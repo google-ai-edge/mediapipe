@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/vision/object_detector/
 title: Object Detection
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 9
 ---
 
@@ -17,6 +18,14 @@ nav_order: 9
 {:toc}
 </details>
 ---
+
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+As of March 1, 2023, this solution was upgraded to a new MediaPipe
+Solution. For more information, see the
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/vision/object_detector/)
+site.*
+
+----
 
 ![object_detection_android_gpu.gif](https://mediapipe.dev/images/mobile/object_detection_android_gpu.gif)
 
@@ -36,12 +45,12 @@ how to build MediaPipe examples.
 #### GPU Pipeline
 
 *   Graph:
-    [`mediapipe/graphs/object_detection/object_detection_mobile_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_gpu.pbtxt)
+    [`mediapipe/graphs/object_detection/object_detection_mobile_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_gpu.pbtxt)
 *   Android target:
     [(or download prebuilt ARM64 APK)](https://drive.google.com/open?id=1di2ywCA_acf3y5rIcJHngWHAUNsUHAGz)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetectiongpu:objectdetectiongpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetectiongpu/BUILD)
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetectiongpu:objectdetectiongpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetectiongpu/BUILD)
 *   iOS target:
-    [`mediapipe/examples/ios/objectdetectiongpu:ObjectDetectionGpuApp`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/objectdetectiongpu/BUILD)
+    [`mediapipe/examples/ios/objectdetectiongpu:ObjectDetectionGpuApp`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/ios/objectdetectiongpu/BUILD)
 
 #### CPU Pipeline
 
@@ -51,12 +60,12 @@ image transfer respectively. As a result, the rest of graph, which shares the
 same configuration as the GPU pipeline, runs entirely on CPU.
 
 *   Graph:
-    [`mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt))
+    [`mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt))
 *   Android target:
     [(or download prebuilt ARM64 APK)](https://drive.google.com/open?id=1eRBK6V5Qd1LCRwexitR2OXgrBBXbOfZ5)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetectioncpu:objectdetectioncpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetectioncpu/BUILD)
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetectioncpu:objectdetectioncpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/objectdetectioncpu/BUILD)
 *   iOS target:
-    [`mediapipe/examples/ios/objectdetectioncpu:ObjectDetectionCpuApp`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/objectdetectioncpu/BUILD)
+    [`mediapipe/examples/ios/objectdetectioncpu:ObjectDetectionCpuApp`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/ios/objectdetectioncpu/BUILD)
 
 ### Desktop
 
@@ -66,9 +75,9 @@ Please first see general instructions for [desktop](../getting_started/cpp.md)
 on how to build MediaPipe examples.
 
 *   Graph:
-    [`mediapipe/graphs/object_detection/object_detection_desktop_live.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_desktop_live.pbtxt)
+    [`mediapipe/graphs/object_detection/object_detection_desktop_live.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_desktop_live.pbtxt)
 *   Target:
-    [`mediapipe/examples/desktop/object_detection:object_detection_cpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/object_detection/BUILD)
+    [`mediapipe/examples/desktop/object_detection:object_detection_cpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/object_detection/BUILD)
 
 #### Video File Input
 
@@ -77,12 +86,12 @@ on how to build MediaPipe examples.
     This uses the same
     [TFLite model](https://storage.googleapis.com/mediapipe-assets/ssdlite_object_detection.tflite)
     (see also
-    [model info](https://github.com/google/mediapipe/tree/master/mediapipe/models/object_detection_saved_model/README.md))
+    [model info](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/models/object_detection_saved_model/README.md))
     as in [Live Camera Input](#live-camera-input) above. The pipeline is
     implemented in this
-    [graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_desktop_tflite_graph.pbtxt),
+    [graph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_desktop_tflite_graph.pbtxt),
     which differs from the live-camera-input CPU-based pipeline
-    [graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt)
+    [graph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt)
     simply by the additional `OpenCvVideoDecoderCalculator` and
     `OpenCvVideoEncoderCalculator` at the beginning and the end of the graph
     respectively.
@@ -108,11 +117,11 @@ on how to build MediaPipe examples.
 *   With a TensorFlow Model
 
     This uses the
-    [TensorFlow model](https://github.com/google/mediapipe/tree/master/mediapipe/models/object_detection_saved_model)
+    [TensorFlow model](https://storage.googleapis.com/mediapipe-assets/object_detection_saved_model/archive.zip)
     ( see also
-    [model info](https://github.com/google/mediapipe/tree/master/mediapipe/models/object_detection_saved_model/README.md)),
+    [model info](https://storage.googleapis.com/mediapipe-assets/object_detection_saved_model/README.md)),
     and the pipeline is implemented in this
-    [graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt).
+    [graph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt).
 
     Note: The following runs TensorFlow inference on CPU. If you would like to
     run inference on GPU (Linux only), please follow
@@ -144,7 +153,7 @@ on how to build MediaPipe examples.
 ### Coral
 
 Please refer to
-[these instructions](https://github.com/google/mediapipe/tree/master/mediapipe/examples/coral/README.md)
+[these instructions](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/coral/README.md)
 to cross-compile and run MediaPipe examples on the
 [Coral Dev Board](https://coral.ai/products/dev-board).
 

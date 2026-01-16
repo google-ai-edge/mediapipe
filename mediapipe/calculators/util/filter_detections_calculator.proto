@@ -25,4 +25,10 @@ message FilterDetectionsCalculatorOptions {
 
   // Detections lower than this score get filtered out.
   optional float min_score = 1;
+
+  // Detections smaller than this size *in pixels* get filtered out.
+  optional float min_pixel_size = 2;
+
+  // Detections larger than this size *in pixels* get filtered out.
+  optional float max_pixel_size = 3;
 }

@@ -20,7 +20,9 @@
 #include <type_traits>
 #include <utility>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api2/const_str.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/calculator_context.h"
@@ -36,6 +38,13 @@ namespace api2 {
 // directly by node code.
 class PortBase {
  public:
+  constexpr PortBase(absl::string_view tag, TypeId type_id, bool optional,
+                     bool multiple)
+      : tag_(tag.size(), tag.data()),
+        optional_(optional),
+        multiple_(multiple),
+        type_id_(type_id) {}
+
   constexpr PortBase(std::size_t tag_size, const char* tag, TypeId type_id,
                      bool optional, bool multiple)
       : tag_(tag_size, tag),
@@ -123,7 +132,7 @@ auto GetCollection(CC* cc, const SideOutputBase& port)
 }
 
 template <class Collection>
-auto GetOrNull(Collection& collection, const std::string& tag, int index)
+auto GetOrNull(Collection& collection, const absl::string_view& tag, int index)
     -> decltype(&collection.Get(std::declval<CollectionItemId>())) {
   CollectionItemId id = collection.GetId(tag, index);
   return id.IsValid() ? &collection.Get(id) : nullptr;
@@ -222,22 +231,24 @@ auto AccessPort(std::false_type, const PortT& port, CC* cc) {
       cc, internal::GetOrNull(collection, port.Tag(), 0));
 }
 
-template <typename ValueT, typename X, class CC>
+template <typename ValueT, typename X, typename CollectionT, class CC>
 class MultiplePortAccess {
  public:
   using AccessT = decltype(SinglePortAccess<ValueT>(std::declval<CC*>(),
                                                     std::declval<X*>()));
 
-  MultiplePortAccess(CC* cc, X* first, int count)
-      : cc_(cc), first_(first), count_(count) {}
+  MultiplePortAccess(CC* cc, CollectionT* collection, const char* tag,
+                     int count)
+      : cc_(cc), collection_(collection), tag_(tag), count_(count) {}
 
   // TODO: maybe this should be size(), like in a standard C++
   // container?
-  int Count() { return count_; }
-  AccessT operator[](int pos) {
-    CHECK_GE(pos, 0);
-    CHECK_LT(pos, count_);
-    return SinglePortAccess<ValueT>(cc_, &first_[pos]);
+  int Count() const { return count_; }
+  AccessT operator[](int pos) const {
+    ABSL_CHECK_GE(pos, 0);
+    ABSL_CHECK_LT(pos, count_);
+    return SinglePortAccess<ValueT>(
+        cc_, internal::GetOrNull(*collection_, tag_, pos));
   }
 
   class Iterator {
@@ -248,9 +259,10 @@ class MultiplePortAccess {
     using pointer = AccessT*;
     using reference = AccessT;  // allowed; see e.g. std::istreambuf_iterator
 
-    Iterator(CC* cc, X* p) : cc_(cc), p_(p) {}
+    Iterator(CC* cc, CollectionT* collection, const char* tag, int pos)
+        : cc_(cc), collection_(collection), tag_(tag), pos_(pos) {}
     Iterator& operator++() {
-      ++p_;
+      ++pos_;
       return *this;
     }
     Iterator operator++(int) {
@@ -258,21 +270,27 @@ class MultiplePortAccess {
       ++(*this);
       return res;
     }
-    bool operator==(const Iterator& other) const { return p_ == other.p_; }
+    bool operator==(const Iterator& other) const { return pos_ == other.pos_; }
     bool operator!=(const Iterator& other) const { return !(*this == other); }
-    AccessT operator*() const { return SinglePortAccess<ValueT>(cc_, p_); }
+    AccessT operator*() const {
+      return SinglePortAccess<ValueT>(
+          cc_, internal::GetOrNull(*collection_, tag_, pos_));
+    }
 
    private:
     CC* cc_;
-    X* p_;
+    CollectionT* collection_;
+    const char* tag_;
+    int pos_ = 0;
   };
 
-  Iterator begin() { return Iterator(cc_, first_); }
-  Iterator end() { return Iterator(cc_, first_ + count_); }
+  Iterator begin() const { return Iterator(cc_, collection_, tag_, 0); }
+  Iterator end() const { return Iterator(cc_, collection_, tag_, count_); }
 
  private:
   CC* cc_;
-  X* first_;
+  CollectionT* collection_;
+  const char* tag_;
   int count_;
 };
 
@@ -280,9 +298,11 @@ template <typename ValueT, typename PortT, class CC>
 auto AccessPort(std::true_type, const PortT& port, CC* cc) {
   auto& collection = GetCollection(cc, port);
   auto* first = internal::GetOrNull(collection, port.Tag(), 0);
-  using EntryT = typename std::remove_pointer<decltype(first)>::type;
-  return MultiplePortAccess<ValueT, EntryT, CC>(
-      cc, first, collection.NumEntries(port.Tag()));
+  using EntryT = typename std::remove_pointer_t<decltype(first)>;
+  using CollectionT = typename std::remove_reference_t<
+      std::remove_const_t<decltype(collection)>>;
+  return MultiplePortAccess<ValueT, EntryT, CollectionT, CC>(
+      cc, &collection, port.Tag(), collection.NumEntries(port.Tag()));
 }
 
 template <class Base>
@@ -331,6 +351,9 @@ class PortCommon : public Base {
   using Optional = PortCommon<Base, ValueT, true, IsMultipleV>;
   using Multiple = PortCommon<Base, ValueT, IsOptionalV, true>;
   using SideFallback = SideFallbackT<Base, ValueT, IsOptionalV, IsMultipleV>;
+
+  explicit constexpr PortCommon(absl::string_view tag)
+      : Base(tag, kTypeId<ValueT>, IsOptionalV, IsMultipleV) {}
 
   template <std::size_t N>
   explicit constexpr PortCommon(const char (&tag)[N])
@@ -456,6 +479,11 @@ class SideFallbackT : public Base {
 // CalculatorContext (e.g. kOut(cc)), and provides a type-safe interface to
 // OutputStreamShard. Like that class, this class will not be usually named in
 // calculator code, but used as a temporary object (e.g. kOut(cc).Send(...)).
+//
+// If not connected (!IsConnected()) SetNextTimestampBound is safe to call and
+// does nothing.
+// All the sub-classes that define Send should implement it to be safe to to
+// call if not connected and do nothing in such case.
 class OutputShardAccessBase {
  public:
   OutputShardAccessBase(const CalculatorContext& cc, OutputStreamShard* output)
@@ -557,11 +585,13 @@ class OutputSidePacketAccess {
     if (output_) output_->Set(ToOldPacket(std::move(packet)));
   }
 
-  void Set(const T& payload) { Set(MakePacket<T>(payload)); }
-  void Set(T&& payload) { Set(MakePacket<T>(std::move(payload))); }
+  void Set(const T& payload) { Set(api2::MakePacket<T>(payload)); }
+  void Set(T&& payload) { Set(api2::MakePacket<T>(std::move(payload))); }
+
+  bool IsConnected() const { return output_ != nullptr; }
 
  private:
-  OutputSidePacketAccess(OutputSidePacket* output) : output_(output) {}
+  explicit OutputSidePacketAccess(OutputSidePacket* output) : output_(output) {}
   OutputSidePacket* output_;
 
   friend OutputSidePacketAccess<T> internal::SinglePortAccess<T>(
@@ -644,7 +674,7 @@ class InputSidePacketAccess : public Packet<T> {
       : Packet<T>(packet ? FromOldPacket(*packet).template As<T>()
                          : Packet<T>()),
         connected_(packet != nullptr) {}
-  bool connected_;
+  const bool connected_;
 
   friend InputSidePacketAccess<T> internal::SinglePortAccess<T>(
       mediapipe::CalculatorContext*, const mediapipe::Packet*);

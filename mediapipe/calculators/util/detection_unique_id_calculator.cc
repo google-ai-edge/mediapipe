@@ -26,7 +26,7 @@ constexpr char kDetectionListTag[] = "DETECTION_LIST";
 // Each detection processed by DetectionUniqueIDCalculator will be assigned an
 // unique id that starts from 1. If a detection already has an ID other than 0,
 // the ID will be overwritten.
-static int64 detection_id = 0;
+static int64_t detection_id = 0;
 
 inline int GetNextDetectionId() { return ++detection_id; }
 

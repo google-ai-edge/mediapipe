@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,15 +14,11 @@
 """Base options for MediaPipe Task APIs."""
 
 import dataclasses
-import os
+import enum
 from typing import Any, Optional
 
-from mediapipe.tasks.cc.core.proto import base_options_pb2
-from mediapipe.tasks.cc.core.proto import external_file_pb2
+from mediapipe.tasks.python.core import base_options_c as base_options_c_lib
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-
-_BaseOptionsProto = base_options_pb2.BaseOptions
-_ExternalFileProto = external_file_pb2.ExternalFile
 
 
 @dataclasses.dataclass
@@ -41,31 +37,31 @@ class BaseOptions:
   Attributes:
     model_asset_path: Path to the model asset file.
     model_asset_buffer: The model asset file contents as bytes.
+    delegate: Acceleration to use. Supported values are GPU and CPU. GPU support
+      is currently limited to Ubuntu platforms.
   """
+
+  class Delegate(enum.IntEnum):
+    CPU = 0
+    GPU = 1
 
   model_asset_path: Optional[str] = None
   model_asset_buffer: Optional[bytes] = None
-  # TODO: Allow Python API to specify acceleration settings.
+  delegate: Optional[Delegate] = None
 
   @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _BaseOptionsProto:
-    """Generates a BaseOptions protobuf object."""
-    if self.model_asset_path is not None:
-      full_path = os.path.abspath(self.model_asset_path)
-    else:
-      full_path = None
-
-    return _BaseOptionsProto(
-        model_asset=_ExternalFileProto(
-            file_name=full_path, file_content=self.model_asset_buffer))
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(cls, pb2_obj: _BaseOptionsProto) -> 'BaseOptions':
-    """Creates a `BaseOptions` object from the given protobuf object."""
-    return BaseOptions(
-        model_asset_path=pb2_obj.model_asset.file_name,
-        model_asset_buffer=pb2_obj.model_asset.file_content)
+  def to_ctypes(self) -> base_options_c_lib.BaseOptionsC:
+    """Creates a BaseOptionsC struct from the BaseOptions object."""
+    options = base_options_c_lib.BaseOptionsC()
+    options.model_asset_buffer = self.model_asset_buffer
+    options.model_asset_buffer_count = (
+        len(self.model_asset_buffer) if self.model_asset_buffer else 0
+    )
+    options.model_asset_path = (
+        self.model_asset_path.encode('utf-8') if self.model_asset_path else None
+    )
+    options.delegate = self.delegate.value if self.delegate else 0
+    return options
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.
@@ -78,5 +74,8 @@ class BaseOptions:
     """
     if not isinstance(other, BaseOptions):
       return False
-
-    return self.to_pb2().__eq__(other.to_pb2())
+    return (
+        self.model_asset_path == other.model_asset_path
+        and self.model_asset_buffer == other.model_asset_buffer
+        and self.delegate == other.delegate
+    )

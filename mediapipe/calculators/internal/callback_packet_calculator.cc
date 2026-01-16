@@ -11,10 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include "mediapipe/calculators/internal/callback_packet_calculator.h"
 
 #include <functional>
 #include <string>
 
+#include "absl/status/status.h"
 #include "mediapipe/calculators/internal/callback_packet_calculator.pb.h"  // NOLINT
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_registry.h"
@@ -39,64 +41,55 @@ void DumpPostStreamPacket(Packet* post_stream_packet, const Packet& packet) {
     *post_stream_packet = packet;
   }
 }
+
 }  // namespace
 
-// Creates a callback which takes a packet and stores it either in a
-// vector of packets or stores only the packet at PostStream timestamp.
-// The kind of callback is controlled by an option.  The callback is
-// a std::function and is directly usable by CallbackCalculator.
-// Since the options for the packet generator include a serialized pointer
-// value, the resulting callback is only valid on the original machine
-// while that pointer is still alive.
-class CallbackPacketCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    const auto& options = cc->Options<CallbackPacketCalculatorOptions>();
-    switch (options.type()) {
-      case CallbackPacketCalculatorOptions::VECTOR_PACKET:
-      case CallbackPacketCalculatorOptions::POST_STREAM_PACKET:
-        cc->OutputSidePackets()
-            .Index(0)
-            .Set<std::function<void(const Packet&)>>();
-        break;
-      default:
-        return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-               << "Invalid type of callback to produce.";
-    }
-    return absl::OkStatus();
-  }
-
-  absl::Status Open(CalculatorContext* cc) override {
-    const auto& options = cc->Options<CallbackPacketCalculatorOptions>();
-    void* ptr;
-    if (sscanf(options.pointer().c_str(), "%p", &ptr) != 1) {
+absl::Status CallbackPacketCalculator::GetContract(CalculatorContract* cc) {
+  const auto& options = cc->Options<CallbackPacketCalculatorOptions>();
+  switch (options.type()) {
+    case CallbackPacketCalculatorOptions::VECTOR_PACKET:
+    case CallbackPacketCalculatorOptions::POST_STREAM_PACKET:
+      cc->OutputSidePackets()
+          .Index(0)
+          .Set<std::function<void(const Packet&)>>();
+      break;
+    default:
       return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-             << "Stored pointer value in options is invalid.";
-    }
-    switch (options.type()) {
-      case CallbackPacketCalculatorOptions::VECTOR_PACKET:
-        cc->OutputSidePackets().Index(0).Set(
-            MakePacket<std::function<void(const Packet&)>>(std::bind(
-                &DumpToVector, reinterpret_cast<std::vector<Packet>*>(ptr),
-                std::placeholders::_1)));
-        break;
-      case CallbackPacketCalculatorOptions::POST_STREAM_PACKET:
-        cc->OutputSidePackets().Index(0).Set(
-            MakePacket<std::function<void(const Packet&)>>(
-                std::bind(&DumpPostStreamPacket, reinterpret_cast<Packet*>(ptr),
-                          std::placeholders::_1)));
-        break;
-      default:
-        return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
-               << "Invalid type to dump into.";
-    }
-    return absl::OkStatus();
+             << "Invalid type of callback to produce.";
   }
+  return absl::OkStatus();
+}
 
-  absl::Status Process(CalculatorContext* cc) override {
-    return absl::OkStatus();
+absl::Status CallbackPacketCalculator::Open(CalculatorContext* cc) {
+  const auto& options = cc->Options<CallbackPacketCalculatorOptions>();
+  void* ptr;
+  if (sscanf(options.pointer().c_str(), "%p", &ptr) != 1) {
+    return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+           << "Stored pointer value in options is invalid.";
   }
-};
+  switch (options.type()) {
+    case CallbackPacketCalculatorOptions::VECTOR_PACKET:
+      cc->OutputSidePackets().Index(0).Set(
+          MakePacket<std::function<void(const Packet&)>>(std::bind(
+              &DumpToVector, reinterpret_cast<std::vector<Packet>*>(ptr),
+              std::placeholders::_1)));
+      break;
+    case CallbackPacketCalculatorOptions::POST_STREAM_PACKET:
+      cc->OutputSidePackets().Index(0).Set(
+          MakePacket<std::function<void(const Packet&)>>(
+              std::bind(&DumpPostStreamPacket, reinterpret_cast<Packet*>(ptr),
+                        std::placeholders::_1)));
+      break;
+    default:
+      return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+             << "Invalid type to dump into.";
+  }
+  return absl::OkStatus();
+}
+
+absl::Status CallbackPacketCalculator::Process(CalculatorContext* cc) {
+  return absl::OkStatus();
+}
 
 REGISTER_CALCULATOR(CallbackPacketCalculator);
 

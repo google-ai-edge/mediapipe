@@ -16,12 +16,14 @@
 
 #include <tuple>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/tool/field_data.pb.h"
 #include "mediapipe/framework/type_map.h"
 
@@ -47,11 +49,11 @@ bool IsLengthDelimited(WireFormatLite::WireType wire_type) {
 }
 
 // Reads a single data value for a wire type.
-absl::Status ReadFieldValue(uint32 tag, CodedInputStream* in,
+absl::Status ReadFieldValue(uint32_t tag, CodedInputStream* in,
                             std::string* result) {
   WireFormatLite::WireType wire_type = WireFormatLite::GetTagWireType(tag);
   if (IsLengthDelimited(wire_type)) {
-    uint32 length;
+    uint32_t length;
     RET_CHECK_NO_LOG(in->ReadVarint32(&length));
     RET_CHECK_NO_LOG(in->ReadString(result, length));
   } else {
@@ -71,10 +73,10 @@ absl::Status ReadFieldValue(uint32 tag, CodedInputStream* in,
 absl::Status ReadPackedValues(WireFormatLite::WireType wire_type,
                               CodedInputStream* in,
                               std::vector<std::string>* field_values) {
-  uint32 data_size;
+  uint32_t data_size;
   RET_CHECK_NO_LOG(in->ReadVarint32(&data_size));
   // fake_tag encodes the wire-type for calls to WireFormatLite::SkipField.
-  uint32 fake_tag = WireFormatLite::MakeTag(1, wire_type);
+  uint32_t fake_tag = WireFormatLite::MakeTag(1, wire_type);
   while (data_size > 0) {
     std::string number;
     MP_RETURN_IF_ERROR(ReadFieldValue(fake_tag, in, &number));
@@ -87,12 +89,13 @@ absl::Status ReadPackedValues(WireFormatLite::WireType wire_type,
 
 // Extracts the data value(s) for one field from a serialized message.
 // The message with these field values removed is written to |out|.
-absl::Status GetFieldValues(uint32 field_id, WireFormatLite::WireType wire_type,
-                            CodedInputStream* in, CodedOutputStream* out,
+absl::Status GetFieldValues(uint32_t field_id, CodedInputStream* in,
+                            CodedOutputStream* out,
                             std::vector<std::string>* field_values) {
-  uint32 tag;
+  uint32_t tag;
   while ((tag = in->ReadTag()) != 0) {
     int field_number = WireFormatLite::GetTagFieldNumber(tag);
+    WireFormatLite::WireType wire_type = WireFormatLite::GetTagWireType(tag);
     if (field_number == field_id) {
       if (!IsLengthDelimited(wire_type) &&
           IsLengthDelimited(WireFormatLite::GetTagWireType(tag))) {
@@ -110,10 +113,10 @@ absl::Status GetFieldValues(uint32 field_id, WireFormatLite::WireType wire_type,
 }
 
 // Injects the data value(s) for one field into a serialized message.
-void SetFieldValues(uint32 field_id, WireFormatLite::WireType wire_type,
+void SetFieldValues(uint32_t field_id, WireFormatLite::WireType wire_type,
                     const std::vector<std::string>& field_values,
                     CodedOutputStream* out) {
-  uint32 tag = WireFormatLite::MakeTag(field_id, wire_type);
+  uint32_t tag = WireFormatLite::MakeTag(field_id, wire_type);
   for (const std::string& field_value : field_values) {
     out->WriteVarint32(tag);
     if (IsLengthDelimited(wire_type)) {
@@ -123,7 +126,7 @@ void SetFieldValues(uint32 field_id, WireFormatLite::WireType wire_type,
   }
 }
 
-FieldAccess::FieldAccess(uint32 field_id, FieldType field_type)
+FieldAccess::FieldAccess(uint32_t field_id, FieldType field_type)
     : field_id_(field_id), field_type_(field_type) {}
 
 absl::Status FieldAccess::SetMessage(const std::string& message) {
@@ -131,9 +134,7 @@ absl::Status FieldAccess::SetMessage(const std::string& message) {
   CodedInputStream in(&ais);
   StringOutputStream sos(&message_);
   CodedOutputStream out(&sos);
-  WireFormatLite::WireType wire_type =
-      WireFormatLite::WireTypeForFieldType(field_type_);
-  return GetFieldValues(field_id_, wire_type, &in, &out, &field_values_);
+  return GetFieldValues(field_id_, &in, &out, &field_values_);
 }
 
 void FieldAccess::GetMessage(std::string* result) {
@@ -149,18 +150,56 @@ std::vector<FieldValue>* FieldAccess::mutable_field_values() {
   return &field_values_;
 }
 
+namespace {
+using ProtoPathEntry = ProtoUtilLite::ProtoPathEntry;
+
+// Returns the FieldAccess and index for a field-id or a map-id.
+// Returns access to the field-id if the field index is found,
+// to the map-id if the map entry is found, and to the field-id otherwise.
+absl::StatusOr<std::pair<FieldAccess, int>> AccessField(
+    const ProtoPathEntry& entry, FieldType field_type,
+    const FieldValue& message) {
+  FieldAccess result(entry.field_id, field_type);
+  if (entry.field_id >= 0) {
+    MP_RETURN_IF_ERROR(result.SetMessage(message));
+    if (entry.index < result.mutable_field_values()->size()) {
+      return std::pair(result, entry.index);
+    }
+  }
+  if (entry.map_id >= 0) {
+    FieldAccess access(entry.map_id, field_type);
+    MP_RETURN_IF_ERROR(access.SetMessage(message));
+    auto& field_values = *access.mutable_field_values();
+    for (int index = 0; index < field_values.size(); ++index) {
+      FieldAccess key(entry.key_id, entry.key_type);
+      MP_RETURN_IF_ERROR(key.SetMessage(field_values[index]));
+      if (key.mutable_field_values()->at(0) == entry.key_value) {
+        return std::pair(std::move(access), index);
+      }
+    }
+  }
+  if (entry.field_id >= 0) {
+    return std::pair(result, entry.index);
+  }
+  return absl::InvalidArgumentError(absl::StrCat(
+      "ProtoPath field missing, field-id: ", entry.field_id, ", map-id: ",
+      entry.map_id, ", key: ", entry.key_value, " key_type: ", entry.key_type));
+}
+
+}  // namespace
+
 // Replaces a range of field values for one field nested within a protobuf.
 absl::Status ProtoUtilLite::ReplaceFieldRange(
     FieldValue* message, ProtoPath proto_path, int length, FieldType field_type,
     const std::vector<FieldValue>& field_values) {
-  int field_id, index;
-  std::tie(field_id, index) = proto_path.front();
+  ProtoPathEntry entry = proto_path.front();
   proto_path.erase(proto_path.begin());
-  FieldAccess access(field_id, !proto_path.empty()
-                                   ? WireFormatLite::TYPE_MESSAGE
-                                   : field_type);
-  MP_RETURN_IF_ERROR(access.SetMessage(*message));
-  std::vector<std::string>& v = *access.mutable_field_values();
+  FieldType type =
+      !proto_path.empty() ? WireFormatLite::TYPE_MESSAGE : field_type;
+  MP_ASSIGN_OR_RETURN(auto r, AccessField(entry, type, *message));
+  FieldAccess& access = r.first;
+  int index = r.second;
+  std::vector<FieldValue>& v = *access.mutable_field_values();
   if (!proto_path.empty()) {
     RET_CHECK_NO_LOG(index >= 0 && index < v.size());
     MP_RETURN_IF_ERROR(ReplaceFieldRange(&v[index], proto_path, length,
@@ -180,19 +219,22 @@ absl::Status ProtoUtilLite::ReplaceFieldRange(
 absl::Status ProtoUtilLite::GetFieldRange(
     const FieldValue& message, ProtoPath proto_path, int length,
     FieldType field_type, std::vector<FieldValue>* field_values) {
-  int field_id, index;
-  std::tie(field_id, index) = proto_path.front();
+  ProtoPathEntry entry = proto_path.front();
   proto_path.erase(proto_path.begin());
-  FieldAccess access(field_id, !proto_path.empty()
-                                   ? WireFormatLite::TYPE_MESSAGE
-                                   : field_type);
-  MP_RETURN_IF_ERROR(access.SetMessage(message));
-  std::vector<std::string>& v = *access.mutable_field_values();
+  FieldType type =
+      !proto_path.empty() ? WireFormatLite::TYPE_MESSAGE : field_type;
+  MP_ASSIGN_OR_RETURN(auto r, AccessField(entry, type, message));
+  FieldAccess& access = r.first;
+  int index = r.second;
+  std::vector<FieldValue>& v = *access.mutable_field_values();
   if (!proto_path.empty()) {
     RET_CHECK_NO_LOG(index >= 0 && index < v.size());
     MP_RETURN_IF_ERROR(
         GetFieldRange(v[index], proto_path, length, field_type, field_values));
   } else {
+    if (length == -1) {
+      length = v.size() - index;
+    }
     RET_CHECK_NO_LOG(index >= 0 && index <= v.size());
     RET_CHECK_NO_LOG(index + length >= 0 && index + length <= v.size());
     field_values->insert(field_values->begin(), v.begin() + index,
@@ -206,19 +248,21 @@ absl::Status ProtoUtilLite::GetFieldCount(const FieldValue& message,
                                           ProtoPath proto_path,
                                           FieldType field_type,
                                           int* field_count) {
-  int field_id, index;
-  std::tie(field_id, index) = proto_path.back();
-  proto_path.pop_back();
-  std::vector<std::string> parent;
-  if (proto_path.empty()) {
-    parent.push_back(std::string(message));
+  ProtoPathEntry entry = proto_path.front();
+  proto_path.erase(proto_path.begin());
+  FieldType type =
+      !proto_path.empty() ? WireFormatLite::TYPE_MESSAGE : field_type;
+  MP_ASSIGN_OR_RETURN(auto r, AccessField(entry, type, message));
+  FieldAccess& access = r.first;
+  int index = r.second;
+  std::vector<FieldValue>& v = *access.mutable_field_values();
+  if (!proto_path.empty()) {
+    RET_CHECK_NO_LOG(index >= 0 && index < v.size());
+    MP_RETURN_IF_ERROR(
+        GetFieldCount(v[index], proto_path, field_type, field_count));
   } else {
-    MP_RETURN_IF_ERROR(ProtoUtilLite::GetFieldRange(
-        message, proto_path, 1, WireFormatLite::TYPE_MESSAGE, &parent));
+    *field_count = v.size();
   }
-  FieldAccess access(field_id, field_type);
-  MP_RETURN_IF_ERROR(access.SetMessage(parent[0]));
-  *field_count = access.mutable_field_values()->size();
   return absl::OkStatus();
 }
 
@@ -354,11 +398,11 @@ static absl::Status DeserializeValue(const FieldValue& bytes,
     case W::TYPE_UINT64:
       return ReadPrimitive<proto_uint64, W::TYPE_UINT64>(&input, result);
     case W::TYPE_INT32:
-      return ReadPrimitive<int32, W::TYPE_INT32>(&input, result);
+      return ReadPrimitive<int32_t, W::TYPE_INT32>(&input, result);
     case W::TYPE_FIXED64:
       return ReadPrimitive<proto_uint64, W::TYPE_FIXED64>(&input, result);
     case W::TYPE_FIXED32:
-      return ReadPrimitive<uint32, W::TYPE_FIXED32>(&input, result);
+      return ReadPrimitive<uint32_t, W::TYPE_FIXED32>(&input, result);
     case W::TYPE_BOOL:
       return ReadPrimitive<bool, W::TYPE_BOOL>(&input, result);
     case W::TYPE_BYTES:
@@ -368,17 +412,17 @@ static absl::Status DeserializeValue(const FieldValue& bytes,
     }
     case W::TYPE_GROUP:
     case W::TYPE_MESSAGE:
-      CHECK(false) << "DeserializeValue cannot deserialize a Message.";
+      ABSL_CHECK(false) << "DeserializeValue cannot deserialize a Message.";
     case W::TYPE_UINT32:
-      return ReadPrimitive<uint32, W::TYPE_UINT32>(&input, result);
+      return ReadPrimitive<uint32_t, W::TYPE_UINT32>(&input, result);
     case W::TYPE_ENUM:
       return ReadPrimitive<int, W::TYPE_ENUM>(&input, result);
     case W::TYPE_SFIXED32:
-      return ReadPrimitive<int32, W::TYPE_SFIXED32>(&input, result);
+      return ReadPrimitive<int32_t, W::TYPE_SFIXED32>(&input, result);
     case W::TYPE_SFIXED64:
       return ReadPrimitive<proto_int64, W::TYPE_SFIXED64>(&input, result);
     case W::TYPE_SINT32:
-      return ReadPrimitive<int32, W::TYPE_SINT32>(&input, result);
+      return ReadPrimitive<int32_t, W::TYPE_SINT32>(&input, result);
     case W::TYPE_SINT64:
       return ReadPrimitive<proto_int64, W::TYPE_SINT64>(&input, result);
   }
@@ -480,27 +524,27 @@ absl::Status ReadValue(absl::string_view field_bytes, FieldType field_type,
   switch (field_type) {
     case WireFormatLite::TYPE_INT32:
       result->set_int32_value(
-          ReadValue<int32, WireFormatLite::TYPE_INT32>(field_bytes, &status));
+          ReadValue<int32_t, WireFormatLite::TYPE_INT32>(field_bytes, &status));
       break;
     case WireFormatLite::TYPE_SINT32:
-      result->set_int32_value(
-          ReadValue<int32, WireFormatLite::TYPE_SINT32>(field_bytes, &status));
+      result->set_int32_value(ReadValue<int32_t, WireFormatLite::TYPE_SINT32>(
+          field_bytes, &status));
       break;
     case WireFormatLite::TYPE_INT64:
       result->set_int64_value(
-          ReadValue<int64, WireFormatLite::TYPE_INT64>(field_bytes, &status));
+          ReadValue<int64_t, WireFormatLite::TYPE_INT64>(field_bytes, &status));
       break;
     case WireFormatLite::TYPE_SINT64:
-      result->set_int64_value(
-          ReadValue<int64, WireFormatLite::TYPE_SINT64>(field_bytes, &status));
+      result->set_int64_value(ReadValue<int64_t, WireFormatLite::TYPE_SINT64>(
+          field_bytes, &status));
       break;
     case WireFormatLite::TYPE_UINT32:
-      result->set_uint32_value(
-          ReadValue<uint32, WireFormatLite::TYPE_UINT32>(field_bytes, &status));
+      result->set_uint32_value(ReadValue<uint32_t, WireFormatLite::TYPE_UINT32>(
+          field_bytes, &status));
       break;
     case WireFormatLite::TYPE_UINT64:
-      result->set_uint64_value(
-          ReadValue<uint32, WireFormatLite::TYPE_UINT32>(field_bytes, &status));
+      result->set_uint64_value(ReadValue<uint32_t, WireFormatLite::TYPE_UINT32>(
+          field_bytes, &status));
       break;
     case WireFormatLite::TYPE_DOUBLE:
       result->set_double_value(
@@ -516,7 +560,7 @@ absl::Status ReadValue(absl::string_view field_bytes, FieldType field_type,
       break;
     case WireFormatLite::TYPE_ENUM:
       result->set_enum_value(
-          ReadValue<int32, WireFormatLite::TYPE_ENUM>(field_bytes, &status));
+          ReadValue<int32_t, WireFormatLite::TYPE_ENUM>(field_bytes, &status));
       break;
     case WireFormatLite::TYPE_STRING:
       result->set_string_value(std::string(field_bytes));

@@ -57,3 +57,17 @@ exports_files([
     "canonical_face_model.obj",
     "canonical_face_model_uv_visualization.png",
 ])
+
+# This metadata contains the 468 landmarks copied from geometry_pipeline_metadata_landmarks.pbtxt
+# plus 10 extra landmarks representing the two irises. The position of each iris landmark was
+# calculated using neighbor vertices through linear interpolation. Visual inspection suggests
+# these positions are good. The UV coordinates are also estimated using a similar approach.
+encode_binary_proto(
+    name = "geometry_pipeline_metadata_including_iris_landmarks",
+    input = "geometry_pipeline_metadata_including_iris_landmarks.pbtxt",
+    message_type = "mediapipe.face_geometry.GeometryPipelineMetadata",
+    output = "geometry_pipeline_metadata_including_iris_landmarks.binarypb",
+    deps = [
+        "//mediapipe/modules/face_geometry/protos:geometry_pipeline_metadata_proto",
+    ],
+)

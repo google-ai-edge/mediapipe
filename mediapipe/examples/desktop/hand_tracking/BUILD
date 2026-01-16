@@ -12,10 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe/examples:__subpackages__"])
-
+# BUILD:
+# bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
+#   //mediapipe/examples/desktop/hand_tracking:hand_tracking_tflite
+# RUN:
+# bazel-bin/mediapipe/examples/desktop/hand_tracking/hand_tracking_tflite \
+#   --calculator_graph_config_file=<.../hand_tracking_desktop.pbtxt> \
+#   --input_side_packets=input_video_path=<input video path>,output_video_path=<output video path>
 cc_binary(
     name = "hand_tracking_tflite",
     data = [
@@ -28,6 +35,14 @@ cc_binary(
     ],
 )
 
+# BUILD:
+# bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
+#   //mediapipe/examples/desktop/hand_tracking:hand_tracking_cpu
+# RUN:
+# bazel-bin/mediapipe/examples/desktop/hand_tracking/hand_tracking_cpu \
+#   --calculator_graph_config_file=<.../hand_tracking_desktop_live.pbtxt> \
+#   --input_video_path=<input video path> \
+#   --output_video_path=<output video path>
 cc_binary(
     name = "hand_tracking_cpu",
     data = [

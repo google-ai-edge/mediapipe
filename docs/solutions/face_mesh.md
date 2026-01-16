@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/vision/face_landmarker/
 title: Face Mesh
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 2
 ---
 
@@ -17,6 +18,14 @@ nav_order: 2
 {:toc}
 </details>
 ---
+
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+As of May 10, 2023, this solution was upgraded to a new MediaPipe
+Solution. For more information, see the
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/vision/face_landmarker)
+site.*
+
+----
 
 ## Overview
 
@@ -59,19 +68,19 @@ employed in our [MediaPipe Hands](./hands.md) solution, which uses a palm
 detector together with a hand landmark model.
 
 The pipeline is implemented as a MediaPipe
-[graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_mesh/face_mesh_mobile.pbtxt)
+[graph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/face_mesh/face_mesh_mobile.pbtxt)
 that uses a
-[face landmark subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_landmark/face_landmark_front_gpu.pbtxt)
+[face landmark subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_landmark/face_landmark_front_gpu.pbtxt)
 from the
-[face landmark module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_landmark),
+[face landmark module](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_landmark),
 and renders using a dedicated
-[face renderer subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_mesh/subgraphs/face_renderer_gpu.pbtxt).
+[face renderer subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/face_mesh/subgraphs/face_renderer_gpu.pbtxt).
 The
-[face landmark subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_landmark/face_landmark_front_gpu.pbtxt)
+[face landmark subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_landmark/face_landmark_front_gpu.pbtxt)
 internally uses a
-[face_detection_subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_short_range_gpu.pbtxt)
+[face_detection_subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_short_range_gpu.pbtxt)
 from the
-[face detection module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection).
+[face detection module](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_detection).
 
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how
@@ -133,14 +142,14 @@ about the model in this [paper](https://arxiv.org/abs/2006.10962).
 The [Face Landmark Model](#face-landmark-model) performs a single-camera face landmark
 detection in the screen coordinate space: the X- and Y- coordinates are
 normalized screen coordinates, while the Z coordinate is relative and is scaled
-as the X coodinate under the
+as the X coordinate under the
 [weak perspective projection camera model](https://en.wikipedia.org/wiki/3D_projection#Weak_perspective_projection).
 This format is well-suited for some applications, however it does not directly
 enable the full spectrum of augmented reality (AR) features like aligning a
 virtual 3D object with a detected face.
 
 The
-[Face Transform module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry)
+[Face Transform module](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_geometry)
 moves away from the screen coordinate space towards a metric 3D space and
 provides necessary primitives to handle a detected face as a regular 3D object.
 By design, you'll be able to use a perspective camera to project the final 3D
@@ -174,7 +183,7 @@ functions:
 
 -   **Defines metric units**: the scale of the canonical face model defines the
     metric units of the Metric 3D space. A metric unit used by the
-    [default canonical face model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/data/canonical_face_model.fbx)
+    [default canonical face model](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_geometry/data/canonical_face_model.fbx)
     is a centimeter;
 -   **Bridges static and runtime spaces**: the face pose transformation matrix
     is - in fact - a linear map from the canonical face model into the runtime
@@ -200,12 +209,12 @@ the following steps are executed in the given order:
     triangular topology are inherited from the canonical face model.
 
 The transform pipeline is implemented as a MediaPipe
-[calculator](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/geometry_pipeline_calculator.cc).
+[calculator](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_geometry/geometry_pipeline_calculator.cc).
 For your convenience, this calculator is bundled together with corresponding
 metadata into a unified MediaPipe
-[subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/face_geometry_from_landmarks.pbtxt).
+[subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_geometry/face_geometry_from_landmarks.pbtxt).
 The face transform format is defined as a Protocol Buffer
-[message](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/protos/face_geometry.proto).
+[message](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_geometry/protos/face_geometry.proto).
 
 #### Effect Renderer
 
@@ -223,7 +232,7 @@ into the depth buffer. This step helps to create a more believable effect via
 hiding invisible elements behind the face surface.
 
 The effect renderer is implemented as a MediaPipe
-[calculator](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/effect_renderer_calculator.cc).
+[calculator](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_geometry/effect_renderer_calculator.cc).
 
 | ![face_geometry_renderer.gif](https://mediapipe.dev/images/face_geometry_renderer.gif)     |
 | :---------------------------------------------------------------------: |
@@ -489,7 +498,7 @@ camera.start();
 Please first follow general
 [instructions](../getting_started/android_solutions.md) to add MediaPipe Gradle
 dependencies and try the Android Solution API in the companion
-[example Android Studio project](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/solutions/facemesh),
+[example Android Studio project](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/solutions/facemesh),
 and learn more in the usage example below.
 
 Supported configuration options:
@@ -699,31 +708,31 @@ detection. For visual reference, please refer to *Fig. 2*.
 #### Mobile
 
 *   Graph:
-    [`mediapipe/graphs/face_mesh/face_mesh_mobile.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_mesh/face_mesh_mobile.pbtxt)
+    [`mediapipe/graphs/face_mesh/face_mesh_mobile.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/face_mesh/face_mesh_mobile.pbtxt)
 *   Android target:
     [(or download prebuilt ARM64 APK)](https://drive.google.com/open?id=1pUmd7CXCL_onYMbsZo5p91cH0oNnR4gi)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/facemeshgpu:facemeshgpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facemeshgpu/BUILD)
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/facemeshgpu:facemeshgpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facemeshgpu/BUILD)
 *   iOS target:
     [`mediapipe/examples/ios/facemeshgpu:FaceMeshGpuApp`](http:/mediapipe/examples/ios/facemeshgpu/BUILD)
 
 Tip: Maximum number of faces to detect/process is set to 1 by default. To change
 it, for Android modify `NUM_FACES` in
-[MainActivity.java](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facemeshgpu/MainActivity.java),
+[MainActivity.java](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facemeshgpu/MainActivity.java),
 and for iOS modify `kNumFaces` in
-[FaceMeshGpuViewController.mm](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/facemeshgpu/FaceMeshGpuViewController.mm).
+[FaceMeshGpuViewController.mm](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/ios/facemeshgpu/FaceMeshGpuViewController.mm).
 
 #### Desktop
 
 *   Running on CPU
     *   Graph:
-        [`mediapipe/graphs/face_mesh/face_mesh_desktop_live.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_mesh/face_mesh_desktop_live.pbtxt)
+        [`mediapipe/graphs/face_mesh/face_mesh_desktop_live.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/face_mesh/face_mesh_desktop_live.pbtxt)
     *   Target:
-        [`mediapipe/examples/desktop/face_mesh:face_mesh_cpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/face_mesh/BUILD)
+        [`mediapipe/examples/desktop/face_mesh:face_mesh_cpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/face_mesh/BUILD)
 *   Running on GPU
     *   Graph:
-        [`mediapipe/graphs/face_mesh/face_mesh_desktop_live_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_mesh/face_mesh_desktop_live_gpu.pbtxt)
+        [`mediapipe/graphs/face_mesh/face_mesh_desktop_live_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/face_mesh/face_mesh_desktop_live_gpu.pbtxt)
     *   Target:
-        [`mediapipe/examples/desktop/face_mesh:face_mesh_gpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/face_mesh/BUILD)
+        [`mediapipe/examples/desktop/face_mesh:face_mesh_gpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/face_mesh/BUILD)
 
 Tip: Maximum number of faces to detect/process is set to 1 by default. To change
 it, in the graph file modify the option of `ConstantSidePacketCalculator`.
@@ -737,10 +746,10 @@ only works for a single face. For visual reference, please refer to *Fig. 4*.
 #### Mobile
 
 *   Graph:
-    [`mediapipe/graphs/face_effect/face_effect_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_effect/face_effect_gpu.pbtxt)
+    [`mediapipe/graphs/face_effect/face_effect_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/face_effect/face_effect_gpu.pbtxt)
 *   Android target:
     [(or download prebuilt ARM64 APK)](https://drive.google.com/file/d/1ccnaDnffEuIXriBZr2SK_Eu4FpO7K44s)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceeffect`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceeffect/BUILD)
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceeffect`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceeffect/BUILD)
 *   iOS target:
     [`mediapipe/examples/ios/faceeffect`](http:/mediapipe/examples/ios/faceeffect/BUILD)
 
@@ -756,9 +765,9 @@ only works for a single face. For visual reference, please refer to *Fig. 4*.
     [Real-time Facial Surface Geometry from Monocular Video on Mobile GPUs](https://arxiv.org/abs/1907.06724)
     ([poster](https://docs.google.com/presentation/d/1-LWwOMO9TzEVdrZ1CS1ndJzciRHfYDJfbSxH_ke_JRg/present?slide=id.g5986dd4b4c_4_212))
 *   Canonical face model:
-    [FBX](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/data/canonical_face_model.fbx),
-    [OBJ](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/data/canonical_face_model.obj),
-    [UV visualization](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/data/canonical_face_model_uv_visualization.png)
+    [FBX](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_geometry/data/canonical_face_model.fbx),
+    [OBJ](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_geometry/data/canonical_face_model.obj),
+    [UV visualization](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_geometry/data/canonical_face_model_uv_visualization.png)
 *   [Models and model cards](./models.md#face_mesh)
 *   [Web demo](https://code.mediapipe.dev/codepen/face_mesh)
 *   [Python Colab](https://mediapipe.page.link/face_mesh_py_colab)

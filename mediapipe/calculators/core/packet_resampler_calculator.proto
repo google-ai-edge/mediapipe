@@ -108,4 +108,17 @@ message PacketResamplerCalculatorOptions {
   // are included in the output, even if the nearest timestamp is not
   // between start_time and end_time.
   optional bool round_limits = 8 [default = false];
+
+  // If set, the output frame rate is the same as the input frame rate.
+  // You need to provide the frame rate of the input images in the header in the
+  // input_side_packet.
+  // This option only makes sense in combination with max_frame_rate. It will
+  // hold on to the original frame rate unless it's higher than the
+  // max_frame_rate.
+  optional bool use_input_frame_rate = 11 [default = false];
+
+  // If set, the output frame rate is limited to this value.
+  // You need to provide the frame rate of the input images in the header in the
+  // input_side_packet.
+  optional double max_frame_rate = 12 [default = -1.0];
 }

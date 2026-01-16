@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -77,9 +77,11 @@ class ModelResourcesCalculator : public api2::Node {
     if (options.has_model_file()) {
       RET_CHECK(options.model_file().has_file_content() ||
                 options.model_file().has_file_descriptor_meta() ||
-                options.model_file().has_file_name())
+                options.model_file().has_file_name() ||
+                options.model_file().has_file_pointer_meta())
           << "'model_file' must specify at least one of "
-             "'file_content', 'file_descriptor_meta', or 'file_name'";
+             "'file_content', 'file_descriptor_meta', 'file_name', or "
+             "'file_pointer_meta'";
     }
     return absl::OkStatus();
   }
@@ -107,7 +109,7 @@ class ModelResourcesCalculator : public api2::Node {
             "ModelResourcesCacheService, and the CalculatorOptions has no "
             "'model_file' field to create a local ModelResources.");
       }
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           model_resources_,
           ModelResources::Create(
               "", std::make_unique<proto::ExternalFile>(options.model_file())));

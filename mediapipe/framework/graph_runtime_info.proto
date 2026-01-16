@@ -1,0 +1,77 @@
+// Copyright 2024 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package mediapipe;
+
+option java_package = "com.google.mediapipe.proto";
+option java_outer_classname = "GraphRuntimeInfoProto";
+
+// The runtime info for an input stream.
+message InputStreamRuntimeInfo {
+  // The name of the stream in the format "TAG:index:stream_name"
+  string stream_name = 1;
+
+  // The number of packets in the queue.
+  int32 queue_size = 2;
+
+  // The total number of packets added to the queue.
+  int32 number_of_packets_added = 3;
+
+  // The minimum timestamp or timestanp bound of the stream.
+  int64 minimum_timestamp_or_bound = 4;
+}
+
+// The runtime info for an output stream.
+message OutputStreamRuntimeInfo {
+  // The name of the stream in the format "TAG:index:stream_name"
+  string stream_name = 1;
+
+  // The total number of packets added to the queue.
+  int32 number_of_packets_added = 2;
+
+  // The minimum timestamp or timestanp bound of the stream.
+  int64 minimum_timestamp_or_bound = 3;
+}
+
+// The runtime info for a calculator.
+message CalculatorRuntimeInfo {
+  // The name of the calculator.
+  string calculator_name = 1;
+
+  // The last time when the Calculator::Process was started.
+  int64 last_process_start_unix_us = 2;
+
+  // The last time when the Calculator::Process was finished.
+  int64 last_process_finish_unix_us = 3;
+
+  // The timestamp bound of the calculator.
+  int64 timestamp_bound = 4;
+
+  // The runtime info for each input stream of the calculator.
+  repeated InputStreamRuntimeInfo input_stream_infos = 5;
+
+  // The runtime info for each output stream of the calculator.
+  repeated OutputStreamRuntimeInfo output_stream_infos = 6;
+}
+
+// The runtime info for the whole graph.
+message GraphRuntimeInfo {
+  // The time when the runtime info was captured.
+  int64 capture_time_unix_us = 1;
+
+  // The runtime info for each calculator in the graph.
+  repeated CalculatorRuntimeInfo calculator_infos = 2;
+}

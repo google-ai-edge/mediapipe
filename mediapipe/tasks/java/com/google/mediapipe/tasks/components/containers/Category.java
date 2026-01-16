@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,12 +16,16 @@ package com.google.mediapipe.tasks.components.containers;
 
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.formats.proto.ClassificationProto;
+import com.google.mediapipe.formats.proto.ClassificationProto.Classification;
+import com.google.mediapipe.formats.proto.ClassificationProto.ClassificationList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
- * Category is a util class, contains a category name, its display name, a float value as score, and
- * the index of the label in the corresponding label file. Typically it's used as result of
- * classification or detection tasks.
+ * Category is a util class, that contains a category name, its display name, a float value as
+ * score, and the index of the label in the corresponding label file. Typically it's used as result
+ * of classification or detection tasks.
  */
 @AutoValue
 public abstract class Category {
@@ -47,6 +51,22 @@ public abstract class Category {
    */
   public static Category createFromProto(ClassificationProto.Classification proto) {
     return create(proto.getScore(), proto.getIndex(), proto.getLabel(), proto.getDisplayName());
+  }
+
+  /**
+   * Creates a list of {@link Category} objects from a {@link
+   * ClassificationProto.ClassificationList}.
+   *
+   * @param classificationListProto the {@link ClassificationProto.ClassificationList} protobuf
+   *     message to convert.
+   * @return A list of {@link Category} objects.
+   */
+  public static List<Category> createListFromProto(ClassificationList classificationListProto) {
+    List<Category> categoryList = new ArrayList<>();
+    for (Classification classification : classificationListProto.getClassificationList()) {
+      categoryList.add(createFromProto(classification));
+    }
+    return categoryList;
   }
 
   /** The probability score of this label category. */

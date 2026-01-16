@@ -1,0 +1,3346 @@
+landmark {
+  x: 0.4941557
+  y: 0.24961156
+  z: -0.035521753
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49347597
+  y: 0.22270131
+  z: -0.06508727
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49388438
+  y: 0.23080254
+  z: -0.038409114
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4854121
+  y: 0.19344743
+  z: -0.046616163
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49357736
+  y: 0.21331827
+  z: -0.06778504
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49382025
+  y: 0.20158114
+  z: -0.06206881
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49474788
+  y: 0.17372379
+  z: -0.02896785
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4249103
+  y: 0.17452842
+  z: 0.017222019
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49495625
+  y: 0.15856908
+  z: -0.01824546
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49527556
+  y: 0.14749305
+  z: -0.018315762
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49579906
+  y: 0.09571741
+  z: 0.00013742932
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49427152
+  y: 0.25249743
+  z: -0.034535766
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49446744
+  y: 0.254811
+  z: -0.032268867
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49419278
+  y: 0.25625697
+  z: -0.028526714
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49431366
+  y: 0.27668932
+  z: -0.015221855
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4942435
+  y: 0.27984947
+  z: -0.018029556
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49451506
+  y: 0.28430516
+  z: -0.021347595
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49447477
+  y: 0.28932202
+  z: -0.020528413
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4943564
+  y: 0.30107436
+  z: -0.0137768295
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49361408
+  y: 0.2277963
+  z: -0.06006821
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.48241636
+  y: 0.22728091
+  z: -0.0453309
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.38153565
+  y: 0.14321493
+  z: 0.070657924
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4529061
+  y: 0.18021052
+  z: 0.006395341
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44261128
+  y: 0.18085504
+  z: 0.006559233
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.43236113
+  y: 0.1807803
+  z: 0.008943757
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.41894042
+  y: 0.17790191
+  z: 0.018044109
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46163696
+  y: 0.17882529
+  z: 0.0070813387
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4377057
+  y: 0.16121493
+  z: 0.004131658
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44954634
+  y: 0.1613698
+  z: 0.0049895975
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.42682767
+  y: 0.16327496
+  z: 0.0067617074
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.41962263
+  y: 0.16642803
+  z: 0.010984202
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.40921688
+  y: 0.18281463
+  z: 0.022364909
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4522139
+  y: 0.31454837
+  z: -0.0016008166
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.42093325
+  y: 0.17370407
+  z: 0.020784395
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.37869543
+  y: 0.18164769
+  z: 0.06996619
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.39729643
+  y: 0.1797265
+  z: 0.03353336
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4377482
+  y: 0.21292444
+  z: -0.01071209
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4763331
+  y: 0.24799232
+  z: -0.034357492
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47725976
+  y: 0.25435537
+  z: -0.030082634
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45959917
+  y: 0.24986336
+  z: -0.026613541
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44832227
+  y: 0.2521609
+  z: -0.013886298
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4632478
+  y: 0.25424975
+  z: -0.023264026
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4526599
+  y: 0.2550142
+  z: -0.011780485
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4370683
+  y: 0.27154833
+  z: 0.0083177835
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.484079
+  y: 0.22277169
+  z: -0.064213865
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.48361012
+  y: 0.21335924
+  z: -0.06650092
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.40540105
+  y: 0.16248733
+  z: 0.013075965
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46284324
+  y: 0.19267341
+  z: -0.00960458
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45611185
+  y: 0.217581
+  z: -0.036980703
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45575714
+  y: 0.21265607
+  z: -0.03283946
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.40602735
+  y: 0.21125248
+  z: 0.0031798487
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.484474
+  y: 0.20251828
+  z: -0.058688596
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.43278962
+  y: 0.15397553
+  z: -0.0047481796
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.41687286
+  y: 0.15693069
+  z: 0.002597876
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.3916672
+  y: 0.12652245
+  z: 0.052090798
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47695073
+  y: 0.15936005
+  z: -0.014334387
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45953798
+  y: 0.16381794
+  z: 0.008320269
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.42763484
+  y: 0.25785768
+  z: 0.009208383
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.39148656
+  y: 0.26900107
+  z: 0.08511445
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4635815
+  y: 0.22336775
+  z: -0.03291434
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47382015
+  y: 0.22640838
+  z: -0.035316538
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.43512455
+  y: 0.25793314
+  z: 0.010809724
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.43807843
+  y: 0.2580745
+  z: 0.00880317
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.41094938
+  y: 0.15163596
+  z: 0.009264538
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4545049
+  y: 0.22056454
+  z: -0.03135917
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45285612
+  y: 0.15441981
+  z: -0.010494788
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45097774
+  y: 0.14684871
+  z: -0.011983797
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.43508226
+  y: 0.102104425
+  z: 0.013910879
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4013343
+  y: 0.13732007
+  z: 0.02879624
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44379187
+  y: 0.121552095
+  z: 0.0008101034
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.39893788
+  y: 0.15852426
+  z: 0.022725403
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.38974133
+  y: 0.15062337
+  z: 0.04673073
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47651547
+  y: 0.25152078
+  z: -0.03299857
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4616075
+  y: 0.25229716
+  z: -0.024933696
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45056263
+  y: 0.25350448
+  z: -0.013524865
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46622735
+  y: 0.22483598
+  z: -0.03145174
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.43664765
+  y: 0.25795287
+  z: 0.009671477
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44350255
+  y: 0.2663957
+  z: 0.004861774
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.43946624
+  y: 0.2583657
+  z: 0.00850132
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47065854
+  y: 0.2222536
+  z: -0.04817695
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45448214
+  y: 0.25572166
+  z: -0.010733492
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46502578
+  y: 0.25512448
+  z: -0.019658597
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47829068
+  y: 0.255655
+  z: -0.026296675
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47624117
+  y: 0.29981378
+  z: -0.012534698
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47743088
+  y: 0.28820622
+  z: -0.018936116
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47760424
+  y: 0.28316575
+  z: -0.019174173
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47826427
+  y: 0.27902973
+  z: -0.015503885
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.479425
+  y: 0.2759068
+  z: -0.013101171
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45619085
+  y: 0.27049264
+  z: -0.001068021
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45432943
+  y: 0.27141133
+  z: -0.0030918147
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45207047
+  y: 0.273626
+  z: -0.004484783
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4506853
+  y: 0.27640635
+  z: -0.0027821115
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.43971175
+  y: 0.24322863
+  z: -0.011092634
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.3783095
+  y: 0.22383605
+  z: 0.105778724
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49362755
+  y: 0.22976995
+  z: -0.04608667
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4485197
+  y: 0.26596305
+  z: 0.0057485774
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44590545
+  y: 0.26610196
+  z: 0.0046593254
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47744554
+  y: 0.22978829
+  z: -0.0356488
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45781472
+  y: 0.22523794
+  z: -0.023582729
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47572118
+  y: 0.2282822
+  z: -0.035978865
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45095247
+  y: 0.19688627
+  z: -0.0067924387
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4328937
+  y: 0.20158267
+  z: -0.005029469
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4528717
+  y: 0.21625228
+  z: -0.026936896
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.40899724
+  y: 0.11251789
+  z: 0.032009058
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.41886735
+  y: 0.12744528
+  z: 0.014019244
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.42918336
+  y: 0.14689884
+  z: -0.0013277293
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44684955
+  y: 0.28268126
+  z: 0.002182974
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4736337
+  y: 0.14799556
+  z: -0.01710853
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4679199
+  y: 0.119126275
+  z: -0.006493824
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46271324
+  y: 0.09683206
+  z: 0.002935609
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.42411724
+  y: 0.17986238
+  z: 0.013374526
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.3974986
+  y: 0.18810415
+  z: 0.027707892
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4672465
+  y: 0.17674497
+  z: 0.008814347
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.40875134
+  y: 0.17054094
+  z: 0.019906742
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47094762
+  y: 0.18755464
+  z: -0.013274607
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4644305
+  y: 0.21581034
+  z: -0.04737731
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.38602412
+  y: 0.19487555
+  z: 0.03792654
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4046376
+  y: 0.19184083
+  z: 0.017493624
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4176268
+  y: 0.19362159
+  z: 0.007752612
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.43748653
+  y: 0.19307399
+  z: 0.0022049164
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4526521
+  y: 0.19051044
+  z: 0.0005387531
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46395144
+  y: 0.1872294
+  z: -0.0021797807
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.48489845
+  y: 0.17631689
+  z: -0.024569312
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.3849923
+  y: 0.21125588
+  z: 0.03309617
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4005423
+  y: 0.17034146
+  z: 0.024603415
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.48777235
+  y: 0.2275418
+  z: -0.059462454
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46153483
+  y: 0.20062143
+  z: -0.015759187
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.3756771
+  y: 0.18236938
+  z: 0.104028635
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47227195
+  y: 0.18278667
+  z: -0.0033214607
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45161456
+  y: 0.21642655
+  z: -0.014789514
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4148912
+  y: 0.17452095
+  z: 0.022648714
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46446148
+  y: 0.20968266
+  z: -0.042396
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.38302782
+  y: 0.24571359
+  z: 0.09777517
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46713042
+  y: 0.17443176
+  z: 0.01257355
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4747701
+  y: 0.20540112
+  z: -0.05258824
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.41127402
+  y: 0.28761283
+  z: 0.03666987
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.41449022
+  y: 0.30179942
+  z: 0.04942259
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.37793463
+  y: 0.21859969
+  z: 0.06974885
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.39819664
+  y: 0.2750811
+  z: 0.047059353
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.38389158
+  y: 0.16472654
+  z: 0.061515342
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4513871
+  y: 0.32697666
+  z: 0.0011478357
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.48910573
+  y: 0.22954892
+  z: -0.045386218
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4509282
+  y: 0.2061908
+  z: -0.0124836825
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.38876513
+  y: 0.18153223
+  z: 0.043750003
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.43456084
+  y: 0.175763
+  z: 0.010977372
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4429973
+  y: 0.17593583
+  z: 0.008403299
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4419958
+  y: 0.26788282
+  z: 0.006051169
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.38523683
+  y: 0.23024064
+  z: 0.03471607
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4707867
+  y: 0.34351614
+  z: -0.0004981443
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44036198
+  y: 0.32684162
+  z: 0.022571212
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.42853653
+  y: 0.31602567
+  z: 0.03524212
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49550828
+  y: 0.11897578
+  z: -0.009171244
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49347213
+  y: 0.34552577
+  z: -0.0035622942
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45139864
+  y: 0.17544796
+  z: 0.007987208
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4594475
+  y: 0.17492564
+  z: 0.009643175
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4648841
+  y: 0.1747935
+  z: 0.011995908
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.39307284
+  y: 0.16854946
+  z: 0.035489284
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45742667
+  y: 0.16962537
+  z: 0.009682713
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44872063
+  y: 0.1677285
+  z: 0.007389529
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44072598
+  y: 0.1674852
+  z: 0.0075498577
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.43249476
+  y: 0.16878425
+  z: 0.009784317
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.42705625
+  y: 0.17063664
+  z: 0.013207836
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.37692326
+  y: 0.16071321
+  z: 0.089962356
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4290104
+  y: 0.1751574
+  z: 0.014186227
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4940266
+  y: 0.23721202
+  z: -0.034871846
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45194682
+  y: 0.23840994
+  z: -0.021337612
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46404192
+  y: 0.22247343
+  z: -0.036975004
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47581577
+  y: 0.23693962
+  z: -0.033586998
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49497637
+  y: 0.16529498
+  z: -0.019120742
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.42478287
+  y: 0.3021474
+  z: 0.027158339
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.43767962
+  y: 0.31436345
+  z: 0.014806041
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47033703
+  y: 0.33468232
+  z: -0.010412871
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.402767
+  y: 0.28762296
+  z: 0.06672805
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46390283
+  y: 0.17242286
+  z: 0.011344032
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47753397
+  y: 0.18981501
+  z: -0.029023463
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49373263
+  y: 0.33760098
+  z: -0.012830191
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45377856
+  y: 0.33646998
+  z: 0.0089574745
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.3812222
+  y: 0.23895788
+  z: 0.065886974
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4668869
+  y: 0.2739567
+  z: -0.007771754
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46503985
+  y: 0.27582222
+  z: -0.009826702
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4635349
+  y: 0.279342
+  z: -0.011583614
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.462592
+  y: 0.2839931
+  z: -0.010507627
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4593309
+  y: 0.29306287
+  z: -0.005748207
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44377935
+  y: 0.25615066
+  z: -0.0010978153
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44184676
+  y: 0.2555552
+  z: -0.0004933493
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4402805
+  y: 0.25472522
+  z: -0.0006760967
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.43063244
+  y: 0.24917726
+  z: 0.00033396503
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.39645308
+  y: 0.23282917
+  z: 0.013501439
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47828603
+  y: 0.1815171
+  z: -0.01810119
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47456223
+  y: 0.16828828
+  z: 0.005190657
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46841535
+  y: 0.16931035
+  z: 0.009693848
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44542468
+  y: 0.2566383
+  z: -0.0004368338
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.39724463
+  y: 0.25805682
+  z: 0.029623458
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.48251414
+  y: 0.16759881
+  z: -0.0106809465
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45579204
+  y: 0.30265504
+  z: -0.0031846536
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49417597
+  y: 0.1920833
+  z: -0.050240867
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4852275
+  y: 0.18507971
+  z: -0.036300194
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49423328
+  y: 0.18323374
+  z: -0.038753584
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46845174
+  y: 0.20275332
+  z: -0.03086902
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49386132
+  y: 0.32583383
+  z: -0.016199563
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.49423146
+  y: 0.31242192
+  z: -0.014712297
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4738325
+  y: 0.31028745
+  z: -0.011895446
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4320109
+  y: 0.2766724
+  z: 0.011865845
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44346315
+  y: 0.22364128
+  z: -0.011545591
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44297555
+  y: 0.29136044
+  z: 0.0054554376
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.41945183
+  y: 0.22362371
+  z: -0.0064012497
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.43300956
+  y: 0.23314777
+  z: -0.007009973
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.41001344
+  y: 0.23858659
+  z: 0.0040072557
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47108024
+  y: 0.3232508
+  z: -0.013174253
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4603053
+  y: 0.20674214
+  z: -0.023549026
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.42549932
+  y: 0.28762537
+  z: 0.018401353
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.43928748
+  y: 0.30195606
+  z: 0.009853812
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4219838
+  y: 0.2617284
+  z: 0.011449069
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.38827217
+  y: 0.2472436
+  z: 0.03771524
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4108054
+  y: 0.26688567
+  z: 0.019406822
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.388055
+  y: 0.2582155
+  z: 0.059980273
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.42318907
+  y: 0.24335481
+  z: 0.00012699135
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46999645
+  y: 0.19532216
+  z: -0.02178053
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4675141
+  y: 0.22038114
+  z: -0.05013914
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45912704
+  y: 0.22104524
+  z: -0.03868507
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4736814
+  y: 0.21448407
+  z: -0.057955056
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46757513
+  y: 0.16285333
+  z: 0.003405534
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45104963
+  y: 0.1590702
+  z: 0.0010459438
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4359575
+  y: 0.15839772
+  z: 0.00082595914
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4227159
+  y: 0.1604807
+  z: 0.0044931136
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.41334298
+  y: 0.16459095
+  z: 0.011030501
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4073094
+  y: 0.17707945
+  z: 0.026363095
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.37721404
+  y: 0.19992939
+  z: 0.07046405
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.41549632
+  y: 0.18516126
+  z: 0.016946755
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.42622575
+  y: 0.18669793
+  z: 0.010334063
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44002202
+  y: 0.18677537
+  z: 0.0058737043
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4532327
+  y: 0.18533054
+  z: 0.0050121048
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46351105
+  y: 0.18286042
+  z: 0.004006117
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47026625
+  y: 0.18027417
+  z: 0.0038044818
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.3768872
+  y: 0.20299374
+  z: 0.10862959
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45891356
+  y: 0.22267433
+  z: -0.033382073
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47702605
+  y: 0.19749074
+  z: -0.03917682
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47605348
+  y: 0.22151262
+  z: -0.05873287
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.48190206
+  y: 0.22612509
+  z: -0.05496796
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4755646
+  y: 0.22309634
+  z: -0.053559206
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.46149415
+  y: 0.22502221
+  z: -0.029905401
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4839455
+  y: 0.22699718
+  z: -0.057868764
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.48512775
+  y: 0.22848913
+  z: -0.045247596
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47072738
+  y: 0.1744214
+  z: 0.010317587
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47544754
+  y: 0.1756608
+  z: 0.0029604633
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.47816014
+  y: 0.1765429
+  z: -0.006371487
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.42366937
+  y: 0.17224947
+  z: 0.01641088
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.41487318
+  y: 0.17027271
+  z: 0.01699809
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.50283825
+  y: 0.19330065
+  z: -0.04639308
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.56548196
+  y: 0.17344058
+  z: 0.018828476
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.504942
+  y: 0.22706445
+  z: -0.04510834
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.606678
+  y: 0.14266267
+  z: 0.0737699
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5373944
+  y: 0.17894493
+  z: 0.0073333527
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.54709786
+  y: 0.1796851
+  z: 0.007721876
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5573025
+  y: 0.17959687
+  z: 0.010397023
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5710348
+  y: 0.17680104
+  z: 0.01973729
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5287372
+  y: 0.17760366
+  z: 0.007831396
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.55284566
+  y: 0.16044712
+  z: 0.0053708726
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5415372
+  y: 0.16082963
+  z: 0.0059537967
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.56337345
+  y: 0.162352
+  z: 0.008349552
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5706003
+  y: 0.16540362
+  z: 0.012677621
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.58026195
+  y: 0.18158731
+  z: 0.024151681
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.53703886
+  y: 0.31307158
+  z: -0.0010185486
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5694283
+  y: 0.17250581
+  z: 0.022410411
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.6088305
+  y: 0.18092732
+  z: 0.07284869
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5920289
+  y: 0.17861018
+  z: 0.035657354
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.55089873
+  y: 0.21218017
+  z: -0.009962988
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5120016
+  y: 0.24704204
+  z: -0.034218997
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.51162297
+  y: 0.25336808
+  z: -0.030020187
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.52902997
+  y: 0.24779023
+  z: -0.026208151
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.54127127
+  y: 0.24939233
+  z: -0.013250458
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.52595586
+  y: 0.25266486
+  z: -0.023009429
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5372504
+  y: 0.25246435
+  z: -0.011301935
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5538073
+  y: 0.26962692
+  z: 0.0092767505
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5027006
+  y: 0.22252764
+  z: -0.06406592
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.50371236
+  y: 0.21335515
+  z: -0.06642409
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5841616
+  y: 0.16147612
+  z: 0.015099588
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.52581096
+  y: 0.19215368
+  z: -0.008987855
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.53148395
+  y: 0.21657676
+  z: -0.03640968
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.53167063
+  y: 0.21170834
+  z: -0.03226943
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5829192
+  y: 0.21021266
+  z: 0.0045312042
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5030231
+  y: 0.20219631
+  z: -0.05857082
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.55727607
+  y: 0.15301956
+  z: -0.0036414932
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.57299674
+  y: 0.15591776
+  z: 0.0041042394
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.59717053
+  y: 0.12611136
+  z: 0.05490555
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.51383346
+  y: 0.158805
+  z: -0.013993083
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5318654
+  y: 0.16309471
+  z: 0.009124542
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5639342
+  y: 0.2558316
+  z: 0.010319959
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5978102
+  y: 0.26815683
+  z: 0.087907836
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5235295
+  y: 0.22248344
+  z: -0.032468937
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.51375884
+  y: 0.22569574
+  z: -0.035104204
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.55545396
+  y: 0.25445095
+  z: 0.011914694
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5526041
+  y: 0.25477427
+  z: 0.009735087
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.57885396
+  y: 0.15076753
+  z: 0.011068272
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5331114
+  y: 0.2193506
+  z: -0.030878004
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.53749025
+  y: 0.15376063
+  z: -0.0097558815
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5393732
+  y: 0.14626297
+  z: -0.011126742
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.554887
+  y: 0.10199423
+  z: 0.015395211
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.58723485
+  y: 0.13675559
+  z: 0.030930195
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5458038
+  y: 0.12127735
+  z: 0.0020561903
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5902397
+  y: 0.15765049
+  z: 0.025334062
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5984913
+  y: 0.15001681
+  z: 0.049278975
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5121723
+  y: 0.25064194
+  z: -0.03285366
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.527527
+  y: 0.25045627
+  z: -0.024595382
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.539359
+  y: 0.25106293
+  z: -0.013031996
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.52139485
+  y: 0.22383071
+  z: -0.0310903
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.55441225
+  y: 0.25453478
+  z: 0.010714521
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5469175
+  y: 0.2635069
+  z: 0.0057433723
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.55146366
+  y: 0.2552308
+  z: 0.009467077
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5165049
+  y: 0.22157769
+  z: -0.047724467
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5351494
+  y: 0.25326782
+  z: -0.010279927
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.524307
+  y: 0.25358126
+  z: -0.019425707
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.510669
+  y: 0.25494683
+  z: -0.02622978
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.51324457
+  y: 0.2988518
+  z: -0.012439724
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5123226
+  y: 0.2871365
+  z: -0.018886229
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5118759
+  y: 0.28231114
+  z: -0.019058801
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5111026
+  y: 0.27796468
+  z: -0.015463265
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.50977427
+  y: 0.27533358
+  z: -0.013004113
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5338526
+  y: 0.2681796
+  z: -0.00042971148
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.53572756
+  y: 0.26886448
+  z: -0.0024878152
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5379008
+  y: 0.2709965
+  z: -0.0039299163
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5394599
+  y: 0.2734871
+  z: -0.002107365
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5502326
+  y: 0.24188875
+  z: -0.010234861
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.60882235
+  y: 0.22330737
+  z: 0.10866164
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5420417
+  y: 0.26332533
+  z: 0.006656624
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5442543
+  y: 0.26318783
+  z: 0.005487146
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.51031786
+  y: 0.22922559
+  z: -0.035437934
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.52986145
+  y: 0.2242445
+  z: -0.023236454
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.51187927
+  y: 0.2278033
+  z: -0.035762064
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.53756547
+  y: 0.19597748
+  z: -0.0059941057
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.55593026
+  y: 0.20073785
+  z: -0.0040908367
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.53475964
+  y: 0.21504574
+  z: -0.02637616
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5803573
+  y: 0.11226493
+  z: 0.03421716
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5702157
+  y: 0.12708595
+  z: 0.015685026
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.56078136
+  y: 0.1461339
+  z: 7.31748e-05
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5436937
+  y: 0.28089684
+  z: 0.0029693467
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.51687855
+  y: 0.14756885
+  z: -0.016655134
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5224042
+  y: 0.11895638
+  z: -0.0059495415
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.52806824
+  y: 0.096664794
+  z: 0.0038038671
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.56587446
+  y: 0.1785511
+  z: 0.015038205
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5914547
+  y: 0.1870836
+  z: 0.029825859
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5237927
+  y: 0.17589968
+  z: 0.00945109
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5811243
+  y: 0.16952431
+  z: 0.021878377
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5177488
+  y: 0.18721832
+  z: -0.0127808
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.52286756
+  y: 0.21518634
+  z: -0.04686876
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.6022743
+  y: 0.19383313
+  z: 0.04059074
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.584555
+  y: 0.19079478
+  z: 0.019373788
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.57155067
+  y: 0.19260319
+  z: 0.0092407055
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5518339
+  y: 0.19201155
+  z: 0.0032827675
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5365241
+  y: 0.18952475
+  z: 0.001337069
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.52525556
+  y: 0.1862782
+  z: -0.0015404588
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5044162
+  y: 0.17609511
+  z: -0.024446283
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.6033445
+  y: 0.210461
+  z: 0.035342436
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5886792
+  y: 0.16933183
+  z: 0.026899166
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4993229
+  y: 0.2272966
+  z: -0.05935116
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.52671564
+  y: 0.19994599
+  z: -0.015173753
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.61143804
+  y: 0.18174958
+  z: 0.10695522
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5174692
+  y: 0.1820379
+  z: -0.002689734
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.53607696
+  y: 0.21523611
+  z: -0.01435679
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.57542187
+  y: 0.17353438
+  z: 0.024436444
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.52319354
+  y: 0.20901512
+  z: -0.04190277
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.60512435
+  y: 0.24510148
+  z: 0.1008258
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5239898
+  y: 0.17350654
+  z: 0.013290767
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5129581
+  y: 0.20505199
+  z: -0.05225015
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5795503
+  y: 0.2863218
+  z: 0.038330905
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.57539636
+  y: 0.300384
+  z: 0.051449675
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.6098029
+  y: 0.21773538
+  z: 0.07251852
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.59252167
+  y: 0.2741088
+  z: 0.049088147
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.6040729
+  y: 0.1641229
+  z: 0.06432192
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5374716
+  y: 0.32542673
+  z: 0.0017601917
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.498272
+  y: 0.22926195
+  z: -0.045311883
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5373628
+  y: 0.20534675
+  z: -0.011841134
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.6001978
+  y: 0.18043394
+  z: 0.04645901
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.55521464
+  y: 0.17430064
+  z: 0.012326822
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5471208
+  y: 0.1744056
+  z: 0.009574962
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.54868317
+  y: 0.26437548
+  z: 0.0069708033
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.6042281
+  y: 0.22938125
+  z: 0.03654232
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5163636
+  y: 0.34285074
+  z: -0.00020709056
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5480205
+  y: 0.32518187
+  z: 0.023873841
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.56059456
+  y: 0.31423068
+  z: 0.036902647
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.53865683
+  y: 0.1740207
+  z: 0.009002481
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.531186
+  y: 0.17374952
+  z: 0.010461636
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.52639323
+  y: 0.1736343
+  z: 0.01278128
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5961916
+  y: 0.16770416
+  z: 0.037833046
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5333704
+  y: 0.16873026
+  z: 0.010615606
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5416961
+  y: 0.16675597
+  z: 0.008459341
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5498442
+  y: 0.16654646
+  z: 0.008782016
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.55757123
+  y: 0.16777618
+  z: 0.011276006
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5632765
+  y: 0.16974187
+  z: 0.014805289
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.6108993
+  y: 0.15994209
+  z: 0.09311389
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5610002
+  y: 0.17398673
+  z: 0.015752817
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.53694916
+  y: 0.23724662
+  z: -0.020715546
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5230217
+  y: 0.22164322
+  z: -0.036595095
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.51270044
+  y: 0.2364199
+  z: -0.033336647
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5649956
+  y: 0.30014706
+  z: 0.028567428
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.551617
+  y: 0.3125909
+  z: 0.015834251
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.51763535
+  y: 0.33408782
+  z: -0.01025139
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.58721983
+  y: 0.28668493
+  z: 0.06897739
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5272223
+  y: 0.17135687
+  z: 0.012122074
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.51091534
+  y: 0.18963487
+  z: -0.028680148
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5340779
+  y: 0.33515224
+  z: 0.009764151
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.60758257
+  y: 0.2384426
+  z: 0.06834051
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5230385
+  y: 0.27219138
+  z: -0.007438288
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5246561
+  y: 0.27417877
+  z: -0.009410483
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.52656114
+  y: 0.27760825
+  z: -0.011299662
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5274386
+  y: 0.28163868
+  z: -0.010119016
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.53100526
+  y: 0.29159796
+  z: -0.00530081
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5466992
+  y: 0.25346208
+  z: -0.00031385897
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.54834557
+  y: 0.25245512
+  z: 0.00037710482
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5499898
+  y: 0.25168252
+  z: 0.00031726292
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5604068
+  y: 0.24777696
+  z: 0.0014937425
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5934149
+  y: 0.23185515
+  z: 0.015038162
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.51059335
+  y: 0.18125647
+  z: -0.017714329
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5163131
+  y: 0.16761632
+  z: 0.005730596
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5228711
+  y: 0.16857238
+  z: 0.010321661
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5446392
+  y: 0.25382328
+  z: 0.0002917128
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5934745
+  y: 0.25714368
+  z: 0.03134103
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5075974
+  y: 0.16729264
+  z: -0.010385155
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.534189
+  y: 0.30112955
+  z: -0.0027868366
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5035214
+  y: 0.18497537
+  z: -0.03609809
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.51961714
+  y: 0.20207323
+  z: -0.030398648
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5152929
+  y: 0.30976424
+  z: -0.011870205
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.55902326
+  y: 0.274925
+  z: 0.012983755
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5449789
+  y: 0.22256994
+  z: -0.010882146
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5475347
+  y: 0.28929296
+  z: 0.00625818
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5701724
+  y: 0.22283071
+  z: -0.0054825773
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5569484
+  y: 0.23207304
+  z: -0.0060657025
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5800641
+  y: 0.23740345
+  z: 0.00514261
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.51774806
+  y: 0.3225606
+  z: -0.013014465
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.52751595
+  y: 0.20595063
+  z: -0.023027388
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5645145
+  y: 0.28579688
+  z: 0.019689044
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5508026
+  y: 0.29995733
+  z: 0.010680489
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.56917727
+  y: 0.25975588
+  z: 0.012682676
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.6019351
+  y: 0.24635158
+  z: 0.03959811
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5803176
+  y: 0.26553768
+  z: 0.020828525
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.60214156
+  y: 0.25762326
+  z: 0.062237572
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.56736887
+  y: 0.24208423
+  z: 0.0011680126
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5183556
+  y: 0.19481912
+  z: -0.021291744
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5192673
+  y: 0.21965598
+  z: -0.049672514
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5280059
+  y: 0.22022574
+  z: -0.038201183
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5136035
+  y: 0.21400286
+  z: -0.05766173
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5236866
+  y: 0.16234258
+  z: 0.004082364
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.53971946
+  y: 0.15832926
+  z: 0.0019131453
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5543852
+  y: 0.15770075
+  z: 0.0019355894
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.56732994
+  y: 0.1596124
+  z: 0.0059881452
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5764502
+  y: 0.16355364
+  z: 0.01280043
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.58234507
+  y: 0.1760804
+  z: 0.0283294
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.60994464
+  y: 0.19915883
+  z: 0.073324315
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.57424104
+  y: 0.18417653
+  z: 0.01861209
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.56314856
+  y: 0.18555093
+  z: 0.011743032
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5493724
+  y: 0.18567212
+  z: 0.0070191203
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.53631574
+  y: 0.18417042
+  z: 0.0058875973
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.52659875
+  y: 0.18183996
+  z: 0.0047277203
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5196783
+  y: 0.17951773
+  z: 0.0043626907
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.6102681
+  y: 0.20233954
+  z: 0.11161955
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5285038
+  y: 0.22154754
+  z: -0.0330185
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5111549
+  y: 0.19703901
+  z: -0.038763106
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.51093423
+  y: 0.22102064
+  z: -0.058534477
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5052943
+  y: 0.22578542
+  z: -0.054772813
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5113521
+  y: 0.22273766
+  z: -0.053326394
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5262481
+  y: 0.22405303
+  z: -0.029548367
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5030447
+  y: 0.22662959
+  z: -0.05780331
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5021901
+  y: 0.22852752
+  z: -0.045167807
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.52021146
+  y: 0.17352693
+  z: 0.010941714
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.51498014
+  y: 0.17500724
+  z: 0.003563834
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.51200116
+  y: 0.1761147
+  z: -0.0060413377
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.56674504
+  y: 0.17128217
+  z: 0.018055953
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5757027
+  y: 0.16927037
+  z: 0.018766526
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44085333
+  y: 0.17215969
+  z: 0.0019534728
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.45160824
+  y: 0.17199564
+  z: 0.0019612163
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.4406637
+  y: 0.16460702
+  z: 0.0019685547
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.42996737
+  y: 0.17230174
+  z: 0.001962492
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.44093132
+  y: 0.17987302
+  z: 0.0019573749
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.54882497
+  y: 0.17098951
+  z: 0.0010605736
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5596917
+  y: 0.17101835
+  z: 0.001032431
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.54901564
+  y: 0.16356081
+  z: 0.0010300322
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5378028
+  y: 0.17075759
+  z: 0.0010154373
+  visibility: 0
+  presence: 0
+}
+landmark {
+  x: 0.5481839
+  y: 0.17835724
+  z: 0.0010173938
+  visibility: 0
+  presence: 0
+}

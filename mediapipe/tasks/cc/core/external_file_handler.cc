@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ limitations under the License.
 #include <windows.h>
 #else
 #include <unistd.h>
-#endif
+#endif  // _WIN32
 
 #include <memory>
 #include <string>
@@ -37,11 +37,13 @@ limitations under the License.
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
+#include "mediapipe/util/resource_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -50,21 +52,29 @@ namespace {
 
 using ::absl::StatusCode;
 
+#ifndef O_BINARY
+#ifdef _O_BINARY
+#define O_BINARY _O_BINARY
+#else
+#define O_BINARY 0  // If this isn't defined, the platform doesn't need it.
+#endif              // _O_BINARY
+#endif              // O_BINARY
+
 // Gets the offset aligned to page size for mapping given files into memory by
 // file descriptor correctly, as according to mmap(2), the offset used in mmap
 // must be a multiple of sysconf(_SC_PAGE_SIZE).
-int64 GetPageSizeAlignedOffset(int64 offset) {
+int64_t GetPageSizeAlignedOffset(int64_t offset) {
 #ifdef _WIN32
   // mmap is not used on Windows
-  return -1;
+  return 0;
 #else
-  int64 aligned_offset = offset;
-  int64 page_size = sysconf(_SC_PAGE_SIZE);
+  int64_t aligned_offset = offset;
+  int64_t page_size = sysconf(_SC_PAGE_SIZE);
   if (offset % page_size != 0) {
     aligned_offset = offset / page_size * page_size;
   }
   return aligned_offset;
-#endif
+#endif  // _WIN32
 }
 
 }  // namespace
@@ -84,12 +94,6 @@ ExternalFileHandler::CreateFromExternalFile(
 }
 
 absl::Status ExternalFileHandler::MapExternalFile() {
-// TODO: Add Windows support
-#ifdef _WIN32
-  return CreateStatusWithPayload(StatusCode::kFailedPrecondition,
-                                 "File loading is not yet supported on Windows",
-                                 MediaPipeTasksStatus::kFileReadError);
-#else
   if (!external_file_.file_content().empty()) {
     return absl::OkStatus();
   } else if (external_file_.has_file_pointer_meta()) {
@@ -106,6 +110,7 @@ absl::Status ExternalFileHandler::MapExternalFile() {
     }
     return absl::OkStatus();
   }
+
   if (external_file_.file_name().empty() &&
       !external_file_.has_file_descriptor_meta()) {
     return CreateStatusWithPayload(
@@ -117,7 +122,9 @@ absl::Status ExternalFileHandler::MapExternalFile() {
   // Obtain file descriptor, offset and size.
   int fd = -1;
   if (!external_file_.file_name().empty()) {
-    owned_fd_ = open(external_file_.file_name().c_str(), O_RDONLY);
+    MP_ASSIGN_OR_RETURN(std::string file_name,
+                        PathToResourceAsFile(external_file_.file_name()));
+    owned_fd_ = open(file_name.c_str(), O_RDONLY | O_BINARY);
     if (owned_fd_ < 0) {
       const std::string error_message = absl::StrFormat(
           "Unable to open file at %s", external_file_.file_name());
@@ -148,6 +155,12 @@ absl::Status ExternalFileHandler::MapExternalFile() {
     }
     fd = owned_fd_;
   } else {
+#ifdef _WIN32
+    return CreateStatusWithPayload(
+        StatusCode::kFailedPrecondition,
+        "File descriptors are not supported on Windows.",
+        MediaPipeTasksStatus::kFileReadError);
+#else
     fd = external_file_.file_descriptor_meta().fd();
     if (fd < 0) {
       return CreateStatusWithPayload(
@@ -157,6 +170,7 @@ absl::Status ExternalFileHandler::MapExternalFile() {
     }
     buffer_offset_ = external_file_.file_descriptor_meta().offset();
     buffer_size_ = external_file_.file_descriptor_meta().length();
+#endif  // _WIN32
   }
   // Get actual file size. Always use 0 as offset to lseek(2) to get the actual
   // file size, as SEEK_END returns the size of the file *plus* offset.
@@ -188,22 +202,37 @@ absl::Status ExternalFileHandler::MapExternalFile() {
                         buffer_size_ + buffer_offset_, file_size),
         MediaPipeTasksStatus::kInvalidArgumentError);
   }
+
   // If buffer_offset_ is not multiple of sysconf(_SC_PAGE_SIZE), align with
   // extra leading bytes and adjust buffer_size_ to account for the extra
   // leading bytes.
   buffer_aligned_offset_ = GetPageSizeAlignedOffset(buffer_offset_);
   buffer_aligned_size_ = buffer_size_ + buffer_offset_ - buffer_aligned_offset_;
+
+#ifdef _WIN32
+  buffer_ = malloc(file_size);
+  // Return the file pointer back to the beginning of the file
+  lseek(fd, 0L, SEEK_SET);
+  buffer_size_ = read(fd, buffer_, file_size);
+  if (buffer_size_ <= 0) {
+    free(buffer_);
+    buffer_ = nullptr;
+  }
+#else
   // Map into memory.
   buffer_ = mmap(/*addr=*/nullptr, buffer_aligned_size_, PROT_READ, MAP_SHARED,
                  fd, buffer_aligned_offset_);
   if (buffer_ == MAP_FAILED) {
+    buffer_ = nullptr;
+  }
+#endif  // _WIN32
+  if (!buffer_) {
     return CreateStatusWithPayload(
         StatusCode::kUnknown,
         absl::StrFormat("Unable to map file to memory buffer, errno=%d", errno),
         MediaPipeTasksStatus::kFileMmapError);
   }
   return absl::OkStatus();
-#endif
 }
 
 absl::string_view ExternalFileHandler::GetFileContent() {
@@ -222,11 +251,13 @@ absl::string_view ExternalFileHandler::GetFileContent() {
 }
 
 ExternalFileHandler::~ExternalFileHandler() {
-#ifndef _WIN32
-  if (buffer_ != MAP_FAILED) {
+  if (buffer_) {
+#ifdef _WIN32
+    free(buffer_);
+#else
     munmap(buffer_, buffer_aligned_size_);
+#endif  // _WIN32
   }
-#endif
   if (owned_fd_ >= 0) {
     close(owned_fd_);
   }

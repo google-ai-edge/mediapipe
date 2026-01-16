@@ -15,20 +15,22 @@
 #include "mediapipe/util/filtering/relative_velocity_filter.h"
 
 #include <cmath>
+#include <cstdint>
 #include <deque>
 
-#include "absl/memory/memory.h"
-#include "mediapipe/framework/port/logging.h"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
+#include "absl/time/time.h"
 
 namespace mediapipe {
 
-float RelativeVelocityFilter::Apply(absl::Duration timestamp, float value_scale,
-                                    float value) {
+float RelativeVelocityFilter::Apply(absl::Duration timestamp, float value,
+                                    float value_scale) {
   const int64_t new_timestamp = absl::ToInt64Nanoseconds(timestamp);
   if (last_timestamp_ >= new_timestamp) {
     // Results are unpredictable in this case, so nothing to do but
     // return same value
-    LOG(WARNING) << "New timestamp is equal or less than the last one.";
+    ABSL_LOG(WARNING) << "New timestamp is equal or less than the last one.";
     return value;
   }
 
@@ -36,8 +38,8 @@ float RelativeVelocityFilter::Apply(absl::Duration timestamp, float value_scale,
   if (last_timestamp_ == -1) {
     alpha = 1.0;
   } else {
-    DCHECK(distance_mode_ == DistanceEstimationMode::kLegacyTransition ||
-           distance_mode_ == DistanceEstimationMode::kForceCurrentScale);
+    ABSL_DCHECK(distance_mode_ == DistanceEstimationMode::kLegacyTransition ||
+                distance_mode_ == DistanceEstimationMode::kForceCurrentScale);
     const float distance =
         distance_mode_ == DistanceEstimationMode::kLegacyTransition
             ? value * value_scale -

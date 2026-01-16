@@ -47,7 +47,7 @@ std::vector<int> TrackedDetectionManager::AddDetection(
     std::unique_ptr<TrackedDetection> detection) {
   std::vector<int> ids_to_remove;
 
-  int64 latest_duplicate_timestamp = 0;
+  int64_t latest_duplicate_timestamp = 0;
   // TODO: All detections should be fastforwarded to the current
   // timestamp before adding the detection manager. E.g. only check they are the
   // same if the timestamp are the same.
@@ -85,7 +85,7 @@ std::vector<int> TrackedDetectionManager::AddDetection(
 }
 
 std::vector<int> TrackedDetectionManager::UpdateDetectionLocation(
-    int id, const NormalizedRect& bounding_box, int64 timestamp) {
+    int id, const NormalizedRect& bounding_box, int64_t timestamp) {
   // TODO: Remove all boxes that are not updating.
   auto detection_ptr = detections_.find(id);
   if (detection_ptr == detections_.end()) {
@@ -103,7 +103,7 @@ std::vector<int> TrackedDetectionManager::UpdateDetectionLocation(
 }
 
 std::vector<int> TrackedDetectionManager::RemoveObsoleteDetections(
-    int64 timestamp) {
+    int64_t timestamp) {
   std::vector<int> ids_to_remove;
   for (auto& existing_detection : detections_) {
     if (existing_detection.second->last_updated_timestamp() < timestamp) {

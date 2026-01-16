@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,10 @@
 # ==============================================================================
 """Helper classes for common model metadata information."""
 
+import abc
 import collections
 import csv
+import enum
 import os
 from typing import List, Optional, Type, Union
 
@@ -349,6 +351,21 @@ class SentencePieceTokenizerMd:
     return tokenizer
 
 
+class ValueRangeMd:
+  """A container for value range metadata information."""
+
+  def __init__(self, min_value: int, max_value: int) -> None:
+    self.min_value = min_value
+    self.max_value = max_value
+
+  def create_metadata(self) -> _metadata_fb.ValueRangeT:
+    """Creates the value range metadata based on the information."""
+    value_range_metadata = _metadata_fb.ValueRangeT()
+    value_range_metadata.min = self.min_value
+    value_range_metadata.max = self.max_value
+    return value_range_metadata
+
+
 class TensorMd:
   """A container for common tensor metadata information.
 
@@ -362,10 +379,13 @@ class TensorMd:
     tensor_name: name of the corresponding tensor [1] in the TFLite model. It is
       used to locate the corresponding tensor and decide the order of the tensor
       metadata [2] when populating model metadata.
+    content_range_md: information of content range [3].
     [1]:
       https://github.com/tensorflow/tensorflow/blob/cb67fef35567298b40ac166b0581cd8ad68e5a3a/tensorflow/lite/schema/schema.fbs#L1129-L1136
     [2]:
       https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L623-L640
+    [3]:
+      https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L385
   """
 
   def __init__(
@@ -376,7 +396,9 @@ class TensorMd:
       max_values: Optional[List[float]] = None,
       content_type: int = _metadata_fb.ContentProperties.FeatureProperties,
       associated_files: Optional[List[Type[AssociatedFileMd]]] = None,
-      tensor_name: Optional[str] = None) -> None:
+      tensor_name: Optional[str] = None,
+      content_range_md: Optional[ValueRangeMd] = None,
+  ) -> None:
     self.name = name
     self.description = description
     self.min_values = min_values
@@ -384,6 +406,7 @@ class TensorMd:
     self.content_type = content_type
     self.associated_files = associated_files
     self.tensor_name = tensor_name
+    self.content_range_md = content_range_md
 
   def create_metadata(self) -> _metadata_fb.TensorMetadataT:
     """Creates the input tensor metadata based on the information.
@@ -415,6 +438,8 @@ class TensorMd:
 
     content.contentPropertiesType = self.content_type
     tensor_metadata.content = content
+    if self.content_range_md:
+      tensor_metadata.content.range = self.content_range_md.create_metadata()
 
     # TODO: check if multiple label files have populated locale.
     # Create associated files
@@ -535,7 +560,7 @@ class InputTextTensorMd(TensorMd):
       name: name of the tensor.
       description: description of what the tensor is.
       tokenizer_md: information of the tokenizer in the input text tensor, if
-        any. Only `RegexTokenizer` [1] is currenly supported. If the tokenizer
+        any. Only `RegexTokenizer` [1] is currently supported. If the tokenizer
         is `BertTokenizer` [2] or `SentencePieceTokenizer` [3], refer to
         `BertInputTensorsMd` class.
       [1]:
@@ -737,7 +762,9 @@ class ClassificationTensorMd(TensorMd):
       tensor_type: Optional[int] = None,
       score_calibration_md: Optional[ScoreCalibrationMd] = None,
       tensor_name: Optional[str] = None,
-      score_thresholding_md: Optional[ScoreThresholdingMd] = None) -> None:
+      score_thresholding_md: Optional[ScoreThresholdingMd] = None,
+      content_range_md: Optional[ValueRangeMd] = None,
+  ) -> None:
     """Initializes the instance of ClassificationTensorMd.
 
     Args:
@@ -753,6 +780,7 @@ class ClassificationTensorMd(TensorMd):
         order of the tensor metadata [4] when populating model metadata.
       score_thresholding_md: information of the score thresholding [5] in the
         classification tensor.
+      content_range_md: information of content range [6].
       [1]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L99
       [2]:
@@ -763,6 +791,8 @@ class ClassificationTensorMd(TensorMd):
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L623-L640
       [5]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L468
+      [6]:
+        https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L385
     """
     self.score_calibration_md = score_calibration_md
     self.score_thresholding_md = score_thresholding_md
@@ -784,9 +814,16 @@ class ClassificationTensorMd(TensorMd):
       associated_files.append(
           score_calibration_md.create_score_calibration_file_md())
 
-    super().__init__(name, description, min_values, max_values,
-                     _metadata_fb.ContentProperties.FeatureProperties,
-                     associated_files, tensor_name)
+    super().__init__(
+        name,
+        description,
+        min_values,
+        max_values,
+        _metadata_fb.ContentProperties.FeatureProperties,
+        associated_files,
+        tensor_name,
+        content_range_md,
+    )
 
   def create_metadata(self) -> _metadata_fb.TensorMetadataT:
     """Creates the classification tensor metadata based on the information."""
@@ -804,3 +841,326 @@ class ClassificationTensorMd(TensorMd):
             self.score_thresholding_md.create_metadata()
         ]
     return tensor_metadata
+
+
+class LocationTensorMd(TensorMd):
+  """A container for the detection location tensor metadata information."""
+
+  # The default order is {left, top, right, bottom}. Denote the order to be
+  # {top, left, bottom, right}.
+  _BOUNDING_BOX_INDEX = (1, 0, 3, 2)
+
+  def __init__(
+      self,
+      name: Optional[str] = None,
+      description: Optional[str] = None,
+      content_range_md: Optional[ValueRangeMd] = None,
+  ) -> None:
+    super().__init__(
+        name=name, description=description, content_range_md=content_range_md
+    )
+
+  def create_metadata(self) -> _metadata_fb.TensorMetadataT:
+    """Creates the detection location tensor metadata."""
+    content = _metadata_fb.ContentT()
+    content.contentPropertiesType = (
+        _metadata_fb.ContentProperties.BoundingBoxProperties
+    )
+    properties = _metadata_fb.BoundingBoxPropertiesT()
+    properties.index = list(self._BOUNDING_BOX_INDEX)
+    properties.type = _metadata_fb.BoundingBoxType.BOUNDARIES
+    properties.coordinateType = _metadata_fb.CoordinateType.RATIO
+    content.contentProperties = properties
+    if self.content_range_md:
+      content.range = self.content_range_md.create_metadata()
+    location_metadata = super().create_metadata()
+    location_metadata.content = content
+    return location_metadata
+
+
+class CategoryTensorMd(TensorMd):
+  """A container for the category tensor metadata information."""
+
+  def __init__(
+      self,
+      name: Optional[str] = None,
+      description: Optional[str] = None,
+      label_files: Optional[List[LabelFileMd]] = None,
+      content_range_md: Optional[ValueRangeMd] = None,
+  ):
+    """Initializes a CategoryTensorMd object.
+
+    Args:
+      name: name of the tensor.
+      description: description of what the tensor is.
+      label_files: information of the label files [1] in the category tensor.
+      content_range_md: information of content range [2].
+      [1]:
+        https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L116
+      [2]:
+        https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L385
+    """
+    # In category tensors, label files are in the type of TENSOR_VALUE_LABELS.
+    if label_files:
+      for file in label_files:
+        file.file_type = _metadata_fb.AssociatedFileType.TENSOR_VALUE_LABELS
+
+    super().__init__(
+        name=name,
+        description=description,
+        associated_files=label_files,
+        content_range_md=content_range_md,
+    )
+
+
+class DetectionOutputTensorsMd:
+  """A container for the output tensor metadata of detection models."""
+
+  _LOCATION_NAME = "location"
+  _LOCATION_DESCRIPTION = "The locations of the detected boxes."
+  _CATRGORY_NAME = "category"
+  _CATEGORY_DESCRIPTION = "The categories of the detected boxes."
+  _SCORE_NAME = "score"
+  _SCORE_DESCRIPTION = "The scores of the detected boxes."
+  _NUMBER_NAME = "number of detections"
+  _NUMBER_DESCRIPTION = "The number of the detected boxes."
+  _CONTENT_VALUE_DIM = 2
+
+  def __init__(
+      self,
+      model_buffer: bytearray,
+      label_files: Optional[List[LabelFileMd]] = None,
+      score_calibration_md: Optional[ScoreCalibrationMd] = None,
+  ) -> None:
+    """Initializes the instance of DetectionOutputTensorsMd.
+
+    Args:
+      model_buffer: A valid flatbuffer loaded from the TFLite model file.
+      label_files: information of the label files [1] in the classification
+        tensor.
+      score_calibration_md: information of the score calibration files operation
+        [2] in the classification tensor.
+      [1]:
+        https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L99
+      [2]:
+        https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L456
+    """
+    content_range_md = ValueRangeMd(
+        min_value=self._CONTENT_VALUE_DIM, max_value=self._CONTENT_VALUE_DIM
+    )
+    location_md = LocationTensorMd(
+        name=self._LOCATION_NAME,
+        description=self._LOCATION_DESCRIPTION,
+        content_range_md=content_range_md,
+    )
+    category_md = CategoryTensorMd(
+        name=self._CATRGORY_NAME,
+        description=self._CATEGORY_DESCRIPTION,
+        label_files=label_files,
+        content_range_md=content_range_md,
+    )
+    score_md = ClassificationTensorMd(
+        name=self._SCORE_NAME,
+        description=self._SCORE_DESCRIPTION,
+        score_calibration_md=score_calibration_md,
+        content_range_md=content_range_md,
+    )
+    number_md = TensorMd(
+        name=self._NUMBER_NAME, description=self._NUMBER_DESCRIPTION
+    )
+
+    # Get the tensor indices of tflite outputs and then gets the order of the
+    # output metadata by the value of tensor indices. The output tensor indices
+    # follow the order as [location, category, score,# detections]. For
+    # instance, if the output indices are [601, 599, 598, 600], tensor names and
+    # indices aligned as below:
+    #   - (598, location)
+    #   - (599, category)
+    #   - (600, score)
+    #   - (601, number of detections)
+    # because of the op's ports of TFLITE_DETECTION_POST_PROCESS
+    # (https://github.com/tensorflow/tensorflow/blob/a4fe268ea084e7d323133ed7b986e0ae259a2bc7/tensorflow/lite/kernels/detection_postprocess.cc#L47-L50).
+    # Thus, the metadata of tensors are paired with output tensor indices & name
+    # in this way.
+
+    # Get the output tensor indices and names from the tflite model.
+    tensor_indices_and_names = zip(
+        writer_utils.get_output_tensor_indices(model_buffer),
+        writer_utils.get_output_tensor_names(model_buffer),
+    )
+    # Sort by the output tensor indices.
+    tensor_indices_and_names = sorted(tensor_indices_and_names)
+
+    # Align tensor names with metadata.
+    self._output_mds = [location_md, category_md, score_md, number_md]
+    if len(self._output_mds) != len(tensor_indices_and_names):
+      raise ValueError(
+          "The size of TFLite output should be " + str(len(self._output_mds))
+      )
+    for i, output_md in enumerate(self._output_mds):
+      output_md.tensor_name = tensor_indices_and_names[i][1]
+
+  @property
+  def output_mds(self) -> List[TensorMd]:
+    return self._output_mds
+
+
+class RawDetectionOutputTensorsOrder(enum.Enum):
+  """Output tensors order for detection models without postprocessing.
+
+  Because it is not able to determined the order of output tensors for models
+  without postprocessing, it is needed to specify the output tensors order for
+  metadata writer.
+  """
+
+  UNSPECIFIED = 0
+  # The first tensor is score, and the second tensor is location.
+  SCORE_LOCATION = 1
+  # The first tensor is location, and the second tensor is score.
+  LOCATION_SCORE = 2
+
+
+class RawDetectionOutputTensorsMd:
+  """A container for the output tensor metadata of detection models without postprocessing."""
+
+  _LOCATION_NAME = "location"
+  _LOCATION_DESCRIPTION = "The locations of the detected boxes."
+  _SCORE_NAME = "score"
+  _SCORE_DESCRIPTION = "The scores of the detected boxes."
+  _CONTENT_VALUE_DIM = 2
+
+  def __init__(
+      self,
+      model_buffer: bytearray,
+      label_files: Optional[List[LabelFileMd]] = None,
+      output_tensors_order: RawDetectionOutputTensorsOrder = RawDetectionOutputTensorsOrder.UNSPECIFIED,
+  ) -> None:
+    """Initializes the instance of DetectionOutputTensorsMd.
+
+    Args:
+      model_buffer: A valid flatbuffer loaded from the TFLite model file.
+      label_files: information of the label files [1] in the classification
+        tensor.
+      output_tensors_order: the order of the output tensors.
+      [1]:
+        https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L9
+    """
+    # Get the output tensor indices and names from the tflite model.
+    tensor_indices_and_names = list(
+        zip(
+            writer_utils.get_output_tensor_indices(model_buffer),
+            writer_utils.get_output_tensor_names(model_buffer),
+        )
+    )
+    location_md = LocationTensorMd(
+        name=self._LOCATION_NAME,
+        description=self._LOCATION_DESCRIPTION,
+    )
+    score_md = ClassificationTensorMd(
+        name=self._SCORE_NAME,
+        description=self._SCORE_DESCRIPTION,
+        label_files=label_files,
+    )
+
+    if output_tensors_order == RawDetectionOutputTensorsOrder.SCORE_LOCATION:
+      self._output_mds = [score_md, location_md]
+    elif output_tensors_order == RawDetectionOutputTensorsOrder.LOCATION_SCORE:
+      self._output_mds = [location_md, score_md]
+    else:
+      raise ValueError(
+          f"Unsupported OutputTensorsOrder value: {output_tensors_order}"
+      )
+
+    if len(self._output_mds) != len(tensor_indices_and_names):
+      raise ValueError(
+          "The size of TFLite output should be " + str(len(self._output_mds))
+      )
+    for i, output_md in enumerate(self._output_mds):
+      output_md.tensor_name = tensor_indices_and_names[i][1]
+
+  @property
+  def output_mds(self) -> List[TensorMd]:
+    return self._output_mds
+
+
+class TensorGroupMd:
+  """A container for a group of tensor metadata information."""
+
+  def __init__(
+      self, name: Optional[str] = None, tensor_names: Optional[List[str]] = None
+  ) -> None:
+    """Initializes a CategoryTensorMd object.
+
+    Args:
+      name: name of tensor group.
+      tensor_names:  Names of the tensors to group together, corresponding to
+        TensorMetadata.name [1].
+      [1]:
+        https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L564
+    """
+    self.name = name
+    self.tensor_names = tensor_names
+
+  def create_metadata(self) -> _metadata_fb.TensorGroupT:
+    """Creates the tensor group metadata."""
+    group = _metadata_fb.TensorGroupT()
+    group.name = self.name
+    group.tensorNames = self.tensor_names
+    return group
+
+
+class SegmentationMaskMd(TensorMd):
+  """A container for the segmentation mask metadata information."""
+
+  # The output tensor is in the shape of [1, ImageHeight, ImageWidth, N], where
+  # N is the number of objects that the segmentation model can recognize. The
+  # output tensor is essentially a list of grayscale bitmaps, where each value
+  # is the probability of the corresponding pixel belonging to a certain object
+  # type. Therefore, the content dimension range of the output tensor is [1, 2].
+  _CONTENT_DIM_MIN = 1
+  _CONTENT_DIM_MAX = 2
+
+  def __init__(
+      self,
+      name: Optional[str] = None,
+      description: Optional[str] = None,
+      label_files: Optional[List[LabelFileMd]] = None,
+  ):
+    self.name = name
+    self.description = description
+    associated_files = label_files or []
+    super().__init__(
+        name=name, description=description, associated_files=associated_files
+    )
+
+  def create_metadata(self) -> _metadata_fb.TensorMetadataT:
+    """Creates the metadata for the segmentation masks tensor."""
+    masks_metadata = super().create_metadata()
+
+    # Create tensor content information.
+    content = _metadata_fb.ContentT()
+    content.contentProperties = _metadata_fb.ImagePropertiesT()
+    content.contentProperties.colorSpace = _metadata_fb.ColorSpaceType.GRAYSCALE
+    content.contentPropertiesType = (
+        _metadata_fb.ContentProperties.ImageProperties
+    )
+    # Add the content range. See
+    # https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L323-L385
+    dim_range = _metadata_fb.ValueRangeT()
+    dim_range.min = self._CONTENT_DIM_MIN
+    dim_range.max = self._CONTENT_DIM_MAX
+    content.range = dim_range
+    masks_metadata.content = content
+
+    return masks_metadata
+
+
+class CustomMetadataMd(abc.ABC):
+  """An abstract class of a container for the custom metadata information."""
+
+  def __init__(self, name: Optional[str] = None):
+    self.name = name
+
+  @abc.abstractmethod
+  def create_metadata(self) -> _metadata_fb.CustomMetadataT:
+    """Creates the custom metadata based on the information."""

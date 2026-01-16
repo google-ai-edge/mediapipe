@@ -42,8 +42,8 @@ namespace mediapipe {
 struct RectSpec {
   int width;
   int height;
-  int center_x;
-  int center_y;
+  float center_x;
+  float center_y;
   float rotation;
 
   bool operator==(const RectSpec& rect) const {
@@ -79,7 +79,7 @@ class ImageCroppingCalculator : public CalculatorBase {
   mediapipe::ImageCroppingCalculatorOptions options_;
 
   bool use_gpu_ = false;
-  // Output texture corners (4) after transoformation in normalized coordinates.
+  // Output texture corners (4) after transformation in normalized coordinates.
   float transformed_points_[8];
   float output_max_width_ = FLT_MAX;
   float output_max_height_ = FLT_MAX;

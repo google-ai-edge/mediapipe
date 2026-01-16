@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/tasks/cc/audio/core/running_mode.h"
+#include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/base_task_api.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 

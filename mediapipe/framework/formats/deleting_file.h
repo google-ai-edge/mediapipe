@@ -28,6 +28,11 @@ class DeletingFile {
   DeletingFile(const DeletingFile&) = delete;
   DeletingFile& operator=(const DeletingFile&) = delete;
 
+  // DeletingFile is movable. The moved-from object remains in valid but
+  // unspecified state and will not perform any operations on destruction.
+  DeletingFile(DeletingFile&& other);
+  DeletingFile& operator=(DeletingFile&& other);
+
   // Provide the path to the file and whether the file should be deleted
   // when this object is destroyed.
   DeletingFile(const std::string& path, bool delete_on_destruction);

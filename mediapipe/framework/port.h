@@ -50,7 +50,7 @@
 // but may or may not still be able to run other OpenGL code.
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE) &&                                  \
     (defined(__APPLE__) || defined(__EMSCRIPTEN__) || MEDIAPIPE_DISABLE_GPU || \
-     MEDIAPIPE_USING_SWIFTSHADER)
+     MEDIAPIPE_USING_LEGACY_SWIFTSHADER)
 #define MEDIAPIPE_DISABLE_GL_COMPUTE
 #endif
 
@@ -80,13 +80,25 @@
 #define MEDIAPIPE_METAL_ENABLED 1
 #elif defined(MEDIAPIPE_OSX)
 #define MEDIAPIPE_OPENGL_ES_VERSION 0
+#if MEDIAPIPE_USE_WEBGPU
+#define MEDIAPIPE_METAL_ENABLED 0
+#else
 #define MEDIAPIPE_METAL_ENABLED 1
+#endif  // MEDIAPIPE_USE_WEBGPU
 #elif defined(__EMSCRIPTEN__)
 // WebGL config.
 #define MEDIAPIPE_OPENGL_ES_VERSION MEDIAPIPE_OPENGL_ES_30
 #define MEDIAPIPE_METAL_ENABLED 0
 #else
+#if MEDIAPIPE_USE_WEBGPU
+// TODO: `MEDIAPIPE_USE_WEBGPU` does not necessarily imply
+// anything about the GLES versions. But despite that, as a temporary
+// measure, setting GLES version to 0 would save a lot of work for the
+// current OSS efforts.
+#define MEDIAPIPE_OPENGL_ES_VERSION 0
+#else
 #define MEDIAPIPE_OPENGL_ES_VERSION MEDIAPIPE_OPENGL_ES_31
+#endif
 #define MEDIAPIPE_METAL_ENABLED 0
 #endif
 #endif
@@ -103,5 +115,25 @@
 #define MEDIAPIPE_HAS_RTTI 1
 #endif
 #endif  // MEDIAPIPE_HAS_RTTI
+
+// AHardware buffers are only available since Android API 26.
+#if !defined(MEDIAPIPE_NO_JNI) || defined(MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW)
+#if (__ANDROID_API__ >= 26) || defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
+#define MEDIAPIPE_GPU_BUFFER_USE_AHWB 1
+#endif  // __ANDROID_API__ >= 26 ||
+        // defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
+#endif  // !defined(MEDIAPIPE_NO_JNI) ||
+        // defined(MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW)
+
+// Supported use cases for tensor_ahwb:
+// 1. Native code running in Android apps.
+// 2. Android vendor processes linked against nativewindow.
+#if !defined(MEDIAPIPE_NO_JNI) || defined(MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW)
+#if __ANDROID_API__ >= 26 || defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
+#define MEDIAPIPE_TENSOR_USE_AHWB 1
+#endif  // __ANDROID_API__ >= 26 ||
+        // defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
+#endif  // !defined(MEDIAPIPE_NO_JNI) ||
+        // defined(MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW)
 
 #endif  // MEDIAPIPE_FRAMEWORK_PORT_H_

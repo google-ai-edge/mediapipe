@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/timestamp.h"
 
 namespace mediapipe {
+namespace api2 {
 
 // A calculator that takes a packet of an input stream and converts it to an
 // output side packet. This calculator only works under the assumption that the
@@ -28,21 +30,21 @@ namespace mediapipe {
 //   input_stream: "stream"
 //   output_side_packet: "side_packet"
 // }
-class StreamToSidePacketCalculator : public mediapipe::CalculatorBase {
+class StreamToSidePacketCalculator : public Node {
  public:
-  static absl::Status GetContract(mediapipe::CalculatorContract* cc) {
-    cc->Inputs().Index(0).SetAny();
-    cc->OutputSidePackets().Index(0).SetAny();
-    return absl::OkStatus();
-  }
+  static constexpr Input<AnyType>::Optional kIn{""};
+  static constexpr SideOutput<SameType<kIn>> kOut{""};
+
+  MEDIAPIPE_NODE_CONTRACT(kIn, kOut);
 
   absl::Status Process(mediapipe::CalculatorContext* cc) override {
-    mediapipe::Packet& packet = cc->Inputs().Index(0).Value();
-    cc->OutputSidePackets().Index(0).Set(
-        packet.At(mediapipe::Timestamp::Unset()));
+    kOut(cc).Set(
+        kIn(cc).packet().As<AnyType>().At(mediapipe::Timestamp::Unset()));
     return absl::OkStatus();
   }
 };
-REGISTER_CALCULATOR(StreamToSidePacketCalculator);
 
+MEDIAPIPE_REGISTER_NODE(StreamToSidePacketCalculator);
+
+}  // namespace api2
 }  // namespace mediapipe

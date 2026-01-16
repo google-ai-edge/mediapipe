@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <iterator>
 #include <memory>
 #include <queue>
 #include <set>
@@ -21,7 +22,6 @@
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/collection_item_id.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
@@ -223,8 +223,8 @@ absl::Status SwitchDemuxCalculator::RecordPackets(CalculatorContext* cc) {
 
 // Returns the channel index for a Timestamp.
 int SwitchDemuxCalculator::ChannelIndex(Timestamp timestamp) {
-  auto it = std::prev(channel_history_.upper_bound(timestamp));
-  return it->second;
+  auto it = channel_history_.upper_bound(timestamp);
+  return it == channel_history_.begin() ? -1 : std::prev(it)->second;
 }
 
 // Dispatches all queued input packets with known channels.
@@ -237,10 +237,12 @@ absl::Status SwitchDemuxCalculator::SendActivePackets(CalculatorContext* cc) {
       auto& queue = input_queue_[input_id];
       while (!queue.empty() && queue.front().Timestamp() <= channel_settled) {
         int channel_index = ChannelIndex(queue.front().Timestamp());
-        std::string output_tag = tool::ChannelTag(tag, channel_index);
-        auto output_id = cc->Outputs().GetId(output_tag, index);
-        if (output_id.IsValid()) {
-          cc->Outputs().Get(output_id).AddPacket(queue.front());
+        if (channel_index != -1) {
+          std::string output_tag = tool::ChannelTag(tag, channel_index);
+          auto output_id = cc->Outputs().GetId(output_tag, index);
+          if (output_id.IsValid()) {
+            cc->Outputs().Get(output_id).AddPacket(queue.front());
+          }
         }
         queue.pop();
       }

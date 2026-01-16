@@ -14,6 +14,8 @@
 
 #include "mediapipe/modules/objectron/calculators/epnp.h"
 
+#include "absl/log/absl_check.h"
+
 namespace mediapipe {
 
 namespace {
@@ -97,7 +99,7 @@ absl::Status SolveEpnp(const float focal_x, const float focal_y,
 
     // Convert 2d point from `pixel coordinates` to `NDC coordinates`([-1, 1])
     // following to the definitions in:
-    // https://google.github.io/mediapipe/solutions/objectron#ndc-space
+    // https://google-ai-edge.github.io/mediapipe/solutions/objectron#ndc-space
     // If portrait mode is been used, it's the caller's responsibility to
     // convert the input 2d points' coordinates.
     float x_ndc, y_ndc;
@@ -126,7 +128,7 @@ absl::Status SolveEpnp(const float focal_x, const float focal_y,
   if (eigen_solver.info() != Eigen::Success) {
     return absl::AbortedError("Eigen decomposition failed.");
   }
-  CHECK_EQ(12, eigen_solver.eigenvalues().size());
+  ABSL_CHECK_EQ(12, eigen_solver.eigenvalues().size());
 
   // Eigenvalues are sorted in increasing order for SelfAdjointEigenSolver
   // only! If you use other Eigen Solvers, it's not guaranteed to be in

@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,32 +13,155 @@
 # limitations under the License.
 """MediaPipe object detector task."""
 
+import ctypes
 import dataclasses
-from typing import Callable, List, Mapping, Optional
+from typing import Callable, List, Optional, Tuple
 
-from mediapipe.python import packet_creator
-from mediapipe.python import packet_getter
-from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.python._framework_bindings import packet as packet_module
-from mediapipe.tasks.cc.vision.object_detector.proto import object_detector_options_pb2
 from mediapipe.tasks.python.components.containers import detections as detections_module
+from mediapipe.tasks.python.components.containers import detections_c as detections_c_module
+from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_module
-from mediapipe.tasks.python.core import task_info as task_info_module
+from mediapipe.tasks.python.core import base_options_c as base_options_c_module
+from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_c_module
+from mediapipe.tasks.python.core import mediapipe_c_utils
+from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-from mediapipe.tasks.python.vision.core import base_vision_task_api
+from mediapipe.tasks.python.vision.core import image as image_module
+from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
+from mediapipe.tasks.python.vision.core import image_processing_options_c as image_processing_options_c_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
+ObjectDetectorResult = detections_module.DetectionResult
 _BaseOptions = base_options_module.BaseOptions
-_ObjectDetectorOptionsProto = object_detector_options_pb2.ObjectDetectorOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
-_TaskInfo = task_info_module.TaskInfo
+_ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
+_AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
+_LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
 
-_DETECTIONS_OUT_STREAM_NAME = 'detections_out'
-_DETECTIONS_TAG = 'DETECTIONS'
-_IMAGE_IN_STREAM_NAME = 'image_in'
-_IMAGE_OUT_STREAM_NAME = 'image_out'
-_IMAGE_TAG = 'IMAGE'
-_TASK_GRAPH_NAME = 'mediapipe.tasks.vision.ObjectDetectorGraph'
+
+_C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
+    None,
+    ctypes.c_int32,  # MpStatus
+    ctypes.POINTER(detections_c_module.DetectionResultC),
+    ctypes.c_void_p,  # MpImage
+    ctypes.c_int64,  # timestamp_ms
+)
+
+
+class ObjectDetectorOptionsC(ctypes.Structure):
+  """The object detector options used in the C API."""
+
+  _fields_ = [
+      ('base_options', base_options_c_module.BaseOptionsC),
+      ('running_mode', ctypes.c_int),
+      ('display_names_locale', ctypes.c_char_p),
+      ('max_results', ctypes.c_int),
+      ('score_threshold', ctypes.c_float),
+      ('category_allowlist', ctypes.POINTER(ctypes.c_char_p)),
+      ('category_allowlist_count', ctypes.c_int),
+      ('category_denylist', ctypes.POINTER(ctypes.c_char_p)),
+      ('category_denylist_count', ctypes.c_int),
+      ('result_callback', _C_TYPES_RESULT_CALLBACK)
+  ]
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_c_options(
+      cls,
+      base_options: base_options_c_module.BaseOptionsC,
+      running_mode: _RunningMode,
+      display_names_locale: Optional[str],
+      max_results: Optional[int],
+      score_threshold: Optional[float],
+      category_allowlist: Optional[List[str]],
+      category_denylist: Optional[List[str]],
+      result_callback: _C_TYPES_RESULT_CALLBACK,
+  ) -> 'ObjectDetectorOptionsC':
+    """Creates an ObjectDetectorOptionsC object from the given options."""
+    category_allowlist_c = (
+        mediapipe_c_bindings_c_module.convert_strings_to_ctypes_array(
+            category_allowlist
+        )
+    )
+    category_denylist_c = (
+        mediapipe_c_bindings_c_module.convert_strings_to_ctypes_array(
+            category_denylist
+        )
+    )
+
+    category_allowlist_count_c = (
+        len(category_allowlist) if category_allowlist else 0
+    )
+    category_denylist_count_c = (
+        len(category_denylist) if category_denylist else 0
+    )
+
+    return cls(
+        base_options=base_options,
+        running_mode=running_mode.ctype,
+        display_names_locale=display_names_locale,
+        max_results=max_results,
+        score_threshold=score_threshold,
+        category_allowlist=category_allowlist_c,
+        category_allowlist_count=category_allowlist_count_c,
+        category_denylist=category_denylist_c,
+        category_denylist_count=category_denylist_count_c,
+        result_callback=result_callback,
+    )
+
+
+_CTYPES_SIGNATURES = (
+    mediapipe_c_utils.CStatusFunction(
+        'MpObjectDetectorCreate',
+        (
+            ctypes.POINTER(ObjectDetectorOptionsC),
+            ctypes.POINTER(ctypes.c_void_p),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpObjectDetectorDetectImage',
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_module.ImageProcessingOptionsC
+            ),
+            ctypes.POINTER(detections_c_module.DetectionResultC),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpObjectDetectorDetectForVideo',
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_module.ImageProcessingOptionsC
+            ),
+            ctypes.c_int64,
+            ctypes.POINTER(detections_c_module.DetectionResultC),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpObjectDetectorDetectAsync',
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_module.ImageProcessingOptionsC
+            ),
+            ctypes.c_int64,
+        ),
+    ),
+    mediapipe_c_utils.CFunction(
+        'MpObjectDetectorCloseResult',
+        [ctypes.POINTER(detections_c_module.DetectionResultC)],
+        None,
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpObjectDetectorClose',
+        (ctypes.c_void_p,),
+    ),
+)
 
 
 @dataclasses.dataclass
@@ -48,11 +171,10 @@ class ObjectDetectorOptions:
   Attributes:
     base_options: Base options for the object detector task.
     running_mode: The running mode of the task. Default to the image mode.
-      Object detector task has three running modes:
-      1) The image mode for detecting objects on single image inputs.
-      2) The video mode for detecting objects on the decoded frames of a video.
-      3) The live stream mode for detecting objects on a live stream of input
-         data, such as from camera.
+      Object detector task has three running modes: 1) The image mode for
+      detecting objects on single image inputs. 2) The video mode for detecting
+      objects on the decoded frames of a video. 3) The live stream mode for
+      detecting objects on a live stream of input data, such as from camera.
     display_names_locale: The locale to use for display names specified through
       the TFLite Model Metadata.
     max_results: The maximum number of top-scored classification results to
@@ -71,33 +193,22 @@ class ObjectDetectorOptions:
       data. The result callback should only be specified when the running mode
       is set to the live stream mode.
   """
+
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
   display_names_locale: Optional[str] = None
-  max_results: Optional[int] = None
-  score_threshold: Optional[float] = None
+  max_results: Optional[int] = -1
+  score_threshold: Optional[float] = 0.0
   category_allowlist: Optional[List[str]] = None
   category_denylist: Optional[List[str]] = None
   result_callback: Optional[
-      Callable[[detections_module.DetectionResult, image_module.Image, int],
-               None]] = None
-
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _ObjectDetectorOptionsProto:
-    """Generates an ObjectDetectorOptions protobuf object."""
-    base_options_proto = self.base_options.to_pb2()
-    base_options_proto.use_stream_mode = False if self.running_mode == _RunningMode.IMAGE else True
-    return _ObjectDetectorOptionsProto(
-        base_options=base_options_proto,
-        display_names_locale=self.display_names_locale,
-        max_results=self.max_results,
-        score_threshold=self.score_threshold,
-        category_allowlist=self.category_allowlist,
-        category_denylist=self.category_denylist,
-    )
+      Callable[
+          [detections_module.DetectionResult, image_module.Image, int], None
+      ]
+  ] = None
 
 
-class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
+class ObjectDetector:
   """Class that performs object detection on images.
 
   The API expects a TFLite model with mandatory TFLite Model Metadata.
@@ -142,6 +253,31 @@ class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
   https://github.com/google/mediapipe/blob/6cdc6443b6a7ed662744e2a2ce2d58d9c83e6d6f/mediapipe/tasks/metadata/metadata_schema.fbs#L456
   """
 
+  _lib: serial_dispatcher.SerialDispatcher
+  _handle: ctypes.c_void_p
+  _dispatcher: _AsyncResultDispatcher
+  _async_callback: _C_TYPES_RESULT_CALLBACK
+
+  def __init__(
+      self,
+      lib: serial_dispatcher.SerialDispatcher,
+      handle: ctypes.c_void_p,
+      dispatcher: _AsyncResultDispatcher,
+      async_callback: _C_TYPES_RESULT_CALLBACK
+  ):
+    """Initializes the object detector.
+
+    Args:
+      lib: The dispatch library to use for the object detector.
+      handle: The C pointer to the object detector.
+      dispatcher: The async result handler for the object detector.
+      async_callback: The c callback for the object detector.
+    """
+    self._lib = lib
+    self._handle = handle
+    self._dispatcher = dispatcher
+    self._async_callback = async_callback
+
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'ObjectDetector':
     """Creates an `ObjectDetector` object from a TensorFlow Lite model and the default `ObjectDetectorOptions`.
@@ -163,12 +299,14 @@ class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
     """
     base_options = _BaseOptions(model_asset_path=model_path)
     options = ObjectDetectorOptions(
-        base_options=base_options, running_mode=_RunningMode.IMAGE)
+        base_options=base_options, running_mode=_RunningMode.IMAGE
+    )
     return cls.create_from_options(options)
 
   @classmethod
-  def create_from_options(cls,
-                          options: ObjectDetectorOptions) -> 'ObjectDetector':
+  def create_from_options(
+      cls, options: ObjectDetectorOptions
+  ) -> 'ObjectDetector':
     """Creates the `ObjectDetector` object from object detector options.
 
     Args:
@@ -183,36 +321,56 @@ class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
       RuntimeError: If other types of error occurred.
     """
 
-    def packets_callback(output_packets: Mapping[str, packet_module.Packet]):
-      if output_packets[_IMAGE_OUT_STREAM_NAME].is_empty():
-        return
-      detection_proto_list = packet_getter.get_proto_list(
-          output_packets[_DETECTIONS_OUT_STREAM_NAME])
-      detection_result = detections_module.DetectionResult([
-          detections_module.Detection.create_from_pb2(result)
-          for result in detection_proto_list
-      ])
-      image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
-      timestamp = output_packets[_IMAGE_OUT_STREAM_NAME].timestamp
-      options.result_callback(detection_result, image, timestamp)
+    running_mode_module.validate_running_mode(
+        options.running_mode, options.result_callback
+    )
 
-    task_info = _TaskInfo(
-        task_graph=_TASK_GRAPH_NAME,
-        input_streams=[':'.join([_IMAGE_TAG, _IMAGE_IN_STREAM_NAME])],
-        output_streams=[
-            ':'.join([_DETECTIONS_TAG, _DETECTIONS_OUT_STREAM_NAME]),
-            ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME])
-        ],
-        task_options=options)
-    return cls(
-        task_info.generate_graph_config(
-            enable_flow_limiting=options.running_mode ==
-            _RunningMode.LIVE_STREAM), options.running_mode,
-        packets_callback if options.result_callback else None)
+    lib = mediapipe_c_bindings_c_module.load_shared_library(_CTYPES_SIGNATURES)
+
+    def convert_result(
+        c_result_ptr: ctypes.POINTER(detections_c_module.DetectionResultC),
+        image_ptr: ctypes.c_void_p,
+        timestamp_ms: int,
+    ) -> Tuple[ObjectDetectorResult, image_module.Image, int]:
+      c_result = c_result_ptr[0]
+      py_result = ObjectDetectorResult.from_ctypes(c_result)
+      py_image = image_module.Image.create_from_ctypes(image_ptr)
+      return (py_result, py_image, timestamp_ms)
+
+    dispatcher = _AsyncResultDispatcher(converter=convert_result)
+    c_callback = dispatcher.wrap_callback(
+        options.result_callback, _C_TYPES_RESULT_CALLBACK
+    )
+    ctypes_options = ObjectDetectorOptionsC.from_c_options(
+        base_options=options.base_options.to_ctypes(),
+        running_mode=options.running_mode,
+        display_names_locale=options.display_names_locale,
+        max_results=options.max_results,
+        score_threshold=options.score_threshold,
+        category_allowlist=options.category_allowlist,
+        category_denylist=options.category_denylist,
+        result_callback=c_callback,
+    )
+
+    detector_handle = ctypes.c_void_p()
+    lib.MpObjectDetectorCreate(
+        ctypes.byref(ctypes_options),
+        ctypes.byref(detector_handle),
+    )
+
+    return ObjectDetector(
+        lib=lib,
+        handle=detector_handle,
+        dispatcher=dispatcher,
+        async_callback=c_callback,
+    )
 
   # TODO: Create an Image class for MediaPipe Tasks.
-  def detect(self,
-             image: image_module.Image) -> detections_module.DetectionResult:
+  def detect(
+      self,
+      image: image_module.Image,
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
+  ) -> ObjectDetectorResult:
     """Performs object detection on the provided MediaPipe Image.
 
     Only use this method when the ObjectDetector is created with the image
@@ -220,6 +378,7 @@ class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
 
     Args:
       image: MediaPipe Image.
+      image_processing_options: Options for image processing.
 
     Returns:
       A detection result object that contains a list of detections, each
@@ -231,17 +390,32 @@ class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If object detection failed to run.
     """
-    output_packets = self._process_image_data(
-        {_IMAGE_IN_STREAM_NAME: packet_creator.create_image(image)})
-    detection_proto_list = packet_getter.get_proto_list(
-        output_packets[_DETECTIONS_OUT_STREAM_NAME])
-    return detections_module.DetectionResult([
-        detections_module.Detection.create_from_pb2(result)
-        for result in detection_proto_list
-    ])
 
-  def detect_for_video(self, image: image_module.Image,
-                       timestamp_ms: int) -> detections_module.DetectionResult:
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    c_result = detections_c_module.DetectionResultC()
+
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
+    )
+    self._lib.MpObjectDetectorDetectImage(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        ctypes.byref(c_result),
+    )
+
+    py_result = ObjectDetectorResult.from_ctypes(c_result)
+    self._lib.MpObjectDetectorCloseResult(ctypes.byref(c_result))
+    return py_result
+
+  def detect_for_video(
+      self,
+      image: image_module.Image,
+      timestamp_ms: int,
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
+  ) -> ObjectDetectorResult:
     """Performs object detection on the provided video frames.
 
     Only use this method when the ObjectDetector is created with the video
@@ -252,6 +426,7 @@ class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
     Args:
       image: MediaPipe Image.
       timestamp_ms: The timestamp of the input video frame in milliseconds.
+      image_processing_options: Options for image processing.
 
     Returns:
       A detection result object that contains a list of detections, each
@@ -263,18 +438,32 @@ class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If object detection failed to run.
     """
-    output_packets = self._process_video_data({
-        _IMAGE_IN_STREAM_NAME:
-            packet_creator.create_image(image).at(timestamp_ms)
-    })
-    detection_proto_list = packet_getter.get_proto_list(
-        output_packets[_DETECTIONS_OUT_STREAM_NAME])
-    return detections_module.DetectionResult([
-        detections_module.Detection.create_from_pb2(result)
-        for result in detection_proto_list
-    ])
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    c_result = detections_c_module.DetectionResultC()
 
-  def detect_async(self, image: image_module.Image, timestamp_ms: int) -> None:
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
+    )
+    self._lib.MpObjectDetectorDetectForVideo(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        timestamp_ms,
+        ctypes.byref(c_result),
+    )
+
+    py_result = ObjectDetectorResult.from_ctypes(c_result)
+    self._lib.MpObjectDetectorCloseResult(ctypes.byref(c_result))
+    return py_result
+
+  def detect_async(
+      self,
+      image: image_module.Image,
+      timestamp_ms: int,
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
+  ) -> None:
     """Sends live image data (an Image with a unique timestamp) to perform object detection.
 
     Only use this method when the ObjectDetector is created with the live stream
@@ -298,12 +487,52 @@ class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
     Args:
       image: MediaPipe Image.
       timestamp_ms: The timestamp of the input image in milliseconds.
+      image_processing_options: Options for image processing.
 
     Raises:
       ValueError: If the current input timestamp is smaller than what the object
         detector has already processed.
+      RuntimeError: If object detection failed to run.
     """
-    self._send_live_stream_data({
-        _IMAGE_IN_STREAM_NAME:
-            packet_creator.create_image(image).at(timestamp_ms)
-    })
+    c_image = image._image_ptr  # pylint: disable=protected-access
+
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
+    )
+    self._lib.MpObjectDetectorDetectAsync(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        timestamp_ms,
+    )
+
+  def close(self):
+    """Shuts down the MediaPipe task instance."""
+    if self._handle:
+      self._lib.MpObjectDetectorClose(self._handle)
+      self._handle = None
+      self._dispatcher.close()
+      self._lib.close()
+
+  def __enter__(self):
+    """Returns `self` upon entering the runtime context."""
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    """Shuts down the MediaPipe task instance on exit of the context manager.
+
+    Args:
+      exc_type: The exception type that caused the exit.
+      exc_value: The exception value that caused the exit.
+      traceback: The exception traceback that caused the exit.
+
+    Raises:
+      RuntimeError: If the MediaPipe FaceDetector task failed to close.
+    """
+    del exc_type, exc_value, traceback  # Unused.
+    self.close()
+
+  def __del__(self):
+    self.close()

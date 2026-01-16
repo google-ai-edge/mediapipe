@@ -28,11 +28,8 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 
-using mediapipe::Adopt;
-using mediapipe::CalculatorBase;
 using mediapipe::ImageFrame;
 using mediapipe::PacketTypeSet;
-using mediapipe::autoflip::Border;
 
 constexpr char kDetectedBorders[] = "DETECTED_BORDERS";
 constexpr int kMinBorderDistance = 5;
@@ -214,7 +211,7 @@ double BorderDetectionCalculator::ColorCount(const Color& mask_color,
                                              const cv::Mat& image) const {
   int background_count = 0;
   for (int i = 0; i < image.rows; i++) {
-    const uint8* row_ptr = image.ptr<uint8>(i);
+    const uint8_t* row_ptr = image.ptr<uint8_t>(i);
     for (int j = 0; j < image.cols * 3; j += 3) {
       if (std::abs(mask_color.r() - static_cast<int>(row_ptr[j + 2])) <=
               options_.color_tolerance() &&

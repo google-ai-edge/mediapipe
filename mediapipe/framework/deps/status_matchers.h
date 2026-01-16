@@ -15,10 +15,16 @@
 #ifndef MEDIAPIPE_DEPS_STATUS_MATCHERS_H_
 #define MEDIAPIPE_DEPS_STATUS_MATCHERS_H_
 
+#include <ostream>
+#include <string>
+#include <type_traits>
+
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "mediapipe/framework/port/statusor.h"
+#include "mediapipe/framework/port/status_macros.h"
 
 namespace mediapipe {
 
@@ -267,9 +273,14 @@ StatusIsMatcher StatusIs(CodeMatcher code_matcher) {
   MP_ASSERT_OK_AND_ASSIGN_IMPL_(            \
       STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__), lhs, rexpr)
 
+inline void MpInternalAssertAddFatalFailure(
+    absl::string_view expression, const mediapipe::StatusBuilder& builder) {
+  FAIL() << absl::StrCat(expression, " returned error: ",
+                         absl::Status(builder).ToString(
+                             absl::StatusToStringMode::kWithEverything));
+}
+
 #define MP_ASSERT_OK_AND_ASSIGN_IMPL_(statusor, lhs, rexpr) \
-  auto statusor = (rexpr);                                  \
-  ASSERT_TRUE(statusor.ok());                               \
-  lhs = std::move(statusor.value())
+  MP_ASSIGN_OR_RETURN(lhs, rexpr, MpInternalAssertAddFatalFailure(#rexpr, _));
 
 #endif  // MEDIAPIPE_DEPS_STATUS_MATCHERS_H_

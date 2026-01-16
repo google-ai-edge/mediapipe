@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 # Placeholder for internal Python strict library and test compatibility macro.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -24,41 +24,20 @@ py_library(
         "audio_classifier.py",
     ],
     deps = [
-        "//mediapipe/python:_framework_bindings",
-        "//mediapipe/python:packet_creator",
-        "//mediapipe/python:packet_getter",
-        "//mediapipe/tasks/cc/audio/audio_classifier/proto:audio_classifier_graph_options_py_pb2",
-        "//mediapipe/tasks/cc/components/containers/proto:classifications_py_pb2",
-        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_py_pb2",
+        "//mediapipe/tasks/python/audio/core:audio_record",
         "//mediapipe/tasks/python/audio/core:audio_task_running_mode",
-        "//mediapipe/tasks/python/audio/core:base_audio_task_api",
         "//mediapipe/tasks/python/components/containers:audio_data",
+        "//mediapipe/tasks/python/components/containers:audio_data_c",
         "//mediapipe/tasks/python/components/containers:classification_result",
+        "//mediapipe/tasks/python/components/containers:classification_result_c",
+        "//mediapipe/tasks/python/components/processors:classifier_options",
+        "//mediapipe/tasks/python/components/processors:classifier_options_c",
+        "//mediapipe/tasks/python/core:async_result_dispatcher",
         "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:base_options_c",
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:mediapipe_c_utils",
         "//mediapipe/tasks/python/core:optional_dependencies",
-        "//mediapipe/tasks/python/core:task_info",
-    ],
-)
-
-py_library(
-    name = "audio_embedder",
-    srcs = [
-        "audio_embedder.py",
-    ],
-    deps = [
-        "//mediapipe/python:_framework_bindings",
-        "//mediapipe/python:packet_creator",
-        "//mediapipe/python:packet_getter",
-        "//mediapipe/tasks/cc/audio/audio_embedder/proto:audio_embedder_graph_options_py_pb2",
-        "//mediapipe/tasks/cc/components/containers/proto:embeddings_py_pb2",
-        "//mediapipe/tasks/cc/components/processors/proto:embedder_options_py_pb2",
-        "//mediapipe/tasks/python/audio/core:audio_task_running_mode",
-        "//mediapipe/tasks/python/audio/core:base_audio_task_api",
-        "//mediapipe/tasks/python/components/containers:audio_data",
-        "//mediapipe/tasks/python/components/containers:embedding_result",
-        "//mediapipe/tasks/python/components/utils:cosine_similarity",
-        "//mediapipe/tasks/python/core:base_options",
-        "//mediapipe/tasks/python/core:optional_dependencies",
-        "//mediapipe/tasks/python/core:task_info",
+        "//mediapipe/tasks/python/core:serial_dispatcher",
     ],
 )

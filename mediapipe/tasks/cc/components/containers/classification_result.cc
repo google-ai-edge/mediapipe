@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,6 +37,19 @@ Classifications ConvertToClassifications(const proto::Classifications& proto) {
   if (proto.has_head_name()) {
     classifications.head_name = proto.head_name();
   }
+  return classifications;
+}
+
+Classifications ConvertToClassifications(
+    const mediapipe::ClassificationList& proto, int head_index,
+    std::optional<std::string> head_name) {
+  Classifications classifications;
+  classifications.categories.reserve(proto.classification_size());
+  for (const auto& classification : proto.classification()) {
+    classifications.categories.push_back(ConvertToCategory(classification));
+  }
+  classifications.head_index = head_index;
+  classifications.head_name = head_name;
   return classifications;
 }
 

@@ -14,14 +14,18 @@
 
 package com.google.mediapipe.apps.basic;
 
+import android.app.ProgressDialog;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.SurfaceTexture;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Size;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -32,7 +36,12 @@ import com.google.mediapipe.components.ExternalTextureConverter;
 import com.google.mediapipe.components.FrameProcessor;
 import com.google.mediapipe.components.PermissionHelper;
 import com.google.mediapipe.framework.AndroidAssetUtil;
+import com.google.mediapipe.framework.ResourcesService;
+import com.google.mediapipe.framework.ResourcesWithMapping;
 import com.google.mediapipe.glutil.EglManager;
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.Map;
 
 /** Main activity of MediaPipe basic app. */
 public class MainActivity extends AppCompatActivity {
@@ -57,12 +66,7 @@ public class MainActivity extends AppCompatActivity {
   static {
     // Load all native libraries needed by the app.
     System.loadLibrary("mediapipe_jni");
-    try {
-      System.loadLibrary("opencv_java3");
-    } catch (java.lang.UnsatisfiedLinkError e) {
-      // Some example apps (e.g. template matching) require OpenCV 4.
-      System.loadLibrary("opencv_java4");
-    }
+    System.loadLibrary("opencv_java4");
   }
 
   // Sends camera-preview frames into a MediaPipe graph for processing, and displays the processed
@@ -84,6 +88,13 @@ public class MainActivity extends AppCompatActivity {
 
   // ApplicationInfo for retrieving metadata defined in the manifest.
   private ApplicationInfo applicationInfo;
+
+  // Progress dialog to show for the actions that must be executed on non-UI thread.
+  private ProgressDialog progressDialog;
+
+  protected Map<String, String> getResourcesMapping() {
+    return new HashMap<>();
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -117,6 +128,11 @@ public class MainActivity extends AppCompatActivity {
             applicationInfo.metaData.getBoolean("flipFramesVertically", FLIP_FRAMES_VERTICALLY));
 
     PermissionHelper.checkAndRequestCameraPermissions(this);
+    Map<String, String> resourcesMapping = getResourcesMapping();
+    if (!resourcesMapping.isEmpty()) {
+      processor.setServiceObject(
+          new ResourcesService(), new ResourcesWithMapping(resourcesMapping));
+    }
   }
 
   // Used to obtain the content view for this application. If you are extending this class, and
@@ -138,6 +154,28 @@ public class MainActivity extends AppCompatActivity {
     if (PermissionHelper.cameraPermissionsGranted(this)) {
       startCamera();
     }
+  }
+
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.main_menu, menu);
+    return true;
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    final int id = item.getItemId();
+    if (id == R.id.action_exit) {
+      progressDialog = new ProgressDialog(this);
+      progressDialog.setMessage("Closing graph, waiting until done & exiting...");
+      progressDialog.setCancelable(false);
+
+      new CloseProcessorAndExitTask(
+              new WeakReference<>(progressDialog), new WeakReference<>(processor))
+          .execute();
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -225,5 +263,47 @@ public class MainActivity extends AppCompatActivity {
                 processor.getVideoSurfaceOutput().setSurface(null);
               }
             });
+  }
+
+  private static class CloseProcessorAndExitTask extends AsyncTask<Void, Void, Boolean> {
+    private final WeakReference<ProgressDialog> progressDialogRef;
+    private final WeakReference<FrameProcessor> frameProcessorRef;
+
+    public CloseProcessorAndExitTask(
+        WeakReference<ProgressDialog> progressDialogRef,
+        WeakReference<FrameProcessor> frameProcessorRef) {
+      this.progressDialogRef = progressDialogRef;
+      this.frameProcessorRef = frameProcessorRef;
+    }
+
+    @Override
+    protected void onPreExecute() {
+      ProgressDialog progressDialog = progressDialogRef.get();
+      if (progressDialog != null) {
+        progressDialog.show();
+      }
+    }
+
+    @Override
+    protected Boolean doInBackground(Void... voids) {
+      FrameProcessor frameProcessor = frameProcessorRef.get();
+      if (frameProcessor != null) {
+        frameProcessor.close();
+        return true;
+      }
+      return false;
+    }
+
+    @Override
+    protected void onPostExecute(Boolean isProcessorClosed) {
+      if (!isProcessorClosed) {
+        throw new IllegalStateException("Processor was not closed.");
+      }
+      ProgressDialog progressDialog = progressDialogRef.get();
+      if (progressDialog != null && progressDialog.isShowing()) {
+        progressDialog.dismiss();
+        progressDialog.getOwnerActivity().finish();
+      }
+    }
   }
 }

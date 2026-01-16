@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,15 @@
 """The running mode of MediaPipe Audio Tasks."""
 
 import enum
+import types
+
+from mediapipe.tasks.python.core.optional_dependencies import doc_controls
+
+# The C API constants that map to the Python enum values.
+_CTYPE_VALUE_MAP = types.MappingProxyType({
+    'AUDIO_CLIPS': 1,
+    'AUDIO_STREAM': 2,
+})
 
 
 class AudioTaskRunningMode(enum.Enum):
@@ -27,3 +36,13 @@ class AudioTaskRunningMode(enum.Enum):
   """
   AUDIO_CLIPS = 'AUDIO_CLIPS'
   AUDIO_STREAM = 'AUDIO_STREAM'
+
+  @property
+  @doc_controls.do_not_generate_docs
+  def ctype(self) -> int:
+    """Generates a C API int object."""
+    ctype_value = _CTYPE_VALUE_MAP.get(self.value)
+    assert (
+        ctype_value is not None
+    ), f'Unsupported audio task running mode: {self}'
+    return ctype_value

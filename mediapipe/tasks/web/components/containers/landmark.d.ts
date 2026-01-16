@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@ export declare interface NormalizedLandmark {
 
   /** The z coordinates of the normalized landmark. */
   z: number;
+
+  /** The likelihood of the landmark being visible within the image. */
+  visibility: number;
 }
 
 /**
@@ -46,4 +49,7 @@ export declare interface Landmark {
 
   /** The z coordinates of the landmark. */
   z: number;
+
+  /** The likelihood of the landmark being visible within the image. */
+  visibility: number;
 }

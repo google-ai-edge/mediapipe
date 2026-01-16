@@ -53,11 +53,11 @@ void PacketSubmodule(pybind11::module* module) {
 
   packet.def(py::init<Packet const&>())
       .def("at", [](Packet* self,
-                    int64 ts_value) { return self->At(Timestamp(ts_value)); })
+                    int64_t ts_value) { return self->At(Timestamp(ts_value)); })
       .def("at", [](Packet* self, Timestamp ts) { return self->At(ts); })
       .def_property(
           "timestamp", &Packet::Timestamp,
-          [](Packet* p, int64 ts_value) { *p = p->At(Timestamp(ts_value)); })
+          [](Packet* p, int64_t ts_value) { *p = p->At(Timestamp(ts_value)); })
       .def("__repr__", [](const Packet& self) {
         return absl::StrCat(
             "<mediapipe.Packet with timestamp: ",

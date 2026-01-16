@@ -14,28 +14,39 @@
 
 #include "mediapipe/framework/calculator_node.h"
 
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <optional>
 #include <set>
 #include <string>
-#include <unordered_map>
+#include <tuple>
 #include <utility>
+#include <vector>
 
+#include "absl/cleanup/cleanup.h"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/time/time.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_base.h"
+#include "mediapipe/framework/calculator_state.h"
 #include "mediapipe/framework/counter_factory.h"
+#include "mediapipe/framework/deps/clock.h"
+#include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/input_stream_manager.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/output_stream_manager.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/packet_type.h"
-#include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -45,10 +56,10 @@
 #include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/framework/tool/status_util.h"
 #include "mediapipe/framework/tool/tag_map.h"
-#include "mediapipe/framework/tool/validate_name.h"
 
 namespace mediapipe {
 
+using ::mediapipe::Clock;
 namespace {
 
 const PacketType* GetPacketType(const PacketTypeSet& packet_type_set,
@@ -59,7 +70,7 @@ const PacketType* GetPacketType(const PacketTypeSet& packet_type_set,
   } else {
     id = packet_type_set.GetId(tag, 0);
   }
-  CHECK(id.IsValid()) << "Internal mediapipe error.";
+  ABSL_CHECK(id.IsValid()) << "Internal mediapipe error.";
   return &packet_type_set.Get(id);
 }
 
@@ -111,7 +122,11 @@ std::unique_ptr<PacketTypeSet> RemoveOmittedPacketTypes(
 
 }  // namespace
 
-CalculatorNode::CalculatorNode() {}
+CalculatorNode::CalculatorNode() {
+  absl::Time now = Clock::RealClock()->TimeNow();
+  last_process_start_ts_ = now;
+  last_process_finish_ts_ = now;
+}
 
 Timestamp CalculatorNode::SourceProcessOrder(
     const CalculatorContext* cc) const {
@@ -123,7 +138,8 @@ absl::Status CalculatorNode::Initialize(
     InputStreamManager* input_stream_managers,
     OutputStreamManager* output_stream_managers,
     OutputSidePacketImpl* output_side_packets, int* buffer_size_hint,
-    std::shared_ptr<ProfilingContext> profiling_context) {
+    std::shared_ptr<ProfilingContext> profiling_context,
+    const GraphServiceManager* graph_service_manager) {
   RET_CHECK(buffer_size_hint) << "buffer_size_hint is NULL";
   validated_graph_ = validated_graph;
   profiling_context_ = profiling_context;
@@ -145,8 +161,7 @@ absl::Status CalculatorNode::Initialize(
         "node_ref is not a calculator or packet generator");
   }
 
-  max_in_flight_ = node_config->max_in_flight();
-  max_in_flight_ = max_in_flight_ ? max_in_flight_ : 1;
+  max_in_flight_ = node_type_info_->Contract().GetMaxInFlight();
   if (!node_config->executor().empty()) {
     executor_ = node_config->executor();
   }
@@ -166,9 +181,9 @@ absl::Status CalculatorNode::Initialize(
                                     node_type_info_->OutputStreamTypes()));
   MP_RETURN_IF_ERROR(InitializeOutputStreams(output_stream_managers));
 
-  calculator_state_ = absl::make_unique<CalculatorState>(
+  calculator_state_ = std::make_unique<CalculatorState>(
       name_, node_ref.index, node_config->calculator(), *node_config,
-      profiling_context_);
+      profiling_context_, graph_service_manager);
 
   // Inform the scheduler that this node has buffering behavior and that the
   // maximum input queue size should be adjusted accordingly.
@@ -210,6 +225,38 @@ absl::Status CalculatorNode::Initialize(
       contract.GetProcessTimestampBounds());
 
   return InitializeInputStreams(input_stream_managers, output_stream_managers);
+}
+
+CalculatorRuntimeInfo CalculatorNode::GetStreamMonitoringInfo() const {
+  CalculatorRuntimeInfo calculator_info;
+  calculator_info.set_calculator_name(DebugName());
+  {
+    absl::MutexLock lock(&runtime_info_mutex_);
+    calculator_info.set_last_process_start_unix_us(
+        absl::ToUnixMicros(last_process_start_ts_));
+    calculator_info.set_last_process_finish_unix_us(
+        absl::ToUnixMicros(last_process_finish_ts_));
+  }
+  const auto input_stream_info = input_stream_handler_->GetMonitoringInfo();
+  for (const auto& [stream_name, queue_size, num_packets_added,
+                    minimum_timestamp_or_bound] : input_stream_info) {
+    auto* stream_info = calculator_info.add_input_stream_infos();
+    stream_info->set_stream_name(stream_name);
+    stream_info->set_queue_size(queue_size);
+    stream_info->set_number_of_packets_added(num_packets_added);
+    stream_info->set_minimum_timestamp_or_bound(
+        minimum_timestamp_or_bound.Value());
+  }
+  const auto output_stream_info = output_stream_handler_->GetMonitoringInfo();
+  for (const auto& [stream_name, num_packets_added,
+                    minimum_timestamp_or_bound] : output_stream_info) {
+    auto* stream_info = calculator_info.add_output_stream_infos();
+    stream_info->set_stream_name(stream_name);
+    stream_info->set_number_of_packets_added(num_packets_added);
+    stream_info->set_minimum_timestamp_or_bound(
+        minimum_timestamp_or_bound.Value());
+  }
+  return calculator_info;
 }
 
 absl::Status CalculatorNode::InitializeOutputSidePackets(
@@ -301,14 +348,15 @@ absl::Status CalculatorNode::InitializeInputStreamHandler(
   const ProtoString& input_stream_handler_name =
       handler_config.input_stream_handler();
   RET_CHECK(!input_stream_handler_name.empty());
-  ASSIGN_OR_RETURN(input_stream_handler_,
-                   InputStreamHandlerRegistry::CreateByNameInNamespace(
-                       validated_graph_->Package(), input_stream_handler_name,
-                       input_stream_types.TagMap(),
-                       &calculator_context_manager_, handler_config.options(),
-                       /*calculator_run_in_parallel=*/max_in_flight_ > 1),
-                   _ << "\"" << input_stream_handler_name
-                     << "\" is not a registered input stream handler.");
+  MP_ASSIGN_OR_RETURN(
+      input_stream_handler_,
+      InputStreamHandlerRegistry::CreateByNameInNamespace(
+          validated_graph_->Package(), input_stream_handler_name,
+          input_stream_types.TagMap(), &calculator_context_manager_,
+          handler_config.options(),
+          /*calculator_run_in_parallel=*/max_in_flight_ > 1),
+      _ << "\"" << input_stream_handler_name
+        << "\" is not a registered input stream handler.");
 
   return absl::OkStatus();
 }
@@ -319,14 +367,15 @@ absl::Status CalculatorNode::InitializeOutputStreamHandler(
   const ProtoString& output_stream_handler_name =
       handler_config.output_stream_handler();
   RET_CHECK(!output_stream_handler_name.empty());
-  ASSIGN_OR_RETURN(output_stream_handler_,
-                   OutputStreamHandlerRegistry::CreateByNameInNamespace(
-                       validated_graph_->Package(), output_stream_handler_name,
-                       output_stream_types.TagMap(),
-                       &calculator_context_manager_, handler_config.options(),
-                       /*calculator_run_in_parallel=*/max_in_flight_ > 1),
-                   _ << "\"" << output_stream_handler_name
-                     << "\" is not a registered output stream handler.");
+  MP_ASSIGN_OR_RETURN(
+      output_stream_handler_,
+      OutputStreamHandlerRegistry::CreateByNameInNamespace(
+          validated_graph_->Package(), output_stream_handler_name,
+          output_stream_types.TagMap(), &calculator_context_manager_,
+          handler_config.options(),
+          /*calculator_run_in_parallel=*/max_in_flight_ > 1),
+      _ << "\"" << output_stream_handler_name
+        << "\" is not a registered output stream handler.");
   return absl::OkStatus();
 }
 
@@ -341,7 +390,7 @@ absl::Status CalculatorNode::ConnectShardsToStreams(
 
 void CalculatorNode::SetExecutor(const std::string& executor) {
   absl::MutexLock status_lock(&status_mutex_);
-  CHECK_LT(status_, kStateOpened);
+  ABSL_CHECK_LT(status_, kStateOpened);
   executor_ = executor;
 }
 
@@ -366,7 +415,7 @@ bool CalculatorNode::Closed() const {
 }
 
 void CalculatorNode::SetMaxInputStreamQueueSize(int max_queue_size) {
-  CHECK(input_stream_handler_);
+  ABSL_CHECK(input_stream_handler_);
   input_stream_handler_->SetMaxQueueSize(max_queue_size);
 }
 
@@ -418,7 +467,7 @@ absl::Status CalculatorNode::PrepareForRun(
   MP_RETURN_IF_ERROR(calculator_context_manager_.PrepareForRun(std::bind(
       &CalculatorNode::ConnectShardsToStreams, this, std::placeholders::_1)));
 
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       auto calculator_factory,
       CalculatorBaseRegistry::CreateByNameInNamespace(
           validated_graph_->Package(), calculator_state_->CalculatorType()));
@@ -506,7 +555,7 @@ absl::Status CalculatorNode::OpenNode() {
                                                             Timestamp(0));
   }
 
-  LOG_IF(FATAL, result == tool::StatusStop()) << absl::Substitute(
+  ABSL_LOG_IF(FATAL, result == tool::StatusStop()) << absl::Substitute(
       "Open() on node \"$0\" returned tool::StatusStop() which should only be "
       "used to signal that a source node is done producing data.",
       DebugName());
@@ -519,7 +568,7 @@ absl::Status CalculatorNode::OpenNode() {
     offset_enabled = offset_enabled || stream->Spec()->offset_enabled;
   }
   if (offset_enabled && input_stream_handler_->SyncSetCount() > 1) {
-    LOG(WARNING) << absl::Substitute(
+    ABSL_LOG(WARNING) << absl::Substitute(
         "Calculator node \"$0\" is configured with multiple input sync-sets "
         "and an output timestamp-offset, which will often conflict due to "
         "the order of packet arrival.  With multiple input sync-sets, use "
@@ -539,7 +588,7 @@ absl::Status CalculatorNode::OpenNode() {
 
 void CalculatorNode::ActivateNode() {
   absl::MutexLock status_lock(&status_mutex_);
-  CHECK_EQ(status_, kStateOpened) << DebugName();
+  ABSL_CHECK_EQ(status_, kStateOpened) << DebugName();
   status_ = kStateActive;
 }
 
@@ -601,7 +650,7 @@ absl::Status CalculatorNode::CloseNode(const absl::Status& graph_status,
   }
   needs_to_close_ = false;
 
-  LOG_IF(FATAL, result == tool::StatusStop()) << absl::Substitute(
+  ABSL_LOG_IF(FATAL, result == tool::StatusStop()) << absl::Substitute(
       "Close() on node \"$0\" returned tool::StatusStop() which should only be "
       "used to signal that a source node is done producing data.",
       DebugName());
@@ -661,14 +710,14 @@ void CalculatorNode::SchedulingLoop() {
     max_allowance = max_in_flight_ - current_in_flight_;
   }
   while (true) {
-    Timestamp input_bound;
-    // input_bound is set to a meaningful value iff the latest readiness of the
-    // node is kNotReady when ScheduleInvocations() returns.
-    input_stream_handler_->ScheduleInvocations(max_allowance, &input_bound);
-    if (input_bound != Timestamp::Unset()) {
+    // last_timestamp_bound_ is set to a meaningful value iff the latest
+    // readiness of the node is kNotReady when ScheduleInvocations() returns.
+    input_stream_handler_->ScheduleInvocations(max_allowance,
+                                               &last_timestamp_bound_);
+    if (last_timestamp_bound_ != Timestamp::Unset()) {
       // Updates the minimum timestamp for which a new packet could possibly
       // arrive.
-      output_stream_handler_->UpdateTaskTimestampBound(input_bound);
+      output_stream_handler_->UpdateTaskTimestampBound(last_timestamp_bound_);
     }
 
     {
@@ -694,8 +743,8 @@ void CalculatorNode::InputStreamHeadersReady() {
   bool ready_for_open = false;
   {
     absl::MutexLock lock(&status_mutex_);
-    CHECK_EQ(status_, kStatePrepared) << DebugName();
-    CHECK(!input_stream_headers_ready_called_);
+    ABSL_CHECK_EQ(status_, kStatePrepared) << DebugName();
+    ABSL_CHECK(!input_stream_headers_ready_called_);
     input_stream_headers_ready_called_ = true;
     input_stream_headers_ready_ = true;
     ready_for_open = input_side_packets_ready_;
@@ -709,8 +758,8 @@ void CalculatorNode::InputSidePacketsReady() {
   bool ready_for_open = false;
   {
     absl::MutexLock lock(&status_mutex_);
-    CHECK_EQ(status_, kStatePrepared) << DebugName();
-    CHECK(!input_side_packets_ready_called_);
+    ABSL_CHECK_EQ(status_, kStatePrepared) << DebugName();
+    ABSL_CHECK(!input_side_packets_ready_called_);
     input_side_packets_ready_called_ = true;
     input_side_packets_ready_ = true;
     ready_for_open = input_stream_headers_ready_;
@@ -760,7 +809,7 @@ void CalculatorNode::EndScheduling() {
       return;
     }
     --current_in_flight_;
-    CHECK_GE(current_in_flight_, 0);
+    ABSL_CHECK_GE(current_in_flight_, 0);
 
     if (scheduling_state_ == kScheduling) {
       // Changes the state to scheduling pending if another thread is doing the
@@ -790,13 +839,25 @@ std::string CalculatorNode::DebugInputStreamNames() const {
 }
 
 std::string CalculatorNode::DebugName() const {
-  DCHECK(calculator_state_);
+  ABSL_DCHECK(calculator_state_);
   return calculator_state_->NodeName();
 }
 
 // TODO: Split this function.
 absl::Status CalculatorNode::ProcessNode(
     CalculatorContext* calculator_context) {
+  // Update calculator runtime info.
+  {
+    absl::MutexLock lock(&runtime_info_mutex_);
+    last_process_start_ts_ = Clock::RealClock()->TimeNow();
+  }
+  absl::Cleanup last_process_finish_ts_cleanup([this]() {
+    {
+      absl::MutexLock lock(&runtime_info_mutex_);
+      last_process_finish_ts_ = Clock::RealClock()->TimeNow();
+    }
+  });
+
   if (IsSource()) {
     // This is a source Calculator.
     if (Closed()) {
@@ -839,8 +900,7 @@ absl::Status CalculatorNode::ProcessNode(
     // This is not a source Calculator.
     InputStreamShardSet* const inputs = &calculator_context->Inputs();
     OutputStreamShardSet* const outputs = &calculator_context->Outputs();
-    absl::Status result =
-        absl::InternalError("Calculator context has no input packets.");
+    std::optional<absl::Status> result;
 
     int num_invocations = calculator_context_manager_.NumberOfContextTimestamps(
         *calculator_context);
@@ -878,24 +938,25 @@ absl::Status CalculatorNode::ProcessNode(
         // of the graph. This is different from an error in that it will
         // ensure that all sources will be closed and that packets in input
         // streams will be processed before the graph is terminated.
-        if (!result.ok() && result != tool::StatusStop()) {
-          return mediapipe::StatusBuilder(result, MEDIAPIPE_LOC).SetPrepend()
+        if (result.has_value() && !result->ok() &&
+            result != tool::StatusStop()) {
+          return mediapipe::StatusBuilder(*result, MEDIAPIPE_LOC).SetPrepend()
                  << absl::Substitute(
                         "Calculator::Process() for node \"$0\" failed: ",
                         DebugName());
         }
         output_stream_handler_->PostProcess(input_timestamp);
         if (result == tool::StatusStop()) {
-          return result;
+          return *result;
         }
       } else if (input_timestamp == Timestamp::Done()) {
         // Some or all the input streams are closed and there are not enough
         // open input streams for Process(). So this node needs to be closed
         // too.
         // If the streams are closed, there shouldn't be more input.
-        CHECK_EQ(calculator_context_manager_.NumberOfContextTimestamps(
-                     *calculator_context),
-                 1);
+        ABSL_CHECK_EQ(calculator_context_manager_.NumberOfContextTimestamps(
+                          *calculator_context),
+                      1);
         return CloseNode(absl::OkStatus(), /*graph_run_ended=*/false);
       } else {
         RET_CHECK_FAIL()
@@ -903,14 +964,18 @@ absl::Status CalculatorNode::ProcessNode(
             << input_timestamp;
       }
     }
-    return result;
+    if (result.has_value()) {
+      return *result;
+    } else {
+      return absl::InternalError("Calculator context has no input packets.");
+    }
   }
 }
 
 void CalculatorNode::SetQueueSizeCallbacks(
     InputStreamManager::QueueSizeCallback becomes_full_callback,
     InputStreamManager::QueueSizeCallback becomes_not_full_callback) {
-  CHECK(input_stream_handler_);
+  ABSL_CHECK(input_stream_handler_);
   input_stream_handler_->SetQueueSizeCallbacks(
       std::move(becomes_full_callback), std::move(becomes_not_full_callback));
 }

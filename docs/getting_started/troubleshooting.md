@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/getting_started/troubleshooting
 title: Troubleshooting
 parent: Getting Started
 nav_order: 10
@@ -11,6 +12,12 @@ nav_order: 10
 1. TOC
 {:toc}
 ---
+
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+--------------------------------------------------------------------------------
 
 ## Missing Python binary path
 
@@ -65,7 +72,7 @@ WARNING: Download from https://storage.googleapis.com/mirror.tensorflow.org/gith
 ```
 
 usually indicates that Bazel fails to download necessary dependency repositories
-that MediaPipe needs. MedaiPipe has several dependency repositories that are
+that MediaPipe needs. MediaPipe has several dependency repositories that are
 hosted by Google sites. In some regions, you may need to set up a network proxy
 or use a VPN to access those resources. You may also need to append
 `--host_jvm_args "-DsocksProxyHost=<ip address> -DsocksProxyPort=<port number>"`
@@ -106,18 +113,18 @@ ERROR: Could not find a version that satisfies the requirement mediapipe
 ERROR: No matching distribution found for mediapipe
 ```
 
-after running `pip install mediapipe` usually indicates that there is no qualified MediaPipe Python for your system.
-Please note that MediaPipe Python PyPI officially supports the **64-bit**
-version of Python 3.7 to 3.10 on the following OS:
+after running `pip install mediapipe` usually indicates that there is no
+qualified MediaPipe Python for your system. Please note that MediaPipe Python
+PyPI officially supports the **64-bit** version of Python on the following OS:
 
 -   x86_64 Linux
 -   x86_64 macOS 10.15+
 -   amd64 Windows
 
 If the OS is currently supported and you still see this error, please make sure
-that both the Python and pip binary are for Python 3.7 to 3.10. Otherwise,
-please consider building the MediaPipe Python package locally by following the
-instructions [here](python.md#building-mediapipe-python-package).
+that both the Python and pip binary are for MediaPipe supported Python versions.
+Otherwise, please consider building the MediaPipe Python package locally by
+following the instructions [here](python.md#building-mediapipe-python-package).
 
 ## Python DLL load failure on Windows
 
@@ -155,7 +162,7 @@ explicitly loaded using the function `System.loadLibrary`.
 
 ## No registered calculator found
 
-The error message:
+The error message
 
 ```
 No registered object with name: OurNewCalculator; Unable to find Calculator "OurNewCalculator"
@@ -165,16 +172,27 @@ usually indicates that `OurNewCalculator` is referenced by name in a
 [`CalculatorGraphConfig`] but that the library target for OurNewCalculator has
 not been linked to the application binary. When a new calculator is added to a
 calculator graph, that calculator must also be added as a build dependency of
-the applications using the calculator graph.
+the applications using the calculator graph. If you created the calculator
+yourself, be sure to add "alwayslink = True" to the BUILD target, e.g.
+
+```
+cc_library(
+    name = "our_new_calculator",
+    srcs = ["our_new_calculator.cc"],
+    deps = [ ... ],
+    alwayslink = True,
+)
+```
 
 This error is caught at runtime because calculator graphs reference their
 calculators by name through the field `CalculatorGraphConfig::Node:calculator`.
 When the library for a calculator is linked into an application binary, the
 calculator is automatically registered by name through the
-[`REGISTER_CALCULATOR`] macro using the [`registration.h`] library. Note that
-[`REGISTER_CALCULATOR`] can register a calculator with a namespace prefix,
-identical to its C++ namespace. In this case, the calculator graph must also use
-the same namespace prefix.
+[`REGISTER_CALCULATOR`] macro using the [`registration.h`] library. The
+calculator, including the registration, may get removed by the linker if
+"alwayslink = True" is missing. Note that [`REGISTER_CALCULATOR`] can register a
+calculator with a namespace prefix, identical to its C++ namespace. In this
+case, the calculator graph must also use the same namespace prefix.
 
 ## Out Of Memory error
 
@@ -226,6 +244,18 @@ If some calculators or streams cannot reach state [`Timestamp::Done`] or
 called to terminate the graph run without waiting for all pending calculators
 and packets to complete.
 
+To understand why a graph hangs/stalls,
+[graph runtime monitoring](#graph-runtime-monitoring) can provide valuable
+insights into input stream packet queues (understand where packets are queued up
+in the MediaPipe graph). This information reveals which calculators are waiting
+on their input queues for additional input before triggering their next
+Calculator::Process call.
+
+For the specific monitoring of timestamp settlements of a specific calculator in
+your MediaPipe graph,
+[DebugInputStreamHandler](#monitor-calculator-inputs-and-timestamp-settlements)
+can be your friend.
+
 ## Output timing is uneven
 
 Some realtime MediaPipe graphs produce a series of video frames for viewing as a
@@ -263,15 +293,209 @@ calculators designed specifically for this purpose such as
 [`FlowLimiterCalculator`] as described in
 [`How to process realtime input streams`].
 
-[`CalculatorGraphConfig`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`CalculatorGraphConfig::max_queue_size`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`CalculatorGraphConfig::report_deadlock`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`REGISTER_CALCULATOR`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_registry.h
-[`registration.h`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/deps/registration.h
-[`CalculatorGraph::CloseAllPacketSources`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
-[`CalculatorGraph::Cancel`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
-[`CalculatorGraph::WaitUntilDone`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
-[`Timestamp::Done`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/timestamp.h
-[`CalculatorBase::Close`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_base.h
-[`FlowLimiterCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc
+## Monitor calculator inputs and timestamp settlements
+
+Debugging MediaPipe calculators often requires a deep understanding of the data
+flow and timestamp synchronization. Incoming packets to calculators are first
+buffered in input queues per stream to be synchronized by the assigned
+`InputStreamHandler`. The `InputStreamHandler` job is to determine the input
+packet set for a settled timestamp, which puts the calculator into a “ready”
+state, followed by triggering a Calculator::Process call with the determined
+packet set as input.
+
+The `DebugInputStreamHandler` can be used to track incoming packets and
+timestamp settlements in real-time in the application's LOG(INFO) output. It can
+be assigned to specific calculators via the Calculator's input_stream_handler or
+graph globally via the `CalculatorGraphConfig`'s input_stream_handler field.
+
+During the graph execution, incoming packets generate LOG messages which reveal
+the timestamp and type of the packet, followed by the current state of all input
+queues:
+
+```
+[INFO] SomeCalculator: Adding packet (ts:2, type:int) to stream INPUT_B:0:input_b
+[INFO] SomeCalculator: INPUT_A:0:input_a num_packets: 0 min_ts: 2
+[INFO] SomeCalculator: INPUT_B:0:input_b num_packets: 1 min_ts: 2
+```
+
+In addition, it enables the monitoring of timestamp settlement events (in case
+the `DefaultInputStreamHandler` is applied). This can help to reveal an
+unexpected timestamp bound increase on input streams resulting in a
+Calculator::Process call with an incomplete input set resulting in empty packets
+on (potentially required) input streams.
+
+*Example scenario:*
+
+```
+node {
+  calculator: "SomeCalculator"
+  input_stream: "INPUT_A:a"
+  input_stream: "INPUT_B:b"
+  ...
+}
+```
+
+Given a calculator with two inputs, receiving an incoming packet with timestamp
+1 on stream A followed by an input packet with timestamp 2 on stream B. The
+timestamp bound increase to 2 on stream B with pending input packet on stream A
+at timestamp 1 triggers the Calculator::Process call with an incomplete input
+set for timestamp 1. In this case, the `DefaultInputStreamHandler` outputs:
+
+```
+[INFO] SomeCalculator: Filled input set at ts: 1 with MISSING packets in input streams: INPUT_B:0:input_b.
+```
+
+## Graph runtime monitoring
+
+Graph runtime monitoring can be a helpful tool to debug stalled MediaPipe
+graphs. It utilizes a background thread to periodically capture a "snapshot" of
+the graph's calculators and input/output streams state at predetermined
+intervals.
+
+The output begins by listing the calculators that are currently running
+(Calculator::Process runs),
+
+```
+Running calculators: PacketClonerCalculator, RectTransformationCalculator
+```
+
+followed by an overview of packets that are currently in flight, as well as
+those waiting in calculator input streams/queues to be processed.
+
+```
+Running calculators: PacketClonerCalculator
+Num packets in input queues: 4
+GateCalculator_2 waiting on stream(s): :1:norm_start_rect
+MergeCalculator waiting on stream(s): :0:output_frames_gpu_ao, :1:segmentation_preview_gpu
+```
+
+The monitoring output continues with a detailed overview of all calculator
+states, including timestamp bounds, time of last activity, and statistics about
+their input and output streams.
+
+```
+PreviousLoopbackCalculator: (idle for 8.17s, ts bound : 0)
+Input streams:
+ * LOOP:0:segmentation_finished - queue size: 0, total added: 0, ts bound: 569604400011
+ * MAIN:0:input_frames_gpu - queue size: 0, total added: 2, ts bound: 569604400011
+Output streams:
+ * PREV_LOOP:0:prev_segmentation_finished, total added: 0, ts bound: 569604400011
+```
+
+Graph runtime monitoring can be enabled with the flag
+`enable_graph_runtime_info`. This enables the background capturing of graph
+runtime monitoring which is written to LOG(INFO).
+
+```
+graph {
+  runtime_info {
+    enable_graph_runtime_info: true
+  }
+  ...
+}
+```
+
+Since adb logging might be throttled for larger graph runtime information, as an
+alternative, its output can be written to a file at the specified capture
+interval. This will overwrite the file each time. To enable this, use the flag
+`mp_graph_runtime_info_output_file`. Note: On Android, the output file may need
+to be created first to avoid permission issues.
+
+## Debugging cv::Mats, Tensors and ImageFrames
+
+Tensors are used as inputs and outputs of InferenceCalculators. Sometimes it is
+necessary to visualize the contents of tensors. For instance, tensors could
+contain image data of shape [1, width, height, channels] for generative AI
+applications, and these tensors may be upside-down on some platforms, see
+[mediapipe/gpu/gpu_origin.proto]
+(https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/gpu/gpu_origin.proto).
+
+The file [mediapipe/framework/debug/logging.h]
+(https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/debug/logging.h) contains useful
+tools to quickly and easily visualize tensors in the command line terminal. As
+this is a text-based visualization, no graphical user interface is needed, so it
+even works over SSH. The command
+
+```
+debug::LogTensor(tensor)
+```
+
+prints out the contents of the tensor of shape [1, width, height, channels] in
+the terminal. Similarly, the contents of cv::Mat and ImageFrame can be printed
+with
+
+```
+debug::LogMat(mat);
+debug::LogImage(image_frame);
+```
+
+If the terminal supports truecolor ($COLORTERM == "truecolor"), the output is a
+low resolution pixel image:
+
+![sergey_color_png](https://mediapipe.dev/images/sergey_color.png)
+
+Most Linux terminals should support this mode. If the terminal does not support
+truecolor output, e.g. Android shells, an ASCII version is printed instead:
+
+![sergey_ascii_png](https://mediapipe.dev/images/sergey_ascii.png)
+
+Note that an optional name can be passed to the log commands, which is printed
+after each line. This allows easy grepping of logs for the visualizations.
+
+## VLOG is your friend
+
+MediaPipe uses `VLOG` in many places to log important events for debugging
+purposes, while not affecting performance if logging is not enabled.
+
+See more about `VLOG` on [abseil `VLOG`]
+
+Mind that `VLOG` can be spammy if you enable it globally e.g. (using `--v`
+flag). The solution `--vmodule` flag that allows different levels to be set for
+different source files.
+
+In cases when `--v` / `--vmodule` cannot be used (e.g. running an Android app),
+MediaPipe allows to set `VLOG` `--v` / `--vmodule` flags overrides for debugging
+purposes which are applied when `CalculatorGraph` is created.
+
+Overrides:
+
+-   `MEDIAPIPE_VLOG_V`: define and provide value you provide for `--v`
+-   `MEDIAPIPE_VLOG_VMODULE`: define and provide value you provide for
+    `--vmodule`
+
+You can set overrides by adding:
+`--copt=-DMEDIAPIPE_VLOG_VMODULE=\"*calculator*=5\"`
+
+with your desired module patterns and `VLOG` levels (see more details for
+`--vmodule` at [abseil `VLOG`]) to your build command.
+
+IMPORTANT: mind that adding the above to your build command will trigger rebuild
+of the whole binary including dependencies. So, considering `VLOG` overrides
+exist for debugging purposes only, it is faster to simply modify
+[`vlog_overrides.cc`] adding `MEDIAPIPE_VLOG_V/VMODULE` at the very top.
+
+[`CalculatorGraphConfig`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
+[`CalculatorGraphConfig::max_queue_size`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
+[`CalculatorGraphConfig::report_deadlock`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
+[`REGISTER_CALCULATOR`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_registry.h
+[`registration.h`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/deps/registration.h
+[`CalculatorGraph::CloseAllPacketSources`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
+[`CalculatorGraph::Cancel`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
+[`CalculatorGraph::WaitUntilDone`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_graph.h
+[`Timestamp::Done`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/timestamp.h
+[`CalculatorBase::Close`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_base.h
+[`FlowLimiterCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc
 [`How to process realtime input streams`]: faq.md#how-to-process-realtime-input-streams
+[`vlog_overrides.cc`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/vlog_overrides.cc
+[abseil `VLOG`]: https://abseil.io/docs/cpp/guides/logging#VLOG
+
+## Unsupported flags during build
+
+If you are using Clang 18 or older, you may have to disable some compiler
+optimizations in our CPU backend.
+
+To disable support for `avxvnniint8`, add the following to you `.bazelrc`:
+
+```
+build --define=xnn_enable_avxvnniint8=false
+```

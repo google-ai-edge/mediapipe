@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,15 +16,19 @@
 
 # Placeholder for internal Python strict library and test compatibility macro.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
 py_library(
     name = "classifier_options",
     srcs = ["classifier_options.py"],
+)
+
+py_library(
+    name = "classifier_options_c",
+    srcs = ["classifier_options_c.py"],
     deps = [
-        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_py_pb2",
-        "//mediapipe/tasks/python/core:optional_dependencies",
+        ":classifier_options",
     ],
 )

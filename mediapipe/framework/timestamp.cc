@@ -16,34 +16,34 @@
 
 #include <string>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 
 namespace mediapipe {
 
-constexpr double Timestamp::kTimestampUnitsPerSecond;
-
 // In the following functions:
 // - The safe int type will check for overflow/underflow and other errors.
 // - The CHECK in the constructor will disallow special values.
-TimestampDiff Timestamp::operator-(const Timestamp other) const {
-  CHECK(IsRangeValue() && other.IsRangeValue())
+TimestampDiff Timestamp::operator-(Timestamp other) const {
+  ABSL_CHECK(IsRangeValue() && other.IsRangeValue())
       << "This timestamp is " << DebugString() << " and other was "
       << other.DebugString();
   TimestampBaseType tmp_base = timestamp_ - other.timestamp_;
   return TimestampDiff(tmp_base);
 }
-TimestampDiff TimestampDiff::operator+(const TimestampDiff other) const {
+TimestampDiff TimestampDiff::operator+(TimestampDiff other) const {
   TimestampBaseType tmp_base = timestamp_ + other.timestamp_;
   return TimestampDiff(tmp_base);
 }
-TimestampDiff TimestampDiff::operator-(const TimestampDiff other) const {
+TimestampDiff TimestampDiff::operator-(TimestampDiff other) const {
   TimestampBaseType tmp_base = timestamp_ - other.timestamp_;
   return TimestampDiff(tmp_base);
 }
 
 // Clamp the addition to the range [Timestamp::Min(), Timestamp::Max()].
-Timestamp Timestamp::operator+(const TimestampDiff offset) const {
-  CHECK(IsRangeValue()) << "Timestamp is: " << DebugString();
+Timestamp Timestamp::operator+(TimestampDiff offset) const {
+  ABSL_CHECK(IsRangeValue()) << "Timestamp is: " << DebugString();
   TimestampBaseType offset_base(offset.Value());
   if (offset_base >= TimestampBaseType(0)) {
     if (timestamp_.value() >= Timestamp::Max().Value() - offset_base.value()) {
@@ -59,18 +59,18 @@ Timestamp Timestamp::operator+(const TimestampDiff offset) const {
   }
   return Timestamp(timestamp_ + offset_base);
 }
-Timestamp Timestamp::operator-(const TimestampDiff offset) const {
+Timestamp Timestamp::operator-(TimestampDiff offset) const {
   return *this + -offset;
 }
-Timestamp TimestampDiff::operator+(const Timestamp timestamp) const {
+Timestamp TimestampDiff::operator+(Timestamp timestamp) const {
   return timestamp + *this;
 }
 
-Timestamp Timestamp::operator+=(const TimestampDiff other) {
+Timestamp Timestamp::operator+=(TimestampDiff other) {
   *this = *this + other;
   return *this;
 }
-Timestamp Timestamp::operator-=(const TimestampDiff other) {
+Timestamp Timestamp::operator-=(TimestampDiff other) {
   *this = *this - other;
   return *this;
 }
@@ -112,7 +112,7 @@ std::string Timestamp::DebugString() const {
     } else if (*this == Timestamp::Done()) {
       return "Timestamp::Done()";
     } else {
-      LOG(FATAL) << "Unknown special type.";
+      ABSL_LOG(FATAL) << "Unknown special type.";
     }
   }
   return absl::StrCat(timestamp_.value());
@@ -129,6 +129,13 @@ Timestamp Timestamp::NextAllowedInStream() const {
     return Min();
   }
   return *this + 1;
+}
+
+bool Timestamp::HasNextAllowedInStream() const {
+  if (*this >= Max() || *this == PreStream()) {
+    return false;
+  }
+  return true;
 }
 
 Timestamp Timestamp::PreviousAllowedInStream() const {

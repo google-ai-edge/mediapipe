@@ -13,18 +13,27 @@
 // limitations under the License.
 
 #include <algorithm>
-#include <unordered_map>
+#include <cstdint>
+#include <limits>
+#include <memory>
+#include <string>
+#include <utility>
 #include <vector>
 
-#include "absl/strings/str_format.h"
-#include "absl/types/span.h"
+#include "absl/container/flat_hash_set.h"
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/calculators/tensor/tensors_to_classification_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
+#include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/resources.h"
 #include "mediapipe/util/label_map.pb.h"
+#include "mediapipe/util/label_map_util.h"
 #include "mediapipe/util/resource_util.h"
 #if defined(MEDIAPIPE_MOBILE)
 #include "mediapipe/util/android/file/base/file.h"
@@ -84,7 +93,7 @@ class TensorsToClassificationCalculator : public Node {
  private:
   int top_k_ = 0;
   bool sort_by_descending_score_ = false;
-  proto_ns::Map<int64, LabelMapItem> local_label_map_;
+  proto_ns::Map<int64_t, LabelMapItem> local_label_map_;
   bool label_map_loaded_ = false;
   bool is_binary_classification_ = false;
   float min_score_threshold_ = std::numeric_limits<float>::lowest();
@@ -98,7 +107,8 @@ class TensorsToClassificationCalculator : public Node {
   // These are used to filter out the output classification results.
   ClassIndexSet class_index_set_;
   bool IsClassIndexAllowed(int class_index);
-  const proto_ns::Map<int64, LabelMapItem>& GetLabelMap(CalculatorContext* cc);
+  const proto_ns::Map<int64_t, LabelMapItem>& GetLabelMap(
+      CalculatorContext* cc);
 };
 MEDIAPIPE_REGISTER_NODE(TensorsToClassificationCalculator);
 
@@ -109,20 +119,14 @@ absl::Status TensorsToClassificationCalculator::Open(CalculatorContext* cc) {
   sort_by_descending_score_ = options.sort_by_descending_score();
   if (options.has_label_map_path()) {
     std::string string_path;
-    ASSIGN_OR_RETURN(string_path,
-                     PathToResourceAsFile(options.label_map_path()));
-    std::string label_map_string;
-    MP_RETURN_IF_ERROR(
-        mediapipe::GetResourceContents(string_path, &label_map_string));
-
-    std::istringstream stream(label_map_string);
-    std::string line;
-    int i = 0;
-    while (std::getline(stream, line)) {
-      LabelMapItem item;
-      item.set_name(line);
-      local_label_map_[i++] = item;
-    }
+    MP_ASSIGN_OR_RETURN(string_path,
+                        PathToResourceAsFile(options.label_map_path()));
+    MP_ASSIGN_OR_RETURN(std::unique_ptr<mediapipe::Resource> label_map,
+                        cc->GetResources().Get(string_path));
+    MP_ASSIGN_OR_RETURN(
+        local_label_map_,
+        BuildLabelMapFromFiles(label_map->ToStringView(),
+                               /*display_names_file_contents*/ {}));
     label_map_loaded_ = true;
   } else if (!options.label_items().empty()) {
     label_map_loaded_ = true;
@@ -133,7 +137,7 @@ absl::Status TensorsToClassificationCalculator::Open(CalculatorContext* cc) {
           << "Duplicate id found: " << entry.id();
       LabelMapItem item;
       item.set_name(entry.label());
-      local_label_map_[entry.id()] = item;
+      local_label_map_[entry.id()] = std::move(item);
     }
     label_map_loaded_ = true;
   }
@@ -180,7 +184,7 @@ absl::Status TensorsToClassificationCalculator::Process(CalculatorContext* cc) {
   auto view = input_tensors[0].GetCpuReadView();
   auto raw_scores = view.buffer<float>();
 
-  auto classification_list = absl::make_unique<ClassificationList>();
+  auto classification_list = std::make_unique<ClassificationList>();
   if (is_binary_classification_) {
     Classification* class_first = classification_list->add_classification();
     Classification* class_second = classification_list->add_classification();
@@ -252,7 +256,7 @@ bool TensorsToClassificationCalculator::IsClassIndexAllowed(int class_index) {
   }
 }
 
-const proto_ns::Map<int64, LabelMapItem>&
+const proto_ns::Map<int64_t, LabelMapItem>&
 TensorsToClassificationCalculator::GetLabelMap(CalculatorContext* cc) {
   return !local_label_map_.empty()
              ? local_label_map_

@@ -1,6 +1,11 @@
 absl-py
-numpy
-opencv-contrib-python
-tensorflow
+mediapipe>=0.10.0
+numpy<2
+opencv-python
+tensorflow>=2.10,<2.16
+tensorflow-addons
 tensorflow-datasets
 tensorflow-hub
+tensorflow-model-optimization<0.8.0
+tensorflow-text
+tf-models-official>=2.13.2,<2.16.0

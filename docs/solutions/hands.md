@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/vision/hand_landmarker
 title: Hands
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 4
 ---
 
@@ -17,6 +18,14 @@ nav_order: 4
 {:toc}
 </details>
 ---
+
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+As of March 1, 2023, this solution was upgraded to a new MediaPipe
+Solution. For more information, see the
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/vision/hand_landmarker)
+site.*
+
+----
 
 ## Overview
 
@@ -61,21 +70,21 @@ frame, and only when the landmark model could no longer identify hand presence
 is palm detection invoked to relocalize the hand.
 
 The pipeline is implemented as a MediaPipe
-[graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt)
+[graph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt)
 that uses a
-[hand landmark tracking subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/hand_landmark/hand_landmark_tracking_gpu.pbtxt)
+[hand landmark tracking subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/hand_landmark/hand_landmark_tracking_gpu.pbtxt)
 from the
-[hand landmark module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/hand_landmark),
+[hand landmark module](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/hand_landmark),
 and renders using a dedicated
-[hand renderer subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/subgraphs/hand_renderer_gpu.pbtxt).
+[hand renderer subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/hand_tracking/subgraphs/hand_renderer_gpu.pbtxt).
 The
-[hand landmark tracking subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/hand_landmark/hand_landmark_tracking_gpu.pbtxt)
+[hand landmark tracking subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/hand_landmark/hand_landmark_tracking_gpu.pbtxt)
 internally uses a
-[hand landmark subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/hand_landmark/hand_landmark_gpu.pbtxt)
+[hand landmark subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/hand_landmark/hand_landmark_gpu.pbtxt)
 from the same module and a
-[palm detection subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/modules/palm_detection/palm_detection_gpu.pbtxt)
+[palm detection subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/palm_detection/palm_detection_gpu.pbtxt)
 from the
-[palm detection module](https://github.com/google/mediapipe/tree/master/mediapipe/modules/palm_detection).
+[palm detection module](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/palm_detection).
 
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). For more information on how
@@ -396,7 +405,7 @@ camera.start();
 Please first follow general
 [instructions](../getting_started/android_solutions.md) to add MediaPipe Gradle
 dependencies and try the Android Solution API in the companion
-[example Android Studio project](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/solutions/hands),
+[example Android Studio project](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/solutions/hands),
 and learn more in the usage example below.
 
 Supported configuration options:
@@ -608,41 +617,41 @@ to visualize its associated subgraphs, please see
 #### Main Example
 
 *   Graph:
-    [`mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt)
+    [`mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_mobile.pbtxt)
 *   Android target:
     [(or download prebuilt ARM64 APK)](https://drive.google.com/open?id=1uCjS0y0O0dTDItsMh8x2cf4-l3uHW1vE)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu:handtrackinggpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu/BUILD)
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu:handtrackinggpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu/BUILD)
 *   iOS target:
-    [`mediapipe/examples/ios/handtrackinggpu:HandTrackingGpuApp`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/handtrackinggpu/BUILD)
+    [`mediapipe/examples/ios/handtrackinggpu:HandTrackingGpuApp`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/ios/handtrackinggpu/BUILD)
 
 Tip: Maximum number of hands to detect/process is set to 2 by default. To change
 it, for Android modify `NUM_HANDS` in
-[MainActivity.java](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu/MainActivity.java),
+[MainActivity.java](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handtrackinggpu/MainActivity.java),
 and for iOS modify `kNumHands` in
-[HandTrackingViewController.mm](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/handtrackinggpu/HandTrackingViewController.mm).
+[HandTrackingViewController.mm](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/ios/handtrackinggpu/HandTrackingViewController.mm).
 
 #### Palm/Hand Detection Only (no landmarks)
 
 *   Graph:
-    [`mediapipe/graphs/hand_tracking/hand_detection_mobile.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_detection_mobile.pbtxt)
+    [`mediapipe/graphs/hand_tracking/hand_detection_mobile.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_detection_mobile.pbtxt)
 *   Android target:
     [(or download prebuilt ARM64 APK)](https://drive.google.com/open?id=1qUlTtH7Ydg-wl_H6VVL8vueu2UCTu37E)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/handdetectiongpu:handdetectiongpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handdetectiongpu/BUILD)
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/handdetectiongpu:handdetectiongpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/handdetectiongpu/BUILD)
 *   iOS target:
-    [`mediapipe/examples/ios/handdetectiongpu:HandDetectionGpuApp`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/handdetectiongpu/BUILD)
+    [`mediapipe/examples/ios/handdetectiongpu:HandDetectionGpuApp`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/ios/handdetectiongpu/BUILD)
 
 ### Desktop
 
 *   Running on CPU
     *   Graph:
-        [`mediapipe/graphs/hand_tracking/hand_tracking_desktop_live.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_desktop_live.pbtxt)
+        [`mediapipe/graphs/hand_tracking/hand_tracking_desktop_live.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_desktop_live.pbtxt)
     *   Target:
-        [`mediapipe/examples/desktop/hand_tracking:hand_tracking_cpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/hand_tracking/BUILD)
+        [`mediapipe/examples/desktop/hand_tracking:hand_tracking_cpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/hand_tracking/BUILD)
 *   Running on GPU
     *   Graph:
-        [`mediapipe/graphs/hand_tracking/hand_tracking_desktop_live_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_desktop_gpu.pbtxt)
+        [`mediapipe/graphs/hand_tracking/hand_tracking_desktop_live_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/hand_tracking/hand_tracking_desktop_gpu.pbtxt)
     *   Target:
-        [`mediapipe/examples/desktop/hand_tracking:hand_tracking_gpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/hand_tracking/BUILD)
+        [`mediapipe/examples/desktop/hand_tracking:hand_tracking_gpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/hand_tracking/BUILD)
 
 Tip: Maximum number of hands to detect/process is set to 2 by default. To change
 it, in the graph file modify the option of `ConstantSidePacketCalculator`.

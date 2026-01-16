@@ -15,6 +15,7 @@
 // Calculator converts from one-dimensional Tensor of DT_FLOAT to Matrix
 // OR from (batched) two-dimensional Tensor of DT_FLOAT to Matrix.
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/calculators/tensorflow/tensor_to_matrix_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"
@@ -36,7 +37,7 @@ constexpr char kReference[] = "REFERENCE";
 
 absl::Status FillTimeSeriesHeaderIfValid(const Packet& header_packet,
                                          TimeSeriesHeader* header) {
-  CHECK(header);
+  ABSL_CHECK(header);
   if (header_packet.IsEmpty()) {
     return absl::UnknownError("No header found.");
   }
@@ -66,8 +67,10 @@ absl::Status FillTimeSeriesHeaderIfValid(const Packet& header_packet,
 // -- 1-D or 2-D Tensor
 // Output:
 // -- Matrix with the same values as the Tensor
-// If input tensor is 1 dimensional, the ouput Matrix is of (1xn) shape.
-// If input tensor is 2 dimensional (batched), the ouput Matrix is (mxn) shape.
+// If input tensor is 1 dimensional, the output Matrix is of (nx1) shape.
+// It is a 1-D column vector, with n rows and 1 column.
+// If input tensor is 2 dimensional (mxn), the output Matrix is (nxm) shape.
+// It has n rows and m columns.
 //
 // Example Config
 // node: {
@@ -191,10 +194,11 @@ absl::Status TensorToMatrixCalculator::Process(CalculatorContext* cc) {
       << "Tensor stream packet does not contain a Tensor.";
 
   const tf::Tensor& input_tensor = cc->Inputs().Tag(kTensor).Get<tf::Tensor>();
-  CHECK(1 == input_tensor.dims() || 2 == input_tensor.dims())
+  ABSL_CHECK(1 == input_tensor.dims() || 2 == input_tensor.dims())
       << "Only 1-D or 2-D Tensors can be converted to matrices.";
-  const int32 length = input_tensor.dim_size(input_tensor.dims() - 1);
-  const int32 width = (1 == input_tensor.dims()) ? 1 : input_tensor.dim_size(0);
+  const int32_t length = input_tensor.dim_size(input_tensor.dims() - 1);
+  const int32_t width =
+      (1 == input_tensor.dims()) ? 1 : input_tensor.dim_size(0);
   if (header_.has_num_channels()) {
     RET_CHECK_EQ(length, header_.num_channels())
         << "The number of channels at runtime does not match the header.";

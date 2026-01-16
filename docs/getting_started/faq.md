@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/getting_started/faq
 title: FAQ
 parent: Getting Started
 nav_order: 9
@@ -11,6 +12,12 @@ nav_order: 9
 1. TOC
 {:toc}
 ---
+
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+----
 
 ### How to convert ImageFrames and GpuBuffers
 
@@ -46,7 +53,7 @@ calculators need only to be *thread-compatible* and not *thread-safe*.
 In order to enable one calculator to process multiple inputs in parallel, there
 are two possible approaches:
 
-1.  Define multiple calulator nodes and dispatch input packets to all nodes.
+1.  Define multiple calculator nodes and dispatch input packets to all nodes.
 2.  Make the calculator thread-safe and configure its [`max_in_flight`] setting.
 
 The first approach can be followed using the calculators designed to distribute
@@ -59,7 +66,7 @@ The second approach allows up to [`max_in_flight`] invocations of the
 packets from [`CalculatorBase::Process`] are automatically ordered by timestamp
 before they are passed along to downstream calculators.
 
-With either aproach, you must be aware that the calculator running in parallel
+With either approach, you must be aware that the calculator running in parallel
 cannot maintain internal state in the same way as a normal sequential
 calculator.
 
@@ -88,12 +95,12 @@ while the application is running:
 The first approach has the advantage of leveraging [`CalculatorGraphConfig`]
 processing tools such as "subgraphs". The second approach has the advantage of
 allowing active calculators and packets to remain in-flight while settings
-change. Mediapipe contributors are currently investigating alternative approaches
+change. MediaPipe contributors are currently investigating alternative approaches
 to achieve both of these advantages.
 
 ### How to process realtime input streams
 
-The mediapipe framework can be used to process data streams either online or
+The MediaPipe framework can be used to process data streams either online or
 offline. For offline processing, packets are pushed into the graph as soon as
 calculators are ready to process those packets. For online processing, one
 packet for each frame is pushed into the graph as that frame is recorded.
@@ -128,19 +135,19 @@ MacOS, Android, and iOS.  The core of MediaPipe framework is a C++ library
 conforming to the C++11 standard, so it is relatively easy to port to
 additional platforms.
 
-[`object_detection_mobile_cpu.pbtxt`]: https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt
-[`ImageFrame`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/formats/image_frame.h
-[`GpuBuffer`]: https://github.com/google/mediapipe/tree/master/mediapipe/gpu/gpu_buffer.h
-[`GpuBufferToImageFrameCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/gpu/gpu_buffer_to_image_frame_calculator.cc
-[`ImageFrameToGpuBufferCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/gpu/image_frame_to_gpu_buffer_calculator.cc
-[`AnnotationOverlayCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/util/annotation_overlay_calculator.cc
-[`face_detection_mobile_gpu.pbtxt`]: https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt
-[`CalculatorBase::Process`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator_base.h
-[`max_in_flight`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`RoundRobinDemuxCalculator`]: https://github.com/google/mediapipe/tree/master//mediapipe/calculators/core/round_robin_demux_calculator.cc
-[`ScaleImageCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/image/scale_image_calculator.cc
-[`ImmediateInputStreamHandler`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/stream_handler/immediate_input_stream_handler.cc
-[`CalculatorGraphConfig`]: https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto
-[`FlowLimiterCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc
-[`PacketClonerCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/packet_cloner_calculator.cc
-[`MakePairCalculator`]: https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core/make_pair_calculator.cc
+[`object_detection_mobile_cpu.pbtxt`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt
+[`ImageFrame`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/formats/image_frame.h
+[`GpuBuffer`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/gpu/gpu_buffer.h
+[`GpuBufferToImageFrameCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/gpu/gpu_buffer_to_image_frame_calculator.cc
+[`ImageFrameToGpuBufferCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/gpu/image_frame_to_gpu_buffer_calculator.cc
+[`AnnotationOverlayCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/util/annotation_overlay_calculator.cc
+[`face_detection_mobile_gpu.pbtxt`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt
+[`CalculatorBase::Process`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_base.h
+[`max_in_flight`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
+[`RoundRobinDemuxCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master//mediapipe/calculators/core/round_robin_demux_calculator.cc
+[`ScaleImageCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/image/scale_image_calculator.cc
+[`ImmediateInputStreamHandler`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/stream_handler/immediate_input_stream_handler.cc
+[`CalculatorGraphConfig`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto
+[`FlowLimiterCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/core/flow_limiter_calculator.cc
+[`PacketClonerCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/core/packet_cloner_calculator.cc
+[`MakePairCalculator`]: https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/core/make_pair_calculator.cc

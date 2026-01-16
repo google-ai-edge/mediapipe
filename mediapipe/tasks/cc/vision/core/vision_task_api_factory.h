@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -26,6 +27,8 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/tasks/cc/core/task_api_factory.h"
+#include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
@@ -48,7 +51,8 @@ class VisionTaskApiFactory {
   static absl::StatusOr<std::unique_ptr<T>> Create(
       CalculatorGraphConfig graph_config,
       std::unique_ptr<tflite::OpResolver> resolver, RunningMode running_mode,
-      tasks::core::PacketsCallback packets_callback = nullptr) {
+      tasks::core::PacketsCallback packets_callback = nullptr,
+      bool disable_default_service = false) {
     bool found_task_subgraph = false;
     for (const auto& node : graph_config.node()) {
       if (node.calculator() == "FlowLimiterCalculator") {
@@ -60,13 +64,8 @@ class VisionTaskApiFactory {
             "Task graph config should only contain one task subgraph node.",
             MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
       } else {
-        if (!node.options().HasExtension(Options::ext)) {
-          return CreateStatusWithPayload(
-              absl::StatusCode::kInvalidArgument,
-              absl::StrCat(node.calculator(),
-                           " is missing the required task options field."),
-              MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
-        }
+        MP_RETURN_IF_ERROR(
+            tasks::core::TaskApiFactory::CheckHasValidOptions<Options>(node));
         found_task_subgraph = true;
       }
     }
@@ -85,10 +84,19 @@ class VisionTaskApiFactory {
           "callback shouldn't be provided.",
           MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
     }
-    ASSIGN_OR_RETURN(auto runner,
-                     tasks::core::TaskRunner::Create(
-                         std::move(graph_config), std::move(resolver),
-                         std::move(packets_callback)));
+#if !MEDIAPIPE_DISABLE_GPU
+    MP_ASSIGN_OR_RETURN(auto runner,
+                        tasks::core::TaskRunner::Create(
+                            std::move(graph_config), std::move(resolver),
+                            std::move(packets_callback), nullptr, std::nullopt,
+                            nullptr, std::nullopt, disable_default_service));
+#else
+    MP_ASSIGN_OR_RETURN(auto runner,
+                        tasks::core::TaskRunner::Create(
+                            std::move(graph_config), std::move(resolver),
+                            std::move(packets_callback), nullptr, std::nullopt,
+                            std::nullopt, disable_default_service));
+#endif  // !MEDIAPIPE_DISABLE_GPU
     return std::make_unique<T>(std::move(runner), running_mode);
   }
 };

@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/framework_concepts/packets
 title: Packets
 parent: Framework Concepts
 nav_order: 3
@@ -11,6 +12,12 @@ nav_order: 3
 1. TOC
 {:toc}
 ---
+
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+----
 
 Calculators communicate by sending and receiving packets. Typically a single
 packet is sent along each input stream at each input timestamp. A packet can

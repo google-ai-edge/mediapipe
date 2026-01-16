@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+# Placeholder: load java_lite_proto_library
+
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
@@ -35,10 +39,10 @@ android_library(
         "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:basic_lib",
         "//mediapipe/java/com/google/mediapipe/components:android_components",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
-        "//third_party:androidx_appcompat",
-        "//third_party:androidx_core",
         "//third_party:opencv",
+        "@maven//:androidx_appcompat_appcompat",
         "@maven//:androidx_concurrent_concurrent_futures",
+        "@maven//:androidx_core_core",
         "@maven//:com_github_bumptech_glide_glide",
         "@maven//:com_google_guava_guava",
     ],
@@ -96,5 +100,6 @@ android_binary(
         ":instantmotiontracking_lib",
         ":mediapipe_jni_lib",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//third_party:libc++_shared_lib",
     ],
 )

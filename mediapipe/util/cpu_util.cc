@@ -15,6 +15,7 @@
 #include "mediapipe/util/cpu_util.h"
 
 #include <cmath>
+#include <cstdint>
 
 #ifdef __ANDROID__
 #include "ndk/sources/android/cpufeatures/cpu-features.h"
@@ -26,35 +27,24 @@
 #include <fstream>
 
 #include "absl/algorithm/container.h"
-#include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/port/canonical_errors.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/statusor.h"
-
-ABSL_FLAG(std::string, system_cpu_max_freq_file,
-          "/sys/devices/system/cpu/cpu$0/cpufreq/cpuinfo_max_freq",
-          "The file pattern for CPU max frequencies, where $0 will be replaced "
-          "with the CPU id.");
 
 namespace mediapipe {
 namespace {
 
-constexpr uint32 kBufferLength = 64;
+constexpr uint32_t kBufferLength = 64;
 
 absl::StatusOr<std::string> GetFilePath(int cpu) {
-  if (!absl::StrContains(absl::GetFlag(FLAGS_system_cpu_max_freq_file), "$0")) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("Invalid frequency file: ",
-                     absl::GetFlag(FLAGS_system_cpu_max_freq_file)));
-  }
-  return absl::Substitute(absl::GetFlag(FLAGS_system_cpu_max_freq_file), cpu);
+  return absl::Substitute(
+      "/sys/devices/system/cpu/cpu$0/cpufreq/cpuinfo_max_freq", cpu);
 }
 
-absl::StatusOr<uint64> GetCpuMaxFrequency(int cpu) {
+absl::StatusOr<uint64_t> GetCpuMaxFrequency(int cpu) {
   auto path_or_status = GetFilePath(cpu);
   if (!path_or_status.ok()) {
     return path_or_status.status();
@@ -65,7 +55,7 @@ absl::StatusOr<uint64> GetCpuMaxFrequency(int cpu) {
     char buffer[kBufferLength];
     file.getline(buffer, kBufferLength);
     file.close();
-    uint64 frequency;
+    uint64_t frequency;
     if (absl::SimpleAtoi(buffer, &frequency)) {
       return frequency;
     } else {
@@ -79,7 +69,7 @@ absl::StatusOr<uint64> GetCpuMaxFrequency(int cpu) {
 }
 
 std::set<int> InferLowerOrHigherCoreIds(bool lower) {
-  std::vector<std::pair<int, uint64>> cpu_freq_pairs;
+  std::vector<std::pair<int, uint64_t>> cpu_freq_pairs;
   for (int cpu = 0; cpu < NumCPUCores(); ++cpu) {
     auto freq_or_status = GetCpuMaxFrequency(cpu);
     if (freq_or_status.ok()) {
@@ -90,12 +80,12 @@ std::set<int> InferLowerOrHigherCoreIds(bool lower) {
     return {};
   }
 
-  absl::c_sort(cpu_freq_pairs, [lower](const std::pair<int, uint64>& left,
-                                       const std::pair<int, uint64>& right) {
+  absl::c_sort(cpu_freq_pairs, [lower](const std::pair<int, uint64_t>& left,
+                                       const std::pair<int, uint64_t>& right) {
     return (lower && left.second < right.second) ||
            (!lower && left.second > right.second);
   });
-  uint64 edge_freq = cpu_freq_pairs[0].second;
+  uint64_t edge_freq = cpu_freq_pairs[0].second;
 
   std::set<int> inferred_cores;
   for (const auto& cpu_freq_pair : cpu_freq_pairs) {

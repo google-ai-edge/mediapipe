@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ from typing import Union
 
 import tensorflow as tf
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_writer
-from mediapipe.tasks.python.metadata.metadata_writers import writer_utils
+from mediapipe.tasks.python.metadata.metadata_writers import model_asset_bundle_utils
 
 _HAND_DETECTOR_TFLITE_NAME = "hand_detector.tflite"
 _HAND_LANDMARKS_DETECTOR_TFLITE_NAME = "hand_landmarks_detector.tflite"
@@ -62,6 +62,51 @@ def read_file(file_path: str, mode: str = "rb") -> Union[str, bytes]:
     return f.read()
 
 
+class HandLandmarkerMetadataWriter:
+  """MetadataWriter to write the model asset bundle for HandLandmarker."""
+
+  def __init__(
+      self,
+      hand_detector_model_buffer: bytearray,
+      hand_landmarks_detector_model_buffer: bytearray,
+  ) -> None:
+    """Initializes HandLandmarkerMetadataWriter to write model asset bundle.
+
+    Args:
+      hand_detector_model_buffer: A valid flatbuffer *with* metadata loaded from
+        the TFLite hand detector model file.
+      hand_landmarks_detector_model_buffer: A valid flatbuffer *with* metadata
+        loaded from the TFLite hand landmarks detector model file.
+    """
+    self._hand_detector_model_buffer = hand_detector_model_buffer
+    self._hand_landmarks_detector_model_buffer = hand_landmarks_detector_model_buffer
+    self._temp_folder = tempfile.TemporaryDirectory()
+
+  def __del__(self):
+    if os.path.exists(self._temp_folder.name):
+      self._temp_folder.cleanup()
+
+  def populate(self):
+    """Creates the model asset bundle for hand landmarker task.
+
+    Returns:
+      Model asset bundle in bytes
+    """
+    landmark_models = {
+        _HAND_DETECTOR_TFLITE_NAME:
+            self._hand_detector_model_buffer,
+        _HAND_LANDMARKS_DETECTOR_TFLITE_NAME:
+            self._hand_landmarks_detector_model_buffer
+    }
+    output_hand_landmarker_path = os.path.join(self._temp_folder.name,
+                                               _HAND_LANDMARKER_BUNDLE_NAME)
+    model_asset_bundle_utils.create_model_asset_bundle(
+        landmark_models, output_hand_landmarker_path
+    )
+    hand_landmarker_model_buffer = read_file(output_hand_landmarker_path)
+    return hand_landmarker_model_buffer
+
+
 class MetadataWriter:
   """MetadataWriter to write the metadata and the model asset bundle."""
 
@@ -86,8 +131,8 @@ class MetadataWriter:
       custom_gesture_classifier_metadata_writer: Metadata writer to write custom
         gesture classifier metadata into the TFLite file.
     """
-    self._hand_detector_model_buffer = hand_detector_model_buffer
-    self._hand_landmarks_detector_model_buffer = hand_landmarks_detector_model_buffer
+    self._hand_landmarker_metadata_writer = HandLandmarkerMetadataWriter(
+        hand_detector_model_buffer, hand_landmarks_detector_model_buffer)
     self._gesture_embedder_model_buffer = gesture_embedder_model_buffer
     self._canned_gesture_classifier_model_buffer = canned_gesture_classifier_model_buffer
     self._custom_gesture_classifier_metadata_writer = custom_gesture_classifier_metadata_writer
@@ -147,16 +192,8 @@ class MetadataWriter:
       A tuple of (model_asset_bundle_in_bytes, metadata_json_content)
     """
     # Creates the model asset bundle for hand landmarker task.
-    landmark_models = {
-        _HAND_DETECTOR_TFLITE_NAME:
-            self._hand_detector_model_buffer,
-        _HAND_LANDMARKS_DETECTOR_TFLITE_NAME:
-            self._hand_landmarks_detector_model_buffer
-    }
-    output_hand_landmarker_path = os.path.join(self._temp_folder.name,
-                                               _HAND_LANDMARKER_BUNDLE_NAME)
-    writer_utils.create_model_asset_bundle(landmark_models,
-                                           output_hand_landmarker_path)
+    hand_landmarker_model_buffer = self._hand_landmarker_metadata_writer.populate(
+    )
 
     # Write metadata into custom gesture classifier model.
     self._custom_gesture_classifier_model_buffer, custom_gesture_classifier_metadata_json = self._custom_gesture_classifier_metadata_writer.populate(
@@ -172,22 +209,24 @@ class MetadataWriter:
     }
     output_hand_gesture_recognizer_path = os.path.join(
         self._temp_folder.name, _HAND_GESTURE_RECOGNIZER_BUNDLE_NAME)
-    writer_utils.create_model_asset_bundle(hand_gesture_recognizer_models,
-                                           output_hand_gesture_recognizer_path)
+    model_asset_bundle_utils.create_model_asset_bundle(
+        hand_gesture_recognizer_models, output_hand_gesture_recognizer_path
+    )
 
     # Creates the model asset bundle for end-to-end hand gesture recognizer
     # graph.
     gesture_recognizer_models = {
         _HAND_LANDMARKER_BUNDLE_NAME:
-            read_file(output_hand_landmarker_path),
+            hand_landmarker_model_buffer,
         _HAND_GESTURE_RECOGNIZER_BUNDLE_NAME:
             read_file(output_hand_gesture_recognizer_path),
     }
 
     output_file_path = os.path.join(self._temp_folder.name,
                                     "gesture_recognizer.task")
-    writer_utils.create_model_asset_bundle(gesture_recognizer_models,
-                                           output_file_path)
+    model_asset_bundle_utils.create_model_asset_bundle(
+        gesture_recognizer_models, output_file_path
+    )
     with open(output_file_path, "rb") as f:
       gesture_recognizer_model_buffer = f.read()
     return gesture_recognizer_model_buffer, custom_gesture_classifier_metadata_json

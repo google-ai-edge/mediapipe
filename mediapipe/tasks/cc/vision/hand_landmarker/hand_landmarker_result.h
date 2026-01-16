@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ limitations under the License.
 
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/tasks/cc/components/containers/classification_result.h"
+#include "mediapipe/tasks/cc/components/containers/landmark.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -28,12 +30,17 @@ namespace hand_landmarker {
 // element represents a single hand detected in the image.
 struct HandLandmarkerResult {
   // Classification of handedness.
-  std::vector<mediapipe::ClassificationList> handedness;
+  std::vector<components::containers::Classifications> handedness;
   // Detected hand landmarks in normalized image coordinates.
-  std::vector<mediapipe::NormalizedLandmarkList> hand_landmarks;
+  std::vector<components::containers::NormalizedLandmarks> hand_landmarks;
   // Detected hand landmarks in world coordinates.
-  std::vector<mediapipe::LandmarkList> hand_world_landmarks;
+  std::vector<components::containers::Landmarks> hand_world_landmarks;
 };
+
+HandLandmarkerResult ConvertToHandLandmarkerResult(
+    const std::vector<mediapipe::ClassificationList>& handedness_proto,
+    const std::vector<mediapipe::NormalizedLandmarkList>& hand_landmarks_proto,
+    const std::vector<mediapipe::LandmarkList>& hand_world_landmarks_proto);
 
 }  // namespace hand_landmarker
 }  // namespace vision

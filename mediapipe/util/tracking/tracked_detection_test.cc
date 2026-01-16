@@ -18,6 +18,8 @@
 
 namespace mediapipe {
 
+using ::mediapipe::NormalizedRect;
+
 const float kErrorMargin = 1e-4f;
 
 TEST(TrackedDetectionTest, ConstructorWithoutBox) {

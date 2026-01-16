@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,11 +16,14 @@ package com.google.mediapipe.tasks.core;
 
 import android.content.Context;
 import android.util.Log;
+import com.google.mediapipe.proto.CalculatorProto.CalculatorGraphConfig;
 import com.google.mediapipe.framework.AndroidAssetUtil;
 import com.google.mediapipe.framework.AndroidPacketCreator;
 import com.google.mediapipe.framework.Graph;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
+import com.google.mediapipe.tasks.core.logging.TasksStatsLogger;
+import com.google.mediapipe.tasks.core.logging.TasksStatsLoggerFactory;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -34,6 +37,7 @@ public class TaskRunner implements AutoCloseable {
   private final Graph graph;
   private final ModelResourcesCache modelResourcesCache;
   private final AndroidPacketCreator packetCreator;
+  private final TasksStatsLogger statsLogger;
   private long lastSeenTimestamp = Long.MIN_VALUE;
   private ErrorListener errorListener;
 
@@ -51,6 +55,9 @@ public class TaskRunner implements AutoCloseable {
       Context context,
       TaskInfo<? extends TaskOptions> taskInfo,
       OutputHandler<? extends TaskResult, ?> outputHandler) {
+    TasksStatsLogger statsLogger =
+        TasksStatsLoggerFactory.create(
+            context, taskInfo.taskName(), taskInfo.taskRunningModeName());
     AndroidAssetUtil.initializeNativeAssetManager(context);
     Graph mediapipeGraph = new Graph();
     mediapipeGraph.loadBinaryGraph(taskInfo.generateGraphConfig());
@@ -58,12 +65,15 @@ public class TaskRunner implements AutoCloseable {
     mediapipeGraph.setServiceObject(new ModelResourcesCacheService(), graphModelResourcesCache);
     mediapipeGraph.addMultiStreamCallback(
         taskInfo.outputStreamNames(),
-        outputHandler::run,
-        /*observeTimestampBounds=*/ outputHandler.handleTimestampBoundChanges());
+        packets -> {
+          outputHandler.run(packets);
+          statsLogger.recordInvocationEnd(packets.get(0).getTimestamp());
+        },
+        /* observeTimestampBounds= */ outputHandler.handleTimestampBoundChanges());
     mediapipeGraph.startRunningGraph();
     // Waits until all calculators are opened and the graph is fully started.
     mediapipeGraph.waitUntilGraphIdle();
-    return new TaskRunner(mediapipeGraph, graphModelResourcesCache, outputHandler);
+    return new TaskRunner(mediapipeGraph, graphModelResourcesCache, outputHandler, statsLogger);
   }
 
   /**
@@ -85,13 +95,16 @@ public class TaskRunner implements AutoCloseable {
    *
    * <p>Note: This method is designed for processing batch data such as unrelated images and texts.
    * The call blocks the current thread until a failure status or a successful result is returned.
-   * An internal timestamp will be assigend per invocation. This method is thread-safe and allows
+   * An internal timestamp will be assigned per invocation. This method is thread-safe and allows
    * clients to call it from different threads.
    *
    * @param inputs a map contains (input stream {@link String}, data {@link Packet}) pairs.
    */
   public synchronized TaskResult process(Map<String, Packet> inputs) {
-    addPackets(inputs, generateSyntheticTimestamp());
+    long syntheticInputTimestamp = generateSyntheticTimestamp();
+    // TODO: Support recording GPU input arrival.
+    statsLogger.recordCpuInputArrival(syntheticInputTimestamp);
+    addPackets(inputs, syntheticInputTimestamp);
     graph.waitUntilGraphIdle();
     lastSeenTimestamp = outputHandler.getLatestOutputTimestamp();
     return outputHandler.retrieveCachedTaskResult();
@@ -112,6 +125,7 @@ public class TaskRunner implements AutoCloseable {
    */
   public synchronized TaskResult process(Map<String, Packet> inputs, long inputTimestamp) {
     validateInputTimstamp(inputTimestamp);
+    statsLogger.recordCpuInputArrival(inputTimestamp);
     addPackets(inputs, inputTimestamp);
     graph.waitUntilGraphIdle();
     return outputHandler.retrieveCachedTaskResult();
@@ -132,6 +146,7 @@ public class TaskRunner implements AutoCloseable {
    */
   public synchronized void send(Map<String, Packet> inputs, long inputTimestamp) {
     validateInputTimstamp(inputTimestamp);
+    statsLogger.recordCpuInputArrival(inputTimestamp);
     addPackets(inputs, inputTimestamp);
   }
 
@@ -145,6 +160,7 @@ public class TaskRunner implements AutoCloseable {
         graphStarted.set(false);
         graph.closeAllPacketSources();
         graph.waitUntilGraphDone();
+        statsLogger.logSessionEnd();
       } catch (MediaPipeException e) {
         reportError(e);
       }
@@ -154,6 +170,7 @@ public class TaskRunner implements AutoCloseable {
       // Waits until all calculators are opened and the graph is fully restarted.
       graph.waitUntilGraphIdle();
       graphStarted.set(true);
+      statsLogger.logSessionStart();
     } catch (MediaPipeException e) {
       reportError(e);
     }
@@ -169,6 +186,7 @@ public class TaskRunner implements AutoCloseable {
       graphStarted.set(false);
       graph.closeAllPacketSources();
       graph.waitUntilGraphDone();
+      statsLogger.logSessionEnd();
       if (modelResourcesCache != null) {
         modelResourcesCache.release();
       }
@@ -183,6 +201,10 @@ public class TaskRunner implements AutoCloseable {
     } catch (MediaPipeException e) {
       reportError(e);
     }
+  }
+
+  public CalculatorGraphConfig getCalculatorGraphConfig() {
+    return graph.getCalculatorGraphConfig();
   }
 
   private synchronized void addPackets(Map<String, Packet> inputs, long inputTimestamp) {
@@ -247,12 +269,15 @@ public class TaskRunner implements AutoCloseable {
   private TaskRunner(
       Graph graph,
       ModelResourcesCache modelResourcesCache,
-      OutputHandler<? extends TaskResult, ?> outputHandler) {
+      OutputHandler<? extends TaskResult, ?> outputHandler,
+      TasksStatsLogger statsLogger) {
     this.outputHandler = outputHandler;
     this.graph = graph;
     this.modelResourcesCache = modelResourcesCache;
     this.packetCreator = new AndroidPacketCreator(graph);
+    this.statsLogger = statsLogger;
     graphStarted.set(true);
+    this.statsLogger.logSessionStart();
   }
 
   /** Reports error. */

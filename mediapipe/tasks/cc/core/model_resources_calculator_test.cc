@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/model_resources_calculator.pb.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -124,7 +124,7 @@ void RunGraphWithGraphService(std::unique_ptr<ModelResources> model_resources,
 
 }  // namespace
 
-class ModelResourcesCalculatorTest : public tflite_shims::testing::Test {};
+class ModelResourcesCalculatorTest : public tflite::testing::Test {};
 
 TEST_F(ModelResourcesCalculatorTest, MissingCalculatorOptions) {
   auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(
@@ -179,9 +179,9 @@ TEST_F(ModelResourcesCalculatorTest, EmptyExternalFileProto) {
   auto status = graph.Initialize(graph_config);
   ASSERT_FALSE(status.ok());
   EXPECT_THAT(status.message(),
-              testing::HasSubstr(
-                  "'model_file' must specify at least one of "
-                  "'file_content', 'file_descriptor_meta', or 'file_name'"));
+              testing::HasSubstr("'model_file' must specify at least one of "
+                                 "'file_content', 'file_descriptor_meta', "
+                                 "'file_name', or 'file_pointer_meta'"));
 }
 
 TEST_F(ModelResourcesCalculatorTest, GraphServiceNotAvailable) {

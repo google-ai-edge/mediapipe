@@ -32,6 +32,10 @@ message LandmarksToRenderDataCalculatorOptions {
 
   // Color of the landmarks.
   optional Color landmark_color = 2;
+
+  // Whether to render landmarks as points.
+  optional bool render_landmarks = 14 [default = true];
+
   // Color of the connections.
   optional Color connection_color = 3;
 

@@ -1,0 +1,60 @@
+// Copyright 2023 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe.tasks.vision.face_geometry.proto;
+
+import "mediapipe/framework/formats/matrix_data.proto";
+import "mediapipe/tasks/cc/vision/face_geometry/proto/mesh_3d.proto";
+
+option java_package = "com.google.mediapipe.tasks.vision.facegeometry.proto";
+option java_outer_classname = "FaceGeometryProto";
+
+// Defines the face geometry pipeline estimation result format.
+message FaceGeometry {
+  // Defines a mesh surface for a face. The face mesh vertex IDs are the same as
+  // the face landmark IDs.
+  //
+  // XYZ coordinates exist in the right-handed Metric 3D space configured by an
+  // environment. UV coordinates are taken from the canonical face mesh model.
+  //
+  // XY coordinates are guaranteed to match the screen positions of
+  // the input face landmarks after (1) being multiplied by the face pose
+  // transformation matrix and then (2) being projected with a perspective
+  // camera matrix of the same environment.
+  //
+  // NOTE: the triangular topology of the face mesh is only useful when derived
+  //       from the 468 face landmarks, not from the 6 face detection landmarks
+  //       (keypoints). The former don't cover the entire face and this mesh is
+  //       defined here only to comply with the API. It should be considered as
+  //       a placeholder and/or for debugging purposes.
+  //
+  //       Use the face geometry derived from the face detection landmarks
+  //       (keypoints) for the face pose transformation matrix, not the mesh.
+  optional Mesh3d mesh = 1;
+
+  // Defines a face pose transformation matrix, which provides mapping from
+  // the static canonical face model to the runtime face. Tries to distinguish
+  // a head pose change from a facial expression change and to only reflect the
+  // former.
+  //
+  // Is a 4x4 matrix and contains only the following components:
+  //   * Uniform scale
+  //   * Rotation
+  //   * Translation
+  //
+  // The last row is guaranteed to be `[0 0 0 1]`.
+  optional mediapipe.MatrixData pose_transform_matrix = 2;
+}

@@ -149,6 +149,19 @@ class PoseTest(parameterized.TestCase):
       self.assertIsNone(results.pose_landmarks)
       self.assertIsNone(results.segmentation_mask)
 
+  def test_blank_image_with_extra_settings(self):
+    with mp_pose.Pose(
+        enable_segmentation=True,
+        extra_settings=mp_pose.ExtraSettings(
+            disallow_service_default_initialization=True
+        ),
+    ) as pose:
+      image = np.zeros([100, 100, 3], dtype=np.uint8)
+      image.fill(255)
+      results = pose.process(image)
+      self.assertIsNone(results.pose_landmarks)
+      self.assertIsNone(results.segmentation_mask)
+
   @parameterized.named_parameters(('static_lite', True, 0, 3),
                                   ('static_full', True, 1, 3),
                                   ('static_heavy', True, 2, 3),

@@ -41,7 +41,7 @@ struct TimedBox {
   float right = 0;
   // Rotation of box w.r.t. center in radians.
   float rotation = 0;
-  int64 time_msec = 0;
+  int64_t time_msec = 0;
   // Confidence of the tracked box in range [0, 1].
   float confidence = 0;
   std::vector<Vector2_f> quad_vertices;
@@ -122,8 +122,8 @@ typedef std::map<int, PathSegment> Path;
 // Returns box at specified time for a specific path segment.
 // Returns true on success, otherwise box is left untouched.
 // Optionally returns closest known MotionBoxState if state is not null.
-bool TimedBoxAtTime(const PathSegment& segment, int64 time_msec, TimedBox* box,
-                    MotionBoxState* state = nullptr);
+bool TimedBoxAtTime(const PathSegment& segment, int64_t time_msec,
+                    TimedBox* box, MotionBoxState* state = nullptr);
 
 // Tracks timed boxes from cached TrackingDataChunks created by
 // FlowPackagerCalculator. For usage see accompanying test.
@@ -169,12 +169,12 @@ class BoxTracker {
   // Does not block caller, returns immediately.
   // Note: Use positive integers for id, we reserve negative ones for debugging
   // and visualization purposes.
-  void NewBoxTrack(const TimedBox& initial_pos, int id, int64 min_msec = 0,
-                   int64 max_msec = std::numeric_limits<int64>::max());
+  void NewBoxTrack(const TimedBox& initial_pos, int id, int64_t min_msec = 0,
+                   int64_t max_msec = std::numeric_limits<int64_t>::max());
 
   // Returns interval for which the state of the specified box is known.
   // (Returns -1, -1 if id is missing or no tracking has been done).
-  std::pair<int64, int64> TrackInterval(int id);
+  std::pair<int64_t, int64_t> TrackInterval(int id);
 
   // Returns box position for requested box at specified time.
   // Returns false if no such box exists.
@@ -184,11 +184,11 @@ class BoxTracker {
   // checkpoints, the returned states are the closest (snapped) known tracking
   // states for the left and right checkpoint path. Therefore the size of states
   // is either two or one (if only one checkpoint exists).
-  bool GetTimedPosition(int id, int64 time_msec, TimedBox* result,
+  bool GetTimedPosition(int id, int64_t time_msec, TimedBox* result,
                         std::vector<MotionBoxState>* states = nullptr);
 
   // Returns chunk index for specified time.
-  int ChunkIdxFromTime(int64 msec) const {
+  int ChunkIdxFromTime(int64_t msec) const {
     return msec / options_.caching_chunk_size_msec();
   }
 
@@ -220,15 +220,15 @@ class BoxTracker {
   // To not interfere with other tracking requests it is recommended that you
   // use a unique id here.
   // Returns true on success.
-  bool GetTrackingData(int id, int64 request_time_msec,
+  bool GetTrackingData(int id, int64_t request_time_msec,
                        TrackingData* tracking_data,
                        int* tracking_data_msec = nullptr);
 
  private:
   // Asynchronous implementation function for box tracking. Schedules forward
   // and backward tracking.
-  void NewBoxTrackAsync(const TimedBox& initial_pos, int id, int64 min_msec,
-                        int64 max_msec);
+  void NewBoxTrackAsync(const TimedBox& initial_pos, int id, int64_t min_msec,
+                        int64_t max_msec);
 
   typedef std::pair<const TrackingDataChunk*, bool> AugmentedChunkPtr;
   // Attempts to read chunk at chunk_idx if it exists. Reads from cache
@@ -250,7 +250,7 @@ class BoxTracker {
       ABSL_LOCKS_EXCLUDED(status_mutex_);
 
   // Determines closest index in passed TrackingDataChunk
-  int ClosestFrameIndex(int64 msec, const TrackingDataChunk& chunk) const;
+  int ClosestFrameIndex(int64_t msec, const TrackingDataChunk& chunk) const;
 
   // Adds new TimedBox to specified checkpoint with state.
   void AddBoxResult(const TimedBox& box, int id, int checkpoint,
@@ -262,7 +262,7 @@ class BoxTracker {
     TrackingImplArgs(AugmentedChunkPtr chunk_ptr,
                      const MotionBoxState& start_state_, int start_frame_,
                      int chunk_idx_, int id_, int checkpoint_, bool forward_,
-                     bool first_call_, int64 min_msec_, int64 max_msec_)
+                     bool first_call_, int64_t min_msec_, int64_t max_msec_)
         : start_state(start_state_),
           start_frame(start_frame_),
           chunk_idx(chunk_idx_),
@@ -295,8 +295,8 @@ class BoxTracker {
     int checkpoint;
     bool forward = true;
     bool first_call = true;
-    int64 min_msec;  // minimum timestamp to track to
-    int64 max_msec;  // maximum timestamp to track to
+    int64_t min_msec;  // minimum timestamp to track to
+    int64_t max_msec;  // maximum timestamp to track to
   };
 
   // Actual tracking algorithm.

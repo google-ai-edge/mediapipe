@@ -91,8 +91,8 @@ absl::Status FrameAnnotationToTimedBoxListCalculator::Process(
       TimedBoxProto* added_box = output_objects->add_box();
       ComputeBoundingRect(key_points, added_box);
       added_box->set_id(annotation.object_id());
-      const int64 time_msec =
-          static_cast<int64>(std::round(frame_annotation.timestamp() / 1000));
+      const int64_t time_msec =
+          static_cast<int64_t>(std::round(frame_annotation.timestamp() / 1000));
       added_box->set_time_msec(time_msec);
     }
 

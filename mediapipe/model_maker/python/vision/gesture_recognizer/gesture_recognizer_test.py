@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@ import tempfile
 from unittest import mock as unittest_mock
 import zipfile
 
-import mock
 import tensorflow as tf
 
 from mediapipe.model_maker.python.core.utils import test_util
 from mediapipe.model_maker.python.vision import gesture_recognizer
+from mediapipe.model_maker.python.vision.gesture_recognizer import hyperparameters
+from mediapipe.model_maker.python.vision.gesture_recognizer import model_options
 from mediapipe.tasks.python.test import test_utils
 
 _TEST_DATA_DIR = 'mediapipe/model_maker/python/vision/gesture_recognizer/testdata'
@@ -43,16 +44,27 @@ class GestureRecognizerTest(tf.test.TestCase):
   def setUp(self):
     super().setUp()
     tf.keras.utils.set_random_seed(87654321)
+    # Mock tempfile.gettempdir() to be unique for each test to avoid race
+    # condition when downloading model since these tests may run in parallel.
+    mock_gettempdir = unittest_mock.patch.object(
+        tempfile,
+        'gettempdir',
+        return_value=self.create_tempdir(),
+        autospec=True,
+    )
+    self.mock_gettempdir = mock_gettempdir.start()
+    self.addCleanup(mock_gettempdir.stop)
+    # Load dataset used by tests
     all_data = self._load_data()
     # Splits data, 90% data for training, 10% for validation
     self._train_data, self._validation_data = all_data.split(0.9)
 
   def test_gesture_recognizer_model(self):
-    model_options = gesture_recognizer.ModelOptions()
+    mo = gesture_recognizer.ModelOptions()
     hparams = gesture_recognizer.HParams(
         export_dir=tempfile.mkdtemp(), epochs=2)
     gesture_recognizer_options = gesture_recognizer.GestureRecognizerOptions(
-        model_options=model_options, hparams=hparams)
+        model_options=mo, hparams=hparams)
     model = gesture_recognizer.GestureRecognizer.create(
         train_data=self._train_data,
         validation_data=self._validation_data,
@@ -60,12 +72,39 @@ class GestureRecognizerTest(tf.test.TestCase):
 
     self._test_accuracy(model)
 
-  def test_export_gesture_recognizer_model(self):
-    model_options = gesture_recognizer.ModelOptions()
+  @unittest_mock.patch.object(
+      tf.keras.layers, 'Dense', wraps=tf.keras.layers.Dense
+  )
+  def test_gesture_recognizer_model_layer_widths(self, mock_dense):
+    layer_widths = [64, 32]
+    mo = gesture_recognizer.ModelOptions(layer_widths=layer_widths)
     hparams = gesture_recognizer.HParams(
         export_dir=tempfile.mkdtemp(), epochs=2)
     gesture_recognizer_options = gesture_recognizer.GestureRecognizerOptions(
-        model_options=model_options, hparams=hparams)
+        model_options=mo, hparams=hparams)
+    model = gesture_recognizer.GestureRecognizer.create(
+        train_data=self._train_data,
+        validation_data=self._validation_data,
+        options=gesture_recognizer_options)
+    expected_calls = [
+        unittest_mock.call(w, name=f'custom_gesture_recognizer_{i}')
+        for i, w in enumerate(layer_widths)
+    ]
+    expected_calls.append(
+        unittest_mock.call(
+            len(self._train_data.label_names),
+            activation='softmax',
+            name='custom_gesture_recognizer_out'))
+    self.assertLen(mock_dense.call_args_list, len(expected_calls))
+    mock_dense.assert_has_calls(expected_calls)
+    self._test_accuracy(model)
+
+  def test_export_gesture_recognizer_model(self):
+    mo = gesture_recognizer.ModelOptions()
+    hparams = gesture_recognizer.HParams(
+        export_dir=tempfile.mkdtemp(), epochs=2)
+    gesture_recognizer_options = gesture_recognizer.GestureRecognizerOptions(
+        model_options=mo, hparams=hparams)
     model = gesture_recognizer.GestureRecognizer.create(
         train_data=self._train_data,
         validation_data=self._validation_data,
@@ -102,15 +141,17 @@ class GestureRecognizerTest(tf.test.TestCase):
     self.assertGreater(accuracy, threshold)
 
   @unittest_mock.patch.object(
-      gesture_recognizer.hyperparameters,
+      hyperparameters,
       'HParams',
       autospec=True,
-      return_value=gesture_recognizer.HParams(epochs=1))
+      return_value=gesture_recognizer.HParams(epochs=1),
+  )
   @unittest_mock.patch.object(
-      gesture_recognizer.model_options,
+      model_options,
       'GestureRecognizerModelOptions',
       autospec=True,
-      return_value=gesture_recognizer.ModelOptions())
+      return_value=gesture_recognizer.ModelOptions(),
+  )
   def test_create_hparams_and_model_options_if_none_in_gesture_recognizer_options(
       self, mock_hparams, mock_model_options):
     options = gesture_recognizer.GestureRecognizerOptions()
@@ -122,13 +163,13 @@ class GestureRecognizerTest(tf.test.TestCase):
     mock_model_options.assert_called_once()
 
   def test_continual_training_by_loading_checkpoint(self):
-    model_options = gesture_recognizer.ModelOptions()
+    mo = gesture_recognizer.ModelOptions()
     hparams = gesture_recognizer.HParams(
         export_dir=tempfile.mkdtemp(), epochs=2)
     gesture_recognizer_options = gesture_recognizer.GestureRecognizerOptions(
-        model_options=model_options, hparams=hparams)
+        model_options=mo, hparams=hparams)
     mock_stdout = io.StringIO()
-    with mock.patch('sys.stdout', mock_stdout):
+    with unittest_mock.patch('sys.stdout', mock_stdout):
       model = gesture_recognizer.GestureRecognizer.create(
           train_data=self._train_data,
           validation_data=self._validation_data,

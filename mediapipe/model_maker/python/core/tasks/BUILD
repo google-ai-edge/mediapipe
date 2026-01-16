@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
 # Placeholder for internal Python strict library and test compatibility macro.
 # Placeholder for internal Python strict test compatibility macro.
 
-package(
-    default_visibility = ["//mediapipe:__subpackages__"],
-)
+package(default_visibility = ["//mediapipe:__subpackages__"])
 
 licenses(["notice"])
 
@@ -28,6 +26,7 @@ py_library(
         "//mediapipe/model_maker/python/core/data:dataset",
         "//mediapipe/model_maker/python/core/utils:model_util",
         "//mediapipe/model_maker/python/core/utils:quantization",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -37,6 +36,7 @@ py_test(
     deps = [
         ":custom_model",
         "//mediapipe/model_maker/python/core/utils:test_util",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -49,6 +49,7 @@ py_library(
         "//mediapipe/model_maker/python/core/data:classification_dataset",
         "//mediapipe/model_maker/python/core/data:dataset",
         "//mediapipe/model_maker/python/core/utils:model_util",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )
 
@@ -58,5 +59,6 @@ py_test(
     deps = [
         ":classifier",
         "//mediapipe/model_maker/python/core/utils:test_util",
+        "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )

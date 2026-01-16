@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ bool IsLeftHand(const mediapipe::Classification& c);
 
 bool IsRightHand(const mediapipe::Classification& c);
 
-absl::StatusOr<float> GetLeftHandScore(
+absl::StatusOr<float> GetRightHandScore(
     const mediapipe::ClassificationList& classification_list);
 
 }  // namespace gesture_recognizer

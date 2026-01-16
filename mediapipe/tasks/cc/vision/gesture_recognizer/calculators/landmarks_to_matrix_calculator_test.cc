@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2025 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -12,32 +12,32 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/calculators/landmarks_to_matrix_calculator.h"
 
-#include <cmath>
-#include <memory>
 #include <string>
 #include <utility>
-#include <vector>
 
-#include "absl/strings/substitute.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/calculator_runner.h"
+#include "mediapipe/framework/api3/function_runner.h"
+#include "mediapipe/framework/api3/graph.h"
+#include "mediapipe/framework/api3/packet.h"
+#include "mediapipe/framework/api3/stream.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {
-
 namespace {
 
-constexpr char kLandmarksTag[] = "LANDMARKS";
-constexpr char kWorldLandmarksTag[] = "WORLD_LANDMARKS";
-constexpr char kImageSizeTag[] = "IMAGE_SIZE";
-constexpr char kLandmarksMatrixTag[] = "LANDMARKS_MATRIX";
-constexpr char kNormRectTag[] = "NORM_RECT";
+using api3::GenericGraph;
+using api3::Packet;
+using api3::Runner;
+using api3::Stream;
+using mediapipe::LandmarkList;
+using mediapipe::LandmarksToMatrixCalculatorOptions;
+using mediapipe::NormalizedLandmarkList;
+using tasks::LandmarksToMatrixNode;
 
 template <class LandmarkListT>
 LandmarkListT BuildPseudoLandmarks(int num_landmarks, int offset = 0) {
@@ -63,76 +63,75 @@ struct Landmarks2dToMatrixCalculatorTestCase {
 using Landmarks2dToMatrixCalculatorTest =
     testing::TestWithParam<Landmarks2dToMatrixCalculatorTestCase>;
 
-TEST_P(Landmarks2dToMatrixCalculatorTest, OutputsCorrectResult) {
-  const Landmarks2dToMatrixCalculatorTestCase& test_case = GetParam();
+TEST_P(Landmarks2dToMatrixCalculatorTest, OutputsCorrectResult2d) {
+  const Landmarks2dToMatrixCalculatorTestCase& params = GetParam();
 
-  auto node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(absl::Substitute(
-          R"pb(
-            calculator: "LandmarksToMatrixCalculator"
-            input_stream: "LANDMARKS:landmarks"
-            input_stream: "IMAGE_SIZE:image_size"
-            input_stream: "NORM_RECT:norm_rect"
-            output_stream: "LANDMARKS_MATRIX:landmarks_matrix"
-            options {
-              [mediapipe.LandmarksToMatrixCalculatorOptions.ext] {
-                object_normalization: $0
-                object_normalization_origin_offset: $1
-              }
-            }
-          )pb",
-          test_case.object_normalization_origin_offset >= 0 ? "true" : "false",
-          test_case.object_normalization_origin_offset));
-  CalculatorRunner runner(node_config);
+  // Initialize the runner
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner,
+      Runner::For([&params](
+                      GenericGraph& graph,
+                      Stream<NormalizedLandmarkList> landmarks,
+                      Stream<std::pair<int, int>> image_size,
+                      Stream<NormalizedRect> norm_rect) -> Stream<Matrix> {
+        auto& node = graph.AddNode<LandmarksToMatrixNode>();
+        {
+          LandmarksToMatrixCalculatorOptions& opts = *node.options.Mutable();
+          opts.set_object_normalization(
+              params.object_normalization_origin_offset >= 0);
+          opts.set_object_normalization_origin_offset(
+              params.object_normalization_origin_offset);
+        }
+        node.landmarks.Set(landmarks);
+        node.image_size.Set(image_size);
+        node.norm_rect.Set(norm_rect);
+        return node.landmarks_matrix.Get();
+      }).Create());
 
-  auto landmarks = std::make_unique<NormalizedLandmarkList>();
-  *landmarks =
-      BuildPseudoLandmarks<NormalizedLandmarkList>(21, test_case.base_offset);
+  // Initialize the inputs
+  NormalizedLandmarkList landmarks =
+      BuildPseudoLandmarks<NormalizedLandmarkList>(21, params.base_offset);
+  std::pair<int, int> image_size(640, 480);
+  NormalizedRect norm_rect;
+  norm_rect.set_rotation(params.rotation);
 
-  runner.MutableInputs()
-      ->Tag(kLandmarksTag)
-      .packets.push_back(Adopt(landmarks.release()).At(Timestamp(0)));
-  auto image_size = std::make_unique<std::pair<int, int>>(640, 480);
-  runner.MutableInputs()
-      ->Tag(kImageSizeTag)
-      .packets.push_back(Adopt(image_size.release()).At(Timestamp(0)));
-  auto norm_rect = std::make_unique<NormalizedRect>();
-  norm_rect->set_rotation(test_case.rotation);
-  runner.MutableInputs()
-      ->Tag(kNormRectTag)
-      .packets.push_back(Adopt(norm_rect.release()).At(Timestamp(0)));
+  // Run the graph and get the output
+  MP_ASSERT_OK_AND_ASSIGN(
+      Packet<Matrix> output_packet,
+      runner.Run(api3::MakePacket<NormalizedLandmarkList>(landmarks),
+                 api3::MakePacket<std::pair<int, int>>(image_size),
+                 api3::MakePacket<NormalizedRect>(norm_rect)));
 
-  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
-
-  const auto matrix =
-      runner.Outputs().Tag(kLandmarksMatrixTag).packets[0].Get<Matrix>();
-  ASSERT_EQ(21, matrix.cols());
-  ASSERT_EQ(3, matrix.rows());
-  EXPECT_NEAR(matrix(0, 2), test_case.expected_cell_0_2, 1e-4f);
-  EXPECT_NEAR(matrix(1, 5), test_case.expected_cell_1_5, 1e-4f);
+  // Verify the output
+  ASSERT_TRUE(output_packet);
+  const Matrix& output_matrix = output_packet.GetOrDie();
+  ASSERT_EQ(output_matrix.cols(), 21);
+  ASSERT_EQ(output_matrix.rows(), 3);
+  EXPECT_NEAR(output_matrix(0, 2), params.expected_cell_0_2, 1e-4f);
+  EXPECT_NEAR(output_matrix(1, 5), params.expected_cell_1_5, 1e-4f);
 }
 
 INSTANTIATE_TEST_CASE_P(
     LandmarksToMatrixCalculatorTests, Landmarks2dToMatrixCalculatorTest,
     testing::ValuesIn<Landmarks2dToMatrixCalculatorTestCase>(
-        {{.test_name = "TestWithOffset0",
-          .base_offset = 0,
-          .object_normalization_origin_offset = 0,
-          .expected_cell_0_2 = 0.1f,
-          .expected_cell_1_5 = 0.1875f,
-          .rotation = 0},
-         {.test_name = "TestWithOffset21",
-          .base_offset = 21,
-          .object_normalization_origin_offset = 0,
-          .expected_cell_0_2 = 0.1f,
-          .expected_cell_1_5 = 0.1875f,
-          .rotation = 0},
-         {.test_name = "TestWithRotation",
-          .base_offset = 0,
-          .object_normalization_origin_offset = 0,
-          .expected_cell_0_2 = 0.075f,
-          .expected_cell_1_5 = -0.25f,
-          .rotation = M_PI / 2.0}}),
+        {{/* test_name= */ "TestWithOffset0",
+          /* base_offset= */ 0,
+          /* object_normalization_origin_offset= */ 0,
+          /* expected_cell_0_2= */ 0.1f,
+          /* expected_cell_1_5= */ 0.1875f,
+          /* rotation= */ 0},
+         {/* test_name= */ "TestWithOffset21",
+          /* base_offset= */ 21,
+          /* object_normalization_origin_offset= */ 0,
+          /* expected_cell_0_2= */ 0.1f,
+          /* expected_cell_1_5= */ 0.1875f,
+          /* rotation= */ 0},
+         {/* test_name= */ "TestWithRotation",
+          /* base_offset= */ 0,
+          /* object_normalization_origin_offset= */ 0,
+          /* expected_cell_0_2= */ 0.075f,
+          /* expected_cell_1_5= */ -0.25f,
+          /* rotation= */ M_PI / 2.0}}),
     [](const testing::TestParamInfo<
         Landmarks2dToMatrixCalculatorTest::ParamType>& info) {
       return info.param.test_name;
@@ -151,85 +150,88 @@ using LandmarksWorld3dToMatrixCalculatorTest =
     testing::TestWithParam<LandmarksWorld3dToMatrixCalculatorTestCase>;
 
 TEST_P(LandmarksWorld3dToMatrixCalculatorTest, OutputsCorrectResult) {
-  const LandmarksWorld3dToMatrixCalculatorTestCase& test_case = GetParam();
+  const LandmarksWorld3dToMatrixCalculatorTestCase& params = GetParam();
 
-  auto node_config =
-      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(absl::Substitute(
-          R"pb(
-            calculator: "LandmarksToMatrixCalculator"
-            input_stream: "WORLD_LANDMARKS:landmarks"
-            input_stream: "IMAGE_SIZE:image_size"
-            input_stream: "NORM_RECT:norm_rect"
-            output_stream: "LANDMARKS_MATRIX:landmarks_matrix"
-            options {
-              [mediapipe.LandmarksToMatrixCalculatorOptions.ext] {
-                object_normalization: $0
-                object_normalization_origin_offset: $1
-              }
-            }
-          )pb",
-          test_case.object_normalization_origin_offset >= 0 ? "true" : "false",
-          test_case.object_normalization_origin_offset));
-  CalculatorRunner runner(node_config);
+  // Initialize the runner
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner,
+      Runner::For([&params](
+                      GenericGraph& graph, Stream<LandmarkList> landmarks,
+                      Stream<std::pair<int, int>> image_size,
+                      Stream<NormalizedRect> norm_rect) -> Stream<Matrix> {
+        auto& node = graph.AddNode<LandmarksToMatrixNode>();
+        {
+          LandmarksToMatrixCalculatorOptions& opts = *node.options.Mutable();
+          opts.set_object_normalization(
+              params.object_normalization_origin_offset >= 0);
+          opts.set_object_normalization_origin_offset(
+              params.object_normalization_origin_offset);
+        }
+        node.world_landmarks.Set(landmarks);
+        node.image_size.Set(image_size);
+        node.norm_rect.Set(norm_rect);
+        return node.landmarks_matrix.Get();
+      }).Create());
 
-  auto landmarks = std::make_unique<LandmarkList>();
-  *landmarks = BuildPseudoLandmarks<LandmarkList>(21, test_case.base_offset);
+  // Initialize the inputs
+  LandmarkList landmarks =
+      BuildPseudoLandmarks<LandmarkList>(21, params.base_offset);
+  std::pair<int, int> image_size(640, 480);
+  NormalizedRect norm_rect;
+  norm_rect.set_rotation(params.rotation);
 
-  runner.MutableInputs()
-      ->Tag(kWorldLandmarksTag)
-      .packets.push_back(Adopt(landmarks.release()).At(Timestamp(0)));
-  auto image_size = std::make_unique<std::pair<int, int>>(640, 480);
-  runner.MutableInputs()
-      ->Tag(kImageSizeTag)
-      .packets.push_back(Adopt(image_size.release()).At(Timestamp(0)));
-  auto norm_rect = std::make_unique<NormalizedRect>();
-  norm_rect->set_rotation(test_case.rotation);
-  runner.MutableInputs()
-      ->Tag(kNormRectTag)
-      .packets.push_back(Adopt(norm_rect.release()).At(Timestamp(0)));
+  // Run the graph and get the output
+  MP_ASSERT_OK_AND_ASSIGN(
+      Packet<Matrix> output_packet,
+      runner.Run(api3::MakePacket<LandmarkList>(landmarks),
+                 api3::MakePacket<std::pair<int, int>>(image_size),
+                 api3::MakePacket<NormalizedRect>(norm_rect)));
 
-  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
-
-  const auto matrix =
-      runner.Outputs().Tag(kLandmarksMatrixTag).packets[0].Get<Matrix>();
-  ASSERT_EQ(21, matrix.cols());
-  ASSERT_EQ(3, matrix.rows());
-  EXPECT_NEAR(matrix(0, 2), test_case.expected_cell_0_2, 1e-4f);
-  EXPECT_NEAR(matrix(1, 5), test_case.expected_cell_1_5, 1e-4f);
+  // Verify the output
+  ASSERT_TRUE(output_packet);
+  const Matrix& output_matrix = output_packet.GetOrDie();
+  ASSERT_EQ(output_matrix.cols(), 21);
+  ASSERT_EQ(output_matrix.rows(), 3);
+  EXPECT_NEAR(output_matrix(0, 2), params.expected_cell_0_2, 1e-4f);
+  EXPECT_NEAR(output_matrix(1, 5), params.expected_cell_1_5, 1e-4f);
 }
 
 INSTANTIATE_TEST_CASE_P(
     LandmarksToMatrixCalculatorTests, LandmarksWorld3dToMatrixCalculatorTest,
     testing::ValuesIn<LandmarksWorld3dToMatrixCalculatorTestCase>(
-        {{.test_name = "TestWithOffset0",
-          .base_offset = 0,
-          .object_normalization_origin_offset = 0,
-          .expected_cell_0_2 = 0.1f,
-          .expected_cell_1_5 = 0.25,
-          .rotation = 0},
-         {.test_name = "TestWithOffset21",
-          .base_offset = 21,
-          .object_normalization_origin_offset = 0,
-          .expected_cell_0_2 = 0.1f,
-          .expected_cell_1_5 = 0.25,
-          .rotation = 0},
-         {.test_name = "NoObjectNormalization",
-          .base_offset = 0,
-          .object_normalization_origin_offset = -1,
-          .expected_cell_0_2 = 0.021f,
-          .expected_cell_1_5 = 0.052f,
-          .rotation = 0},
-         {.test_name = "TestWithRotation",
-          .base_offset = 0,
-          .object_normalization_origin_offset = 0,
-          .expected_cell_0_2 = 0.1f,
-          .expected_cell_1_5 = -0.25f,
-          .rotation = M_PI / 2.0}}),
+        {{/* test_name= */ "TestWithOffset0",
+          /* base_offset= */ 0,
+          /* object_normalization_origin_offset= */ 0,
+          /* expected_cell_0_2= */ 0.1f,
+          /* expected_cell_1_5= */ 0.25,
+          /* rotation= */ 0},
+         {/* test_name= */ "TestWithOffset21",
+          /* base_offset= */ 21,
+          /* object_normalization_origin_offset= */ 0,
+          /* expected_cell_0_2= */ 0.1f,
+          /* expected_cell_1_5= */ 0.25,
+          /* rotation= */ 0},
+         {/* test_name= */ "NoObjectNormalization",
+          /* base_offset= */ 0,
+          /* object_normalization_origin_offset= */ -1,
+          /* expected_cell_0_2= */ 0.021f,
+          /* expected_cell_1_5= */ 0.052f,
+          /* rotation= */ 0},
+         {/* test_name= */ "TestWithRotation",
+          /* base_offset= */ 0,
+          /* object_normalization_origin_offset= */ 0,
+          /* expected_cell_0_2= */ 0.1f,
+          /* expected_cell_1_5= */ -0.25f,
+          /* rotation= */ M_PI / 2.0}}),
     [](const testing::TestParamInfo<
         LandmarksWorld3dToMatrixCalculatorTest::ParamType>& info) {
       return info.param.test_name;
     });
 
-}  // namespace
+TEST(LandmarksToMatrixCalculatorTest, HasCorrectRegistrationName) {
+  EXPECT_EQ(tasks::LandmarksToMatrixNode::GetRegistrationName(),
+            "LandmarksToMatrixCalculator");
+}
 
+}  // namespace
 }  // namespace mediapipe

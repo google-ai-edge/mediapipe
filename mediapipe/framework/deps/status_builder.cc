@@ -68,11 +68,21 @@ StatusBuilder&& StatusBuilder::SetNoLogging() && {
   return std::move(SetNoLogging());
 }
 
-StatusBuilder::operator Status() const& {
+StatusBuilder&& StatusBuilder::SetCode(absl::StatusCode code) && {
+  return std::move(SetCode(code));
+}
+
+StatusBuilder& StatusBuilder::SetCode(absl::StatusCode code) & {
+  if (!impl_) return *this;
+  impl_->status = absl::Status(code, impl_->status.message());
+  return *this;
+}
+
+StatusBuilder::operator absl::Status() const& {
   return StatusBuilder(*this).JoinMessageToStatus();
 }
 
-StatusBuilder::operator Status() && { return JoinMessageToStatus(); }
+StatusBuilder::operator absl::Status() && { return JoinMessageToStatus(); }
 
 absl::Status StatusBuilder::JoinMessageToStatus() {
   if (!impl_) {

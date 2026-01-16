@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 licenses(["notice"])
 
 # Basic library common across example apps.
@@ -26,10 +29,10 @@ android_library(
         "//mediapipe/java/com/google/mediapipe/components:android_components",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/glutil",
-        "//third_party:androidx_appcompat",
-        "//third_party:androidx_constraint_layout",
         "//third_party:opencv",
+        "@maven//:androidx_appcompat_appcompat",
         "@maven//:androidx_concurrent_concurrent_futures",
+        "@maven//:androidx_constraintlayout_constraintlayout",
         "@maven//:com_google_guava_guava",
     ],
 )
@@ -80,5 +83,6 @@ android_binary(
     deps = [
         ":basic_lib",
         ":mediapipe_jni_lib",
+        "//third_party:libc++_shared_lib",
     ],
 )

@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/processors/proto/image_preprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
+#include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 
@@ -45,6 +46,7 @@ namespace components {
 namespace processors {
 namespace {
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::Tensor;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
@@ -70,35 +72,9 @@ struct ImagePreprocessingOutputStreams {
   Source<Image> image;
 };
 
-// Builds an ImageTensorSpecs for configuring the preprocessing calculators.
-absl::StatusOr<ImageTensorSpecs> BuildImageTensorSpecs(
-    const ModelResources& model_resources) {
-  const tflite::Model& model = *model_resources.GetTfLiteModel();
-  if (model.subgraphs()->size() != 1) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "Image tflite models are assumed to have a single subgraph.",
-        MediaPipeTasksStatus::kInvalidArgumentError);
-  }
-  const auto* primary_subgraph = (*model.subgraphs())[0];
-  if (primary_subgraph->inputs()->size() != 1) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "Image tflite models are assumed to have a single input.",
-        MediaPipeTasksStatus::kInvalidArgumentError);
-  }
-  const auto* input_tensor =
-      (*primary_subgraph->tensors())[(*primary_subgraph->inputs())[0]];
-  ASSIGN_OR_RETURN(const auto* image_tensor_metadata,
-                   vision::GetImageTensorMetadataIfAny(
-                       *model_resources.GetMetadataExtractor(), 0));
-  return vision::BuildInputImageTensorSpecs(*input_tensor,
-                                            image_tensor_metadata);
-}
-
 // Fills in the ImageToTensorCalculatorOptions based on the ImageTensorSpecs.
 absl::Status ConfigureImageToTensorCalculator(
-    const ImageTensorSpecs& image_tensor_specs,
+    const ImageTensorSpecs& image_tensor_specs, GpuOrigin::Mode gpu_origin,
     mediapipe::ImageToTensorCalculatorOptions* options) {
   options->set_output_tensor_width(image_tensor_specs.image_width);
   options->set_output_tensor_height(image_tensor_specs.image_height);
@@ -132,9 +108,9 @@ absl::Status ConfigureImageToTensorCalculator(
     options->mutable_output_tensor_float_range()->set_max((255.0f - mean) /
                                                           std);
   }
-  // TODO: need to support different GPU origin on differnt
+  // TODO: need to support different GPU origin on different
   // platforms or applications.
-  options->set_gpu_origin(mediapipe::GpuOrigin::TOP_LEFT);
+  options->set_gpu_origin(gpu_origin);
   return absl::OkStatus();
 }
 
@@ -142,16 +118,27 @@ absl::Status ConfigureImageToTensorCalculator(
 
 bool DetermineImagePreprocessingGpuBackend(
     const core::proto::Acceleration& acceleration) {
-  return acceleration.has_gpu();
+  return acceleration.has_gpu() ||
+         (acceleration.has_nnapi() &&
+          acceleration.nnapi().accelerator_name() == "google-edgetpu");
 }
 
 absl::Status ConfigureImagePreprocessingGraph(
     const ModelResources& model_resources, bool use_gpu,
     proto::ImagePreprocessingGraphOptions* options) {
-  ASSIGN_OR_RETURN(auto image_tensor_specs,
-                   BuildImageTensorSpecs(model_resources));
+  return ConfigureImagePreprocessingGraph(model_resources, use_gpu,
+                                          GpuOrigin::TOP_LEFT, options);
+}
+
+absl::Status ConfigureImagePreprocessingGraph(
+    const ModelResources& model_resources, bool use_gpu,
+    GpuOrigin::Mode gpu_origin,
+    proto::ImagePreprocessingGraphOptions* options) {
+  MP_ASSIGN_OR_RETURN(auto image_tensor_specs,
+                      vision::BuildInputImageTensorSpecs(model_resources));
   MP_RETURN_IF_ERROR(ConfigureImageToTensorCalculator(
-      image_tensor_specs, options->mutable_image_to_tensor_options()));
+      image_tensor_specs, gpu_origin,
+      options->mutable_image_to_tensor_options()));
   // The GPU backend isn't able to process int data. If the input tensor is
   // quantized, forces the image preprocessing graph to use CPU backend.
   if (use_gpu && image_tensor_specs.tensor_type != tflite::TensorType_UINT8) {
@@ -284,8 +271,9 @@ class ImagePreprocessingGraph : public Subgraph {
     };
   }
 };
+
 REGISTER_MEDIAPIPE_GRAPH(
-    ::mediapipe::tasks::components::processors::ImagePreprocessingGraph);
+    ::mediapipe::tasks::components::processors::ImagePreprocessingGraph)
 
 }  // namespace processors
 }  // namespace components

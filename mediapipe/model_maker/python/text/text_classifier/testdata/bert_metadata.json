@@ -1,0 +1,84 @@
+{
+  "name": "TextClassifier",
+  "description": "Classify the input text into a set of known categories.",
+  "subgraph_metadata": [
+    {
+      "input_tensor_metadata": [
+        {
+          "name": "ids",
+          "description": "Tokenized ids of the input text.",
+          "content": {
+            "content_properties_type": "FeatureProperties",
+            "content_properties": {
+            }
+          },
+          "stats": {
+          }
+        },
+        {
+          "name": "segment_ids",
+          "description": "0 for the first sequence, 1 for the second sequence if exists.",
+          "content": {
+            "content_properties_type": "FeatureProperties",
+            "content_properties": {
+            }
+          },
+          "stats": {
+          }
+        },
+        {
+          "name": "mask",
+          "description": "Mask with 1 for real tokens and 0 for padding tokens.",
+          "content": {
+            "content_properties_type": "FeatureProperties",
+            "content_properties": {
+            }
+          },
+          "stats": {
+          }
+        }
+      ],
+      "output_tensor_metadata": [
+        {
+          "name": "score",
+          "description": "Score of the labels respectively.",
+          "content": {
+            "content_properties_type": "FeatureProperties",
+            "content_properties": {
+            }
+          },
+          "stats": {
+            "max": [
+              1.0
+            ],
+            "min": [
+              0.0
+            ]
+          },
+          "associated_files": [
+            {
+              "name": "labels.txt",
+              "description": "Labels for categories that the model can recognize.",
+              "type": "TENSOR_AXIS_LABELS"
+            }
+          ]
+        }
+      ],
+      "input_process_units": [
+        {
+          "options_type": "BertTokenizerOptions",
+          "options": {
+            "vocab_file": [
+              {
+                "name": "vocab.txt",
+                "description": "Vocabulary file to convert natural language words to embedding vectors.",
+                "type": "VOCABULARY"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "min_parser_version": "1.1.0"
+}

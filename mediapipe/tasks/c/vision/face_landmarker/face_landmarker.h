@@ -1,0 +1,180 @@
+/* Copyright 2023 The MediaPipe Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+#ifndef MEDIAPIPE_TASKS_C_VISION_FACE_LANDMARKER_FACE_LANDMARKER_H_
+#define MEDIAPIPE_TASKS_C_VISION_FACE_LANDMARKER_FACE_LANDMARKER_H_
+
+#include <stdbool.h>
+
+#include <cstdint>
+
+#include "mediapipe/tasks/c/core/base_options.h"
+#include "mediapipe/tasks/c/core/common.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/face_landmarker/face_landmarker_result.h"
+
+#ifndef MP_EXPORT
+#if defined(_MSC_VER)
+#define MP_EXPORT __declspec(dllexport)
+#else
+#define MP_EXPORT __attribute__((visibility("default")))
+#endif  // _MSC_VER
+#endif  // MP_EXPORT
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct MpFaceLandmarkerInternal* MpFaceLandmarkerPtr;
+
+// The options for configuring a MediaPipe face landmarker task.
+struct FaceLandmarkerOptions {
+  // Base options for configuring MediaPipe Tasks, such as specifying the model
+  // file with metadata, accelerator options, op resolver, etc.
+  struct BaseOptions base_options;
+
+  // The running mode of the task. Default to the image mode.
+  // FaceLandmarker has three running modes:
+  // 1) The image mode for recognizing face landmarks on single image inputs.
+  // 2) The video mode for recognizing face landmarks on the decoded frames of a
+  //    video.
+  // 3) The live stream mode for recognizing face landmarks on the live stream
+  //    of input data, such as from camera. In this mode, the "result_callback"
+  //    below must be specified to receive the detection results asynchronously.
+  RunningMode running_mode;
+
+  // The maximum number of faces can be detected by the FaceLandmarker.
+  int num_faces = 1;
+
+  // The minimum confidence score for the face detection to be considered
+  // successful.
+  float min_face_detection_confidence = 0.5;
+
+  // The minimum confidence score of face presence score in the face landmark
+  // detection.
+  float min_face_presence_confidence = 0.5;
+
+  // The minimum confidence score for the face tracking to be considered
+  // successful.
+  float min_tracking_confidence = 0.5;
+
+  // Whether FaceLandmarker outputs face blendshapes classification. Face
+  // blendshapes are used for rendering the 3D face model.
+  bool output_face_blendshapes = false;
+
+  // Whether FaceLandmarker outputs facial transformation_matrix. Facial
+  // transformation matrix is used to transform the face landmarks in canonical
+  // face to the detected face, so that users can apply face effects on the
+  // detected landmarks.
+  bool output_facial_transformation_matrixes = false;
+
+  // The user-defined result callback for processing live stream data.
+  // The result callback should only be specified when the running mode is set
+  // to RunningMode::LIVE_STREAM. Arguments of the callback function include:
+  // the pointer to recognition result, the image that result was obtained
+  // on, the timestamp relevant to recognition results and pointer to error
+  // message in case of any failure. The validity of the passed arguments is
+  // true for the lifetime of the callback function.
+  //
+  // The passed arguments are only valid for the lifetime of the callback.
+  typedef void (*result_callback_fn)(MpStatus status,
+                                     const FaceLandmarkerResult* result,
+                                     MpImagePtr image, int64_t timestamp_ms);
+  result_callback_fn result_callback;
+};
+
+// Creates an FaceLandmarker from the provided `options`.
+//
+// If successful, returns `kMpOk` and sets `*landmarker` to the new
+// `MpFaceLandmarkerPtr`. To obtain a detailed error, `error_msg` must be
+// non-null pointer to a `char*`, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with `MpErrorFree()`.
+MP_EXPORT MpStatus MpFaceLandmarkerCreate(struct FaceLandmarkerOptions* options,
+                                          MpFaceLandmarkerPtr* landmarker,
+                                          char** error_msg);
+
+// Performs face landmark detection on the input `image`.
+// If successful, returns `kMpOk` and sets `*result` to the new
+// `FaceLandmarkerResult`. To obtain a detailed error, `error_msg` must be
+// non-null pointer to a `char*`, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with `MpErrorFree()`.
+MP_EXPORT MpStatus
+MpFaceLandmarkerDetectImage(MpFaceLandmarkerPtr landmarker, MpImagePtr image,
+                            const struct ImageProcessingOptions* options,
+                            FaceLandmarkerResult* result, char** error_msg);
+
+// Performs face landmark detection on the provided video frame.
+// Only use this method when the FaceLandmarker is created with the video
+// running mode.
+// The image can be of any size with format RGB or RGBA. It's required to
+// provide the video frame's timestamp (in milliseconds). The input timestamps
+// must be monotonically increasing.
+// You need to invoke `MpFaceLandmarkerCloseResult` after each invocation
+// to free memory.
+//
+// Returns `kMpOk` on success. To obtain a detailed error, error_msg must be
+// non-null pointer to a char*, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with `MpErrorFree()`.
+MP_EXPORT MpStatus MpFaceLandmarkerDetectForVideo(
+    MpFaceLandmarkerPtr landmarker, MpImagePtr image,
+    const struct ImageProcessingOptions* options, int64_t timestamp_ms,
+    FaceLandmarkerResult* result, char** error_msg);
+
+// Sends live image data to face landmark detection, and the results will be
+// available via the `result_callback` provided in the FaceLandmarkerOptions.
+// Only use this method when the FaceLandmarker is created with the live
+// stream running mode.
+// The image can be of any size with format RGB or RGBA. It's required to
+// provide a timestamp (in milliseconds) to indicate when the input image is
+// sent to the face landmarker. The input timestamps must be monotonically
+// increasing.
+// The `result_callback` provides:
+//   - The recognition results as an FaceLandmarkerResult object.
+//   - The const reference to the corresponding input image that the face
+//     landmarker runs on. Note that the const reference to the image will no
+//     longer be valid when the callback returns. To access the image data
+//     outside of the callback, callers need to make a copy of the image.
+//   - The input timestamp in milliseconds.
+//
+// Returns `kMpOk` on success. To obtain a detailed error, error_msg must be
+// non-null pointer to a char*, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with MpErrorFree().
+MP_EXPORT MpStatus
+MpFaceLandmarkerDetectAsync(MpFaceLandmarkerPtr landmarker, MpImagePtr image,
+                            const struct ImageProcessingOptions* options,
+                            int64_t timestamp_ms, char** error_msg);
+
+// Frees the memory allocated inside a FaceLandmarkerResult result.
+// Does not free the result pointer itself.
+MP_EXPORT void MpFaceLandmarkerCloseResult(FaceLandmarkerResult* result);
+
+// Frees face landmarker.
+// Returns `kMpOk` on success. To obtain a detailed error, error_msg must be
+// non-null pointer to a char*, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with MpErrorFree().
+MP_EXPORT MpStatus MpFaceLandmarkerClose(MpFaceLandmarkerPtr landmarker,
+                                         char** error_msg);
+
+#ifdef __cplusplus
+}  // extern C
+#endif
+
+#endif  // MEDIAPIPE_TASKS_C_VISION_FACE_LANDMARKER_FACE_LANDMARKER_H_

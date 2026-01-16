@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,8 +49,7 @@ namespace tflite;
 // New fields and types will have associated comments with the schema version
 // for which they were added.
 //
-// TODO: Add LINT change check as needed.
-// Schema Semantic version: 1.4.1
+// Schema Semantic version: 1.5.0
 
 // This indicates the flatbuffer compatibility. The number will bump up when a
 // break change is applied to the schema, such as removing fields or adding new
@@ -69,11 +68,11 @@ file_identifier "M001";
 // 1.3.0 - Added AudioProperties to ContentProperties.
 // 1.4.0 - Added SCANN_INDEX_FILE type to AssociatedFileType.
 // 1.4.1 - Added version to AssociatedFile.
+// 1.5.0 - Added CustomMetadata in SubGraphMetadata.
 
 // File extension of any written files.
 file_extension "tflitemeta";
 
-// TODO: Add LINT change check as needed.
 enum AssociatedFileType : byte {
   UNKNOWN = 0,
 
@@ -143,7 +142,7 @@ enum AssociatedFileType : byte {
 
   // TODO: introduce the ScaNN index file with links once the code
   // is released.
-  // Contains on-devide ScaNN index file with LevelDB format.
+  // Contains on-device ScaNN index file with LevelDB format.
   // Added in: 1.4.0
   SCANN_INDEX_FILE = 6,
 }
@@ -234,7 +233,7 @@ table ImageProperties {
 //
 // <Codegen usage>:
 // Input image tensors: NA.
-// Output image tensors: parses the values into a data stucture that represents
+// Output image tensors: parses the values into a data structure that represents
 // bounding boxes. For example, in the generated wrapper for Android, it returns
 // the output as android.graphics.Rect objects.
 enum BoundingBoxType : byte {
@@ -390,7 +389,7 @@ table NormalizationOptions{
   // mean and std are normalization parameters. Tensor values are normalized
   // on a per-channel basis, by the formula
   //   (x - mean) / std.
-  // If there is only one value in mean or std, we'll propogate the value to
+  // If there is only one value in mean or std, we'll propagate the value to
   // all channels.
   //
   // Quantized models share the same normalization parameters as their
@@ -527,7 +526,7 @@ table Stats {
   // Max and min are not currently used in tflite.support codegen. They mainly
   // serve as references for users to better understand the model. They can also
   // be used to validate model pre/post processing results.
-  // If there is only one value in max or min, we'll propogate the value to
+  // If there is only one value in max or min, we'll propagate the value to
   // all channels.
 
   // Per-channel maximum value of the tensor.
@@ -543,7 +542,7 @@ table Stats {
 // has four outputs: classes, scores, bounding boxes, and number of detections.
 // If the four outputs are bundled together using TensorGroup (for example,
 // named as "detection result"), the codegen tool will generate the class,
-// `DetectionResult`, which contains the class, score, and bouding box. And the
+// `DetectionResult`, which contains the class, score, and bounding box. And the
 // outputs of the model will be converted to a list of `DetectionResults` and
 // the number of detection. Note that the number of detection is a single
 // number, therefore is inappropriate for the list of `DetectionResult`.
@@ -609,6 +608,11 @@ table TensorMetadata {
   associated_files:[AssociatedFile];
 }
 
+table CustomMetadata {
+  name:string;
+  data:[ubyte] (force_align: 16);
+}
+
 table SubGraphMetadata {
   // Name of the subgraph.
   //
@@ -620,7 +624,7 @@ table SubGraphMetadata {
   // A description explains details about what the subgraph does.
   description:string;
 
-  // Metadata of all input tensors used in this subgraph. It matches extactly
+  // Metadata of all input tensors used in this subgraph. It matches exactly
   // the input tensors specified by `SubGraph.inputs` in the TFLite
   // schema.fbs file[2]. The number of `TensorMetadata` in the array should
   // equal to the number of indices in `SubGraph.inputs`.
@@ -630,7 +634,7 @@ table SubGraphMetadata {
   // Determines how to process the inputs.
   input_tensor_metadata:[TensorMetadata];
 
-  // Metadata of all output tensors used in this subgraph. It matches extactly
+  // Metadata of all output tensors used in this subgraph. It matches exactly
   // the output tensors specified by `SubGraph.outputs` in the TFLite
   // schema.fbs file[2]. The number of `TensorMetadata` in the array should
   // equal to the number of indices in `SubGraph.outputs`.
@@ -676,6 +680,9 @@ table SubGraphMetadata {
   // Added in: 1.2.0
   output_tensor_groups:[TensorGroup];
 
+  // A list of custom metadata.
+  // Added in: 1.5.0.
+  custom_metadata:[CustomMetadata];
 }
 
 table ModelMetadata {
@@ -717,7 +724,7 @@ table ModelMetadata {
   // number among the versions of all the fields populated and the smallest
   // compatible version indicated by the file identifier.
   //
-  // This field is automaticaly populated by the MetadataPopulator when
+  // This field is automatically populated by the MetadataPopulator when
   // the metadata is populated into a TFLite model.
   min_parser_version:string;
 }

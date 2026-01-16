@@ -60,7 +60,7 @@ std::string GetUnusedSidePacketName(
   }
   std::string candidate = input_side_packet_name_base;
   int iter = 2;
-  while (mediapipe::ContainsKey(input_side_packets, candidate)) {
+  while (input_side_packets.contains(candidate)) {
     candidate = absl::StrCat(input_side_packet_name_base, "_",
                              absl::StrFormat("%02d", iter));
     ++iter;

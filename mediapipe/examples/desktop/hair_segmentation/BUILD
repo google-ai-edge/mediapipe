@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-licenses(["notice"])
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 
-package(default_visibility = ["//mediapipe/examples:__subpackages__"])
+licenses(["notice"])
 
 # Linux only
 cc_binary(
@@ -26,6 +26,14 @@ cc_binary(
     ],
 )
 
+# BUILD:
+# bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
+#   //mediapipe/examples/desktop/hair_segmentation:hair_segmentation_cpu
+# RUN:
+# bazel-bin/mediapipe/examples/desktop/hair_segmentation/hair_segmentation_cpu \
+#   --calculator_graph_config_file=<.../hair_segmentation_desktop_live.pbtxt> \
+#   --input_video_path=<input video path> \
+#   --output_video_path=<output video path>
 cc_binary(
     name = "hair_segmentation_cpu",
     data = ["//mediapipe/models:hair_segmentation.tflite"],

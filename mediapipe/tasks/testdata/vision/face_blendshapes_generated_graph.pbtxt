@@ -1,0 +1,878 @@
+node {
+  name: "mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph__SplitNormalizedLandmarkListCalculator"
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "landmarks"
+  output_stream: "mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph____stream_2"
+  options {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges {
+        begin: 0
+        end: 1
+      }
+      ranges {
+        begin: 1
+        end: 2
+      }
+      ranges {
+        begin: 4
+        end: 5
+      }
+      ranges {
+        begin: 5
+        end: 6
+      }
+      ranges {
+        begin: 6
+        end: 7
+      }
+      ranges {
+        begin: 7
+        end: 8
+      }
+      ranges {
+        begin: 8
+        end: 9
+      }
+      ranges {
+        begin: 10
+        end: 11
+      }
+      ranges {
+        begin: 13
+        end: 14
+      }
+      ranges {
+        begin: 14
+        end: 15
+      }
+      ranges {
+        begin: 17
+        end: 18
+      }
+      ranges {
+        begin: 21
+        end: 22
+      }
+      ranges {
+        begin: 33
+        end: 34
+      }
+      ranges {
+        begin: 37
+        end: 38
+      }
+      ranges {
+        begin: 39
+        end: 40
+      }
+      ranges {
+        begin: 40
+        end: 41
+      }
+      ranges {
+        begin: 46
+        end: 47
+      }
+      ranges {
+        begin: 52
+        end: 53
+      }
+      ranges {
+        begin: 53
+        end: 54
+      }
+      ranges {
+        begin: 54
+        end: 55
+      }
+      ranges {
+        begin: 55
+        end: 56
+      }
+      ranges {
+        begin: 58
+        end: 59
+      }
+      ranges {
+        begin: 61
+        end: 62
+      }
+      ranges {
+        begin: 63
+        end: 64
+      }
+      ranges {
+        begin: 65
+        end: 66
+      }
+      ranges {
+        begin: 66
+        end: 67
+      }
+      ranges {
+        begin: 67
+        end: 68
+      }
+      ranges {
+        begin: 70
+        end: 71
+      }
+      ranges {
+        begin: 78
+        end: 79
+      }
+      ranges {
+        begin: 80
+        end: 81
+      }
+      ranges {
+        begin: 81
+        end: 82
+      }
+      ranges {
+        begin: 82
+        end: 83
+      }
+      ranges {
+        begin: 84
+        end: 85
+      }
+      ranges {
+        begin: 87
+        end: 88
+      }
+      ranges {
+        begin: 88
+        end: 89
+      }
+      ranges {
+        begin: 91
+        end: 92
+      }
+      ranges {
+        begin: 93
+        end: 94
+      }
+      ranges {
+        begin: 95
+        end: 96
+      }
+      ranges {
+        begin: 103
+        end: 104
+      }
+      ranges {
+        begin: 105
+        end: 106
+      }
+      ranges {
+        begin: 107
+        end: 108
+      }
+      ranges {
+        begin: 109
+        end: 110
+      }
+      ranges {
+        begin: 127
+        end: 128
+      }
+      ranges {
+        begin: 132
+        end: 133
+      }
+      ranges {
+        begin: 133
+        end: 134
+      }
+      ranges {
+        begin: 136
+        end: 137
+      }
+      ranges {
+        begin: 144
+        end: 145
+      }
+      ranges {
+        begin: 145
+        end: 146
+      }
+      ranges {
+        begin: 146
+        end: 147
+      }
+      ranges {
+        begin: 148
+        end: 149
+      }
+      ranges {
+        begin: 149
+        end: 150
+      }
+      ranges {
+        begin: 150
+        end: 151
+      }
+      ranges {
+        begin: 152
+        end: 153
+      }
+      ranges {
+        begin: 153
+        end: 154
+      }
+      ranges {
+        begin: 154
+        end: 155
+      }
+      ranges {
+        begin: 155
+        end: 156
+      }
+      ranges {
+        begin: 157
+        end: 158
+      }
+      ranges {
+        begin: 158
+        end: 159
+      }
+      ranges {
+        begin: 159
+        end: 160
+      }
+      ranges {
+        begin: 160
+        end: 161
+      }
+      ranges {
+        begin: 161
+        end: 162
+      }
+      ranges {
+        begin: 162
+        end: 163
+      }
+      ranges {
+        begin: 163
+        end: 164
+      }
+      ranges {
+        begin: 168
+        end: 169
+      }
+      ranges {
+        begin: 172
+        end: 173
+      }
+      ranges {
+        begin: 173
+        end: 174
+      }
+      ranges {
+        begin: 176
+        end: 177
+      }
+      ranges {
+        begin: 178
+        end: 179
+      }
+      ranges {
+        begin: 181
+        end: 182
+      }
+      ranges {
+        begin: 185
+        end: 186
+      }
+      ranges {
+        begin: 191
+        end: 192
+      }
+      ranges {
+        begin: 195
+        end: 196
+      }
+      ranges {
+        begin: 197
+        end: 198
+      }
+      ranges {
+        begin: 234
+        end: 235
+      }
+      ranges {
+        begin: 246
+        end: 247
+      }
+      ranges {
+        begin: 249
+        end: 250
+      }
+      ranges {
+        begin: 251
+        end: 252
+      }
+      ranges {
+        begin: 263
+        end: 264
+      }
+      ranges {
+        begin: 267
+        end: 268
+      }
+      ranges {
+        begin: 269
+        end: 270
+      }
+      ranges {
+        begin: 270
+        end: 271
+      }
+      ranges {
+        begin: 276
+        end: 277
+      }
+      ranges {
+        begin: 282
+        end: 283
+      }
+      ranges {
+        begin: 283
+        end: 284
+      }
+      ranges {
+        begin: 284
+        end: 285
+      }
+      ranges {
+        begin: 285
+        end: 286
+      }
+      ranges {
+        begin: 288
+        end: 289
+      }
+      ranges {
+        begin: 291
+        end: 292
+      }
+      ranges {
+        begin: 293
+        end: 294
+      }
+      ranges {
+        begin: 295
+        end: 296
+      }
+      ranges {
+        begin: 296
+        end: 297
+      }
+      ranges {
+        begin: 297
+        end: 298
+      }
+      ranges {
+        begin: 300
+        end: 301
+      }
+      ranges {
+        begin: 308
+        end: 309
+      }
+      ranges {
+        begin: 310
+        end: 311
+      }
+      ranges {
+        begin: 311
+        end: 312
+      }
+      ranges {
+        begin: 312
+        end: 313
+      }
+      ranges {
+        begin: 314
+        end: 315
+      }
+      ranges {
+        begin: 317
+        end: 318
+      }
+      ranges {
+        begin: 318
+        end: 319
+      }
+      ranges {
+        begin: 321
+        end: 322
+      }
+      ranges {
+        begin: 323
+        end: 324
+      }
+      ranges {
+        begin: 324
+        end: 325
+      }
+      ranges {
+        begin: 332
+        end: 333
+      }
+      ranges {
+        begin: 334
+        end: 335
+      }
+      ranges {
+        begin: 336
+        end: 337
+      }
+      ranges {
+        begin: 338
+        end: 339
+      }
+      ranges {
+        begin: 356
+        end: 357
+      }
+      ranges {
+        begin: 361
+        end: 362
+      }
+      ranges {
+        begin: 362
+        end: 363
+      }
+      ranges {
+        begin: 365
+        end: 366
+      }
+      ranges {
+        begin: 373
+        end: 374
+      }
+      ranges {
+        begin: 374
+        end: 375
+      }
+      ranges {
+        begin: 375
+        end: 376
+      }
+      ranges {
+        begin: 377
+        end: 378
+      }
+      ranges {
+        begin: 378
+        end: 379
+      }
+      ranges {
+        begin: 379
+        end: 380
+      }
+      ranges {
+        begin: 380
+        end: 381
+      }
+      ranges {
+        begin: 381
+        end: 382
+      }
+      ranges {
+        begin: 382
+        end: 383
+      }
+      ranges {
+        begin: 384
+        end: 385
+      }
+      ranges {
+        begin: 385
+        end: 386
+      }
+      ranges {
+        begin: 386
+        end: 387
+      }
+      ranges {
+        begin: 387
+        end: 388
+      }
+      ranges {
+        begin: 388
+        end: 389
+      }
+      ranges {
+        begin: 389
+        end: 390
+      }
+      ranges {
+        begin: 390
+        end: 391
+      }
+      ranges {
+        begin: 397
+        end: 398
+      }
+      ranges {
+        begin: 398
+        end: 399
+      }
+      ranges {
+        begin: 400
+        end: 401
+      }
+      ranges {
+        begin: 402
+        end: 403
+      }
+      ranges {
+        begin: 405
+        end: 406
+      }
+      ranges {
+        begin: 409
+        end: 410
+      }
+      ranges {
+        begin: 415
+        end: 416
+      }
+      ranges {
+        begin: 454
+        end: 455
+      }
+      ranges {
+        begin: 466
+        end: 467
+      }
+      ranges {
+        begin: 468
+        end: 469
+      }
+      ranges {
+        begin: 469
+        end: 470
+      }
+      ranges {
+        begin: 470
+        end: 471
+      }
+      ranges {
+        begin: 471
+        end: 472
+      }
+      ranges {
+        begin: 472
+        end: 473
+      }
+      ranges {
+        begin: 473
+        end: 474
+      }
+      ranges {
+        begin: 474
+        end: 475
+      }
+      ranges {
+        begin: 475
+        end: 476
+      }
+      ranges {
+        begin: 476
+        end: 477
+      }
+      ranges {
+        begin: 477
+        end: 478
+      }
+      combine_outputs: true
+    }
+  }
+}
+node {
+  name: "mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph__LandmarksToTensorCalculator"
+  calculator: "LandmarksToTensorCalculator"
+  input_stream: "IMAGE_SIZE:image_size"
+  input_stream: "NORM_LANDMARKS:mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph____stream_2"
+  output_stream: "TENSORS:mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph____stream_3"
+  options {
+    [mediapipe.LandmarksToTensorCalculatorOptions.ext] {
+      attributes: X
+      attributes: Y
+      flatten: false
+    }
+  }
+}
+node {
+  name: "mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph__mediapipe_tasks_core_inferencesubgraph__ModelResourcesCalculator"
+  calculator: "ModelResourcesCalculator"
+  output_side_packet: "METADATA_EXTRACTOR:mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph__mediapipe_tasks_core_inferencesubgraph____side_packet_1"
+  output_side_packet: "MODEL:mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph__mediapipe_tasks_core_inferencesubgraph____side_packet_2"
+  output_side_packet: "OP_RESOLVER:mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph__mediapipe_tasks_core_inferencesubgraph____side_packet_3"
+  options {
+    [mediapipe.tasks.core.proto.ModelResourcesCalculatorOptions.ext] {
+      model_file {
+        file_name: "mediapipe/tasks/testdata/vision/face_blendshapes.tflite"
+      }
+    }
+  }
+}
+node {
+  name: "mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph__mediapipe_tasks_core_inferencesubgraph__inferencecalculator__mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph__mediapipe_tasks_core_inferencesubgraph__InferenceCalculator"
+  calculator: "InferenceCalculatorCpu"
+  input_stream: "TENSORS:mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph____stream_3"
+  output_stream: "TENSORS:mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph____stream_4"
+  input_side_packet: "MODEL:mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph__mediapipe_tasks_core_inferencesubgraph____side_packet_2"
+  input_side_packet: "OP_RESOLVER:mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph__mediapipe_tasks_core_inferencesubgraph____side_packet_3"
+  options {
+    [mediapipe.InferenceCalculatorOptions.ext] {
+      delegate {
+      }
+    }
+  }
+}
+node {
+  name: "mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph__SplitTensorVectorCalculator"
+  calculator: "SplitTensorVectorCalculator"
+  input_stream: "mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph____stream_4"
+  output_stream: "mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph____stream_5"
+  options {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges {
+        begin: 0
+        end: 1
+      }
+      combine_outputs: true
+    }
+  }
+}
+node {
+  name: "mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph__TensorsToClassificationCalculator"
+  calculator: "TensorsToClassificationCalculator"
+  input_stream: "TENSORS:mediapipe_tasks_vision_face_landmarker_faceblendshapesgraph____stream_5"
+  output_stream: "CLASSIFICATIONS:blendshapes"
+  options {
+    [mediapipe.TensorsToClassificationCalculatorOptions.ext] {
+      min_score_threshold: -1
+      top_k: 0
+      label_map {
+        entries {
+          id: 0
+          label: "_neutral"
+        }
+        entries {
+          id: 1
+          label: "browDownLeft"
+        }
+        entries {
+          id: 2
+          label: "browDownRight"
+        }
+        entries {
+          id: 3
+          label: "browInnerUp"
+        }
+        entries {
+          id: 4
+          label: "browOuterUpLeft"
+        }
+        entries {
+          id: 5
+          label: "browOuterUpRight"
+        }
+        entries {
+          id: 6
+          label: "cheekPuff"
+        }
+        entries {
+          id: 7
+          label: "cheekSquintLeft"
+        }
+        entries {
+          id: 8
+          label: "cheekSquintRight"
+        }
+        entries {
+          id: 9
+          label: "eyeBlinkLeft"
+        }
+        entries {
+          id: 10
+          label: "eyeBlinkRight"
+        }
+        entries {
+          id: 11
+          label: "eyeLookDownLeft"
+        }
+        entries {
+          id: 12
+          label: "eyeLookDownRight"
+        }
+        entries {
+          id: 13
+          label: "eyeLookInLeft"
+        }
+        entries {
+          id: 14
+          label: "eyeLookInRight"
+        }
+        entries {
+          id: 15
+          label: "eyeLookOutLeft"
+        }
+        entries {
+          id: 16
+          label: "eyeLookOutRight"
+        }
+        entries {
+          id: 17
+          label: "eyeLookUpLeft"
+        }
+        entries {
+          id: 18
+          label: "eyeLookUpRight"
+        }
+        entries {
+          id: 19
+          label: "eyeSquintLeft"
+        }
+        entries {
+          id: 20
+          label: "eyeSquintRight"
+        }
+        entries {
+          id: 21
+          label: "eyeWideLeft"
+        }
+        entries {
+          id: 22
+          label: "eyeWideRight"
+        }
+        entries {
+          id: 23
+          label: "jawForward"
+        }
+        entries {
+          id: 24
+          label: "jawLeft"
+        }
+        entries {
+          id: 25
+          label: "jawOpen"
+        }
+        entries {
+          id: 26
+          label: "jawRight"
+        }
+        entries {
+          id: 27
+          label: "mouthClose"
+        }
+        entries {
+          id: 28
+          label: "mouthDimpleLeft"
+        }
+        entries {
+          id: 29
+          label: "mouthDimpleRight"
+        }
+        entries {
+          id: 30
+          label: "mouthFrownLeft"
+        }
+        entries {
+          id: 31
+          label: "mouthFrownRight"
+        }
+        entries {
+          id: 32
+          label: "mouthFunnel"
+        }
+        entries {
+          id: 33
+          label: "mouthLeft"
+        }
+        entries {
+          id: 34
+          label: "mouthLowerDownLeft"
+        }
+        entries {
+          id: 35
+          label: "mouthLowerDownRight"
+        }
+        entries {
+          id: 36
+          label: "mouthPressLeft"
+        }
+        entries {
+          id: 37
+          label: "mouthPressRight"
+        }
+        entries {
+          id: 38
+          label: "mouthPucker"
+        }
+        entries {
+          id: 39
+          label: "mouthRight"
+        }
+        entries {
+          id: 40
+          label: "mouthRollLower"
+        }
+        entries {
+          id: 41
+          label: "mouthRollUpper"
+        }
+        entries {
+          id: 42
+          label: "mouthShrugLower"
+        }
+        entries {
+          id: 43
+          label: "mouthShrugUpper"
+        }
+        entries {
+          id: 44
+          label: "mouthSmileLeft"
+        }
+        entries {
+          id: 45
+          label: "mouthSmileRight"
+        }
+        entries {
+          id: 46
+          label: "mouthStretchLeft"
+        }
+        entries {
+          id: 47
+          label: "mouthStretchRight"
+        }
+        entries {
+          id: 48
+          label: "mouthUpperUpLeft"
+        }
+        entries {
+          id: 49
+          label: "mouthUpperUpRight"
+        }
+        entries {
+          id: 50
+          label: "noseSneerLeft"
+        }
+        entries {
+          id: 51
+          label: "noseSneerRight"
+        }
+      }
+    }
+  }
+}
+input_stream: "LANDMARKS:landmarks"
+input_stream: "IMAGE_SIZE:image_size"
+executor {
+}

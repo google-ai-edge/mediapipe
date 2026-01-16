@@ -56,7 +56,7 @@ output_stream: "HANDEDNESS:multi_handedness"
 output_stream: "PALM_DETECTIONS:palm_detections"
 # Regions of interest calculated based on landmarks.
 # (std::vector<NormalizedRect>)
-output_stream: "HAND_ROIS_FROM_LANDMARKS:hand_rects"
+output_stream: "HAND_ROIS_FROM_LANDMARKS:hand_rects_from_landmarks"
 # Regions of interest calculated based on palm detections.
 # (std::vector<NormalizedRect>)
 output_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:hand_rects_from_palm_detections"

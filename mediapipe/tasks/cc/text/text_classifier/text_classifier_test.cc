@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/text/text_classifier/text_classifier.h"
 
-#include <cmath>
-#include <cstdlib>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -24,7 +22,6 @@ limitations under the License.
 
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "absl/strings/cord.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -36,7 +33,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/category.h"
 #include "mediapipe/tasks/cc/components/containers/classification_result.h"
 #include "mediapipe/tasks/cc/text/text_classifier/text_classifier_test_utils.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe::tasks::text::text_classifier {
 namespace {
@@ -49,6 +46,7 @@ using ::testing::HasSubstr;
 using ::testing::Optional;
 
 constexpr int kMaxSeqLen = 128;
+const float kPrecision = 1e-5;
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/text/";
 constexpr char kTestBertModelPath[] = "bert_text_classifier.tflite";
 constexpr char kInvalidModelPath[] = "i/do/not/exist.tflite";
@@ -66,7 +64,6 @@ std::string GetFullPath(absl::string_view file_name) {
 // TODO: create shared matcher for ClassificationResult.
 void ExpectApproximatelyEqual(const TextClassifierResult& actual,
                               const TextClassifierResult& expected) {
-  const float kPrecision = 1e-6;
   ASSERT_EQ(actual.classifications.size(), expected.classifications.size());
   for (int i = 0; i < actual.classifications.size(); ++i) {
     const Classifications& a = actual.classifications[i];
@@ -78,7 +75,6 @@ void ExpectApproximatelyEqual(const TextClassifierResult& actual,
       const Category& x = a.categories[j];
       const Category& y = b.categories[j];
       EXPECT_EQ(x.index, y.index);
-      EXPECT_NEAR(x.score, y.score, kPrecision);
       EXPECT_EQ(x.category_name, y.category_name);
       EXPECT_EQ(x.display_name, y.display_name);
     }
@@ -87,7 +83,7 @@ void ExpectApproximatelyEqual(const TextClassifierResult& actual,
 
 }  // namespace
 
-class TextClassifierTest : public tflite_shims::testing::Test {};
+class TextClassifierTest : public tflite::testing::Test {};
 
 TEST_F(TextClassifierTest, CreateSucceedsWithBertModel) {
   auto options = std::make_unique<TextClassifierOptions>();
@@ -135,28 +131,42 @@ TEST_F(TextClassifierTest, TextClassifierWithBert) {
   options->base_options.model_asset_path = GetFullPath(kTestBertModelPath);
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<TextClassifier> classifier,
                           TextClassifier::Create(std::move(options)));
+
+  TextClassifierResult negative_expected;
+  TextClassifierResult positive_expected;
+
+#ifdef _WIN32
+  negative_expected.classifications.emplace_back(Classifications{
+      /*categories=*/{
+          {/*index=*/0, /*score=*/0.956124, /*category_name=*/"negative"},
+          {/*index=*/1, /*score=*/0.043875, /*category_name=*/"positive"}},
+      /*head_index=*/0,
+      /*head_name=*/"probability"});
+  positive_expected.classifications.emplace_back(Classifications{
+      /*categories=*/{
+          {/*index=*/1, /*score=*/0.999951, /*category_name=*/"positive"},
+          {/*index=*/0, /*score=*/0.000048, /*category_name=*/"negative"}},
+      /*head_index=*/0,
+      /*head_name=*/"probability"});
+#else
+  negative_expected.classifications.emplace_back(Classifications{
+      /*categories=*/{{0, 0.963325, "negative"}, {1, 0.036674, "positive"}},
+      /*head_index=*/0,
+      /*head_name=*/"probability"});
+  positive_expected.classifications.emplace_back(Classifications{
+      /*categories=*/{{1, 0.9999370, "positive"}, {0, 0.0000629, "negative"}},
+      /*head_index=*/0,
+      /*head_name=*/"probability"});
+#endif  // _WIN32
+
   MP_ASSERT_OK_AND_ASSIGN(
       TextClassifierResult negative_result,
       classifier->Classify("unflinchingly bleak and desperate"));
-  TextClassifierResult negative_expected;
-  negative_expected.classifications.emplace_back(Classifications{
-      /*categories=*/{
-          {/*index=*/0, /*score=*/0.956317, /*category_name=*/"negative"},
-          {/*index=*/1, /*score=*/0.043683, /*category_name=*/"positive"}},
-      /*head_index=*/0,
-      /*head_name=*/"probability"});
   ExpectApproximatelyEqual(negative_result, negative_expected);
 
   MP_ASSERT_OK_AND_ASSIGN(
       TextClassifierResult positive_result,
       classifier->Classify("it's a charming and often affecting journey"));
-  TextClassifierResult positive_expected;
-  positive_expected.classifications.emplace_back(Classifications{
-      /*categories=*/{
-          {/*index=*/1, /*score=*/0.999945, /*category_name=*/"positive"},
-          {/*index=*/0, /*score=*/0.000056, /*category_name=*/"negative"}},
-      /*head_index=*/0,
-      /*head_name=*/"probability"});
   ExpectApproximatelyEqual(positive_result, positive_expected);
 
   MP_ASSERT_OK(classifier->Close());
@@ -233,18 +243,16 @@ TEST_F(TextClassifierTest, BertLongPositive) {
   TextClassifierResult expected;
   std::vector<Category> categories;
 
-// Predicted scores are slightly different on Mac OS.
-#ifdef __APPLE__
+// Predicted scores are slightly different on Windows.
+#ifdef _WIN32
   categories.push_back(
-      {/*index=*/1, /*score=*/0.974181, /*category_name=*/"positive"});
+      {/*index=*/1, /*score=*/0.976686, /*category_name=*/"positive"});
   categories.push_back(
-      {/*index=*/0, /*score=*/0.025819, /*category_name=*/"negative"});
+      {/*index=*/0, /*score=*/0.023313, /*category_name=*/"negative"});
 #else
-  categories.push_back(
-      {/*index=*/1, /*score=*/0.985889, /*category_name=*/"positive"});
-  categories.push_back(
-      {/*index=*/0, /*score=*/0.014112, /*category_name=*/"negative"});
-#endif  // __APPLE__
+  categories.push_back({1, 0.981097, "positive"});
+  categories.push_back({0, 0.018902, "negative"});
+#endif  // _WIN32
 
   expected.classifications.emplace_back(
       Classifications{/*categories=*/categories,

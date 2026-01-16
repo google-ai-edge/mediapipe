@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,8 +13,9 @@
 # limitations under the License.
 
 load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_test_with_tflite")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -47,7 +48,7 @@ cc_test_with_tflite(
     data = ["//mediapipe/tasks/testdata/audio:test_models"],
     tflite_deps = [
         "//mediapipe/tasks/cc/core:model_resources",
-        "@org_tensorflow//tensorflow/lite/core/shims:cc_shims_test_util",
+        "@org_tensorflow//tensorflow/lite:test_util",
     ],
     deps = [
         ":audio_tensor_specs",

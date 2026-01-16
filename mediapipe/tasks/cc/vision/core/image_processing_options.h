@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,14 +28,15 @@ namespace core {
 // Options for image processing.
 //
 // If both region-or-interest and rotation are specified, the crop around the
-// region-of-interest is extracted first, the the specified rotation is applied
+// region-of-interest is extracted first, then the specified rotation is applied
 // to the crop.
 struct ImageProcessingOptions {
   // The optional region-of-interest to crop from the image. If not specified,
   // the full image is used.
   //
   // Coordinates must be in [0,1] with 'left' < 'right' and 'top' < bottom.
-  std::optional<components::containers::Rect> region_of_interest = std::nullopt;
+  std::optional<components::containers::RectF> region_of_interest =
+      std::nullopt;
 
   // The rotation to apply to the image (or cropped region-of-interest), in
   // degrees clockwise.

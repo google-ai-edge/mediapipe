@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,24 +24,29 @@ limitations under the License.
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "absl/base/thread_annotations.h"
-#include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/status_macros.h"
-#include "mediapipe/tasks/cc/core/model_resources.h"
-#include "mediapipe/tasks/cc/core/model_resources_cache.h"
+#include "mediapipe/framework/executor.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
 namespace mediapipe {
+
+#if !MEDIAPIPE_DISABLE_GPU
+class GpuResources;
+#endif  // !MEDIAPIPE_DISABLE_GPU
+
 namespace tasks {
 namespace core {
+
+using ErrorFn = std::function<void(absl::Status)>;
 
 // Mapping from the MediaPipe calculator graph stream/side packet names to the
 // packets.
@@ -65,15 +70,31 @@ class TaskRunner {
   // Creates the task runner with a CalculatorGraphConfig proto.
   // If a tflite op resolver object is provided, the task runner will take
   // it as the global op resolver for all models running within this task.
-  // The op resolver's owernship will be transferred into the pipeleine runner.
+  // The op resolver's ownership will be transferred into the pipeleine runner.
   // When a user-defined PacketsCallback is provided, clients must use the
   // asynchronous method, Send(), to provide the input packets. If the packets
   // callback is absent, clients must use the synchronous method, Process(), to
   // provide the input packets and receive the output packets.
+#if !MEDIAPIPE_DISABLE_GPU
   static absl::StatusOr<std::unique_ptr<TaskRunner>> Create(
       CalculatorGraphConfig config,
       std::unique_ptr<tflite::OpResolver> op_resolver = nullptr,
-      PacketsCallback packets_callback = nullptr);
+      PacketsCallback packets_callback = nullptr,
+      std::shared_ptr<Executor> default_executor = nullptr,
+      std::optional<PacketMap> input_side_packets = std::nullopt,
+      std::shared_ptr<::mediapipe::GpuResources> resources = nullptr,
+      std::optional<ErrorFn> error_fn = std::nullopt,
+      bool disable_default_service = false);
+#else
+  static absl::StatusOr<std::unique_ptr<TaskRunner>> Create(
+      CalculatorGraphConfig config,
+      std::unique_ptr<tflite::OpResolver> op_resolver = nullptr,
+      PacketsCallback packets_callback = nullptr,
+      std::shared_ptr<Executor> default_executor = nullptr,
+      std::optional<PacketMap> input_side_packets = std::nullopt,
+      std::optional<ErrorFn> error_fn = std::nullopt,
+      bool disable_default_service = false);
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
   // TaskRunner is neither copyable nor movable.
   TaskRunner(const TaskRunner&) = delete;
@@ -84,7 +105,7 @@ class TaskRunner {
   // frames from a video file and an audio file. The call blocks the current
   // thread until a failure status or a successful result is returned.
   // If the input packets have no timestamp, an internal timestamp will be
-  // assigend per invocation. Otherwise, when the timestamp is set in the
+  // assigned per invocation. Otherwise, when the timestamp is set in the
   // input packets, the caller must ensure that the input packet timestamps are
   // greater than the timestamps of the previous invocation. This method is
   // thread-unsafe and it is the caller's responsibility to synchronize access
@@ -116,7 +137,7 @@ class TaskRunner {
  private:
   // Constructor.
   // Creates a TaskRunner instance with an optional PacketsCallback method.
-  TaskRunner(PacketsCallback packets_callback = nullptr)
+  explicit TaskRunner(PacketsCallback packets_callback = nullptr)
       : packets_callback_(packets_callback) {}
 
   // Initializes the task runner. Returns an ok status to indicate that the
@@ -125,7 +146,11 @@ class TaskRunner {
   // be only initialized once.
   absl::Status Initialize(
       CalculatorGraphConfig config,
-      std::unique_ptr<tflite::OpResolver> op_resolver = nullptr);
+      std::unique_ptr<tflite::OpResolver> op_resolver = nullptr,
+      std::shared_ptr<Executor> default_executor = nullptr,
+      std::optional<PacketMap> input_side_packets = std::nullopt,
+      std::optional<ErrorFn> error_fn = std::nullopt,
+      bool disable_default_service = false);
 
   // Starts the task runner. Returns an ok status to indicate that the
   // runner is ready to accept input data. Otherwise, returns an error status to

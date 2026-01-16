@@ -16,6 +16,7 @@ load(
     "@build_bazel_rules_apple//apple:ios.bzl",
     "ios_application",
 )
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load(
     "//mediapipe/examples/ios:bundle_id.bzl",
     "BUNDLE_ID_PREFIX",
@@ -24,7 +25,7 @@ load(
 
 licenses(["notice"])
 
-MIN_IOS_VERSION = "11.0"
+MIN_IOS_VERSION = "12.0"
 
 alias(
     name = "facemeshgpu",
@@ -59,7 +60,6 @@ objc_library(
     hdrs = [
         "FaceMeshGpuViewController.h",
     ],
-    copts = ["-std=c++17"],
     data = [
         "//mediapipe/graphs/face_mesh:face_mesh_mobile_gpu.binarypb",
         "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
@@ -67,12 +67,11 @@ objc_library(
     ],
     deps = [
         "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",
+        "//mediapipe/framework/formats:landmark_cc_proto",
     ] + select({
-        "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
         "//conditions:default": [
             "//mediapipe/graphs/face_mesh:mobile_calculators",
-            "//mediapipe/framework/formats:landmark_cc_proto",
         ],
     }),
 )

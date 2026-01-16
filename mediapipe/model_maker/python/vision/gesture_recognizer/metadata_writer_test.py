@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,23 @@ _CUSTOM_GESTURE_CLASSIFIER_PATH = test_utils.get_test_data_path(
 
 
 class MetadataWriterTest(tf.test.TestCase):
+
+  def test_hand_landmarker_metadata_writer(self):
+    # Use dummy model buffer for unit test only.
+    hand_detector_model_buffer = b"\x11\x12"
+    hand_landmarks_detector_model_buffer = b"\x22"
+    writer = metadata_writer.HandLandmarkerMetadataWriter(
+        hand_detector_model_buffer, hand_landmarks_detector_model_buffer)
+    model_bundle_content = writer.populate()
+    model_bundle_filepath = os.path.join(self.get_temp_dir(),
+                                         "hand_landmarker.task")
+    with open(model_bundle_filepath, "wb") as f:
+      f.write(model_bundle_content)
+
+    with zipfile.ZipFile(model_bundle_filepath) as zf:
+      self.assertEqual(
+          set(zf.namelist()),
+          set(["hand_landmarks_detector.tflite", "hand_detector.tflite"]))
 
   def test_write_metadata_and_create_model_asset_bundle_successful(self):
     # Use dummy model buffer for unit test only.

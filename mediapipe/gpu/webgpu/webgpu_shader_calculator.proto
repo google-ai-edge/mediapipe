@@ -1,0 +1,41 @@
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message WebGpuShaderCalculatorOptions {
+  extend CalculatorOptions {
+    optional WebGpuShaderCalculatorOptions ext = 507638011;
+  }
+
+  message ProfilingOptions {
+    // Must be set to true to enable profiling. Default is false.
+    optional bool enable = 1;
+    // Number of times to repeatedly enqueue the shader on the GPU during
+    // timing. Averaging over larger values lets us amortize away the cost of
+    // the query itself.
+    optional int32 repetitions = 2;
+    // Number of times the shader will be enqueued on the GPU before timing
+    // query is started.
+    optional int32 skip_starting_frames = 3;
+  }
+
+  // The source code for the WGSL shader, if not default.
+  optional string shader_source = 1;
+
+  // The path to a file containing source code for the WGSL shader, if not
+  // default.  Will override shader_source if set.
+  optional string shader_path = 2;
+
+  // These can be used to set the output dimensions of the shader-- otherwise,
+  // the size of the first input texture will be matched, or if no input texture
+  // is given, a default size of 640x480 will be used.
+  optional int32 output_width = 3;
+  optional int32 output_height = 4;
+  // Depth is only used for 3D textures.
+  optional int32 output_depth = 6;
+
+  // Options for profiling; profiling will be disabled if not included.
+  optional ProfilingOptions profiling_options = 5;
+}

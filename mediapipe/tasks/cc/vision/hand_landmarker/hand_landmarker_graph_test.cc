@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -54,6 +54,7 @@ namespace {
 
 using ::file::Defaults;
 using ::file::GetTextProto;
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
@@ -68,8 +69,8 @@ using ::testing::proto::Partially;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kHandLandmarkerModelBundle[] = "hand_landmarker.task";
-constexpr char kLeftHandsImage[] = "left_hands.jpg";
-constexpr char kLeftHandsRotatedImage[] = "left_hands_rotated.jpg";
+constexpr char kRightHandsImage[] = "right_hands.jpg";
+constexpr char kRightHandsRotatedImage[] = "right_hands_rotated.jpg";
 
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kImageName[] = "image_in";
@@ -85,15 +86,15 @@ constexpr char kHandednessTag[] = "HANDEDNESS";
 constexpr char kHandednessName[] = "handedness";
 
 // Expected hand landmarks positions, in text proto format.
-constexpr char kExpectedLeftUpHandLandmarksFilename[] =
-    "expected_left_up_hand_landmarks.prototxt";
-constexpr char kExpectedLeftDownHandLandmarksFilename[] =
-    "expected_left_down_hand_landmarks.prototxt";
+constexpr char kExpectedRightUpHandLandmarksFilename[] =
+    "expected_right_up_hand_landmarks.prototxt";
+constexpr char kExpectedRightDownHandLandmarksFilename[] =
+    "expected_right_down_hand_landmarks.prototxt";
 // Same but for the rotated image.
-constexpr char kExpectedLeftUpHandRotatedLandmarksFilename[] =
-    "expected_left_up_hand_rotated_landmarks.prototxt";
-constexpr char kExpectedLeftDownHandRotatedLandmarksFilename[] =
-    "expected_left_down_hand_rotated_landmarks.prototxt";
+constexpr char kExpectedRightUpHandRotatedLandmarksFilename[] =
+    "expected_right_up_hand_rotated_landmarks.prototxt";
+constexpr char kExpectedRightDownHandRotatedLandmarksFilename[] =
+    "expected_right_down_hand_rotated_landmarks.prototxt";
 
 constexpr float kFullModelFractionDiff = 0.03;  // percentage
 constexpr float kAbsMargin = 0.03;
@@ -136,12 +137,12 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner() {
       graph.GetConfig(), absl::make_unique<core::MediaPipeBuiltinOpResolver>());
 }
 
-class HandLandmarkerTest : public tflite_shims::testing::Test {};
+class HandLandmarkerTest : public tflite::testing::Test {};
 
 TEST_F(HandLandmarkerTest, Succeeds) {
   MP_ASSERT_OK_AND_ASSIGN(
-      Image image,
-      DecodeImageFromFile(JoinPath("./", kTestDataDirectory, kLeftHandsImage)));
+      Image image, DecodeImageFromFile(
+                       JoinPath("./", kTestDataDirectory, kRightHandsImage)));
   NormalizedRect input_norm_rect;
   input_norm_rect.set_x_center(0.5);
   input_norm_rect.set_y_center(0.5);
@@ -156,8 +157,8 @@ TEST_F(HandLandmarkerTest, Succeeds) {
                               .Get<std::vector<NormalizedLandmarkList>>();
   ASSERT_EQ(landmarks.size(), kMaxNumHands);
   std::vector<NormalizedLandmarkList> expected_landmarks = {
-      GetExpectedLandmarkList(kExpectedLeftUpHandLandmarksFilename),
-      GetExpectedLandmarkList(kExpectedLeftDownHandLandmarksFilename)};
+      GetExpectedLandmarkList(kExpectedRightUpHandLandmarksFilename),
+      GetExpectedLandmarkList(kExpectedRightDownHandLandmarksFilename)};
 
   EXPECT_THAT(landmarks[0],
               Approximately(Partially(EqualsProto(expected_landmarks[0])),
@@ -172,7 +173,7 @@ TEST_F(HandLandmarkerTest, Succeeds) {
 TEST_F(HandLandmarkerTest, SucceedsWithRotation) {
   MP_ASSERT_OK_AND_ASSIGN(
       Image image, DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
-                                                kLeftHandsRotatedImage)));
+                                                kRightHandsRotatedImage)));
   NormalizedRect input_norm_rect;
   input_norm_rect.set_x_center(0.5);
   input_norm_rect.set_y_center(0.5);
@@ -188,8 +189,8 @@ TEST_F(HandLandmarkerTest, SucceedsWithRotation) {
                               .Get<std::vector<NormalizedLandmarkList>>();
   ASSERT_EQ(landmarks.size(), kMaxNumHands);
   std::vector<NormalizedLandmarkList> expected_landmarks = {
-      GetExpectedLandmarkList(kExpectedLeftUpHandRotatedLandmarksFilename),
-      GetExpectedLandmarkList(kExpectedLeftDownHandRotatedLandmarksFilename)};
+      GetExpectedLandmarkList(kExpectedRightUpHandRotatedLandmarksFilename),
+      GetExpectedLandmarkList(kExpectedRightDownHandRotatedLandmarksFilename)};
 
   EXPECT_THAT(landmarks[0],
               Approximately(Partially(EqualsProto(expected_landmarks[0])),

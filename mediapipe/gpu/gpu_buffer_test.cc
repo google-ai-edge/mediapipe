@@ -22,8 +22,6 @@
 #include "mediapipe/framework/tool/test_util.h"
 #include "mediapipe/gpu/gl_texture_buffer.h"
 #include "mediapipe/gpu/gl_texture_util.h"
-#include "mediapipe/gpu/gpu_buffer_storage_ahwb.h"
-#include "mediapipe/gpu/gpu_buffer_storage_image_frame.h"
 #include "mediapipe/gpu/gpu_test_base.h"
 #include "stb_image.h"
 #include "stb_image_write.h"
@@ -31,7 +29,8 @@
 namespace mediapipe {
 namespace {
 
-void FillImageFrameRGBA(ImageFrame& image, uint8 r, uint8 g, uint8 b, uint8 a) {
+void FillImageFrameRGBA(ImageFrame& image, uint8_t r, uint8_t g, uint8_t b,
+                        uint8_t a) {
   auto* data = image.MutablePixelData();
   for (int y = 0; y < image.Height(); ++y) {
     auto* row = data + image.WidthStep() * y;
@@ -49,7 +48,8 @@ class GpuBufferTest : public GpuTestBase {};
 
 TEST_F(GpuBufferTest, BasicTest) {
   RunInGlContext([this] {
-    GpuBuffer buffer = gpu_shared_.gpu_buffer_pool.GetBuffer(300, 200);
+    MP_ASSERT_OK_AND_ASSIGN(GpuBuffer buffer,
+                            gpu_shared_.gpu_buffer_pool.GetBuffer(300, 200));
     EXPECT_EQ(buffer.width(), 300);
     EXPECT_EQ(buffer.height(), 200);
     EXPECT_TRUE(buffer);

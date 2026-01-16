@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,10 @@ import {Embedding} from '../../../../tasks/web/components/containers/embedding_r
 import {convertEmbedderOptionsToProto} from '../../../../tasks/web/components/processors/embedder_options';
 import {convertFromEmbeddingResultProto} from '../../../../tasks/web/components/processors/embedder_result';
 import {computeCosineSimilarity} from '../../../../tasks/web/components/utils/cosine_similarity';
-import {TaskRunner} from '../../../../tasks/web/core/task_runner';
+import {
+  CachedGraphRunner,
+  TaskRunner,
+} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
@@ -40,7 +43,7 @@ export * from './text_embedder_result';
 const INPUT_STREAM = 'text_in';
 const EMBEDDINGS_STREAM = 'embeddings_out';
 const TEXT_EMBEDDER_CALCULATOR =
-    'mediapipe.tasks.text.text_embedder.TextEmbedderGraph';
+  'mediapipe.tasks.text.text_embedder.TextEmbedderGraph';
 
 /**
  * Performs embedding extraction on text.
@@ -52,6 +55,7 @@ export class TextEmbedder extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new text embedder from the
    * provided options.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param textEmbedderOptions The options for the text embedder. Note that
@@ -59,47 +63,64 @@ export class TextEmbedder extends TaskRunner {
    *     provided (via `baseOptions`).
    */
   static createFromOptions(
-      wasmFileset: WasmFileset,
-      textEmbedderOptions: TextEmbedderOptions): Promise<TextEmbedder> {
+    wasmFileset: WasmFileset,
+    textEmbedderOptions: TextEmbedderOptions,
+  ): Promise<TextEmbedder> {
     return TaskRunner.createInstance(
-        TextEmbedder, /* initializeCanvas= */ false, wasmFileset,
-        textEmbedderOptions);
+      TextEmbedder,
+      /* canvas= */ null,
+      wasmFileset,
+      textEmbedderOptions,
+    );
   }
 
   /**
    * Initializes the Wasm runtime and creates a new text embedder based on the
    * provided model asset buffer.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
-   * @param modelAssetBuffer A binary representation of the TFLite model.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *    representation of the model.
    */
   static createFromModelBuffer(
-      wasmFileset: WasmFileset,
-      modelAssetBuffer: Uint8Array): Promise<TextEmbedder> {
+    wasmFileset: WasmFileset,
+    modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
+  ): Promise<TextEmbedder> {
     return TaskRunner.createInstance(
-        TextEmbedder, /* initializeCanvas= */ false, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+      TextEmbedder,
+      /* canvas= */ null,
+      wasmFileset,
+      {baseOptions: {modelAssetBuffer}},
+    );
   }
 
   /**
    * Initializes the Wasm runtime and creates a new text embedder based on the
    * path to the model asset.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the TFLite model.
    */
   static createFromModelPath(
-      wasmFileset: WasmFileset,
-      modelAssetPath: string): Promise<TextEmbedder> {
+    wasmFileset: WasmFileset,
+    modelAssetPath: string,
+  ): Promise<TextEmbedder> {
     return TaskRunner.createInstance(
-        TextEmbedder, /* initializeCanvas= */ false, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+      TextEmbedder,
+      /* canvas= */ null,
+      wasmFileset,
+      {baseOptions: {modelAssetPath}},
+    );
   }
 
+  /** @hideconstructor */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
-    super(wasmModule, glCanvas);
+    wasmModule: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
+    super(new CachedGraphRunner(wasmModule, glCanvas));
     this.options.setBaseOptions(new BaseOptionsProto());
   }
 
@@ -110,13 +131,14 @@ export class TextEmbedder extends TaskRunner {
    * You can reset an option back to its default value by explicitly setting it
    * to `undefined`.
    *
+   * @export
    * @param options The options for the text embedder.
    */
-  override async setOptions(options: TextEmbedderOptions): Promise<void> {
-    await super.setOptions(options);
-    this.options.setEmbedderOptions(convertEmbedderOptionsToProto(
-        options, this.options.getEmbedderOptions()));
-    this.refreshGraph();
+  override setOptions(options: TextEmbedderOptions): Promise<void> {
+    this.options.setEmbedderOptions(
+      convertEmbedderOptionsToProto(options, this.options.getEmbedderOptions()),
+    );
+    return this.applyOptions(options);
   }
 
   protected override get baseOptions(): BaseOptionsProto {
@@ -131,13 +153,16 @@ export class TextEmbedder extends TaskRunner {
    * Performs embeding extraction on the provided text and waits synchronously
    * for the response.
    *
+   * @export
    * @param text The text to process.
-   * @return The embedding resuls of the text
+   * @return The embedding results of the text
    */
   embed(text: string): TextEmbedderResult {
-    // Get text embeddings by running our MediaPipe graph.
     this.graphRunner.addStringToStream(
-        text, INPUT_STREAM, /* timestamp= */ performance.now());
+      text,
+      INPUT_STREAM,
+      this.getSynctheticTimestamp(),
+    );
     this.finishProcessing();
     return this.embeddingResult;
   }
@@ -148,6 +173,7 @@ export class TextEmbedder extends TaskRunner {
    *
    * [1]: https://en.wikipedia.org/wiki/Cosine_similarity
    *
+   * @export
    * @throws if the embeddings are of different types(float vs. quantized), have
    *     different sizes, or have an L2-norm of 0.
    */
@@ -156,14 +182,16 @@ export class TextEmbedder extends TaskRunner {
   }
 
   /** Updates the MediaPipe graph configuration. */
-  private refreshGraph(): void {
+  protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(INPUT_STREAM);
     graphConfig.addOutputStream(EMBEDDINGS_STREAM);
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
-        TextEmbedderGraphOptionsProto.ext, this.options);
+      TextEmbedderGraphOptionsProto.ext,
+      this.options,
+    );
 
     const embedderNode = new CalculatorGraphConfig.Node();
     embedderNode.setCalculator(TEXT_EMBEDDER_CALCULATOR);
@@ -173,15 +201,24 @@ export class TextEmbedder extends TaskRunner {
 
     graphConfig.addNode(embedderNode);
 
-    this.graphRunner.attachProtoListener(EMBEDDINGS_STREAM, binaryProto => {
-      const embeddingResult = EmbeddingResult.deserializeBinary(binaryProto);
-      this.embeddingResult = convertFromEmbeddingResultProto(embeddingResult);
-    });
+    this.graphRunner.attachProtoListener(
+      EMBEDDINGS_STREAM,
+      (binaryProto, timestamp) => {
+        const embeddingResult = EmbeddingResult.deserializeBinary(binaryProto);
+        this.embeddingResult = convertFromEmbeddingResultProto(embeddingResult);
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
+    this.graphRunner.attachEmptyPacketListener(
+      EMBEDDINGS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
   }
 }
-
 
 

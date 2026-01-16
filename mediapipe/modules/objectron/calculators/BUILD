@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("//mediapipe/framework:mediapipe_register_type.bzl", "mediapipe_register_type")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
 
@@ -135,6 +137,7 @@ cc_library(
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/util/tracking:box_tracker_cc_proto",
+        "@com_google_absl//absl/log:absl_check",
     ],
 )
 
@@ -146,10 +149,11 @@ cc_library(
         ":annotation_cc_proto",
         ":box_util",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/util/tracking:box_tracker_cc_proto",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -163,9 +167,10 @@ cc_library(
     ],
     deps = [
         "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:str_format",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -182,12 +187,13 @@ cc_library(
         ":belief_decoder_config_cc_proto",
         ":box",
         ":epnp",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -203,6 +209,7 @@ cc_library(
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
+        "@com_google_absl//absl/log:absl_check",
         "@org_tensorflow//tensorflow/lite:framework",
     ],
 )
@@ -223,7 +230,8 @@ cc_library(
         ":annotation_cc_proto",
         ":object_cc_proto",
         "//mediapipe/framework/port:logging",
-        "@eigen_archive//:eigen3",
+        "@com_google_absl//absl/log:absl_check",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -277,10 +285,12 @@ cc_library(
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
         "@org_tensorflow//tensorflow/lite:framework",
     ],
     alwayslink = 1,
@@ -298,12 +308,14 @@ cc_library(
         ":tensors_to_objects_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
     alwayslink = 1,
 )
@@ -321,10 +333,11 @@ cc_library(
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
         "@org_tensorflow//tensorflow/lite:framework",
     ],
     alwayslink = 1,
@@ -341,7 +354,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/memory",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
     alwayslink = 1,
 )
@@ -368,11 +381,11 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:location_data_cc_proto",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:re2",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/container:node_hash_set",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -416,5 +429,6 @@ cc_test(
         "//mediapipe/framework/port:logging",
         "//mediapipe/util/tracking:box_tracker_cc_proto",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log:absl_check",
     ],
 )

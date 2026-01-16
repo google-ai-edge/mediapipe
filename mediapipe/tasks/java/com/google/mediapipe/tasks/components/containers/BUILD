@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -40,6 +40,9 @@ android_library(
     srcs = ["Detection.java"],
     deps = [
         ":category",
+        ":normalizedkeypoint",
+        "//mediapipe/framework/formats:detection_java_proto_lite",
+        "//mediapipe/framework/formats:location_data_java_proto_lite",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -48,9 +51,6 @@ android_library(
 android_library(
     name = "classifications",
     srcs = ["Classifications.java"],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     deps = [
         ":category",
         "//mediapipe/framework/formats:classification_java_proto_lite",
@@ -63,9 +63,6 @@ android_library(
 android_library(
     name = "classificationresult",
     srcs = ["ClassificationResult.java"],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     deps = [
         ":classifications",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_java_proto_lite",
@@ -75,9 +72,19 @@ android_library(
 )
 
 android_library(
+    name = "connection",
+    srcs = ["Connection.java"],
+    deps = [
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
     name = "landmark",
     srcs = ["Landmark.java"],
     deps = [
+        "//mediapipe/framework/formats:landmark_java_proto_lite",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -86,6 +93,16 @@ android_library(
 android_library(
     name = "normalized_landmark",
     srcs = ["NormalizedLandmark.java"],
+    deps = [
+        "//mediapipe/framework/formats:landmark_java_proto_lite",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "normalizedkeypoint",
+    srcs = ["NormalizedKeypoint.java"],
     deps = [
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
@@ -102,9 +119,6 @@ filegroup(
 android_library(
     name = "embedding",
     srcs = ["Embedding.java"],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     deps = [
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_java_proto_lite",
         "//third_party:autovalue",
@@ -115,9 +129,6 @@ android_library(
 android_library(
     name = "embeddingresult",
     srcs = ["EmbeddingResult.java"],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
     deps = [
         ":embedding",
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_java_proto_lite",

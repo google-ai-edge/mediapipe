@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+# Placeholder: load proto_library
 
 licenses(["notice"])
 
@@ -44,6 +46,7 @@ cc_library(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/tool:status_util",
+        "@com_google_absl//absl/log:absl_check",
     ],
     alwayslink = 1,
 )

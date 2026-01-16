@@ -14,7 +14,12 @@
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/packet_getter_jni.h"
 
+#include <jni.h>
+#include <stdint.h>
+
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -39,6 +44,78 @@ template <typename T>
 const T& GetFromNativeHandle(int64_t packet_handle) {
   return mediapipe::android::Graph::GetPacketFromHandle(packet_handle).Get<T>();
 }
+
+// Validates the destination buffer size and copies the byte data of the image
+// frame to the destination buffer.
+template <typename T>
+bool ValidateAndCopy(JNIEnv* env, const mediapipe::ImageFrame& src,
+                     int64_t dst_size, void* dst_data) {
+  if (dst_size != src.PixelDataSizeStoredContiguously()) {
+    ThrowIfError(
+        env, absl::InvalidArgumentError(absl::StrCat(
+                 "Expected buffer size ", src.PixelDataSizeStoredContiguously(),
+                 " got: ", dst_size)));
+    return false;
+  }
+  T* data = static_cast<T*>(dst_data);
+  src.CopyToBuffer(data, dst_size);
+  return true;
+}
+
+bool CopyImageDataToByteBuffer(JNIEnv* env, const mediapipe::ImageFrame& image,
+                               jobject byte_buffer) {
+  int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
+  void* buffer_data = env->GetDirectBufferAddress(byte_buffer);
+  if (buffer_data == nullptr || buffer_size < 0) {
+    ThrowIfError(env, absl::InvalidArgumentError(
+                          "input buffer does not support direct access"));
+    return false;
+  }
+
+  switch (image.ByteDepth()) {
+    case 1:
+      return ValidateAndCopy<uint8_t>(env, image, buffer_size, buffer_data);
+    case 2:
+      return ValidateAndCopy<uint16_t>(env, image, buffer_size, buffer_data);
+    case 4: {
+      // Special case: uint8 data (ByteDepth 1) being read from a float32
+      // buffer image. All values are expected to be in the [0.0, 1.0] range and
+      // are scaled to [0, 255] during the copy to the output buffer.
+      // TODO: Remove this conversions and/or perform on GPU.
+      if (buffer_size ==
+          image.Width() * image.Height() * image.NumberOfChannels()) {
+        const float* float_data =
+            reinterpret_cast<const float*>(image.PixelData());
+        uint8_t* byte_data = reinterpret_cast<uint8_t*>(buffer_data);
+        for (int i = 0; i < buffer_size; ++i) {
+          byte_data[i] = static_cast<uint8_t>(float_data[i] * 255.0f);
+        }
+        return true;
+      }
+
+      return ValidateAndCopy<float>(env, image, buffer_size, buffer_data);
+    }
+    default:
+      return false;
+  }
+}
+
+void CheckImageSizeInImageList(JNIEnv* env,
+                               const std::vector<mediapipe::Image>& image_list,
+                               int height, int width, int channels) {
+  for (int i = 0; i < image_list.size(); ++i) {
+    if (image_list[i].height() != height || image_list[i].width() != width ||
+        image_list[i].channels() != channels) {
+      ThrowIfError(env, absl::InvalidArgumentError(absl::StrFormat(
+                            "Expect images in the image list having the same "
+                            "size: (%d, %d, %d), but get image at index %d "
+                            "with size: (%d, %d, %d)",
+                            height, width, channels, i, image_list[i].height(),
+                            image_list[i].width(), image_list[i].channels())));
+    }
+  }
+}
+
 }  // namespace
 
 JNIEXPORT jlong JNICALL PACKET_GETTER_METHOD(nativeGetPacketFromReference)(
@@ -159,7 +236,7 @@ JNIEXPORT void JNICALL PACKET_GETTER_METHOD(nativeGetProto)(JNIEnv* env,
   if (!ThrowIfError(env, status)) {
     // Convert type_name and value to Java data.
     const auto& proto_message = mediapipe_packet.GetProtoMessageLite();
-    std::string type_name = proto_message.GetTypeName();
+    std::string type_name(proto_message.GetTypeName());
     jstring j_type_name = env->NewStringUTF(type_name.c_str());
     std::string proto_bytes;
     proto_message.SerializeToString(&proto_bytes);
@@ -287,6 +364,20 @@ JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageHeight)(
   return image.Height();
 }
 
+JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageNumChannels)(
+    JNIEnv* env, jobject thiz, jlong packet) {
+  mediapipe::Packet mediapipe_packet =
+      mediapipe::android::Graph::GetPacketFromHandle(packet);
+  const bool is_image =
+      mediapipe_packet.ValidateAsType<mediapipe::Image>().ok();
+  const mediapipe::ImageFrame& image =
+      is_image ? *GetFromNativeHandle<mediapipe::Image>(packet)
+                      .GetImageFrameSharedPtr()
+                      .get()
+               : GetFromNativeHandle<mediapipe::ImageFrame>(packet);
+  return image.NumberOfChannels();
+}
+
 JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageData)(
     JNIEnv* env, jobject thiz, jlong packet, jobject byte_buffer) {
   mediapipe::Packet mediapipe_packet =
@@ -298,45 +389,101 @@ JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageData)(
                       .GetImageFrameSharedPtr()
                       .get()
                : GetFromNativeHandle<mediapipe::ImageFrame>(packet);
+  return CopyImageDataToByteBuffer(env, image, byte_buffer);
+}
 
-  int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
-  void* buffer_data = env->GetDirectBufferAddress(byte_buffer);
-  if (buffer_data == nullptr || buffer_size < 0) {
+JNIEXPORT jobject JNICALL PACKET_GETTER_METHOD(nativeGetImageDataDirect)(
+    JNIEnv* env, jobject thiz, jlong packet) {
+  mediapipe::Packet mediapipe_packet =
+      mediapipe::android::Graph::GetPacketFromHandle(packet);
+  const bool is_image =
+      mediapipe_packet.ValidateAsType<mediapipe::Image>().ok();
+  const mediapipe::ImageFrame& image =
+      is_image ? *GetFromNativeHandle<mediapipe::Image>(packet)
+                      .GetImageFrameSharedPtr()
+                      .get()
+               : GetFromNativeHandle<mediapipe::ImageFrame>(packet);
+  if (!image.IsContiguous()) {
+    return NULL;
+  }
+
+  // We need to get a mutable data pointer to create a ByteBuffer in Java. Since
+  // we are returning a read-only ByteBuffer via the API, we essentially retain
+  // the original const qualifier.
+  mediapipe::ImageFrame& mutable_image =
+      const_cast<mediapipe::ImageFrame&>(image);
+  void* unsafe_ptr = static_cast<void*>(mutable_image.MutablePixelData());
+  return env->NewDirectByteBuffer(unsafe_ptr,
+                                  image.PixelDataSizeStoredContiguously());
+}
+
+JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageListSize)(
+    JNIEnv* env, jobject thiz, jlong packet) {
+  const auto& image_list =
+      GetFromNativeHandle<std::vector<mediapipe::Image>>(packet);
+  return image_list.size();
+}
+
+JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageWidthFromImageList)(
+    JNIEnv* env, jobject thiz, jlong packet) {
+  const auto& image_list =
+      GetFromNativeHandle<std::vector<mediapipe::Image>>(packet);
+  if (image_list.empty()) {
     ThrowIfError(env, absl::InvalidArgumentError(
-                          "input buffer does not support direct access"));
+                          "Image list from the packet is empty."));
+  }
+  CheckImageSizeInImageList(env, image_list, image_list[0].height(),
+                            image_list[0].width(), image_list[0].channels());
+  return image_list[0].width();
+}
+
+JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageHeightFromImageList)(
+    JNIEnv* env, jobject thiz, jlong packet) {
+  const auto& image_list =
+      GetFromNativeHandle<std::vector<mediapipe::Image>>(packet);
+  if (image_list.empty()) {
+    ThrowIfError(env, absl::InvalidArgumentError(
+                          "Image list from the packet is empty."));
+  }
+  CheckImageSizeInImageList(env, image_list, image_list[0].height(),
+                            image_list[0].width(), image_list[0].channels());
+  return image_list[0].height();
+}
+
+JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageList)(
+    JNIEnv* env, jobject thiz, jlong packet, jobjectArray byte_buffer_array,
+    jboolean deep_copy) {
+  const auto& image_list =
+      GetFromNativeHandle<std::vector<mediapipe::Image>>(packet);
+  if (env->GetArrayLength(byte_buffer_array) != image_list.size()) {
+    ThrowIfError(env, absl::InvalidArgumentError(absl::StrCat(
+                          "Expected ByteBuffer array size: ", image_list.size(),
+                          " but get ByteBuffer array size: ",
+                          env->GetArrayLength(byte_buffer_array))));
     return false;
   }
-
-  // Assume byte buffer stores pixel data contiguously.
-  const int expected_buffer_size = image.Width() * image.Height() *
-                                   image.ByteDepth() * image.NumberOfChannels();
-  if (buffer_size != expected_buffer_size) {
-    ThrowIfError(
-        env, absl::InvalidArgumentError(absl::StrCat(
-                 "Expected buffer size ", expected_buffer_size,
-                 " got: ", buffer_size, ", width ", image.Width(), ", height ",
-                 image.Height(), ", channels ", image.NumberOfChannels())));
-    return false;
-  }
-
-  switch (image.ByteDepth()) {
-    case 1: {
-      uint8* data = static_cast<uint8*>(buffer_data);
-      image.CopyToBuffer(data, expected_buffer_size);
-      break;
-    }
-    case 2: {
-      uint16* data = static_cast<uint16*>(buffer_data);
-      image.CopyToBuffer(data, expected_buffer_size);
-      break;
-    }
-    case 4: {
-      float* data = static_cast<float*>(buffer_data);
-      image.CopyToBuffer(data, expected_buffer_size);
-      break;
-    }
-    default: {
+  for (int i = 0; i < image_list.size(); ++i) {
+    auto& image = *image_list[i].GetImageFrameSharedPtr().get();
+    if (!image.IsContiguous()) {
+      ThrowIfError(
+          env, absl::InternalError("ImageFrame must store data contiguously to "
+                                   "be allocated as ByteBuffer."));
       return false;
+    }
+    if (deep_copy) {
+      jobject byte_buffer = reinterpret_cast<jobject>(
+          env->GetObjectArrayElement(byte_buffer_array, i));
+      if (!CopyImageDataToByteBuffer(env, image, byte_buffer)) {
+        return false;
+      }
+    } else {
+      // Assume byte buffer stores pixel data contiguously.
+      const int expected_buffer_size = image.Width() * image.Height() *
+                                       image.ByteDepth() *
+                                       image.NumberOfChannels();
+      jobject image_data_byte_buffer = env->NewDirectByteBuffer(
+          image.MutablePixelData(), expected_buffer_size);
+      env->SetObjectArrayElement(byte_buffer_array, i, image_data_byte_buffer);
     }
   }
   return true;
@@ -412,10 +559,11 @@ JNIEXPORT jbyteArray JNICALL PACKET_GETTER_METHOD(nativeGetAudioData)(
   int offset = 0;
   for (int sample = 0; sample < num_samples; ++sample) {
     for (int channel = 0; channel < num_channels; ++channel) {
-      int16 value =
-          static_cast<int16>(audio_mat(channel, sample) * kMultiplier);
+      int16_t value =
+          static_cast<int16_t>(audio_mat(channel, sample) * kMultiplier);
       // The java and native has the same byte order, by default is little
-      // Endian, we can safely copy data directly, we have tests to cover this.
+      // Endian, we can safely copy data directly, we have tests to cover
+      // this.
       env->SetByteArrayRegion(byte_data, offset, 2,
                               reinterpret_cast<const jbyte*>(&value));
       offset += 2;

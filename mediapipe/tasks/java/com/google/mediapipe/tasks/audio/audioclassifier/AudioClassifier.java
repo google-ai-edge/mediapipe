@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -203,6 +203,8 @@ public final class AudioClassifier extends BaseAudioTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<AudioClassifierOptions>builder()
+                .setTaskName(AudioClassifier.class.getSimpleName())
+                .setTaskRunningModeName(options.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)
                 .setOutputStreams(OUTPUT_STREAMS)

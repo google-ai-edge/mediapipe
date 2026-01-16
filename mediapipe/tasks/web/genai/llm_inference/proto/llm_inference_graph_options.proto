@@ -1,0 +1,53 @@
+/* Copyright 2024 The MediaPipe Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto3";
+
+package mediapipe.tasks.genai.llm_inference.proto;
+
+import "mediapipe/tasks/cc/core/proto/base_options.proto";
+import "mediapipe/tasks/cc/genai/inference/proto/sampler_params.proto";
+
+option java_package = "com.google.mediapipe.tasks.genai.llminference.proto";
+option java_outer_classname = "LlmInferenceGraphOptionsProto";
+
+message LlmInferenceGraphOptions {
+  // Base options for configuring MediaPipe Tasks, such as specifying the model
+  // asset bundle file with metadata, accelerator options, etc.
+  core.proto.BaseOptions base_options = 1;
+
+  // Maximum number of the combined input and output tokens.
+  optional uint32 max_tokens = 2;
+
+  // Parameters for the sampler, which is used to pick the winning token.
+  odml.infra.proto.SamplerParameters sampler_params = 3;
+
+  // The LoRA ranks that will be used during inference.
+  repeated int32 lora_ranks = 4;
+
+  // The number of responses to generate for 'generateResponses' call.
+  optional uint32 num_responses = 5;
+
+  // Whether or not to force inference to be performed with F32 precision. By
+  // default, this will be false for best performance.
+  optional bool force_f32 = 6;
+
+  // The maximum number of images we can handle with MM LLMs. Enables vision
+  // modality when set > 0.
+  optional uint32 max_num_images = 7;
+
+  // Enables audio modality when set to true for MM LLMs.
+  optional bool support_audio = 8;
+}

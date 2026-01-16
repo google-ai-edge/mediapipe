@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_GPU_GPU_SERVICE_H_
 #define MEDIAPIPE_GPU_GPU_SERVICE_H_
 
+#include "absl/base/attributes.h"
 #include "mediapipe/framework/graph_service.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
@@ -27,9 +28,9 @@ namespace mediapipe {
 class GpuResources {
   GpuResources() = delete;
 };
-#endif  // !MEDIAPIPE_DISABLE_GPU
+#endif  // MEDIAPIPE_DISABLE_GPU
 
-extern const GraphService<GpuResources> kGpuService;
+ABSL_CONST_INIT extern const GraphService<GpuResources> kGpuService;
 
 }  // namespace mediapipe
 

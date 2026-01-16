@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,13 @@
 # limitations under the License.
 """MediaPipe Tasks' common but optional dependencies."""
 
-doc_controls = lambda: None
-no_op = lambda x: x
-setattr(doc_controls, 'do_not_generate_docs', no_op)
+# TensorFlow isn't a dependency of mediapipe pip package. It's only
+# required in the API docgen pipeline so we'll ignore it if tensorflow is not
+# installed.
+try:
+  from tensorflow.tools.docs import doc_controls
+except ModuleNotFoundError:
+  # Replace the real doc_controls.do_not_generate_docs with an no-op
+  doc_controls = lambda: None
+  no_op = lambda x: x
+  setattr(doc_controls, 'do_not_generate_docs', no_op)

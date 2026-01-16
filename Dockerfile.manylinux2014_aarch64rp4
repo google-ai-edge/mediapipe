@@ -1,0 +1,108 @@
+# 2025 Copyright 2020 The MediaPipe Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# A docker image that contains the PyPA aarch64rp4 manylinux2014 toolchain and
+# bazel 7.4.1. The image produces MediaPipe rasberryPi wheels for Python 3.12.
+# and puts the output wheel files in /wheelhouse/.
+#
+# Usage:
+# $ docker build -f Dockerfile.manylinux2014_aarch64rp4 -t mp_manylinux_aarch64rp4 .
+# $ docker create -ti --name mp_pip_package_container mp_manylinux_aarch64rp4:latest
+# $ docker cp mp_pip_package_container:/wheelhouse/. wheelhouse/
+# $ docker rm -f mp_pip_package_container
+
+FROM quay.io/pypa/manylinux2014_aarch64
+
+# Install Bazel
+RUN curl -L -o bazel https://github.com/bazelbuild/bazel/releases/download/7.4.1/bazel-7.4.1-linux-arm64
+RUN chmod +x bazel
+RUN mv ./bazel /usr/local/bin
+
+# Copy Protobuf Compiler binary
+ARG PROTOC_ZIP=protoc-5.28.3-linux-aarch_64.zip
+RUN curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v5.28.3/$PROTOC_ZIP
+RUN unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
+RUN unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
+RUN rm -f $PROTOC_ZIP
+
+# Install Clang 18
+RUN yum install -y wget gcc-c++ cmake
+RUN mkdir /tmp/llvm-project && wget -qO - https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-18.1.8.tar.gz | tar -xz -C /tmp/llvm-project --strip-components 1 && \
+    mkdir /tmp/llvm-project/build && cd /tmp/llvm-project/build && cmake -DLLVM_ENABLE_PROJECTS='clang;lld' -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/lib/llvm-18/ ../llvm && \
+    make -j$(nproc) && make -j$(nproc) install && rm -rf /tmp/llvm-project
+
+# Install OpenGL
+RUN yum install -y -v mesa-libGL mesa-libGL-devel mesa-libEGL mesa-libEGL-devel
+RUN yum install -y -v mesa-libGLES-devel
+
+# Install EPEL 7, Java 11, and other small packages.
+RUN yum install -y -v https://archives.fedoraproject.org/pub/archive/epel/7/aarch64/Packages/e/epel-release-7-12.noarch.rpm
+RUN yum install -y -v java-11-openjdk java-11-openjdk-devel zip emacs portaudio-devel
+
+# Install OpenSSL.
+RUN curl -OL https://www.openssl.org/source/openssl-1.1.1.tar.gz
+RUN tar -xvzf openssl-1.1.1.tar.gz && cd openssl-1.1.1 && \
+    ./Configure linux-aarch64 --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib && \
+     make -j$(($(nproc)+1)) && \
+     make install
+RUN echo 'LD_LIBRARY_PATH=/usr/local/ssl/lib:${LD_LIBRARY_PATH}' >> /etc/environment
+RUN rm openssl-1.1.1.tar.gz
+RUN rm openssl-1.1.1 -r
+
+# Install OpenCV.
+WORKDIR /tmp/bazel_build
+RUN git clone https://github.com/opencv/opencv.git
+RUN mkdir opencv/release
+RUN cd /tmp/bazel_build/opencv && git checkout 4.10.0 && cd release && cmake .. \
+    -DCMAKE_C_COMPILER=/usr/lib/llvm-18/bin/clang -DCMAKE_CXX_COMPILER=/usr/lib/llvm-18/bin/clang++ \
+    -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=/usr/local \
+    -DBUILD_SHARED_LIBS=OFF -DBUILD_LIST=imgproc,core \
+    -DWITH_ITT=OFF -DWITH_IPP=OFF -DBUILD_EXAMPLES=OFF \
+    -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_opencv_ts=OFF \
+    -DCV_ENABLE_INTRINSICS=ON -DWITH_EIGEN=ON -DWITH_PTHREADS=ON -DWITH_PTHREADS_PF=ON
+RUN cd /tmp/bazel_build/opencv/release && make -j 16 && make install
+
+# Compile Python 3.12
+WORKDIR /tmp/bazel_build
+RUN curl -O https://www.python.org/ftp/python/3.12.0/Python-3.12.0.tgz
+RUN tar -xzf Python-3.12.0.tgz && cd Python-3.12.0 && \
+    sed -i 's/PKG_CONFIG openssl /PKG_CONFIG openssl11 /g' configure && \
+   ./configure --enable-optimizations --with-openssl=/usr/local/ssl --with-openssl-rpath=auto && \
+   make altinstall
+
+COPY . /mediapipe/
+WORKDIR /mediapipe
+
+# Set version number
+RUN MP_VERSION_NUMBER=$(awk '/MEDIAPIPE_FULL_VERSION/ {split($0, a, "="); print a[2]}' mediapipe/version.bzl | sed 's/[" ]//g') && \
+    sed -i "s/__version__ = 'dev'/__version__ = '${MP_VERSION_NUMBER}'/g" setup.py
+
+# Set build flags for MediaPipe and OpenCV.
+RUN echo "build --client_env=CC=/usr/lib/llvm-18/bin/clang++" >> .bazelrc && \
+    echo "build --define=xnn_enable_avxvnniint8=false" >> .bazelrc && \
+    sed -i "s/path = \"\/usr\"/path = \"\/usr\/local\"/g" WORKSPACE && \
+    echo 'cc_library(name = "opencv", srcs = ["lib64/libopencv_imgproc.a", "lib64/libopencv_core.a"],hdrs = glob(["include/opencv4/opencv2/**/*.h*"]), includes = ["include/opencv4/"], linkstatic = 1, visibility = ["//visibility:public"])' > third_party/opencv_linux.BUILD && \
+    sed -i "s|bazel_command.append('--define=OPENCV=source')|pass|g" setup.py
+
+# Apply diff to reduce the number of OpenCV dependencies.
+RUN patch -p1 < mediapipe_python_build.diff
+
+ARG PYTHON_BIN="/opt/python/cp312-cp312/bin/python3.12"
+RUN ln -sf $PYTHON_BIN /usr/bin/python && \
+   ln -sf $PYTHON_BIN /usr/bin/python3 && \
+   $PYTHON_BIN -m pip install wheel "numpy<2" auditwheel && \
+   $PYTHON_BIN setup.py bdist_wheel clean --all
+RUN auditwheel repair dist/*.whl
+
+RUN mkdir /wheelhouse/ && cp dist/* /wheelhouse/

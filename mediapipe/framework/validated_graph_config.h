@@ -16,15 +16,18 @@
 #define MEDIAPIPE_FRAMEWORK_VALIDATED_GRAPH_CONFIG_H_
 
 #include <map>
+#include <string>
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
+#include "google/protobuf/repeated_ptr_field.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/packet_generator.pb.h"
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/framework/port/map_util.h"
+#include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/framework/status_handler.pb.h"
@@ -33,6 +36,12 @@
 namespace mediapipe {
 
 class ValidatedGraphConfig;
+
+std::string DebugEdgeNames(
+    const std::string& edge_type,
+    const proto_ns::RepeatedPtrField<ProtoString>& edges);
+
+std::string DebugName(const CalculatorGraphConfig::Node& node_config);
 
 // Type information for a graph node (Calculator, Generator, etc).
 class NodeTypeInfo {
@@ -282,6 +291,14 @@ class ValidatedGraphConfig {
     return output_streams_[iter->second].parent_node.index;
   }
 
+  std::vector<int> OutputStreamToConsumers(int idx) const {
+    auto iter = output_streams_to_consumer_nodes_.find(idx);
+    if (iter == output_streams_to_consumer_nodes_.end()) {
+      return {};
+    }
+    return iter->second;
+  }
+
   // Returns the registered type name of the specified side packet if
   // it can be determined, otherwise an appropriate error is returned.
   absl::StatusOr<std::string> RegisteredSidePacketTypeName(
@@ -418,6 +435,10 @@ class ValidatedGraphConfig {
 
   // Mapping from stream name to the output_streams_ index which produces it.
   std::map<std::string, int> stream_to_producer_;
+
+  // Mapping from output streams to consumer node ids. Used for profiling.
+  std::map<int, std::vector<int>> output_streams_to_consumer_nodes_;
+
   // Mapping from side packet name to the output_side_packets_ index
   // which produces it.
   std::map<std::string, int> side_packet_to_producer_;

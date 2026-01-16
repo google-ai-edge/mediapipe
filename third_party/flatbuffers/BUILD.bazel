@@ -1,6 +1,6 @@
 load("@build_bazel_rules_android//android:rules.bzl", "android_library")
-load(":build_defs.bzl", "flatbuffer_py_strip_prefix_srcs")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load(":build_defs.bzl", "flatbuffer_py_strip_prefix_srcs")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -42,15 +42,18 @@ filegroup(
         "include/flatbuffers/allocator.h",
         "include/flatbuffers/array.h",
         "include/flatbuffers/base.h",
-        "include/flatbuffers/bfbs_generator.h",
         "include/flatbuffers/buffer.h",
         "include/flatbuffers/buffer_ref.h",
+        "include/flatbuffers/code_generator.h",
         "include/flatbuffers/code_generators.h",
         "include/flatbuffers/default_allocator.h",
         "include/flatbuffers/detached_buffer.h",
+        "include/flatbuffers/file_manager.h",
         "include/flatbuffers/flatbuffer_builder.h",
         "include/flatbuffers/flatbuffers.h",
+        "include/flatbuffers/flex_flat_util.h",
         "include/flatbuffers/flexbuffers.h",
+        "include/flatbuffers/grpc.h",
         "include/flatbuffers/hash.h",
         "include/flatbuffers/idl.h",
         "include/flatbuffers/minireflect.h",

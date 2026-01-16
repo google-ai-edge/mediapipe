@@ -34,6 +34,8 @@ constexpr char kRecropRectTag[] = "RECROP_RECT";
 constexpr char kImageSizeTag[] = "IMAGE_SIZE";
 constexpr char kTrackingRectTag[] = "TRACKING_RECT";
 
+using ::mediapipe::NormalizedRect;
+
 // TODO: Use rect rotation.
 // Verifies that Intersection over Union of previous frame rect and current
 // frame re-crop rect is less than threshold.

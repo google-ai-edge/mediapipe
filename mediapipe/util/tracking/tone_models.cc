@@ -16,6 +16,7 @@
 
 #include <cmath>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_format.h"
 
 namespace mediapipe {
@@ -47,13 +48,13 @@ void ToneModelMethods<Model, Adapter>::MapImage(const Model& model,
                                                 bool normalized_model,
                                                 const cv::Mat& input,
                                                 cv::Mat* output) {
-  CHECK(output != nullptr);
+  ABSL_CHECK(output != nullptr);
 
   const int out_channels = output->channels();
-  CHECK_EQ(input.channels(), 3);
-  CHECK_LE(out_channels, 3);
-  CHECK_EQ(input.rows, output->rows);
-  CHECK_EQ(input.cols, output->cols);
+  ABSL_CHECK_EQ(input.channels(), 3);
+  ABSL_CHECK_LE(out_channels, 3);
+  ABSL_CHECK_EQ(input.rows, output->rows);
+  ABSL_CHECK_EQ(input.cols, output->cols);
 
   float norm_scale =
       normalized_model
@@ -64,8 +65,8 @@ void ToneModelMethods<Model, Adapter>::MapImage(const Model& model,
   const float inv_norm_scale = 1.0f / norm_scale;
 
   for (int i = 0; i < input.rows; ++i) {
-    const uint8* input_ptr = input.ptr<uint8>(i);
-    uint8* output_ptr = output->ptr<uint8>(i);
+    const uint8_t* input_ptr = input.ptr<uint8_t>(i);
+    uint8_t* output_ptr = output->ptr<uint8_t>(i);
     for (int j = 0; j < input.cols;
          ++j, input_ptr += 3, output_ptr += out_channels) {
       Vector3_f color_vec(input_ptr[0], input_ptr[1], input_ptr[2]);

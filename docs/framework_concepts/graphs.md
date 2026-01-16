@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/framework_concepts/graphs
 title: Graphs
 parent: Framework Concepts
 nav_order: 2
@@ -12,31 +13,37 @@ nav_order: 2
 {:toc}
 ---
 
-## GraphConfig
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
 
-A `GraphConfig` is a specification that describes the topology and functionality
-of a MediaPipe graph. In the specification, a node in the graph represents an
-instance of a particular calculator. All the necessary configurations of the
-node, such its type, inputs and outputs must be described in the specification.
-Description of the node can also include several optional fields, such as
+----
+
+## Graph
+
+A `CalculatorGraphConfig` proto specifies the topology and functionality of a
+MediaPipe graph. Each `node` in the graph represents a particular calculator or
+subgraph, and specifies necessary configurations, such as registered
+calculator/subgraph type, inputs, outputs and optional fields, such as
 node-specific options, input policy and executor, discussed in
 [Synchronization](synchronization.md).
 
-`GraphConfig` has several other fields to configure the global graph-level
-settings, eg, graph executor configs, number of threads, and maximum queue size
+`CalculatorGraphConfig` has several other fields to configure global graph-level
+settings, e.g. graph executor configs, number of threads, and maximum queue size
 of input streams. Several graph-level settings are useful for tuning the
-performance of the graph on different platforms (eg, desktop v.s. mobile). For
+performance of the graph on different platforms (e.g., desktop v.s. mobile). For
 instance, on mobile, attaching a heavy model-inference calculator to a separate
 executor can improve the performance of a real-time application since this
 enables thread locality.
 
-Below is a trivial `GraphConfig` example where we have series of passthrough
-calculators :
+Below is a trivial `CalculatorGraphConfig` example where we have series of
+passthrough calculators :
 
 ```proto
 # This graph named main_pass_throughcals_nosubgraph.pbtxt contains 4
 # passthrough calculators.
 input_stream: "in"
+output_stream: "out"
 node {
     calculator: "PassThroughCalculator"
     input_stream: "in"
@@ -55,9 +62,38 @@ node {
 node {
     calculator: "PassThroughCalculator"
     input_stream: "out3"
-    output_stream: "out4"
+    output_stream: "out"
 }
 ```
+
+MediaPipe offers an alternative `C++` representation for complex graphs (e.g. ML pipelines, handling model metadata, optional nodes, etc.). The above graph may look like:
+
+```c++
+CalculatorGraphConfig BuildGraphConfig() {
+  Graph graph;
+
+  // Graph inputs
+  Stream<AnyType> in = graph.In(0).SetName("in");
+
+  auto pass_through_fn = [](Stream<AnyType> in,
+                            Graph& graph) -> Stream<AnyType> {
+    auto& node = graph.AddNode("PassThroughCalculator");
+    in.ConnectTo(node.In(0));
+    return node.Out(0);
+  };
+
+  Stream<AnyType> out1 = pass_through_fn(in, graph);
+  Stream<AnyType> out2 = pass_through_fn(out1, graph);
+  Stream<AnyType> out3 = pass_through_fn(out2, graph);
+  Stream<AnyType> out4 = pass_through_fn(out3, graph);
+
+  // Graph outputs
+  out4.SetName("out").ConnectTo(graph.Out(0));
+
+  return graph.GetConfig();
+}
+```
+See more details in [Building Graphs in C++](building_graphs_cpp.md)
 
 ## Subgraph
 
@@ -65,7 +101,7 @@ To modularize a `CalculatorGraphConfig` into sub-modules and assist with re-use
 of perception solutions, a MediaPipe graph can be defined as a `Subgraph`. The
 public interface of a subgraph consists of a set of input and output streams
 similar to a calculator's public interface. The subgraph can then be included in
-an `CalculatorGraphConfig` as if it were a calculator. When a MediaPipe graph is
+a `CalculatorGraphConfig` as if it were a calculator. When a MediaPipe graph is
 loaded from a `CalculatorGraphConfig`, each subgraph node is replaced by the
 corresponding graph of calculators. As a result, the semantics and performance
 of the subgraph is identical to the corresponding graph of calculators.
@@ -151,7 +187,7 @@ protobuf specified for a MediaPipe calculator. These "graph options" can be
 specified where a graph is invoked, and used to populate calculator options and
 subgraph options within the graph.
 
-In a CalculatorGraphConfig, graph options can be specified for a subgraph
+In a `CalculatorGraphConfig`, graph options can be specified for a subgraph
 exactly like calculator options, as shown below:
 
 ```
@@ -178,7 +214,7 @@ node {
 }
 ```
 
-In a CalculatorGraphConfig, graph options can be accepted and used to populate
+In a `CalculatorGraphConfig`, graph options can be accepted and used to populate
 calculator options, as shown below:
 
 ```
@@ -188,7 +224,7 @@ graph_options: {
 
 node: {
   calculator: "ImageToTensorCalculator"
-  input_stream: "IMAGE:multi_backend_image"
+  input_stream: "IMAGE:image"
   node_options: {
     [type.googleapis.com/mediapipe.ImageToTensorCalculatorOptions] {
         keep_aspect_ratio: true
@@ -235,6 +271,37 @@ syntax. Nested messages that are referenced in the LHS or RHS must already be
 defined in the enclosing protobuf in order to be traversed using
 `option_value:`.
 
+In order to copy the entire graph options, use the syntax `OPTIONS:options`.
+Here, `OPTIONS` identifies the graph options and `option` targets the node or
+subgraph options`. Note that both have to be of the same type.
+
+This reflection-based mechanism requires protobuf descriptors that have to be
+explicitly registered. To achieve that, the calculator or subgraph has to depend
+on the `<options_proto>_options_lib` target that is generated by
+`mediapipe_proto_library`, e.g.
+
+```
+mediapipe_proto_library(
+    name = "face_detection_proto",
+    srcs = ["face_detection.proto"],
+    ...
+)
+
+mediapipe_simple_subgraph(
+    name = "face_detection",
+    graph = "face_detection.pbtxt",
+    register_as = "FaceDetection",
+    deps = [
+        ":face_detection_cc_proto",
+        ":face_detection_options_lib",      # <-- required
+        ...
+    ]
+)
+```
+
+If the `options_lib` target is missing, you may see errors like
+`INVALID_ARGUMENT: Cannot merge field data with data types: 10, 9`.
+
 ## Cycles
 
 <!-- TODO: add discussion of PreviousLoopbackCalculator -->
@@ -247,9 +314,9 @@ NOTE: The current approach is experimental and subject to change. We welcome
 your feedback.
 
 Please use the `CalculatorGraphTest.Cycle` unit test in
-`mediapipe/framework/calculator_graph_test.cc` as sample code. Shown
-below is the cyclic graph in the test. The `sum` output of the adder is the sum
-of the integers generated by the integer source calculator.
+`mediapipe/framework/calculator_graph_test.cc` as sample code. Shown below is
+the cyclic graph in the test. The `sum` output of the adder is the sum of the
+integers generated by the integer source calculator.
 
 ![a cyclic graph that adds a stream of integers](https://mediapipe.dev/images/cyclic_integer_sum_graph.svg "A cyclic graph")
 

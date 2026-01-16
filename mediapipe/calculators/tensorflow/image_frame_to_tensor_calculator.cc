@@ -40,7 +40,7 @@ std::unique_ptr<tf::Tensor> ImageFrameToNormalizedTensor(
   const int cols = image_frame.Width();
   const int rows = image_frame.Height();
   const int channels = image_frame.NumberOfChannels();
-  const uint8* pixel = image_frame.PixelData();
+  const uint8_t* pixel = image_frame.PixelData();
   const int width_padding = image_frame.WidthStep() - cols * channels;
   auto tensor = ::absl::make_unique<tf::Tensor>(
       tf::DT_FLOAT, tf::TensorShape({rows, cols, channels}));
@@ -188,10 +188,10 @@ absl::Status ImageFrameToTensorCalculator::Process(CalculatorContext* cc) {
 
     // Copy pixel data from the ImageFrame to the tensor.
     if (data_type == tf::DT_UINT8) {
-      uint8* dst = tensor->flat<uint8>().data();
+      uint8_t* dst = tensor->flat<uint8_t>().data();
       video_frame.CopyToBuffer(dst, num_components);
     } else if (data_type == tf::DT_UINT16) {
-      uint16* dst = tensor->flat<uint16>().data();
+      uint16_t* dst = tensor->flat<uint16_t>().data();
       video_frame.CopyToBuffer(dst, num_components);
     } else {
       float* dst = tensor->flat<float>().data();

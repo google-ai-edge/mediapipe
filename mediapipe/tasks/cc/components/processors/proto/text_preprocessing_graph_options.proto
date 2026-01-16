@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,25 +18,20 @@ syntax = "proto2";
 package mediapipe.tasks.components.processors.proto;
 
 import "mediapipe/framework/calculator.proto";
+import "mediapipe/tasks/cc/components/processors/proto/text_model_type.proto";
 
 message TextPreprocessingGraphOptions {
   extend mediapipe.CalculatorOptions {
     optional TextPreprocessingGraphOptions ext = 476978751;
   }
 
-  // The type of text preprocessor required for the TFLite model.
-  enum PreprocessorType {
-    UNSPECIFIED_PREPROCESSOR = 0;
-    // Used for the BertPreprocessorCalculator.
-    BERT_PREPROCESSOR = 1;
-    // Used for the RegexPreprocessorCalculator.
-    REGEX_PREPROCESSOR = 2;
-    // Used for the TextToTensorCalculator.
-    STRING_PREPROCESSOR = 3;
-  }
-  optional PreprocessorType preprocessor_type = 1;
+  optional TextModelType.ModelType model_type = 1;
 
   // The maximum input sequence length for the TFLite model. Used with
-  // BERT_PREPROCESSOR and REGEX_PREPROCESSOR.
+  // BERT_MODEL and REGEX_MODEL.
   optional int32 max_seq_len = 2;
+
+  // The model's input tensors are dynamic rather than static.
+  // Used with BERT_MODEL.
+  optional bool has_dynamic_input_tensors = 3;
 }

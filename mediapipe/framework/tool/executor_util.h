@@ -15,14 +15,19 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TOOL_EXECUTOR_UTIL_H_
 #define MEDIAPIPE_FRAMEWORK_TOOL_EXECUTOR_UTIL_H_
 
+#include <cstdint>
+
 #include "mediapipe/framework/calculator.pb.h"
-#include "mediapipe/framework/port/integral_types.h"
 
 namespace mediapipe {
 
 namespace tool {
 // Ensures the default executor's stack size is at least min_stack_size.
-void EnsureMinimumDefaultExecutorStackSize(int32 min_stack_size,
+//
+// Note that this will also initialize the default executor; any configuration
+// changes, such as num_threads, should be done to the config before calling
+// this.
+void EnsureMinimumDefaultExecutorStackSize(int32_t min_stack_size,
                                            CalculatorGraphConfig* config);
 }  // namespace tool
 }  // namespace mediapipe

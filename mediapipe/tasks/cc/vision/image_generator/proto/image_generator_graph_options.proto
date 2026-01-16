@@ -1,0 +1,39 @@
+/* Copyright 2023 The MediaPipe Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto3";
+
+package mediapipe.tasks.vision.image_generator.proto;
+
+import "mediapipe/tasks/cc/core/proto/external_file.proto";
+import "mediapipe/tasks/cc/vision/image_generator/diffuser/stable_diffusion_iterate_calculator.proto";
+import "mediapipe/tasks/cc/vision/image_generator/proto/control_plugin_graph_options.proto";
+
+option java_package = "com.google.mediapipe.tasks.vision.imagegenerator.proto";
+option java_outer_classname = "ImageGeneratorGraphOptionsProto";
+
+message ImageGeneratorGraphOptions {
+  // The directory containing the models weight of the text to image model.
+  string text2image_model_directory = 1;
+
+  // An optional LoRA weights file. If set, the diffusion model will be created
+  // with LoRA weights.
+  core.proto.ExternalFile lora_weights_file = 2;
+
+  repeated proto.ControlPluginGraphOptions control_plugin_graphs_options = 3;
+
+  mediapipe.StableDiffusionIterateCalculatorOptions
+      stable_diffusion_iterate_options = 4;
+}

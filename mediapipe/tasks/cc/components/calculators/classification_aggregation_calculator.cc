@@ -111,7 +111,7 @@ class ClassificationAggregationCalculator : public Node {
  private:
   std::vector<std::string> head_names_;
   bool time_aggregation_enabled_;
-  std::unordered_map<int64, std::vector<ClassificationList>>
+  std::unordered_map<int64_t, std::vector<ClassificationList>>
       cached_classifications_;
 
   ClassificationResult ConvertToClassificationResult(CalculatorContext* cc);
@@ -188,6 +188,7 @@ ClassificationAggregationCalculator::ConvertToClassificationResult(
     *classifications->mutable_classification_list() =
         std::move(classification_lists[i]);
   }
+  result.set_timestamp_ms(cc->InputTimestamp().Value() / 1000);
   cached_classifications_.erase(cc->InputTimestamp().Value());
   return result;
 }

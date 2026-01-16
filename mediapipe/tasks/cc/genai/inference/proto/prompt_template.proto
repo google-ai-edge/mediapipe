@@ -1,0 +1,88 @@
+// Copyright 2024 The ODML Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package odml.infra.proto;
+
+option java_package = "com.google.odml.infra.proto";
+option java_outer_classname = "PromptTemplateProto";
+
+// The role of the prompt.
+// When LLM is decoding, the prompt role should be PROMPT_ROLE_MODEL.
+enum PromptRole {
+  // Unknown prompt role.
+  PROMPT_ROLE_UNKNOWN = 0;
+
+  // No prompt role.
+  PROMPT_ROLE_NONE = 1;
+
+  // User prompt role.
+  PROMPT_ROLE_USER = 2;
+
+  // Model prompt role.
+  PROMPT_ROLE_MODEL = 3;
+
+  // System prompt role.
+  PROMPT_ROLE_SYSTEM = 4;
+}
+
+// Prompt template to be used for prefill and decode calls.
+// Here is an example of the template based on Gemma's specifications here:
+// https://ai.google.dev/gemma/docs/formatting
+//
+//  message prepended {
+//    .prompt_prefix = "<start_of_turn>user\n ";
+//    .prompt_suffix = "<end_of_turn>\n<start_of_turn>model\n";
+//  }
+//
+message PromptTemplate {
+  // Text prepended to session's context on the first prefill invocation. This
+  // is useful for system prompts.
+  string session_prefix = 1 [deprecated = true];
+
+  // Text prepended to the input prompt on the first chunck of the prefill call.
+  // This is useful for adding start of user's turn markers.
+  string prompt_prefix = 2;
+
+  // Text appended to the input prompt upon transition to decode. This is useful
+  // for adding start of model of model's turn markers.
+  string prompt_suffix = 3;
+}
+
+// A collection of prompt templates for different roles.
+// Here is an example of the template based on Gemma's specifications here:
+// https://ai.google.dev/gemma/docs/formatting
+//
+//  message prompt_templates {
+//    .user_template = {
+//      .prompt_prefix = "<start_of_turn>user\n";
+//      .prompt_suffix = "<end_of_turn>\n";
+//    }
+//    .model_template = {
+//      .prompt_prefix = "<start_of_turn>model\n ";
+//      .prompt_suffix = "<end_of_turn>\n";
+//    }
+//  }
+//
+message PromptTemplates {
+  // The template for user role.
+  optional PromptTemplate user_template = 1;
+
+  // The template for model role.
+  optional PromptTemplate model_template = 2;
+
+  // The template for system role.
+  optional PromptTemplate system_template = 3;
+}

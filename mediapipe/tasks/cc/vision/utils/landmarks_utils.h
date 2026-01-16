@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,15 +27,15 @@ limitations under the License.
 namespace mediapipe::tasks::vision::utils {
 
 // Calculates intersection over union for two bounds.
-float CalculateIOU(const components::containers::Rect& a,
-                   const components::containers::Rect& b);
+float CalculateIOU(const components::containers::RectF& a,
+                   const components::containers::RectF& b);
 
 // Calculates area for face bound
-float CalculateArea(const components::containers::Rect& rect);
+float CalculateArea(const components::containers::RectF& rect);
 
 // Calucates intersection area of two face bounds
-float CalculateIntersectionArea(const components::containers::Rect& a,
-                                const components::containers::Rect& b);
+float CalculateIntersectionArea(const components::containers::RectF& a,
+                                const components::containers::RectF& b);
 }  // namespace mediapipe::tasks::vision::utils
 
 #endif  // MEDIAPIPE_TASKS_CC_VISION_UTILS_LANDMARKS_UTILS_H_

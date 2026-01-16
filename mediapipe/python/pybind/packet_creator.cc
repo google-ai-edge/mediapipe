@@ -14,13 +14,21 @@
 
 #include "mediapipe/python/pybind/packet_creator.h"
 
+#include <algorithm>
+#include <climits>
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/packet.h"
-#include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/timestamp.h"
 #include "mediapipe/python/pybind/image_frame_util.h"
 #include "mediapipe/python/pybind/util.h"
 #include "pybind11/eigen.h"
@@ -36,13 +44,14 @@ Packet CreateImageFramePacket(mediapipe::ImageFormat::Format format,
   if (format == mediapipe::ImageFormat::SRGB ||
       format == mediapipe::ImageFormat::SRGBA ||
       format == mediapipe::ImageFormat::GRAY8) {
-    return Adopt(CreateImageFrame<uint8>(format, data, copy).release());
+    return Adopt(CreateImageFrame<uint8_t>(format, data, copy).release());
   } else if (format == mediapipe::ImageFormat::GRAY16 ||
              format == mediapipe::ImageFormat::SRGB48 ||
              format == mediapipe::ImageFormat::SRGBA64) {
-    return Adopt(CreateImageFrame<uint16>(format, data, copy).release());
+    return Adopt(CreateImageFrame<uint16_t>(format, data, copy).release());
   } else if (format == mediapipe::ImageFormat::VEC32F1 ||
-             format == mediapipe::ImageFormat::VEC32F2) {
+             format == mediapipe::ImageFormat::VEC32F2 ||
+             format == mediapipe::ImageFormat::VEC32F4) {
     return Adopt(CreateImageFrame<float>(format, data, copy).release());
   }
   throw RaisePyError(PyExc_RuntimeError,
@@ -56,14 +65,15 @@ Packet CreateImagePacket(mediapipe::ImageFormat::Format format,
       format == mediapipe::ImageFormat::SRGBA ||
       format == mediapipe::ImageFormat::GRAY8) {
     return MakePacket<Image>(std::shared_ptr<ImageFrame>(
-        CreateImageFrame<uint8>(format, data, copy)));
+        CreateImageFrame<uint8_t>(format, data, copy)));
   } else if (format == mediapipe::ImageFormat::GRAY16 ||
              format == mediapipe::ImageFormat::SRGB48 ||
              format == mediapipe::ImageFormat::SRGBA64) {
     return MakePacket<Image>(std::shared_ptr<ImageFrame>(
-        CreateImageFrame<uint16>(format, data, copy)));
+        CreateImageFrame<uint16_t>(format, data, copy)));
   } else if (format == mediapipe::ImageFormat::VEC32F1 ||
-             format == mediapipe::ImageFormat::VEC32F2) {
+             format == mediapipe::ImageFormat::VEC32F2 ||
+             format == mediapipe::ImageFormat::VEC32F4) {
     return MakePacket<Image>(std::shared_ptr<ImageFrame>(
         CreateImageFrame<float>(format, data, copy)));
   }
@@ -139,7 +149,7 @@ void PublicPacketCreators(pybind11::module* m) {
 
   m->def(
       "create_int",
-      [](int64 data) {
+      [](int64_t data) {
         RaisePyErrorIfOverflow(data, INT_MIN, INT_MAX);
         return MakePacket<int>(data);
       },
@@ -163,9 +173,9 @@ void PublicPacketCreators(pybind11::module* m) {
 
   m->def(
       "create_int8",
-      [](int64 data) {
+      [](int64_t data) {
         RaisePyErrorIfOverflow(data, INT8_MIN, INT8_MAX);
-        return MakePacket<int8>(data);
+        return MakePacket<int8_t>(data);
       },
       R"doc(Create a MediaPipe int8 Packet from an integer.
 
@@ -187,9 +197,9 @@ void PublicPacketCreators(pybind11::module* m) {
 
   m->def(
       "create_int16",
-      [](int64 data) {
+      [](int64_t data) {
         RaisePyErrorIfOverflow(data, INT16_MIN, INT16_MAX);
-        return MakePacket<int16>(data);
+        return MakePacket<int16_t>(data);
       },
       R"doc(Create a MediaPipe int16 Packet from an integer.
 
@@ -211,9 +221,9 @@ void PublicPacketCreators(pybind11::module* m) {
 
   m->def(
       "create_int32",
-      [](int64 data) {
+      [](int64_t data) {
         RaisePyErrorIfOverflow(data, INT32_MIN, INT32_MAX);
-        return MakePacket<int32>(data);
+        return MakePacket<int32_t>(data);
       },
       R"doc(Create a MediaPipe int32 Packet from an integer.
 
@@ -234,7 +244,7 @@ void PublicPacketCreators(pybind11::module* m) {
       py::arg().noconvert(), py::return_value_policy::move);
 
   m->def(
-      "create_int64", [](int64 data) { return MakePacket<int64>(data); },
+      "create_int64", [](int64_t data) { return MakePacket<int64_t>(data); },
       R"doc(Create a MediaPipe int64 Packet from an integer.
 
   Args:
@@ -254,9 +264,9 @@ void PublicPacketCreators(pybind11::module* m) {
 
   m->def(
       "create_uint8",
-      [](int64 data) {
+      [](int64_t data) {
         RaisePyErrorIfOverflow(data, 0, UINT8_MAX);
-        return MakePacket<uint8>(data);
+        return MakePacket<uint8_t>(data);
       },
       R"doc(Create a MediaPipe uint8 Packet from an integer.
 
@@ -278,9 +288,9 @@ void PublicPacketCreators(pybind11::module* m) {
 
   m->def(
       "create_uint16",
-      [](int64 data) {
+      [](int64_t data) {
         RaisePyErrorIfOverflow(data, 0, UINT16_MAX);
-        return MakePacket<uint16>(data);
+        return MakePacket<uint16_t>(data);
       },
       R"doc(Create a MediaPipe uint16 Packet from an integer.
 
@@ -302,9 +312,9 @@ void PublicPacketCreators(pybind11::module* m) {
 
   m->def(
       "create_uint32",
-      [](int64 data) {
+      [](int64_t data) {
         RaisePyErrorIfOverflow(data, 0, UINT32_MAX);
-        return MakePacket<uint32>(data);
+        return MakePacket<uint32_t>(data);
       },
       R"doc(Create a MediaPipe uint32 Packet from an integer.
 
@@ -325,7 +335,7 @@ void PublicPacketCreators(pybind11::module* m) {
       py::arg().noconvert(), py::return_value_policy::move);
 
   m->def(
-      "create_uint64", [](uint64 data) { return MakePacket<uint64>(data); },
+      "create_uint64", [](uint64_t data) { return MakePacket<uint64_t>(data); },
       R"doc(Create a MediaPipe uint64 Packet from an integer.
 
   Args:
@@ -387,7 +397,7 @@ void PublicPacketCreators(pybind11::module* m) {
       [](const std::vector<int>& data) {
         int* ints = new int[data.size()];
         std::copy(data.begin(), data.end(), ints);
-        return Adopt(reinterpret_cast<int(*)[]>(ints));
+        return Adopt(reinterpret_cast<int (*)[]>(ints));
       },
       R"doc(Create a MediaPipe int array Packet from a list of integers.
 
@@ -410,7 +420,7 @@ void PublicPacketCreators(pybind11::module* m) {
       [](const std::vector<float>& data) {
         float* floats = new float[data.size()];
         std::copy(data.begin(), data.end(), floats);
-        return Adopt(reinterpret_cast<float(*)[]>(floats));
+        return Adopt(reinterpret_cast<float (*)[]>(floats));
       },
       R"doc(Create a MediaPipe float array Packet from a list of floats.
 
@@ -536,6 +546,31 @@ void PublicPacketCreators(pybind11::module* m) {
     packet = mp.packet_creator.create_image_vector([
         image1, image2, image3])
     data = mp.packet_getter.get_image_list(packet)
+)doc",
+      py::arg().noconvert(), py::return_value_policy::move);
+
+  m->def(
+      "create_image_frame_vector",
+      [](const py::list& data) {
+        return MakePacket<std::vector<ImageFrame>>(
+            CreateImageFrameVectorFromImageFrameList(data));
+      },
+      R"doc(Create a MediaPipe Packet holding a vector of MediaPipe ImageFrames.
+
+  Args:
+    data: A list of MediaPipe ImageFrames.
+
+  Returns:
+    A MediaPipe Packet holding a vector of MediaPipe ImageFrames that are copies
+    of the original ImageFrames.
+
+  Raises:
+    TypeError: If the input is not a list of MediaPipe ImageFrames.
+
+  Examples:
+    packet = mp.packet_creator.create_image_frame_vector([
+        image_frame_1, image_frame_2, image_frame_3])
+    data = mp.packet_getter.get_image_frame_list(packet)
 )doc",
       py::arg().noconvert(), py::return_value_policy::move);
 

@@ -1,0 +1,125 @@
+# Copyright 2022 The MediaPipe Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Placeholder: load py_test
+
+package(default_visibility = ["//visibility:public"])
+
+licenses(["notice"])
+
+py_test(
+    name = "audio_data_test",
+    srcs = ["audio_data_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/audio:test_audio_clips",
+    ],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:audio_data",
+        "//mediapipe/tasks/python/components/containers:audio_data_c",
+        "//mediapipe/tasks/python/test:test_utils",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)
+
+py_test(
+    name = "category_test",
+    srcs = ["category_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:category_c",
+        "//third_party/py/immutabledict",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)
+
+py_test(
+    name = "landmark_test",
+    srcs = ["landmark_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//mediapipe/tasks/python/components/containers:landmark_c",
+        "//testing/pybase",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)
+
+py_test(
+    name = "matrix_test",
+    srcs = ["matrix_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:matrix_c",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)
+
+py_test(
+    name = "embedding_result_test",
+    srcs = ["embedding_result_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:embedding_result",
+        "//mediapipe/tasks/python/components/containers:embedding_result_c",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)
+
+py_test(
+    name = "detections_test",
+    srcs = ["detections_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:bounding_box",
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:category_c",
+        "//mediapipe/tasks/python/components/containers:detections",
+        "//mediapipe/tasks/python/components/containers:detections_c",
+        "//mediapipe/tasks/python/components/containers:keypoint",
+        "//mediapipe/tasks/python/components/containers:keypoint_c",
+        "//mediapipe/tasks/python/components/containers:rect_c",
+        "//third_party/py/immutabledict",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)
+
+py_test(
+    name = "bounding_box_test",
+    srcs = ["bounding_box_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:bounding_box",
+        "//mediapipe/tasks/python/components/containers:rect_c",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)
+
+py_test(
+    name = "classification_result_test",
+    srcs = ["classification_result_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:category_c",
+        "//mediapipe/tasks/python/components/containers:classification_result",
+        "//mediapipe/tasks/python/components/containers:classification_result_c",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)
+
+py_test(
+    name = "keypoint_test",
+    srcs = ["keypoint_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:keypoint",
+        "//mediapipe/tasks/python/components/containers:keypoint_c",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)

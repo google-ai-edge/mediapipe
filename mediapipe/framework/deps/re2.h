@@ -17,9 +17,11 @@
 
 #include <regex>  // NOLINT
 
+#include "absl/base/call_once.h"
+
 namespace mediapipe {
 
-// Implementats a subset of RE2 using std::regex_match.
+// Implements a subset of RE2 using std::regex_match.
 class RE2 {
  public:
   RE2(const std::string& pattern) : std_regex_(pattern) {}
@@ -41,17 +43,17 @@ class RE2 {
   std::regex std_regex_;
 };
 
-// Implements LazyRE2 using std::call_once.
+// Implements LazyRE2 using absl::call_once.
 class LazyRE2 {
  public:
   RE2& operator*() const {
-    std::call_once(once_, [&]() { ptr_ = new RE2(pattern_); });
+    absl::call_once(once_, [&]() { ptr_ = new RE2(pattern_); });
     return *ptr_;
   }
   RE2* operator->() const { return &**this; }
   const char* pattern_;
   mutable RE2* ptr_;
-  mutable std::once_flag once_;
+  mutable absl::once_flag once_;
 };
 
 }  // namespace mediapipe

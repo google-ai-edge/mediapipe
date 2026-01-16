@@ -14,6 +14,8 @@
 
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 
+#include <optional>
+
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
@@ -172,6 +174,10 @@ constexpr char kValidIntProto[] = R"(
   output_tensor_height: 200
 )";
 
+constexpr char kValidNoTensorDimsProto[] = R"(
+  output_tensor_float_range { min: 0 max: 255 }
+)";
+
 TEST(ValidateOptionOutputDims, ImageToTensorCalcOptions) {
   const auto float_options =
       mediapipe::ParseTextProtoOrDie<mediapipe::ImageToTensorCalculatorOptions>(
@@ -193,13 +199,6 @@ TEST(ValidateOptionOutputDims, EmptyProto) {
       ValidateOptionOutputDims(options),
       StatusIs(absl::StatusCode::kInternal,
                HasSubstr("Valid output float tensor range is required")));
-
-  // Output width/height is not set.
-  options.mutable_output_tensor_float_range()->set_min(0.0);
-  options.mutable_output_tensor_float_range()->set_max(1.0);
-  EXPECT_THAT(ValidateOptionOutputDims(options),
-              StatusIs(absl::StatusCode::kInternal,
-                       HasSubstr("Valid output tensor width is required")));
 }
 
 TEST(GetOutputTensorParams, ImageToTensorCalcOptionsSetValues) {
@@ -213,6 +212,20 @@ TEST(GetOutputTensorParams, ImageToTensorCalcOptionsSetValues) {
   EXPECT_EQ(params2.output_batch, 1);
   EXPECT_EQ(params2.output_width, 100);
   EXPECT_EQ(params2.output_height, 200);
+}
+
+TEST(GetOutputTensorParams, ImageToTensorCalcOptionsNoTensorDims) {
+  // Test valid option for ImageToTensorCalculatorOptions without output
+  // width/height.
+  const auto options =
+      mediapipe::ParseTextProtoOrDie<mediapipe::ImageToTensorCalculatorOptions>(
+          kValidNoTensorDimsProto);
+  const auto params3 = GetOutputTensorParams(options);
+  EXPECT_EQ(params3.range_min, 0.0f);
+  EXPECT_EQ(params3.range_max, 255.0f);
+  EXPECT_EQ(params3.output_batch, 1);
+  EXPECT_EQ(params3.output_width, std::nullopt);
+  EXPECT_EQ(params3.output_height, std::nullopt);
 }
 
 TEST(GetBorderMode, GetBorderMode) {

@@ -26,4 +26,27 @@ message TensorsToAudioCalculatorOptions {
   // Size of the fft in number of bins. If set, the calculator will do ifft
   // on the input tensor.
   optional int64 fft_size = 1;
+
+  // The number of samples per channel the output audio has.
+  optional int64 num_samples = 2;
+
+  // The number of overlapping samples between adjacent windows.
+  optional int64 num_overlapping_samples = 3 [default = 0];
+
+  enum DftTensorFormat {
+    DFT_TENSOR_FORMAT_UNKNOWN = 0;
+    // The input dft tensor without dc and nyquist components.
+    WITHOUT_DC_AND_NYQUIST = 1;
+    // The input dft tensor contains the nyquist component as the last
+    // two values.
+    WITH_NYQUIST = 2;
+    // The input dft tensor contains the dc component as the first two values
+    // and the nyquist component as the last two values.
+    WITH_DC_AND_NYQUIST = 3;
+  }
+  optional DftTensorFormat dft_tensor_format = 11 [default = WITH_NYQUIST];
+
+  // The volume gain, measured in dB.
+  // Scale the output audio amplitude by 10^(volume_gain_db/20).
+  optional double volume_gain_db = 12;
 }

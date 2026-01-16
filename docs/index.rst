@@ -1,3 +1,3 @@
 MediaPipe
 =====================================
-Please see https://docs.mediapipe.dev.
+Please see https://developers.google.com/mediapipe/

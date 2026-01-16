@@ -14,21 +14,21 @@
 
 #include "mediapipe/calculators/util/landmarks_refinement_calculator.h"
 
-#include <algorithm>
 #include <set>
 #include <utility>
 
+#include "absl/log/absl_check.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/calculators/util/landmarks_refinement_calculator.pb.h"
-#include "mediapipe/framework/api2/node.h"
-#include "mediapipe/framework/api2/port.h"
-#include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/api3/calculator.h"
+#include "mediapipe/framework/api3/calculator_context.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
 
-namespace mediapipe {
-
-namespace api2 {
+namespace mediapipe::api3 {
 
 namespace {
 
@@ -102,16 +102,17 @@ void RefineZ(
           ->set_z(z_average);
     }
   } else {
-    CHECK(false) << "Z refinement is either not specified or not supported";
+    ABSL_CHECK(false)
+        << "Z refinement is either not specified or not supported";
   }
 }
 
 }  // namespace
 
-class LandmarksRefinementCalculatorImpl
-    : public NodeImpl<LandmarksRefinementCalculator> {
-  absl::Status Open(CalculatorContext* cc) override {
-    options_ = cc->Options<LandmarksRefinementCalculatorOptions>();
+class LandmarksRefinementNodeImpl
+    : public Calculator<LandmarksRefinementNode, LandmarksRefinementNodeImpl> {
+  absl::Status Open(CalculatorContext<LandmarksRefinementNode>& cc) override {
+    options_ = cc.options.Get();
 
     // Validate refinements.
     for (int i = 0; i < options_.refinement_size(); ++i) {
@@ -135,21 +136,22 @@ class LandmarksRefinementCalculatorImpl
     }
 
     // Validate indexes mapping and get total number of refined landmarks.
-    ASSIGN_OR_RETURN(n_refined_landmarks_,
-                     GetNumberOfRefinedLandmarks(options_.refinement()));
+    MP_ASSIGN_OR_RETURN(n_refined_landmarks_,
+                        GetNumberOfRefinedLandmarks(options_.refinement()));
 
     // Validate that number of refinements and landmark streams is the same.
-    RET_CHECK_EQ(kLandmarks(cc).Count(), options_.refinement_size())
+    RET_CHECK_EQ(cc.landmarks.Count(), options_.refinement_size())
         << "There are " << options_.refinement_size() << " refinements while "
-        << kLandmarks(cc).Count() << " landmark streams";
+        << cc.landmarks.Count() << " landmark streams";
 
     return absl::OkStatus();
   }
 
-  absl::Status Process(CalculatorContext* cc) override {
+  absl::Status Process(
+      CalculatorContext<LandmarksRefinementNode>& cc) override {
     // If any of the refinement landmarks is missing - refinement won't happen.
-    for (const auto& landmarks_stream : kLandmarks(cc)) {
-      if (landmarks_stream.IsEmpty()) {
+    for (const auto& landmarks_stream : cc.landmarks) {
+      if (!landmarks_stream) {
         return absl::OkStatus();
       }
     }
@@ -160,9 +162,9 @@ class LandmarksRefinementCalculatorImpl
       refined_landmarks->add_landmark();
     }
 
-    // Apply input landmarks to outpu refined landmarks in provided order.
-    for (int i = 0; i < kLandmarks(cc).Count(); ++i) {
-      const auto& landmarks = kLandmarks(cc)[i].Get();
+    // Apply input landmarks to output refined landmarks in provided order.
+    for (int i = 0; i < cc.landmarks.Count(); ++i) {
+      const auto& landmarks = cc.landmarks.At(i).GetOrDie();
       const auto& refinement = options_.refinement(i);
 
       // Check number of landmarks in mapping and stream are the same.
@@ -182,7 +184,7 @@ class LandmarksRefinementCalculatorImpl
       // Visibility and presence are not currently refined and are left as `0`.
     }
 
-    kRefinedLandmarks(cc).Send(std::move(refined_landmarks));
+    cc.refined_landmarks.Send(std::move(refined_landmarks));
     return absl::OkStatus();
   }
 
@@ -191,7 +193,4 @@ class LandmarksRefinementCalculatorImpl
   int n_refined_landmarks_ = 0;
 };
 
-MEDIAPIPE_NODE_IMPLEMENTATION(LandmarksRefinementCalculatorImpl);
-
-}  // namespace api2
-}  // namespace mediapipe
+}  // namespace mediapipe::api3

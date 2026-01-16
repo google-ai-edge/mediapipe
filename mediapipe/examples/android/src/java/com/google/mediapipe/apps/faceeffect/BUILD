@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
@@ -67,5 +70,6 @@ android_binary(
         "//mediapipe/framework/formats:matrix_data_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/modules/face_geometry/protos:face_geometry_java_proto_lite",
+        "//third_party:libc++_shared_lib",
     ],
 )

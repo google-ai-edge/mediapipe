@@ -52,7 +52,7 @@ int select = cc->Inputs().Tag(kSelectTag).Get<int>();
 write
 
 ```
-int select = kSelectTag(cc).Get();  // alternative: *kSelectTag(cc)
+int select = kSelect(cc).Get();  // alternative: *kSelect(cc)
 ```
 
 Sets of multiple ports can be declared with `::Multiple`. Note, also, that a tag
@@ -99,8 +99,8 @@ MEDIAPIPE_NODE_CONTRACT(kMain, kLoop, kPrevLoop,
 ```
 
 Several calculators in
-[`calculators/core`](https://github.com/google/mediapipe/tree/master/mediapipe/calculators/core) and
-[`calculators/tensor`](https://github.com/google/mediapipe/tree/master/mediapipe/calculators/tensor)
+[`calculators/core`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/core) and
+[`calculators/tensor`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/calculators/tensor)
 have been updated to use this API. Reference them for more examples.
 
 More complete documentation will be provided in the future.

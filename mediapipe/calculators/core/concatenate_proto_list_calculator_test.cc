@@ -63,7 +63,7 @@ void ValidateCombinedLandmarks(
 
 void AddInputLandmarkLists(
     const std::vector<NormalizedLandmarkList>& input_landmarks_vec,
-    int64 timestamp, CalculatorRunner* runner) {
+    int64_t timestamp, CalculatorRunner* runner) {
   for (int i = 0; i < input_landmarks_vec.size(); ++i) {
     runner->MutableInputs()->Index(i).packets.push_back(
         MakePacket<NormalizedLandmarkList>(input_landmarks_vec[i])
@@ -73,7 +73,7 @@ void AddInputLandmarkLists(
 
 void AddInputClassificationLists(
     const std::vector<ClassificationList>& input_classifications_vec,
-    int64 timestamp, CalculatorRunner* runner) {
+    int64_t timestamp, CalculatorRunner* runner) {
   for (int i = 0; i < input_classifications_vec.size(); ++i) {
     runner->MutableInputs()->Index(i).packets.push_back(
         MakePacket<ClassificationList>(input_classifications_vec[i])
@@ -134,8 +134,12 @@ TEST(ConcatenateNormalizedLandmarkListCalculatorTest,
   NormalizedLandmarkList input_2 =
       GenerateLandmarks(/*landmarks_size=*/2, /*value_multiplier=*/2);
   std::vector<NormalizedLandmarkList> inputs = {input_0, input_1, input_2};
-  { AddInputLandmarkLists(inputs, /*timestamp=*/1, &runner); }
-  { AddInputLandmarkLists(inputs, /*timestamp=*/2, &runner); }
+  {
+    AddInputLandmarkLists(inputs, /*timestamp=*/1, &runner);
+  }
+  {
+    AddInputLandmarkLists(inputs, /*timestamp=*/2, &runner);
+  }
   MP_ASSERT_OK(runner.Run());
 
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;

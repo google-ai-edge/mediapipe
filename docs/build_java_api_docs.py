@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 # ==============================================================================
 """Generate Java reference docs for MediaPipe."""
 import pathlib
+import shutil
 
 from absl import app
 from absl import flags
@@ -41,7 +42,9 @@ def main(_) -> None:
   mp_root = pathlib.Path(__file__)
   while (mp_root := mp_root.parent).name != 'mediapipe':
     # Find the nearest `mediapipe` dir.
-    pass
+    if not mp_root.name:
+      # We've hit the filesystem root - abort.
+      raise FileNotFoundError('"mediapipe" root not found')
 
   # Find the root from which all packages are relative.
   root = mp_root.parent
@@ -50,6 +53,14 @@ def main(_) -> None:
   # that does not exist internally. Support both.
   if (mp_root / 'mediapipe').exists():
     mp_root = mp_root / 'mediapipe'
+
+  # We need to copy this into the tasks dir to ensure we don't leave broken
+  # links in the generated docs.
+  old_api_dir = 'java/com/google/mediapipe/framework/image'
+  shutil.copytree(
+      mp_root / old_api_dir,
+      mp_root / 'tasks' / old_api_dir,
+      dirs_exist_ok=True)
 
   gen_java.gen_java_docs(
       package='com.google.mediapipe',

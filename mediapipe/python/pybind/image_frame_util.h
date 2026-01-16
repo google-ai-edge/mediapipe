@@ -15,14 +15,21 @@
 #ifndef MEDIAPIPE_PYTHON_PYBIND_IMAGE_FRAME_UTIL_H_
 #define MEDIAPIPE_PYTHON_PYBIND_IMAGE_FRAME_UTIL_H_
 
+#include <cstdint>
+#include <memory>
+#include <utility>
+#include <vector>
+
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/packet.h"
 #include "mediapipe/python/pybind/util.h"
+#include "pybind11/cast.h"
 #include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"
+#include "pybind11/pytypes.h"
 
 namespace mediapipe {
 namespace python {
@@ -40,7 +47,7 @@ std::unique_ptr<ImageFrame> CreateImageFrame(
   if (copy) {
     auto image_frame = absl::make_unique<ImageFrame>(
         format, /*width=*/cols, /*height=*/rows, width_step,
-        static_cast<uint8*>(data.request().ptr),
+        static_cast<uint8_t*>(data.request().ptr),
         ImageFrame::PixelDataDeleter::kNone);
     auto image_frame_copy = absl::make_unique<ImageFrame>();
     // Set alignment_boundary to kGlDefaultAlignmentBoundary so that both
@@ -52,8 +59,8 @@ std::unique_ptr<ImageFrame> CreateImageFrame(
   PyObject* data_pyobject = data.ptr();
   auto image_frame = absl::make_unique<ImageFrame>(
       format, /*width=*/cols, /*height=*/rows, width_step,
-      static_cast<uint8*>(data.request().ptr),
-      /*deleter=*/[data_pyobject](uint8*) { Py_XDECREF(data_pyobject); });
+      static_cast<uint8_t*>(data.request().ptr),
+      /*deleter=*/[data_pyobject](uint8_t*) { Py_XDECREF(data_pyobject); });
   Py_XINCREF(data_pyobject);
   return image_frame;
 }
@@ -93,11 +100,11 @@ py::array GenerateContiguousDataArrayHelper(const ImageFrame& image_frame,
 inline py::array GenerateContiguousDataArray(const ImageFrame& image_frame,
                                              const py::object& py_object) {
   switch (image_frame.ChannelSize()) {
-    case sizeof(uint8):
-      return GenerateContiguousDataArrayHelper<uint8>(image_frame, py_object)
+    case sizeof(uint8_t):
+      return GenerateContiguousDataArrayHelper<uint8_t>(image_frame, py_object)
           .cast<py::array>();
-    case sizeof(uint16):
-      return GenerateContiguousDataArrayHelper<uint16>(image_frame, py_object)
+    case sizeof(uint16_t):
+      return GenerateContiguousDataArrayHelper<uint16_t>(image_frame, py_object)
           .cast<py::array>();
     case sizeof(float):
       return GenerateContiguousDataArrayHelper<float>(image_frame, py_object)
@@ -165,6 +172,57 @@ py::object GetValue(const ImageFrame& image_frame, const std::vector<int>& pos,
     return py::cast(static_cast<T>(output_array.at(pos[0], pos[1], pos[2])));
   }
   return py::none();
+}
+
+// Creates a Python list of ImageFrames from a MediaPipe Packet containing a C++
+// vector of ImageFrames.
+//
+// The returned ImageFrames are shallow copies that refer to the same pixel data
+// as the input ImageFrames. To make sure that the returned ImageFrames outlive
+// the input ImageFrames, the returned ImageFrames are constructed with a custom
+// deleter that captures the input Packet by copy.
+inline py::list CreateImageFrameListFromImageFrameVectorPacket(
+    const Packet& packet) {
+  const std::vector<ImageFrame>& image_frame_vector =
+      packet.Get<std::vector<ImageFrame>>();
+  py::list image_frame_list;
+  for (const ImageFrame& image_frame : image_frame_vector) {
+    ImageFrame image_frame_ref(
+        image_frame.Format(), image_frame.Width(), image_frame.Height(),
+        image_frame.WidthStep(), const_cast<uint8_t*>(image_frame.PixelData()),
+        // Capture the packet by copy to ensure that the returned ImageFrames
+        // outlive the input ImageFrames. Destroy the captured packet when the
+        // deleter is called to ensure that the input ImageFrames can be
+        // released when no longer needed.
+        /*deleter=*/[p = packet](uint8_t*) mutable { p = Packet(); });
+    image_frame_list.append(std::move(image_frame_ref));
+  }
+  return image_frame_list;
+}
+
+// Creates a C++ vector of ImageFrames from a Python list of ImageFrames.
+//
+// Contained ImageFrames are copied.
+inline std::vector<ImageFrame> CreateImageFrameVectorFromImageFrameList(
+    const py::list& image_frame_list) {
+  std::vector<ImageFrame> image_frame_vector;
+  image_frame_vector.reserve(image_frame_list.size());
+  for (int i = 0; i < image_frame_list.size(); ++i) {
+    if (!py::isinstance<ImageFrame>(image_frame_list[i])) {
+      throw RaisePyError(
+          PyExc_TypeError,
+          absl::StrCat("Item ", i, " is not an ImageFrame.").c_str());
+    }
+    const ImageFrame& image_frame =
+        py::cast<const ImageFrame&>(image_frame_list[i]);
+    ImageFrame image_frame_copy;
+    image_frame_copy.CopyFrom(image_frame,
+                              // Use kGlDefaultAlignmentBoundary so that both
+                              // GPU and CPU can process it.
+                              ImageFrame::kGlDefaultAlignmentBoundary);
+    image_frame_vector.push_back(std::move(image_frame_copy));
+  }
+  return image_frame_vector;
 }
 
 }  // namespace python

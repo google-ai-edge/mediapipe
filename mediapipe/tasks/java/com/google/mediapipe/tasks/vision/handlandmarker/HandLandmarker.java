@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
+import com.google.mediapipe.tasks.components.containers.Connection;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.OutputHandler;
@@ -48,6 +49,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Performs hand landmarks detection on images.
@@ -86,6 +88,10 @@ public final class HandLandmarker extends BaseVisionTaskApi {
   private static final int IMAGE_OUT_STREAM_INDEX = 3;
   private static final String TASK_GRAPH_NAME =
       "mediapipe.tasks.vision.hand_landmarker.HandLandmarkerGraph";
+
+  static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
+  }
 
   /**
    * Creates a {@link HandLandmarker} instance from a model file and the default {@link
@@ -173,7 +179,7 @@ public final class HandLandmarker extends BaseVisionTaskApi {
           @Override
           public MPImage convertToTaskInput(List<Packet> packets) {
             return new BitmapImageBuilder(
-                    AndroidPacketGetter.getBitmapFromRgb(packets.get(IMAGE_OUT_STREAM_INDEX)))
+                    AndroidPacketGetter.getBitmap(packets.get(IMAGE_OUT_STREAM_INDEX)))
                 .build();
           }
         });
@@ -183,6 +189,8 @@ public final class HandLandmarker extends BaseVisionTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<HandLandmarkerOptions>builder()
+                .setTaskName(HandLandmarker.class.getSimpleName())
+                .setTaskRunningModeName(landmarkerOptions.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)
                 .setOutputStreams(OUTPUT_STREAMS)
@@ -192,6 +200,33 @@ public final class HandLandmarker extends BaseVisionTaskApi {
             handler);
     return new HandLandmarker(runner, landmarkerOptions.runningMode());
   }
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> HAND_PALM_CONNECTIONS =
+      HandLandmarksConnections.HAND_PALM_CONNECTIONS;
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> HAND_THUMB_CONNECTIONS =
+      HandLandmarksConnections.HAND_THUMB_CONNECTIONS;
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> HAND_INDEX_FINGER_CONNECTIONS =
+      HandLandmarksConnections.HAND_INDEX_FINGER_CONNECTIONS;
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> HAND_MIDDLE_FINGER_CONNECTIONS =
+      HandLandmarksConnections.HAND_MIDDLE_FINGER_CONNECTIONS;
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> HAND_RING_FINGER_CONNECTIONS =
+      HandLandmarksConnections.HAND_RING_FINGER_CONNECTIONS;
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> HAND_PINKY_FINGER_CONNECTIONS =
+      HandLandmarksConnections.HAND_PINKY_FINGER_CONNECTIONS;
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> HAND_CONNECTIONS = HandLandmarksConnections.HAND_CONNECTIONS;
 
   /**
    * Constructor to initialize an {@link HandLandmarker} from a {@link TaskRunner} and a {@link

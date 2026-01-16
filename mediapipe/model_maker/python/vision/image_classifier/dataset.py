@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,37 +13,16 @@
 # limitations under the License.
 """Image classifier dataset library."""
 
+import dataclasses
+import functools
 import os
 import random
-
 from typing import List, Optional
+
 import tensorflow as tf
-import tensorflow_datasets as tfds
 
 from mediapipe.model_maker.python.core.data import classification_dataset
-
-
-def _load_image(path: str) -> tf.Tensor:
-  """Loads a jpeg/png image and returns an image tensor."""
-  image_raw = tf.io.read_file(path)
-  image_tensor = tf.cond(
-      tf.io.is_jpeg(image_raw),
-      lambda: tf.io.decode_jpeg(image_raw, channels=3),
-      lambda: tf.io.decode_png(image_raw, channels=3))
-  return image_tensor
-
-
-def _create_data(
-    name: str, data: tf.data.Dataset, info: tfds.core.DatasetInfo,
-    label_names: List[str]
-) -> Optional[classification_dataset.ClassificationDataset]:
-  """Creates a Dataset object from tfds data."""
-  if name not in data:
-    return None
-  data = data[name]
-  data = data.map(lambda a: (a['image'], a['label']))
-  size = info.splits[name].num_examples
-  return Dataset(data, size, label_names)
+from mediapipe.model_maker.python.vision.core import image_utils
 
 
 class Dataset(classification_dataset.ClassificationDataset):
@@ -93,7 +72,9 @@ class Dataset(classification_dataset.ClassificationDataset):
 
     path_ds = tf.data.Dataset.from_tensor_slices(all_image_paths)
 
-    image_ds = path_ds.map(_load_image, num_parallel_calls=tf.data.AUTOTUNE)
+    image_ds = path_ds.map(
+        image_utils.load_image, num_parallel_calls=tf.data.AUTOTUNE
+    )
 
     # Load label
     label_ds = tf.data.Dataset.from_tensor_slices(
@@ -106,4 +87,5 @@ class Dataset(classification_dataset.ClassificationDataset):
         'Load image with size: %d, num_label: %d, labels: %s.', all_image_size,
         all_label_size, ', '.join(label_names))
     return Dataset(
-        dataset=image_label_ds, size=all_image_size, label_names=label_names)
+        dataset=image_label_ds, label_names=label_names, size=all_image_size
+    )

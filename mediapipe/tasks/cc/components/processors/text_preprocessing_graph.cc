@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,15 +25,14 @@ limitations under the License.
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/subgraph.h"
+#include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/tasks/cc/components/processors/proto/text_model_type.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/text_preprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
+#include "mediapipe/tasks/cc/text/utils/text_model_utils.h"
 
-namespace mediapipe {
-namespace tasks {
-namespace components {
-namespace processors {
-
+namespace mediapipe::tasks::components::processors {
 namespace {
 
 using ::mediapipe::api2::Input;
@@ -42,89 +41,35 @@ using ::mediapipe::api2::SideInput;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::SideSource;
 using ::mediapipe::api2::builder::Source;
+using ::mediapipe::tasks::components::processors::proto::TextModelType;
 using ::mediapipe::tasks::components::processors::proto::
     TextPreprocessingGraphOptions;
 using ::mediapipe::tasks::core::ModelResources;
 using ::mediapipe::tasks::metadata::ModelMetadataExtractor;
+using ::mediapipe::tasks::text::utils::GetModelType;
 
 constexpr char kTextTag[] = "TEXT";
 constexpr char kMetadataExtractorTag[] = "METADATA_EXTRACTOR";
 constexpr char kTensorsTag[] = "TENSORS";
 
-constexpr int kNumInputTensorsForBert = 3;
-constexpr int kNumInputTensorsForRegex = 1;
-
-// Gets the name of the MediaPipe calculator associated with
-// `preprocessor_type`.
-absl::StatusOr<std::string> GetCalculatorNameFromPreprocessorType(
-    TextPreprocessingGraphOptions::PreprocessorType preprocessor_type) {
-  switch (preprocessor_type) {
-    case TextPreprocessingGraphOptions::UNSPECIFIED_PREPROCESSOR:
+// Gets the name of the MediaPipe preprocessor calculator associated with
+// `model_type`.
+absl::StatusOr<std::string> GetCalculatorNameFromModelType(
+    TextModelType::ModelType model_type) {
+  switch (model_type) {
+    case TextModelType::UNSPECIFIED_MODEL:
       return CreateStatusWithPayload(
-          absl::StatusCode::kInvalidArgument, "Unspecified preprocessor type",
+          absl::StatusCode::kInvalidArgument, "Unspecified model type",
           MediaPipeTasksStatus::kInvalidArgumentError);
-    case TextPreprocessingGraphOptions::BERT_PREPROCESSOR:
+    case TextModelType::BERT_MODEL:
       return "BertPreprocessorCalculator";
-    case TextPreprocessingGraphOptions::REGEX_PREPROCESSOR:
+    case TextModelType::REGEX_MODEL:
       return "RegexPreprocessorCalculator";
-    case TextPreprocessingGraphOptions::STRING_PREPROCESSOR:
+    case TextModelType::STRING_MODEL:
       return "TextToTensorCalculator";
+    case TextModelType::USE_MODEL:
+      return "UniversalSentenceEncoderPreprocessorCalculator";
   }
-}
-
-// Determines the PreprocessorType for the model based on its metadata as well
-// as its input tensors' type and count. Returns an error if there is no
-// compatible preprocessor.
-absl::StatusOr<TextPreprocessingGraphOptions::PreprocessorType>
-GetPreprocessorType(const ModelResources& model_resources) {
-  const tflite::SubGraph& model_graph =
-      *(*model_resources.GetTfLiteModel()->subgraphs())[0];
-  bool all_int32_tensors =
-      absl::c_all_of(*model_graph.inputs(), [&model_graph](int i) {
-        return (*model_graph.tensors())[i]->type() == tflite::TensorType_INT32;
-      });
-  bool all_string_tensors =
-      absl::c_all_of(*model_graph.inputs(), [&model_graph](int i) {
-        return (*model_graph.tensors())[i]->type() == tflite::TensorType_STRING;
-      });
-  if (!all_int32_tensors && !all_string_tensors) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "All input tensors should have type int32 or all should have type "
-        "string",
-        MediaPipeTasksStatus::kInvalidInputTensorTypeError);
-  }
-  if (all_string_tensors) {
-    return TextPreprocessingGraphOptions::STRING_PREPROCESSOR;
-  }
-
-  // Otherwise, all tensors should have type int32
-  const ModelMetadataExtractor* metadata_extractor =
-      model_resources.GetMetadataExtractor();
-  if (metadata_extractor->GetModelMetadata() == nullptr ||
-      metadata_extractor->GetModelMetadata()->subgraph_metadata() == nullptr) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "Text models with int32 input tensors require TFLite Model "
-        "Metadata but none was found",
-        MediaPipeTasksStatus::kMetadataNotFoundError);
-  }
-
-  if (model_graph.inputs()->size() == kNumInputTensorsForBert) {
-    return TextPreprocessingGraphOptions::BERT_PREPROCESSOR;
-  }
-
-  if (model_graph.inputs()->size() == kNumInputTensorsForRegex) {
-    return TextPreprocessingGraphOptions::REGEX_PREPROCESSOR;
-  }
-
-  return CreateStatusWithPayload(
-      absl::StatusCode::kInvalidArgument,
-      absl::Substitute("Models with int32 input tensors should take exactly $0 "
-                       "or $1 input tensors, but found $2",
-                       kNumInputTensorsForBert, kNumInputTensorsForRegex,
-                       model_graph.inputs()->size()),
-      MediaPipeTasksStatus::kInvalidNumInputTensorsError);
 }
 
 // Returns the maximum input sequence length accepted by the TFLite
@@ -169,6 +114,60 @@ absl::StatusOr<int> GetMaxSeqLen(const tflite::SubGraph& model_graph) {
   }
   return max_seq_len;
 }
+
+// Determines whether the TFLite model for `model_graph` has input tensors with
+// dynamic shape rather than static shape or returns an error if the input
+// tensors have invalid shape signatures. This util assumes that the model has
+// the correct input tensors type and count for the BertPreprocessorCalculator.
+absl::StatusOr<bool> HasDynamicInputTensors(
+    const tflite::SubGraph& model_graph) {
+  const flatbuffers::Vector<int32_t>& input_indices = *model_graph.inputs();
+  const flatbuffers::Vector<flatbuffers::Offset<tflite::Tensor>>&
+      model_tensors = *model_graph.tensors();
+
+  // Static input tensors may have undefined shape signatures.
+  if (absl::c_all_of(input_indices, [&model_tensors](int i) {
+        return model_tensors[i]->shape_signature() == nullptr;
+      })) {
+    return false;
+  } else if (absl::c_any_of(input_indices, [&model_tensors](int i) {
+               return model_tensors[i]->shape_signature() == nullptr;
+             })) {
+    return CreateStatusWithPayload(absl::StatusCode::kInvalidArgument,
+                                   "Input tensors contain a mix of defined and "
+                                   "undefined shape signatures.");
+  }
+
+  for (int i : input_indices) {
+    const tflite::Tensor* tensor = model_tensors[i];
+    if (tensor->shape_signature()->size() != 2) {
+      return CreateStatusWithPayload(
+          absl::StatusCode::kInvalidArgument,
+          absl::Substitute(
+              "Model should take 2-D shape signatures, got dimension: $0",
+              tensor->shape_signature()->size()),
+          MediaPipeTasksStatus::kInvalidInputTensorDimensionsError);
+    }
+  }
+
+  // For dynamic input tensors, the shape_signature entry corresponding to the
+  // input size is -1.
+  if (absl::c_all_of(input_indices, [&model_tensors](int i) {
+        return (*model_tensors[i]->shape_signature())[1] != -1;
+      })) {
+    return false;
+  } else if (absl::c_all_of(input_indices, [&model_tensors](int i) {
+               return (*model_tensors[i]->shape_signature())[1] == -1;
+             })) {
+    return true;
+  } else {
+    return CreateStatusWithPayload(
+        absl::StatusCode::kInvalidArgument,
+        "Input tensors contain a mix of static and dynamic shapes.");
+  }
+  return false;
+}
+
 }  // namespace
 
 absl::Status ConfigureTextPreprocessingGraph(
@@ -181,24 +180,28 @@ absl::Status ConfigureTextPreprocessingGraph(
         MediaPipeTasksStatus::kInvalidArgumentError);
   }
 
-  ASSIGN_OR_RETURN(
-      TextPreprocessingGraphOptions::PreprocessorType preprocessor_type,
-      GetPreprocessorType(model_resources));
-  options.set_preprocessor_type(preprocessor_type);
-  switch (preprocessor_type) {
-    case TextPreprocessingGraphOptions::UNSPECIFIED_PREPROCESSOR:
-    case TextPreprocessingGraphOptions::STRING_PREPROCESSOR: {
+  MP_ASSIGN_OR_RETURN(TextModelType::ModelType model_type,
+                      GetModelType(model_resources));
+  const tflite::SubGraph& model_graph =
+      *(*model_resources.GetTfLiteModel()->subgraphs())[0];
+  options.set_model_type(model_type);
+  switch (model_type) {
+    case TextModelType::UNSPECIFIED_MODEL:
+    case TextModelType::STRING_MODEL:
+    case TextModelType::USE_MODEL: {
       break;
     }
-    case TextPreprocessingGraphOptions::BERT_PREPROCESSOR:
-    case TextPreprocessingGraphOptions::REGEX_PREPROCESSOR: {
-      ASSIGN_OR_RETURN(
-          int max_seq_len,
-          GetMaxSeqLen(*(*model_resources.GetTfLiteModel()->subgraphs())[0]));
+    case TextModelType::BERT_MODEL:
+    case TextModelType::REGEX_MODEL: {
+      MP_ASSIGN_OR_RETURN(int max_seq_len, GetMaxSeqLen(model_graph));
       options.set_max_seq_len(max_seq_len);
     }
   }
-
+  if (model_type == TextModelType::BERT_MODEL) {
+    MP_ASSIGN_OR_RETURN(bool has_dynamic_input_tensors,
+                        HasDynamicInputTensors(model_graph));
+    options.set_has_dynamic_input_tensors(has_dynamic_input_tensors);
+  }
   return absl::OkStatus();
 }
 
@@ -224,7 +227,7 @@ class TextPreprocessingGraph : public mediapipe::Subgraph {
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         Source<std::vector<Tensor>> tensors_in,
         BuildTextPreprocessing(
             sc->Options<TextPreprocessingGraphOptions>(),
@@ -239,23 +242,29 @@ class TextPreprocessingGraph : public mediapipe::Subgraph {
   absl::StatusOr<Source<std::vector<Tensor>>> BuildTextPreprocessing(
       const TextPreprocessingGraphOptions& options, Source<std::string> text_in,
       SideSource<ModelMetadataExtractor> metadata_extractor_in, Graph& graph) {
-    ASSIGN_OR_RETURN(
-        std::string preprocessor_name,
-        GetCalculatorNameFromPreprocessorType(options.preprocessor_type()));
+    MP_ASSIGN_OR_RETURN(std::string preprocessor_name,
+                        GetCalculatorNameFromModelType(options.model_type()));
     auto& text_preprocessor = graph.AddNode(preprocessor_name);
-    switch (options.preprocessor_type()) {
-      case TextPreprocessingGraphOptions::UNSPECIFIED_PREPROCESSOR:
-      case TextPreprocessingGraphOptions::STRING_PREPROCESSOR: {
+    switch (options.model_type()) {
+      case TextModelType::UNSPECIFIED_MODEL:
+      case TextModelType::STRING_MODEL: {
         break;
       }
-      case TextPreprocessingGraphOptions::BERT_PREPROCESSOR: {
-        text_preprocessor.GetOptions<BertPreprocessorCalculatorOptions>()
-            .set_bert_max_seq_len(options.max_seq_len());
+      case TextModelType::USE_MODEL: {
         metadata_extractor_in >>
             text_preprocessor.SideIn(kMetadataExtractorTag);
         break;
       }
-      case TextPreprocessingGraphOptions::REGEX_PREPROCESSOR: {
+      case TextModelType::BERT_MODEL: {
+        text_preprocessor.GetOptions<BertPreprocessorCalculatorOptions>()
+            .set_bert_max_seq_len(options.max_seq_len());
+        text_preprocessor.GetOptions<BertPreprocessorCalculatorOptions>()
+            .set_has_dynamic_input_tensors(options.has_dynamic_input_tensors());
+        metadata_extractor_in >>
+            text_preprocessor.SideIn(kMetadataExtractorTag);
+        break;
+      }
+      case TextModelType::REGEX_MODEL: {
         text_preprocessor.GetOptions<RegexPreprocessorCalculatorOptions>()
             .set_max_seq_len(options.max_seq_len());
         metadata_extractor_in >>
@@ -270,7 +279,4 @@ class TextPreprocessingGraph : public mediapipe::Subgraph {
 REGISTER_MEDIAPIPE_GRAPH(
     ::mediapipe::tasks::components::processors::TextPreprocessingGraph);
 
-}  // namespace processors
-}  // namespace components
-}  // namespace tasks
-}  // namespace mediapipe
+}  // namespace mediapipe::tasks::components::processors

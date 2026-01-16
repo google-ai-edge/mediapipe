@@ -17,6 +17,8 @@
 #include <vector>
 
 #include "Eigen/Dense"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
@@ -76,7 +78,7 @@ class TfLiteTensorsToObjectsCalculator : public CalculatorBase {
   // In a single MediaPipe session, the IDs are unique.
   // Also assign timestamp for the FrameAnnotation to be the input packet
   // timestamp.
-  void AssignObjectIdAndTimestamp(int64 timestamp_us,
+  void AssignObjectIdAndTimestamp(int64_t timestamp_us,
                                   FrameAnnotation* annotation);
 
   int num_classes_ = 0;
@@ -154,7 +156,7 @@ absl::Status TfLiteTensorsToObjectsCalculator::ProcessCPU(
   auto status = decoder_->Lift2DTo3D(projection_matrix_, /*portrait*/ true,
                                      output_objects);
   if (!status.ok()) {
-    LOG(ERROR) << status;
+    ABSL_LOG(ERROR) << status;
     return status;
   }
   Project3DTo2D(/*portrait*/ true, output_objects);
@@ -178,7 +180,7 @@ absl::Status TfLiteTensorsToObjectsCalculator::LoadOptions(
   num_keypoints_ = options_.num_keypoints();
 
   // Currently only support 2D when num_values_per_keypoint equals to 2.
-  CHECK_EQ(options_.num_values_per_keypoint(), 2);
+  ABSL_CHECK_EQ(options_.num_values_per_keypoint(), 2);
 
   return absl::OkStatus();
 }
@@ -207,7 +209,7 @@ void TfLiteTensorsToObjectsCalculator::Project3DTo2D(
 }
 
 void TfLiteTensorsToObjectsCalculator::AssignObjectIdAndTimestamp(
-    int64 timestamp_us, FrameAnnotation* annotation) {
+    int64_t timestamp_us, FrameAnnotation* annotation) {
   for (auto& ann : *annotation->mutable_annotations()) {
     ann.set_object_id(GetNextObjectId());
   }

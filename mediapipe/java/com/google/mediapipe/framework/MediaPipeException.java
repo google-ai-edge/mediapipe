@@ -15,7 +15,7 @@
 package com.google.mediapipe.framework;
 
 // Package java.nio.charset is not yet available in all Android apps.
-import static com.google.common.base.Charsets.UTF_8;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /** This class represents an error reported by the MediaPipe framework. */
 public class MediaPipeException extends RuntimeException {
@@ -40,7 +40,7 @@ public class MediaPipeException extends RuntimeException {
     return statusMessage;
   }
 
-  /** The 17 canonical status codes. */
+  /** The 18 canonical status codes. */
   public enum StatusCode {
     OK("ok"),
     CANCELLED("canceled"),
@@ -58,7 +58,8 @@ public class MediaPipeException extends RuntimeException {
     INTERNAL("internal"),
     UNAVAILABLE("unavailable"),
     DATA_LOSS("data loss"),
-    UNAUTHENTICATED("unauthenticated");
+    UNAUTHENTICATED("unauthenticated"),
+    IO_EXCEPTION("i/o exception");
 
     StatusCode(String description) {
       this.description = description;

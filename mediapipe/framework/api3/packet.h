@@ -1,0 +1,149 @@
+// Copyright 2025 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#ifndef MEDIAPIPE_FRAMEWORK_API3_PACKET_H_
+#define MEDIAPIPE_FRAMEWORK_API3_PACKET_H_
+
+#include <memory>
+#include <string>
+#include <utility>
+
+#include "absl/functional/any_invocable.h"
+#include "absl/status/statusor.h"
+#include "mediapipe/framework/api3/any.h"
+#include "mediapipe/framework/packet.h"
+#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/timestamp.h"
+
+namespace mediapipe::api3 {
+
+// A generic container class which can hold data of a specific type.
+//
+// `Packet` is implemented as a reference-counted pointer.  This means
+// that copying `Packet`s creates a fast, shallow copy.  `Packet`s are
+// copyable, movable, and assignable.  `Packet`s can be stored in STL
+// containers.  A `Packet` may optionally contain a timestamp.
+//
+// The preferred method of creating a `Packet` is with `MakePacket<T>()`.
+// `Packet` typically owns the object that it contains, but `PointToForeign`
+// allows a Packet to be constructed which does not own its data.
+//
+// This class is thread compatible.
+template <typename T>
+class Packet {
+ public:
+  using PayloadT = T;
+
+  explicit Packet() = default;
+
+  Packet(const Packet& p) = default;
+  Packet& operator=(const Packet& p) = default;
+
+  Packet(Packet&& p) = default;
+  Packet& operator=(Packet&& p) = default;
+
+  // Checks if packet is empty.
+  bool IsEmpty() const { return packet_.IsEmpty(); }
+
+  // Checks if packet is not empty.
+  explicit operator bool() const { return !IsEmpty(); }
+
+  // Returns the payload.
+  //
+  // NOTE: Dies if packet is not empty, so must be checked before accessing the
+  //   value, e.g. RET_CHECK(packet);
+  const T& GetOrDie() const { return packet_.Get<T>(); }
+
+  Packet<T> At(Timestamp timestamp) const {
+    return Packet(packet_.At(timestamp));
+  }
+
+  mediapipe::Timestamp Timestamp() const { return packet_.Timestamp(); }
+
+  const mediapipe::Packet& AsLegacyPacket() const { return packet_; }
+
+  mediapipe::Packet ConsumeAsLegacyPacket() && { return std::move(packet_); }
+
+  // Debug info about the packet (type, timestamp).
+  std::string DebugString() const { return packet_.DebugString(); }
+
+ private:
+  explicit Packet(mediapipe::Packet p) : packet_(std::move(p)) {}
+
+  // Either holds a payload of type T or packet is empty.
+  mediapipe::Packet packet_;
+
+  template <typename V, typename... Args>
+  friend Packet<V> MakePacket(Args&&... args);
+  template <typename V>
+  friend Packet<V> MakePacket(std::unique_ptr<V> ptr);
+  template <typename V>
+  friend Packet<V> PointToForeign(const V* ptr,
+                                  absl::AnyInvocable<void()> cleanup);
+  template <typename V>
+  friend Packet<V> PointToForeign(const V* ptr);
+  template <typename V>
+  friend absl::StatusOr<Packet<V>> WrapLegacyPacket(mediapipe::Packet packet);
+};
+
+// Allows to wrap generic/legacy mediapipe::Packet into a typed Packet.
+//
+// NOTE: fails if `packet` holds a payload of type other than T, unless T is
+//   Any.
+template <typename T>
+absl::StatusOr<Packet<T>> WrapLegacyPacket(mediapipe::Packet packet) {
+  if constexpr (!std::is_same_v<T, Any>) {
+    if (!packet.IsEmpty()) {
+      MP_RETURN_IF_ERROR(packet.ValidateAsType<T>());
+    }
+  }
+  return Packet<T>(std::move(packet));
+}
+
+// Create a packet containing an object of type T initialized with the
+// provided arguments.
+//
+// The timestamp of the returned Packet is Timestamp::Unset(). To set the
+// timestamp, the caller should do PointToForeign(...).At(...).
+template <typename T, typename... Args>
+Packet<T> MakePacket(Args&&... args) {
+  return Packet<T>(mediapipe::MakePacket<T>(std::forward<Args>(args)...));
+}
+template <typename T>
+Packet<T> MakePacket(std::unique_ptr<T> ptr) {
+  return Packet<T>(mediapipe::Adopt(ptr.release()));
+}
+
+// Returns a Packet that does not own its data. The data pointed to by *ptr
+// remains owned by the caller, who must ensure that it outlives not only the
+// returned Packet but also all of its copies.
+//
+// Optionally, `cleanup` object can be specified to invoke when all copies of
+// the packet are destroyed (can be used to capture the foreign owner if
+// possible and ensure the lifetime).
+//
+// The timestamp of the returned Packet is Timestamp::Unset(). To set the
+// timestamp, the caller should do PointToForeign(...).At(...).
+template <typename T>
+Packet<T> PointToForeign(const T* ptr, absl::AnyInvocable<void()> cleanup) {
+  return Packet<T>(mediapipe::PointToForeign(ptr, std::move(cleanup)));
+}
+template <typename T>
+Packet<T> PointToForeign(const T* ptr) {
+  return Packet<T>(mediapipe::PointToForeign(ptr));
+}
+
+}  // namespace mediapipe::api3
+
+#endif  // MEDIAPIPE_FRAMEWORK_API3_PACKET_H_

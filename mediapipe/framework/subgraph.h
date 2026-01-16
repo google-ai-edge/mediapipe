@@ -17,16 +17,21 @@
 #ifndef MEDIAPIPE_FRAMEWORK_SUBGRAPH_H_
 #define MEDIAPIPE_FRAMEWORK_SUBGRAPH_H_
 
-#include "absl/base/macros.h"
-#include "absl/memory/memory.h"
+#include <functional>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+
 #include "absl/status/status.h"
-#include "absl/types/optional.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/deps/registration.h"
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/framework/graph_service_manager.h"
-#include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/statusor.h"
+#include "mediapipe/framework/resources.h"
+#include "mediapipe/framework/resources_service.h"
 #include "mediapipe/framework/tool/calculator_graph_template.pb.h"
 #include "mediapipe/framework/tool/options_util.h"
 
@@ -38,16 +43,24 @@ class SubgraphContext {
   // @node and/or @service_manager can be nullptr.
   SubgraphContext(CalculatorGraphConfig::Node* node,
                   const GraphServiceManager* service_manager)
-      : default_node_(node ? absl::nullopt
-                           : absl::optional<CalculatorGraphConfig::Node>(
+      : default_node_(node ? std::nullopt
+                           : std::optional<CalculatorGraphConfig::Node>(
                                  CalculatorGraphConfig::Node())),
         original_node_(node ? *node : default_node_.value()),
         default_service_manager_(
             service_manager
-                ? absl::nullopt
-                : absl::optional<GraphServiceManager>(GraphServiceManager())),
-        service_manager_(service_manager ? *service_manager
+                ? std::nullopt
+                : std::optional<GraphServiceManager>(GraphServiceManager())),
+        service_manager_(service_manager ? *std::move(service_manager)
                                          : default_service_manager_.value()),
+        resources_([this]() {
+          std::shared_ptr<Resources> resources =
+              service_manager_.GetServiceObject(kResourcesService);
+          if (!resources) {
+            resources = CreateDefaultResources();
+          }
+          return resources;
+        }()),
         options_map_(
             std::move(tool::MutableOptionsMap().Initialize(original_node_))) {}
 
@@ -61,6 +74,11 @@ class SubgraphContext {
     return options_map_.GetMutable<T>();
   }
 
+  template <typename T>
+  bool HasOptions() {
+    return options_map_.Has<T>();
+  }
+
   const CalculatorGraphConfig::Node& OriginalNode() const {
     return original_node_;
   }
@@ -70,16 +88,29 @@ class SubgraphContext {
     return ServiceBinding<T>(service_manager_.GetServiceObject(service));
   }
 
+  // Gets interface to access resources (file system, assets, etc.) from
+  // subgraphs.
+  //
+  // NOTE: this is the preferred way to access resources from subgraphs and
+  // calculators as it allows for fine grained per graph configuration.
+  //
+  // Resources can be configured by setting a custom `kResourcesService` graph
+  // service on `CalculatorGraph`. The default resources service can be created
+  // and reused through `CreateDefaultResources`.
+  const Resources& GetResources() { return *resources_; }
+
  private:
   // Populated if node is not provided during construction.
-  absl::optional<CalculatorGraphConfig::Node> default_node_;
+  std::optional<CalculatorGraphConfig::Node> default_node_;
 
   CalculatorGraphConfig::Node& original_node_;
 
   // Populated if service manager is not provided during construction.
-  const absl::optional<GraphServiceManager> default_service_manager_;
+  const std::optional<GraphServiceManager> default_service_manager_;
 
   const GraphServiceManager& service_manager_;
+
+  std::shared_ptr<Resources> resources_;
 
   tool::MutableOptionsMap options_map_;
 };
@@ -118,6 +149,11 @@ class Subgraph {
     return tool::OptionsMap().Initialize(supgraph_options).Get<T>();
   }
 
+  template <typename T>
+  static bool HasOptions(const Subgraph::SubgraphOptions& supgraph_options) {
+    return tool::OptionsMap().Initialize(supgraph_options).Has<T>();
+  }
+
   // Returns the CalculatorGraphConfig::Node specifying the subgraph.
   // This provides to Subgraphs the same graph information that GetContract
   // provides to Calculators.
@@ -132,7 +168,7 @@ using SubgraphRegistry = GlobalFactoryRegistry<std::unique_ptr<Subgraph>>;
 #define REGISTER_MEDIAPIPE_GRAPH(name)                             \
   REGISTER_FACTORY_FUNCTION_QUALIFIED(mediapipe::SubgraphRegistry, \
                                       subgraph_registration, name, \
-                                      absl::make_unique<name>)
+                                      std::make_unique<name>)
 
 // A graph factory holding a literal CalculatorGraphConfig.
 class ProtoSubgraph : public Subgraph {
@@ -187,7 +223,7 @@ class GraphRegistry {
 
   // Returns the specified graph config.
   absl::StatusOr<CalculatorGraphConfig> CreateByName(
-      const std::string& ns, const std::string& type_name,
+      absl::string_view ns, absl::string_view type_name,
       SubgraphContext* context = nullptr) const;
 
   static GraphRegistry global_graph_registry;

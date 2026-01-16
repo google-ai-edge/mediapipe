@@ -1,4 +1,6 @@
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 # Copyright 2019 The MediaPipe Authors.
 #
@@ -19,7 +21,6 @@ licenses(["notice"])
 package(default_visibility = [
     "//buzz/diffractor/mediapipe:__subpackages__",
     "//mediapipe/examples:__subpackages__",
-    "//mediapipe/viz:__subpackages__",
     "//mediapipe/web/solutions:__subpackages__",
 ])
 
@@ -40,20 +41,14 @@ cc_library(
     alwayslink = 1,
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "border_detection_calculator_proto",
     srcs = ["border_detection_calculator.proto"],
+    visibility = ["//mediapipe/examples:__subpackages__"],
     deps = [
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
     ],
-)
-
-mediapipe_cc_proto_library(
-    name = "border_detection_calculator_cc_proto",
-    srcs = ["border_detection_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe/examples:__subpackages__"],
-    deps = [":border_detection_calculator_proto"],
 )
 
 cc_library(
@@ -85,27 +80,16 @@ cc_library(
     alwayslink = 1,
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "content_zooming_calculator_proto",
     srcs = ["content_zooming_calculator.proto"],
-    deps = [
-        "//mediapipe/examples/desktop/autoflip/quality:kinematic_path_solver_proto",
-        "//mediapipe/framework:calculator_proto",
-    ],
-)
-
-mediapipe_cc_proto_library(
-    name = "content_zooming_calculator_cc_proto",
-    srcs = ["content_zooming_calculator.proto"],
-    cc_deps = [
-        "//mediapipe/examples/desktop/autoflip/quality:kinematic_path_solver_cc_proto",
-        "//mediapipe/framework:calculator_cc_proto",
-    ],
     visibility = [
         "//mediapipe/examples:__subpackages__",
     ],
     deps = [
-        ":content_zooming_calculator_proto",
+        "//mediapipe/examples/desktop/autoflip/quality:kinematic_path_solver_proto",
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
     ],
 )
 
@@ -177,21 +161,14 @@ cc_library(
     alwayslink = 1,
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "video_filtering_calculator_proto",
     srcs = ["video_filtering_calculator.proto"],
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
     ],
-)
-
-mediapipe_cc_proto_library(
-    name = "video_filtering_calculator_cc_proto",
-    srcs = ["video_filtering_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":video_filtering_calculator_proto"],
 )
 
 cc_test(
@@ -209,25 +186,15 @@ cc_test(
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "scene_cropping_calculator_proto",
     srcs = ["scene_cropping_calculator.proto"],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/examples/desktop/autoflip/quality:cropping_proto",
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
     ],
-)
-
-mediapipe_cc_proto_library(
-    name = "scene_cropping_calculator_cc_proto",
-    srcs = ["scene_cropping_calculator.proto"],
-    cc_deps = [
-        "//mediapipe/examples/desktop/autoflip/quality:cropping_cc_proto",
-        "//mediapipe/framework:calculator_cc_proto",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [":scene_cropping_calculator_proto"],
 )
 
 cc_library(
@@ -267,6 +234,7 @@ cc_test(
     size = "large",
     timeout = "long",
     srcs = ["scene_cropping_calculator_test.cc"],
+    tags = ["noasan"],  #  TODO b/352507058 - ASAN run takes 25 minutes. Disabled for now.
     deps = [
         ":scene_cropping_calculator",
         "//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto",
@@ -296,24 +264,15 @@ cc_library(
     alwayslink = 1,
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "signal_fusing_calculator_proto",
     srcs = ["signal_fusing_calculator.proto"],
+    visibility = ["//mediapipe/examples:__subpackages__"],
     deps = [
         "//mediapipe/examples/desktop/autoflip:autoflip_messages_proto",
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
     ],
-)
-
-mediapipe_cc_proto_library(
-    name = "signal_fusing_calculator_cc_proto",
-    srcs = ["signal_fusing_calculator.proto"],
-    cc_deps = [
-        "//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto",
-        "//mediapipe/framework:calculator_cc_proto",
-    ],
-    visibility = ["//mediapipe/examples:__subpackages__"],
-    deps = [":signal_fusing_calculator_proto"],
 )
 
 cc_test(
@@ -349,22 +308,19 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_log",
     ],
     alwayslink = 1,
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "shot_boundary_calculator_proto",
     srcs = ["shot_boundary_calculator.proto"],
-    deps = ["//mediapipe/framework:calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "shot_boundary_calculator_cc_proto",
-    srcs = ["shot_boundary_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
     visibility = ["//mediapipe/examples:__subpackages__"],
-    deps = [":shot_boundary_calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
 cc_test(
@@ -413,24 +369,15 @@ cc_library(
     alwayslink = 1,
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "face_to_region_calculator_proto",
     srcs = ["face_to_region_calculator.proto"],
+    visibility = ["//mediapipe/examples:__subpackages__"],
     deps = [
         "//mediapipe/examples/desktop/autoflip/quality:visual_scorer_proto",
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
     ],
-)
-
-mediapipe_cc_proto_library(
-    name = "face_to_region_calculator_cc_proto",
-    srcs = ["face_to_region_calculator.proto"],
-    cc_deps = [
-        "//mediapipe/examples/desktop/autoflip/quality:visual_scorer_cc_proto",
-        "//mediapipe/framework:calculator_cc_proto",
-    ],
-    visibility = ["//mediapipe/examples:__subpackages__"],
-    deps = [":face_to_region_calculator_proto"],
 )
 
 cc_test(
@@ -454,20 +401,14 @@ cc_test(
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "localization_to_region_calculator_proto",
     srcs = ["localization_to_region_calculator.proto"],
+    visibility = ["//mediapipe/examples:__subpackages__"],
     deps = [
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
     ],
-)
-
-mediapipe_cc_proto_library(
-    name = "localization_to_region_calculator_cc_proto",
-    srcs = ["localization_to_region_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe/examples:__subpackages__"],
-    deps = [":localization_to_region_calculator_proto"],
 )
 
 cc_library(

@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/embedder_options.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/embedding_postprocessing_graph_options.pb.h"
-#include "mediapipe/tasks/cc/components/utils/source_or_node_output.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "tensorflow/lite/schema/schema_generated.h"
@@ -51,8 +50,6 @@ using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
 using ::mediapipe::tasks::core::ModelResources;
-using TensorsSource =
-    ::mediapipe::tasks::SourceOrNodeOutput<std::vector<Tensor>>;
 
 constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kEmbeddingsTag[] = "EMBEDDINGS";
@@ -154,13 +151,13 @@ absl::Status ConfigureEmbeddingPostprocessingGraph(
     const ModelResources& model_resources,
     const proto::EmbedderOptions& embedder_options,
     proto::EmbeddingPostprocessingGraphOptions* options) {
-  ASSIGN_OR_RETURN(bool has_quantized_outputs,
-                   HasQuantizedOutputs(model_resources));
+  MP_ASSIGN_OR_RETURN(bool has_quantized_outputs,
+                      HasQuantizedOutputs(model_resources));
   options->set_has_quantized_outputs(has_quantized_outputs);
   auto* tensors_to_embeddings_options =
       options->mutable_tensors_to_embeddings_options();
   *tensors_to_embeddings_options->mutable_embedder_options() = embedder_options;
-  ASSIGN_OR_RETURN(auto head_names, GetHeadNames(model_resources));
+  MP_ASSIGN_OR_RETURN(auto head_names, GetHeadNames(model_resources));
   if (!head_names.empty()) {
     *tensors_to_embeddings_options->mutable_head_names() = {head_names.begin(),
                                                             head_names.end()};
@@ -200,7 +197,7 @@ class EmbeddingPostprocessingGraph : public mediapipe::Subgraph {
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto output_streams,
         BuildEmbeddingPostprocessing(
             sc->Options<proto::EmbeddingPostprocessingGraphOptions>(),
@@ -229,12 +226,13 @@ class EmbeddingPostprocessingGraph : public mediapipe::Subgraph {
       Source<std::vector<Tensor>> tensors_in,
       Source<std::vector<Timestamp>> timestamps_in, Graph& graph) {
     // If output tensors are quantized, they must be dequantized first.
-    TensorsSource dequantized_tensors(&tensors_in);
+    Source<std::vector<Tensor>> dequantized_tensors = tensors_in;
     if (options.has_quantized_outputs()) {
       GenericNode& tensors_dequantization_node =
           graph.AddNode("TensorsDequantizationCalculator");
       tensors_in >> tensors_dequantization_node.In(kTensorsTag);
-      dequantized_tensors = {&tensors_dequantization_node, kTensorsTag};
+      dequantized_tensors = tensors_dequantization_node.Out(kTensorsTag)
+                                .Cast<std::vector<Tensor>>();
     }
 
     // Adds TensorsToEmbeddingsCalculator.

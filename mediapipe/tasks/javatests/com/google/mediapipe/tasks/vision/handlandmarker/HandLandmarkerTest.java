@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,12 +18,14 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.RectF;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.common.truth.Correspondence;
 import com.google.mediapipe.framework.MediaPipeException;
+import com.google.mediapipe.framework.image.BitmapExtractor;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.components.containers.Category;
@@ -34,6 +36,7 @@ import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker.HandLandmarkerOptions;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,6 +50,7 @@ public class HandLandmarkerTest {
   private static final String HAND_LANDMARKER_BUNDLE_ASSET_FILE = "hand_landmarker.task";
   private static final String TWO_HANDS_IMAGE = "right_hands.jpg";
   private static final String THUMB_UP_IMAGE = "thumb_up.jpg";
+  private static final String THUMB_UP_RGBA_IMAGE = "thumb_up_rgba.png";
   private static final String POINTING_UP_ROTATED_IMAGE = "pointing_up_rotated.jpg";
   private static final String NO_HANDS_IMAGE = "cats_and_dogs.jpg";
   private static final String THUMB_UP_LANDMARKS = "thumb_up_landmarks.pb";
@@ -70,10 +74,25 @@ public class HandLandmarkerTest {
               .build();
       HandLandmarker handLandmarker =
           HandLandmarker.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      HandLandmarkerResult actualResult = handLandmarker.detect(getImageFromAsset(THUMB_UP_IMAGE));
+      HandLandmarkerResult expectedResult = getExpectedHandLandmarkerResult(THUMB_UP_LANDMARKS);
+      assertActualResultApproximatelyEqualsToExpectedResult(actualResult, expectedResult);
+    }
+
+    @Test
+    public void detect_successWithRgbaImage() throws Exception {
+      HandLandmarkerOptions options =
+          HandLandmarkerOptions.builder()
+              .setBaseOptions(
+                  BaseOptions.builder()
+                      .setModelAssetPath(HAND_LANDMARKER_BUNDLE_ASSET_FILE)
+                      .build())
+              .build();
+      HandLandmarker handLandmarker =
+          HandLandmarker.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       HandLandmarkerResult actualResult =
-          handLandmarker.detect(getImageFromAsset(THUMB_UP_IMAGE));
-      HandLandmarkerResult expectedResult =
-          getExpectedHandLandmarkerResult(THUMB_UP_LANDMARKS);
+          handLandmarker.detect(getImageFromAsset(THUMB_UP_RGBA_IMAGE));
+      HandLandmarkerResult expectedResult = getExpectedHandLandmarkerResult(THUMB_UP_LANDMARKS);
       assertActualResultApproximatelyEqualsToExpectedResult(actualResult, expectedResult);
     }
 
@@ -88,11 +107,10 @@ public class HandLandmarkerTest {
               .build();
       HandLandmarker handLandmarker =
           HandLandmarker.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      HandLandmarkerResult actualResult =
-          handLandmarker.detect(getImageFromAsset(NO_HANDS_IMAGE));
+      HandLandmarkerResult actualResult = handLandmarker.detect(getImageFromAsset(NO_HANDS_IMAGE));
       assertThat(actualResult.landmarks()).isEmpty();
       assertThat(actualResult.worldLandmarks()).isEmpty();
-      assertThat(actualResult.handednesses()).isEmpty();
+      assertThat(actualResult.handedness()).isEmpty();
     }
 
     @Test
@@ -107,9 +125,8 @@ public class HandLandmarkerTest {
               .build();
       HandLandmarker handLandmarker =
           HandLandmarker.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      HandLandmarkerResult actualResult =
-          handLandmarker.detect(getImageFromAsset(TWO_HANDS_IMAGE));
-      assertThat(actualResult.handednesses()).hasSize(2);
+      HandLandmarkerResult actualResult = handLandmarker.detect(getImageFromAsset(TWO_HANDS_IMAGE));
+      assertThat(actualResult.handedness()).hasSize(2);
     }
 
     @Test
@@ -217,13 +234,14 @@ public class HandLandmarkerTest {
             MediaPipeException.class,
             () ->
                 handLandmarker.detectForVideo(
-                    getImageFromAsset(THUMB_UP_IMAGE), /*timestampsMs=*/ 0));
+                    getImageFromAsset(THUMB_UP_IMAGE), /* timestampMs= */ 0));
     assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
     exception =
         assertThrows(
             MediaPipeException.class,
             () ->
-                handLandmarker.detectAsync(getImageFromAsset(THUMB_UP_IMAGE), /*timestampsMs=*/ 0));
+                handLandmarker.detectAsync(
+                    getImageFromAsset(THUMB_UP_IMAGE), /* timestampMs= */ 0));
     assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
   }
 
@@ -247,7 +265,8 @@ public class HandLandmarkerTest {
         assertThrows(
             MediaPipeException.class,
             () ->
-                handLandmarker.detectAsync(getImageFromAsset(THUMB_UP_IMAGE), /*timestampsMs=*/ 0));
+                handLandmarker.detectAsync(
+                    getImageFromAsset(THUMB_UP_IMAGE), /* timestampMs= */ 0));
     assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
   }
 
@@ -273,7 +292,7 @@ public class HandLandmarkerTest {
             MediaPipeException.class,
             () ->
                 handLandmarker.detectForVideo(
-                    getImageFromAsset(THUMB_UP_IMAGE), /*timestampsMs=*/ 0));
+                    getImageFromAsset(THUMB_UP_IMAGE), /* timestampMs= */ 0));
     assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
   }
 
@@ -309,7 +328,7 @@ public class HandLandmarkerTest {
         getExpectedHandLandmarkerResult(THUMB_UP_LANDMARKS);
     for (int i = 0; i < 3; i++) {
       HandLandmarkerResult actualResult =
-          handLandmarker.detectForVideo(getImageFromAsset(THUMB_UP_IMAGE), /*timestampsMs=*/ i);
+          handLandmarker.detectForVideo(getImageFromAsset(THUMB_UP_IMAGE), /* timestampMs= */ i);
       assertActualResultApproximatelyEqualsToExpectedResult(actualResult, expectedResult);
     }
   }
@@ -333,11 +352,11 @@ public class HandLandmarkerTest {
             .build();
     try (HandLandmarker handLandmarker =
         HandLandmarker.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
-      handLandmarker.detectAsync(image, /*timestampsMs=*/ 1);
+      handLandmarker.detectAsync(image, /* timestampMs= */ 1);
       MediaPipeException exception =
           assertThrows(
               MediaPipeException.class,
-              () -> handLandmarker.detectAsync(image, /*timestampsMs=*/ 0));
+              () -> handLandmarker.detectAsync(image, /* timestampMs= */ 0));
       assertThat(exception)
           .hasMessageThat()
           .contains("having a smaller timestamp than the processed timestamp");
@@ -345,7 +364,7 @@ public class HandLandmarkerTest {
   }
 
   @Test
-  public void recognize_successWithLiveSteamMode() throws Exception {
+  public void recognize_successWithLiveSteamModeAndRgbImage() throws Exception {
     MPImage image = getImageFromAsset(THUMB_UP_IMAGE);
     HandLandmarkerResult expectedResult =
         getExpectedHandLandmarkerResult(THUMB_UP_LANDMARKS);
@@ -358,13 +377,37 @@ public class HandLandmarkerTest {
                 (actualResult, inputImage) -> {
                   assertActualResultApproximatelyEqualsToExpectedResult(
                       actualResult, expectedResult);
-                  assertImageSizeIsExpected(inputImage);
+                  assertImageMatchesInputImage(image, inputImage);
                 })
             .build();
     try (HandLandmarker handLandmarker =
         HandLandmarker.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
       for (int i = 0; i < 3; i++) {
-        handLandmarker.detectAsync(image, /*timestampsMs=*/ i);
+        handLandmarker.detectAsync(image, /* timestampMs= */ i);
+      }
+    }
+  }
+
+  @Test
+  public void recognize_successWithLiveSteamModeAndRgbaImage() throws Exception {
+    MPImage image = getImageFromAsset(THUMB_UP_RGBA_IMAGE);
+    HandLandmarkerResult expectedResult = getExpectedHandLandmarkerResult(THUMB_UP_LANDMARKS);
+    HandLandmarkerOptions options =
+        HandLandmarkerOptions.builder()
+            .setBaseOptions(
+                BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_BUNDLE_ASSET_FILE).build())
+            .setRunningMode(RunningMode.LIVE_STREAM)
+            .setResultListener(
+                (actualResult, inputImage) -> {
+                  assertActualResultApproximatelyEqualsToExpectedResult(
+                      actualResult, expectedResult);
+                  assertImageMatchesInputImage(image, inputImage);
+                })
+            .build();
+    try (HandLandmarker handLandmarker =
+        HandLandmarker.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
+      for (int i = 0; i < 3; i++) {
+        handLandmarker.detectAsync(image, /* timestampMs= */ i);
       }
     }
   }
@@ -393,7 +436,7 @@ public class HandLandmarkerTest {
     // Expects to have the same number of hands detected.
     assertThat(actualResult.landmarks()).hasSize(expectedResult.landmarks().size());
     assertThat(actualResult.worldLandmarks()).hasSize(expectedResult.worldLandmarks().size());
-    assertThat(actualResult.handednesses()).hasSize(expectedResult.handednesses().size());
+    assertThat(actualResult.handedness()).hasSize(expectedResult.handedness().size());
 
     // Actual landmarks match expected landmarks.
     assertThat(actualResult.landmarks().get(0))
@@ -410,8 +453,8 @@ public class HandLandmarkerTest {
         .containsExactlyElementsIn(expectedResult.landmarks().get(0));
 
     // Actual handedness matches expected handedness.
-    Category actualTopHandedness = actualResult.handednesses().get(0).get(0);
-    Category expectedTopHandedness = expectedResult.handednesses().get(0).get(0);
+    Category actualTopHandedness = actualResult.handedness().get(0).get(0);
+    Category expectedTopHandedness = expectedResult.handedness().get(0).get(0);
     assertThat(actualTopHandedness.index()).isEqualTo(expectedTopHandedness.index());
     assertThat(actualTopHandedness.categoryName()).isEqualTo(expectedTopHandedness.categoryName());
   }
@@ -420,5 +463,22 @@ public class HandLandmarkerTest {
     assertThat(inputImage).isNotNull();
     assertThat(inputImage.getWidth()).isEqualTo(IMAGE_WIDTH);
     assertThat(inputImage.getHeight()).isEqualTo(IMAGE_HEIGHT);
+  }
+
+  private static void assertImageMatchesInputImage(MPImage expectedImage, MPImage actualImage) {
+    assertThat(actualImage).isNotNull();
+    assertThat(actualImage.getWidth()).isEqualTo(expectedImage.getWidth());
+    assertThat(actualImage.getHeight()).isEqualTo(expectedImage.getHeight());
+
+    ByteBuffer expectedBuffer = bitmapToByteBuffer(BitmapExtractor.extract(expectedImage));
+    ByteBuffer actualBuffer = bitmapToByteBuffer(BitmapExtractor.extract(actualImage));
+    assertThat(actualBuffer).isEqualTo(expectedBuffer);
+  }
+
+  private static ByteBuffer bitmapToByteBuffer(Bitmap bitmap) {
+    ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bitmap.getByteCount());
+    bitmap.copyPixelsToBuffer(byteBuffer);
+    byteBuffer.rewind();
+    return byteBuffer;
   }
 }

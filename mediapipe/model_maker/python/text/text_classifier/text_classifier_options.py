@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 import dataclasses
 from typing import Optional
 
-from mediapipe.model_maker.python.core import hyperparameters as hp
+from mediapipe.model_maker.python.text.text_classifier import hyperparameters as hp
 from mediapipe.model_maker.python.text.text_classifier import model_options as mo
 from mediapipe.model_maker.python.text.text_classifier import model_spec as ms
 
@@ -34,5 +34,5 @@ class TextClassifierOptions:
       architecture of the `supported_model`.
   """
   supported_model: ms.SupportedModels
-  hparams: Optional[hp.BaseHParams] = None
+  hparams: Optional[hp.HParams] = None
   model_options: Optional[mo.TextClassifierModelOptions] = None

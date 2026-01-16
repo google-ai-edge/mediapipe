@@ -56,7 +56,7 @@ void TimestampSubmodule(pybind11::module* module) {
 )doc");
 
   timestamp.def(py::init<const Timestamp&>())
-      .def(py::init<int64>())
+      .def(py::init<int64_t>())
       .def_property_readonly("value", &Timestamp::Value)
       .def_property_readonly_static(
           "UNSET", [](py::object) { return Timestamp::Unset(); })
@@ -137,7 +137,7 @@ void TimestampSubmodule(pybind11::module* module) {
     timestamp_now = mp.Timestamp.from_seconds(time.time())
 )doc");
 
-  py::implicitly_convertible<int64, Timestamp>();
+  py::implicitly_convertible<int64_t, Timestamp>();
 }
 
 }  // namespace python

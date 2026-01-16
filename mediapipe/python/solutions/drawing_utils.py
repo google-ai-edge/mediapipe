@@ -13,17 +13,17 @@
 # limitations under the License.
 """MediaPipe solution drawing utils."""
 
+import dataclasses
 import math
 from typing import List, Mapping, Optional, Tuple, Union
 
 import cv2
-import dataclasses
 import matplotlib.pyplot as plt
 import numpy as np
 
 from mediapipe.framework.formats import detection_pb2
-from mediapipe.framework.formats import location_data_pb2
 from mediapipe.framework.formats import landmark_pb2
+from mediapipe.framework.formats import location_data_pb2
 
 _PRESENCE_THRESHOLD = 0.5
 _VISIBILITY_THRESHOLD = 0.5
@@ -120,12 +120,14 @@ def draw_landmarks(
     image: np.ndarray,
     landmark_list: landmark_pb2.NormalizedLandmarkList,
     connections: Optional[List[Tuple[int, int]]] = None,
-    landmark_drawing_spec: Union[DrawingSpec,
-                                 Mapping[int, DrawingSpec]] = DrawingSpec(
-                                     color=RED_COLOR),
-    connection_drawing_spec: Union[DrawingSpec,
-                                   Mapping[Tuple[int, int],
-                                           DrawingSpec]] = DrawingSpec()):
+    landmark_drawing_spec: Optional[
+        Union[DrawingSpec, Mapping[int, DrawingSpec]]
+    ] = DrawingSpec(color=RED_COLOR),
+    connection_drawing_spec: Union[
+        DrawingSpec, Mapping[Tuple[int, int], DrawingSpec]
+    ] = DrawingSpec(),
+    is_drawing_landmarks: bool = True,
+):
   """Draws the landmarks and the connections on the image.
 
   Args:
@@ -142,6 +144,8 @@ def draw_landmarks(
       connections to the DrawingSpecs that specifies the connections' drawing
       settings such as color and line thickness. If this argument is explicitly
       set to None, no landmark connections will be drawn.
+    is_drawing_landmarks: Whether to draw landmarks. If set false, skip drawing
+      landmarks, only contours will be drawed.
 
   Raises:
     ValueError: If one of the followings:
@@ -181,7 +185,7 @@ def draw_landmarks(
                  drawing_spec.thickness)
   # Draws landmark points after finishing the connection lines, which is
   # aesthetically better.
-  if landmark_drawing_spec:
+  if is_drawing_landmarks and landmark_drawing_spec:
     for idx, landmark_px in idx_to_coordinates.items():
       drawing_spec = landmark_drawing_spec[idx] if isinstance(
           landmark_drawing_spec, Mapping) else landmark_drawing_spec

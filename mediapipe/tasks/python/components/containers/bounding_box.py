@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,10 +16,8 @@
 import dataclasses
 from typing import Any
 
-from mediapipe.framework.formats import location_data_pb2
+from mediapipe.tasks.python.components.containers import rect_c as rect_c_lib
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-
-_BoundingBoxProto = location_data_pb2.LocationData.BoundingBox
 
 
 @dataclasses.dataclass
@@ -38,25 +36,16 @@ class BoundingBox:
   width: int
   height: int
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _BoundingBoxProto:
-    """Generates a BoundingBox protobuf object."""
-    return _BoundingBoxProto(
-        xmin=self.origin_x,
-        ymin=self.origin_y,
-        width=self.width,
-        height=self.height,
-    )
-
   @classmethod
   @doc_controls.do_not_generate_docs
-  def create_from_pb2(cls, pb2_obj: _BoundingBoxProto) -> 'BoundingBox':
-    """Creates a `BoundingBox` object from the given protobuf object."""
+  def from_ctypes(cls, c_obj: rect_c_lib.RectC) -> 'BoundingBox':
+    """Creates a `BoundingBox` object from a ctypes RectC struct."""
     return BoundingBox(
-        origin_x=pb2_obj.xmin,
-        origin_y=pb2_obj.ymin,
-        width=pb2_obj.width,
-        height=pb2_obj.height)
+        origin_x=c_obj.left,
+        origin_y=c_obj.top,
+        width=c_obj.right - c_obj.left,
+        height=c_obj.bottom - c_obj.top,
+    )
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.
@@ -69,5 +58,9 @@ class BoundingBox:
     """
     if not isinstance(other, BoundingBox):
       return False
-
-    return self.to_pb2().__eq__(other.to_pb2())
+    return (
+        self.origin_x == other.origin_x
+        and self.origin_y == other.origin_y
+        and self.width == other.width
+        and self.height == other.height
+    )

@@ -39,6 +39,9 @@ constexpr char kImageSizeTag[] = "IMAGE_SIZE";
 constexpr char kRectTag[] = "RECT";
 constexpr char kDetectionTag[] = "DETECTION";
 
+using ::mediapipe::NormalizedRect;
+using ::mediapipe::Rect;
+
 MATCHER_P4(RectEq, x_center, y_center, width, height, "") {
   return testing::Value(arg.x_center(), testing::Eq(x_center)) &&
          testing::Value(arg.y_center(), testing::Eq(y_center)) &&
@@ -53,8 +56,8 @@ MATCHER_P4(NormRectEq, x_center, y_center, width, height, "") {
          testing::Value(arg.height(), testing::FloatEq(height));
 }
 
-Detection DetectionWithLocationData(int32 xmin, int32 ymin, int32 width,
-                                    int32 height) {
+Detection DetectionWithLocationData(int32_t xmin, int32_t ymin, int32_t width,
+                                    int32_t height) {
   Detection detection;
   LocationData* location_data = detection.mutable_location_data();
   location_data->set_format(LocationData::BOUNDING_BOX);

@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,17 +15,17 @@
 """Preprocessors for text classification."""
 
 import collections
+import hashlib
 import os
 import re
-import tempfile
-from typing import Mapping, Sequence, Tuple, Union
+from typing import Any, Mapping, Sequence, Union
 
 import tensorflow as tf
 import tensorflow_hub
 
+from mediapipe.model_maker.python.core.data import cache_files as cache_files_lib
+from mediapipe.model_maker.python.text.text_classifier import bert_tokenizer
 from mediapipe.model_maker.python.text.text_classifier import dataset as text_classifier_ds
-from official.nlp.data import classifier_data_lib
-from official.nlp.tools import tokenization
 
 
 def _validate_text_and_label(text: tf.Tensor, label: tf.Tensor) -> None:
@@ -33,8 +33,8 @@ def _validate_text_and_label(text: tf.Tensor, label: tf.Tensor) -> None:
 
   Args:
     text: Stores text data. Should have shape [1] and dtype tf.string.
-    label: Stores the label for the corresponding `text`. Should have shape [1]
-      and dtype tf.int64.
+    label: Stores the label for the corresponding `text`. Should have dtype
+      tf.int64.
 
   Raises:
     ValueError: If either tensor has the wrong shape or type.
@@ -43,15 +43,13 @@ def _validate_text_and_label(text: tf.Tensor, label: tf.Tensor) -> None:
     raise ValueError(f"`text` should have shape [1], got {text.shape}")
   if text.dtype != tf.string:
     raise ValueError(f"Expected dtype string for `text`, got {text.dtype}")
-  if label.shape != [1]:
-    raise ValueError(f"`label` should have shape [1], got {text.shape}")
   if label.dtype != tf.int64:
     raise ValueError(f"Expected dtype int64 for `label`, got {label.dtype}")
 
 
 def _decode_record(
     record: tf.Tensor, name_to_features: Mapping[str, tf.io.FixedLenFeature]
-) -> Tuple[Mapping[str, tf.Tensor], tf.Tensor]:
+) -> Any:
   """Decodes a record into input for a BERT model.
 
   Args:
@@ -59,7 +57,7 @@ def _decode_record(
     name_to_features: Maps record keys to feature types.
 
   Returns:
-    BERT model input features and label for the record.
+    BERT model input features, label, and optional mask for the record.
   """
   example = tf.io.parse_single_example(record, name_to_features)
 
@@ -68,26 +66,30 @@ def _decode_record(
     example[name] = tf.cast(example[name], tf.int32)
 
   bert_features = {
-      "input_word_ids": example["input_ids"],
+      "input_word_ids": example["input_word_ids"],
       "input_mask": example["input_mask"],
-      "input_type_ids": example["segment_ids"]
+      "input_type_ids": example["input_type_ids"],
   }
-  return bert_features, example["label_ids"]
+  if "label_mask" in example:
+    return bert_features, example["label_ids"], example["label_mask"]
+  else:
+    return bert_features, example["label_ids"]
 
 
-def _single_file_dataset(
-    input_file: str, name_to_features: Mapping[str, tf.io.FixedLenFeature]
+def _tfrecord_dataset(
+    tfrecord_files: Sequence[str],
+    name_to_features: Mapping[str, tf.io.FixedLenFeature],
 ) -> tf.data.TFRecordDataset:
   """Creates a single-file dataset to be passed for BERT custom training.
 
   Args:
-    input_file: Filepath for the dataset.
+    tfrecord_files: Filepaths for the dataset.
     name_to_features: Maps record keys to feature types.
 
   Returns:
     Dataset containing BERT model input features and labels.
   """
-  d = tf.data.TFRecordDataset(input_file)
+  d = tf.data.TFRecordDataset(tfrecord_files)
   d = d.map(
       lambda record: _decode_record(record, name_to_features),
       num_parallel_calls=tf.data.AUTOTUNE)
@@ -144,7 +146,6 @@ class AverageWordEmbeddingClassifierPreprocessor:
     """Returns the vocab of the AverageWordEmbeddingClassifierPreprocessor."""
     return self._vocab
 
-  # TODO: Align with MediaPipe's RegexTokenizer.
   def _regex_tokenize(self, text: str) -> Sequence[str]:
     """Splits `text` by words but does not split on single quotes.
 
@@ -221,65 +222,174 @@ class BertClassifierPreprocessor:
     seq_len: Length of the input sequence to the model.
     vocab_file: File containing the BERT vocab.
     tokenizer: BERT tokenizer.
+    model_name: Name of the model provided by the model_spec. Used to associate
+      cached files with specific Bert model vocab.
+    preprocessor: Which preprocessor to use. Must be one of the enum values of
+      SupportedBertPreprocessors.
   """
 
-  def __init__(self, seq_len: int, do_lower_case: bool, uri: str):
+  def __init__(
+      self,
+      seq_len: int,
+      do_lower_case: bool,
+      uri: str,
+      model_name: str,
+      tokenizer: bert_tokenizer.SupportedBertTokenizers,
+  ):
     self._seq_len = seq_len
     # Vocab filepath is tied to the BERT module's URI.
     self._vocab_file = os.path.join(
-        tensorflow_hub.resolve(uri), "assets", "vocab.txt")
-    self._tokenizer = tokenization.FullTokenizer(self._vocab_file,
-                                                 do_lower_case)
+        tensorflow_hub.resolve(uri), "assets", "vocab.txt"
+    )
+    self._do_lower_case = do_lower_case
+    self._tokenizer: bert_tokenizer.BertTokenizer = None
+    if tokenizer == bert_tokenizer.SupportedBertTokenizers.FULL_TOKENIZER:
+      self._tokenizer = bert_tokenizer.BertFullTokenizer(
+          self._vocab_file, self._do_lower_case, self._seq_len
+      )
+    elif (
+        tokenizer == bert_tokenizer.SupportedBertTokenizers.FAST_BERT_TOKENIZER
+    ):
+      self._tokenizer = bert_tokenizer.BertFastTokenizer(
+          self._vocab_file, self._do_lower_case, self._seq_len
+      )
+    else:
+      raise ValueError(f"Unsupported tokenizer: {tokenizer}")
+    self._model_name = model_name
 
-  def _get_name_to_features(self):
+  def _get_name_to_features(
+      self, label_shape: int = 1, has_label_mask: bool = False
+  ):
     """Gets the dictionary mapping record keys to feature types."""
-    return {
-        "input_ids": tf.io.FixedLenFeature([self._seq_len], tf.int64),
+    features = {
+        "input_word_ids": tf.io.FixedLenFeature([self._seq_len], tf.int64),
         "input_mask": tf.io.FixedLenFeature([self._seq_len], tf.int64),
-        "segment_ids": tf.io.FixedLenFeature([self._seq_len], tf.int64),
-        "label_ids": tf.io.FixedLenFeature([], tf.int64),
+        "input_type_ids": tf.io.FixedLenFeature([self._seq_len], tf.int64),
+        "label_ids": tf.io.FixedLenFeature([label_shape], tf.int64),
     }
+    if has_label_mask:
+      features["label_mask"] = tf.io.FixedLenFeature([label_shape], tf.int64)
+    return features
 
   def get_vocab_file(self) -> str:
     """Returns the vocab file of the BertClassifierPreprocessor."""
     return self._vocab_file
 
+  def get_tfrecord_cache_files(
+      self, ds_cache_files
+  ) -> cache_files_lib.TFRecordCacheFiles:
+    """Helper to regenerate cache prefix filename using preprocessor info.
+
+    We need to update the dataset cache_prefix cache because the actual cached
+    dataset depends on the preprocessor parameters such as model_name, seq_len,
+    and do_lower_case in addition to the raw dataset parameters which is already
+    included in the ds_cache_files.cache_prefix_filename
+
+    Specifically, the new cache_prefix_filename used by the preprocessor will
+    be a hash generated from the following:
+      1. cache_prefix_filename of the initial raw dataset
+      2. model_name
+      3. seq_len
+      4. do_lower_case
+      5. tokenizer name
+
+    Args:
+      ds_cache_files: TFRecordCacheFiles from the original raw dataset object
+
+    Returns:
+      A new TFRecordCacheFiles object which incorporates the preprocessor
+      parameters.
+    """
+    hasher = hashlib.md5()
+    hasher.update(ds_cache_files.cache_prefix_filename.encode("utf-8"))
+    hasher.update(self._model_name.encode("utf-8"))
+    hasher.update(str(self._seq_len).encode("utf-8"))
+    hasher.update(str(self._do_lower_case).encode("utf-8"))
+    hasher.update(self._tokenizer.name.encode("utf-8"))
+    cache_prefix_filename = hasher.hexdigest()
+    return cache_files_lib.TFRecordCacheFiles(
+        cache_prefix_filename,
+        ds_cache_files.cache_dir,
+        ds_cache_files.num_shards,
+    )
+
   def preprocess(
-      self, dataset: text_classifier_ds.Dataset) -> text_classifier_ds.Dataset:
+      self, dataset: text_classifier_ds.Dataset
+  ) -> text_classifier_ds.Dataset:
     """Preprocesses data into input for a BERT-based classifier.
 
     Args:
-      dataset: Stores (text, label) data.
+      dataset: Stores (text, label) or (text, label, label_mask) data depending
+        on whether dataset.has_label_mask is True.
 
     Returns:
       Dataset containing (bert_features, label) data.
     """
-    examples = []
-    for index, (text, label) in enumerate(dataset.gen_tf_dataset()):
-      _validate_text_and_label(text, label)
-      examples.append(
-          classifier_data_lib.InputExample(
-              guid=str(index),
-              text_a=text.numpy()[0].decode("utf-8"),
-              text_b=None,
-              # InputExample expects the label name rather than the int ID
-              label=dataset.label_names[label.numpy()[0]]))
+    ds_cache_files = dataset.tfrecord_cache_files
+    # Get new tfrecord_cache_files by including preprocessor information.
+    tfrecord_cache_files = self.get_tfrecord_cache_files(ds_cache_files)
+    if not tfrecord_cache_files.is_cached():
+      print(f"Writing new cache files to {tfrecord_cache_files.cache_prefix}")
+      writers = tfrecord_cache_files.get_writers()
+      size = 0
+      for index, item in enumerate(dataset.gen_tf_dataset()):
+        text, label = item[0], item[1]
+        _validate_text_and_label(text, label)
+        feature = self._tokenizer.process(text)
+        def create_int_feature(values):
+          f = tf.train.Feature(int64_list=tf.train.Int64List(value=values))
+          return f
 
-    tfrecord_file = os.path.join(tempfile.mkdtemp(), "bert_features.tfrecord")
-    classifier_data_lib.file_based_convert_examples_to_features(
-        examples=examples,
-        label_list=dataset.label_names,
-        max_seq_length=self._seq_len,
-        tokenizer=self._tokenizer,
-        output_file=tfrecord_file)
-    preprocessed_ds = _single_file_dataset(tfrecord_file,
-                                           self._get_name_to_features())
+        features = collections.OrderedDict()
+        features["input_word_ids"] = create_int_feature(
+            feature["input_word_ids"]
+        )
+        features["input_mask"] = create_int_feature(feature["input_mask"])
+        features["input_type_ids"] = create_int_feature(
+            feature["input_type_ids"]
+        )
+        features["label_ids"] = create_int_feature(
+            tf.reshape(label, [-1]).numpy().tolist()
+        )
+        if dataset.has_label_mask:
+          mask = item[2]
+          features["label_mask"] = create_int_feature(
+              tf.reshape(mask, [-1]).numpy().tolist()
+          )
+        tf_example = tf.train.Example(
+            features=tf.train.Features(feature=features)
+        )
+        writers[index % len(writers)].write(tf_example.SerializeToString())
+        size = index + 1
+      for writer in writers:
+        writer.close()
+      metadata = {"size": size, "label_names": dataset.label_names}
+      tfrecord_cache_files.save_metadata(metadata)
+    else:
+      print(
+          f"Using existing cache files at {tfrecord_cache_files.cache_prefix}"
+      )
+      metadata = tfrecord_cache_files.load_metadata()
+    size = metadata["size"]
+    label_names = metadata["label_names"]
+    preprocessed_ds = _tfrecord_dataset(
+        tfrecord_cache_files.tfrecord_files,
+        self._get_name_to_features(dataset.label_shape, dataset.has_label_mask),
+    )
     return text_classifier_ds.Dataset(
         dataset=preprocessed_ds,
-        size=dataset.size,
-        label_names=dataset.label_names)
+        size=size,
+        label_names=label_names,
+        tfrecord_cache_files=tfrecord_cache_files,
+        has_label_mask=dataset.has_label_mask,
+        label_shape=dataset.label_shape,
+    )
+
+  @property
+  def tokenizer(self) -> bert_tokenizer.BertTokenizer:
+    return self._tokenizer
 
 
-TextClassifierPreprocessor = (
-    Union[BertClassifierPreprocessor,
-          AverageWordEmbeddingClassifierPreprocessor])
+TextClassifierPreprocessor = Union[
+    BertClassifierPreprocessor, AverageWordEmbeddingClassifierPreprocessor
+]

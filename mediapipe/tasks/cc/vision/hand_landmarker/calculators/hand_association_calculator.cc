@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -12,88 +12,93 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
+#include "mediapipe/tasks/cc/vision/hand_landmarker/calculators/hand_association_calculator.h"
 
+#include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
 
-#include "mediapipe/framework/api2/node.h"
-#include "mediapipe/framework/calculator_framework.h"
+#include "absl/log/absl_check.h"
+#include "absl/status/status.h"
+#include "mediapipe/framework/api3/calculator.h"
+#include "mediapipe/framework/api3/calculator_context.h"
 #include "mediapipe/framework/formats/rect.pb.h"
-#include "mediapipe/framework/port/rectangle.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/tasks/cc/vision/hand_landmarker/calculators/hand_association_calculator.pb.h"
 #include "mediapipe/util/rectangle_util.h"
 
-namespace mediapipe::api2 {
+namespace mediapipe {
+namespace tasks {
+namespace {
 
-// HandAssociationCalculator accepts multiple inputs of vectors of
-// NormalizedRect. The output is a vector of NormalizedRect that contains
-// rects from the input vectors that don't overlap with each other. When two
-// rects overlap, the rect that comes in from an earlier input stream is
-// kept in the output. If a rect has no ID (i.e. from detection stream),
-// then a unique rect ID is assigned for it.
+using ::mediapipe::NormalizedRect;
+using ::mediapipe::api3::Calculator;
+using ::mediapipe::api3::CalculatorContext;
 
-// The rects in multiple input streams are effectively flattened to a single
-// list.  For example:
-// Stream1 : rect 1, rect 2
-// Stream2:  rect 3, rect 4
-// Stream3: rect 5, rect 6
-// (Conceptually) flattened list : rect 1, 2, 3, 4, 5, 6
-// In the flattened list, if a rect with a higher index overlaps with a rect a
-// lower index, beyond a specified IOU threshold, the rect with the lower
-// index will be in the output, and the rect with higher index will be
-// discarded.
-// TODO: Upgrade this to latest API for calculators
-class HandAssociationCalculator : public CalculatorBase {
+}  // namespace
+
+class HandAssociationNodeImpl
+    : public Calculator<HandAssociationNode, HandAssociationNodeImpl> {
  public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    // Initialize input and output streams.
-    for (auto& input_stream : cc->Inputs()) {
-      input_stream.Set<std::vector<NormalizedRect>>();
-    }
-    cc->Outputs().Index(0).Set<std::vector<NormalizedRect>>();
+  absl::Status Open(CalculatorContext<HandAssociationNode>& cc) override {
+    options_ = cc.options.Get();
+    ABSL_CHECK_GT(options_.min_similarity_threshold(), 0.0);
+    ABSL_CHECK_LE(options_.min_similarity_threshold(), 1.0);
 
     return absl::OkStatus();
   }
 
-  absl::Status Open(CalculatorContext* cc) override {
-    cc->SetOffset(TimestampDiff(0));
-
-    options_ = cc->Options<HandAssociationCalculatorOptions>();
-    CHECK_GT(options_.min_similarity_threshold(), 0.0);
-    CHECK_LE(options_.min_similarity_threshold(), 1.0);
-
-    return absl::OkStatus();
-  }
-
-  absl::Status Process(CalculatorContext* cc) override {
-    ASSIGN_OR_RETURN(auto result, GetNonOverlappingElements(cc));
+  absl::Status Process(CalculatorContext<HandAssociationNode>& cc) override {
+    MP_ASSIGN_OR_RETURN(auto result, GetNonOverlappingElements(cc));
 
     auto output =
         std::make_unique<std::vector<NormalizedRect>>(std::move(result));
-    cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
+    cc.output_rects.Send(std::move(output));
 
     return absl::OkStatus();
   }
 
  private:
+  // HandAssociationCalculatorOptions from the calculator options.
   HandAssociationCalculatorOptions options_;
+
+  // Each NormalizedRect processed by the calculator will be assigned
+  // an unique id, if it does not already have an ID. The starting ID will be
+  // 1. Note: This rect_id_ is local to an instance of this calculator. And it
+  // is expected that the hand tracking graph to have only one instance of this
+  // association calculator.
+  int64_t rect_id_ = 1;
+
+  inline int GetNextRectId() { return rect_id_++; }
 
   // Return a list of non-overlapping elements from all input streams, with
   // decreasing order of priority based on input stream index and indices
   // within an input stream.
   absl::StatusOr<std::vector<NormalizedRect>> GetNonOverlappingElements(
-      CalculatorContext* cc) {
+      CalculatorContext<HandAssociationNode>& cc) {
     std::vector<NormalizedRect> result;
 
-    for (const auto& input_stream : cc->Inputs()) {
-      if (input_stream.IsEmpty()) {
+    for (int i = 0; i < cc.base_rects.Count(); ++i) {
+      const auto& base_rects_input_stream = cc.base_rects.At(i);
+      if (!base_rects_input_stream) {
+        continue;
+      }
+      for (auto rect : base_rects_input_stream.GetOrDie()) {
+        if (!rect.has_rect_id()) {
+          rect.set_rect_id(GetNextRectId());
+        }
+        result.push_back(rect);
+      }
+    }
+
+    for (int i = 0; i < cc.rects.Count(); ++i) {
+      const auto& rects_input_stream = cc.rects.At(i);
+      if (!rects_input_stream) {
         continue;
       }
 
-      for (auto rect : input_stream.Get<std::vector<NormalizedRect>>()) {
-        ASSIGN_OR_RETURN(
+      for (auto rect : rects_input_stream.GetOrDie()) {
+        MP_ASSIGN_OR_RETURN(
             bool is_overlapping,
             mediapipe::DoesRectOverlap(rect, result,
                                        options_.min_similarity_threshold()));
@@ -108,18 +113,7 @@ class HandAssociationCalculator : public CalculatorBase {
 
     return result;
   }
-
- private:
-  // Each NormalizedRect processed by the calculator will be assigned
-  // an unique id, if it does not already have an ID. The starting ID will be 1.
-  // Note: This rect_id_ is local to an instance of this calculator. And it is
-  // expected that the hand tracking graph to have only one instance of
-  // this association calculator.
-  int64 rect_id_ = 1;
-
-  inline int GetNextRectId() { return rect_id_++; }
 };
 
-MEDIAPIPE_REGISTER_NODE(HandAssociationCalculator);
-
-}  // namespace mediapipe::api2
+}  // namespace tasks
+}  // namespace mediapipe

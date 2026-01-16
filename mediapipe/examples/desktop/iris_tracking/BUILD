@@ -12,10 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe/examples:__subpackages__"])
-
+# BUILD:
+# bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
+#   //mediapipe/examples/desktop/iris_tracking:iris_depth_from_image_desktop
+# RUN:
+# bazel-bin/mediapipe/examples/desktop/iris_tracking/iris_depth_from_image_desktop \
+#   --input_image_path=<input image path> --output_image_path=<output image path>
 cc_binary(
     name = "iris_depth_from_image_desktop",
     srcs = ["iris_depth_from_image_desktop.cc"],
@@ -26,6 +32,7 @@ cc_binary(
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:opencv_video",
         "//mediapipe/framework/port:parse_text_proto",
@@ -33,9 +40,17 @@ cc_binary(
         "//mediapipe/graphs/iris_tracking:iris_depth_cpu_deps",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
+# BUILD:
+# bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
+#   //mediapipe/examples/desktop/iris_tracking:iris_tracking_cpu_video_input
+# RUN:
+# bazel-bin/mediapipe/examples/desktop/iris_tracking/iris_tracking_cpu_video_input \
+#   --calculator_graph_config_file=<.../iris_tracking_cpu_video_input.pbtxt> \
+#   --input_side_packets=input_video_path=<input video path>,output_video_path=<output video path>
 cc_binary(
     name = "iris_tracking_cpu_video_input",
     data = ["//mediapipe/modules/iris_landmark:iris_landmark.tflite"],
@@ -45,6 +60,14 @@ cc_binary(
     ],
 )
 
+# BUILD:
+# bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
+#   //mediapipe/examples/desktop/iris_tracking:iris_tracking_cpu
+# RUN:
+# bazel-bin/mediapipe/examples/desktop/iris_tracking/iris_tracking_cpu \
+#   --calculator_graph_config_file=<.../iris_tracking_cpu.pbtxt> \
+#   --input_video_path=<input video path> \
+#   --output_video_path=<output video path>
 cc_binary(
     name = "iris_tracking_cpu",
     data = ["//mediapipe/modules/iris_landmark:iris_landmark.tflite"],

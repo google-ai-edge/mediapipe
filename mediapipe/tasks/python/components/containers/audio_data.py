@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +13,14 @@
 # limitations under the License.
 """MediaPipe audio data."""
 
+import ctypes
 import dataclasses
 from typing import Optional
 
 import numpy as np
+
+from mediapipe.tasks.python.components.containers import audio_data_c
+from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 
 @dataclasses.dataclass
@@ -113,6 +117,7 @@ class AudioData(object):
       An `AudioData` object that contains a copy of the NumPy source array as
       the data.
     """
+    src = src.astype(np.float32)
     obj = cls(
         buffer_length=src.shape[0],
         audio_format=AudioDataFormat(
@@ -135,3 +140,13 @@ class AudioData(object):
   def buffer(self) -> np.ndarray:
     """Gets the internal buffer."""
     return self._buffer
+
+  @doc_controls.do_not_generate_docs
+  def to_ctypes(self) -> audio_data_c.AudioDataC:
+    """Converts the object to a ctypes audio data object."""
+    return audio_data_c.AudioDataC(
+        num_channels=self.audio_format.num_channels,
+        sample_rate=self.audio_format.sample_rate,
+        audio_data=self._buffer.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
+        audio_data_size=self._buffer.size,
+    )

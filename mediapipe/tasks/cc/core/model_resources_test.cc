@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,9 +38,9 @@ limitations under the License.
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "tensorflow/lite/c/common.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/core/shims/cc/kernels/builtin_op_kernels.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/kernels/builtin_op_kernels.h"
 #include "tensorflow/lite/mutable_op_resolver.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace tflite {
 namespace ops {
@@ -116,7 +116,7 @@ void CheckModelResourcesPackets(const ModelResources* model_resources) {
 
 }  // namespace
 
-class ModelResourcesTest : public tflite_shims::testing::Test {};
+class ModelResourcesTest : public tflite::testing::Test {};
 
 TEST_F(ModelResourcesTest, CreateFromBinaryContent) {
   auto model_file = std::make_unique<proto::ExternalFile>();
@@ -136,6 +136,7 @@ TEST_F(ModelResourcesTest, CreateFromFile) {
   CheckModelResourcesPackets(model_resources.get());
 }
 
+#ifndef _WIN32
 TEST_F(ModelResourcesTest, CreateFromFileDescriptor) {
   const int model_file_descriptor = open(kTestModelPath, O_RDONLY);
   auto model_file = std::make_unique<proto::ExternalFile>();
@@ -145,6 +146,7 @@ TEST_F(ModelResourcesTest, CreateFromFileDescriptor) {
       ModelResources::Create(kTestModelResourcesTag, std::move(model_file)));
   CheckModelResourcesPackets(model_resources.get());
 }
+#endif  // _WIN32
 
 TEST_F(ModelResourcesTest, CreateFromInvalidFile) {
   auto model_file = std::make_unique<proto::ExternalFile>();
@@ -168,6 +170,15 @@ TEST_F(ModelResourcesTest, CreateFromInvalidFileDescriptor) {
   auto status_or_model_resources =
       ModelResources::Create(kTestModelResourcesTag, std::move(model_file));
 
+#ifdef _WIN32
+  EXPECT_EQ(status_or_model_resources.status().code(),
+            absl::StatusCode::kFailedPrecondition);
+  EXPECT_THAT(
+      status_or_model_resources.status().message(),
+      testing::HasSubstr("File descriptors are not supported on Windows."));
+  AssertStatusHasMediaPipeTasksStatusCode(status_or_model_resources.status(),
+                                          MediaPipeTasksStatus::kFileReadError);
+#else
   EXPECT_EQ(status_or_model_resources.status().code(),
             absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(
@@ -176,6 +187,7 @@ TEST_F(ModelResourcesTest, CreateFromInvalidFileDescriptor) {
   AssertStatusHasMediaPipeTasksStatusCode(
       status_or_model_resources.status(),
       MediaPipeTasksStatus::kInvalidArgumentError);
+#endif  // _WIN32
 }
 
 TEST_F(ModelResourcesTest, CreateFailWithCorruptedFile) {
@@ -199,7 +211,7 @@ TEST_F(ModelResourcesTest, CreateSuccessWithCustomOpsFromFile) {
   static constexpr char kCustomOpName[] = "MY_CUSTOM_OP";
   tflite::MutableOpResolver resolver;
   resolver.AddBuiltin(::tflite::BuiltinOperator_ADD,
-                      ::tflite_shims::ops::builtin::Register_ADD());
+                      ::tflite::ops::builtin::Register_ADD());
   resolver.AddCustom(kCustomOpName,
                      ::tflite::ops::custom::Register_MY_CUSTOM_OP());
 
@@ -263,7 +275,7 @@ TEST_F(ModelResourcesTest, CreateSuccessWithCustomOpsPacket) {
   static constexpr char kCustomOpName[] = "MY_CUSTOM_OP";
   tflite::MutableOpResolver resolver;
   resolver.AddBuiltin(::tflite::BuiltinOperator_ADD,
-                      ::tflite_shims::ops::builtin::Register_ADD());
+                      ::tflite::ops::builtin::Register_ADD());
   resolver.AddCustom(kCustomOpName,
                      ::tflite::ops::custom::Register_MY_CUSTOM_OP());
 

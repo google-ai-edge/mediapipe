@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
@@ -126,12 +129,4 @@ cc_library(
     srcs = [":libmediapipe_jni.so"],
     visibility = ["//visibility:public"],
     alwayslink = 1,
-)
-
-load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_aar")
-
-mediapipe_aar(
-    name = "solution_core",
-    srcs = glob(["**/*.java"]),
-    gen_libmediapipe = False,
 )

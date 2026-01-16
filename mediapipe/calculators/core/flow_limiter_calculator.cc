@@ -42,7 +42,7 @@ constexpr char kOptionsTag[] = "OPTIONS";
 //
 // Increasing `max_in_flight` to 2 or more can yield the better throughput
 // when the graph exhibits a high degree of pipeline parallelism.  Decreasing
-// `max_in_flight` to 0 can yield a better average latency, but at the cost of
+// `max_in_queue` to 0 can yield a better average latency, but at the cost of
 // lower throughput (lower framerate) due to the time during which the graph
 // is idle awaiting the next input frame.
 //

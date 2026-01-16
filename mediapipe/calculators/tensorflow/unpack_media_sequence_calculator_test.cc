@@ -12,8 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
-#include "absl/strings/numbers.h"
 #include "mediapipe/calculators/core/packet_resampler_calculator.pb.h"
 #include "mediapipe/calculators/tensorflow/unpack_media_sequence_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -21,7 +27,6 @@
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/rectangle.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/util/audio_decoder.pb.h"
 #include "mediapipe/util/sequence/media_sequence.h"
@@ -37,6 +42,9 @@ constexpr char kImageFrameRateTag[] = "IMAGE_FRAME_RATE";
 constexpr char kEncodedMediaStartTimestampTag[] =
     "ENCODED_MEDIA_START_TIMESTAMP";
 constexpr char kEncodedMediaTag[] = "ENCODED_MEDIA";
+constexpr char kEncodedAudioStartTimestampTag[] =
+    "ENCODED_MEDIA_START_TIMESTAMP_AUDIO";
+constexpr char kEncodedAudioTag[] = "ENCODED_MEDIA_AUDIO";
 constexpr char kResamplerOptionsTag[] = "RESAMPLER_OPTIONS";
 constexpr char kSandboxedDecoderOptionsTag[] = "SANDBOXED_DECODER_OPTIONS";
 constexpr char kDecoderOptionsTag[] = "DECODER_OPTIONS";
@@ -81,7 +89,7 @@ class UnpackMediaSequenceCalculatorTest : public ::testing::Test {
     if (options != nullptr) {
       *config.mutable_options() = *options;
     }
-    LOG(INFO) << config.DebugString();
+    ABSL_LOG(INFO) << config.DebugString();
     runner_ = absl::make_unique<CalculatorRunner>(config);
   }
 
@@ -94,6 +102,10 @@ class UnpackMediaSequenceCalculatorTest : public ::testing::Test {
     mpms::SetClipEncodedMediaBytes(encoded_video_data_, sequence_.get());
     mpms::SetClipEncodedMediaStartTimestamp(encoded_video_start_timestamp_,
                                             sequence_.get());
+    mpms::SetClipEncodedMediaBytes("AUDIO", encoded_audio_data_,
+                                   sequence_.get());
+    mpms::SetClipEncodedMediaStartTimestamp(
+        "AUDIO", encoded_audio_start_timestamp_, sequence_.get());
     mpms::SetImageFrameRate(image_frame_rate_, sequence_.get());
   }
 
@@ -101,10 +113,12 @@ class UnpackMediaSequenceCalculatorTest : public ::testing::Test {
   std::unique_ptr<CalculatorRunner> runner_;
   const std::string video_id_ = "test_video_id";
   const std::string data_path_ = "test_directory";
-  const int64 start_time_ = 3000000;
-  const int64 end_time_ = 5000000;
+  const int64_t start_time_ = 3000000;
+  const int64_t end_time_ = 5000000;
   const std::string encoded_video_data_ = "encoded_video_data";
-  const int64 encoded_video_start_timestamp_ = 1000000;
+  const int64_t encoded_video_start_timestamp_ = 1000000;
+  const std::string encoded_audio_data_ = "encoded_audio_data";
+  const int64_t encoded_audio_start_timestamp_ = 2000000;
   const double image_frame_rate_ = 1.0;
 };
 
@@ -220,7 +234,7 @@ TEST_F(UnpackMediaSequenceCalculatorTest, UnpacksOneForwardFlowImage) {
   for (int i = 0; i < num_forward_flow_images; ++i) {
     const std::string& output_image = output_packets[i].Get<std::string>();
     ASSERT_EQ(output_image, test_image_string);
-    ASSERT_EQ(output_packets[i].Timestamp().Value(), static_cast<int64>(i));
+    ASSERT_EQ(output_packets[i].Timestamp().Value(), static_cast<int64_t>(i));
   }
 }
 
@@ -249,7 +263,7 @@ TEST_F(UnpackMediaSequenceCalculatorTest, UnpacksTwoForwardFlowImages) {
   for (int i = 0; i < num_forward_flow_images; ++i) {
     const std::string& output_image = output_packets[i].Get<std::string>();
     ASSERT_EQ(output_image, test_image_strings[i]);
-    ASSERT_EQ(output_packets[i].Timestamp().Value(), static_cast<int64>(i));
+    ASSERT_EQ(output_packets[i].Timestamp().Value(), static_cast<int64_t>(i));
   }
 }
 
@@ -694,6 +708,30 @@ TEST_F(UnpackMediaSequenceCalculatorTest, GetFrameRateFromExample) {
                    .ValidateAsType<double>());
   EXPECT_EQ(runner_->OutputSidePackets().Tag(kImageFrameRateTag).Get<double>(),
             image_frame_rate_);
+}
+
+TEST_F(UnpackMediaSequenceCalculatorTest, DoesNotCrashOnMissingFrames) {
+  SetUpCalculator({"IMAGE:images"}, {});
+  auto input_sequence = std::make_unique<tf::SequenceExample>();
+  std::string test_video_id = "test_video_id";
+  mpms::SetClipMediaId(test_video_id, input_sequence.get());
+
+  std::string test_image_string = "test_image_string";
+
+  int num_images = 1;
+  for (int i = 0; i < num_images; ++i) {
+    // Add Timestamps but not Images.
+    mpms::AddImageTimestamp(i, input_sequence.get());
+  }
+
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kImageTag).packets;
+  ASSERT_EQ(0, output_packets.size());
 }
 
 }  // namespace

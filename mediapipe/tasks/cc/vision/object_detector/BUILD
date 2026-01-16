@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -22,9 +25,6 @@ cc_library(
     name = "object_detector",
     srcs = ["object_detector.cc"],
     hdrs = ["object_detector.h"],
-    visibility = [
-        "//mediapipe/tasks:users",
-    ],
     deps = [
         ":object_detector_graph",
         "//mediapipe/calculators/core:concatenate_vector_calculator",
@@ -35,6 +35,7 @@ cc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator",
+        "//mediapipe/tasks/cc/components/containers:detection_result",
         "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core:utils",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
@@ -55,14 +56,10 @@ cc_library(
     name = "object_detector_graph",
     srcs = ["object_detector_graph.cc"],
     deps = [
-        "//mediapipe/calculators/core:split_vector_calculator_cc_proto",
         "//mediapipe/calculators/tensor:inference_calculator",
-        "//mediapipe/calculators/tensor:tensors_to_detections_calculator",
-        "//mediapipe/calculators/tensor:tensors_to_detections_calculator_cc_proto",
-        "//mediapipe/calculators/util:detection_label_id_to_text_calculator",
-        "//mediapipe/calculators/util:detection_label_id_to_text_calculator_cc_proto",
         "//mediapipe/calculators/util:detection_projection_calculator",
         "//mediapipe/calculators/util:detection_transformation_calculator",
+        "//mediapipe/calculators/util:detections_deduplicate_calculator",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",
@@ -71,20 +68,15 @@ cc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/tasks/cc:common",
-        "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator_cc_proto",
-        "//mediapipe/tasks/cc/components/calculators:score_calibration_utils",
+        "//mediapipe/tasks/cc/components/processors:detection_postprocessing_graph",
         "//mediapipe/tasks/cc/components/processors:image_preprocessing_graph",
-        "//mediapipe/tasks/cc/components/utils:source_or_node_output",
+        "//mediapipe/tasks/cc/components/processors/proto:detection_postprocessing_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/components/processors/proto:detector_options_cc_proto",
         "//mediapipe/tasks/cc/core:model_resources",
         "//mediapipe/tasks/cc/core:model_task_graph",
-        "//mediapipe/tasks/cc/core:utils",
-        "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
         "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
-        "//mediapipe/tasks/cc/metadata:metadata_extractor",
         "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_cc_proto",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
-        "//mediapipe/util:label_map_cc_proto",
-        "//mediapipe/util:label_map_util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
     ],

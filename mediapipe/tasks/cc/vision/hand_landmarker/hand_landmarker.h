@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -70,7 +70,8 @@ struct HandLandmarkerOptions {
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
   // to RunningMode::LIVE_STREAM.
-  std::function<void(absl::StatusOr<HandLandmarkerResult>, const Image&, int64)>
+  std::function<void(absl::StatusOr<HandLandmarkerResult>, const Image&,
+                     int64_t)>
       result_callback = nullptr;
 };
 
@@ -101,7 +102,7 @@ class HandLandmarker : tasks::vision::core::BaseVisionTaskApi {
   // three running modes:
   // 1) Image mode for detecting hand landmarks on single image inputs. Users
   //    provide mediapipe::Image to the `Detect` method, and will receive the
-  //    deteced hand landmarks results as the return value.
+  //    detected hand landmarks results as the return value.
   // 2) Video mode for detecting hand landmarks on the decoded frames of a
   //    video. Users call `DetectForVideo` method, and will receive the detected
   //    hand landmarks results as the return value.
@@ -146,7 +147,7 @@ class HandLandmarker : tasks::vision::core::BaseVisionTaskApi {
   // provide the video frame's timestamp (in milliseconds). The input timestamps
   // must be monotonically increasing.
   absl::StatusOr<HandLandmarkerResult> DetectForVideo(
-      Image image, int64 timestamp_ms,
+      Image image, int64_t timestamp_ms,
       std::optional<core::ImageProcessingOptions> image_processing_options =
           std::nullopt);
 
@@ -174,7 +175,7 @@ class HandLandmarker : tasks::vision::core::BaseVisionTaskApi {
   //     longer be valid when the callback returns. To access the image data
   //     outside of the callback, callers need to make a copy of the image.
   //   - The input timestamp in milliseconds.
-  absl::Status DetectAsync(Image image, int64 timestamp_ms,
+  absl::Status DetectAsync(Image image, int64_t timestamp_ms,
                            std::optional<core::ImageProcessingOptions>
                                image_processing_options = std::nullopt);
 

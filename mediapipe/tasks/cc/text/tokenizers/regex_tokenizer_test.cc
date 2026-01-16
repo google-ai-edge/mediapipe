@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,9 +38,15 @@ constexpr char kTestRegexEmptyVocabPath[] =
 
 constexpr char kRegex[] = "[^\\w\\']+";
 
+std::unique_ptr<RegexTokenizer> CreateRegexTokenizer(
+    const std::string& regexp_pattern, const std::string& vocab_path) {
+  std::string buffer = LoadBinaryContent(vocab_path.c_str());
+  return absl::make_unique<RegexTokenizer>(regexp_pattern, buffer.data(),
+                                           buffer.size());
+}
+
 TEST(RegexTokenizerTest, TestTokenize) {
-  auto tokenizer =
-      absl::make_unique<RegexTokenizer>(kRegex, kTestRegexVocabPath);
+  auto tokenizer = CreateRegexTokenizer(kRegex, kTestRegexVocabPath);
   auto results = tokenizer->Tokenize("good    morning, i'm your teacher.\n");
   EXPECT_THAT(results.subwords,
               ElementsAre("good", "morning", "i'm", "your", "teacher"));
@@ -48,16 +54,15 @@ TEST(RegexTokenizerTest, TestTokenize) {
 
 TEST(RegexTokenizerTest, TestTokenizeFromFileBuffer) {
   std::string buffer = LoadBinaryContent(kTestRegexVocabPath);
-  auto tokenizer =
-      absl::make_unique<RegexTokenizer>(kRegex, buffer.data(), buffer.size());
+  auto tokenizer = CreateRegexTokenizer(kRegex, kTestRegexVocabPath);
   auto results = tokenizer->Tokenize("good    morning, i'm your teacher.\n");
   EXPECT_THAT(results.subwords,
               ElementsAre("good", "morning", "i'm", "your", "teacher"));
 }
 
 TEST(RegexTokenizerTest, TestLookupId) {
-  auto tokenizer =
-      absl::make_unique<RegexTokenizer>(kRegex, kTestRegexVocabPath);
+  std::string buffer = LoadBinaryContent(kTestRegexVocabPath);
+  auto tokenizer = CreateRegexTokenizer(kRegex, kTestRegexVocabPath);
   std::vector<std::string> subwords = {"good", "morning", "i'm", "your",
                                        "teacher"};
   std::vector<int> true_ids = {52, 1972, 146, 129, 1750};
@@ -69,8 +74,8 @@ TEST(RegexTokenizerTest, TestLookupId) {
 }
 
 TEST(RegexTokenizerTest, TestLookupWord) {
-  auto tokenizer =
-      absl::make_unique<RegexTokenizer>(kRegex, kTestRegexVocabPath);
+  std::string buffer = LoadBinaryContent(kTestRegexVocabPath);
+  auto tokenizer = CreateRegexTokenizer(kRegex, kTestRegexVocabPath);
   std::vector<int> ids = {52, 1972, 146, 129, 1750};
   std::vector<std::string> subwords = {"good", "morning", "i'm", "your",
                                        "teacher"};
@@ -86,8 +91,8 @@ TEST(RegexTokenizerTest, TestGetSpecialTokens) {
   // <PAD> 0
   // <START> 1
   // <UNKNOWN> 2
-  auto tokenizer =
-      absl::make_unique<RegexTokenizer>(kRegex, kTestRegexVocabPath);
+  std::string buffer = LoadBinaryContent(kTestRegexVocabPath);
+  auto tokenizer = CreateRegexTokenizer(kRegex, kTestRegexVocabPath);
 
   int start_token;
   ASSERT_TRUE(tokenizer->GetStartToken(&start_token));

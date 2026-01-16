@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -22,7 +25,6 @@ cc_library(
     name = "text_classifier",
     srcs = ["text_classifier.cc"],
     hdrs = ["text_classifier.h"],
-    visibility = ["//visibility:public"],
     deps = [
         ":text_classifier_graph",
         "//mediapipe/framework:packet",
@@ -75,6 +77,7 @@ cc_test(
         "//mediapipe/tasks/testdata/text:bert_text_classifier_models",
         "//mediapipe/tasks/testdata/text:text_classifier_models",
     ],
+    tags = ["not_run:arm"],
     deps = [
         ":text_classifier",
         ":text_classifier_test_utils",
@@ -85,11 +88,10 @@ cc_test(
         "//mediapipe/tasks/cc/components/containers:classification_result",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:cord",
-        "@com_google_sentencepiece//src:sentencepiece_processor",
-        "@org_tensorflow//tensorflow/lite/core/shims:cc_shims_test_util",
+        "@com_google_sentencepiece//:sentencepiece_processor",  # fixdeps: keep
+        "@org_tensorflow//tensorflow/lite:test_util",
     ],
 )
 

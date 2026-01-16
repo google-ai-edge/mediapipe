@@ -18,9 +18,12 @@
 
 #include "absl/status/status.h"
 #include "mediapipe/calculators/tensor/feedback_tensors_calculator.pb.h"
+#include "mediapipe/framework/api2/contract.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/memory_manager_service.h"
 
 namespace mediapipe {
 namespace api2 {
@@ -44,14 +47,19 @@ class FeedbackTensorsCalculator : public Node {
   static constexpr Input<Tensors> kInputTensorsIn{kInputTensorsTag};
   static constexpr Output<Tensors> kTensorsOut{kOutputTensorsTag};
 
-  MEDIAPIPE_NODE_CONTRACT(kFeedbackTensorsIn, kInputTensorsIn, kTensorsOut);
+  MEDIAPIPE_NODE_CONTRACT(kFeedbackTensorsIn, kInputTensorsIn, kTensorsOut,
+                          TimestampChange::Arbitrary());
 
-  static absl::Status GetContract(CalculatorContract* cc) {
+  static absl::Status UpdateContract(CalculatorContract* cc) {
     cc->SetProcessTimestampBounds(true);
+    cc->UseService(kMemoryManagerService).Optional();
     return absl::OkStatus();
   }
 
   absl::Status Open(CalculatorContext* cc) override {
+    if (cc->Service(kMemoryManagerService).IsAvailable()) {
+      memory_manager_ = &cc->Service(kMemoryManagerService).GetObject();
+    }
     const auto& options =
         cc->Options<mediapipe::FeedbackTensorsCalculatorOptions>();
 
@@ -114,7 +122,7 @@ class FeedbackTensorsCalculator : public Node {
     if (first_run_) {
       for (int index = 0; index < num_feedback_tensors_; ++index) {
         Tensor initial_feedback_tensor(Tensor::ElementType::kFloat32,
-                                       feedback_tensor_shape_);
+                                       feedback_tensor_shape_, memory_manager_);
         float* data = initial_feedback_tensor.GetCpuWriteView().buffer<float>();
         std::fill_n(data, feedback_tensor_size_, 0.0f);
         outputs.push_back(std::move(initial_feedback_tensor));
@@ -157,6 +165,9 @@ class FeedbackTensorsCalculator : public Node {
 
   int feedback_tensor_size_ = 0;
   bool first_run_ = true;
+
+  // Enable pooling of AHWBs in Tensor instances.
+  MemoryManager* memory_manager_ = nullptr;
 };
 
 MEDIAPIPE_REGISTER_NODE(FeedbackTensorsCalculator);

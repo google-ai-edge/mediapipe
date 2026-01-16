@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -12,19 +12,31 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
+#include "mediapipe/tasks/cc/vision/hand_landmarker/calculators/hand_association_calculator.h"
 
-#include <memory>
+#include <utility>
 #include <vector>
 
-#include "mediapipe/framework/calculator_runner.h"
+#include "mediapipe/framework/api3/function_runner.h"
+#include "mediapipe/framework/api3/graph.h"
+#include "mediapipe/framework/api3/packet.h"
+#include "mediapipe/framework/api3/stream.h"
 #include "mediapipe/framework/formats/rect.pb.h"
-#include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/parse_text_proto.h"
 
 namespace mediapipe {
 namespace {
+
+constexpr float kMinThreadHold = 0.1;
+
+using ::mediapipe::NormalizedRect;
+using ::mediapipe::api3::GenericGraph;
+using ::mediapipe::api3::Packet;
+using ::mediapipe::api3::Runner;
+using ::mediapipe::api3::Stream;
+using ::testing::ElementsAre;
+using ::testing::EqualsProto;
 
 class HandAssociationCalculatorTest : public testing::Test {
  protected:
@@ -83,45 +95,49 @@ class HandAssociationCalculatorTest : public testing::Test {
 };
 
 TEST_F(HandAssociationCalculatorTest, NormRectAssocTest) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
-    calculator: "HandAssociationCalculator"
-    input_stream: "input_vec_0"
-    input_stream: "input_vec_1"
-    input_stream: "input_vec_2"
-    output_stream: "output_vec"
-    options {
-      [mediapipe.HandAssociationCalculatorOptions.ext] {
-        min_similarity_threshold: 0.1
-      }
-    }
-  )pb"));
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner,
+      Runner::For([&](GenericGraph& graph,
+                      Stream<std::vector<NormalizedRect>> base_rects,
+                      Stream<std::vector<NormalizedRect>> rects0,
+                      Stream<std::vector<NormalizedRect>> rects1)
+                      -> Stream<std::vector<NormalizedRect>> {
+        auto& node = graph.AddNode<tasks::HandAssociationNode>();
+        {
+          mediapipe::HandAssociationCalculatorOptions& options =
+              *node.options.Mutable();
+          options.set_min_similarity_threshold(kMinThreadHold);
+        }
+        node.base_rects.Add(base_rects);
+        node.rects.Add(rects0);
+        node.rects.Add(rects1);
+        return node.output_rects.Get();
+      }).Create());
 
   // Input Stream 0: nr_0, nr_1, nr_2.
-  auto input_vec_0 = std::make_unique<std::vector<NormalizedRect>>();
-  input_vec_0->push_back(nr_0_);
-  input_vec_0->push_back(nr_1_);
-  input_vec_0->push_back(nr_2_);
-  runner.MutableInputs()->Index(0).packets.push_back(
-      Adopt(input_vec_0.release()).At(Timestamp(1)));
+  auto input_vec_0 = std::vector<NormalizedRect>();
+  input_vec_0.push_back(nr_0_);
+  input_vec_0.push_back(nr_1_);
+  input_vec_0.push_back(nr_2_);
 
   // Input Stream 1: nr_3, nr_4.
-  auto input_vec_1 = std::make_unique<std::vector<NormalizedRect>>();
-  input_vec_1->push_back(nr_3_);
-  input_vec_1->push_back(nr_4_);
-  runner.MutableInputs()->Index(1).packets.push_back(
-      Adopt(input_vec_1.release()).At(Timestamp(1)));
+  auto input_vec_1 = std::vector<NormalizedRect>();
+  input_vec_1.push_back(nr_3_);
+  input_vec_1.push_back(nr_4_);
 
   // Input Stream 2: nr_5.
-  auto input_vec_2 = std::make_unique<std::vector<NormalizedRect>>();
-  input_vec_2->push_back(nr_5_);
-  runner.MutableInputs()->Index(2).packets.push_back(
-      Adopt(input_vec_2.release()).At(Timestamp(1)));
+  auto input_vec_2 = std::vector<NormalizedRect>();
+  input_vec_2.push_back(nr_5_);
 
-  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
-  const std::vector<Packet>& output = runner.Outputs().Index(0).packets;
-  EXPECT_EQ(1, output.size());
-  auto assoc_rects = output[0].Get<std::vector<NormalizedRect>>();
-
+  MP_ASSERT_OK_AND_ASSIGN(
+      Packet<std::vector<NormalizedRect>> output_packet,
+      runner.Run(
+          api3::MakePacket<std::vector<NormalizedRect>>(std::move(input_vec_0)),
+          api3::MakePacket<std::vector<NormalizedRect>>(std::move(input_vec_1)),
+          api3::MakePacket<std::vector<NormalizedRect>>(
+              std::move(input_vec_2))));
+  ASSERT_TRUE(output_packet);
+  const std::vector<NormalizedRect>& assoc_rects = output_packet.GetOrDie();
   // Rectangles are added in the following sequence:
   // nr_0 is added 1st.
   // nr_1 is added because it does not overlap with nr_0.
@@ -132,55 +148,47 @@ TEST_F(HandAssociationCalculatorTest, NormRectAssocTest) {
   EXPECT_EQ(3, assoc_rects.size());
 
   // Check that IDs are filled in and contents match.
-  EXPECT_EQ(assoc_rects[0].rect_id(), 1);
-  assoc_rects[0].clear_rect_id();
-  EXPECT_THAT(assoc_rects[0], testing::EqualsProto(nr_0_));
-
-  EXPECT_EQ(assoc_rects[1].rect_id(), 2);
-  assoc_rects[1].clear_rect_id();
-  EXPECT_THAT(assoc_rects[1], testing::EqualsProto(nr_1_));
-
-  EXPECT_EQ(assoc_rects[2].rect_id(), 3);
-  assoc_rects[2].clear_rect_id();
-  EXPECT_THAT(assoc_rects[2], testing::EqualsProto(nr_2_));
+  nr_0_.set_rect_id(1);
+  nr_1_.set_rect_id(2);
+  nr_2_.set_rect_id(3);
+  EXPECT_THAT(assoc_rects, ElementsAre(EqualsProto(nr_0_), EqualsProto(nr_1_),
+                                       EqualsProto(nr_2_)));
 }
 
 TEST_F(HandAssociationCalculatorTest, NormRectAssocTestWithTrackedHands) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
-    calculator: "HandAssociationCalculator"
-    input_stream: "input_vec_0"
-    input_stream: "input_vec_1"
-    input_stream: "input_vec_2"
-    output_stream: "output_vec"
-    options {
-      [mediapipe.HandAssociationCalculatorOptions.ext] {
-        min_similarity_threshold: 0.1
-      }
-    }
-  )pb"));
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner,
+      Runner::For([&](GenericGraph& graph,
+                      Stream<std::vector<NormalizedRect>> base_rects,
+                      Stream<std::vector<NormalizedRect>> rects0)
+                      -> Stream<std::vector<NormalizedRect>> {
+        auto& node = graph.AddNode<tasks::HandAssociationNode>();
+        node.options.Mutable()->set_min_similarity_threshold(kMinThreadHold);
+        node.base_rects.Add(base_rects);
+        node.rects.Add(rects0);
+        return node.output_rects.Get();
+      }).Create());
 
   // Input Stream 0: nr_0, nr_1.  Tracked hands.
-  auto input_vec_0 = std::make_unique<std::vector<NormalizedRect>>();
-  // Setting ID to a negative number for test only, since newly generated
-  // ID by HandAssociationCalculator are positive numbers.
+  auto input_vec_0 = std::vector<NormalizedRect>();
   nr_0_.set_rect_id(-2);
-  input_vec_0->push_back(nr_0_);
+  input_vec_0.push_back(nr_0_);
   nr_1_.set_rect_id(-1);
-  input_vec_0->push_back(nr_1_);
-  runner.MutableInputs()->Index(0).packets.push_back(
-      Adopt(input_vec_0.release()).At(Timestamp(1)));
+  input_vec_0.push_back(nr_1_);
 
   // Input Stream 1: nr_2, nr_3. Newly detected palms.
-  auto input_vec_1 = std::make_unique<std::vector<NormalizedRect>>();
-  input_vec_1->push_back(nr_2_);
-  input_vec_1->push_back(nr_3_);
-  runner.MutableInputs()->Index(1).packets.push_back(
-      Adopt(input_vec_1.release()).At(Timestamp(1)));
+  auto input_vec_1 = std::vector<NormalizedRect>();
+  input_vec_1.push_back(nr_2_);
+  input_vec_1.push_back(nr_3_);
 
-  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
-  const std::vector<Packet>& output = runner.Outputs().Index(0).packets;
-  EXPECT_EQ(1, output.size());
-  auto assoc_rects = output[0].Get<std::vector<NormalizedRect>>();
+  MP_ASSERT_OK_AND_ASSIGN(
+      Packet<std::vector<NormalizedRect>> output_packet,
+      runner.Run(
+          api3::MakePacket<std::vector<NormalizedRect>>(std::move(input_vec_0)),
+          api3::MakePacket<std::vector<NormalizedRect>>(
+              std::move(input_vec_1))));
+  ASSERT_TRUE(output_packet);
+  const std::vector<NormalizedRect>& assoc_rects = output_packet.GetOrDie();
 
   // Rectangles are added in the following sequence:
   // nr_0 is added 1st.
@@ -190,56 +198,51 @@ TEST_F(HandAssociationCalculatorTest, NormRectAssocTestWithTrackedHands) {
   EXPECT_EQ(3, assoc_rects.size());
 
   // Check that IDs are filled in and contents match.
-  EXPECT_EQ(assoc_rects[0].rect_id(), -2);
-  EXPECT_THAT(assoc_rects[0], testing::EqualsProto(nr_0_));
-
-  EXPECT_EQ(assoc_rects[1].rect_id(), -1);
-  EXPECT_THAT(assoc_rects[1], testing::EqualsProto(nr_1_));
-
-  EXPECT_EQ(assoc_rects[2].rect_id(), 1);
-  assoc_rects[2].clear_rect_id();
-  EXPECT_THAT(assoc_rects[2], testing::EqualsProto(nr_2_));
+  nr_2_.set_rect_id(1);
+  EXPECT_THAT(assoc_rects, ElementsAre(EqualsProto(nr_0_), EqualsProto(nr_1_),
+                                       EqualsProto(nr_2_)));
 }
 
 TEST_F(HandAssociationCalculatorTest, NormRectAssocTestReverse) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
-    calculator: "HandAssociationCalculator"
-    input_stream: "input_vec_0"
-    input_stream: "input_vec_1"
-    input_stream: "input_vec_2"
-    output_stream: "output_vec"
-    options {
-      [mediapipe.HandAssociationCalculatorOptions.ext] {
-        min_similarity_threshold: 0.1
-      }
-    }
-  )pb"));
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner,
+      Runner::For([&](GenericGraph& graph,
+                      Stream<std::vector<NormalizedRect>> base_rects,
+                      Stream<std::vector<NormalizedRect>> rects0,
+                      Stream<std::vector<NormalizedRect>> rects1)
+                      -> Stream<std::vector<NormalizedRect>> {
+        auto& node = graph.AddNode<tasks::HandAssociationNode>();
+        node.options.Mutable()->set_min_similarity_threshold(kMinThreadHold);
+        node.base_rects.Add(base_rects);
+        node.rects.Add(rects0);
+        node.rects.Add(rects1);
+        return node.output_rects.Get();
+      }).Create());
 
-  // Input Stream 0: nr_5.
-  auto input_vec_0 = std::make_unique<std::vector<NormalizedRect>>();
-  input_vec_0->push_back(nr_5_);
-  runner.MutableInputs()->Index(0).packets.push_back(
-      Adopt(input_vec_0.release()).At(Timestamp(1)));
+  // Input Stream 0: nr_5
+  auto input_vec_0 = std::vector<NormalizedRect>();
+  input_vec_0.push_back(nr_5_);
 
   // Input Stream 1: nr_4, nr_3
-  auto input_vec_1 = std::make_unique<std::vector<NormalizedRect>>();
-  input_vec_1->push_back(nr_4_);
-  input_vec_1->push_back(nr_3_);
-  runner.MutableInputs()->Index(1).packets.push_back(
-      Adopt(input_vec_1.release()).At(Timestamp(1)));
+  auto input_vec_1 = std::vector<NormalizedRect>();
+  input_vec_1.push_back(nr_4_);
+  input_vec_1.push_back(nr_3_);
 
-  // Input Stream 2: nr_2, nr_1, nr_0.
-  auto input_vec_2 = std::make_unique<std::vector<NormalizedRect>>();
-  input_vec_2->push_back(nr_2_);
-  input_vec_2->push_back(nr_1_);
-  input_vec_2->push_back(nr_0_);
-  runner.MutableInputs()->Index(2).packets.push_back(
-      Adopt(input_vec_2.release()).At(Timestamp(1)));
+  // Input Stream 2: nr_2, nr_1, nr_0
+  auto input_vec_2 = std::vector<NormalizedRect>();
+  input_vec_2.push_back(nr_2_);
+  input_vec_2.push_back(nr_1_);
+  input_vec_2.push_back(nr_0_);
 
-  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
-  const std::vector<Packet>& output = runner.Outputs().Index(0).packets;
-  EXPECT_EQ(1, output.size());
-  auto assoc_rects = output[0].Get<std::vector<NormalizedRect>>();
+  MP_ASSERT_OK_AND_ASSIGN(
+      Packet<std::vector<NormalizedRect>> output_packet,
+      runner.Run(
+          api3::MakePacket<std::vector<NormalizedRect>>(std::move(input_vec_0)),
+          api3::MakePacket<std::vector<NormalizedRect>>(std::move(input_vec_1)),
+          api3::MakePacket<std::vector<NormalizedRect>>(
+              std::move(input_vec_2))));
+  ASSERT_TRUE(output_packet);
+  const std::vector<NormalizedRect>& assoc_rects = output_packet.GetOrDie();
 
   // Rectangles are added in the following sequence:
   // nr_5 is added 1st.
@@ -251,51 +254,109 @@ TEST_F(HandAssociationCalculatorTest, NormRectAssocTestReverse) {
   EXPECT_EQ(3, assoc_rects.size());
 
   // Outputs are in same order as inputs, and IDs are filled in.
-  EXPECT_EQ(assoc_rects[0].rect_id(), 1);
-  assoc_rects[0].clear_rect_id();
-  EXPECT_THAT(assoc_rects[0], testing::EqualsProto(nr_5_));
+  nr_5_.set_rect_id(1);
+  nr_4_.set_rect_id(2);
+  nr_0_.set_rect_id(3);
+  EXPECT_THAT(assoc_rects, ElementsAre(EqualsProto(nr_5_), EqualsProto(nr_4_),
+                                       EqualsProto(nr_0_)));
+}
 
-  EXPECT_EQ(assoc_rects[1].rect_id(), 2);
-  assoc_rects[1].clear_rect_id();
-  EXPECT_THAT(assoc_rects[1], testing::EqualsProto(nr_4_));
+TEST_F(HandAssociationCalculatorTest, NormRectAssocTestReservesBaseRects) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner,
+      Runner::For([&](GenericGraph& graph,
+                      Stream<std::vector<NormalizedRect>> base_rects,
+                      Stream<std::vector<NormalizedRect>> rects0,
+                      Stream<std::vector<NormalizedRect>> rects1)
+                      -> Stream<std::vector<NormalizedRect>> {
+        auto& node = graph.AddNode<tasks::HandAssociationNode>();
+        node.options.Mutable()->set_min_similarity_threshold(kMinThreadHold);
+        node.base_rects.Add(base_rects);
+        node.rects.Add(rects0);
+        node.rects.Add(rects1);
+        return node.output_rects.Get();
+      }).Create());
 
-  EXPECT_EQ(assoc_rects[2].rect_id(), 3);
-  assoc_rects[2].clear_rect_id();
-  EXPECT_THAT(assoc_rects[2], testing::EqualsProto(nr_0_));
+  // Input Stream 0: nr_5, nr_3, nr_1.
+  auto input_vec_0 = std::vector<NormalizedRect>();
+  input_vec_0.push_back(nr_5_);
+  input_vec_0.push_back(nr_3_);
+  input_vec_0.push_back(nr_1_);
+
+  // Input Stream 1: nr_4.
+  auto input_vec_1 = std::vector<NormalizedRect>();
+  input_vec_1.push_back(nr_4_);
+
+  // Input Stream 2: nr_2, nr_0.
+  auto input_vec_2 = std::vector<NormalizedRect>();
+  input_vec_2.push_back(nr_2_);
+  input_vec_2.push_back(nr_0_);
+
+  MP_ASSERT_OK_AND_ASSIGN(
+      Packet<std::vector<NormalizedRect>> output_packet,
+      runner.Run(
+          api3::MakePacket<std::vector<NormalizedRect>>(std::move(input_vec_0)),
+          api3::MakePacket<std::vector<NormalizedRect>>(std::move(input_vec_1)),
+          api3::MakePacket<std::vector<NormalizedRect>>(
+              std::move(input_vec_2))));
+  ASSERT_TRUE(output_packet);
+  const std::vector<NormalizedRect>& assoc_rects = output_packet.GetOrDie();
+
+  // Rectangles are added in the following sequence:
+  // nr_5 is added because it is in BASE_RECTS input stream.
+  // nr_3 is added because it is in BASE_RECTS input stream.
+  // nr_1 is added because it is in BASE_RECTS input stream.
+  // nr_4 is added because it does not overlap with nr_5.
+  // nr_2 is NOT added because it overlaps with nr_4.
+  // nr_0 is NOT added because it overlaps with nr_3.
+  EXPECT_EQ(4, assoc_rects.size());
+
+  // Outputs are in same order as inputs, and IDs are filled in.
+  nr_5_.set_rect_id(1);
+  nr_3_.set_rect_id(2);
+  nr_1_.set_rect_id(3);
+  nr_4_.set_rect_id(4);
+  EXPECT_THAT(assoc_rects, ElementsAre(EqualsProto(nr_5_), EqualsProto(nr_3_),
+                                       EqualsProto(nr_1_), EqualsProto(nr_4_)));
 }
 
 TEST_F(HandAssociationCalculatorTest, NormRectAssocSingleInputStream) {
-  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
-    calculator: "HandAssociationCalculator"
-    input_stream: "input_vec"
-    output_stream: "output_vec"
-    options {
-      [mediapipe.HandAssociationCalculatorOptions.ext] {
-        min_similarity_threshold: 0.1
-      }
-    }
-  )pb"));
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner,
+      Runner::For([&](GenericGraph& graph,
+                      Stream<std::vector<NormalizedRect>> base_rects)
+                      -> Stream<std::vector<NormalizedRect>> {
+        auto& node = graph.AddNode<tasks::HandAssociationNode>();
+        node.options.Mutable()->set_min_similarity_threshold(kMinThreadHold);
+        node.base_rects.Add(base_rects);
+        return node.output_rects.Get();
+      }).Create());
 
   // Just one input stream : nr_3, nr_5.
-  auto input_vec = std::make_unique<std::vector<NormalizedRect>>();
-  input_vec->push_back(nr_3_);
-  input_vec->push_back(nr_5_);
-  runner.MutableInputs()->Index(0).packets.push_back(
-      Adopt(input_vec.release()).At(Timestamp(1)));
+  auto input_vec = std::vector<NormalizedRect>();
+  input_vec.push_back(nr_3_);
+  input_vec.push_back(nr_5_);
 
-  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
-  const std::vector<Packet>& output = runner.Outputs().Index(0).packets;
-  EXPECT_EQ(1, output.size());
-  auto assoc_rects = output[0].Get<std::vector<NormalizedRect>>();
+  MP_ASSERT_OK_AND_ASSIGN(
+      Packet<std::vector<NormalizedRect>> output_packet,
+      runner.Run(
+          api3::MakePacket<std::vector<NormalizedRect>>(std::move(input_vec))));
+  ASSERT_TRUE(output_packet);
+  const std::vector<NormalizedRect>& assoc_rects = output_packet.GetOrDie();
 
   // Rectangles are added in the following sequence:
   // nr_3 is added 1st.
-  // nr_5 is NOT added because it overlaps with nr_3.
-  EXPECT_EQ(1, assoc_rects.size());
+  // nr_5 is added 2nd. The calculator assumes it does not overlap with nr_3.
+  EXPECT_EQ(2, assoc_rects.size());
 
-  EXPECT_EQ(assoc_rects[0].rect_id(), 1);
-  assoc_rects[0].clear_rect_id();
-  EXPECT_THAT(assoc_rects[0], testing::EqualsProto(nr_3_));
+  nr_3_.set_rect_id(1);
+  nr_5_.set_rect_id(2);
+  EXPECT_THAT(assoc_rects, ElementsAre(EqualsProto(nr_3_), EqualsProto(nr_5_)));
+}
+
+TEST_F(HandAssociationCalculatorTest, HasCorrectRegistrationName) {
+  EXPECT_EQ(tasks::HandAssociationNode::GetRegistrationName(),
+            "HandAssociationCalculator");
 }
 
 }  // namespace

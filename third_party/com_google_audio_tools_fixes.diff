@@ -1,0 +1,49 @@
+diff --git a/audio/dsp/number_util.cc b/audio/dsp/number_util.cc
+index 756e1f8..6a0c6d6 100644
+--- a/audio/dsp/number_util.cc
++++ b/audio/dsp/number_util.cc
+@@ -16,6 +16,7 @@
+ 
+ #include "audio/dsp/number_util.h"
+ 
++#include <algorithm>
+ #include <cmath>
+ #include <iomanip>
+ #include <limits>
+diff --git a/audio/dsp/porting.cc b/audio/dsp/porting.cc
+index e906d2d..753c286 100644
+--- a/audio/dsp/porting.cc
++++ b/audio/dsp/porting.cc
+@@ -16,6 +16,7 @@
+ 
+ #include "audio/dsp/porting.h"
+ 
++#include <algorithm>
+ #include <cfloat>
+ #include <cstdarg>
+ 
+diff --git a/audio/dsp/porting.h b/audio/dsp/porting.h
+index 56e45d2..37ab6e9 100644
+--- a/audio/dsp/porting.h
++++ b/audio/dsp/porting.h
+@@ -17,6 +17,7 @@
+ #ifndef AUDIO_DSP_OPEN_SOURCE_PORTING_H_
+ #define AUDIO_DSP_OPEN_SOURCE_PORTING_H_
+ 
++#include <cstdint>
+ #include <iostream>
+ #include <cmath>
+ #include <limits>
+ #include <string>
+diff --git a/third_party/eigen3/BUILD b/third_party/eigen3/BUILD
+index 497c1f0..de1c7f4 100644
+--- a/third_party/eigen3/BUILD
++++ b/third_party/eigen3/BUILD
+@@ -23,6 +23,6 @@ cc_library(
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+-        "@eigen_archive//:eigen",
++        "@eigen_archive//:eigen3",
+     ],
+ )

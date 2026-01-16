@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/guide#legacy
 title: YouTube-8M Feature Extraction and Model Inference
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 16
 ---
 
@@ -17,6 +18,14 @@ nav_order: 16
 {:toc}
 </details>
 ---
+
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+We have ended support for this MediaPipe Legacy Solution as of March 1, 2023.
+For more information, see the
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/guide#legacy)
+site.*
+
+----
 
 MediaPipe is a useful and general framework for media processing that can assist
 with research, development, and deployment of ML models. This example focuses on
@@ -40,7 +49,7 @@ and
 to extract features from video and audio respectively.
 
 To visualize the
-[graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/youtube8m/feature_extraction.pbtxt),
+[graph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/youtube8m/feature_extraction.pbtxt),
 copy the text specification of the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). The feature extraction
 pipeline is highly customizable. You are welcome to add new calculators or use
@@ -121,9 +130,9 @@ videos.
 
 MediaPipe can help you do model inference for YouTube-8M Challenge with both
 local videos and the YouTube-8M dataset. To visualize
-[the graph for local videos](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/youtube8m/local_video_model_inference.pbtxt)
+[the graph for local videos](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/youtube8m/local_video_model_inference.pbtxt)
 and
-[the graph for the YouTube-8M dataset](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/youtube8m/yt8m_dataset_model_inference.pbtxt),
+[the graph for the YouTube-8M dataset](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/youtube8m/yt8m_dataset_model_inference.pbtxt),
 copy the text specification of the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/). We use the baseline model
 [(model card)](https://drive.google.com/file/d/1xTCi9-Nm9dt2KIk8WR0dDFrIssWawyXy/view)
@@ -162,7 +171,7 @@ the inference for both local videos and the dataset
     [Here](https://drive.google.com/file/d/19GSvdAAuAlACpBhHOaqMWZ_9p8bLUYKh/view?usp=sharing)
     is a demo video showing the steps to use this web application. Also please
     read
-    [youtube8m/README.md](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/youtube8m/README.md)
+    [youtube8m/README.md](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/youtube8m/README.md)
     if you prefer to run the underlying model_inference binary in command line.
 
 ### Steps to run the YouTube-8M model inference graph with a local video

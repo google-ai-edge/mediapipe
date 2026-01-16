@@ -23,17 +23,18 @@
 #include <algorithm>
 #include <utility>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/port/aligned_malloc_and_free.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
 
 namespace mediapipe {
 
 namespace {
 
-int CountOnes(uint32 n) {
+int CountOnes(uint32_t n) {
 #if (defined(__i386__) || defined(__x86_64__)) && defined(__POPCNT__) && \
     defined(__GNUC__)
   return __builtin_popcount(n);
@@ -47,20 +48,21 @@ int CountOnes(uint32 n) {
 }  // namespace
 
 const ImageFrame::Deleter ImageFrame::PixelDataDeleter::kArrayDelete =
-    std::default_delete<uint8[]>();
+    std::default_delete<uint8_t[]>();
 const ImageFrame::Deleter ImageFrame::PixelDataDeleter::kFree = free;
 const ImageFrame::Deleter ImageFrame::PixelDataDeleter::kAlignedFree =
     aligned_free;
-const ImageFrame::Deleter ImageFrame::PixelDataDeleter::kNone = [](uint8* x) {};
+const ImageFrame::Deleter ImageFrame::PixelDataDeleter::kNone = [](uint8_t* x) {
+};
 
-const uint32 ImageFrame::kDefaultAlignmentBoundary;
-const uint32 ImageFrame::kGlDefaultAlignmentBoundary;
+const uint32_t ImageFrame::kDefaultAlignmentBoundary;
+const uint32_t ImageFrame::kGlDefaultAlignmentBoundary;
 
 ImageFrame::ImageFrame()
     : format_(ImageFormat::UNKNOWN), width_(0), height_(0), width_step_(0) {}
 
 ImageFrame::ImageFrame(ImageFormat::Format format, int width, int height,
-                       uint32 alignment_boundary)
+                       uint32_t alignment_boundary)
     : format_(format), width_(width), height_(height) {
   Reset(format, width, height, alignment_boundary);
 }
@@ -71,7 +73,7 @@ ImageFrame::ImageFrame(ImageFormat::Format format, int width, int height)
 }
 
 ImageFrame::ImageFrame(ImageFormat::Format format, int width, int height,
-                       int width_step, uint8* pixel_data,
+                       int width_step, uint8_t* pixel_data,
                        ImageFrame::Deleter deleter) {
   AdoptPixelData(format, width, height, width_step, pixel_data, deleter);
 }
@@ -93,15 +95,15 @@ ImageFrame& ImageFrame::operator=(ImageFrame&& move_from) {
 }
 
 void ImageFrame::Reset(ImageFormat::Format format, int width, int height,
-                       uint32 alignment_boundary) {
+                       uint32_t alignment_boundary) {
   format_ = format;
   width_ = width;
   height_ = height;
-  CHECK_NE(ImageFormat::UNKNOWN, format_);
-  CHECK(IsValidAlignmentNumber(alignment_boundary));
-  width_step_ = width * NumberOfChannels() * ByteDepth();
+  ABSL_CHECK_NE(ImageFormat::UNKNOWN, format_);
+  ABSL_CHECK(IsValidAlignmentNumber(alignment_boundary));
+  width_step_ = width * NumberOfChannels() * ChannelSize();
   if (alignment_boundary == 1) {
-    pixel_data_ = {new uint8[height * width_step_],
+    pixel_data_ = {new uint8_t[height * width_step_],
                    PixelDataDeleter::kArrayDelete};
   } else {
     // Increase width_step_ to the smallest multiple of alignment_boundary
@@ -109,34 +111,34 @@ void ImageFrame::Reset(ImageFormat::Format format, int width, int height,
     // twiddling bits.  alignment_boundary - 1 is a mask which sets all
     // the low order bits.
     width_step_ = ((width_step_ - 1) | (alignment_boundary - 1)) + 1;
-    pixel_data_ = {reinterpret_cast<uint8*>(aligned_malloc(height * width_step_,
-                                                           alignment_boundary)),
+    pixel_data_ = {reinterpret_cast<uint8_t*>(aligned_malloc(
+                       height * width_step_, alignment_boundary)),
                    PixelDataDeleter::kAlignedFree};
   }
 }
 
 void ImageFrame::AdoptPixelData(ImageFormat::Format format, int width,
-                                int height, int width_step, uint8* pixel_data,
+                                int height, int width_step, uint8_t* pixel_data,
                                 ImageFrame::Deleter deleter) {
   format_ = format;
   width_ = width;
   height_ = height;
   width_step_ = width_step;
 
-  CHECK_NE(ImageFormat::UNKNOWN, format_);
-  CHECK_GE(width_step_, width * NumberOfChannels() * ByteDepth());
+  ABSL_CHECK_NE(ImageFormat::UNKNOWN, format_);
+  ABSL_CHECK_GE(width_step_, width * NumberOfChannels() * ChannelSize());
 
   pixel_data_ = {pixel_data, deleter};
 }
 
-std::unique_ptr<uint8[], ImageFrame::Deleter> ImageFrame::Release() {
+std::unique_ptr<uint8_t[], ImageFrame::Deleter> ImageFrame::Release() {
   return std::move(pixel_data_);
 }
 
 void ImageFrame::InternalCopyFrom(int width, int height, int width_step,
-                                  int channel_size, const uint8* pixel_data) {
-  CHECK_EQ(width_, width);
-  CHECK_EQ(height_, height);
+                                  int channel_size, const uint8_t* pixel_data) {
+  ABSL_CHECK_EQ(width_, width);
+  ABSL_CHECK_EQ(height_, height);
   // row_bytes = channel_size * num_channels * width
   const int row_bytes = channel_size * NumberOfChannels() * width;
   if (width_step == 0) {
@@ -186,15 +188,15 @@ void ImageFrame::SetAlignmentPaddingAreas() {
   if (!pixel_data_) {
     return;
   }
-  CHECK_GE(width_, 1);
-  CHECK_GE(height_, 1);
+  ABSL_CHECK_GE(width_, 1);
+  ABSL_CHECK_GE(height_, 1);
 
-  const int pixel_size = ByteDepth() * NumberOfChannels();
+  const int pixel_size = ChannelSize() * NumberOfChannels();
   const int padding_size = width_step_ - width_ * pixel_size;
   for (int row = 0; row < height_; ++row) {
-    uint8* row_start = pixel_data_.get() + width_step_ * row;
-    uint8* last_pixel_in_row = row_start + (width_ - 1) * pixel_size;
-    uint8* padding = row_start + width_ * pixel_size;
+    uint8_t* row_start = pixel_data_.get() + width_step_ * row;
+    uint8_t* last_pixel_in_row = row_start + (width_ - 1) * pixel_size;
+    uint8_t* padding = row_start + width_ * pixel_size;
     int padding_index = 0;
     while (padding_index + pixel_size - 1 < padding_size) {
       // Copy the entire last pixel in the row into this padding pixel.
@@ -217,11 +219,11 @@ bool ImageFrame::IsContiguous() const {
   if (!pixel_data_) {
     return false;
   }
-  return width_step_ == width_ * NumberOfChannels() * ByteDepth();
+  return width_step_ == width_ * NumberOfChannels() * ChannelSize();
 }
 
-bool ImageFrame::IsAligned(uint32 alignment_boundary) const {
-  CHECK(IsValidAlignmentNumber(alignment_boundary));
+bool ImageFrame::IsAligned(uint32_t alignment_boundary) const {
+  ABSL_CHECK(IsValidAlignmentNumber(alignment_boundary));
   if (!pixel_data_) {
     return false;
   }
@@ -236,14 +238,14 @@ bool ImageFrame::IsAligned(uint32 alignment_boundary) const {
 }
 
 // static
-bool ImageFrame::IsValidAlignmentNumber(uint32 alignment_boundary) {
+bool ImageFrame::IsValidAlignmentNumber(uint32_t alignment_boundary) {
   return CountOnes(alignment_boundary) == 1;
 }
 
 // static
 std::string ImageFrame::InvalidFormatString(ImageFormat::Format format) {
 #ifdef MEDIAPIPE_PROTO_LITE
-  return "Invalid format.";
+  return absl::StrCat("Invalid format: ", ImageFormat::Format_Name(format));
 #else
   const proto_ns::EnumValueDescriptor* enum_value_descriptor =
       ImageFormat::Format_descriptor()->FindValueByNumber(format);
@@ -279,12 +281,14 @@ int ImageFrame::NumberOfChannelsForFormat(ImageFormat::Format format) {
       return 1;
     case ImageFormat::VEC32F2:
       return 2;
+    case ImageFormat::VEC32F4:
+      return 4;
     case ImageFormat::LAB8:
       return 3;
     case ImageFormat::SBGRA:
       return 4;
     default:
-      LOG(FATAL) << InvalidFormatString(format);
+      ABSL_LOG(FATAL) << InvalidFormatString(format);
   }
 }
 
@@ -293,95 +297,74 @@ int ImageFrame::ChannelSize() const { return ChannelSizeForFormat(format_); }
 int ImageFrame::ChannelSizeForFormat(ImageFormat::Format format) {
   switch (format) {
     case ImageFormat::GRAY8:
-      return sizeof(uint8);
+      return sizeof(uint8_t);
     case ImageFormat::SRGB:
-      return sizeof(uint8);
+      return sizeof(uint8_t);
     case ImageFormat::SRGBA:
-      return sizeof(uint8);
+      return sizeof(uint8_t);
     case ImageFormat::GRAY16:
-      return sizeof(uint16);
+      return sizeof(uint16_t);
     case ImageFormat::SRGB48:
-      return sizeof(uint16);
+      return sizeof(uint16_t);
     case ImageFormat::SRGBA64:
-      return sizeof(uint16);
+      return sizeof(uint16_t);
     case ImageFormat::VEC32F1:
       return sizeof(float);
     case ImageFormat::VEC32F2:
       return sizeof(float);
+    case ImageFormat::VEC32F4:
+      return sizeof(float);
     case ImageFormat::LAB8:
-      return sizeof(uint8);
+      return sizeof(uint8_t);
     case ImageFormat::SBGRA:
-      return sizeof(uint8);
+      return sizeof(uint8_t);
     default:
-      LOG(FATAL) << InvalidFormatString(format);
+      ABSL_LOG(FATAL) << InvalidFormatString(format);
   }
 }
 
-int ImageFrame::ByteDepth() const { return ByteDepthForFormat(format_); }
+int ImageFrame::ByteDepth() const { return ChannelSizeForFormat(format_); }
 
 int ImageFrame::ByteDepthForFormat(ImageFormat::Format format) {
-  switch (format) {
-    case ImageFormat::GRAY8:
-      return 1;
-    case ImageFormat::GRAY16:
-      return 2;
-    case ImageFormat::SRGB:
-      return 1;
-    case ImageFormat::SRGBA:
-      return 1;
-    case ImageFormat::SRGB48:
-      return 2;
-    case ImageFormat::SRGBA64:
-      return 2;
-    case ImageFormat::VEC32F1:
-      return 4;
-    case ImageFormat::VEC32F2:
-      return 4;
-    case ImageFormat::LAB8:
-      return 1;
-    case ImageFormat::SBGRA:
-      return 1;
-    default:
-      LOG(FATAL) << InvalidFormatString(format);
-  }
+  return ChannelSizeForFormat(format);
 }
 
 void ImageFrame::CopyFrom(const ImageFrame& image_frame,
-                          uint32 alignment_boundary) {
+                          uint32_t alignment_boundary) {
   // Reset the current image.
   Reset(image_frame.Format(), image_frame.Width(), image_frame.Height(),
         alignment_boundary);
 
-  CHECK_EQ(format_, image_frame.Format());
+  ABSL_CHECK_EQ(format_, image_frame.Format());
   InternalCopyFrom(image_frame.Width(), image_frame.Height(),
                    image_frame.WidthStep(), image_frame.ChannelSize(),
                    image_frame.PixelData());
 }
 
 void ImageFrame::CopyPixelData(ImageFormat::Format format, int width,
-                               int height, const uint8* pixel_data,
-                               uint32 alignment_boundary) {
+                               int height, const uint8_t* pixel_data,
+                               uint32_t alignment_boundary) {
   CopyPixelData(format, width, height, 0 /* contiguous storage */, pixel_data,
                 alignment_boundary);
 }
 
 void ImageFrame::CopyPixelData(ImageFormat::Format format, int width,
                                int height, int width_step,
-                               const uint8* pixel_data,
-                               uint32 alignment_boundary) {
+                               const uint8_t* pixel_data,
+                               uint32_t alignment_boundary) {
   Reset(format, width, height, alignment_boundary);
   InternalCopyFrom(width, height, width_step, ChannelSizeForFormat(format),
                    pixel_data);
 }
 
-void ImageFrame::CopyToBuffer(uint8* buffer, int buffer_size) const {
-  CHECK(buffer);
-  CHECK_EQ(1, ByteDepth());
+void ImageFrame::CopyToBuffer(uint8_t* buffer, int buffer_size) const {
+  ABSL_CHECK(buffer);
+  ABSL_CHECK_EQ(1, ChannelSize());
   const int data_size = width_ * height_ * NumberOfChannels();
-  CHECK_LE(data_size, buffer_size);
+  ABSL_CHECK_LE(data_size, buffer_size);
   if (IsContiguous()) {
     // The data is stored contiguously, we can just copy.
-    const uint8* src = reinterpret_cast<const uint8*>(pixel_data_.get());
+    const uint8_t* src = reinterpret_cast<const uint8_t*>(pixel_data_.get());
     std::copy_n(src, data_size, buffer);
   } else {
     InternalCopyToBuffer(0 /* contiguous storage */,
@@ -389,14 +372,14 @@ void ImageFrame::CopyToBuffer(uint8* buffer, int buffer_size) const {
   }
 }
 
-void ImageFrame::CopyToBuffer(uint16* buffer, int buffer_size) const {
-  CHECK(buffer);
-  CHECK_EQ(2, ByteDepth());
+void ImageFrame::CopyToBuffer(uint16_t* buffer, int buffer_size) const {
+  ABSL_CHECK(buffer);
+  ABSL_CHECK_EQ(2, ChannelSize());
   const int data_size = width_ * height_ * NumberOfChannels();
-  CHECK_LE(data_size, buffer_size);
+  ABSL_CHECK_LE(data_size, buffer_size);
   if (IsContiguous()) {
     // The data is stored contiguously, we can just copy.
-    const uint16* src = reinterpret_cast<const uint16*>(pixel_data_.get());
+    const uint16_t* src = reinterpret_cast<const uint16_t*>(pixel_data_.get());
     std::copy_n(src, data_size, buffer);
   } else {
     InternalCopyToBuffer(0 /* contiguous storage */,
@@ -405,10 +388,10 @@ void ImageFrame::CopyToBuffer(uint16* buffer, int buffer_size) const {
 }
 
 void ImageFrame::CopyToBuffer(float* buffer, int buffer_size) const {
-  CHECK(buffer);
-  CHECK_EQ(4, ByteDepth());
+  ABSL_CHECK(buffer);
+  ABSL_CHECK_EQ(4, ChannelSize());
   const int data_size = width_ * height_ * NumberOfChannels();
-  CHECK_LE(data_size, buffer_size);
+  ABSL_CHECK_LE(data_size, buffer_size);
   if (IsContiguous()) {
     // The data is stored contiguously, we can just copy.
     const float* src = reinterpret_cast<float*>(pixel_data_.get());

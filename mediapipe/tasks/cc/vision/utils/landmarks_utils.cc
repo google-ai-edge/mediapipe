@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ limitations under the License.
 
 namespace mediapipe::tasks::vision::utils {
 
-using ::mediapipe::tasks::components::containers::Rect;
+using ::mediapipe::tasks::components::containers::RectF;
 
-float CalculateArea(const Rect& rect) {
+float CalculateArea(const RectF& rect) {
   return (rect.right - rect.left) * (rect.bottom - rect.top);
 }
 
-float CalculateIntersectionArea(const Rect& a, const Rect& b) {
+float CalculateIntersectionArea(const RectF& a, const RectF& b) {
   const float intersection_left = std::max<float>(a.left, b.left);
   const float intersection_top = std::max<float>(a.top, b.top);
   const float intersection_right = std::min<float>(a.right, b.right);
@@ -38,7 +38,7 @@ float CalculateIntersectionArea(const Rect& a, const Rect& b) {
          std::max<float>(intersection_right - intersection_left, 0.0);
 }
 
-float CalculateIOU(const Rect& a, const Rect& b) {
+float CalculateIOU(const RectF& a, const RectF& b) {
   const float area_a = CalculateArea(a);
   const float area_b = CalculateArea(b);
   if (area_a <= 0 || area_b <= 0) return 0.0;

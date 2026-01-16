@@ -1,0 +1,117 @@
+{
+  "name": "ObjectDetector",
+  "description": "Identify which of a known set of objects might be present and provide information about their positions within the given image or a video stream.",
+  "subgraph_metadata": [
+    {
+      "input_tensor_metadata": [
+        {
+          "name": "image",
+          "description": "Input image to be processed.",
+          "content": {
+            "content_properties_type": "ImageProperties",
+            "content_properties": {
+              "color_space": "RGB"
+            }
+          },
+          "process_units": [
+            {
+              "options_type": "NormalizationOptions",
+              "options": {
+                "mean": [
+                  127.5
+                ],
+                "std": [
+                  127.5
+                ]
+              }
+            }
+          ],
+          "stats": {
+            "max": [
+              255.0
+            ],
+            "min": [
+              0.0
+            ]
+          }
+        }
+      ],
+      "output_tensor_metadata": [
+        {
+          "name": "location",
+          "description": "The locations of the detected boxes.",
+          "content": {
+            "content_properties_type": "BoundingBoxProperties",
+            "content_properties": {
+              "index": [
+                1,
+                0,
+                3,
+                2
+              ],
+              "type": "BOUNDARIES"
+            },
+            "range": {
+              "min": 2,
+              "max": 2
+            }
+          },
+          "stats": {}
+        },
+        {
+          "name": "category",
+          "description": "The categories of the detected boxes.",
+          "content": {
+            "content_properties_type": "FeatureProperties",
+            "content_properties": {},
+            "range": {
+              "min": 2,
+              "max": 2
+            }
+          },
+          "stats": {},
+          "associated_files": [
+            {
+              "name": "labels.txt",
+              "description": "Labels for categories that the model can recognize.",
+              "type": "TENSOR_VALUE_LABELS"
+            }
+          ]
+        },
+        {
+          "name": "score",
+          "description": "The scores of the detected boxes.",
+          "content": {
+            "content_properties_type": "FeatureProperties",
+            "content_properties": {},
+            "range": {
+              "min": 2,
+              "max": 2
+            }
+          },
+          "stats": {}
+        },
+        {
+          "name": "number of detections",
+          "description": "The number of the detected boxes.",
+          "content": {
+            "content_properties_type": "FeatureProperties",
+            "content_properties": {}
+          },
+          "stats": {}
+        }
+      ],
+      "output_tensor_groups": [
+        {
+          "name": "detection_result",
+          "tensor_names": [
+            "location",
+            "category",
+            "score"
+          ]
+        }
+      ]
+    }
+  ],
+  "min_parser_version": "1.2.0"
+}

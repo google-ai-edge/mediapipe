@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cmath>
+#include <cstdint>
+#include <memory>
 #include <random>
+#include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -24,24 +28,19 @@
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/memory_manager_service.h"
+#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
+#include "mediapipe/framework/port/opencv_core_inc.h"  // NOLINT
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"  // NOLINT
 #include "mediapipe/framework/tool/validate_type.h"
 
 namespace mediapipe {
-namespace {
-
-constexpr char kTransposeOptionsString[] =
-    "[mediapipe.TensorConverterCalculatorOptions.ext]: {"
-    "row_major_matrix: True}";
-
-}  // namespace
-
 using RandomEngine = std::mt19937_64;
-using testing::Eq;
-const uint32 kSeed = 1234;
+using ::testing::HasSubstr;
+const uint32_t kSeed = 1234;
 const int kNumSizes = 8;
 const int sizes[kNumSizes][2] = {{1, 1}, {12, 1}, {1, 9},   {2, 2},
                                  {5, 3}, {7, 13}, {16, 32}, {101, 2}};
@@ -49,11 +48,11 @@ const int sizes[kNumSizes][2] = {{1, 1}, {12, 1}, {1, 9},   {2, 2},
 class TensorConverterCalculatorTest : public ::testing::Test {
  protected:
   // Adds a packet with a matrix filled with random values in [0,1].
-  void AddRandomMatrix(int num_rows, int num_columns, uint32 seed,
+  void AddRandomMatrix(int num_rows, int num_columns, uint32_t seed,
                        bool row_major_matrix = false) {
     RandomEngine random(kSeed);
     std::uniform_real_distribution<> uniform_dist(0, 1.0);
-    auto matrix = ::absl::make_unique<Matrix>();
+    auto matrix = std::make_unique<Matrix>();
     matrix->resize(num_rows, num_columns);
     if (row_major_matrix) {
       for (int y = 0; y < num_rows; ++y) {
@@ -101,7 +100,7 @@ TEST_F(TensorConverterCalculatorTest, RandomMatrixColMajor) {
     tool::AddVectorSink("tensor", &graph_config, &output_packets);
 
     // Run the graph.
-    graph_ = absl::make_unique<CalculatorGraph>();
+    graph_ = std::make_unique<CalculatorGraph>();
     MP_ASSERT_OK(graph_->Initialize(graph_config));
     MP_ASSERT_OK(graph_->StartRun({}));
 
@@ -110,12 +109,12 @@ TEST_F(TensorConverterCalculatorTest, RandomMatrixColMajor) {
 
     // Wait until the calculator done processing.
     MP_ASSERT_OK(graph_->WaitUntilIdle());
-    EXPECT_EQ(1, output_packets.size());
+    ASSERT_EQ(output_packets.size(), 1);
 
     // Get and process results.
     const std::vector<Tensor>& tensor_vec =
         output_packets[0].Get<std::vector<Tensor>>();
-    EXPECT_EQ(1, tensor_vec.size());
+    ASSERT_EQ(tensor_vec.size(), 1);
 
     const Tensor* tensor = &tensor_vec[0];
     EXPECT_EQ(Tensor::ElementType::kFloat32, tensor->element_type());
@@ -127,7 +126,7 @@ TEST_F(TensorConverterCalculatorTest, RandomMatrixColMajor) {
     auto tensor_buffer = view.buffer<float>();
     for (int i = 0; i < num_rows * num_columns; ++i) {
       const float expected = uniform_dist(random);
-      EXPECT_EQ(expected, tensor_buffer[i]) << "at i = " << i;
+      EXPECT_FLOAT_EQ(tensor_buffer[i], expected) << "at i = " << i;
     }
 
     // Fully close graph at end, otherwise calculator+tensors are destroyed
@@ -163,7 +162,7 @@ TEST_F(TensorConverterCalculatorTest, RandomMatrixRowMajor) {
     tool::AddVectorSink("tensor", &graph_config, &output_packets);
 
     // Run the graph.
-    graph_ = absl::make_unique<CalculatorGraph>();
+    graph_ = std::make_unique<CalculatorGraph>();
     MP_ASSERT_OK(graph_->Initialize(graph_config));
     MP_ASSERT_OK(graph_->StartRun({}));
 
@@ -172,12 +171,12 @@ TEST_F(TensorConverterCalculatorTest, RandomMatrixRowMajor) {
 
     // Wait until the calculator done processing.
     MP_ASSERT_OK(graph_->WaitUntilIdle());
-    EXPECT_EQ(1, output_packets.size());
+    ASSERT_EQ(output_packets.size(), 1);
 
     // Get and process results.
     const std::vector<Tensor>& tensor_vec =
         output_packets[0].Get<std::vector<Tensor>>();
-    EXPECT_EQ(1, tensor_vec.size());
+    ASSERT_EQ(tensor_vec.size(), 1);
 
     const Tensor* tensor = &tensor_vec[0];
     EXPECT_EQ(Tensor::ElementType::kFloat32, tensor->element_type());
@@ -189,7 +188,7 @@ TEST_F(TensorConverterCalculatorTest, RandomMatrixRowMajor) {
     auto tensor_buffer = view.buffer<float>();
     for (int i = 0; i < num_rows * num_columns; ++i) {
       const float expected = uniform_dist(random);
-      EXPECT_EQ(expected, tensor_buffer[i]) << "at i = " << i;
+      EXPECT_EQ(tensor_buffer[i], expected) << "at i = " << i;
     }
 
     // Fully close graph at end, otherwise calculator+tensors are destroyed
@@ -225,11 +224,13 @@ TEST_F(TensorConverterCalculatorTest, CustomDivAndSub) {
   tool::AddVectorSink("tensor", &graph_config, &output_packets);
 
   // Run the graph.
+  MP_ASSERT_OK(graph.SetServiceObject(kMemoryManagerService,
+                                      std::make_shared<MemoryManager>()));
   MP_ASSERT_OK(graph.Initialize(graph_config));
   MP_ASSERT_OK(graph.StartRun({}));
-  auto input_image = absl::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
+  auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
   cv::Mat mat = mediapipe::formats::MatView(input_image.get());
-  mat.at<uint8>(0, 0) = 200;
+  mat.at<uint8_t>(0, 0) = 200;
   MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_image", Adopt(input_image.release()).At(Timestamp(0))));
 
@@ -239,12 +240,12 @@ TEST_F(TensorConverterCalculatorTest, CustomDivAndSub) {
   // Get and process results.
   const std::vector<Tensor>& tensor_vec =
       output_packets[0].Get<std::vector<Tensor>>();
-  EXPECT_EQ(1, tensor_vec.size());
+  ASSERT_EQ(tensor_vec.size(), 1);
 
   const Tensor* tensor = &tensor_vec[0];
   EXPECT_EQ(Tensor::ElementType::kFloat32, tensor->element_type());
   auto view = tensor->GetCpuReadView();
-  EXPECT_FLOAT_EQ(67.0f, *view.buffer<float>());
+  EXPECT_FLOAT_EQ(*view.buffer<float>(), 67.0f);
 
   // Fully close graph at end, otherwise calculator+tensors are destroyed
   // after calling WaitUntilDone().
@@ -259,8 +260,120 @@ TEST_F(TensorConverterCalculatorTest, SetOutputRange) {
   for (std::pair<float, float> range : range_values) {
     CalculatorGraph graph;
     CalculatorGraphConfig graph_config =
-        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-            absl::Substitute(R"(
+        mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(absl::Substitute(
+            R"pb(
+              input_stream: "input_image"
+              node {
+                calculator: "TensorConverterCalculator"
+                input_stream: "IMAGE:input_image"
+                output_stream: "TENSORS:tensor"
+                options {
+                  [mediapipe.TensorConverterCalculatorOptions.ext] {
+                    output_tensor_float_range { min: $0 max: $1 }
+                  }
+                }
+              }
+            )pb",
+            /*$0=*/range.first,
+            /*$1=*/range.second));
+    std::vector<Packet> output_packets;
+    tool::AddVectorSink("tensor", &graph_config, &output_packets);
+
+    // Run the graph.
+    MP_ASSERT_OK(graph.Initialize(graph_config));
+    MP_ASSERT_OK(graph.StartRun({}));
+    auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
+    cv::Mat mat = mediapipe::formats::MatView(input_image.get());
+    mat.at<uint8_t>(0, 0) = 200;
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
+        "input_image", Adopt(input_image.release()).At(Timestamp(0))));
+
+    // Wait until the calculator finishes processing.
+    MP_ASSERT_OK(graph.WaitUntilIdle());
+    ASSERT_EQ(output_packets.size(), 1);
+
+    // Get and process results.
+    const std::vector<Tensor>& tensor_vec =
+        output_packets[0].Get<std::vector<Tensor>>();
+    ASSERT_EQ(tensor_vec.size(), 1);
+
+    const Tensor* tensor = &tensor_vec[0];
+
+    // Calculate the expected normalized value:
+    float expected_value =
+        range.first + (200 * (range.second - range.first)) / 255.0;
+
+    EXPECT_EQ(tensor->element_type(), Tensor::ElementType::kFloat32);
+    auto view = tensor->GetCpuReadView();
+    float actual_value = *view.buffer<float>();
+    EXPECT_FLOAT_EQ(actual_value, expected_value);
+
+    // Fully close graph at end, otherwise calculator+tensors are destroyed
+    // after calling WaitUntilDone().
+    MP_ASSERT_OK(graph.CloseInputStream("input_image"));
+    MP_ASSERT_OK(graph.WaitUntilDone());
+  }
+}
+
+TEST_F(TensorConverterCalculatorTest,
+       ShouldConvertImageWithDefaultOutputRange) {
+  CalculatorGraph graph;
+  CalculatorGraphConfig graph_config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
+          R"pb(
+            input_stream: "input_image"
+            node {
+              calculator: "TensorConverterCalculator"
+              input_stream: "IMAGE:input_image"
+              output_stream: "TENSORS:tensor"
+              options {
+                [mediapipe.TensorConverterCalculatorOptions.ext] {
+                  zero_center: false
+                }
+              }
+            }
+          )pb");
+  std::vector<Packet> output_packets;
+  tool::AddVectorSink("tensor", &graph_config, &output_packets);
+
+  // Run the graph.
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
+  cv::Mat mat = mediapipe::formats::MatView(input_image.get());
+  mat.at<uint8_t>(0, 0) = 200;
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input_image", Adopt(input_image.release()).At(Timestamp(0))));
+
+  // Wait until the calculator finishes processing.
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  ASSERT_EQ(output_packets.size(), 1);
+
+  // Get and process results.
+  const std::vector<Tensor>& tensor_vec =
+      output_packets[0].Get<std::vector<Tensor>>();
+  ASSERT_EQ(tensor_vec.size(), 1);
+
+  const Tensor* tensor = &tensor_vec[0];
+
+  // Calculate the expected normalized value:
+  float expected_value = 200.0 / 255.0;
+
+  EXPECT_EQ(tensor->element_type(), Tensor::ElementType::kFloat32);
+  auto view = tensor->GetCpuReadView();
+  float actual_value = *view.buffer<float>();
+  EXPECT_FLOAT_EQ(actual_value, expected_value);
+
+  // Fully close graph at end, otherwise calculator+tensors are destroyed
+  // after calling WaitUntilDone().
+  MP_ASSERT_OK(graph.CloseInputStream("input_image"));
+  MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
+TEST_F(TensorConverterCalculatorTest, FlipVertically) {
+  CalculatorGraph graph;
+  CalculatorGraphConfig graph_config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input_image"
         node {
           calculator: "TensorConverterCalculator"
@@ -268,56 +381,136 @@ TEST_F(TensorConverterCalculatorTest, SetOutputRange) {
           output_stream: "TENSORS:tensor"
           options {
             [mediapipe.TensorConverterCalculatorOptions.ext] {
-              output_tensor_float_range {
-                min: $0
-                max: $1
-              }
+              flip_vertically: true
+              output_tensor_float_range { min: 0 max: 255 }
             }
           }
         }
-        )",
-                             /*$0=*/range.first,
-                             /*$1=*/range.second));
-    std::vector<Packet> output_packets;
-    tool::AddVectorSink("tensor", &graph_config, &output_packets);
+      )pb");
+  std::vector<Packet> output_packets;
+  tool::AddVectorSink("tensor", &graph_config, &output_packets);
 
-    // Run the graph.
-    MP_ASSERT_OK(graph.Initialize(graph_config));
-    MP_ASSERT_OK(graph.StartRun({}));
-    auto input_image = absl::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
-    cv::Mat mat = mediapipe::formats::MatView(input_image.get());
-    mat.at<uint8>(0, 0) = 200;
-    MP_ASSERT_OK(graph.AddPacketToInputStream(
-        "input_image", Adopt(input_image.release()).At(Timestamp(0))));
+  // Run the graph.
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 2);
+  cv::Mat mat = mediapipe::formats::MatView(input_image.get());
+  constexpr uint8_t kY0Value = 100;
+  constexpr uint8_t kY1Value = 200;
+  mat.at<uint8_t>(0, 0) = kY0Value;
+  mat.at<uint8_t>(1, 0) = kY1Value;  // Note: y, x!
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input_image", Adopt(input_image.release()).At(Timestamp(0))));
 
-    // Wait until the calculator finishes processing.
-    MP_ASSERT_OK(graph.WaitUntilIdle());
-    EXPECT_THAT(output_packets.size(), Eq(1));
+  // Wait until the calculator finishes processing.
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  ASSERT_EQ(output_packets.size(), 1);
 
-    // Get and process results.
-    const std::vector<Tensor>& tensor_vec =
-        output_packets[0].Get<std::vector<Tensor>>();
-    EXPECT_THAT(tensor_vec.size(), Eq(1));
+  // Get and process results.
+  const std::vector<Tensor>& tensor_vec =
+      output_packets[0].Get<std::vector<Tensor>>();
+  ASSERT_EQ(tensor_vec.size(), 1);
 
-    const Tensor* tensor = &tensor_vec[0];
+  const Tensor* tensor = &tensor_vec[0];
 
-    // Calculate the expected normalized value:
-    float normalized_value =
-        range.first + (200 * (range.second - range.first)) / 255.0;
+  EXPECT_EQ(tensor->element_type(), Tensor::ElementType::kFloat32);
+  const float* dataf = tensor->GetCpuReadView().buffer<float>();
+  EXPECT_EQ(static_cast<int>(roundf(dataf[0])), kY1Value);  // Y0, Y1 flipped!
+  EXPECT_EQ(static_cast<int>(roundf(dataf[1])), kY0Value);
 
-    EXPECT_THAT(tensor->element_type(), Eq(Tensor::ElementType::kFloat32));
-    auto view = tensor->GetCpuReadView();
-    float dataf = *view.buffer<float>();
-    EXPECT_THAT(
-        normalized_value,
-        testing::FloatNear(dataf, 2.0f * std::abs(dataf) *
-                                      std::numeric_limits<float>::epsilon()));
+  // Fully close graph at end, otherwise calculator+tensors are destroyed
+  // after calling WaitUntilDone().
+  MP_ASSERT_OK(graph.CloseInputStream("input_image"));
+  MP_ASSERT_OK(graph.WaitUntilDone());
+}
 
-    // Fully close graph at end, otherwise calculator+tensors are destroyed
-    // after calling WaitUntilDone().
-    MP_ASSERT_OK(graph.CloseInputStream("input_image"));
-    MP_ASSERT_OK(graph.WaitUntilDone());
-  }
+TEST_F(TensorConverterCalculatorTest,
+       CannotSpecifyBothFlipVerticallyAndGpuOrigin) {
+  CalculatorGraph graph;
+  CalculatorGraphConfig graph_config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "input_image"
+        node {
+          calculator: "TensorConverterCalculator"
+          input_stream: "IMAGE:input_image"
+          output_stream: "TENSORS:tensor"
+          options {
+            [mediapipe.TensorConverterCalculatorOptions.ext] {
+              flip_vertically: true
+              gpu_origin: TOP_LEFT
+              output_tensor_float_range { min: 0 max: 255 }
+            }
+          }
+        }
+      )pb");
+  std::vector<Packet> output_packets;
+  tool::AddVectorSink("tensor", &graph_config, &output_packets);
+
+  // Run the graph.
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  // Processing should fail as we specified both flip_vertically and gpu_origin.
+  EXPECT_THAT(
+      graph.WaitUntilIdle(),
+      StatusIs(
+          absl::StatusCode::kFailedPrecondition,
+          HasSubstr(
+              "Cannot specify both flip_vertically and gpu_origin options")));
+}
+
+TEST_F(TensorConverterCalculatorTest, GpuOriginIsIgnoredWithCpuImage) {
+  CalculatorGraph graph;
+  CalculatorGraphConfig graph_config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "input_image"
+        node {
+          calculator: "TensorConverterCalculator"
+          input_stream: "IMAGE:input_image"
+          output_stream: "TENSORS:tensor"
+          options {
+            [mediapipe.TensorConverterCalculatorOptions.ext] {
+              gpu_origin: CONVENTIONAL
+              output_tensor_float_range { min: 0 max: 255 }
+            }
+          }
+        }
+      )pb");
+  std::vector<Packet> output_packets;
+  tool::AddVectorSink("tensor", &graph_config, &output_packets);
+
+  // Run the graph.
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 2);
+  cv::Mat mat = mediapipe::formats::MatView(input_image.get());
+  constexpr uint8_t kY0Value = 100;
+  constexpr uint8_t kY1Value = 200;
+  mat.at<uint8_t>(0, 0) = kY0Value;
+  mat.at<uint8_t>(1, 0) = kY1Value;  // Note: y, x!
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input_image", Adopt(input_image.release()).At(Timestamp(0))));
+
+  // Wait until the calculator finishes processing.
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  ASSERT_EQ(output_packets.size(), 1);
+
+  // Get and process results.
+  const std::vector<Tensor>& tensor_vec =
+      output_packets[0].Get<std::vector<Tensor>>();
+  ASSERT_EQ(tensor_vec.size(), 1);
+
+  const Tensor* tensor = &tensor_vec[0];
+
+  EXPECT_EQ(tensor->element_type(), Tensor::ElementType::kFloat32);
+  const float* dataf = tensor->GetCpuReadView().buffer<float>();
+  EXPECT_EQ(static_cast<int>(roundf(dataf[0])), kY0Value);  // Not flipped!
+  EXPECT_EQ(static_cast<int>(roundf(dataf[1])), kY1Value);
+
+  // Fully close graph at end, otherwise calculator+tensors are destroyed
+  // after calling WaitUntilDone().
+  MP_ASSERT_OK(graph.CloseInputStream("input_image"));
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 }  // namespace mediapipe

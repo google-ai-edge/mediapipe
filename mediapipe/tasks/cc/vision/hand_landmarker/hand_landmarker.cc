@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@ limitations under the License.
 ==============================================================================*/
 
 #include "mediapipe/tasks/cc/vision/hand_landmarker/hand_landmarker.h"
+
+#include <utility>
 
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
@@ -45,6 +47,8 @@ namespace {
 
 using HandLandmarkerGraphOptionsProto = ::mediapipe::tasks::vision::
     hand_landmarker::proto::HandLandmarkerGraphOptions;
+
+using ::mediapipe::NormalizedRect;
 
 constexpr char kHandLandmarkerGraphTypeName[] =
     "mediapipe.tasks.vision.hand_landmarker.HandLandmarkerGraph";
@@ -153,9 +157,13 @@ absl::StatusOr<std::unique_ptr<HandLandmarker>> HandLandmarker::Create(
       Packet hand_world_landmarks_packet =
           status_or_packets.value()[kHandWorldLandmarksStreamName];
       result_callback(
-          {{handedness_packet.Get<std::vector<ClassificationList>>(),
-            hand_landmarks_packet.Get<std::vector<NormalizedLandmarkList>>(),
-            hand_world_landmarks_packet.Get<std::vector<LandmarkList>>()}},
+          ConvertToHandLandmarkerResult(
+              /* handedness= */ handedness_packet
+                  .Get<std::vector<ClassificationList>>(),
+              /* hand_landmarks= */
+              hand_landmarks_packet.Get<std::vector<NormalizedLandmarkList>>(),
+              /* hand_world_landmarks= */
+              hand_world_landmarks_packet.Get<std::vector<LandmarkList>>()),
           image_packet.Get<Image>(),
           hand_landmarks_packet.Timestamp().Value() /
               kMicroSecondsPerMilliSecond);
@@ -167,7 +175,9 @@ absl::StatusOr<std::unique_ptr<HandLandmarker>> HandLandmarker::Create(
           std::move(options_proto),
           options->running_mode == core::RunningMode::LIVE_STREAM),
       std::move(options->base_options.op_resolver), options->running_mode,
-      std::move(packets_callback));
+      std::move(packets_callback),
+      /*disable_default_service=*/
+      options->base_options.disable_default_service);
 }
 
 absl::StatusOr<HandLandmarkerResult> HandLandmarker::Detect(
@@ -179,10 +189,10 @@ absl::StatusOr<HandLandmarkerResult> HandLandmarker::Detect(
         "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(
-      NormalizedRect norm_rect,
-      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                      ConvertToNormalizedRect(image_processing_options, image,
+                                              /*roi_allowed=*/false));
+  MP_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
           {{kImageInStreamName, MakePacket<Image>(std::move(image))},
@@ -191,19 +201,25 @@ absl::StatusOr<HandLandmarkerResult> HandLandmarker::Detect(
   if (output_packets[kHandLandmarksStreamName].IsEmpty()) {
     return {HandLandmarkerResult()};
   }
-  return {{/* handedness= */
-           {output_packets[kHandednessStreamName]
-                .Get<std::vector<mediapipe::ClassificationList>>()},
-           /* hand_landmarks= */
-           {output_packets[kHandLandmarksStreamName]
-                .Get<std::vector<mediapipe::NormalizedLandmarkList>>()},
-           /* hand_world_landmarks */
-           {output_packets[kHandWorldLandmarksStreamName]
-                .Get<std::vector<mediapipe::LandmarkList>>()}}};
+  return ConvertToHandLandmarkerResult(/* handedness= */
+                                       output_packets[kHandednessStreamName]
+                                           .Get<std::vector<
+                                               mediapipe::
+                                                   ClassificationList>>(),
+                                       /* hand_landmarks= */
+                                       output_packets[kHandLandmarksStreamName]
+                                           .Get<std::vector<
+                                               mediapipe::
+                                                   NormalizedLandmarkList>>(),
+                                       /* hand_world_landmarks */
+                                       output_packets
+                                           [kHandWorldLandmarksStreamName]
+                                               .Get<std::vector<
+                                                   mediapipe::LandmarkList>>());
 }
 
 absl::StatusOr<HandLandmarkerResult> HandLandmarker::DetectForVideo(
-    mediapipe::Image image, int64 timestamp_ms,
+    mediapipe::Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
@@ -211,10 +227,10 @@ absl::StatusOr<HandLandmarkerResult> HandLandmarker::DetectForVideo(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(
-      NormalizedRect norm_rect,
-      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                      ConvertToNormalizedRect(image_processing_options, image,
+                                              /*roi_allowed=*/false));
+  MP_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
           {{kImageInStreamName,
@@ -226,21 +242,25 @@ absl::StatusOr<HandLandmarkerResult> HandLandmarker::DetectForVideo(
   if (output_packets[kHandLandmarksStreamName].IsEmpty()) {
     return {HandLandmarkerResult()};
   }
-  return {
-      {/* handedness= */
-       {output_packets[kHandednessStreamName]
-            .Get<std::vector<mediapipe::ClassificationList>>()},
-       /* hand_landmarks= */
-       {output_packets[kHandLandmarksStreamName]
-            .Get<std::vector<mediapipe::NormalizedLandmarkList>>()},
-       /* hand_world_landmarks */
-       {output_packets[kHandWorldLandmarksStreamName]
-            .Get<std::vector<mediapipe::LandmarkList>>()}},
-  };
+  return ConvertToHandLandmarkerResult(/* handedness= */
+                                       output_packets[kHandednessStreamName]
+                                           .Get<std::vector<
+                                               mediapipe::
+                                                   ClassificationList>>(),
+                                       /* hand_landmarks= */
+                                       output_packets[kHandLandmarksStreamName]
+                                           .Get<std::vector<
+                                               mediapipe::
+                                                   NormalizedLandmarkList>>(),
+                                       /* hand_world_landmarks */
+                                       output_packets
+                                           [kHandWorldLandmarksStreamName]
+                                               .Get<std::vector<
+                                                   mediapipe::LandmarkList>>());
 }
 
 absl::Status HandLandmarker::DetectAsync(
-    mediapipe::Image image, int64 timestamp_ms,
+    mediapipe::Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
@@ -248,9 +268,9 @@ absl::Status HandLandmarker::DetectAsync(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(
-      NormalizedRect norm_rect,
-      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
+  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                      ConvertToNormalizedRect(image_processing_options, image,
+                                              /*roi_allowed=*/false));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

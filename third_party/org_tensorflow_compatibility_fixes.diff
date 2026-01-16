@@ -1,7 +1,7 @@
-diff --git a/tensorflow/core/lib/monitoring/percentile_sampler.cc b/tensorflow/core/lib/monitoring/percentile_sampler.cc
+diff --git a/tensorflow/tsl/lib/monitoring/percentile_sampler.cc b/tensorflow/tsl/lib/monitoring/percentile_sampler.cc
 index b7c22ae77ba..d0ba7b48b4b 100644
---- a/tensorflow/core/lib/monitoring/percentile_sampler.cc
-+++ b/tensorflow/core/lib/monitoring/percentile_sampler.cc
+--- a/tensorflow/tsl/lib/monitoring/percentile_sampler.cc
++++ b/tensorflow/tsl/lib/monitoring/percentile_sampler.cc
 @@ -29,7 +29,8 @@ namespace monitoring {
  void PercentileSamplerCell::Add(double sample) {
    uint64 nstime = EnvTime::NowNanos();
@@ -23,18 +23,6 @@ index b7c22ae77ba..d0ba7b48b4b 100644
        pct_samples.points.push_back(pct);
      }
    }
-diff --git a/tensorflow/core/platform/test.h b/tensorflow/core/platform/test.h
-index b598b6ee1e4..51c013a2d62 100644
---- a/tensorflow/core/platform/test.h
-+++ b/tensorflow/core/platform/test.h
-@@ -40,7 +40,6 @@ limitations under the License.
- // better error messages, more maintainable tests and more test coverage.
- #if !defined(PLATFORM_GOOGLE) && !defined(PLATFORM_GOOGLE_ANDROID) && \
-     !defined(PLATFORM_CHROMIUMOS)
--#include <gmock/gmock-generated-matchers.h>
- #include <gmock/gmock-matchers.h>
- #include <gmock/gmock-more-matchers.h>
- #endif
 diff --git a/third_party/eigen3/eigen_archive.BUILD b/third_party/eigen3/eigen_archive.BUILD
 index 5514f774c35..1a38f76f4e9 100644
 --- a/third_party/eigen3/eigen_archive.BUILD
@@ -53,3 +41,30 @@ index 5514f774c35..1a38f76f4e9 100644
  filegroup(
      name = "eigen_header_files",
      srcs = EIGEN_HEADERS,
+diff --git a/tensorflow/lite/delegates/gpu/build_defs.bzl b/tensorflow/lite/delegates/gpu/build_defs.bzl
+index 462ec7c2218..f2b583a4cbd 100644
+--- a/tensorflow/lite/delegates/gpu/build_defs.bzl
++++ b/tensorflow/lite/delegates/gpu/build_defs.bzl
+@@ -9,7 +9,7 @@ def nativewindow_linkopts():
+     # return min_supported_ndk_api("26", ["-lnativewindow"])
+     # copybara:uncomment_end
+     # copybara:comment_begin(oss-only)
+-    return ["-lnativewindow"]
++    return []
+     # copybara:comment_end
+ 
+ def gpu_delegate_linkopts():
+diff --git a/tensorflow/tsl/platform/windows/error_windows.cc b/tensorflow/tsl/platform/windows/error_windows.cc
+index fea37ddb2ea..4070ea55425 100644
+--- a/tensorflow/tsl/platform/windows/error_windows.cc
++++ b/tensorflow/tsl/platform/windows/error_windows.cc
+@@ -15,8 +15,8 @@ limitations under the License.
+ 
+ #include "tensorflow/tsl/platform/windows/error_windows.h"
+ 
+-#include <Windows.h>
+ #include <Winsock2.h>
++#include <Windows.h>
+ 
+ #include <string>
+ 

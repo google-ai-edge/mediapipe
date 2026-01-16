@@ -1,0 +1,45 @@
+/* Copyright 2023 The MediaPipe Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto2";
+
+package mediapipe.tasks.vision.pose_detector.proto;
+
+import "mediapipe/framework/calculator.proto";
+import "mediapipe/framework/calculator_options.proto";
+import "mediapipe/tasks/cc/core/proto/base_options.proto";
+
+option java_package = "com.google.mediapipe.tasks.vision.posedetector.proto";
+option java_outer_classname = "PoseDetectorGraphOptionsProto";
+
+message PoseDetectorGraphOptions {
+  extend mediapipe.CalculatorOptions {
+    optional PoseDetectorGraphOptions ext = 514774813;
+  }
+  // Base options for configuring Task library, such as specifying the TfLite
+  // model file with metadata, accelerator options, etc.
+  optional core.proto.BaseOptions base_options = 1;
+
+  // Minimum confidence value ([0.0, 1.0]) for confidence score to be considered
+  // successfully detecting a pose in the image.
+  optional float min_detection_confidence = 2 [default = 0.5];
+
+  // IoU threshold ([0,0, 1.0]) for non-maximu-suppression to be considered
+  // duplicate detections.
+  optional float min_suppression_threshold = 3 [default = 0.5];
+
+  // Maximum number of poses to detect in the image.
+  optional int32 num_poses = 4;
+}

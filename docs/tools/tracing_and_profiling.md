@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/
 title: Tracing and Profiling
 parent: Tools
 nav_order: 2
@@ -11,6 +12,12 @@ nav_order: 2
 1. TOC
 {:toc}
 ---
+
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+----
 
 The MediaPipe framework includes a built-in tracer and profiler. The tracer
 records various timing events related to packet processing, including the start
@@ -32,7 +39,7 @@ option: `--define MEDIAPIPE_PROFILING=0`.  For other platforms, you can use the
 bazel command line option `--define MEDIAPIPE_PROFILING=1` to link it.
 
 To enable tracing and profiling, the `CalculatorGraphConfig` (in
-[calculator.proto](https://github.com/google/mediapipe/tree/master/mediapipe/framework/calculator.proto))
+[calculator.proto](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator.proto))
 representing the graph must have a `profiler_config` message at its root. Here
 is a simple setup that turns on tracing and keeps 100 seconds of timing events:
 

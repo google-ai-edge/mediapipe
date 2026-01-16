@@ -16,21 +16,17 @@
 # Description:
 #   Working with dense optical flow in mediapipe.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-proto_library(
+mediapipe_proto_library(
     name = "optical_flow_field_data_proto",
     srcs = ["optical_flow_field_data.proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "optical_flow_field_data_cc_proto",
-    srcs = ["optical_flow_field_data.proto"],
-    deps = [":optical_flow_field_data_proto"],
 )
 
 cc_library(
@@ -38,18 +34,19 @@ cc_library(
     srcs = ["optical_flow_field.cc"],
     hdrs = ["optical_flow_field.h"],
     deps = [
+        ":optical_flow_field_data_cc_proto",
         "//mediapipe/framework:type_map",
         "//mediapipe/framework/deps:mathutil",
         "//mediapipe/framework/formats:location",
         "//mediapipe/framework/formats:location_opencv",
-        "//mediapipe/framework/formats/motion:optical_flow_field_data_cc_proto",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:point",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/core:framework",
     ],
@@ -66,9 +63,10 @@ cc_test(
         "//mediapipe/framework/formats:location_opencv",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
+        "//third_party:opencv",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@org_tensorflow//tensorflow/core:framework",
     ],
 )

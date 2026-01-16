@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@ limitations under the License.
 #define MEDIAPIPE_TASKS_CC_CORE_BASE_OPTIONS_H_
 
 #include <memory>
+#include <optional>
 #include <string>
+#include <variant>
+#include <vector>
 
 #include "absl/memory/memory.h"
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
@@ -38,13 +41,40 @@ struct BaseOptions {
   std::string model_asset_path = "";
 
   // The delegate to run MediaPipe. If the delegate is not set, the default
-  // delegate CPU is used.
+  // delegate CPU is used. Use `delegate_options` to configure advanced
+  // features of the selected delegate."
   enum Delegate {
     CPU = 0,
     GPU = 1,
+    // Edge TPU acceleration using NNAPI delegate.
+    EDGETPU_NNAPI = 2,
   };
 
   Delegate delegate = CPU;
+
+  // Options for CPU.
+  struct CpuOptions {};
+
+  // Options for GPU.
+  struct GpuOptions {
+    // Load pre-compiled serialized binary cache to accelerate init process.
+    // Only available on Android. Kernel caching will only be enabled if this
+    // path is set. NOTE: binary cache usage may be skipped if valid serialized
+    // model, specified by "serialized_model_dir", exists.
+    std::string cached_kernel_path;
+
+    // A dir to load from and save to a pre-compiled serialized model used to
+    // accelerate init process.
+    // NOTE: serialized model takes precedence over binary cache
+    // specified by "cached_kernel_path", which still can be used if
+    // serialized model is invalid or missing.
+    std::string serialized_model_dir;
+
+    // Unique token identifying the model. Used in conjunction with
+    // "serialized_model_dir". It is the caller's responsibility to ensure
+    // there is no clash of the tokens.
+    std::string model_token;
+  };
 
   // The file descriptor to a file opened with open(2), with optional additional
   // offset and length information.
@@ -65,6 +95,18 @@ struct BaseOptions {
   // built-in Ops.
   std::unique_ptr<tflite::OpResolver> op_resolver =
       absl::make_unique<MediaPipeBuiltinOpResolver>();
+
+  // Options for the chosen delegate. If not set, the default delegate options
+  // is used.
+  std::optional<std::variant<CpuOptions, GpuOptions>> delegate_options;
+
+  // Disallows/disables default initialization of MediaPipe graph services. This
+  // can be used to disable default OpenCL context creation so that the whole
+  // pipeline can run on CPU.
+  //
+  // Recommendation: do not use unless you have to (for example, default
+  // initialization has side effects)
+  bool disable_default_service = false;
 };
 
 // Converts a BaseOptions to a BaseOptionsProto.

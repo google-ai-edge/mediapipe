@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,14 +14,17 @@ limitations under the License.
 ==============================================================================*/
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
+#include "mediapipe/framework/formats/tensor.h"
 #include "stb_image.h"
 
 namespace mediapipe {
@@ -64,11 +67,40 @@ absl::StatusOr<Image> DecodeImageFromFile(const std::string& path) {
   return Image(std::move(image_frame));
 }
 
+absl::StatusOr<Image> CreateImageFromBuffer(ImageFormat::Format format,
+                                            const uint8_t* pixel_data,
+                                            int width, int height) {
+  int width_step = 0;
+  switch (format) {
+    case ImageFormat::GRAY8:
+      width_step = width;
+      break;
+    case ImageFormat::SRGB:
+      width_step = 3 * width;
+      break;
+    case ImageFormat::SRGBA:
+      width_step = 4 * width;
+      break;
+    case ImageFormat::SBGRA:
+      width_step = 4 * width;
+      break;
+    default:
+      return absl::InvalidArgumentError(absl::StrFormat(
+          "Expected image of SRGB, SRGBA or SBGRA format, but found %d.",
+          format));
+  }
+  ImageFrameSharedPtr image_frame = std::make_shared<ImageFrame>(
+      format, width, height, width_step, const_cast<uint8_t*>(pixel_data),
+      ImageFrame::PixelDataDeleter::kNone);
+  return Image(std::move(image_frame));
+}
+
 absl::StatusOr<Shape> GetImageLikeTensorShape(const mediapipe::Tensor& tensor) {
   int width = 0;
   int height = 0;
   int channels = 1;
-  switch (tensor.shape().dims.size()) {
+  const int dims_size = tensor.shape().dims.size();
+  switch (dims_size) {
     case 2: {
       height = tensor.shape().dims[0];
       width = tensor.shape().dims[1];
@@ -87,7 +119,8 @@ absl::StatusOr<Shape> GetImageLikeTensorShape(const mediapipe::Tensor& tensor) {
       break;
     }
     default:
-      return absl::InvalidArgumentError("Tensor should have 2, 3, or 4 dims");
+      return absl::InvalidArgumentError(absl::StrFormat(
+          "Tensor should have 2, 3, or 4 dims, received: %d", dims_size));
   }
   return {{height, width, channels}};
 }

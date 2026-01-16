@@ -29,7 +29,7 @@ namespace autoflip {
 // Packs detected features and timestamp (ms) into a KeyFrameInfo object. Scales
 // features back to the original frame size if features have been detected on a
 // different frame size.
-absl::Status PackKeyFrameInfo(const int64 frame_timestamp_ms,
+absl::Status PackKeyFrameInfo(const int64_t frame_timestamp_ms,
                               const DetectionSet& detections,
                               const int original_frame_width,
                               const int original_frame_height,
@@ -71,7 +71,7 @@ absl::Status ComputeSceneStaticBordersSize(
 // interpolation functions in Lab space using input timestamps.
 absl::Status FindSolidBackgroundColor(
     const std::vector<StaticFeatures>& static_features,
-    const std::vector<int64>& static_features_timestamps,
+    const std::vector<int64_t>& static_features_timestamps,
     const double min_fraction_solid_background_color,
     bool* has_solid_background,
     PiecewiseLinearFunction* background_color_l_function,

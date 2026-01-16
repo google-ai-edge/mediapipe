@@ -18,6 +18,7 @@
 
 #include <string>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_split.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -40,10 +41,10 @@ absl::Status FindCropDimensions(int input_width, int input_height,    //
                                 const std::string& max_aspect_ratio,  //
                                 int* crop_width, int* crop_height,    //
                                 int* col_start, int* row_start) {
-  CHECK(crop_width);
-  CHECK(crop_height);
-  CHECK(col_start);
-  CHECK(row_start);
+  ABSL_CHECK(crop_width);
+  ABSL_CHECK(crop_height);
+  ABSL_CHECK(col_start);
+  ABSL_CHECK(row_start);
 
   double min_aspect_ratio_q = 0.0;
   double max_aspect_ratio_q = 0.0;
@@ -83,8 +84,8 @@ absl::Status FindCropDimensions(int input_width, int input_height,    //
     }
   }
 
-  CHECK_LE(*crop_width, input_width);
-  CHECK_LE(*crop_height, input_height);
+  ABSL_CHECK_LE(*crop_width, input_width);
+  ABSL_CHECK_LE(*crop_height, input_height);
   return absl::OkStatus();
 }
 
@@ -96,8 +97,8 @@ absl::Status FindOutputDimensions(int input_width,             //
                                   bool preserve_aspect_ratio,  //
                                   int scale_to_multiple_of,    //
                                   int* output_width, int* output_height) {
-  CHECK(output_width);
-  CHECK(output_height);
+  ABSL_CHECK(output_width);
+  ABSL_CHECK(output_height);
 
   if (target_max_area > 0 && input_width * input_height > target_max_area) {
     preserve_aspect_ratio = true;
@@ -142,6 +143,9 @@ absl::Status FindOutputDimensions(int input_width,             //
                                       static_cast<double>(input_height));
     try_width = (try_width / 2) * 2;
     try_height = (try_height / 2) * 2;
+    // The output width/height should be greater than 0.
+    try_width = std::max(try_width, 1);
+    try_height = std::max(try_height, 1);
 
     if (target_height <= 0 || try_height <= target_height) {
       // The resulting height based on the target width and aspect ratio
@@ -160,6 +164,9 @@ absl::Status FindOutputDimensions(int input_width,             //
                                      static_cast<double>(input_width));
     try_width = (try_width / 2) * 2;
     try_height = (try_height / 2) * 2;
+    // The output width/height should be greater than 0.
+    try_width = std::max(try_width, 1);
+    try_height = std::max(try_height, 1);
 
     if (target_width <= 0 || try_width <= target_width) {
       // The resulting width based on the target width and aspect ratio

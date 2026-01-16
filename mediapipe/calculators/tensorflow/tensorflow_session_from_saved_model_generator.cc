@@ -19,6 +19,7 @@
 #if !defined(__ANDROID__)
 #include "mediapipe/framework/port/file_helpers.h"
 #endif
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_replace.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session_from_saved_model_generator.pb.h"
@@ -61,7 +62,7 @@ absl::Status GetLatestDirectory(std::string* path) {
 }
 
 // If options.convert_signature_to_tags() is set, will convert letters to
-// uppercase and replace /'s and -'s with _'s. This enables the standard
+// uppercase and replace /, -, and .'s with _'s. This enables the standard
 // SavedModel classification, regression, and prediction signatures to be used
 // as uppercase INPUTS and OUTPUTS tags for streams and supports other common
 // patterns.
@@ -73,10 +74,9 @@ const std::string MaybeConvertSignatureToTag(
     output.resize(name.length());
     std::transform(name.begin(), name.end(), output.begin(),
                    [](unsigned char c) { return std::toupper(c); });
-    output = absl::StrReplaceAll(output, {{"/", "_"}});
-    output = absl::StrReplaceAll(output, {{"-", "_"}});
-    output = absl::StrReplaceAll(output, {{".", "_"}});
-    LOG(INFO) << "Renamed TAG from: " << name << " to " << output;
+    output = absl::StrReplaceAll(
+        output, {{"/", "_"}, {"-", "_"}, {".", "_"}, {":", "_"}});
+    ABSL_LOG(INFO) << "Renamed TAG from: " << name << " to " << output;
     return output;
   } else {
     return name;
@@ -145,7 +145,7 @@ class TensorFlowSessionFromSavedModelGenerator : public PacketGenerator {
     tensorflow::SessionOptions session_options;
     session_options.config = options.session_config();
     auto saved_model = absl::make_unique<tensorflow::SavedModelBundle>();
-    ::tensorflow::Status status = tensorflow::LoadSavedModel(
+    absl::Status status = tensorflow::LoadSavedModel(
         session_options, run_options, path, tags_set, saved_model.get());
     if (!status.ok()) {
       return absl::Status(static_cast<absl::StatusCode>(status.code()),

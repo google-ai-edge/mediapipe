@@ -43,7 +43,8 @@ constexpr absl::string_view kTestModelPath =
     "mediapipe/tasks/testdata/text/bert_text_classifier.tflite";
 
 absl::StatusOr<std::vector<std::vector<int>>> RunBertPreprocessorCalculator(
-    absl::string_view text, absl::string_view model_path) {
+    absl::string_view text, absl::string_view model_path,
+    bool has_dynamic_input_tensors = false, int tensor_size = kBertMaxSeqLen) {
   auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(
       absl::Substitute(R"(
         input_stream: "text"
@@ -56,18 +57,20 @@ absl::StatusOr<std::vector<std::vector<int>>> RunBertPreprocessorCalculator(
           options {
             [mediapipe.BertPreprocessorCalculatorOptions.ext] {
               bert_max_seq_len: $0
+              has_dynamic_input_tensors: $1
             }
           }
         }
       )",
-                       kBertMaxSeqLen));
+                       tensor_size, has_dynamic_input_tensors));
   std::vector<Packet> output_packets;
   tool::AddVectorSink("tensors", &graph_config, &output_packets);
 
   std::string model_buffer = tasks::core::LoadBinaryContent(model_path.data());
-  ASSIGN_OR_RETURN(std::unique_ptr<ModelMetadataExtractor> metadata_extractor,
-                   ModelMetadataExtractor::CreateFromModelBuffer(
-                       model_buffer.data(), model_buffer.size()));
+  MP_ASSIGN_OR_RETURN(
+      std::unique_ptr<ModelMetadataExtractor> metadata_extractor,
+      ModelMetadataExtractor::CreateFromModelBuffer(model_buffer.data(),
+                                                    model_buffer.size()));
   // Run the graph.
   CalculatorGraph graph;
   MP_RETURN_IF_ERROR(graph.Initialize(
@@ -92,13 +95,13 @@ absl::StatusOr<std::vector<std::vector<int>>> RunBertPreprocessorCalculator(
   }
 
   std::vector<std::vector<int>> results;
-  for (int i = 0; i < kNumInputTensorsForBert; i++) {
+  for (int i = 0; i < tensor_vec.size(); i++) {
     const Tensor& tensor = tensor_vec[i];
     if (tensor.element_type() != Tensor::ElementType::kInt32) {
       return absl::InvalidArgumentError("Expected tensor element type kInt32");
     }
     auto* buffer = tensor.GetCpuReadView().buffer<int>();
-    std::vector<int> buffer_view(buffer, buffer + kBertMaxSeqLen);
+    std::vector<int> buffer_view(buffer, buffer + tensor_size);
     results.push_back(buffer_view);
   }
   MP_RETURN_IF_ERROR(graph.CloseAllPacketSources());

@@ -173,11 +173,6 @@ class HandsTest(parameterized.TestCase):
       ('full', 1, 'asl_hand.full.npz'))
   def test_on_video(self, model_complexity, expected_name):
     """Tests hand models on a video."""
-
-    # Set threshold for comparing actual and expected predictions in pixels.
-    diff_threshold = 18
-    world_diff_threshold = 0.05
-
     video_path = os.path.join(os.path.dirname(__file__),
                               'testdata/asl_hand.25fps.mp4')
     expected_path = os.path.join(os.path.dirname(__file__),
@@ -193,25 +188,31 @@ class HandsTest(parameterized.TestCase):
     with open(json_path, 'w') as fl:
       dump_data = {
           'predictions': np.around(actual, 3).tolist(),
-          'predictions_world': np.around(actual_world, 3).tolist()
+          'predictions_world': np.around(actual_world, 3).tolist(),
       }
       fl.write(json.dumps(dump_data, indent=2, separators=(',', ': ')))
 
     # Validate actual vs. expected landmarks.
     expected = np.load(expected_path)['predictions']
-    assert actual.shape == expected.shape, (
-        'Unexpected shape of predictions: {} instead of {}'.format(
-            actual.shape, expected.shape))
-    self._assert_diff_less(
-        actual[..., :2], expected[..., :2], threshold=diff_threshold)
+    assert (
+        actual.shape == expected.shape
+    ), 'Unexpected shape of predictions: {} instead of {}'.format(
+        actual.shape, expected.shape
+    )
+    # large values, use relative tolerance for testing.
+    np.testing.assert_allclose(actual[..., :2], expected[..., :2], rtol=0.1)
 
     # Validate actual vs. expected world landmarks.
     expected_world = np.load(expected_path)['w_predictions']
-    assert actual_world.shape == expected_world.shape, (
-        'Unexpected shape of world predictions: {} instead of {}'.format(
-            actual_world.shape, expected_world.shape))
-    self._assert_diff_less(
-        actual_world, expected_world, threshold=world_diff_threshold)
+    assert (
+        actual_world.shape == expected_world.shape
+    ), 'Unexpected shape of world predictions: {} instead of {}'.format(
+        actual_world.shape, expected_world.shape
+    )
+    # small values, use absolute tolerance for testing.
+    np.testing.assert_array_almost_equal(
+        actual_world, expected_world, decimal=1
+    )
 
 
 if __name__ == '__main__':

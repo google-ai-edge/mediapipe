@@ -136,10 +136,9 @@ message GraphTrace {
     GPU_TASK_INVOKE = 16;
     TPU_TASK_INVOKE = 17;
     CPU_TASK_INVOKE = 18;
+    GPU_TASK_INVOKE_ADVANCED = 19;
+    TPU_TASK_INVOKE_ASYNC = 20;
   }
-  //  //depot/mediapipe/framework/mediapipe_profiling.h:profiler_census_tags,
-  //  //depot/mediapipe/framework/profiler/trace_buffer.h:event_type_list,
-  // )
 
   // The timing for one packet set being processed at one caclulator node.
   message CalculatorTrace {

@@ -71,6 +71,9 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   StatusBuilder& SetNoLogging() &;
   StatusBuilder&& SetNoLogging() &&;
 
+  StatusBuilder& SetCode(absl::StatusCode code) &;
+  StatusBuilder&& SetCode(absl::StatusCode code) &&;
+
   template <typename T>
   StatusBuilder& operator<<(const T& msg) & {
     if (!impl_) return *this;
@@ -83,8 +86,8 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
     return std::move(*this << msg);
   }
 
-  operator Status() const&;
-  operator Status() &&;
+  operator absl::Status() const&;
+  operator absl::Status() &&;
 
   absl::Status JoinMessageToStatus();
 

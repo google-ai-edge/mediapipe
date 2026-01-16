@@ -32,6 +32,8 @@
 namespace mediapipe {
 namespace {
 
+using ::mediapipe::NormalizedRect;
+
 constexpr int kDetectionUpdateTimeOutMS = 5000;
 constexpr char kDetectionsTag[] = "DETECTIONS";
 constexpr char kDetectionBoxesTag[] = "DETECTION_BOXES";
@@ -45,13 +47,13 @@ void MoveIds(std::vector<int>* dst, std::vector<int> src) {
               std::make_move_iterator(src.end()));
 }
 
-int64 GetInputTimestampMs(::mediapipe::CalculatorContext* cc) {
+int64_t GetInputTimestampMs(::mediapipe::CalculatorContext* cc) {
   return cc->InputTimestamp().Microseconds() / 1000;  // 1 ms = 1000 us.
 }
 
 // Converts a Mediapipe Detection Proto to a TrackedDetection class.
 std::unique_ptr<TrackedDetection> GetTrackedDetectionFromDetection(
-    const Detection& detection, int64 timestamp) {
+    const Detection& detection, int64_t timestamp) {
   std::unique_ptr<TrackedDetection> tracked_detection =
       absl::make_unique<TrackedDetection>(detection.detection_id(), timestamp);
   const float top = detection.location_data().relative_bounding_box().ymin();

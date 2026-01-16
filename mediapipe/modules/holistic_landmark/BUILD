@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//mediapipe/framework/tool:mediapipe_graph.bzl", "mediapipe_simple_subgraph")
 load(
     "//mediapipe/framework/tool:mediapipe_files.bzl",
     "mediapipe_files",
 )
+load("//mediapipe/framework/tool:mediapipe_graph.bzl", "mediapipe_simple_subgraph")
 
 # TODO: revert to private.
 package(default_visibility = ["//visibility:public"])

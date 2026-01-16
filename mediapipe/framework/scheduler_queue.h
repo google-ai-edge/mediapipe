@@ -15,17 +15,17 @@
 #ifndef MEDIAPIPE_FRAMEWORK_SCHEDULER_QUEUE_H_
 #define MEDIAPIPE_FRAMEWORK_SCHEDULER_QUEUE_H_
 
-#include <atomic>
+#include <cstdint>
 #include <functional>
-#include <memory>
 #include <queue>
+#include <string>
 #include <utility>
 
-#include "absl/base/macros.h"
+#include "absl/base/thread_annotations.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/executor.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/scheduler_shared.h"
 
 namespace mediapipe {
@@ -47,7 +47,15 @@ class SchedulerQueue : public TaskQueue {
    public:
     Item(CalculatorNode* node, CalculatorContext* cc);
     // A null CalculatorContext indicates the task should run OpenNode().
-    Item(CalculatorNode* node);
+    explicit Item(CalculatorNode* node);
+
+    // Not copyable.
+    Item(const Item&) = delete;
+    Item& operator=(const Item&) = delete;
+
+    // Movable.
+    Item(Item&&) = default;
+    Item& operator=(Item&&) = default;
 
     CalculatorNode* Node() const { return node_; }
 
@@ -67,7 +75,7 @@ class SchedulerQueue : public TaskQueue {
     bool operator<(const Item& that) const;
 
    private:
-    int64 source_process_order_ = 0;
+    int64_t source_process_order_ = 0;
     CalculatorNode* node_;
     CalculatorContext* cc_;
     int id_ = 0;
@@ -76,7 +84,8 @@ class SchedulerQueue : public TaskQueue {
     bool is_open_node_ = false;  // True if the task should run OpenNode().
   };
 
-  explicit SchedulerQueue(SchedulerShared* shared) : shared_(shared) {}
+  explicit SchedulerQueue(absl::string_view queue_name, SchedulerShared* shared)
+      : queue_name_(queue_name), shared_(shared) {}
 
   // Sets the executor that will run the nodes. Must be called before the
   // scheduler is started.
@@ -107,12 +116,6 @@ class SchedulerQueue : public TaskQueue {
   // queue was not running.
   void SetRunning(bool running) ABSL_LOCKS_EXCLUDED(mutex_);
 
-  // Gets the number of tasks that need to be submitted to the executor, and
-  // updates num_pending_tasks_. If this method is called and returns a
-  // non-zero value, the executor's AddTask method *must* be called for each
-  // task returned, but it can be called without holding the lock.
-  int GetTasksToSubmitToExecutor() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
-
   // Submits tasks that are waiting (e.g. that were added while the queue was
   // not running) if the queue is running. The caller must not hold any mutex.
   void SubmitWaitingTasksToExecutor() ABSL_LOCKS_EXCLUDED(mutex_);
@@ -127,12 +130,18 @@ class SchedulerQueue : public TaskQueue {
   // Adds a node to the scheduler queue for an OpenNode() call.
   void AddNodeForOpen(CalculatorNode* node) ABSL_LOCKS_EXCLUDED(mutex_);
 
-  // Adds an Item to queue_.
-  void AddItemToQueue(Item&& item);
-
   void CleanupAfterRun() ABSL_LOCKS_EXCLUDED(mutex_);
 
  private:
+  // Gets the number of tasks that need to be submitted to the executor, and
+  // updates num_pending_tasks_. If this method is called and returns a
+  // non-zero value, the executor's AddTask method *must* be called for each
+  // task returned, but it can be called without holding the lock.
+  int GetTasksToSubmitToExecutor() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+
+  // Adds an Item to queue_.
+  void AddItemToQueue(Item item);
+
   // Used internally by RunNextTask. Invokes ProcessNode or CloseNode, followed
   // by EndScheduling.
   void RunCalculatorNode(CalculatorNode* node, CalculatorContext* cc)
@@ -144,6 +153,9 @@ class SchedulerQueue : public TaskQueue {
 
   // Checks whether the queue has no queued nodes or pending tasks.
   bool IsIdle() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+
+  // Queue name for logging purposes.
+  const std::string queue_name_;
 
   Executor* executor_ = nullptr;
 

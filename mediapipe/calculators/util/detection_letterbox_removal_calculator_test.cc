@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
+
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/tool/validate_type.h"
@@ -40,7 +41,7 @@ LocationData CreateRelativeLocationData(double xmin, double ymin, double width,
 }
 
 Detection CreateDetection(const std::vector<std::string>& labels,
-                          const std::vector<int32>& label_ids,
+                          const std::vector<int32_t>& label_ids,
                           const std::vector<float>& scores,
                           const LocationData& location_data,
                           const std::string& feature_tag) {

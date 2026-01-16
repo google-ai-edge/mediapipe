@@ -17,9 +17,24 @@
 
 #include <stdio.h>
 
-#include "mediapipe/framework/port/logging.h"
+#include <utility>
+
+#include "absl/log/absl_log.h"
 
 namespace mediapipe {
+
+DeletingFile::DeletingFile(DeletingFile&& other)
+    : path_(std::move(other.path_)),
+      delete_on_destruction_(other.delete_on_destruction_) {
+  other.delete_on_destruction_ = false;
+}
+
+DeletingFile& DeletingFile::operator=(DeletingFile&& other) {
+  path_ = std::move(other.path_);
+  delete_on_destruction_ = other.delete_on_destruction_;
+  other.delete_on_destruction_ = false;
+  return *this;
+}
 
 DeletingFile::DeletingFile(const std::string& path, bool delete_on_destruction)
     : path_(path), delete_on_destruction_(delete_on_destruction) {}
@@ -27,7 +42,7 @@ DeletingFile::DeletingFile(const std::string& path, bool delete_on_destruction)
 DeletingFile::~DeletingFile() {
   if (delete_on_destruction_) {
     if (remove(path_.c_str()) != 0) {
-      LOG(ERROR) << "Unable to delete file: " << path_;
+      ABSL_LOG(ERROR) << "Unable to delete file: " << path_;
     }
   }
 }

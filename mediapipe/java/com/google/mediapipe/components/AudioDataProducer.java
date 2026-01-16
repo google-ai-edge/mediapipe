@@ -14,8 +14,10 @@
 
 package com.google.mediapipe.components;
 
+import javax.annotation.Nullable;
+
 /** Lightweight abstraction for an object that can produce audio data. */
 public interface AudioDataProducer {
   /** Set the consumer that receives the audio data from this producer. */
-  void setAudioConsumer(AudioDataConsumer consumer);
+  void setAudioConsumer(@Nullable AudioDataConsumer consumer);
 }

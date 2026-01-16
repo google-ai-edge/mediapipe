@@ -84,23 +84,24 @@ class PacketFrequencyCalculator : public CalculatorBase {
                                      const Timestamp& input_timestamp);
 
   // Adds the input timestamp in the particular stream's timestamp buffer.
-  absl::Status AddPacketTimestampForStream(int stream_id, int64 timestamp);
+  absl::Status AddPacketTimestampForStream(int stream_id, int64_t timestamp);
 
   // For the specified input stream, clears timestamps from buffer that are
   // older than the configured time_window_sec.
-  absl::Status ClearOldpacketTimestamps(int stream_id, int64 current_timestamp);
+  absl::Status ClearOldpacketTimestamps(int stream_id,
+                                        int64_t current_timestamp);
 
   // Options for the calculator.
   PacketFrequencyCalculatorOptions options_;
 
   // Map where key is the input stream ID and value is the timestamp of the
   // first packet received on that stream.
-  std::map<int, int64> first_timestamp_for_stream_id_usec_;
+  std::map<int, int64_t> first_timestamp_for_stream_id_usec_;
 
   // Map where key is the input stream ID and value is a vector that stores
   // timestamps of recently received packets on the stream. Timestamps older
   // than the time_window_sec are continuously deleted for all the streams.
-  std::map<int, std::vector<int64>> previous_timestamps_for_stream_id_;
+  std::map<int, std::vector<int64_t>> previous_timestamps_for_stream_id_;
 };
 REGISTER_CALCULATOR(PacketFrequencyCalculator);
 
@@ -166,7 +167,7 @@ absl::Status PacketFrequencyCalculator::Process(CalculatorContext* cc) {
 }
 
 absl::Status PacketFrequencyCalculator::AddPacketTimestampForStream(
-    int stream_id, int64 timestamp_usec) {
+    int stream_id, int64_t timestamp_usec) {
   if (previous_timestamps_for_stream_id_.find(stream_id) ==
       previous_timestamps_for_stream_id_.end()) {
     return absl::InvalidArgumentError("Input stream id is invalid");
@@ -178,19 +179,20 @@ absl::Status PacketFrequencyCalculator::AddPacketTimestampForStream(
 }
 
 absl::Status PacketFrequencyCalculator::ClearOldpacketTimestamps(
-    int stream_id, int64 current_timestamp_usec) {
+    int stream_id, int64_t current_timestamp_usec) {
   if (previous_timestamps_for_stream_id_.find(stream_id) ==
       previous_timestamps_for_stream_id_.end()) {
     return absl::InvalidArgumentError("Input stream id is invalid");
   }
 
   auto& timestamps_buffer = previous_timestamps_for_stream_id_[stream_id];
-  int64 time_window_usec = options_.time_window_sec() * kSecondsToMicroseconds;
+  int64_t time_window_usec =
+      options_.time_window_sec() * kSecondsToMicroseconds;
 
   timestamps_buffer.erase(
       std::remove_if(timestamps_buffer.begin(), timestamps_buffer.end(),
                      [&time_window_usec,
-                      &current_timestamp_usec](const int64 timestamp_usec) {
+                      &current_timestamp_usec](const int64_t timestamp_usec) {
                        return current_timestamp_usec - timestamp_usec >
                               time_window_usec;
                      }),

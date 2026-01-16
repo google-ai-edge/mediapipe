@@ -48,6 +48,14 @@ public interface TextureFrame extends TextureReleaseCallback {
   long getTimestamp();
 
   /**
+   * The OpenGL format of the texture.
+   *
+   * <p>The format may be an unqualified format, such as GL_RGBA, or a qualified format, such as
+   * GL_RGBA8. For unqualified formats the data type is simply assumed to be 8-bit unsigned.
+   */
+  int getFormat();
+
+  /**
    * The consumer that receives this TextureFrame must call this method to inform the provider that
    * it is done with it.
    */
@@ -59,4 +67,18 @@ public interface TextureFrame extends TextureReleaseCallback {
    */
   @Override
   void release(GlSyncToken syncToken);
+
+  /**
+   * If this method returns true, this object supports the retain method, and can be used with
+   * multiple consumers. Call retain for each additional consumer beyond the first; each consumer
+   * should call release.
+   */
+  default boolean supportsRetain() {
+    return false;
+  }
+
+  /** Increments the reference count. Only available with some implementations of TextureFrame. */
+  default void retain() {
+    throw new UnsupportedOperationException();
+  }
 }

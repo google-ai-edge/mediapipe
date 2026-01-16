@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
 licenses(["notice"])
 
 package(default_visibility = [
@@ -23,7 +26,7 @@ cc_library(
     srcs = ["low_pass_filter.cc"],
     hdrs = ["low_pass_filter.h"],
     deps = [
-        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -44,8 +47,21 @@ cc_library(
     hdrs = ["one_euro_filter.h"],
     deps = [
         ":low_pass_filter",
-        "//mediapipe/framework/port:logging",
-        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_test(
+    name = "one_euro_filter_test",
+    srcs = ["one_euro_filter_test.cc"],
+    deps = [
+        ":one_euro_filter",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/time",
     ],
 )
@@ -56,7 +72,8 @@ cc_library(
     hdrs = ["relative_velocity_filter.h"],
     deps = [
         ":low_pass_filter",
-        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/time",
     ],
@@ -68,7 +85,7 @@ cc_test(
     deps = [
         ":relative_velocity_filter",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/time",
     ],

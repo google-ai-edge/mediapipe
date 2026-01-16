@@ -48,16 +48,20 @@ void ImageSubmodule(pybind11::module* module) {
   become immutable after creation.
 
   Creation examples:
-    import cv2
-    cv_mat = cv2.imread(input_file)[:, :, ::-1]
-    rgb_frame = mp.Image(format=ImageFormat.SRGB, data=cv_mat)
-    gray_frame = mp.Image(
-        format=ImageFormat.GRAY, data=cv2.cvtColor(cv_mat, cv2.COLOR_RGB2GRAY))
 
-    from PIL import Image
-    pil_img = Image.new('RGB', (60, 30), color = 'red')
-    image = mp.Image(
-        format=mp.ImageFormat.SRGB, data=np.asarray(pil_img))
+  ```python
+  import cv2
+  cv_mat = cv2.imread(input_file)
+  rgb_frame = mp.Image(image_format=mp.ImageFormat.SRGB, data=cv_mat)
+  gray_frame = mp.Image(
+      image_format=mp.ImageFormat.GRAY8,
+      data=cv2.cvtColor(cv_mat, cv2.COLOR_RGB2GRAY))
+
+  from PIL import Image
+  pil_img = Image.new('RGB', (60, 30), color = 'red')
+  image = mp.Image(
+      image_format=mp.ImageFormat.SRGB, data=np.asarray(pil_img))
+  ```
 
   The pixel data in an Image can be retrieved as a numpy ndarray by calling
   `Image.numpy_view()`. The returned numpy ndarray is a reference to the
@@ -65,22 +69,25 @@ void ImageSubmodule(pybind11::module* module) {
   numpy ndarray, it's required to obtain a copy of it.
 
   Pixel data retrieval examples:
-    for channel in range(num_channel):
-      for col in range(width):
-        for row in range(height):
-          print(image[row, col, channel])
 
-    output_ndarray = image.numpy_view()
-    print(output_ndarray[0, 0, 0])
-    copied_ndarray = np.copy(output_ndarray)
-    copied_ndarray[0,0,0] = 0
+  ```python
+  for channel in range(num_channel):
+    for col in range(width):
+      for row in range(height):
+        print(image[row, col, channel])
+
+  output_ndarray = image.numpy_view()
+  print(output_ndarray[0, 0, 0])
+  copied_ndarray = np.copy(output_ndarray)
+  copied_ndarray[0,0,0] = 0
+  ```
   )doc",
       py::dynamic_attr());
 
   image
       .def(
           py::init([](mediapipe::ImageFormat::Format format,
-                      const py::array_t<uint8, py::array::c_style>& data) {
+                      const py::array_t<uint8_t, py::array::c_style>& data) {
             if (format != mediapipe::ImageFormat::GRAY8 &&
                 format != mediapipe::ImageFormat::SRGB &&
                 format != mediapipe::ImageFormat::SRGBA) {
@@ -89,13 +96,13 @@ void ImageSubmodule(pybind11::module* module) {
                                  "SRGB, and SRGBA MediaPipe image formats.");
             }
             return Image(std::shared_ptr<ImageFrame>(
-                CreateImageFrame<uint8>(format, data)));
+                CreateImageFrame<uint8_t>(format, data)));
           }),
-          R"doc(For uint8 data type, valid ImageFormat are GRAY8, SGRB, and SRGBA.)doc",
+          R"doc(For uint8 data type, valid ImageFormat are GRAY8, SRGB, and SRGBA.)doc",
           py::arg("image_format"), py::arg("data").noconvert())
       .def(
           py::init([](mediapipe::ImageFormat::Format format,
-                      const py::array_t<uint16, py::array::c_style>& data) {
+                      const py::array_t<uint16_t, py::array::c_style>& data) {
             if (format != mediapipe::ImageFormat::GRAY16 &&
                 format != mediapipe::ImageFormat::SRGB48 &&
                 format != mediapipe::ImageFormat::SRGBA64) {
@@ -105,7 +112,7 @@ void ImageSubmodule(pybind11::module* module) {
                   "SRGB48, and SRGBA64 MediaPipe image formats.");
             }
             return Image(std::shared_ptr<ImageFrame>(
-                CreateImageFrame<uint16>(format, data)));
+                CreateImageFrame<uint16_t>(format, data)));
           }),
           R"doc(For uint16 data type, valid ImageFormat are GRAY16, SRGB48, and SRGBA64.)doc",
           py::arg("image_format"), py::arg("data").noconvert())
@@ -113,16 +120,17 @@ void ImageSubmodule(pybind11::module* module) {
           py::init([](mediapipe::ImageFormat::Format format,
                       const py::array_t<float, py::array::c_style>& data) {
             if (format != mediapipe::ImageFormat::VEC32F1 &&
-                format != mediapipe::ImageFormat::VEC32F2) {
+                format != mediapipe::ImageFormat::VEC32F2 &&
+                format != mediapipe::ImageFormat::VEC32F4) {
               throw RaisePyError(
                   PyExc_RuntimeError,
-                  "float image data should be either VEC32F1 or VEC32F2 "
-                  "MediaPipe image formats.");
+                  "float image data should be either VEC32F1, VEC32F2, or "
+                  "VEC32F4 MediaPipe image formats.");
             }
             return Image(std::shared_ptr<ImageFrame>(
                 CreateImageFrame<float>(format, data)));
           }),
-          R"doc(For float data type, valid ImageFormat are VEC32F1 and VEC32F2.)doc",
+          R"doc(For float data type, valid ImageFormat are VEC32F1, VEC32F2, and VEC32F4.)doc",
           py::arg("image_format"), py::arg("data").noconvert());
 
   image.def(
@@ -156,9 +164,11 @@ void ImageSubmodule(pybind11::module* module) {
     An unwritable numpy ndarray.
 
   Examples:
+    ```
     output_ndarray = image.numpy_view()
     copied_ndarray = np.copy(output_ndarray)
     copied_ndarray[0,0,0] = 0
+    ```
 )doc");
 
   image.def(
@@ -173,11 +183,11 @@ void ImageSubmodule(pybind11::module* module) {
             py::cast(self, py::return_value_policy::reference);
         switch (self.GetImageFrameSharedPtr()->ByteDepth()) {
           case 1:
-            return GetValue<uint8>(*self.GetImageFrameSharedPtr(), pos,
-                                   py_object);
+            return GetValue<uint8_t>(*self.GetImageFrameSharedPtr(), pos,
+                                     py_object);
           case 2:
-            return GetValue<uint16>(*self.GetImageFrameSharedPtr(), pos,
-                                    py_object);
+            return GetValue<uint16_t>(*self.GetImageFrameSharedPtr(), pos,
+                                      py_object);
           case 4:
             return GetValue<float>(*self.GetImageFrameSharedPtr(), pos,
                                    py_object);
@@ -191,10 +201,12 @@ void ImageSubmodule(pybind11::module* module) {
     IndexError: If the index is invalid or out of bounds.
 
   Examples:
+    ```
     for channel in range(num_channel):
       for col in range(width):
         for row in range(height):
           print(image[row, col, channel])
+    ```
 )doc");
 
   image
@@ -212,7 +224,7 @@ void ImageSubmodule(pybind11::module* module) {
           R"doc(Return True if the pixel data is unallocated.)doc")
       .def(
           "is_aligned",
-          [](Image& self, uint32 alignment_boundary) {
+          [](Image& self, uint32_t alignment_boundary) {
             return self.GetImageFrameSharedPtr()->IsAligned(alignment_boundary);
           },
           R"doc(Return True if each row of the data is aligned to alignment boundary, which must be 1 or a power of 2.
@@ -224,18 +236,34 @@ void ImageSubmodule(pybind11::module* module) {
     A boolean.
 
   Examples:
+    ```
     image.is_aligned(16)
+    ```
 )doc");
 
   image.def_static(
       "create_from_file",
       [](const std::string& file_name) {
+        unsigned char* image_data = nullptr;
         int width;
         int height;
         int channels;
-        auto* image_data =
-            stbi_load(file_name.c_str(), &width, &height, &channels,
-                      /*desired_channels=*/0);
+
+#if TARGET_OS_OSX && !MEDIAPIPE_DISABLE_GPU
+        // Our ObjC layer does not support 3-channel images, so we read the
+        // number of channels first and request RGBA if needed.
+        if (stbi_info(file_name.c_str(), &width, &height, &channels)) {
+          if (channels == 3) {
+            channels = 4;
+          }
+          int unused;
+          image_data =
+              stbi_load(file_name.c_str(), &width, &height, &unused, channels);
+        }
+#else
+        image_data = stbi_load(file_name.c_str(), &width, &height, &channels,
+                               /*desired_channels=*/0);
+#endif  // TARGET_OS_OSX && !MEDIAPIPE_DISABLE_GPU
         if (image_data == nullptr) {
           throw RaisePyError(PyExc_RuntimeError,
                              absl::StrFormat("Image decoding failed (%s): %s",
@@ -249,11 +277,13 @@ void ImageSubmodule(pybind11::module* module) {
                 ImageFormat::GRAY8, width, height, width, image_data,
                 stbi_image_free);
             break;
+#if !TARGET_OS_OSX || MEDIAPIPE_DISABLE_GPU
           case 3:
             image_frame = std::make_shared<ImageFrame>(
                 ImageFormat::SRGB, width, height, 3 * width, image_data,
                 stbi_image_free);
             break;
+#endif  // !TARGET_OS_OSX || MEDIAPIPE_DISABLE_GPU
           case 4:
             image_frame = std::make_shared<ImageFrame>(
                 ImageFormat::SRGBA, width, height, 4 * width, image_data,

@@ -69,7 +69,7 @@ message Locus {
 
   // Required if locus_type = REGION, Specifies a region using a scanline
   // encoding
-  optional Rasterization region = 4;
+  optional mediapipe.Rasterization region = 4;
 
   // Required if locus_type = VIDEO_TUBE. Specifies the component loci of the
   // tube.

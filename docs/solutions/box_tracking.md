@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/guide#legacy
 title: Box Tracking
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 10
 ---
 
@@ -17,6 +18,14 @@ nav_order: 10
 {:toc}
 </details>
 ---
+
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+We have ended support for this MediaPipe Legacy Solution as of March 1, 2023.
+For more information, see the
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/guide#legacy)
+site.*
+
+----
 
 ## Overview
 
@@ -35,13 +44,13 @@ Our solution consists of three main components: a motion analysis component, a
 flow packager component, and a box tracking component. Each component is
 encapsulated as a MediaPipe calculator, and the box tracking solution as a whole
 is represented as a MediaPipe
-[subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/tracking/subgraphs/box_tracking_gpu.pbtxt).
+[subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/tracking/subgraphs/box_tracking_gpu.pbtxt).
 
 Note: To visualize a graph, copy the graph and paste it into
 [MediaPipe Visualizer](https://viz.mediapipe.dev/).
 
 In the
-[box tracking subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/tracking/subgraphs/box_tracking_gpu.pbtxt),
+[box tracking subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/tracking/subgraphs/box_tracking_gpu.pbtxt),
 the MotionAnalysis calculator extracts features (e.g. high-gradient corners)
 across the image, tracks those features over time, classifies them into
 foreground and background features, and estimates both local motion vectors and
@@ -85,25 +94,25 @@ frame (e.g., [MediaPipe Object Detection](./object_detection.md)):
 *Fig 1. Box tracking paired with ML-based object detection.*                         |
 
 The object detection and tracking pipeline can be implemented as a MediaPipe
-[graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/tracking/object_detection_tracking_mobile_gpu.pbtxt),
+[graph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/tracking/object_detection_tracking_mobile_gpu.pbtxt),
 which internally utilizes an
-[object detection subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/tracking/subgraphs/object_detection_gpu.pbtxt),
+[object detection subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/tracking/subgraphs/object_detection_gpu.pbtxt),
 an
-[object tracking subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/tracking/subgraphs/object_tracking_gpu.pbtxt),
+[object tracking subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/tracking/subgraphs/object_tracking_gpu.pbtxt),
 and a
-[renderer subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/tracking/subgraphs/renderer_gpu.pbtxt).
+[renderer subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/tracking/subgraphs/renderer_gpu.pbtxt).
 
 In general, the object detection subgraph (which performs ML model inference
 internally) runs only upon request, e.g. at an arbitrary frame rate or triggered
 by specific signals. More specifically, in this particular
-[graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/tracking/object_detection_tracking_mobile_gpu.pbtxt)
+[graph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/tracking/object_detection_tracking_mobile_gpu.pbtxt)
 a PacketResampler calculator temporally subsamples the incoming video frames to
 0.5 fps before they are passed into the object detection subgraph. This frame
 rate can be configured differently as an option in PacketResampler.
 
 The object tracking subgraph runs in real-time on every incoming frame to track
 the detected objects. It expands the
-[box tracking subgraph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/tracking/subgraphs/box_tracking_gpu.pbtxt)
+[box tracking subgraph](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/tracking/subgraphs/box_tracking_gpu.pbtxt)
 with additional functionality: when new detections arrive it uses IoU
 (Intersection over Union) to associate the current tracked objects/boxes with
 new detections to remove obsolete or duplicated boxes.
@@ -124,10 +133,10 @@ to visualize its associated subgraphs, please see
 Note: Object detection is using TensorFlow Lite on GPU while tracking is on CPU.
 
 *   Graph:
-    [`mediapipe/graphs/tracking/object_detection_tracking_mobile_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/tracking/object_detection_tracking_mobile_gpu.pbtxt)
+    [`mediapipe/graphs/tracking/object_detection_tracking_mobile_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/tracking/object_detection_tracking_mobile_gpu.pbtxt)
 *   Android target:
     [(or download prebuilt ARM64 APK)](https://drive.google.com/open?id=1UXL9jX4Wpp34TsiVogugV3J3T9_C5UK-)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/objecttrackinggpu:objecttrackinggpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/objecttrackinggpu/BUILD)
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/objecttrackinggpu:objecttrackinggpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/objecttrackinggpu/BUILD)
 *   iOS target: Not available
 
 ### Desktop
@@ -135,9 +144,9 @@ Note: Object detection is using TensorFlow Lite on GPU while tracking is on CPU.
 *   Running on CPU (both for object detection using TensorFlow Lite and
     tracking):
     *   Graph:
-        [`mediapipe/graphs/tracking/object_detection_tracking_desktop_live.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/tracking/object_detection_tracking_desktop_live.pbtxt)
+        [`mediapipe/graphs/tracking/object_detection_tracking_desktop_live.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/tracking/object_detection_tracking_desktop_live.pbtxt)
     *   Target:
-        [`mediapipe/examples/desktop/object_tracking:object_tracking_cpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/object_tracking/BUILD)
+        [`mediapipe/examples/desktop/object_tracking:object_tracking_cpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/object_tracking/BUILD)
 *   Running on GPU: Not available
 
 ## Resources

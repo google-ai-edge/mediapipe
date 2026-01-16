@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,18 +19,22 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/cord.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/tasks/cc/core/utils.h"
+#include "mediapipe/tasks/cc/metadata/metadata_parser.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace metadata {
 namespace {
 
+using core::LoadBinaryContent;
 using ::testing::Optional;
 
 constexpr char kTestDataDirectory[] = "mediapipe/tasks/testdata/metadata";
@@ -41,6 +45,11 @@ constexpr char kMobileIcaWithoutTfLiteMetadata[] =
     "mobile_ica_8bit-without-model-metadata.tflite";
 constexpr char kMobileIcaWithTfLiteMetadata[] =
     "mobile_ica_8bit-with-metadata.tflite";
+constexpr char kMobileIcaWithCustomMetadata[] =
+    "mobile_ica_8bit-with-custom-metadata.tflite";
+// `min_parser_version=1000.0.0` for test purpose.
+constexpr char kMobileIcaWithLargeMinParseVersion[] =
+    "mobile_ica_8bit-with-large-min-parser-version.tflite";
 
 constexpr char kMobileIcaWithUnsupportedMetadataVersion[] =
     "mobile_ica_8bit-with-unsupported-metadata-version.tflite";
@@ -53,8 +62,8 @@ constexpr char kRandomTextFile[] = "external_file";
 
 absl::StatusOr<std::unique_ptr<ModelMetadataExtractor>> CreateMetadataExtractor(
     std::string model_name, std::string* file_contents) {
-  MP_RETURN_IF_ERROR(file::GetContents(
-      file::JoinPath("./", kTestDataDirectory, model_name), file_contents));
+  *file_contents = LoadBinaryContent(
+      file::JoinPath("./", kTestDataDirectory, model_name).c_str());
   return ModelMetadataExtractor::CreateFromModelBuffer(file_contents->data(),
                                                        file_contents->length());
 }
@@ -330,6 +339,81 @@ TEST(ModelMetadataExtractorTest, GetModelVersionWorks) {
       std::unique_ptr<ModelMetadataExtractor> extractor,
       CreateMetadataExtractor(kMobileIcaWithTfLiteMetadata, &buffer));
   MP_EXPECT_OK(extractor->GetModelVersion().status());
+}
+
+TEST(ModelMetadataExtractorTest, GetCustomMetadataListWorks) {
+  std::string buffer;
+  MP_ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<ModelMetadataExtractor> extractor,
+      CreateMetadataExtractor(kMobileIcaWithCustomMetadata, &buffer));
+  EXPECT_TRUE(extractor->GetCustomMetadataList() != nullptr);
+}
+
+TEST(ModelMetadataExtractorTest,
+     GetCustomMetadataListWithoutTfLiteMetadataWorks) {
+  std::string buffer;
+  MP_ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<ModelMetadataExtractor> extractor,
+      CreateMetadataExtractor(kMobileIcaWithoutTfLiteMetadata, &buffer));
+  EXPECT_TRUE(extractor->GetCustomMetadataList() == nullptr);
+}
+
+TEST(ModelMetadataExtractorTest, GetCustomMetadataWorks) {
+  std::string buffer;
+  MP_ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<ModelMetadataExtractor> extractor,
+      CreateMetadataExtractor(kMobileIcaWithCustomMetadata, &buffer));
+  EXPECT_TRUE(extractor->GetCustomMetadata(0) != nullptr);
+}
+
+TEST(ModelMetadataExtractorTest, GetCustomMetadataWithoutTfLiteMetadataWorks) {
+  std::string buffer;
+  MP_ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<ModelMetadataExtractor> extractor,
+      CreateMetadataExtractor(kMobileIcaWithoutTfLiteMetadata, &buffer));
+  EXPECT_TRUE(extractor->GetCustomMetadata(0) == nullptr);
+}
+
+TEST(ModelMetadataExtractorTest, GetCustomMetadataWithOutOfRangeIndexWorks) {
+  std::string buffer;
+  MP_ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<ModelMetadataExtractor> extractor,
+      CreateMetadataExtractor(kMobileIcaWithoutTfLiteMetadata, &buffer));
+  EXPECT_TRUE(extractor->GetCustomMetadata(-1) == nullptr);
+  EXPECT_TRUE(extractor->GetCustomMetadata(2) == nullptr);
+}
+
+TEST(ModelMetadataExtractorTest, GetCustomMetadataCountWorks) {
+  std::string buffer;
+  MP_ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<ModelMetadataExtractor> extractor,
+      CreateMetadataExtractor(kMobileIcaWithCustomMetadata, &buffer));
+  EXPECT_EQ(extractor->GetCustomMetadataCount(), 2);
+}
+
+TEST(ModelMetadataExtractorTest,
+     GetCustomMetadataCountWithoutTfLiteMetadataWorks) {
+  std::string buffer;
+  MP_ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<ModelMetadataExtractor> extractor,
+      CreateMetadataExtractor(kMobileIcaWithoutTfLiteMetadata, &buffer));
+  EXPECT_EQ(extractor->GetCustomMetadataCount(), 0);
+}
+
+TEST(ModelMetadataExtractorTest,
+     CreateFailsWithIncompatibleWithMinParserVersion) {
+  std::string buffer;
+  auto extractor =
+      CreateMetadataExtractor(kMobileIcaWithLargeMinParseVersion, &buffer);
+  EXPECT_THAT(extractor.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_EQ(
+      extractor.status().message(),
+      absl::StrFormat("Metadata schema version %s is smaller than the minimum "
+                      "version 1000.0.0 to parse the metadata flatbuffer.",
+                      kMetadataParserVersion));
+  EXPECT_THAT(extractor.status().GetPayload(kMediaPipeTasksPayload),
+              Optional(absl::Cord(absl::StrCat(
+                  MediaPipeTasksStatus::kMetadataInvalidSchemaVersionError))));
 }
 
 }  // namespace

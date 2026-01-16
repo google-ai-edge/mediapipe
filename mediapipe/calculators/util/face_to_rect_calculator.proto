@@ -1,0 +1,47 @@
+// Copyright 2023 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package mediapipe;
+
+message FaceToRectCalculatorOptions {
+  // The number of landmarks for each eye.
+  int32 eye_landmark_size = 1;
+
+  // The number of landmarks for nose.
+  int32 nose_landmark_size = 2;
+
+  // The number of landmarks for mouth.
+  int32 mouth_landmark_size = 3;
+
+  // Coefficient to compute center by mixing eye center and mouth center.
+  // Suggest values:
+  // - human face: 0.1
+  // - cartoon face: 0.2
+  float eye_to_mouth_mix = 4;
+
+  // The scale transforms eye-mouth distance to crop size.
+  // Suggest values:
+  // - human face landmarks: 3.6 (100%)
+  // - human face detection: 3.42 (95%)
+  float eye_to_mouth_scale = 5;
+
+  // The scale transforms eye-eye distance to crop size.
+  // Suggest values:
+  // - human face landmarks: 4.0 (100%)
+  // - human face detection: 3.8 (95%)
+  // - cartoon face landmarks: 3.0 (75%)
+  float eye_to_eye_scale = 6;
+}

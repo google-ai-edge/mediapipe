@@ -15,6 +15,8 @@
 #ifndef MEDIAPIPE_GPU_GPU_BUFFER_FORMAT_H_
 #define MEDIAPIPE_GPU_GPU_BUFFER_FORMAT_H_
 
+#include <cstdint>
+
 #ifdef __APPLE__
 #include <CoreVideo/CoreVideo.h>
 #if !TARGET_OS_OSX
@@ -43,6 +45,7 @@ enum class GpuBufferFormat : uint32_t {
   kGrayFloat32 = MEDIAPIPE_FOURCC('L', '0', '0', 'f'),
   kGrayHalf16 = MEDIAPIPE_FOURCC('L', '0', '0', 'h'),
   kOneComponent8 = MEDIAPIPE_FOURCC('L', '0', '0', '8'),
+  kOneComponent8Alpha = MEDIAPIPE_FOURCC('A', '0', '0', '8'),
   kOneComponent8Red = MEDIAPIPE_FOURCC('R', '0', '0', '8'),
   kTwoComponent8 = MEDIAPIPE_FOURCC('2', 'C', '0', '8'),
   kTwoComponentHalf16 = MEDIAPIPE_FOURCC('2', 'C', '0', 'h'),
@@ -52,6 +55,18 @@ enum class GpuBufferFormat : uint32_t {
   kRGB24 = 0x00000018,  // Note: prefer BGRA32 whenever possible.
   kRGBAHalf64 = MEDIAPIPE_FOURCC('R', 'G', 'h', 'A'),
   kRGBAFloat128 = MEDIAPIPE_FOURCC('R', 'G', 'f', 'A'),
+  // Immutable version of kRGBA32
+  kImmutableRGBA32 = MEDIAPIPE_FOURCC('4', 'C', 'I', '8'),
+  // Immutable version of kRGBAFloat128
+  kImmutableRGBAFloat128 = MEDIAPIPE_FOURCC('4', 'C', 'I', 'f'),
+  // 8-bit Y plane + interleaved 8-bit U/V plane with 2x2 subsampling.
+  kNV12 = MEDIAPIPE_FOURCC('N', 'V', '1', '2'),
+  // 8-bit Y plane + interleaved 8-bit V/U plane with 2x2 subsampling.
+  kNV21 = MEDIAPIPE_FOURCC('N', 'V', '2', '1'),
+  // 8-bit Y plane + non-interleaved 8-bit U/V planes with 2x2 subsampling.
+  kI420 = MEDIAPIPE_FOURCC('I', '4', '2', '0'),
+  // 8-bit Y plane + non-interleaved 8-bit V/U planes with 2x2 subsampling.
+  kYV12 = MEDIAPIPE_FOURCC('Y', 'V', '1', '2'),
 };
 
 #if !MEDIAPIPE_DISABLE_GPU
@@ -69,11 +84,16 @@ struct GlTextureInfo {
   // For multiplane buffers, this represents how many times smaller than
   // the nominal image size a plane is.
   int downscale;
+  // For GLES3.1+ compute shaders, users may explicitly request immutable
+  // textures.
+  bool immutable = false;
 };
 
 const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
                                                      int plane,
                                                      GlVersion gl_version);
+
+GpuBufferFormat GpuBufferFormatForGlFormat(GLenum format);
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
 ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format);
@@ -93,6 +113,7 @@ inline OSType CVPixelFormatForGpuBufferFormat(GpuBufferFormat format) {
       return kCVPixelFormatType_OneComponent32Float;
     case GpuBufferFormat::kOneComponent8:
       return kCVPixelFormatType_OneComponent8;
+    case GpuBufferFormat::kOneComponent8Alpha:
     case GpuBufferFormat::kOneComponent8Red:
       return -1;
     case GpuBufferFormat::kTwoComponent8:
@@ -111,6 +132,12 @@ inline OSType CVPixelFormatForGpuBufferFormat(GpuBufferFormat format) {
       return kCVPixelFormatType_64RGBAHalf;
     case GpuBufferFormat::kRGBAFloat128:
       return kCVPixelFormatType_128RGBAFloat;
+    case GpuBufferFormat::kImmutableRGBA32:
+    case GpuBufferFormat::kImmutableRGBAFloat128:
+    case GpuBufferFormat::kNV12:
+    case GpuBufferFormat::kNV21:
+    case GpuBufferFormat::kI420:
+    case GpuBufferFormat::kYV12:
     case GpuBufferFormat::kUnknown:
       return -1;
   }

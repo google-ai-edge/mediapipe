@@ -28,8 +28,6 @@
 using mediapipe::Packet;
 using mediapipe::PacketTypeSet;
 using mediapipe::autoflip::DetectionSet;
-using mediapipe::autoflip::SalientRegion;
-using mediapipe::autoflip::SignalType;
 
 constexpr char kIsShotBoundaryTag[] = "IS_SHOT_BOUNDARY";
 constexpr char kSignalInputsTag[] = "SIGNAL";

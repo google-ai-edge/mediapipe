@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ limitations under the License.
 #include <type_traits>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/calculators/tensor/tensors_to_classification_calculator.pb.h"
@@ -52,6 +53,7 @@ namespace gesture_recognizer {
 
 namespace {
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
@@ -171,7 +173,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
     if (sc->Options<HandGestureRecognizerGraphOptions>()
             .base_options()
             .has_model_asset()) {
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           const auto* model_asset_bundle_resources,
           CreateModelAssetBundleResources<HandGestureRecognizerGraphOptions>(
               sc));
@@ -184,18 +186,18 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
           !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
                .IsAvailable()));
     }
-    ASSIGN_OR_RETURN(const auto sub_task_model_resources,
-                     CreateSubTaskModelResources(sc));
+    MP_ASSIGN_OR_RETURN(const auto sub_task_model_resources,
+                        CreateSubTaskModelResources(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(auto hand_gestures,
-                     BuildGestureRecognizerGraph(
-                         sc->Options<HandGestureRecognizerGraphOptions>(),
-                         sub_task_model_resources,
-                         graph[Input<ClassificationList>(kHandednessTag)],
-                         graph[Input<NormalizedLandmarkList>(kLandmarksTag)],
-                         graph[Input<LandmarkList>(kWorldLandmarksTag)],
-                         graph[Input<std::pair<int, int>>(kImageSizeTag)],
-                         graph[Input<NormalizedRect>(kNormRectTag)], graph));
+    MP_ASSIGN_OR_RETURN(auto hand_gestures,
+                        BuildGestureRecognizerGraph(
+                            sc->Options<HandGestureRecognizerGraphOptions>(),
+                            sub_task_model_resources,
+                            graph[Input<ClassificationList>(kHandednessTag)],
+                            graph[Input<NormalizedLandmarkList>(kLandmarksTag)],
+                            graph[Input<LandmarkList>(kWorldLandmarksTag)],
+                            graph[Input<std::pair<int, int>>(kImageSizeTag)],
+                            graph[Input<NormalizedRect>(kNormRectTag)], graph));
     hand_gestures >> graph[Output<ClassificationList>(kHandGesturesTag)];
     return graph.GetConfig();
   }
@@ -205,8 +207,8 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
   absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
                                      HandGestureRecognizerGraphOptions* options,
                                      bool is_copy) {
-    ASSIGN_OR_RETURN(const auto gesture_embedder_file,
-                     resources.GetModelFile(kGestureEmbedderTFLiteName));
+    MP_ASSIGN_OR_RETURN(const auto gesture_embedder_file,
+                        resources.GetFile(kGestureEmbedderTFLiteName));
     auto* gesture_embedder_graph_options =
         options->mutable_gesture_embedder_graph_options();
     SetExternalFile(gesture_embedder_file,
@@ -217,9 +219,8 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
         options->base_options(),
         gesture_embedder_graph_options->mutable_base_options());
 
-    ASSIGN_OR_RETURN(
-        const auto canned_gesture_classifier_file,
-        resources.GetModelFile(kCannedGestureClassifierTFLiteName));
+    MP_ASSIGN_OR_RETURN(const auto canned_gesture_classifier_file,
+                        resources.GetFile(kCannedGestureClassifierTFLiteName));
     auto* canned_gesture_classifier_graph_options =
         options->mutable_canned_gesture_classifier_graph_options();
     SetExternalFile(
@@ -232,7 +233,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
         canned_gesture_classifier_graph_options->mutable_base_options());
 
     const auto custom_gesture_classifier_file =
-        resources.GetModelFile(kCustomGestureClassifierTFLiteName);
+        resources.GetFile(kCustomGestureClassifierTFLiteName);
     if (custom_gesture_classifier_file.ok()) {
       has_custom_gesture_classifier = true;
       auto* custom_gesture_classifier_graph_options =
@@ -246,7 +247,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
           options->base_options(),
           custom_gesture_classifier_graph_options->mutable_base_options());
     } else {
-      LOG(INFO) << "Custom gesture classifier is not defined.";
+      ABSL_LOG(INFO) << "Custom gesture classifier is not defined.";
     }
     return absl::OkStatus();
   }
@@ -259,7 +260,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
         *options->mutable_gesture_embedder_graph_options()
              ->mutable_base_options()
              ->mutable_model_asset();
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         sub_task_model_resources.gesture_embedder_model_resource,
         CreateModelResources(sc,
                              std::make_unique<core::proto::ExternalFile>(
@@ -269,7 +270,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
         *options->mutable_canned_gesture_classifier_graph_options()
              ->mutable_base_options()
              ->mutable_model_asset();
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         sub_task_model_resources.canned_gesture_classifier_model_resource,
         CreateModelResources(
             sc,
@@ -281,7 +282,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
           *options->mutable_custom_gesture_classifier_graph_options()
                ->mutable_base_options()
                ->mutable_model_asset();
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           sub_task_model_resources.custom_gesture_classifier_model_resource,
           CreateModelResources(
               sc,
@@ -373,23 +374,23 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
     int classifier_nums = 0;
     // Inference for custom gesture classifier if it exists.
     if (has_custom_gesture_classifier) {
-      ASSIGN_OR_RETURN(
-          auto gesture_clasification_list,
+      MP_ASSIGN_OR_RETURN(
+          auto gesture_classification_list,
           GetGestureClassificationList(
               sub_task_model_resources.custom_gesture_classifier_model_resource,
               graph_options.custom_gesture_classifier_graph_options(),
               embedding_tensors, graph));
-      gesture_clasification_list >> combine_predictions.In(classifier_nums++);
+      gesture_classification_list >> combine_predictions.In(classifier_nums++);
     }
 
     // Inference for canned gesture classifier.
-    ASSIGN_OR_RETURN(
-        auto gesture_clasification_list,
+    MP_ASSIGN_OR_RETURN(
+        auto gesture_classification_list,
         GetGestureClassificationList(
             sub_task_model_resources.canned_gesture_classifier_model_resource,
             graph_options.canned_gesture_classifier_graph_options(),
             embedding_tensors, graph));
-    gesture_clasification_list >> combine_predictions.In(classifier_nums++);
+    gesture_classification_list >> combine_predictions.In(classifier_nums++);
 
     auto combined_classification_list =
         combine_predictions.Out(kPredictionTag).Cast<ClassificationList>();
@@ -480,7 +481,7 @@ class MultipleHandGestureRecognizerGraph : public core::ModelTaskGraph {
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto multi_hand_gestures,
         BuildMultiGestureRecognizerSubraph(
             sc->Options<HandGestureRecognizerGraphOptions>(),

@@ -16,6 +16,9 @@ syntax = "proto2";
 
 package mediapipe;
 
+option java_package = "com.google.mediapipe.util.proto";
+option java_outer_classname = "LabelMapProto";
+
 // Mapping a numerical class index output to a Knowledge Graph entity
 // ID or any other string label representing this class. Optionally it is
 // possible to specify an additional display name (in a given language) which is

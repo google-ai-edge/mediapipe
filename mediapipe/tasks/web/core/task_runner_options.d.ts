@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,16 @@ export declare interface BaseOptions {
    * The model path to the model asset file. Only one of `modelAssetPath` or
    * `modelAssetBuffer` can be set.
    */
-  modelAssetPath?: string|undefined;
+  modelAssetPath?: string | undefined;
 
   /**
-   * A buffer containing the model aaset. Only one of `modelAssetPath` or
-   * `modelAssetBuffer` can be set.
+   * A buffer or stream reader containing the model asset. Only one of
+   * `modelAssetPath` or `modelAssetBuffer` can be set.
    */
-  modelAssetBuffer?: Uint8Array|undefined;
+  modelAssetBuffer?: Uint8Array | ReadableStreamDefaultReader | undefined;
 
   /** Overrides the default backend to use for the provided model. */
-  delegate?: 'cpu'|'gpu'|undefined;
+  delegate?: 'CPU' | 'GPU' | undefined;
 }
 
 /** Options to configure MediaPipe Tasks in general. */

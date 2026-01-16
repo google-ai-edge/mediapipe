@@ -29,4 +29,8 @@ message RectToRenderScaleCalculatorOptions {
   // when actual object size on the image will be `B`, than all RenderData
   // primitives will be scaled with factor `B/A`.
   optional float multiplier = 1 [default = 0.01];
+
+  // When true, Process is called for every new timestamp bound, with or without
+  // new packets.
+  optional bool process_timestamp_bounds = 2 [default = false];
 }

@@ -3,6 +3,8 @@
 # This task takes text input performs Natural Language classification (including
 # BERT-based text classification).
 
+load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
@@ -44,4 +46,25 @@ mediapipe_ts_declaration(
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:classifier_options",
     ],
+)
+
+mediapipe_ts_library(
+    name = "text_classifier_test_lib",
+    testonly = True,
+    srcs = [
+        "text_classifier_test.ts",
+    ],
+    deps = [
+        ":text_classifier",
+        "//mediapipe/framework:calculator_jspb_proto",
+        "//mediapipe/framework/formats:classification_jspb_proto",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_jspb_proto",
+        "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/core:task_runner_test_utils",
+    ],
+)
+
+jasmine_node_test(
+    name = "text_classifier_test",
+    srcs = [":text_classifier_test_lib"],
 )

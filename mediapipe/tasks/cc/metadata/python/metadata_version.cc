@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ PYBIND11_MODULE(_pywrap_metadata_version, m) {
 
   // Using pybind11 type conversions to convert between Python and native
   // C++ types. There are other options to provide access to native Python types
-  // in C++ and vice versa. See the pybind 11 instrcution [1] for more details.
-  // Type converstions is recommended by pybind11, though the main downside
+  // in C++ and vice versa. See the pybind 11 instruction [1] for more details.
+  // Type conversions is recommended by pybind11, though the main downside
   // is that a copy of the data must be made on every Python to C++ transition:
   // this is needed since the C++ and Python versions of the same type generally
   // won’t have the same memory layout.

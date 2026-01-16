@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2025 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -12,36 +12,38 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/calculators/landmarks_to_matrix_calculator.h"
 
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <memory>
-#include <string>
 #include <type_traits>
 #include <utility>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
-#include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/api3/calculator.h"
+#include "mediapipe/framework/api3/calculator_context.h"
+#include "mediapipe/framework/api3/calculator_contract.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/calculators/landmarks_to_matrix_calculator.pb.h"
 
-// TODO Update to use API2
 namespace mediapipe {
-namespace api2 {
+namespace tasks {
+
+using ::mediapipe::NormalizedRect;
+using ::mediapipe::api3::Calculator;
+using ::mediapipe::api3::CalculatorContext;
+using ::mediapipe::api3::CalculatorContract;
+using ::mediapipe::tasks::LandmarksToMatrixNode;
 
 namespace {
 
-constexpr char kLandmarksTag[] = "LANDMARKS";
-constexpr char kWorldLandmarksTag[] = "WORLD_LANDMARKS";
-constexpr char kImageSizeTag[] = "IMAGE_SIZE";
-constexpr char kNormRectTag[] = "NORM_RECT";
-constexpr char kLandmarksMatrixTag[] = "LANDMARKS_MATRIX";
 constexpr int kFeaturesPerLandmark = 3;
 
 template <class LandmarkListT>
@@ -146,26 +148,25 @@ bool IsNormalized() {
 }
 
 template <class LandmarkListT>
-absl::Status ProcessLandmarks(LandmarkListT landmarks, CalculatorContext* cc) {
+absl::Status ProcessLandmarks(LandmarkListT landmarks,
+                              CalculatorContext<LandmarksToMatrixNode>& cc) {
   if (IsNormalized<LandmarkListT>()) {
-    RET_CHECK(cc->Inputs().HasTag(kImageSizeTag) &&
-              !cc->Inputs().Tag(kImageSizeTag).IsEmpty());
-    const auto [width, height] =
-        cc->Inputs().Tag(kImageSizeTag).Get<std::pair<int, int>>();
-    ASSIGN_OR_RETURN(landmarks,
-                     NormalizeLandmarkAspectRatio(landmarks, width, height));
+    RET_CHECK(cc.image_size.IsConnected() && cc.image_size);
+    const auto& [width, height] = cc.image_size.GetOrDie();
+    MP_ASSIGN_OR_RETURN(landmarks,
+                        NormalizeLandmarkAspectRatio(landmarks, width, height));
   }
 
-  if (cc->Inputs().HasTag(kNormRectTag)) {
-    RET_CHECK(!cc->Inputs().Tag(kNormRectTag).IsEmpty());
-    const auto rotation =
-        cc->Inputs().Tag(kNormRectTag).Get<NormalizedRect>().rotation();
-    ASSIGN_OR_RETURN(landmarks, RotateLandmarks(landmarks, rotation));
+  if (cc.norm_rect.IsConnected()) {
+    RET_CHECK(cc.norm_rect);
+    const NormalizedRect& norm_rect = cc.norm_rect.GetOrDie();
+    const float rotation = norm_rect.rotation();
+    MP_ASSIGN_OR_RETURN(landmarks, RotateLandmarks(landmarks, rotation));
   }
 
-  const auto& options = cc->Options<LandmarksToMatrixCalculatorOptions>();
+  const LandmarksToMatrixCalculatorOptions& options = cc.options.Get();
   if (options.object_normalization()) {
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         landmarks,
         NormalizeObject(landmarks,
                         options.object_normalization_origin_offset()));
@@ -173,83 +174,44 @@ absl::Status ProcessLandmarks(LandmarkListT landmarks, CalculatorContext* cc) {
 
   auto landmarks_matrix = std::make_unique<Matrix>();
   *landmarks_matrix = LandmarksToMatrix(landmarks);
-  cc->Outputs()
-      .Tag(kLandmarksMatrixTag)
-      .Add(landmarks_matrix.release(), cc->InputTimestamp());
+  cc.landmarks_matrix.Send(std::move(landmarks_matrix));
   return absl::OkStatus();
 }
 
 }  // namespace
 
-// Convert landmarks into a matrix. The landmarks are normalized
-// w.r.t. the image's aspect ratio (if they are NormalizedLandmarksList)
-// and optionally w.r.t and "origin" landmark. This pre-processing step
-// is required for the some models.
-//
-// Input:
-//   LANDMARKS - Landmarks of one object. Use *either* LANDMARKS or
-//               WORLD_LANDMARKS.
-//   WORLD_LANDMARKS - World 3d landmarks of one object. Use *either*
-//               LANDMARKS or WORLD_LANDMARKS.
-//   IMAGE_SIZE - (width, height) of the image
-//   NORM_RECT - Optional NormalizedRect object whose 'rotation' field is used
-//               to rotate the landmarks.
-// Output:
-//   LANDMARKS_MATRIX - Matrix for the landmarks.
-//
-// Usage example:
-// node {
-//   calculator: "LandmarksToMatrixCalculator"
-//   input_stream: "LANDMARKS:hand_landmarks"
-//   input_stream: "IMAGE_SIZE:image_size"
-//   output_stream: "LANDMARKS_MATRIX:landmarks_matrix"
-//   options {
-//     [mediapipe.LandmarksToMatrixCalculatorOptions.ext] {
-//       object_normalization: true
-//       object_normalization_origin_offset: 0
-//     }
-//   }
-// }
-class LandmarksToMatrixCalculator : public CalculatorBase {
+class LandmarksToMatrixCalculatorImpl
+    : public Calculator<LandmarksToMatrixNode,
+                        LandmarksToMatrixCalculatorImpl> {
  public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Tag(kLandmarksTag).Set<NormalizedLandmarkList>().Optional();
-    cc->Inputs().Tag(kWorldLandmarksTag).Set<LandmarkList>().Optional();
-    cc->Inputs().Tag(kImageSizeTag).Set<std::pair<int, int>>().Optional();
-    cc->Inputs().Tag(kNormRectTag).Set<NormalizedRect>().Optional();
-    cc->Outputs().Tag(kLandmarksMatrixTag).Set<Matrix>();
+  static absl::Status UpdateContract(
+      CalculatorContract<LandmarksToMatrixNode>& cc) {
+    RET_CHECK(cc.landmarks.IsConnected() ^ cc.world_landmarks.IsConnected());
     return absl::OkStatus();
   }
 
-  absl::Status Open(CalculatorContext* cc) override {
-    cc->SetOffset(TimestampDiff(0));
-    RET_CHECK(cc->Inputs().HasTag(kLandmarksTag) ^
-              cc->Inputs().HasTag(kWorldLandmarksTag));
-    const auto& options = cc->Options<LandmarksToMatrixCalculatorOptions>();
+  absl::Status Open(CalculatorContext<LandmarksToMatrixNode>& cc) override {
+    const LandmarksToMatrixCalculatorOptions& options = cc.options.Get();
     RET_CHECK(options.has_object_normalization());
     return absl::OkStatus();
   }
 
-  absl::Status Process(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext<LandmarksToMatrixNode>& cc) override;
 };
 
-REGISTER_CALCULATOR(LandmarksToMatrixCalculator);
-
-absl::Status LandmarksToMatrixCalculator::Process(CalculatorContext* cc) {
-  if (cc->Inputs().HasTag(kLandmarksTag)) {
-    if (!cc->Inputs().Tag(kLandmarksTag).IsEmpty()) {
-      auto landmarks =
-          cc->Inputs().Tag(kLandmarksTag).Get<NormalizedLandmarkList>();
-      return ProcessLandmarks(landmarks, cc);
-    }
-  } else if (cc->Inputs().HasTag(kWorldLandmarksTag)) {
-    if (!cc->Inputs().Tag(kWorldLandmarksTag).IsEmpty()) {
-      auto landmarks = cc->Inputs().Tag(kWorldLandmarksTag).Get<LandmarkList>();
-      return ProcessLandmarks(landmarks, cc);
-    }
+absl::Status LandmarksToMatrixCalculatorImpl::Process(
+    CalculatorContext<LandmarksToMatrixNode>& cc) {
+  if (cc.landmarks.IsConnected()) {
+    if (!cc.landmarks) return absl::OkStatus();
+    const NormalizedLandmarkList& landmarks = cc.landmarks.GetOrDie();
+    return ProcessLandmarks(landmarks, cc);
+  } else if (cc.world_landmarks.IsConnected()) {
+    if (!cc.world_landmarks) return absl::OkStatus();
+    const LandmarkList& world_landmarks = cc.world_landmarks.GetOrDie();
+    return ProcessLandmarks(world_landmarks, cc);
   }
   return absl::OkStatus();
 }
 
-}  // namespace api2
+}  // namespace tasks
 }  // namespace mediapipe

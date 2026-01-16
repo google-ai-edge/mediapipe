@@ -17,19 +17,26 @@
 
 #include <jni.h>
 
+#include <cstdint>
 #include <map>
 #include <memory>
-#include <queue>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "mediapipe/framework/calculator_framework.h"
+#include "absl/status/status.h"
+#include "mediapipe/framework/graph_service.h"
+
+#ifdef MEDIAPIPE_PROFILER_AVAILABLE
+#include "mediapipe/framework/profiler/graph_profiler.h"
+#endif  // MEDIAPIPE_PROFILER_AVAILABLE
+
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
 #endif  // !MEDIAPIPE_DISABLE_GPU
 #include "absl/synchronization/mutex.h"
+#include "mediapipe/framework/calculator_framework.h"
 
 namespace mediapipe {
 namespace android {
@@ -131,7 +138,7 @@ class Graph {
   int64_t AddSurfaceOutput(const std::string& stream_name);
 
   // Sets a parent GL context to use for texture sharing.
-  absl::Status SetParentGlContext(int64 java_gl_context);
+  absl::Status SetParentGlContext(int64_t java_gl_context);
 
   // Sets the object for a service.
   template <typename T>
@@ -166,7 +173,9 @@ class Graph {
   void CallbackToJava(JNIEnv* env, jobject java_callback_obj,
                       const std::vector<Packet>& packets);
 
+#ifdef MEDIAPIPE_PROFILER_AVAILABLE
   ProfilingContext* GetProfilingContext();
+#endif
 
  private:
   // Increase the graph's default executor's worker thread stack size to run

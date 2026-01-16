@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -67,6 +67,8 @@ public class MPImage implements Closeable {
     IMAGE_FORMAT_YUV_420_888,
     IMAGE_FORMAT_ALPHA,
     IMAGE_FORMAT_JPEG,
+    IMAGE_FORMAT_VEC32F1,
+    IMAGE_FORMAT_VEC32F2,
   })
   @Retention(RetentionPolicy.SOURCE)
   public @interface MPImageFormat {}
@@ -81,6 +83,8 @@ public class MPImage implements Closeable {
   public static final int IMAGE_FORMAT_YUV_420_888 = 7;
   public static final int IMAGE_FORMAT_ALPHA = 8;
   public static final int IMAGE_FORMAT_JPEG = 9;
+  public static final int IMAGE_FORMAT_VEC32F1 = 10;
+  public static final int IMAGE_FORMAT_VEC32F2 = 11;
 
   /** Specifies the image container type. Would be useful for choosing extractors. */
   @IntDef({

@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ limitations under the License.
 #include "absl/strings/string_view.h"
 #include "flatbuffers/flatbuffers.h"
 #include "mediapipe/calculators/core/flow_limiter_calculator.pb.h"
+#include "mediapipe/tasks/cc/core/external_file_handler.h"
+#include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -30,17 +32,16 @@ namespace core {
 namespace {
 constexpr char kFinishedTag[] = "FINISHED";
 constexpr char kFlowLimiterCalculatorName[] = "FlowLimiterCalculator";
+constexpr char kPreviousLoopbackCalculatorName[] = "PreviousLoopbackCalculator";
 
 }  // namespace
 
 std::string LoadBinaryContent(const char* filename) {
-  std::ifstream input_file(filename, std::ios::binary | std::ios::ate);
-  // Find buffer size from input file, and load the buffer.
-  size_t buffer_size = input_file.tellg();
-  std::string buffer(buffer_size, '\0');
-  input_file.seekg(0, std::ios::beg);
-  input_file.read(const_cast<char*>(buffer.c_str()), buffer_size);
-  return buffer;
+  proto::ExternalFile external_file;
+  external_file.set_file_name(filename);
+  auto file_handler =
+      ExternalFileHandler::CreateFromExternalFile(&external_file);
+  return std::string{(*file_handler)->GetFileContent()};
 }
 
 int FindTensorIndexByMetadataName(
@@ -87,6 +88,19 @@ CalculatorGraphConfig AddFlowLimiterCalculator(
     }
   }
   return config;
+}
+
+void FixGraphBackEdges(::mediapipe::CalculatorGraphConfig& graph_config) {
+  // TODO remove when support is fixed.
+  // As mediapipe GraphBuilder currently doesn't support configuring
+  // InputStreamInfo, modifying the CalculatorGraphConfig proto directly.
+  for (int i = 0; i < graph_config.node_size(); ++i) {
+    if (graph_config.node(i).calculator() == kPreviousLoopbackCalculatorName) {
+      auto* info = graph_config.mutable_node(i)->add_input_stream_info();
+      info->set_tag_index("LOOP");
+      info->set_back_edge(true);
+    }
+  }
 }
 
 }  // namespace core

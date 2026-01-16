@@ -163,20 +163,21 @@ class AudioToTensorCalculatorNonStreamingModeTest : public ::testing::Test {
   }
 
   void CheckTimestampsOutputPackets(
-      std::vector<int64> expected_timestamp_values) {
+      std::vector<int64_t> expected_timestamp_values) {
     ASSERT_EQ(num_iterations_, timestamps_packets_.size());
     for (int i = 0; i < timestamps_packets_.size(); ++i) {
       const auto& p = timestamps_packets_[i];
       MP_ASSERT_OK(p.ValidateAsType<std::vector<Timestamp>>());
       auto output_timestamps = p.Get<std::vector<Timestamp>>();
-      int64 base_timestamp = i * Timestamp::kTimestampUnitsPerSecond;
+      int64_t base_timestamp = i * Timestamp::kTimestampUnitsPerSecond;
       std::vector<Timestamp> expected_timestamps;
       expected_timestamps.resize(expected_timestamp_values.size());
-      std::transform(
-          expected_timestamp_values.begin(), expected_timestamp_values.end(),
-          expected_timestamps.begin(), [base_timestamp](int64 v) -> Timestamp {
-            return Timestamp(v + base_timestamp);
-          });
+      std::transform(expected_timestamp_values.begin(),
+                     expected_timestamp_values.end(),
+                     expected_timestamps.begin(),
+                     [base_timestamp](int64_t v) -> Timestamp {
+                       return Timestamp(v + base_timestamp);
+                     });
       EXPECT_EQ(expected_timestamps, output_timestamps);
       EXPECT_EQ(p.Timestamp(), expected_timestamps.back());
     }
@@ -379,7 +380,7 @@ class AudioToTensorCalculatorStreamingModeTest : public ::testing::Test {
   }
 
   void CheckTensorsOutputPackets(int sample_offset, int num_packets,
-                                 int64 timestamp_interval,
+                                 int64_t timestamp_interval,
                                  bool output_last_at_close) {
     ASSERT_EQ(num_packets, tensors_packets_.size());
     for (int i = 0; i < num_packets; ++i) {
@@ -550,7 +551,7 @@ class AudioToTensorCalculatorFftTest : public ::testing::Test {
  protected:
   // Creates an audio matrix containing a single sample of 1.0 at a specified
   // offset.
-  std::unique_ptr<Matrix> CreateImpulseSignalData(int64 num_samples,
+  std::unique_ptr<Matrix> CreateImpulseSignalData(int64_t num_samples,
                                                   int impulse_offset_idx) {
     Matrix impulse = Matrix::Zero(1, num_samples);
     impulse(0, impulse_offset_idx) = 1.0;

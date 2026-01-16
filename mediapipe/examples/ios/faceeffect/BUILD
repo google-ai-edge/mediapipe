@@ -16,6 +16,7 @@ load(
     "@build_bazel_rules_apple//apple:ios.bzl",
     "ios_application",
 )
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load(
     "//mediapipe/examples/ios:bundle_id.bzl",
     "BUNDLE_ID_PREFIX",
@@ -24,7 +25,7 @@ load(
 
 licenses(["notice"])
 
-MIN_IOS_VERSION = "11.0"
+MIN_IOS_VERSION = "12.0"
 
 alias(
     name = "faceeffect",
@@ -56,7 +57,6 @@ objc_library(
     hdrs = [
         "FaceEffectViewController.h",
     ],
-    copts = ["-std=c++17"],
     data = [
         "Base.lproj/LaunchScreen.storyboard",
         "Base.lproj/Main.storyboard",
@@ -74,20 +74,19 @@ objc_library(
     ],
     features = ["-layering_check"],
     deps = [
+        "//mediapipe/framework/formats:matrix_data_cc_proto",
+        "//mediapipe/modules/face_geometry/protos:face_geometry_cc_proto",
+        "//mediapipe/objc:mediapipe_framework_ios",
+        "//mediapipe/objc:mediapipe_input_sources_ios",
+        "//mediapipe/objc:mediapipe_layer_renderer",
         "//third_party/apple_frameworks:AVFoundation",
         "//third_party/apple_frameworks:CoreGraphics",
         "//third_party/apple_frameworks:CoreMedia",
         "//third_party/apple_frameworks:UIKit",
-        "//mediapipe/objc:mediapipe_framework_ios",
-        "//mediapipe/objc:mediapipe_input_sources_ios",
-        "//mediapipe/objc:mediapipe_layer_renderer",
     ] + select({
-        "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
         "//conditions:default": [
-            "//mediapipe/framework/formats:matrix_data_cc_proto",
             "//mediapipe/graphs/face_effect:face_effect_gpu_deps",
-            "//mediapipe/modules/face_geometry/protos:face_geometry_cc_proto",
         ],
     }),
 )

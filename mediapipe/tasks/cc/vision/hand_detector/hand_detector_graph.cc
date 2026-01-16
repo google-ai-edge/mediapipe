@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ namespace hand_detector {
 
 namespace {
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
@@ -149,9 +150,9 @@ void ConfigureRectTransformationCalculator(
 // Inputs:
 //   IMAGE - Image
 //     Image to perform detection on.
-//   NORM_RECT - NormalizedRect
-//     Describes image rotation and region of image to perform detection
-//     on.
+//   NORM_RECT - NormalizedRect @Optional
+//     Describes image rotation and region of image to perform detection on. If
+//     not provided, whole image is used for hand detection.
 //
 // Outputs:
 //   PALM_DETECTIONS - std::vector<Detection>
@@ -193,14 +194,15 @@ class HandDetectorGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(const auto* model_resources,
-                     CreateModelResources<HandDetectorGraphOptions>(sc));
+    MP_ASSIGN_OR_RETURN(const auto* model_resources,
+                        CreateModelResources<HandDetectorGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(auto hand_detection_outs,
-                     BuildHandDetectionSubgraph(
-                         sc->Options<HandDetectorGraphOptions>(),
-                         *model_resources, graph[Input<Image>(kImageTag)],
-                         graph[Input<NormalizedRect>(kNormRectTag)], graph));
+    MP_ASSIGN_OR_RETURN(
+        auto hand_detection_outs,
+        BuildHandDetectionSubgraph(
+            sc->Options<HandDetectorGraphOptions>(), *model_resources,
+            graph[Input<Image>(kImageTag)],
+            graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
     hand_detection_outs.palm_detections >>
         graph[Output<std::vector<Detection>>(kPalmDetectionsTag)];
     hand_detection_outs.hand_rects >>
@@ -240,7 +242,7 @@ class HandDetectorGraph : public core::ModelTaskGraph {
         components::processors::DetermineImagePreprocessingGpuBackend(
             subgraph_options.base_options().acceleration());
     MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
-        model_resources, use_gpu,
+        model_resources, use_gpu, subgraph_options.base_options().gpu_origin(),
         &preprocessing.GetOptions<
             components::processors::proto::ImagePreprocessingGraphOptions>()));
     image_in >> preprocessing.In("IMAGE");
@@ -255,19 +257,28 @@ class HandDetectorGraph : public core::ModelTaskGraph {
     preprocessed_tensors >> inference.In("TENSORS");
     auto model_output_tensors = inference.Out("TENSORS");
 
+    // TODO: support hand detection metadata.
+    bool has_metadata = false;
+
     // Generates a single side packet containing a vector of SSD anchors.
     auto& ssd_anchor = graph.AddNode("SsdAnchorsCalculator");
-    ConfigureSsdAnchorsCalculator(
-        &ssd_anchor.GetOptions<mediapipe::SsdAnchorsCalculatorOptions>());
+    auto& ssd_anchor_options =
+        ssd_anchor.GetOptions<mediapipe::SsdAnchorsCalculatorOptions>();
+    if (!has_metadata) {
+      ConfigureSsdAnchorsCalculator(&ssd_anchor_options);
+    }
     auto anchors = ssd_anchor.SideOut("");
 
     // Converts output tensors to Detections.
     auto& tensors_to_detections =
         graph.AddNode("TensorsToDetectionsCalculator");
-    ConfigureTensorsToDetectionsCalculator(
-        subgraph_options,
-        &tensors_to_detections
-             .GetOptions<mediapipe::TensorsToDetectionsCalculatorOptions>());
+    if (!has_metadata) {
+      ConfigureTensorsToDetectionsCalculator(
+          subgraph_options,
+          &tensors_to_detections
+               .GetOptions<mediapipe::TensorsToDetectionsCalculatorOptions>());
+    }
+
     model_output_tensors >> tensors_to_detections.In("TENSORS");
     anchors >> tensors_to_detections.SideIn("ANCHORS");
     auto detections = tensors_to_detections.Out("DETECTIONS");

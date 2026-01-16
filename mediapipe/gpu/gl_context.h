@@ -18,10 +18,18 @@
 #include <pthread.h>
 
 #include <atomic>
+#include <cstdint>
 #include <functional>
 #include <memory>
+#include <type_traits>
 
+#include "absl/base/attributes.h"
+#include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/absl_check.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
@@ -70,6 +78,8 @@ typedef std::function<void()> GlVoidFunction;
 typedef std::function<absl::Status()> GlStatusFunction;
 
 class GlContext;
+// TODO: remove after glWaitSync crashes are resolved.
+class GlSyncWrapper;
 
 // Generic interface for synchronizing access to a shared resource from a
 // different context. This is an abstract class to keep users from
@@ -189,8 +199,7 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   // Like Run, but does not wait.
   void RunWithoutWaiting(GlVoidFunction gl_func);
 
-  // Returns a synchronization token.
-  // This should not be called outside of the GlContext thread.
+  // Returns a synchronization token for this GlContext.
   std::shared_ptr<GlSyncPoint> CreateSyncToken();
 
   // If another part of the framework calls glFinish, it should call this
@@ -276,8 +285,8 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   //
   // Therefore, instead of using std::function<void(void)>, we use a template
   // that only accepts arguments with a void result type.
-  template <typename T, typename = typename std::enable_if<std::is_void<
-                            typename std::result_of<T()>::type>::value>::type>
+  template <typename T, typename = typename std::enable_if<
+                            std::is_void<std::invoke_result_t<T>>::value>::type>
   void Run(T f) {
     Run([f] {
       f();
@@ -295,7 +304,7 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   // TOOD: const result?
   template <class T>
   T& GetCachedAttachment(const Attachment<T>& attachment) {
-    DCHECK(IsCurrent());
+    ABSL_DCHECK(IsCurrent());
     internal::AttachmentPtr<void>& entry = attachments_[&attachment];
     if (entry == nullptr) {
       entry = attachment.factory()(*this);
@@ -329,6 +338,9 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
       SyncTokenTypeForTest type);
 
  private:
+  // TODO: remove after glWaitSync crashes are resolved.
+  friend GlSyncWrapper;
+
   GlContext();
 
   bool ShouldUseFenceSync() const;
@@ -454,8 +466,8 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   // Number of glFinish calls completed on the GL thread.
   // Changes should be guarded by mutex_. However, we use simple atomic
   // loads for efficiency on the fast path.
-  std::atomic<int64_t> gl_finish_count_ = ATOMIC_VAR_INIT(0);
-  std::atomic<int64_t> gl_finish_count_target_ = ATOMIC_VAR_INIT(0);
+  std::atomic<int64_t> gl_finish_count_ = 0;
+  std::atomic<int64_t> gl_finish_count_target_ = 0;
 
   GlContext* context_waiting_on_ ABSL_GUARDED_BY(mutex_) = nullptr;
 
@@ -486,6 +498,18 @@ ABSL_DEPRECATED(
     "GlContext::GetGlVersion)")
 const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
                                                      int plane);
+
+namespace internal_gl_context {
+
+struct OpenGlVersion {
+  int major;
+  int minor;
+};
+
+bool IsOpenGlVersionSameOrAbove(const OpenGlVersion& version,
+                                const OpenGlVersion& expected_version);
+
+}  // namespace internal_gl_context
 
 }  // namespace mediapipe
 

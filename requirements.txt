@@ -1,7 +1,6 @@
-absl-py
-attrs>=19.1.0
-flatbuffers>=2.0
-matplotlib
+absl-py~=2.3
 numpy
+sounddevice~=0.5
+flatbuffers~=25.9
 opencv-contrib-python
-protobuf>=3.11,<4
+matplotlib

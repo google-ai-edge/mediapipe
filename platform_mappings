@@ -1,0 +1,61 @@
+# This file allows automatically mapping flags such as '--cpu' to the more
+# modern Bazel platforms (https://bazel.build/concepts/platforms).
+
+# In particular, Bazel platforms lack support for Apple for now if no such
+# mapping is put into place. It's inspired from:
+# https://github.com/bazelbuild/rules_apple/issues/1764
+
+flags:
+  --cpu=x86
+  --crosstool_top=//external:android/crosstool
+    @mediapipe//mediapipe:android_x86_platform
+
+  --cpu=x86_64
+  --crosstool_top=//external:android/crosstool
+    @mediapipe//mediapipe:android_x86_64_platform
+
+  --cpu=armeabi-v7a
+  --crosstool_top=//external:android/crosstool
+    @mediapipe//mediapipe:android_arm_platform
+
+  --cpu=arm64-v8a
+  --crosstool_top=//external:android/crosstool
+    @mediapipe//mediapipe:android_arm64_platform
+
+  --cpu=darwin_x86_64
+  --apple_platform_type=macos
+    @mediapipe//mediapipe:macos_x86_64_platform
+
+  --cpu=darwin_arm64
+  --apple_platform_type=macos
+    @mediapipe//mediapipe:macos_arm64_platform
+
+  --cpu=ios_i386
+  --apple_platform_type=ios
+    @mediapipe//mediapipe:ios_i386_platform
+
+  --cpu=ios_x86_64
+  --apple_platform_type=ios
+    @mediapipe//mediapipe:ios_x86_64_platform
+
+  --cpu=ios_sim_arm64
+  --apple_platform_type=ios
+    @mediapipe//mediapipe:ios_sim_arm64_platform
+
+  --cpu=ios_armv7
+  --apple_platform_type=ios
+    @mediapipe//mediapipe:ios_armv7_platform
+
+  --cpu=ios_arm64
+  --apple_platform_type=ios
+    @mediapipe//mediapipe:ios_arm64_platform
+
+  --cpu=ios_arm64e
+  --apple_platform_type=ios
+    @mediapipe//mediapipe:ios_arm64e_platform
+
+  --cpu=x64_windows
+    @mediapipe//mediapipe:windows_platform
+
+  --cpu=k8
+    @mediapipe//mediapipe:linux_platform

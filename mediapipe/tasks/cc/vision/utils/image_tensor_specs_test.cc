@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ limitations under the License.
 #include <type_traits>
 
 #include "absl/flags/flag.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/cord.h"
@@ -35,7 +36,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -69,7 +70,7 @@ constexpr char kMobileNetMetadata[] =
 constexpr char kMobileNetQuantizedPartialMetadata[] =
     "mobilenet_v1_0.25_224_quant_without_subgraph_metadata.tflite";
 
-class ImageTensorSpecsTest : public tflite_shims::testing::Test {};
+class ImageTensorSpecsTest : public tflite::testing::Test {};
 
 TEST_F(ImageTensorSpecsTest, BuildInputImageTensorSpecsWorks) {
   auto model_file = std::make_unique<core::proto::ExternalFile>();
@@ -160,6 +161,28 @@ TEST_F(ImageTensorSpecsTest,
                           GetImageTensorMetadataIfAny(metadata_extractor, 0));
   absl::StatusOr<ImageTensorSpecs> input_specs_or =
       BuildInputImageTensorSpecs(*input_tensor, metadata);
+  MP_ASSERT_OK(input_specs_or);
+
+  const ImageTensorSpecs& input_specs = input_specs_or.value();
+  EXPECT_EQ(input_specs.image_width, 224);
+  EXPECT_EQ(input_specs.image_height, 224);
+  EXPECT_EQ(input_specs.color_space, ColorSpaceType_RGB);
+  EXPECT_STREQ(EnumNameTensorType(input_specs.tensor_type),
+               EnumNameTensorType(tflite::TensorType_UINT8));
+  EXPECT_EQ(input_specs.normalization_options, absl::nullopt);
+}
+
+TEST_F(ImageTensorSpecsTest, BuildInputImageTensorSpecsFromModelResources) {
+  auto model_file = std::make_unique<core::proto::ExternalFile>();
+  model_file->set_file_name(
+      JoinPath("./", kTestDataDirectory, kMobileNetQuantizedPartialMetadata));
+  MP_ASSERT_OK_AND_ASSIGN(auto model_resources,
+                          core::ModelResources::Create(kTestModelResourcesTag,
+                                                       std::move(model_file)));
+  const tflite::Model* model = model_resources->GetTfLiteModel();
+  ABSL_CHECK(model != nullptr);
+  absl::StatusOr<ImageTensorSpecs> input_specs_or =
+      BuildInputImageTensorSpecs(*model_resources);
   MP_ASSERT_OK(input_specs_or);
 
   const ImageTensorSpecs& input_specs = input_specs_or.value();

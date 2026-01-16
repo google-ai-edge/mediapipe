@@ -25,8 +25,8 @@ namespace mediapipe {
 // segments per row.
 static const int kWidth = 7;
 static const int kHeight = 3;
-const std::vector<uint8> kTestPatternVector = {0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0,
-                                               0, 0, 0, 1, 0, 1, 0, 1, 0, 0};
+const std::vector<uint8_t> kTestPatternVector = {
+    0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0};
 
 // Interval {y, x_start, x_end} representation of kTestPatternVector.
 const std::vector<std::vector<int>> kTestPatternIntervals = {
@@ -67,8 +67,8 @@ TEST(LocationOpencvTest, CreateBBoxLocation) {
 }
 
 TEST(LocationOpencvTest, CreateCvMaskLocation) {
-  cv::Mat_<uint8> test_mask(kHeight, kWidth,
-                            const_cast<uint8*>(kTestPatternVector.data()));
+  cv::Mat_<uint8_t> test_mask(kHeight, kWidth,
+                              const_cast<uint8_t*>(kTestPatternVector.data()));
   Location location = CreateCvMaskLocation(test_mask);
   auto intervals = location.ConvertToProto().mask().rasterization().interval();
   EXPECT_EQ(intervals.size(), kTestPatternIntervals.size());
@@ -157,8 +157,8 @@ TEST(LocationOpenCvTest, GetCvMask) {
   auto cv_mask = *GetCvMask(test_location);
   EXPECT_EQ(cv_mask.cols * cv_mask.rows, kTestPatternVector.size());
   int flat_idx = 0;
-  for (auto it = cv_mask.begin<uint8>(); it != cv_mask.end<uint8>(); ++it) {
-    const uint8 expected_value = kTestPatternVector[flat_idx] == 0 ? 0 : 255;
+  for (auto it = cv_mask.begin<uint8_t>(); it != cv_mask.end<uint8_t>(); ++it) {
+    const uint8_t expected_value = kTestPatternVector[flat_idx] == 0 ? 0 : 255;
     EXPECT_EQ(*it, expected_value);
     flat_idx++;
   }

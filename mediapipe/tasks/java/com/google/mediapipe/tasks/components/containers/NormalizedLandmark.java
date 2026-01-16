@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,8 +14,13 @@
 
 package com.google.mediapipe.tasks.components.containers;
 
+import android.annotation.TargetApi;
 import com.google.auto.value.AutoValue;
+import com.google.mediapipe.formats.proto.LandmarkProto;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Normalized Landmark represents a point in 3D space with x, y, z coordinates. x and y are
@@ -24,11 +29,43 @@ import java.util.Objects;
  * uses roughly the same scale as x.
  */
 @AutoValue
+@TargetApi(31)
 public abstract class NormalizedLandmark {
   private static final float TOLERANCE = 1e-6f;
 
+  /** Creates a normalized landmark from x, y, z coordinates. */
   public static NormalizedLandmark create(float x, float y, float z) {
-    return new AutoValue_NormalizedLandmark(x, y, z);
+    return new AutoValue_NormalizedLandmark(x, y, z, Optional.empty(), Optional.empty());
+  }
+
+  /**
+   * Creates a normalized landmark from x, y, z coordinates with optional visibility and presence.
+   */
+  public static NormalizedLandmark create(
+      float x, float y, float z, Optional<Float> visibility, Optional<Float> presence) {
+    return new AutoValue_NormalizedLandmark(x, y, z, visibility, presence);
+  }
+
+  /** Creates a normalized landmark from a normalized landmark proto. */
+  public static NormalizedLandmark createFromProto(LandmarkProto.NormalizedLandmark landmarkProto) {
+    return NormalizedLandmark.create(
+        landmarkProto.getX(),
+        landmarkProto.getY(),
+        landmarkProto.getZ(),
+        landmarkProto.hasVisibility()
+            ? Optional.of(landmarkProto.getVisibility())
+            : Optional.empty(),
+        landmarkProto.hasPresence() ? Optional.of(landmarkProto.getPresence()) : Optional.empty());
+  }
+
+  /** Creates a list of normalized landmarks from a {@link NormalizedLandmarkList}. */
+  public static List<NormalizedLandmark> createListFromProto(
+      LandmarkProto.NormalizedLandmarkList landmarkListProto) {
+    List<NormalizedLandmark> landmarkList = new ArrayList<>();
+    for (LandmarkProto.NormalizedLandmark landmarkProto : landmarkListProto.getLandmarkList()) {
+      landmarkList.add(createFromProto(landmarkProto));
+    }
+    return landmarkList;
   }
 
   // The x coordinates of the normalized landmark.
@@ -39,6 +76,12 @@ public abstract class NormalizedLandmark {
 
   // The z coordinates of the normalized landmark.
   public abstract float z();
+
+  // Visibility of the normalized landmark.
+  public abstract Optional<Float> visibility();
+
+  // Presence of the normalized landmark.
+  public abstract Optional<Float> presence();
 
   @Override
   public final boolean equals(Object o) {
@@ -58,6 +101,16 @@ public abstract class NormalizedLandmark {
 
   @Override
   public final String toString() {
-    return "<Normalized Landmark (x=" + x() + " y=" + y() + " z=" + z() + ")>";
+    return "<Normalized Landmark (x="
+        + x()
+        + " y="
+        + y()
+        + " z="
+        + z()
+        + " visibility= "
+        + visibility()
+        + " presence="
+        + presence()
+        + ")>";
   }
 }

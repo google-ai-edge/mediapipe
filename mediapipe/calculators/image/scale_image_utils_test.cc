@@ -124,6 +124,16 @@ TEST(ScaleImageUtilsTest, FindOutputDimensionsPreserveRatio) {
                                     &output_width, &output_height));
   EXPECT_EQ(151, output_width);
   EXPECT_EQ(101, output_height);
+  // Scale to height 1.
+  MP_ASSERT_OK(FindOutputDimensions(10000, 10, 100, 0, 0, true, 2,
+                                    &output_width, &output_height));
+  EXPECT_EQ(100, output_width);
+  EXPECT_EQ(1, output_height);
+  // Scale to width 1.
+  MP_ASSERT_OK(FindOutputDimensions(10, 10000, 0, 100, 0, true, 2,
+                                    &output_width, &output_height));
+  EXPECT_EQ(1, output_width);
+  EXPECT_EQ(100, output_height);
 }
 
 // Tests scaling without keeping the aspect ratio fixed.

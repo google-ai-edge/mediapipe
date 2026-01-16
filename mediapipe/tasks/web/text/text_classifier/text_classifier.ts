@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,10 @@ import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/b
 import {TextClassifierGraphOptions} from '../../../../tasks/cc/text/text_classifier/proto/text_classifier_graph_options_pb';
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
 import {convertFromClassificationResultProto} from '../../../../tasks/web/components/processors/classifier_result';
-import {TaskRunner} from '../../../../tasks/web/core/task_runner';
+import {
+  CachedGraphRunner,
+  TaskRunner,
+} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
@@ -35,7 +38,7 @@ export * from './text_classifier_result';
 const INPUT_STREAM = 'text_in';
 const CLASSIFICATIONS_STREAM = 'classifications_out';
 const TEXT_CLASSIFIER_GRAPH =
-    'mediapipe.tasks.text.text_classifier.TextClassifierGraph';
+  'mediapipe.tasks.text.text_classifier.TextClassifierGraph';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -48,6 +51,7 @@ export class TextClassifier extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new text classifier from the
    * provided options.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param textClassifierOptions The options for the text classifier. Note that
@@ -55,47 +59,64 @@ export class TextClassifier extends TaskRunner {
    *     provided (via `baseOptions`).
    */
   static createFromOptions(
-      wasmFileset: WasmFileset,
-      textClassifierOptions: TextClassifierOptions): Promise<TextClassifier> {
+    wasmFileset: WasmFileset,
+    textClassifierOptions: TextClassifierOptions,
+  ): Promise<TextClassifier> {
     return TaskRunner.createInstance(
-        TextClassifier, /* initializeCanvas= */ false, wasmFileset,
-        textClassifierOptions);
+      TextClassifier,
+      /* canvas= */ null,
+      wasmFileset,
+      textClassifierOptions,
+    );
   }
 
   /**
    * Initializes the Wasm runtime and creates a new text classifier based on the
    * provided model asset buffer.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
-   * @param modelAssetBuffer A binary representation of the model.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *    representation of the model.
    */
   static createFromModelBuffer(
-      wasmFileset: WasmFileset,
-      modelAssetBuffer: Uint8Array): Promise<TextClassifier> {
+    wasmFileset: WasmFileset,
+    modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
+  ): Promise<TextClassifier> {
     return TaskRunner.createInstance(
-        TextClassifier, /* initializeCanvas= */ false, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+      TextClassifier,
+      /* canvas= */ null,
+      wasmFileset,
+      {baseOptions: {modelAssetBuffer}},
+    );
   }
 
   /**
    * Initializes the Wasm runtime and creates a new text classifier based on the
    * path to the model asset.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
    */
   static createFromModelPath(
-      wasmFileset: WasmFileset,
-      modelAssetPath: string): Promise<TextClassifier> {
+    wasmFileset: WasmFileset,
+    modelAssetPath: string,
+  ): Promise<TextClassifier> {
     return TaskRunner.createInstance(
-        TextClassifier, /* initializeCanvas= */ false, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+      TextClassifier,
+      /* canvas= */ null,
+      wasmFileset,
+      {baseOptions: {modelAssetPath}},
+    );
   }
 
+  /** @hideconstructor */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
-    super(wasmModule, glCanvas);
+    wasmModule: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
+    super(new CachedGraphRunner(wasmModule, glCanvas));
     this.options.setBaseOptions(new BaseOptionsProto());
   }
 
@@ -106,13 +127,17 @@ export class TextClassifier extends TaskRunner {
    * You can reset an option back to its default value by explicitly setting it
    * to `undefined`.
    *
+   * @export
    * @param options The options for the text classifier.
    */
-  override async setOptions(options: TextClassifierOptions): Promise<void> {
-    await super.setOptions(options);
-    this.options.setClassifierOptions(convertClassifierOptionsToProto(
-        options, this.options.getClassifierOptions()));
-    this.refreshGraph();
+  override setOptions(options: TextClassifierOptions): Promise<void> {
+    this.options.setClassifierOptions(
+      convertClassifierOptionsToProto(
+        options,
+        this.options.getClassifierOptions(),
+      ),
+    );
+    return this.applyOptions(options);
   }
 
   protected override get baseOptions(): BaseOptionsProto {
@@ -127,27 +152,32 @@ export class TextClassifier extends TaskRunner {
    * Performs Natural Language classification on the provided text and waits
    * synchronously for the response.
    *
+   * @export
    * @param text The text to process.
    * @return The classification result of the text
    */
   classify(text: string): TextClassifierResult {
-    // Get classification result by running our MediaPipe graph.
     this.classificationResult = {classifications: []};
     this.graphRunner.addStringToStream(
-        text, INPUT_STREAM, /* timestamp= */ performance.now());
+      text,
+      INPUT_STREAM,
+      this.getSynctheticTimestamp(),
+    );
     this.finishProcessing();
     return this.classificationResult;
   }
 
   /** Updates the MediaPipe graph configuration. */
-  private refreshGraph(): void {
+  protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(INPUT_STREAM);
     graphConfig.addOutputStream(CLASSIFICATIONS_STREAM);
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
-        TextClassifierGraphOptions.ext, this.options);
+      TextClassifierGraphOptions.ext,
+      this.options,
+    );
 
     const classifierNode = new CalculatorGraphConfig.Node();
     classifierNode.setCalculator(TEXT_CLASSIFIER_GRAPH);
@@ -158,15 +188,24 @@ export class TextClassifier extends TaskRunner {
     graphConfig.addNode(classifierNode);
 
     this.graphRunner.attachProtoListener(
-        CLASSIFICATIONS_STREAM, binaryProto => {
-          this.classificationResult = convertFromClassificationResultProto(
-              ClassificationResult.deserializeBinary(binaryProto));
-        });
+      CLASSIFICATIONS_STREAM,
+      (binaryProto, timestamp) => {
+        this.classificationResult = convertFromClassificationResultProto(
+          ClassificationResult.deserializeBinary(binaryProto),
+        );
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
+    this.graphRunner.attachEmptyPacketListener(
+      CLASSIFICATIONS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
   }
 }
-
 
 

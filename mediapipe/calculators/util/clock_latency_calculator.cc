@@ -66,17 +66,17 @@ class ClockLatencyCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) override;
 
  private:
-  int64 num_packet_streams_ = -1;
+  int64_t num_packet_streams_ = -1;
 };
 REGISTER_CALCULATOR(ClockLatencyCalculator);
 
 absl::Status ClockLatencyCalculator::GetContract(CalculatorContract* cc) {
   RET_CHECK_GT(cc->Inputs().NumEntries(), 1);
 
-  int64 num_packet_streams = cc->Inputs().NumEntries() - 1;
+  int64_t num_packet_streams = cc->Inputs().NumEntries() - 1;
   RET_CHECK_EQ(cc->Outputs().NumEntries(), num_packet_streams);
 
-  for (int64 i = 0; i < num_packet_streams; ++i) {
+  for (int64_t i = 0; i < num_packet_streams; ++i) {
     cc->Inputs().Index(i).Set<absl::Time>();
     cc->Outputs().Index(i).Set<absl::Duration>();
   }
@@ -99,7 +99,7 @@ absl::Status ClockLatencyCalculator::Process(CalculatorContext* cc) {
       cc->Inputs().Tag(kReferenceTag).Get<absl::Time>();
 
   // Push Duration packets for every input stream we have.
-  for (int64 i = 0; i < num_packet_streams_; ++i) {
+  for (int64_t i = 0; i < num_packet_streams_; ++i) {
     if (!cc->Inputs().Index(i).IsEmpty()) {
       const absl::Time& input_stream_time =
           cc->Inputs().Index(i).Get<absl::Time>();

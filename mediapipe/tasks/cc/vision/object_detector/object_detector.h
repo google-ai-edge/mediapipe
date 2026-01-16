@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/tasks/cc/components/containers/detection_result.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
@@ -35,6 +36,22 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+
+// Alias the shared DetectionResult struct as result typo.
+using ObjectDetectorResult =
+    ::mediapipe::tasks::components::containers::DetectionResult;
+
+// Options related to non-maximum-suppression.
+struct NonMaxSuppressionOptions {
+  // Whether to use multiclass non-max-suppression. That is, each category
+  // processes non-max-suppression separately.
+  bool multiclass_nms = false;
+
+  // Overlapping threshold for non-maximum-suppression. Only used for
+  // models without built-in non-maximum-suppression, i.e., models that don't
+  // use the Detection_Postprocess TFLite Op
+  float min_suppression_threshold = 0.3f;
+};
 
 // The options for configuring a mediapipe object detector task.
 struct ObjectDetectorOptions {
@@ -79,9 +96,11 @@ struct ObjectDetectorOptions {
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
   // to RunningMode::LIVE_STREAM.
-  std::function<void(absl::StatusOr<std::vector<mediapipe::Detection>>,
-                     const Image&, int64)>
+  std::function<void(absl::StatusOr<ObjectDetectorResult>, const Image&,
+                     int64_t)>
       result_callback = nullptr;
+
+  NonMaxSuppressionOptions non_max_suppression_options;
 };
 
 // Performs object detection on single images, video frames, or live stream.
@@ -95,7 +114,20 @@ struct ObjectDetectorOptions {
 //    - only RGB inputs are supported (`channels` is required to be 3).
 //    - if type is kTfLiteFloat32, NormalizationOptions are required to be
 //      attached to the metadata for input normalization.
-// Output tensors must be the 4 outputs of a `DetectionPostProcess` op, i.e:
+// Output tensors could be 2 output tensors or 4 output tensors.
+// The 2 output tensors must represent locations and scores, respectively.
+//  (kTfLiteFloat32)
+//   - locations tensor of size `[num_results x num_coords]`. The num_coords is
+//   the number of coordinates a location result represent. Usually in the
+//   form: [4 + 2 * keypoint_num], where 4 location values encode the bounding
+//   box (y_center, x_center, height, width) and the additional keypoints are in
+//   (y, x) order.
+//  (kTfLiteFloat32)
+//   - scores tensor of size `[num_results x num_classes]`. The values of a
+//   result represent the classification probability belonging to the class at
+//   the index, which is denoted in the label file of corresponding tensor
+//   metadata in the model file.
+// The 4 output tensors must come from `DetectionPostProcess` op, i.e:
 //  (kTfLiteFloat32)
 //   - locations tensor of size `[num_results x 4]`, the inner array
 //     representing bounding boxes in the form [top, left, right, bottom].
@@ -126,7 +158,7 @@ struct ObjectDetectorOptions {
 //
 // [1]:
 // https://github.com/google/mediapipe/blob/6cdc6443b6a7ed662744e2a2ce2d58d9c83e6d6f/mediapipe/tasks/metadata/metadata_schema.fbs#L456
-class ObjectDetector : tasks::vision::core::BaseVisionTaskApi {
+class ObjectDetector : public tasks::vision::core::BaseVisionTaskApi {
  public:
   using BaseVisionTaskApi::BaseVisionTaskApi;
 
@@ -165,7 +197,7 @@ class ObjectDetector : tasks::vision::core::BaseVisionTaskApi {
   // underlying image data.
   // TODO: Describes the output bounding boxes for gpu input
   // images after enabling the gpu support in MediaPipe Tasks.
-  absl::StatusOr<std::vector<mediapipe::Detection>> Detect(
+  absl::StatusOr<ObjectDetectorResult> Detect(
       mediapipe::Image image,
       std::optional<core::ImageProcessingOptions> image_processing_options =
           std::nullopt);
@@ -188,8 +220,8 @@ class ObjectDetector : tasks::vision::core::BaseVisionTaskApi {
   // unrotated input frame of reference coordinates system, i.e. in `[0,
   // image_width) x [0, image_height)`, which are the dimensions of the
   // underlying image data.
-  absl::StatusOr<std::vector<mediapipe::Detection>> DetectForVideo(
-      mediapipe::Image image, int64 timestamp_ms,
+  absl::StatusOr<ObjectDetectorResult> DetectForVideo(
+      mediapipe::Image image, int64_t timestamp_ms,
       std::optional<core::ImageProcessingOptions> image_processing_options =
           std::nullopt);
 
@@ -219,7 +251,7 @@ class ObjectDetector : tasks::vision::core::BaseVisionTaskApi {
   //     longer be valid when the callback returns. To access the image data
   //     outside of the callback, callers need to make a copy of the image.
   //   - The input timestamp in milliseconds.
-  absl::Status DetectAsync(mediapipe::Image image, int64 timestamp_ms,
+  absl::Status DetectAsync(mediapipe::Image image, int64_t timestamp_ms,
                            std::optional<core::ImageProcessingOptions>
                                image_processing_options = std::nullopt);
 

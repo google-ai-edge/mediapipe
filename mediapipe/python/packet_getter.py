@@ -17,6 +17,7 @@
 from typing import List
 
 from google.protobuf import message
+from google.protobuf import message_factory
 from google.protobuf import symbol_database
 from mediapipe.python._framework_bindings import _packet_getter
 from mediapipe.python._framework_bindings import packet as mp_packet
@@ -32,6 +33,7 @@ get_bool_list = _packet_getter.get_bool_list
 get_float_list = _packet_getter.get_float_list
 get_str_list = _packet_getter.get_str_list
 get_image_list = _packet_getter.get_image_list
+get_image_frame_list = _packet_getter.get_image_frame_list
 get_packet_list = _packet_getter.get_packet_list
 get_str_to_packet_dict = _packet_getter.get_str_to_packet_dict
 get_image = _packet_getter.get_image
@@ -67,7 +69,7 @@ def get_proto(packet: mp_packet.Packet) -> message.Message:
     raise TypeError('Can not find message descriptor by type name: %s' %
                     proto_type_name)
 
-  message_class = symbol_database.Default().GetPrototype(descriptor)
+  message_class = message_factory.GetMessageClass(descriptor)
   # pylint:disable=protected-access
   serialized_proto = _packet_getter._get_serialized_proto(packet)
   # pylint:enable=protected-access
@@ -107,7 +109,7 @@ def get_proto_list(packet: mp_packet.Packet) -> List[message.Message]:
   except KeyError:
     raise TypeError('Can not find message descriptor by type name: %s' %
                     proto_type_name)
-  message_class = symbol_database.Default().GetPrototype(descriptor)
+  message_class = message_factory.GetMessageClass(descriptor)
   # pylint:disable=protected-access
   serialized_protos = _packet_getter._get_serialized_proto_list(packet)
   # pylint:enable=protected-access

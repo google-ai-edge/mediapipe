@@ -17,25 +17,31 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <algorithm>
+#include <cstdlib>
+#include <limits>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
-#include "absl/strings/match.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/deps/file_path.h"
-#include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/file_helpers.h"
-#include "mediapipe/framework/port/logging.h"
-#include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "stb_image.h"
@@ -54,12 +60,11 @@ bool EqualWithTolerance(const T value1, const T value2, const T max_diff) {
 
 template <typename T>
 absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
-                         const T max_color_diff, const T max_alpha_diff,
-                         const float max_avg_diff,
+                         const ImageFrameComparisonOptions& options,
                          std::unique_ptr<ImageFrame>& diff_image) {
   // Verify image byte depth matches expected byte depth.
-  CHECK_EQ(sizeof(T), image1.ByteDepth());
-  CHECK_EQ(sizeof(T), image2.ByteDepth());
+  ABSL_CHECK_EQ(sizeof(T), image1.ByteDepth());
+  ABSL_CHECK_EQ(sizeof(T), image2.ByteDepth());
 
   const int width = image1.Width();
   const int height = image1.Height();
@@ -70,14 +75,15 @@ absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
   const int num_channels = std::min(channels1, channels2);
 
   // Verify the width steps are multiples of byte depth.
-  CHECK_EQ(image1.WidthStep() % image1.ByteDepth(), 0);
-  CHECK_EQ(image2.WidthStep() % image2.ByteDepth(), 0);
+  ABSL_CHECK_EQ(image1.WidthStep() % image1.ByteDepth(), 0);
+  ABSL_CHECK_EQ(image2.WidthStep() % image2.ByteDepth(), 0);
   const int width_padding1 =
       image1.WidthStep() / image1.ByteDepth() - width * channels1;
   const int width_padding2 =
       image2.WidthStep() / image2.ByteDepth() - width * channels2;
 
   diff_image = std::make_unique<ImageFrame>(image1.Format(), width, height);
+  diff_image->SetToZero();
   T* pixel_diff = reinterpret_cast<T*>(diff_image->MutablePixelData());
   const int width_padding_diff =
       diff_image->WidthStep() / diff_image->ByteDepth() - width * channels1;
@@ -88,29 +94,38 @@ absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
   float max_color_diff_found = 0;
   int different_alpha_components = 0;
   float max_alpha_diff_found = 0;
+  // Amplify diffs to make them more visible.
+  constexpr float kDiffFactor = 20.0f;
+  constexpr float kTMin = std::numeric_limits<T>::lowest();
+  constexpr float kTMax = std::numeric_limits<T>::max();
+  constexpr float kTMid = (kTMax + kTMin) / 2;
   for (int row = 0; row < height; ++row) {
     for (int col = 0; col < width; ++col) {
+      bool any_color_diff_above_max = false;
       for (int channel = 0; channel < num_channels; ++channel) {
         // Check local difference.
         const T value1 = pixel1[channel];
         const T value2 = pixel2[channel];
         const float diff =
-            std::abs(static_cast<float>(value1) - static_cast<float>(value2));
+            static_cast<float>(value1) - static_cast<float>(value2);
+        const float abs_diff = std::abs(diff);
         if (channel < 3) {
-          different_color_components += diff > max_color_diff;
-          max_color_diff_found = std::max(max_color_diff_found, diff);
-          pixel_diff[channel] = diff;
+          any_color_diff_above_max |= abs_diff > options.max_color_diff;
+          max_color_diff_found = std::max(max_color_diff_found, abs_diff);
+          pixel_diff[channel] =
+              std::clamp(kTMid + diff * kDiffFactor, kTMin, kTMax);
         } else {
-          different_alpha_components += diff > max_alpha_diff;
-          max_alpha_diff_found = std::max(max_alpha_diff_found, diff);
-          pixel_diff[channel] = 255;  // opaque to see color difference
+          different_alpha_components += abs_diff > options.max_alpha_diff;
+          max_alpha_diff_found = std::max(max_alpha_diff_found, abs_diff);
+          pixel_diff[channel] = kTMax;  // opaque to see color difference
         }
         // Check global average difference.
-        avg_diff += (diff - avg_diff) / ++total_count;
+        avg_diff += (abs_diff - avg_diff) / ++total_count;
       }
       pixel1 += channels1;
       pixel2 += channels2;
       pixel_diff += channels1;
+      different_color_components += any_color_diff_above_max ? 1 : 0;
     }
     pixel1 += width_padding1;
     pixel2 += width_padding2;
@@ -118,18 +133,20 @@ absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
   }
 
   std::vector<std::string> errors;
-  if (different_color_components)
+  if (different_color_components > options.max_num_pixels_above_limit)
     errors.push_back(absl::Substitute(
-        "$0 color components differences above limit of $1, max found was $2",
-        different_color_components, max_color_diff, max_color_diff_found));
-  if (different_alpha_components)
+        "$0 pixels with color differences above limit of $1, max found was $2",
+        different_color_components, options.max_color_diff,
+        max_color_diff_found));
+  if (different_alpha_components > options.max_num_pixels_above_limit)
     errors.push_back(absl::Substitute(
-        "$0 alpha components differences above limit of $1, max found was $2",
-        different_alpha_components, max_alpha_diff, max_alpha_diff_found));
-  if (avg_diff > max_avg_diff)
+        "$0 pixels with alpha differences above limit of $1, max found was $2",
+        different_alpha_components, options.max_alpha_diff,
+        max_alpha_diff_found));
+  if (avg_diff > options.max_avg_diff)
     errors.push_back(
         absl::Substitute("the average component difference is $0 (limit: $1)",
-                         avg_diff, max_avg_diff));
+                         avg_diff, options.max_avg_diff));
 
   if (!errors.empty())
     return absl::InternalError(
@@ -142,19 +159,35 @@ absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
 std::string GetBinaryDirectory() {
   char full_path[PATH_MAX + 1];
   int length = readlink("/proc/self/exe", full_path, PATH_MAX + 1);
-  CHECK_GT(length, 0);
+  ABSL_CHECK_GT(length, 0);
   return std::string(
       ::mediapipe::file::Dirname(absl::string_view(full_path, length)));
 }
 #endif
 
+absl::Status CompareAndSaveOutputInternal(
+    const ImageFrame& expected, const ImageFrame& actual,
+    const ImageFrameComparisonOptions& options) {
+  MP_ASSIGN_OR_RETURN(auto output_img_path,
+                      SavePngTestOutput(actual, "output"));
+  MP_ASSIGN_OR_RETURN(auto expected_img_path,
+                      SavePngTestOutput(expected, "expected"));
+
+  std::unique_ptr<ImageFrame> diff_img;
+  auto status = CompareImageFrames(expected, actual, options, diff_img);
+  if (diff_img) {
+    MP_ASSIGN_OR_RETURN(auto diff_img_path,
+                        SavePngTestOutput(*diff_img, "diff"));
+  }
+
+  return status;
+}
+
 }  // namespace
 
 absl::Status CompareImageFrames(const ImageFrame& image1,
                                 const ImageFrame& image2,
-                                const float max_color_diff,
-                                const float max_alpha_diff,
-                                const float max_avg_diff,
+                                const ImageFrameComparisonOptions& options,
                                 std::unique_ptr<ImageFrame>& diff_image) {
   auto IsSupportedImageFormatComparison = [](ImageFormat::Format one,
                                              ImageFormat::Format two) {
@@ -182,28 +215,48 @@ absl::Status CompareImageFrames(const ImageFrame& image1,
     case ImageFormat::SRGB:
     case ImageFormat::SRGBA:
     case ImageFormat::LAB8:
-      return CompareDiff<uint8>(image1, image2, max_color_diff, max_alpha_diff,
-                                max_avg_diff, diff_image);
+      return CompareDiff<uint8_t>(image1, image2, options, diff_image);
     case ImageFormat::GRAY16:
     case ImageFormat::SRGB48:
     case ImageFormat::SRGBA64:
-      return CompareDiff<uint16>(image1, image2, max_color_diff, max_alpha_diff,
-                                 max_avg_diff, diff_image);
+      return CompareDiff<uint16_t>(image1, image2, options, diff_image);
     case ImageFormat::VEC32F1:
     case ImageFormat::VEC32F2:
-      return CompareDiff<float>(image1, image2, max_color_diff, max_alpha_diff,
-                                max_avg_diff, diff_image);
+    case ImageFormat::VEC32F4:
+      return CompareDiff<float>(image1, image2, options, diff_image);
     default:
-      LOG(FATAL) << ImageFrame::InvalidFormatString(image1.Format());
+      ABSL_LOG(FATAL) << ImageFrame::InvalidFormatString(image1.Format());
   }
+}
+
+absl::Status CompareImageFrames(const ImageFrame& image1,
+                                const ImageFrame& image2,
+                                const float max_color_diff,
+                                const float max_alpha_diff,
+                                const float max_avg_diff,
+                                std::unique_ptr<ImageFrame>& diff_image) {
+  return CompareImageFrames(image1, image2,
+                            ImageFrameComparisonOptions{
+                                .max_color_diff = max_color_diff,
+                                .max_alpha_diff = max_alpha_diff,
+                                .max_avg_diff = max_avg_diff,
+                                .max_num_pixels_above_limit = 0,
+                            },
+                            diff_image);
 }
 
 bool CompareImageFrames(const ImageFrame& image1, const ImageFrame& image2,
                         const float max_color_diff, const float max_alpha_diff,
                         const float max_avg_diff, std::string* error_message) {
   std::unique_ptr<ImageFrame> diff_image;
-  auto status = CompareImageFrames(image1, image2, max_color_diff,
-                                   max_alpha_diff, max_avg_diff, diff_image);
+  auto status = CompareImageFrames(image1, image2,
+                                   {
+                                       .max_color_diff = max_color_diff,
+                                       .max_alpha_diff = max_alpha_diff,
+                                       .max_avg_diff = max_avg_diff,
+                                       .max_num_pixels_above_limit = 0,
+                                   },
+                                   diff_image);
   if (status.ok()) return true;
   if (error_message) *error_message = std::string(status.message());
   return false;
@@ -212,22 +265,19 @@ bool CompareImageFrames(const ImageFrame& image1, const ImageFrame& image2,
 absl::Status CompareAndSaveImageOutput(
     absl::string_view golden_image_path, const ImageFrame& actual,
     const ImageFrameComparisonOptions& options) {
-  ASSIGN_OR_RETURN(auto output_img_path, SavePngTestOutput(actual, "output"));
-
-  auto expected = LoadTestImage(GetTestFilePath(golden_image_path));
+  auto expected =
+      LoadTestImage(GetTestFilePath(golden_image_path), ImageFormat::UNKNOWN);
   if (!expected.ok()) {
     return expected.status();
   }
-  ASSIGN_OR_RETURN(auto expected_img_path,
-                   SavePngTestOutput(**expected, "expected"));
 
-  std::unique_ptr<ImageFrame> diff_img;
-  auto status = CompareImageFrames(**expected, actual, options.max_color_diff,
-                                   options.max_alpha_diff, options.max_avg_diff,
-                                   diff_img);
-  ASSIGN_OR_RETURN(auto diff_img_path, SavePngTestOutput(*diff_img, "diff"));
+  return CompareAndSaveOutputInternal(**expected, actual, options);
+}
 
-  return status;
+absl::Status CompareAndSaveImageOutputDynamic(
+    const ImageFrame& expected, const ImageFrame& actual,
+    const ImageFrameComparisonOptions& options) {
+  return CompareAndSaveOutputInternal(expected, actual, options);
 }
 
 std::string GetTestRootDir() {
@@ -309,6 +359,13 @@ std::unique_ptr<ImageFrame> LoadTestPng(absl::string_view path,
 // Returns the path to the output if successful.
 absl::StatusOr<std::string> SavePngTestOutput(
     const mediapipe::ImageFrame& image, absl::string_view prefix) {
+  absl::flat_hash_set<ImageFormat::Format> supported_formats = {
+      ImageFormat::GRAY8, ImageFormat::SRGB, ImageFormat::SRGBA,
+      ImageFormat::LAB8, ImageFormat::SBGRA};
+  if (!supported_formats.contains(image.Format())) {
+    return absl::CancelledError(
+        absl::StrFormat("Format %d can not be saved to PNG.", image.Format()));
+  }
   std::string now_string = absl::FormatTime(absl::Now());
   std::string output_relative_path =
       absl::StrCat(prefix, "_", now_string, ".png");
@@ -324,15 +381,15 @@ absl::StatusOr<std::string> SavePngTestOutput(
 bool LoadTestGraph(CalculatorGraphConfig* proto, const std::string& path) {
   int fd = open(path.c_str(), O_RDONLY);
   if (fd == -1) {
-    LOG(ERROR) << "could not open test graph: " << path
-               << ", error: " << strerror(errno);
+    ABSL_LOG(ERROR) << "could not open test graph: " << path
+                    << ", error: " << strerror(errno);
     return false;
   }
   proto_ns::io::FileInputStream input(fd);
   bool success = proto->ParseFromZeroCopyStream(&input);
   close(fd);
   if (!success) {
-    LOG(ERROR) << "could not parse test graph: " << path;
+    ABSL_LOG(ERROR) << "could not parse test graph: " << path;
   }
   return success;
 }
@@ -343,23 +400,23 @@ std::unique_ptr<ImageFrame> GenerateLuminanceImage(
   const int height = original_image.Height();
   const int channels = original_image.NumberOfChannels();
   if (channels != 3 && channels != 4) {
-    LOG(ERROR) << "Invalid number of image channels: " << channels;
+    ABSL_LOG(ERROR) << "Invalid number of image channels: " << channels;
     return nullptr;
   }
   auto luminance_image =
       absl::make_unique<ImageFrame>(original_image.Format(), width, height,
                                     ImageFrame::kGlDefaultAlignmentBoundary);
-  const uint8* pixel1 = original_image.PixelData();
-  uint8* pixel2 = luminance_image->MutablePixelData();
+  const uint8_t* pixel1 = original_image.PixelData();
+  uint8_t* pixel2 = luminance_image->MutablePixelData();
   const int width_padding1 = original_image.WidthStep() - width * channels;
   const int width_padding2 = luminance_image->WidthStep() - width * channels;
   for (int row = 0; row < height; ++row) {
     for (int col = 0; col < width; ++col) {
       float luminance =
           pixel1[0] * 0.2125f + pixel1[1] * 0.7154f + pixel1[2] * 0.0721f;
-      uint8 luminance_byte = 255;
+      uint8_t luminance_byte = 255;
       if (luminance < 255.0f) {
-        luminance_byte = static_cast<uint8>(luminance);
+        luminance_byte = static_cast<uint8_t>(luminance);
       }
       pixel2[0] = luminance_byte;
       pixel2[1] = luminance_byte;

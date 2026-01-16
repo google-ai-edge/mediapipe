@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/vision/face_detector/
 title: Face Detection
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 1
 ---
 
@@ -17,6 +18,14 @@ nav_order: 1
 {:toc}
 </details>
 ---
+
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+As of May 10, 2023, this solution was upgraded to a new MediaPipe
+Solution. For more information, see the
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/vision/face_detector)
+site.*
+
+----
 
 ## Overview
 
@@ -53,6 +62,25 @@ best for faces within 5 meters. For the full-range option, a sparse model is
 used for its improved inference speed. Please refer to the
 [model cards](./models.md#face_detection) for details. Default to `0` if not
 specified.
+
+Note: Not available for JavaScript (use "model" instead).
+
+#### model
+
+A string value to indicate which model should be used. Use "short" to
+select a short-range model that works best for faces within 2 meters from the
+camera, and "full" for a full-range model best for faces within 5 meters. For
+the full-range option, a sparse model is used for its improved inference speed.
+Please refer to the model cards for details. Default to empty string.
+
+Note: Valid only for JavaScript solution.
+
+#### selfie_mode
+
+A boolean value to indicate whether to flip the images/video frames
+horizontally or not. Default to `false`.
+
+Note: Valid only for JavaScript solution.
 
 #### min_detection_confidence
 
@@ -146,9 +174,9 @@ Please first see general [introduction](../getting_started/javascript.md) on
 MediaPipe in JavaScript, then learn more in the companion [web demo](#resources)
 and the following usage example.
 
-Supported configuration options:
-
-*   [modelSelection](#model_selection)
+Supported face detection options:
+*   [selfieMode](#selfie_mode)
+*   [model](#model)
 *   [minDetectionConfidence](#min_detection_confidence)
 
 ```html
@@ -176,6 +204,7 @@ Supported configuration options:
 const videoElement = document.getElementsByClassName('input_video')[0];
 const canvasElement = document.getElementsByClassName('output_canvas')[0];
 const canvasCtx = canvasElement.getContext('2d');
+const drawingUtils = window;
 
 function onResults(results) {
   // Draw the overlays.
@@ -199,7 +228,7 @@ const faceDetection = new FaceDetection({locateFile: (file) => {
   return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/${file}`;
 }});
 faceDetection.setOptions({
-  modelSelection: 0,
+  model: 'short',
   minDetectionConfidence: 0.5
 });
 faceDetection.onResults(onResults);
@@ -220,7 +249,7 @@ camera.start();
 Please first follow general
 [instructions](../getting_started/android_solutions.md) to add MediaPipe Gradle
 dependencies and try the Android Solution API in the companion
-[example Android Studio project](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/solutions/facedetection),
+[example Android Studio project](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/solutions/facedetection),
 and learn more in the usage example below.
 
 Supported configuration options:
@@ -439,12 +468,12 @@ to visualize its associated subgraphs, please see
 #### GPU Pipeline
 
 *   Graph:
-    [`mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt)
+    [`mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt)
 *   Android target:
     [(or download prebuilt ARM64 APK)](https://drive.google.com/open?id=1DZTCy1gp238kkMnu4fUkwI3IrF77Mhy5)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu:facedetectiongpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu/BUILD)
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu:facedetectiongpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu/BUILD)
 *   iOS target:
-    [`mediapipe/examples/ios/facedetectiongpu:FaceDetectionGpuApp`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/facedetectiongpu/BUILD)
+    [`mediapipe/examples/ios/facedetectiongpu:FaceDetectionGpuApp`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/ios/facedetectiongpu/BUILD)
 
 #### CPU Pipeline
 
@@ -454,30 +483,30 @@ image transfer respectively. As a result, the rest of graph, which shares the
 same configuration as the GPU pipeline, runs entirely on CPU.
 
 *   Graph:
-    [`mediapipe/graphs/face_detection/face_detection_mobile_cpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_cpu.pbtxt)
+    [`mediapipe/graphs/face_detection/face_detection_mobile_cpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_cpu.pbtxt)
 *   Android target:
     [(or download prebuilt ARM64 APK)](https://drive.google.com/open?id=1npiZY47jbO5m2YaL63o5QoCQs40JC6C7)
-    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectioncpu:facedetectioncpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectioncpu/BUILD)
+    [`mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectioncpu:facedetectioncpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectioncpu/BUILD)
 *   iOS target:
-    [`mediapipe/examples/ios/facedetectioncpu:FaceDetectionCpuApp`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/ios/facedetectioncpu/BUILD)
+    [`mediapipe/examples/ios/facedetectioncpu:FaceDetectionCpuApp`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/ios/facedetectioncpu/BUILD)
 
 ### Desktop
 
 *   Running on CPU:
     *   Graph:
-        [`mediapipe/graphs/face_detection/face_detection_desktop_live.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_desktop_live.pbtxt)
+        [`mediapipe/graphs/face_detection/face_detection_desktop_live.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_desktop_live.pbtxt)
     *   Target:
-        [`mediapipe/examples/desktop/face_detection:face_detection_cpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/face_detection/BUILD)
+        [`mediapipe/examples/desktop/face_detection:face_detection_cpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/face_detection/BUILD)
 *   Running on GPU
     *   Graph:
-        [`mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt`](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt)
+        [`mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/graphs/face_detection/face_detection_mobile_gpu.pbtxt)
     *   Target:
-        [`mediapipe/examples/desktop/face_detection:face_detection_gpu`](https://github.com/google/mediapipe/tree/master/mediapipe/examples/desktop/face_detection/BUILD)
+        [`mediapipe/examples/desktop/face_detection:face_detection_gpu`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/desktop/face_detection/BUILD)
 
 ### Coral
 
 Please refer to
-[these instructions](https://github.com/google/mediapipe/tree/master/mediapipe/examples/coral/README.md)
+[these instructions](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/examples/coral/README.md)
 to cross-compile and run MediaPipe examples on the
 [Coral Dev Board](https://coral.ai/products/dev-board).
 

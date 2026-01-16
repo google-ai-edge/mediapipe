@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,12 +33,13 @@ limitations under the License.
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/timestamp.h"
+#include "mediapipe/tasks/cc/components/calculators/tensors_to_embeddings_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/embedder_options.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/embedding_postprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -85,7 +86,7 @@ absl::StatusOr<std::unique_ptr<ModelResources>> CreateModelResourcesForModel(
                                 std::move(external_file));
 }
 
-class ConfigureTest : public tflite_shims::testing::Test {};
+class ConfigureTest : public tflite::testing::Test {};
 
 TEST_F(ConfigureTest, SucceedsWithQuantizedModelWithMetadata) {
   MP_ASSERT_OK_AND_ASSIGN(
@@ -152,22 +153,28 @@ TEST_F(ConfigureTest, SucceedsWithFloatModelWithMetadata) {
                    has_quantized_outputs: false)pb")));
 }
 
-class PostprocessingTest : public tflite_shims::testing::Test {
+class PostprocessingTest : public tflite::testing::Test {
  protected:
   absl::StatusOr<OutputStreamPoller> BuildGraph(
       absl::string_view model_name, const proto::EmbedderOptions& options,
-      bool connect_timestamps = false) {
-    ASSIGN_OR_RETURN(auto model_resources,
-                     CreateModelResourcesForModel(model_name));
+      bool connect_timestamps = false,
+      const std::vector<absl::string_view>& ignored_head_names = {}) {
+    MP_ASSIGN_OR_RETURN(auto model_resources,
+                        CreateModelResourcesForModel(model_name));
 
     Graph graph;
     auto& postprocessing = graph.AddNode(
         "mediapipe.tasks.components.processors."
         "EmbeddingPostprocessingGraph");
-    MP_RETURN_IF_ERROR(ConfigureEmbeddingPostprocessingGraph(
-        *model_resources, options,
+    auto* postprocessing_options =
         &postprocessing
-             .GetOptions<proto::EmbeddingPostprocessingGraphOptions>()));
+             .GetOptions<proto::EmbeddingPostprocessingGraphOptions>();
+    for (const absl::string_view head_name : ignored_head_names) {
+      postprocessing_options->mutable_tensors_to_embeddings_options()
+          ->add_ignored_head_names(std::string(head_name));
+    }
+    MP_RETURN_IF_ERROR(ConfigureEmbeddingPostprocessingGraph(
+        *model_resources, options, postprocessing_options));
     graph[Input<std::vector<Tensor>>(kTensorsTag)].SetName(kTensorsName) >>
         postprocessing.In(kTensorsTag);
     if (connect_timestamps) {
@@ -185,13 +192,13 @@ class PostprocessingTest : public tflite_shims::testing::Test {
 
     MP_RETURN_IF_ERROR(calculator_graph_.Initialize(graph.GetConfig()));
     if (connect_timestamps) {
-      ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
-                                        kTimestampedEmbeddingsName));
+      MP_ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
+                                           kTimestampedEmbeddingsName));
       MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
       return poller;
     }
-    ASSIGN_OR_RETURN(auto poller,
-                     calculator_graph_.AddOutputStreamPoller(kEmbeddingsName));
+    MP_ASSIGN_OR_RETURN(
+        auto poller, calculator_graph_.AddOutputStreamPoller(kEmbeddingsName));
     MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
     return poller;
   }
@@ -246,7 +253,7 @@ class PostprocessingTest : public tflite_shims::testing::Test {
       absl::make_unique<std::vector<Tensor>>();
 };
 
-TEST_F(PostprocessingTest, SucceedsWithoutTimestamps) {
+TEST_F(PostprocessingTest, SucceedsWithoutAggregation) {
   // Build graph.
   proto::EmbedderOptions options;
   MP_ASSERT_OK_AND_ASSIGN(auto poller,
@@ -261,7 +268,8 @@ TEST_F(PostprocessingTest, SucceedsWithoutTimestamps) {
   MP_ASSERT_OK_AND_ASSIGN(auto results, GetResult<EmbeddingResult>(poller));
 
   // Validate results.
-  EXPECT_FALSE(results.has_timestamp_ms());
+  EXPECT_TRUE(results.has_timestamp_ms());
+  EXPECT_EQ(results.timestamp_ms(), 0);
   EXPECT_EQ(results.embeddings_size(), 1);
   EXPECT_EQ(results.embeddings(0).head_index(), 0);
   EXPECT_EQ(results.embeddings(0).head_name(), "feature");
@@ -273,7 +281,29 @@ TEST_F(PostprocessingTest, SucceedsWithoutTimestamps) {
   }
 }
 
-TEST_F(PostprocessingTest, SucceedsWithTimestamps) {
+TEST_F(PostprocessingTest, SucceedsWithFilter) {
+  // Build graph.
+  proto::EmbedderOptions options;
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto poller,
+      BuildGraph(kMobileNetV3Embedder, options, /*connect_timestamps=*/false,
+                 /*ignored_head_names=*/{"feature"}));
+  // Build input tensor.
+  std::vector<float> tensor(kMobileNetV3EmbedderEmbeddingSize, 0);
+  tensor[0] = 1.0;
+
+  // Send tensor and get results.
+  AddTensor(tensor, Tensor::ElementType::kFloat32);
+  MP_ASSERT_OK(Run());
+  MP_ASSERT_OK_AND_ASSIGN(auto results, GetResult<EmbeddingResult>(poller));
+
+  // Validate results.
+  EXPECT_TRUE(results.has_timestamp_ms());
+  EXPECT_EQ(results.timestamp_ms(), 0);
+  EXPECT_EQ(results.embeddings_size(), 0);
+}
+
+TEST_F(PostprocessingTest, SucceedsWithAggregation) {
   // Build graph.
   proto::EmbedderOptions options;
   MP_ASSERT_OK_AND_ASSIGN(auto poller, BuildGraph(kMobileNetV3Embedder, options,

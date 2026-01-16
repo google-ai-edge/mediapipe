@@ -645,5 +645,41 @@ TEST(MuxInputStreamHandlerTest,
   MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
+TEST(MuxInputStreamHandlerTest, RemovesUnusedDataStreamPackets) {
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "input0"
+        input_stream: "input1"
+        input_stream: "select"
+        node {
+          calculator: "MuxCalculator"
+          input_stream: "INPUT:0:input0"
+          input_stream: "INPUT:1:input1"
+          input_stream: "SELECT:select"
+          output_stream: "OUTPUT:output"
+          input_stream_handler { input_stream_handler: "MuxInputStreamHandler" }
+        }
+      )pb");
+  config.set_max_queue_size(1);
+  config.set_report_deadlock(true);
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "select", MakePacket<int>(0).At(Timestamp(2))));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input0", MakePacket<int>(1000).At(Timestamp(2))));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  // Add two delayed packets to the deselected input. They should be discarded
+  // instead of triggering the deadlock detection (max_queue_size = 1).
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input1", MakePacket<int>(900).At(Timestamp(1))));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input1", MakePacket<int>(900).At(Timestamp(2))));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+}
+
 }  // namespace
 }  // namespace mediapipe

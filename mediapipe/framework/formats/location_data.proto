@@ -75,7 +75,7 @@ message LocationData {
     optional int32 width = 1;
     optional int32 height = 2;
     // A rasterization-like format for storing the mask.
-    optional Rasterization rasterization = 3;
+    optional mediapipe.Rasterization rasterization = 3;
   }
   optional BinaryMask mask = 4;
 

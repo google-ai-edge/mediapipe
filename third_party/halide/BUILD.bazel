@@ -1,0 +1,50 @@
+# Copyright 2023 The MediaPipe Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@halide//:halide.bzl", "halide_library_runtimes")
+
+licenses(["notice"])
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+halide_library_runtimes()
+
+# Alias the 'gengen' target so that it uses the correct Halide release based on host platform.
+alias(
+    name = "gengen",
+    actual = select(
+        {
+            "@mediapipe//mediapipe:macos_x86_64": "@macos_x86_64_halide//:gengen",
+            "@mediapipe//mediapipe:macos_arm64": "@macos_arm_64_halide//:gengen",
+            "@mediapipe//mediapipe:windows": "@windows_halide//:gengen",
+            "@mediapipe//mediapipe:linux": "@linux_halide//:gengen",
+            # Deliberately no //condition:default clause here.
+        },
+        no_match_error = "Compiling Halide code requires that the build host is one of Linux x86-64, Windows x86-64, macOS x86-64, or macOS arm64.",
+    ),
+)
+
+# Arbitrarily alias the 'runtime' and 'language' targets to the Linux Halide release. The underlying
+# targets are identical for all host platforms.
+alias(
+    name = "runtime",
+    actual = "@linux_halide//:runtime",
+)
+
+alias(
+    name = "language",
+    actual = "@linux_halide//:language",
+)

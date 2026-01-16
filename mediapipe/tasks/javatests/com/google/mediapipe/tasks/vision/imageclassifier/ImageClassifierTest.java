@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -265,9 +265,9 @@ public class ImageClassifierTest {
       assertCategoriesAre(
           results,
           Arrays.asList(
-              Category.create(0.6390683f, 934, "cheeseburger", ""),
-              Category.create(0.0495407f, 963, "meat loaf", ""),
-              Category.create(0.0469720f, 925, "guacamole", "")));
+              Category.create(0.75369555f, 934, "cheeseburger", ""),
+              Category.create(0.029219573f, 925, "guacamole", ""),
+              Category.create(0.028840661f, 932, "bagel", "")));
     }
 
     @Test
@@ -279,8 +279,8 @@ public class ImageClassifierTest {
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      // RectF around the chair.
-      RectF roi = new RectF(0.0f, 0.1763f, 0.5642f, 0.3049f);
+      // RectF around the soccer ball.
+      RectF roi = new RectF(0.2655f, 0.45f, 0.6925f, 0.614f);
       ImageProcessingOptions imageProcessingOptions =
           ImageProcessingOptions.builder().setRegionOfInterest(roi).setRotationDegrees(-90).build();
       ImageClassifierResult results =
@@ -289,7 +289,7 @@ public class ImageClassifierTest {
 
       assertHasOneHead(results);
       assertCategoriesAre(
-          results, Arrays.asList(Category.create(0.686824f, 560, "folding chair", "")));
+          results, Arrays.asList(Category.create(0.99730396f, 806, "soccer ball", "")));
     }
   }
 

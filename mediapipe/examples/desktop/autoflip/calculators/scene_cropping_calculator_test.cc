@@ -175,7 +175,7 @@ constexpr int kMinNumDetections = 0;
 constexpr int kMaxNumDetections = 10;
 
 constexpr int kDownSampleRate = 4;
-constexpr int64 kTimestampDiff = 20000;
+constexpr int64_t kTimestampDiff = 20000;
 
 // Returns a singleton random engine for generating random values. The seed is
 // fixed for reproducibility.
@@ -254,7 +254,7 @@ std::unique_ptr<ImageFrame> MakeImageFrameFromColor(const cv::Scalar& color,
 // Randomly generates a number of detections in the range of kMinNumDetections
 // and kMaxNumDetections. Optionally add a key image frame of random solid color
 // and given size.
-void AddKeyFrameFeatures(const int64 time_ms, const int key_frame_width,
+void AddKeyFrameFeatures(const int64_t time_ms, const int key_frame_width,
                          const int key_frame_height, bool randomize,
                          CalculatorRunner::StreamContentsSet* inputs) {
   Timestamp timestamp(time_ms);
@@ -286,7 +286,7 @@ void AddScene(const int start_frame_index, const int num_scene_frames,
               const int key_frame_width, const int key_frame_height,
               const int DownSampleRate,
               CalculatorRunner::StreamContentsSet* inputs) {
-  int64 time_ms = start_frame_index * kTimestampDiff;
+  int64_t time_ms = start_frame_index * kTimestampDiff;
   for (int i = 0; i < num_scene_frames; ++i) {
     Timestamp timestamp(time_ms);
     if (inputs->HasTag(kVideoFramesTag)) {
@@ -657,7 +657,7 @@ TEST(SceneCroppingCalculatorTest, PadsWithSolidColorFromStaticFeatures) {
 
   // Add inputs.
   auto* inputs = runner->MutableInputs();
-  int64 time_ms = 0;
+  int64_t time_ms = 0;
   int num_static_features = 0;
   for (int i = 0; i < kSceneSize; ++i) {
     Timestamp timestamp(time_ms);
@@ -914,6 +914,41 @@ TEST(SceneCroppingCalculatorTest, OutputsCropMessageKinematicPathNoVideo) {
     EXPECT_EQ(ext_render_message.crop_from_location().y(), 0);
     EXPECT_EQ(ext_render_message.crop_from_location().width(), 461);
     EXPECT_EQ(ext_render_message.crop_from_location().height(), 720);
+    EXPECT_EQ(ext_render_message.render_to_location().x(), 0);
+    EXPECT_EQ(ext_render_message.render_to_location().y(), 0);
+    EXPECT_EQ(ext_render_message.render_to_location().width(), 720);
+    EXPECT_EQ(ext_render_message.render_to_location().height(), 1124);
+  }
+}
+
+// Checks external render message with default poly path solver using
+// normalized crops.
+TEST(SceneCroppingCalculatorTest, OutputsCropMessagePolyPathNormalized) {
+  const CalculatorGraphConfig::Node config =
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(
+          absl::Substitute(kExternalRenderConfig, kTargetWidth, kTargetHeight));
+  auto runner = absl::make_unique<CalculatorRunner>(config);
+  const int num_frames = kSceneSize;
+  AddScene(0, num_frames, kInputFrameWidth, kInputFrameHeight, kKeyFrameWidth,
+           kKeyFrameHeight, 1, runner->MutableInputs());
+
+  MP_EXPECT_OK(runner->Run());
+  const auto& outputs = runner->Outputs();
+  const auto& ext_render_per_frame =
+      outputs.Tag(kExternalRenderingPerFrameTag).packets;
+  EXPECT_EQ(ext_render_per_frame.size(), num_frames);
+
+  for (int i = 0; i < num_frames - 1; ++i) {
+    const auto& ext_render_message =
+        ext_render_per_frame[i].Get<ExternalRenderFrame>();
+    EXPECT_EQ(ext_render_message.timestamp_us(), i * 20000);
+    EXPECT_EQ(ext_render_message.normalized_crop_from_location().x(),
+              725 / static_cast<float>(kInputFrameWidth));
+    EXPECT_EQ(ext_render_message.normalized_crop_from_location().y(), 0);
+    EXPECT_EQ(ext_render_message.normalized_crop_from_location().width(),
+              461 / static_cast<float>(kInputFrameWidth));
+    EXPECT_EQ(ext_render_message.normalized_crop_from_location().height(),
+              720 / static_cast<float>(kInputFrameHeight));
     EXPECT_EQ(ext_render_message.render_to_location().x(), 0);
     EXPECT_EQ(ext_render_message.render_to_location().y(), 0);
     EXPECT_EQ(ext_render_message.render_to_location().width(), 720);

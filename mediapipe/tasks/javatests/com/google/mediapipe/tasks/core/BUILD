@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ android_library(
     name = "test_utils",
     srcs = ["TestUtils.java"],
     deps = [
-        "//third_party/java/android_libs/guava_jdk5:io",
+        "@maven//:com_google_guava_guava",
     ],
 )
+
+# TODO: Enable this in OSS

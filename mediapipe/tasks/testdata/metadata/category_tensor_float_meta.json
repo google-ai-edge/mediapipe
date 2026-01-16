@@ -1,0 +1,33 @@
+{
+  "subgraph_metadata": [
+    {
+      "input_tensor_metadata": [
+        {
+          "name": "category",
+          "description": "The category tensor.",
+          "content": {
+            "content_properties_type": "FeatureProperties",
+            "content_properties": {
+            }
+          },
+          "stats": {
+          },
+          "associated_files": [
+            {
+              "name": "labels.txt",
+              "description": "Labels for categories that the model can recognize.",
+              "type": "TENSOR_VALUE_LABELS",
+              "locale": "en"
+            },
+            {
+              "name": "labels_cn.txt",
+              "description": "Labels for categories that the model can recognize.",
+              "type": "TENSOR_VALUE_LABELS",
+              "locale": "cn"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

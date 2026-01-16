@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,21 +21,29 @@ limitations under the License.
 #include <iterator>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "absl/container/flat_hash_map.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/substitute.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/executor.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/model_resources_cache.h"
+#include "tensorflow/lite/core/api/op_resolver.h"
+
+#if !MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/gpu/gpu_shared_data_internal.h"
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
 namespace mediapipe {
 namespace tasks {
@@ -86,20 +94,47 @@ absl::StatusOr<PacketMap> GenerateOutputPacketMap(
 }  // namespace
 
 /* static */
+#if !MEDIAPIPE_DISABLE_GPU
 absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
     CalculatorGraphConfig config,
     std::unique_ptr<tflite::OpResolver> op_resolver,
-    PacketsCallback packets_callback) {
+    PacketsCallback packets_callback,
+    std::shared_ptr<Executor> default_executor,
+    std::optional<PacketMap> input_side_packets,
+    std::shared_ptr<::mediapipe::GpuResources> resources,
+    std::optional<ErrorFn> error_fn, bool disable_default_service) {
+#else
+absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
+    CalculatorGraphConfig config,
+    std::unique_ptr<tflite::OpResolver> op_resolver,
+    PacketsCallback packets_callback,
+    std::shared_ptr<Executor> default_executor,
+    std::optional<PacketMap> input_side_packets,
+    std::optional<ErrorFn> error_fn, bool disable_default_service) {
+#endif  // !MEDIAPIPE_DISABLE_GPU
   auto task_runner = absl::WrapUnique(new TaskRunner(packets_callback));
-  MP_RETURN_IF_ERROR(
-      task_runner->Initialize(std::move(config), std::move(op_resolver)));
+  MP_RETURN_IF_ERROR(task_runner->Initialize(
+      std::move(config), std::move(op_resolver), std::move(default_executor),
+      std::move(input_side_packets), std::move(error_fn),
+      disable_default_service));
+
+#if !MEDIAPIPE_DISABLE_GPU
+  if (resources) {
+    MP_RETURN_IF_ERROR(
+        task_runner->graph_.SetGpuResources(std::move(resources)));
+  }
+#endif  // !MEDIAPIPE_DISABLE_GPU
+
   MP_RETURN_IF_ERROR(task_runner->Start());
   return task_runner;
 }
 
 absl::Status TaskRunner::Initialize(
     CalculatorGraphConfig config,
-    std::unique_ptr<tflite::OpResolver> op_resolver) {
+    std::unique_ptr<tflite::OpResolver> op_resolver,
+    std::shared_ptr<Executor> default_executor,
+    std::optional<PacketMap> input_side_packets,
+    std::optional<ErrorFn> error_fn, bool disable_default_service) {
   if (initialized_) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
@@ -123,7 +158,9 @@ absl::Status TaskRunner::Initialize(
         MediaPipeTasksStatus::kRunnerInitializationError);
   }
   config.clear_output_stream();
-  PacketMap input_side_packets;
+  if (!input_side_packets) {
+    input_side_packets.emplace();
+  }
   if (packets_callback_) {
     tool::AddMultiStreamCallback(
         output_stream_names_,
@@ -132,7 +169,7 @@ absl::Status TaskRunner::Initialize(
               GenerateOutputPacketMap(packets, output_stream_names_));
           return;
         },
-        &config, &input_side_packets,
+        &config, &input_side_packets.value(),
         /*observe_timestamp_bounds=*/true);
   } else {
     mediapipe::tool::AddMultiStreamCallback(
@@ -142,7 +179,18 @@ absl::Status TaskRunner::Initialize(
               GenerateOutputPacketMap(packets, output_stream_names_);
           return;
         },
-        &config, &input_side_packets, /*observe_timestamp_bounds=*/true);
+        &config, &input_side_packets.value(),
+        /*observe_timestamp_bounds=*/true);
+  }
+
+  if (default_executor) {
+    MP_RETURN_IF_ERROR(graph_.SetExecutor("", std::move(default_executor)));
+  }
+
+  if (error_fn) MP_RETURN_IF_ERROR(graph_.SetErrorCallback(*error_fn));
+
+  if (disable_default_service) {
+    MP_RETURN_IF_ERROR(graph_.DisallowServiceDefaultInitialization());
   }
   auto model_resources_cache =
       std::make_shared<ModelResourcesCache>(std::move(op_resolver));
@@ -152,7 +200,7 @@ absl::Status TaskRunner::Initialize(
                  "ModelResourcesCacheService is not set up successfully.",
                  MediaPipeTasksStatus::kRunnerModelResourcesCacheServiceError));
   MP_RETURN_IF_ERROR(
-      AddPayload(graph_.Initialize(std::move(config), input_side_packets),
+      AddPayload(graph_.Initialize(std::move(config), *input_side_packets),
                  "MediaPipe CalculatorGraph is not successfully initialized.",
                  MediaPipeTasksStatus::kRunnerInitializationError));
   initialized_ = true;
@@ -202,7 +250,8 @@ absl::StatusOr<PacketMap> TaskRunner::Process(PacketMap inputs) {
         "callback is provided.",
         MediaPipeTasksStatus::kRunnerApiCalledInWrongModeError);
   }
-  ASSIGN_OR_RETURN(auto input_timestamp, ValidateAndGetPacketTimestamp(inputs));
+  MP_ASSIGN_OR_RETURN(auto input_timestamp,
+                      ValidateAndGetPacketTimestamp(inputs));
   // MediaPipe reports runtime errors through CalculatorGraph::WaitUntilIdle or
   // WaitUntilDone without indicating the exact packet timestamp.
   // To ensure that the TaskRunner::Process reports errors per invocation,
@@ -264,7 +313,8 @@ absl::Status TaskRunner::Send(PacketMap inputs) {
         "callback is not provided.",
         MediaPipeTasksStatus::kRunnerApiCalledInWrongModeError);
   }
-  ASSIGN_OR_RETURN(auto input_timestamp, ValidateAndGetPacketTimestamp(inputs));
+  MP_ASSIGN_OR_RETURN(auto input_timestamp,
+                      ValidateAndGetPacketTimestamp(inputs));
   if (!input_timestamp.IsAllowedInStream()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
@@ -301,7 +351,7 @@ absl::Status TaskRunner::Close() {
   }
   is_running_ = false;
   MP_RETURN_IF_ERROR(
-      AddPayload(graph_.CloseAllInputStreams(), "Fail to close intput streams",
+      AddPayload(graph_.CloseAllInputStreams(), "Fail to close input streams",
                  MediaPipeTasksStatus::kRunnerFailsToCloseError));
   MP_RETURN_IF_ERROR(AddPayload(
       graph_.WaitUntilDone(), "Fail to shutdown the MediaPipe graph.",

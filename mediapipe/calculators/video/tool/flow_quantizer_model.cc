@@ -14,14 +14,15 @@
 
 #include "mediapipe/calculators/video/tool/flow_quantizer_model.h"
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/type_map.h"
 
 namespace mediapipe {
 
 // Uniform normalization to 0-255.
-uint8 FlowQuantizerModel::Apply(const float val, const int channel) const {
-  CHECK_LT(channel, model_.min_value_size());
+uint8_t FlowQuantizerModel::Apply(const float val, const int channel) const {
+  ABSL_CHECK_LT(channel, model_.min_value_size());
   const auto& min_value = model_.min_value(channel);
   const auto& max_value = model_.max_value(channel);
   QCHECK_GT(max_value, min_value);
@@ -31,7 +32,7 @@ uint8 FlowQuantizerModel::Apply(const float val, const int channel) const {
   } else if (res > 1.0) {
     res = 1.0;
   }
-  return static_cast<uint8>(res * 255);
+  return static_cast<uint8_t>(res * 255);
 }
 
 void FlowQuantizerModel::LoadFromProto(const QuantizerModelData& data) {
@@ -51,7 +52,7 @@ const QuantizerModelData& FlowQuantizerModel::GetModelData() const {
 // TODO: Taking the min and max over all training flow fields might be
 // sensitive to noise. We should use more robust statistics.
 void FlowQuantizerModel::AddSampleFlowField(const OpticalFlowField& flow) {
-  CHECK_EQ(model_.min_value_size(), 2);
+  ABSL_CHECK_EQ(model_.min_value_size(), 2);
   const cv::Mat_<cv::Point2f>& flow_mat = flow.flow_data();
   for (int i = 0; i != flow.width(); ++i) {
     for (int j = 0; j != flow.height(); ++j) {

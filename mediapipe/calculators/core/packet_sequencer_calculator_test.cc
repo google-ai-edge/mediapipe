@@ -71,7 +71,7 @@ TEST_F(PacketSequencerCalculatorTest, IsRegistered) {
       CalculatorBaseRegistry::IsRegistered("PacketSequencerCalculator"));
 }
 
-// Shows how control packets recieve timestamps before and after frame packets
+// Shows how control packets receive timestamps before and after frame packets
 // have arrived.
 TEST_F(PacketSequencerCalculatorTest, ChannelEarly) {
   CalculatorGraphConfig::Node node_config = BuildNodeConfig();

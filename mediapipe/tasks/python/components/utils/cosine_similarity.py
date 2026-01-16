@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,20 +20,20 @@ from mediapipe.tasks.python.components.containers import embedding_result
 _Embedding = embedding_result.Embedding
 
 
-def _compute_cosine_similarity(u, v):
+def _compute_cosine_similarity(u: np.ndarray, v: np.ndarray):
   """Computes cosine similarity between two embeddings."""
 
-  if len(u.embedding) <= 0:
+  if len(u) <= 0:
     raise ValueError("Cannot compute cosing similarity on empty embeddings.")
 
-  norm_u = np.linalg.norm(u.embedding)
-  norm_v = np.linalg.norm(v.embedding)
+  norm_u = np.linalg.norm(u)
+  norm_v = np.linalg.norm(v)
 
   if norm_u <= 0 or norm_v <= 0:
     raise ValueError(
         "Cannot compute cosine similarity on embedding with 0 norm.")
 
-  return np.dot(u.embedding, v.embedding.T) / (norm_u * norm_v)
+  return u.dot(v) / (norm_u * norm_v)
 
 
 def cosine_similarity(u: _Embedding, v: _Embedding) -> float:
@@ -56,10 +56,13 @@ def cosine_similarity(u: _Embedding, v: _Embedding) -> float:
                      f"({len(u.embedding)} vs. {len(v.embedding)}).")
 
   if u.embedding.dtype == float and v.embedding.dtype == float:
-    return _compute_cosine_similarity(u, v)
+    return _compute_cosine_similarity(u.embedding, v.embedding)
 
   if u.embedding.dtype == np.uint8 and v.embedding.dtype == np.uint8:
-    return _compute_cosine_similarity(u, v)
+    return _compute_cosine_similarity(
+        u.embedding.view("int8").astype("float"),
+        v.embedding.view("int8").astype("float"),
+    )
 
   raise ValueError("Cannot compute cosine similarity between quantized and "
                    "float embeddings.")

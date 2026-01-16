@@ -13,8 +13,6 @@ py_test(
     data = [
         "//mediapipe/tasks/testdata/metadata:data_files",
     ],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         "//mediapipe/tasks/metadata:metadata_schema_py",
         "//mediapipe/tasks/metadata:schema_py",
@@ -22,6 +20,7 @@ py_test(
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_info",
         "//mediapipe/tasks/python/test:test_utils",
         "@flatbuffers//:runtime_py",
+        "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )
 
@@ -33,8 +32,11 @@ py_test(
         "//mediapipe/tasks/testdata/metadata:model_files",
     ],
     deps = [
+        "//mediapipe/tasks/metadata:metadata_schema_py",
+        "//mediapipe/tasks/python/metadata/metadata_writers:metadata_info",
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
         "//mediapipe/tasks/python/test:test_utils",
+        "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )
 
@@ -51,6 +53,7 @@ py_test(
         "//mediapipe/tasks/python/metadata/metadata_writers:image_classifier",
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
         "//mediapipe/tasks/python/test:test_utils",
+        "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )
 
@@ -65,5 +68,49 @@ py_test(
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
         "//mediapipe/tasks/python/metadata/metadata_writers:text_classifier",
         "//mediapipe/tasks/python/test:test_utils",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)
+
+py_test(
+    name = "model_asset_bundle_utils_test",
+    srcs = ["model_asset_bundle_utils_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/metadata/metadata_writers:model_asset_bundle_utils",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)
+
+py_test(
+    name = "object_detector_test",
+    srcs = ["object_detector_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/metadata:data_files",
+        "//mediapipe/tasks/testdata/metadata:model_files",
+    ],
+    deps = [
+        "//mediapipe/tasks/metadata:metadata_schema_py",
+        "//mediapipe/tasks/python/metadata",
+        "//mediapipe/tasks/python/metadata/metadata_writers:metadata_info",
+        "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
+        "//mediapipe/tasks/python/metadata/metadata_writers:object_detector",
+        "//mediapipe/tasks/python/test:test_utils",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)
+
+py_test(
+    name = "image_segmenter_test",
+    srcs = ["image_segmenter_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/metadata:data_files",
+        "//mediapipe/tasks/testdata/metadata:model_files",
+    ],
+    deps = [
+        "//mediapipe/tasks/python/metadata",
+        "//mediapipe/tasks/python/metadata/metadata_writers:image_segmenter",
+        "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
+        "//mediapipe/tasks/python/test:test_utils",
+        "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )

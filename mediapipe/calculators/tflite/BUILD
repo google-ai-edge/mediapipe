@@ -13,8 +13,11 @@
 # limitations under the License.
 #
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
 
@@ -26,6 +29,7 @@ mediapipe_proto_library(
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
+        "//mediapipe/framework/formats/object_detection:anchor_proto",
     ],
 )
 
@@ -101,6 +105,8 @@ cc_library(
         "//mediapipe/framework/formats/object_detection:anchor_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
     ],
     alwayslink = 1,
 )
@@ -191,24 +197,20 @@ cc_library(
         ":edge_tpu_pci": ["MEDIAPIPE_EDGE_TPU=pci"],
         ":edge_tpu_all": ["MEDIAPIPE_EDGE_TPU=all"],
     }),
-    linkopts = select({
-        "//mediapipe:ios": [
-            "-framework CoreVideo",
-            "-framework MetalKit",
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":tflite_inference_calculator_cc_proto",
-        "@com_google_absl//absl/memory",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
         "//mediapipe/util/tflite:config",
         "//mediapipe/util/tflite:tflite_model_loader",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/memory",
         "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
-        "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
-        "//mediapipe/framework/port:ret_check",
     ] + selects.with_or({
         ":gpu_inference_disabled": [],
         "//mediapipe:ios": [
@@ -220,6 +222,8 @@ cc_library(
             "@org_tensorflow//tensorflow/lite/delegates/gpu/metal:buffer_convert",
             "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate",
             "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate_internal",
+            "//third_party/apple_frameworks:MetalKit",
+            "//third_party/apple_frameworks:CoreVideo",
         ],
         "//conditions:default": [
             "//mediapipe/util/tflite:tflite_gpu_runner",
@@ -238,6 +242,7 @@ cc_library(
             "@org_tensorflow//tensorflow/lite/delegates/nnapi:nnapi_delegate",
         ],
     }) + select({
+        "//mediapipe:emscripten": [],
         "//conditions:default": [
             "//mediapipe/util:cpu_util",
         ],
@@ -269,22 +274,16 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
-    linkopts = select({
-        "//mediapipe:ios": [
-            "-framework CoreVideo",
-            "-framework MetalKit",
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":tflite_converter_calculator_cc_proto",
-        "//mediapipe/util/tflite:config",
-        "//mediapipe/util:resource_util",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:matrix",
-        "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
+        "//mediapipe/util:resource_util",
+        "//mediapipe/util/tflite:config",
+        "@com_google_absl//absl/log:absl_check",
         "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ] + selects.with_or({
@@ -294,6 +293,8 @@ cc_library(
             "//mediapipe/gpu:MPPMetalHelper",
             "//mediapipe/objc:mediapipe_framework_ios",
             "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate",
+            "//third_party/apple_frameworks:MetalKit",
+            "//third_party/apple_frameworks:CoreVideo",
         ],
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
@@ -311,15 +312,22 @@ cc_library(
     alwayslink = 1,
 )
 
-cc_library(
+# TODO: Re-evaluate which of these libraries we can avoid making
+# cc_library_with_tflite and can be changed back to cc_library.
+cc_library_with_tflite(
     name = "tflite_model_calculator",
     srcs = ["tflite_model_calculator.cc"],
+    tflite_deps = [
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+    ],
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",
+        "//mediapipe/framework:resources",
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/status",
-        "@org_tensorflow//tensorflow/lite:framework",
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/types:span",
     ],
     alwayslink = 1,
 )
@@ -329,16 +337,16 @@ cc_library(
     srcs = ["tflite_tensors_to_segmentation_calculator.cc"],
     deps = [
         ":tflite_tensors_to_segmentation_calculator_cc_proto",
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/types:span",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework:calculator_context",
-        "//mediapipe/framework:calculator_framework",
         "//mediapipe/util:resource_util",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/types:span",
         "@org_tensorflow//tensorflow/lite:framework",
     ] + selects.with_or({
         ":gpu_inference_disabled": [],
@@ -387,24 +395,19 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
-    linkopts = select({
-        "//mediapipe:ios": [
-            "-framework CoreVideo",
-            "-framework MetalKit",
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":tflite_tensors_to_detections_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location",
         "//mediapipe/framework/formats/object_detection:anchor_cc_proto",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/util/tflite:config",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
-        "//mediapipe/framework/deps:file_path",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/formats:location",
-        "//mediapipe/framework/port:ret_check",
         "@org_tensorflow//tensorflow/lite:framework",
     ] + selects.with_or({
         ":gpu_inference_disabled": [],
@@ -414,6 +417,8 @@ cc_library(
             "//mediapipe/gpu:MPPMetalHelper",
             "//mediapipe/objc:mediapipe_framework_ios",
             "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate",
+            "//third_party/apple_frameworks:MetalKit",
+            "//third_party/apple_frameworks:CoreVideo",
         ],
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
@@ -431,20 +436,24 @@ cc_library(
     srcs = ["tflite_tensors_to_classification_calculator.cc"],
     deps = [
         ":tflite_tensors_to_classification_calculator_cc_proto",
-        "@com_google_absl//absl/container:node_hash_map",
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/types:span",
-        "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:location",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/util:resource_util",
+        "@com_google_absl//absl/container:node_hash_map",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/types:span",
         "@org_tensorflow//tensorflow/lite:framework",
     ] + select({
         "//mediapipe:android": [
             "//mediapipe/util/android/file/base",
         ],
         "//mediapipe:ios": [
+            "//mediapipe/util/android/file/base",
+        ],
+        "//mediapipe:emscripten": [
             "//mediapipe/util/android/file/base",
         ],
         "//mediapipe:macos": [
@@ -465,6 +474,7 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/log:absl_check",
         "@org_tensorflow//tensorflow/lite:framework",
     ],
     alwayslink = 1,
@@ -495,8 +505,7 @@ cc_test(
         ":tflite_inference_calculator",
         ":tflite_inference_calculator_cc_proto",
         ":tflite_model_calculator",
-        "//mediapipe/calculators/core:constant_side_packet_calculator",
-        "//mediapipe/calculators/util:local_file_contents_calculator",
+        "//mediapipe/calculators/util:resource_provider_calculator",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/deps:file_path",
@@ -546,8 +555,26 @@ cc_test(
         "//mediapipe/calculators/util:local_file_contents_calculator",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:resources",
+        "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/types:span",
         "@org_tensorflow//tensorflow/lite:framework",
+        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
+    ],
+)
+
+cc_test(
+    name = "tflite_custom_op_resolver_calculator_test",
+    srcs = ["tflite_custom_op_resolver_calculator_test.cc"],
+    data = ["testdata/add.bin"],
+    deps = [
+        ":tflite_custom_op_resolver_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
 )

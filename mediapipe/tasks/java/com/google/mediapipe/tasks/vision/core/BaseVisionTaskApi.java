@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,14 +27,13 @@ import java.util.Map;
 
 /** The base class of MediaPipe vision tasks. */
 public class BaseVisionTaskApi implements AutoCloseable {
-  private static final long MICROSECONDS_PER_MILLISECOND = 1000;
-  private final TaskRunner runner;
-  private final RunningMode runningMode;
-  private final String imageStreamName;
-  private final String normRectStreamName;
+  protected static final long MICROSECONDS_PER_MILLISECOND = 1000;
+  protected final TaskRunner runner;
+  protected final RunningMode runningMode;
+  protected final String imageStreamName;
+  protected final String normRectStreamName;
 
   static {
-    System.loadLibrary("mediapipe_tasks_vision_jni");
     ProtoUtil.registerTypeName(NormalizedRect.class, "mediapipe.NormalizedRect");
   }
 
@@ -69,17 +68,32 @@ public class BaseVisionTaskApi implements AutoCloseable {
    */
   protected TaskResult processImageData(
       MPImage image, ImageProcessingOptions imageProcessingOptions) {
+    Map<String, Packet> inputPackets = new HashMap<>();
+    inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
+    if (!normRectStreamName.isEmpty()) {
+      inputPackets.put(
+          normRectStreamName,
+          runner
+              .getPacketCreator()
+              .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
+    }
+    return processImageData(inputPackets);
+  }
+
+  /**
+   * A synchronous method to process single image inputs. The call blocks the current thread until a
+   * failure status or a successful result is returned.
+   *
+   * @param inputPackets the maps of input stream names to the input packets.
+   * @throws MediaPipeException if the task is not in the image mode.
+   */
+  protected TaskResult processImageData(Map<String, Packet> inputPackets) {
     if (runningMode != RunningMode.IMAGE) {
       throw new MediaPipeException(
           MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
           "Task is not initialized with the image mode. Current running mode:"
               + runningMode.name());
     }
-    Map<String, Packet> inputPackets = new HashMap<>();
-    inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
-    inputPackets.put(
-        normRectStreamName,
-        runner.getPacketCreator().createProto(convertToNormalizedRect(imageProcessingOptions)));
     return runner.process(inputPackets);
   }
 
@@ -95,17 +109,33 @@ public class BaseVisionTaskApi implements AutoCloseable {
    */
   protected TaskResult processVideoData(
       MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
+    Map<String, Packet> inputPackets = new HashMap<>();
+    inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
+    if (!normRectStreamName.isEmpty()) {
+      inputPackets.put(
+          normRectStreamName,
+          runner
+              .getPacketCreator()
+              .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
+    }
+    return processVideoData(inputPackets, timestampMs);
+  }
+
+  /**
+   * A synchronous method to process continuous video frames. The call blocks the current thread
+   * until a failure status or a successful result is returned.
+   *
+   * @param inputPackets the maps of input stream names to the input packets.
+   * @param timestampMs the corresponding timestamp of the input image in milliseconds.
+   * @throws MediaPipeException if the task is not in the video mode.
+   */
+  protected TaskResult processVideoData(Map<String, Packet> inputPackets, long timestampMs) {
     if (runningMode != RunningMode.VIDEO) {
       throw new MediaPipeException(
           MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
           "Task is not initialized with the video mode. Current running mode:"
               + runningMode.name());
     }
-    Map<String, Packet> inputPackets = new HashMap<>();
-    inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
-    inputPackets.put(
-        normRectStreamName,
-        runner.getPacketCreator().createProto(convertToNormalizedRect(imageProcessingOptions)));
     return runner.process(inputPackets, timestampMs * MICROSECONDS_PER_MILLISECOND);
   }
 
@@ -121,17 +151,33 @@ public class BaseVisionTaskApi implements AutoCloseable {
    */
   protected void sendLiveStreamData(
       MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
+    Map<String, Packet> inputPackets = new HashMap<>();
+    inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
+    if (!normRectStreamName.isEmpty()) {
+      inputPackets.put(
+          normRectStreamName,
+          runner
+              .getPacketCreator()
+              .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
+    }
+    sendLiveStreamData(inputPackets, timestampMs);
+  }
+
+  /**
+   * An asynchronous method to send live stream data to the {@link TaskRunner}. The results will be
+   * available in the user-defined result listener.
+   *
+   * @param inputPackets the maps of input stream names to the input packets.
+   * @param timestampMs the corresponding timestamp of the input image in milliseconds.
+   * @throws MediaPipeException if the task is not in the stream mode.
+   */
+  protected void sendLiveStreamData(Map<String, Packet> inputPackets, long timestampMs) {
     if (runningMode != RunningMode.LIVE_STREAM) {
       throw new MediaPipeException(
           MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
           "Task is not initialized with the live stream mode. Current running mode:"
               + runningMode.name());
     }
-    Map<String, Packet> inputPackets = new HashMap<>();
-    inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
-    inputPackets.put(
-        normRectStreamName,
-        runner.getPacketCreator().createProto(convertToNormalizedRect(imageProcessingOptions)));
     runner.send(inputPackets, timestampMs * MICROSECONDS_PER_MILLISECOND);
   }
 
@@ -145,17 +191,31 @@ public class BaseVisionTaskApi implements AutoCloseable {
    * Converts an {@link ImageProcessingOptions} instance into a {@link NormalizedRect} protobuf
    * message.
    */
-  private static NormalizedRect convertToNormalizedRect(
-      ImageProcessingOptions imageProcessingOptions) {
+  protected static NormalizedRect convertToNormalizedRect(
+      ImageProcessingOptions imageProcessingOptions, MPImage image) {
     RectF regionOfInterest =
         imageProcessingOptions.regionOfInterest().isPresent()
             ? imageProcessingOptions.regionOfInterest().get()
             : new RectF(0, 0, 1, 1);
+    // For 90° and 270° rotations, we need to swap width and height.
+    // This is due to the internal behavior of ImageToTensorCalculator, which:
+    // - first denormalizes the provided rect by multiplying the rect width or
+    //   height by the image width or height, respectively.
+    // - then rotates this by denormalized rect by the provided rotation, and
+    //   uses this for cropping,
+    // - then finally rotates this back.
+    boolean requiresSwap = imageProcessingOptions.rotationDegrees() % 180 != 0;
     return NormalizedRect.newBuilder()
         .setXCenter(regionOfInterest.centerX())
         .setYCenter(regionOfInterest.centerY())
-        .setWidth(regionOfInterest.width())
-        .setHeight(regionOfInterest.height())
+        .setWidth(
+            requiresSwap
+                ? regionOfInterest.height() * image.getHeight() / image.getWidth()
+                : regionOfInterest.width())
+        .setHeight(
+            requiresSwap
+                ? regionOfInterest.width() * image.getWidth() / image.getHeight()
+                : regionOfInterest.height())
         // Convert to radians anti-clockwise.
         .setRotation(-(float) Math.PI * imageProcessingOptions.rotationDegrees() / 180.0f)
         .build();

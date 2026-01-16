@@ -22,6 +22,7 @@
 
 // TODO: Move protos in another CL after the C++ code migration.
 #include "absl/container/flat_hash_map.h"
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/graph_service.h"
@@ -61,12 +62,22 @@ class CalculatorContract {
   // Returns the name given to this node.
   const std::string& GetNodeName() const { return node_name_; }
 
+  // Returns the maximum number of invocations that can be executed in parallel.
+  int GetMaxInFlight() const {
+    return max_in_flight_ == 0 ? 1 : max_in_flight_;
+  }
+
   // Returns the options given to this calculator.  Template argument T must
   // be the type of the protobuf extension message or the protobuf::Any
   // message containing the options.
   template <class T>
   const T& Options() const {
     return options_.Get<T>();
+  }
+
+  template <class T>
+  bool HasOptions() const {
+    return options_.Has<T>();
   }
 
   // Returns the PacketTypeSet for the input streams.
@@ -136,6 +147,12 @@ class CalculatorContract {
   class GraphServiceRequest {
    public:
     // APIs that should be used by calculators.
+    //
+    // Indicates that requested service is optional and calculator can operate
+    // correctly without it.
+    //
+    // NOTE: `CalculatorGraph` will still try to create services which allow
+    // default initialization. (See `CalculatorGraph::UseService`)
     GraphServiceRequest& Optional() {
       optional_ = true;
       return *this;
@@ -153,6 +170,17 @@ class CalculatorContract {
     bool optional_ = false;
   };
 
+  // Indicates specific `service` is required for graph execution.
+  //
+  // For services which allow default initialization:
+  // - `CalculatorGraph` will try to create corresponding service object by
+  //   default even if request is made optional
+  //   (`GraphServiceRequest::Optional()`).
+  //
+  // For services which disallow default initialization:
+  // - `CalculatorGraph` requires client to set corresponding service object and
+  //   otherwise fails, unless request is made optional
+  //   (`GraphServiceRequest::Optional()`).
   GraphServiceRequest& UseService(const GraphServiceBase& service) {
     auto it = service_requests_.emplace(service.key, service).first;
     return it->second;
@@ -187,6 +215,7 @@ class CalculatorContract {
   std::string node_name_;
   ServiceReqMap service_requests_;
   bool process_timestamps_ = false;
+  int max_in_flight_ = 0;
   TimestampDiff timestamp_offset_ = TimestampDiff::Unset();
 
   friend class CalculatorNode;

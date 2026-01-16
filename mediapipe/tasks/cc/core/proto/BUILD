@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@ load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 mediapipe_proto_library(
     name = "external_file_proto",
@@ -40,12 +40,10 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "base_options_proto",
     srcs = ["base_options.proto"],
-    visibility = [
-        "//mediapipe/tasks:internal",
-    ],
     deps = [
         ":acceleration_proto",
         ":external_file_proto",
+        "//mediapipe/gpu:gpu_origin_proto",
     ],
 )
 

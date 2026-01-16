@@ -14,12 +14,13 @@
 
 #include "mediapipe/calculators/core/concatenate_vector_calculator.h"
 
+#include <cstdint>
 #include <vector>
 
 #include "mediapipe/framework/formats/classification.pb.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/util/render_data.pb.h"
 #include "tensorflow/lite/interpreter.h"
 
@@ -46,14 +47,18 @@ MEDIAPIPE_REGISTER_NODE(ConcatenateFloatVectorCalculator);
 //   input_stream: "int32_vector_2"
 //   output_stream: "concatenated_int32_vector"
 // }
-typedef ConcatenateVectorCalculator<int32> ConcatenateInt32VectorCalculator;
+typedef ConcatenateVectorCalculator<int32_t> ConcatenateInt32VectorCalculator;
 MEDIAPIPE_REGISTER_NODE(ConcatenateInt32VectorCalculator);
 
-typedef ConcatenateVectorCalculator<uint64> ConcatenateUInt64VectorCalculator;
+typedef ConcatenateVectorCalculator<uint64_t> ConcatenateUInt64VectorCalculator;
 MEDIAPIPE_REGISTER_NODE(ConcatenateUInt64VectorCalculator);
 
 typedef ConcatenateVectorCalculator<bool> ConcatenateBoolVectorCalculator;
 MEDIAPIPE_REGISTER_NODE(ConcatenateBoolVectorCalculator);
+
+typedef ConcatenateVectorCalculator<std::string>
+    ConcatenateStringVectorCalculator;
+MEDIAPIPE_REGISTER_NODE(ConcatenateStringVectorCalculator);
 
 // Example config:
 // node {
@@ -100,4 +105,7 @@ typedef ConcatenateVectorCalculator<mediapipe::RenderData>
     ConcatenateRenderDataVectorCalculator;
 MEDIAPIPE_REGISTER_NODE(ConcatenateRenderDataVectorCalculator);
 
+typedef ConcatenateVectorCalculator<mediapipe::Image>
+    ConcatenateImageVectorCalculator;
+MEDIAPIPE_REGISTER_NODE(ConcatenateImageVectorCalculator);
 }  // namespace mediapipe

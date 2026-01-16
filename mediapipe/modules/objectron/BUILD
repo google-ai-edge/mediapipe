@@ -13,12 +13,12 @@
 # limitations under the License.
 
 load(
-    "//mediapipe/framework/tool:mediapipe_graph.bzl",
-    "mediapipe_simple_subgraph",
-)
-load(
     "//mediapipe/framework/tool:mediapipe_files.bzl",
     "mediapipe_files",
+)
+load(
+    "//mediapipe/framework/tool:mediapipe_graph.bzl",
+    "mediapipe_simple_subgraph",
 )
 
 licenses(["notice"])
@@ -159,7 +159,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:association_norm_rect_calculator",
         "//mediapipe/calculators/util:collection_has_min_size_calculator",
         "//mediapipe/calculators/util:detections_to_rects_calculator",
-        "//mediapipe/calculators/util:local_file_contents_calculator",
+        "//mediapipe/calculators/util:resource_provider_calculator",
         "//mediapipe/modules/objectron/calculators:frame_annotation_to_rect_calculator",
         "//mediapipe/modules/objectron/calculators:landmarks_to_frame_annotation_calculator",
         "//mediapipe/modules/objectron/calculators:lift_2d_frame_annotation_to_3d_calculator",

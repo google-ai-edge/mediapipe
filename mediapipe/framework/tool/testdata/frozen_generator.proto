@@ -1,0 +1,20 @@
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/packet_generator.proto";
+
+message FrozenGeneratorOptions {
+  extend mediapipe.PacketGeneratorOptions {
+    optional FrozenGeneratorOptions ext = 225748738;
+  }
+
+  // Path to file containing serialized proto of type tensorflow::GraphDef.
+  optional string graph_proto_path = 1;
+
+  // This map defines the which streams are fed to which tensors in the model.
+  map<string, string> tag_to_tensor_names = 2;
+
+  // Graph nodes to run to initialize the model.
+  repeated string initialization_op_names = 4;
+}

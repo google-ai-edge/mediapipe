@@ -31,7 +31,7 @@ namespace autoflip {
 
 absl::Status SceneCropper::ProcessKinematicPathSolver(
     const SceneKeyFrameCropSummary& scene_summary,
-    const std::vector<int64>& scene_timestamps,
+    const std::vector<int64_t>& scene_timestamps,
     const std::vector<bool>& is_key_frames,
     const std::vector<FocusPointFrame>& focus_point_frames,
     const bool continue_last_scene, std::vector<cv::Mat>* all_xforms) {
@@ -82,7 +82,7 @@ absl::Status SceneCropper::ProcessKinematicPathSolver(
 
 absl::Status SceneCropper::CropFrames(
     const SceneKeyFrameCropSummary& scene_summary,
-    const std::vector<int64>& scene_timestamps,
+    const std::vector<int64_t>& scene_timestamps,
     const std::vector<bool>& is_key_frames,
     const std::vector<cv::Mat>& scene_frames_or_empty,
     const std::vector<FocusPointFrame>& focus_point_frames,

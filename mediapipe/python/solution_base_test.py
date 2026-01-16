@@ -21,6 +21,7 @@ import numpy as np
 from google.protobuf import text_format
 from mediapipe.framework import calculator_pb2
 from mediapipe.framework.formats import detection_pb2
+from mediapipe.framework.formats import time_series_header_pb2
 from mediapipe.python import solution_base
 from mediapipe.python.solution_base import PacketDataType
 
@@ -141,10 +142,65 @@ class SolutionBaseTest(parameterized.TestCase):
       text_format.Parse('score: 0.5', detection)
       with self.assertRaisesRegex(
           NotImplementedError,
-          'SolutionBase can only process non-audio and non-proto-list data. '
-          + 'PROTO_LIST type is not supported.'
+          'SolutionBase can only process non-proto-list data. PROTO_LIST type'
+          ' is not supported.',
       ):
         solution.process({'input_detections': detection})
+
+  def test_valid_input_data_type_audio(self):
+    text_config = """
+      input_side_packet: "audio_header"
+      input_stream: 'input_audio'
+      output_stream: 'output_audio'
+
+      node {
+        calculator: "AddHeaderCalculator"
+        input_side_packet: "HEADER:audio_header"
+        input_stream: "DATA:input_audio"
+        output_stream: "input_audio_with_header"
+      }
+
+      node {
+        calculator: "ResampleTimeSeriesCalculator"
+        input_stream: "input_audio_with_header"
+        output_stream: "output_audio"
+        options {
+          [mediapipe.ResampleTimeSeriesCalculatorOptions.ext] {
+            resampler_type: RESAMPLER_RATIONAL_FACTOR
+            target_sample_rate: 16000.0
+            check_inconsistent_timestamps: false
+            resampler_rational_factor_options {
+              # equivalent to libresample's "high quality" mode
+              radius_factor: 17.0
+            }
+          }
+        }
+      }
+    """
+    config_proto = text_format.Parse(
+        text_config, calculator_pb2.CalculatorGraphConfig()
+    )
+
+    audio_header = time_series_header_pb2.TimeSeriesHeader()
+    audio_header.sample_rate = 16_000
+    audio_header.num_channels = 1
+
+    with solution_base.SolutionBase(
+        graph_config=config_proto,
+        side_inputs={
+            'audio_header': audio_header,
+        },
+        stream_type_hints={
+            'input_audio': solution_base.PacketDataType.AUDIO,
+            'output_audio': solution_base.PacketDataType.AUDIO,
+        },
+        side_packet_type_hints={
+            'audio_header': solution_base.PacketDataType.PROTO,
+        },
+    ) as solution:
+      input_audio = np.ones((1, 16_000), dtype=np.float32)
+      results = solution.process({'input_audio': input_audio})
+      self.assertTrue(hasattr(results, 'output_audio'))
 
   def test_invalid_input_image_data(self):
     text_config = """

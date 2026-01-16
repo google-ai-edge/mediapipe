@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "absl/container/node_hash_map.h"
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "mediapipe/calculators/tflite/tflite_tensors_to_classification_calculator.pb.h"
@@ -100,8 +101,8 @@ absl::Status TfLiteTensorsToClassificationCalculator::Open(
   top_k_ = options_.top_k();
   if (options_.has_label_map_path()) {
     std::string string_path;
-    ASSIGN_OR_RETURN(string_path,
-                     PathToResourceAsFile(options_.label_map_path()));
+    MP_ASSIGN_OR_RETURN(string_path,
+                        PathToResourceAsFile(options_.label_map_path()));
     std::string label_map_string;
     MP_RETURN_IF_ERROR(file::GetContents(string_path, &label_map_string));
 
@@ -172,7 +173,7 @@ absl::Status TfLiteTensorsToClassificationCalculator::Process(
 
   // Note that partial_sort will raise error when top_k_ >
   // classification_list->classification_size().
-  CHECK_GE(classification_list->classification_size(), top_k_);
+  ABSL_CHECK_GE(classification_list->classification_size(), top_k_);
   auto raw_classification_list = classification_list->mutable_classification();
   if (top_k_ > 0 && classification_list->classification_size() >= top_k_) {
     std::partial_sort(raw_classification_list->begin(),

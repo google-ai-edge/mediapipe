@@ -15,6 +15,9 @@
 #ifndef MEDIAPIPE_FRAMEWORK_PROFILER_TRACE_BUFFER_H_
 #define MEDIAPIPE_FRAMEWORK_PROFILER_TRACE_BUFFER_H_
 
+#include <cstdint>
+#include <string>
+
 #include "absl/time/time.h"
 #include "mediapipe/framework/calculator_profile.pb.h"
 #include "mediapipe/framework/packet.h"
@@ -22,17 +25,6 @@
 #include "mediapipe/framework/timestamp.h"
 
 namespace mediapipe {
-
-namespace packet_internal {
-// Returns a hash of the packet data address from a packet data holder.
-inline const int64 GetPacketDataId(const HolderBase* holder) {
-  if (holder == nullptr) {
-    return 0;
-  }
-  const void* address = &(static_cast<const Holder<int>*>(holder)->data());
-  return reinterpret_cast<int64>(address);
-}
-}  // namespace packet_internal
 
 // Packet trace log event.
 struct TraceEvent {
@@ -42,10 +34,10 @@ struct TraceEvent {
   bool is_finish = false;
   Timestamp input_ts = Timestamp::Unset();
   Timestamp packet_ts = Timestamp::Unset();
-  int32 node_id = -1;
+  int32_t node_id = -1;
   const std::string* stream_id = nullptr;
-  int32 thread_id = 0;
-  int64 event_data = 0;
+  int32_t thread_id = 0;
+  int64_t event_data = 0;
 
   TraceEvent(const EventType& event_type) : event_type(event_type) {}
   TraceEvent() {}
@@ -75,8 +67,12 @@ struct TraceEvent {
     return *this;
   }
   inline TraceEvent& set_packet_data_id(const Packet* packet) {
-    this->event_data =
-        packet_internal::GetPacketDataId(packet_internal::GetHolder(*packet));
+    const auto* holder = packet_internal::GetHolder(*packet);
+    int64_t data_id = 0;
+    if (holder != nullptr) {
+      data_id = holder->DebugDataId();
+    }
+    this->event_data = data_id;
     return *this;
   }
   inline TraceEvent& set_thread_id(int thread_id) {
@@ -112,10 +108,10 @@ struct TraceEvent {
   static constexpr EventType GPU_TASK_INVOKE = GraphTrace::GPU_TASK_INVOKE;
   static constexpr EventType TPU_TASK_INVOKE = GraphTrace::TPU_TASK_INVOKE;
   static constexpr EventType CPU_TASK_INVOKE = GraphTrace::CPU_TASK_INVOKE;
-
-  //  //depot/mediapipe/framework/mediapipe_profiling.h:profiler_census_tags,
-  //  //depot/mediapipe/framework/calculator_profile.proto:event_type,
-  // )
+  static constexpr EventType GPU_TASK_INVOKE_ADVANCED =
+      GraphTrace::GPU_TASK_INVOKE_ADVANCED;
+  static constexpr EventType TPU_TASK_INVOKE_ASYNC =
+      GraphTrace::TPU_TASK_INVOKE_ASYNC;
 };
 
 // Packet trace log buffer.

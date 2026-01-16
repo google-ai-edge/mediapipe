@@ -14,35 +14,51 @@
 
 #include "mediapipe/framework/calculator_context.h"
 
+#include <memory>
+#include <string>
+
+#include "absl/log/absl_check.h"
+#include "mediapipe/framework/collection_item_id.h"
+#include "mediapipe/framework/counter.h"
+#include "mediapipe/framework/counter_factory.h"
+#include "mediapipe/framework/output_stream_shard.h"
+#include "mediapipe/framework/packet_set.h"
+#include "mediapipe/framework/timestamp.h"
+
 namespace mediapipe {
 
 const std::string& CalculatorContext::CalculatorType() const {
-  CHECK(calculator_state_);
+  ABSL_CHECK(calculator_state_);
   return calculator_state_->CalculatorType();
 }
 
 const CalculatorOptions& CalculatorContext::Options() const {
-  CHECK(calculator_state_);
+  ABSL_CHECK(calculator_state_);
   return calculator_state_->Options();
 }
 
 const std::string& CalculatorContext::NodeName() const {
-  CHECK(calculator_state_);
+  ABSL_CHECK(calculator_state_);
   return calculator_state_->NodeName();
 }
 
 int CalculatorContext::NodeId() const {
-  CHECK(calculator_state_);
+  ABSL_CHECK(calculator_state_);
   return calculator_state_->NodeId();
 }
 
+int CalculatorContext::NodeMaxInFlight() const {
+  ABSL_CHECK(calculator_state_);
+  return calculator_state_->NodeMaxInFlight();
+}
+
 Counter* CalculatorContext::GetCounter(const std::string& name) {
-  CHECK(calculator_state_);
+  ABSL_CHECK(calculator_state_);
   return calculator_state_->GetCounter(name);
 }
 
 CounterFactory* CalculatorContext::GetCounterFactory() {
-  CHECK(calculator_state_);
+  ABSL_CHECK(calculator_state_);
   return calculator_state_->GetCounterFactory();
 }
 
@@ -72,7 +88,7 @@ void CalculatorContext::SetOffset(TimestampDiff offset) {
 
 const InputStreamSet& CalculatorContext::InputStreams() const {
   if (!input_streams_) {
-    input_streams_ = absl::make_unique<InputStreamSet>(inputs_.TagMap());
+    input_streams_ = std::make_unique<InputStreamSet>(inputs_.TagMap());
     for (CollectionItemId id = input_streams_->BeginId();
          id < input_streams_->EndId(); ++id) {
       input_streams_->Get(id) = const_cast<InputStreamShard*>(&inputs_.Get(id));
@@ -83,7 +99,7 @@ const InputStreamSet& CalculatorContext::InputStreams() const {
 
 const OutputStreamSet& CalculatorContext::OutputStreams() const {
   if (!output_streams_) {
-    output_streams_ = absl::make_unique<OutputStreamSet>(outputs_.TagMap());
+    output_streams_ = std::make_unique<OutputStreamSet>(outputs_.TagMap());
     for (CollectionItemId id = output_streams_->BeginId();
          id < output_streams_->EndId(); ++id) {
       output_streams_->Get(id) =

@@ -12,12 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package mediapipe;
 
+option java_package = "com.google.mediapipe.gpu";
+option java_outer_classname = "GpuOriginProto";
+
 message GpuOrigin {
   enum Mode {
+    // Defaults to CONVENTIONAL
     DEFAULT = 0;
 
     // OpenGL: bottom-left origin

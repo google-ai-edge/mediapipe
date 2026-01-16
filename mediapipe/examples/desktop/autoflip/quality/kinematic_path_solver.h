@@ -15,10 +15,10 @@
 #ifndef MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_QUALITY_UNIFORM_ACCELERATION_PATH_SOLVER_H_
 #define MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_QUALITY_UNIFORM_ACCELERATION_PATH_SOLVER_H_
 
+#include <cstdint>
 #include <deque>
 
 #include "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.pb.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 
@@ -43,9 +43,9 @@ class KinematicPathSolver {
         initialized_(false),
         pixels_per_degree_(pixels_per_degree) {}
   // Add an observation (detection) at a position and time.
-  absl::Status AddObservation(int position, const uint64 time_us);
+  absl::Status AddObservation(int position, const uint64_t time_us);
   // Get the predicted position at a time.
-  absl::Status UpdatePrediction(const int64 time_us);
+  absl::Status UpdatePrediction(const int64_t time_us);
   // Get the state at a time, as an int.
   absl::Status GetState(int* position);
   // Get the state at a time, as a float.
@@ -63,7 +63,7 @@ class KinematicPathSolver {
   bool IsMotionTooSmall(double delta_degs);
   // Check if a position measurement will cause the camera to be in motion
   // without updating the internal state.
-  absl::Status PredictMotionState(int position, const uint64 time_us,
+  absl::Status PredictMotionState(int position, const uint64_t time_us,
                                   bool* state);
   // Clear any history buffer of positions that are used when
   // filtering_time_window_us is set to a non-zero value.
@@ -85,9 +85,9 @@ class KinematicPathSolver {
   double current_position_px_;
   double prior_position_px_;
   double current_velocity_deg_per_s_;
-  uint64 current_time_ = 0;
+  uint64_t current_time_ = 0;
   // History of observations (second) and their time (first).
-  std::deque<std::pair<uint64, int>> raw_positions_at_time_;
+  std::deque<std::pair<uint64_t, int>> raw_positions_at_time_;
   // Current target position.
   double target_position_px_;
   // Defines if the camera is moving to a target (true) or reached a target

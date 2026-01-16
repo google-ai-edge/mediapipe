@@ -16,31 +16,35 @@
 
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
+#include "mediapipe/framework/deps/no_destructor.h"
 
 namespace mediapipe {
 namespace tool {
 
-absl::Status StatusInvalid(const std::string& message) {
+absl::Status StatusInvalid(absl::string_view message) {
   return absl::Status(absl::StatusCode::kInvalidArgument, message);
 }
 
-absl::Status StatusFail(const std::string& message) {
+absl::Status StatusFail(absl::string_view message) {
   return absl::Status(absl::StatusCode::kUnknown, message);
 }
 
-absl::Status StatusStop() {
-  return absl::Status(absl::StatusCode::kOutOfRange,
-                      "mediapipe::tool::StatusStop()");
+const absl::Status& StatusStop() {
+  static const NoDestructor<absl::Status> kStatusStop(
+      absl::StatusCode::kOutOfRange, "mediapipe::tool::StatusStop()");
+  return *kStatusStop;
 }
 
-absl::Status AddStatusPrefix(const std::string& prefix,
+absl::Status AddStatusPrefix(absl::string_view prefix,
                              const absl::Status& status) {
   return absl::Status(status.code(), absl::StrCat(prefix, status.message()));
 }
 
-absl::Status CombinedStatus(const std::string& general_comment,
+absl::Status CombinedStatus(absl::string_view general_comment,
                             const std::vector<absl::Status>& statuses) {
   // The final error code is absl::StatusCode::kUnknown if not all
   // the error codes are the same.  Otherwise it is the same error code
@@ -58,8 +62,8 @@ absl::Status CombinedStatus(const std::string& general_comment,
       }
     }
   }
-  if (error_code == StatusCode::kOk) return OkStatus();
-  Status combined;
+  if (error_code == absl::StatusCode::kOk) return absl::OkStatus();
+  absl::Status combined;
   combined = absl::Status(
       error_code,
       absl::StrCat(general_comment, "\n", absl::StrJoin(errors, "\n")));

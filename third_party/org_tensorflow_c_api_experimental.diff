@@ -1,0 +1,138 @@
+diff --git a/tensorflow/lite/c/BUILD b/tensorflow/lite/c/BUILD
+index f1c18ec5803..60c1a562d0f 100644
+--- a/tensorflow/lite/c/BUILD
++++ b/tensorflow/lite/c/BUILD
+@@ -119,10 +119,7 @@ cc_library_with_tflite_with_c_headers_test(
+     tflite_deps = [
+         ":c_api",
+     ],
+-    deps = [
+-        "//tensorflow/lite/core/c:c_api_experimental",
+-        "//tensorflow/lite/core/c:c_api_opaque",
+-    ],
++    deps = ["//tensorflow/lite/core/c:c_api_experimental"],
+ )
+ 
+ # Same as ":c_api_experimental", but without linking in the default CreateOpResolver implementation.
+@@ -143,10 +140,7 @@ cc_library_with_tflite_with_c_headers_test(
+     tflite_deps = [
+         ":c_api_without_op_resolver",
+     ],
+-    deps = [
+-        "//tensorflow/lite/core/c:c_api_experimental_without_op_resolver",
+-        "//tensorflow/lite/core/c:c_api_opaque_without_op_resolver",
+-    ],
++    deps = ["//tensorflow/lite/core/c:c_api_experimental_without_op_resolver"],
+ )
+ 
+ # Same as ":c_api_experimental", but without linking in the default CreateOpResolver implementation,
+@@ -183,6 +177,7 @@ cc_library_with_tflite_with_c_headers_test(
+     copts = tflite_copts() + tflite_copts_warnings(),
+     generate_opaque_delegate_target = True,
+     tflite_deps = [":c_api"],
++    linkstatic = 1,
+     deps = ["//tensorflow/lite/core/c:c_api_opaque"],
+ )
+ 
+@@ -209,7 +204,7 @@ cc_library_with_tflite_with_c_headers_test(
+     tflite_deps = [
+         ":c_api_without_op_resolver_without_alwayslink",
+     ],
+-    deps = ["//tensorflow/lite/core/c:c_api_opaque_without_op_resolver_without_alwayslink"],
++    deps = ["//tensorflow/lite/core/c:c_api_experimental_without_op_resolver_without_alwayslink"],
+ )
+ 
+ cc_library_with_tflite_with_c_headers_test(
+@@ -462,7 +457,6 @@ cc_test(
+         ":c_api_experimental",
+         "//tensorflow/lite/core/c:c_api",
+         "//tensorflow/lite/core/c:c_api_experimental",
+-        "//tensorflow/lite/core/c:c_api_opaque",
+         "//tensorflow/lite/core/c:c_api_types",
+         "//tensorflow/lite/core/c:common",
+     ],
+diff --git a/tensorflow/lite/core/c/BUILD b/tensorflow/lite/core/c/BUILD
+index 98ae0d425ab..fbddc684a5d 100644
+--- a/tensorflow/lite/core/c/BUILD
++++ b/tensorflow/lite/core/c/BUILD
+@@ -407,14 +407,18 @@ tflite_cc_library_with_c_headers_test(
+     deps = [
+         ":c_api",
+         ":c_api_experimental_without_op_resolver",
+-        ":c_api_opaque",
+         ":c_api_types",
+         ":common",
+         ":operator",
+         "//tensorflow/lite:builtin_ops",
+         "//tensorflow/lite:signature_runner",
++        "//tensorflow/lite/c:c_api_internal",
++        "//tensorflow/lite/c:c_api_opaque_internal",
+         "//tensorflow/lite/c:c_api_types",
+         "//tensorflow/lite/core:framework",
++        "//tensorflow/lite/kernels:kernel_util",
++        "//tensorflow/lite/profiling/telemetry:profiler",
++        "//tensorflow/lite/profiling/telemetry/c:profiler",
+     ],
+ )
+ 
+@@ -423,6 +427,7 @@ tflite_cc_library_with_c_headers_test(
+     name = "c_api_experimental_without_op_resolver",
+     srcs = [
+         "c_api_experimental.cc",
++        "c_api_opaque.cc",
+     ],
+     hdrs = [
+         "c_api_experimental.h",
+@@ -437,17 +442,22 @@ tflite_cc_library_with_c_headers_test(
+     copts = tflite_copts(),
+     tags = ["allow_undefined_symbols"],  # For tflite::CreateOpResolver().
+     deps = [
+-        ":c_api_opaque_without_op_resolver",
+         ":c_api_types",
+         ":c_api_without_op_resolver",
+         ":common",
+         ":operator",
+         "//tensorflow/lite:builtin_ops",
+         "//tensorflow/lite:framework",
++        "//tensorflow/lite:kernel_api",
++        "//tensorflow/lite:string_util",
++        "//tensorflow/lite:util",
+         "//tensorflow/lite/c:c_api_internal",
++        "//tensorflow/lite/c:c_api_opaque_internal",
+         "//tensorflow/lite/c:c_api_types",
+         "//tensorflow/lite/core:framework",
++        "//tensorflow/lite/kernels:kernel_util",
+         "//tensorflow/lite/profiling/telemetry:profiler",
++        "//tensorflow/lite/profiling/telemetry/c:profiler",
+     ],
+@@ -469,6 +479,7 @@ tflite_cc_library_with_c_headers_test(
+     name = "c_api_experimental_without_op_resolver_without_alwayslink",
+     srcs = [
+         "c_api_experimental.cc",
++        "c_api_opaque.cc",
+     ],
+     hdrs = [
+         "c_api_experimental.h",
+@@ -485,17 +496,21 @@ tflite_cc_library_with_c_headers_test(
+     copts = tflite_copts(),
+     tags = ["allow_undefined_symbols"],  # For tflite::CreateOpResolver().
+     deps = [
+-        ":c_api_opaque_without_op_resolver_without_alwayslink",
+         ":c_api_types",
+         ":c_api_without_op_resolver_without_alwayslink",
+         ":common",
+         ":operator_without_alwayslink",
+         "//tensorflow/lite:framework",
+         "//tensorflow/lite:kernel_api",
++        "//tensorflow/lite:string_util",
++        "//tensorflow/lite:util",
+         "//tensorflow/lite/c:c_api_internal",
++        "//tensorflow/lite/c:c_api_opaque_internal_without_alwayslink",
+         "//tensorflow/lite/c:c_api_types",
+         "//tensorflow/lite/core:framework",
++        "//tensorflow/lite/kernels:kernel_util",
+         "//tensorflow/lite/profiling/telemetry:profiler",
++        "//tensorflow/lite/profiling/telemetry/c:profiler",
+     ],
+ )
+ 

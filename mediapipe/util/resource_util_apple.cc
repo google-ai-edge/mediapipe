@@ -17,10 +17,11 @@
 #include <fstream>
 #include <sstream>
 
+#include "absl/log/absl_log.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/util/resource_util.h"
 
 namespace mediapipe {
@@ -46,14 +47,16 @@ absl::Status DefaultGetResourceContents(const std::string& path,
                                         std::string* output,
                                         bool read_as_binary) {
   if (!read_as_binary) {
-    LOG(WARNING) << "Setting \"read_as_binary\" to false is a no-op on ios.";
+    ABSL_LOG(WARNING)
+        << "Setting \"read_as_binary\" to false is a no-op on ios.";
   }
-  ASSIGN_OR_RETURN(std::string full_path, PathToResourceAsFile(path));
+  MP_ASSIGN_OR_RETURN(std::string full_path, PathToResourceAsFile(path));
   return file::GetContents(full_path, output, read_as_binary);
 }
 }  // namespace internal
 
-absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
+absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path,
+                                                 bool /*shadow_copy*/) {
   // Return full path.
   if (absl::StartsWith(path, "/")) {
     return path;
@@ -63,7 +66,7 @@ absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
   {
     auto status_or_path = PathToResourceAsFileInternal(path);
     if (status_or_path.ok()) {
-      LOG(INFO) << "Successfully loaded: " << path;
+      ABSL_LOG(INFO) << "Successfully loaded: " << path;
       return status_or_path;
     }
   }
@@ -76,7 +79,7 @@ absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
     auto base_name = path.substr(last_slash_idx + 1);
     auto status_or_path = PathToResourceAsFileInternal(base_name);
     if (status_or_path.ok()) {
-      LOG(INFO) << "Successfully loaded: " << base_name;
+      ABSL_LOG(INFO) << "Successfully loaded: " << base_name;
       return status_or_path;
     }
   }
@@ -90,7 +93,7 @@ absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
     if ([[NSFileManager defaultManager]
             fileExistsAtPath:[NSString
                                  stringWithUTF8String:test_path.c_str()]]) {
-      LOG(INFO) << "Successfully loaded: " << test_path;
+      ABSL_LOG(INFO) << "Successfully loaded: " << test_path;
       return test_path;
     }
   }

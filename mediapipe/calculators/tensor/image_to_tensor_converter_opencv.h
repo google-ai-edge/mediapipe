@@ -19,6 +19,7 @@
 
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/statusor.h"
 
 namespace mediapipe {
@@ -26,7 +27,8 @@ namespace mediapipe {
 // Creates OpenCV image-to-tensor converter.
 absl::StatusOr<std::unique_ptr<ImageToTensorConverter>> CreateOpenCvConverter(
     CalculatorContext* cc, BorderMode border_mode,
-    Tensor::ElementType tensor_type);
+    Tensor::ElementType tensor_type,
+    cv::InterpolationFlags flags = cv::INTER_LINEAR);
 
 }  // namespace mediapipe
 

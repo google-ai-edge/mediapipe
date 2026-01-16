@@ -15,6 +15,7 @@
 #include "mediapipe/modules/objectron/calculators/frame_annotation_tracker.h"
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/logging.h"
@@ -53,7 +54,7 @@ ObjectAnnotation ConstructFixedObject(
   ObjectAnnotation obj;
   for (const auto& point : points) {
     auto* keypoint = obj.add_keypoints();
-    CHECK_EQ(2, point.size());
+    ABSL_CHECK_EQ(2, point.size());
     keypoint->mutable_point_2d()->set_x(point[0]);
     keypoint->mutable_point_2d()->set_y(point[1]);
   }

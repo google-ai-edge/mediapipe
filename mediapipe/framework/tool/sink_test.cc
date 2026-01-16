@@ -17,6 +17,7 @@
 #include <memory>
 #include <vector>
 
+#include "absl/functional/bind_front.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"

@@ -1,3 +1,5 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 package(
     default_visibility = [
         "//mediapipe/tasks:internal",
@@ -36,6 +38,7 @@ cc_library(
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@zlib//:zlib_minizip",

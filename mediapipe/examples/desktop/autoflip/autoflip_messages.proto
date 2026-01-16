@@ -185,6 +185,10 @@ message ExternalRenderFrame {
   // original dimensions of the input video.  The first step to render this
   // frame is to crop this rect from the input frame.
   optional Rect crop_from_location = 1;
+  // Rect that must be cropped out of the input frame.  It is defined in the
+  // ratio of the frame of the input video.  The first step to render this frame
+  // is to crop this rect from the input frame.
+  optional Rect normalized_crop_from_location = 7;
   // The placement location where the above rect is placed on the output frame.
   // This will always have the same aspect ratio as the above rect but scaling
   // may be required.

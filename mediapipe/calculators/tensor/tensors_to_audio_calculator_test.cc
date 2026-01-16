@@ -30,19 +30,22 @@
 namespace mediapipe {
 namespace {
 
+using Options = ::mediapipe::TensorsToAudioCalculatorOptions;
+
 class TensorsToAudioCalculatorFftTest : public ::testing::Test {
  protected:
   // Creates an audio matrix containing a single sample of 1.0 at a specified
   // offset.
-  Matrix CreateImpulseSignalData(int64 num_samples, int impulse_offset_idx) {
+  Matrix CreateImpulseSignalData(int64_t num_samples, int impulse_offset_idx) {
     Matrix impulse = Matrix::Zero(1, num_samples);
     impulse(0, impulse_offset_idx) = 1.0;
     return impulse;
   }
 
-  void ConfigGraph(int num_samples, double sample_rate, int fft_size) {
-    graph_config_ = ParseTextProtoOrDie<CalculatorGraphConfig>(
-        absl::Substitute(R"(
+  void ConfigGraph(int num_samples, double sample_rate, int fft_size,
+                   Options::DftTensorFormat dft_tensor_format) {
+    graph_config_ = ParseTextProtoOrDie<CalculatorGraphConfig>(absl::Substitute(
+        R"(
         input_stream: "audio_in"
         input_stream: "sample_rate"
         output_stream: "audio_out"
@@ -59,6 +62,7 @@ class TensorsToAudioCalculatorFftTest : public ::testing::Test {
               num_overlapping_samples: 0
               target_sample_rate: $1
               fft_size: $2
+              dft_tensor_format: $3
             }
           }
         }
@@ -70,13 +74,15 @@ class TensorsToAudioCalculatorFftTest : public ::testing::Test {
           options {
             [mediapipe.TensorsToAudioCalculatorOptions.ext] {
               fft_size: $2
+              dft_tensor_format: $3
             }
           }
         }
         )",
-                         /*$0=*/num_samples,
-                         /*$1=*/sample_rate,
-                         /*$2=*/fft_size));
+        /*$0=*/num_samples,
+        /*$1=*/sample_rate,
+        /*$2=*/fft_size,
+        /*$3=*/Options::DftTensorFormat_Name(dft_tensor_format)));
     tool::AddVectorSink("audio_out", &graph_config_, &audio_out_packets_);
   }
 
@@ -97,7 +103,7 @@ class TensorsToAudioCalculatorFftTest : public ::testing::Test {
 };
 
 TEST_F(TensorsToAudioCalculatorFftTest, TestInvalidFftSize) {
-  ConfigGraph(320, 16000, 103);
+  ConfigGraph(320, 16000, 103, Options::WITH_NYQUIST);
   MP_ASSERT_OK(graph_.Initialize(graph_config_));
   MP_ASSERT_OK(graph_.StartRun({}));
   auto status = graph_.WaitUntilIdle();
@@ -109,8 +115,7 @@ TEST_F(TensorsToAudioCalculatorFftTest, TestInvalidFftSize) {
 TEST_F(TensorsToAudioCalculatorFftTest, TestImpulseSignalAtTheCenter) {
   constexpr int sample_size = 320;
   constexpr double sample_rate = 16000;
-  ConfigGraph(sample_size, sample_rate, 320);
-
+  ConfigGraph(sample_size, sample_rate, 320, Options::WITH_NYQUIST);
   Matrix impulse_data = CreateImpulseSignalData(sample_size, sample_size / 2);
   RunGraph(impulse_data, sample_rate);
   ASSERT_EQ(1, audio_out_packets_.size());
@@ -122,7 +127,7 @@ TEST_F(TensorsToAudioCalculatorFftTest, TestImpulseSignalAtTheCenter) {
 TEST_F(TensorsToAudioCalculatorFftTest, TestWindowedImpulseSignal) {
   constexpr int sample_size = 320;
   constexpr double sample_rate = 16000;
-  ConfigGraph(sample_size, sample_rate, 320);
+  ConfigGraph(sample_size, sample_rate, 320, Options::WITH_NYQUIST);
   Matrix impulse_data = CreateImpulseSignalData(sample_size, sample_size / 4);
   RunGraph(impulse_data, sample_rate);
   ASSERT_EQ(1, audio_out_packets_.size());
@@ -135,7 +140,7 @@ TEST_F(TensorsToAudioCalculatorFftTest, TestWindowedImpulseSignal) {
 TEST_F(TensorsToAudioCalculatorFftTest, TestImpulseSignalAtBeginning) {
   constexpr int sample_size = 320;
   constexpr double sample_rate = 16000;
-  ConfigGraph(sample_size, sample_rate, 320);
+  ConfigGraph(sample_size, sample_rate, 320, Options::WITH_NYQUIST);
   Matrix impulse_data = CreateImpulseSignalData(sample_size, 0);
   RunGraph(impulse_data, sample_rate);
   ASSERT_EQ(1, audio_out_packets_.size());
@@ -143,6 +148,32 @@ TEST_F(TensorsToAudioCalculatorFftTest, TestImpulseSignalAtBeginning) {
   // As the impulse signal sits at the beginning of the hann window, the inverse
   // window function completely removes it.
   EXPECT_EQ(audio_out_packets_[0].Get<Matrix>(), Matrix::Zero(1, sample_size));
+}
+
+TEST_F(TensorsToAudioCalculatorFftTest, TestDftTensorWithDCAndNyquist) {
+  constexpr int sample_size = 320;
+  constexpr double sample_rate = 16000;
+  ConfigGraph(sample_size, sample_rate, 320, Options::WITH_DC_AND_NYQUIST);
+
+  Matrix impulse_data = CreateImpulseSignalData(sample_size, sample_size / 2);
+  RunGraph(impulse_data, sample_rate);
+  ASSERT_EQ(1, audio_out_packets_.size());
+  MP_ASSERT_OK(audio_out_packets_[0].ValidateAsType<Matrix>());
+  // The impulse signal at the center is not affected by the window function.
+  EXPECT_EQ(audio_out_packets_[0].Get<Matrix>(), impulse_data);
+}
+
+TEST_F(TensorsToAudioCalculatorFftTest, TestDftTensorWithoutDCAndNyquist) {
+  constexpr int sample_size = 320;
+  constexpr double sample_rate = 16000;
+  ConfigGraph(sample_size, sample_rate, 320, Options::WITHOUT_DC_AND_NYQUIST);
+
+  Matrix impulse_data = CreateImpulseSignalData(sample_size, sample_size / 2);
+  RunGraph(impulse_data, sample_rate);
+  ASSERT_EQ(1, audio_out_packets_.size());
+  MP_ASSERT_OK(audio_out_packets_[0].ValidateAsType<Matrix>());
+  // The impulse signal at the center is not affected by the window function.
+  EXPECT_EQ(audio_out_packets_[0].Get<Matrix>(), impulse_data);
 }
 
 }  // namespace

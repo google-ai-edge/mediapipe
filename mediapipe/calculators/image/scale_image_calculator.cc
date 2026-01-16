@@ -15,9 +15,13 @@
 // This Calculator takes an ImageFrame and scales it appropriately.
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <string>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/substitute.h"
 #include "libyuv/scale.h"
@@ -30,9 +34,9 @@
 #include "mediapipe/framework/formats/video_stream_header.h"
 #include "mediapipe/framework/formats/yuv_image.h"
 #include "mediapipe/framework/port/image_resizer.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
+#include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
@@ -75,16 +79,16 @@ absl::Status FindInterpolationAlgorithm(
 
 void CropImageFrame(const ImageFrame& original, int col_start, int row_start,
                     int crop_width, int crop_height, ImageFrame* cropped) {
-  const uint8* src = original.PixelData();
-  uint8* dst = cropped->MutablePixelData();
+  const uint8_t* src = original.PixelData();
+  uint8_t* dst = cropped->MutablePixelData();
 
   int des_y = 0;
   for (int y = row_start; y < row_start + crop_height; ++y) {
-    const uint8* src_line = src + y * original.WidthStep();
-    const uint8* src_pixel = src_line + col_start *
-                                            original.NumberOfChannels() *
-                                            original.ByteDepth();
-    uint8* dst_line = dst + des_y * cropped->WidthStep();
+    const uint8_t* src_line = src + y * original.WidthStep();
+    const uint8_t* src_pixel = src_line + col_start *
+                                              original.NumberOfChannels() *
+                                              original.ByteDepth();
+    uint8_t* dst_line = dst + des_y * cropped->WidthStep();
     std::memcpy(
         dst_line, src_pixel,
         crop_width * cropped->NumberOfChannels() * cropped->ByteDepth());
@@ -293,7 +297,7 @@ absl::Status ScaleImageCalculator::InitializeFrameInfo(CalculatorContext* cc) {
     header->width = output_width_;
     header->height = output_height_;
     header->format = output_format_;
-    LOG(INFO) << "OUTPUTTING HEADER on stream";
+    ABSL_LOG(INFO) << "OUTPUTTING HEADER on stream";
     cc->Outputs()
         .Tag("VIDEO_HEADER")
         .Add(header.release(), Timestamp::PreStream());
@@ -393,10 +397,11 @@ absl::Status ScaleImageCalculator::Open(CalculatorContext* cc) {
           .SetHeader(Adopt(output_header.release()));
       has_header_ = true;
     } else {
-      LOG(WARNING) << "Stream had a VideoHeader which didn't have sufficient "
-                      "information.  "
-                      "Dropping VideoHeader and trying to deduce needed "
-                      "information.";
+      ABSL_LOG(WARNING)
+          << "Stream had a VideoHeader which didn't have sufficient "
+             "information.  "
+             "Dropping VideoHeader and trying to deduce needed "
+             "information.";
       input_width_ = 0;
       input_height_ = 0;
       if (!options_.has_input_format()) {
@@ -445,9 +450,14 @@ absl::Status ScaleImageCalculator::ValidateImageFormats() const {
             (input_format_ == ImageFormat::YCBCR420P &&
              output_format_ == ImageFormat::SRGB) ||
             (input_format_ == ImageFormat::SRGB &&
-             output_format_ == ImageFormat::SRGBA))
-      << "Conversion of the color space (except from "
-         "YCbCr420P to SRGB or SRGB to SRBGA) is not yet supported.";
+             output_format_ == ImageFormat::SRGBA) ||
+            (input_format_ == ImageFormat::SRGBA &&
+             output_format_ == ImageFormat::SRGB))
+      << "Conversion of the color space from "
+      << ImageFormat::Format_Name(input_format_) << " to "
+      << ImageFormat::Format_Name(output_format_)
+      << " (except from YCbCr420P to SRGB or SRGB to SRBGA or SRGBA to SRGB) "
+         "is not yet supported.";
   return absl::OkStatus();
 }
 
@@ -507,7 +517,7 @@ absl::Status ScaleImageCalculator::ValidateImageFrame(
 
 absl::Status ScaleImageCalculator::ValidateYUVImage(CalculatorContext* cc,
                                                     const YUVImage& yuv_image) {
-  CHECK_EQ(input_format_, ImageFormat::YCBCR420P);
+  ABSL_CHECK_EQ(input_format_, ImageFormat::YCBCR420P);
   if (!has_header_) {
     if (input_width_ != yuv_image.width() ||
         input_height_ != yuv_image.height()) {
@@ -591,9 +601,9 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
       const int y_size = output_width_ * output_height_;
       const int uv_size = output_width_ * output_height_ / 4;
       std::unique_ptr<uint8_t[]> yuv_data(new uint8_t[y_size + uv_size * 2]);
-      uint8* y = yuv_data.get();
-      uint8* u = y + y_size;
-      uint8* v = u + uv_size;
+      uint8_t* y = yuv_data.get();
+      uint8_t* u = y + y_size;
+      uint8_t* v = u + uv_size;
       RET_CHECK_EQ(0, I420Scale(yuv_image->data(0), yuv_image->stride(0),
                                 yuv_image->data(1), yuv_image->stride(1),
                                 yuv_image->data(2), yuv_image->stride(2),
@@ -624,7 +634,18 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
     converted_image_frame.Reset(ImageFormat::SRGBA, image_frame->Width(),
                                 image_frame->Height(), alignment_boundary_);
     cv::Mat output_mat = ::mediapipe::formats::MatView(&converted_image_frame);
-    cv::cvtColor(input_mat, output_mat, cv::COLOR_RGB2RGBA, 4);
+    cv::cvtColor(input_mat, output_mat, cv::COLOR_RGB2RGBA,
+                 /*num_output_channels=*/4);
+    image_frame = &converted_image_frame;
+  } else if (input_format_ == ImageFormat::SRGBA &&
+             output_format_ == ImageFormat::SRGB) {
+    image_frame = &cc->Inputs().Get(input_data_id_).Get<ImageFrame>();
+    cv::Mat input_mat = ::mediapipe::formats::MatView(image_frame);
+    converted_image_frame.Reset(ImageFormat::SRGB, image_frame->Width(),
+                                image_frame->Height(), alignment_boundary_);
+    cv::Mat output_mat = ::mediapipe::formats::MatView(&converted_image_frame);
+    cv::cvtColor(input_mat, output_mat, cv::COLOR_RGBA2RGB,
+                 /*num_output_channels=*/3);
     image_frame = &converted_image_frame;
   } else {
     image_frame = &cc->Inputs().Get(input_data_id_).Get<ImageFrame>();
@@ -686,6 +707,14 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
       }
     }
     return absl::OkStatus();
+  }
+
+  // Before rescaling the frame in image_frame_util::RescaleImageFrame, check
+  // the frame's dimension. If width * height = 0,
+  // image_frame_util::RescaleImageFrame will crash in OpenCV resize().
+  // See b/317149725.
+  if (image_frame->PixelDataSize() == 0) {
+    return absl::InvalidArgumentError("Image frame is empty before rescaling.");
   }
 
   // Rescale the image frame.

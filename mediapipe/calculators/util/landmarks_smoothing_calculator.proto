@@ -64,8 +64,8 @@ message LandmarksSmoothingCalculatorOptions {
     // balance between jittering and lag.
     optional float beta = 3 [default = 0.0];
 
-    // Cutoff frequency for derivate. It is set to 1Hz in the original
-    // algorithm, but can be tuned to further smooth the speed (i.e. derivate)
+    // Cutoff frequency for derivative. It is set to 1Hz in the original
+    // algorithm, but can be tuned to further smooth the speed (i.e. derivative)
     // on the object.
     optional float derivate_cutoff = 4 [default = 1.0];
 

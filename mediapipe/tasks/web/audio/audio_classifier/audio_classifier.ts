@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/b
 import {AudioTaskRunner} from '../../../../tasks/web/audio/core/audio_task_runner';
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
 import {convertFromClassificationResultProto} from '../../../../tasks/web/components/processors/classifier_result';
+import {CachedGraphRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
@@ -33,7 +34,7 @@ export * from './audio_classifier_options';
 export * from './audio_classifier_result';
 
 const MEDIAPIPE_GRAPH =
-    'mediapipe.tasks.audio.audio_classifier.AudioClassifierGraph';
+  'mediapipe.tasks.audio.audio_classifier.AudioClassifierGraph';
 
 const AUDIO_STREAM = 'audio_in';
 const SAMPLE_RATE_STREAM = 'sample_rate';
@@ -50,6 +51,7 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
   /**
    * Initializes the Wasm runtime and creates a new audio classifier from the
    * provided options.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param audioClassifierOptions The options for the audio classifier. Note
@@ -57,47 +59,60 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
    *     provided (via `baseOptions`).
    */
   static createFromOptions(
-      wasmFileset: WasmFileset, audioClassifierOptions: AudioClassifierOptions):
-      Promise<AudioClassifier> {
-    return AudioTaskRunner.createInstance(
-        AudioClassifier, /* initializeCanvas= */ false, wasmFileset,
-        audioClassifierOptions);
+    wasmFileset: WasmFileset,
+    audioClassifierOptions: AudioClassifierOptions,
+  ): Promise<AudioClassifier> {
+    return AudioTaskRunner.createAudioInstance(
+      AudioClassifier,
+      wasmFileset,
+      audioClassifierOptions,
+    );
   }
 
   /**
    * Initializes the Wasm runtime and creates a new audio classifier based on
    * the provided model asset buffer.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
-   * @param modelAssetBuffer A binary representation of the model.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *    representation of the model.
    */
   static createFromModelBuffer(
-      wasmFileset: WasmFileset,
-      modelAssetBuffer: Uint8Array): Promise<AudioClassifier> {
-    return AudioTaskRunner.createInstance(
-        AudioClassifier, /* initializeCanvas= */ false, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+    wasmFileset: WasmFileset,
+    modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
+  ): Promise<AudioClassifier> {
+    return AudioTaskRunner.createAudioInstance(AudioClassifier, wasmFileset, {
+      baseOptions: {modelAssetBuffer},
+    });
   }
 
   /**
    * Initializes the Wasm runtime and creates a new audio classifier based on
    * the path to the model asset.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
    */
   static createFromModelPath(
-      wasmFileset: WasmFileset,
-      modelAssetPath: string): Promise<AudioClassifier> {
+    wasmFileset: WasmFileset,
+    modelAssetPath: string,
+  ): Promise<AudioClassifier> {
     return AudioTaskRunner.createInstance(
-        AudioClassifier, /* initializeCanvas= */ false, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+      AudioClassifier,
+      /* canvas= */ null,
+      wasmFileset,
+      {baseOptions: {modelAssetPath}},
+    );
   }
 
+  /** @hideconstructor */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
-    super(wasmModule, glCanvas);
+    wasmModule: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
+    super(new CachedGraphRunner(wasmModule, glCanvas));
     this.options.setBaseOptions(new BaseOptionsProto());
   }
 
@@ -116,40 +131,58 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
    * You can reset an option back to its default value by explicitly setting it
    * to `undefined`.
    *
+   * @export
    * @param options The options for the audio classifier.
    */
-  override async setOptions(options: AudioClassifierOptions): Promise<void> {
-    await super.setOptions(options);
-    this.options.setClassifierOptions(convertClassifierOptionsToProto(
-        options, this.options.getClassifierOptions()));
-    this.refreshGraph();
+  override setOptions(options: AudioClassifierOptions): Promise<void> {
+    this.options.setClassifierOptions(
+      convertClassifierOptionsToProto(
+        options,
+        this.options.getClassifierOptions(),
+      ),
+    );
+    return this.applyOptions(options);
   }
+
+  // TODO: Add a classifyStream() that takes a timestamp
 
   /**
    * Performs audio classification on the provided audio clip and waits
    * synchronously for the response.
    *
+   * @export
    * @param audioData An array of raw audio capture data, like from a call to
    *     `getChannelData()` on an AudioBuffer.
    * @param sampleRate The sample rate in Hz of the provided audio data. If not
    *     set, defaults to the sample rate set via `setDefaultSampleRate()` or
    *     `48000` if no custom default was set.
-   * @return The classification result of the audio datas
+   * @return The classification result of the audio data
    */
-  classify(audioData: Float32Array, sampleRate?: number):
-      AudioClassifierResult[] {
+  classify(
+    audioData: Float32Array,
+    sampleRate?: number,
+  ): AudioClassifierResult[] {
     return this.processAudioClip(audioData, sampleRate);
   }
 
   /** Sends an audio package to the graph and returns the classifications. */
   protected override process(
-      audioData: Float32Array, sampleRate: number,
-      timestampMs: number): AudioClassifierResult[] {
+    audioData: Float32Array,
+    sampleRate: number,
+    timestampMs: number,
+  ): AudioClassifierResult[] {
     this.graphRunner.addDoubleToStream(
-        sampleRate, SAMPLE_RATE_STREAM, timestampMs);
+      sampleRate,
+      SAMPLE_RATE_STREAM,
+      timestampMs,
+    );
     this.graphRunner.addAudioToStreamWithShape(
-        audioData, /* numChannels= */ 1, /* numSamples= */ audioData.length,
-        AUDIO_STREAM, timestampMs);
+      audioData,
+      /* numChannels= */ 1,
+      /* numSamples= */ audioData.length,
+      AUDIO_STREAM,
+      timestampMs,
+    );
 
     this.classificationResults = [];
     this.finishProcessing();
@@ -158,19 +191,20 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
 
   /**
    * Internal function for converting raw data into classification results, and
-   * adding them to our classfication results list.
+   * adding them to our classification results list.
    **/
   private addJsAudioClassificationResults(binaryProtos: Uint8Array[]): void {
-    binaryProtos.forEach(binaryProto => {
+    binaryProtos.forEach((binaryProto) => {
       const classificationResult =
-          ClassificationResult.deserializeBinary(binaryProto);
+        ClassificationResult.deserializeBinary(binaryProto);
       this.classificationResults.push(
-          convertFromClassificationResultProto(classificationResult));
+        convertFromClassificationResultProto(classificationResult),
+      );
     });
   }
 
   /** Updates the MediaPipe graph configuration. */
-  private refreshGraph(): void {
+  protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(AUDIO_STREAM);
     graphConfig.addInputStream(SAMPLE_RATE_STREAM);
@@ -178,7 +212,9 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
-        AudioClassifierGraphOptions.ext, this.options);
+      AudioClassifierGraphOptions.ext,
+      this.options,
+    );
 
     // Perform audio classification. Pre-processing and results post-processing
     // are built-in.
@@ -187,15 +223,25 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
     classifierNode.addInputStream('AUDIO:' + AUDIO_STREAM);
     classifierNode.addInputStream('SAMPLE_RATE:' + SAMPLE_RATE_STREAM);
     classifierNode.addOutputStream(
-        'TIMESTAMPED_CLASSIFICATIONS:' + TIMESTAMPED_CLASSIFICATIONS_STREAM);
+      'TIMESTAMPED_CLASSIFICATIONS:' + TIMESTAMPED_CLASSIFICATIONS_STREAM,
+    );
     classifierNode.setOptions(calculatorOptions);
 
     graphConfig.addNode(classifierNode);
 
     this.graphRunner.attachProtoVectorListener(
-        TIMESTAMPED_CLASSIFICATIONS_STREAM, binaryProtos => {
-          this.addJsAudioClassificationResults(binaryProtos);
-        });
+      TIMESTAMPED_CLASSIFICATIONS_STREAM,
+      (binaryProtos, timestamp) => {
+        this.addJsAudioClassificationResults(binaryProtos);
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
+    this.graphRunner.attachEmptyPacketListener(
+      TIMESTAMPED_CLASSIFICATIONS_STREAM,
+      (timestamp) => {
+        this.setLatestOutputTimestamp(timestamp);
+      },
+    );
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

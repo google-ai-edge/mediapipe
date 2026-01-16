@@ -3,6 +3,7 @@ syntax = "proto2";
 package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
+import "mediapipe/gpu/gpu_origin.proto";
 
 // Full Example:
 //
@@ -31,7 +32,7 @@ message TensorConverterCalculatorOptions {
   // Custom settings to override the internal scaling factors `div` and `sub`.
   // Both values must be set to non-negative values. Will only take effect on
   // CPU AND when |use_custom_normalization| is set to true. When these custom
-  // values take effect, the |zero_center| setting above will be overriden, and
+  // values take effect, the |zero_center| setting above will be overridden, and
   // the normalized_value will be calculated as:
   // normalized_value = input / custom_div - custom_sub.
   optional bool use_custom_normalization = 6 [default = false];
@@ -43,7 +44,15 @@ message TensorConverterCalculatorOptions {
   // with a coordinate system where the origin is at the bottom-left corner
   // (e.g., in OpenGL) whereas the ML model expects an image with a top-left
   // origin.
+  // Prefer gpu_origin over this field when using GPU input images.
   optional bool flip_vertically = 2 [default = false];
+
+  // Determines when the input GPU image should be flipped vertically.
+  // See GpuOrigin.Mode for more information.
+  // Affects only IMAGE_GPU inputs.
+  // If unset, falls back to flip_vertically for backwards compatibility.
+  // Cannot set both gpu_origin and flip_vertically.
+  optional GpuOrigin.Mode gpu_origin = 10;
 
   // Controls how many channels of the input image get passed through to the
   // tensor. Valid values are 1,3,4 only. Ignored for iOS GPU.

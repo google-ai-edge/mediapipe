@@ -200,14 +200,27 @@ absl::Status ParseAspectRatioString(const std::string& aspect_ratio_string,
 }
 void ConstructExternalRenderMessage(
     const cv::Rect& crop_from_location, const cv::Rect& render_to_location,
-    const cv::Scalar& padding_color, const uint64 timestamp_us,
-    ExternalRenderFrame* external_render_message) {
+    const cv::Scalar& padding_color, const uint64_t timestamp_us,
+    ExternalRenderFrame* external_render_message, int frame_width,
+    int frame_height) {
   auto crop_from_message =
       external_render_message->mutable_crop_from_location();
   crop_from_message->set_x(crop_from_location.x);
   crop_from_message->set_y(crop_from_location.y);
   crop_from_message->set_width(crop_from_location.width);
   crop_from_message->set_height(crop_from_location.height);
+
+  auto normalized_crop_from_message =
+      external_render_message->mutable_normalized_crop_from_location();
+  normalized_crop_from_message->set_x(crop_from_location.x /
+                                      static_cast<float>(frame_width));
+  normalized_crop_from_message->set_y(crop_from_location.y /
+                                      static_cast<float>(frame_height));
+  normalized_crop_from_message->set_width(crop_from_location.width /
+                                          static_cast<float>(frame_width));
+  normalized_crop_from_message->set_height(crop_from_location.height /
+                                           static_cast<float>(frame_height));
+
   auto render_to_message =
       external_render_message->mutable_render_to_location();
   render_to_message->set_x(render_to_location.x);
@@ -627,7 +640,8 @@ absl::Status SceneCroppingCalculator::ProcessScene(const bool is_end_of_scene,
       auto external_render_message = absl::make_unique<ExternalRenderFrame>();
       ConstructExternalRenderMessage(
           crop_from_locations[i], render_to_locations[i], padding_colors[i],
-          scene_frame_timestamps_[i], external_render_message.get());
+          scene_frame_timestamps_[i], external_render_message.get(),
+          frame_width_, frame_height_);
       cc->Outputs()
           .Tag(kExternalRenderingPerFrame)
           .Add(external_render_message.release(),
@@ -640,7 +654,8 @@ absl::Status SceneCroppingCalculator::ProcessScene(const bool is_end_of_scene,
       ExternalRenderFrame render_frame;
       ConstructExternalRenderMessage(crop_from_locations[i],
                                      render_to_locations[i], padding_colors[i],
-                                     scene_frame_timestamps_[i], &render_frame);
+                                     scene_frame_timestamps_[i], &render_frame,
+                                     frame_width_, frame_height_);
       external_render_list_->push_back(render_frame);
     }
   }
@@ -702,7 +717,7 @@ absl::Status SceneCroppingCalculator::FormatAndOutputCroppedFrames(
   for (int i = 0; i < num_frames; ++i) {
     // Set default padding color to white.
     cv::Scalar padding_color_to_add = cv::Scalar(255, 255, 255);
-    const int64 time_ms = scene_frame_timestamps_[i];
+    const int64_t time_ms = scene_frame_timestamps_[i];
     if (*apply_padding) {
       if (has_solid_background_) {
         double lab[3];
@@ -732,7 +747,7 @@ absl::Status SceneCroppingCalculator::FormatAndOutputCroppedFrames(
 
   // Resizes cropped frames, pads frames, and output frames.
   for (int i = 0; i < num_frames; ++i) {
-    const int64 time_ms = scene_frame_timestamps_[i];
+    const int64_t time_ms = scene_frame_timestamps_[i];
     const Timestamp timestamp(time_ms);
     auto scaled_frame = absl::make_unique<ImageFrame>(
         frame_format_, scaled_width, scaled_height);

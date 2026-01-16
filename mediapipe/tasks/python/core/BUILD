@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 # Placeholder for internal Python strict library and test compatibility macro.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -23,28 +23,54 @@ py_library(
     srcs = [
         "optional_dependencies.py",
     ],
+)
+
+py_library(
+    name = "serial_dispatcher",
+    srcs = ["serial_dispatcher.py"],
+    deps = [":mediapipe_c_utils"],
+)
+
+# Foreign Function Interface (FFI) defintion for the MediaPipe Tasks C API.
+py_library(
+    name = "mediapipe_c_bindings",
+    srcs = [
+        "mediapipe_c_bindings.py",
+    ],
+    data = [
+        "//mediapipe/tasks/c:libmediapipe.so",
+    ],
     deps = [
-        "@org_tensorflow//tensorflow/tools/docs:doc_controls",
+        ":mediapipe_c_utils",
+        ":serial_dispatcher",
     ],
 )
 
 py_library(
     name = "base_options",
     srcs = ["base_options.py"],
-    visibility = ["//mediapipe/tasks:users"],
+    visibility = [
+        "//mediapipe/model_maker:__subpackages__",
+        "//mediapipe/tasks:users",
+    ],
     deps = [
+        ":base_options_c",
         ":optional_dependencies",
-        "//mediapipe/tasks/cc/core/proto:base_options_py_pb2",
-        "//mediapipe/tasks/cc/core/proto:external_file_py_pb2",
     ],
 )
 
 py_library(
-    name = "task_info",
-    srcs = ["task_info.py"],
-    deps = [
-        "//mediapipe/calculators/core:flow_limiter_calculator_py_pb2",
-        "//mediapipe/framework:calculator_options_py_pb2",
-        "//mediapipe/framework:calculator_py_pb2",
-    ],
+    name = "base_options_c",
+    srcs = ["base_options_c.py"],
+)
+
+py_library(
+    name = "mediapipe_c_utils",
+    srcs = ["mediapipe_c_utils.py"],
+)
+
+py_library(
+    name = "async_result_dispatcher",
+    srcs = ["async_result_dispatcher.py"],
+    deps = [":mediapipe_c_utils"],
 )

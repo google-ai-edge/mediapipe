@@ -15,23 +15,56 @@
 #ifndef MEDIAPIPE_UTIL_TFLITE_TFLITE_MODEL_LOADER_H_
 #define MEDIAPIPE_UTIL_TFLITE_TFLITE_MODEL_LOADER_H_
 
+#include <functional>
+#include <memory>
+#include <optional>
+#include <string>
+
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/api2/packet.h"
-#include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/statusor.h"
-#include "tensorflow/lite/model.h"
+#include "mediapipe/framework/resources.h"
+#include "tensorflow/lite/model_builder.h"
 
 namespace mediapipe {
+
 // Represents a TfLite model as a FlatBuffer.
 using TfLiteModelPtr =
     std::unique_ptr<tflite::FlatBufferModel,
                     std::function<void(tflite::FlatBufferModel*)>>;
 
+struct TfLiteModelWithResource {
+  api2::Packet<TfLiteModelPtr> model_packet;
+  std::shared_ptr<Resource> resource;
+};
+
 class TfLiteModelLoader {
  public:
   // Returns a Packet containing a TfLiteModelPtr, pointing to a model loaded
-  // from the specified file path.
+  // from the specified file path. If file at `path` exists and try_mmap is
+  // true, tries to load the model as memory mapped file. (This can be
+  // significantly faster than loading the tflite file into a buffer first.)
+  // If memory mapping is not available or fails, loads the model using
+  // `Resources` object. (Which can be customized per graph.)
   static absl::StatusOr<api2::Packet<TfLiteModelPtr>> LoadFromPath(
-      const std::string& path);
+      const Resources& resources, const std::string& path,
+      bool try_mmap = false);
+
+  // Same as above, but allows to specify the memory mapping mode.
+  static absl::StatusOr<api2::Packet<TfLiteModelPtr>> LoadFromPath(
+      const Resources& resources, const std::string& path,
+      std::optional<MMapMode> mmap_mode);
+
+  // Returns a TfLiteModelWithResource, which contains a Packet containing a
+  // TfLiteModelPtr, pointing to a model loaded from the specified file path,
+  // and a Resource object. If file at `path` exists and try_mmap is true, tries
+  // to load the model as memory mapped file. (This can be significantly faster
+  // than loading the tflite file into a buffer first.) If memory mapping is not
+  // available or fails, loads the model using `Resources` object. (Which can be
+  // customized per graph.)
+  static absl::StatusOr<TfLiteModelWithResource> LoadFromPathAndGetResource(
+      const Resources& resources, const std::string& path,
+      std::optional<MMapMode> mmap_mode);
 };
 
 }  // namespace mediapipe

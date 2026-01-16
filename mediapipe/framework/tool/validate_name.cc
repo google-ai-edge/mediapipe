@@ -15,13 +15,14 @@
 // Definition of helper functions.
 #include "mediapipe/framework/tool/validate_name.h"
 
+#include <cstdint>
+
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/source_location.h"
@@ -127,14 +128,14 @@ absl::Status ValidateTag(const std::string& tag) {
                    "\" does not match \"" MEDIAPIPE_TAG_REGEX "\"."));
 }
 
-absl::Status ParseTagAndName(const std::string& tag_and_name, std::string* tag,
+absl::Status ParseTagAndName(absl::string_view tag_and_name, std::string* tag,
                              std::string* name) {
   // An optional tag and colon, followed by a name.
   RET_CHECK(tag);
   RET_CHECK(name);
   absl::Status tag_status = absl::OkStatus();
   absl::Status name_status = absl::UnknownError("");
-  int name_index = 0;
+  int name_index = -1;
   std::vector<std::string> v = absl::StrSplit(tag_and_name, ':');
   if (v.size() == 1) {
     name_status = ValidateName(v[0]);
@@ -143,7 +144,7 @@ absl::Status ParseTagAndName(const std::string& tag_and_name, std::string* tag,
     tag_status = ValidateTag(v[0]);
     name_status = ValidateName(v[1]);
     name_index = 1;
-  }
+  }  // else omitted, name_index == -1, triggering error.
   if (name_index == -1 || tag_status != absl::OkStatus() ||
       name_status != absl::OkStatus()) {
     tag->clear();
@@ -185,7 +186,7 @@ absl::Status ParseTagIndexName(const std::string& tag_index_name,
     tag_status = ValidateTag(v[0]);
     number_status = ValidateNumber(v[1]);
     if (number_status.ok()) {
-      int64 index64;
+      int64_t index64;
       RET_CHECK(absl::SimpleAtoi(v[1], &index64));
       RET_CHECK_LE(index64, internal::kMaxCollectionItemId);
       the_index = index64;
@@ -227,7 +228,7 @@ absl::Status ParseTagIndex(const std::string& tag_index, std::string* tag,
     }
     number_status = ValidateNumber(v[1]);
     if (number_status.ok()) {
-      int64 index64;
+      int64_t index64;
       RET_CHECK(absl::SimpleAtoi(v[1], &index64));
       RET_CHECK_LE(index64, internal::kMaxCollectionItemId);
       the_index = index64;

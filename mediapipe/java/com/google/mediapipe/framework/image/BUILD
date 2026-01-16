@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ android_library(
     manifest = "AndroidManifest.xml",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party:androidx_legacy_support_v4",
         "//third_party:autovalue",
         "@maven//:androidx_annotation_annotation",
+        "@maven//:androidx_legacy_legacy_support_v4",
         "@maven//:com_google_guava_guava",
     ],
 )
@@ -33,5 +33,7 @@ android_library(
 filegroup(
     name = "java_src",
     srcs = glob(["*.java"]),
-    visibility = ["//mediapipe:__subpackages__"],
+    visibility = [
+        "//mediapipe:__subpackages__",
+    ],
 )

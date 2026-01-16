@@ -30,8 +30,8 @@ namespace mediapipe {
 namespace tf = tensorflow;
 using RandomEngine = std::mt19937_64;
 
-const uint8 kGray8 = 42;
-const uint16 kGray16 = 4242;
+const uint8_t kGray8 = 42;
+const uint16_t kGray16 = 4242;
 const float kFloat = 42.0;
 const uint kRed = 255;
 const uint kGreen = 36;
@@ -40,7 +40,7 @@ const uint kAlpha = 42;
 
 const int kFixedNoiseWidth = 3;
 const int kFixedNoiseHeight = 2;
-const uint8 kFixedNoiseData[kFixedNoiseWidth * kFixedNoiseHeight * 3] = {
+const uint8_t kFixedNoiseData[kFixedNoiseWidth * kFixedNoiseHeight * 3] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 123, 213, 156, 9, 10, 11, 255, 0, 128};
 
 class ImageFrameToTensorCalculatorTest : public ::testing::Test {
@@ -69,8 +69,8 @@ class ImageFrameToTensorCalculatorTest : public ::testing::Test {
   void AddRGBFrame(int width, int height) {
     auto image_frame =
         ::absl::make_unique<ImageFrame>(ImageFormat::SRGB, width, height);
-    const uint8 color[] = {kRed, kGreen, kBlue};
-    SetToColor<uint8>(color, image_frame.get());
+    const uint8_t color[] = {kRed, kGreen, kBlue};
+    SetToColor<uint8_t>(color, image_frame.get());
     runner_->MutableInputs()->Index(0).packets.push_back(
         Adopt(image_frame.release()).At(Timestamp(0)));
   }
@@ -79,8 +79,8 @@ class ImageFrameToTensorCalculatorTest : public ::testing::Test {
   void AddRGBAFrame(int width, int height) {
     auto image_frame =
         ::absl::make_unique<ImageFrame>(ImageFormat::SRGBA, width, height);
-    const uint8 color[] = {kRed, kGreen, kBlue, kAlpha};
-    SetToColor<uint8>(color, image_frame.get());
+    const uint8_t color[] = {kRed, kGreen, kBlue, kAlpha};
+    SetToColor<uint8_t>(color, image_frame.get());
     runner_->MutableInputs()->Index(0).packets.push_back(
         Adopt(image_frame.release()).At(Timestamp(0)));
   }
@@ -89,8 +89,8 @@ class ImageFrameToTensorCalculatorTest : public ::testing::Test {
   void AddGray8Frame(int width, int height) {
     auto image_frame =
         ::absl::make_unique<ImageFrame>(ImageFormat::GRAY8, width, height);
-    const uint8 gray[] = {kGray8};
-    SetToColor<uint8>(gray, image_frame.get());
+    const uint8_t gray[] = {kGray8};
+    SetToColor<uint8_t>(gray, image_frame.get());
     runner_->MutableInputs()->Index(0).packets.push_back(
         Adopt(image_frame.release()).At(Timestamp(0)));
   }
@@ -99,8 +99,8 @@ class ImageFrameToTensorCalculatorTest : public ::testing::Test {
   void AddGray16Frame(int width, int height) {
     auto image_frame =
         ::absl::make_unique<ImageFrame>(ImageFormat::GRAY16, width, height, 1);
-    const uint16 gray[] = {kGray16};
-    SetToColor<uint16>(gray, image_frame.get());
+    const uint16_t gray[] = {kGray16};
+    SetToColor<uint16_t>(gray, image_frame.get());
     runner_->MutableInputs()->Index(0).packets.push_back(
         Adopt(image_frame.release()).At(Timestamp(0)));
   }
@@ -121,10 +121,10 @@ class ImageFrameToTensorCalculatorTest : public ::testing::Test {
         ImageFormat::SRGB, kFixedNoiseWidth, kFixedNoiseHeight);
 
     // Copy fixed noise data into the ImageFrame.
-    const uint8* src = kFixedNoiseData;
-    uint8* pixels = image_frame->MutablePixelData();
+    const uint8_t* src = kFixedNoiseData;
+    uint8_t* pixels = image_frame->MutablePixelData();
     for (int y = 0; y < kFixedNoiseHeight; ++y) {
-      uint8* row = pixels + y * image_frame->WidthStep();
+      uint8_t* row = pixels + y * image_frame->WidthStep();
       std::memcpy(row, src, kFixedNoiseWidth * 3);
       src += kFixedNoiseWidth * 3;
     }
@@ -134,7 +134,7 @@ class ImageFrameToTensorCalculatorTest : public ::testing::Test {
   }
 
   // Adds a packet with an 8-bit RGB ImageFrame containing random noise.
-  void AddRandomRGBFrame(int width, int height, uint32 seed) {
+  void AddRandomRGBFrame(int width, int height, uint32_t seed) {
     RandomEngine random(seed);
     std::uniform_int_distribution<int> uniform_dist{
         0, std::numeric_limits<uint8_t>::max()};
@@ -143,9 +143,9 @@ class ImageFrameToTensorCalculatorTest : public ::testing::Test {
 
     // Copy "noisy data" into the ImageFrame.
     const int num_components_per_row = width * image_frame->NumberOfChannels();
-    uint8* pixels = image_frame->MutablePixelData();
+    uint8_t* pixels = image_frame->MutablePixelData();
     for (int y = 0; y < kFixedNoiseHeight; ++y) {
-      uint8* p = pixels + y * image_frame->WidthStep();
+      uint8_t* p = pixels + y * image_frame->WidthStep();
       for (int i = 0; i < num_components_per_row; ++i) {
         p[i] = uniform_dist(random);
       }
@@ -188,8 +188,8 @@ TEST_F(ImageFrameToTensorCalculatorTest, SolidRedRGBFrame) {
     ASSERT_EQ(3, shape.dim_size(2));
 
     // Verify that the data in the tensor is correct.
-    const uint8* pixels =
-        reinterpret_cast<const uint8*>(tensor.tensor_data().data());
+    const uint8_t* pixels =
+        reinterpret_cast<const uint8_t*>(tensor.tensor_data().data());
     for (int i = 0; i < num_pixels; ++i) {
       ASSERT_EQ(kRed, pixels[0]);
       ASSERT_EQ(kGreen, pixels[1]);
@@ -229,8 +229,8 @@ TEST_F(ImageFrameToTensorCalculatorTest, SolidRedRGBAFrame) {
     ASSERT_EQ(4, shape.dim_size(2));
 
     // Verify that the data in the tensor is correct.
-    const uint8* pixels =
-        reinterpret_cast<const uint8*>(tensor.tensor_data().data());
+    const uint8_t* pixels =
+        reinterpret_cast<const uint8_t*>(tensor.tensor_data().data());
     for (int i = 0; i < num_pixels; ++i) {
       ASSERT_EQ(kRed, pixels[0]);
       ASSERT_EQ(kGreen, pixels[1]);
@@ -271,8 +271,8 @@ TEST_F(ImageFrameToTensorCalculatorTest, SolidGray8Frame) {
     ASSERT_EQ(1, shape.dim_size(2));
 
     // Verify that the data in the tensor is correct.
-    const uint8* pixels =
-        reinterpret_cast<const uint8*>(tensor.tensor_data().data());
+    const uint8_t* pixels =
+        reinterpret_cast<const uint8_t*>(tensor.tensor_data().data());
     for (int i = 0; i < num_pixels; ++i) {
       ASSERT_EQ(kGray8, pixels[0]);
       ++pixels;
@@ -310,8 +310,8 @@ TEST_F(ImageFrameToTensorCalculatorTest, SolidGray16Frame) {
     ASSERT_EQ(1, shape.dim_size(2));
 
     // Verify that the data in the tensor is correct.
-    const uint16* pixels =
-        reinterpret_cast<const uint16*>(tensor.tensor_data().data());
+    const uint16_t* pixels =
+        reinterpret_cast<const uint16_t*>(tensor.tensor_data().data());
     for (int i = 0; i < num_pixels; ++i) {
       ASSERT_EQ(kGray16, pixels[0]);
       ++pixels;
@@ -381,8 +381,8 @@ TEST_F(ImageFrameToTensorCalculatorTest, FixedNoiseRGBFrame) {
 
   // Verify that the data in the tensor is correct.
   const int num_pixels = kFixedNoiseWidth * kFixedNoiseHeight;
-  const uint8* pixels =
-      reinterpret_cast<const uint8*>(tensor.tensor_data().data());
+  const uint8_t* pixels =
+      reinterpret_cast<const uint8_t*>(tensor.tensor_data().data());
   for (int i = 0; i < num_pixels; ++i) {
     ASSERT_EQ(kFixedNoiseData[i], pixels[i]);
   }
@@ -390,7 +390,7 @@ TEST_F(ImageFrameToTensorCalculatorTest, FixedNoiseRGBFrame) {
 
 TEST_F(ImageFrameToTensorCalculatorTest, RandomRGBFrame) {
   // Run the calculator and verify that one output is generated.
-  const uint32 seed = 1234;
+  const uint32_t seed = 1234;
   const int height = 2;
   for (int width = 1; width <= 33; ++width) {
     runner_.reset(
@@ -417,10 +417,10 @@ TEST_F(ImageFrameToTensorCalculatorTest, RandomRGBFrame) {
     std::uniform_int_distribution<int> uniform_dist{
         0, std::numeric_limits<uint8_t>::max()};
     const int num_pixels = width * height;
-    const uint8* pixels =
-        reinterpret_cast<const uint8*>(tensor.tensor_data().data());
+    const uint8_t* pixels =
+        reinterpret_cast<const uint8_t*>(tensor.tensor_data().data());
     for (int i = 0; i < num_pixels; ++i) {
-      const uint8 expected = uniform_dist(random);
+      const uint8_t expected = uniform_dist(random);
       ASSERT_EQ(expected, pixels[i]);
     }
   }
@@ -435,8 +435,8 @@ TEST_F(ImageFrameToTensorCalculatorTest, FixedRGBFrameWithMeanAndStddev) {
 
   // Create a single pixel image of fixed color #0080ff.
   auto image_frame = ::absl::make_unique<ImageFrame>(ImageFormat::SRGB, 1, 1);
-  const uint8 color[] = {0, 128, 255};
-  SetToColor<uint8>(color, image_frame.get());
+  const uint8_t color[] = {0, 128, 255};
+  SetToColor<uint8_t>(color, image_frame.get());
 
   runner_->MutableInputs()->Index(0).packets.push_back(
       Adopt(image_frame.release()).At(Timestamp(0)));
@@ -464,8 +464,8 @@ TEST_F(ImageFrameToTensorCalculatorTest, FixedRGBFrameWithRepeatMeanAndStddev) {
 
   // Create a single pixel image of fixed color #0080ff.
   auto image_frame = ::absl::make_unique<ImageFrame>(ImageFormat::SRGB, 1, 1);
-  const uint8 color[] = {0, 128, 255};
-  SetToColor<uint8>(color, image_frame.get());
+  const uint8_t color[] = {0, 128, 255};
+  SetToColor<uint8_t>(color, image_frame.get());
 
   runner_->MutableInputs()->Index(0).packets.push_back(
       Adopt(image_frame.release()).At(Timestamp(0)));

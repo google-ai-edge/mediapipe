@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,14 @@
 # limitations under the License.
 
 package(default_visibility = ["//visibility:public"])
+
+config_setting(
+    name = "build_for_3p",
+    define_values = {
+        "BUILD_FOR_3P": "1",
+    },
+    visibility = ["//visibility:public"],
+)
 
 package_group(
     name = "internal",

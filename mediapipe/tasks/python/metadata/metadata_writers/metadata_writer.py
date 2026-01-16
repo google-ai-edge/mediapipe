@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import tempfile
 from typing import List, Optional, Tuple, Union
 
 import flatbuffers
+
 from mediapipe.tasks.metadata import metadata_schema_py_generated as metadata_fb
 from mediapipe.tasks.python.metadata import metadata
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_info
@@ -34,6 +35,14 @@ _INPUT_REGEX_TEXT_DESCRIPTION = ('Embedding vectors representing the input '
                                  'text to be processed.')
 _OUTPUT_CLASSIFICATION_NAME = 'score'
 _OUTPUT_CLASSIFICATION_DESCRIPTION = 'Score of the labels respectively.'
+_OUTPUT_SEGMENTATION_MASKS_NAME = 'segmentation_masks'
+_OUTPUT_SEGMENTATION_MASKS_DESCRIPTION = (
+    'Masks over the target objects with high accuracy.'
+)
+# Detection tensor result to be grouped together.
+_DETECTION_GROUP_NAME = 'detection_result'
+# File name to export score calibration parameters.
+_SCORE_CALIBATION_FILENAME = 'score_calibration.txt'
 
 
 @dataclasses.dataclass
@@ -311,7 +320,9 @@ def _create_metadata_buffer(
     general_md: Optional[metadata_info.GeneralMd] = None,
     input_md: Optional[List[metadata_info.TensorMd]] = None,
     output_md: Optional[List[metadata_info.TensorMd]] = None,
-    input_process_units: Optional[List[metadata_fb.ProcessUnitT]] = None
+    input_process_units: Optional[List[metadata_fb.ProcessUnitT]] = None,
+    output_group_md: Optional[List[metadata_info.TensorGroupMd]] = None,
+    custom_metadata_md: Optional[List[metadata_info.CustomMetadataMd]] = None,
 ) -> bytearray:
   """Creates a buffer of the metadata.
 
@@ -321,8 +332,13 @@ def _create_metadata_buffer(
     input_md: metadata information of the input tensors.
     output_md: metadata information of the output tensors.
     input_process_units: a lists of metadata of the input process units [1].
+    output_group_md: a list of metadata of output tensor groups [2];
+    custom_metadata_md: a lists of custom metadata.
     [1]:
       https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L655
+    [2]:
+      https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L677
+
   Returns:
     A buffer of the metadata.
 
@@ -359,6 +375,14 @@ def _create_metadata_buffer(
   subgraph_metadata.outputTensorMetadata = output_metadata
   if input_process_units:
     subgraph_metadata.inputProcessUnits = input_process_units
+  if custom_metadata_md:
+    subgraph_metadata.customMetadata = [
+        m.create_metadata() for m in custom_metadata_md
+    ]
+  if output_group_md:
+    subgraph_metadata.outputTensorGroups = [
+        m.create_metadata() for m in output_group_md
+    ]
 
   # Create the whole model metadata.
   if general_md is None:
@@ -402,7 +426,9 @@ class MetadataWriter(object):
     self._input_mds = []
     self._input_process_units = []
     self._output_mds = []
+    self._output_group_mds = []
     self._associated_files = []
+    self._custom_metadata_mds = []
     self._temp_folder = tempfile.TemporaryDirectory()
 
   def __del__(self):
@@ -583,27 +609,13 @@ class MetadataWriter(object):
     Returns:
       The current Writer instance to allow chained operation.
     """
-    calibration_md = None
-    if score_calibration:
-      calibration_md = metadata_info.ScoreCalibrationMd(
-          score_transformation_type=score_calibration.transformation_type,
-          default_score=score_calibration.default_score,
-          file_path=self._export_calibration_file('score_calibration.txt',
-                                                  score_calibration.parameters))
+    calibration_md = self._create_score_calibration_md(score_calibration)
     score_thresholding_md = None
     if score_thresholding:
       score_thresholding_md = metadata_info.ScoreThresholdingMd(
           score_thresholding.global_score_threshold)
 
-    label_files = None
-    if labels:
-      label_files = []
-      for item in labels.labels:
-        label_files.append(
-            metadata_info.LabelFileMd(
-                self._export_labels(item.filename, item.names),
-                locale=item.locale))
-
+    label_files = self._create_label_file_md(labels)
     output_md = metadata_info.ClassificationTensorMd(
         name=name,
         description=description,
@@ -611,6 +623,94 @@ class MetadataWriter(object):
         tensor_type=self._output_tensor_type(len(self._output_mds)),
         score_calibration_md=calibration_md,
         score_thresholding_md=score_thresholding_md,
+    )
+    self._output_mds.append(output_md)
+    return self
+
+  def add_detection_output(
+      self,
+      labels: Optional[Labels] = None,
+      score_calibration: Optional[ScoreCalibration] = None,
+      group_name: str = _DETECTION_GROUP_NAME,
+  ) -> 'MetadataWriter':
+    """Adds a detection head metadata for detection output tensor of models with postprocessing.
+
+    Args:
+      labels: an instance of Labels helper class.
+      score_calibration: an instance of ScoreCalibration helper class.
+      group_name: name of output tensor group.
+
+    Returns:
+      The current Writer instance to allow chained operation.
+    """
+    calibration_md = self._create_score_calibration_md(score_calibration)
+    label_files = self._create_label_file_md(labels)
+    detection_output_mds = metadata_info.DetectionOutputTensorsMd(
+        self._model_buffer,
+        label_files=label_files,
+        score_calibration_md=calibration_md,
+    ).output_mds
+    self._output_mds.extend(detection_output_mds)
+    # Outputs are location, category, score, number of detections.
+    if len(detection_output_mds) != 4:
+      raise ValueError('The size of detections output should be 4.')
+    # The first 3 tensors (location, category, score) are grouped.
+    group_md = metadata_info.TensorGroupMd(
+        name=group_name,
+        tensor_names=[output_md.name for output_md in detection_output_mds[:3]],
+    )
+    self._output_group_mds.append(group_md)
+    return self
+
+  def add_raw_detection_output(
+      self,
+      labels: Optional[Labels] = None,
+      output_tensors_order: metadata_info.RawDetectionOutputTensorsOrder = metadata_info.RawDetectionOutputTensorsOrder.UNSPECIFIED,
+  ) -> 'MetadataWriter':
+    """Adds a detection head metadata for detection output tensor of models without postprocessing.
+
+    Args:
+      labels: an instance of Labels helper class.
+      output_tensors_order: the order of the output tensors. For models of
+        out-of-graph non-maximum-suppression only.
+
+    Returns:
+      The current Writer instance to allow chained operation.
+    """
+    label_files = self._create_label_file_md(labels)
+    detection_output_mds = metadata_info.RawDetectionOutputTensorsMd(
+        self._model_buffer,
+        label_files=label_files,
+        output_tensors_order=output_tensors_order,
+    ).output_mds
+    self._output_mds.extend(detection_output_mds)
+    # Outputs are location, score.
+    if len(detection_output_mds) != 2:
+      raise ValueError('The size of detections output should be 2.')
+    return self
+
+  def add_segmentation_output(
+      self,
+      labels: Optional[Labels] = None,
+      name: str = _OUTPUT_SEGMENTATION_MASKS_NAME,
+      description: str = _OUTPUT_SEGMENTATION_MASKS_DESCRIPTION,
+  ) -> 'MetadataWriter':
+    """Adds a segmentation head metadata for segmentation output tensor.
+
+    Args:
+      labels: an instance of Labels helper class.
+      name: Metadata name of the tensor. Note that this is different from tensor
+        name in the flatbuffer.
+      description: human readable description of what the output is.
+
+    Returns:
+      The current Writer instance to allow chained operation.
+    """
+    label_files = self._create_label_file_md(labels)
+    output_md = metadata_info.SegmentationMaskMd(
+        name=name,
+        description=description,
+        label_files=label_files,
     )
     self._output_mds.append(output_md)
     return self
@@ -623,6 +723,12 @@ class MetadataWriter(object):
     self._output_mds.append(output_md)
     return self
 
+  def add_custom_metadata(
+      self, custom_metadata_md: metadata_info.CustomMetadataMd
+  ) -> 'MetadataWriter':
+    self._custom_metadata_mds.append(custom_metadata_md)
+    return self
+
   def populate(self) -> Tuple[bytearray, str]:
     """Populates metadata into the TFLite file.
 
@@ -630,7 +736,7 @@ class MetadataWriter(object):
     content is used to interpret the metadata content.
 
     Returns:
-      A tuple of (model_with_metadata_in_bytes, metdata_json_content)
+      A tuple of (model_with_metadata_in_bytes, metadata_json_content)
     """
     # Populates metadata and associated files into TFLite model buffer.
     populator = metadata.MetadataPopulator.with_model_buffer(self._model_buffer)
@@ -639,7 +745,10 @@ class MetadataWriter(object):
         general_md=self._general_md,
         input_md=self._input_mds,
         output_md=self._output_mds,
-        input_process_units=self._input_process_units)
+        input_process_units=self._input_process_units,
+        custom_metadata_md=self._custom_metadata_mds,
+        output_group_md=self._output_group_mds,
+    )
     populator.load_metadata_buffer(metadata_buffer)
     if self._associated_files:
       populator.load_associated_files(self._associated_files)
@@ -683,6 +792,36 @@ class MetadataWriter(object):
     self._associated_files.append(filepath)
     return filepath
 
+  def _create_score_calibration_md(
+      self, score_calibration: ScoreCalibration
+  ) -> Optional[metadata_info.ScoreCalibrationMd]:
+    """Creates the ScoreCalibrationMd object."""
+    if score_calibration is None:
+      return None
+    return metadata_info.ScoreCalibrationMd(
+        score_transformation_type=score_calibration.transformation_type,
+        default_score=score_calibration.default_score,
+        file_path=self._export_calibration_file(
+            _SCORE_CALIBATION_FILENAME, score_calibration.parameters
+        ),
+    )
+
+  def _create_label_file_md(
+      self, labels: Optional[Labels] = None
+  ) -> Optional[List[metadata_info.LabelFileMd]]:
+    """Creates a list of LabelFileMd objects."""
+    label_files = None
+    if labels:
+      label_files = []
+      for item in labels.labels:
+        label_files.append(
+            metadata_info.LabelFileMd(
+                self._export_labels(item.filename, item.names),
+                locale=item.locale,
+            )
+        )
+    return label_files
+
 
 class MetadataWriterBase:
   """Base MetadataWriter class which contains the apis exposed to users.
@@ -701,6 +840,6 @@ class MetadataWriterBase:
     content is used to interpret the metadata content.
 
     Returns:
-      A tuple of (model_with_metadata_in_bytes, metdata_json_content)
+      A tuple of (model_with_metadata_in_bytes, metadata_json_content)
     """
     return self.writer.populate()

@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,10 +41,11 @@ limitations under the License.
 namespace mediapipe::api2 {
 namespace {
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Source;
-using ::mediapipe::tasks::components::containers::Rect;
+using ::mediapipe::tasks::components::containers::RectF;
 using ::mediapipe::tasks::vision::utils::CalculateIOU;
 using ::mediapipe::tasks::vision::utils::DuplicatesFinder;
 
@@ -126,7 +127,7 @@ absl::StatusOr<float> HandBaselineDistance(
   return distance;
 }
 
-Rect CalculateBound(const NormalizedLandmarkList& list) {
+RectF CalculateBound(const NormalizedLandmarkList& list) {
   constexpr float kMinInitialValue = std::numeric_limits<float>::max();
   constexpr float kMaxInitialValue = std::numeric_limits<float>::lowest();
 
@@ -144,10 +145,10 @@ Rect CalculateBound(const NormalizedLandmarkList& list) {
   }
 
   // Populate normalized non rotated face bounding box
-  return Rect{/*left=*/bounding_box_left,
-              /*top=*/bounding_box_top,
-              /*right=*/bounding_box_right,
-              /*bottom=*/bounding_box_bottom};
+  return RectF{/*left=*/bounding_box_left,
+               /*top=*/bounding_box_top,
+               /*right=*/bounding_box_right,
+               /*bottom=*/bounding_box_bottom};
 }
 
 // Uses IoU and distance of some corresponding hand landmarks to detect
@@ -172,11 +173,12 @@ class HandDuplicatesFinder : public DuplicatesFinder {
     const int num = multi_landmarks.size();
     std::vector<float> baseline_distances;
     baseline_distances.reserve(num);
-    std::vector<Rect> bounds;
+    std::vector<RectF> bounds;
     bounds.reserve(num);
     for (const NormalizedLandmarkList& list : multi_landmarks) {
-      ASSIGN_OR_RETURN(const float baseline_distance,
-                       HandBaselineDistance(list, input_width, input_height));
+      MP_ASSIGN_OR_RETURN(
+          const float baseline_distance,
+          HandBaselineDistance(list, input_width, input_height));
       baseline_distances.push_back(baseline_distance);
       bounds.push_back(CalculateBound(list));
     }
@@ -193,9 +195,9 @@ class HandDuplicatesFinder : public DuplicatesFinder {
             std::max(stable_distance_i, stable_distance_j) *
             kAllowedBaselineDistanceRatio;
 
-        ASSIGN_OR_RETURN(const std::vector<float> distances,
-                         Distances(multi_landmarks[i], multi_landmarks[j],
-                                   input_width, input_height));
+        MP_ASSIGN_OR_RETURN(const std::vector<float> distances,
+                            Distances(multi_landmarks[i], multi_landmarks[j],
+                                      input_width, input_height));
         const int num_matched_landmarks = absl::c_count_if(
             distances,
             [&](float distance) { return distance < distance_threshold; });
@@ -253,9 +255,9 @@ absl::Status HandLandmarksDeduplicationCalculator::Process(
 
   std::unique_ptr<DuplicatesFinder> duplicates_finder =
       CreateHandDuplicatesFinder(/*start_from_the_end=*/false);
-  ASSIGN_OR_RETURN(absl::flat_hash_set<int> indices_to_remove,
-                   duplicates_finder->FindDuplicates(
-                       in_landmarks, image_size.first, image_size.second));
+  MP_ASSIGN_OR_RETURN(absl::flat_hash_set<int> indices_to_remove,
+                      duplicates_finder->FindDuplicates(
+                          in_landmarks, image_size.first, image_size.second));
 
   if (indices_to_remove.empty()) {
     kOutLandmarks(cc).Send(kInLandmarks(cc));
@@ -266,12 +268,12 @@ absl::Status HandLandmarksDeduplicationCalculator::Process(
     std::vector<NormalizedLandmarkList> out_landmarks;
     const int num = in_landmarks.size();
 
-    ASSIGN_OR_RETURN(absl::optional<std::vector<NormalizedRect>> out_rois,
-                     VerifyNumAndMaybeInitOutput(kInRois, cc, num));
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(absl::optional<std::vector<NormalizedRect>> out_rois,
+                        VerifyNumAndMaybeInitOutput(kInRois, cc, num));
+    MP_ASSIGN_OR_RETURN(
         absl::optional<std::vector<LandmarkList>> out_world_landmarks,
         VerifyNumAndMaybeInitOutput(kInWorldLandmarks, cc, num));
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         absl::optional<std::vector<ClassificationList>> out_classifications,
         VerifyNumAndMaybeInitOutput(kInClassifications, cc, num));
 

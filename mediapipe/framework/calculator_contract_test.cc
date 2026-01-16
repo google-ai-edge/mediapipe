@@ -41,6 +41,7 @@ TEST(CalculatorContractTest, Calculator) {
       )pb");
   CalculatorContract contract;
   MP_EXPECT_OK(contract.Initialize(node));
+  EXPECT_FALSE(contract.HasOptions<CalculatorContractTestOptions>());
   EXPECT_EQ(contract.Inputs().NumEntries(), 4);
   EXPECT_EQ(contract.Outputs().NumEntries(), 1);
   EXPECT_EQ(contract.InputSidePackets().NumEntries(), 1);
@@ -60,6 +61,7 @@ TEST(CalculatorContractTest, CalculatorOptions) {
         })pb");
   CalculatorContract contract;
   MP_EXPECT_OK(contract.Initialize(node));
+  ASSERT_TRUE(contract.HasOptions<CalculatorContractTestOptions>());
   const auto& test_options =
       contract.Options().GetExtension(CalculatorContractTestOptions::ext);
   EXPECT_EQ(test_options.test_field(), 1.0);

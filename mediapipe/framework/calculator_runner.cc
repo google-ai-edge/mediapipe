@@ -16,10 +16,11 @@
 
 #include "mediapipe/framework/calculator_runner.h"
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 
@@ -110,20 +111,20 @@ absl::Status CalculatorRunner::InitializeFromNodeConfig(
         node_config_.mutable_input_side_packet());
   }
 
-  ASSIGN_OR_RETURN(auto input_map,
-                   tool::TagMap::Create(node_config_.input_stream()));
+  MP_ASSIGN_OR_RETURN(auto input_map,
+                      tool::TagMap::Create(node_config_.input_stream()));
   inputs_ = absl::make_unique<StreamContentsSet>(input_map);
 
-  ASSIGN_OR_RETURN(auto output_map,
-                   tool::TagMap::Create(node_config_.output_stream()));
+  MP_ASSIGN_OR_RETURN(auto output_map,
+                      tool::TagMap::Create(node_config_.output_stream()));
   outputs_ = absl::make_unique<StreamContentsSet>(output_map);
 
-  ASSIGN_OR_RETURN(auto input_side_map,
-                   tool::TagMap::Create(node_config_.input_side_packet()));
+  MP_ASSIGN_OR_RETURN(auto input_side_map,
+                      tool::TagMap::Create(node_config_.input_side_packet()));
   input_side_packets_ = absl::make_unique<PacketSet>(input_side_map);
 
-  ASSIGN_OR_RETURN(auto output_side_map,
-                   tool::TagMap::Create(node_config_.output_side_packet()));
+  MP_ASSIGN_OR_RETURN(auto output_side_map,
+                      tool::TagMap::Create(node_config_.output_side_packet()));
   output_side_packets_ = absl::make_unique<PacketSet>(output_side_map);
 
   return absl::OkStatus();
@@ -139,7 +140,7 @@ CalculatorRunner::CalculatorRunner(const std::string& calculator_type,
 #if !defined(MEDIAPIPE_PROTO_LITE)
 CalculatorRunner::CalculatorRunner(const std::string& node_config_string) {
   CalculatorGraphConfig::Node node_config;
-  CHECK(
+  ABSL_CHECK(
       proto_ns::TextFormat::ParseFromString(node_config_string, &node_config));
   MEDIAPIPE_CHECK_OK(InitializeFromNodeConfig(node_config));
 }
@@ -149,8 +150,8 @@ CalculatorRunner::CalculatorRunner(const std::string& calculator_type,
                                    int num_inputs, int num_outputs,
                                    int num_side_packets) {
   node_config_.set_calculator(calculator_type);
-  CHECK(proto_ns::TextFormat::ParseFromString(options_string,
-                                              node_config_.mutable_options()));
+  ABSL_CHECK(proto_ns::TextFormat::ParseFromString(
+      options_string, node_config_.mutable_options()));
   SetNumInputs(num_inputs);
   SetNumOutputs(num_outputs);
   SetNumInputSidePackets(num_side_packets);
@@ -188,7 +189,7 @@ void CalculatorRunner::SetNumInputSidePackets(int n) {
 }
 
 void CalculatorRunner::InitializeInputs(const tool::TagAndNameInfo& info) {
-  CHECK(graph_ == nullptr);
+  ABSL_CHECK(graph_ == nullptr);
   MEDIAPIPE_CHECK_OK(
       tool::SetFromTagAndNameInfo(info, node_config_.mutable_input_stream()));
   inputs_.reset(new StreamContentsSet(info));
@@ -196,7 +197,7 @@ void CalculatorRunner::InitializeInputs(const tool::TagAndNameInfo& info) {
 }
 
 void CalculatorRunner::InitializeOutputs(const tool::TagAndNameInfo& info) {
-  CHECK(graph_ == nullptr);
+  ABSL_CHECK(graph_ == nullptr);
   MEDIAPIPE_CHECK_OK(
       tool::SetFromTagAndNameInfo(info, node_config_.mutable_output_stream()));
   outputs_.reset(new StreamContentsSet(info));
@@ -205,7 +206,7 @@ void CalculatorRunner::InitializeOutputs(const tool::TagAndNameInfo& info) {
 
 void CalculatorRunner::InitializeInputSidePackets(
     const tool::TagAndNameInfo& info) {
-  CHECK(graph_ == nullptr);
+  ABSL_CHECK(graph_ == nullptr);
   MEDIAPIPE_CHECK_OK(tool::SetFromTagAndNameInfo(
       info, node_config_.mutable_input_side_packet()));
   input_side_packets_.reset(new PacketSet(info));
@@ -216,7 +217,7 @@ mediapipe::Counter* CalculatorRunner::GetCounter(const std::string& name) {
   return graph_->GetCounterFactory()->GetCounter(name);
 }
 
-std::map<std::string, int64> CalculatorRunner::GetCountersValues() {
+std::map<std::string, int64_t> CalculatorRunner::GetCountersValues() {
   return graph_->GetCounterFactory()->GetCounterSet()->GetCountersValues();
 }
 
@@ -262,16 +263,18 @@ absl::Status CalculatorRunner::BuildGraph() {
 
   if (log_calculator_proto_) {
 #if defined(MEDIAPIPE_PROTO_LITE)
-    LOG(INFO) << "Please initialize CalculatorRunner using the recommended "
-                 "constructor:\n    CalculatorRunner runner(node_config);";
+    ABSL_LOG(INFO)
+        << "Please initialize CalculatorRunner using the recommended "
+           "constructor:\n    CalculatorRunner runner(node_config);";
 #else
     std::string config_string;
     proto_ns::TextFormat::Printer printer;
     printer.SetInitialIndentLevel(4);
     printer.PrintToString(node_config_, &config_string);
-    LOG(INFO) << "Please initialize CalculatorRunner using the recommended "
-                 "constructor:\n    CalculatorRunner runner(R\"(\n"
-              << config_string << "\n    )\");";
+    ABSL_LOG(INFO)
+        << "Please initialize CalculatorRunner using the recommended "
+           "constructor:\n    CalculatorRunner runner(R\"(\n"
+        << config_string << "\n    )\");";
 #endif
   }
 
@@ -350,7 +353,7 @@ absl::Status CalculatorRunner::Run() {
         node_config_.output_side_packet(i), &tag, &index, &name));
     Packet& contents = output_side_packets_->Get(
         tag, (index == -1) ? ++positional_index : index);
-    ASSIGN_OR_RETURN(contents, graph_->GetOutputSidePacket(name));
+    MP_ASSIGN_OR_RETURN(contents, graph_->GetOutputSidePacket(name));
   }
   return absl::OkStatus();
 }

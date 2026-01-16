@@ -1,0 +1,60 @@
+name: Feature Request Issues
+description: Use this template for raising a feature request. If this doesn’t look right, choose a different type.
+labels: 'type:feature'
+body:
+  - type: markdown
+    id: linkmodel
+    attributes:
+      value: Please make sure that this is a feature request.
+  - type: input
+    id: solution
+    attributes:
+      label: MediaPipe Solution (you are using)
+    validations:
+      required: false
+  - type: input
+    id: pgmlang
+    attributes:
+      label: Programming language
+      placeholder: C++/typescript/Python/Objective C/Android Java
+    validations:
+      required: false
+  - type: dropdown
+    id: willingcon
+    attributes:
+      label: Are you willing to contribute it
+      options:
+        - 'Yes'
+        - 'No'
+    validations:
+      required: false
+  - type: input
+    id: behaviour
+    attributes:
+      label: Describe the feature and the current behaviour/state
+    validations:
+      required: true
+  - type: input
+    id: api_change
+    attributes:
+      label: Will this change the current API? How?
+    validations:
+      required: false
+  - type: input
+    id: benifit
+    attributes:
+      label: Who will benefit with this feature?
+    validations:
+       required: false
+  - type: input
+    id: use_case
+    attributes:
+      label: Please specify the use cases for this feature
+    validations:
+       required: true
+  - type: input
+    id: info_other
+    attributes:
+      label: Any Other info
+    validations:
+      required: false

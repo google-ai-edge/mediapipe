@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ class MergeToVectorCalculator : public Node {
   }
 
   absl::Status Process(CalculatorContext* cc) {
-    const int input_num = kIn(cc).Count();
     std::vector<T> output_vector;
     for (auto it = kIn(cc).begin(); it != kIn(cc).end(); it++) {
       const auto& elem = *it;

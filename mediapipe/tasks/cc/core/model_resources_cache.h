@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -103,8 +103,8 @@ class ModelResourcesCache {
 };
 
 // Global service for mediapipe task model resources cache.
-const mediapipe::GraphService<ModelResourcesCache> kModelResourcesCacheService(
-    "mediapipe::tasks::ModelResourcesCacheService");
+inline constexpr mediapipe::GraphService<ModelResourcesCache>
+    kModelResourcesCacheService("mediapipe::tasks::ModelResourcesCacheService");
 
 }  // namespace core
 }  // namespace tasks

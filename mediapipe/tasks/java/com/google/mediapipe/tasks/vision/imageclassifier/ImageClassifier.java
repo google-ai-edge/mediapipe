@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -104,6 +104,7 @@ public final class ImageClassifier extends BaseVisionTaskApi {
       "mediapipe.tasks.vision.image_classifier.ImageClassifierGraph";
 
   static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
     ProtoUtil.registerTypeName(
         ClassificationsProto.ClassificationResult.class,
         "mediapipe.tasks.components.containers.proto.ClassificationResult");
@@ -187,7 +188,7 @@ public final class ImageClassifier extends BaseVisionTaskApi {
           @Override
           public MPImage convertToTaskInput(List<Packet> packets) {
             return new BitmapImageBuilder(
-                    AndroidPacketGetter.getBitmapFromRgb(packets.get(IMAGE_OUT_STREAM_INDEX)))
+                    AndroidPacketGetter.getBitmap(packets.get(IMAGE_OUT_STREAM_INDEX)))
                 .build();
           }
         });
@@ -197,6 +198,8 @@ public final class ImageClassifier extends BaseVisionTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<ImageClassifierOptions>builder()
+                .setTaskName(ImageClassifier.class.getSimpleName())
+                .setTaskRunningModeName(options.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)
                 .setOutputStreams(OUTPUT_STREAMS)

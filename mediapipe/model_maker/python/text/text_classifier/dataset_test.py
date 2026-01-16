@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ class DatasetTest(tf.test.TestCase):
 
   def test_split(self):
     ds = tf.data.Dataset.from_tensor_slices(['good', 'bad', 'neutral', 'odd'])
-    data = dataset.Dataset(ds, 4, ['pos', 'neg'])
+    data = dataset.Dataset(ds, ['pos', 'neg'], size=4)
     train_data, test_data = data.split(0.5)
     expected_train_data = [b'good', b'bad']
     expected_test_data = [b'neutral', b'odd']

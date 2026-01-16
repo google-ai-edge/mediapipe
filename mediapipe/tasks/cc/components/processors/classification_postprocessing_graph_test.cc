@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/util/label_map.pb.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -101,7 +101,7 @@ absl::StatusOr<std::unique_ptr<ModelResources>> CreateModelResourcesForModel(
                                 std::move(external_file));
 }
 
-class ConfigureTest : public tflite_shims::testing::Test {};
+class ConfigureTest : public tflite::testing::Test {};
 
 TEST_F(ConfigureTest, FailsWithInvalidMaxResults) {
   MP_ASSERT_OK_AND_ASSIGN(
@@ -417,13 +417,13 @@ TEST_F(ConfigureTest, SucceedsWithMultipleHeads) {
                                )pb")));
 }
 
-class PostprocessingTest : public tflite_shims::testing::Test {
+class PostprocessingTest : public tflite::testing::Test {
  protected:
   absl::StatusOr<OutputStreamPoller> BuildGraph(
       absl::string_view model_name, const proto::ClassifierOptions& options,
       bool connect_timestamps = false) {
-    ASSIGN_OR_RETURN(auto model_resources,
-                     CreateModelResourcesForModel(model_name));
+    MP_ASSIGN_OR_RETURN(auto model_resources,
+                        CreateModelResourcesForModel(model_name));
 
     Graph graph;
     auto& postprocessing = graph.AddNode(
@@ -450,13 +450,13 @@ class PostprocessingTest : public tflite_shims::testing::Test {
 
     MP_RETURN_IF_ERROR(calculator_graph_.Initialize(graph.GetConfig()));
     if (connect_timestamps) {
-      ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
-                                        kTimestampedClassificationsName));
+      MP_ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
+                                           kTimestampedClassificationsName));
       MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
       return poller;
     }
-    ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
-                                      kClassificationsName));
+    MP_ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
+                                         kClassificationsName));
     MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
     return poller;
   }
@@ -520,7 +520,7 @@ TEST_F(PostprocessingTest, SucceedsWithoutMetadata) {
       auto poller,
       BuildGraph(kQuantizedImageClassifierWithoutMetadata, options));
   // Build input tensors.
-  std::vector<uint8> tensor(kMobileNetNumClasses, 0);
+  std::vector<uint8_t> tensor(kMobileNetNumClasses, 0);
   tensor[1] = 18;
   tensor[2] = 16;
 
@@ -534,6 +534,7 @@ TEST_F(PostprocessingTest, SucceedsWithoutMetadata) {
   // Validate results.
   EXPECT_THAT(results,
               EqualsProto(ParseTextProtoOrDie<ClassificationResult>(R"pb(
+                timestamp_ms: 0,
                 classifications {
                   head_index: 0
                   classification_list {
@@ -551,7 +552,7 @@ TEST_F(PostprocessingTest, SucceedsWithMetadata) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto poller, BuildGraph(kQuantizedImageClassifierWithMetadata, options));
   // Build input tensors.
-  std::vector<uint8> tensor(kMobileNetNumClasses, 0);
+  std::vector<uint8_t> tensor(kMobileNetNumClasses, 0);
   tensor[1] = 12;
   tensor[2] = 14;
   tensor[3] = 16;
@@ -567,6 +568,7 @@ TEST_F(PostprocessingTest, SucceedsWithMetadata) {
   // Validate results.
   EXPECT_THAT(
       results, EqualsProto(ParseTextProtoOrDie<ClassificationResult>(R"pb(
+        timestamp_ms: 0,
         classifications {
           head_index: 0
           head_name: "probability"
@@ -587,7 +589,7 @@ TEST_F(PostprocessingTest, SucceedsWithScoreCalibration) {
       auto poller,
       BuildGraph(kQuantizedImageClassifierWithDummyScoreCalibration, options));
   // Build input tensors.
-  std::vector<uint8> tensor(kMobileNetNumClasses, 0);
+  std::vector<uint8_t> tensor(kMobileNetNumClasses, 0);
   tensor[1] = 12;
   tensor[2] = 14;
   tensor[3] = 16;
@@ -603,6 +605,7 @@ TEST_F(PostprocessingTest, SucceedsWithScoreCalibration) {
   // Validate results.
   EXPECT_THAT(
       results, EqualsProto(ParseTextProtoOrDie<ClassificationResult>(R"pb(
+        timestamp_ms: 0,
         classifications {
           head_index: 0
           head_name: "probability"
@@ -646,6 +649,7 @@ TEST_F(PostprocessingTest, SucceedsWithMultipleHeads) {
   // Validate results.
   EXPECT_THAT(
       results, EqualsProto(ParseTextProtoOrDie<ClassificationResult>(R"pb(
+        timestamp_ms: 0,
         classifications {
           head_index: 0
           head_name: "yamnet_classification"
@@ -673,11 +677,11 @@ TEST_F(PostprocessingTest, SucceedsWithTimestamps) {
       auto poller, BuildGraph(kQuantizedImageClassifierWithMetadata, options,
                               /*connect_timestamps=*/true));
   // Build input tensors.
-  std::vector<uint8> tensor_0(kMobileNetNumClasses, 0);
+  std::vector<uint8_t> tensor_0(kMobileNetNumClasses, 0);
   tensor_0[1] = 12;
   tensor_0[2] = 14;
   tensor_0[3] = 16;
-  std::vector<uint8> tensor_1(kMobileNetNumClasses, 0);
+  std::vector<uint8_t> tensor_1(kMobileNetNumClasses, 0);
   tensor_1[5] = 12;
   tensor_1[6] = 14;
   tensor_1[7] = 16;

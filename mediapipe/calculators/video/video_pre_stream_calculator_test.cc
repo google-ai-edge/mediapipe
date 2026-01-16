@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
+
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/video_stream_header.h"
@@ -163,7 +165,7 @@ TEST(VideoPreStreamCalculatorTest, FailsWithoutFrameRateInPreStream2) {
     }
   )pb");
 
-  for (int64 timestamp = -1; timestamp < 2; ++timestamp) {
+  for (int64_t timestamp = -1; timestamp < 2; ++timestamp) {
     CalculatorGraph graph;
     MP_ASSERT_OK(graph.Initialize(config));
     MP_ASSERT_OK(graph.StartRun({}));

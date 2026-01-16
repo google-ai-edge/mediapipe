@@ -1,8 +1,15 @@
 # MediaPipe graph to detect faces. (GPU input and inference, with region-of-interest.)
+#
+# EXAMPLE:
+#   node {
+#     calculator: "FaceDetectionShortRangeByRoiGpu"
+#     input_stream: "IMAGE:image"
+#     output_stream: "DETECTIONS:face_detections"
+#   }
 
-type: "FaceDetectionShortRangeGpu"
+type: "FaceDetectionShortRangeByRoiGpu"
 
-# The input image, either ImageFrame, or (multi-backend) Image.
+# The input image, either GpuBuffer, or (multi-backend) Image.
 input_stream: "IMAGE:image"
 
 # ROI (region of interest) within the given image where faces should be

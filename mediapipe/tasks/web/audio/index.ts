@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
-export * from '../../../tasks/web/audio/audio_classifier/audio_classifier';
-export * from '../../../tasks/web/audio/audio_embedder/audio_embedder';
-export * from '../../../tasks/web/core/fileset_resolver';
+import {AudioClassifier as AudioClassifierImpl} from '../../../tasks/web/audio/audio_classifier/audio_classifier';
+import {FilesetResolver as FilesetResolverImpl} from '../../../tasks/web/core/fileset_resolver';
+
+// Declare the variables locally so that Rollup in OSS includes them explicitly
+// as exports.
+const AudioClassifier = AudioClassifierImpl;
+const FilesetResolver = FilesetResolverImpl;
+
+export {AudioClassifier, FilesetResolver};

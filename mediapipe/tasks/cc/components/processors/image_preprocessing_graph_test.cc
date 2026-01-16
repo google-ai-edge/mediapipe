@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,13 +31,14 @@ limitations under the License.
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/gpu/gpu_origin.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/image_preprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -125,7 +126,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
   return TaskRunner::Create(graph.GetConfig());
 }
 
-class ConfigureTest : public tflite_shims::testing::Test {};
+class ConfigureTest : public tflite::testing::Test {};
 
 TEST_F(ConfigureTest, SucceedsWithQuantizedModelWithMetadata) {
   MP_ASSERT_OK_AND_ASSIGN(
@@ -226,6 +227,25 @@ TEST_F(ConfigureTest, SucceedsWithFloatModelGpuBackend) {
                                   output_tensor_height: 224
                                   output_tensor_float_range { min: -1 max: 1 }
                                   gpu_origin: TOP_LEFT
+                                }
+                                backend: GPU_BACKEND)pb"));
+}
+
+TEST_F(ConfigureTest, SucceedsGpuOriginConventional) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto model_resources,
+      CreateModelResourcesForModel(kMobileNetFloatWithMetadata));
+
+  proto::ImagePreprocessingGraphOptions options;
+  MP_EXPECT_OK(ConfigureImagePreprocessingGraph(
+      *model_resources, true, mediapipe::GpuOrigin::CONVENTIONAL, &options));
+
+  EXPECT_THAT(options, EqualsProto(
+                           R"pb(image_to_tensor_options {
+                                  output_tensor_width: 224
+                                  output_tensor_height: 224
+                                  output_tensor_float_range { min: -1 max: 1 }
+                                  gpu_origin: CONVENTIONAL
                                 }
                                 backend: GPU_BACKEND)pb"));
 }

@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
+#include "mediapipe/framework/collection_item_id.h"
 
 namespace mediapipe {
 
@@ -26,6 +28,10 @@ namespace mediapipe {
 // packets will be ignored (allowing PassThroughCalculator to be used to
 // test internal behavior).  Any options may be specified and will be
 // ignored.
+//
+// NOTE: keeping the legacy implementation for backward compatibility as with
+//   legacy APIs we allowed to use random input / output tags for this specific
+//   calculator which was disabled since API2.
 class PassThroughCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {

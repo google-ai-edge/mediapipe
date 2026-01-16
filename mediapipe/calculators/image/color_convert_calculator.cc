@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
+
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -24,12 +26,12 @@
 
 namespace mediapipe {
 namespace {
-void SetColorChannel(int channel, uint8 value, cv::Mat* mat) {
-  CHECK(mat->depth() == CV_8U);
-  CHECK(channel < mat->channels());
+void SetColorChannel(int channel, uint8_t value, cv::Mat* mat) {
+  ABSL_CHECK(mat->depth() == CV_8U);
+  ABSL_CHECK(channel < mat->channels());
   const int step = mat->channels();
   for (int r = 0; r < mat->rows; ++r) {
-    uint8* row_ptr = mat->ptr<uint8>(r);
+    uint8_t* row_ptr = mat->ptr<uint8_t>(r);
     for (int offset = channel; offset < mat->cols * step; offset += step) {
       row_ptr[offset] = value;
     }
@@ -38,6 +40,7 @@ void SetColorChannel(int channel, uint8 value, cv::Mat* mat) {
 
 constexpr char kRgbaInTag[] = "RGBA_IN";
 constexpr char kRgbInTag[] = "RGB_IN";
+constexpr char kBgrInTag[] = "BGR_IN";
 constexpr char kBgraInTag[] = "BGRA_IN";
 constexpr char kGrayInTag[] = "GRAY_IN";
 constexpr char kRgbaOutTag[] = "RGBA_OUT";
@@ -57,6 +60,7 @@ constexpr char kGrayOutTag[] = "GRAY_OUT";
 //   RGB  -> RGBA
 //   RGBA -> BGRA
 //   BGRA -> RGBA
+//   BGR  -> RGB
 //
 // This calculator only supports a single input stream and output stream at a
 // time. If more than one input stream or output stream is present, the
@@ -69,6 +73,7 @@ constexpr char kGrayOutTag[] = "GRAY_OUT";
 //   RGB_IN:        The input video stream (ImageFrame, SRGB).
 //   BGRA_IN:       The input video stream (ImageFrame, SBGRA).
 //   GRAY_IN:       The input video stream (ImageFrame, GRAY8).
+//   BGR_IN:        The input video stream (ImageFrame, SBGR).
 //
 // Output streams:
 //   RGBA_OUT:      The output video stream (ImageFrame, SRGBA).
@@ -120,6 +125,10 @@ absl::Status ColorConvertCalculator::GetContract(CalculatorContract* cc) {
 
   if (cc->Inputs().HasTag(kBgraInTag)) {
     cc->Inputs().Tag(kBgraInTag).Set<ImageFrame>();
+  }
+
+  if (cc->Inputs().HasTag(kBgrInTag)) {
+    cc->Inputs().Tag(kBgrInTag).Set<ImageFrame>();
   }
 
   if (cc->Outputs().HasTag(kRgbOutTag)) {
@@ -193,6 +202,11 @@ absl::Status ColorConvertCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kRgbaInTag) && cc->Outputs().HasTag(kBgraOutTag)) {
     return ConvertAndOutput(kRgbaInTag, kBgraOutTag, ImageFormat::SBGRA,
                             cv::COLOR_RGBA2BGRA, cc);
+  }
+  // BGR -> RGB
+  if (cc->Inputs().HasTag(kBgrInTag) && cc->Outputs().HasTag(kRgbOutTag)) {
+    return ConvertAndOutput(kBgrInTag, kRgbOutTag, ImageFormat::SRGB,
+                            cv::COLOR_BGR2RGB, cc);
   }
 
   return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)

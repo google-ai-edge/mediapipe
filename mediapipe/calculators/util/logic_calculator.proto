@@ -18,6 +18,9 @@ package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
 
+option java_package = "com.google.mediapipe.calculator.proto";
+option java_outer_classname = "LogicCalculatorOptionsProto";
+
 message LogicCalculatorOptions {
   extend CalculatorOptions {
     optional LogicCalculatorOptions ext = 338731246;

@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -106,7 +107,7 @@ absl::Status VisualScorer::CalculateScore(const cv::Mat& image,
 
   *score = (area_score + sharpness_score + colorfulness_score) / weight_sum;
   if (*score > 1.0f || *score < 0.0f) {
-    LOG(WARNING) << "Score of region outside expected range: " << *score;
+    ABSL_LOG(WARNING) << "Score of region outside expected range: " << *score;
   }
   return absl::OkStatus();
 }
@@ -122,7 +123,7 @@ absl::Status VisualScorer::CalculateColorfulness(const cv::Mat& image,
   bool empty_mask = true;
   for (int x = 0; x < image.cols; ++x) {
     for (int y = 0; y < image.rows; ++y) {
-      const cv::Vec3b& pixel = image.at<cv::Vec3b>(x, y);
+      const cv::Vec3b& pixel = image.at<cv::Vec3b>(y, x);
       const bool is_usable =
           (std::min(pixel.val[0], std::min(pixel.val[1], pixel.val[2])) < 250 &&
            std::max(pixel.val[0], std::max(pixel.val[1], pixel.val[2])) > 5);

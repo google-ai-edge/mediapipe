@@ -87,6 +87,17 @@ absl::Status QuadRenderer::GlSetup(
   glGenVertexArrays(1, &vao_);
   glGenBuffers(2, vbo_);
 
+  glBindVertexArray(vao_);
+  glEnableVertexAttribArray(ATTRIB_VERTEX);
+  glEnableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
+
+  glBindBuffer(GL_ARRAY_BUFFER, vbo_[1]);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(mediapipe::kBasicTextureVertices),
+               kBasicTextureVertices, GL_STATIC_DRAW);
+  glVertexAttribPointer(ATTRIB_TEXTURE_POSITION, 2, GL_FLOAT, 0, 0, nullptr);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
+
   return absl::OkStatus();
 }
 
@@ -104,6 +115,7 @@ void QuadRenderer::GlTeardown() {
     vbo_[0] = 0;
     vbo_[1] = 0;
   }
+  rotation_ = std::nullopt;
 }
 
 absl::Status QuadRenderer::GlRender(float frame_width, float frame_height,
@@ -145,12 +157,42 @@ absl::Status QuadRenderer::GlRender(float frame_width, float frame_height,
       break;
   }
 
+  if (flip_texture) {
+    switch (rotation) {
+      case FrameRotation::kNone:  // Fall-through intended.
+      case FrameRotation::k180:
+        flip_vertical = !flip_vertical;
+        break;
+      case FrameRotation::k90:
+        flip_horizontal = !flip_horizontal;
+        break;
+      case FrameRotation::k270:
+        flip_horizontal = !flip_horizontal;
+        break;
+    }
+  }
   const int h_flip_factor = flip_horizontal ? -1 : 1;
   const int v_flip_factor = flip_vertical ? -1 : 1;
+
   GLfloat scale[] = {scale_width * h_flip_factor, scale_height * v_flip_factor,
                      1.0, 1.0};
   glUniform4fv(scale_unif_, 1, scale);
 
+  // Draw.
+
+  glBindVertexArray(vao_);
+  if (rotation != rotation_) {
+    rotation_ = rotation;
+    UpdateVertices(rotation);
+  }
+
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+  glBindVertexArray(0);
+
+  return absl::OkStatus();
+}
+
+void QuadRenderer::UpdateVertices(FrameRotation rotation) const {
   // Choose vertices for rotation.
   const GLfloat* vertices;  // quad used to render the texture.
   switch (rotation) {
@@ -168,36 +210,11 @@ absl::Status QuadRenderer::GlRender(float frame_width, float frame_height,
       break;
   }
 
-  // Draw.
-
-  // TODO: In practice, our vertex attributes almost never change, so
-  // convert this to being actually static, with initialization done in the
-  // GLSetup.
-  glBindVertexArray(vao_);
-  glEnableVertexAttribArray(ATTRIB_VERTEX);
   glBindBuffer(GL_ARRAY_BUFFER, vbo_[0]);
   glBufferData(GL_ARRAY_BUFFER, sizeof(mediapipe::kBasicSquareVertices),
                vertices, GL_STATIC_DRAW);
   glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, 0, 0, nullptr);
-
-  glEnableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo_[1]);
-  glBufferData(
-      GL_ARRAY_BUFFER,
-      flip_texture ? sizeof(mediapipe::kBasicTextureVerticesFlipY)
-                   : sizeof(mediapipe::kBasicTextureVertices),
-      flip_texture ? kBasicTextureVerticesFlipY : kBasicTextureVertices,
-      GL_STATIC_DRAW);
-
-  glVertexAttribPointer(ATTRIB_TEXTURE_POSITION, 2, GL_FLOAT, 0, 0, nullptr);
-
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-  glDisableVertexAttribArray(ATTRIB_VERTEX);
-  glDisableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindVertexArray(0);
-
-  return absl::OkStatus();
 }
 
 absl::Status FrameRotationFromInt(FrameRotation* rotation, int degrees_ccw) {

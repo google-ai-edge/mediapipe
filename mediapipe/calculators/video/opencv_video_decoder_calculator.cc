@@ -14,6 +14,7 @@
 
 #include <stdlib.h>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -112,6 +113,7 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
       return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Fail to open video file at " << input_file_path;
     }
+    cap_->set(cv::CAP_PROP_ORIENTATION_AUTO, true);
     width_ = static_cast<int>(cap_->get(cv::CAP_PROP_FRAME_WIDTH));
     height_ = static_cast<int>(cap_->get(cv::CAP_PROP_FRAME_HEIGHT));
     double fps = static_cast<double>(cap_->get(cv::CAP_PROP_FPS));
@@ -168,9 +170,10 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
             .Tag(kSavedAudioPathTag)
             .Set(MakePacket<std::string>(saved_audio_path));
       } else {
-        LOG(WARNING) << "FFmpeg can't extract audio from " << input_file_path
-                     << " by executing the following command: "
-                     << ffmpeg_command;
+        ABSL_LOG(WARNING) << "FFmpeg can't extract audio from "
+                          << input_file_path
+                          << " by executing the following command: "
+                          << ffmpeg_command;
         cc->OutputSidePackets()
             .Tag(kSavedAudioPathTag)
             .Set(MakePacket<std::string>(std::string()));
@@ -189,8 +192,6 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) override {
     auto image_frame = absl::make_unique<ImageFrame>(format_, width_, height_,
                                                      /*alignment_boundary=*/1);
-    // Use microsecond as the unit of time.
-    Timestamp timestamp(cap_->get(cv::CAP_PROP_POS_MSEC) * 1000);
     if (format_ == ImageFormat::GRAY8) {
       cv::Mat frame = formats::MatView(image_frame.get());
       ReadFrame(frame);
@@ -211,6 +212,8 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
                      cv::COLOR_BGRA2RGBA);
       }
     }
+    // Use microsecond as the unit of time.
+    Timestamp timestamp(cap_->get(cv::CAP_PROP_POS_MSEC) * 1000);
     // If the timestamp of the current frame is not greater than the one of the
     // previous frame, the new frame will be discarded.
     if (prev_timestamp_ < timestamp) {
@@ -227,9 +230,9 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
       cap_->release();
     }
     if (decoded_frames_ != frame_count_) {
-      LOG(WARNING) << "Not all the frames are decoded (total frames: "
-                   << frame_count_ << " vs decoded frames: " << decoded_frames_
-                   << ").";
+      ABSL_LOG(WARNING) << "Not all the frames are decoded (total frames: "
+                        << frame_count_
+                        << " vs decoded frames: " << decoded_frames_ << ").";
     }
     return absl::OkStatus();
   }

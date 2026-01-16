@@ -23,8 +23,9 @@ licenses(["notice"])
 mediapipe_proto_library(
     name = "locus_proto",
     srcs = ["locus.proto"],
-    portable_deps = ["//mediapipe/framework/formats/annotation:rasterization_cc_proto"],
-    deps = ["//mediapipe/framework/formats/annotation:rasterization_proto"],
+    deps = [
+        ":rasterization_proto",
+    ],
 )
 
 mediapipe_proto_library(

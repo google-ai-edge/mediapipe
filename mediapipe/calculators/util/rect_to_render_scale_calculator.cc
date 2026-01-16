@@ -24,6 +24,8 @@ constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kImageSizeTag[] = "IMAGE_SIZE";
 constexpr char kRenderScaleTag[] = "RENDER_SCALE";
 
+using ::mediapipe::NormalizedRect;
+
 }  // namespace
 
 // A calculator to get scale for RenderData primitives.
@@ -78,7 +80,9 @@ absl::Status RectToRenderScaleCalculator::GetContract(CalculatorContract* cc) {
   cc->Inputs().Tag(kNormRectTag).Set<NormalizedRect>();
   cc->Inputs().Tag(kImageSizeTag).Set<std::pair<int, int>>();
   cc->Outputs().Tag(kRenderScaleTag).Set<float>();
-
+  cc->SetProcessTimestampBounds(
+      cc->Options<RectToRenderScaleCalculatorOptions>()
+          .process_timestamp_bounds());
   return absl::OkStatus();
 }
 

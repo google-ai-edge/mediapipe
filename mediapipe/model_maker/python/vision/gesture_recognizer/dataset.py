@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,16 +16,22 @@
 import dataclasses
 import os
 import random
-from typing import List, NamedTuple, Optional
+from typing import List, Optional
 
-import cv2
 import tensorflow as tf
 
 from mediapipe.model_maker.python.core.data import classification_dataset
-from mediapipe.model_maker.python.core.data import data_util
 from mediapipe.model_maker.python.core.utils import model_util
 from mediapipe.model_maker.python.vision.gesture_recognizer import constants
-from mediapipe.python.solutions import hands as mp_hands
+from mediapipe.model_maker.python.vision.gesture_recognizer import metadata_writer
+from mediapipe.tasks.python.core import base_options as base_options_module
+from mediapipe.tasks.python.vision import hand_landmarker as hand_landmarker_module
+from mediapipe.tasks.python.vision.core import image as image_module
+
+_Image = image_module.Image
+_HandLandmarker = hand_landmarker_module.HandLandmarker
+_HandLandmarkerOptions = hand_landmarker_module.HandLandmarkerOptions
+_HandLandmarkerResult = hand_landmarker_module.HandLandmarkerResult
 
 
 @dataclasses.dataclass
@@ -59,7 +65,7 @@ class HandData:
   handedness: List[float]
 
 
-def _validate_data_sample(data: NamedTuple) -> bool:
+def _validate_data_sample(data: _HandLandmarkerResult) -> bool:
   """Validates the input hand data sample.
 
   Args:
@@ -70,19 +76,17 @@ def _validate_data_sample(data: NamedTuple) -> bool:
     'multi_hand_landmarks' or 'multi_hand_world_landmarks' or 'multi_handedness'
     or any of these attributes' values are none. Otherwise, True.
   """
-  if (not hasattr(data, 'multi_hand_landmarks') or
-      data.multi_hand_landmarks is None):
+  if data.hand_landmarks is None or not data.hand_landmarks:
     return False
-  if (not hasattr(data, 'multi_hand_world_landmarks') or
-      data.multi_hand_world_landmarks is None):
+  if data.hand_world_landmarks is None or not data.hand_world_landmarks:
     return False
-  if not hasattr(data, 'multi_handedness') or data.multi_handedness is None:
+  if data.handedness is None or not data.handedness:
     return False
   return True
 
 
 def _get_hand_data(all_image_paths: List[str],
-                   min_detection_confidence: float) -> Optional[HandData]:
+                   min_detection_confidence: float) -> List[Optional[HandData]]:
   """Computes hand data (landmarks and handedness) in the input image.
 
   Args:
@@ -93,28 +97,38 @@ def _get_hand_data(all_image_paths: List[str],
     A HandData object. Returns None if no hand is detected.
   """
   hand_data_result = []
-  with mp_hands.Hands(
-      static_image_mode=True,
-      max_num_hands=1,
-      min_detection_confidence=min_detection_confidence) as hands:
+  hand_detector_model_buffer = model_util.load_tflite_model_buffer(
+      constants.HAND_DETECTOR_TFLITE_MODEL_FILE.get_path()
+  )
+  hand_landmarks_detector_model_buffer = model_util.load_tflite_model_buffer(
+      constants.HAND_LANDMARKS_DETECTOR_TFLITE_MODEL_FILE.get_path()
+  )
+  hand_landmarker_writer = metadata_writer.HandLandmarkerMetadataWriter(
+      hand_detector_model_buffer, hand_landmarks_detector_model_buffer)
+  hand_landmarker_options = _HandLandmarkerOptions(
+      base_options=base_options_module.BaseOptions(
+          model_asset_buffer=hand_landmarker_writer.populate()),
+      num_hands=1,
+      min_hand_detection_confidence=min_detection_confidence,
+      min_hand_presence_confidence=0.5,
+      min_tracking_confidence=1,
+  )
+  with _HandLandmarker.create_from_options(
+      hand_landmarker_options) as hand_landmarker:
     for path in all_image_paths:
       tf.compat.v1.logging.info('Loading image %s', path)
-      image = data_util.load_image(path)
-      # Flip image around y-axis for correct handedness output
-      image = cv2.flip(image, 1)
-      data = hands.process(image)
+      image = _Image.create_from_file(path)
+      data = hand_landmarker.detect(image)
       if not _validate_data_sample(data):
         hand_data_result.append(None)
         continue
-      hand_landmarks = [[
-          hand_landmark.x, hand_landmark.y, hand_landmark.z
-      ] for hand_landmark in data.multi_hand_landmarks[0].landmark]
+      hand_landmarks = [[hand_landmark.x, hand_landmark.y, hand_landmark.z]
+                        for hand_landmark in data.hand_landmarks[0]]
       hand_world_landmarks = [[
           hand_landmark.x, hand_landmark.y, hand_landmark.z
-      ] for hand_landmark in data.multi_hand_world_landmarks[0].landmark]
+      ] for hand_landmark in data.hand_world_landmarks[0]]
       handedness_scores = [
-          handedness.score
-          for handedness in data.multi_handedness[0].classification
+          handedness.score for handedness in data.handedness[0]
       ]
       hand_data_result.append(
           HandData(
@@ -209,7 +223,8 @@ class Dataset(classification_dataset.ClassificationDataset):
     hand_ds = tf.data.Dataset.from_tensor_slices(hand_data_dict)
 
     embedder_model = model_util.load_keras_model(
-        constants.GESTURE_EMBEDDER_KERAS_MODEL_PATH)
+        constants.GESTURE_EMBEDDER_KERAS_MODEL_FILES.get_path()
+    )
 
     hand_ds = hand_ds.batch(batch_size=1)
     hand_embedding_ds = hand_ds.map(
@@ -234,5 +249,6 @@ class Dataset(classification_dataset.ClassificationDataset):
             len(valid_hand_data), len(label_names), ','.join(label_names)))
     return Dataset(
         dataset=hand_embedding_label_ds,
+        label_names=label_names,
         size=len(valid_hand_data),
-        label_names=label_names)
+    )

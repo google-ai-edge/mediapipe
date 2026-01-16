@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+# Placeholder: load py_binary
+
 licenses(["notice"])
 
 cc_binary(
@@ -20,6 +23,7 @@ cc_binary(
     deps = [
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:matrix",

@@ -21,11 +21,12 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_options.pb.h"
+#include "mediapipe/framework/calculator_state.h"
 #include "mediapipe/framework/mediapipe_options.pb.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/tool/tag_map.h"
@@ -71,12 +72,13 @@ class TestContextBuilder {
     static auto packet_type = new PacketType;
     packet_type->Set<std::string>();
 
-    state_ = absl::make_unique<CalculatorState>(
+    state_ = std::make_unique<CalculatorState>(
         node_name, node_id, "PCalculator", CalculatorGraphConfig::Node(),
-        nullptr);
+        /*profiling_context=*/nullptr,
+        /*graph_service_manager=*/nullptr);
     input_map_ = tool::CreateTagMap(inputs).value();
     output_map_ = tool::CreateTagMap(outputs).value();
-    input_handler_ = absl::make_unique<InputStreamWriter>(
+    input_handler_ = std::make_unique<InputStreamWriter>(
         input_map_, nullptr, MediaPipeOptions(), false);
     input_managers_.reset(new InputStreamManager[input_map_->NumEntries()]);
     for (auto id = input_map_->BeginId(); id < input_map_->EndId(); ++id) {
@@ -92,7 +94,7 @@ class TestContextBuilder {
       spec.name = output_map_->Names()[id.value()];
       spec.packet_type = packet_type;
       spec.error_callback = [](const absl::Status& status) {
-        LOG(ERROR) << status;
+        ABSL_LOG(ERROR) << status;
       };
       output_specs_[spec.name] = spec;
     }
@@ -101,8 +103,8 @@ class TestContextBuilder {
 
   // Initializes the input and output streams of a calculator context.
   std::unique_ptr<CalculatorContext> CreateCalculatorContext() {
-    auto result = absl::make_unique<CalculatorContext>(state_.get(), input_map_,
-                                                       output_map_);
+    auto result = std::make_unique<CalculatorContext>(state_.get(), input_map_,
+                                                      output_map_);
     MEDIAPIPE_CHECK_OK(input_handler_->SetupInputShards(&result->Inputs()));
     for (auto id = output_map_->BeginId(); id < output_map_->EndId(); ++id) {
       auto& out_stream = result->Outputs().Get(id);

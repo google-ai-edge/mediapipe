@@ -15,10 +15,13 @@
 package com.google.mediapipe.framework;
 
 import android.graphics.Bitmap;
+import android.graphics.PixelFormat;
+import android.media.Image;
 import com.google.mediapipe.framework.image.BitmapExtractor;
 import com.google.mediapipe.framework.image.ByteBufferExtractor;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.framework.image.MPImageProperties;
+import com.google.mediapipe.framework.image.MediaImageExtractor;
 import java.nio.ByteBuffer;
 
 // TODO: use Preconditions in this file.
@@ -97,7 +100,17 @@ public class AndroidPacketCreator extends PacketCreator {
       }
       return Packet.create(nativeCreateRgbaImage(mediapipeGraph.getNativeHandle(), bitmap));
     }
-
+    if (properties.getStorageType() == MPImage.STORAGE_TYPE_MEDIA_IMAGE) {
+      Image mediaImage = MediaImageExtractor.extract(image);
+      if (mediaImage.getFormat() != PixelFormat.RGBA_8888) {
+        throw new UnsupportedOperationException("Android media image must use RGBA_8888 config.");
+      }
+      return createImage(
+          mediaImage.getPlanes()[0].getBuffer(),
+          mediaImage.getWidth(),
+          mediaImage.getHeight(),
+          /* numChannels= */ 4);
+    }
     // Unsupported type.
     throw new UnsupportedOperationException(
         "Unsupported Image container type: " + properties.getStorageType());

@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import tempfile
 
 from absl.testing import absltest
 from absl.testing import parameterized
-
 import flatbuffers
+
 from mediapipe.tasks.metadata import metadata_schema_py_generated as _metadata_fb
 from mediapipe.tasks.metadata import schema_py_generated as _schema_fb
 from mediapipe.tasks.python.metadata import metadata as _metadata
@@ -403,6 +403,79 @@ class SentencePieceTokenizerMdTest(absltest.TestCase):
     self.assertEqual(metadata_json, expected_json)
 
 
+class CategoryTensorMdTest(parameterized.TestCase, absltest.TestCase):
+  _NAME = "category"
+  _DESCRIPTION = "The category tensor."
+  _LABEL_FILE_EN = "labels.txt"
+  _LABEL_FILE_CN = "labels_cn.txt"  # Locale label file in Chinese.
+  _EXPECTED_TENSOR_JSON = test_utils.get_test_data_path(
+      os.path.join(_TEST_DATA_DIR, "category_tensor_float_meta.json")
+  )
+
+  def test_create_metadata_should_succeed(self):
+    label_file_en = metadata_info.LabelFileMd(
+        file_path=self._LABEL_FILE_EN, locale="en"
+    )
+    label_file_cn = metadata_info.LabelFileMd(
+        file_path=self._LABEL_FILE_CN, locale="cn"
+    )
+    tensor_md = metadata_info.CategoryTensorMd(
+        name=self._NAME,
+        description=self._DESCRIPTION,
+        label_files=[label_file_en, label_file_cn],
+    )
+    tensor_metadata = tensor_md.create_metadata()
+
+    metadata_json = _metadata.convert_to_json(
+        _create_dummy_model_metadata_with_tensor(tensor_metadata)
+    )
+    with open(self._EXPECTED_TENSOR_JSON, "r") as f:
+      expected_json = f.read()
+    self.assertEqual(metadata_json, expected_json)
+
+
+class TensorGroupMdMdTest(absltest.TestCase):
+  _NAME = "detection_result"
+  _TENSOR_NAMES = ["location", "category", "score"]
+  _EXPECTED_JSON = test_utils.get_test_data_path(
+      os.path.join(_TEST_DATA_DIR, "tensor_group_meta.json")
+  )
+
+  def test_create_metadata_should_succeed(self):
+    tensor_group_md = metadata_info.TensorGroupMd(
+        name=self._NAME, tensor_names=self._TENSOR_NAMES
+    )
+    tensor_group_metadata = tensor_group_md.create_metadata()
+
+    metadata_json = _metadata.convert_to_json(
+        _create_dummy_model_metadata_with_tensor_group(tensor_group_metadata)
+    )
+    with open(self._EXPECTED_JSON, "r") as f:
+      expected_json = f.read()
+    self.assertEqual(metadata_json, expected_json)
+
+
+class SegmentationMaskMdTest(absltest.TestCase):
+  _NAME = "segmentation_masks"
+  _DESCRIPTION = "Masks over the target objects."
+  _EXPECTED_JSON = test_utils.get_test_data_path(
+      os.path.join(_TEST_DATA_DIR, "segmentation_mask_meta.json")
+  )
+
+  def test_create_metadata_should_succeed(self):
+    segmentation_mask_md = metadata_info.SegmentationMaskMd(
+        name=self._NAME, description=self._DESCRIPTION
+    )
+    metadata = segmentation_mask_md.create_metadata()
+
+    metadata_json = _metadata.convert_to_json(
+        _create_dummy_model_metadata_with_tensor(metadata)
+    )
+    with open(self._EXPECTED_JSON, "r") as f:
+      expected_json = f.read()
+    self.assertEqual(metadata_json, expected_json)
+
+
 def _create_dummy_model_metadata_with_tensor(
     tensor_metadata: _metadata_fb.TensorMetadataT) -> bytes:
   # Create a dummy model using the tensor metadata.
@@ -424,6 +497,24 @@ def _create_dummy_model_metadata_with_process_uint(
   # Create a dummy model using the tensor metadata.
   subgraph_metadata = _metadata_fb.SubGraphMetadataT()
   subgraph_metadata.inputProcessUnits = [process_unit_metadata]
+  model_metadata = _metadata_fb.ModelMetadataT()
+  model_metadata.subgraphMetadata = [subgraph_metadata]
+
+  # Create the Flatbuffers object and convert it to the json format.
+  builder = flatbuffers.Builder(0)
+  builder.Finish(
+      model_metadata.Pack(builder),
+      _metadata.MetadataPopulator.METADATA_FILE_IDENTIFIER,
+  )
+  return bytes(builder.Output())
+
+
+def _create_dummy_model_metadata_with_tensor_group(
+    tensor_group: _metadata_fb.TensorGroupT,
+) -> bytes:
+  # Creates a dummy model using the tensor group.
+  subgraph_metadata = _metadata_fb.SubGraphMetadataT()
+  subgraph_metadata.outputTensorGroups = [tensor_group]
   model_metadata = _metadata_fb.ModelMetadataT()
   model_metadata.subgraphMetadata = [subgraph_metadata]
 

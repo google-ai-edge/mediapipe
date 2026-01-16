@@ -15,7 +15,6 @@
 #include <utility>
 
 #include "absl/memory/memory.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"

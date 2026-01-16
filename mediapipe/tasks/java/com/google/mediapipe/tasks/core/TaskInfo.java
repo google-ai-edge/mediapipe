@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,11 +20,13 @@ import com.google.mediapipe.proto.CalculatorProto.CalculatorGraphConfig;
 import com.google.mediapipe.proto.CalculatorProto.CalculatorGraphConfig.Node;
 import com.google.mediapipe.proto.CalculatorProto.InputStreamInfo;
 import com.google.mediapipe.calculator.proto.FlowLimiterCalculatorProto.FlowLimiterCalculatorOptions;
+import com.google.mediapipe.framework.MediaPipeException;
+import com.google.protobuf.Any;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * {@link TaskInfo} contains all needed informaton to initialize a MediaPipe Task {@link
+ * {@link TaskInfo} contains all needed information to initialize a MediaPipe Task {@link
  * com.google.mediapipe.framework.Graph}.
  */
 @AutoValue
@@ -32,6 +34,12 @@ public abstract class TaskInfo<T extends TaskOptions> {
   /** Builder for {@link TaskInfo}. */
   @AutoValue.Builder
   public abstract static class Builder<T extends TaskOptions> {
+    /** Sets the MediaPipe task name. */
+    public abstract Builder<T> setTaskName(String value);
+
+    /** Sets the MediaPipe task running mode name. */
+    public abstract Builder<T> setTaskRunningModeName(String value);
+
     /** Sets the MediaPipe task graph name. */
     public abstract Builder<T> setTaskGraphName(String value);
 
@@ -42,7 +50,7 @@ public abstract class TaskInfo<T extends TaskOptions> {
     public abstract Builder<T> setOutputStreams(List<String> value);
 
     /** Sets to true if the task requires a flow limiter. */
-    public abstract Builder<T> setEnableFlowLimiting(Boolean value);
+    public abstract Builder<T> setEnableFlowLimiting(boolean value);
 
     /**
      * Sets a task-specific options instance.
@@ -71,6 +79,10 @@ public abstract class TaskInfo<T extends TaskOptions> {
     }
   }
 
+  abstract String taskName();
+
+  abstract String taskRunningModeName();
+
   abstract String taskGraphName();
 
   abstract T taskOptions();
@@ -79,10 +91,10 @@ public abstract class TaskInfo<T extends TaskOptions> {
 
   abstract List<String> outputStreams();
 
-  abstract Boolean enableFlowLimiting();
+  abstract boolean enableFlowLimiting();
 
   public static <T extends TaskOptions> Builder<T> builder() {
-    return new AutoValue_TaskInfo.Builder<T>();
+    return new AutoValue_TaskInfo.Builder<T>().setTaskName("").setTaskRunningModeName("");
   }
 
   /* Returns a list of the output stream names without the stream tags. */
@@ -100,10 +112,21 @@ public abstract class TaskInfo<T extends TaskOptions> {
    */
   CalculatorGraphConfig generateGraphConfig() {
     CalculatorGraphConfig.Builder graphBuilder = CalculatorGraphConfig.newBuilder();
-    Node.Builder taskSubgraphBuilder =
-        Node.newBuilder()
-            .setCalculator(taskGraphName())
-            .setOptions(taskOptions().convertToCalculatorOptionsProto());
+    CalculatorOptions options = taskOptions().convertToCalculatorOptionsProto();
+    Any anyOptions = taskOptions().convertToAnyProto();
+    if (!(options == null ^ anyOptions == null)) {
+      throw new MediaPipeException(
+          MediaPipeException.StatusCode.INVALID_ARGUMENT.ordinal(),
+          "Only one of convertTo*Proto() method should be implemented for "
+              + taskOptions().getClass());
+    }
+    Node.Builder taskSubgraphBuilder = Node.newBuilder().setCalculator(taskGraphName());
+    if (options != null) {
+      taskSubgraphBuilder.setOptions(options);
+    }
+    if (anyOptions != null) {
+      taskSubgraphBuilder.addNodeOptions(anyOptions);
+    }
     for (String outputStream : outputStreams()) {
       taskSubgraphBuilder.addOutputStream(outputStream);
       graphBuilder.addOutputStream(outputStream);

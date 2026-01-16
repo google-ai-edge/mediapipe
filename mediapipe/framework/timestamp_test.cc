@@ -14,7 +14,9 @@
 
 #include "mediapipe/framework/timestamp.h"
 
-#include <memory>
+#include <cstdint>
+#include <limits>
+#include <string>
 #include <vector>
 
 #include "mediapipe/framework/port/gtest.h"
@@ -34,9 +36,10 @@ TEST(TimestampDeathTest, ConstructorDieOnSpecialValue) {
 }
 
 TEST(TimestampDeathTest, Overflow) {
-  Timestamp large = Timestamp(kint64max / 2 + 100);
-  TimestampDiff large_diff = TimestampDiff(kint64max / 2 + 100);
-  Timestamp small = Timestamp(kint64min / 2 - 100);
+  Timestamp large = Timestamp(std::numeric_limits<int64_t>::max() / 2 + 100);
+  TimestampDiff large_diff =
+      TimestampDiff(std::numeric_limits<int64_t>::max() / 2 + 100);
+  Timestamp small = Timestamp(std::numeric_limits<int64_t>::min() / 2 - 100);
   EXPECT_FALSE(large.IsSpecialValue());
   EXPECT_FALSE(small.IsSpecialValue());
   EXPECT_DEATH(large_diff + large_diff, "");
@@ -123,6 +126,22 @@ TEST(TimestampTest, NextAllowedInStream) {
             Timestamp::Max().NextAllowedInStream());
   EXPECT_EQ(Timestamp::OneOverPostStream(),
             Timestamp::PostStream().NextAllowedInStream());
+}
+
+TEST(TimestampTest, HasNextAllowedInStream) {
+  EXPECT_TRUE(Timestamp::Min().HasNextAllowedInStream());
+  EXPECT_TRUE((Timestamp::Min() + 1).HasNextAllowedInStream());
+  EXPECT_TRUE(Timestamp(-1000).HasNextAllowedInStream());
+  EXPECT_TRUE(Timestamp(0).HasNextAllowedInStream());
+  EXPECT_TRUE(Timestamp(1000).HasNextAllowedInStream());
+  EXPECT_TRUE((Timestamp::Max() - 2).HasNextAllowedInStream());
+  EXPECT_TRUE((Timestamp::Max() - 1).HasNextAllowedInStream());
+
+  EXPECT_FALSE(Timestamp::PreStream().HasNextAllowedInStream());
+  EXPECT_FALSE(Timestamp::Max().HasNextAllowedInStream());
+  EXPECT_FALSE(Timestamp::PostStream().HasNextAllowedInStream());
+  EXPECT_FALSE(Timestamp::OneOverPostStream().HasNextAllowedInStream());
+  EXPECT_FALSE(Timestamp::Done().HasNextAllowedInStream());
 }
 
 TEST(TimestampTest, SpecialValueDifferences) {
@@ -261,6 +280,18 @@ TEST(TimestampTest, AddZeroToMinAndMax) {
   EXPECT_EQ(Timestamp::Min(), Timestamp::Min() + TimestampDiff(0));
   EXPECT_EQ(Timestamp::Max(), Timestamp::Max() - TimestampDiff(0));
   EXPECT_EQ(Timestamp::Min(), Timestamp::Min() - TimestampDiff(0));
+}
+
+TEST(TimestampTest, TimestampStaticConstructors) {
+  EXPECT_EQ(Timestamp::FromSeconds(2.5).Microseconds(), 2500000);
+  EXPECT_EQ(Timestamp::FromMilliseconds(2.5).Microseconds(), 2500);
+  EXPECT_EQ(Timestamp::FromMicroseconds(25).Microseconds(), 25);
+}
+
+TEST(TimestampTest, TimestampDiffStaticConstructors) {
+  EXPECT_EQ(TimestampDiff::FromSeconds(2.5).Microseconds(), 2500000);
+  EXPECT_EQ(TimestampDiff::FromMilliseconds(2.5).Microseconds(), 2500);
+  EXPECT_EQ(TimestampDiff::FromMicroseconds(25).Microseconds(), 25);
 }
 
 // Note: Add test to timestamp_pcoder_test.cc if another special value is added.

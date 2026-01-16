@@ -27,10 +27,6 @@ namespace options_field_util {
 
 using ::mediapipe::proto_ns::internal::WireFormatLite;
 using FieldType = WireFormatLite::FieldType;
-using ::mediapipe::proto_ns::io::ArrayInputStream;
-using ::mediapipe::proto_ns::io::CodedInputStream;
-using ::mediapipe::proto_ns::io::CodedOutputStream;
-using ::mediapipe::proto_ns::io::StringOutputStream;
 
 // Utility functions for OptionsFieldUtil.
 namespace {
@@ -179,7 +175,8 @@ StatusOr<int> FindExtensionIndex(const FieldData& message_data,
   }
   std::string& extension_type = entry->extension_type;
   std::vector<FieldData> field_values;
-  ASSIGN_OR_RETURN(field_values, GetFieldValues(message_data, *entry->field));
+  MP_ASSIGN_OR_RETURN(field_values,
+                      GetFieldValues(message_data, *entry->field));
   for (int i = 0; i < field_values.size(); ++i) {
     FieldData extension = ParseProtobufAny(field_values[i]);
     if (extension_type == "*" ||
@@ -279,7 +276,7 @@ absl::Status FindExtension(const FieldData& message_data,
   }
 
   // For repeated protobuf::Any, find the index for the extension_type.
-  ASSIGN_OR_RETURN(int index, FindExtensionIndex(message_data, entry));
+  MP_ASSIGN_OR_RETURN(int index, FindExtensionIndex(message_data, entry));
   if (index != -1) {
     entry->index = index;
     return absl::OkStatus();
@@ -371,7 +368,7 @@ absl::StatusOr<std::vector<FieldData>> GetFieldValues(
     MP_RETURN_IF_ERROR(FindExtension(message_data, &head));
   }
   RET_CHECK_NE(head.field, nullptr);
-  ASSIGN_OR_RETURN(results, GetFieldValues(message_data, *head.field));
+  MP_ASSIGN_OR_RETURN(results, GetFieldValues(message_data, *head.field));
   if (IsProtobufAny(head.field)) {
     for (int i = 0; i < results.size(); ++i) {
       results[i] = ParseProtobufAny(results[i]);
@@ -385,7 +382,7 @@ absl::StatusOr<std::vector<FieldData>> GetFieldValues(
   }
   if (!tail.empty()) {
     FieldData child = results.at(index);
-    ASSIGN_OR_RETURN(results, GetFieldValues(child, tail));
+    MP_ASSIGN_OR_RETURN(results, GetFieldValues(child, tail));
   } else if (index > -1) {
     FieldData child = results.at(index);
     results.clear();
@@ -398,7 +395,7 @@ absl::StatusOr<std::vector<FieldData>> GetFieldValues(
 absl::StatusOr<FieldData> GetField(const FieldData& message_data,
                                    const FieldPath& field_path) {
   std::vector<FieldData> results;
-  ASSIGN_OR_RETURN(results, GetFieldValues(message_data, field_path));
+  MP_ASSIGN_OR_RETURN(results, GetFieldValues(message_data, field_path));
   if (results.empty()) {
     FieldPathEntry tail = field_path.back();
     return absl::OutOfRangeError(absl::StrCat(
@@ -456,12 +453,12 @@ absl::Status MergeFieldValues(FieldData& message_data,
                                             : field_path.back().field->type();
   std::vector<FieldData> results = values;
   std::vector<FieldData> prevs;
-  ASSIGN_OR_RETURN(prevs, GetFieldValues(message_data, field_path));
+  MP_ASSIGN_OR_RETURN(prevs, GetFieldValues(message_data, field_path));
   if (field_type == FieldType::TYPE_MESSAGE) {
     for (int i = 0; i < std::min(values.size(), prevs.size()); ++i) {
       FieldData& v = results[i];
       FieldData& b = prevs[i];
-      ASSIGN_OR_RETURN(v, MergeMessages(b, v));
+      MP_ASSIGN_OR_RETURN(v, MergeMessages(b, v));
     }
   }
   status.Update(SetFieldValues(message_data, field_path, results));
@@ -487,24 +484,24 @@ FieldData AsFieldData(const proto_ns::MessageLite& message) {
 
 // Represents a protobuf enum value stored in a Packet.
 struct ProtoEnum {
-  ProtoEnum(int32 v) : value(v) {}
-  int32 value;
+  ProtoEnum(int32_t v) : value(v) {}
+  int32_t value;
 };
 
 absl::StatusOr<Packet> AsPacket(const FieldData& data) {
   Packet result;
   switch (data.value_case()) {
     case FieldData::ValueCase::kInt32Value:
-      result = MakePacket<int32>(data.int32_value());
+      result = MakePacket<int32_t>(data.int32_value());
       break;
     case FieldData::ValueCase::kInt64Value:
-      result = MakePacket<int64>(data.int64_value());
+      result = MakePacket<int64_t>(data.int64_value());
       break;
     case FieldData::ValueCase::kUint32Value:
-      result = MakePacket<uint32>(data.uint32_value());
+      result = MakePacket<uint32_t>(data.uint32_value());
       break;
     case FieldData::ValueCase::kUint64Value:
-      result = MakePacket<uint64>(data.uint64_value());
+      result = MakePacket<uint64_t>(data.uint64_value());
       break;
     case FieldData::ValueCase::kDoubleValue:
       result = MakePacket<double>(data.double_value());
@@ -538,11 +535,11 @@ absl::StatusOr<Packet> AsPacket(const FieldData& data) {
 }
 
 absl::StatusOr<FieldData> AsFieldData(Packet packet) {
-  static const auto* kTypeIds = new std::map<TypeId, int32>{
-      {kTypeId<int32>, WireFormatLite::CPPTYPE_INT32},
-      {kTypeId<int64>, WireFormatLite::CPPTYPE_INT64},
-      {kTypeId<uint32>, WireFormatLite::CPPTYPE_UINT32},
-      {kTypeId<uint64>, WireFormatLite::CPPTYPE_UINT64},
+  static const auto* kTypeIds = new std::map<TypeId, int32_t>{
+      {kTypeId<int32_t>, WireFormatLite::CPPTYPE_INT32},
+      {kTypeId<int64_t>, WireFormatLite::CPPTYPE_INT64},
+      {kTypeId<uint32_t>, WireFormatLite::CPPTYPE_UINT32},
+      {kTypeId<uint64_t>, WireFormatLite::CPPTYPE_UINT64},
       {kTypeId<double>, WireFormatLite::CPPTYPE_DOUBLE},
       {kTypeId<float>, WireFormatLite::CPPTYPE_FLOAT},
       {kTypeId<bool>, WireFormatLite::CPPTYPE_BOOL},
@@ -566,16 +563,16 @@ absl::StatusOr<FieldData> AsFieldData(Packet packet) {
 
   switch (kTypeIds->at(packet.GetTypeId())) {
     case WireFormatLite::CPPTYPE_INT32:
-      result.set_int32_value(packet.Get<int32>());
+      result.set_int32_value(packet.Get<int32_t>());
       break;
     case WireFormatLite::CPPTYPE_INT64:
-      result.set_int64_value(packet.Get<int64>());
+      result.set_int64_value(packet.Get<int64_t>());
       break;
     case WireFormatLite::CPPTYPE_UINT32:
-      result.set_uint32_value(packet.Get<uint32>());
+      result.set_uint32_value(packet.Get<uint32_t>());
       break;
     case WireFormatLite::CPPTYPE_UINT64:
-      result.set_uint64_value(packet.Get<uint64>());
+      result.set_uint64_value(packet.Get<uint64_t>());
       break;
     case WireFormatLite::CPPTYPE_DOUBLE:
       result.set_double_value(packet.Get<double>());

@@ -14,6 +14,7 @@
 
 #include <cstring>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
@@ -23,6 +24,8 @@
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/memory_manager_service.h"
 
 namespace mediapipe {
 namespace api2 {
@@ -53,18 +56,39 @@ class TextToTensorCalculator : public Node {
 
   MEDIAPIPE_NODE_CONTRACT(kTextIn, kTensorsOut);
 
+  absl::Status Open(CalculatorContext* cc) final;
   absl::Status Process(CalculatorContext* cc) override;
+
+  static absl::Status UpdateContract(CalculatorContract* cc);
+
+ private:
+  // Enable pooling of AHWBs in Tensor instances.
+  MemoryManager* memory_manager_ = nullptr;
 };
+
+absl::Status TextToTensorCalculator::Open(CalculatorContext* cc) {
+  if (cc->Service(kMemoryManagerService).IsAvailable()) {
+    memory_manager_ = &cc->Service(kMemoryManagerService).GetObject();
+  }
+  return absl::OkStatus();
+}
 
 absl::Status TextToTensorCalculator::Process(CalculatorContext* cc) {
   absl::string_view text = kTextIn(cc).Get();
   int input_len = static_cast<int>(text.length());
 
   std::vector<Tensor> result;
-  result.push_back({Tensor::ElementType::kChar, Tensor::Shape({input_len})});
+  result.push_back({Tensor::ElementType::kChar, Tensor::Shape({input_len}),
+                    memory_manager_});
   std::memcpy(result[0].GetCpuWriteView().buffer<char>(), text.data(),
               input_len * sizeof(char));
   kTensorsOut(cc).Send(std::move(result));
+  return absl::OkStatus();
+}
+
+// static
+absl::Status TextToTensorCalculator::UpdateContract(CalculatorContract* cc) {
+  cc->UseService(kMemoryManagerService).Optional();
   return absl::OkStatus();
 }
 

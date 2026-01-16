@@ -14,6 +14,7 @@
 
 #include "mediapipe/framework/input_side_packet_handler.h"
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_builder.h"
@@ -28,7 +29,7 @@ absl::Status InputSidePacketHandler::PrepareForRun(
     std::function<void(absl::Status)> error_callback) {
   int missing_input_side_packet_count;
   prev_input_side_packets_ = std::move(input_side_packets_);
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       input_side_packets_,
       tool::FillPacketSet(*input_side_packet_types, all_side_packets,
                           &missing_input_side_packet_count));
@@ -82,7 +83,7 @@ absl::Status InputSidePacketHandler::SetInternal(CollectionItemId id,
 
 void InputSidePacketHandler::TriggerErrorCallback(
     const absl::Status& status) const {
-  CHECK(error_callback_);
+  ABSL_CHECK(error_callback_);
   error_callback_(status);
 }
 

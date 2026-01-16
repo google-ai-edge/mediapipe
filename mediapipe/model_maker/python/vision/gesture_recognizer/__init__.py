@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,3 +25,12 @@ HParams = hyperparameters.HParams
 Dataset = dataset.Dataset
 HandDataPreprocessingParams = dataset.HandDataPreprocessingParams
 GestureRecognizerOptions = gesture_recognizer_options.GestureRecognizerOptions
+
+# Remove duplicated and non-public API
+del constants  # pylint: disable=undefined-variable
+del dataset
+del gesture_recognizer
+del gesture_recognizer_options
+del hyperparameters
+del metadata_writer  # pylint: disable=undefined-variable
+del model_options

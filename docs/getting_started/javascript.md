@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/
 title: MediaPipe in JavaScript
 parent: Getting Started
 nav_order: 4
@@ -11,6 +12,12 @@ nav_order: 4
 1. TOC
 {:toc}
 ---
+
+**Attention:** *Thanks for your interest in MediaPipe! We are moving to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe starting April 3, 2023.*
+
+----
 
 ## Ready-to-use JavaScript Solutions
 
@@ -29,11 +36,11 @@ Solution                    | NPM Package                             | Example
 Click on a solution link above for more information, including API and code
 snippets.
 
-### Supported plaforms:
+### Supported platforms:
 
 | Browser | Platform                | Notes                                  |
 | ------- | ----------------------- | -------------------------------------- |
-| Chrome  | Android / Windows / Mac | Pixel 4 and older unsupported. Fuschia |
+| Chrome  | Android / Windows / Mac | Pixel 4 and older unsupported. Fuchsia |
 |         |                         | unsupported.                           |
 | Chrome  | iOS                     | Camera unavailable in Chrome on iOS.   |
 | Safari  | iPad/iPhone/Mac         | iOS and Safari on iPad / iPhone /      |

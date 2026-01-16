@@ -12,76 +12,80 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
+#include "mediapipe/gpu/gpu_buffer_to_image_frame_calculator.h"
 
-#define HAVE_GPU_BUFFER
+#include <memory>
+#include <utility>
+
+#include "absl/status/status.h"
+#include "mediapipe/framework/api3/calculator.h"
+#include "mediapipe/framework/api3/calculator_context.h"
+#include "mediapipe/framework/api3/calculator_contract.h"
+#include "mediapipe/framework/formats/image_frame.h"
+#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/gpu/gpu_buffer.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
+
 #ifdef __APPLE__
 #include "mediapipe/objc/util.h"
 #endif
 
 #include "mediapipe/gpu/gl_calculator_helper.h"
 
-namespace mediapipe {
+namespace mediapipe::api3 {
 
-// Convert an input image (GpuBuffer or ImageFrame) to ImageFrame.
-class GpuBufferToImageFrameCalculator : public CalculatorBase {
+class GpuBufferToImageFrameCalculator
+    : public Calculator<GpuBufferToImageFrameNode,
+                        GpuBufferToImageFrameCalculator> {
  public:
-  GpuBufferToImageFrameCalculator() {}
+  static absl::Status UpdateContract(
+      CalculatorContract<GpuBufferToImageFrameNode>& cc);
 
-  static absl::Status GetContract(CalculatorContract* cc);
-
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
+  absl::Status Open(CalculatorContext<GpuBufferToImageFrameNode>& cc) override;
+  absl::Status Process(
+      CalculatorContext<GpuBufferToImageFrameNode>& cc) override;
 
  private:
 #if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   GlCalculatorHelper helper_;
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 };
-REGISTER_CALCULATOR(GpuBufferToImageFrameCalculator);
 
-// static
-absl::Status GpuBufferToImageFrameCalculator::GetContract(
-    CalculatorContract* cc) {
-  cc->Inputs().Index(0).SetAny();
-  cc->Outputs().Index(0).Set<ImageFrame>();
-  // Note: we call this method even on platforms where we don't use the helper,
-  // to ensure the calculator's contract is the same. In particular, the helper
-  // enables support for the legacy side packet, which several graphs still use.
-  MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
-  return absl::OkStatus();
+/* static */
+absl::Status GpuBufferToImageFrameCalculator::UpdateContract(
+    CalculatorContract<GpuBufferToImageFrameNode>& cc) {
+  // Note: we call this method even on platforms where we don't use the
+  // helper, to ensure the calculator's contract is the same. In particular,
+  // the helper enables support for the legacy side packet, which several
+  // graphs still use.
+  return GlCalculatorHelper::UpdateContract(&cc.GetGenericContract());
 }
 
-absl::Status GpuBufferToImageFrameCalculator::Open(CalculatorContext* cc) {
-  // Inform the framework that we always output at the same timestamp
-  // as we receive a packet at.
-  cc->SetOffset(TimestampDiff(0));
+absl::Status GpuBufferToImageFrameCalculator::Open(
+    CalculatorContext<GpuBufferToImageFrameNode>& cc) {
 #if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  MP_RETURN_IF_ERROR(helper_.Open(cc));
+  MP_RETURN_IF_ERROR(helper_.Open(&cc.GetGenericContext()));
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   return absl::OkStatus();
 }
 
-absl::Status GpuBufferToImageFrameCalculator::Process(CalculatorContext* cc) {
-  if (cc->Inputs().Index(0).Value().ValidateAsType<ImageFrame>().ok()) {
-    cc->Outputs().Index(0).AddPacket(cc->Inputs().Index(0).Value());
+absl::Status GpuBufferToImageFrameCalculator::Process(
+    CalculatorContext<GpuBufferToImageFrameNode>& cc) {
+  if (cc.in.Has<ImageFrame>()) {
+    cc.out.Send(cc.in.PacketOrDie<ImageFrame>());
     return absl::OkStatus();
   }
 
-#ifdef HAVE_GPU_BUFFER
-  if (cc->Inputs().Index(0).Value().ValidateAsType<GpuBuffer>().ok()) {
-    const auto& input = cc->Inputs().Index(0).Get<GpuBuffer>();
+  if (cc.in.Has<GpuBuffer>()) {
+    const auto& input = cc.in.GetOrDie<GpuBuffer>();
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
     std::unique_ptr<ImageFrame> frame =
         CreateImageFrameForCVPixelBuffer(GetCVPixelBufferRef(input));
-    cc->Outputs().Index(0).Add(frame.release(), cc->InputTimestamp());
+    cc.out.Send(std::move(frame));
 #else
     helper_.RunInGlContext([this, &input, &cc]() {
       auto src = helper_.CreateSourceTexture(input);
-      std::unique_ptr<ImageFrame> frame = absl::make_unique<ImageFrame>(
+      auto frame = std::make_unique<ImageFrame>(
           ImageFormatForGpuBufferFormat(input.format()), src.width(),
           src.height(), ImageFrame::kGlDefaultAlignmentBoundary);
       helper_.BindFramebuffer(src);
@@ -89,17 +93,16 @@ absl::Status GpuBufferToImageFrameCalculator::Process(CalculatorContext* cc) {
                                                         helper_.GetGlVersion());
       glReadPixels(0, 0, src.width(), src.height(), info.gl_format,
                    info.gl_type, frame->MutablePixelData());
-      glFlush();
-      cc->Outputs().Index(0).Add(frame.release(), cc->InputTimestamp());
+      cc.out.Send(std::move(frame));
       src.Release();
     });
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+
     return absl::OkStatus();
   }
-#endif  // defined(HAVE_GPU_BUFFER)
 
-  return absl::Status(absl::StatusCode::kInvalidArgument,
-                      "Input packets must be ImageFrame or GpuBuffer.");
+  return absl::InvalidArgumentError(
+      "Input packets must be ImageFrame or GpuBuffer.");
 }
 
-}  // namespace mediapipe
+}  // namespace mediapipe::api3

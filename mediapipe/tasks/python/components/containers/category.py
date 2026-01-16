@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,10 +16,8 @@
 import dataclasses
 from typing import Any, Optional
 
-from mediapipe.framework.formats import classification_pb2
+from mediapipe.tasks.python.components.containers import category_c as category_c_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-
-_ClassificationProto = classification_pb2.Classification
 
 
 @dataclasses.dataclass
@@ -44,24 +42,30 @@ class Category:
   display_name: Optional[str] = None
   category_name: Optional[str] = None
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _ClassificationProto:
-    """Generates a Category protobuf object."""
-    return _ClassificationProto(
-        index=self.index,
-        score=self.score,
-        label=self.category_name,
-        display_name=self.display_name)
-
   @classmethod
   @doc_controls.do_not_generate_docs
-  def create_from_pb2(cls, pb2_obj: _ClassificationProto) -> 'Category':
-    """Creates a `Category` object from the given protobuf object."""
+  def from_ctypes(cls, c_obj: category_c_module.CategoryC) -> "Category":
+    """Creates a `Category` object from the given `CategoryC` object.
+
+    This function converts the `CategoryC` index of -1 to a Python value of None
+    to retain the same semantic meaning. All other values are converted as-is.
+
+    Args:
+      c_obj: The `CategoryC` object to be converted.
+
+    Returns:
+      A `Category` object.
+    """
     return Category(
-        index=pb2_obj.index,
-        score=pb2_obj.score,
-        display_name=pb2_obj.display_name,
-        category_name=pb2_obj.label)
+        index=c_obj.index if c_obj.index != -1 else None,
+        score=c_obj.score,
+        category_name=(
+            c_obj.category_name.decode("utf-8") if c_obj.category_name else None
+        ),
+        display_name=(
+            c_obj.display_name.decode("utf-8") if c_obj.display_name else None
+        ),
+    )
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.
@@ -74,5 +78,20 @@ class Category:
     """
     if not isinstance(other, Category):
       return False
+    return (
+        self.index == other.index
+        and self.score == other.score
+        and self.display_name == other.display_name
+        and self.category_name == other.category_name
+    )
 
-    return self.to_pb2().__eq__(other.to_pb2())
+
+@doc_controls.do_not_generate_docs
+def create_list_of_categories_from_ctypes(
+    c_obj: category_c_module.CategoriesC,
+) -> list[Category]:
+  """Creates a list of `Category` objects from a `CategoriesC` object."""
+  return [
+      Category.from_ctypes(c_obj.categories[i])
+      for i in range(c_obj.categories_count)
+  ]

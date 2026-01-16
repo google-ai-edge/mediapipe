@@ -129,6 +129,60 @@ TEST(TensorsToEmbeddingsCalculatorTest, SucceedsWithHeadNames) {
                                })pb")));
 }
 
+TEST(TensorsToEmbeddingsCalculatorTest, SucceedsWithHeadNameIgnored) {
+  CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"pb(
+    calculator: "TensorsToEmbeddingsCalculator"
+    input_stream: "TENSORS:tensors"
+    output_stream: "EMBEDDINGS:embeddings"
+    options {
+      [mediapipe.TensorsToEmbeddingsCalculatorOptions.ext] {
+        embedder_options { l2_normalize: false quantize: false }
+        head_names: "foo"
+        head_names: "bar"
+        ignored_head_names: "foo"
+      }
+    }
+  )pb"));
+
+  BuildGraph(&runner, {{0.1, 0.2}, {-0.2, -0.3}});
+  MP_ASSERT_OK(runner.Run());
+
+  const EmbeddingResult& result =
+      runner.Outputs().Get("EMBEDDINGS", 0).packets[0].Get<EmbeddingResult>();
+  EXPECT_THAT(result, EqualsProto(ParseTextProtoOrDie<EmbeddingResult>(
+                          R"pb(
+                            embeddings {
+                              float_embedding { values: -0.2 values: -0.3 }
+                              head_index: 1
+                              head_name: "bar"
+                            })pb")));
+}
+
+TEST(TensorsToEmbeddingsCalculatorTest, SucceedsWithBothHeadsIgnored) {
+  CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"pb(
+    calculator: "TensorsToEmbeddingsCalculator"
+    input_stream: "TENSORS:tensors"
+    output_stream: "EMBEDDINGS:embeddings"
+    options {
+      [mediapipe.TensorsToEmbeddingsCalculatorOptions.ext] {
+        embedder_options { l2_normalize: false quantize: false }
+        head_names: "foo"
+        head_names: "bar"
+        ignored_head_names: "foo"
+        ignored_head_names: "bar"
+      }
+    }
+  )pb"));
+
+  BuildGraph(&runner, {{0.1, 0.2}, {-0.2, -0.3}});
+  MP_ASSERT_OK(runner.Run());
+
+  const EmbeddingResult& result =
+      runner.Outputs().Get("EMBEDDINGS", 0).packets[0].Get<EmbeddingResult>();
+  EXPECT_THAT(result,
+              EqualsProto(ParseTextProtoOrDie<EmbeddingResult>(R"pb()pb")));
+}
+
 TEST(TensorsToEmbeddingsCalculatorTest, SucceedsWithNormalization) {
   CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"pb(
     calculator: "TensorsToEmbeddingsCalculator"

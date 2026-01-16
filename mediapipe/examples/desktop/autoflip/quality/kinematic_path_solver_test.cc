@@ -14,13 +14,14 @@
 
 #include "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.h"
 
+#include <cstdint>
+
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
-constexpr int64 kMicroSecInSec = 1000000;
+constexpr int64_t kMicroSecInSec = 1000000;
 constexpr float kWidthFieldOfView = 60;
 
 namespace mediapipe {
@@ -43,7 +44,7 @@ TEST(KinematicPathSolverTest, FailNotInitializedState) {
 TEST(KinematicPathSolverTest, FailNotInitializedPrediction) {
   KinematicOptions options;
   KinematicPathSolver solver(options, 0, 1000, 1000.0 / kWidthFieldOfView);
-  int64 timestamp = 0;
+  int64_t timestamp = 0;
   EXPECT_FALSE(solver.UpdatePrediction(timestamp).ok());
 }
 

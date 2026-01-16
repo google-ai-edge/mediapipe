@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "mediapipe/calculators/core/merge_to_vector_calculator.h"
 
+#include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/image.h"
 
 namespace mediapipe {
@@ -26,6 +27,10 @@ MEDIAPIPE_REGISTER_NODE(MergeImagesToVectorCalculator);
 typedef MergeToVectorCalculator<mediapipe::GpuBuffer>
     MergeGpuBuffersToVectorCalculator;
 MEDIAPIPE_REGISTER_NODE(MergeGpuBuffersToVectorCalculator);
+
+typedef MergeToVectorCalculator<mediapipe::Detection>
+    MergeDetectionsToVectorCalculator;
+MEDIAPIPE_REGISTER_NODE(MergeDetectionsToVectorCalculator);
 
 }  // namespace api2
 }  // namespace mediapipe

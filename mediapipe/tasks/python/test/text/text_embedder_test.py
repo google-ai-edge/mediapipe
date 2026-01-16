@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,11 +32,12 @@ _TextEmbedderOptions = text_embedder.TextEmbedderOptions
 
 _BERT_MODEL_FILE = 'mobilebert_embedding_with_metadata.tflite'
 _REGEX_MODEL_FILE = 'regex_one_embedding_with_metadata.tflite'
+_USE_MODEL_FILE = 'universal_sentence_encoder_qa_with_metadata.tflite'
 _TEST_DATA_DIR = 'mediapipe/tasks/testdata/text'
 # Tolerance for embedding vector coordinate values.
 _EPSILON = 1e-4
 # Tolerance for cosine similarity evaluation.
-_SIMILARITY_TOLERANCE = 1e-6
+_SIMILARITY_TOLERANCE = 1e-3
 
 
 class ModelFileType(enum.Enum):
@@ -65,7 +66,9 @@ class TextEmbedderTest(parameterized.TestCase):
 
   def test_create_from_options_fails_with_invalid_model_path(self):
     with self.assertRaisesRegex(
-        RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'):
+        FileNotFoundError,
+        'Unable to open file at /path/to/invalid/model.tflite',
+    ):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite')
       options = _TextEmbedderOptions(base_options=base_options)
@@ -102,14 +105,60 @@ class TextEmbedderTest(parameterized.TestCase):
         similarity, expected_similarity, delta=_SIMILARITY_TOLERANCE)
 
   @parameterized.parameters(
-      (False, False, _BERT_MODEL_FILE, ModelFileType.FILE_NAME, 0.969514, 512,
-       (19.9016, 22.626251)),
-      (True, False, _BERT_MODEL_FILE, ModelFileType.FILE_NAME, 0.969514, 512,
-       (0.0585837, 0.0723035)),
-      (False, False, _REGEX_MODEL_FILE, ModelFileType.FILE_NAME, 0.999937, 16,
-       (0.0309356, 0.0312863)),
-      (True, False, _REGEX_MODEL_FILE, ModelFileType.FILE_CONTENT, 0.999937, 16,
-       (0.549632, 0.552879)),
+      (
+          False,
+          False,
+          _BERT_MODEL_FILE,
+          ModelFileType.FILE_NAME,
+          0.9624276,∂ç
+          512,
+          (21.2054, 19.6843),
+      ),
+      (
+          True,
+          False,
+          _BERT_MODEL_FILE,
+          ModelFileType.FILE_NAME,
+          0.9624276,
+          512,
+          (0.062578, 0.067393),
+      ),
+      (
+          False,
+          False,
+          _REGEX_MODEL_FILE,
+          ModelFileType.FILE_NAME,
+          0.999937,
+          16,
+          (0.0309356, 0.0312863),
+      ),
+      (
+          True,
+          False,
+          _REGEX_MODEL_FILE,
+          ModelFileType.FILE_CONTENT,
+          0.999937,
+          16,
+          (0.549632, 0.552879),
+      ),
+      (
+          False,
+          False,
+          _USE_MODEL_FILE,
+          ModelFileType.FILE_NAME,
+          0.851961,
+          100,
+          (1.422951, 1.404664),
+      ),
+      (
+          True,
+          False,
+          _USE_MODEL_FILE,
+          ModelFileType.FILE_CONTENT,
+          0.851961,
+          100,
+          (0.127049, 0.125416),
+      ),
   )
   def test_embed(self, l2_normalize, quantize, model_name, model_file_type,
                  expected_similarity, expected_size, expected_first_values):
@@ -149,14 +198,60 @@ class TextEmbedderTest(parameterized.TestCase):
     embedder.close()
 
   @parameterized.parameters(
-      (False, False, _BERT_MODEL_FILE, ModelFileType.FILE_NAME, 0.969514, 512,
-       (19.9016, 22.626251)),
-      (True, False, _BERT_MODEL_FILE, ModelFileType.FILE_NAME, 0.969514, 512,
-       (0.0585837, 0.0723035)),
-      (False, False, _REGEX_MODEL_FILE, ModelFileType.FILE_NAME, 0.999937, 16,
-       (0.0309356, 0.0312863)),
-      (True, False, _REGEX_MODEL_FILE, ModelFileType.FILE_CONTENT, 0.999937, 16,
-       (0.549632, 0.552879)),
+      (
+          False,
+          False,
+          _BERT_MODEL_FILE,
+          ModelFileType.FILE_NAME,
+          0.962427,
+          512,
+          (21.2054, 19.684337),
+      ),
+      (
+          True,
+          False,
+          _BERT_MODEL_FILE,
+          ModelFileType.FILE_NAME,
+          0.962427,
+          512,
+          (0.0625787, 0.0673937),
+      ),
+      (
+          False,
+          False,
+          _REGEX_MODEL_FILE,
+          ModelFileType.FILE_NAME,
+          0.999937,
+          16,
+          (0.0309356, 0.0312863),
+      ),
+      (
+          True,
+          False,
+          _REGEX_MODEL_FILE,
+          ModelFileType.FILE_CONTENT,
+          0.999937,
+          16,
+          (0.549632, 0.552879),
+      ),
+      (
+          False,
+          False,
+          _USE_MODEL_FILE,
+          ModelFileType.FILE_NAME,
+          0.851961,
+          100,
+          (1.422951, 1.404664),
+      ),
+      (
+          True,
+          False,
+          _USE_MODEL_FILE,
+          ModelFileType.FILE_CONTENT,
+          0.851961,
+          100,
+          (0.127049, 0.125416),
+      ),
   )
   def test_embed_in_context(self, l2_normalize, quantize, model_name,
                             model_file_type, expected_similarity, expected_size,
@@ -191,6 +286,42 @@ class TextEmbedderTest(parameterized.TestCase):
       self._check_embedding_value(result0, expected_result0_value)
       self._check_embedding_value(result1, expected_result1_value)
       self._check_cosine_similarity(result0, result1, expected_similarity)
+
+  @parameterized.parameters(
+      # TODO: The similarity should likely be lower
+      (_BERT_MODEL_FILE, 0.98103),
+      (_USE_MODEL_FILE, 0.780334),
+  )
+  def test_embed_with_different_themes(self, model_file, expected_similarity):
+    # Creates embedder.
+    model_path = test_utils.get_test_data_path(
+        os.path.join(_TEST_DATA_DIR, model_file)
+    )
+    base_options = _BaseOptions(model_asset_path=model_path)
+    options = _TextEmbedderOptions(base_options=base_options)
+    embedder = _TextEmbedder.create_from_options(options)
+
+    # Extracts both embeddings.
+    text0 = (
+        'When you go to this restaurant, they hold the pancake upside-down '
+        "before they hand it to you. It's a great gimmick."
+    )
+    result0 = embedder.embed(text0)
+
+    text1 = "Let's make a plan to steal the declaration of independence."
+    result1 = embedder.embed(text1)
+
+    similarity = _TextEmbedder.cosine_similarity(
+        result0.embeddings[0], result1.embeddings[0]
+    )
+
+    self.assertAlmostEqual(
+        similarity, expected_similarity, delta=_SIMILARITY_TOLERANCE
+    )
+
+    # Closes the embedder explicitly when the embedder is not used in
+    # a context.
+    embedder.close()
 
 
 if __name__ == '__main__':

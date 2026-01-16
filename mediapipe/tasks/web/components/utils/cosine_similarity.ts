@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may
  * not use this file except in compliance with the License. You may obtain a
@@ -38,10 +38,10 @@ export function computeCosineSimilarity(u: Embedding, v: Embedding): number {
 }
 
 function convertToBytes(data: Uint8Array): number[] {
-  return Array.from(data, v => v - 128);
+  return Array.from(data, v => v > 127 ? v - 256 : v);
 }
 
-function compute(u: number[], v: number[]) {
+function compute(u: readonly number[], v: readonly number[]) {
   if (u.length !== v.length) {
     throw new Error(
         `Cannot compute cosine similarity between embeddings of different sizes (${

@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_PORT_PARSE_TEXT_PROTO_H_
 #define MEDIAPIPE_PORT_PARSE_TEXT_PROTO_H_
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
@@ -29,7 +30,7 @@ bool ParseTextProto(const std::string& input, T* proto) {
 template <typename T>
 T ParseTextProtoOrDie(const std::string& input) {
   T result;
-  CHECK(ParseTextProto(input, &result));
+  ABSL_CHECK(ParseTextProto(input, &result));
   return result;
 }
 

@@ -12,6 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load(
+    "//mediapipe/framework/tool:mediapipe_graph.bzl",
+    "mediapipe_binary_graph",
+)
+
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
@@ -22,11 +28,6 @@ cc_library(
         "//mediapipe/calculators/image:luminance_calculator",
         "//mediapipe/calculators/image:sobel_edges_calculator",
     ],
-)
-
-load(
-    "//mediapipe/framework/tool:mediapipe_graph.bzl",
-    "mediapipe_binary_graph",
 )
 
 mediapipe_binary_graph(

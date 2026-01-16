@@ -14,6 +14,10 @@
 
 #include "mediapipe/framework/output_stream_manager.h"
 
+#include <list>
+
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/input_stream_handler.h"
 #include "mediapipe/framework/port/status_builder.h"
@@ -39,6 +43,7 @@ void OutputStreamManager::PrepareForRun(
     absl::MutexLock lock(&stream_mutex_);
     next_timestamp_bound_ = Timestamp::PreStream();
     closed_ = false;
+    num_packets_added_ = 0;
   }
 }
 
@@ -80,7 +85,7 @@ void OutputStreamManager::PropagateHeader() {
 
 void OutputStreamManager::AddMirror(InputStreamHandler* input_stream_handler,
                                     CollectionItemId id) {
-  CHECK(input_stream_handler);
+  ABSL_CHECK(input_stream_handler);
   mirrors_.emplace_back(input_stream_handler, id);
 }
 
@@ -163,21 +168,22 @@ Timestamp OutputStreamManager::ComputeOutputTimestampBound(
 // TODO Consider moving the propagation logic to OutputStreamHandler.
 void OutputStreamManager::PropagateUpdatesToMirrors(
     Timestamp next_timestamp_bound, OutputStreamShard* output_stream_shard) {
-  CHECK(output_stream_shard);
+  ABSL_CHECK(output_stream_shard);
+  std::list<Packet>* packets_to_propagate = output_stream_shard->OutputQueue();
   {
     if (next_timestamp_bound != Timestamp::Unset()) {
       absl::MutexLock lock(&stream_mutex_);
       next_timestamp_bound_ = next_timestamp_bound;
+      num_packets_added_ += packets_to_propagate->size();
       VLOG(3) << "Next timestamp bound for output " << output_stream_spec_.name
               << " is " << next_timestamp_bound_;
     }
   }
-  std::list<Packet>* packets_to_propagate = output_stream_shard->OutputQueue();
   VLOG(3) << "Output stream: " << Name()
           << " queue size: " << packets_to_propagate->size();
   VLOG(3) << "Output stream: " << Name()
           << " next timestamp: " << next_timestamp_bound;
-  bool add_packets = !packets_to_propagate->empty();
+  const bool add_packets = !packets_to_propagate->empty();
   bool set_bound =
       (next_timestamp_bound != Timestamp::Unset()) &&
       (!add_packets ||
@@ -215,6 +221,11 @@ void OutputStreamManager::ResetShard(OutputStreamShard* output_stream_shard) {
     closed = closed_;
   }
   output_stream_shard->Reset(next_timestamp_bound, closed);
+}
+
+int OutputStreamManager::NumPacketsAdded() const {
+  absl::MutexLock lock(&stream_mutex_);
+  return num_packets_added_;
 }
 
 }  // namespace mediapipe

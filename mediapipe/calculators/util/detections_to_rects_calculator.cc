@@ -37,6 +37,9 @@ constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kRectsTag[] = "RECTS";
 constexpr char kNormRectsTag[] = "NORM_RECTS";
 
+using ::mediapipe::NormalizedRect;
+using ::mediapipe::Rect;
+
 constexpr float kMinFloat = std::numeric_limits<float>::lowest();
 constexpr float kMaxFloat = std::numeric_limits<float>::max();
 

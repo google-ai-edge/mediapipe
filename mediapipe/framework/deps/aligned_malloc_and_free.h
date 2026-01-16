@@ -21,17 +21,17 @@
 #include <malloc.h>  // for memalign() on Android, _aligned_alloc() on Windows
 #endif
 
-inline void *aligned_malloc(size_t size, int minimum_alignment) {
+inline void* aligned_malloc(size_t size, int minimum_alignment) {
 #if defined(__ANDROID__) || defined(OS_ANDROID)
   return memalign(minimum_alignment, size);
 #elif _WIN32
   return _aligned_malloc(size, minimum_alignment);
 #else  // !__ANDROID__ && !OS_ANDROID && !_WIN32
-  void *ptr = nullptr;
+  void* ptr = nullptr;
   // posix_memalign requires that the requested alignment be at least
   // sizeof(void*). In this case, fall back on malloc which should return memory
   // aligned to at least the size of a pointer.
-  const int required_alignment = sizeof(void *);
+  const int required_alignment = sizeof(void*);
   if (minimum_alignment < required_alignment) return malloc(size);
   if (posix_memalign(&ptr, static_cast<size_t>(minimum_alignment), size) != 0)
     return nullptr;
@@ -40,7 +40,7 @@ inline void *aligned_malloc(size_t size, int minimum_alignment) {
 #endif
 }
 
-inline void aligned_free(void *aligned_memory) {
+inline void aligned_free(void* aligned_memory) {
 #ifdef _WIN32
   _aligned_free(aligned_memory);
 #else

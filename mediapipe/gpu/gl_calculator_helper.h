@@ -15,10 +15,15 @@
 #ifndef MEDIAPIPE_GPU_GL_CALCULATOR_HELPER_H_
 #define MEDIAPIPE_GPU_GL_CALCULATOR_HELPER_H_
 
+#include <functional>
 #include <memory>
+#include <string>
+#include <type_traits>
+#include <utility>
 
 #include "absl/base/attributes.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/formats/image.h"
@@ -67,7 +72,8 @@ class GlCalculatorHelper {
 
   // This method can be called from GetContract to set up the needed GPU
   // resources.
-  static absl::Status UpdateContract(CalculatorContract* cc);
+  static absl::Status UpdateContract(CalculatorContract* cc,
+                                     bool request_gpu_as_optional = false);
 
   // This method can be called from FillExpectations to set the correct types
   // for the shared GL input side packet(s).
@@ -97,8 +103,8 @@ class GlCalculatorHelper {
   //
   // Therefore, instead of using std::function<void(void)>, we use a template
   // that only accepts arguments with a void result type.
-  template <typename T, typename = typename std::enable_if<std::is_void<
-                            typename std::result_of<T()>::type>::value>::type>
+  template <typename T, typename = typename std::enable_if<
+                            std::is_void<std::invoke_result_t<T>>::value>::type>
   void RunInGlContext(T f) {
     RunInGlContext([f] {
       f();
@@ -135,6 +141,12 @@ class GlCalculatorHelper {
   // This is deprecated because: 1) it encourages the use of GlTexture as a
   // long-lived object; 2) it requires copying the ImageFrame's contents,
   // which may not always be necessary.
+  //
+  // WARNING: do NOT use as a destination texture which will be sent to
+  // downstream calculators as it may lead to synchronization issues. The result
+  // is meant to be a short-lived object, local to a single calculator and
+  // single GL thread. Use `CreateDestinationTexture` instead, if you need a
+  // destination texture.
   ABSL_DEPRECATED("Use `GpuBufferWithImageFrame`.")
   GlTexture CreateSourceTexture(const ImageFrame& image_frame);
 
@@ -156,6 +168,21 @@ class GlCalculatorHelper {
       int output_width, int output_height,
       GpuBufferFormat format = GpuBufferFormat::kBGRA32);
 
+  // Allows user provided buffers to be used as rendering destinations.
+  GlTexture CreateDestinationTexture(GpuBuffer& buffer);
+
+  // Creates a destination texture copying and uploading passed image frame.
+  //
+  // WARNING: mind that this functions creates a new texture every time and
+  // doesn't use MediaPipe's gpu buffer pool.
+  // TODO: ensure buffer pool is used when creating textures out of
+  // ImageFrame.
+  GlTexture CreateDestinationTexture(const ImageFrame& image_frame);
+
+  // Creates the framebuffer for rendering. Use this when the calculator
+  // needs a managed framebuffer but manages its own textures.
+  void CreateFramebuffer();
+
   // The OpenGL name of the output framebuffer.
   GLuint framebuffer() const;
 
@@ -164,6 +191,8 @@ class GlCalculatorHelper {
   void BindFramebuffer(const GlTexture& dst);
 
   GlContext& GetGlContext() const { return *gl_context_; }
+
+  std::shared_ptr<GlContext> GetSharedGlContext() const { return gl_context_; }
 
   GlVersion GetGlVersion() const { return gl_context_->GetGlVersion(); }
 
@@ -179,9 +208,6 @@ class GlCalculatorHelper {
   // Makes a GpuBuffer accessible as a texture in the GL context.
   GlTexture MapGpuBuffer(const GpuBuffer& gpu_buffer, GlTextureView view);
 
-  // Create the framebuffer for rendering.
-  void CreateFramebuffer();
-
   std::shared_ptr<GlContext> gl_context_;
 
   GLuint framebuffer_ = 0;
@@ -190,13 +216,13 @@ class GlCalculatorHelper {
 };
 
 // Represents an OpenGL texture, and is a 'view' into the memory pool.
-// It's more like a GlTextureLock, because it's main purpose (in conjunction
-// with the helper): to manage GL sync points in the gl command queue.
+// It's more like a GlTextureLock, because its main purpose (in conjunction
+// with the helper) is: to manage GL sync points in the gl command queue.
 //
 // This class should be the main way to interface with GL memory within a single
 // calculator. This is the preferred way to utilize the memory pool inside of
 // the helper, because GlTexture manages efficiently releasing memory back into
-// the pool. A GPU backed Image can be extracted from the unerlying
+// the pool. A GPU backed Image can be extracted from the underlying
 // memory.
 class GlTexture {
  public:

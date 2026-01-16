@@ -1,0 +1,12 @@
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/packet_generator.proto";
+
+message GeneratorOptions {
+  extend mediapipe.PacketGeneratorOptions {
+    optional GeneratorOptions ext = 4200000;
+  }
+  optional int32 value = 1;
+}
