@@ -34,6 +34,7 @@ import com.google.mediapipe.tasks.core.Delegate
 import com.google.mediapipe.tasks.vision.facedetector.FaceDetector
 import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarker
 import com.google.mediapipe.tasks.vision.gesturerecognizer.GestureRecognizer
+import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
 import com.google.mediapipe.tasks.vision.imagesegmenter.ImageSegmenter
 import java.io.File
 import java.io.FileInputStream
@@ -552,6 +553,39 @@ constructor(
     model: VisionModel,
     settings: GestureRecognizerSettingsInternal,
   ): Future<GestureRecognizer> = createTask(model, settings, ::createGestureRecognizerImplHelper)
+
+  /**
+   * Creates a [HandLandmarker] instance.
+   *
+   * @param context The application context.
+   * @param modelBuffer The [ByteBuffer] containings the model.
+   * @param dispatchLibraryPath The optional path to the NPU dispatch library. If null, no NPU
+   *   delegate is used.
+   * @param settings The internal settings for the [HandLandmarker].
+   * @return A [HandLandmarker] instance.
+   */
+  private fun createHandLandmarkerImplHelper(
+    context: Context,
+    modelBuffer: ByteBuffer,
+    dispatchLibraryPath: String?,
+    settings: HandLandmarkerSettingsInternal,
+  ): HandLandmarker {
+    val baseOptions = createBaseOptions(modelBuffer, dispatchLibraryPath).build()
+    val options = settings.toOptions(baseOptions)
+    return HandLandmarker.createFromOptions(context, options)
+  }
+
+  /**
+   * Creates an [HandLandmarker] asynchronously.
+   *
+   * @param model The [VisionModel] to use.
+   * @param settings The internal settings for [HandLandmarker].
+   * @return A [Future] that completes with the created [HandLandmarker].
+   */
+  protected fun createHandLandmarkerImpl(
+    model: VisionModel,
+    settings: HandLandmarkerSettingsInternal,
+  ): Future<HandLandmarker> = createTask(model, settings, ::createHandLandmarkerImplHelper)
 
   /**
    * Closes the [VisionProviderBase] and releases any resources.
