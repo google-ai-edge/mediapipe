@@ -46,6 +46,7 @@ internal class VisionProviderCodeGenerator(private val visionProviderConfig: Vis
         "ImageSegmenter" -> ImageSegmenterSpec.getParams()
         "FaceDetector" -> FaceDetectorSpec.getParams()
         "FaceLandmarker" -> FaceLandmarkerSpec.getParams()
+        "GestureRecognizer" -> GestureRecognizerSpec.getParams()
         else -> throw IllegalArgumentException("Unknown task name: $taskName")
       }
   }
@@ -201,6 +202,43 @@ internal class VisionProviderCodeGenerator(private val visionProviderConfig: Vis
   }
 
   /**
+   * Generates a settings data class.
+   *
+   * @param classBuilder The [TypeSpec.Builder] for the VisionProvider class.
+   * @param settingName The name of the settings class to generate.
+   * @param params The parameters for the settings class.
+   */
+  private fun generateSetting(
+    classBuilder: TypeSpec.Builder,
+    settingName: String,
+    params: List<ParameterSpec>,
+  ) {
+    val settingsClassName = ClassName("$PACKAGE_NAME.VisionProvider", "${settingName}Settings")
+    val dataClassBuilder =
+      TypeSpec.classBuilder(settingsClassName).addModifiers(KModifier.PUBLIC, KModifier.DATA)
+    val constructorBuilder = FunSpec.constructorBuilder()
+
+    for (param in params) {
+      constructorBuilder.addParameter(param)
+      dataClassBuilder.addProperty(
+        PropertySpec.builder(param.name, param.type).initializer(param.name).build()
+      )
+      val methodName = "with${param.name.replaceFirstChar { it.uppercase() }}"
+      dataClassBuilder.addFunction(
+        FunSpec.builder(methodName)
+          .addModifiers(KModifier.PUBLIC)
+          .returns(settingsClassName)
+          .addParameter(param.name, param.type)
+          .addStatement("return copy(%N = %N)", param.name, param.name)
+          .build()
+      )
+    }
+
+    dataClassBuilder.primaryConstructor(constructorBuilder.build())
+    classBuilder.addType(dataClassBuilder.build())
+  }
+
+  /**
    * Generates the settings classes for each task.
    *
    * Example:
@@ -226,33 +264,16 @@ internal class VisionProviderCodeGenerator(private val visionProviderConfig: Vis
    * @param tasks The list of [VisionTask]s to generate settings for.
    */
   private fun generateSettings(classBuilder: TypeSpec.Builder, tasks: Iterable<VisionTask>) {
+    generateSetting(classBuilder, "Classifier", ClassifierSpec.getParams())
     for (task in tasks) {
-      val taskName = task.name
-      val settingsClassName = ClassName("$PACKAGE_NAME.VisionProvider", "${taskName}Settings")
-      val dataClassBuilder =
-        TypeSpec.classBuilder(settingsClassName).addModifiers(KModifier.PUBLIC, KModifier.DATA)
-      val constructorBuilder = FunSpec.constructorBuilder()
-
-      val params = getInternalSettingsParams(taskName)
-      for (param in params) {
-        constructorBuilder.addParameter(param)
-        dataClassBuilder.addProperty(
-          PropertySpec.builder(param.name, param.type).initializer(param.name).build()
-        )
-        val methodName = "with${param.name.replaceFirstChar { it.uppercase() }}"
-        dataClassBuilder.addFunction(
-          FunSpec.builder(methodName)
-            .addModifiers(KModifier.PUBLIC)
-            .returns(settingsClassName)
-            .addParameter(param.name, param.type)
-            .addStatement("return copy(%N = %N)", param.name, param.name)
-            .build()
-        )
-      }
-
-      dataClassBuilder.primaryConstructor(constructorBuilder.build())
-      classBuilder.addType(dataClassBuilder.build())
+      generateSetting(classBuilder, task.name, getInternalSettingsParams(task.name))
     }
+  }
+
+  private fun toClassifierOptions(setting: String): String {
+    val params = ClassifierSpec.getParams().joinToString(", ") { "s.${it.name}" }
+    return setting +
+      "?.let { s -> com.google.mediapipe.tasks.vision.provider.ClassifierSettingsInternal($params) }"
   }
 
   /**
@@ -275,6 +296,9 @@ internal class VisionProviderCodeGenerator(private val visionProviderConfig: Vis
     tasks: Iterable<VisionTask>,
     futureCn: ClassName,
   ) {
+    val classifierSettingsCn =
+      ClassName("com.google.mediapipe.tasks.vision.provider.VisionProvider", "ClassifierSettings")
+
     for (task in tasks) {
       val taskName = task.name
       val modelEnumCn = ClassName("$PACKAGE_NAME.VisionProvider", "${taskName}Model")
@@ -286,7 +310,16 @@ internal class VisionProviderCodeGenerator(private val visionProviderConfig: Vis
       val defaultModel = task.defaultModel
 
       val params = getInternalSettingsParams(taskName)
-      val settingsParams = params.map { "settings.${it.name}" }.joinToString(", ")
+      val settingsParams =
+        params
+          .map {
+            if (it.type == classifierSettingsCn.copy(nullable = true)) {
+              "${it.name} = ${toClassifierOptions("settings.${it.name}")}"
+            } else {
+              "${it.name} = settings.${it.name}"
+            }
+          }
+          .joinToString(", ")
 
       classBuilder.addFunction(
         FunSpec.builder("create$taskName")

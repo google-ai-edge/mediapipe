@@ -33,6 +33,7 @@ import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.core.Delegate
 import com.google.mediapipe.tasks.vision.facedetector.FaceDetector
 import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarker
+import com.google.mediapipe.tasks.vision.gesturerecognizer.GestureRecognizer
 import com.google.mediapipe.tasks.vision.imagesegmenter.ImageSegmenter
 import java.io.File
 import java.io.FileInputStream
@@ -519,7 +520,44 @@ constructor(
     settings: FaceLandmarkerSettingsInternal,
   ): Future<FaceLandmarker> = createTask(model, settings, ::createFaceLandmarkerImplHelper)
 
-  /** Closes the VisionProvider and releases all resources. */
+  /**
+   * Creates a [GestureRecognizer] instance.
+   *
+   * @param context The application context.
+   * @param modelBuffer The [ByteBuffer] containings the model.
+   * @param dispatchLibraryPath The optional path to the NPU dispatch library. If null, no NPU
+   *   delegate is used.
+   * @param settings The internal settings for the [GestureRecognizer].
+   * @return A [GestureRecognizer] instance.
+   */
+  private fun createGestureRecognizerImplHelper(
+    context: Context,
+    modelBuffer: ByteBuffer,
+    dispatchLibraryPath: String?,
+    settings: GestureRecognizerSettingsInternal,
+  ): GestureRecognizer {
+    val baseOptions = createBaseOptions(modelBuffer, dispatchLibraryPath).build()
+    val options = settings.toOptions(baseOptions)
+    return GestureRecognizer.createFromOptions(context, options)
+  }
+
+  /**
+   * Creates an [GestureRecognizer] asynchronously.
+   *
+   * @param model The [VisionModel] to use.
+   * @param settings The internal settings for [GestureRecognizer].
+   * @return A [Future] that completes with the created [GestureRecognizer].
+   */
+  protected fun createGestureRecognizerImpl(
+    model: VisionModel,
+    settings: GestureRecognizerSettingsInternal,
+  ): Future<GestureRecognizer> = createTask(model, settings, ::createGestureRecognizerImplHelper)
+
+  /**
+   * Closes the [VisionProviderBase] and releases any resources.
+   *
+   * This method shuts down the internal executor.
+   */
   override fun close() {
     executor.shutdown()
   }

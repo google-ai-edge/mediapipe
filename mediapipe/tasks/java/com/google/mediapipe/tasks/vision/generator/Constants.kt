@@ -40,6 +40,7 @@ object Constants {
 
   val UNLIMITED_RESULTS = CodeBlock.of("%L", -1)
   val DEFAULT_NUM_FACES = CodeBlock.of("%L", 1)
+  val DEFAULT_NUM_HANDS = CodeBlock.of("%L", 1)
   val DEFAULT_OUTPUT_BLENDSHAPES = CodeBlock.of("%L", false)
   val DEFAULT_OUTPUT_FACIAL_TRANSFORMATION_MATRIXES = CodeBlock.of("%L", false)
   val DEFAULT_DISPLAY_NAMES_LOCALE = CodeBlock.of("%S", "en")
