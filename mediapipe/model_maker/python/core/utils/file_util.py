@@ -66,6 +66,9 @@ class DownloadedFiles:
     )
     if not absolute_path.exists():
       print(f'Downloading {self.url} to {absolute_path}')
+      # Enforce HTTPS to prevent man-in-the-middle attacks
+      if not self.url.startswith('https://'):
+        raise ValueError(f'URL must use HTTPS protocol for security: {self.url}')
       r = requests.get(self.url, allow_redirects=True)
       if self.is_folder:
         # Use tempf to store the downloaded .tar.gz file
