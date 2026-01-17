@@ -105,7 +105,7 @@ class Dataset(classification_dataset.ClassificationDataset):
     if cache_dir is None:
       cache_dir = tempfile.mkdtemp()
     # calculate hash for cache based off of files
-    hasher = hashlib.md5()
+    hasher = hashlib.sha256()
     hasher.update(os.path.basename(filename).encode("utf-8"))
     with tf.io.gfile.GFile(filename, "r") as f:
       reader = csv.DictReader(
