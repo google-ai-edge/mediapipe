@@ -54,6 +54,7 @@ kt_android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:imagesegmenter",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:interactivesegmenter",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:objectdetector",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:poselandmarker",
         "//third_party/java/androidx/activity",
         "@maven//:androidx_annotation_annotation",
     ],

@@ -40,6 +40,7 @@ import com.google.mediapipe.tasks.vision.imageembedder.ImageEmbedder
 import com.google.mediapipe.tasks.vision.imagesegmenter.ImageSegmenter
 import com.google.mediapipe.tasks.vision.interactivesegmenter.InteractiveSegmenter
 import com.google.mediapipe.tasks.vision.objectdetector.ObjectDetector
+import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -690,6 +691,39 @@ constructor(
     model: VisionModel,
     settings: ObjectDetectorSettingsInternal,
   ): Future<ObjectDetector> = createTask(model, settings, ::createObjectDetectorImplHelper)
+
+  /**
+   * Creates a [PoseLandmarker] instance.
+   *
+   * @param context The application context.
+   * @param modelBuffer The [ByteBuffer] containings the model.
+   * @param dispatchLibraryPath The optional path to the NPU dispatch library. If null, no NPU
+   *   delegate is used.
+   * @param settings The internal settings for the [PoseLandmarker].
+   * @return A [PoseLandmarker] instance.
+   */
+  private fun createPoseLandmarkerImplHelper(
+    context: Context,
+    modelBuffer: ByteBuffer,
+    dispatchLibraryPath: String?,
+    settings: PoseLandmarkerSettingsInternal,
+  ): PoseLandmarker {
+    val baseOptions = createBaseOptions(modelBuffer, dispatchLibraryPath).build()
+    val options = settings.toOptions(baseOptions)
+    return PoseLandmarker.createFromOptions(context, options)
+  }
+
+  /**
+   * Creates a [PoseLandmarker] asynchronously.
+   *
+   * @param model The [VisionModel] to use.
+   * @param settings The internal settings for [PoseLandmarker].
+   * @return A [Future] that completes with the created [PoseLandmarker].
+   */
+  protected fun createPoseLandmarkerImpl(
+    model: VisionModel,
+    settings: PoseLandmarkerSettingsInternal,
+  ): Future<PoseLandmarker> = createTask(model, settings, ::createPoseLandmarkerImplHelper)
 
   /**
    * Creates a [HandLandmarker] instance.
