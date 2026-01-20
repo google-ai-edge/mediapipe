@@ -39,6 +39,7 @@ import com.google.mediapipe.tasks.vision.imageclassifier.ImageClassifier
 import com.google.mediapipe.tasks.vision.imageembedder.ImageEmbedder
 import com.google.mediapipe.tasks.vision.imagesegmenter.ImageSegmenter
 import com.google.mediapipe.tasks.vision.interactivesegmenter.InteractiveSegmenter
+import com.google.mediapipe.tasks.vision.objectdetector.ObjectDetector
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -656,6 +657,39 @@ constructor(
     settings: InteractiveSegmenterSettingsInternal,
   ): Future<InteractiveSegmenter> =
     createTask(model, settings, ::createInteractiveSegmenterImplHelper)
+
+  /**
+   * Creates an [ObjectDetector] instance.
+   *
+   * @param context The application context.
+   * @param modelBuffer The [ByteBuffer] containings the model.
+   * @param dispatchLibraryPath The optional path to the NPU dispatch library. If null, no NPU
+   *   delegate is used.
+   * @param settings The internal settings for the [ObjectDetector].
+   * @return An [ObjectDetector] instance.
+   */
+  private fun createObjectDetectorImplHelper(
+    context: Context,
+    modelBuffer: ByteBuffer,
+    dispatchLibraryPath: String?,
+    settings: ObjectDetectorSettingsInternal,
+  ): ObjectDetector {
+    val baseOptions = createBaseOptions(modelBuffer, dispatchLibraryPath).build()
+    val options = settings.toOptions(baseOptions)
+    return ObjectDetector.createFromOptions(context, options)
+  }
+
+  /**
+   * Creates an [ObjectDetector] asynchronously.
+   *
+   * @param model The [VisionModel] to use.
+   * @param settings The internal settings for [ObjectDetector].
+   * @return A [Future] that completes with the created [ObjectDetector].
+   */
+  protected fun createObjectDetectorImpl(
+    model: VisionModel,
+    settings: ObjectDetectorSettingsInternal,
+  ): Future<ObjectDetector> = createTask(model, settings, ::createObjectDetectorImplHelper)
 
   /**
    * Creates a [HandLandmarker] instance.
