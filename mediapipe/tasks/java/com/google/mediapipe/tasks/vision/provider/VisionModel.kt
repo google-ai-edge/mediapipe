@@ -68,7 +68,7 @@ interface VisionModel {
       }
       return object : VisionModel {
         override val task: VisionTask.Type = task
-        override val enumName: String = name.uppercase()
+        override val enumName: String = name.uppercase().replace('.', '_')
         override val modelName: String = modelName
         override val version: String = version
         override val quantization: Quantization = quantization

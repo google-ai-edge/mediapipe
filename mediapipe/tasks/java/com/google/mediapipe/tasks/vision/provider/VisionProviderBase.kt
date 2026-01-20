@@ -38,6 +38,7 @@ import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
 import com.google.mediapipe.tasks.vision.imageclassifier.ImageClassifier
 import com.google.mediapipe.tasks.vision.imageembedder.ImageEmbedder
 import com.google.mediapipe.tasks.vision.imagesegmenter.ImageSegmenter
+import com.google.mediapipe.tasks.vision.interactivesegmenter.InteractiveSegmenter
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -621,6 +622,40 @@ constructor(
     model: VisionModel,
     settings: ImageEmbedderSettingsInternal,
   ): Future<ImageEmbedder> = createTask(model, settings, ::createImageEmbedderImplHelper)
+
+  /**
+   * Creates an [InteractiveSegmenter] instance.
+   *
+   * @param context The application context.
+   * @param modelBuffer The [ByteBuffer] containings the model.
+   * @param dispatchLibraryPath The optional path to the NPU dispatch library. If null, no NPU
+   *   delegate is used.
+   * @param settings The internal settings for the [InteractiveSegmenter].
+   * @return An [InteractiveSegmenter] instance.
+   */
+  private fun createInteractiveSegmenterImplHelper(
+    context: Context,
+    modelBuffer: ByteBuffer,
+    dispatchLibraryPath: String?,
+    settings: InteractiveSegmenterSettingsInternal,
+  ): InteractiveSegmenter {
+    val baseOptions = createBaseOptions(modelBuffer, dispatchLibraryPath).build()
+    val options = settings.toOptions(baseOptions)
+    return InteractiveSegmenter.createFromOptions(context, options)
+  }
+
+  /**
+   * Creates an [InteractiveSegmenter] asynchronously.
+   *
+   * @param model The [VisionModel] to use.
+   * @param settings The internal settings for [InteractiveSegmenter].
+   * @return A [Future] that completes with the created [InteractiveSegmenter].
+   */
+  protected fun createInteractiveSegmenterImpl(
+    model: VisionModel,
+    settings: InteractiveSegmenterSettingsInternal,
+  ): Future<InteractiveSegmenter> =
+    createTask(model, settings, ::createInteractiveSegmenterImplHelper)
 
   /**
    * Creates a [HandLandmarker] instance.

@@ -50,6 +50,7 @@ internal class VisionProviderCodeGenerator(private val visionProviderConfig: Vis
         "GestureRecognizer" -> GestureRecognizerSpec.getParams()
         "ImageClassifier" -> ImageClassifierSpec.getParams()
         "ImageEmbedder" -> ImageEmbedderSpec.getParams()
+        "InteractiveSegmenter" -> InteractiveSegmenterSpec.getParams()
         else -> throw IllegalArgumentException("Unknown task name: $taskName")
       }
   }
@@ -190,7 +191,7 @@ internal class VisionProviderCodeGenerator(private val visionProviderConfig: Vis
 
       for (modelName in task.models) {
         val model = VisionModel.fromCanonicalName(task.type, modelName)
-        val enumConstantName = modelName
+        val enumConstantName = model.enumName
         val anonymousClassBuilder =
           TypeSpec.anonymousClassBuilder()
             .addSuperclassConstructorParameter(CodeBlock.of(enumConstantMember.toString()))
@@ -198,7 +199,7 @@ internal class VisionProviderCodeGenerator(private val visionProviderConfig: Vis
             .addSuperclassConstructorParameter("%S", model.modelName)
             .addSuperclassConstructorParameter("%S", model.version)
             .addSuperclassConstructorParameter("%T.%L", quantizationCn, model.quantization)
-        modelEnumBuilder.addEnumConstant(modelName.uppercase(), anonymousClassBuilder.build())
+        modelEnumBuilder.addEnumConstant(enumConstantName, anonymousClassBuilder.build())
       }
       classBuilder.addType(modelEnumBuilder.build())
     }
@@ -311,6 +312,7 @@ internal class VisionProviderCodeGenerator(private val visionProviderConfig: Vis
         ClassName("com.google.mediapipe.tasks.vision.${taskName.lowercase()}", taskName)
       val futureOfTask = futureCn.parameterizedBy(taskReturnCn)
       val defaultModel = task.defaultModel
+      val defaultModelEnumName = VisionModel.fromCanonicalName(task.type, defaultModel).enumName
 
       val params = getInternalSettingsParams(taskName)
       val settingsParams =
@@ -332,7 +334,7 @@ internal class VisionProviderCodeGenerator(private val visionProviderConfig: Vis
           .addParameter(
             ParameterSpec.builder("model", modelEnumCn)
               .addAnnotation(Constants.NON_NULL_CLASS)
-              .defaultValue("%T.%L", modelEnumCn, defaultModel.uppercase())
+              .defaultValue("%T.%L", modelEnumCn, defaultModelEnumName)
               .build()
           )
           .addParameter(
