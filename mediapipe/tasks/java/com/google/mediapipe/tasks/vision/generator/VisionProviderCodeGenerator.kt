@@ -48,6 +48,7 @@ internal class VisionProviderCodeGenerator(private val visionProviderConfig: Vis
         "FaceLandmarker" -> FaceLandmarkerSpec.getParams()
         "HandLandmarker" -> HandLandmarkerSpec.getParams()
         "GestureRecognizer" -> GestureRecognizerSpec.getParams()
+        "ImageClassifier" -> ImageClassifierSpec.getParams()
         else -> throw IllegalArgumentException("Unknown task name: $taskName")
       }
   }
