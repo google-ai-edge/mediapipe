@@ -53,7 +53,6 @@ interface VisionModel {
      * @return A [VisionModel] instance.
      * @throws IllegalArgumentException if the name does not match the expected format.
      */
-    @JvmStatic
     fun fromCanonicalName(task: VisionTask.Type, name: String): VisionModel {
       val pattern = Pattern.compile("^(.*)_(v\\d+)_(fp16|fp32|int8)$")
       val matcher = pattern.matcher(name)

@@ -24,7 +24,6 @@ object HandLandmarkerSpec {
     ClassName("com.google.mediapipe.tasks.vision.handlandmarker", "HandLandmarkerResult")
 
   /** Gets the [ParameterSpec] list for [HandLandmarkerSettingsInternal]. */
-  @JvmStatic
   fun getParams(): List<ParameterSpec> =
     listOf(
       ParameterSpec.builder("minHandDetectionConfidence", Float::class)

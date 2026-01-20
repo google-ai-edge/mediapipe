@@ -39,17 +39,16 @@ import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarkerResult
  * @property errorListener The listener to receive errors.
  */
 data class FaceLandmarkerSettingsInternal
-@JvmOverloads
 constructor(
-  val minFaceDetectionConfidence: Float = 0.5f,
-  val minFacePresenceConfidence: Float = 0.5f,
-  val minTrackingConfidence: Float = 0.5f,
-  val numFaces: Int = 1,
-  val outputFaceBlendshapes: Boolean = false,
-  val outputFacialTransformationMatrixes: Boolean = false,
-  val runningMode: RunningMode = RunningMode.IMAGE,
-  val resultListener: OutputHandler.ResultListener<FaceLandmarkerResult, MPImage>? = null,
-  val errorListener: ErrorListener? = null,
+  val minFaceDetectionConfidence: Float,
+  val minFacePresenceConfidence: Float,
+  val minTrackingConfidence: Float,
+  val numFaces: Int,
+  val outputFaceBlendshapes: Boolean,
+  val outputFacialTransformationMatrixes: Boolean,
+  val runningMode: RunningMode,
+  val resultListener: OutputHandler.ResultListener<FaceLandmarkerResult, MPImage>?,
+  val errorListener: ErrorListener?,
 ) {
   /**
    * Converts the internal settings to a [FaceLandmarker.FaceLandmarkerOptions].

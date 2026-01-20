@@ -24,7 +24,6 @@ object ImageSegmenterSpec {
     ClassName("com.google.mediapipe.tasks.vision.imagesegmenter", "ImageSegmenterResult")
 
   /** Gets the [ParameterSpec] list for [ImageSegmenterSettingsInternal]. */
-  @JvmStatic
   fun getParams(): List<ParameterSpec> =
     listOf(
       ParameterSpec.builder("outputConfidenceMasks", Boolean::class)

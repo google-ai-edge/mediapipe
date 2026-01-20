@@ -26,7 +26,6 @@ object GestureRecognizerSpec {
     ClassName("com.google.mediapipe.tasks.vision.provider.VisionProvider", "ClassifierSettings")
 
   /** Gets the [ParameterSpec] list for [GestureRecognizerSettingsInternal]. */
-  @JvmStatic
   fun getParams(): List<ParameterSpec> =
     listOf(
       ParameterSpec.builder("minHandDetectionConfidence", Float::class)

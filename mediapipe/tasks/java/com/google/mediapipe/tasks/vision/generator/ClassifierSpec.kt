@@ -21,7 +21,6 @@ import com.squareup.kotlinpoet.ParameterSpec
 object ClassifierSpec {
 
   /** Gets the [ParameterSpec] list for [ClassifierSettingsInternal]. */
-  @JvmStatic
   fun getParams(): List<ParameterSpec> =
     listOf(
       ParameterSpec.builder("displayNamesLocale", String::class)

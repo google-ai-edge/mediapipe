@@ -32,13 +32,12 @@ import com.google.mediapipe.tasks.vision.facedetector.FaceDetectorResult
  * @property errorListener The listener to receive errors.
  */
 data class FaceDetectorSettingsInternal
-@JvmOverloads
 constructor(
-  val minDetectionConfidence: Float = 0.5f,
-  val minSuppressionThreshold: Float = 0.5f,
-  val runningMode: RunningMode = RunningMode.IMAGE,
-  val resultListener: OutputHandler.ResultListener<FaceDetectorResult, MPImage>? = null,
-  val errorListener: ErrorListener? = null,
+  val minDetectionConfidence: Float,
+  val minSuppressionThreshold: Float,
+  val runningMode: RunningMode,
+  val resultListener: OutputHandler.ResultListener<FaceDetectorResult, MPImage>?,
+  val errorListener: ErrorListener?,
 ) {
   /**
    * Converts the internal settings to a [FaceDetector.FaceDetectorOptions].

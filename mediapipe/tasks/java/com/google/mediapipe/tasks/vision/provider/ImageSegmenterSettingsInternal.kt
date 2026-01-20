@@ -33,14 +33,13 @@ import com.google.mediapipe.tasks.vision.imagesegmenter.ImageSegmenterResult
  * @property errorListener The listener to receive errors.
  */
 data class ImageSegmenterSettingsInternal
-@JvmOverloads
 constructor(
-  val outputConfidenceMasks: Boolean = false,
-  val outputCategoryMask: Boolean = true,
-  val displayNamesLocale: String? = "en-US",
-  val runningMode: RunningMode = RunningMode.IMAGE,
-  val resultListener: OutputHandler.ResultListener<ImageSegmenterResult, MPImage>? = null,
-  val errorListener: ErrorListener? = null,
+  val outputConfidenceMasks: Boolean,
+  val outputCategoryMask: Boolean,
+  val displayNamesLocale: String?,
+  val runningMode: RunningMode,
+  val resultListener: OutputHandler.ResultListener<ImageSegmenterResult, MPImage>?,
+  val errorListener: ErrorListener?,
 ) {
   /**
    * Converts the internal settings to an [ImageSegmenter.ImageSegmenterOptions].

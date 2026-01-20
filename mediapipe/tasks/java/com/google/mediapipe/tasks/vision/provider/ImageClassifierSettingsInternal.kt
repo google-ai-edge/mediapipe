@@ -35,16 +35,15 @@ import com.google.mediapipe.tasks.vision.imageclassifier.ImageClassifierResult
  * @property errorListener The listener to receive errors.
  */
 data class ImageClassifierSettingsInternal
-@JvmOverloads
 constructor(
-  val displayNamesLocale: String = "en",
-  val maxResults: Int = -1,
-  val scoreThreshold: Float = 0.0f,
-  val categoryAllowlist: List<String> = emptyList(),
-  val categoryDenylist: List<String> = emptyList(),
-  val runningMode: RunningMode = RunningMode.IMAGE,
-  val resultListener: OutputHandler.ResultListener<ImageClassifierResult, MPImage>? = null,
-  val errorListener: ErrorListener? = null,
+  val displayNamesLocale: String,
+  val maxResults: Int,
+  val scoreThreshold: Float,
+  val categoryAllowlist: List<String>,
+  val categoryDenylist: List<String>,
+  val runningMode: RunningMode,
+  val resultListener: OutputHandler.ResultListener<ImageClassifierResult, MPImage>?,
+  val errorListener: ErrorListener?,
 ) {
   /**
    * Converts the internal settings to an [ImageClassifier.ImageClassifierOptions].

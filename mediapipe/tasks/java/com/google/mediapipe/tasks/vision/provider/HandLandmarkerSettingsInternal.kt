@@ -37,15 +37,14 @@ import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
  * @property errorListener The listener to receive errors.
  */
 data class HandLandmarkerSettingsInternal
-@JvmOverloads
 constructor(
-  val minHandDetectionConfidence: Float = 0.5f,
-  val minHandPresenceConfidence: Float = 0.5f,
-  val minTrackingConfidence: Float = 0.5f,
-  val numHands: Int = 1,
-  val runningMode: RunningMode = RunningMode.IMAGE,
-  val resultListener: OutputHandler.ResultListener<HandLandmarkerResult, MPImage>? = null,
-  val errorListener: ErrorListener? = null,
+  val minHandDetectionConfidence: Float,
+  val minHandPresenceConfidence: Float,
+  val minTrackingConfidence: Float,
+  val numHands: Int,
+  val runningMode: RunningMode,
+  val resultListener: OutputHandler.ResultListener<HandLandmarkerResult, MPImage>?,
+  val errorListener: ErrorListener?,
 ) {
   /**
    * Converts the internal settings to a [HandLandmarker.HandLandmarkerOptions].

@@ -25,7 +25,6 @@ object ImageEmbedderSpec {
     ClassName("com.google.mediapipe.tasks.vision.imageembedder", "ImageEmbedderResult")
 
   /** Gets the [ParameterSpec] list for [ImageEmbedderSettingsInternal]. */
-  @JvmStatic
   fun getParams(): List<ParameterSpec> =
     listOf(
       ParameterSpec.builder("l2Normalize", Boolean::class)

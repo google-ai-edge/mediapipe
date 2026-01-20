@@ -24,7 +24,6 @@ object ImageClassifierSpec {
     ClassName("com.google.mediapipe.tasks.vision.imageclassifier", "ImageClassifierResult")
 
   /** Gets the [ParameterSpec] list for [ImageClassifierSettingsInternal]. */
-  @JvmStatic
   fun getParams(): List<ParameterSpec> =
     ClassifierSpec.getParams() +
       listOf(

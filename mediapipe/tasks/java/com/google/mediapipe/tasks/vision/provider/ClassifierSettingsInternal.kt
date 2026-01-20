@@ -26,13 +26,12 @@ import com.google.mediapipe.tasks.components.processors.ClassifierOptions
  * @property categoryDenylist A list of denied category names.
  */
 data class ClassifierSettingsInternal
-@JvmOverloads
 constructor(
-  val displayNamesLocale: String = "en",
-  val maxResults: Int = -1,
-  val scoreThreshold: Float = 0.0f,
-  val categoryAllowlist: List<String> = emptyList(),
-  val categoryDenylist: List<String> = emptyList(),
+  val displayNamesLocale: String,
+  val maxResults: Int,
+  val scoreThreshold: Float,
+  val categoryAllowlist: List<String>,
+  val categoryDenylist: List<String>,
 ) {
   fun toClassifierOptions(): ClassifierOptions =
     ClassifierOptions.builder()

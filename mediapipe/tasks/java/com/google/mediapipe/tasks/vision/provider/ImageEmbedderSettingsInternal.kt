@@ -32,13 +32,12 @@ import com.google.mediapipe.tasks.vision.imageembedder.ImageEmbedderResult
  * @property errorListener The listener to receive errors.
  */
 data class ImageEmbedderSettingsInternal
-@JvmOverloads
 constructor(
-  val l2Normalize: Boolean = false,
-  val quantize: Boolean = false,
-  val runningMode: RunningMode = RunningMode.IMAGE,
-  val resultListener: OutputHandler.ResultListener<ImageEmbedderResult, MPImage>? = null,
-  val errorListener: ErrorListener? = null,
+  val l2Normalize: Boolean,
+  val quantize: Boolean,
+  val runningMode: RunningMode,
+  val resultListener: OutputHandler.ResultListener<ImageEmbedderResult, MPImage>?,
+  val errorListener: ErrorListener?,
 ) {
   /**
    * Converts the internal settings to an [ImageEmbedder.ImageEmbedderOptions].

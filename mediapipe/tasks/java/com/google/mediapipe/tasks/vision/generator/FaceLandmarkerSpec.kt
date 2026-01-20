@@ -24,7 +24,6 @@ object FaceLandmarkerSpec {
     ClassName("com.google.mediapipe.tasks.vision.facelandmarker", "FaceLandmarkerResult")
 
   /** Gets the [ParameterSpec] list for [FaceLandmarkerSettingsInternal]. */
-  @JvmStatic
   fun getParams(): List<ParameterSpec> =
     listOf(
       ParameterSpec.builder("minFaceDetectionConfidence", Float::class)

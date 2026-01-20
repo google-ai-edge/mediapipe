@@ -24,7 +24,6 @@ object FaceDetectorSpec {
     ClassName("com.google.mediapipe.tasks.vision.facedetector", "FaceDetectorResult")
 
   /** Gets the [ParameterSpec] list for FaceDetectorSettingsInternal. */
-  @JvmStatic
   fun getParams(): List<ParameterSpec> =
     listOf(
       ParameterSpec.builder("minDetectionConfidence", Float::class)
