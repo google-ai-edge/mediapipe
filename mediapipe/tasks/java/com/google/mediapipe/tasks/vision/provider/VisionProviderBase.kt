@@ -36,6 +36,7 @@ import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarker
 import com.google.mediapipe.tasks.vision.gesturerecognizer.GestureRecognizer
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
 import com.google.mediapipe.tasks.vision.imageclassifier.ImageClassifier
+import com.google.mediapipe.tasks.vision.imageembedder.ImageEmbedder
 import com.google.mediapipe.tasks.vision.imagesegmenter.ImageSegmenter
 import java.io.File
 import java.io.FileInputStream
@@ -587,6 +588,39 @@ constructor(
     model: VisionModel,
     settings: ImageClassifierSettingsInternal,
   ): Future<ImageClassifier> = createTask(model, settings, ::createImageClassifierImplHelper)
+
+  /**
+   * Creates an [ImageEmbedder] instance.
+   *
+   * @param context The application context.
+   * @param modelBuffer The [ByteBuffer] containings the model.
+   * @param dispatchLibraryPath The optional path to the NPU dispatch library. If null, no NPU
+   *   delegate is used.
+   * @param settings The internal settings for the [ImageEmbedder].
+   * @return An [ImageEmbedder] instance.
+   */
+  private fun createImageEmbedderImplHelper(
+    context: Context,
+    modelBuffer: ByteBuffer,
+    dispatchLibraryPath: String?,
+    settings: ImageEmbedderSettingsInternal,
+  ): ImageEmbedder {
+    val baseOptions = createBaseOptions(modelBuffer, dispatchLibraryPath).build()
+    val options = settings.toOptions(baseOptions)
+    return ImageEmbedder.createFromOptions(context, options)
+  }
+
+  /**
+   * Creates an [ImageEmbedder] asynchronously.
+   *
+   * @param model The [VisionModel] to use.
+   * @param settings The internal settings for [ImageEmbedder].
+   * @return A [Future] that completes with the created [ImageEmbedder].
+   */
+  protected fun createImageEmbedderImpl(
+    model: VisionModel,
+    settings: ImageEmbedderSettingsInternal,
+  ): Future<ImageEmbedder> = createTask(model, settings, ::createImageEmbedderImplHelper)
 
   /**
    * Creates a [HandLandmarker] instance.

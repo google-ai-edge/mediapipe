@@ -50,6 +50,7 @@ kt_android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:gesturerecognizer",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:handlandmarker",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:imageclassifier",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:imageembedder",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:imagesegmenter",
         "//third_party/java/androidx/activity",
         "@maven//:androidx_annotation_annotation",
