@@ -15,7 +15,10 @@
 # Placeholder for internal Python strict library and test compatibility macro.
 # Placeholder for internal Python strict test compatibility macro.
 
-package(default_visibility = ["//third_party/py/ai_edge_torch/google/model_conversion:__subpackages__"])
+package(default_visibility = [
+    "//third_party/py/ai_edge_torch/google/model_conversion:__subpackages__",
+    "//third_party/py/litert_torch/google/model_conversion:__subpackages__",
+])
 
 py_library(
     name = "llm_bundler_metadata_options_c",
