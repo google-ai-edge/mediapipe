@@ -17,22 +17,24 @@
 #include <functional>
 #include <memory>
 #include <queue>
+#include <string>
 #include <utility>
 #include <vector>
 
+#include "absl/base/thread_annotations.h"
 #include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+#include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_graph.h"
 #include "mediapipe/framework/executor.h"
-#include "mediapipe/framework/port.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/timestamp.h"
-#include "mediapipe/framework/tool/status_util.h"
+#include "mediapipe/framework/scheduler_queue.h"
+#include "mediapipe/framework/scheduler_shared.h"
 
 namespace mediapipe {
 
@@ -329,12 +331,12 @@ void Scheduler::ClosedAllGraphInputStreams() {
 // handle the pending calculator context. For example, the caller should dispose
 // of the calculator context and put it into a pending calculator context
 // container.
-void Scheduler::ScheduleNodeIfNotThrottled(
-    CalculatorNode* node, CalculatorContext* calculator_context) {
+void Scheduler::ScheduleNodeIfNotThrottled(CalculatorNode* node,
+                                           CalculatorContext* cc) {
   ABSL_DCHECK(node);
-  ABSL_DCHECK(calculator_context);
+  ABSL_DCHECK(cc);
   if (!graph_->IsNodeThrottled(node->Id())) {
-    node->GetSchedulerQueue()->AddNode(node, calculator_context);
+    node->GetSchedulerQueue()->AddNode(node, cc);
   }
 }
 

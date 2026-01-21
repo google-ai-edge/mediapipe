@@ -80,5 +80,7 @@ mobilebert_classifier_spec = functools.partial(
 class SupportedModels(enum.Enum):
   """Predefined text classifier model specs supported by Model Maker."""
 
-  AVERAGE_WORD_EMBEDDING_CLASSIFIER = average_word_embedding_classifier_spec
-  MOBILEBERT_CLASSIFIER = mobilebert_classifier_spec
+  AVERAGE_WORD_EMBEDDING_CLASSIFIER = enum.member(
+      average_word_embedding_classifier_spec
+  )
+  MOBILEBERT_CLASSIFIER = enum.member(mobilebert_classifier_spec)

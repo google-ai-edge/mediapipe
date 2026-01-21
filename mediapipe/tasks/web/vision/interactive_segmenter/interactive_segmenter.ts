@@ -19,6 +19,11 @@ import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {ImageSegmenterGraphOptions as ImageSegmenterGraphOptionsProto} from '../../../../tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options_pb';
 import {SegmenterOptions as SegmenterOptionsProto} from '../../../../tasks/cc/vision/image_segmenter/proto/segmenter_options_pb';
+import {
+  Point as PointProto,
+  RegionOfInterest as RegionOfInterestProto,
+  Scribble as ScribbleProto,
+} from '../../../../tasks/cc/vision/interactive_segmenter/proto/region_of_interest_pb';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {MPMask} from '../../../../tasks/web/vision/core/mask';
@@ -27,11 +32,6 @@ import {
   VisionGraphRunner,
   VisionTaskRunner,
 } from '../../../../tasks/web/vision/core/vision_task_runner';
-import {Color as ColorProto} from '../../../../util/color_pb';
-import {
-  RenderAnnotation as RenderAnnotationProto,
-  RenderData as RenderDataProto,
-} from '../../../../util/render_data_pb';
 import {
   ImageSource,
   WasmModule,
@@ -51,7 +51,7 @@ const ROI_IN_STREAM = 'roi_in';
 const CONFIDENCE_MASKS_STREAM = 'confidence_masks';
 const CATEGORY_MASK_STREAM = 'category_mask';
 const QUALITY_SCORES_STREAM = 'quality_scores';
-const IMAGEA_SEGMENTER_GRAPH =
+const IMAGE_SEGMENTER_GRAPH =
   'mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph';
 const DEFAULT_OUTPUT_CATEGORY_MASK = false;
 const DEFAULT_OUTPUT_CONFIDENCE_MASKS = true;
@@ -359,7 +359,7 @@ export class InteractiveSegmenter extends VisionTaskRunner {
     );
 
     const segmenterNode = new CalculatorGraphConfig.Node();
-    segmenterNode.setCalculator(IMAGEA_SEGMENTER_GRAPH);
+    segmenterNode.setCalculator(IMAGE_SEGMENTER_GRAPH);
     segmenterNode.addInputStream('IMAGE:' + IMAGE_IN_STREAM);
     segmenterNode.addInputStream('ROI:' + ROI_IN_STREAM);
     segmenterNode.addInputStream('NORM_RECT:' + NORM_RECT_IN_STREAM);
@@ -445,44 +445,37 @@ export class InteractiveSegmenter extends VisionTaskRunner {
   }
 
   /**
-   * Converts the user-facing RegionOfInterest message to the RenderData proto
-   * and sends it to the graph
+   * Converts the user-facing RegionOfInterest message to the RegionOfInterest
+   * proto and sends it to the graph
    */
   private processRenderData(roi: RegionOfInterest, timestamp: number): void {
-    const renderData = new RenderDataProto();
-
-    const renderAnnotation = new RenderAnnotationProto();
-    const color = new ColorProto();
-    color.setR(255);
-    renderAnnotation.setColor(color);
+    const regionOfInterest = new RegionOfInterestProto();
 
     if (roi.keypoint && roi.scribble) {
       throw new Error('Cannot provide both keypoint and scribble.');
     } else if (roi.keypoint) {
-      const point = new RenderAnnotationProto.Point();
+      const point = new PointProto();
       point.setNormalized(true);
       point.setX(roi.keypoint.x);
       point.setY(roi.keypoint.y);
-      renderAnnotation.setPoint(point);
+      regionOfInterest.setKeypoint(point);
     } else if (roi.scribble) {
-      const scribble = new RenderAnnotationProto.Scribble();
+      const scribble = new ScribbleProto();
       for (const coord of roi.scribble) {
-        const point = new RenderAnnotationProto.Point();
+        const point = new PointProto();
         point.setNormalized(true);
         point.setX(coord.x);
         point.setY(coord.y);
         scribble.addPoint(point);
       }
-      renderAnnotation.setScribble(scribble);
+      regionOfInterest.setScribble(scribble);
     } else {
       throw new Error('Must provide either a keypoint or a scribble.');
     }
 
-    renderData.addRenderAnnotations(renderAnnotation);
-
     this.graphRunner.addProtoToStream(
-      renderData.serializeBinary(),
-      'mediapipe.RenderData',
+      regionOfInterest.serializeBinary(),
+      'mediapipe.tasks.vision.interactive_segmenter.proto.RegionOfInterest',
       ROI_IN_STREAM,
       timestamp,
     );

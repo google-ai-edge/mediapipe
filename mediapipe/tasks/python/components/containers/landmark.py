@@ -16,11 +16,8 @@
 import dataclasses
 from typing import Optional
 
-from mediapipe.framework.formats import landmark_pb2
+from mediapipe.tasks.python.components.containers import landmark_c as landmark_c_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-
-_LandmarkProto = landmark_pb2.Landmark
-_NormalizedLandmarkProto = landmark_pb2.NormalizedLandmark
 
 
 @dataclasses.dataclass
@@ -42,6 +39,7 @@ class Landmark:
       of whether landmark is present on the scene (located within scene bounds).
       Depending on the model, presence value is either a result of sigmoid or an
       argument of sigmoid function to get landmark presence probability.
+    name: The name of the landmark.
   """
 
   x: Optional[float] = None
@@ -49,27 +47,20 @@ class Landmark:
   z: Optional[float] = None
   visibility: Optional[float] = None
   presence: Optional[float] = None
-
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _LandmarkProto:
-    """Generates a Landmark protobuf object."""
-    return _LandmarkProto(
-        x=self.x,
-        y=self.y,
-        z=self.z,
-        visibility=self.visibility,
-        presence=self.presence)
+  name: Optional[str] = None
 
   @classmethod
   @doc_controls.do_not_generate_docs
-  def create_from_pb2(cls, pb2_obj: _LandmarkProto) -> 'Landmark':
-    """Creates a `Landmark` object from the given protobuf object."""
+  def from_ctypes(cls, c_struct: landmark_c_module.LandmarkC) -> 'Landmark':
+    """Creates a `Landmark` object from the given ctypes struct."""
     return Landmark(
-        x=pb2_obj.x,
-        y=pb2_obj.y,
-        z=pb2_obj.z,
-        visibility=pb2_obj.visibility,
-        presence=pb2_obj.presence)
+        x=c_struct.x,
+        y=c_struct.y,
+        z=c_struct.z,
+        visibility=c_struct.visibility if c_struct.has_visibility else None,
+        presence=c_struct.presence if c_struct.has_presence else None,
+        name=c_struct.name.decode('utf-8') if c_struct.name else None,
+    )
 
 
 @dataclasses.dataclass
@@ -91,6 +82,7 @@ class NormalizedLandmark:
       of whether landmark is present on the scene (located within scene bounds).
       Depending on the model, presence value is either a result of sigmoid or an
       argument of sigmoid function to get landmark presence probability.
+    name: The name of the landmark.
   """
 
   x: Optional[float] = None
@@ -98,25 +90,19 @@ class NormalizedLandmark:
   z: Optional[float] = None
   visibility: Optional[float] = None
   presence: Optional[float] = None
-
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _NormalizedLandmarkProto:
-    """Generates a NormalizedLandmark protobuf object."""
-    return _NormalizedLandmarkProto(
-        x=self.x,
-        y=self.y,
-        z=self.z,
-        visibility=self.visibility,
-        presence=self.presence)
+  name: Optional[str] = None
 
   @classmethod
   @doc_controls.do_not_generate_docs
-  def create_from_pb2(
-      cls, pb2_obj: _NormalizedLandmarkProto) -> 'NormalizedLandmark':
-    """Creates a `NormalizedLandmark` object from the given protobuf object."""
+  def from_ctypes(
+      cls, c_struct: landmark_c_module.NormalizedLandmarkC
+  ) -> 'NormalizedLandmark':
+    """Creates a `NormalizedLandmark` object from the given ctypes struct."""
     return NormalizedLandmark(
-        x=pb2_obj.x,
-        y=pb2_obj.y,
-        z=pb2_obj.z,
-        visibility=pb2_obj.visibility,
-        presence=pb2_obj.presence)
+        x=c_struct.x,
+        y=c_struct.y,
+        z=c_struct.z,
+        visibility=c_struct.visibility if c_struct.has_visibility else None,
+        presence=c_struct.presence if c_struct.has_presence else None,
+        name=c_struct.name.decode('utf-8') if c_struct.name else None,
+    )

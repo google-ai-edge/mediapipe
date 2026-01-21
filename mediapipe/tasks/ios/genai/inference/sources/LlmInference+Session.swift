@@ -58,6 +58,7 @@ extension LlmInference {
         lora_path: nil,
         include_token_cost_calculator: true,
         enable_vision_modality: options.enableVisionModality,
+        enable_audio_modality: options.enableAudioModality,
         prompt_templates: nil)
 
       /// If `loraPath` is != nil, modify session config with the corresponding C string and invoke
@@ -117,6 +118,10 @@ extension LlmInference {
 
     @objc public func addImage(image: CGImage) throws {
       try llmSessionRunner.addImage(image: image)
+    }
+
+    @objc public func addAudio(audio: Data) throws {
+      try llmSessionRunner.addAudio(audio: audio)
     }
 
     /// Generates a response based on the previously added query chunks synchronously. Use
@@ -280,6 +285,12 @@ extension LlmInference {
       return llmResponse.humanReadableString(stripLeadingWhitespaces: stripLeadingWhitespaces)
     }
 
+    /// Cancels the current asynchronous response generation.
+    /// - Throws: An error if cancelling the current asynchronous response generation fails.
+    public func cancelGenerateResponseAsync() throws {
+      try llmSessionRunner.cancelGenerateResponseAsync()
+    }
+
   }
 }
 
@@ -310,6 +321,9 @@ extension LlmInference.Session {
 
     /// Whether to enable vision modality.
     @objc public var enableVisionModality: Bool = false
+
+    /// Whether to enable audio modality.
+    @objc public var enableAudioModality: Bool = false
   }
 }
 

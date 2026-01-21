@@ -28,7 +28,7 @@
 
 namespace mediapipe {
 
-void MediaPipe_RegisterTfLiteOpResolver(tflite::MutableOpResolver *resolver) {
+void MediaPipe_RegisterTfLiteOpResolver(tflite::MutableOpResolver* resolver) {
   ABSL_CHECK(resolver != nullptr);
   resolver->AddCustom("MaxPoolingWithArgmax2D",
                       tflite_operations::RegisterMaxPoolingWithArgmax2D());

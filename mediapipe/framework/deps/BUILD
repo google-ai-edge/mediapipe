@@ -16,6 +16,8 @@
 #   The dependencies of mediapipe.
 
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
@@ -123,6 +125,7 @@ cc_library(
     deps = [
         "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
@@ -335,6 +338,9 @@ cc_library(
     hdrs = [
         "re2.h",
     ],
+    deps = [
+        "@com_google_absl//absl/base",
+    ],
 )
 
 cc_library(
@@ -345,8 +351,10 @@ cc_library(
     # Use this library through "mediapipe/framework/port:gtest_main".
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
-        "//mediapipe/framework/port:statusor",
+        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -369,6 +377,8 @@ cc_library(
     deps = [
         ":status",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
@@ -517,4 +527,10 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "@com_google_absl//absl/synchronization",
     ],
+)
+
+cc_library(
+    name = "compile_time_string",
+    hdrs = ["compile_time_string.h"],
+    deps = ["@com_google_absl//absl/strings:string_view"],
 )

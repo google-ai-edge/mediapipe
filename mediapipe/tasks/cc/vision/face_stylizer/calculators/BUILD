@@ -13,19 +13,19 @@
 # limitations under the License.
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//mediapipe/framework:more_selects.bzl", "more_selects")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 config_setting(
     name = "disable_gpu",
     define_values = {
         "MEDIAPIPE_DISABLE_GPU": "1",
     },
-    visibility = ["//visibility:public"],
 )
 
 more_selects.config_setting_negation(
@@ -148,17 +148,4 @@ cc_library(
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl/converters:util",
         ],
     }),
-)
-
-cc_library(
-    name = "strip_rotation_calculator",
-    srcs = ["strip_rotation_calculator.cc"],
-    deps = [
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/api2:node",
-        "//mediapipe/framework/api2:packet",
-        "//mediapipe/framework/api2:port",
-        "//mediapipe/framework/formats:rect_cc_proto",
-    ],
-    alwayslink = 1,
 )

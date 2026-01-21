@@ -69,20 +69,20 @@ class SimpleSemaphore {
 
   // Acquires the semaphore by certain amount.
   void Acquire(uint32_t amount) {
-    mutex_.Lock();
+    mutex_.lock();
     while (count_ < amount) {
       cond_.Wait(&mutex_);
     }
     count_ -= amount;
-    mutex_.Unlock();
+    mutex_.unlock();
   }
 
   // Releases the semaphore by certain amount.
   void Release(uint32_t amount) {
-    mutex_.Lock();
+    mutex_.lock();
     count_ += amount;
     cond_.SignalAll();
-    mutex_.Unlock();
+    mutex_.unlock();
   }
 
  private:
@@ -341,7 +341,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
     }
 
     {
-      absl::WriterMutexLock l(&mutex_);
+      absl::WriterMutexLock l(mutex_);
       inference_state_ = std::unique_ptr<InferenceState>();
     }
 
@@ -400,7 +400,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) override {
     std::unique_ptr<InferenceState> inference_state_to_process;
     {
-      absl::WriterMutexLock l(&mutex_);
+      absl::WriterMutexLock l(mutex_);
       if (inference_state_ == nullptr) {
         inference_state_ = CreateInferenceState(cc);
       }
@@ -466,7 +466,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
   absl::Status Close(CalculatorContext* cc) override {
     std::unique_ptr<InferenceState> inference_state_to_process = nullptr;
     {
-      absl::WriterMutexLock l(&mutex_);
+      absl::WriterMutexLock l(mutex_);
       if (cc->GraphStatus().ok() && inference_state_ != nullptr &&
           !inference_state_->batch_timestamps_.empty()) {
         inference_state_to_process = std::move(inference_state_);
@@ -578,7 +578,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
           outputs[pos]);
     }
 
-    absl::WriterMutexLock l(&mutex_);
+    absl::WriterMutexLock l(mutex_);
     // Set that we want to split on each index of the 0th dimension.
     std::vector<int64_t> split_vector(
         options_.pad_to_batch_size()

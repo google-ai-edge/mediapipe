@@ -66,7 +66,7 @@ ABSL_FLAG(std::optional<uint32_t>, random_seed, std::nullopt,
 ABSL_FLAG(
     std::optional<std::string>, prompt, std::nullopt,
     "The input prompt to be fed to the model. The flag is not relevant when "
-    "running the benchmark, i.e. the input_token_limits value is set.");
+    "running the benchmark, i.e. the input_token_limit value is set.");
 
 namespace {
 

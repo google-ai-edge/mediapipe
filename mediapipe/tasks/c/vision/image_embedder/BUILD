@@ -12,33 +12,51 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 licenses(["notice"])
+
+IMAGE_EMBEDDER_DEPS = [
+    "@com_google_absl//absl/log:absl_log",
+    "@com_google_absl//absl/status",
+    "@com_google_absl//absl/log:absl_check",
+    "@com_google_absl//absl/status:statusor",
+    "//mediapipe/framework/formats:image",
+    "//mediapipe/tasks/c/components/containers:embedding_result",
+    "//mediapipe/tasks/c/components/containers:embedding_result_converter",
+    "//mediapipe/tasks/c/components/processors:embedder_options",
+    "//mediapipe/tasks/c/components/processors:embedder_options_converter",
+    "//mediapipe/tasks/c/core:base_options",
+    "//mediapipe/tasks/c/core:base_options_converter",
+    "//mediapipe/tasks/c/core:mp_status",
+    "//mediapipe/tasks/c/core:mp_status_converter",
+    "//mediapipe/tasks/c/core:common",
+    "//mediapipe/tasks/c/vision/core:image",
+    "//mediapipe/tasks/c/vision/core:image_frame_util",
+    "//mediapipe/tasks/c/vision/core:image_processing_options",
+    "//mediapipe/tasks/c/vision/core:image_processing_options_converter",
+    "//mediapipe/tasks/cc/components/containers:embedding_result",
+    "//mediapipe/tasks/cc/vision/core:image_processing_options",
+    "//mediapipe/tasks/cc/vision/core:running_mode",
+    "//mediapipe/tasks/cc/vision/image_embedder",
+]
 
 cc_library(
     name = "image_embedder_lib",
     srcs = ["image_embedder.cc"],
     hdrs = ["image_embedder.h"],
     visibility = ["//visibility:public"],
-    deps = [
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/tasks/c/components/containers:embedding_result",
-        "//mediapipe/tasks/c/components/containers:embedding_result_converter",
-        "//mediapipe/tasks/c/components/processors:embedder_options",
-        "//mediapipe/tasks/c/components/processors:embedder_options_converter",
-        "//mediapipe/tasks/c/core:base_options",
-        "//mediapipe/tasks/c/core:base_options_converter",
-        "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/cc/components/containers:embedding_result",
-        "//mediapipe/tasks/cc/vision/core:running_mode",
-        "//mediapipe/tasks/cc/vision/image_embedder",
-        "//mediapipe/tasks/cc/vision/utils:image_utils",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-    ],
+    deps = IMAGE_EMBEDDER_DEPS,
+)
+
+cc_library(
+    name = "image_embedder_c_lib",
+    srcs = ["image_embedder.cc"],
+    hdrs = ["image_embedder.h"],
+    visibility = ["//mediapipe/tasks/c:__subpackages__"],
+    deps = IMAGE_EMBEDDER_DEPS,
     alwayslink = 1,
 )
 
@@ -56,13 +74,17 @@ cc_test(
     deps = [
         ":image_embedder_lib",
         "//mediapipe/framework/deps:file_path",
-        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/port:gtest",
         "//mediapipe/tasks/c/components/containers:embedding_result",
-        "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/cc/vision/utils:image_utils",
+        "//mediapipe/tasks/c/core:common",
+        "//mediapipe/tasks/c/core:mp_status",
+        "//mediapipe/tasks/c/vision/core:image",
+        "//mediapipe/tasks/c/vision/core:image_processing_options",
+        "//mediapipe/tasks/c/vision/core:image_test_util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
     ],
 )

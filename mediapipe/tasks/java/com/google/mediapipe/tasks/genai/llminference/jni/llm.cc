@@ -114,6 +114,13 @@ LlmModelSettings ParseModelSettings(void* bytes, int size) {
       output.preferred_backend = kLlmPreferredBackendDefault;
       break;
   }
+  if (input.has_audio_model_settings()) {
+    output.enable_audio_modality = true;
+    output.max_audio_sequence_length =
+        input.audio_model_settings().max_audio_sequence_length();
+  } else {
+    output.enable_audio_modality = false;
+  }
   return output;
 }
 
@@ -134,6 +141,7 @@ LlmSessionConfig ParseSessionConfig(void* bytes, int size) {
           ? input.graph_config().include_token_cost_calculator()
           : kDefaultIncludeTokenCostCalculator;
   output.enable_vision_modality = input.graph_config().enable_vision_modality();
+  output.enable_audio_modality = input.graph_config().enable_audio_modality();
   if (input.has_prompt_templates()) {
     LlmPromptTemplates* prompt_templates = new LlmPromptTemplates();
     if (input.prompt_templates().has_user_prefix()) {
@@ -349,6 +357,34 @@ JNIEXPORT void JNICALL JNI_METHOD(nativeAddImage)(JNIEnv* env, jclass thiz,
   }
 }
 
+JNIEXPORT void JNICALL JNI_METHOD(nativeAddAudio)(JNIEnv* env, jclass thiz,
+                                                  jlong session_handle,
+                                                  jbyteArray audio_bytes) {
+  char* error_msg = nullptr;
+
+  jbyte* audio_elements_ptr = env->GetByteArrayElements(audio_bytes, nullptr);
+  if (audio_elements_ptr == nullptr) {
+    ThrowIfError(env, absl::InternalError(
+                          "Failed to get byte array elements for audio."));
+    return;
+  }
+  jsize array_len_bytes = env->GetArrayLength(audio_bytes);
+
+  int error_code = LlmInferenceEngine_Session_AddAudio(
+      reinterpret_cast<void*>(session_handle),
+      reinterpret_cast<const char*>(audio_elements_ptr),
+      static_cast<int>(array_len_bytes), &error_msg);
+
+  env->ReleaseByteArrayElements(audio_bytes, audio_elements_ptr,
+                                JNI_ABORT);  // Release after C API call
+
+  if (error_code) {
+    ThrowIfError(env, absl::InternalError(absl::StrCat(
+                          "Failed to add audio spectrum: %s", error_msg)));
+    free(error_msg);
+  }
+}
+
 JNIEXPORT jbyteArray JNICALL
 JNI_METHOD(nativePredictSync)(JNIEnv* env, jclass thiz, jlong session_handle) {
   char* error_msg = nullptr;
@@ -392,6 +428,20 @@ JNIEXPORT void JNICALL JNI_METHOD(nativePredictAsync)(JNIEnv* env, jclass thiz,
   if (error_code) {
     ThrowIfError(env, absl::InternalError(absl::StrCat(
                           "Failed to predict async: %s", error_msg)));
+    free(error_msg);
+  }
+}
+
+JNIEXPORT void JNICALL JNI_METHOD(nativePendingProcessCancellation)(
+    JNIEnv* env, jclass, jlong session_handle) {
+  char* error_msg = nullptr;
+  int error_code = LlmInferenceEngine_Session_PendingProcessCancellation(
+      reinterpret_cast<LlmInferenceEngine_Session*>(session_handle),
+      &error_msg);
+  if (error_code) {
+    ThrowIfError(env,
+                 absl::InternalError(absl::StrCat(
+                     "Failed to cancel pending processes: %s", error_msg)));
     free(error_msg);
   }
 }

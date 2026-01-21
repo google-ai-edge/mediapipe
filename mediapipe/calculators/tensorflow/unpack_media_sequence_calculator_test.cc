@@ -20,7 +20,6 @@
 
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
-#include "absl/strings/numbers.h"
 #include "mediapipe/calculators/core/packet_resampler_calculator.pb.h"
 #include "mediapipe/calculators/tensorflow/unpack_media_sequence_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -28,7 +27,6 @@
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/rectangle.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/util/audio_decoder.pb.h"
 #include "mediapipe/util/sequence/media_sequence.h"
@@ -44,6 +42,9 @@ constexpr char kImageFrameRateTag[] = "IMAGE_FRAME_RATE";
 constexpr char kEncodedMediaStartTimestampTag[] =
     "ENCODED_MEDIA_START_TIMESTAMP";
 constexpr char kEncodedMediaTag[] = "ENCODED_MEDIA";
+constexpr char kEncodedAudioStartTimestampTag[] =
+    "ENCODED_MEDIA_START_TIMESTAMP_AUDIO";
+constexpr char kEncodedAudioTag[] = "ENCODED_MEDIA_AUDIO";
 constexpr char kResamplerOptionsTag[] = "RESAMPLER_OPTIONS";
 constexpr char kSandboxedDecoderOptionsTag[] = "SANDBOXED_DECODER_OPTIONS";
 constexpr char kDecoderOptionsTag[] = "DECODER_OPTIONS";
@@ -101,6 +102,10 @@ class UnpackMediaSequenceCalculatorTest : public ::testing::Test {
     mpms::SetClipEncodedMediaBytes(encoded_video_data_, sequence_.get());
     mpms::SetClipEncodedMediaStartTimestamp(encoded_video_start_timestamp_,
                                             sequence_.get());
+    mpms::SetClipEncodedMediaBytes("AUDIO", encoded_audio_data_,
+                                   sequence_.get());
+    mpms::SetClipEncodedMediaStartTimestamp(
+        "AUDIO", encoded_audio_start_timestamp_, sequence_.get());
     mpms::SetImageFrameRate(image_frame_rate_, sequence_.get());
   }
 
@@ -112,6 +117,8 @@ class UnpackMediaSequenceCalculatorTest : public ::testing::Test {
   const int64_t end_time_ = 5000000;
   const std::string encoded_video_data_ = "encoded_video_data";
   const int64_t encoded_video_start_timestamp_ = 1000000;
+  const std::string encoded_audio_data_ = "encoded_audio_data";
+  const int64_t encoded_audio_start_timestamp_ = 2000000;
   const double image_frame_rate_ = 1.0;
 };
 

@@ -13,40 +13,121 @@
 # limitations under the License.
 """MediaPipe face detector task."""
 
+import ctypes
 import dataclasses
-from typing import Callable, Mapping, Optional
+from typing import Callable, Optional, Tuple
 
-from mediapipe.python import packet_creator
-from mediapipe.python import packet_getter
-from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.python._framework_bindings import packet as packet_module
-from mediapipe.tasks.cc.vision.face_detector.proto import face_detector_graph_options_pb2
 from mediapipe.tasks.python.components.containers import detections as detections_module
+from mediapipe.tasks.python.components.containers import detections_c as detections_c_module
+from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_module
-from mediapipe.tasks.python.core import task_info as task_info_module
+from mediapipe.tasks.python.core import base_options_c as base_options_c_module
+from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
+from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-from mediapipe.tasks.python.vision.core import base_vision_task_api
+from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
+from mediapipe.tasks.python.vision.core import image_processing_options_c as image_processing_options_c_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
 FaceDetectorResult = detections_module.DetectionResult
-_BaseOptions = base_options_module.BaseOptions
-_FaceDetectorGraphOptionsProto = (
-    face_detector_graph_options_pb2.FaceDetectorGraphOptions
-)
 _RunningMode = running_mode_module.VisionTaskRunningMode
+_BaseOptions = base_options_module.BaseOptions
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_TaskInfo = task_info_module.TaskInfo
 
-_DETECTIONS_OUT_STREAM_NAME = 'detections'
-_DETECTIONS_TAG = 'DETECTIONS'
-_NORM_RECT_STREAM_NAME = 'norm_rect_in'
-_NORM_RECT_TAG = 'NORM_RECT'
-_IMAGE_IN_STREAM_NAME = 'image_in'
-_IMAGE_OUT_STREAM_NAME = 'image_out'
-_IMAGE_TAG = 'IMAGE'
-_TASK_GRAPH_NAME = 'mediapipe.tasks.vision.face_detector.FaceDetectorGraph'
-_MICRO_SECONDS_PER_MILLISECOND = 1000
+
+_C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
+    None,
+    ctypes.c_int32,  # MpStatus
+    ctypes.POINTER(detections_c_module.DetectionResultC),
+    ctypes.c_void_p,  # MpImage
+    ctypes.c_int64,  # timestamp_ms
+)
+
+
+class FaceDetectorOptionsC(ctypes.Structure):
+  """C types for FaceDetectorOptions."""
+  _fields_ = [
+      ('base_options', base_options_c_module.BaseOptionsC),
+      ('running_mode', ctypes.c_int),
+      ('min_detection_confidence', ctypes.c_float),
+      ('min_suppression_threshold', ctypes.c_float),
+      ('result_callback', _C_TYPES_RESULT_CALLBACK),
+  ]
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_c_options(
+      cls,
+      base_options: base_options_c_module.BaseOptionsC,
+      running_mode: _RunningMode,
+      min_detection_confidence: float,
+      min_suppression_threshold: float,
+      result_callback: _C_TYPES_RESULT_CALLBACK,
+  ) -> 'FaceDetectorOptionsC':
+    """Creates a FaceDetectorOptionsC object from the given options."""
+    return cls(
+        base_options=base_options,
+        running_mode=running_mode.ctype,
+        min_detection_confidence=min_detection_confidence,
+        min_suppression_threshold=min_suppression_threshold,
+        result_callback=result_callback,
+    )
+
+
+_CTYPES_SIGNATURES = (
+    mediapipe_c_utils.CStatusFunction(
+        'MpFaceDetectorCreate',
+        (
+            ctypes.POINTER(FaceDetectorOptionsC),
+            ctypes.POINTER(ctypes.c_void_p),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpFaceDetectorDetectImage',
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_module.ImageProcessingOptionsC
+            ),
+            ctypes.POINTER(detections_c_module.DetectionResultC),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpFaceDetectorDetectForVideo',
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_module.ImageProcessingOptionsC
+            ),
+            ctypes.c_int64,
+            ctypes.POINTER(detections_c_module.DetectionResultC),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpFaceDetectorDetectAsync',
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_module.ImageProcessingOptionsC
+            ),
+            ctypes.c_int64,
+        ),
+    ),
+    mediapipe_c_utils.CFunction(
+        'MpFaceDetectorCloseResult',
+        [ctypes.POINTER(detections_c_module.DetectionResultC)],
+        None,
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpFaceDetectorClose',
+        (ctypes.c_void_p,),
+    ),
+)
 
 
 @dataclasses.dataclass
@@ -79,22 +160,34 @@ class FaceDetectorOptions:
       ]
   ] = None
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _FaceDetectorGraphOptionsProto:
-    """Generates an FaceDetectorOptions protobuf object."""
-    base_options_proto = self.base_options.to_pb2()
-    base_options_proto.use_stream_mode = (
-        False if self.running_mode == _RunningMode.IMAGE else True
-    )
-    return _FaceDetectorGraphOptionsProto(
-        base_options=base_options_proto,
-        min_detection_confidence=self.min_detection_confidence,
-        min_suppression_threshold=self.min_suppression_threshold,
-    )
 
-
-class FaceDetector(base_vision_task_api.BaseVisionTaskApi):
+class FaceDetector:
   """Class that performs face detection on images."""
+
+  _lib: serial_dispatcher.SerialDispatcher
+  _handle: ctypes.c_void_p
+  _dispatcher: async_result_dispatcher.AsyncResultDispatcher
+  _async_callback: _C_TYPES_RESULT_CALLBACK
+
+  def __init__(
+      self,
+      lib: serial_dispatcher.SerialDispatcher,
+      handle: ctypes.c_void_p,
+      dispatcher: async_result_dispatcher.AsyncResultDispatcher,
+      async_callback: _C_TYPES_RESULT_CALLBACK,
+  ):
+    """Initializes the face detector.
+
+    Args:
+      lib: The dispatch library to use for the face detector.
+      handle: The C pointer to the face detector.
+      dispatcher: The async result handler for the face detector.
+      async_callback: The c callback for the face detector.
+    """
+    self._lib = lib
+    self._handle = handle
+    self._dispatcher = dispatcher
+    self._async_callback = async_callback
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'FaceDetector':
@@ -136,55 +229,47 @@ class FaceDetector(base_vision_task_api.BaseVisionTaskApi):
         `FaceDetectorOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-
-    def packets_callback(output_packets: Mapping[str, packet_module.Packet]):
-      if output_packets[_IMAGE_OUT_STREAM_NAME].is_empty():
-        return
-      image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
-      if output_packets[_DETECTIONS_OUT_STREAM_NAME].is_empty():
-        empty_packet = output_packets[_DETECTIONS_OUT_STREAM_NAME]
-        options.result_callback(
-            FaceDetectorResult([]),
-            image,
-            empty_packet.timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
-        )
-        return
-      detection_proto_list = packet_getter.get_proto_list(
-          output_packets[_DETECTIONS_OUT_STREAM_NAME]
-      )
-      detection_result = detections_module.DetectionResult(
-          [
-              detections_module.Detection.create_from_pb2(result)
-              for result in detection_proto_list
-          ]
-      )
-
-      timestamp = output_packets[_IMAGE_OUT_STREAM_NAME].timestamp
-      options.result_callback(
-          detection_result,
-          image,
-          timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
-      )
-
-    task_info = _TaskInfo(
-        task_graph=_TASK_GRAPH_NAME,
-        input_streams=[
-            ':'.join([_IMAGE_TAG, _IMAGE_IN_STREAM_NAME]),
-            ':'.join([_NORM_RECT_TAG, _NORM_RECT_STREAM_NAME]),
-        ],
-        output_streams=[
-            ':'.join([_DETECTIONS_TAG, _DETECTIONS_OUT_STREAM_NAME]),
-            ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME]),
-        ],
-        task_options=options,
+    running_mode_module.validate_running_mode(
+        options.running_mode, options.result_callback
     )
-    return cls(
-        task_info.generate_graph_config(
-            enable_flow_limiting=options.running_mode
-            == _RunningMode.LIVE_STREAM
-        ),
-        options.running_mode,
-        packets_callback if options.result_callback else None,
+
+    lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
+
+    def convert_result(
+        c_result_ptr: ctypes.POINTER(detections_c_module.DetectionResultC),
+        image_ptr: ctypes.c_void_p,
+        timestamp_ms: int,
+    ) -> Tuple[FaceDetectorResult, image_module.Image, int]:
+      c_result = c_result_ptr[0]
+      py_result = FaceDetectorResult.from_ctypes(c_result)
+      py_image = image_module.Image.create_from_ctypes(image_ptr)
+      return (py_result, py_image, timestamp_ms)
+
+    dispatcher = async_result_dispatcher.AsyncResultDispatcher(
+        converter=convert_result
+    )
+    c_callback = dispatcher.wrap_callback(
+        options.result_callback, _C_TYPES_RESULT_CALLBACK
+    )
+    ctypes_options = FaceDetectorOptionsC.from_c_options(
+        base_options=options.base_options.to_ctypes(),
+        running_mode=options.running_mode,
+        min_detection_confidence=options.min_detection_confidence,
+        min_suppression_threshold=options.min_suppression_threshold,
+        result_callback=c_callback,
+    )
+
+    detector_handle = ctypes.c_void_p()
+    lib.MpFaceDetectorCreate(
+        ctypes.byref(ctypes_options),
+        ctypes.byref(detector_handle),
+    )
+
+    return FaceDetector(
+        lib=lib,
+        handle=detector_handle,
+        dispatcher=dispatcher,
+        async_callback=c_callback,
     )
 
   def detect(
@@ -211,26 +296,24 @@ class FaceDetector(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If face detection failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    c_result = detections_c_module.DetectionResultC()
+
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    output_packets = self._process_image_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ),
-    })
-    if output_packets[_DETECTIONS_OUT_STREAM_NAME].is_empty():
-      return FaceDetectorResult([])
-    detection_proto_list = packet_getter.get_proto_list(
-        output_packets[_DETECTIONS_OUT_STREAM_NAME]
+    self._lib.MpFaceDetectorDetectImage(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        ctypes.byref(c_result),
     )
-    return detections_module.DetectionResult(
-        [
-            detections_module.Detection.create_from_pb2(result)
-            for result in detection_proto_list
-        ]
-    )
+
+    py_result = FaceDetectorResult.from_ctypes(c_result)
+    self._lib.MpFaceDetectorCloseResult(ctypes.byref(c_result))
+    return py_result
 
   def detect_for_video(
       self,
@@ -260,28 +343,25 @@ class FaceDetector(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If face detection failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    c_result = detections_c_module.DetectionResultC()
+
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    output_packets = self._process_video_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
-            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
-        ),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-    })
-    if output_packets[_DETECTIONS_OUT_STREAM_NAME].is_empty():
-      return FaceDetectorResult([])
-    detection_proto_list = packet_getter.get_proto_list(
-        output_packets[_DETECTIONS_OUT_STREAM_NAME]
+    self._lib.MpFaceDetectorDetectForVideo(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        timestamp_ms,
+        ctypes.byref(c_result),
     )
-    return detections_module.DetectionResult(
-        [
-            detections_module.Detection.create_from_pb2(result)
-            for result in detection_proto_list
-        ]
-    )
+
+    py_result = FaceDetectorResult.from_ctypes(c_result)
+    self._lib.MpFaceDetectorCloseResult(ctypes.byref(c_result))
+    return py_result
 
   def detect_async(
       self,
@@ -318,15 +398,48 @@ class FaceDetector(base_vision_task_api.BaseVisionTaskApi):
     Raises:
       ValueError: If the current input timestamp is smaller than what the face
         detector has already processed.
+      RuntimeError: If face detection failed to initialize.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
+    c_image = image._image_ptr  # pylint: disable=protected-access
+
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    self._send_live_stream_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
-            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
-        ),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-    })
+    self._lib.MpFaceDetectorDetectAsync(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        timestamp_ms,
+    )
+
+  def close(self):
+    """Shuts down the MediaPipe task instance."""
+    if not self._handle:
+      return
+    self._lib.MpFaceDetectorClose(self._handle)
+    self._handle = None
+    self._dispatcher.close()
+    self._lib.close()
+
+  def __enter__(self):
+    """Returns `self` upon entering the runtime context."""
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    """Shuts down the MediaPipe task instance on exit of the context manager.
+
+    Args:
+      exc_type: The exception type that caused the exit.
+      exc_value: The exception value that caused the exit.
+      traceback: The exception traceback that caused the exit.
+
+    Raises:
+      RuntimeError: If the MediaPipe FaceDetector task failed to close.
+    """
+    del exc_type, exc_value, traceback  # Unused.
+    self.close()
+
+  def __del__(self):
+    self.close()

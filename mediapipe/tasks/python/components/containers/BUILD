@@ -21,14 +21,23 @@ licenses(["notice"])
 py_library(
     name = "audio_data",
     srcs = ["audio_data.py"],
-    deps = ["@mediapipe_pip_deps_numpy//:pkg"],
+    deps = [
+        ":audio_data_c",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)
+
+py_library(
+    name = "audio_data_c",
+    srcs = ["audio_data_c.py"],
 )
 
 py_library(
     name = "bounding_box",
     srcs = ["bounding_box.py"],
     deps = [
-        "//mediapipe/framework/formats:location_data_py_pb2",
+        ":rect_c",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
@@ -37,31 +46,37 @@ py_library(
     name = "rect",
     srcs = ["rect.py"],
     deps = [
-        "//mediapipe/framework/formats:rect_py_pb2",
+        ":rect_c",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
+)
+
+py_library(
+    name = "rect_c",
+    srcs = ["rect_c.py"],
 )
 
 py_library(
     name = "landmark",
     srcs = ["landmark.py"],
     deps = [
-        "//mediapipe/framework/formats:landmark_py_pb2",
+        ":landmark_c",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
+)
+
+py_library(
+    name = "landmark_c",
+    srcs = ["landmark_c.py"],
 )
 
 py_library(
     name = "landmark_detection_result",
     srcs = ["landmark_detection_result.py"],
     deps = [
+        ":category",
         ":landmark",
         ":rect",
-        "//mediapipe/framework/formats:classification_py_pb2",
-        "//mediapipe/framework/formats:landmark_py_pb2",
-        "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",
-        "//mediapipe/tasks/python/components/containers:category",
-        "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
 
@@ -69,18 +84,28 @@ py_library(
     name = "category",
     srcs = ["category.py"],
     deps = [
-        "//mediapipe/framework/formats:classification_py_pb2",
+        ":category_c",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
+)
+
+py_library(
+    name = "category_c",
+    srcs = ["category_c.py"],
 )
 
 py_library(
     name = "keypoint",
     srcs = ["keypoint.py"],
     deps = [
-        "//mediapipe/framework/formats:location_data_py_pb2",
+        ":keypoint_c",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
+)
+
+py_library(
+    name = "keypoint_c",
+    srcs = ["keypoint_c.py"],
 )
 
 py_library(
@@ -89,10 +114,20 @@ py_library(
     deps = [
         ":bounding_box",
         ":category",
+        ":category_c",
+        ":detections_c",
         ":keypoint",
-        "//mediapipe/framework/formats:detection_py_pb2",
-        "//mediapipe/framework/formats:location_data_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
+    name = "detections_c",
+    srcs = ["detections_c.py"],
+    deps = [
+        ":category_c",
+        ":keypoint_c",
+        ":rect_c",
     ],
 )
 
@@ -101,8 +136,16 @@ py_library(
     srcs = ["classification_result.py"],
     deps = [
         ":category",
-        "//mediapipe/framework/formats:classification_py_pb2",
-        "//mediapipe/tasks/cc/components/containers/proto:classifications_py_pb2",
+        ":classification_result_c",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
+    name = "classification_result_c",
+    srcs = ["classification_result_c.py"],
+    deps = [
+        ":category_c",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
@@ -111,7 +154,21 @@ py_library(
     name = "embedding_result",
     srcs = ["embedding_result.py"],
     deps = [
-        "//mediapipe/tasks/cc/components/containers/proto:embeddings_py_pb2",
+        ":embedding_result_c",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)
+
+py_library(
+    name = "embedding_result_c",
+    srcs = ["embedding_result_c.py"],
+)
+
+py_library(
+    name = "matrix_c",
+    srcs = ["matrix_c.py"],
+    deps = [
         "//mediapipe/tasks/python/core:optional_dependencies",
         "@mediapipe_pip_deps_numpy//:pkg",
     ],

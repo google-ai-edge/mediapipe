@@ -14,6 +14,8 @@
 #
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("//mediapipe/framework:mediapipe_register_type.bzl", "mediapipe_register_type")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
@@ -120,7 +122,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/log:absl_check",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -632,8 +634,12 @@ cc_library(
             ":ahwb_gpu_releaser",
             ":hardware_buffer",
             ":hardware_buffer_pool",
+            ":shared_fd",
             ":tensor_ahwb_usage",
             ":unique_fd",
+            "//mediapipe/util:sync_wait",
+            "@com_google_absl//absl/base:log_severity",
+            "@com_google_absl//absl/time",
         ],
         ":android_link_native_window": [
             ":ahwb_gpu_releaser",
@@ -652,12 +658,26 @@ cc_library(
     }),
 )
 
+cc_library(
+    name = "tensor_fd_finished_func",
+    srcs = ["tensor_fd_finished_func.cc"],
+    hdrs = ["tensor_fd_finished_func.h"],
+    deps = [
+        ":shared_fd",
+        ":unique_fd",
+        "//mediapipe/util:sync_wait",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/time",
+    ],
+)
+
 cc_test(
     name = "tensor_test",
     srcs = ["tensor_test.cc"],
     tags = [
-        "noasan",
-        "not_run:arm",  # TODO: Remove noasan tag when SwiftShader supports sanitizers
+        "angle",
+        "not_run:arm",
+        "requires-gpu-nvidia",
     ],
     deps = [
         ":tensor",

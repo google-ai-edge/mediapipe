@@ -1,0 +1,24 @@
+diff --git a/cc/defs.bzl b/cc/defs.bzl
+index 4fccdcc625..751626819b 100644
+--- a/cc/defs.bzl
++++ b/cc/defs.bzl
+@@ -13,7 +13,6 @@
+ # limitations under the License.
+ """Starlark rules for building C++ projects."""
+ 
+-load("@com_google_protobuf//bazel:cc_proto_library.bzl", _cc_proto_library = "cc_proto_library")
+ load("//cc:cc_binary.bzl", _cc_binary = "cc_binary")
+ load("//cc:cc_import.bzl", _cc_import = "cc_import")
+ load("//cc:cc_library.bzl", _cc_library = "cc_library")
+@@ -46,9 +45,9 @@ objc_import = _objc_import
+ # DEPRECATED: use rule from com_google_protobuf repository
+ def cc_proto_library(**kwargs):
+     if "deprecation" not in kwargs:
+-        _cc_proto_library(deprecation = "Use cc_proto_library from com_google_protobuf", **kwargs)
++        native.cc_proto_library(deprecation = "Use cc_proto_library from com_google_protobuf", **kwargs)
+     else:
+-        _cc_proto_library(**kwargs)
++        native.cc_proto_library(**kwargs)
+ 
+ # Toolchain rules
+ 

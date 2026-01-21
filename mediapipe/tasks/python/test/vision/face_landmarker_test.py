@@ -14,6 +14,7 @@
 """Tests for face landmarker."""
 
 import enum
+import threading
 from unittest import mock
 
 from absl.testing import absltest
@@ -23,23 +24,17 @@ import numpy as np
 from google.protobuf import text_format
 from mediapipe.framework.formats import classification_pb2
 from mediapipe.framework.formats import landmark_pb2
-from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.tasks.python.components.containers import category as category_module
-from mediapipe.tasks.python.components.containers import landmark as landmark_module
-from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
+from mediapipe.tasks.python.test.vision import proto_utils
 from mediapipe.tasks.python.vision import face_landmarker
+from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
 
 FaceLandmarkerResult = face_landmarker.FaceLandmarkerResult
 _BaseOptions = base_options_module.BaseOptions
-_Category = category_module.Category
-_Rect = rect_module.Rect
-_Landmark = landmark_module.Landmark
-_NormalizedLandmark = landmark_module.NormalizedLandmark
 _Image = image_module.Image
 _FaceLandmarker = face_landmarker.FaceLandmarker
 _FaceLandmarkerOptions = face_landmarker.FaceLandmarkerOptions
@@ -62,9 +57,9 @@ def _get_expected_face_landmarks(file_path: str):
   with open(proto_file_path, 'rb') as f:
     proto = landmark_pb2.NormalizedLandmarkList()
     text_format.Parse(f.read(), proto)
-    face_landmarks = []
-    for landmark in proto.landmark:
-      face_landmarks.append(_NormalizedLandmark.create_from_pb2(landmark))
+    face_landmarks = proto_utils.create_normalized_landmark_list_from_proto(
+        proto
+    )
   face_landmarks_results.append(face_landmarks)
   return face_landmarks_results
 
@@ -75,18 +70,9 @@ def _get_expected_face_blendshapes(file_path: str):
   with open(proto_file_path, 'rb') as f:
     proto = classification_pb2.ClassificationList()
     text_format.Parse(f.read(), proto)
-    face_blendshapes_categories = []
-    face_blendshapes_classifications = classification_pb2.ClassificationList()
-    face_blendshapes_classifications.MergeFrom(proto)
-    for face_blendshapes in face_blendshapes_classifications.classification:
-      face_blendshapes_categories.append(
-          category_module.Category(
-              index=face_blendshapes.index,
-              score=face_blendshapes.score,
-              display_name=face_blendshapes.display_name,
-              category_name=face_blendshapes.label,
-          )
-      )
+    face_blendshapes_categories = (
+        proto_utils.create_classification_list_from_proto(proto)
+    )
   face_blendshapes_results.append(face_blendshapes_categories)
   return face_blendshapes_results
 
@@ -176,13 +162,15 @@ class FaceLandmarkerTest(parameterized.TestCase):
   def test_create_from_options_fails_with_invalid_model_path(self):
     # Invalid empty model path.
     with self.assertRaisesRegex(
-        RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'
+        FileNotFoundError,
+        'Unable to open file at /path/to/invalid/model.tflite',
     ):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite'
       )
       options = _FaceLandmarkerOptions(base_options=base_options)
-      _FaceLandmarker.create_from_options(options)
+      landmarker = _FaceLandmarker.create_from_options(options)
+      landmarker.close()
 
   def test_create_from_options_succeeds_with_valid_model_content(self):
     # Creates with options containing model content successfully.
@@ -191,6 +179,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
       options = _FaceLandmarkerOptions(base_options=base_options)
       landmarker = _FaceLandmarker.create_from_options(options)
       self.assertIsInstance(landmarker, _FaceLandmarker)
+      landmarker.close()
 
   @parameterized.parameters(
       (
@@ -370,6 +359,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
       ):
         landmarker.detect_for_video(self.test_image, 0)
 
+  # TODO: Change the errors to ValueError once we return MpStatus.
   def test_calling_detect_async_in_image_mode(self):
     options = _FaceLandmarkerOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
@@ -521,30 +511,39 @@ class FaceLandmarkerTest(parameterized.TestCase):
     test_image = _Image.create_from_file(
         test_utils.get_test_data_path(image_path)
     )
+    callback_event = threading.Event()
+    callback_exception: None | Exception = None
     observed_timestamp_ms = -1
 
     def check_result(
         result: FaceLandmarkerResult, output_image: _Image, timestamp_ms: int
     ):
-      # Comparing results.
-      if expected_face_landmarks is not None:
-        self._expect_landmarks_correct(
-            result.face_landmarks, expected_face_landmarks
+      nonlocal callback_event, callback_exception, observed_timestamp_ms
+
+      try:
+        # Comparing results.
+        if expected_face_landmarks is not None:
+          self._expect_landmarks_correct(
+              result.face_landmarks, expected_face_landmarks
+          )
+        if expected_face_blendshapes is not None:
+          self._expect_blendshapes_correct(
+              result.face_blendshapes, expected_face_blendshapes
+          )
+        if expected_facial_transformation_matrixes is not None:
+          self._expect_facial_transformation_matrixes_correct(
+              result.facial_transformation_matrixes,
+              expected_facial_transformation_matrixes,
+          )
+        self.assertTrue(
+            np.array_equal(output_image.numpy_view(), test_image.numpy_view())
         )
-      if expected_face_blendshapes is not None:
-        self._expect_blendshapes_correct(
-            result.face_blendshapes, expected_face_blendshapes
-        )
-      if expected_facial_transformation_matrixes is not None:
-        self._expect_facial_transformation_matrixes_correct(
-            result.facial_transformation_matrixes,
-            expected_facial_transformation_matrixes,
-        )
-      self.assertTrue(
-          np.array_equal(output_image.numpy_view(), test_image.numpy_view())
-      )
-      self.assertLess(observed_timestamp_ms, timestamp_ms)
-      self.observed_timestamp_ms = timestamp_ms
+        self.assertLess(observed_timestamp_ms, timestamp_ms)
+        observed_timestamp_ms = timestamp_ms
+      except AssertionError as e:
+        callback_exception = e
+      finally:
+        callback_event.set()
 
     model_path = test_utils.get_test_data_path(model_name)
     options = _FaceLandmarkerOptions(
@@ -559,6 +558,10 @@ class FaceLandmarkerTest(parameterized.TestCase):
     with _FaceLandmarker.create_from_options(options) as landmarker:
       for timestamp in range(0, 300, 30):
         landmarker.detect_async(test_image, timestamp)
+        callback_event.wait(timeout=3.0)
+        if callback_exception is not None:
+          raise callback_exception
+        callback_event.clear()
 
 
 if __name__ == '__main__':

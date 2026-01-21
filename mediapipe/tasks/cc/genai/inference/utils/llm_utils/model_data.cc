@@ -41,8 +41,8 @@
 #include "mediapipe/tasks/cc/genai/inference/proto/llm_params.pb.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/metadata_utils.h"
 // clang-format off
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h",
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h",
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h"
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h"
 // clang-format on
 #include "tensorflow/lite/model_builder.h"
 #include "tensorflow/lite/schema/schema_generated.h"

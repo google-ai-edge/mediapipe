@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = [
-    "//mediapipe/tasks:internal",
-])
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -22,7 +23,6 @@ cc_library(
     name = "pose_landmarker",
     srcs = ["pose_landmarker.cc"],
     hdrs = ["pose_landmarker.h"],
-    visibility = ["//visibility:public"],
     deps = [
         ":pose_landmarker_graph",
         ":pose_landmarker_result",
@@ -154,7 +154,6 @@ cc_library(
     name = "pose_landmarker_result",
     srcs = ["pose_landmarker_result.cc"],
     hdrs = ["pose_landmarker_result.h"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:landmark_cc_proto",

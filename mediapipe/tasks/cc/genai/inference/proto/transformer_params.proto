@@ -20,6 +20,7 @@ option java_package = "com.google.odml.infra.proto";
 option java_outer_classname = "TransformerParametersProto";
 
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
+// Next ID: 47
 message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
@@ -89,6 +90,8 @@ message TransformerParameters {
     // LAYERNORM stands for Layer Normalization, see
     // https://arxiv.org/pdf/1607.06450v1.pdf for details.
     LAYER_NORM = 3;
+    // RMSNORM without scale. This is equivalent to setting all scales to 0.
+    RMS_NORM_NO_SCALE = 4;
   }
 
   message FeedForwardParameters {
@@ -164,9 +167,16 @@ message TransformerParameters {
     // If set, enables separate q and k weighted norms in the attention layer
     // (used for Gemma3).
     optional bool qk_norm = 7;
+
+    // For architectures which support qk norms being either weighted or
+    // unweighted, (like Gemma 3n), setting this determines which of those is
+    // the case.
+    optional bool qk_norm_has_scale = 8;
   }
 
   SelfAttentionParameters self_attention_parameters = 16;
+
+  reserved 39;
 
   reserved 17;
   // Whether to skip absolute positional embeddings. If the value is false, then
@@ -189,6 +199,8 @@ message TransformerParameters {
   // If set, will override the default RoPE wavelength to be the specified
   // value for all global layers (but will not change local attention layers).
   optional float global_rope_wavelength = 32;
+
+  reserved 40;
 
   // Audio parameters
   // Describes where to interleave residual adapters with transformer layers.
@@ -228,4 +240,61 @@ message TransformerParameters {
   int32 audio_vocab_extra_dim = 30;
   // Dimension which we embed audio hard tokens to.
   int32 audio_input_embedding_dim = 31;
+  // Whether to apply dual normalization (before and after projection) to audio
+  // soft and hard tokens. This is used in Nano V3 models. If not defined, it
+  // will default to True for backward compatibility.
+  optional bool audio_dual_norm_soft_and_hard_tokens = 46;
+
+  // Laurel configs.
+  message LaurelConfig {
+    // The embedding w/ shape [B, L, d_model] will first be projected to
+    // [B, L, laurel_rank] and then projected to [B, L, d_model].
+    optional int32 laurel_rank = 1;
+    // The scale shift for the post laurel rms normalization. The default value
+    // is 0.0f, which means no scale shift.
+    optional float post_laurel_norm_scale_shift = 2;
+  }
+  optional LaurelConfig laurel_config = 34;
+
+  // The start layer of the kv cache that is shared from the previous layers.
+  optional int32 kv_cache_shared_start_layer = 35;
+
+  // Gemma3 models are trained from bf16, so they are susceptible to overflow
+  // when run in environments without native bf16 support (especially for larger
+  // models, like 4B+). Thus, to ensure correct behavior for these models when
+  // not forcing fp32 precision, we allow for applying a special workaround.
+  optional bool gemma3_bfloat16_fix = 36;
+
+  // Altup configs.
+  message AltupConfig {
+    // The number of modalities for altup.
+    optional int32 altup_num_modalities = 1;
+    // The index of the active modality for altup.
+    optional int32 altup_active_idx = 2;
+    // Number of inputs.
+    optional int32 altup_num_inputs = 3;
+  }
+  optional AltupConfig altup_config = 37;
+
+  // Activation sparsity stddev multiplier. It depends on the specified sparsity
+  // probability. In particular, stddev_multiplier = cdf^{-1}(sparsity_prob),
+  // where cdf is the cumulative distribution function of the Gaussian
+  // distribution.
+  optional float activation_sparsity_stddev_multiplier = 38;
+
+  // Whether to apply SRQ. If true, depending on the model setup, static
+  // range quantization will be applied to the corresponding layers, e.g.,
+  // attn_vec_einsum, kv_einsum, q_einsum, mlp/gating_einsum and mlp/linear.
+  optional bool apply_srq = 41;
+
+  // Params for skipping layers, used by the submodel.
+  optional int32 layer_skip_start = 42;
+  optional int32 num_layers_skipped = 43;
+
+  // The factor to use when scaling for matformer. A factor of 2 means the layer
+  // will be cut in half.
+  optional int32 matform_factor = 44;
+
+  // Whether to scale all LoRA weights by their inverse rank.
+  optional bool scale_lora = 45;
 }

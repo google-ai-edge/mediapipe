@@ -48,6 +48,10 @@ message LlmSessionConfig {
     // Whether to configure the graph to include the vision modality. Only one
     // of enable_vision_modality or enable_audio_modality can be true currently.
     optional bool enable_vision_modality = 2;
+
+    // Whether to configure the graph to include the audio modality. Only one
+    // of enable_vision_modality or enable_audio_modality can be true currently.
+    optional bool enable_audio_modality = 3;
   }
 
   // Parameters to customize the graph.
@@ -81,7 +85,7 @@ message LlmSessionConfig {
 }
 
 // Configurable model parameters for creating an LLM inference engine.
-// Next ID: 13
+// Next ID: 14
 message LlmModelSettings {
   // Path to the tflite model file.
   string model_path = 1;
@@ -131,6 +135,14 @@ message LlmModelSettings {
   }
 
   optional VisionModelSettings vision_model_settings = 9;
+
+  // A container for audio model related settings.
+  message AudioModelSettings {
+    // Maximum audio sequence length for the audio encoder. If greater than 0,
+    // it will override the default value provided by the model.
+    optional int64 max_audio_sequence_length = 1;
+  }
+  optional AudioModelSettings audio_model_settings = 13;
 
   // Reserved for audio model settings.
   reserved 10;

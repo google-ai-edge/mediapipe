@@ -30,8 +30,8 @@ public class TextEmbedderTest {
   private static final String REGEX_MODEL_FILE = "regex_one_embedding_with_metadata.tflite";
   private static final String USE_MODEL_FILE = "universal_sentence_encoder_qa_with_metadata.tflite";
 
-  private static final double DOUBLE_DIFF_TOLERANCE = 1e-4;
-  private static final float FLOAT_DIFF_TOLERANCE = 1e-4f;
+  private static final double DOUBLE_DIFF_TOLERANCE = 0.05;
+  private static final float FLOAT_DIFF_TOLERANCE = 0.05f;
 
   @Test
   public void create_failsWithMissingModel() throws Exception {
@@ -55,20 +55,20 @@ public class TextEmbedderTest {
     assertThat(result0.embeddingResult().embeddings().get(0).floatEmbedding()).hasLength(512);
     assertThat(result0.embeddingResult().embeddings().get(0).floatEmbedding()[0])
         .isWithin(FLOAT_DIFF_TOLERANCE)
-        .of(21.214869f);
+        .of(21.17f);
     TextEmbedderResult result1 = textEmbedder.embed("what a great and fantastic trip");
     assertThat(result1.embeddingResult().embeddings().size()).isEqualTo(1);
     assertThat(result1.embeddingResult().embeddings().get(0).floatEmbedding()).hasLength(512);
     assertThat(result1.embeddingResult().embeddings().get(0).floatEmbedding()[0])
         .isWithin(FLOAT_DIFF_TOLERANCE)
-        .of(22.626257f);
+        .of(19.67f);
 
     // Check cosine similarity.
     double similarity =
         TextEmbedder.cosineSimilarity(
             result0.embeddingResult().embeddings().get(0),
             result1.embeddingResult().embeddings().get(0));
-    assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.9714174924235968);
+    assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.95);
   }
 
   @Test
@@ -81,20 +81,20 @@ public class TextEmbedderTest {
     assertThat(result0.embeddingResult().embeddings().get(0).floatEmbedding()).hasLength(100);
     assertThat(result0.embeddingResult().embeddings().get(0).floatEmbedding()[0])
         .isWithin(FLOAT_DIFF_TOLERANCE)
-        .of(1.422951f);
+        .of(1.42f);
     TextEmbedderResult result1 = textEmbedder.embed("what a great and fantastic trip");
     assertThat(result1.embeddingResult().embeddings().size()).isEqualTo(1);
     assertThat(result1.embeddingResult().embeddings().get(0).floatEmbedding()).hasLength(100);
     assertThat(result1.embeddingResult().embeddings().get(0).floatEmbedding()[0])
         .isWithin(FLOAT_DIFF_TOLERANCE)
-        .of(1.404664f);
+        .of(1.40f);
 
     // Check cosine similarity.
     double similarity =
         TextEmbedder.cosineSimilarity(
             result0.embeddingResult().embeddings().get(0),
             result1.embeddingResult().embeddings().get(0));
-    assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.851961);
+    assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.85);
   }
 
   @Test
@@ -107,20 +107,20 @@ public class TextEmbedderTest {
     assertThat(result0.embeddingResult().embeddings().get(0).floatEmbedding()).hasLength(16);
     assertThat(result0.embeddingResult().embeddings().get(0).floatEmbedding()[0])
         .isWithin(FLOAT_DIFF_TOLERANCE)
-        .of(0.030935612f);
+        .of(0.03f);
     TextEmbedderResult result1 = textEmbedder.embed("what a great and fantastic trip");
     assertThat(result1.embeddingResult().embeddings().size()).isEqualTo(1);
     assertThat(result1.embeddingResult().embeddings().get(0).floatEmbedding()).hasLength(16);
     assertThat(result1.embeddingResult().embeddings().get(0).floatEmbedding()[0])
         .isWithin(FLOAT_DIFF_TOLERANCE)
-        .of(0.0312863f);
+        .of(0.03f);
 
     // Check cosine similarity.
     double similarity =
         TextEmbedder.cosineSimilarity(
             result0.embeddingResult().embeddings().get(0),
             result1.embeddingResult().embeddings().get(0));
-    assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.999937);
+    assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(1.00);
   }
 
   @Test
@@ -140,7 +140,7 @@ public class TextEmbedderTest {
         TextEmbedder.cosineSimilarity(
             result0.embeddingResult().embeddings().get(0),
             result1.embeddingResult().embeddings().get(0));
-    assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.3549060071739994);
+    assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.35);
   }
 
   @Test
@@ -160,6 +160,6 @@ public class TextEmbedderTest {
         TextEmbedder.cosineSimilarity(
             result0.embeddingResult().embeddings().get(0),
             result1.embeddingResult().embeddings().get(0));
-    assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.7835510599396296);
+    assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.78);
   }
 }

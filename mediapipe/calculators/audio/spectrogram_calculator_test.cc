@@ -195,7 +195,9 @@ class SpectrogramCalculatorTest
     // We expect the output header to have num_samples and packet_rate unset.
     expected_header.clear_num_samples();
     expected_header.clear_packet_rate();
-    if (!options_.allow_multichannel_input()) {
+    if (!options_.allow_multichannel_input() ||
+        options_.output_layout() ==
+            SpectrogramCalculatorOptions::SPECTROGRAM_CHANNELS_IN_ROWS) {
       ExpectOutputHeaderEquals(expected_header);
     } else {
       EXPECT_THAT(output()
@@ -225,8 +227,8 @@ class SpectrogramCalculatorTest
       const double expected_timestamp_seconds =
           packet_timestamp_offset_seconds +
           cumulative_output_frames * frame_step_seconds;
-      const int64_t expected_timestamp_ticks =
-          expected_timestamp_seconds * Timestamp::kTimestampUnitsPerSecond;
+      const int64_t expected_timestamp_ticks = round(
+          expected_timestamp_seconds * Timestamp::kTimestampUnitsPerSecond);
       EXPECT_EQ(expected_timestamp_ticks, packet.Timestamp().Value());
       // Accept the timestamp of the first packet as the baseline for checking
       // the remainder.
@@ -238,22 +240,28 @@ class SpectrogramCalculatorTest
       EXPECT_TRUE(time_series_util::LogWarningIfTimestampIsInconsistent(
           packet.Timestamp(), initial_timestamp, cumulative_output_frames,
           expected_header.sample_rate()));
-      if (!options_.allow_multichannel_input()) {
-        if (options_.output_type() == SpectrogramCalculatorOptions::COMPLEX) {
-          const Eigen::MatrixXcf& matrix = packet.Get<Eigen::MatrixXcf>();
-          cumulative_output_frames += matrix.cols();
-        } else {
-          const Matrix& matrix = packet.Get<Matrix>();
-          cumulative_output_frames += matrix.cols();
-        }
+      if (options_.output_layout() ==
+          SpectrogramCalculatorOptions::SPECTROGRAM_CHANNELS_IN_ROWS) {
+        // each packet is a one frame with all channels.
+        cumulative_output_frames += 1;
       } else {
-        if (options_.output_type() == SpectrogramCalculatorOptions::COMPLEX) {
-          const Eigen::MatrixXcf& matrix =
-              packet.Get<std::vector<Eigen::MatrixXcf>>().at(0);
-          cumulative_output_frames += matrix.cols();
+        if (!options_.allow_multichannel_input()) {
+          if (options_.output_type() == SpectrogramCalculatorOptions::COMPLEX) {
+            const Eigen::MatrixXcf& matrix = packet.Get<Eigen::MatrixXcf>();
+            cumulative_output_frames += matrix.cols();
+          } else {
+            const Matrix& matrix = packet.Get<Matrix>();
+            cumulative_output_frames += matrix.cols();
+          }
         } else {
-          const Matrix& matrix = packet.Get<std::vector<Matrix>>().at(0);
-          cumulative_output_frames += matrix.cols();
+          if (options_.output_type() == SpectrogramCalculatorOptions::COMPLEX) {
+            const Eigen::MatrixXcf& matrix =
+                packet.Get<std::vector<Eigen::MatrixXcf>>().at(0);
+            cumulative_output_frames += matrix.cols();
+          } else {
+            const Matrix& matrix = packet.Get<std::vector<Matrix>>().at(0);
+            cumulative_output_frames += matrix.cols();
+          }
         }
       }
     }
@@ -289,6 +297,16 @@ class SpectrogramCalculatorTest
 
     int actual_largest_bin;
     matrix.col(frame).maxCoeff(&actual_largest_bin);
+    EXPECT_EQ(actual_largest_bin, target_bin);
+  }
+
+  void CheckPeakFrequencyInMatrixWithChannel(const Matrix& matrix, int channel,
+                                             float frequency) {
+    const int fft_size = audio_dsp::NextPowerOfTwo(frame_duration_samples_);
+    const int target_bin =
+        round((frequency / input_sample_rate_) * static_cast<float>(fft_size));
+    int actual_largest_bin;
+    matrix.row(channel).maxCoeff(&actual_largest_bin);
     EXPECT_EQ(actual_largest_bin, target_bin);
   }
 
@@ -952,6 +970,68 @@ TEST_F(SpectrogramCalculatorTest,
   for (int i = 1; i < num_input_channels_; i++) {
     EXPECT_EQ(spectrogram_num_rows, spectrograms[i].rows());
     EXPECT_EQ(spectrogram_num_cols, spectrograms[i].cols());
+  }
+}
+
+TEST_F(SpectrogramCalculatorTest,
+       SingleChannelOutputFramesWithAllChannelsIsRight) {
+  const std::vector<int> input_packet_sizes = {460};
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_pad_final_packet(false);
+  options_.set_allow_multichannel_input(false);
+  options_.set_output_layout(
+      SpectrogramCalculatorOptions::SPECTROGRAM_CHANNELS_IN_ROWS);
+  num_input_channels_ = 1;
+  InitializeGraph();
+  FillInputHeader();
+  const float tone_frequency_hz = 440.0;
+  SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz);
+  MP_ASSERT_OK(Run());
+
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(output().packets.size(), 10);
+  for (int i = 0; i < output().packets.size(); ++i) {
+    const Matrix& matrix = output().packets[i].Get<Matrix>();
+    EXPECT_EQ(matrix.rows(), num_input_channels_);
+    for (int channel_idx = 0; channel_idx < num_input_channels_;
+         ++channel_idx) {
+      CheckPeakFrequencyInMatrixWithChannel(matrix, channel_idx,
+                                            tone_frequency_hz);
+    }
+  }
+}
+
+TEST_F(SpectrogramCalculatorTest,
+       MultichannelOutputFramesWithAllChannelsIsRight) {
+  const std::vector<int> input_packet_sizes = {460};
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_pad_final_packet(false);
+  options_.set_allow_multichannel_input(true);
+  options_.set_output_layout(
+      SpectrogramCalculatorOptions::SPECTROGRAM_CHANNELS_IN_ROWS);
+  num_input_channels_ = 3;
+  InitializeGraph();
+  FillInputHeader();
+  const float tone_frequency_hz = 440.0;
+  SetupMultichannelInputPackets(input_packet_sizes, tone_frequency_hz);
+  MP_ASSERT_OK(Run());
+
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(output().packets.size(), 10);
+  for (int i = 0; i < output().packets.size(); ++i) {
+    const Matrix& matrix = output().packets[i].Get<Matrix>();
+    EXPECT_EQ(matrix.rows(), num_input_channels_);
+    for (int channel_idx = 0; channel_idx < num_input_channels_;
+         ++channel_idx) {
+      if (channel_idx % 2 == 0) {
+        CheckPeakFrequencyInMatrixWithChannel(matrix, channel_idx, 0);
+      } else {
+        CheckPeakFrequencyInMatrixWithChannel(matrix, channel_idx,
+                                              tone_frequency_hz);
+      }
+    }
   }
 }
 

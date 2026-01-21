@@ -16,7 +16,7 @@ load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 mediapipe_proto_library(
     name = "external_file_proto",
@@ -40,7 +40,6 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "base_options_proto",
     srcs = ["base_options.proto"],
-    visibility = ["//visibility:public"],
     deps = [
         ":acceleration_proto",
         ":external_file_proto",

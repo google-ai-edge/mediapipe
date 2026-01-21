@@ -12,25 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 licenses(["notice"])
+
+LANGUAGE_DETECTOR_DEPS = [
+    ":language_detector_result_converter",
+    "@com_google_absl//absl/log:absl_check",
+    "@com_google_absl//absl/log:absl_log",
+    "@com_google_absl//absl/status",
+    "//mediapipe/tasks/c/components/processors:classifier_options",
+    "//mediapipe/tasks/c/components/processors:classifier_options_converter",
+    "//mediapipe/tasks/c/core:base_options",
+    "//mediapipe/tasks/c/core:base_options_converter",
+    "//mediapipe/tasks/c/core:mp_status",
+    "//mediapipe/tasks/c/core:mp_status_converter",
+    "//mediapipe/tasks/cc/text/language_detector",
+]
 
 cc_library(
     name = "language_detector_lib",
     srcs = ["language_detector.cc"],
     hdrs = ["language_detector.h"],
     visibility = ["//visibility:public"],
-    deps = [
-        ":language_detector_result_converter",
-        "//mediapipe/tasks/c/components/processors:classifier_options",
-        "//mediapipe/tasks/c/components/processors:classifier_options_converter",
-        "//mediapipe/tasks/c/core:base_options",
-        "//mediapipe/tasks/c/core:base_options_converter",
-        "//mediapipe/tasks/cc/text/language_detector",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
-    ],
+    deps = LANGUAGE_DETECTOR_DEPS,
+)
+
+cc_library(
+    name = "language_detector_c_lib",
+    srcs = ["language_detector.cc"],
+    hdrs = ["language_detector.h"],
+    visibility = ["//mediapipe/tasks/c:__subpackages__"],
+    deps = LANGUAGE_DETECTOR_DEPS,
     alwayslink = 1,
 )
 
@@ -74,6 +89,7 @@ cc_library(
     deps = [
         "//mediapipe/tasks/c/components/processors:classifier_options",
         "//mediapipe/tasks/c/core:base_options",
+        "//mediapipe/tasks/c/core:mp_status",
     ],
 )
 
@@ -109,6 +125,8 @@ cc_test(
         ":language_detector_lib",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/c/core:common",
+        "//mediapipe/tasks/c/core:mp_status",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",

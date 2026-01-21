@@ -69,6 +69,10 @@ constexpr char kFrameOverlapTag[] = "FRAME_OVERLAP";
 // rounded to the nearest integer number of samples. Consequently, all output
 // frames will be based on the same number of input samples, and each
 // analysis frame will advance from its predecessor by the same time step.
+//
+// If output_layout is set to SPECTROGRAM_CHANNELS_IN_ROWS, the output will be a
+// matrix with each row being one channel of the spectrogram regardless of the
+// number of channels that need to be output.
 class SpectrogramCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
@@ -94,7 +98,9 @@ class SpectrogramCalculator : public CalculatorBase {
 
     SpectrogramCalculatorOptions spectrogram_options =
         cc->Options<SpectrogramCalculatorOptions>();
-    if (!spectrogram_options.allow_multichannel_input()) {
+    if (!spectrogram_options.allow_multichannel_input() ||
+        spectrogram_options.output_layout() ==
+            SpectrogramCalculatorOptions::SPECTROGRAM_CHANNELS_IN_ROWS) {
       if (spectrogram_options.output_type() ==
           SpectrogramCalculatorOptions::COMPLEX) {
         cc->Outputs().Index(0).Set<Eigen::MatrixXcf>(
@@ -158,6 +164,12 @@ class SpectrogramCalculator : public CalculatorBase {
                  Timestamp::kTimestampUnitsPerSecond / input_sample_rate_);
   }
 
+  TimestampDiff TimeStampDurationForSamples(int64_t num_samples) {
+    return TimestampDiff(
+        round(num_samples * Timestamp::kTimestampUnitsPerSecond /
+              input_sample_rate_));
+  }
+
   int frame_step_samples() const {
     return frame_duration_samples_ - frame_overlap_samples_;
   }
@@ -208,6 +220,8 @@ class SpectrogramCalculator : public CalculatorBase {
   float input_scale_;
   // Fixed scale factor applied to output values (regardless of type).
   double output_scale_;
+  // Specifies the output layout.
+  SpectrogramCalculatorOptions::OutputLayout output_layout_;
 
   static const float kLnSquaredMagnitudeToDb;
 };
@@ -288,6 +302,7 @@ absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
   pad_final_packet_ = spectrogram_options.pad_final_packet();
   output_type_ = spectrogram_options.output_type();
   allow_multichannel_input_ = spectrogram_options.allow_multichannel_input();
+  output_layout_ = spectrogram_options.output_layout();
 
   input_scale_ = spectrogram_options.input_scale();
   output_scale_ = spectrogram_options.output_scale();
@@ -347,7 +362,9 @@ absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
   // output_header.num_samples.
   output_header->clear_packet_rate();
   output_header->clear_num_samples();
-  if (!spectrogram_options.allow_multichannel_input()) {
+  if (!spectrogram_options.allow_multichannel_input() ||
+      output_layout_ ==
+          SpectrogramCalculatorOptions::SPECTROGRAM_CHANNELS_IN_ROWS) {
     cc->Outputs().Index(0).SetHeader(Adopt(output_header.release()));
   } else {
     std::unique_ptr<MultiStreamTimeSeriesHeader> multichannel_output_header(
@@ -444,13 +461,31 @@ absl::Status SpectrogramCalculator::ProcessVectorToOutput(
   if (!spectrogram_matrices->empty()) {
     RET_CHECK_EQ(spectrogram_matrices->size(), input_stream.rows())
         << "Inconsistent number of spectrogram channels.";
-    if (allow_multichannel_input_) {
-      cc->Outputs().Index(0).Add(spectrogram_matrices.release(),
-                                 CurrentOutputTimestamp(cc));
+
+    if (output_layout_ ==
+        SpectrogramCalculatorOptions::SPECTROGRAM_CHANNELS_IN_ROWS) {
+      int num_frames = spectrogram_matrices->at(0).cols();
+      int num_parameters = spectrogram_matrices->at(0).rows();
+      for (int i = 0; i < num_frames; ++i) {
+        std::unique_ptr<OutputMatrixType> output_matrix(
+            new OutputMatrixType(num_input_channels_, num_parameters));
+        for (int j = 0; j < num_input_channels_; ++j) {
+          output_matrix->row(j) = spectrogram_matrices->at(j).col(i);
+        }
+        auto timestamp = CurrentOutputTimestamp(cc) +
+                         TimeStampDurationForSamples(i * frame_step_samples());
+
+        cc->Outputs().Index(0).Add(output_matrix.release(), timestamp);
+      }
     } else {
-      cc->Outputs().Index(0).Add(
-          new OutputMatrixType(spectrogram_matrices->at(0)),
-          CurrentOutputTimestamp(cc));
+      if (allow_multichannel_input_) {
+        cc->Outputs().Index(0).Add(spectrogram_matrices.release(),
+                                   CurrentOutputTimestamp(cc));
+      } else {
+        cc->Outputs().Index(0).Add(
+            new OutputMatrixType(spectrogram_matrices->at(0)),
+            CurrentOutputTimestamp(cc));
+      }
     }
     cumulative_completed_frames_ += output_vectors.size();
     last_completed_frames_ = output_vectors.size();

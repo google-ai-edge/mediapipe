@@ -13,44 +13,51 @@
 # limitations under the License.
 """MediaPipe pose landmarker task."""
 
+import ctypes
 import dataclasses
-from typing import Callable, Mapping, Optional, List
+import enum
+from typing import Callable, Optional, Tuple
 
-from mediapipe.framework.formats import landmark_pb2
-from mediapipe.python import packet_creator
-from mediapipe.python import packet_getter
-from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.python._framework_bindings import packet as packet_module
-from mediapipe.tasks.cc.vision.pose_landmarker.proto import pose_landmarker_graph_options_pb2
-from mediapipe.tasks.python.components.containers import landmark as landmark_module
-from mediapipe.tasks.python.core import base_options as base_options_module
-from mediapipe.tasks.python.core import task_info as task_info_module
+from mediapipe.tasks.python.components.containers import landmark as landmark_lib
+from mediapipe.tasks.python.components.containers import landmark_c as landmark_c_lib
+from mediapipe.tasks.python.core import async_result_dispatcher
+from mediapipe.tasks.python.core import base_options as base_options_lib
+from mediapipe.tasks.python.core import base_options_c as base_options_c_lib
+from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_lib
+from mediapipe.tasks.python.core import mediapipe_c_utils
+from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-from mediapipe.tasks.python.vision.core import base_vision_task_api
-from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
-from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
+from mediapipe.tasks.python.vision.core import image as image_lib
+from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_lib
+from mediapipe.tasks.python.vision.core import image_processing_options_c as image_processing_options_c_lib
+from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_lib
 
-_BaseOptions = base_options_module.BaseOptions
-_PoseLandmarkerGraphOptionsProto = (
-    pose_landmarker_graph_options_pb2.PoseLandmarkerGraphOptions
+_BaseOptions = base_options_lib.BaseOptions
+_RunningMode = running_mode_lib.VisionTaskRunningMode
+_ImageProcessingOptions = image_processing_options_lib.ImageProcessingOptions
+_AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
+_LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
+
+
+class PoseLandmarkerResultC(ctypes.Structure):
+  """The ctypes struct for PoseLandmarkerResult."""
+
+  _fields_ = [
+      ('segmentation_masks', ctypes.POINTER(ctypes.c_void_p)),
+      ('segmentation_masks_count', ctypes.c_uint32),
+      ('pose_landmarks', ctypes.POINTER(landmark_c_lib.NormalizedLandmarksC)),
+      ('pose_landmarks_count', ctypes.c_uint32),
+      ('pose_world_landmarks', ctypes.POINTER(landmark_c_lib.LandmarksC)),
+      ('pose_world_landmarks_count', ctypes.c_uint32),
+  ]
+
+_C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
+    None,
+    ctypes.c_int32,  # MpStatus
+    ctypes.POINTER(PoseLandmarkerResultC),
+    ctypes.c_void_p,  # MpImage
+    ctypes.c_int64,  # timestamp_ms
 )
-_RunningMode = running_mode_module.VisionTaskRunningMode
-_ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_TaskInfo = task_info_module.TaskInfo
-
-_IMAGE_IN_STREAM_NAME = 'image_in'
-_IMAGE_OUT_STREAM_NAME = 'image_out'
-_IMAGE_TAG = 'IMAGE'
-_NORM_RECT_STREAM_NAME = 'norm_rect_in'
-_NORM_RECT_TAG = 'NORM_RECT'
-_SEGMENTATION_MASK_STREAM_NAME = 'segmentation_mask'
-_SEGMENTATION_MASK_TAG = 'SEGMENTATION_MASK'
-_NORM_LANDMARKS_STREAM_NAME = 'norm_landmarks'
-_NORM_LANDMARKS_TAG = 'NORM_LANDMARKS'
-_POSE_WORLD_LANDMARKS_STREAM_NAME = 'world_landmarks'
-_POSE_WORLD_LANDMARKS_TAG = 'WORLD_LANDMARKS'
-_TASK_GRAPH_NAME = 'mediapipe.tasks.vision.pose_landmarker.PoseLandmarkerGraph'
-_MICRO_SECONDS_PER_MILLISECOND = 1000
 
 
 @dataclasses.dataclass
@@ -63,52 +70,79 @@ class PoseLandmarkerResult:
     segmentation_masks: Optional segmentation masks for pose.
   """
 
-  pose_landmarks: List[List[landmark_module.NormalizedLandmark]]
-  pose_world_landmarks: List[List[landmark_module.Landmark]]
-  segmentation_masks: Optional[List[image_module.Image]] = None
+  pose_landmarks: list[list[landmark_lib.NormalizedLandmark]]
+  pose_world_landmarks: list[list[landmark_lib.Landmark]]
+  segmentation_masks: Optional[list[image_lib.Image]] = None
 
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_ctypes(
+      cls, c_struct: PoseLandmarkerResultC
+  ) -> 'PoseLandmarkerResult':
+    """Creates a PoseLandmarkerResult from a ctypes struct."""
+    pose_landmarks = []
+    for i in range(c_struct.pose_landmarks_count):
+      landmarks_c = c_struct.pose_landmarks[i]
+      pose_landmarks.append([
+          landmark_lib.NormalizedLandmark.from_ctypes(landmarks_c.landmarks[j])
+          for j in range(landmarks_c.landmarks_count)
+      ])
 
-def _build_landmarker_result(
-    output_packets: Mapping[str, packet_module.Packet]
-) -> PoseLandmarkerResult:
-  """Constructs a `PoseLandmarkerResult` from output packets."""
-  pose_landmarker_result = PoseLandmarkerResult([], [])
+    pose_world_landmarks = []
+    for i in range(c_struct.pose_world_landmarks_count):
+      landmarks_c = c_struct.pose_world_landmarks[i]
+      pose_world_landmarks.append([
+          landmark_lib.Landmark.from_ctypes(landmarks_c.landmarks[j])
+          for j in range(landmarks_c.landmarks_count)
+      ])
 
-  if _SEGMENTATION_MASK_STREAM_NAME in output_packets:
-    pose_landmarker_result.segmentation_masks = packet_getter.get_image_list(
-        output_packets[_SEGMENTATION_MASK_STREAM_NAME]
+    segmentation_masks = []
+    for i in range(c_struct.segmentation_masks_count):
+      image_c = c_struct.segmentation_masks[i]
+      segmentation_masks.append(image_lib.Image.create_from_ctypes(image_c))
+
+    segmentation_masks = (
+        None if c_struct.segmentation_masks_count == 0 else segmentation_masks
     )
+    return cls(pose_landmarks, pose_world_landmarks, segmentation_masks)
 
-  pose_landmarks_proto_list = packet_getter.get_proto_list(
-      output_packets[_NORM_LANDMARKS_STREAM_NAME]
-  )
-  pose_world_landmarks_proto_list = packet_getter.get_proto_list(
-      output_packets[_POSE_WORLD_LANDMARKS_STREAM_NAME]
-  )
 
-  for proto in pose_landmarks_proto_list:
-    pose_landmarks = landmark_pb2.NormalizedLandmarkList()
-    pose_landmarks.MergeFrom(proto)
-    pose_landmarks_list = []
-    for pose_landmark in pose_landmarks.landmark:
-      pose_landmarks_list.append(
-          landmark_module.NormalizedLandmark.create_from_pb2(pose_landmark)
-      )
-    pose_landmarker_result.pose_landmarks.append(pose_landmarks_list)
+class PoseLandmark(enum.IntEnum):
+  """The 33 pose landmarks."""
 
-  for proto in pose_world_landmarks_proto_list:
-    pose_world_landmarks = landmark_pb2.LandmarkList()
-    pose_world_landmarks.MergeFrom(proto)
-    pose_world_landmarks_list = []
-    for pose_world_landmark in pose_world_landmarks.landmark:
-      pose_world_landmarks_list.append(
-          landmark_module.Landmark.create_from_pb2(pose_world_landmark)
-      )
-    pose_landmarker_result.pose_world_landmarks.append(
-        pose_world_landmarks_list
-    )
-
-  return pose_landmarker_result
+  NOSE = 0
+  LEFT_EYE_INNER = 1
+  LEFT_EYE = 2
+  LEFT_EYE_OUTER = 3
+  RIGHT_EYE_INNER = 4
+  RIGHT_EYE = 5
+  RIGHT_EYE_OUTER = 6
+  LEFT_EAR = 7
+  RIGHT_EAR = 8
+  MOUTH_LEFT = 9
+  MOUTH_RIGHT = 10
+  LEFT_SHOULDER = 11
+  RIGHT_SHOULDER = 12
+  LEFT_ELBOW = 13
+  RIGHT_ELBOW = 14
+  LEFT_WRIST = 15
+  RIGHT_WRIST = 16
+  LEFT_PINKY = 17
+  RIGHT_PINKY = 18
+  LEFT_INDEX = 19
+  RIGHT_INDEX = 20
+  LEFT_THUMB = 21
+  RIGHT_THUMB = 22
+  LEFT_HIP = 23
+  RIGHT_HIP = 24
+  LEFT_KNEE = 25
+  RIGHT_KNEE = 26
+  LEFT_ANKLE = 27
+  RIGHT_ANKLE = 28
+  LEFT_HEEL = 29
+  RIGHT_HEEL = 30
+  LEFT_FOOT_INDEX = 31
+  RIGHT_FOOT_INDEX = 32
 
 
 class PoseLandmarksConnections:
@@ -121,7 +155,7 @@ class PoseLandmarksConnections:
     start: int
     end: int
 
-  POSE_LANDMARKS: List[Connection] = [
+  POSE_LANDMARKS: list[Connection] = [
       Connection(0, 1),
       Connection(1, 2),
       Connection(2, 3),
@@ -156,8 +190,51 @@ class PoseLandmarksConnections:
       Connection(29, 31),
       Connection(30, 32),
       Connection(27, 31),
-      Connection(28, 32)
+      Connection(28, 32),
   ]
+
+
+class PoseLandmarkerOptionsC(ctypes.Structure):
+  """The ctypes struct for PoseLandmarkerOptions."""
+
+  _fields_ = [
+      ('base_options', base_options_c_lib.BaseOptionsC),
+      ('running_mode', ctypes.c_int),
+      ('num_poses', ctypes.c_int),
+      ('min_pose_detection_confidence', ctypes.c_float),
+      ('min_pose_presence_confidence', ctypes.c_float),
+      ('min_tracking_confidence', ctypes.c_float),
+      ('output_segmentation_masks', ctypes.c_bool),
+      (
+          'result_callback',
+          _C_TYPES_RESULT_CALLBACK,
+      ),
+  ]
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_c_options(
+      cls,
+      base_options: base_options_c_lib.BaseOptionsC,
+      running_mode: _RunningMode,
+      num_poses: int,
+      min_pose_detection_confidence: float,
+      min_pose_presence_confidence: float,
+      min_tracking_confidence: float,
+      output_segmentation_masks: bool,
+      result_callback: _C_TYPES_RESULT_CALLBACK,
+  ) -> 'PoseLandmarkerOptionsC':
+    """Creates a PoseLandmarkerOptionsC object from the given options."""
+    return cls(
+        base_options=base_options,
+        running_mode=running_mode.ctype,
+        num_poses=num_poses,
+        min_pose_detection_confidence=min_pose_detection_confidence,
+        min_pose_presence_confidence=min_pose_presence_confidence,
+        min_tracking_confidence=min_tracking_confidence,
+        output_segmentation_masks=output_segmentation_masks,
+        result_callback=result_callback,
+    )
 
 
 @dataclasses.dataclass
@@ -195,38 +272,91 @@ class PoseLandmarkerOptions:
   min_tracking_confidence: float = 0.5
   output_segmentation_masks: bool = False
   result_callback: Optional[
-      Callable[[PoseLandmarkerResult, image_module.Image, int], None]
+      Callable[[PoseLandmarkerResult, image_lib.Image, int], None]
   ] = None
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _PoseLandmarkerGraphOptionsProto:
-    """Generates an PoseLandmarkerGraphOptions protobuf object."""
-    base_options_proto = self.base_options.to_pb2()
-    base_options_proto.use_stream_mode = (
-        False if self.running_mode == _RunningMode.IMAGE else True
-    )
 
-    # Initialize the pose landmarker options from base options.
-    pose_landmarker_options_proto = _PoseLandmarkerGraphOptionsProto(
-        base_options=base_options_proto
-    )
-    pose_landmarker_options_proto.min_tracking_confidence = (
-        self.min_tracking_confidence
-    )
-    pose_landmarker_options_proto.pose_detector_graph_options.num_poses = (
-        self.num_poses
-    )
-    pose_landmarker_options_proto.pose_detector_graph_options.min_detection_confidence = (
-        self.min_pose_detection_confidence
-    )
-    pose_landmarker_options_proto.pose_landmarks_detector_graph_options.min_detection_confidence = (
-        self.min_pose_presence_confidence
-    )
-    return pose_landmarker_options_proto
+_CTYPES_SIGNATURES = (
+    mediapipe_c_utils.CStatusFunction(
+        'MpPoseLandmarkerCreate',
+        (
+            ctypes.POINTER(PoseLandmarkerOptionsC),
+            ctypes.POINTER(ctypes.c_void_p),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpPoseLandmarkerDetectImage',
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_lib.ImageProcessingOptionsC
+            ),
+            ctypes.POINTER(PoseLandmarkerResultC),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpPoseLandmarkerDetectForVideo',
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_lib.ImageProcessingOptionsC
+            ),
+            ctypes.c_int64,
+            ctypes.POINTER(PoseLandmarkerResultC),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpPoseLandmarkerDetectAsync',
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_lib.ImageProcessingOptionsC
+            ),
+            ctypes.c_int64,
+        ),
+    ),
+    mediapipe_c_utils.CFunction(
+        'MpPoseLandmarkerCloseResult',
+        [ctypes.POINTER(PoseLandmarkerResultC)],
+        None,
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpPoseLandmarkerClose',
+        (ctypes.c_void_p,),
+    ),
+)
 
 
-class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
+class PoseLandmarker:
   """Class that performs pose landmarks detection on images."""
+
+  _lib: serial_dispatcher.SerialDispatcher
+  _handle: ctypes.c_void_p
+  _dispatcher: _AsyncResultDispatcher
+  _async_callback: _C_TYPES_RESULT_CALLBACK
+
+  def __init__(
+      self,
+      lib: serial_dispatcher.SerialDispatcher,
+      handle: ctypes.c_void_p,
+      dispatcher: _AsyncResultDispatcher,
+      async_callback: _C_TYPES_RESULT_CALLBACK,
+  ):
+    """Initializes the pose landmarker.
+
+    Args:
+      lib: The dispatch library to use for the pose landmarker.
+      handle: The C pointer to the pose landmarker.
+      dispatcher: The async result handler for the pose landmarker.
+      async_callback: The c callback for the pose landmarker.
+    """
+    self._lib = lib
+    self._handle = handle
+    self._dispatcher = dispatcher
+    self._async_callback = async_callback
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'PoseLandmarker':
@@ -270,64 +400,49 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
         `PoseLandmarkerOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-
-    def packets_callback(output_packets: Mapping[str, packet_module.Packet]):
-      if output_packets[_IMAGE_OUT_STREAM_NAME].is_empty():
-        return
-
-      image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
-
-      if output_packets[_NORM_LANDMARKS_STREAM_NAME].is_empty():
-        empty_packet = output_packets[_NORM_LANDMARKS_STREAM_NAME]
-        options.result_callback(
-            PoseLandmarkerResult([], []),
-            image,
-            empty_packet.timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
-        )
-        return
-
-      pose_landmarker_result = _build_landmarker_result(output_packets)
-      timestamp = output_packets[_NORM_LANDMARKS_STREAM_NAME].timestamp
-      options.result_callback(
-          pose_landmarker_result,
-          image,
-          timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
-      )
-
-    output_streams = [
-        ':'.join([_NORM_LANDMARKS_TAG, _NORM_LANDMARKS_STREAM_NAME]),
-        ':'.join(
-            [_POSE_WORLD_LANDMARKS_TAG, _POSE_WORLD_LANDMARKS_STREAM_NAME]
-        ),
-        ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME]),
-    ]
-
-    if options.output_segmentation_masks:
-      output_streams.append(
-          ':'.join([_SEGMENTATION_MASK_TAG, _SEGMENTATION_MASK_STREAM_NAME])
-      )
-
-    task_info = _TaskInfo(
-        task_graph=_TASK_GRAPH_NAME,
-        input_streams=[
-            ':'.join([_IMAGE_TAG, _IMAGE_IN_STREAM_NAME]),
-            ':'.join([_NORM_RECT_TAG, _NORM_RECT_STREAM_NAME]),
-        ],
-        output_streams=output_streams,
-        task_options=options,
+    running_mode_lib.validate_running_mode(
+        options.running_mode, options.result_callback
     )
-    return cls(
-        task_info.generate_graph_config(
-            enable_flow_limiting=options.running_mode
-            == _RunningMode.LIVE_STREAM
-        ),
-        options.running_mode,
-        packets_callback if options.result_callback else None,
+
+    lib = mediapipe_c_bindings_lib.load_shared_library(_CTYPES_SIGNATURES)
+
+    def convert_result(
+        c_result_ptr: ctypes.POINTER(PoseLandmarkerResultC),
+        image_ptr: ctypes.c_void_p,
+        timestamp_ms: int,
+    ) -> Tuple[PoseLandmarkerResult, image_lib.Image, int]:
+      c_result = c_result_ptr[0]
+      py_result = PoseLandmarkerResult.from_ctypes(c_result)
+      py_image = image_lib.Image.create_from_ctypes(image_ptr)
+      return (py_result, py_image, timestamp_ms)
+
+    dispatcher = _AsyncResultDispatcher(converter=convert_result)
+
+    c_callback = dispatcher.wrap_callback(
+        options.result_callback, _C_TYPES_RESULT_CALLBACK
+    )
+    ctypes_options = PoseLandmarkerOptionsC.from_c_options(
+        base_options=options.base_options.to_ctypes(),
+        running_mode=options.running_mode,
+        num_poses=options.num_poses,
+        min_pose_detection_confidence=options.min_pose_detection_confidence,
+        min_pose_presence_confidence=options.min_pose_presence_confidence,
+        min_tracking_confidence=options.min_tracking_confidence,
+        output_segmentation_masks=options.output_segmentation_masks,
+        result_callback=c_callback,
+    )
+    landmarker = ctypes.c_void_p()
+    lib.MpPoseLandmarkerCreate(
+        ctypes.byref(ctypes_options), ctypes.byref(landmarker)
+    )
+
+    return PoseLandmarker(
+        lib, landmarker, dispatcher=dispatcher, async_callback=c_callback
     )
 
   def detect(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
       image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> PoseLandmarkerResult:
     """Performs pose landmarks detection on the given image.
@@ -346,24 +461,28 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If pose landmarker detection failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    result_c = PoseLandmarkerResultC()
+
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    output_packets = self._process_image_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ),
-    })
+    self._lib.MpPoseLandmarkerDetectImage(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        ctypes.byref(result_c),
+    )
 
-    if output_packets[_NORM_LANDMARKS_STREAM_NAME].is_empty():
-      return PoseLandmarkerResult([], [])
-
-    return _build_landmarker_result(output_packets)
+    result = PoseLandmarkerResult.from_ctypes(result_c)
+    self._lib.MpPoseLandmarkerCloseResult(ctypes.byref(result_c))
+    return result
 
   def detect_for_video(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
       timestamp_ms: int,
       image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> PoseLandmarkerResult:
@@ -389,26 +508,29 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If pose landmarker detection failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    result_c = PoseLandmarkerResultC()
+
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    output_packets = self._process_video_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
-            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
-        ),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-    })
+    self._lib.MpPoseLandmarkerDetectForVideo(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        timestamp_ms,
+        ctypes.byref(result_c),
+    )
 
-    if output_packets[_NORM_LANDMARKS_STREAM_NAME].is_empty():
-      return PoseLandmarkerResult([], [])
-
-    return _build_landmarker_result(output_packets)
+    result = PoseLandmarkerResult.from_ctypes(result_c)
+    self._lib.MpPoseLandmarkerCloseResult(ctypes.byref(result_c))
+    return result
 
   def detect_async(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
       timestamp_ms: int,
       image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> None:
@@ -442,14 +564,47 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If the current input timestamp is smaller than what the
       pose landmarker has already processed.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
+    c_image = image._image_ptr  # pylint: disable=protected-access
+
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    self._send_live_stream_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
-            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
-        ),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-    })
+    self._lib.MpPoseLandmarkerDetectAsync(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        timestamp_ms,
+    )
+
+  def close(self):
+    """Closes the PoseLandmarker."""
+    if not self._handle:
+      return
+    self._lib.MpPoseLandmarkerClose(self._handle)
+    self._handle = None
+    self._dispatcher.close()
+    self._lib.close()
+
+  def __enter__(self):
+    """Returns `self` upon entering the runtime context."""
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    """Shuts down the MediaPipe task instance on exit of the context manager.
+
+    Args:
+      exc_type: The exception type that caused the context manager to exit.
+      exc_value: The exception value that caused the context manager to exit.
+      traceback: The exception traceback that caused the context manager to
+        exit.
+
+    Raises:
+      RuntimeError: If the MediaPipe PoseLandmarker task failed to close.
+    """
+    del exc_type, exc_value, traceback  # Unused.
+    self.close()
+
+  def __del__(self):
+    self.close()

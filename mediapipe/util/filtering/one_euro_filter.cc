@@ -1,3 +1,17 @@
+// Copyright 2025 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include "mediapipe/util/filtering/one_euro_filter.h"
 
 #include <cmath>
@@ -5,6 +19,10 @@
 #include <memory>
 
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
+#include "absl/time/time.h"
 #include "mediapipe/util/filtering/low_pass_filter.h"
 
 namespace mediapipe {
@@ -12,19 +30,58 @@ namespace mediapipe {
 static const double kEpsilon = 0.000001;
 static constexpr int kUninitializedTimestamp = -1;
 
-OneEuroFilter::OneEuroFilter(double frequency, double min_cutoff, double beta,
-                             double derivate_cutoff) {
-  SetFrequency(frequency);
-  SetMinCutoff(min_cutoff);
-  SetBeta(beta);
-  SetDerivateCutoff(derivate_cutoff);
-  x_ = std::make_unique<LowPassFilter>(GetAlpha(min_cutoff));
-  dx_ = std::make_unique<LowPassFilter>(GetAlpha(derivate_cutoff));
-  last_time_ = kUninitializedTimestamp;
+absl::StatusOr<OneEuroFilter> OneEuroFilter::InternalCreate(
+    double frequency, double min_cutoff, double beta, double derivate_cutoff,
+    int64_t initial_last_time) {
+  if (frequency <= kEpsilon) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("frequency should be > 0, but equals: ", frequency));
+  }
+
+  if (min_cutoff <= kEpsilon) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("min_cutoff should be > 0, but equals: ", min_cutoff));
+  }
+
+  if (derivate_cutoff <= kEpsilon) {
+    return absl::InvalidArgumentError(absl::StrCat(
+        "derivate_cutoff should be > 0, but equals: ", derivate_cutoff));
+  }
+
+  return OneEuroFilter(frequency, min_cutoff, beta, derivate_cutoff,
+                       initial_last_time);
 }
 
-double OneEuroFilter::Apply(absl::Duration timestamp, double value_scale,
-                            double value) {
+absl::StatusOr<OneEuroFilter> OneEuroFilter::Create(double frequency,
+                                                    double min_cutoff,
+                                                    double beta,
+                                                    double derivate_cutoff) {
+  return OneEuroFilter::InternalCreate(
+      frequency, min_cutoff, beta, derivate_cutoff, kUninitializedTimestamp);
+}
+
+absl::StatusOr<OneEuroFilter> OneEuroFilter::CreateLegacyFilter(
+    double frequency, double min_cutoff, double beta, double derivate_cutoff) {
+  return OneEuroFilter::InternalCreate(
+      frequency, min_cutoff, beta, derivate_cutoff, /*initial_last_time=*/0);
+}
+
+// Input values frequency, min_cutoff, and derivate_cutoff must be non zero.
+OneEuroFilter::OneEuroFilter(double frequency, double min_cutoff, double beta,
+                             double derivate_cutoff,
+                             int64_t initial_last_time) {
+  frequency_ = frequency;
+  min_cutoff_ = min_cutoff;
+  beta_ = beta;
+  derivate_cutoff_ = derivate_cutoff;
+
+  x_ = std::make_unique<LowPassFilter>(GetAlpha(min_cutoff));
+  dx_ = std::make_unique<LowPassFilter>(GetAlpha(derivate_cutoff));
+  last_time_ = initial_last_time;
+}
+
+double OneEuroFilter::Apply(absl::Duration timestamp, double value,
+                            double value_scale, double beta_scale) {
   int64_t new_timestamp = absl::ToInt64Nanoseconds(timestamp);
   if (last_time_ >= new_timestamp) {
     // Results are unpredictable in this case, so nothing to do but
@@ -46,7 +103,8 @@ double OneEuroFilter::Apply(absl::Duration timestamp, double value_scale,
                       : 0.0;  // FIXME: 0.0 or value?
   double edvalue = dx_->ApplyWithAlpha(dvalue, GetAlpha(derivate_cutoff_));
   // use it to update the cutoff frequency
-  double cutoff = min_cutoff_ + beta_ * std::fabs(edvalue);
+  double scaled_beta = beta_scale * beta_;
+  double cutoff = min_cutoff_ + scaled_beta * std::fabs(edvalue);
 
   // filter the given value
   return x_->ApplyWithAlpha(value, GetAlpha(cutoff));
@@ -58,30 +116,8 @@ double OneEuroFilter::GetAlpha(double cutoff) {
   return 1.0 / (1.0 + tau / te);
 }
 
-void OneEuroFilter::SetFrequency(double frequency) {
-  if (frequency <= kEpsilon) {
-    ABSL_LOG(ERROR) << "frequency should be > 0";
-    return;
-  }
-  frequency_ = frequency;
-}
+float OneEuroFilter::GetLastX() const { return x_->LastValue(); }
 
-void OneEuroFilter::SetMinCutoff(double min_cutoff) {
-  if (min_cutoff <= kEpsilon) {
-    ABSL_LOG(ERROR) << "min_cutoff should be > 0";
-    return;
-  }
-  min_cutoff_ = min_cutoff;
-}
-
-void OneEuroFilter::SetBeta(double beta) { beta_ = beta; }
-
-void OneEuroFilter::SetDerivateCutoff(double derivate_cutoff) {
-  if (derivate_cutoff <= kEpsilon) {
-    ABSL_LOG(ERROR) << "derivate_cutoff should be > 0";
-    return;
-  }
-  derivate_cutoff_ = derivate_cutoff;
-}
+float OneEuroFilter::GetLastDx() const { return dx_->LastValue(); }
 
 }  // namespace mediapipe

@@ -48,6 +48,14 @@ public interface TextureFrame extends TextureReleaseCallback {
   long getTimestamp();
 
   /**
+   * The OpenGL format of the texture.
+   *
+   * <p>The format may be an unqualified format, such as GL_RGBA, or a qualified format, such as
+   * GL_RGBA8. For unqualified formats the data type is simply assumed to be 8-bit unsigned.
+   */
+  int getFormat();
+
+  /**
    * The consumer that receives this TextureFrame must call this method to inform the provider that
    * it is done with it.
    */

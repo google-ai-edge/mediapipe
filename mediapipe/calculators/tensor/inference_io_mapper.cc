@@ -257,7 +257,10 @@ absl::Status InferenceIoMapper::UpdateIoMap(
     // Feedback tensors are excluded from the input_tensor_indices_.
     RET_CHECK_EQ(input_tensor_indices_.size() + num_feedback_tensors_,
                  num_model_input_tensors)
-        << "Unexpected number of input tensors.";
+        << "Unexpected number of input tensors. Input tensor names: "
+        << absl::StrJoin(
+               input_output_tensor_names_default_signature.input_tensor_names,
+               ", ");
   }
 
   if (io_config.has_output_tensor_names_map()) {

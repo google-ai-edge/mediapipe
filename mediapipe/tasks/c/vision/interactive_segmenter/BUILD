@@ -12,32 +12,51 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 licenses(["notice"])
+
+INTERACTIVE_SEGMENTER_DEPS = [
+    "@com_google_absl//absl/log",
+    "@com_google_absl//absl/log:absl_check",
+    "@com_google_absl//absl/status",
+    "@com_google_absl//absl/status:statusor",
+    "//mediapipe/framework/formats:image",
+    "//mediapipe/framework/formats:image_frame",
+    "//mediapipe/tasks/c/components/containers:keypoint",
+    "//mediapipe/tasks/c/core:base_options",
+    "//mediapipe/tasks/c/core:base_options_converter",
+    "//mediapipe/tasks/c/core:mp_status",
+    "//mediapipe/tasks/c/core:mp_status_converter",
+    "//mediapipe/tasks/c/core:common",
+    "//mediapipe/tasks/c/vision/core:image",
+    "//mediapipe/tasks/c/vision/core:image_frame_util",
+    "//mediapipe/tasks/c/vision/core:image_processing_options",
+    "//mediapipe/tasks/c/vision/core:image_processing_options_converter",
+    "//mediapipe/tasks/c/vision/image_segmenter:image_segmenter_result",
+    "//mediapipe/tasks/c/vision/image_segmenter:image_segmenter_result_converter",
+    "//mediapipe/tasks/cc/components/containers:keypoint",
+    "//mediapipe/tasks/cc/vision/core:image_processing_options",
+    "//mediapipe/tasks/cc/vision/interactive_segmenter",
+    "//mediapipe/tasks/cc/vision/utils:image_utils",
+]
 
 cc_library(
     name = "interactive_segmenter_lib",
     srcs = ["interactive_segmenter.cc"],
     hdrs = ["interactive_segmenter.h"],
     visibility = ["//visibility:public"],
-    deps = [
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/tasks/c/components/containers:keypoint",
-        "//mediapipe/tasks/c/core:base_options",
-        "//mediapipe/tasks/c/core:base_options_converter",
-        "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/c/vision/image_segmenter:image_segmenter_result",
-        "//mediapipe/tasks/c/vision/image_segmenter:image_segmenter_result_converter",
-        "//mediapipe/tasks/cc/components/containers:keypoint",
-        "//mediapipe/tasks/cc/vision/interactive_segmenter",
-        "//mediapipe/tasks/cc/vision/utils:image_utils",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-    ],
+    deps = INTERACTIVE_SEGMENTER_DEPS,
+)
+
+cc_library(
+    name = "interactive_segmenter_c_lib",
+    srcs = ["interactive_segmenter.cc"],
+    hdrs = ["interactive_segmenter.h"],
+    visibility = ["//mediapipe/tasks/c:__subpackages__"],
+    deps = INTERACTIVE_SEGMENTER_DEPS,
     alwayslink = 1,
 )
 
@@ -55,11 +74,15 @@ cc_test(
     deps = [
         ":interactive_segmenter_lib",
         "//mediapipe/framework/deps:file_path",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status_matchers",
         "//mediapipe/tasks/c/components/containers:keypoint",
+        "//mediapipe/tasks/c/core:common",
+        "//mediapipe/tasks/c/core:mp_status",
         "//mediapipe/tasks/c/test:test_utils",
-        "//mediapipe/tasks/c/vision/core:common",
+        "//mediapipe/tasks/c/vision/core:image",
+        "//mediapipe/tasks/c/vision/core:image_processing_options",
+        "//mediapipe/tasks/c/vision/core:image_test_util",
         "//mediapipe/tasks/c/vision/image_segmenter:image_segmenter_result",
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "@com_google_absl//absl/flags:flag",

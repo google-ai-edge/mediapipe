@@ -24,7 +24,6 @@ VISION_LIBS = [
     "//mediapipe/tasks/web/vision/core:mask",
     "//mediapipe/tasks/web/vision/face_detector",
     "//mediapipe/tasks/web/vision/face_landmarker",
-    "//mediapipe/tasks/web/vision/face_stylizer",
     "//mediapipe/tasks/web/vision/gesture_recognizer",
     "//mediapipe/tasks/web/vision/hand_landmarker",
     "//mediapipe/tasks/web/vision/holistic_landmarker",

@@ -1,0 +1,36 @@
+// Copyright 2025 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package mediapipe;
+
+message ImmediateMuxCalculatorOptions {
+  // Whether to process timestamp bound.
+  //
+  // process_timestamp_bounds = false maintains legacy behavior, where the
+  // calculator will not process timestamp bounds updates for one of the input
+  // streams if input streams > 1 and ImmediateInputStreamHandler is used. e.g.
+  // if input stream 0 receives timestamp bound update to 100, and then input
+  // stream 1 receives a real packet at 90, the packet at 90 will still be sent
+  // out. However, it's not recommended to update timestamp bounds in this case,
+  // since it can lead to undeterministic behavior.
+  //
+  // With process_timestamp_bounds = true, the calculator will maintain a more
+  // stable behavior with timestamp bound updates: It will propagate the
+  // timestamp bound update inputs downstream and increase the input timestamp
+  // bound correspondingly, and drop later packets with smaller input
+  // timestamps.
+  optional bool process_timestamp_bounds = 1;
+}

@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <tuple>
@@ -160,8 +161,7 @@ absl::Status CalculatorNode::Initialize(
         "node_ref is not a calculator or packet generator");
   }
 
-  max_in_flight_ = node_config->max_in_flight();
-  max_in_flight_ = max_in_flight_ ? max_in_flight_ : 1;
+  max_in_flight_ = node_type_info_->Contract().GetMaxInFlight();
   if (!node_config->executor().empty()) {
     executor_ = node_config->executor();
   }
@@ -900,8 +900,7 @@ absl::Status CalculatorNode::ProcessNode(
     // This is not a source Calculator.
     InputStreamShardSet* const inputs = &calculator_context->Inputs();
     OutputStreamShardSet* const outputs = &calculator_context->Outputs();
-    absl::Status result =
-        absl::InternalError("Calculator context has no input packets.");
+    std::optional<absl::Status> result;
 
     int num_invocations = calculator_context_manager_.NumberOfContextTimestamps(
         *calculator_context);
@@ -939,15 +938,16 @@ absl::Status CalculatorNode::ProcessNode(
         // of the graph. This is different from an error in that it will
         // ensure that all sources will be closed and that packets in input
         // streams will be processed before the graph is terminated.
-        if (!result.ok() && result != tool::StatusStop()) {
-          return mediapipe::StatusBuilder(result, MEDIAPIPE_LOC).SetPrepend()
+        if (result.has_value() && !result->ok() &&
+            result != tool::StatusStop()) {
+          return mediapipe::StatusBuilder(*result, MEDIAPIPE_LOC).SetPrepend()
                  << absl::Substitute(
                         "Calculator::Process() for node \"$0\" failed: ",
                         DebugName());
         }
         output_stream_handler_->PostProcess(input_timestamp);
         if (result == tool::StatusStop()) {
-          return result;
+          return *result;
         }
       } else if (input_timestamp == Timestamp::Done()) {
         // Some or all the input streams are closed and there are not enough
@@ -964,7 +964,11 @@ absl::Status CalculatorNode::ProcessNode(
             << input_timestamp;
       }
     }
-    return result;
+    if (result.has_value()) {
+      return *result;
+    } else {
+      return absl::InternalError("Calculator context has no input packets.");
+    }
   }
 }
 

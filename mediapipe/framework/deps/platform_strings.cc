@@ -14,12 +14,17 @@
 
 #include "mediapipe/framework/deps/platform_strings.h"
 
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <errno.h>
+#include <string.h>
+#endif  // _WIN32
+
 #include <string>
 
 namespace mediapipe {
 #ifdef _WIN32
-#include <Windows.h>
-
 std::string FormatLastError() {
   DWORD message_id = GetLastError();
   if (message_id == 0) {
@@ -45,9 +50,6 @@ std::string FormatLastError() {
   return NativeToUtf8(message);
 }
 #else
-#include <errno.h>
-#include <string.h>
-
 std::string FormatLastError() { return strerror(errno); }
 #endif  // _WIN32
 }  // namespace mediapipe

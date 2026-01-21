@@ -38,11 +38,28 @@ Args:
 
 # buildifier: disable=out-of-order-load
 
+load("@com_google_protobuf//bazel/common:proto_info.bzl", "ProtoInfo")
+load("//mediapipe/framework:transitive_protos.bzl", "TransitiveProtoInfo")
 load("@bazel_skylib//lib:paths.bzl", "paths")
 
 PROTOC = "@com_google_protobuf//:protoc"
 
 def _canonicalize_proto_path_oss(f):
+    """Given the full path of a proto file, returns the root path and file name.
+
+    This function is used to canonicalize the proto path for OSS. It checks the "external"
+    and "_virtual_imports" keyword to seperate the correct path into proto path and file name.
+    The rule is that the proto path is the path to the "external" repo, or to the library after
+    "_virtual_imports" and the file name is the rest of the path.
+
+    E.g.
+    Input file path:
+    <some_path>/external/com_google_protobuf/src/google/protobuf/_virtual_imports/any_proto/google/protobuf/any.proto
+
+    Return:
+    proto_path: <some_path>/external/com_google_protobuf/src/google/protobuf/_virtual_imports/any_proto
+    file_name: google/protobuf/any.proto (used in .proto files)
+    """
     if not f.root.path:
         return struct(
             proto_path = ".",
@@ -50,11 +67,27 @@ def _canonicalize_proto_path_oss(f):
         )
 
     # `f.path` looks like "<genfiles>/external/<repo>/(_virtual_imports/<library>/)?<file_name>"
+    # or "<genfiles>/external/<repo>/<path>/_virtual_imports/<library>/<file_name>"
     repo_name, _, file_name = f.path[len(paths.join(f.root.path, "external") + "/"):].partition("/")
-    if file_name.startswith("_virtual_imports/"):
-        # This is a virtual import; move "_virtual_imports/<library>" from `repo_name` to `file_name`.
-        repo_name = paths.join(repo_name, *file_name.split("/", 2)[:2])
-        file_name = file_name.split("/", 2)[-1]
+
+    # Check if a virtual import path exists anywhere in the remaining file_name
+    if "_virtual_imports/" in file_name:
+        # Split the path into its directory components
+        parts = file_name.split("/")
+
+        # Find the index of the _virtual_imports directory
+        vi_index = parts.index("_virtual_imports")
+
+        # e.g., <path>/_virtual_imports/<library>
+        virtual_path_parts = parts[:vi_index + 2]
+        repo_name = paths.join(repo_name, *virtual_path_parts)
+
+        # The new file_name is whatever remains
+        file_name = "/".join(parts[vi_index + 2:])
+    else:
+        # This is the case for a standard external proto with no virtual import.
+        pass
+
     return struct(
         proto_path = paths.join(f.root.path, "external", repo_name),
         file_name = file_name,
@@ -78,10 +111,14 @@ def _get_proto_provider(dep):
     if ProtoInfo in dep:
         return dep[ProtoInfo]
 
+    elif TransitiveProtoInfo in dep:
+        return dep[TransitiveProtoInfo]
+
     elif hasattr(dep, "proto"):
         return dep.proto
     else:
         fail("cannot happen, rule definition requires .proto" +
+             ", TransitiveProtoInfo," +
              " or ProtoInfo")
 
 def _encode_binary_proto_impl(ctx):
@@ -147,6 +184,7 @@ _encode_binary_proto = rule(
         "deps": attr.label_list(
             providers = [
                 [ProtoInfo],
+                [TransitiveProtoInfo],
             ],
         ),
         "input": attr.label(
@@ -189,26 +227,33 @@ def _generate_proto_descriptor_set_impl(ctx):
         for dep in ctx.attr.deps
         if (
             ProtoInfo in dep or
+            TransitiveProtoInfo in dep or
             hasattr(dep, "proto")
         )
     ])
     descriptor = ctx.outputs.output
 
-    # Note: the combination of absolute_paths and proto_path, as well as the exact
-    # order of gendir before ., is needed for the proto compiler to resolve
-    # import statements that reference proto files produced by a genrule.
+    args = ctx.actions.args()
+    args.add("--descriptor_set_out=%s" % descriptor.path)
+    args.add("--proto_path=" + ctx.genfiles_dir.path)
+    args.add("--proto_path=" + ctx.bin_dir.path)
+    args.add("--proto_path=.")
+    args.add_all(
+        all_protos,
+        map_each = _map_root_path,
+        format_each = "--proto_path=%s",
+        uniquify = True,
+    )
+    args.add_all(
+        all_protos,
+        map_each = _map_short_path,
+    )
     ctx.actions.run(
         inputs = all_protos,
         tools = [ctx.executable._proto_compiler],
         outputs = [descriptor],
         executable = ctx.executable._proto_compiler,
-        arguments = [
-                        "--descriptor_set_out=%s" % descriptor.path,
-                        "--proto_path=" + ctx.genfiles_dir.path,
-                        "--proto_path=" + ctx.bin_dir.path,
-                        "--proto_path=.",
-                    ] +
-                    [s.path for s in all_protos.to_list()],
+        arguments = [args],
         mnemonic = "GenerateProtoDescriptor",
     )
 
@@ -223,6 +268,7 @@ generate_proto_descriptor_set = rule(
         "deps": attr.label_list(
             providers = [
                 [ProtoInfo],
+                [TransitiveProtoInfo],
             ],
         ),
     },

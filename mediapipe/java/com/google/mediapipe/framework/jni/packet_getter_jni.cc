@@ -14,6 +14,9 @@
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/packet_getter_jni.h"
 
+#include <jni.h>
+#include <stdint.h>
+
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -42,6 +45,23 @@ const T& GetFromNativeHandle(int64_t packet_handle) {
   return mediapipe::android::Graph::GetPacketFromHandle(packet_handle).Get<T>();
 }
 
+// Validates the destination buffer size and copies the byte data of the image
+// frame to the destination buffer.
+template <typename T>
+bool ValidateAndCopy(JNIEnv* env, const mediapipe::ImageFrame& src,
+                     int64_t dst_size, void* dst_data) {
+  if (dst_size != src.PixelDataSizeStoredContiguously()) {
+    ThrowIfError(
+        env, absl::InvalidArgumentError(absl::StrCat(
+                 "Expected buffer size ", src.PixelDataSizeStoredContiguously(),
+                 " got: ", dst_size)));
+    return false;
+  }
+  T* data = static_cast<T*>(dst_data);
+  src.CopyToBuffer(data, dst_size);
+  return true;
+}
+
 bool CopyImageDataToByteBuffer(JNIEnv* env, const mediapipe::ImageFrame& image,
                                jobject byte_buffer) {
   int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
@@ -52,39 +72,32 @@ bool CopyImageDataToByteBuffer(JNIEnv* env, const mediapipe::ImageFrame& image,
     return false;
   }
 
-  // Assume byte buffer stores pixel data contiguously.
-  const int expected_buffer_size = image.Width() * image.Height() *
-                                   image.ByteDepth() * image.NumberOfChannels();
-  if (buffer_size != expected_buffer_size) {
-    ThrowIfError(
-        env, absl::InvalidArgumentError(absl::StrCat(
-                 "Expected buffer size ", expected_buffer_size,
-                 " got: ", buffer_size, ", width ", image.Width(), ", height ",
-                 image.Height(), ", channels ", image.NumberOfChannels())));
-    return false;
-  }
-
   switch (image.ByteDepth()) {
-    case 1: {
-      uint8_t* data = static_cast<uint8_t*>(buffer_data);
-      image.CopyToBuffer(data, expected_buffer_size);
-      break;
-    }
-    case 2: {
-      uint16_t* data = static_cast<uint16_t*>(buffer_data);
-      image.CopyToBuffer(data, expected_buffer_size);
-      break;
-    }
+    case 1:
+      return ValidateAndCopy<uint8_t>(env, image, buffer_size, buffer_data);
+    case 2:
+      return ValidateAndCopy<uint16_t>(env, image, buffer_size, buffer_data);
     case 4: {
-      float* data = static_cast<float*>(buffer_data);
-      image.CopyToBuffer(data, expected_buffer_size);
-      break;
+      // Special case: uint8 data (ByteDepth 1) being read from a float32
+      // buffer image. All values are expected to be in the [0.0, 1.0] range and
+      // are scaled to [0, 255] during the copy to the output buffer.
+      // TODO: Remove this conversions and/or perform on GPU.
+      if (buffer_size ==
+          image.Width() * image.Height() * image.NumberOfChannels()) {
+        const float* float_data =
+            reinterpret_cast<const float*>(image.PixelData());
+        uint8_t* byte_data = reinterpret_cast<uint8_t*>(buffer_data);
+        for (int i = 0; i < buffer_size; ++i) {
+          byte_data[i] = static_cast<uint8_t>(float_data[i] * 255.0f);
+        }
+        return true;
+      }
+
+      return ValidateAndCopy<float>(env, image, buffer_size, buffer_data);
     }
-    default: {
+    default:
       return false;
-    }
   }
-  return true;
 }
 
 void CheckImageSizeInImageList(JNIEnv* env,

@@ -97,7 +97,8 @@ absl::Status TFRecordReaderCalculator::Open(CalculatorContext* cc) {
     if (current_idx == target_idx) {
       if (cc->OutputSidePackets().HasTag(kExampleTag)) {
         tensorflow::Example tf_example;
-        tf_example.ParseFromArray(example_str.data(), example_str.size());
+        tf_example.ParseFromString(
+            absl::string_view(example_str.data(), example_str.size()));
         cc->OutputSidePackets()
             .Tag(kExampleTag)
             .Set(MakePacket<tensorflow::Example>(std::move(tf_example)));

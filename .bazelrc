@@ -3,6 +3,13 @@
 # Tensorflow needs remote repo
 common --experimental_repo_remote_exec
 
+# WORKSPACE support
+common --noenable_bzlmod
+
+# Turn off toolchain resolution for cc rules and android rules.
+common --noincompatible_enable_cc_toolchain_resolution
+common --noincompatible_enable_android_toolchain_resolution
+
 # Basic build settings
 build --jobs 128
 build --define='absl=1'  # for gtest
@@ -11,31 +18,35 @@ build --enable_platform_specific_config
 # Enable stack traces
 test --test_env="GTEST_INSTALL_FAILURE_SIGNAL_HANDLER=1"
 
+# Android
+build:android --cxxopt=-std=c++20
+build:android --host_cxxopt=-std=c++20
+
 # Linux
-build:linux --cxxopt=-std=c++17
-build:linux --host_cxxopt=-std=c++17
+build:linux --cxxopt=-std=c++20
+build:linux --host_cxxopt=-std=c++20
 build:linux --copt=-w
 build:linux --define=xnn_enable_avx512amx=false
 
 # windows
-build:windows --cxxopt=/std:c++17
-build:windows --host_cxxopt=/std:c++17
+build:windows --cxxopt=/std:c++20
+build:windows --host_cxxopt=/std:c++20
 build:windows --copt=/w
 # For using M_* math constants on Windows with MSVC.
 build:windows --copt=/D_USE_MATH_DEFINES
 build:windows --host_copt=/D_USE_MATH_DEFINES
 
 # macOS
-build:macos --cxxopt=-std=c++17
-build:macos --host_cxxopt=-std=c++17
+build:macos --cxxopt=-std=c++20
+build:macos --host_cxxopt=-std=c++20
 build:macos --copt=-w
 build:macos --define=xnn_enable_avx512amx=false
 
 # Sets the default Apple platform to macOS.
 build --apple_platform_type=macos
 
-# Compile ObjC++ files with C++17
-build --per_file_copt=.*\.mm\$@-std=c++17
+# Compile ObjC++ files with C++20
+build --per_file_copt=.*\.mm\$@-std=c++20
 
 # Allow debugging with XCODE
 build --apple_generate_dsym
@@ -58,10 +69,12 @@ build:android --define=xnn_enable_arm_i8mm=false
 build:android_arm --config=android
 build:android_arm --cpu=armeabi-v7a
 build:android_arm --fat_apk_cpu=armeabi-v7a
+build:android_arm --platforms=@//third_party/android:armeabi-v7a
 
 build:android_arm64 --config=android
 build:android_arm64 --cpu=arm64-v8a
 build:android_arm64 --fat_apk_cpu=arm64-v8a
+build:android_arm64 --platforms=@//third_party/android:arm64-v8a
 
 # iOS configs.
 build:ios --apple_platform_type=ios
@@ -74,18 +87,22 @@ build:ios_i386 --watchos_cpus=i386
 build:ios_x86_64 --config=ios
 build:ios_x86_64 --cpu=ios_x86_64
 build:ios_x86_64 --watchos_cpus=i386
+build:ios_x86_64 --platforms=@build_bazel_apple_support//configs/platforms:ios_x86_64
 
 build:ios_armv7 --config=ios
 build:ios_armv7 --cpu=ios_armv7
 build:ios_armv7 --watchos_cpus=armv7k
+build:ios_armv7 --platforms=@//third_party/ios:ios_armv7
 
 build:ios_arm64 --config=ios
 build:ios_arm64 --cpu=ios_arm64
 build:ios_arm64 --watchos_cpus=armv7k
+build:ios_arm64 --platforms=@build_bazel_apple_support//configs/platforms:ios_arm64
 
 build:ios_arm64e --config=ios
 build:ios_arm64e --cpu=ios_arm64e
 build:ios_arm64e --watchos_cpus=armv7k
+build:ios_arm64e --platforms=@build_bazel_apple_support//configs/platforms:ios_arm64e
 
 build:ios_fat --config=ios
 build:ios_fat --ios_multi_cpus=armv7,arm64

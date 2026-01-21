@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 licenses(["notice"])
 
@@ -22,7 +24,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/c/components/containers:landmark",
-        "//mediapipe/tasks/c/vision/core:common",
+        "//mediapipe/tasks/c/vision/core:image",
     ],
 )
 
@@ -32,9 +34,12 @@ cc_library(
     hdrs = ["pose_landmarker_result_converter.h"],
     deps = [
         ":pose_landmarker_result",
+        "//mediapipe/framework/formats:image",
         "//mediapipe/tasks/c/components/containers:landmark",
         "//mediapipe/tasks/c/components/containers:landmark_converter",
-        "//mediapipe/tasks/c/vision/core:common",
+        "//mediapipe/tasks/c/core:common",
+        "//mediapipe/tasks/c/vision/core:image",
+        "//mediapipe/tasks/c/vision/core:image_frame_util",
         "//mediapipe/tasks/cc/components/containers:landmark",
         "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_result",
     ],
@@ -66,27 +71,43 @@ cc_test(
     ],
 )
 
+POSE_LANDMARKER_DEPS = [
+    ":pose_landmarker_result",
+    ":pose_landmarker_result_converter",
+    "@com_google_absl//absl/log:absl_log",
+    "@com_google_absl//absl/log:absl_check",
+    "@com_google_absl//absl/status",
+    "@com_google_absl//absl/status:statusor",
+    "//mediapipe/framework/formats:image",
+    "//mediapipe/tasks/c/core:base_options",
+    "//mediapipe/tasks/c/core:base_options_converter",
+    "//mediapipe/tasks/c/core:mp_status",
+    "//mediapipe/tasks/c/core:mp_status_converter",
+    "//mediapipe/tasks/c/core:common",
+    "//mediapipe/tasks/c/vision/core:image",
+    "//mediapipe/tasks/c/vision/core:image_frame_util",
+    "//mediapipe/tasks/c/vision/core:image_processing_options",
+    "//mediapipe/tasks/c/vision/core:image_processing_options_converter",
+    "//mediapipe/tasks/cc/vision/core:image_processing_options",
+    "//mediapipe/tasks/cc/vision/core:running_mode",
+    "//mediapipe/tasks/cc/vision/pose_landmarker",
+    "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_result",
+]
+
 cc_library(
     name = "pose_landmarker_lib",
     srcs = ["pose_landmarker.cc"],
     hdrs = ["pose_landmarker.h"],
     visibility = ["//visibility:public"],
-    deps = [
-        ":pose_landmarker_result",
-        ":pose_landmarker_result_converter",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/tasks/c/core:base_options",
-        "//mediapipe/tasks/c/core:base_options_converter",
-        "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/cc/vision/core:running_mode",
-        "//mediapipe/tasks/cc/vision/pose_landmarker",
-        "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_result",
-        "//mediapipe/tasks/cc/vision/utils:image_utils",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-    ],
+    deps = POSE_LANDMARKER_DEPS,
+)
+
+cc_library(
+    name = "pose_landmarker_c_lib",
+    srcs = ["pose_landmarker.cc"],
+    hdrs = ["pose_landmarker.h"],
+    visibility = ["//mediapipe/tasks/c:__subpackages__"],
+    deps = POSE_LANDMARKER_DEPS,
     alwayslink = 1,
 )
 
@@ -105,13 +126,16 @@ cc_test(
         ":pose_landmarker_lib",
         ":pose_landmarker_result",
         "//mediapipe/framework/deps:file_path",
-        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/port:gtest",
         "//mediapipe/tasks/c/components/containers:landmark",
-        "//mediapipe/tasks/c/vision/core:common",
-        "//mediapipe/tasks/cc/vision/utils:image_utils",
+        "//mediapipe/tasks/c/core:common",
+        "//mediapipe/tasks/c/core:mp_status",
+        "//mediapipe/tasks/c/vision/core:image",
+        "//mediapipe/tasks/c/vision/core:image_frame_util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
     ],
 )

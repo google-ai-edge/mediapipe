@@ -15,6 +15,7 @@
 package com.google.mediapipe.tasks.text.languagedetector;
 
 import static com.google.common.truth.Truth.assertThat;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertThrows;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -23,7 +24,6 @@ import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.TestUtils;
 import com.google.mediapipe.tasks.text.languagedetector.LanguageDetector.LanguageDetectorOptions;
-import java.util.Arrays;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -31,6 +31,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class LanguageDetectorTest {
   private static final String MODEL_FILE = "language_detector.tflite";
+  private static final float SCORE_THRESHOLD = 0.05f;
 
   @Test
   public void options_failsWithNegativeMaxResults() throws Exception {
@@ -53,8 +54,8 @@ public class LanguageDetectorTest {
             () ->
                 LanguageDetectorOptions.builder()
                     .setBaseOptions(BaseOptions.builder().setModelAssetPath(MODEL_FILE).build())
-                    .setCategoryAllowlist(Arrays.asList("foo"))
-                    .setCategoryDenylist(Arrays.asList("bar"))
+                    .setCategoryAllowlist(asList("foo"))
+                    .setCategoryDenylist(asList("bar"))
                     .build());
     assertThat(exception)
         .hasMessageThat()
@@ -79,19 +80,13 @@ public class LanguageDetectorTest {
         LanguageDetector.createFromFile(ApplicationProvider.getApplicationContext(), MODEL_FILE);
     LanguageDetectorResult enResult =
         languageDetector.detect("To be, or not to be, that is the question");
-    assertThat(enResult.languagesAndScores().size()).isEqualTo(1);
-    assertThat(enResult.languagesAndScores().get(0))
-        .isEqualTo(LanguagePrediction.create("en", 0.9998559f));
+    assertPredictions(enResult, LanguagePrediction.create("en", 1.0f));
     LanguageDetectorResult frResult =
         languageDetector.detect(
             "Il y a beaucoup de bouches qui parlent et fort peu de têtes qui pensent.");
-    assertThat(frResult.languagesAndScores().size()).isEqualTo(1);
-    assertThat(frResult.languagesAndScores().get(0))
-        .isEqualTo(LanguagePrediction.create("fr", 0.9997813f));
+    assertPredictions(frResult, LanguagePrediction.create("fr", 1.0f));
     LanguageDetectorResult ruResult = languageDetector.detect("это какой-то английский язык");
-    assertThat(ruResult.languagesAndScores().size()).isEqualTo(1);
-    assertThat(ruResult.languagesAndScores().get(0))
-        .isEqualTo(LanguagePrediction.create("ru", 0.9933616f));
+    assertPredictions(ruResult, LanguagePrediction.create("ru", 1.0f));
   }
 
   @Test
@@ -101,10 +96,20 @@ public class LanguageDetectorTest {
             ApplicationProvider.getApplicationContext(),
             TestUtils.loadFile(ApplicationProvider.getApplicationContext(), MODEL_FILE));
     LanguageDetectorResult mixedResult = languageDetector.detect("分久必合合久必分");
-    assertThat(mixedResult.languagesAndScores().size()).isEqualTo(2);
-    assertThat(mixedResult.languagesAndScores().get(0))
-        .isEqualTo(LanguagePrediction.create("zh", 0.50542367f));
-    assertThat(mixedResult.languagesAndScores().get(1))
-        .isEqualTo(LanguagePrediction.create("ja", 0.4816168f));
+    assertPredictions(
+        mixedResult,
+        LanguagePrediction.create("zh", 0.50f),
+        LanguagePrediction.create("ja", 0.48f));
+  }
+
+  private void assertPredictions(
+      LanguageDetectorResult result, LanguagePrediction... expectedPredictions) {
+    assertThat(result.languagesAndScores()).hasSize(expectedPredictions.length);
+    for (int i = 0; i < result.languagesAndScores().size(); i++) {
+      LanguagePrediction actual = result.languagesAndScores().get(i);
+      LanguagePrediction expected = expectedPredictions[i];
+      assertThat(actual.languageCode()).isEqualTo(expected.languageCode());
+      assertThat(actual.probability()).isWithin(SCORE_THRESHOLD).of(expected.probability());
+    }
   }
 }

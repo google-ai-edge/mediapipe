@@ -15,6 +15,8 @@
 """Building MediaPipe Tasks AARs."""
 
 load("@build_bazel_rules_android//android:rules.bzl", "android_binary", "android_library")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 _CORE_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/gpu:gpu_origin_java_proto_lite",
@@ -30,7 +32,6 @@ _CORE_TASKS_JAVA_PROTO_LITE_TARGETS = [
 
 _AUDIO_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/audio/audio_classifier/proto:audio_classifier_graph_options_java_proto_lite",
-    "//mediapipe/tasks/cc/audio/audio_embedder/proto:audio_embedder_graph_options_java_proto_lite",
 ]
 
 _VISION_TASKS_JAVA_PROTO_LITE_TARGETS = [
@@ -41,7 +42,6 @@ _VISION_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_blendshapes_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarker_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarks_detector_graph_options_java_proto_lite",
-    "//mediapipe/tasks/cc/vision/face_stylizer/proto:face_stylizer_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_classifier_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_embedder_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_recognizer_graph_options_java_proto_lite",
@@ -51,6 +51,7 @@ _VISION_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_roi_refinement_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/holistic_landmarker/proto:holistic_landmarker_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_classifier/proto:image_classifier_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_embedder/proto:image_embedder_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_java_proto_lite",
@@ -91,6 +92,89 @@ _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_java_proto_lite",
 ]
+
+def mediapipe_jni_binary(name, deps, uses_explicit_exports = False, shared_lib_name = None):
+    """Builds MediaPipe JNI library. Uses prebuilt libraries if available.
+
+    Creates an .so file at name/shared_lib_name. If shared_lib_name is not provided, it will be
+    set to lib{name}.so. Additionally, if shared_lib_name is not provided, this rule asssumes that
+    it should create a default library and creates a "lib{name}.so" file in the current package.
+
+    Args:
+      name: The name of the library group.
+      deps: The cc_binary dependencies.
+      uses_explicit_exports: Whethe this library uses JNIEXPORT to mark exported symbols.
+      shared_lib_name: The name of the shared library. If not provided, it will be inferred from
+        the name argument.
+    """
+    extra_linkopts = []
+    if not uses_explicit_exports:
+        extra_linkopts = [
+            "-Wl,--version-script,$(location //mediapipe/tasks/java:version_script.lds)",
+        ]
+
+    target_lib_name = shared_lib_name or "lib" + name + ".so"
+
+    # Target to build the JNI library from source.
+    cc_binary(
+        name = "lib" + name + "_src",
+        defines = [
+            "EXCLUDE_OPENCV_SO_LIB=1",
+            "ABSL_MIN_LOG_LEVEL=2",
+            "libunwind=true",
+            "xnnpack_use_latest_ops=true",
+        ],
+        features = ["-legacy_whole_archive"],
+        copts = [
+            "-fvisibility=hidden",
+            "-ffunction-sections",
+            "-fdata-sections",
+            "-fstack-protector",
+        ],
+        linkopts = [
+            "-Wl,-soname=lib" + name + ".so",
+            "-Wl,--no-undefined",
+            "-Wl,--strip-all",
+            "-Wl,--gc-sections",
+            "-Wl,-z,max-page-size=16384",
+        ] + extra_linkopts,
+        linkshared = 1,
+        deps = deps + [
+            "//mediapipe/tasks/java:version_script.lds",
+        ],
+    )
+
+    native.filegroup(
+        name = "lib" + name + "_files",
+        srcs = select({
+            "@platforms//cpu:armv7": native.glob(["armeabi-v7a/lib" + name + ".so"]) or [":lib" + name + "_src"],
+            "@platforms//cpu:arm64": native.glob(["arm64-v8a/lib" + name + ".so"]) or [":lib" + name + "_src"],
+            "@platforms//cpu:x86_32": native.glob(["x86/lib" + name + ".so"]) or [":lib" + name + "_src"],
+            "@platforms//cpu:x86_64": native.glob(["x86_64/lib" + name + ".so"]) or [":lib" + name + "_src"],
+            "//conditions:default": [":lib" + name + "_src"],
+        }),
+    )
+
+    native.genrule(
+        name = "lib" + name + "_rename",
+        srcs = ["lib" + name + "_files"],
+        outs = [name + "/" + target_lib_name],
+        cmd = "cp $< $@",
+    )
+
+    cc_library(
+        name = "lib" + name + "_lib",
+        srcs = [name + "/" + target_lib_name],
+        alwayslink = 1,
+    )
+
+    if not shared_lib_name:
+        native.genrule(
+            name = target_lib_name + "_copy",
+            srcs = [name + "/" + target_lib_name],
+            outs = [target_lib_name],
+            cmd = "cp $< $@",
+        )
 
 def mediapipe_tasks_core_aar(name, srcs, manifest):
     """Builds medaipipe tasks core AAR.
@@ -161,9 +245,6 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
                    "//conditions:default": [],
                    "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:enable_tasks_usage_logging": mediapipe_logging_java_proto_srcs(),
                }),
-        javacopts = [
-            "-Xep:AndroidJdkLibsChecker:OFF",
-        ],
         manifest = manifest,
         deps = [
                    "//third_party:any_java_proto",
@@ -206,60 +287,6 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
                    ],
                }),
     )
-
-def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_library):
-    """Builds medaipipe tasks AAR."""
-    deps = java_proto_lite_targets + [native_library] + [
-        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
-        "//mediapipe/java/com/google/mediapipe/framework/image",
-        "//mediapipe/framework:calculator_options_java_proto_lite",
-        "//mediapipe/framework:calculator_java_proto_lite",
-        "//mediapipe/framework/formats:classification_java_proto_lite",
-        "//mediapipe/framework/formats:detection_java_proto_lite",
-        "//mediapipe/framework/formats:landmark_java_proto_lite",
-        "//mediapipe/framework/formats:location_data_java_proto_lite",
-        "//mediapipe/framework/formats:matrix_data_java_proto_lite",
-        "//mediapipe/framework/formats:rect_java_proto_lite",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:audiodata",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:detection",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classifications",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:connection",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embedding",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embeddingresult",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:landmark",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalizedkeypoint",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:classifieroptions",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:logging",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
-        "//mediapipe/util:color_java_proto_lite",
-        "//mediapipe/util:label_map_java_proto_lite",
-        "//mediapipe/util:render_data_java_proto_lite",
-        "//third_party:autovalue",
-        "@maven//:androidx_annotation_annotation",
-        "@maven//:com_google_guava_guava",
-        "@com_google_protobuf//:protobuf_javalite",
-        "//third_party:any_java_proto",
-    ]
-
-    deps += select({
-        "//conditions:default": ["//third_party:android_jni_opencv_cc_lib"],
-        "//mediapipe/framework/port:disable_opencv": [],
-        "//third_party:exclude_opencv_so_lib": [],
-    })
-
-    android_library(
-        name = name + "_android_lib",
-        srcs = srcs,
-        manifest = manifest,
-        proguard_specs = ["//mediapipe/java/com/google/mediapipe/framework:proguard.pgcfg"],
-        deps = deps,
-    )
-
-    mediapipe_build_aar_with_jni(name, name + "_android_lib")
 
 def _mediapipe_tasks_java_proto_src_extractor(target):
     proto_path = "com/google/" + target.split(":")[0].replace("cc/", "").replace("//", "").replace("third_party/", "").replace("_", "") + "/"

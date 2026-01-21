@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-licenses(["notice"])
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 
-package(default_visibility = ["//mediapipe/examples:__subpackages__"])
+licenses(["notice"])
 
 # bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/object_detection_3d:objectron_cpu
 # To run 3D object detection for shoes,

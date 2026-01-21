@@ -1,9 +1,8 @@
 #include "mediapipe/gpu/webgpu/webgpu_texture_buffer.h"
 
-#include <webgpu/webgpu.h>
-#include <webgpu/webgpu_cpp.h>
-
 #include <cstdint>
+#include <cstring>
+#include <iterator>
 #include <memory>
 #include <utility>
 
@@ -14,6 +13,8 @@
 #include "mediapipe/framework/legacy_calculator_support.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
+#include "mediapipe/gpu/gpu_buffer_storage.h"
+#include "mediapipe/gpu/webgpu/webgpu_headers.h"
 #include "mediapipe/gpu/webgpu/webgpu_service.h"
 #include "mediapipe/gpu/webgpu/webgpu_texture_view.h"
 
@@ -117,8 +118,8 @@ static std::shared_ptr<WebGpuTextureBuffer> GetWebGpuTextureBufferFromPool(
   // TODO: gkarpiak - consider converting to ABSL_CHECK or better convert the
   // function to return absl::StatusOr.
   if (!cc) return nullptr;
-  const wgpu::Device device = cc->Service(kWebGpuService).GetObject().device();
-  auto& pool = GetWebGpuDeviceCachedAttachment(device, kWebGpuTexturePool);
+  auto& pool =
+      cc->Service(kWebGpuService).GetObject().GetAttachment(kWebGpuTexturePool);
   auto texture_buffer = pool.GetBuffer(width, height, format);
   ABSL_CHECK_OK(texture_buffer);
   return *texture_buffer;

@@ -174,11 +174,14 @@ class AudioClassifierTest(parameterized.TestCase):
 
   def test_create_from_options_fails_with_invalid_model_path(self):
     with self.assertRaisesRegex(
-        RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'):
+        FileNotFoundError,
+        'Unable to open file at /path/to/invalid/model.tflite',
+    ):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite')
       options = _AudioClassifierOptions(base_options=base_options)
-      _AudioClassifier.create_from_options(options)
+      classifier = _AudioClassifier.create_from_options(options)
+      classifier.close()
 
   def test_create_from_options_succeeds_with_valid_model_content(self):
     # Creates with options containing model content successfully.
@@ -187,6 +190,7 @@ class AudioClassifierTest(parameterized.TestCase):
       options = _AudioClassifierOptions(base_options=base_options)
       classifier = _AudioClassifier.create_from_options(options)
       self.assertIsInstance(classifier, _AudioClassifier)
+      classifier.close()
 
   @parameterized.parameters((_SPEECH_WAV_16K_MONO), (_SPEECH_WAV_48K_MONO))
   def test_classify_with_yamnet_model(self, audio_file):
@@ -255,8 +259,9 @@ class AudioClassifierTest(parameterized.TestCase):
     # Fails with combined allowlist and denylist
     with self.assertRaisesRegex(
         ValueError,
-        r'`category_allowlist` and `category_denylist` are mutually '
-        r'exclusive options.'):
+        '`category_allowlist` and `category_denylist` are mutually exclusive'
+        ' options',
+    ):
       options = _AudioClassifierOptions(
           base_options=_BaseOptions(model_asset_path=self.yamnet_model_path),
           category_allowlist=['foo'],
@@ -316,8 +321,11 @@ class AudioClassifierTest(parameterized.TestCase):
     options = _AudioClassifierOptions(
         base_options=_BaseOptions(model_asset_path=self.yamnet_model_path),
         running_mode=_RUNNING_MODE.AUDIO_STREAM)
-    with self.assertRaisesRegex(ValueError,
-                                r'result callback must be provided'):
+    with self.assertRaisesRegex(
+        ValueError,
+        'The audio task is in audio stream mode, a user-defined result callback'
+        ' must be provided.',
+    ):
       with _AudioClassifier.create_from_options(options) as unused_classifier:
         pass
 
@@ -326,8 +334,11 @@ class AudioClassifierTest(parameterized.TestCase):
         base_options=_BaseOptions(model_asset_path=self.yamnet_model_path),
         running_mode=_RUNNING_MODE.AUDIO_CLIPS,
         result_callback=mock.MagicMock())
-    with self.assertRaisesRegex(ValueError,
-                                r'result callback should not be provided'):
+    with self.assertRaisesRegex(
+        ValueError,
+        'The audio task is in audio clips mode, a user-defined result callback'
+        " shouldn't be provided",
+    ):
       with _AudioClassifier.create_from_options(options) as unused_classifier:
         pass
 
@@ -337,8 +348,11 @@ class AudioClassifierTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.AUDIO_STREAM,
         result_callback=mock.MagicMock())
     with _AudioClassifier.create_from_options(options) as classifier:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the audio clips mode'):
+      with self.assertRaisesRegex(
+          ValueError,
+          'Task is not initialized with the audio clips mode. Current running'
+          ' mode:audio stream mode',
+      ):
         classifier.classify(self._read_wav_file(_SPEECH_WAV_16K_MONO))
 
   def test_calling_classify_async_in_audio_clips_mode(self):
@@ -347,7 +361,10 @@ class AudioClassifierTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.AUDIO_CLIPS)
     with _AudioClassifier.create_from_options(options) as classifier:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the audio stream mode'):
+          ValueError,
+          'Task is not initialized with the audio stream mode. Current running'
+          ' mode:audio clips mode',
+      ):
         classifier.classify_async(self._read_wav_file(_SPEECH_WAV_16K_MONO), 0)
 
   def test_classify_async_calls_with_illegal_timestamp(self):
@@ -358,7 +375,8 @@ class AudioClassifierTest(parameterized.TestCase):
     with _AudioClassifier.create_from_options(options) as classifier:
       classifier.classify_async(self._read_wav_file(_SPEECH_WAV_16K_MONO), 100)
       with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'):
+          ValueError, 'Input timestamp must be monotonically increasing.'
+      ):
         classifier.classify_async(self._read_wav_file(_SPEECH_WAV_16K_MONO), 0)
 
   @parameterized.parameters((_SPEECH_WAV_16K_MONO), (_SPEECH_WAV_48K_MONO))

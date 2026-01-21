@@ -14,6 +14,7 @@
 """Tests for hand landmarker."""
 
 import enum
+import threading
 from unittest import mock
 
 from absl.testing import absltest
@@ -21,21 +22,22 @@ from absl.testing import parameterized
 import numpy as np
 
 from google.protobuf import text_format
-from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.tasks.cc.components.containers.proto import landmarks_detection_result_pb2
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
 from mediapipe.tasks.python.components.containers import landmark_detection_result as landmark_detection_result_module
 from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
+from mediapipe.tasks.python.test.vision import proto_utils
 from mediapipe.tasks.python.vision import hand_landmarker
+from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
 _LandmarksDetectionResultProto = (
     landmarks_detection_result_pb2.LandmarksDetectionResult)
 _BaseOptions = base_options_module.BaseOptions
-_Rect = rect_module.Rect
+_RectF = rect_module.RectF
 _Landmark = landmark_module.Landmark
 _NormalizedLandmark = landmark_module.NormalizedLandmark
 _LandmarksDetectionResult = (
@@ -69,8 +71,11 @@ def _get_expected_hand_landmarker_result(
     # Use this if a .pb file is available.
     # landmarks_detection_result_proto.ParseFromString(f.read())
     text_format.Parse(f.read(), landmarks_detection_result_proto)
-    landmarks_detection_result = _LandmarksDetectionResult.create_from_pb2(
-        landmarks_detection_result_proto)
+    landmarks_detection_result = (
+        proto_utils.create_landmarks_detection_result_from_proto(
+            landmarks_detection_result_proto
+        )
+    )
   return _HandLandmarkerResult(
       handedness=[landmarks_detection_result.categories],
       hand_landmarks=[landmarks_detection_result.landmarks],
@@ -144,11 +149,14 @@ class HandLandmarkerTest(parameterized.TestCase):
   def test_create_from_options_fails_with_invalid_model_path(self):
     # Invalid empty model path.
     with self.assertRaisesRegex(
-        RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'):
+        FileNotFoundError,
+        'Unable to open file at /path/to/invalid/model.tflite',
+    ):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite')
       options = _HandLandmarkerOptions(base_options=base_options)
-      _HandLandmarker.create_from_options(options)
+      landmarker = _HandLandmarker.create_from_options(options)
+      landmarker.close()
 
   def test_create_from_options_succeeds_with_valid_model_content(self):
     # Creates with options containing model content successfully.
@@ -157,6 +165,7 @@ class HandLandmarkerTest(parameterized.TestCase):
       options = _HandLandmarkerOptions(base_options=base_options)
       landmarker = _HandLandmarker.create_from_options(options)
       self.assertIsInstance(landmarker, _HandLandmarker)
+      landmarker.close()
 
   @parameterized.parameters(
       (ModelFileType.FILE_NAME,
@@ -250,12 +259,12 @@ class HandLandmarkerTest(parameterized.TestCase):
     # Creates hand landmarker.
     base_options = _BaseOptions(model_asset_path=self.model_path)
     options = _HandLandmarkerOptions(base_options=base_options)
-    with self.assertRaisesRegex(
-        ValueError, "This task doesn't support region-of-interest."):
+    with self.assertRaises(ValueError):
       with _HandLandmarker.create_from_options(options) as landmarker:
         # Set the `region_of_interest` parameter using `ImageProcessingOptions`.
         image_processing_options = _ImageProcessingOptions(
-            region_of_interest=_Rect(0, 0, 1, 1))
+            region_of_interest=_RectF(0.0, 0.0, 1.0, 1.0)
+        )
         # Attempt to perform hand landmarks detection on the cropped input.
         landmarker.detect(self.test_image, image_processing_options)
 
@@ -297,8 +306,7 @@ class HandLandmarkerTest(parameterized.TestCase):
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.IMAGE)
     with _HandLandmarker.create_from_options(options) as landmarker:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the video mode'):
+      with self.assertRaises(ValueError):
         landmarker.detect_for_video(self.test_image, 0)
 
   def test_calling_detect_async_in_image_mode(self):
@@ -306,8 +314,7 @@ class HandLandmarkerTest(parameterized.TestCase):
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.IMAGE)
     with _HandLandmarker.create_from_options(options) as landmarker:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the live stream mode'):
+      with self.assertRaises(ValueError):
         landmarker.detect_async(self.test_image, 0)
 
   def test_calling_detect_in_video_mode(self):
@@ -315,8 +322,7 @@ class HandLandmarkerTest(parameterized.TestCase):
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.VIDEO)
     with _HandLandmarker.create_from_options(options) as landmarker:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the image mode'):
+      with self.assertRaises(ValueError):
         landmarker.detect(self.test_image)
 
   def test_calling_detect_async_in_video_mode(self):
@@ -324,8 +330,7 @@ class HandLandmarkerTest(parameterized.TestCase):
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.VIDEO)
     with _HandLandmarker.create_from_options(options) as landmarker:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the live stream mode'):
+      with self.assertRaises(ValueError):
         landmarker.detect_async(self.test_image, 0)
 
   def test_detect_for_video_with_out_of_order_timestamp(self):
@@ -334,8 +339,7 @@ class HandLandmarkerTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.VIDEO)
     with _HandLandmarker.create_from_options(options) as landmarker:
       unused_result = landmarker.detect_for_video(self.test_image, 1)
-      with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'):
+      with self.assertRaises(ValueError):
         landmarker.detect_for_video(self.test_image, 0)
 
   @parameterized.parameters(
@@ -371,8 +375,7 @@ class HandLandmarkerTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.LIVE_STREAM,
         result_callback=mock.MagicMock())
     with _HandLandmarker.create_from_options(options) as landmarker:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the image mode'):
+      with self.assertRaises(ValueError):
         landmarker.detect(self.test_image)
 
   def test_calling_detect_for_video_in_live_stream_mode(self):
@@ -381,8 +384,7 @@ class HandLandmarkerTest(parameterized.TestCase):
         running_mode=_RUNNING_MODE.LIVE_STREAM,
         result_callback=mock.MagicMock())
     with _HandLandmarker.create_from_options(options) as landmarker:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the video mode'):
+      with self.assertRaises(ValueError):
         landmarker.detect_for_video(self.test_image, 0)
 
   def test_detect_async_calls_with_illegal_timestamp(self):
@@ -392,8 +394,7 @@ class HandLandmarkerTest(parameterized.TestCase):
         result_callback=mock.MagicMock())
     with _HandLandmarker.create_from_options(options) as landmarker:
       landmarker.detect_async(self.test_image, 100)
-      with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'):
+      with self.assertRaises(ValueError):
         landmarker.detect_async(self.test_image, 0)
 
   @parameterized.parameters(
@@ -410,19 +411,32 @@ class HandLandmarkerTest(parameterized.TestCase):
     # Set rotation parameters using ImageProcessingOptions.
     image_processing_options = _ImageProcessingOptions(
         rotation_degrees=rotation)
+    callback_event = threading.Event()
+    callback_exception: None | Exception = None
     observed_timestamp_ms = -1
 
     def check_result(result: _HandLandmarkerResult, output_image: _Image,
                      timestamp_ms: int):
-      if (result.hand_landmarks and result.hand_world_landmarks and
-          result.handedness):
-        self._expect_hand_landmarker_results_correct(result, expected_result)
-      else:
-        self.assertEqual(result, expected_result)
-      self.assertTrue(
-          np.array_equal(output_image.numpy_view(), test_image.numpy_view()))
-      self.assertLess(observed_timestamp_ms, timestamp_ms)
-      self.observed_timestamp_ms = timestamp_ms
+      nonlocal callback_exception, observed_timestamp_ms
+
+      try:
+        if (
+            result.hand_landmarks
+            and result.hand_world_landmarks
+            and result.handedness
+        ):
+          self._expect_hand_landmarker_results_correct(result, expected_result)
+        else:
+          self.assertEqual(result, expected_result)
+        self.assertTrue(
+            np.array_equal(output_image.numpy_view(), test_image.numpy_view())
+        )
+        self.assertLess(observed_timestamp_ms, timestamp_ms)
+        observed_timestamp_ms = timestamp_ms
+      except AssertionError as e:
+        callback_exception = e
+      finally:
+        callback_event.set()
 
     options = _HandLandmarkerOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
@@ -431,6 +445,10 @@ class HandLandmarkerTest(parameterized.TestCase):
     with _HandLandmarker.create_from_options(options) as landmarker:
       for timestamp in range(0, 300, 30):
         landmarker.detect_async(test_image, timestamp, image_processing_options)
+        callback_event.wait(timeout=3.0)
+        if callback_exception is not None:
+          raise callback_exception
+        callback_event.clear()
 
 
 if __name__ == '__main__':

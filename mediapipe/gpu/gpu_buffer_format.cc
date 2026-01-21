@@ -221,6 +221,47 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
   ABSL_CHECK_LT(plane, planes.size()) << "invalid plane number";
   return planes[plane];
 }
+
+GpuBufferFormat GpuBufferFormatForGlFormat(const GLenum format) {  // NOLINT
+  switch (format) {
+    case GL_RGBA8:
+      return GpuBufferFormat::kBGRA32;
+    case GL_RGBA:  // Often defaults to RGBA8
+      return GpuBufferFormat::kBGRA32;
+    case GL_R8:
+      return GpuBufferFormat::kOneComponent8Red;
+    case GL_RED:  // Sometimes used as an internal format
+      return GpuBufferFormat::kOneComponent8Red;
+    case GL_RG8:
+      return GpuBufferFormat::kTwoComponent8;
+    case GL_RG:  // Sometimes used as an internal format
+      return GpuBufferFormat::kTwoComponent8;
+    case GL_RGB8:
+      return GpuBufferFormat::kRGB24;
+    case GL_RGB:  // Often defaults to RGB8
+      return GpuBufferFormat::kRGB24;
+    case GL_R16F:
+      return GpuBufferFormat::kGrayHalf16;
+    case GL_RG16F:
+      return GpuBufferFormat::kTwoComponentHalf16;
+    case GL_RGBA16F:
+      return GpuBufferFormat::kRGBAHalf64;
+    case GL_R32F:
+      return GpuBufferFormat::kGrayFloat32;
+    case GL_RG32F:
+      return GpuBufferFormat::kTwoComponentFloat32;
+    case GL_RGBA32F:
+      return GpuBufferFormat::kRGBAFloat128;
+    case GL_ALPHA:
+      return GpuBufferFormat::kOneComponent8Alpha;
+#if !TARGET_OS_OSX
+    case GL_LUMINANCE:
+      return GpuBufferFormat::kOneComponent8;
+#endif
+    default:
+      return GpuBufferFormat::kUnknown;
+  }
+}
 #endif  // MEDIAPIPE_DISABLE_GPU
 
 ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
@@ -232,6 +273,7 @@ ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
     case GpuBufferFormat::kGrayFloat32:
       return ImageFormat::VEC32F1;
     case GpuBufferFormat::kOneComponent8:
+    case GpuBufferFormat::kOneComponent8Red:
       return ImageFormat::GRAY8;
     case GpuBufferFormat::kBiPlanar420YpCbCr8VideoRange:
     case GpuBufferFormat::kBiPlanar420YpCbCr8FullRange:
@@ -248,7 +290,6 @@ ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
       return ImageFormat::SRGBA;
     case GpuBufferFormat::kGrayHalf16:
     case GpuBufferFormat::kOneComponent8Alpha:
-    case GpuBufferFormat::kOneComponent8Red:
     case GpuBufferFormat::kTwoComponent8:
     case GpuBufferFormat::kTwoComponentHalf16:
     case GpuBufferFormat::kRGBAHalf64:

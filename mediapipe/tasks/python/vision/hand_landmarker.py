@@ -13,47 +13,141 @@
 # limitations under the License.
 """MediaPipe hand landmarker task."""
 
+import ctypes
 import dataclasses
 import enum
-from typing import Callable, Mapping, Optional, List
+from typing import Callable, List, Optional, Tuple
 
-from mediapipe.framework.formats import classification_pb2
-from mediapipe.framework.formats import landmark_pb2
-from mediapipe.python import packet_creator
-from mediapipe.python import packet_getter
-from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.python._framework_bindings import packet as packet_module
-from mediapipe.tasks.cc.vision.hand_landmarker.proto import hand_landmarker_graph_options_pb2
-from mediapipe.tasks.python.components.containers import category as category_module
-from mediapipe.tasks.python.components.containers import landmark as landmark_module
-from mediapipe.tasks.python.core import base_options as base_options_module
-from mediapipe.tasks.python.core import task_info as task_info_module
+from mediapipe.tasks.python.components.containers import category
+from mediapipe.tasks.python.components.containers import category_c
+from mediapipe.tasks.python.components.containers import landmark
+from mediapipe.tasks.python.components.containers import landmark_c
+from mediapipe.tasks.python.core import async_result_dispatcher
+from mediapipe.tasks.python.core import base_options as base_options_lib
+from mediapipe.tasks.python.core import base_options_c
+from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
+from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-from mediapipe.tasks.python.vision.core import base_vision_task_api
-from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
-from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
+from mediapipe.tasks.python.vision.core import image as image_lib
+from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_lib
+from mediapipe.tasks.python.vision.core import image_processing_options_c
+from mediapipe.tasks.python.vision.core import vision_task_running_mode
 
-_BaseOptions = base_options_module.BaseOptions
-_HandLandmarkerGraphOptionsProto = (
-    hand_landmarker_graph_options_pb2.HandLandmarkerGraphOptions
+_BaseOptions = base_options_lib.BaseOptions
+_RunningMode = vision_task_running_mode.VisionTaskRunningMode
+_ImageProcessingOptions = image_processing_options_lib.ImageProcessingOptions
+_CFunction = mediapipe_c_utils.CFunction
+_AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
+
+
+class HandLandmarkerResultC(ctypes.Structure):
+  """The hand landmarker result from HandLandmarker in ctypes."""
+
+  _fields_ = [
+      ('handedness', ctypes.POINTER(category_c.CategoriesC)),
+      ('handedness_count', ctypes.c_uint32),
+      (
+          'hand_landmarks',
+          ctypes.POINTER(landmark_c.NormalizedLandmarksC),
+      ),
+      ('hand_landmarks_count', ctypes.c_uint32),
+      ('hand_world_landmarks', ctypes.POINTER(landmark_c.LandmarksC)),
+      ('hand_world_landmarks_count', ctypes.c_uint32),
+  ]
+
+_C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
+    None,
+    ctypes.c_int32,  # MpStatus
+    ctypes.POINTER(HandLandmarkerResultC),
+    ctypes.c_void_p,  # MpImage
+    ctypes.c_int64,  # timestamp_ms
 )
-_RunningMode = running_mode_module.VisionTaskRunningMode
-_ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_TaskInfo = task_info_module.TaskInfo
 
-_IMAGE_IN_STREAM_NAME = 'image_in'
-_IMAGE_OUT_STREAM_NAME = 'image_out'
-_IMAGE_TAG = 'IMAGE'
-_NORM_RECT_STREAM_NAME = 'norm_rect_in'
-_NORM_RECT_TAG = 'NORM_RECT'
-_HANDEDNESS_STREAM_NAME = 'handedness'
-_HANDEDNESS_TAG = 'HANDEDNESS'
-_HAND_LANDMARKS_STREAM_NAME = 'landmarks'
-_HAND_LANDMARKS_TAG = 'LANDMARKS'
-_HAND_WORLD_LANDMARKS_STREAM_NAME = 'world_landmarks'
-_HAND_WORLD_LANDMARKS_TAG = 'WORLD_LANDMARKS'
-_TASK_GRAPH_NAME = 'mediapipe.tasks.vision.hand_landmarker.HandLandmarkerGraph'
-_MICRO_SECONDS_PER_MILLISECOND = 1000
+
+class HandLandmarkerOptionsC(ctypes.Structure):
+  """The hand landmarker options used in the C API."""
+
+  _fields_ = [
+      ('base_options', base_options_c.BaseOptionsC),
+      ('running_mode', ctypes.c_int),
+      ('num_hands', ctypes.c_int),
+      ('min_hand_detection_confidence', ctypes.c_float),
+      ('min_hand_presence_confidence', ctypes.c_float),
+      ('min_tracking_confidence', ctypes.c_float),
+      ('result_callback', _C_TYPES_RESULT_CALLBACK),
+  ]
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_c_options(
+      cls,
+      base_options: base_options_c.BaseOptionsC,
+      running_mode: _RunningMode,
+      num_hands: int,
+      min_hand_detection_confidence: float,
+      min_hand_presence_confidence: float,
+      min_tracking_confidence: float,
+      result_callback: _C_TYPES_RESULT_CALLBACK,
+  ) -> 'HandLandmarkerOptionsC':
+    """Creates a HandLandmarkerOptionsC object from the given options."""
+    return cls(
+        base_options=base_options,
+        running_mode=running_mode.ctype,
+        num_hands=num_hands,
+        min_hand_detection_confidence=min_hand_detection_confidence,
+        min_hand_presence_confidence=min_hand_presence_confidence,
+        min_tracking_confidence=min_tracking_confidence,
+        result_callback=result_callback,
+    )
+
+
+_CTYPES_SIGNATURES = (
+    mediapipe_c_utils.CStatusFunction(
+        'MpHandLandmarkerCreate',
+        (
+            ctypes.POINTER(HandLandmarkerOptionsC),
+            ctypes.POINTER(ctypes.c_void_p),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpHandLandmarkerDetectImage',
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.POINTER(HandLandmarkerResultC),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpHandLandmarkerDetectForVideo',
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.c_int64,
+            ctypes.POINTER(HandLandmarkerResultC),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpHandLandmarkerDetectAsync',
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.c_int64,
+        ),
+    ),
+    _CFunction(
+        'MpHandLandmarkerCloseResult',
+        [ctypes.POINTER(HandLandmarkerResultC)],
+        None,
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpHandLandmarkerClose',
+        (ctypes.c_void_p,),
+    ),
+)
 
 
 class HandLandmark(enum.IntEnum):
@@ -151,66 +245,40 @@ class HandLandmarkerResult:
     hand_world_landmarks: Detected hand landmarks in world coordinates.
   """
 
-  handedness: List[List[category_module.Category]]
-  hand_landmarks: List[List[landmark_module.NormalizedLandmark]]
-  hand_world_landmarks: List[List[landmark_module.Landmark]]
+  handedness: List[List[category.Category]]
+  hand_landmarks: List[List[landmark.NormalizedLandmark]]
+  hand_world_landmarks: List[List[landmark.Landmark]]
 
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_ctypes(cls, c_obj: HandLandmarkerResultC) -> 'HandLandmarkerResult':
+    """Creates a `HandLandmarkerResult` from a `HandLandmarkerResultC`."""
+    handedness = [
+        category.create_list_of_categories_from_ctypes(c_obj.handedness[i])
+        for i in range(c_obj.handedness_count)
+    ]
 
-def _build_landmarker_result(
-    output_packets: Mapping[str, packet_module.Packet]
-) -> HandLandmarkerResult:
-  """Constructs a `HandLandmarksDetectionResult` from output packets."""
-  handedness_proto_list = packet_getter.get_proto_list(
-      output_packets[_HANDEDNESS_STREAM_NAME]
-  )
-  hand_landmarks_proto_list = packet_getter.get_proto_list(
-      output_packets[_HAND_LANDMARKS_STREAM_NAME]
-  )
-  hand_world_landmarks_proto_list = packet_getter.get_proto_list(
-      output_packets[_HAND_WORLD_LANDMARKS_STREAM_NAME]
-  )
+    hand_landmarks = []
+    for i in range(c_obj.hand_landmarks_count):
+      landmarks_c = c_obj.hand_landmarks[i]
+      hand_landmarks.append([
+          landmark.NormalizedLandmark.from_ctypes(landmarks_c.landmarks[j])
+          for j in range(landmarks_c.landmarks_count)
+      ])
 
-  handedness_results = []
-  for proto in handedness_proto_list:
-    handedness_categories = []
-    handedness_classifications = classification_pb2.ClassificationList()
-    handedness_classifications.MergeFrom(proto)
-    for handedness in handedness_classifications.classification:
-      handedness_categories.append(
-          category_module.Category(
-              index=handedness.index,
-              score=handedness.score,
-              display_name=handedness.display_name,
-              category_name=handedness.label,
-          )
-      )
-    handedness_results.append(handedness_categories)
+    hand_world_landmarks = []
+    for i in range(c_obj.hand_world_landmarks_count):
+      landmarks_c = c_obj.hand_world_landmarks[i]
+      hand_world_landmarks.append([
+          landmark.Landmark.from_ctypes(landmarks_c.landmarks[j])
+          for j in range(landmarks_c.landmarks_count)
+      ])
 
-  hand_landmarks_results = []
-  for proto in hand_landmarks_proto_list:
-    hand_landmarks = landmark_pb2.NormalizedLandmarkList()
-    hand_landmarks.MergeFrom(proto)
-    hand_landmarks_list = []
-    for hand_landmark in hand_landmarks.landmark:
-      hand_landmarks_list.append(
-          landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark)
-      )
-    hand_landmarks_results.append(hand_landmarks_list)
-
-  hand_world_landmarks_results = []
-  for proto in hand_world_landmarks_proto_list:
-    hand_world_landmarks = landmark_pb2.LandmarkList()
-    hand_world_landmarks.MergeFrom(proto)
-    hand_world_landmarks_list = []
-    for hand_world_landmark in hand_world_landmarks.landmark:
-      hand_world_landmarks_list.append(
-          landmark_module.Landmark.create_from_pb2(hand_world_landmark)
-      )
-    hand_world_landmarks_results.append(hand_world_landmarks_list)
-
-  return HandLandmarkerResult(
-      handedness_results, hand_landmarks_results, hand_world_landmarks_results
-  )
+    return HandLandmarkerResult(
+        handedness=handedness,
+        hand_landmarks=hand_landmarks,
+        hand_world_landmarks=hand_world_landmarks,
+    )
 
 
 @dataclasses.dataclass
@@ -246,38 +314,37 @@ class HandLandmarkerOptions:
   min_hand_presence_confidence: float = 0.5
   min_tracking_confidence: float = 0.5
   result_callback: Optional[
-      Callable[[HandLandmarkerResult, image_module.Image, int], None]
+      Callable[[HandLandmarkerResult, image_lib.Image, int], None]
   ] = None
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _HandLandmarkerGraphOptionsProto:
-    """Generates an HandLandmarkerGraphOptions protobuf object."""
-    base_options_proto = self.base_options.to_pb2()
-    base_options_proto.use_stream_mode = (
-        False if self.running_mode == _RunningMode.IMAGE else True
-    )
 
-    # Initialize the hand landmarker options from base options.
-    hand_landmarker_options_proto = _HandLandmarkerGraphOptionsProto(
-        base_options=base_options_proto
-    )
-    hand_landmarker_options_proto.min_tracking_confidence = (
-        self.min_tracking_confidence
-    )
-    hand_landmarker_options_proto.hand_detector_graph_options.num_hands = (
-        self.num_hands
-    )
-    hand_landmarker_options_proto.hand_detector_graph_options.min_detection_confidence = (
-        self.min_hand_detection_confidence
-    )
-    hand_landmarker_options_proto.hand_landmarks_detector_graph_options.min_detection_confidence = (
-        self.min_hand_presence_confidence
-    )
-    return hand_landmarker_options_proto
-
-
-class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
+class HandLandmarker:
   """Class that performs hand landmarks detection on images."""
+
+  _lib: serial_dispatcher.SerialDispatcher
+  _handle: ctypes.c_void_p
+  _dispatcher: _AsyncResultDispatcher
+  _async_callback: _C_TYPES_RESULT_CALLBACK
+
+  def __init__(
+      self,
+      lib: serial_dispatcher.SerialDispatcher,
+      handle: ctypes.c_void_p,
+      dispatcher: _AsyncResultDispatcher,
+      async_callback: _C_TYPES_RESULT_CALLBACK,
+  ):
+    """Initializes the hand landmarker.
+
+    Args:
+      lib: The dispatch library to use for the hand landmarker.
+      handle: The C pointer to the hand landmarker.
+      dispatcher: The async result handler for the hand landmarker.
+      async_callback: The c callback for the hand landmarker.
+    """
+    self._lib = lib
+    self._handle = handle
+    self._dispatcher = dispatcher
+    self._async_callback = async_callback
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'HandLandmarker':
@@ -298,9 +365,9 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
         provided file such as invalid file path.
       RuntimeError: If other types of error occurred.
     """
-    base_options = _BaseOptions(model_asset_path=model_path)
     options = HandLandmarkerOptions(
-        base_options=base_options, running_mode=_RunningMode.IMAGE
+        base_options=_BaseOptions(model_asset_path=model_path),
+        running_mode=_RunningMode.IMAGE,
     )
     return cls.create_from_options(options)
 
@@ -321,58 +388,51 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
         `HandLandmarkerOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-
-    def packets_callback(output_packets: Mapping[str, packet_module.Packet]):
-      if output_packets[_IMAGE_OUT_STREAM_NAME].is_empty():
-        return
-
-      image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
-
-      if output_packets[_HAND_LANDMARKS_STREAM_NAME].is_empty():
-        empty_packet = output_packets[_HAND_LANDMARKS_STREAM_NAME]
-        options.result_callback(
-            HandLandmarkerResult([], [], []),
-            image,
-            empty_packet.timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
-        )
-        return
-
-      hand_landmarks_detection_result = _build_landmarker_result(output_packets)
-      timestamp = output_packets[_HAND_LANDMARKS_STREAM_NAME].timestamp
-      options.result_callback(
-          hand_landmarks_detection_result,
-          image,
-          timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
-      )
-
-    task_info = _TaskInfo(
-        task_graph=_TASK_GRAPH_NAME,
-        input_streams=[
-            ':'.join([_IMAGE_TAG, _IMAGE_IN_STREAM_NAME]),
-            ':'.join([_NORM_RECT_TAG, _NORM_RECT_STREAM_NAME]),
-        ],
-        output_streams=[
-            ':'.join([_HANDEDNESS_TAG, _HANDEDNESS_STREAM_NAME]),
-            ':'.join([_HAND_LANDMARKS_TAG, _HAND_LANDMARKS_STREAM_NAME]),
-            ':'.join(
-                [_HAND_WORLD_LANDMARKS_TAG, _HAND_WORLD_LANDMARKS_STREAM_NAME]
-            ),
-            ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME]),
-        ],
-        task_options=options,
+    vision_task_running_mode.validate_running_mode(
+        options.running_mode, options.result_callback
     )
-    return cls(
-        task_info.generate_graph_config(
-            enable_flow_limiting=options.running_mode
-            == _RunningMode.LIVE_STREAM
-        ),
-        options.running_mode,
-        packets_callback if options.result_callback else None,
+
+    lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
+
+    def convert_result(
+        c_result_ptr: ctypes.POINTER(HandLandmarkerResultC),
+        image_ptr: ctypes.c_void_p,
+        timestamp_ms: int,
+    ) -> Tuple[HandLandmarkerResult, image_lib.Image, int]:
+      c_result = c_result_ptr[0]
+      py_result = HandLandmarkerResult.from_ctypes(c_result)
+      py_image = image_lib.Image.create_from_ctypes(image_ptr)
+      return (py_result, py_image, timestamp_ms)
+
+    dispatcher = _AsyncResultDispatcher(converter=convert_result)
+    c_callback = dispatcher.wrap_callback(
+        options.result_callback, _C_TYPES_RESULT_CALLBACK
+    )
+    ctypes_options = HandLandmarkerOptionsC.from_c_options(
+        base_options=options.base_options.to_ctypes(),
+        running_mode=options.running_mode,
+        num_hands=options.num_hands,
+        min_hand_detection_confidence=options.min_hand_detection_confidence,
+        min_hand_presence_confidence=options.min_hand_presence_confidence,
+        min_tracking_confidence=options.min_tracking_confidence,
+        result_callback=c_callback,
+    )
+
+    landmarker_handle = ctypes.c_void_p()
+    lib.MpHandLandmarkerCreate(
+        ctypes.byref(ctypes_options),
+        ctypes.byref(landmarker_handle),
+    )
+    return HandLandmarker(
+        lib=lib,
+        handle=landmarker_handle,
+        dispatcher=dispatcher,
+        async_callback=c_callback,
     )
 
   def detect(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
       image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> HandLandmarkerResult:
     """Performs hand landmarks detection on the given image.
@@ -395,24 +455,28 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If hand landmarker detection failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    c_result = HandLandmarkerResultC()
+
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    output_packets = self._process_image_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ),
-    })
+    self._lib.MpHandLandmarkerDetectImage(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        ctypes.byref(c_result),
+    )
 
-    if output_packets[_HAND_LANDMARKS_STREAM_NAME].is_empty():
-      return HandLandmarkerResult([], [], [])
-
-    return _build_landmarker_result(output_packets)
+    py_result = HandLandmarkerResult.from_ctypes(c_result)
+    self._lib.MpHandLandmarkerCloseResult(ctypes.byref(c_result))
+    return py_result
 
   def detect_for_video(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
       timestamp_ms: int,
       image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> HandLandmarkerResult:
@@ -438,26 +502,29 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If hand landmarker detection failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    c_result = HandLandmarkerResultC()
+
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    output_packets = self._process_video_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
-            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
-        ),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-    })
+    self._lib.MpHandLandmarkerDetectForVideo(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        timestamp_ms,
+        ctypes.byref(c_result),
+    )
 
-    if output_packets[_HAND_LANDMARKS_STREAM_NAME].is_empty():
-      return HandLandmarkerResult([], [], [])
-
-    return _build_landmarker_result(output_packets)
+    py_result = HandLandmarkerResult.from_ctypes(c_result)
+    self._lib.MpHandLandmarkerCloseResult(ctypes.byref(c_result))
+    return py_result
 
   def detect_async(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
       timestamp_ms: int,
       image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> None:
@@ -489,16 +556,48 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
 
     Raises:
       ValueError: If the current input timestamp is smaller than what the
-      hand landmarker has already processed.
+        hand landmarker has already processed.
+      RuntimeError: If hand landmarker detection failed to initialize.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image, roi_allowed=False
+    c_image = image._image_ptr  # pylint: disable=protected-access
+
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    self._send_live_stream_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
-            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
-        ),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-    })
+    self._lib.MpHandLandmarkerDetectAsync(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        timestamp_ms,
+    )
+
+  def close(self):
+    """Shuts down the MediaPipe task instance."""
+    if self._handle:
+      self._lib.MpHandLandmarkerClose(self._handle)
+      self._handle = None
+      self._dispatcher.close()
+      self._lib.close()
+
+  def __enter__(self):
+    """Returns `self` upon entering the runtime context."""
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    """Shuts down the MediaPipe task instance on exit of the context manager.
+
+    Args:
+      exc_type: The exception type that caused the exit.
+      exc_value: The exception value that caused the exit.
+      traceback: The exception traceback that caused the exit.
+
+    Raises:
+      RuntimeError: If the MediaPipe HandLandmarker task failed to close.
+    """
+    del exc_type, exc_value, traceback  # Unused.
+    self.close()
+
+  def __del__(self):
+    self.close()

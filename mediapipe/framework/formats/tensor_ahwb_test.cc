@@ -246,7 +246,7 @@ TEST(TensorAhwbTest, TestAhwbAlignment) {
 // Tensor::GetCpuView uses source location mechanism that gives source file
 // name and line from where the method is called. The function is intended
 // just to have two calls providing the same source file name and line.
-auto GetCpuView(const Tensor &tensor) { return tensor.GetCpuWriteView(); }
+auto GetCpuView(const Tensor& tensor) { return tensor.GetCpuWriteView(); }
 
 // The test checks the tracking mechanism: when a tensor's Cpu view is
 // retrieved for the first time then the source location is attached to the
@@ -289,7 +289,7 @@ TEST(TensorAhwbTest, ShouldReuseHardwareBufferFromHardwareBufferPool) {
   constexpr int kTensorSize = 123;
   MemoryManager memory_manager(GetTestMultiPoolOptions());
 
-  AHardwareBuffer *buffer = nullptr;
+  AHardwareBuffer* buffer = nullptr;
   {
     // First call instantiates HardwareBuffer.
     Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{kTensorSize},
@@ -312,7 +312,7 @@ TEST(TensorAhwbTest, ShouldNotReuseHardwareBufferFromHardwareBufferPool) {
   constexpr int kTensorBSize = 456;
   MemoryManager memory_manager(GetTestMultiPoolOptions());
 
-  AHardwareBuffer *buffer = nullptr;
+  AHardwareBuffer* buffer = nullptr;
   {
     // First call instantiates HardwareBuffer of size kTensorASize.
     Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{kTensorASize},

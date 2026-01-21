@@ -1,0 +1,41 @@
+Description:
+This file describes the generation process for `feedback_tensor_without_passthrough_model.tflite`.
+This TFLite model is a simple model used for testing feedback tensor functionality in MediaPipe.
+It takes a single float tensor as input and outputs a single float tensor.
+The model performs a simple operation (e.g., adding a constant) on the input.
+The "without passthrough" in the name indicates that the output is not directly passed through from the input, but rather results from a computation.
+
+Replication Process:
+To regenerate `feedback_tensor_without_passthrough_model.tflite`:
+
+1.  **Define and Save the TensorFlow Model:**
+    Create a Python script using TensorFlow to define a simple model. For instance, a model that adds a constant value to the input:
+
+    ```python
+    def model(self, regular_int_input, feedback_int_input):
+      # Constant tensor to concatenate with
+      const_tensor = tf.constant([[0]], dtype=tf.int32)
+
+      # Force a new tensor for regular_out by concatenating and slicing.
+      # This generally requires new memory allocation.
+      concatenated_reg = tf.concat([regular_int_input, const_tensor], axis=1)
+      regular_out = tf.slice(concatenated_reg, [0, 0], regular_int_input.shape, name="regular_int_output")
+
+      # Increment the feedback input - This naturally creates a new tensor
+      # because the data changes.
+      feedback_plus_one = feedback_int_input + 1
+      feedback_incremented_out = tf.identity(feedback_plus_one, name="feedback_incremented_int_output")
+
+      # Force a new tensor for feedback_copy_out using the same concat/slice method.
+      concatenated_copy = tf.concat([feedback_int_input, const_tensor], axis=1)
+      feedback_copy_out = tf.slice(concatenated_copy, [0, 0], feedback_int_input.shape, name="feedback_incremented_int_copy")
+
+      return {
+          "regular_int_output": regular_out,
+          "feedback_incremented_int_output": feedback_incremented_out,
+          "feedback_incremented_int_copy": feedback_copy_out
+      }
+    ```
+
+This process generates a `.tflite` model suitable for testing scenarios where a tensor is fed back into a graph without being a direct passthrough.
+The Concatenation and Slicing operations force the creation of a new tensor, which is necessary for testing feedback tensors.

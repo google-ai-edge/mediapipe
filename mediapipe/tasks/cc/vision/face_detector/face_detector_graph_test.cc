@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors.
+/* Copyright 2025 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -78,6 +78,8 @@ constexpr char kFullRangeSparseBlazeFaceModel[] =
     "face_detection_full_range_sparse.tflite";
 constexpr char kShortRangeBlazeFaceModel[] =
     "face_detection_short_range.tflite";
+constexpr char kShortRangeBlazeMetadataFaceModel[] =
+    "face_detection_short_range_with_metadata.tflite";
 constexpr char kPortraitImage[] = "portrait.jpg";
 constexpr char kPortraitExpectedDetection[] =
     "portrait_expected_detection.pbtxt";
@@ -177,7 +179,15 @@ INSTANTIATE_TEST_SUITE_P(
             .expected_result = {GetExpectedFaceDetectionResult(
                 kPortraitExpectedDetection)},
             .graph_name =
-                "mediapipe.tasks.vision.face_detector.FaceDetectorGraph"}, ),
+                "mediapipe.tasks.vision.face_detector.FaceDetectorGraph"},
+        TestParams{
+            .test_name = "ShortRangeWithMetadata",
+            .face_detection_model_name = kShortRangeBlazeMetadataFaceModel,
+            .test_image_name = kPortraitImage,
+            .expected_result = {GetExpectedFaceDetectionResult(
+                kPortraitExpectedDetection)},
+            .graph_name =
+                "mediapipe.tasks.vision.face_detector.FaceDetectorGraph"}),
     [](const TestParamInfo<FaceDetectorGraphTest::ParamType>& info) {
       return info.param.test_name;
     });

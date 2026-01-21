@@ -65,12 +65,10 @@ TENSORFLOW_LITE_C_DEPS = [
 CALCULATORS_AND_GRAPHS = [
     "//mediapipe/calculators/core:flow_limiter_calculator",
     "//mediapipe/tasks/cc/audio/audio_classifier:audio_classifier_graph",
-    "//mediapipe/tasks/cc/audio/audio_embedder:audio_embedder_graph",
     "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
     "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
     "//mediapipe/tasks/cc/vision/face_detector:face_detector_graph",
     "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_graph",
-    "//mediapipe/tasks/cc/vision/face_stylizer:face_stylizer_graph",
     "//mediapipe/tasks/cc/vision/hand_landmarker:hand_landmarker_graph",
     "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_graph",
     "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
@@ -111,9 +109,6 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/audio/audio_classifier:sources/MPPAudioClassifier.h",
         "//mediapipe/tasks/ios/audio/audio_classifier:sources/MPPAudioClassifierOptions.h",
         "//mediapipe/tasks/ios/audio/audio_classifier:sources/MPPAudioClassifierResult.h",
-        "//mediapipe/tasks/ios/audio/audio_embedder:sources/MPPAudioEmbedder.h",
-        "//mediapipe/tasks/ios/audio/audio_embedder:sources/MPPAudioEmbedderOptions.h",
-        "//mediapipe/tasks/ios/audio/audio_embedder:sources/MPPAudioEmbedderResult.h",
         "//mediapipe/tasks/ios/audio/core:sources/MPPAudioData.h",
         "//mediapipe/tasks/ios/audio/core:sources/MPPAudioDataFormat.h",
         "//mediapipe/tasks/ios/audio/core:sources/MPPAudioRecord.h",
@@ -137,9 +132,6 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/vision/face_landmarker:sources/MPPFaceLandmarker.h",
         "//mediapipe/tasks/ios/vision/face_landmarker:sources/MPPFaceLandmarkerOptions.h",
         "//mediapipe/tasks/ios/vision/face_landmarker:sources/MPPFaceLandmarkerResult.h",
-        "//mediapipe/tasks/ios/vision/face_stylizer:sources/MPPFaceStylizer.h",
-        "//mediapipe/tasks/ios/vision/face_stylizer:sources/MPPFaceStylizerOptions.h",
-        "//mediapipe/tasks/ios/vision/face_stylizer:sources/MPPFaceStylizerResult.h",
         "//mediapipe/tasks/ios/vision/hand_landmarker:sources/MPPHandLandmarker.h",
         "//mediapipe/tasks/ios/vision/hand_landmarker:sources/MPPHandLandmarkerOptions.h",
         "//mediapipe/tasks/ios/vision/hand_landmarker:sources/MPPHandLandmarkerResult.h",
@@ -192,9 +184,6 @@ apple_static_xcframework(
         ":MPPAudioClassifier.h",
         ":MPPAudioClassifierOptions.h",
         ":MPPAudioClassifierResult.h",
-        ":MPPAudioEmbedder.h",
-        ":MPPAudioEmbedderOptions.h",
-        ":MPPAudioEmbedderResult.h",
         ":MPPAudioData.h",
         ":MPPAudioDataFormat.h",
         ":MPPAudioRecord.h",
@@ -211,7 +200,6 @@ apple_static_xcframework(
     ],
     deps = [
         "//mediapipe/tasks/ios/audio/audio_classifier:MPPAudioClassifier",
-        "//mediapipe/tasks/ios/audio/audio_embedder:MPPAudioEmbedder",
     ],
 )
 
@@ -300,9 +288,6 @@ apple_static_xcframework(
         ":MPPFaceLandmarker.h",
         ":MPPFaceLandmarkerOptions.h",
         ":MPPFaceLandmarkerResult.h",
-        ":MPPFaceStylizer.h",
-        ":MPPFaceStylizerOptions.h",
-        ":MPPFaceStylizerResult.h",
         ":MPPImageClassifier.h",
         ":MPPImageClassifierOptions.h",
         ":MPPImageClassifierResult.h",
@@ -334,7 +319,6 @@ apple_static_xcframework(
     deps = [
         "//mediapipe/tasks/ios/vision/face_detector:MPPFaceDetector",
         "//mediapipe/tasks/ios/vision/face_landmarker:MPPFaceLandmarker",
-        "//mediapipe/tasks/ios/vision/face_stylizer:MPPFaceStylizer",
         "//mediapipe/tasks/ios/vision/gesture_recognizer:MPPGestureRecognizer",
         "//mediapipe/tasks/ios/vision/hand_landmarker:MPPHandLandmarker",
         "//mediapipe/tasks/ios/vision/holistic_landmarker:MPPHolisticLandmarker",
@@ -430,6 +414,7 @@ apple_static_xcframework(
     },
     public_hdrs = [
         "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine.h",
+        "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine_ios.h",
     ],
     # Including here the deps that were in avoid_deps in MediaPipeTasksGenAI_library.
     deps = TENSORFLOW_LITE_C_DEPS + [

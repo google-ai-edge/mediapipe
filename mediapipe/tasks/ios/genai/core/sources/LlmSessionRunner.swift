@@ -14,7 +14,6 @@
 
 import CoreGraphics
 import Foundation
-import MediaPipeSKImageConverter
 import MediaPipeTasksGenAIC
 
 /// This class is used to create and call appropriate methods on the C `LlmInferenceEngine_Session`
@@ -56,8 +55,27 @@ final class LlmSessionRunner {
 
   func addImage(image: CGImage) throws {
     var cErrorMessage: UnsafeMutablePointer<CChar>? = nil
-    let cSkBitmap: CSkBitmap = SkImageConverter.skBitmap(from: image)
-    LlmInferenceEngine_Session_AddImage(cLlmSession, cSkBitmap, &cErrorMessage)
+    LlmInferenceEngine_Session_AddCgImage(cLlmSession, image, &cErrorMessage)
+  }
+
+  func addAudio(audio: Data) throws {
+    var cErrorMessage: UnsafeMutablePointer<CChar>? = nil
+
+    let statusCode = audio.withUnsafeBytes({ (buffer: UnsafeRawBufferPointer) -> Int32 in
+      let rawPointer = buffer.baseAddress?.assumingMemoryBound(to: CChar.self)
+
+      return LlmInferenceEngine_Session_AddAudio(
+        cLlmSession,
+        rawPointer,
+        Int32(buffer.count),
+        &cErrorMessage
+      )
+    })
+
+    guard statusCode == StatusCode.success.rawValue else {
+      throw GenAiInferenceError.failedToAddAudioToSession(
+        String(allocatedCErrorMessage: cErrorMessage))
+    }
   }
 
   /// Invokes the C LLM session with the previously added query chunks synchronously to generate an
@@ -157,6 +175,17 @@ final class LlmSessionRunner {
 
     guard errorCode == StatusCode.success.rawValue else {
       throw GenAiInferenceError.failedToPredictAsync(String(allocatedCErrorMessage: cErrorMessage))
+    }
+  }
+
+  /// Signals the C LLM session to cancel the pending asynchronous prediction.
+  /// - Throws: An error if the C LLM session could not be cancelled.
+  func cancelGenerateResponseAsync() throws {
+    var cErrorMessage: UnsafeMutablePointer<CChar>? = nil
+    LlmInferenceEngine_Session_PendingProcessCancellation(cLlmSession, &cErrorMessage)
+    if let cErrorMessage {
+      throw GenAiInferenceError.failedToCancelAsyncPrediction(
+        String(allocatedCErrorMessage: cErrorMessage))
     }
   }
 

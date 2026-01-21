@@ -49,6 +49,15 @@ absl::StatusOr<std::string> GetPromptPrefixFromPromptTemplates(
     odml::infra::proto::PromptRole last_prompt_role,
     odml::infra::proto::PromptRole current_prompt_role);
 
+// Predicts the prompt templates from the provided prompt template.
+// This is a temporary solution to support models with only prompt template.
+// Currently it only recognizes the prompt template for Gemma and Deepseek.
+// TODO: b/400470302 - Remove this once the prompt templates are bundled within
+// the model.
+absl::StatusOr<odml::infra::proto::PromptTemplates>
+PredictPromptTemplatesFromPromptTemplate(
+    const odml::infra::proto::PromptTemplate& prompt_template);
+
 }  // namespace mediapipe::tasks::genai::llm_utils
 
 #endif  // MEDIAPIPE_TASKS_GENAI_INFERENCE_UTILS_LLM_UTILS_PROMPT_UTILS_H_

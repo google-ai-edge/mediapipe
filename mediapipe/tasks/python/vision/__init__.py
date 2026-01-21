@@ -15,13 +15,12 @@
 """MediaPipe Tasks Vision API."""
 
 import mediapipe.tasks.python.vision.core
-import mediapipe.tasks.python.vision.face_aligner
+import mediapipe.tasks.python.vision.drawing_styles
+import mediapipe.tasks.python.vision.drawing_utils
 import mediapipe.tasks.python.vision.face_detector
 import mediapipe.tasks.python.vision.face_landmarker
-import mediapipe.tasks.python.vision.face_stylizer
 import mediapipe.tasks.python.vision.gesture_recognizer
 import mediapipe.tasks.python.vision.hand_landmarker
-import mediapipe.tasks.python.vision.holistic_landmarker
 import mediapipe.tasks.python.vision.image_classifier
 import mediapipe.tasks.python.vision.image_embedder
 import mediapipe.tasks.python.vision.image_segmenter
@@ -29,8 +28,8 @@ import mediapipe.tasks.python.vision.interactive_segmenter
 import mediapipe.tasks.python.vision.object_detector
 import mediapipe.tasks.python.vision.pose_landmarker
 
-FaceAligner = face_aligner.FaceAligner
-FaceAlignerOptions = face_aligner.FaceAlignerOptions
+drawing_styles = drawing_styles
+drawing_utils = drawing_utils
 FaceDetector = face_detector.FaceDetector
 FaceDetectorOptions = face_detector.FaceDetectorOptions
 FaceDetectorResult = face_detector.FaceDetectorResult
@@ -38,8 +37,6 @@ FaceLandmarker = face_landmarker.FaceLandmarker
 FaceLandmarkerOptions = face_landmarker.FaceLandmarkerOptions
 FaceLandmarkerResult = face_landmarker.FaceLandmarkerResult
 FaceLandmarksConnections = face_landmarker.FaceLandmarksConnections
-FaceStylizer = face_stylizer.FaceStylizer
-FaceStylizerOptions = face_stylizer.FaceStylizerOptions
 GestureRecognizer = gesture_recognizer.GestureRecognizer
 GestureRecognizerOptions = gesture_recognizer.GestureRecognizerOptions
 GestureRecognizerResult = gesture_recognizer.GestureRecognizerResult
@@ -62,25 +59,20 @@ InteractiveSegmenterRegionOfInterest = interactive_segmenter.RegionOfInterest
 ObjectDetector = object_detector.ObjectDetector
 ObjectDetectorOptions = object_detector.ObjectDetectorOptions
 ObjectDetectorResult = object_detector.ObjectDetectorResult
+PoseLandmark = pose_landmarker.PoseLandmark
 PoseLandmarker = pose_landmarker.PoseLandmarker
 PoseLandmarkerOptions = pose_landmarker.PoseLandmarkerOptions
 PoseLandmarkerResult = pose_landmarker.PoseLandmarkerResult
 PoseLandmarksConnections = pose_landmarker.PoseLandmarksConnections
-HolisticLandmarker = holistic_landmarker.HolisticLandmarker
-HolisticLandmarkerOptions = holistic_landmarker.HolisticLandmarkerOptions
-HolisticLandmarkerResult = holistic_landmarker.HolisticLandmarkerResult
 
 RunningMode = core.vision_task_running_mode.VisionTaskRunningMode
 
 # Remove unnecessary modules to avoid duplication in API docs.
 del core
-del face_aligner
 del face_detector
 del face_landmarker
-del face_stylizer
 del gesture_recognizer
 del hand_landmarker
-del holistic_landmarker
 del image_classifier
 del image_embedder
 del image_segmenter

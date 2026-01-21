@@ -21,16 +21,25 @@ limitations under the License.
 #include <cstdint>
 
 #include "mediapipe/tasks/c/core/base_options.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/core/common.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result.h"
 
 #ifndef MP_EXPORT
+#if defined(_MSC_VER)
+#define MP_EXPORT __declspec(dllexport)
+#else
 #define MP_EXPORT __attribute__((visibility("default")))
+#endif  // _MSC_VER
 #endif  // MP_EXPORT
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct MpImageSegmenterInternal* MpImageSegmenterPtr;
 
 // The options for configuring a mediapipe image segmenter task.
 struct ImageSegmenterOptions {
@@ -65,11 +74,10 @@ struct ImageSegmenterOptions {
   // message in case of any failure. The validity of the passed arguments is
   // true for the lifetime of the callback function.
   //
-  //  The passed `image` is only valid for the lifetime of the call. A caller is
-  //  responsible for closing the image segmenter result.
-  typedef void (*result_callback_fn)(ImageSegmenterResult* result,
-                                     const MpImage* image, int64_t timestamp_ms,
-                                     char* error_msg);
+  // The passed arguments are only valid for the lifetime of the callback.
+  typedef void (*result_callback_fn)(MpStatus status,
+                                     const ImageSegmenterResult* result,
+                                     MpImagePtr image, int64_t timestamp_ms);
   result_callback_fn result_callback;
 };
 
@@ -83,21 +91,29 @@ struct SegmentationOptions {
 };
 
 // Creates an ImageSegmenter from the provided `options`.
-// Returns a pointer to the image segmenter on success.
-// If an error occurs, returns `nullptr` and sets the error parameter to an
-// an error message (if `error_msg` is not `nullptr`). You must free the memory
-// allocated for the error message.
-MP_EXPORT void* image_segmenter_create(struct ImageSegmenterOptions* options,
-                                       char** error_msg);
+// Returns 'kMpOk' on success and sets `segmenter` to the created
+// ImageSegmenter.
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `MpErrorFree()`.
+MP_EXPORT MpStatus MpImageSegmenterCreate(struct ImageSegmenterOptions* options,
+                                          MpImageSegmenterPtr* segmenter,
+                                          char** error_msg);
 
-// Performs image segmentation on the input `image`. Returns `0` on
-// success. If an error occurs, returns an error code and sets the error
-// parameter to an an error message (if `error_msg` is not `nullptr`). You must
-// free the memory allocated for the error message.
-MP_EXPORT int image_segmenter_segment_image(void* segmenter,
-                                            const MpImage* image,
-                                            ImageSegmenterResult* result,
-                                            char** error_msg);
+// Performs image segmentation on the input `image`.
+// Returns 'kMpOk' on success and sets `result` to the segmentation result.
+// You must call `MpImageSegmenterCloseResult` to free its memory.
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `MpErrorFree()`.
+MP_EXPORT MpStatus
+MpImageSegmenterSegmentImage(MpImageSegmenterPtr segmenter, MpImagePtr image,
+                             const ImageProcessingOptions* options,
+                             ImageSegmenterResult* result, char** error_msg);
 
 // Performs image segmentation on the provided video frame.
 // Only use this method when the ImageSegmenter is created with the video
@@ -105,14 +121,17 @@ MP_EXPORT int image_segmenter_segment_image(void* segmenter,
 // The image can be of any size with format RGB or RGBA. It's required to
 // provide the video frame's timestamp (in milliseconds). The input timestamps
 // must be monotonically increasing.
-// If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not `nullptr`). You must free the memory
-// allocated for the error message.
-MP_EXPORT int image_segmenter_segment_for_video(void* segmenter,
-                                                const MpImage* image,
-                                                int64_t timestamp_ms,
-                                                ImageSegmenterResult* result,
-                                                char** error_msg);
+// Returns 'kMpOk' on success and sets `result` to the segmentation result.
+// You must call `MpImageSegmenterCloseResult` to free its memory.
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `MpErrorFree()`.
+MP_EXPORT MpStatus MpImageSegmenterSegmentForVideo(
+    MpImageSegmenterPtr segmenter, MpImagePtr image,
+    const ImageProcessingOptions* options, int64_t timestamp_ms,
+    ImageSegmenterResult* result, char** error_msg);
 
 // Sends live image data to image segmentation, and the results will be
 // available via the `result_callback` provided in the ImageSegmenterOptions.
@@ -129,25 +148,44 @@ MP_EXPORT int image_segmenter_segment_for_video(void* segmenter,
 //     longer be valid when the callback returns. To access the image data
 //     outside of the callback, callers need to make a copy of the image.
 //   - The input timestamp in milliseconds.
-// If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not `nullptr`). You must free the memory
-// allocated for the error message.
-// You need to invoke `image_segmenter_close_result` after each invocation to
-// free memory.
-MP_EXPORT int image_segmenter_segment_async(void* segmenter,
-                                            const MpImage* image,
-                                            int64_t timestamp_ms,
-                                            char** error_msg);
+//
+// Returns 'kMpOk' on success. To obtain a detailed error, `error_msg` must be
+// non-null pointer to a `char*`, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with `MpErrorFree()`.
+MP_EXPORT MpStatus
+MpImageSegmenterSegmentAsync(MpImageSegmenterPtr segmenter, MpImagePtr image,
+                             const ImageProcessingOptions* options,
+                             int64_t timestamp_ms, char** error_msg);
 
 // Frees the memory allocated inside a ImageSegmenterResult result.
 // Does not free the result pointer itself.
-MP_EXPORT void image_segmenter_close_result(ImageSegmenterResult* result);
+MP_EXPORT void MpImageSegmenterCloseResult(ImageSegmenterResult* result);
 
-// Frees image segmenter.
-// If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not `nullptr`). You must free the memory
-// allocated for the error message.
-MP_EXPORT int image_segmenter_close(void* segmenter, char** error_msg);
+// Shuts down the ImageSegmenter when all the work is done. Frees all memory.
+//
+// Returns 'kMpOk' on success. To obtain a detailed error, `error_msg` must be
+// non-null pointer to a `char*`, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with `MpErrorFree()`.
+MP_EXPORT MpStatus MpImageSegmenterClose(MpImageSegmenterPtr segmenter,
+                                         char** error_msg);
+
+// Gets the category label list of the ImageSegmenter can recognize.
+// The index in the category mask corresponds to the category in the label list.
+// The output mask list at index corresponds to the category in the label list.
+// If there is no label map provided in the model file, an empty label list is
+// returned.
+//
+// Returns 'kMpOk' on success and sets `label_list` to the label list. The
+// caller is responsible for freeing the memory of the `label_list` by calling
+// `MpStringListFree()`. To obtain a detailed error, `error_msg` must be
+// non-null pointer to a `char*`, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with `MpErrorFree()`.
+MP_EXPORT MpStatus MpImageSegmenterGetLabels(MpImageSegmenterPtr segmenter,
+                                             MpStringList* label_list,
+                                             char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

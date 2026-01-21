@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <string>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/absl_log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/strip.h"
 #include "mediapipe/calculators/core/packet_resampler_calculator.pb.h"
 #include "mediapipe/calculators/tensorflow/unpack_media_sequence_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/location.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/audio_decoder.pb.h"
 #include "mediapipe/util/sequence/media_sequence.h"
 #include "tensorflow/core/example/example.pb.h"
@@ -157,25 +159,19 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
     }
     for (const auto& tag : cc->Outputs().GetTags()) {
       if (absl::StartsWith(tag, kImageTag)) {
-        std::string key = "";
         if (tag != kImageTag) {
           int tag_length = sizeof(kImageTag) / sizeof(*kImageTag) - 1;
-          if (tag[tag_length] == '_') {
-            key = tag.substr(tag_length + 1);
-          } else {
-            continue;  // Skip keys that don't match "(kImageTag)_?"
+          if (tag[tag_length] != '_') {
+            continue;  // Skip keys that don't match "{kImageTag}_*"
           }
         }
         cc->Outputs().Tag(tag).Set<std::string>();
       }
       if (absl::StartsWith(tag, kBBoxTag)) {
-        std::string key = "";
         if (tag != kBBoxTag) {
           int tag_length = sizeof(kBBoxTag) / sizeof(*kBBoxTag) - 1;
-          if (tag[tag_length] == '_') {
-            key = tag.substr(tag_length + 1);
-          } else {
-            continue;  // Skip keys that don't match "(kBBoxTag)_?"
+          if (tag[tag_length] != '_') {
+            continue;  // Skip keys that don't match "{kBBoxTag}_*"
           }
         }
         cc->Outputs().Tag(tag).Set<std::vector<Location>>();

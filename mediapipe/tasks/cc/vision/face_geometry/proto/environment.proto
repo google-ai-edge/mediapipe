@@ -74,8 +74,8 @@ message PerspectiveCamera {
   // `0 < vertical_fov_degrees < 180`.
   optional float vertical_fov_degrees = 1;
   // `0 < near < far`.
-  optional float near = 2;
-  optional float far = 3;
+  optional float near_plane = 2;
+  optional float far_plane = 3;
 }
 
 message Environment {

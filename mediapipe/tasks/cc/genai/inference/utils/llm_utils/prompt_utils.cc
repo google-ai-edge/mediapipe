@@ -17,6 +17,7 @@
 #include <string>
 
 #include "absl/status/statusor.h"
+#include "absl/strings/match.h"
 
 namespace mediapipe::tasks::genai::llm_utils {
 
@@ -80,6 +81,47 @@ absl::StatusOr<std::string> GetPromptPrefixFromPromptTemplates(
     }
   }
   return prompt_prefix;
+}
+
+// TODO: b/400470302 - Remove this once the prompt templates are bundled within
+// the model.
+absl::StatusOr<odml::infra::proto::PromptTemplates>
+PredictPromptTemplatesFromPromptTemplate(
+    const odml::infra::proto::PromptTemplate& prompt_template) {
+  odml::infra::proto::PromptTemplates prompt_templates;
+  if (!prompt_template.prompt_prefix().empty()) {
+    prompt_templates.mutable_user_template()->set_prompt_prefix(
+        prompt_template.prompt_prefix());
+  }
+  if (!prompt_template.prompt_suffix().empty()) {
+    int newline_pos = prompt_template.prompt_suffix().find('\n');
+    if (newline_pos != std::string::npos) {
+      std::string suffix_until_newline = prompt_template.prompt_suffix().substr(
+          0, prompt_template.prompt_suffix().find('\n'));
+      suffix_until_newline = suffix_until_newline + "\n";
+      std::string suffix_after_newline = prompt_template.prompt_suffix().substr(
+          prompt_template.prompt_suffix().find('\n'));
+      suffix_after_newline = suffix_after_newline.substr(1);
+      prompt_templates.mutable_user_template()->set_prompt_suffix(
+          suffix_until_newline);
+      prompt_templates.mutable_model_template()->set_prompt_prefix(
+          suffix_after_newline);
+    } else {
+      prompt_templates.mutable_model_template()->set_prompt_prefix(
+          prompt_template.prompt_suffix());
+    }
+  }
+  // Predict the model suffix from the provided information.
+  if (prompt_templates.has_user_template()) {
+    if (absl::StrContains(prompt_templates.user_template().prompt_prefix(),
+                          "<start_of_turn>") ||
+        absl::StrContains(prompt_templates.user_template().prompt_prefix(),
+                          "<ctrl99>")) {
+      prompt_templates.mutable_model_template()->set_prompt_suffix(
+          prompt_templates.user_template().prompt_suffix());
+    }
+  }
+  return prompt_templates;
 }
 
 }  // namespace mediapipe::tasks::genai::llm_utils

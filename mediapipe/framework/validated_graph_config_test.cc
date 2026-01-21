@@ -61,6 +61,52 @@ class AlwaysCalculatorALegacySubgraph : public Subgraph {
 };
 REGISTER_MEDIAPIPE_GRAPH(AlwaysCalculatorALegacySubgraph);
 
+TEST(ValidatedGraphConfigTest, MissingInputFails) {
+  CalculatorGraphConfig config;
+  auto* node = config.add_node();
+  node->set_calculator("CalculatorA");
+  node->set_name("add_calculator");
+  node->add_input_stream("missing_input");
+  config.add_executor();
+
+  ValidatedGraphConfig validated_graph;
+  EXPECT_THAT(validated_graph.Initialize(config),
+              StatusIs(testing::_,
+                       testing::HasSubstr("For input streams of add_calculator "
+                                          "ValidatePacketTypeSet failed")));
+}
+
+TEST(ValidatedGraphConfigTest, MissingOutputFails) {
+  CalculatorGraphConfig config;
+  auto* node = config.add_node();
+  node->set_calculator("CalculatorA");
+  node->set_name("add_calculator");
+  node->add_output_stream("missing_output");
+  config.add_executor();
+
+  ValidatedGraphConfig validated_graph;
+  EXPECT_THAT(validated_graph.Initialize(config),
+              StatusIs(testing::_, testing::HasSubstr(
+                                       "For output streams of add_calculator "
+                                       "ValidatePacketTypeSet failed")));
+}
+
+TEST(ValidatedGraphConfigTest, MissingSideInputFails) {
+  CalculatorGraphConfig config;
+  auto* node = config.add_node();
+  node->set_calculator("CalculatorA");
+  node->set_name("add_calculator");
+  node->add_input_side_packet("missing_side_input");
+  config.add_executor();
+
+  ValidatedGraphConfig validated_graph;
+  EXPECT_THAT(
+      validated_graph.Initialize(config),
+      StatusIs(testing::_,
+               testing::HasSubstr("For input side packets of add_calculator "
+                                  "ValidatePacketTypeSet failed")));
+}
+
 TEST(ValidatedGraphConfigTest, InitializeByTypeLegacySubgraphHardcoded) {
   ValidatedGraphConfig config;
   MP_EXPECT_OK(config.Initialize("AlwaysCalculatorALegacySubgraph",

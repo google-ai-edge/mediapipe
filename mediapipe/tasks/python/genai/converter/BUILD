@@ -42,8 +42,11 @@ py_library(
     deps = [
         ":converter_base",
         ":converter_factory",
+        ":external_dependencies",
         ":quantization_util",
-        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:mediapipe_c_utils",
+        "//mediapipe/tasks/python/core:serial_dispatcher",
         "@mediapipe_pip_deps_numpy//:pkg",
     ],
 )
@@ -53,6 +56,7 @@ py_library(
     srcs = ["pytorch_converter.py"],
     deps = [
         ":converter_base",
+        ":external_dependencies",
     ],
 )
 
@@ -61,12 +65,17 @@ py_library(
     srcs = ["safetensors_converter.py"],
     deps = [
         ":converter_base",
+        ":external_dependencies",
     ],
 )
 
 py_library(
     name = "quantization_util",
     srcs = ["quantization_util.py"],
+    deps = [
+        ":external_dependencies",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
 )
 
 py_test(
@@ -82,7 +91,16 @@ py_library(
     srcs = ["weight_bins_writer.py"],
     deps = [
         ":converter_base",
+        ":external_dependencies",
         ":quantization_util",
+    ],
+)
+
+py_library(
+    name = "external_dependencies",
+    srcs = ["external_dependencies.py"],
+    deps = [
+        "@com_google_sentencepiece//python:sentencepiece_processor",
     ],
 )
 

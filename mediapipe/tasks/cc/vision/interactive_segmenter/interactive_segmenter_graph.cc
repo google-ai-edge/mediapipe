@@ -13,9 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include "mediapipe/tasks/cc/vision/interactive_segmenter/interactive_segmenter_graph.h"
+
 #include <memory>
+#include <utility>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/calculators/util/flat_color_image_calculator.pb.h"
@@ -29,6 +33,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/segmenter_options.pb.h"
+#include "mediapipe/tasks/cc/vision/interactive_segmenter/proto/region_of_interest.pb.h"
 #include "mediapipe/util/color.pb.h"
 #include "mediapipe/util/graph_builder_utils.h"
 #include "mediapipe/util/render_data.pb.h"
@@ -39,36 +44,59 @@ namespace vision {
 namespace interactive_segmenter {
 namespace internal {
 
-// A calculator to add thickness to the render data according to the image size,
-// so that the render data is scale invariant to the image size. If the render
-// data already has thickness, it will be kept as is.
-class AddThicknessToRenderDataCalculator : public api2::Node {
+namespace {
+
+using ::mediapipe::tasks::vision::interactive_segmenter::proto::
+    RegionOfInterest;
+}  // namespace
+
+// A calculator to convert a RegionOfInterest proto to a RenderData proto.
+// This calculator adds a thickness according to the image size, so that the
+// render data is scale invariant to the image size.
+class RegionOfInterestToRenderDataCalculator : public api2::Node {
  public:
+  static constexpr api2::Input<RegionOfInterest> kRoiIn{"ROI"};
   static constexpr api2::Input<Image> kImageIn{"IMAGE"};
-  static constexpr api2::Input<mediapipe::RenderData> kRenderDataIn{
-      "RENDER_DATA"};
-  static constexpr api2::Output<mediapipe::RenderData> kRenderDataOut{
-      "RENDER_DATA"};
+  static constexpr api2::Output<RenderData> kRenderDataOut{"RENDER_DATA"};
 
   static constexpr int kModelInputTensorWidth = 512;
   static constexpr int kModelInputTensorHeight = 512;
 
-  MEDIAPIPE_NODE_CONTRACT(kImageIn, kRenderDataIn, kRenderDataOut);
+  MEDIAPIPE_NODE_CONTRACT(kRoiIn, kImageIn, kRenderDataOut);
 
   absl::Status Process(CalculatorContext* cc) final {
-    mediapipe::RenderData render_data = kRenderDataIn(cc).Get();
     Image image = kImageIn(cc).Get();
+    const auto& roi = kRoiIn(cc).Get();
+
+    RenderData render_data;
+    mediapipe::RenderAnnotation* annotation =
+        render_data.add_render_annotations();
+    annotation->mutable_color()->set_r(255);
+
     double thickness = std::max(
         std::max(image.width() / static_cast<double>(kModelInputTensorWidth),
                  image.height() / static_cast<double>(kModelInputTensorHeight)),
         1.0);
+    annotation->set_thickness(thickness);
 
-    for (auto& annotation : *render_data.mutable_render_annotations()) {
-      if (!annotation.has_thickness()) {
-        annotation.set_thickness(thickness);
+    if (roi.has_keypoint()) {
+      auto* keypoint = annotation->mutable_point();
+      keypoint->set_x(roi.keypoint().x());
+      keypoint->set_y(roi.keypoint().y());
+      keypoint->set_normalized(roi.keypoint().normalized());
+    } else if (roi.has_scribble()) {
+      for (const auto& point : roi.scribble().point()) {
+        auto* new_point = annotation->mutable_scribble()->add_point();
+        new_point->set_x(point.x());
+        new_point->set_y(point.y());
+        new_point->set_normalized(point.normalized());
       }
+    } else {
+      return absl::InvalidArgumentError(
+          "RegionOfInterest has no focus region.");
     }
-    kRenderDataOut(cc).Send(render_data);
+
+    kRenderDataOut(cc).Send(std::move(render_data));
     return absl::OkStatus();
   }
 };
@@ -77,7 +105,7 @@ class AddThicknessToRenderDataCalculator : public api2::Node {
 // moved to next line.
 // clang-format off
 MEDIAPIPE_REGISTER_NODE(
-    ::mediapipe::tasks::vision::interactive_segmenter::internal::AddThicknessToRenderDataCalculator);
+    ::mediapipe::tasks::vision::interactive_segmenter::internal::RegionOfInterestToRenderDataCalculator);
 // clang-format on
 // NOLINTEND
 
@@ -92,6 +120,8 @@ using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
+using ::mediapipe::tasks::vision::interactive_segmenter::proto::
+    RegionOfInterest;
 
 constexpr absl::string_view kSegmentationTag{"SEGMENTATION"};
 constexpr absl::string_view kGroupedSegmentationTag{"GROUPED_SEGMENTATION"};
@@ -111,8 +141,8 @@ constexpr absl::string_view kRenderDataTag{"RENDER_DATA"};
 // Updates the graph to return `roi` stream which has same dimension as
 // `image`, and rendered with `roi`. If `use_gpu` is true, returned `Source` is
 // in GpuBuffer format, otherwise using ImageFrame.
-Source<> RoiToAlpha(Source<Image> image, Source<RenderData> roi, bool use_gpu,
-                    Graph& graph) {
+Source<> RoiToAlpha(Source<Image> image, Source<RegionOfInterest> roi,
+                    bool use_gpu, Graph& graph) {
   // TODO: Replace with efficient implementation.
   const absl::string_view image_tag_with_suffix =
       use_gpu ? kImageGpuTag : kImageCpuTag;
@@ -121,9 +151,9 @@ Source<> RoiToAlpha(Source<Image> image, Source<RenderData> roi, bool use_gpu,
   // invariant to the input image size.
   auto& add_thickness = graph.AddNode(
       "mediapipe::tasks::vision::interactive_segmenter::internal::"
-      "AddThicknessToRenderDataCalculator");
+      "RegionOfInterestToRenderDataCalculator");
   image >> add_thickness.In(kImageTag);
-  roi >> add_thickness.In(kRenderDataTag);
+  roi >> add_thickness.In(kRoiTag);
   auto roi_with_thickness = add_thickness.Out(kRenderDataTag);
 
   // Generates a blank canvas with same size as input image.
@@ -160,7 +190,7 @@ Source<> RoiToAlpha(Source<Image> image, Source<RenderData> roi, bool use_gpu,
 // Inputs:
 //   IMAGE - Image
 //     Image to perform segmentation on.
-//   ROI - RenderData proto
+//   ROI - RegionOfInterest proto
 //     Region of interest based on user interaction. Currently only support
 //     Point format, and Color has to be (255, 255, 255).
 //   NORM_RECT - NormalizedRect @Optional
@@ -197,75 +227,70 @@ Source<> RoiToAlpha(Source<Image> image, Source<RenderData> roi, bool use_gpu,
 //     }
 //   }
 // }
-class InteractiveSegmenterGraph : public core::ModelTaskGraph {
- public:
-  absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
-      mediapipe::SubgraphContext* sc) override {
-    Graph graph;
-    const auto& task_options = sc->Options<ImageSegmenterGraphOptions>();
-    bool use_gpu =
-        components::processors::DetermineImagePreprocessingGpuBackend(
-            task_options.base_options().acceleration());
+absl::StatusOr<mediapipe::CalculatorGraphConfig>
+InteractiveSegmenterGraph::GetConfig(mediapipe::SubgraphContext* sc) {
+  Graph graph;
+  const auto& task_options = sc->Options<ImageSegmenterGraphOptions>();
+  bool use_gpu = components::processors::DetermineImagePreprocessingGpuBackend(
+      task_options.base_options().acceleration());
 
-    Source<Image> image = graph[Input<Image>(kImageTag)];
-    Source<RenderData> roi = graph[Input<RenderData>(kRoiTag)];
-    Source<NormalizedRect> norm_rect =
-        graph[Input<NormalizedRect>(kNormRectTag)];
-    const absl::string_view image_tag_with_suffix =
-        use_gpu ? kImageGpuTag : kImageCpuTag;
-    const absl::string_view alpha_tag_with_suffix =
-        use_gpu ? kAlphaGpuTag : kAlphaTag;
+  Source<Image> image = graph[Input<Image>(kImageTag)];
+  Source<RegionOfInterest> roi = graph[Input<RegionOfInterest>(kRoiTag)];
+  Source<NormalizedRect> norm_rect = graph[Input<NormalizedRect>(kNormRectTag)];
+  const absl::string_view image_tag_with_suffix =
+      use_gpu ? kImageGpuTag : kImageCpuTag;
+  const absl::string_view alpha_tag_with_suffix =
+      use_gpu ? kAlphaGpuTag : kAlphaTag;
 
-    auto& from_mp_image = graph.AddNode("FromImageCalculator");
-    image >> from_mp_image.In(kImageTag);
-    auto image_in_cpu_or_gpu = from_mp_image.Out(image_tag_with_suffix);
+  auto& from_mp_image = graph.AddNode("FromImageCalculator");
+  image >> from_mp_image.In(kImageTag);
+  auto image_in_cpu_or_gpu = from_mp_image.Out(image_tag_with_suffix);
 
-    // Creates an RGBA image with model input tensor size.
-    auto alpha_in_cpu_or_gpu = RoiToAlpha(image, roi, use_gpu, graph);
+  // Creates an RGBA image with model input tensor size.
+  auto alpha_in_cpu_or_gpu = RoiToAlpha(image, roi, use_gpu, graph);
 
-    auto& set_alpha = graph.AddNode("SetAlphaCalculator");
-    image_in_cpu_or_gpu >> set_alpha.In(use_gpu ? kImageGpuTag : kImageTag);
-    alpha_in_cpu_or_gpu >> set_alpha.In(alpha_tag_with_suffix);
-    auto image_in_cpu_or_gpu_with_set_alpha =
-        set_alpha.Out(use_gpu ? kImageGpuTag : kImageTag);
+  auto& set_alpha = graph.AddNode("SetAlphaCalculator");
+  image_in_cpu_or_gpu >> set_alpha.In(use_gpu ? kImageGpuTag : kImageTag);
+  alpha_in_cpu_or_gpu >> set_alpha.In(alpha_tag_with_suffix);
+  auto image_in_cpu_or_gpu_with_set_alpha =
+      set_alpha.Out(use_gpu ? kImageGpuTag : kImageTag);
 
-    auto& to_mp_image = graph.AddNode("ToImageCalculator");
-    image_in_cpu_or_gpu_with_set_alpha >> to_mp_image.In(image_tag_with_suffix);
-    auto image_with_set_alpha = to_mp_image.Out(kImageTag);
+  auto& to_mp_image = graph.AddNode("ToImageCalculator");
+  image_in_cpu_or_gpu_with_set_alpha >> to_mp_image.In(image_tag_with_suffix);
+  auto image_with_set_alpha = to_mp_image.Out(kImageTag);
 
-    auto& image_segmenter = graph.AddNode(
-        "mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph");
-    image_segmenter.GetOptions<ImageSegmenterGraphOptions>() = task_options;
-    image_with_set_alpha >> image_segmenter.In(kImageTag);
-    norm_rect >> image_segmenter.In(kNormRectTag);
+  auto& image_segmenter = graph.AddNode(
+      "mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph");
+  image_segmenter.GetOptions<ImageSegmenterGraphOptions>() = task_options;
+  image_with_set_alpha >> image_segmenter.In(kImageTag);
+  norm_rect >> image_segmenter.In(kNormRectTag);
 
-    // TODO: remove deprecated output type support.
-    if (task_options.segmenter_options().has_output_type()) {
-      image_segmenter.Out(kSegmentationTag) >>
-          graph[Output<Image>(kSegmentationTag)];
-      image_segmenter.Out(kGroupedSegmentationTag) >>
-          graph[Output<std::vector<Image>>(kGroupedSegmentationTag)];
-    } else {
-      if (HasOutput(sc->OriginalNode(), kConfidenceMaskTag)) {
-        image_segmenter.Out(kConfidenceMaskTag) >>
-            graph[Output<Image>(kConfidenceMaskTag)];
-      }
-      if (HasOutput(sc->OriginalNode(), kConfidenceMasksTag)) {
-        image_segmenter.Out(kConfidenceMasksTag) >>
-            graph[Output<Image>(kConfidenceMasksTag)];
-      }
-      if (HasOutput(sc->OriginalNode(), kCategoryMaskTag)) {
-        image_segmenter.Out(kCategoryMaskTag) >>
-            graph[Output<Image>(kCategoryMaskTag)];
-      }
+  // TODO: remove deprecated output type support.
+  if (task_options.segmenter_options().has_output_type()) {
+    image_segmenter.Out(kSegmentationTag) >>
+        graph[Output<Image>(kSegmentationTag)];
+    image_segmenter.Out(kGroupedSegmentationTag) >>
+        graph[Output<std::vector<Image>>(kGroupedSegmentationTag)];
+  } else {
+    if (HasOutput(sc->OriginalNode(), kConfidenceMaskTag)) {
+      image_segmenter.Out(kConfidenceMaskTag) >>
+          graph[Output<Image>(kConfidenceMaskTag)];
     }
-    image_segmenter.Out(kQualityScoresTag) >>
-        graph[Output<std::vector<float>>::Optional(kQualityScoresTag)];
-    image_segmenter.Out(kImageTag) >> graph[Output<Image>(kImageTag)];
-
-    return graph.GetConfig();
+    if (HasOutput(sc->OriginalNode(), kConfidenceMasksTag)) {
+      image_segmenter.Out(kConfidenceMasksTag) >>
+          graph[Output<Image>(kConfidenceMasksTag)];
+    }
+    if (HasOutput(sc->OriginalNode(), kCategoryMaskTag)) {
+      image_segmenter.Out(kCategoryMaskTag) >>
+          graph[Output<Image>(kCategoryMaskTag)];
+    }
   }
-};
+  image_segmenter.Out(kQualityScoresTag) >>
+      graph[Output<std::vector<float>>::Optional(kQualityScoresTag)];
+  image_segmenter.Out(kImageTag) >> graph[Output<Image>(kImageTag)];
+
+  return graph.GetConfig();
+}
 
 // REGISTER_MEDIAPIPE_GRAPH argument has to fit on one line to work properly.
 // clang-format off

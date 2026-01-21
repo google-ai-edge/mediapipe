@@ -23,10 +23,11 @@ import os
 from typing import List, Optional
 
 import numpy as np
-import torch
 
 from mediapipe.tasks.python.genai.converter import converter_base
+from mediapipe.tasks.python.genai.converter import external_dependencies
 
+torch = external_dependencies.torch
 
 DTYPE_MAP = {
     "F16": torch.float16,
@@ -608,6 +609,8 @@ class SafetensorsCkptLoader(converter_base.CkptLoaderBase):
         "GEMMA3_4B",
         "GEMMA3_12B",
         "GEMMA3_27B",
+        "GEMMA3_300M",
+        "FUNCTIONGEMMA3_300M",
     ]:
       self.mapper = GemmaMapper(
           is_symmetric,

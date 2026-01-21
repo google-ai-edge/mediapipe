@@ -174,6 +174,75 @@ LlmParameters GetGemma2_2BParams() {
   return llm_params;
 }
 
+LlmParameters GetGemma3_300MParams() {
+  LlmParameters llm_params;
+  llm_params.set_start_token_id(2);
+  llm_params.add_stop_tokens("<eos>");
+  llm_params.add_stop_tokens("<end_of_turn>");
+
+  // No MM for 300M
+  llm_params.set_vocab_size(262144);
+
+  TransformerParameters& transformer_params =
+      *llm_params.mutable_transformer_parameters();
+  transformer_params.set_batch_size(kBatchSize);
+  transformer_params.set_embedding_dim(640);
+  transformer_params.set_hidden_dimension(2048);
+  transformer_params.set_head_dimension(256);
+  transformer_params.set_num_heads(4);
+  transformer_params.set_num_stacks(18);
+  transformer_params.set_num_kv_heads(1);
+
+  // We DO use the bfloat16 fix here, even though it's smaller than the 1B
+  // variant, because activations seem to exceed the cap.
+  transformer_params.set_gemma3_bfloat16_fix(true);
+
+  transformer_params.set_pre_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_post_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_final_norm(TransformerParameters::RMS_NORM);
+  transformer_params.set_skip_absolute_positional_embeddings(true);
+  // LLLLLGLLLLLG...
+  transformer_params.set_num_local_layers_per_global(5);
+  transformer_params.set_global_rope_wavelength(1000000.0f);
+
+  TransformerParameters::SelfAttentionParameters& sa_params =
+      *transformer_params.mutable_self_attention_parameters();
+  sa_params.set_attention_mask_type(TransformerParameters::CAUSAL);
+  sa_params.set_qkv_no_bias(true);
+  sa_params.set_post_proj_no_bias(true);
+  sa_params.set_attention_scale_type(
+      TransformerParameters::SCALE_TYPE_INV_SQRT_HEAD_DIM);
+  // Disable softcap
+  sa_params.set_soft_cap_value(0.0f);
+  // Enable qk norms
+  sa_params.set_qk_norm(true);
+  sa_params.set_sliding_window_size(512);
+
+  TransformerParameters::FeedForwardParameters& ff_params =
+      *transformer_params.mutable_feed_forward_parameters();
+  ff_params.set_no_bias(true);
+  ff_params.set_activation(TransformerParameters::GELU);
+  ff_params.set_pre_norm(TransformerParameters::RMS_NORM);
+  ff_params.set_post_norm(TransformerParameters::RMS_NORM);
+
+  TransformerParameters::FinalProjectParameters& fp_params =
+      *transformer_params.mutable_final_project_parameters();
+  fp_params.set_no_bias(true);
+  // Disable soft cap.
+  fp_params.set_soft_cap_value(0.0f);
+
+  return llm_params;
+}
+
+LlmParameters GetFunctionGemma3_300MParams() {
+  LlmParameters llm_params = GetGemma3_300MParams();
+  llm_params.clear_stop_tokens();
+  llm_params.add_stop_tokens("<eos>");
+  llm_params.add_stop_tokens("<end_of_turn>");
+  llm_params.add_stop_tokens("<start_function_response>");
+  return llm_params;
+}
+
 LlmParameters GetGemma3_1BParams() {
   LlmParameters llm_params;
   llm_params.set_start_token_id(2);
@@ -182,6 +251,9 @@ LlmParameters GetGemma3_1BParams() {
 
   // New tokenizer
   llm_params.set_vocab_size(262144);
+
+  // We don't use gemma3_bfloat16_fix for the 1B variant because the maximum
+  // activations so far seem to stay below the f16 max cap.
 
   TransformerParameters& transformer_params =
       *llm_params.mutable_transformer_parameters();
@@ -257,6 +329,9 @@ LlmParameters GetGemma3_4BParams() {
   transformer_params.set_global_rope_wavelength(1000000.0f);
   transformer_params.set_global_rope_scaling(8.0f);
 
+  // To allow fp16 usage when bf16 trained
+  transformer_params.set_gemma3_bfloat16_fix(true);
+
   TransformerParameters::SelfAttentionParameters& sa_params =
       *transformer_params.mutable_self_attention_parameters();
   sa_params.set_attention_mask_type(TransformerParameters::CAUSAL);
@@ -312,6 +387,9 @@ LlmParameters GetGemma3_12BParams() {
   transformer_params.set_global_rope_wavelength(1000000.0f);
   transformer_params.set_global_rope_scaling(8.0f);
 
+  // To allow fp16 usage when bf16 trained
+  transformer_params.set_gemma3_bfloat16_fix(true);
+
   TransformerParameters::SelfAttentionParameters& sa_params =
       *transformer_params.mutable_self_attention_parameters();
   sa_params.set_attention_mask_type(TransformerParameters::CAUSAL);
@@ -366,6 +444,9 @@ LlmParameters GetGemma3_27BParams() {
   transformer_params.set_num_local_layers_per_global(5);
   transformer_params.set_global_rope_wavelength(1000000.0f);
   transformer_params.set_global_rope_scaling(8.0f);
+
+  // To allow fp16 usage when bf16 trained
+  transformer_params.set_gemma3_bfloat16_fix(true);
 
   TransformerParameters::SelfAttentionParameters& sa_params =
       *transformer_params.mutable_self_attention_parameters();

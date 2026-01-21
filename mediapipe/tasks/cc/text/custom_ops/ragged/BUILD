@@ -14,7 +14,10 @@
 #
 # RaggedTensors support in TFLite
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -22,9 +25,6 @@ cc_library(
     name = "ragged_tensor_to_tensor_tflite",
     srcs = ["ragged_tensor_to_tensor_tflite.cc"],
     hdrs = ["ragged_tensor_to_tensor_tflite.h"],
-    visibility = [
-        "//visibility:public",
-    ],
     deps = [
         "@flatbuffers",
         "@org_tensorflow//tensorflow/core/util:ragged_to_dense_util_common",

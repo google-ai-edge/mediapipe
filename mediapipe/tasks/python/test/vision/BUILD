@@ -12,11 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder for internal Python strict test compatibility macro.
+# Placeholder for internal Python strict contrib test macro and library compatibility macro.
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
+
+py_library(
+    name = "proto_utils",
+    testonly = True,
+    srcs = ["proto_utils.py"],
+    deps = [
+        "//mediapipe/framework/formats:classification_py_pb2",
+        "//mediapipe/framework/formats:detection_py_pb2",
+        "//mediapipe/framework/formats:landmark_py_pb2",
+        "//mediapipe/framework/formats:location_data_py_pb2",
+        "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",
+        "//mediapipe/tasks/python/components/containers:bounding_box",
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:detections",
+        "//mediapipe/tasks/python/components/containers:keypoint",
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//mediapipe/tasks/python/components/containers:landmark_detection_result",
+        "//mediapipe/tasks/python/components/containers:rect",
+        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/vision:hand_landmarker",
+        "//mediapipe/tasks/python/vision:pose_landmarker",
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
 
 py_test(
     name = "object_detector_test",
@@ -27,13 +51,13 @@ py_test(
     ],
     tags = ["not_run:arm"],
     deps = [
-        "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/containers:bounding_box",
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:detections",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:object_detector",
+        "//mediapipe/tasks/python/vision/core:image",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@mediapipe_pip_deps_absl_py//:pkg",
@@ -50,13 +74,13 @@ py_test(
     ],
     tags = ["not_run:arm"],
     deps = [
-        "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:classification_result",
         "//mediapipe/tasks/python/components/containers:rect",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:image_classifier",
+        "//mediapipe/tasks/python/vision/core:image",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@mediapipe_pip_deps_absl_py//:pkg",
@@ -73,12 +97,12 @@ py_test(
     ],
     tags = ["not_run:arm"],
     deps = [
-        "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/containers:embedding_result",
         "//mediapipe/tasks/python/components/containers:rect",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:image_embedder",
+        "//mediapipe/tasks/python/vision/core:image",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@mediapipe_pip_deps_absl_py//:pkg",
@@ -95,10 +119,10 @@ py_test(
     ],
     tags = ["not_run:arm"],
     deps = [
-        "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:image_segmenter",
+        "//mediapipe/tasks/python/vision/core:image",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@mediapipe_pip_deps_absl_py//:pkg",
         "@mediapipe_pip_deps_numpy//:pkg",
@@ -115,14 +139,13 @@ py_test(
     ],
     tags = ["not_run:arm"],
     deps = [
+        ":proto_utils",
         "//mediapipe/framework/formats:detection_py_pb2",
-        "//mediapipe/python:_framework_bindings",
-        "//mediapipe/tasks/python/components/containers:bounding_box",
-        "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:detections",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:face_detector",
+        "//mediapipe/tasks/python/vision/core:image",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@com_google_protobuf//:protobuf_python",
@@ -140,15 +163,13 @@ py_test(
     ],
     tags = ["not_run:arm"],
     deps = [
+        ":proto_utils",
         "//mediapipe/framework/formats:classification_py_pb2",
         "//mediapipe/framework/formats:landmark_py_pb2",
-        "//mediapipe/python:_framework_bindings",
-        "//mediapipe/tasks/python/components/containers:category",
-        "//mediapipe/tasks/python/components/containers:landmark",
-        "//mediapipe/tasks/python/components/containers:rect",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:face_landmarker",
+        "//mediapipe/tasks/python/vision/core:image",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@com_google_protobuf//:protobuf_python",
@@ -167,7 +188,7 @@ py_test(
     ],
     tags = ["not_run:arm"],
     deps = [
-        "//mediapipe/python:_framework_bindings",
+        ":proto_utils",
         "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",
         "//mediapipe/tasks/python/components/containers:landmark",
         "//mediapipe/tasks/python/components/containers:landmark_detection_result",
@@ -175,6 +196,7 @@ py_test(
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:hand_landmarker",
+        "//mediapipe/tasks/python/vision/core:image",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@com_google_protobuf//:protobuf_python",
@@ -193,7 +215,7 @@ py_test(
     ],
     tags = ["not_run:arm"],
     deps = [
-        "//mediapipe/python:_framework_bindings",
+        ":proto_utils",
         "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",
         "//mediapipe/tasks/python/components/containers:landmark",
         "//mediapipe/tasks/python/components/containers:landmark_detection_result",
@@ -201,6 +223,7 @@ py_test(
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:pose_landmarker",
+        "//mediapipe/tasks/python/vision/core:image",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@com_google_protobuf//:protobuf_python",
@@ -210,67 +233,15 @@ py_test(
 )
 
 py_test(
-    name = "holistic_landmarker_test",
-    srcs = ["holistic_landmarker_test.py"],
+    name = "image_test",
+    srcs = ["image_test.py"],
     data = [
         "//mediapipe/tasks/testdata/vision:test_images",
-        "//mediapipe/tasks/testdata/vision:test_models",
-        "//mediapipe/tasks/testdata/vision:test_protos",
     ],
-    tags = ["not_run:arm"],
     deps = [
-        "//mediapipe/python:_framework_bindings",
-        "//mediapipe/tasks/cc/vision/holistic_landmarker/proto:holistic_result_py_pb2",
-        "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
-        "//mediapipe/tasks/python/vision:holistic_landmarker",
-        "//mediapipe/tasks/python/vision/core:image_processing_options",
-        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
-        "@com_google_protobuf//:protobuf_python",
+        "//mediapipe/tasks/python/vision/core:image",
         "@mediapipe_pip_deps_absl_py//:pkg",
         "@mediapipe_pip_deps_numpy//:pkg",
-    ],
-)
-
-py_test(
-    name = "face_aligner_test",
-    srcs = ["face_aligner_test.py"],
-    data = [
-        "//mediapipe/tasks/testdata/vision:test_images",
-        "//mediapipe/tasks/testdata/vision:test_models",
-    ],
-    tags = [
-        "noasan",  # TODO: Re-enable once the bug is fixed.
-        "not_run:arm",
-    ],
-    deps = [
-        "//mediapipe/python:_framework_bindings",
-        "//mediapipe/tasks/python/components/containers:rect",
-        "//mediapipe/tasks/python/core:base_options",
-        "//mediapipe/tasks/python/test:test_utils",
-        "//mediapipe/tasks/python/vision:face_aligner",
-        "//mediapipe/tasks/python/vision/core:image_processing_options",
-        "@mediapipe_pip_deps_absl_py//:pkg",
-    ],
-)
-
-py_test(
-    name = "face_stylizer_test",
-    srcs = ["face_stylizer_test.py"],
-    data = [
-        "//mediapipe/tasks/testdata/vision:test_images",
-        "//mediapipe/tasks/testdata/vision:test_models",
-    ],
-    tags = [
-        "noasan",  # TODO: Re-enable once the bug is fixed.
-    ],
-    deps = [
-        "//mediapipe/python:_framework_bindings",
-        "//mediapipe/tasks/python/components/containers:rect",
-        "//mediapipe/tasks/python/core:base_options",
-        "//mediapipe/tasks/python/test:test_utils",
-        "//mediapipe/tasks/python/vision:face_stylizer",
-        "//mediapipe/tasks/python/vision/core:image_processing_options",
-        "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )

@@ -14,6 +14,11 @@
 
 # Utilities to help optimize Large Language Models (LLM).
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+# Placeholder for internal Python strict binary compatibility macro.
+
 package(default_visibility = [
     "//mediapipe/tasks/cc:__subpackages__",
     "//third_party/odml/infra/genai/inference:__subpackages__",
@@ -39,6 +44,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/cleanup",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
@@ -66,6 +72,10 @@ cc_library(
     name = "metadata_utils",
     srcs = ["metadata_utils.cc"],
     hdrs = ["metadata_utils.h"],
+    defines = select({
+        "//mediapipe/tasks:build_for_3p": ["BUILD_FOR_3P"],
+        "//conditions:default": [],
+    }),
     deps = [
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
         "@com_google_absl//absl/algorithm:container",
@@ -125,6 +135,10 @@ cc_library(
     name = "well_known_models",
     srcs = ["well_known_models.cc"],
     hdrs = ["well_known_models.h"],
+    defines = select({
+        "//mediapipe/tasks:build_for_3p": ["BUILD_FOR_3P"],
+        "//conditions:default": [],
+    }),
     deps = [
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_cc_proto",
         "//mediapipe/tasks/cc/genai/inference/proto:transformer_params_cc_proto",
@@ -139,5 +153,6 @@ cc_library(
         "//mediapipe/tasks/cc/genai/inference/proto:prompt_template_cc_proto",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ],
 )

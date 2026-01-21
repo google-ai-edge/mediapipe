@@ -78,8 +78,6 @@ absl::Status PacketResamplerCalculator::GetContract(CalculatorContract* cc) {
   }
   cc->Outputs().Get(output_data_id).SetSameAs(&cc->Inputs().Get(input_data_id));
   if (cc->Outputs().HasTag(kVideoHeaderTag)) {
-    RET_CHECK(resampler_options.max_frame_rate() <= 0)
-        << "VideoHeader output is not supported with max_frame_rate.";
     cc->Outputs().Tag(kVideoHeaderTag).Set<VideoHeader>();
   }
 
@@ -146,6 +144,8 @@ absl::Status PacketResamplerCalculator::Open(CalculatorContext* cc) {
       !cc->Inputs().Get(input_data_id_).Header().IsEmpty()) {
     if (resampler_options.output_header() ==
         PacketResamplerCalculatorOptions::UPDATE_VIDEO_HEADER) {
+      RET_CHECK(resampler_options.max_frame_rate() <= 0)
+          << "Updating VideoHeader is not supported with max_frame_rate.";
       video_header_ =
           cc->Inputs().Get(input_data_id_).Header().Get<VideoHeader>();
       video_header_.frame_rate = frame_rate_;
@@ -181,6 +181,13 @@ absl::Status PacketResamplerCalculator::Process(CalculatorContext* cc) {
     if (cc->Inputs().Get(input_data_id_).IsEmpty()) {
       return absl::OkStatus();
     }
+  }
+  if (!header_sent_ && cc->Outputs().UsesTags() &&
+      cc->Outputs().HasTag(kVideoHeaderTag)) {
+    cc->Outputs()
+        .Tag(kVideoHeaderTag)
+        .Add(new VideoHeader(video_header_), Timestamp::PreStream());
+    header_sent_ = true;
   }
 
   MP_RETURN_IF_ERROR(strategy_->Process(cc));
@@ -670,12 +677,6 @@ absl::Status NoJitterStrategy::Process(CalculatorContext* cc) {
       calculator_->first_timestamp_ =
           base_timestamp_ +
           TimestampDiffFromSeconds(first_index / calculator_->frame_rate_);
-    }
-    if (cc->Outputs().UsesTags() && cc->Outputs().HasTag(kVideoHeaderTag)) {
-      cc->Outputs()
-          .Tag(kVideoHeaderTag)
-          .Add(new VideoHeader(calculator_->video_header_),
-               Timestamp::PreStream());
     }
   }
   const Timestamp received_timestamp = cc->InputTimestamp();

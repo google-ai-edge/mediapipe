@@ -40,6 +40,9 @@ JNIEXPORT jint JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeGetWidth)(
 JNIEXPORT jint JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeGetHeight)(
     JNIEnv* env, jobject thiz, jlong nativeHandle);
 
+JNIEXPORT jint JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeGetFormat)(
+    JNIEnv* env, jobject thiz, jlong nativeHandle);
+
 JNIEXPORT jlong JNICALL GRAPH_TEXTURE_FRAME_METHOD(
     nativeCreateSyncTokenForCurrentExternalContext)(JNIEnv* env, jobject thiz,
                                                     jlong nativeHandle);

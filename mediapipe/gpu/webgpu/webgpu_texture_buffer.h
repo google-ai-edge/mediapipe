@@ -1,17 +1,19 @@
 #ifndef MEDIAPIPE_GPU_WEBGPU_WEBGPU_TEXTURE_BUFFER_H_
 #define MEDIAPIPE_GPU_WEBGPU_WEBGPU_TEXTURE_BUFFER_H_
 
-#include <webgpu/webgpu_cpp.h>
-
 #include <cstdint>
 #include <memory>
 #include <utility>
 
+#include "absl/base/nullability.h"
+#include "absl/functional/any_invocable.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/statusor.h"
-#include "mediapipe/gpu/gpu_buffer.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/gpu_buffer_storage.h"
 #include "mediapipe/gpu/multi_pool.h"
 #include "mediapipe/gpu/reusable_pool.h"
+#include "mediapipe/gpu/webgpu/webgpu_headers.h"
 #include "mediapipe/gpu/webgpu/webgpu_service.h"
 #include "mediapipe/gpu/webgpu/webgpu_texture_view.h"
 
@@ -29,14 +31,26 @@ class WebGpuTextureBuffer
                                                      uint32_t height,
                                                      GpuBufferFormat format);
 
-  WebGpuTextureBuffer(wgpu::Texture texture, uint32_t width, uint32_t height,
-                      GpuBufferFormat format)
+  // Creates WebGpuTextureBuffer.
+  //
+  // NOTE: you can provide a custom texture deleter to wrap a `texture` and
+  //   avoid its destruction (no-op deleter) or perform custom actions on
+  //   deletion if needed.
+  WebGpuTextureBuffer(
+      wgpu::Texture texture, uint32_t width, uint32_t height,
+      GpuBufferFormat format,
+      /*absl_nonnull - not yet supported*/
+      absl::AnyInvocable<void(wgpu::Texture*)> texture_deleter =
+          [](wgpu::Texture* texture) { texture->Destroy(); })
       : texture_(std::move(texture)),
         width_(width),
         height_(height),
-        format_(format) {}
+        format_(format),
+        texture_deleter_(std::move(texture_deleter)) {
+    ABSL_CHECK(texture_deleter_);
+  }
 
-  ~WebGpuTextureBuffer() override { texture_.Destroy(); }
+  ~WebGpuTextureBuffer() override { texture_deleter_(&texture_); }
 
   int width() const override { return width_; }
   int height() const override { return height_; }
@@ -56,6 +70,7 @@ class WebGpuTextureBuffer
   const uint32_t width_ = 0;
   const uint32_t height_ = 0;
   const GpuBufferFormat format_;
+  absl::AnyInvocable<void(wgpu::Texture*)> texture_deleter_;
 };
 
 class Canvas;

@@ -12,34 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_java_proto_src_extractor")
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_java_proto_src_extractor", "mediapipe_jni_binary")
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-config_setting(
-    name = "exclude_internal_names_from_llm_inference_engine_g3_build",
-    define_values = {
-        "EXCLUDE_INTERNAL_NAMES_FROM_LLM_INFERENCE_ENGINE_G3_BUILD": "1",
-    },
-    visibility = ["//visibility:public"],
-)
-
-cc_binary(
-    name = "libllm_inference_engine_jni.so",
-    linkopts = [
-        "-Wl,-soname=libllm_inference_engine_jni.so",
-        "-fvisibility=hidden",
-    ],
-    linkshared = 1,
+mediapipe_jni_binary(
+    name = "llm_inference_engine_jni",
+    uses_explicit_exports = True,
     deps = ["//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni:llm"],
-)
-
-cc_library(
-    name = "libllm_inference_engine_jni_lib",
-    srcs = [":libllm_inference_engine_jni.so"],
-    alwayslink = 1,
 )
 
 android_library(
@@ -54,6 +36,7 @@ android_library(
             target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_response_context_java_proto_lite",
         ),
     ],
+    exports_manifest = 1,
     manifest = "AndroidManifest.xml",
     deps = [
         ":libllm_inference_engine_jni_lib",

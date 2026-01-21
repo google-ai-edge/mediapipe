@@ -15,8 +15,6 @@
 #ifndef MEDIAPIPE_UTIL_FILTERING_LOW_PASS_FILTER_H_
 #define MEDIAPIPE_UTIL_FILTERING_LOW_PASS_FILTER_H_
 
-#include <memory>
-
 namespace mediapipe {
 
 class LowPassFilter {

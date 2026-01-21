@@ -7,6 +7,7 @@
 #include <string>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
@@ -39,6 +40,11 @@ class Resource {
   //
   virtual std::string ReleaseOrCopyAsString() && {
     return std::string(static_cast<const char*>(data()), length());
+  }
+
+  // Returns a managed file descriptor which backs the resource if available.
+  virtual absl::StatusOr<int> TryGetFd() const {
+    return absl::UnavailableError("FD is unavailable.");
   }
 
  protected:
@@ -115,6 +121,22 @@ class Resources {
   inline absl::StatusOr<std::unique_ptr<Resource>> Get(
       absl::string_view resource_id) const {
     return Get(resource_id, Options());
+  }
+
+  // Resolves the provided resource id.
+  //
+  // - Resolution is implementation dependent. (The default implementation
+  //   returns the same id.)
+  // - `Resources::Get` must already handle all the required resolutions, so
+  //   `Resources::ResolveId` is not required for calling `Resources::Get` and
+  //   is not recommended.
+  // - `ResolveId` may be helpful to fulfil custom logic, e.g. when using
+  //   placeholder resource ids ($RES_ID -> real/resource/path) and the actual
+  //   resolved resource id (real/resource/path) needs to be used somehow.
+  //   (e.g. debugging, caching, etc.)
+  virtual absl::StatusOr<std::string> ResolveId(absl::string_view resource_id,
+                                                const Options& options) const {
+    return std::string(resource_id);
   }
 };
 

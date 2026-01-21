@@ -15,19 +15,20 @@
 
 import enum
 import os
+import threading
 from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
 import numpy as np
 
-from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.tasks.python.components.containers import bounding_box as bounding_box_module
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import detections as detections_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import object_detector
+from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
@@ -151,13 +152,15 @@ class ObjectDetectorTest(parameterized.TestCase):
 
   def test_create_from_options_fails_with_invalid_model_path(self):
     with self.assertRaisesRegex(
-        RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'
+        FileNotFoundError,
+        'Unable to open file at /path/to/invalid/model.tflite',
     ):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite'
       )
       options = _ObjectDetectorOptions(base_options=base_options)
-      _ObjectDetector.create_from_options(options)
+      detector = _ObjectDetector.create_from_options(options)
+      detector.close()
 
   def test_create_from_options_succeeds_with_valid_model_content(self):
     # Creates with options containing model content successfully.
@@ -166,6 +169,7 @@ class ObjectDetectorTest(parameterized.TestCase):
       options = _ObjectDetectorOptions(base_options=base_options)
       detector = _ObjectDetector.create_from_options(options)
       self.assertIsInstance(detector, _ObjectDetector)
+      detector.close()
 
   @parameterized.parameters(
       (ModelFileType.FILE_NAME, 4, _EXPECTED_DETECTION_RESULT),
@@ -294,8 +298,8 @@ class ObjectDetectorTest(parameterized.TestCase):
     # Fails with combined allowlist and denylist
     with self.assertRaisesRegex(
         ValueError,
-        r'`category_allowlist` and `category_denylist` are mutually '
-        r'exclusive options.',
+        '`category_allowlist` and `category_denylist` are mutually exclusive'
+        ' options.',
     ):
       options = _ObjectDetectorOptions(
           base_options=_BaseOptions(model_asset_path=self.model_path),
@@ -319,7 +323,9 @@ class ObjectDetectorTest(parameterized.TestCase):
     options = _ObjectDetectorOptions(
         base_options=_BaseOptions(
             model_asset_path=test_utils.get_test_data_path(
-                os.path.join(_TEST_DATA_DIR, _NO_NMS_MODEL_FILE))),
+                os.path.join(_TEST_DATA_DIR, _NO_NMS_MODEL_FILE)
+            )
+        ),
         score_threshold=1,
     )
     with _ObjectDetector.create_from_options(options) as detector:
@@ -351,6 +357,7 @@ class ObjectDetectorTest(parameterized.TestCase):
       with _ObjectDetector.create_from_options(options) as unused_detector:
         pass
 
+  # TODO: Change the errors to ValueError once we return MpStatus.
   def test_calling_detect_for_video_in_image_mode(self):
     options = _ObjectDetectorOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
@@ -358,7 +365,9 @@ class ObjectDetectorTest(parameterized.TestCase):
     )
     with _ObjectDetector.create_from_options(options) as detector:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the video mode'
+          ValueError,
+          'Task is not initialized with the video mode. Current running'
+          ' mode:image mode',
       ):
         detector.detect_for_video(self.test_image, 0)
 
@@ -369,7 +378,9 @@ class ObjectDetectorTest(parameterized.TestCase):
     )
     with _ObjectDetector.create_from_options(options) as detector:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the live stream mode'
+          ValueError,
+          'Task is not initialized with the live stream mode. Current running'
+          ' mode:image mode',
       ):
         detector.detect_async(self.test_image, 0)
 
@@ -380,7 +391,9 @@ class ObjectDetectorTest(parameterized.TestCase):
     )
     with _ObjectDetector.create_from_options(options) as detector:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the image mode'
+          ValueError,
+          'Task is not initialized with the image mode. Current running'
+          ' mode:video mode',
       ):
         detector.detect(self.test_image)
 
@@ -391,7 +404,9 @@ class ObjectDetectorTest(parameterized.TestCase):
     )
     with _ObjectDetector.create_from_options(options) as detector:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the live stream mode'
+          ValueError,
+          'Task is not initialized with the live stream mode. Current running'
+          ' mode:video mode',
       ):
         detector.detect_async(self.test_image, 0)
 
@@ -403,7 +418,7 @@ class ObjectDetectorTest(parameterized.TestCase):
     with _ObjectDetector.create_from_options(options) as detector:
       unused_result = detector.detect_for_video(self.test_image, 1)
       with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'
+          ValueError, 'Input timestamp must be monotonically increasing.'
       ):
         detector.detect_for_video(self.test_image, 0)
 
@@ -428,7 +443,9 @@ class ObjectDetectorTest(parameterized.TestCase):
     )
     with _ObjectDetector.create_from_options(options) as detector:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the image mode'
+          ValueError,
+          'Task is not initialized with the image mode. Current running'
+          ' mode:live stream mode',
       ):
         detector.detect(self.test_image)
 
@@ -440,7 +457,9 @@ class ObjectDetectorTest(parameterized.TestCase):
     )
     with _ObjectDetector.create_from_options(options) as detector:
       with self.assertRaisesRegex(
-          ValueError, r'not initialized with the video mode'
+          ValueError,
+          'Task is not initialized with the video mode. Current running'
+          ' mode:live stream mode',
       ):
         detector.detect_for_video(self.test_image, 0)
 
@@ -454,7 +473,7 @@ class ObjectDetectorTest(parameterized.TestCase):
     with _ObjectDetector.create_from_options(options) as detector:
       detector.detect_async(self.test_image, 100)
       with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'
+          ValueError, 'Input timestamp must be monotonically increasing.'
       ):
         detector.detect_async(self.test_image, 0)
 
@@ -462,19 +481,27 @@ class ObjectDetectorTest(parameterized.TestCase):
       (0, _EXPECTED_DETECTION_RESULT), (1, _DetectionResult(detections=[]))
   )
   def test_detect_async_calls(self, threshold, expected_result):
+    callback_event = threading.Event()
+    callback_exception: None | Exception = None
     observed_timestamp_ms = -1
 
     def check_result(
         result: _DetectionResult, output_image: _Image, timestamp_ms: int
     ):
-      self.assertEqual(result, expected_result)
-      self.assertTrue(
-          np.array_equal(
-              output_image.numpy_view(), self.test_image.numpy_view()
-          )
-      )
-      self.assertLess(observed_timestamp_ms, timestamp_ms)
-      self.observed_timestamp_ms = timestamp_ms
+      nonlocal callback_exception, observed_timestamp_ms
+      try:
+        self.assertLess(observed_timestamp_ms, timestamp_ms)
+        self.assertEqual(result, expected_result)
+        self.assertTrue(
+            np.array_equal(
+                output_image.numpy_view(), self.test_image.numpy_view()
+            )
+        )
+        observed_timestamp_ms = timestamp_ms
+      except AssertionError as e:
+        callback_exception = e
+      finally:
+        callback_event.set()
 
     options = _ObjectDetectorOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),

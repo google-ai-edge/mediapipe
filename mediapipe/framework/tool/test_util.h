@@ -35,6 +35,17 @@ struct ImageFrameComparisonOptions {
   float max_alpha_diff;
   // Maximum difference for all channels, averaged across all pixels.
   float max_avg_diff;
+  // Maximum number of pixels that may exceed the max_color/alpha_diff limits.
+  int max_num_pixels_above_limit = 0;
+
+  static ImageFrameComparisonOptions ExactMatch() {
+    return {
+        .max_color_diff = 0.0,
+        .max_alpha_diff = 0.0,
+        .max_avg_diff = 0.0,
+        .max_num_pixels_above_limit = 0,
+    };
+  }
 };
 
 // Compares an output image with a golden file. Saves the output and difference
@@ -44,11 +55,30 @@ absl::Status CompareAndSaveImageOutput(
     absl::string_view golden_image_path, const ImageFrame& actual,
     const ImageFrameComparisonOptions& options);
 
+// Compares an output image with a golden output computed dynamically. Saves the
+// output and difference to the undeclared test outputs.
+//
+// Returns ok if they are equal within the tolerances specified in options.
+absl::Status CompareAndSaveImageOutputDynamic(
+    const mediapipe::ImageFrame& expected, const mediapipe::ImageFrame& actual,
+    const mediapipe::ImageFrameComparisonOptions& options = {});
+
 // Checks if two image frames are equal within the specified tolerance.
 // image1 and image2 may be of different-but-compatible image formats (e.g.,
 // SRGB and SRGBA); in that case, only the channels available in both are
 // compared.
 // The diff arguments are as in ImageFrameComparisonOptions.
+absl::Status CompareImageFrames(const ImageFrame& image1,
+                                const ImageFrame& image2,
+                                const ImageFrameComparisonOptions& options,
+                                std::unique_ptr<ImageFrame>& diff_image);
+
+// Checks if two image frames are equal within the specified tolerance.
+// image1 and image2 may be of different-but-compatible image formats (e.g.,
+// SRGB and SRGBA); in that case, only the channels available in both are
+// compared.
+// The diff arguments are as in ImageFrameComparisonOptions.
+ABSL_DEPRECATED("Use the overload that takes ImageFrameComparisonOptions.")
 absl::Status CompareImageFrames(const ImageFrame& image1,
                                 const ImageFrame& image2,
                                 const float max_color_diff,

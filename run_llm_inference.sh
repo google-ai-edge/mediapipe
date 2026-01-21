@@ -28,7 +28,7 @@ docker build . --tag=mediapipe
 CONTAINER_NAME=mediapipe_$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
 docker run --name "$CONTAINER_NAME" mediapipe:latest  sh -c "
     chmod +x  setup_android_sdk_and_ndk.sh && \
-    ./setup_android_sdk_and_ndk.sh ~/Android/Sdk ~/Android/Ndk r26d \
+    ./setup_android_sdk_and_ndk.sh ~/Android/Sdk ~/Android/Ndk r28b \
         --accept-licenses &&
     bazel build --config android_arm64 --client_env=CC=clang-16 -c opt \
         --copt=-DABSL_FLAGS_STRIP_NAMES=0 \

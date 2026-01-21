@@ -16,7 +16,9 @@ load("//mediapipe/framework:encode_binary_proto.bzl", "encode_binary_proto")
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(
+    default_visibility = ["//visibility:public"],
+)
 
 encode_binary_proto(
     name = "geometry_pipeline_metadata_detection",

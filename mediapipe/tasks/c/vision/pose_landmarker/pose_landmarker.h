@@ -18,17 +18,28 @@ limitations under the License.
 
 #include <stdbool.h>
 
+#include <cstdint>
+
 #include "mediapipe/tasks/c/core/base_options.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/core/common.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/pose_landmarker/pose_landmarker_result.h"
 
 #ifndef MP_EXPORT
+#if defined(_MSC_VER)
+#define MP_EXPORT __declspec(dllexport)
+#else
 #define MP_EXPORT __attribute__((visibility("default")))
+#endif  // _MSC_VER
 #endif  // MP_EXPORT
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct MpPoseLandmarkerInternal* MpPoseLandmarkerPtr;
 
 // The options for configuring a MediaPipe pose landmarker task.
 struct PoseLandmarkerOptions {
@@ -72,11 +83,11 @@ struct PoseLandmarkerOptions {
   // message in case of any failure. The validity of the passed arguments is
   // true for the lifetime of the callback function.
   //
-  //  The passed `image` is only valid for the lifetime of the call. A caller is
-  //  responsible for closing the pose landmarker result.
-  typedef void (*result_callback_fn)(PoseLandmarkerResult* result,
-                                     const MpImage* image, int64_t timestamp_ms,
-                                     char* error_msg);
+  // The passed arguments are only valid for the lifetime of the callback.
+  typedef void (*result_callback_fn)(MpStatus status,
+                                     const PoseLandmarkerResult* result,
+                                     const MpImagePtr image,
+                                     int64_t timestamp_ms);
   result_callback_fn result_callback;
 };
 
@@ -85,17 +96,18 @@ struct PoseLandmarkerOptions {
 // If an error occurs, returns `nullptr` and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT void* pose_landmarker_create(struct PoseLandmarkerOptions* options,
-                                       char** error_msg);
+MP_EXPORT MpStatus MpPoseLandmarkerCreate(struct PoseLandmarkerOptions* options,
+                                          MpPoseLandmarkerPtr* landmarker_out,
+                                          char** error_msg);
 
 // Performs pose landmark detection on the input `image`. Returns `0` on
 // success. If an error occurs, returns an error code and sets the error
 // parameter to an an error message (if `error_msg` is not `nullptr`). You must
 // free the memory allocated for the error message.
-MP_EXPORT int pose_landmarker_detect_image(void* landmarker,
-                                           const MpImage* image,
-                                           PoseLandmarkerResult* result,
-                                           char** error_msg);
+MP_EXPORT MpStatus
+MpPoseLandmarkerDetectImage(MpPoseLandmarkerPtr landmarker, MpImagePtr image,
+                            const ImageProcessingOptions* options,
+                            PoseLandmarkerResult* result, char** error_msg);
 
 // Performs pose landmark detection on the provided video frame.
 // Only use this method when the PoseLandmarker is created with the video
@@ -106,11 +118,10 @@ MP_EXPORT int pose_landmarker_detect_image(void* landmarker,
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int pose_landmarker_detect_for_video(void* landmarker,
-                                               const MpImage* image,
-                                               int64_t timestamp_ms,
-                                               PoseLandmarkerResult* result,
-                                               char** error_msg);
+MP_EXPORT MpStatus MpPoseLandmarkerDetectForVideo(
+    MpPoseLandmarkerPtr landmarker, MpImagePtr image,
+    const ImageProcessingOptions* options, int64_t timestamp_ms,
+    PoseLandmarkerResult* result, char** error_msg);
 
 // Sends live image data to pose landmark detection, and the results will be
 // available via the `result_callback` provided in the PoseLandmarkerOptions.
@@ -130,22 +141,21 @@ MP_EXPORT int pose_landmarker_detect_for_video(void* landmarker,
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-// You need to invoke `pose_landmarker_close_result` after each invocation to
-// free memory.
-MP_EXPORT int pose_landmarker_detect_async(void* landmarker,
-                                           const MpImage* image,
-                                           int64_t timestamp_ms,
-                                           char** error_msg);
+MP_EXPORT MpStatus
+MpPoseLandmarkerDetectAsync(MpPoseLandmarkerPtr landmarker, MpImagePtr image,
+                            const ImageProcessingOptions* options,
+                            int64_t timestamp_ms, char** error_msg);
 
 // Frees the memory allocated inside a PoseLandmarkerResult result.
 // Does not free the result pointer itself.
-MP_EXPORT void pose_landmarker_close_result(PoseLandmarkerResult* result);
+MP_EXPORT void MpPoseLandmarkerCloseResult(PoseLandmarkerResult* result);
 
 // Frees pose landmarker.
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int pose_landmarker_close(void* landmarker, char** error_msg);
+MP_EXPORT MpStatus MpPoseLandmarkerClose(MpPoseLandmarkerPtr landmarker,
+                                         char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

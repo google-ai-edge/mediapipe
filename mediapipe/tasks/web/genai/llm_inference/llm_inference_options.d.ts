@@ -88,4 +88,22 @@ export declare interface LlmInferenceOptions extends TaskRunnerOptions {
    * the top result.
    */
   numResponses?: number;
+
+  /**
+   * When set to true, will force inference to be performed with F32 precision.
+   * Useful for debugging F16 precision-related errors.
+   */
+  forceF32?: boolean;
+
+  /**
+   * When set > 0, will enable vision modality usage. Will also enable streaming
+   * loading, and therefore is not compatible with "converted" models.
+   */
+  maxNumImages?: number;
+
+  /**
+   * When set to true, will enable audio modality usage. Will also enable
+   * streaming loading, and therefore is not compatible with "converted" models.
+   */
+  supportAudio?: boolean;
 }

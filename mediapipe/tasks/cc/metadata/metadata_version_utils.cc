@@ -9,7 +9,7 @@ namespace tasks {
 namespace metadata {
 namespace {
 
-static int32_t GetValueOrZero(const std::vector<std::string> &list,
+static int32_t GetValueOrZero(const std::vector<std::string>& list,
                               const int index) {
   int32_t value = 0;
   if (index <= list.size() - 1) {

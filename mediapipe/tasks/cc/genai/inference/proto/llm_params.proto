@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// LINT: LEGACY_NAMES
 
 syntax = "proto3";
 
@@ -27,7 +29,8 @@ enum LlmModelType {
   // Unknown LLM model type
   LLM_MODEL_TYPE_UNKNOWN = 0;
 
-  reserved 1, 2, 3, 4, 7, 9, 10, 13, 14, 15, 16, 17, 19, 21, 22, 23, 24, 25, 26;
+  reserved 1, 2, 3, 4, 7, 9, 10, 13, 14, 15, 16, 17, 19, 21, 22, 23, 24, 25, 26,
+      31, 32, 33, 34, 35, 36, 37, 39, 40, 41, 42, 43, 44, 45, 46;
 
   // FALCON RefinedWeb with 1B parameters.
   // https://huggingface.co/tiiuae/falcon-rw-1b
@@ -54,6 +57,12 @@ enum LlmModelType {
   // GEMMA v3 with 27B parameters
   LLM_MODEL_TYPE_GEMMA3_27B = 30;
 
+  // GEMMA v3 with 300M parameters.
+  LLM_MODEL_TYPE_GEMMA3_300M = 38;
+
+  // FUNCTIONGEMMA v3 with 300M parameters.
+  LLM_MODEL_TYPE_FUNCTIONGEMMA3_300M = 47;
+
   // StableLM 4E1T with 3B parameters
   LLM_MODEL_TYPE_STABLELM_4E1T_3B = 8;
 
@@ -66,6 +75,7 @@ enum LlmModelType {
 }
 
 // Parameters for Large Language Models (LLM).
+// Next ID: 19
 message LlmParameters {
   TransformerParameters transformer_parameters = 1;
 
@@ -84,6 +94,12 @@ message LlmParameters {
 
   // Stop tokens to determine the end of output stream.
   repeated string stop_tokens = 5;
+
+  // Stop token id to determine the end of output stream. Not used in the LLM
+  // engine but used in the LiteRT LM engine. Basically it is used to streamline
+  // the .litertlm file generation from .task file. One id should be matching
+  // one stop token string.
+  repeated int32 stop_token_ids = 18;
 
   enum InputOutputNormalization {
     INPUT_OUTPUT_NORMALIZATION_UNKNOWN = 0;

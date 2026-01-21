@@ -15,6 +15,9 @@
 # Utilities needed to interacte with XNNPACK.
 
 load("@flatbuffers//:build_defs.bzl", "flatbuffer_cc_library")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 DEFAULT_VISIBILITY = [
     "//mediapipe/tasks/cc/genai:__subpackages__",
@@ -183,7 +186,7 @@ cc_library(
     srcs = ["llm_builder_factory.cc"],
     hdrs = ["llm_builder_factory.h"],
     defines = select({
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai:exclude_internal_names_from_llm_inference_engine_g3_build": ["EXCLUDE_INTERNAL_NAMES_FROM_LLM_INFERENCE_ENGINE_G3_BUILD"],
+        "//mediapipe/tasks:build_for_3p": ["BUILD_FOR_3P"],
         "//conditions:default": [],
     }),
     deps = [
@@ -199,7 +202,11 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-    ],
+    ] + select({
+        "//mediapipe/tasks:build_for_3p": [],
+        "//conditions:default": [
+        ],
+    }),
 )
 
 cc_library(
@@ -270,8 +277,10 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:memory_mapped_file",
+        "//mediapipe/tasks/cc/genai/inference/utils/llm_utils:scoped_file",
         "@XNNPACK",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/functional:overload",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",

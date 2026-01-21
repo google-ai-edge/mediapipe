@@ -42,7 +42,7 @@ class BoxDetectorInterface {
  public:
   // Creates box detector based on index type defined in `options`.
   static std::unique_ptr<BoxDetectorInterface> Create(
-      const BoxDetectorOptions &options);
+      const BoxDetectorOptions& options);
 
   // Locate quad from feature correspondences using perspective model.
   // Feature locations need to be normalized with 1.0 / max(width, height).
@@ -51,7 +51,7 @@ class BoxDetectorInterface {
   // Note that to perform pnp tracking, both box aspect ratio and frame aspect
   // ratio need to be positive. Otherwise fallback to homography tracking.
   TimedBoxProtoList FindQuadFromFeatureCorrespondence(
-      const FeatureCorrespondence &matches, const TimedBoxProto &box_proto,
+      const FeatureCorrespondence& matches, const TimedBoxProto& box_proto,
       float frame_aspect = -1.0f);
 
   virtual ~BoxDetectorInterface() = default;
@@ -66,20 +66,20 @@ class BoxDetectorInterface {
   // If the box's ID has never been recorded in the index before, The ID and all
   // the features within the box will be merged into the index.
   // `timestamp_msec` should correspond to `tracking_data`.
-  void DetectAndAddBox(const TrackingData &tracking_data,
-                       const TimedBoxProtoList &tracked_boxes,
+  void DetectAndAddBox(const TrackingData& tracking_data,
+                       const TimedBoxProtoList& tracked_boxes,
                        int64_t timestamp_msec,
-                       TimedBoxProtoList *detected_boxes);
+                       TimedBoxProtoList* detected_boxes);
 
   // Detects pre-set boxes from input frame and adds features from new boxes
   // into detector's index structure. Features and descriptors are extracted
   // from `image` in real time.
   // Other parameters work the same way as the previous function.
   // `timestamp_msec` should correspond to `image`.
-  void DetectAndAddBox(const cv::Mat &image,
-                       const TimedBoxProtoList &tracked_boxes,
+  void DetectAndAddBox(const cv::Mat& image,
+                       const TimedBoxProtoList& tracked_boxes,
                        int64_t timestamp_msec,
-                       TimedBoxProtoList *detected_boxes);
+                       TimedBoxProtoList* detected_boxes);
 
   // Stops detection of box with `box_id`.
   void CancelBoxDetection(int box_id);
@@ -88,7 +88,7 @@ class BoxDetectorInterface {
   BoxDetectorIndex ObtainBoxDetectorIndex() const;
 
   // Add detector's search index with pre-defined index.
-  void AddBoxDetectorIndex(const BoxDetectorIndex &index);
+  void AddBoxDetectorIndex(const BoxDetectorIndex& index);
 
   // Internal call for public DetectAndAddBox functions. `features` and
   // `descriptors` can be either extracted from live frames or tracked from
@@ -96,25 +96,25 @@ class BoxDetectorInterface {
   // so that boxes from `tracked_boxes` can be denormalized and boxes in
   // `detected_boxes` normalized. `timestamp_msec` should correspond to the
   // timestamp of `features` and `descriptors`.
-  void DetectAndAddBoxFromFeatures(const std::vector<Vector2_f> &features,
-                                   const cv::Mat &descriptors,
-                                   const TimedBoxProtoList &tracked_boxes,
+  void DetectAndAddBoxFromFeatures(const std::vector<Vector2_f>& features,
+                                   const cv::Mat& descriptors,
+                                   const TimedBoxProtoList& tracked_boxes,
                                    int64_t timestamp_msec, float scale_x,
                                    float scale_y,
-                                   TimedBoxProtoList *detected_boxes);
+                                   TimedBoxProtoList* detected_boxes);
 
  protected:
-  explicit BoxDetectorInterface(const BoxDetectorOptions &options);
+  explicit BoxDetectorInterface(const BoxDetectorOptions& options);
 
   // `transform_features_for_pnp` controls wheather we transform features
   // coordinates into a rectangular target space for pnp detection mode.
-  void AddBoxFeaturesToIndex(const std::vector<Vector2_f> &features,
-                             const cv::Mat &descriptors,
-                             const TimedBoxProto &box,
+  void AddBoxFeaturesToIndex(const std::vector<Vector2_f>& features,
+                             const cv::Mat& descriptors,
+                             const TimedBoxProto& box,
                              bool transform_features_for_pnp = false);
 
   // Check if add / detect action will be called based on input `tracked_boxes`.
-  bool CheckDetectAndAddBox(const TimedBoxProtoList &tracked_boxes);
+  bool CheckDetectAndAddBox(const TimedBoxProtoList& tracked_boxes);
 
   // Returns feature indices that are within the given box. If the box size
   // isn't big enough to cover sufficient features to reacquire the box, this
@@ -125,23 +125,23 @@ class BoxDetectorInterface {
   // a box size for reacquisition. They should choose suitable box size for
   // tracking based on their use cases.
   std::vector<int> GetFeatureIndexWithinBox(
-      const std::vector<Vector2_f> &features, const TimedBoxProto &box);
+      const std::vector<Vector2_f>& features, const TimedBoxProto& box);
 
   // Specifies which box to detect with `box_idx`. This enalbles separately
   // managing the detection behavior for each box in the index. Tracked boxes
   // will be skipped and lost and out-of-view boxes will be detected.
-  TimedBoxProtoList DetectBox(const std::vector<Vector2_f> &features,
-                              const cv::Mat &descriptors, int box_idx);
+  TimedBoxProtoList DetectBox(const std::vector<Vector2_f>& features,
+                              const cv::Mat& descriptors, int box_idx);
 
   // Only matches those features from the specific box with `box_idx`.
   virtual std::vector<FeatureCorrespondence> MatchFeatureDescriptors(
-      const std::vector<Vector2_f> &features, const cv::Mat &descriptors,
+      const std::vector<Vector2_f>& features, const cv::Mat& descriptors,
       int box_idx) = 0;
 
   // Specifies which box the correspondences come from with `box_id`, so that we
   // can figure out the transformation accordingly.
   TimedBoxProtoList FindBoxesFromFeatureCorrespondence(
-      const std::vector<FeatureCorrespondence> &matches, int box_idx);
+      const std::vector<FeatureCorrespondence>& matches, int box_idx);
 
   int cnt_detect_called_ = 0;
   float image_scale_;

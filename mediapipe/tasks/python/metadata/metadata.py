@@ -15,6 +15,7 @@
 """TensorFlow Lite metadata tools."""
 
 import copy
+import ctypes
 import inspect
 import io
 import json
@@ -32,7 +33,8 @@ import flatbuffers
 from mediapipe.tasks.cc.metadata.python import _pywrap_metadata_version
 from mediapipe.tasks.metadata import metadata_schema_py_generated as _metadata_fb
 from mediapipe.tasks.metadata import schema_py_generated as _schema_fb
-from mediapipe.tasks.python.metadata.flatbuffers_lib import _pywrap_flatbuffers
+from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
 
 try:
   # If exists, optionally use TensorFlow to open and check files. Used to
@@ -97,6 +99,89 @@ def get_path_to_datafile(path):
 
 _FLATC_TFLITE_METADATA_SCHEMA_FILE = get_path_to_datafile(
     "../../metadata/metadata_schema.fbs")
+
+_FLATBUFFERS_C_API_SIGNATURES = (
+    mediapipe_c_utils.CStatusFunction(
+        func_name="MpFlatbufferParserCreate",
+        core_argtypes=(ctypes.c_bool, ctypes.POINTER(ctypes.c_void_p)),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        func_name="MpFlatbufferParserParse",
+        core_argtypes=(ctypes.c_void_p, ctypes.c_char_p),
+    ),
+    mediapipe_c_utils.CFunction(
+        func_name="MpFlatbufferParserGetError",
+        argtypes=[ctypes.c_void_p],
+        restype=ctypes.c_char_p,
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        func_name="MpFlatbufferGenerateText",
+        core_argtypes=(
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_uint8),
+            ctypes.c_size_t,
+        ),
+    ),
+    mediapipe_c_utils.CFunction(
+        func_name="MpFlatbufferFreeString",
+        argtypes=[ctypes.c_char_p],
+        restype=None,
+    ),
+    mediapipe_c_utils.CFunction(
+        func_name="MpFlatbufferParserDelete",
+        argtypes=[ctypes.c_void_p],
+        restype=None,
+    ),
+)
+
+
+class _FlatbuffersParser:
+  """Context manager for MpFlatbufferParser."""
+
+  def __enter__(self):
+    self._lib = mediapipe_c_bindings.load_shared_library(
+        _FLATBUFFERS_C_API_SIGNATURES
+    )
+    self._lib.__enter__()  # Enter the mediapipe_c_bindings context
+    self._parser = ctypes.c_void_p()
+    try:
+      self._lib.MpFlatbufferParserCreate(True, ctypes.byref(self._parser))
+    except Exception:
+      self._lib.__exit__(None, None, None)
+      raise
+    return self
+
+  def __exit__(self, exc_type, exc_val, exc_tb):
+    if self._parser:
+      self._lib.MpFlatbufferParserDelete(self._parser)
+    self._lib.__exit__(exc_type, exc_val, exc_tb)
+
+  def parse(self, source: bytes) -> None:
+    """Parses the Flatbuffers schema source."""
+    try:
+      self._lib.MpFlatbufferParserParse(self._parser, source)
+    except Exception as e:
+      error_message = self._lib.MpFlatbufferParserGetError(self._parser).decode(
+          "utf-8"
+      )
+      raise ValueError(f"Cannot parse schema. Reason: {error_message}") from e
+
+  def generate_text(self, buffer: bytes) -> str:
+    """Generates JSON text from a Flatbuffer buffer."""
+    json_out = ctypes.c_char_p()
+    self._lib.MpFlatbufferGenerateText(
+        self._parser,
+        ctypes.cast(ctypes.c_char_p(buffer), ctypes.POINTER(ctypes.c_uint8)),
+        len(buffer),
+        ctypes.byref(json_out),
+    )
+    if json_out.value is None:
+      raise ValueError("Failed to generate text from buffer")
+    try:
+      raw_json_content = json_out.value.decode("utf-8")
+      return raw_json_content
+    finally:
+      self._lib.MpFlatbufferFreeString(json_out)
 
 
 # TODO: add delete method for associated files.
@@ -811,7 +896,10 @@ def _get_custom_metadata(metadata_buffer: bytes, name: str):
 
   for i in range(subgraph.CustomMetadataLength()):
     custom_metadata = subgraph.CustomMetadata(i)
-    if custom_metadata.Name().decode("utf-8") == name:
+    if custom_metadata is None:
+      continue
+    current_name = custom_metadata.Name()
+    if current_name is not None and current_name.decode("utf-8") == name:
       return i, custom_metadata.DataAsNumpy().tobytes()
   return None, None
 
@@ -837,42 +925,39 @@ def convert_to_json(
   Raises:
     ValueError: error occurred when parsing the metadata schema file.
   """
-  opt = _pywrap_flatbuffers.IDLOptions()
-  opt.strict_json = True
-  parser = _pywrap_flatbuffers.Parser(opt)
-  with _open_file(_FLATC_TFLITE_METADATA_SCHEMA_FILE) as f:
-    metadata_schema_content = f.read()
-  if not parser.parse(metadata_schema_content):
-    raise ValueError("Cannot parse metadata schema. Reason: " + parser.error)
-  # Json content which may contain binary custom metadata.
-  raw_json_content = _pywrap_flatbuffers.generate_text(parser, metadata_buffer)
-  if not custom_metadata_schema:
-    return raw_json_content
+  with _FlatbuffersParser() as parser:
+    with _open_file(_FLATC_TFLITE_METADATA_SCHEMA_FILE) as f:
+      metadata_schema_content = f.read()
+    parser.parse(metadata_schema_content.encode("utf-8"))
 
-  json_data = json.loads(raw_json_content)
-  # Gets the custom metadata by name and parse the binary custom metadata into
-  # human readable json content.
-  for name, schema_file in custom_metadata_schema.items():
-    idx, custom_metadata = _get_custom_metadata(metadata_buffer, name)
-    if not custom_metadata:
-      logging.info(
-          "No custom metadata with name %s in metadata flatbuffer.", name
-      )
-      continue
-    _assert_file_exist(schema_file)
-    with _open_file(schema_file, "rb") as f:
-      custom_metadata_schema_content = f.read()
-    if not parser.parse(custom_metadata_schema_content):
-      raise ValueError(
-          "Cannot parse custom metadata schema. Reason: " + parser.error
-      )
-    custom_metadata_json = _pywrap_flatbuffers.generate_text(
-        parser, custom_metadata
-    )
-    json_meta = json_data["subgraph_metadata"][0]["custom_metadata"][idx]
-    json_meta["name"] = name
-    json_meta["data"] = json.loads(custom_metadata_json)
-  return json.dumps(json_data, indent=2)
+    # Json content which may contain binary custom metadata.
+    raw_json_content = parser.generate_text(metadata_buffer)
+
+    if not custom_metadata_schema:
+      return raw_json_content
+
+    json_data = json.loads(raw_json_content)
+
+    # Gets the custom metadata by name and parse the binary custom metadata
+    # into human readable json content.
+    for name, schema_file in custom_metadata_schema.items():
+      idx, custom_metadata = _get_custom_metadata(metadata_buffer, name)
+      if not custom_metadata:
+        logging.info(
+            "No custom metadata with name %s in metadata flatbuffer.", name
+        )
+        continue
+      _assert_file_exist(schema_file)
+      with _open_file(schema_file, "rb") as f:
+        custom_metadata_schema_content = f.read()
+      parser.parse(custom_metadata_schema_content)
+      custom_metadata_json = parser.generate_text(custom_metadata)
+
+      json_meta = json_data["subgraph_metadata"][0]["custom_metadata"][idx]
+      json_meta["name"] = name
+      json_meta["data"] = json.loads(custom_metadata_json)
+
+    return json.dumps(json_data, indent=2)
 
 
 def _assert_file_exist(filename):

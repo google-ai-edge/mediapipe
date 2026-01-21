@@ -13,8 +13,10 @@
 # limitations under the License.
 
 load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite", "cc_test_with_tflite")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -22,7 +24,6 @@ cc_library(
     name = "base_options",
     srcs = ["base_options.cc"],
     hdrs = ["base_options.h"],
-    visibility = ["//visibility:public"],
     deps = [
         ":mediapipe_builtin_op_resolver",
         "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
@@ -99,7 +100,6 @@ cc_library_with_tflite(
         ":model_resources",
         ":model_resources_cache",
     ],
-    visibility = ["//visibility:public"],
     deps = [
         ":model_asset_bundle_resources",
         ":model_resources_calculator",
@@ -109,6 +109,7 @@ cc_library_with_tflite(
         "//mediapipe/framework:subgraph",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
@@ -257,7 +258,6 @@ cc_library_with_tflite(
         ":model_resources_cache",
         ":model_resources_calculator",
     ],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -309,7 +309,6 @@ cc_library_with_tflite(
     tflite_deps = [
         ":task_runner",
     ],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator",
     ],
@@ -323,7 +322,6 @@ cc_library_with_tflite(
         ":model_resources",
         ":task_runner",
     ],
-    visibility = ["//visibility:public"],
     deps = [
         ":utils",
         "//mediapipe/framework:calculator_cc_proto",
@@ -365,7 +363,6 @@ cc_library(
     name = "model_asset_bundle_resources",
     srcs = ["model_asset_bundle_resources.cc"],
     hdrs = ["model_asset_bundle_resources.h"],
-    visibility = ["//visibility:public"],
     deps = [
         ":external_file_handler",
         "//mediapipe/framework/port:status",

@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
 package(
+    default_visibility = ["//visibility:public"],
     licenses = ["notice"],  # Apache 2.0
 )
 
@@ -115,7 +119,7 @@ cc_library(
 cc_library(
     name = "holistic_landmarker_graph",
     srcs = ["holistic_landmarker_graph.cc"],
-    visibility = ["//visibility:public"],  # Visibility is public until we have a C++ API.
+    # Visibility is public until we have a C++ API.
     deps = [
         ":holistic_face_tracking",
         ":holistic_hand_tracking",

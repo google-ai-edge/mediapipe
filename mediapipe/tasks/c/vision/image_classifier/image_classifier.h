@@ -16,19 +16,29 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_VISION_IMAGE_CLASSIFIER_IMAGE_CLASSIFIER_H_
 #define MEDIAPIPE_TASKS_C_VISION_IMAGE_CLASSIFIER_IMAGE_CLASSIFIER_H_
 
+#include <cstdint>
+
 #include "mediapipe/tasks/c/components/containers/classification_result.h"
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/core/common.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 
 #ifndef MP_EXPORT
+#if defined(_MSC_VER)
+#define MP_EXPORT __declspec(dllexport)
+#else
 #define MP_EXPORT __attribute__((visibility("default")))
+#endif  // _MSC_VER
 #endif  // MP_EXPORT
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+typedef struct MpImageClassifierInternal* MpImageClassifierPtr;
 typedef ClassificationResult ImageClassifierResult;
 
 // The options for configuring a MediaPipe image classifier task.
@@ -58,11 +68,10 @@ struct ImageClassifierOptions {
   // message in case of any failure. The validity of the passed arguments is
   // true for the lifetime of the callback function.
   //
-  // The passed `image` is only valid for the lifetime of the call.  A caller is
-  // responsible for closing image classifier result.
-  typedef void (*result_callback_fn)(ImageClassifierResult* result,
-                                     const MpImage* image, int64_t timestamp_ms,
-                                     char* error_msg);
+  // The passed arguments are only valid for the lifetime of the callback.
+  typedef void (*result_callback_fn)(MpStatus status,
+                                     const ImageClassifierResult* result,
+                                     MpImagePtr image, int64_t timestamp_ms);
   result_callback_fn result_callback;
 };
 
@@ -71,17 +80,18 @@ struct ImageClassifierOptions {
 // If an error occurs, returns `nullptr` and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT void* image_classifier_create(struct ImageClassifierOptions* options,
-                                        char** error_msg);
+MP_EXPORT MpStatus
+MpImageClassifierCreate(struct ImageClassifierOptions* options,
+                        MpImageClassifierPtr* classifier, char** error_msg);
 
 // Performs image classification on the input `image`. Returns `0` on success.
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int image_classifier_classify_image(void* classifier,
-                                              const MpImage* image,
-                                              ImageClassifierResult* result,
-                                              char** error_msg);
+MP_EXPORT MpStatus MpImageClassifierClassifyImage(
+    MpImageClassifierPtr classifier, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    ImageClassifierResult* result, char** error_msg);
 
 // Performs image classification on the provided video frame.
 // Only use this method when the ImageClassifier is created with the video
@@ -92,11 +102,10 @@ MP_EXPORT int image_classifier_classify_image(void* classifier,
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int image_classifier_classify_for_video(void* classifier,
-                                                  const MpImage* image,
-                                                  int64_t timestamp_ms,
-                                                  ImageClassifierResult* result,
-                                                  char** error_msg);
+MP_EXPORT MpStatus MpImageClassifierClassifyForVideo(
+    MpImageClassifierPtr classifier, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, ImageClassifierResult* result, char** error_msg);
 
 // Sends live image data to image classification, and the results will be
 // available via the `result_callback` provided in the ImageClassifierOptions.
@@ -116,22 +125,21 @@ MP_EXPORT int image_classifier_classify_for_video(void* classifier,
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-// You need to invoke `image_classifier_classify_async` after each invocation to
-// free memory.
-MP_EXPORT int image_classifier_classify_async(void* classifier,
-                                              const MpImage* image,
-                                              int64_t timestamp_ms,
-                                              char** error_msg);
+MP_EXPORT MpStatus MpImageClassifierClassifyAsync(
+    MpImageClassifierPtr classifier, MpImagePtr image,
+    const ImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, char** error_msg);
 
 // Frees the memory allocated inside a ImageClassifierResult result.
 // Does not free the result pointer itself.
-MP_EXPORT void image_classifier_close_result(ImageClassifierResult* result);
+MP_EXPORT void MpImageClassifierCloseResult(ImageClassifierResult* result);
 
 // Frees image classifier.
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT int image_classifier_close(void* classifier, char** error_msg);
+MP_EXPORT MpStatus MpImageClassifierClose(MpImageClassifierPtr classifier,
+                                          char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

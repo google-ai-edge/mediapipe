@@ -359,7 +359,7 @@ class TemplateParser::Parser::ParserImpl {
                         << root_message_type_->full_name() << ": " << message;
       }
     } else {
-      error_collector_->AddError(line, col, std::string(message));
+      error_collector_->RecordError(line, col, message);
     }
   }
 
@@ -374,7 +374,7 @@ class TemplateParser::Parser::ParserImpl {
                           << root_message_type_->full_name() << ": " << message;
       }
     } else {
-      error_collector_->AddWarning(line, col, std::string(message));
+      error_collector_->RecordWarning(line, col, message);
     }
   }
 
@@ -880,7 +880,7 @@ class TemplateParser::Parser::ParserImpl {
 
         if (enum_value == NULL) {
           if (int_value != std::numeric_limits<int64_t>::max() &&
-              reflection->SupportsUnknownEnumValues()) {
+              !field->legacy_enum_field_treated_as_closed()) {
             SET_FIELD(EnumValue, int_value);
             return true;
           } else if (!allow_unknown_enum_) {
@@ -1310,11 +1310,12 @@ class TemplateParser::Parser::ParserImpl {
 
     virtual ~ParserErrorCollector() {}
 
-    virtual void AddError(int line, int column, const std::string& message) {
+    virtual void RecordError(int line, int column, absl::string_view message) {
       parser_->ReportError(line, column, message);
     }
 
-    virtual void AddWarning(int line, int column, const std::string& message) {
+    virtual void RecordWarning(int line, int column,
+                               absl::string_view message) {
       parser_->ReportWarning(line, column, message);
     }
 

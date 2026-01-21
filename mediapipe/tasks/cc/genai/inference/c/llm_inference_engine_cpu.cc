@@ -52,7 +52,7 @@
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_builder_factory.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_weights.h"
 // clang-format off
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h",
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h"
 // clang-format on
 #include "sentencepiece/src/sentencepiece_processor.h"  // from @com_google_sentencepiece
 #include "sentencepiece/src/util.h"  // from @com_google_sentencepiece
@@ -482,8 +482,7 @@ CreateTfliteLlmCpuEngine(const LlmModelSettings* model_settings) {
   MP_RETURN_IF_ERROR(tokenizer->LoadFromSerializedProto(tokenizer_buffer));
 
   auto llm_parameters = odml::infra::proto::LlmParameters();
-  RET_CHECK(llm_parameters.ParseFromArray(params_buffer.data(),
-                                          params_buffer.size()));
+  RET_CHECK(llm_parameters.ParseFromString(params_buffer));
 
   auto start_token_id = tokenizer->PieceToId(llm_parameters.start_token());
 
@@ -595,6 +594,13 @@ ODML_EXPORT int LlmInferenceEngine_Session_AddImage(
   return 12;
 }
 
+ODML_EXPORT int LlmInferenceEngine_Session_AddAudio(
+    LlmInferenceEngine_Session* session, const char* audio_bytes,
+    int audio_bytes_size, char** error_msg) {
+  *error_msg = strdup("Not implemented");
+  return 12;
+}
+
 int LlmInferenceEngine_Session_PredictSync(LlmInferenceEngine_Session* session,
                                            LlmResponseContext* response_context,
                                            char** error_msg) {
@@ -681,6 +687,12 @@ int LlmInferenceEngine_Session_PredictAsync(
                  cpu_session);
 
   return 0;
+}
+
+int LlmInferenceEngine_Session_PendingProcessCancellation(
+    LlmInferenceEngine_Session* session, char** error_msg) {
+  *error_msg = strdup("Not implemented");
+  return 12;
 }
 
 int LlmInferenceEngine_Session_Clone(

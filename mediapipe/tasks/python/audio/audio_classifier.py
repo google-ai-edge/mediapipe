@@ -13,41 +13,113 @@
 # limitations under the License.
 """MediaPipe audio classifier task."""
 
+import ctypes
 import dataclasses
-from typing import Callable, Mapping, List, Optional
+from typing import Callable, Optional
 
-from mediapipe.python import packet_creator
-from mediapipe.python import packet_getter
-from mediapipe.python._framework_bindings import packet
-from mediapipe.tasks.cc.audio.audio_classifier.proto import audio_classifier_graph_options_pb2
-from mediapipe.tasks.cc.components.containers.proto import classifications_pb2
-from mediapipe.tasks.cc.components.processors.proto import classifier_options_pb2
-from mediapipe.tasks.python.audio.core import audio_task_running_mode as running_mode_module
-from mediapipe.tasks.python.audio.core import base_audio_task_api
-from mediapipe.tasks.python.components.containers import audio_data as audio_data_module
-from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
-from mediapipe.tasks.python.core import base_options as base_options_module
-from mediapipe.tasks.python.core import task_info as task_info_module
+from mediapipe.tasks.python.audio.core import audio_record
+from mediapipe.tasks.python.audio.core import audio_task_running_mode
+from mediapipe.tasks.python.components.containers import audio_data
+from mediapipe.tasks.python.components.containers import audio_data_c
+from mediapipe.tasks.python.components.containers import classification_result
+from mediapipe.tasks.python.components.containers import classification_result_c
+from mediapipe.tasks.python.components.processors import classifier_options as classifier_options_lib
+from mediapipe.tasks.python.components.processors import classifier_options_c
+from mediapipe.tasks.python.core import async_result_dispatcher
+from mediapipe.tasks.python.core import base_options as base_options_lib
+from mediapipe.tasks.python.core import base_options_c
+from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
+from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
-AudioClassifierResult = classification_result_module.ClassificationResult
-_AudioClassifierGraphOptionsProto = audio_classifier_graph_options_pb2.AudioClassifierGraphOptions
-_AudioData = audio_data_module.AudioData
-_BaseOptions = base_options_module.BaseOptions
-_ClassifierOptionsProto = classifier_options_pb2.ClassifierOptions
-_RunningMode = running_mode_module.AudioTaskRunningMode
-_TaskInfo = task_info_module.TaskInfo
-
-_AUDIO_IN_STREAM_NAME = 'audio_in'
-_AUDIO_TAG = 'AUDIO'
-_CLASSIFICATIONS_STREAM_NAME = 'classifications_out'
-_CLASSIFICATIONS_TAG = 'CLASSIFICATIONS'
-_SAMPLE_RATE_IN_STREAM_NAME = 'sample_rate_in'
-_SAMPLE_RATE_TAG = 'SAMPLE_RATE'
-_TASK_GRAPH_NAME = 'mediapipe.tasks.audio.audio_classifier.AudioClassifierGraph'
-_TIMESTAMPED_CLASSIFICATIONS_STREAM_NAME = 'timestamped_classifications_out'
-_TIMESTAMPED_CLASSIFICATIONS_TAG = 'TIMESTAMPED_CLASSIFICATIONS'
+AudioClassifierResult = classification_result.ClassificationResult
+_AudioData = audio_data.AudioData
+_BaseOptions = base_options_lib.BaseOptions
+_RunningMode = audio_task_running_mode.AudioTaskRunningMode
 _MICRO_SECONDS_PER_MILLISECOND = 1000
+_AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
+_LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
+
+
+class AudioClassifierResultC(ctypes.Structure):
+  """The C representation of a list of audio classification results."""
+
+  _fields_ = [
+      (
+          'results',
+          ctypes.POINTER(classification_result_c.ClassificationResultC),
+      ),
+      ('results_count', ctypes.c_int),
+  ]
+
+_C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
+    None, ctypes.c_int32, ctypes.POINTER(AudioClassifierResultC)
+)
+
+
+class AudioClassifierOptionsC(ctypes.Structure):
+  """The audio classifier options used in the C API."""
+
+  _fields_ = [
+      ('base_options', base_options_c.BaseOptionsC),
+      ('classifier_options', classifier_options_c.ClassifierOptionsC),
+      ('running_mode', ctypes.c_int),
+      ('result_callback', _C_TYPES_RESULT_CALLBACK),
+  ]
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_c_options(
+      cls,
+      base_options: base_options_c.BaseOptionsC,
+      classifier_options: classifier_options_c.ClassifierOptionsC,
+      running_mode: _RunningMode,
+      result_callback: _C_TYPES_RESULT_CALLBACK,
+  ) -> 'AudioClassifierOptionsC':
+    """Creates an AudioClassifierOptionsC object from the given options."""
+    return cls(
+        base_options=base_options,
+        classifier_options=classifier_options,
+        running_mode=running_mode.ctype,
+        result_callback=result_callback,
+    )
+
+
+_CTYPES_SIGNATURES = (
+    mediapipe_c_utils.CStatusFunction(
+        'MpAudioClassifierCreate',
+        (
+            ctypes.POINTER(AudioClassifierOptionsC),
+            ctypes.POINTER(ctypes.c_void_p),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpAudioClassifierClassify',
+        (
+            ctypes.c_void_p,
+            ctypes.POINTER(audio_data_c.AudioDataC),
+            ctypes.POINTER(AudioClassifierResultC),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpAudioClassifierClassifyAsync',
+        (
+            ctypes.c_void_p,
+            ctypes.POINTER(audio_data_c.AudioDataC),
+            ctypes.c_int64,
+        ),
+    ),
+    mediapipe_c_utils.CFunction(
+        'MpAudioClassifierCloseResult',
+        [ctypes.POINTER(AudioClassifierResultC)],
+        None,
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpAudioClassifierClose',
+        (ctypes.c_void_p,),
+    ),
+)
 
 
 @dataclasses.dataclass
@@ -85,28 +157,12 @@ class AudioClassifierOptions:
   display_names_locale: Optional[str] = None
   max_results: Optional[int] = None
   score_threshold: Optional[float] = None
-  category_allowlist: Optional[List[str]] = None
-  category_denylist: Optional[List[str]] = None
+  category_allowlist: Optional[list[str]] = None
+  category_denylist: Optional[list[str]] = None
   result_callback: Optional[Callable[[AudioClassifierResult, int], None]] = None
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _AudioClassifierGraphOptionsProto:
-    """Generates an AudioClassifierOptions protobuf object."""
-    base_options_proto = self.base_options.to_pb2()
-    base_options_proto.use_stream_mode = False if self.running_mode == _RunningMode.AUDIO_CLIPS else True
-    classifier_options_proto = _ClassifierOptionsProto(
-        score_threshold=self.score_threshold,
-        category_allowlist=self.category_allowlist,
-        category_denylist=self.category_denylist,
-        display_names_locale=self.display_names_locale,
-        max_results=self.max_results)
 
-    return _AudioClassifierGraphOptionsProto(
-        base_options=base_options_proto,
-        classifier_options=classifier_options_proto)
-
-
-class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
+class AudioClassifier:
   """Class that performs audio classification on audio data.
 
   This API expects a TFLite model with mandatory TFLite Model Metadata that
@@ -131,6 +187,30 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
       English). If none of these are available, only the `index` field of the
       results will be filled.
   """
+  _lib: serial_dispatcher.SerialDispatcher
+  _handle: ctypes.c_void_p
+  _dispatcher: _AsyncResultDispatcher
+  _async_callback: _C_TYPES_RESULT_CALLBACK
+
+  def __init__(
+      self,
+      lib: serial_dispatcher.SerialDispatcher,
+      handle: ctypes.c_void_p,
+      dispatcher: _AsyncResultDispatcher,
+      async_callback: _C_TYPES_RESULT_CALLBACK,
+  ):
+    """Initializes the AudioClassifier instance.
+
+    Args:
+      lib: The serial dispatcher for the audio classifier task.
+      handle: The handle to the audio classifier task.
+      dispatcher: The async result dispatcher for the audio classifier task.
+      async_callback: The C callback for processing audio stream data.
+    """
+    self._lib = lib
+    self._handle = handle
+    self._dispatcher = dispatcher
+    self._async_callback = async_callback
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'AudioClassifier':
@@ -153,12 +233,14 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
     """
     base_options = _BaseOptions(model_asset_path=model_path)
     options = AudioClassifierOptions(
-        base_options=base_options, running_mode=_RunningMode.AUDIO_CLIPS)
+        base_options=base_options, running_mode=_RunningMode.AUDIO_CLIPS
+    )
     return cls.create_from_options(options)
 
   @classmethod
-  def create_from_options(cls,
-                          options: AudioClassifierOptions) -> 'AudioClassifier':
+  def create_from_options(
+      cls, options: AudioClassifierOptions
+  ) -> 'AudioClassifier':
     """Creates the `AudioClassifier` object from audio classifier options.
 
     Args:
@@ -172,43 +254,47 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
         `AudioClassifierOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
+    lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
-    def packets_callback(output_packets: Mapping[str, packet.Packet]):
-      timestamp_ms = output_packets[
-          _CLASSIFICATIONS_STREAM_NAME].timestamp.value // _MICRO_SECONDS_PER_MILLISECOND
-      if output_packets[_CLASSIFICATIONS_STREAM_NAME].is_empty():
-        options.result_callback(
-            AudioClassifierResult(classifications=[]), timestamp_ms)
-        return
-      classification_result_proto = classifications_pb2.ClassificationResult()
-      classification_result_proto.CopyFrom(
-          packet_getter.get_proto(output_packets[_CLASSIFICATIONS_STREAM_NAME]))
-      options.result_callback(
-          AudioClassifierResult.create_from_pb2(classification_result_proto),
-          timestamp_ms)
+    def convert_result(c_result_ptr: ctypes.POINTER(AudioClassifierResultC)):
+      c_result = c_result_ptr[0]
+      if c_result.results_count == 0:
+        raise RuntimeError('No results returned from audio classifier.')
+      py_result = AudioClassifierResult.from_ctypes(c_result.results[0])
+      return (py_result, py_result.timestamp_ms)
 
-    task_info = _TaskInfo(
-        task_graph=_TASK_GRAPH_NAME,
-        input_streams=[
-            ':'.join([_AUDIO_TAG, _AUDIO_IN_STREAM_NAME]),
-            ':'.join([_SAMPLE_RATE_TAG, _SAMPLE_RATE_IN_STREAM_NAME])
-        ],
-        output_streams=[
-            ':'.join([_CLASSIFICATIONS_TAG, _CLASSIFICATIONS_STREAM_NAME]),
-            ':'.join([
-                _TIMESTAMPED_CLASSIFICATIONS_TAG,
-                _TIMESTAMPED_CLASSIFICATIONS_STREAM_NAME
-            ])
-        ],
-        task_options=options)
-    return cls(
-        # Audio tasks should not drop input audio due to flow limiting, which
-        # may cause data inconsistency.
-        task_info.generate_graph_config(enable_flow_limiting=False),
-        options.running_mode,
-        packets_callback if options.result_callback else None)
+    dispatcher = _AsyncResultDispatcher(converter=convert_result)
 
-  def classify(self, audio_clip: _AudioData) -> List[AudioClassifierResult]:
+    c_callback = dispatcher.wrap_callback(
+        options.result_callback, _C_TYPES_RESULT_CALLBACK
+    )
+    ctypes_options = AudioClassifierOptionsC.from_c_options(
+        base_options=options.base_options.to_ctypes(),
+        classifier_options=classifier_options_c.convert_to_classifier_options_c(
+            classifier_options_lib.ClassifierOptions(
+                score_threshold=options.score_threshold,
+                category_allowlist=options.category_allowlist,
+                category_denylist=options.category_denylist,
+                display_names_locale=options.display_names_locale,
+                max_results=options.max_results,
+            )
+        ),
+        running_mode=options.running_mode,
+        result_callback=c_callback,
+    )
+
+    classifier_handle_ptr = ctypes.c_void_p()
+    lib.MpAudioClassifierCreate(
+        ctypes.byref(ctypes_options), ctypes.byref(classifier_handle_ptr)
+    )
+    return AudioClassifier(
+        lib=lib,
+        handle=classifier_handle_ptr,
+        dispatcher=dispatcher,
+        async_callback=c_callback,
+    )
+
+  def classify(self, audio_clip: _AudioData) -> list[AudioClassifierResult]:
     """Performs audio classification on the provided audio clip.
 
     The audio clip is represented as a MediaPipe AudioData. The method accepts
@@ -257,21 +343,19 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
     """
     if not audio_clip.audio_format.sample_rate:
       raise ValueError('Must provide the audio sample rate in audio data.')
-    output_packets = self._process_audio_clip({
-        _AUDIO_IN_STREAM_NAME:
-            packet_creator.create_matrix(audio_clip.buffer, transpose=True),
-        _SAMPLE_RATE_IN_STREAM_NAME:
-            packet_creator.create_double(audio_clip.audio_format.sample_rate)
-    })
-    output_list = []
-    classification_result_proto_list = packet_getter.get_proto_list(
-        output_packets[_TIMESTAMPED_CLASSIFICATIONS_STREAM_NAME])
-    for proto in classification_result_proto_list:
-      classification_result_proto = classifications_pb2.ClassificationResult()
-      classification_result_proto.CopyFrom(proto)
-      output_list.append(
-          AudioClassifierResult.create_from_pb2(classification_result_proto))
-    return output_list
+
+    c_result = AudioClassifierResultC()
+    self._lib.MpAudioClassifierClassify(
+        self._handle,
+        audio_clip.to_ctypes(),
+        ctypes.byref(c_result),
+    )
+    py_result = [
+        AudioClassifierResult.from_ctypes(c_result.results[i])
+        for i in range(c_result.results_count)
+    ]
+    self._lib.MpAudioClassifierCloseResult(ctypes.byref(c_result))
+    return py_result
 
   def classify_async(self, audio_block: _AudioData, timestamp_ms: int) -> None:
     """Sends audio data (a block in a continuous audio stream) to perform audio classification.
@@ -307,18 +391,66 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
     """
     if not audio_block.audio_format.sample_rate:
       raise ValueError('Must provide the audio sample rate in audio data.')
-    if not self._default_sample_rate:
-      self._default_sample_rate = audio_block.audio_format.sample_rate
-      self._set_sample_rate(_SAMPLE_RATE_IN_STREAM_NAME,
-                            self._default_sample_rate)
-    elif audio_block.audio_format.sample_rate != self._default_sample_rate:
-      raise ValueError(
-          f'The audio sample rate provided in audio data: '
-          f'{audio_block.audio_format.sample_rate} is inconsistent with '
-          f'the previously received: {self._default_sample_rate}.')
 
-    self._send_audio_stream_data({
-        _AUDIO_IN_STREAM_NAME:
-            packet_creator.create_matrix(audio_block.buffer, transpose=True).at(
-                timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
-    })
+    self._lib.MpAudioClassifierClassifyAsync(
+        self._handle,
+        audio_block.to_ctypes(),
+        timestamp_ms,
+    )
+
+  def create_audio_record(
+      self, num_channels: int, sample_rate: int, required_input_buffer_size: int
+  ) -> audio_record.AudioRecord:
+    """Creates an AudioRecord instance to record audio stream.
+
+    The returned AudioRecord instance is initialized and client needs to call
+    the appropriate method to start recording.
+
+    Note that MediaPipe Audio tasks will up/down sample automatically to fit the
+    sample rate required by the model. The default sample rate of the MediaPipe
+    pretrained audio model, Yamnet is 16kHz.
+
+    Args:
+      num_channels: The number of audio channels.
+      sample_rate: The audio sample rate.
+      required_input_buffer_size: The required input buffer size in number of
+        float elements.
+
+    Returns:
+      An AudioRecord instance.
+
+    Raises:
+      ValueError: If there's a problem creating the AudioRecord instance.
+    """
+    return audio_record.AudioRecord(
+        num_channels, sample_rate, required_input_buffer_size
+    )
+
+  def close(self):
+    """Shuts down the MediaPipe task instance."""
+    if self._handle:
+      self._lib.MpAudioClassifierClose(self._handle)
+      self._handle = None
+      self._dispatcher.close()
+      self._lib.close()
+
+  def __enter__(self):
+    """Returns `self` upon entering the runtime context."""
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    """Shuts down the MediaPipe task instance on exit of the context manager.
+
+    Args:
+      exc_type: The exception type that caused the exit.
+      exc_value: The exception value that caused the exit.
+      traceback: The exception traceback that caused the exit.
+
+    Raises:
+      RuntimeError: If the MediaPipe TextClassifier task failed to close.
+    """
+    del exc_type, exc_value, traceback  # Unused.
+    self.close()
+
+  def __del__(self):
+    self.close()

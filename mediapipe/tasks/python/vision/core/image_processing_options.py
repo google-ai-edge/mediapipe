@@ -17,6 +17,9 @@ import dataclasses
 from typing import Optional
 
 from mediapipe.tasks.python.components.containers import rect as rect_module
+from mediapipe.tasks.python.components.containers import rect_c as rect_c_module
+from mediapipe.tasks.python.core.optional_dependencies import doc_controls
+from mediapipe.tasks.python.vision.core import image_processing_options_c as image_processing_options_c_module
 
 
 @dataclasses.dataclass
@@ -35,5 +38,20 @@ class ImageProcessingOptions:
       region-of-interest), in degrees clockwise. The rotation must be a multiple
       (positive or negative) of 90°.
   """
-  region_of_interest: Optional[rect_module.Rect] = None
+  region_of_interest: Optional[rect_module.RectF] = None
   rotation_degrees: int = 0
+
+  @doc_controls.do_not_generate_docs
+  def to_ctypes(
+      self,
+  ) -> image_processing_options_c_module.ImageProcessingOptionsC:
+    """Generates a ImageProcessingOptionsC object."""
+    return image_processing_options_c_module.ImageProcessingOptionsC(
+        has_region_of_interest=self.region_of_interest is not None,
+        region_of_interest=(
+            self.region_of_interest.to_ctypes()
+            if self.region_of_interest
+            else rect_c_module.RectFC()
+        ),
+        rotation_degrees=self.rotation_degrees,
+    )

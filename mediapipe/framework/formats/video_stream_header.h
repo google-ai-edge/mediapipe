@@ -38,6 +38,10 @@ struct VideoHeader {
 
   // The frame rate in Hz at which the video frames are output.
   double frame_rate = 0.0;
+
+  // The frame rate in numerator and denominator.
+  int frame_rate_numerator = 0;
+  int frame_rate_denominator = 0;
 };
 
 }  // namespace mediapipe

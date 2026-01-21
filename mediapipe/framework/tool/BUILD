@@ -14,6 +14,10 @@
 #
 
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load(
@@ -45,6 +49,7 @@ bzl_library(
         "//mediapipe/framework/deps:descriptor_set_bzl",
         "//mediapipe/framework/deps:expand_template_bzl",
         "@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite_bzl",
+        "@rules_cc//cc:core_rules",
     ],
 )
 
@@ -466,6 +471,7 @@ cc_library(
     hdrs = ["status_util.h"],
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
@@ -819,6 +825,19 @@ cc_library(
         "@com_google_absl//absl/strings:str_format",
         "@stblib//:stb_image",
         "@stblib//:stb_image_write",
+    ],
+)
+
+mediapipe_cc_test(
+    name = "test_util_test",
+    srcs = ["test_util_test.cc"],
+    tags = ["nodocker"],  # TODO: b/445878970 - Re-enable on docker.
+    deps = [
+        ":test_util",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/status",
     ],
 )
 

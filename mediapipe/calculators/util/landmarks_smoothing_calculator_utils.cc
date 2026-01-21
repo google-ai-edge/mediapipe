@@ -14,12 +14,21 @@
 
 #include "mediapipe/calculators/util/landmarks_smoothing_calculator_utils.h"
 
-#include <iostream>
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <utility>
+#include <vector>
 
+#include "absl/algorithm/container.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/time/time.h"
 #include "mediapipe/calculators/util/landmarks_smoothing_calculator.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/util/filtering/one_euro_filter.h"
 #include "mediapipe/util/filtering/relative_velocity_filter.h"
 
@@ -63,7 +72,7 @@ class NoFilter : public LandmarksFilter {
  public:
   absl::Status Apply(const LandmarkList& in_landmarks,
                      const absl::Duration& timestamp,
-                     const absl::optional<float> object_scale_opt,
+                     const std::optional<float> object_scale_opt,
                      LandmarkList& out_landmarks) override {
     out_landmarks = in_landmarks;
     return absl::OkStatus();
@@ -89,7 +98,7 @@ class VelocityFilter : public LandmarksFilter {
 
   absl::Status Apply(const LandmarkList& in_landmarks,
                      const absl::Duration& timestamp,
-                     const absl::optional<float> object_scale_opt,
+                     const std::optional<float> object_scale_opt,
                      LandmarkList& out_landmarks) override {
     // Get value scale as inverse value of the object scale.
     // If value is too small smoothing will be disabled and landmarks will be
@@ -114,12 +123,12 @@ class VelocityFilter : public LandmarksFilter {
 
       auto* out_landmark = out_landmarks.add_landmark();
       *out_landmark = in_landmark;
-      out_landmark->set_x(
-          x_filters_[i].Apply(timestamp, value_scale, in_landmark.x()));
-      out_landmark->set_y(
-          y_filters_[i].Apply(timestamp, value_scale, in_landmark.y()));
-      out_landmark->set_z(
-          z_filters_[i].Apply(timestamp, value_scale, in_landmark.z()));
+      out_landmark->set_x(x_filters_[i].Apply(
+          timestamp, /*value=*/in_landmark.x(), value_scale));
+      out_landmark->set_y(y_filters_[i].Apply(
+          timestamp, /*value=*/in_landmark.y(), value_scale));
+      out_landmark->set_z(z_filters_[i].Apply(
+          timestamp, /*value=*/in_landmark.z(), value_scale));
     }
 
     return absl::OkStatus();
@@ -178,7 +187,7 @@ class OneEuroFilterImpl : public LandmarksFilter {
 
   absl::Status Apply(const LandmarkList& in_landmarks,
                      const absl::Duration& timestamp,
-                     const absl::optional<float> object_scale_opt,
+                     const std::optional<float> object_scale_opt,
                      LandmarkList& out_landmarks) override {
     // Initialize filters once.
     MP_RETURN_IF_ERROR(InitializeFiltersIfEmpty(in_landmarks.landmark_size()));
@@ -203,12 +212,15 @@ class OneEuroFilterImpl : public LandmarksFilter {
 
       auto* out_landmark = out_landmarks.add_landmark();
       *out_landmark = in_landmark;
-      out_landmark->set_x(
-          x_filters_[i].Apply(timestamp, value_scale, in_landmark.x()));
-      out_landmark->set_y(
-          y_filters_[i].Apply(timestamp, value_scale, in_landmark.y()));
-      out_landmark->set_z(
-          z_filters_[i].Apply(timestamp, value_scale, in_landmark.z()));
+      out_landmark->set_x(x_filters_[i].Apply(timestamp,
+                                              /*value=*/in_landmark.x(),
+                                              value_scale, /*beta_scale*/ 1.0));
+      out_landmark->set_y(y_filters_[i].Apply(timestamp,
+                                              /*value=*/in_landmark.y(),
+                                              value_scale, /*beta_scale=*/1.0));
+      out_landmark->set_z(z_filters_[i].Apply(timestamp,
+                                              /*value=*/in_landmark.z(),
+                                              value_scale, /*beta_scale=*/1.0));
     }
 
     return absl::OkStatus();
@@ -226,12 +238,18 @@ class OneEuroFilterImpl : public LandmarksFilter {
     }
 
     for (int i = 0; i < n_landmarks; ++i) {
-      x_filters_.push_back(
-          OneEuroFilter(frequency_, min_cutoff_, beta_, derivate_cutoff_));
-      y_filters_.push_back(
-          OneEuroFilter(frequency_, min_cutoff_, beta_, derivate_cutoff_));
-      z_filters_.push_back(
-          OneEuroFilter(frequency_, min_cutoff_, beta_, derivate_cutoff_));
+      MP_ASSIGN_OR_RETURN(auto filter,
+                          OneEuroFilter::Create(frequency_, min_cutoff_, beta_,
+                                                derivate_cutoff_));
+      x_filters_.push_back(std::move(filter));
+      MP_ASSIGN_OR_RETURN(filter,
+                          OneEuroFilter::Create(frequency_, min_cutoff_, beta_,
+                                                derivate_cutoff_));
+      y_filters_.push_back(std::move(filter));
+      MP_ASSIGN_OR_RETURN(filter,
+                          OneEuroFilter::Create(frequency_, min_cutoff_, beta_,
+                                                derivate_cutoff_));
+      z_filters_.push_back(std::move(filter));
     }
 
     return absl::OkStatus();
@@ -319,15 +337,15 @@ float GetObjectScale(const Rect& roi) {
 absl::StatusOr<std::unique_ptr<LandmarksFilter>> InitializeLandmarksFilter(
     const LandmarksSmoothingCalculatorOptions& options) {
   if (options.has_no_filter()) {
-    return absl::make_unique<NoFilter>();
+    return std::make_unique<NoFilter>();
   } else if (options.has_velocity_filter()) {
-    return absl::make_unique<VelocityFilter>(
+    return std::make_unique<VelocityFilter>(
         options.velocity_filter().window_size(),
         options.velocity_filter().velocity_scale(),
         options.velocity_filter().min_allowed_object_scale(),
         options.velocity_filter().disable_value_scaling());
   } else if (options.has_one_euro_filter()) {
-    return absl::make_unique<OneEuroFilterImpl>(
+    return std::make_unique<OneEuroFilterImpl>(
         options.one_euro_filter().frequency(),
         options.one_euro_filter().min_cutoff(),
         options.one_euro_filter().beta(),

@@ -62,6 +62,8 @@ LlmParams::Norm TransformerParametersProtoNormTypeToLlmParamsNormType(
       return LlmParams::Norm::RMS_NORM;
     case TransformerParameters::LAYER_NORM:
       return LlmParams::Norm::LAYER_NORM;
+    case TransformerParameters::RMS_NORM_NO_SCALE:
+      return LlmParams::Norm::RMS_NORM_NO_SCALE;
     default:
       ABSL_LOG(DFATAL) << "Unknown norm type: " << norm_type;
   }
@@ -85,6 +87,9 @@ absl::StatusOr<std::optional<LlmWeights::NormWeights>> LoadNormWeights(
           rms_norm_weights.norm_weight,
           weight_accessor.LoadWeight(absl::StrCat(basename, ".scale"), dims));
       return rms_norm_weights;
+    }
+    case LlmParams::Norm::RMS_NORM_NO_SCALE: {
+      break;
     }
     case LlmParams::Norm::LAYER_NORM: {
       RET_CHECK_EQ(dims.size(), 1);
@@ -512,15 +517,22 @@ absl::StatusOr<LlmWeights> LlmWeightsLoader::LoadWeights() {
 
 DefaultLlmWeightsLoader::DefaultLlmWeightsLoader(
     absl::string_view weight_path, const LlmParams& params,
-    std::shared_ptr<tflite::FlatBufferModel> flat_buffer_model)
+    std::shared_ptr<tflite::FlatBufferModel> flat_buffer_model,
+    std::shared_ptr<ScopedFile> scoped_cache_file)
     : LlmWeightsLoader(nullptr, params) {
-  xnn_weights_cache_ = std::make_shared<PackWeightsCache>(
-      params.cache_dir.empty()
-          ? absl::StrCat(weight_path, ".cache")
-          : mediapipe::file::JoinPath(
-                params.cache_dir,
-                absl::StrCat(mediapipe::file::Basename(weight_path),
-                             ".cache")));
+  // Prefer to load from the scoped cache file if provided.
+  if (scoped_cache_file && scoped_cache_file->IsValid()) {
+    xnn_weights_cache_ =
+        std::make_shared<PackWeightsCache>(std::move(scoped_cache_file));
+  } else {
+    xnn_weights_cache_ = std::make_shared<PackWeightsCache>(
+        params.cache_dir.empty()
+            ? absl::StrCat(weight_path, ".cache")
+            : mediapipe::file::JoinPath(
+                  params.cache_dir,
+                  absl::StrCat(mediapipe::file::Basename(weight_path),
+                               ".cache")));
+  }
   ABSL_CHECK_OK(xnn_weights_cache_->Initialize());
   if (flat_buffer_model != nullptr) {
     const tflite::Model* model = flat_buffer_model->GetModel();
@@ -532,6 +544,9 @@ DefaultLlmWeightsLoader::DefaultLlmWeightsLoader(
         std::make_shared<TfLiteWeightAccessor>(tflite_model, data),
         xnn_weights_cache_.get());
   } else {
+    ABSL_CHECK(!scoped_cache_file)
+        << "loading the weight cache from a scoped file is currently only "
+           "supported if the model is passed as a FlatBufferModel";
     weight_accessor_ = std::make_unique<WeightAccessorCompositeWithCache>(
         std::make_shared<TfLiteWeightAccessor>(weight_path),
         xnn_weights_cache_.get());

@@ -28,8 +28,11 @@ import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {LlmInferenceGraphOptions} from '../../../../tasks/web/genai/llm_inference/proto/llm_inference_graph_options_pb';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 import {
+  instanceOfAudio,
+  instanceOfImage,
   MultiResponseProgressListener,
   ProgressListener,
+  Prompt,
   SupportLlmInference,
 } from '../../../../web/graph_runner/graph_runner_llm_inference_lib';
 import {
@@ -51,17 +54,24 @@ import {TransformerParameters} from '../../../../tasks/cc/genai/inference/proto/
 
 import {LlmInferenceOptions} from './llm_inference_options';
 import {
-  ModelFormat,
   getModelFormatAndClose,
+  ModelFormat,
   tee,
   uint8ArrayToStream,
 } from './model_loading_utils';
 
 export type {
+  Audio,
+  Image,
   MultiResponseProgressListener,
   ProgressListener,
+  Prompt,
 } from '../../../../web/graph_runner/graph_runner_llm_inference_lib';
 export * from './llm_inference_options';
+
+declare interface CancelModule {
+  LLM_CANCEL_FLAG: number | undefined;
+}
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -159,7 +169,7 @@ export class LlmInference extends TaskRunner {
   // TODO: Move options and samplerParams to LlmInferenceSupportedGraphRunner
   // class once LlmInferenceSupportedGraphRunner becomes the only entry point
   // for LLM inference.
-  private readonly options: LlmInferenceGraphOptions;
+  readonly options: LlmInferenceGraphOptions;
   private readonly samplerParams: SamplerParameters;
   private isProcessing = false;
   private isMultiResponseGeneration?: boolean;
@@ -169,7 +179,8 @@ export class LlmInference extends TaskRunner {
     | ProgressListener
     | MultiResponseProgressListener;
   private streamingReader?: StreamingReader;
-  private isConvertedLlmModel = false;
+  private useLlmEngine = false;
+  private isConvertedModel = false;
 
   // The WebGPU device used for LLM inference.
   private wgpuDevice?: GPUDevice;
@@ -439,11 +450,23 @@ export class LlmInference extends TaskRunner {
       const modelFormat = await getModelFormatAndClose(
         modelStreamForFormatTest,
       );
-      if (modelFormat === ModelFormat.CONVERTED) {
-        this.isConvertedLlmModel = true;
+      this.isConvertedModel = modelFormat === ModelFormat.CONVERTED;
+
+      // LLM Engine must be used for converted models and multi-modality.
+      const maxNumImages =
+        'maxNumImages' in options && options.maxNumImages
+          ? (options.maxNumImages as number)
+          : 0;
+      this.options.setMaxNumImages(maxNumImages);
+
+      const supportAudio = 'supportAudio' in options && !!options.supportAudio;
+      this.options.setSupportAudio(supportAudio);
+
+      if (this.isConvertedModel || maxNumImages > 0 || supportAudio) {
+        this.useLlmEngine = true;
         modelStream = modelStreamForLoading;
       } else {
-        this.isConvertedLlmModel = false;
+        this.useLlmEngine = false;
         this.streamingReader = StreamingReader.loadFromReader(
           modelStreamForLoading,
           onFinishedLoadingData,
@@ -491,9 +514,10 @@ export class LlmInference extends TaskRunner {
       if (numResponsesToSet < 1) {
         throw new Error(`'numResponses' must be at least 1.`);
       }
-      if (this.isConvertedLlmModel && numResponsesToSet > 1) {
+      if (this.useLlmEngine && numResponsesToSet > 1) {
         throw new Error(
-          `'numResponses > 1' is not supported for converted LLM models yet.`,
+          `'numResponses > 1' is not supported for converted LLM models yet, ` +
+            `and is also not supported with multimodality.`,
         );
       }
       this.options.setNumResponses(numResponsesToSet);
@@ -510,18 +534,32 @@ export class LlmInference extends TaskRunner {
         );
       }
     }
+    if ('forceF32' in options && options.forceF32 !== undefined) {
+      this.options.setForceF32(options.forceF32);
+    }
 
-    // If the model is a converted LLM, use LlmInferenceSupportedGraphRunner's
-    // members for the functionality support.
-    if (this.isConvertedLlmModel) {
+    // If the model is a converted LLM or we're using multimodality, use
+    // LlmInferenceSupportedGraphRunner's members for the functionality support.
+    if (this.useLlmEngine) {
       (
         this.graphRunner as unknown as LlmGraphRunner
       ).deleteLlmInferenceEngine();
-      return (this.graphRunner as unknown as LlmGraphRunner)
-        .createLlmInferenceEngine(modelStream, this.options)
-        .then(() => {
-          this.checkWgpuErrors();
-        });
+      if (this.isConvertedModel) {
+        // Converted models can't use streaming loading or advanced features.
+        return (this.graphRunner as unknown as LlmGraphRunner)
+          .createLlmInferenceEngineConverted(modelStream, this.options)
+          .then(() => {
+            this.checkWgpuErrors();
+          });
+      } else {
+        // We use streaming loading by default, and enable all features from
+        // options.
+        return (this.graphRunner as unknown as LlmGraphRunner)
+          .createLlmInferenceEngine(modelStream, this.options)
+          .then(() => {
+            this.checkWgpuErrors();
+          });
+      }
     }
 
     // If the model is a handwritten LLM, construct the MediaPipe graph to
@@ -569,61 +607,61 @@ export class LlmInference extends TaskRunner {
   }
 
   /**
-   * Performs LLM Inference on the provided text and waits
+   * Performs LLM Inference on the provided prompt and waits
    * asynchronously for the response. Only one call to `generateResponse()` can
    * run at a time.
    *
    * @export
-   * @param text The text to process.
+   * @param query The prompt to process.
    * @return The generated text result.
    */
-  generateResponse(text: string): Promise<string>;
+  generateResponse(query: Prompt): Promise<string>;
   /**
-   * Performs LLM Inference on the provided text and waits
+   * Performs LLM Inference on the provided prompt and waits
    * asynchronously for the response. Only one call to `generateResponse()` can
    * run at a time.
    *
    * @export
-   * @param text The text to process.
+   * @param query The prompt to process.
    * @param progressListener A listener that will be triggered when the task has
    *     new partial response generated.
    * @return The generated text result.
    */
   generateResponse(
-    text: string,
+    query: Prompt,
     progressListener?: ProgressListener,
   ): Promise<string>;
   /**
-   * Performs LLM Inference on the provided text and waits
+   * Performs LLM Inference on the provided prompt and waits
    * asynchronously for the response. Only one call to `generateResponse()` can
    * run at a time.
    *
    * @export
-   * @param text The text to process.
+   * @param query The prompt to process.
    * @param loraModel The LoRA model to apply on the text generation.
    * @return The generated text result.
    */
-  generateResponse(text: string, loraModel?: LoraModel): Promise<string>;
+  generateResponse(query: Prompt, loraModel?: LoraModel): Promise<string>;
   /**
-   * Performs LLM Inference on the provided text and waits
+   * Performs LLM Inference on the provided prompt and waits
    * asynchronously for the response. Only one call to `generateResponse()` can
    * run at a time.
    *
    * @export
-   * @param text The text to process.
+   * @param query The prompt to process.
    * @param loraModel The LoRA model to apply on the text generation.
    * @param progressListener A listener that will be triggered when the task has
    *     new partial response generated.
    * @return The generated text result.
    */
   generateResponse(
-    text: string,
+    query: Prompt,
     loraModel?: LoraModel,
     progressListener?: ProgressListener,
   ): Promise<string>;
   /** @export */
   generateResponse(
-    text: string,
+    query: Prompt,
     loraModelOrProgressListener?: ProgressListener | LoraModel,
     progressListener?: ProgressListener,
   ): Promise<string> {
@@ -637,7 +675,7 @@ export class LlmInference extends TaskRunner {
     }
     this.isMultiResponseGeneration = false;
     return this.generateResponsesInternal(
-      text,
+      query,
       loraModelOrProgressListener,
       progressListener,
     ).then((responses) => responses[0]);
@@ -649,23 +687,23 @@ export class LlmInference extends TaskRunner {
    * greater than 1.
    *
    * @export
-   * @param text The text to process.
+   * @param query The prompt to process.
    * @return The generated results.
    */
-  generateResponses(text: string): Promise<string[]>;
+  generateResponses(query: Prompt): Promise<string[]>;
   /**
    * Similar to `generateResponse()` but can return multiple responses for the
    * given prompt if the task is initialized with a value for `numResponses`
    * greater than 1.
    *
    * @export
-   * @param text The text to process.
+   * @param query The prompt to process.
    * @param progressListener A listener that will be triggered when the task has
    *     new partial response generated.
    * @return The generated results.
    */
   generateResponses(
-    text: string,
+    query: Prompt,
     progressListener: MultiResponseProgressListener,
   ): Promise<string[]>;
   /**
@@ -674,44 +712,44 @@ export class LlmInference extends TaskRunner {
    * greater than 1.
    *
    * @export
-   * @param text The text to process.
+   * @param query The prompt to process.
    * @param loraModel The LoRA model to apply on the text generation.
    * @return The generated results.
    */
-  generateResponses(text: string, loraModel: LoraModel): Promise<string[]>;
+  generateResponses(query: Prompt, loraModel: LoraModel): Promise<string[]>;
   /**
    * Similar to `generateResponse()` but can return multiple responses for the
    * given prompt if the task is initialized with a value for `numResponses`
    * greater than 1.
    *
    * @export
-   * @param text The text to process.
+   * @param query The prompt to process.
    * @param loraModel The LoRA model to apply on the text generation.
    * @param progressListener A listener that will be triggered when the task has
    *     new partial response generated.
    * @return The generated results.
    */
   generateResponses(
-    text: string,
+    query: Prompt,
     loraModel: LoraModel,
     progressListener: MultiResponseProgressListener,
   ): Promise<string[]>;
   /** @export */
   generateResponses(
-    text: string,
+    query: Prompt,
     loraModelOrProgressListener?: MultiResponseProgressListener | LoraModel,
     progressListener?: MultiResponseProgressListener,
   ): Promise<string[]> {
     this.isMultiResponseGeneration = true;
     return this.generateResponsesInternal(
-      text,
+      query,
       loraModelOrProgressListener,
       progressListener,
     );
   }
 
   private generateResponsesInternal(
-    text: string,
+    query: Prompt,
     loraModelOrProgressListener?:
       | MultiResponseProgressListener
       | ProgressListener
@@ -722,7 +760,37 @@ export class LlmInference extends TaskRunner {
       typeof loraModelOrProgressListener === 'function'
         ? loraModelOrProgressListener
         : progressListener;
-    if (this.isConvertedLlmModel) {
+    // If prompt contains a multi-modal piece, ensure options are set properly.
+    const queryAsArray = Array.isArray(query) ? query : [query];
+    const numImages = queryAsArray.filter((elem) =>
+      instanceOfImage(elem),
+    ).length;
+    if (
+      numImages > 0 &&
+      (!this.options.hasMaxNumImages() ||
+        this.options.getMaxNumImages() < numImages)
+    ) {
+      throw new Error(
+        `maxNumImages is set to ` +
+          `${
+            this.options.hasMaxNumImages() ? this.options.getMaxNumImages() : 0
+          }` +
+          `, but the query included ${numImages} images.`,
+      );
+    }
+    const numAudios = queryAsArray.filter((elem) =>
+      instanceOfAudio(elem),
+    ).length;
+    if (
+      numAudios > 0 &&
+      (!this.options.hasSupportAudio() || !this.options.getSupportAudio())
+    ) {
+      throw new Error(
+        `supportAudio was not enabled, but the query included ${numAudios} ` +
+          `audio chunks.`,
+      );
+    }
+    if (this.useLlmEngine) {
       // TODO: b/398949555 - Support multi-response generation for converted LLM
       // models (.task format).
       if (
@@ -731,37 +799,45 @@ export class LlmInference extends TaskRunner {
       ) {
         throw new Error(
           'Multi-response generation is not supported for converted LLM ' +
-            'models (.task format) yet. Please use the .bin format.',
+            'models (.task format) yet, nor is it supported for ' +
+            'multimodality. Please use the .bin format without multimodality ' +
+            'or request only one response.',
         );
       }
       if (loraModelOrProgressListener instanceof LoraModel) {
         throw new Error(
           'LoRA is not supported for converted LLM models (.task format) ' +
-            'yet. Please use the .bin format.',
+            'yet, nor is it supported for multimodality. Please use the .bin ' +
+            'format without multimodality to use LoRA.',
         );
       }
+      this.clearCancelSignals();
       // TODO: b/398904237 - Support streaming generation by passing the
       // progress listener.
       return (this.graphRunner as unknown as LlmGraphRunner)
-        .generateResponse(text, this.samplerParams, (partialResult, done) => {
-          // Don't trigger the user progress listener if there are WebGPU
-          // errors.
-          if (this.wgpuErrors.length === 0 && this.userProgressListener) {
-            // TODO: b/398949555 - Support multi-response generation for
-            // converted LLM models (.task format).
-            if (this.isMultiResponseGeneration) {
-              (this.userProgressListener as MultiResponseProgressListener)(
-                /* partialResult= */ [partialResult],
-                /* done= */ done,
-              );
-            } else {
-              (this.userProgressListener as ProgressListener)(
-                /* partialResult= */ partialResult,
-                /* done= */ done,
-              );
+        .generateResponse(
+          queryAsArray,
+          this.samplerParams,
+          (partialResult, done) => {
+            // Don't trigger the user progress listener if there are WebGPU
+            // errors.
+            if (this.wgpuErrors.length === 0 && this.userProgressListener) {
+              // TODO: b/398949555 - Support multi-response generation for
+              // converted LLM models (.task format).
+              if (this.isMultiResponseGeneration) {
+                (this.userProgressListener as MultiResponseProgressListener)(
+                  /* partialResult= */ [partialResult],
+                  /* done= */ done,
+                );
+              } else {
+                (this.userProgressListener as ProgressListener)(
+                  /* partialResult= */ partialResult,
+                  /* done= */ done,
+                );
+              }
             }
-          }
-        })
+          },
+        )
         .then((responses) => {
           this.checkWgpuErrors();
           return [responses];
@@ -771,11 +847,16 @@ export class LlmInference extends TaskRunner {
       throw new Error('Previous invocation or loading is still ongoing.');
     }
     this.isProcessing = true;
+    this.clearCancelSignals();
     this.generationResults.length = 0;
     for (let i = 0; i < this.options.getNumResponses(); i++) {
       this.generationResults[i] = [];
     }
     const timeStamp = this.getSynctheticTimestamp();
+
+    // This code is only run when the prompt is text-only, so condense into a
+    // single string.
+    const text = queryAsArray.join('');
     this.graphRunner.addStringToStream(text, INPUT_STREAM, timeStamp);
     if (loraModelOrProgressListener instanceof LoraModel) {
       if (loraModelOrProgressListener.owner !== this) {
@@ -807,17 +888,27 @@ export class LlmInference extends TaskRunner {
    * a `generateResponse()` query is active. Runs synchronously.
    *
    * @export
-   * @param text The text to tokenize.
+   * @param query The prompt to tokenize.
    * @return The number of tokens in the resulting tokenization of the text.
    *         May return undefined if an error occurred.
    */
-  sizeInTokens(text: string): number | undefined {
-    if (this.isConvertedLlmModel) {
-      return (this.graphRunner as unknown as LlmGraphRunner).sizeInTokens(text);
+  sizeInTokens(query: Prompt): number | undefined {
+    const queryAsArray = Array.isArray(query) ? query : [query];
+    if (this.useLlmEngine) {
+      return (this.graphRunner as unknown as LlmGraphRunner).sizeInTokens(
+        queryAsArray,
+      );
     }
     if (this.isProcessing) {
       throw new Error('Previous invocation or loading is still ongoing.');
     }
+    if (queryAsArray.some(instanceOfImage)) {
+      throw new Error('sizeInTokens requires maxNumImages > 0 for images.');
+    }
+    if (queryAsArray.some(instanceOfAudio)) {
+      throw new Error('sizeInTokens requires supportAudio for audio.');
+    }
+    const text = queryAsArray.join('');
     this.isProcessing = true;
     this.latestTokenCostQueryResult = undefined;
     this.graphRunner.addStringToStream(
@@ -828,6 +919,30 @@ export class LlmInference extends TaskRunner {
     this.finishProcessing();
     this.isProcessing = false;
     return this.latestTokenCostQueryResult;
+  }
+
+  /**
+   * Sends a signal to cancel any current decoding when the engine is able to.
+   * Does not cancel initialization or prefilling yet.
+   * @export
+   */
+  cancelProcessing() {
+    // It would be nice to return a Promise here to allow the user to wait until
+    // processing has been successfully canceled. For now, the cancel signal
+    // will be sent immediately, but the client must use other mechanisms to
+    // check when the processing has actually finished (like the "done"
+    // parameter of the UserProgressListener).
+    const cancelModule = this.graphRunner.wasmModule as unknown as CancelModule;
+    if (this.useLlmEngine || this.isProcessing) {
+      cancelModule.LLM_CANCEL_FLAG = 1;
+    }
+  }
+
+  // Internal-only helper to clear any pending cancellation signals which were
+  // sent in before the `generateResponse(s)` call was actually made.
+  clearCancelSignals() {
+    const cancelModule = this.graphRunner.wasmModule as unknown as CancelModule;
+    cancelModule.LLM_CANCEL_FLAG = undefined;
   }
 
   /**
@@ -844,10 +959,11 @@ export class LlmInference extends TaskRunner {
     modelAsset: string | Uint8Array | Blob,
   ): Promise<LoraModel> {
     // TODO: b/398858769 - Support LoRA for converted LLM models (.task format).
-    if (this.isConvertedLlmModel) {
+    if (this.useLlmEngine) {
       throw new Error(
-        'LoRA is not supported for converted LLM models (.task format) yet. ' +
-          'Please use the old foramat (.bin) to use LoRA.',
+        'LoRA is not supported for converted LLM models (.task format) yet, ' +
+          'nor is it supported for multimodality. Please use the old format ' +
+          '(.bin) without multimodality to use LoRA.',
       );
     }
     if (this.isProcessing) {
@@ -994,9 +1110,18 @@ export class LlmInference extends TaskRunner {
     this.graphRunner.attachBoolListener(
       OUTPUT_END_STREAM,
       (bool, timestamp) => {
-        this.isProcessing = false;
         this.setLatestOutputTimestamp(timestamp);
-        this.checkWgpuErrors();
+        // If there are any WebGPU errors, we want to release our isProcessing
+        // lock, but otherwise we want to keep the lock until we're about to
+        // leave the WebAssembly stack, which means waiting until *after* the
+        // userProgressListener is called, since that callback is still
+        // happening from within the Wasm VM.
+        try {
+          this.checkWgpuErrors();
+        } catch (e) {
+          this.isProcessing = false;
+          throw e;
+        }
         if (this.resultDeferred) {
           this.resultDeferred.resolve(
             this.generationResults.map((result) => result.join('')),
@@ -1020,6 +1145,7 @@ export class LlmInference extends TaskRunner {
             );
           }
         }
+        this.isProcessing = false;
         this.isMultiResponseGeneration = undefined;
       },
     );
@@ -1259,7 +1385,7 @@ export class LlmInference extends TaskRunner {
   }
 
   override close() {
-    if (this.isConvertedLlmModel) {
+    if (this.useLlmEngine) {
       (
         this.graphRunner as unknown as LlmGraphRunner
       ).deleteLlmInferenceEngine();

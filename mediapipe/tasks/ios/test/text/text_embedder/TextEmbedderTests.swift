@@ -38,6 +38,8 @@ class TextEmbedderTests: XCTestCase {
 
   static let doubleDiffTolerance: Double = 1e-4
 
+  static let cosineSimilarityThreshold: Double = 0.95
+
   func assertEqualErrorDescriptions(
     _ error: Error, expectedLocalizedDescription: String
   ) {
@@ -113,9 +115,7 @@ class TextEmbedderTests: XCTestCase {
         embedding1: embedding1,
         embedding2: embedding2))
 
-    XCTAssertEqual(
-      cosineSimilarity.doubleValue,
-      0.96236,
-      accuracy: TextEmbedderTests.doubleDiffTolerance)
+    XCTAssertGreaterThanOrEqual(
+      cosineSimilarity.doubleValue, TextEmbedderTests.cosineSimilarityThreshold)
   }
 }

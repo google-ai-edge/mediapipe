@@ -16,11 +16,6 @@
 import dataclasses
 from typing import Any, List, Optional
 
-from mediapipe.tasks.cc.components.processors.proto import classifier_options_pb2
-from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-
-_ClassifierOptionsProto = classifier_options_pb2.ClassifierOptions
-
 
 @dataclasses.dataclass
 class ClassifierOptions:
@@ -49,28 +44,6 @@ class ClassifierOptions:
   category_allowlist: Optional[List[str]] = None
   category_denylist: Optional[List[str]] = None
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _ClassifierOptionsProto:
-    """Generates a ClassifierOptions protobuf object."""
-    return _ClassifierOptionsProto(
-        score_threshold=self.score_threshold,
-        category_allowlist=self.category_allowlist,
-        category_denylist=self.category_denylist,
-        display_names_locale=self.display_names_locale,
-        max_results=self.max_results)
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(cls,
-                      pb2_obj: _ClassifierOptionsProto) -> 'ClassifierOptions':
-    """Creates a `ClassifierOptions` object from the given protobuf object."""
-    return ClassifierOptions(
-        score_threshold=pb2_obj.score_threshold,
-        category_allowlist=[str(name) for name in pb2_obj.category_allowlist],
-        category_denylist=[str(name) for name in pb2_obj.category_denylist],
-        display_names_locale=pb2_obj.display_names_locale,
-        max_results=pb2_obj.max_results)
-
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.
 
@@ -82,5 +55,10 @@ class ClassifierOptions:
     """
     if not isinstance(other, ClassifierOptions):
       return False
-
-    return self.to_pb2().__eq__(other.to_pb2())
+    return (
+        self.display_names_locale == other.display_names_locale
+        and self.max_results == other.max_results
+        and self.score_threshold == other.score_threshold
+        and self.category_allowlist == other.category_allowlist
+        and self.category_denylist == other.category_denylist
+    )

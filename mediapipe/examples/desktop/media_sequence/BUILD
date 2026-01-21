@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 # Placeholder: load py_binary
 # Placeholder: load py_library
 
 licenses(["notice"])
-
-package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 
 cc_library(
     name = "run_graph_file_io_main",

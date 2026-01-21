@@ -31,7 +31,8 @@ TEST(BaseOptionsConverterTest, ConvertsBaseOptionsAssetBuffer) {
   BaseOptions c_base_options = {/* model_asset_buffer= */ kAssetBuffer,
                                 /* model_asset_buffer_count= */
                                 static_cast<unsigned int>(strlen(kAssetBuffer)),
-                                /* model_asset_path= */ nullptr};
+                                /* model_asset_path= */ nullptr,
+                                /* delegate= */ CPU};
 
   mediapipe::tasks::core::BaseOptions cpp_base_options = {};
 
@@ -43,13 +44,27 @@ TEST(BaseOptionsConverterTest, ConvertsBaseOptionsAssetBuffer) {
 TEST(BaseOptionsConverterTest, ConvertsBaseOptionsAssetPath) {
   BaseOptions c_base_options = {/* model_asset_buffer= */ nullptr,
                                 /* model_asset_buffer_count= */ 0,
-                                /* model_asset_path= */ kModelAssetPath};
+                                /* model_asset_path= */ kModelAssetPath,
+                                /* delegate= */ CPU};
 
   mediapipe::tasks::core::BaseOptions cpp_base_options = {};
 
   CppConvertToBaseOptions(c_base_options, &cpp_base_options);
   EXPECT_EQ(cpp_base_options.model_asset_buffer.get(), nullptr);
   EXPECT_EQ(cpp_base_options.model_asset_path, std::string{kModelAssetPath});
+}
+
+TEST(BaseOptionsConverterTest, ConvertsBaseOptionsDelegate) {
+  BaseOptions c_base_options = {/* model_asset_buffer= */ nullptr,
+                                /* model_asset_buffer_count= */ 0,
+                                /* model_asset_path= */ kModelAssetPath,
+                                /* delegate= */ GPU};
+
+  mediapipe::tasks::core::BaseOptions cpp_base_options = {};
+
+  CppConvertToBaseOptions(c_base_options, &cpp_base_options);
+  EXPECT_EQ(cpp_base_options.delegate,
+            mediapipe::tasks::core::BaseOptions::GPU);
 }
 
 }  // namespace mediapipe::tasks::c::core

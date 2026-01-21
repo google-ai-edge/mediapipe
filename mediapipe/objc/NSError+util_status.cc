@@ -16,11 +16,11 @@
 
 @implementation GUSUtilStatusWrapper
 
-+ (instancetype)wrapStatus:(const absl::Status &)status {
++ (instancetype)wrapStatus:(const absl::Status&)status {
   return [[self alloc] initWithStatus:status];
 }
 
-- (instancetype)initWithStatus:(const absl::Status &)status {
+- (instancetype)initWithStatus:(const absl::Status&)status {
   self = [super init];
   if (self) {
     _status = status;
@@ -28,7 +28,7 @@
   return self;
 }
 
-- (NSString *)description {
+- (NSString*)description {
   return [NSString stringWithFormat:@"<%@: %p; status = %s>", [self class],
                                     self, _status.message().data()];
 }
@@ -37,16 +37,16 @@
 
 @implementation NSError (GUSGoogleUtilStatus)
 
-NSString *const kGUSGoogleUtilStatusErrorDomain =
+NSString* const kGUSGoogleUtilStatusErrorDomain =
     @"GoogleUtilStatusErrorDomain";
-NSString *const kGUSGoogleUtilStatusErrorKey = @"GUSGoogleUtilStatusErrorKey";
+NSString* const kGUSGoogleUtilStatusErrorKey = @"GUSGoogleUtilStatusErrorKey";
 
-+ (NSError *)gus_errorWithStatus:(const absl::Status &)status {
-  NSDictionary *userInfo = @{
++ (NSError*)gus_errorWithStatus:(const absl::Status&)status {
+  NSDictionary* userInfo = @{
     NSLocalizedDescriptionKey : @(status.message().data()),
     kGUSGoogleUtilStatusErrorKey : [GUSUtilStatusWrapper wrapStatus:status],
   };
-  NSError *error =
+  NSError* error =
       [NSError errorWithDomain:kGUSGoogleUtilStatusErrorDomain
                           code:static_cast<NSInteger>(status.code())
                       userInfo:userInfo];
@@ -54,9 +54,9 @@ NSString *const kGUSGoogleUtilStatusErrorKey = @"GUSGoogleUtilStatusErrorKey";
 }
 
 - (absl::Status)gus_status {
-  NSString *domain = self.domain;
+  NSString* domain = self.domain;
   if ([domain isEqual:kGUSGoogleUtilStatusErrorDomain]) {
-    GUSUtilStatusWrapper *wrapper = self.userInfo[kGUSGoogleUtilStatusErrorKey];
+    GUSUtilStatusWrapper* wrapper = self.userInfo[kGUSGoogleUtilStatusErrorKey];
     if (wrapper) return wrapper.status;
 #if 0
   // Unfortunately, util/task/posixerrorspace.h is not in portable status yet.

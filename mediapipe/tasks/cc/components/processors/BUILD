@@ -13,8 +13,10 @@
 # limitations under the License.
 
 load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -22,7 +24,6 @@ cc_library(
     name = "classifier_options",
     srcs = ["classifier_options.cc"],
     hdrs = ["classifier_options.h"],
-    visibility = ["//visibility:public"],
     deps = ["//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto"],
 )
 
@@ -69,7 +70,6 @@ cc_library(
     name = "embedder_options",
     srcs = ["embedder_options.cc"],
     hdrs = ["embedder_options.h"],
-    visibility = ["//visibility:public"],
     deps = ["//mediapipe/tasks/cc/components/processors/proto:embedder_options_cc_proto"],
 )
 

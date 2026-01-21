@@ -16,22 +16,33 @@ limitations under the License.
 #include "mediapipe/tasks/c/vision/interactive_segmenter/interactive_segmenter.h"
 
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
-#include "absl/log/absl_log.h"
-#include "absl/log/log.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
-#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/core/common.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/core/mp_status_converter.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_frame_util.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options_converter.h"
 #include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result.h"
 #include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result_converter.h"
 #include "mediapipe/tasks/cc/components/containers/keypoint.h"
+#include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/interactive_segmenter/interactive_segmenter.h"
-#include "mediapipe/tasks/cc/vision/utils/image_utils.h"
+
+struct MpInteractiveSegmenterInternal {
+  std::unique_ptr<
+      ::mediapipe::tasks::vision::interactive_segmenter::InteractiveSegmenter>
+      instance;
+};
 
 namespace mediapipe::tasks::c::vision::interactive_segmenter {
 
@@ -42,18 +53,21 @@ using ::mediapipe::tasks::c::components::containers::
 using ::mediapipe::tasks::c::components::containers::
     CppConvertToImageSegmenterResult;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
-using ::mediapipe::tasks::vision::CreateImageFromBuffer;
+using ::mediapipe::tasks::c::vision::core::CppConvertToImageProcessingOptions;
 using ::mediapipe::tasks::vision::interactive_segmenter::InteractiveSegmenter;
 typedef ::mediapipe::tasks::vision::interactive_segmenter::RegionOfInterest::
     Format CppRegionOfInterestFormat;
 typedef ::mediapipe::tasks::components::containers::NormalizedKeypoint
     CppNormalizedKeypoint;
+using CppImageProcessingOptions =
+    ::mediapipe::tasks::vision::core::ImageProcessingOptions;
+using ::mediapipe::tasks::c::core::ToMpStatus;
 
-int CppProcessError(absl::Status status, char** error_msg) {
-  if (error_msg) {
-    *error_msg = strdup(status.ToString().c_str());
-  }
-  return status.raw_code();
+const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
+
+InteractiveSegmenter* GetCppSegmenter(MpInteractiveSegmenterPtr wrapper) {
+  ABSL_CHECK(wrapper != nullptr) << "InteractiveSegmenter is null.";
+  return wrapper->instance.get();
 }
 
 }  // namespace
@@ -96,8 +110,9 @@ void CppConvertToInteractiveSegmenterOptions(
   out->output_category_mask = in.output_category_mask;
 }
 
-InteractiveSegmenter* CppInteractiveSegmenterCreate(
-    const InteractiveSegmenterOptions& options, char** error_msg) {
+absl::Status CppInteractiveSegmenterCreate(
+    const InteractiveSegmenterOptions& options,
+    MpInteractiveSegmenterPtr* segmenter) {
   auto cpp_options =
       std::make_unique<::mediapipe::tasks::vision::interactive_segmenter::
                            InteractiveSegmenterOptions>();
@@ -105,92 +120,85 @@ InteractiveSegmenter* CppInteractiveSegmenterCreate(
   CppConvertToBaseOptions(options.base_options, &cpp_options->base_options);
   CppConvertToInteractiveSegmenterOptions(options, cpp_options.get());
 
-  auto segmenter = InteractiveSegmenter::Create(std::move(cpp_options));
-  if (!segmenter.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create InteractiveSegmenter: "
-                    << segmenter.status();
-    CppProcessError(segmenter.status(), error_msg);
-    return nullptr;
+  auto cpp_segmenter = InteractiveSegmenter::Create(std::move(cpp_options));
+  if (!cpp_segmenter.ok()) {
+    return cpp_segmenter.status();
   }
-  return segmenter->release();
+  *segmenter =
+      new MpInteractiveSegmenterInternal{.instance = std::move(*cpp_segmenter)};
+  return absl::OkStatus();
 }
 
-int CppInteractiveSegmenterSegment(void* segmenter, const MpImage* image,
-                                   const RegionOfInterest* region_of_interest,
-                                   ImageSegmenterResult* result,
-                                   char** error_msg) {
-  if (image->type == MpImage::GPU_BUFFER) {
-    const absl::Status status =
-        absl::InvalidArgumentError("GPU Buffer not supported yet.");
-
-    ABSL_LOG(ERROR) << "Segmentation failed: " << status.message();
-    return CppProcessError(status, error_msg);
+absl::Status CppInteractiveSegmenterSegment(
+    MpInteractiveSegmenterPtr segmenter, MpImagePtr image,
+    const RegionOfInterest* region_of_interest,
+    const ImageProcessingOptions* image_processing_options,
+    ImageSegmenterResult* result) {
+  auto cpp_segmenter = GetCppSegmenter(segmenter);
+  std::optional<CppImageProcessingOptions> cpp_image_processing_options;
+  if (image_processing_options) {
+    CppImageProcessingOptions options;
+    CppConvertToImageProcessingOptions(*image_processing_options, &options);
+    cpp_image_processing_options = options;
   }
-
-  const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image->image_frame.format),
-      image->image_frame.image_buffer, image->image_frame.width,
-      image->image_frame.height);
-
-  mediapipe::tasks::vision::interactive_segmenter::RegionOfInterest roi;
-  CppConvertToRegionOfInterest(region_of_interest, &roi);
-
-  if (!img.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
-    return CppProcessError(img.status(), error_msg);
-  }
-
-  auto cpp_segmenter = static_cast<InteractiveSegmenter*>(segmenter);
-  auto cpp_result = cpp_segmenter->Segment(*img, roi);
+  mediapipe::tasks::vision::interactive_segmenter::RegionOfInterest cpp_roi;
+  CppConvertToRegionOfInterest(region_of_interest, &cpp_roi);
+  auto cpp_result = cpp_segmenter->Segment(ToImage(image), cpp_roi,
+                                           cpp_image_processing_options);
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Segmentation failed: " << cpp_result.status();
-    return CppProcessError(cpp_result.status(), error_msg);
+    return cpp_result.status();
   }
   CppConvertToImageSegmenterResult(*cpp_result, result);
-  return 0;
+  return absl::OkStatus();
 }
 
 void CppImageSegmenterCloseResult(ImageSegmenterResult* result) {
   CppCloseImageSegmenterResult(result);
 }
 
-int CppInteractiveSegmenterClose(void* segmenter, char** error_msg) {
-  auto cpp_segmenter = static_cast<InteractiveSegmenter*>(segmenter);
+absl::Status CppInteractiveSegmenterClose(MpInteractiveSegmenterPtr segmenter) {
+  auto cpp_segmenter = GetCppSegmenter(segmenter);
   auto result = cpp_segmenter->Close();
   if (!result.ok()) {
-    ABSL_LOG(ERROR) << "Failed to close InteractiveSegmenter: " << result;
-    return CppProcessError(result, error_msg);
+    return result;
   }
-  delete cpp_segmenter;
-  return 0;
+  delete segmenter;
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe::tasks::c::vision::interactive_segmenter
 
 extern "C" {
 
-void* interactive_segmenter_create(struct InteractiveSegmenterOptions* options,
-                                   char** error_msg) {
-  return mediapipe::tasks::c::vision::interactive_segmenter::
-      CppInteractiveSegmenterCreate(*options, error_msg);
+MP_EXPORT MpStatus MpInteractiveSegmenterCreate(
+    struct InteractiveSegmenterOptions* options,
+    MpInteractiveSegmenterPtr* segmenter, char** error_msg) {
+  absl::Status status = mediapipe::tasks::c::vision::interactive_segmenter::
+      CppInteractiveSegmenterCreate(*options, segmenter);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
-int interactive_segmenter_segment_image(void* segmenter, const MpImage* image,
-                                        const RegionOfInterest* roi,
-                                        ImageSegmenterResult* result,
-                                        char** error_msg) {
-  return mediapipe::tasks::c::vision::interactive_segmenter::
-      CppInteractiveSegmenterSegment(segmenter, image, roi, result, error_msg);
+MP_EXPORT MpStatus MpInteractiveSegmenterSegmentImage(
+    MpInteractiveSegmenterPtr segmenter, MpImagePtr image,
+    const RegionOfInterest* roi,
+    const ImageProcessingOptions* image_processing_options,
+    ImageSegmenterResult* result, char** error_msg) {
+  absl::Status status = mediapipe::tasks::c::vision::interactive_segmenter::
+      CppInteractiveSegmenterSegment(segmenter, image, roi,
+                                     image_processing_options, result);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
-void interactive_segmenter_close_result(ImageSegmenterResult* result) {
+MP_EXPORT void MpInteractiveSegmenterCloseResult(ImageSegmenterResult* result) {
   mediapipe::tasks::c::vision::interactive_segmenter::
       CppImageSegmenterCloseResult(result);
 }
 
-int interactive_segmenter_close(void* segmenter, char** error_ms) {
-  return mediapipe::tasks::c::vision::interactive_segmenter::
-      CppInteractiveSegmenterClose(segmenter, error_ms);
+MP_EXPORT MpStatus MpInteractiveSegmenterClose(
+    MpInteractiveSegmenterPtr segmenter, char** error_msg) {
+  absl::Status status = mediapipe::tasks::c::vision::interactive_segmenter::
+      CppInteractiveSegmenterClose(segmenter);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 }  // extern "C"

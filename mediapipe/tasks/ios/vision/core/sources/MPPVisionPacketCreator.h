@@ -75,17 +75,18 @@
                             timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 
 /**
- * Creates a MediapPipe Packet wrapping a `RenderData` constructed from an `MPPRegionOfInterest`.
+ * Creates a MediapPipe Packet wrapping a `RegionOfInterest` constructed from an
+ * `MPPRegionOfInterest`.
  *
  * @param regionOfInterest The `MPPRegionOfInterest` to send to the MediaPipe graph.
  * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
  * error will be saved.
  *
- * @return The MediaPipe packet containing the `RenderData` constructed from the given
+ * @return The MediaPipe packet containing the `RegionOfInterest` constructed from the given
  * `MPPRegionOfInterest`.
  */
-+ (std::optional<mediapipe::Packet>)createRenderDataPacketWithRegionOfInterest:
-                                        (MPPRegionOfInterest *)regionOfInterest
-                                                                         error:(NSError **)error;
++ (std::optional<mediapipe::Packet>)
+    createRegionOfInterestProtoPacketWithRegionOfInterest:(MPPRegionOfInterest *)regionOfInterest
+                                                    error:(NSError **)error;
 
 @end

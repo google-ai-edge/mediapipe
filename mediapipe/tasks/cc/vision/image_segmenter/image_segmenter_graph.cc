@@ -154,12 +154,16 @@ absl::StatusOr<LabelItems> GetLabelItemsIfAny(
   const std::string labels_filename =
       ModelMetadataExtractor::FindFirstAssociatedFileName(
           tensor_metadata, tflite::AssociatedFileType_TENSOR_AXIS_LABELS);
-  if (labels_filename.empty()) {
+
+  absl::StatusOr<absl::string_view> labels_file;
+  if (!labels_filename.empty()) {
+    labels_file = metadata_extractor.GetAssociatedFile(labels_filename);
+  }
+  if (labels_filename.empty() || !labels_file.ok()) {
     LabelItems empty_label_items;
     return empty_label_items;
   }
-  MP_ASSIGN_OR_RETURN(absl::string_view labels_file,
-                      metadata_extractor.GetAssociatedFile(labels_filename));
+
   const std::string display_names_filename =
       ModelMetadataExtractor::FindFirstAssociatedFileName(
           tensor_metadata, tflite::AssociatedFileType_TENSOR_AXIS_LABELS,
@@ -170,7 +174,7 @@ absl::StatusOr<LabelItems> GetLabelItemsIfAny(
         display_names_file,
         metadata_extractor.GetAssociatedFile(display_names_filename));
   }
-  return mediapipe::BuildLabelMapFromFiles(labels_file, display_names_file);
+  return mediapipe::BuildLabelMapFromFiles(*labels_file, display_names_file);
 }
 
 absl::Status ConfigureTensorsToSegmentationCalculator(
@@ -226,12 +230,14 @@ absl::Status ConfigureTensorsToSegmentationCalculator(
         "Segmentation tflite models are assumed to have a single subgraph.",
         MediaPipeTasksStatus::kInvalidArgumentError);
   }
-  MP_ASSIGN_OR_RETURN(
-      *options->mutable_label_items(),
-      GetLabelItemsIfAny(
-          *metadata_extractor,
-          **metadata_extractor->GetOutputTensorMetadata()->crbegin(),
-          segmenter_option.display_names_locale()));
+  if (metadata_extractor->GetOutputTensorMetadata()) {
+    MP_ASSIGN_OR_RETURN(
+        *options->mutable_label_items(),
+        GetLabelItemsIfAny(
+            *metadata_extractor,
+            **metadata_extractor->GetOutputTensorMetadata()->crbegin(),
+            segmenter_option.display_names_locale()));
+  }
   return absl::OkStatus();
 }
 
@@ -401,8 +407,9 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
-    MP_ASSIGN_OR_RETURN(const auto* model_resources,
-                        CreateModelResources<ImageSegmenterGraphOptions>(sc));
+    MP_ASSIGN_OR_RETURN(
+        const auto* model_resources,
+        GetOrCreateModelResources<ImageSegmenterGraphOptions>(sc));
     Graph graph;
     const auto& options = sc->Options<ImageSegmenterGraphOptions>();
     // TODO: remove deprecated output type support.

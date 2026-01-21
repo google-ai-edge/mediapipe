@@ -1,14 +1,14 @@
 #ifndef MEDIAPIPE_GPU_WEBGPU_WEBGPU_UTILS_H_
 #define MEDIAPIPE_GPU_WEBGPU_WEBGPU_UTILS_H_
 
-#include <webgpu/webgpu_cpp.h>
-
 #include <cstdint>
 #include <memory>
 #include <optional>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/time/time.h"
+#include "mediapipe/gpu/webgpu/webgpu_headers.h"
 
 namespace mediapipe {
 
@@ -63,13 +63,11 @@ absl::StatusOr<wgpu::Texture> CreateWebGpuTexture2dAndUploadData(
     wgpu::TextureFormat format, wgpu::TextureUsage usage,
     const wgpu::Queue& queue, uint32_t bytes_per_pixel, void* data);
 
-#ifdef __EMSCRIPTEN__
 absl::Status GetTexture2dData(const wgpu::Device& device,
                               const wgpu::Queue& queue,
                               const wgpu::Texture& texture, uint32_t width,
                               uint32_t height, uint32_t bytes_per_row,
                               uint8_t* dst);
-#endif  // __EMSCRIPTEN__
 
 }  // namespace mediapipe
 

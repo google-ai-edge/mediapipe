@@ -12,10 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 package(default_visibility = [
+    "//mediapipe/app/aimatter:__subpackages__",
     "//mediapipe/tasks:__subpackages__",
+    "//research/xeno/nnets/matting/inference:__subpackages__",
+    "//third_party/odml/audio/transcription:__subpackages__",
     "//third_party/odml/litert_lm/runtime:__subpackages__",
     "//third_party/odml/vogo:__subpackages__",
 ])

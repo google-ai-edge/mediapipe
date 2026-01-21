@@ -15,31 +15,30 @@
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPRegionOfInterest+Helpers.h"
+
+#include "mediapipe/tasks/cc/vision/interactive_segmenter/proto/region_of_interest.pb.h"
 #include "mediapipe/util/color.pb.h"
 
 namespace {
 using RenderData = ::mediapipe::RenderData;
 using RenderAnnotation = ::mediapipe::RenderAnnotation;
-
+using RegionOfInterest = ::mediapipe::tasks::vision::interactive_segmenter::proto::RegionOfInterest;
 }  // namespace
 
 @implementation MPPRegionOfInterest (Helpers)
 
-- (std::optional<RenderData>)getRenderDataWithError:(NSError**)error {
-  RenderData result;
+- (std::optional<RegionOfInterest>)getRegionOfInteresProtoWithError:(NSError**)error {
+  RegionOfInterest result;
   if (self.keypoint) {
-    auto* annotation = result.add_render_annotations();
-    annotation->mutable_color()->set_r(255);
-    auto* point = annotation->mutable_point();
+    auto* point = result.mutable_keypoint();
     point->set_normalized(true);
     point->set_x(self.keypoint.location.x);
     point->set_y(self.keypoint.location.y);
     return result;
   } else if (self.scribbles) {
-    auto* annotation = result.add_render_annotations();
-    annotation->mutable_color()->set_r(255);
+    auto* scribble = result.mutable_scribble();
     for (MPPNormalizedKeypoint* keypoint in self.scribbles) {
-      auto* point = annotation->mutable_scribble()->add_point();
+      auto* point = scribble->add_point();
       point->set_normalized(true);
       point->set_x(keypoint.location.x);
       point->set_y(keypoint.location.y);

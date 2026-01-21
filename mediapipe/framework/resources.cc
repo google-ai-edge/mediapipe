@@ -48,6 +48,10 @@ class MMapResource : public Resource {
         mmapped_file_(std::move(mmapped_file)),
         mlocked_(mlocked) {}
 
+  absl::StatusOr<int> TryGetFd() const override {
+    return mmapped_file_->TryGetFd();
+  }
+
   ~MMapResource() override {
     if (mlocked_) {
       auto status =
@@ -127,6 +131,16 @@ class ResourcesWithMapping : public Resources {
 
   absl::StatusOr<std::unique_ptr<Resource>> Get(
       absl::string_view resource_id, const Options& options) const final {
+    return resources_->Get(MaybeIdFromMapping(resource_id), options);
+  }
+
+  absl::StatusOr<std::string> ResolveId(absl::string_view resource_id,
+                                        const Options& options) const final {
+    return resources_->ResolveId(MaybeIdFromMapping(resource_id), options);
+  }
+
+ private:
+  absl::string_view MaybeIdFromMapping(absl::string_view resource_id) const {
     auto iter = mapping_.find(resource_id);
     absl::string_view resolved_res_id;
     if (iter != mapping_.end()) {
@@ -134,10 +148,9 @@ class ResourcesWithMapping : public Resources {
     } else {
       resolved_res_id = resource_id;
     }
-    return resources_->Get(resolved_res_id, options);
+    return resolved_res_id;
   }
 
- private:
   std::unique_ptr<Resources> resources_;
   absl::flat_hash_map<std::string, std::string> mapping_;
 };

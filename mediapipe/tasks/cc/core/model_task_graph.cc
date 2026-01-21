@@ -25,6 +25,7 @@ limitations under the License.
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/ascii.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
@@ -32,6 +33,7 @@ limitations under the License.
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/model_asset_bundle_resources.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
@@ -130,16 +132,16 @@ class InferenceSubgraph : public Subgraph {
     const Acceleration& acceleration = options.base_options().acceleration();
     switch (acceleration.delegate_case()) {
       case Acceleration::kXnnpack:
-        delegate.mutable_xnnpack()->CopyFrom(acceleration.xnnpack());
+        *delegate.mutable_xnnpack() = acceleration.xnnpack();
         break;
       case Acceleration::kGpu:
-        delegate.mutable_gpu()->CopyFrom(acceleration.gpu());
+        *delegate.mutable_gpu() = acceleration.gpu();
         break;
       case Acceleration::kNnapi:
-        delegate.mutable_nnapi()->CopyFrom(acceleration.nnapi());
+        *delegate.mutable_nnapi() = acceleration.nnapi();
         break;
       case Acceleration::kTflite:
-        delegate.mutable_tflite()->CopyFrom(acceleration.tflite());
+        *delegate.mutable_tflite() = acceleration.tflite();
         break;
       case Acceleration::DELEGATE_NOT_SET:
         // Default inference calculator setting.

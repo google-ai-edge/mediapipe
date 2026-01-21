@@ -30,7 +30,7 @@ namespace mediapipe {
 
 namespace {
 
-void ScaleBox(float scale_x, float scale_y, TimedBoxProto *box) {
+void ScaleBox(float scale_x, float scale_y, TimedBoxProto* box) {
   box->set_left(box->left() * scale_x);
   box->set_right(box->right() * scale_x);
   box->set_top(box->top() * scale_y);
@@ -44,7 +44,7 @@ void ScaleBox(float scale_x, float scale_y, TimedBoxProto *box) {
   }
 }
 
-cv::Mat ConvertDescriptorsToMat(const std::vector<std::string> &descriptors) {
+cv::Mat ConvertDescriptorsToMat(const std::vector<std::string>& descriptors) {
   ABSL_CHECK(!descriptors.empty()) << "empty descriptors.";
 
   const int descriptors_dims = descriptors[0].size();
@@ -59,8 +59,8 @@ cv::Mat ConvertDescriptorsToMat(const std::vector<std::string> &descriptors) {
   return mat;
 }
 
-cv::Mat GetDescriptorsWithIndices(const cv::Mat &frame_descriptors,
-                                  const std::vector<int> &indices) {
+cv::Mat GetDescriptorsWithIndices(const cv::Mat& frame_descriptors,
+                                  const std::vector<int>& indices) {
   ABSL_CHECK_GT(frame_descriptors.rows, 0);
 
   const int num_inlier_descriptors = indices.size();
@@ -84,18 +84,18 @@ cv::Mat GetDescriptorsWithIndices(const cv::Mat &frame_descriptors,
 // the query.
 class BoxDetectorOpencvBfImpl : public BoxDetectorInterface {
  public:
-  explicit BoxDetectorOpencvBfImpl(const BoxDetectorOptions &options);
+  explicit BoxDetectorOpencvBfImpl(const BoxDetectorOptions& options);
 
  private:
   std::vector<FeatureCorrespondence> MatchFeatureDescriptors(
-      const std::vector<Vector2_f> &features, const cv::Mat &descriptors,
+      const std::vector<Vector2_f>& features, const cv::Mat& descriptors,
       int box_idx) override;
 
   cv::BFMatcher bf_matcher_;
 };
 
 std::unique_ptr<BoxDetectorInterface> BoxDetectorInterface::Create(
-    const BoxDetectorOptions &options) {
+    const BoxDetectorOptions& options) {
   if (options.index_type() == BoxDetectorOptions::OPENCV_BF) {
     return absl::make_unique<BoxDetectorOpencvBfImpl>(options);
   } else {
@@ -103,20 +103,20 @@ std::unique_ptr<BoxDetectorInterface> BoxDetectorInterface::Create(
   }
 }
 
-BoxDetectorInterface::BoxDetectorInterface(const BoxDetectorOptions &options)
+BoxDetectorInterface::BoxDetectorInterface(const BoxDetectorOptions& options)
     : options_(options) {}
 
 void BoxDetectorInterface::DetectAndAddBoxFromFeatures(
-    const std::vector<Vector2_f> &features, const cv::Mat &descriptors,
-    const TimedBoxProtoList &tracked_boxes, int64_t timestamp_msec,
-    float scale_x, float scale_y, TimedBoxProtoList *detected_boxes) {
+    const std::vector<Vector2_f>& features, const cv::Mat& descriptors,
+    const TimedBoxProtoList& tracked_boxes, int64_t timestamp_msec,
+    float scale_x, float scale_y, TimedBoxProtoList* detected_boxes) {
   absl::MutexLock lock_access(&access_to_index_);
   image_scale_ = std::min(scale_x, scale_y);
   image_aspect_ = scale_x / scale_y;
 
   int size_before_add = box_id_to_idx_.size();
   std::vector<bool> tracked(size_before_add, false);
-  for (const auto &box : tracked_boxes.box()) {
+  for (const auto& box : tracked_boxes.box()) {
     if (!box.reacquisition()) {
       continue;
     }
@@ -178,8 +178,8 @@ void BoxDetectorInterface::DetectAndAddBoxFromFeatures(
 }
 
 void BoxDetectorInterface::DetectAndAddBox(
-    const TrackingData &tracking_data, const TimedBoxProtoList &tracked_boxes,
-    int64_t timestamp_msec, TimedBoxProtoList *detected_boxes) {
+    const TrackingData& tracking_data, const TimedBoxProtoList& tracked_boxes,
+    int64_t timestamp_msec, TimedBoxProtoList* detected_boxes) {
   std::vector<Vector2_f> features_from_tracking_data;
   std::vector<std::string> descriptors_from_tracking_data;
   FeatureAndDescriptorFromTrackingData(tracking_data,
@@ -206,10 +206,10 @@ void BoxDetectorInterface::DetectAndAddBox(
 }
 
 bool BoxDetectorInterface::CheckDetectAndAddBox(
-    const TimedBoxProtoList &tracked_boxes) {
+    const TimedBoxProtoList& tracked_boxes) {
   bool need_add = false;
   int cnt_tracked = 0;
-  for (const auto &box : tracked_boxes.box()) {
+  for (const auto& box : tracked_boxes.box()) {
     if (!box.reacquisition()) {
       continue;
     }
@@ -257,14 +257,14 @@ bool BoxDetectorInterface::CheckDetectAndAddBox(
 }
 
 void BoxDetectorInterface::DetectAndAddBox(
-    const cv::Mat &image, const TimedBoxProtoList &tracked_boxes,
-    int64_t timestamp_msec, TimedBoxProtoList *detected_boxes) {
+    const cv::Mat& image, const TimedBoxProtoList& tracked_boxes,
+    int64_t timestamp_msec, TimedBoxProtoList* detected_boxes) {
   // Determine if we need execute feature extraction.
   if (!CheckDetectAndAddBox(tracked_boxes)) {
     return;
   }
 
-  const auto &image_query_settings = options_.image_query_settings();
+  const auto& image_query_settings = options_.image_query_settings();
 
   cv::Mat grayscale;
   if (image.channels() == 3) {
@@ -321,14 +321,14 @@ void BoxDetectorInterface::DetectAndAddBox(
 }
 
 TimedBoxProtoList BoxDetectorInterface::DetectBox(
-    const std::vector<Vector2_f> &features, const cv::Mat &descriptors,
+    const std::vector<Vector2_f>& features, const cv::Mat& descriptors,
     int box_idx) {
   return FindBoxesFromFeatureCorrespondence(
       MatchFeatureDescriptors(features, descriptors, box_idx), box_idx);
 }
 
 TimedBoxProtoList BoxDetectorInterface::FindBoxesFromFeatureCorrespondence(
-    const std::vector<FeatureCorrespondence> &matches, int box_idx) {
+    const std::vector<FeatureCorrespondence>& matches, int box_idx) {
   int max_corr = -1;
   int max_corr_frame = 0;
   for (int j = 0; j < matches.size(); ++j) {
@@ -346,7 +346,7 @@ TimedBoxProtoList BoxDetectorInterface::FindBoxesFromFeatureCorrespondence(
     return result_list;
   }
 
-  const TimedBoxProto &ori_box = frame_box_[box_idx][max_corr_frame];
+  const TimedBoxProto& ori_box = frame_box_[box_idx][max_corr_frame];
   if (!ori_box.has_quad()) {
     cv::Mat similarity =
         cv::estimateRigidTransform(matches[max_corr_frame].points_index,
@@ -359,7 +359,7 @@ TimedBoxProtoList BoxDetectorInterface::FindBoxesFromFeatureCorrespondence(
     float similarity_theta =
         std::atan2(similarity.at<double>(1, 0), similarity.at<double>(0, 0));
 
-    auto *new_box_ptr = result_list.add_box();
+    auto* new_box_ptr = result_list.add_box();
 
     float box_center_x = 0.5f * (ori_box.left() + ori_box.right());
     float box_center_y = 0.5f * (ori_box.top() + ori_box.bottom());
@@ -393,7 +393,7 @@ TimedBoxProtoList BoxDetectorInterface::FindBoxesFromFeatureCorrespondence(
 }
 
 TimedBoxProtoList BoxDetectorInterface::FindQuadFromFeatureCorrespondence(
-    const FeatureCorrespondence &matches, const TimedBoxProto &box_proto,
+    const FeatureCorrespondence& matches, const TimedBoxProto& box_proto,
     float frame_aspect) {
   TimedBoxProtoList result_list;
 
@@ -493,7 +493,7 @@ TimedBoxProtoList BoxDetectorInterface::FindQuadFromFeatureCorrespondence(
     cv::perspectiveTransform(template_corners, frame_corners, homography);
   }
 
-  auto *new_box_ptr = result_list.add_box();
+  auto* new_box_ptr = result_list.add_box();
 
   float min_x = std::numeric_limits<float>::max();
   float max_x = std::numeric_limits<float>::lowest();
@@ -524,7 +524,7 @@ TimedBoxProtoList BoxDetectorInterface::FindQuadFromFeatureCorrespondence(
 }
 
 std::vector<int> BoxDetectorInterface::GetFeatureIndexWithinBox(
-    const std::vector<Vector2_f> &features, const TimedBoxProto &box) {
+    const std::vector<Vector2_f>& features, const TimedBoxProto& box) {
   std::vector<int> insider_idx;
   if (features.empty()) return insider_idx;
 
@@ -536,7 +536,7 @@ std::vector<int> BoxDetectorInterface::GetFeatureIndexWithinBox(
     box_state.set_height(box.bottom() - box.top());
     box_state.set_rotation(box.rotation());
   } else {
-    auto *state_quad_ptr = box_state.mutable_quad();
+    auto* state_quad_ptr = box_state.mutable_quad();
     for (int c = 0; c < 8; ++c) {
       state_quad_ptr->add_vertices(box.quad().vertices(c));
     }
@@ -553,8 +553,8 @@ std::vector<int> BoxDetectorInterface::GetFeatureIndexWithinBox(
 }
 
 void BoxDetectorInterface::AddBoxFeaturesToIndex(
-    const std::vector<Vector2_f> &features, const cv::Mat &descriptors,
-    const TimedBoxProto &box, bool transform_features_for_pnp) {
+    const std::vector<Vector2_f>& features, const cv::Mat& descriptors,
+    const TimedBoxProto& box, bool transform_features_for_pnp) {
   std::vector<int> insider_idx = GetFeatureIndexWithinBox(features, box);
 
   if (!insider_idx.empty()) {
@@ -650,21 +650,21 @@ BoxDetectorIndex BoxDetectorInterface::ObtainBoxDetectorIndex() const {
   absl::MutexLock lock_access(&access_to_index_);
   BoxDetectorIndex index;
   for (int j = 0; j < frame_box_.size(); ++j) {
-    BoxDetectorIndex::BoxEntry *box_ptr = index.add_box_entry();
+    BoxDetectorIndex::BoxEntry* box_ptr = index.add_box_entry();
     for (int i = 0; i < frame_box_[j].size(); ++i) {
-      BoxDetectorIndex::BoxEntry::FrameEntry *frame_ptr =
+      BoxDetectorIndex::BoxEntry::FrameEntry* frame_ptr =
           box_ptr->add_frame_entry();
       *(frame_ptr->mutable_box()) = frame_box_[j][i];
     }
 
     for (int k = 0; k < feature_to_frame_[j].size(); ++k) {
-      BoxDetectorIndex::BoxEntry::FrameEntry *frame_ptr =
+      BoxDetectorIndex::BoxEntry::FrameEntry* frame_ptr =
           box_ptr->mutable_frame_entry(feature_to_frame_[j][k]);
 
       frame_ptr->add_keypoints(feature_keypoints_[j][k].x());
       frame_ptr->add_keypoints(feature_keypoints_[j][k].y());
       frame_ptr->add_descriptors()->set_data(
-          static_cast<void *>(feature_descriptors_[j].row(k).data),
+          static_cast<void*>(feature_descriptors_[j].row(k).data),
           feature_descriptors_[j].cols * sizeof(float));
     }
   }
@@ -672,12 +672,12 @@ BoxDetectorIndex BoxDetectorInterface::ObtainBoxDetectorIndex() const {
   return index;
 }
 
-void BoxDetectorInterface::AddBoxDetectorIndex(const BoxDetectorIndex &index) {
+void BoxDetectorInterface::AddBoxDetectorIndex(const BoxDetectorIndex& index) {
   absl::MutexLock lock_access(&access_to_index_);
   for (int j = 0; j < index.box_entry_size(); ++j) {
-    const auto &box_entry = index.box_entry(j);
+    const auto& box_entry = index.box_entry(j);
     for (int i = 0; i < box_entry.frame_entry_size(); ++i) {
-      const auto &frame_entry = box_entry.frame_entry(i);
+      const auto& frame_entry = box_entry.frame_entry(i);
 
       // If the box to be added already exists in the index, skip.
       if (box_id_to_idx_.find(frame_entry.box().id()) != box_id_to_idx_.end()) {
@@ -709,12 +709,12 @@ void BoxDetectorInterface::AddBoxDetectorIndex(const BoxDetectorIndex &index) {
 }
 
 BoxDetectorOpencvBfImpl::BoxDetectorOpencvBfImpl(
-    const BoxDetectorOptions &options)
+    const BoxDetectorOptions& options)
     : BoxDetectorInterface(options), bf_matcher_(cv::NORM_L2, true) {}
 
 std::vector<FeatureCorrespondence>
 BoxDetectorOpencvBfImpl::MatchFeatureDescriptors(
-    const std::vector<Vector2_f> &features, const cv::Mat &descriptors,
+    const std::vector<Vector2_f>& features, const cv::Mat& descriptors,
     int box_idx) {
   ABSL_CHECK_EQ(features.size(), descriptors.rows);
 
@@ -732,9 +732,9 @@ BoxDetectorOpencvBfImpl::MatchFeatureDescriptors(
   // Hamming distance threshold for best match distance. This max distance
   // filtering rejects some of false matches which has not been rejected by
   // cross match validation. And the value is determined emprically.
-  for (const auto &match_pair : matches) {
+  for (const auto& match_pair : matches) {
     if (match_pair.size() < knn) continue;
-    const cv::DMatch &best_match = match_pair[0];
+    const cv::DMatch& best_match = match_pair[0];
     if (best_match.distance > options_.max_match_distance()) continue;
 
     int match_idx = feature_to_frame_[box_idx][best_match.trainIdx];

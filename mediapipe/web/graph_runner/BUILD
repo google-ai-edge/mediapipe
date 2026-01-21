@@ -158,6 +158,7 @@ mediapipe_ts_library(
     ],
     allow_unoptimized_namespaces = True,
     deps = [
+        ":graph_runner_streaming_reader_ts",
         ":graph_runner_ts",
         "//mediapipe/tasks/cc/genai/inference/proto:sampler_params_jspb_proto",
         "//mediapipe/tasks/web/genai/llm_inference:llm_inference_types",

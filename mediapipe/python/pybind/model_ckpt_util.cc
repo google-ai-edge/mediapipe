@@ -36,10 +36,11 @@ void ModelCkptUtilModule(pybind11::module* module) {
   m.doc() = "Pybind model checkpoint utility functions.";
 
 #ifdef ENABLE_ODML_CONVERTER
-  m.def("GenerateCpuTfLite", &odml::infra::xnn_utils::GenerateTfLite,
+  m.def("GenerateCpuTfLite",
+        &mediapipe::tasks::genai::xnn_utils::GenerateTfLite,
         "Generates the TfLite flatbuffer file from the serialized weight files "
         "for the CPU backend.");
-  m.def("GenerateGpuTfLite", &odml::infra::gpu::GenerateTfLite,
+  m.def("GenerateGpuTfLite", &mediapipe::tasks::genai::gpu::GenerateTfLite,
         "Generates the TfLite flatbuffer file from the serialized weight files "
         "for the GPU backend.");
   m.def("ConvertHfTokenizer", &mediapipe::tasks::text::ConvertHfTokenizer,

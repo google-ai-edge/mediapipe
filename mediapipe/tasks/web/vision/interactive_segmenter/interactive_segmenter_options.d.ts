@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-
-import {TaskRunnerOptions} from '../../../../tasks/web/core/task_runner_options';
+import {VisionTaskOptions} from '../../../../tasks/web/vision/core/vision_task_options';
 
 /** Options to configure the MediaPipe Interactive Segmenter Task */
-export declare interface InteractiveSegmenterOptions extends TaskRunnerOptions {
+export declare interface InteractiveSegmenterOptions extends VisionTaskOptions {
   /** Whether to output confidence masks. Defaults to true. */
-  outputConfidenceMasks?: boolean|undefined;
+  outputConfidenceMasks?: boolean | undefined;
 
   /** Whether to output the category masks. Defaults to false. */
-  outputCategoryMask?: boolean|undefined;
+  outputCategoryMask?: boolean | undefined;
 }

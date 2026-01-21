@@ -20,6 +20,7 @@
 
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/timestamp.h"
+#include "mediapipe/tasks/cc/vision/interactive_segmenter/proto/region_of_interest.pb.h"
 
 static const NSUInteger kMicrosecondsPerMillisecond = 1000;
 
@@ -31,6 +32,7 @@ using ::mediapipe::MakePacket;
 using ::mediapipe::NormalizedRect;
 using ::mediapipe::Packet;
 using ::mediapipe::Timestamp;
+using ::mediapipe::tasks::vision::interactive_segmenter::proto::RegionOfInterest;
 }  // namespace
 
 @implementation MPPVisionPacketCreator
@@ -68,16 +70,17 @@ using ::mediapipe::Timestamp;
       .At(Timestamp(int64_t(timestampInMilliseconds * kMicrosecondsPerMillisecond)));
 }
 
-+ (std::optional<Packet>)createRenderDataPacketWithRegionOfInterest:
++ (std::optional<Packet>)createRegionOfInterestProtoPacketWithRegionOfInterest:
                              (MPPRegionOfInterest *)regionOfInterest
-                                                              error:(NSError **)error {
-  std::optional<RenderData> renderData = [regionOfInterest getRenderDataWithError:error];
+                                                                         error:(NSError **)error {
+  std::optional<RegionOfInterest> regionOfInterestProto =
+      [regionOfInterest getRegionOfInteresProtoWithError:error];
 
-  if (!renderData.has_value()) {
+  if (!regionOfInterestProto.has_value()) {
     return std::nullopt;
   }
 
-  return MakePacket<RenderData>(std::move(renderData.value()));
+  return MakePacket<RegionOfInterest>(std::move(regionOfInterestProto.value()));
 }
 
 @end

@@ -83,6 +83,7 @@ absl::Status CalculatorContract::Initialize(
 #endif  // !(MEDIAPIPE_LITE || MEDIAPIPE_MOBILE)
     return std::move(builder);
   }
+  max_in_flight_ = node.max_in_flight();
 
   node_config_ = &node;
   options_.Initialize(*node_config_);

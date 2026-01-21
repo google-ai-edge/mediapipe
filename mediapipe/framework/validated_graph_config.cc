@@ -228,19 +228,19 @@ absl::Status NodeTypeInfo::Initialize(
   if (!status.ok()) {
     statuses.push_back(
         mediapipe::StatusBuilder(std::move(status), MEDIAPIPE_LOC).SetPrepend()
-        << "For input streams ");
+        << "For input streams of " << contract_.GetNodeName() << " ");
   }
   status = ValidatePacketTypeSet(contract_.Outputs());
   if (!status.ok()) {
     statuses.push_back(
         mediapipe::StatusBuilder(std::move(status), MEDIAPIPE_LOC).SetPrepend()
-        << "For output streams ");
+        << "For output streams of " << contract_.GetNodeName() << " ");
   }
   status = ValidatePacketTypeSet(contract_.InputSidePackets());
   if (!status.ok()) {
     statuses.push_back(
         mediapipe::StatusBuilder(std::move(status), MEDIAPIPE_LOC).SetPrepend()
-        << "For input side packets ");
+        << "For input side packets of " << contract_.GetNodeName() << " ");
   }
   if (!statuses.empty()) {
     return tool::CombinedStatus(

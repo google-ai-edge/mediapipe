@@ -2,6 +2,9 @@
 
 # buildifier: disable=out-of-order-load
 
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 DEFAULT_ADDITIONAL_TEST_DEPS = []
 
 def mediapipe_cc_test(
@@ -32,7 +35,7 @@ def mediapipe_cc_test(
         browsers = None,
         jspi = False,
         **kwargs):
-    native.cc_library(
+    cc_library(
         name = name + "_lib",
         testonly = True,
         srcs = srcs,
@@ -46,4 +49,5 @@ def mediapipe_cc_test(
         size = size,
         timeout = timeout,
         deps = [":{}_lib".format(name)],
+        tags = tags + linux_tags,
     )

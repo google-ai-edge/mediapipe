@@ -13,6 +13,8 @@
 # limitations under the License.
 #
 
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library", "mediapipe_proto_library")
 # Placeholder: load py_proto_library
 # Placeholder: load proto_library
@@ -387,6 +389,7 @@ cc_library(
         "//mediapipe/util/sequence:media_sequence",
         "//mediapipe/util/sequence:media_sequence_util",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
@@ -799,7 +802,6 @@ cc_library(
         "//mediapipe/calculators/tensorflow:unpack_media_sequence_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:location",
-        "//mediapipe/framework/port:status",
         "//mediapipe/util:audio_decoder_cc_proto",
         "//mediapipe/util/sequence:media_sequence",
         "@com_google_absl//absl/log:absl_log",
@@ -1204,7 +1206,6 @@ cc_test(
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/formats:location",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:rectangle",
         "//mediapipe/util:audio_decoder_cc_proto",
         "//mediapipe/util/sequence:media_sequence",
         "@com_google_absl//absl/log:absl_log",

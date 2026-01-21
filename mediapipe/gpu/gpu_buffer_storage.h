@@ -1,11 +1,11 @@
 #ifndef MEDIAPIPE_GPU_GPU_BUFFER_STORAGE_H_
 #define MEDIAPIPE_GPU_GPU_BUFFER_STORAGE_H_
 
-#include <cstdint>
 #include <functional>
 #include <memory>
-#include <sstream>
 #include <type_traits>
+#include <utility>
+#include <vector>
 
 #include "absl/container/flat_hash_map.h"
 #include "mediapipe/framework/deps/no_destructor.h"
@@ -111,12 +111,16 @@ class GpuBufferStorageRegistry {
   // This is normally called by GpuBufferImpl.
   template <class Storage>
   RegistryToken Register() {
-    return RegisterFactory<Storage>(
-        [](int width, int height,
-           GpuBufferFormat format) -> std::shared_ptr<Storage> {
-          return CreateStorage<Storage>(overload_priority<10>{}, width, height,
-                                        format);
-        });
+    if constexpr (kDisableRegistration<Storage>) {
+      return {};
+    } else {
+      return RegisterFactory<Storage>(
+          [](int width, int height,
+             GpuBufferFormat format) -> std::shared_ptr<Storage> {
+            return CreateStorage<Storage>(overload_priority<10>{}, width,
+                                          height, format);
+          });
+    }
   }
 
   // Registers a new factory for a storage type.
@@ -124,8 +128,9 @@ class GpuBufferStorageRegistry {
   RegistryToken RegisterFactory(F&& factory) {
     if constexpr (kDisableRegistration<Storage>) {
       return {};
+    } else {
+      return Register(factory, Storage::GetProviderTypes());
     }
-    return Register(factory, Storage::GetProviderTypes());
   }
 
   // Registers a new converter from storage type StorageFrom to StorageTo.
@@ -133,13 +138,14 @@ class GpuBufferStorageRegistry {
   RegistryToken RegisterConverter(F&& converter) {
     if constexpr (kDisableRegistration<StorageTo>) {
       return {};
+    } else {
+      return Register(
+          [converter](std::shared_ptr<GpuBufferStorage> source)
+              -> std::shared_ptr<GpuBufferStorage> {
+            return converter(std::static_pointer_cast<StorageFrom>(source));
+          },
+          StorageTo::GetProviderTypes(), kTypeId<StorageFrom>);
     }
-    return Register(
-        [converter](std::shared_ptr<GpuBufferStorage> source)
-            -> std::shared_ptr<GpuBufferStorage> {
-          return converter(std::static_pointer_cast<StorageFrom>(source));
-        },
-        StorageTo::GetProviderTypes(), kTypeId<StorageFrom>);
   }
 
   // Returns a factory function for a storage that implements

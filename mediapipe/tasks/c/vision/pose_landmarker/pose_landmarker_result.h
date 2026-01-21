@@ -19,10 +19,14 @@ limitations under the License.
 #include <cstdint>
 
 #include "mediapipe/tasks/c/components/containers/landmark.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
 
 #ifndef MP_EXPORT
+#if defined(_WIN32)
+#define MP_EXPORT __declspec(dllexport)
+#else
 #define MP_EXPORT __attribute__((visibility("default")))
+#endif  // _WIN32
 #endif  // MP_EXPORT
 
 #ifdef __cplusplus
@@ -33,7 +37,7 @@ extern "C" {
 // element represents a single hand detected in the image.
 struct PoseLandmarkerResult {
   // Segmentation masks for pose.
-  struct MpMask* segmentation_masks;
+  MpImagePtr* segmentation_masks;
 
   // The number of elements in the segmentation_masks array.
   uint32_t segmentation_masks_count;

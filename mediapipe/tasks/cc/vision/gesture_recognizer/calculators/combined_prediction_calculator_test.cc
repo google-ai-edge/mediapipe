@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors.
+/* Copyright 2025 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -12,51 +12,28 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/calculators/combined_prediction_calculator.h"
 
-#include <cmath>
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
-#include <vector>
 
-#include "absl/strings/string_view.h"
-#include "absl/strings/substitute.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/calculator_runner.h"
+#include "mediapipe/framework/api3/function_runner.h"
+#include "mediapipe/framework/api3/graph.h"
+#include "mediapipe/framework/api3/packet.h"
+#include "mediapipe/framework/api3/stream.h"
 #include "mediapipe/framework/formats/classification.pb.h"
+#include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {
 
 namespace {
 
-constexpr char kPredictionTag[] = "PREDICTION";
-
-std::unique_ptr<CalculatorRunner> BuildNodeRunnerWithOptions(
-    float drama_thresh, float llama_thresh, float bazinga_thresh,
-    float joy_thresh, float peace_thresh) {
-  constexpr absl::string_view kCalculatorProto = R"pb(
-    calculator: "CombinedPredictionCalculator"
-    input_stream: "custom_softmax_scores"
-    input_stream: "canned_softmax_scores"
-    output_stream: "PREDICTION:prediction"
-    options {
-      [mediapipe.CombinedPredictionCalculatorOptions.ext] {
-        class { label: "CustomDrama" score_threshold: $0 }
-        class { label: "CustomLlama" score_threshold: $1 }
-        class { label: "CannedBazinga" score_threshold: $2 }
-        class { label: "CannedJoy" score_threshold: $3 }
-        class { label: "CannedPeace" score_threshold: $4 }
-        background_label: "Negative"
-      }
-    }
-  )pb";
-  auto runner = std::make_unique<CalculatorRunner>(
-      absl::Substitute(kCalculatorProto, drama_thresh, llama_thresh,
-                       bazinga_thresh, joy_thresh, peace_thresh));
-  return runner;
-}
+using ::mediapipe::api3::GenericGraph;
+using ::mediapipe::api3::Packet;
+using ::mediapipe::api3::Runner;
+using ::mediapipe::api3::Stream;
 
 std::unique_ptr<ClassificationList> BuildCustomScoreInput(
     const float negative_score, const float drama_score,
@@ -93,32 +70,76 @@ std::unique_ptr<ClassificationList> BuildCannedScoreInput(
   return canned_scores;
 }
 
+void AddClass(const std::string& label, float threshold,
+              mediapipe::CombinedPredictionCalculatorOptions& opts) {
+  auto& c = *opts.add_class_();
+  c.set_label(label);
+  c.set_score_threshold(threshold);
+}
+
 TEST(CombinedPredictionCalculatorPacketTest,
      CustomEmpty_CannedEmpty_ResultIsEmpty) {
-  auto runner = BuildNodeRunnerWithOptions(
-      /*drama_thresh=*/0.0, /*llama_thresh=*/0.0, /*bazinga_thresh=*/0.0,
-      /*joy_thresh=*/0.0, /*peace_thresh=*/0.0);
-  MP_ASSERT_OK(runner->Run()) << "Calculator execution failed.";
-  EXPECT_THAT(runner->Outputs().Tag("PREDICTION").packets, testing::IsEmpty());
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner, Runner::For([](GenericGraph& graph,
+                                  Stream<ClassificationList> custom_scores,
+                                  Stream<ClassificationList> canned_scores)
+                                   -> Stream<ClassificationList> {
+                     auto& node =
+                         graph.AddNode<tasks::CombinedPredictionNode>();
+                     node.classification_list_in.Add(custom_scores);
+                     node.classification_list_in.Add(canned_scores);
+                     mediapipe::CombinedPredictionCalculatorOptions& opts =
+                         *node.options.Mutable();
+                     AddClass("CustomDrama", 0.0, opts);
+                     AddClass("CustomLlama", 0.0, opts);
+                     AddClass("CannedBazinga", 0.0, opts);
+                     AddClass("CannedJoy", 0.0, opts);
+                     AddClass("CannedPeace", 0.0, opts);
+                     opts.set_background_label("Negative");
+                     return node.prediction_out.Get();
+                   }).Create());
+
+  MP_ASSERT_OK_AND_ASSIGN(
+      Packet<ClassificationList> output_packet,
+      runner.Run(Packet<ClassificationList>(), Packet<ClassificationList>()));
+  EXPECT_FALSE(output_packet);
 }
 
 TEST(CombinedPredictionCalculatorPacketTest,
      CustomEmpty_CannedNotEmpty_ResultIsCanned) {
-  auto runner = BuildNodeRunnerWithOptions(
-      /*drama_thresh=*/0.0, /*llama_thresh=*/0.0, /*bazinga_thresh=*/0.9,
-      /*joy_thresh=*/0.5, /*peace_thresh=*/0.8);
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner, Runner::For([](GenericGraph& graph,
+                                  Stream<ClassificationList> custom_scores,
+                                  Stream<ClassificationList> canned_scores)
+                                   -> Stream<ClassificationList> {
+                     auto& node =
+                         graph.AddNode<tasks::CombinedPredictionNode>();
+                     node.classification_list_in.Add(custom_scores);
+                     node.classification_list_in.Add(canned_scores);
+                     mediapipe::CombinedPredictionCalculatorOptions& opts =
+                         *node.options.Mutable();
+                     AddClass("CustomDrama", 0.0, opts);
+                     AddClass("CustomLlama", 0.0, opts);
+                     AddClass("CannedBazinga", 0.9, opts);
+                     AddClass("CannedJoy", 0.5, opts);
+                     AddClass("CannedPeace", 0.8, opts);
+                     opts.set_background_label("Negative");
+                     return node.prediction_out.Get();
+                   }).Create());
+
   auto canned_scores = BuildCannedScoreInput(
       /*negative_score=*/0.1,
       /*bazinga_score=*/0.1, /*joy_score=*/0.6, /*peace_score=*/0.2);
-  runner->MutableInputs()->Index(1).packets.push_back(
-      Adopt(canned_scores.release()).At(Timestamp(1)));
-  MP_ASSERT_OK(runner->Run()) << "Calculator execution failed.";
 
-  auto output_prediction_packets =
-      runner->Outputs().Tag(kPredictionTag).packets;
-  ASSERT_EQ(output_prediction_packets.size(), 1);
-  Classification output_prediction =
-      output_prediction_packets[0].Get<ClassificationList>().classification(0);
+  MP_ASSERT_OK_AND_ASSIGN(Packet<ClassificationList> output_packet,
+                          runner.Run(Packet<ClassificationList>(),
+                                     api3::MakePacket<ClassificationList>(
+                                         std::move(canned_scores))));
+
+  ASSERT_TRUE(output_packet);
+  const ClassificationList& output_prediction_list = output_packet.GetOrDie();
+  ASSERT_EQ(output_prediction_list.classification_size(), 1);
+  Classification output_prediction = output_prediction_list.classification(0);
 
   EXPECT_EQ(output_prediction.label(), "CannedJoy");
   EXPECT_NEAR(output_prediction.score(), 0.6, 1e-4);
@@ -126,21 +147,38 @@ TEST(CombinedPredictionCalculatorPacketTest,
 
 TEST(CombinedPredictionCalculatorPacketTest,
      CustomNotEmpty_CannedEmpty_ResultIsCustom) {
-  auto runner = BuildNodeRunnerWithOptions(
-      /*drama_thresh=*/0.3, /*llama_thresh=*/0.5, /*bazinga_thresh=*/0.0,
-      /*joy_thresh=*/0.0, /*peace_thresh=*/0.0);
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner, Runner::For([](GenericGraph& graph,
+                                  Stream<ClassificationList> custom_scores,
+                                  Stream<ClassificationList> canned_scores)
+                                   -> Stream<ClassificationList> {
+                     auto& node =
+                         graph.AddNode<tasks::CombinedPredictionNode>();
+                     node.classification_list_in.Add(custom_scores);
+                     node.classification_list_in.Add(canned_scores);
+                     mediapipe::CombinedPredictionCalculatorOptions& opts =
+                         *node.options.Mutable();
+                     AddClass("CustomDrama", 0.3, opts);
+                     AddClass("CustomLlama", 0.5, opts);
+                     AddClass("CannedBazinga", 0.0, opts);
+                     AddClass("CannedJoy", 0.0, opts);
+                     AddClass("CannedPeace", 0.0, opts);
+                     opts.set_background_label("Negative");
+                     return node.prediction_out.Get();
+                   }).Create());
+
   auto custom_scores =
       BuildCustomScoreInput(/*negative_score=*/0.1,
                             /*drama_score=*/0.2, /*llama_score=*/0.7);
-  runner->MutableInputs()->Index(0).packets.push_back(
-      Adopt(custom_scores.release()).At(Timestamp(1)));
-  MP_ASSERT_OK(runner->Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK_AND_ASSIGN(
+      Packet<ClassificationList> output_packet,
+      runner.Run(api3::MakePacket<ClassificationList>(std::move(custom_scores)),
+                 Packet<ClassificationList>()));
 
-  auto output_prediction_packets =
-      runner->Outputs().Tag(kPredictionTag).packets;
-  ASSERT_EQ(output_prediction_packets.size(), 1);
-  Classification output_prediction =
-      output_prediction_packets[0].Get<ClassificationList>().classification(0);
+  ASSERT_TRUE(output_packet);
+  const ClassificationList& output_prediction_list = output_packet.GetOrDie();
+  ASSERT_EQ(output_prediction_list.classification_size(), 1);
+  Classification output_prediction = output_prediction_list.classification(0);
 
   EXPECT_EQ(output_prediction.label(), "CustomLlama");
   EXPECT_NEAR(output_prediction.score(), 0.7, 1e-4);
@@ -168,35 +206,49 @@ using CombinedPredictionCalculatorTest =
     testing::TestWithParam<CombinedPredictionCalculatorTestCase>;
 
 TEST_P(CombinedPredictionCalculatorTest, OutputsCorrectResult) {
-  const CombinedPredictionCalculatorTestCase& test_case = GetParam();
+  const CombinedPredictionCalculatorTestCase& test_params = GetParam();
 
-  auto runner = BuildNodeRunnerWithOptions(
-      test_case.drama_thresh, test_case.llama_thresh, test_case.bazinga_thresh,
-      test_case.joy_thresh, test_case.peace_thresh);
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner,
+      Runner::For([&](GenericGraph& graph,
+                      Stream<ClassificationList> custom_scores,
+                      Stream<ClassificationList> canned_scores)
+                      -> Stream<ClassificationList> {
+        auto& node = graph.AddNode<tasks::CombinedPredictionNode>();
+        node.classification_list_in.Add(custom_scores);
+        node.classification_list_in.Add(canned_scores);
+        mediapipe::CombinedPredictionCalculatorOptions& opts =
+            *node.options.Mutable();
+        AddClass("CustomDrama", test_params.drama_thresh, opts);
+        AddClass("CustomLlama", test_params.llama_thresh, opts);
+        AddClass("CannedBazinga", test_params.bazinga_thresh, opts);
+        AddClass("CannedJoy", test_params.joy_thresh, opts);
+        AddClass("CannedPeace", test_params.peace_thresh, opts);
+        opts.set_background_label("Negative");
+        return node.prediction_out.Get();
+      }).Create());
 
   auto custom_scores =
-      BuildCustomScoreInput(test_case.custom_negative_score,
-                            test_case.drama_score, test_case.llama_score);
-
-  runner->MutableInputs()->Index(0).packets.push_back(
-      Adopt(custom_scores.release()).At(Timestamp(1)));
+      BuildCustomScoreInput(test_params.custom_negative_score,
+                            test_params.drama_score, test_params.llama_score);
 
   auto canned_scores = BuildCannedScoreInput(
-      test_case.canned_negative_score, test_case.bazinga_score,
-      test_case.joy_score, test_case.peace_score);
-  runner->MutableInputs()->Index(1).packets.push_back(
-      Adopt(canned_scores.release()).At(Timestamp(1)));
+      test_params.canned_negative_score, test_params.bazinga_score,
+      test_params.joy_score, test_params.peace_score);
 
-  MP_ASSERT_OK(runner->Run()) << "Calculator execution failed.";
+  MP_ASSERT_OK_AND_ASSIGN(
+      Packet<ClassificationList> output_packet,
+      runner.Run(
+          api3::MakePacket<ClassificationList>(std::move(custom_scores)),
+          api3::MakePacket<ClassificationList>(std::move(canned_scores))));
 
-  auto output_prediction_packets =
-      runner->Outputs().Tag(kPredictionTag).packets;
-  ASSERT_EQ(output_prediction_packets.size(), 1);
-  Classification output_prediction =
-      output_prediction_packets[0].Get<ClassificationList>().classification(0);
+  ASSERT_TRUE(output_packet);
+  const ClassificationList& output_prediction_list = output_packet.GetOrDie();
+  ASSERT_EQ(output_prediction_list.classification_size(), 1);
+  Classification output_prediction = output_prediction_list.classification(0);
 
-  EXPECT_EQ(output_prediction.label(), test_case.max_scoring_label);
-  EXPECT_NEAR(output_prediction.score(), test_case.max_score, 1e-4);
+  EXPECT_EQ(output_prediction.label(), test_params.max_scoring_label);
+  EXPECT_NEAR(output_prediction.score(), test_params.max_score, 1e-4);
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -314,6 +366,11 @@ INSTANTIATE_TEST_CASE_P(
         CombinedPredictionCalculatorTest::ParamType>& info) {
       return info.param.test_name;
     });
+
+TEST(CombinedPredictionCalculatorTest, HasCorrectRegistrationName) {
+  EXPECT_EQ(tasks::CombinedPredictionNode::GetRegistrationName(),
+            "CombinedPredictionCalculator");
+}
 
 }  // namespace
 

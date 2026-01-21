@@ -1,6 +1,7 @@
 """BUILD rules for generating flatbuffer files."""
 
 load("@build_bazel_rules_android//android:rules.bzl", "android_library")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_java//java:defs.bzl", "java_library")
 
 flatc_path = "@flatbuffers//:flatc"
@@ -213,7 +214,7 @@ def flatbuffer_cc_library(
         reflection_name = reflection_name,
         reflection_visibility = visibility,
     )
-    native.cc_library(
+    cc_library(
         name = name,
         hdrs = output_headers,
         srcs = output_headers,

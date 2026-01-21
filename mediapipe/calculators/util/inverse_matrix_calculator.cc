@@ -14,23 +14,27 @@
 
 #include "mediapipe/calculators/util/inverse_matrix_calculator.h"
 
+#include <array>
+#include <utility>
+
 #include "Eigen/Core"
-#include "Eigen/Geometry"
-#include "Eigen/LU"
+#include "Eigen/Geometry"  // IWYU pragma: keep(for computeInverseWithCheck)
 #include "absl/status/status.h"
-#include "mediapipe/framework/api2/node.h"
-#include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/api3/calculator.h"
+#include "mediapipe/framework/api3/calculator_context.h"
+#include "mediapipe/framework/port/ret_check.h"
 
 namespace mediapipe {
-namespace api2 {
+namespace api3 {
 
-class InverseMatrixCalculatorImpl : public NodeImpl<InverseMatrixCalculator> {
-  absl::Status Process(mediapipe::CalculatorContext* cc) override {
-    if (kInputMatrix(cc).IsEmpty()) {
+class InverseMatrixNodeImpl
+    : public Calculator<InverseMatrixNode, InverseMatrixNodeImpl> {
+  absl::Status Process(CalculatorContext<InverseMatrixNode>& cc) override {
+    if (!cc.input_matrix) {
       return absl::OkStatus();
     }
     Eigen::Matrix<float, 4, 4, Eigen::RowMajor> matrix(
-        kInputMatrix(cc).Get().data());
+        cc.input_matrix.GetOrDie().data());
 
     Eigen::Matrix<float, 4, 4, Eigen::RowMajor> inverse_matrix;
     bool inverse_check = false;
@@ -48,11 +52,11 @@ class InverseMatrixCalculatorImpl : public NodeImpl<InverseMatrixCalculator> {
     std::array<float, 16> output;
     Eigen::Map<Eigen::Matrix<float, 4, 4, Eigen::RowMajor>>(
         output.data(), 4, 4) = inverse_matrix.matrix();
-    kOutputMatrix(cc).Send(std::move(output));
+    cc.output_matrix.Send(std::move(output));
+
     return absl::OkStatus();
   }
 };
-MEDIAPIPE_NODE_IMPLEMENTATION(InverseMatrixCalculatorImpl);
 
-}  // namespace api2
+}  // namespace api3
 }  // namespace mediapipe

@@ -16,19 +16,23 @@
 
 #include <atomic>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/substitute.h"
 #include "absl/synchronization/mutex.h"
+#include "google/protobuf/text_format.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/logging.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/port/threadpool.h"
 #include "mediapipe/framework/tool/sink.h"
@@ -90,8 +94,9 @@ std::shared_ptr<Executor> MakeExecutor(std::function<void()> start_callback,
 // Tests showing ImmediateMuxCalculator dropping packets in various sequences.
 class ImmediateMuxCalculatorTest : public ::testing::Test {
  protected:
-  void SetUpMuxGraph() {
-    ASSERT_TRUE(proto_ns::TextFormat::ParseFromString(R"(
+  void SetUpMuxGraph(bool process_timestamp_bounds = false) {
+    ASSERT_TRUE(proto_ns::TextFormat::ParseFromString(
+        absl::Substitute(R"(
           input_stream: "input_packets_0"
           input_stream: "input_packets_1"
           node {
@@ -102,9 +107,43 @@ class ImmediateMuxCalculatorTest : public ::testing::Test {
             input_stream: "input_packets_0"
             input_stream: "input_packets_1"
             output_stream: "output_packets_0"
+            $0
           }
         )",
-                                                      &graph_config_));
+                         process_timestamp_bounds ? R"(
+              node_options {
+                [type.googleapis.com/mediapipe.ImmediateMuxCalculatorOptions] {
+                  process_timestamp_bounds: true
+                }
+              })"
+                                                  : ""),
+        &graph_config_));
+  }
+
+  void SetUpMuxGraphOneInput(bool process_timestamp_bounds = false) {
+    CalculatorGraphConfig graph_config;
+    ASSERT_TRUE(proto_ns::TextFormat::ParseFromString(
+        absl::Substitute(R"(
+    input_stream: "input_packets_0"
+    output_stream: "output_packets_0"
+    node {
+      calculator: "ImmediateMuxCalculator"
+      input_stream_handler {
+        input_stream_handler: "ImmediateInputStreamHandler"
+      }
+      input_stream: "input_packets_0"
+      output_stream: "output_packets_0"
+      $0
+    }
+  )",
+                         process_timestamp_bounds ? R"(
+              node_options {
+                [type.googleapis.com/mediapipe.ImmediateMuxCalculatorOptions] {
+                  process_timestamp_bounds: true
+                }
+              })"
+                                                  : ""),
+        &graph_config_));
   }
 
   void SetUpDemuxGraph() {
@@ -197,6 +236,14 @@ class ImmediateMuxCalculatorTest : public ::testing::Test {
   static bool IsNone(const Packet& packet) {
     return packet.Timestamp() == Timestamp::OneOverPostStream();
   }
+  static Packet TimestampBoundUpdateAt(int64_t ts) {
+    return Adopt(new int64_t(std::numeric_limits<int64_t>::max()))
+        .At(Timestamp(ts));
+  }
+  static bool IsTimestampBoundUpdate(const Packet& packet) {
+    return !IsNone(packet) &&
+           packet.Get<int64_t>() == std::numeric_limits<int64_t>::max();
+  }
   // Return the values of the timestamps of a vector of Packets.
   static std::vector<int64_t> TimestampValues(
       const std::vector<Packet>& packets) {
@@ -210,25 +257,33 @@ class ImmediateMuxCalculatorTest : public ::testing::Test {
   // Runs a CalculatorGraph with a series of packet sets.
   // Returns a vector of packets from each graph output stream.
   void RunGraph(const std::vector<std::vector<Packet>>& input_sets,
-                std::vector<Packet>* output_packets) {
-    // Register output packet observers.
-    tool::AddVectorSink("output_packets_0", &graph_config_, output_packets);
-
+                std::vector<Packet>* output_packets,
+                bool observe_timestamp_bounds = false) {
     // Start running the graph.
     CalculatorGraph graph;
     MP_ASSERT_OK(graph.Initialize(graph_config_));
+    MP_ASSERT_OK(graph.ObserveOutputStream(
+        "output_packets_0",
+        [&](const Packet& packet) {
+          output_packets->push_back(packet);
+          return absl::OkStatus();
+        },
+        observe_timestamp_bounds));
     MP_ASSERT_OK(graph.StartRun({}));
-
     // Send each packet to the graph in the specified order.
     for (int t = 0; t < input_sets.size(); t++) {
       const std::vector<Packet>& input_set = input_sets[t];
       MP_EXPECT_OK(graph.WaitUntilIdle());
       for (int i = 0; i < input_set.size(); i++) {
         const Packet& packet = input_set[i];
-        if (!IsNone(packet)) {
+        if (IsTimestampBoundUpdate(packet)) {
+          MP_EXPECT_OK(graph.SetInputStreamTimestampBound(
+              absl::StrCat("input_packets_", i), packet.Timestamp()));
+        } else if (!IsNone(packet)) {
           MP_EXPECT_OK(graph.AddPacketToInputStream(
               absl::StrCat("input_packets_", i), packet));
         }
+        MP_ASSERT_OK(graph.WaitUntilIdle());
       }
     }
     MP_ASSERT_OK(graph.CloseAllInputStreams());
@@ -285,6 +340,71 @@ TEST_F(ImmediateMuxCalculatorTest, SimultaneousTimestamps) {
 
   // Output packet 20000 is superseded and dropped.
   EXPECT_THAT(TimestampValues(output_packets), ElementsAre(10000, 40000));
+}
+
+TEST_F(ImmediateMuxCalculatorTest, TimestampBoundUpdateForOneInput) {
+  std::vector<std::vector<Packet>> input_sets = {
+      {PacketAt(10000)},                //
+      {TimestampBoundUpdateAt(20000)},  //
+  };
+  SetUpMuxGraphOneInput(/*process_timestamp_bounds=*/true);
+  std::vector<Packet> output_packets;
+  RunGraph(input_sets, &output_packets, /*observe_timestamp_bounds=*/true);
+  // Update timestamp bound to 20000 results in a return packet of 19999.
+  EXPECT_THAT(TimestampValues(output_packets), ElementsAre(10000, 19999));
+}
+
+TEST_F(ImmediateMuxCalculatorTest, TimestampBoundUpdateOneSide) {
+  // Run the graph with a series of packet sets.
+  std::vector<std::vector<Packet>> input_sets = {
+      {PacketAt(10000), None()},                //
+      {None(), TimestampBoundUpdateAt(20000)},  //
+      {PacketAt(15000), None()},                //
+  };
+  SetUpMuxGraph(/*process_timestamp_bounds=*/true);
+  std::vector<Packet> output_packets;
+  RunGraph(input_sets, &output_packets, /*observe_timestamp_bounds=*/true);
+
+  // Timestamp bound update pushs the bound forward, thus later packets with
+  // smaller timestamps are dropped.
+  EXPECT_THAT(TimestampValues(output_packets), ElementsAre(10000, 19999));
+}
+
+TEST_F(ImmediateMuxCalculatorTest, TimestampBoundUpdateBothSides) {
+  // Run the graph with a series of packet sets.
+  std::vector<std::vector<Packet>> input_sets = {
+      {PacketAt(10000), None()},                //
+      {None(), TimestampBoundUpdateAt(20000)},  //
+      {TimestampBoundUpdateAt(20000), None()},  //
+      {None(), TimestampBoundUpdateAt(30000)},  //
+  };
+  SetUpMuxGraph(/*process_timestamp_bounds=*/true);
+  std::vector<Packet> output_packets;
+  RunGraph(input_sets, &output_packets, /*observe_timestamp_bounds=*/true);
+
+  // Timestamp bound update with the same timestamp still results in the later
+  // one being dropped.
+  EXPECT_THAT(TimestampValues(output_packets),
+              ElementsAre(10000, 19999, 29999));
+}
+
+TEST_F(ImmediateMuxCalculatorTest, TimestampBoundUpdateInterleavedWithPackets) {
+  // Run the graph with a series of packet sets.
+  std::vector<std::vector<Packet>> input_sets = {
+      {PacketAt(10000), None()},                //
+      {None(), TimestampBoundUpdateAt(15000)},  //
+      {PacketAt(15000), None()},                //
+      {TimestampBoundUpdateAt(16000), None()},  //
+  };
+  SetUpMuxGraph(/*process_timestamp_bounds=*/true);
+  std::vector<Packet> output_packets;
+  RunGraph(input_sets, &output_packets, /*observe_timestamp_bounds=*/true);
+
+  // If Timestamp bound is updated to N earlier, a later packet with timestamp N
+  // is still valid, since timestamp bound means the smallest packet allowed to
+  // arrive later.
+  EXPECT_THAT(TimestampValues(output_packets),
+              ElementsAre(10000, 14999, 15000, 15999));
 }
 
 // A Calculator::Process callback function.

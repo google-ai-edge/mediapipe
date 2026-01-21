@@ -1,3 +1,5 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 # Placeholder: load py_test
 
@@ -23,16 +25,13 @@ cc_library(
         "//mediapipe/framework:calculator_contract",
         "//mediapipe/framework:mediapipe_options_cc_proto",
         "//mediapipe/framework:stream_handler_cc_proto",
-        "//mediapipe/framework/port:any_proto",
-        "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:source_location",
-        "//mediapipe/framework/port:status",
-        "@com_google_absl//absl/container:btree",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:side_packet",
+        "//mediapipe/framework/api3:stream",
+        "//mediapipe/framework/api3/internal:graph_builder",
+        "//mediapipe/framework/deps:registration",
         "@com_google_absl//absl/log:absl_check",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
         "@com_google_protobuf//:protobuf",
     ],
 )

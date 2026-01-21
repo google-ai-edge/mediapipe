@@ -56,6 +56,16 @@ import MediaPipeTasksGenAIC
   @objc public init(options: Options) throws {
     let cacheDirectory = FileManager.default.temporaryDirectory.path
 
+    var preferredBackend = kLlmPreferredBackendDefault
+    switch options.preferredBackend {
+    case .defaultBackend:
+      preferredBackend = kLlmPreferredBackendDefault
+    case .gpu:
+      preferredBackend = kLlmPreferredBackendGpu
+    case .cpu:
+      preferredBackend = kLlmPreferredBackendCpu
+    }
+
     let numberOfDecodeStepsPerSync = LlmInference.numberOfDecodeStepsPerSync
     let timeBeforeInit = clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW)
     llmTaskRunner = try options.modelPath.withCString { modelPath in
@@ -79,7 +89,9 @@ import MediaPipeTasksGenAIC
                 num_draft_tokens: 0,
                 wait_for_weight_uploads: options.waitForWeightUploads,
                 use_submodel: options.useSubmodel,
-                preferred_backend: kLlmPreferredBackendDefault)
+                preferred_backend: preferredBackend,
+                enable_audio_modality: options.enableAudioModality,
+                max_audio_sequence_length: options.maxAudioSequenceLength)
               return try LlmTaskRunner(modelSettings: modelSetting)
             }
           }
@@ -220,6 +232,19 @@ import MediaPipeTasksGenAIC
 
 // Extension to `LlmInference` for defining `LlmInference.Options`
 extension LlmInference {
+
+  /// Specify the LiteRT backend to use for the LLM model. If not specified, the
+  /// default backend will be used. For non-LiteRT models, the backend is specified during the
+  /// conversion process.
+  @objc public enum LlmPreferredBackend: Int32 {
+    /// Use default backend extracted from the model.
+    case defaultBackend = 0
+    /// Use GPU backend.
+    case gpu = 1
+    /// Use CPU backend.
+    case cpu = 2
+  }
+
   /// Options for setting up a `LlmInference`.
   ///
   /// Note: Inherits from `NSObject` for Objective C interoperability.
@@ -232,6 +257,9 @@ extension LlmInference {
 
     /// Path to the vision adapter to use for vision modality. Optional.
     @objc public var visionAdapterPath: String = ""
+
+    /// Setting to prefer a specific backend.
+    @objc public var preferredBackend: LlmPreferredBackend = .defaultBackend
 
     /// The total length of the kv-cache. In other words, this is the total number of input + output
     /// tokens the model needs to handle.
@@ -263,6 +291,12 @@ extension LlmInference {
     /// of 1. Setting this value to 0 means the batch size will be optimized
     /// programmatically.
     @objc public var sequenceBatchSize: Int = 0
+
+    /// Maximum audio sequence length in tokens, used by audio modality.
+    @objc public var maxAudioSequenceLength: Int = 0
+
+    /// Whether to enable audio modality.
+    @objc public var enableAudioModality: Bool = false
 
     /// Creates a new instance of `Options` with the given `modelPath` and default values of
     /// `maxTokens`, `maxTopk`, `supportedLoraRanks`.

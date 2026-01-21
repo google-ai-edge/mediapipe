@@ -1,4 +1,6 @@
 load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
@@ -52,6 +54,20 @@ cc_library(
 )
 
 cc_library(
+    name = "webgpu_headers",
+    hdrs = ["webgpu_headers.h"],
+    deps = select({
+        "//mediapipe:emscripten": [
+            "//third_party/emdawnwebgpu:webgpu",
+        ],
+        "//conditions:default": [
+            "//third_party/dawn:dawn_headers",
+            "//third_party/dawn:webgpu_headers",
+        ],
+    }),
+)
+
+cc_library(
     name = "webgpu_check",
     srcs = ["webgpu_check.cc"],
     hdrs = ["webgpu_check.h"],
@@ -73,6 +89,7 @@ cc_library(
     hdrs = ["webgpu_service.h"],
     deps = [
         ":webgpu_check",
+        ":webgpu_headers",
         "//mediapipe/framework:graph_service",
         "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/gpu:attachments",
@@ -82,6 +99,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/synchronization",
     ] + select({
         "//mediapipe:emscripten": [
         ],
@@ -95,6 +113,10 @@ cc_library(
     name = "webgpu_texture_view",
     hdrs = ["webgpu_texture_view.h"],
     visibility = ["//visibility:public"],
+    deps = [
+        ":webgpu_headers",
+        "//mediapipe/gpu:gpu_buffer_storage",
+    ],
 )
 
 cc_library(
@@ -106,19 +128,111 @@ cc_library(
         "//visibility:public",
     ],
     deps = [
+        ":webgpu_headers",
         ":webgpu_service",
         ":webgpu_texture_view",
         "//mediapipe/framework:legacy_calculator_support",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/gpu:gpu_buffer",
         "//mediapipe/gpu:gpu_buffer_format",
         "//mediapipe/gpu:gpu_buffer_storage",
+        "//third_party/dawn:webgpu_headers",
+        "@com_google_absl//absl/base:nullability",
+        "@com_google_absl//absl/functional:any_invocable",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
+    ] + select({
+        "//mediapipe:emscripten": [
+        ],
+        "//conditions:default": [],
+    }),
+    alwayslink = 1,
+)
+
+mediapipe_cc_test(
+    name = "webgpu_texture_buffer_test",
+    size = "small",
+    timeout = "short",
+    srcs = ["webgpu_texture_buffer_test.cc"],
+    browsers = ["//mediapipe/web:chrome-linux-hardware-gpu-webgpu"],
+    jspi = True,
+    platforms = ["wasm"],
+    wasm_tags = [
+        "requires-gpu-nvidia",
+    ],
+    deps = [
+        ":webgpu_service",
+        ":webgpu_texture_buffer",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_state",
+        "//mediapipe/framework:legacy_calculator_support",
+        "//mediapipe/framework/tool:tag_map_helper",
+        "//mediapipe/gpu:gpu_buffer_format",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_googletest//:gtest_main",
+    ] + select({
+        "//mediapipe:emscripten": [
+            "//mediapipe/gpu/webgpu:setup_test_webgpu",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+cc_library(
+    name = "webgpu_external_texture_buffer",
+    hdrs = ["webgpu_external_texture_buffer.h"],
+    tags = ["keep_dep"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        ":webgpu_headers",
+        "//mediapipe/gpu:gpu_buffer_format",
+        "//mediapipe/gpu:gpu_buffer_storage",
     ],
     alwayslink = 1,
+)
+
+mediapipe_cc_test(
+    name = "webgpu_external_texture_buffer_test",
+    size = "small",
+    timeout = "short",
+    srcs = ["webgpu_external_texture_buffer_test.cc"],
+    browsers = ["//mediapipe/web:chrome-linux-hardware-gpu-webgpu"],
+    jspi = True,
+    platforms = ["wasm"],
+    wasm_tags = [
+        "requires-gpu-nvidia",
+    ],
+    deps = [
+        ":webgpu_external_quad_renderer",
+        ":webgpu_external_texture_buffer",
+        ":webgpu_headers",
+        ":webgpu_service",
+        ":webgpu_texture_view",
+        ":webgpu_utils",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_state",
+        "//mediapipe/framework:legacy_calculator_support",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/tool:tag_map_helper",
+        "//mediapipe/gpu:gpu_buffer",
+        "//mediapipe/gpu:gpu_buffer_format",
+        "//mediapipe/gpu:gpu_buffer_storage",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_googletest//:gtest_main",
+    ] + select({
+        "//mediapipe:emscripten": [
+            ":setup_test_webgpu",
+            "//third_party/emdawnwebgpu:webgpu",
+            "//third_party/emscripten:embind",
+        ],
+        "//conditions:default": [
+            "//third_party/dawn:dawn_native",
+            "//third_party/dawn:libdawn_proc",
+        ],
+    }),
 )
 
 cc_library(
@@ -127,19 +241,14 @@ cc_library(
     hdrs = ["webgpu_utils.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":webgpu_headers",
         "//mediapipe/framework/port:status",
         "//mediapipe/web:jspi_check",
-        "//third_party/dawn:webgpu_headers",
         "@com_google_absl//absl/base:no_destructor",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/time",
-    ] + select({
-        "//mediapipe:emscripten": [
-            "//third_party/emdawnwebgpu:webgpu",
-        ],
-        "//conditions:default": [],
-    }),
+    ],
 )
 
 cc_library(
@@ -147,34 +256,54 @@ cc_library(
     srcs = ["image_to_tensor_converter_webgpu_texture.cc"],
     hdrs = ["image_to_tensor_converter_webgpu_texture.h"],
     deps = [
+        ":webgpu_headers",
         ":webgpu_service",
         ":webgpu_texture_view",
         ":webgpu_utils",
         "//mediapipe/calculators/tensor:image_to_tensor_converter",
+        "//mediapipe/calculators/tensor:image_to_tensor_utils",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:statusor",
+        "//mediapipe/gpu:gpu_buffer",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
 cc_library(
     name = "webgpu_shader_calculator",
     srcs = ["webgpu_shader_calculator.cc"],
+    hdrs = ["webgpu_shader_calculator.h"],
     deps = [
+        ":webgpu_headers",
+        ":webgpu_service",
         ":webgpu_shader_calculator_cc_proto",
+        ":webgpu_texture_buffer",
+        ":webgpu_texture_buffer_3d",
+        ":webgpu_texture_view",
+        ":webgpu_utils",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_options_cc_proto",
-        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework:resources",
+        "//mediapipe/framework/api3:any",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:calculator_contract",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
         "//mediapipe/framework/deps:re2",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/gpu:gpu_buffer",
         "//mediapipe/gpu:gpu_buffer_format",
-        "//mediapipe/gpu/webgpu:webgpu_service",
-        "//mediapipe/gpu/webgpu:webgpu_texture_buffer",
-        "//mediapipe/gpu/webgpu:webgpu_texture_buffer_3d",
-        "//mediapipe/gpu/webgpu:webgpu_texture_view",
-        "//mediapipe/gpu/webgpu:webgpu_utils",
-        "//mediapipe/util:resource_util",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )

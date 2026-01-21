@@ -14,10 +14,7 @@
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
-package(default_visibility = [
-    "//mediapipe/tasks:internal",
-    "//mediapipe/tasks:users",
-])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 

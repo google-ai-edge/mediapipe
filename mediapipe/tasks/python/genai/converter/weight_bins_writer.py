@@ -18,11 +18,13 @@ import contextlib
 import os
 from typing import Dict, Tuple
 
-from jax import numpy as jnp
 import numpy as np
 
 from mediapipe.tasks.python.genai.converter import converter_base
+from mediapipe.tasks.python.genai.converter import external_dependencies
 from mediapipe.tasks.python.genai.converter import quantization_util
+
+jnp = external_dependencies.jnp
 
 
 @contextlib.contextmanager

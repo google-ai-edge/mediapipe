@@ -19,15 +19,21 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/classification_result.h"
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
 
 #ifndef MP_EXPORT
+#if defined(_MSC_VER)
+#define MP_EXPORT __declspec(dllexport)
+#else
 #define MP_EXPORT __attribute__((visibility("default")))
+#endif  // _MSC_VER
 #endif  // MP_EXPORT
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+typedef struct MpTextClassifierInternal* MpTextClassifierPtr;
 typedef struct ClassificationResult TextClassifierResult;
 
 // The options for configuring a MediaPipe text classifier task.
@@ -42,30 +48,37 @@ struct TextClassifierOptions {
 };
 
 // Creates a TextClassifier from the provided `options`.
-// Returns a pointer to the text classifier on success.
-// If an error occurs, returns `nullptr` and sets the error parameter to an
-// an error message (if `error_msg` is not `nullptr`). You must free the memory
-// allocated for the error message.
-MP_EXPORT void* text_classifier_create(struct TextClassifierOptions* options,
-                                       char** error_msg);
+// If successful, returns `kMpOk` and sets `*classifier` to the new
+// `MpTextClassifierPtr`.
+// To obtain a detailed error, error_msg must be non-null pointer to a char*,
+// which will be populated with a newly-allocated error message upon failure.
+// It's the caller responsibility to free the error message with MpErrorFree().
+MP_EXPORT MpStatus MpTextClassifierCreate(struct TextClassifierOptions* options,
+                                          MpTextClassifierPtr* classifier,
+                                          char** error_msg);
 
-// Performs classification on the input `text`. Returns `0` on success.
-// If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not `nullptr`). You must free the memory
-// allocated for the error message.
-MP_EXPORT int text_classifier_classify(void* classifier, const char* utf8_str,
-                                       TextClassifierResult* result,
-                                       char** error_msg);
+// Performs classification on the input `utf8_str`.
+// If successful, returns `kMpOk` and sets `*result` to the new
+// `TextClassifierResult`.
+// To obtain a detailed error, error_msg must be non-null pointer to a char*,
+// which will be populated with a newly-allocated error message upon failure.
+// It's the caller responsibility to free the error message with MpErrorFree().
+MP_EXPORT MpStatus MpTextClassifierClassify(MpTextClassifierPtr classifier,
+                                            const char* utf8_str,
+                                            TextClassifierResult* result,
+                                            char** error_msg);
 
 // Frees the memory allocated inside a TextClassifierResult result. Does not
 // free the result pointer itself.
-MP_EXPORT void text_classifier_close_result(TextClassifierResult* result);
+MP_EXPORT void MpTextClassifierCloseResult(TextClassifierResult* result);
 
 // Shuts down the TextClassifier when all the work is done. Frees all memory.
-// If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not `nullptr`). You must free the memory
-// allocated for the error message.
-MP_EXPORT int text_classifier_close(void* classifier, char** error_msg);
+//
+// To obtain a detailed error, error_msg must be non-null pointer to a char*,
+// which will be populated with a newly-allocated error message upon failure.
+// It's the caller responsibility to free the error message with MpErrorFree().
+MP_EXPORT MpStatus MpTextClassifierClose(MpTextClassifierPtr classifier,
+                                         char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

@@ -15,6 +15,8 @@
 # Description:
 #  Port of various libraries and utilities.
 
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 licenses(["notice"])
 
 package(
@@ -484,4 +486,10 @@ cc_library(
     name = "requires",
     hdrs = ["requires.h"],
     deps = ["//mediapipe/framework/deps:requires"],
+)
+
+cc_library(
+    name = "compile_time_string",
+    hdrs = ["compile_time_string.h"],
+    deps = ["//mediapipe/framework/deps:compile_time_string"],
 )

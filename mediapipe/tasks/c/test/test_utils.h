@@ -16,27 +16,18 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_TEST_TEST_UTILS_H_
 #define MEDIAPIPE_TASKS_C_TEST_TEST_UTILS_H_
 
-#include <string>
-
-#include "absl/flags/flag.h"
 #include "mediapipe/framework/formats/image.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 
 namespace mediapipe::tasks::c::test {
 
-MpMask CreateCategoryMaskFromImage(absl::StatusOr<Image>& image);
+MpImagePtr CreateCategoryMaskFromImage(const Image& image);
 
-float SimilarToUint8Mask(const MpMask* actual_mask, const MpMask* expected_mask,
+float SimilarToUint8Mask(MpImageInternal* actual_mask,
+                         MpImageInternal* expected_mask,
                          int magnification_factor);
 
 }  // namespace mediapipe::tasks::c::test
-
-#ifdef __cplusplus
-}  // extern C
-#endif
 
 #endif  // MEDIAPIPE_TASKS_C_TEST_TEST_UTILS_H_

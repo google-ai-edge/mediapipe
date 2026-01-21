@@ -15,8 +15,9 @@
 #ifndef MEDIAPIPE_UTIL_FILTERING_RELATIVE_VELOCITY_FILTER_H_
 #define MEDIAPIPE_UTIL_FILTERING_RELATIVE_VELOCITY_FILTER_H_
 
+#include <cstddef>
+#include <cstdint>
 #include <deque>
-#include <memory>
 
 #include "absl/time/time.h"
 #include "mediapipe/util/filtering/low_pass_filter.h"
@@ -60,13 +61,13 @@ class RelativeVelocityFilter {
   // Applies filter to the value.
   // @timestamp - timestamp associated with the value (for instance,
   //              timestamp of the frame where you got value from)
+  // @value - value to filter
   // @value_scale - value scale (for instance, if your value is a distance
   //                detected on a frame, it can look same on different
   //                devices but have quite different absolute values due
   //                to different resolution, you should come up with an
   //                appropriate parameter for your particular use case)
-  // @value - value to filter
-  float Apply(absl::Duration timestamp, float value_scale, float value);
+  float Apply(absl::Duration timestamp, float value, float value_scale);
 
  private:
   struct WindowElement {

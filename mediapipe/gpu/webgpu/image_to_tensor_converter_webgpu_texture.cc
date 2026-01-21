@@ -1,7 +1,5 @@
 #include "mediapipe/gpu/webgpu/image_to_tensor_converter_webgpu_texture.h"
 
-#include <webgpu/webgpu_cpp.h>
-
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -16,7 +14,7 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/gpu_buffer.h"
-#include "mediapipe/gpu/gpu_buffer_format.h"
+#include "mediapipe/gpu/webgpu/webgpu_headers.h"
 #include "mediapipe/gpu/webgpu/webgpu_service.h"
 #include "mediapipe/gpu/webgpu/webgpu_texture_view.h"
 #include "mediapipe/gpu/webgpu/webgpu_utils.h"
@@ -31,13 +29,13 @@ constexpr uint32_t kTileSize = 8;
 //
 //  - Output is a 3x3 matrix instead of 4x4. (Padded to 3x4 for WebGPU.)
 //  - Input coordinates are pixels in output rather than [0, 1].
-//  - Output coordinates are pixels in input rather than [0, 1].
 //  - Unused "flip_horizontally" matrix removed.
 void GetTransposedRotatedSubRectToRectTransformMatrixWebGpu(
-    const RotatedRect& sub_rect, int output_width, int output_height,
-    std::array<float, 12>& matrix) {
+    const RotatedRect& sub_rect, int input_width, int input_height,
+    int output_width, int output_height, std::array<float, 12>& matrix) {
   // The resulting matrix is multiplication of below commented out matrices:
-  //   translate_matrix
+  //   post_scale_matrix
+  //     * translate_matrix
   //     * rotate_matrix
   //     * initial_translate_matrix
   //     * scale_matrix
@@ -77,23 +75,32 @@ void GetTransposedRotatedSubRectToRectTransformMatrixWebGpu(
   // {0.0f, 1.0f, h   }
   // {0.0f, 0.0f, 1.0f}
 
+  const float i = 1.0f / input_width;
+  const float j = 1.0f / input_height;
+  // Matrix to convert X,Y from [0, input_size] to [0, 1] range
+  // "post_scale_matrix"
+  //
+  // {   i, 0.0f, 0.0f}
+  // {0.0f,    j, 0.0f}
+  // {0.0f, 0.0f, 1.0f}
+
   // Note: Each column is 4 elements long because WebGPU adds padding.
 
   // column 1
-  matrix[0] = a * e;
-  matrix[1] = a * f;
+  matrix[0] = a * e * i;
+  matrix[1] = a * f * j;
   matrix[2] = 0.0f;
   matrix[3] = 0.0f;
 
   // column 2
-  matrix[4] = -b * f;
-  matrix[5] = b * e;
+  matrix[4] = -b * f * i;
+  matrix[5] = b * e * j;
   matrix[6] = 0.0f;
   matrix[7] = 0.0f;
 
   // column 3
-  matrix[8] = d * f + g - c * e;
-  matrix[9] = -c * f + h - d * e;
+  matrix[8] = (d * f + g - c * e) * i;
+  matrix[9] = (-c * f + h - d * e) * j;
   matrix[10] = 1.0f;
   matrix[11] = 0.0f;
 }
@@ -112,16 +119,19 @@ struct Parameters {
 };
 
 @group(0) @binding(0) var input : texture_2d<f32>;
-@group(0) @binding(1) var output : texture_storage_2d<rgba32float, write>;
-@group(0) @binding(2) var<uniform> params : Parameters;
+@group(0) @binding(1) var input_sampler : sampler;
+@group(0) @binding(2) var output : texture_storage_2d<rgba32float, write>;
+@group(0) @binding(3) var<uniform> params : Parameters;
 
 @compute @workgroup_size(%d, %d)
 fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   if (gid.x >= params.output_size.x || gid.y >= params.output_size.y) {
     return;
   }
-  let input_coord = (params.transform * vec3<f32>(vec2<f32>(gid.xy), 1.0f)).xy;
-  let input_value = textureLoad(input, vec2<i32>(input_coord), 0);
+
+  let output_coord = vec2f(gid.xy) + vec2f(0.5);
+  let input_coord = (params.transform * vec3<f32>(output_coord, 1.0f)).xy;
+  let input_value = textureSampleLevel(input, input_sampler, input_coord, 0);
   let output_value = params.value_transform.x * input_value.xyz
       + vec3<f32>(params.value_transform.y);
   textureStore(
@@ -157,6 +167,13 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
         .size = sizeof(Parameters),
     };
     params_buffer_ = service_.device().CreateBuffer(&buffer_desc);
+
+    // Create sampler
+    wgpu::SamplerDescriptor sampler_desc = {
+        .magFilter = wgpu::FilterMode::Linear,
+        .minFilter = wgpu::FilterMode::Linear,
+    };
+    sampler_ = service_.device().CreateSampler(&sampler_desc);
   }
 
   absl::Status Convert(const mediapipe::Image& input, const RotatedRect& roi,
@@ -174,6 +191,9 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     // TODO: Find out why this workaround is needed.
     // auto image_view = input.GetGpuBuffer().GetReadView<WebGpuTextureView>();
     const GpuBuffer& in_buffer = input.GetGpuBuffer(/*upload_to_gpu=*/false);
+    const int input_width = in_buffer.width();
+    const int input_height = in_buffer.height();
+
     WebGpuTextureView image_view = in_buffer.GetReadView<WebGpuTextureView>();
     wgpu::Texture src_texture = image_view.texture();
 
@@ -186,7 +206,8 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     }
     Parameters params;
     GetTransposedRotatedSubRectToRectTransformMatrixWebGpu(
-        roi, output_width, output_height, params.transform_matrix);
+        roi, input_width, input_height, output_width, output_height,
+        params.transform_matrix);
     params.output_width = output_width;
     params.output_height = output_height;
     MP_ASSIGN_OR_RETURN(auto transform, GetValueRangeTransformation(
@@ -202,8 +223,9 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 
     // Create the bind group.
     // [[group(0), binding(0)]] is the input texture.
-    // [[group(0), binding(1)]] is the output texture.
-    // [[group(0), binding(2)]] is the shader parameters uniform buffer.
+    // [[group(0), binding(1)]] is the sampler.
+    // [[group(0), binding(2)]] is the output texture.
+    // [[group(0), binding(3)]] is the shader parameters uniform buffer.
     wgpu::BindGroupEntry entries[] = {
         {
             .binding = 0,
@@ -211,10 +233,14 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
         },
         {
             .binding = 1,
-            .textureView = dst_texture.CreateView(),
+            .sampler = sampler_,
         },
         {
             .binding = 2,
+            .textureView = dst_texture.CreateView(),
+        },
+        {
+            .binding = 3,
             .buffer = params_buffer_,
             .size = sizeof(Parameters),
         },
@@ -261,6 +287,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   const WebGpuService& service_;
   WebGpuAsyncFuture<wgpu::ComputePipeline> pipeline_;
   wgpu::Buffer params_buffer_;
+  wgpu::Sampler sampler_;
 
   struct Parameters {  // Must match `Parameters` in WGSL above.
     std::array<float, 12> transform_matrix;

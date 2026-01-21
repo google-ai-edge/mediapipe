@@ -1,3 +1,4 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//mediapipe/tasks/metadata:build_defs.bzl", "stamp_metadata_parser_version")
 
 package(

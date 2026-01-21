@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @hide
  */
-public final class LlmTaskRunner implements AutoCloseable {
+final class LlmTaskRunner implements AutoCloseable {
   private final long engineHandle;
   private final AtomicBoolean isLocked = new AtomicBoolean(false);
 
@@ -179,14 +179,24 @@ public final class LlmTaskRunner implements AutoCloseable {
   public void addImage(LlmSession session, MPImage input) {
     long imageHandle = createImage(input);
     try {
-      // TODO: Remove this dummy chunk.
-      // Since AddImage cannot distinguish if start_id is being added,
-      // use a dummy chunk to make sure the start_id is being added properly.
-      nativeAddQueryChunk(session.sessionHandle, "");
       nativeAddImage(session.sessionHandle, imageHandle);
     } finally {
       nativeDeleteSkBitmap(imageHandle);
     }
+  }
+
+  /**
+   * Adds a new audio to the session context.
+   *
+   * @param session The LlmSession to add the audio spectrum to.
+   * @param rawAudioData A array of byte values representing the audio data.
+   */
+  public void addAudio(LlmSession session, byte[] rawAudioData) {
+    if (rawAudioData == null) {
+      throw new IllegalArgumentException("Audio data cannot be null.");
+    }
+
+    nativeAddAudio(session.sessionHandle, rawAudioData);
   }
 
   /**
@@ -208,6 +218,11 @@ public final class LlmTaskRunner implements AutoCloseable {
   /** Invokes the LLM with the given session and calls the callback with the result. */
   public void predictAsync(LlmSession session, long callbackHandle) {
     nativePredictAsync(session.sessionHandle, callbackHandle);
+  }
+
+  /** Cancels pending processes in the session. */
+  public void pendingProcessCancellation(LlmSession session) {
+    nativePendingProcessCancellation(session.sessionHandle);
   }
 
   /** Invokes the native token cost calculator and returns the size of the string in tokens. */
@@ -366,6 +381,8 @@ public final class LlmTaskRunner implements AutoCloseable {
 
   private static native void nativePredictAsync(long sessionPointer, long callbackContextHandle);
 
+  private static native void nativePendingProcessCancellation(long sessionPointer);
+
   private static native int nativeSizeInTokens(long sessionPointer, String input);
 
   private static native long nativeCreateSkBitmap(
@@ -378,4 +395,6 @@ public final class LlmTaskRunner implements AutoCloseable {
   private static native long nativeGetSentencePieceProcessor(long enginePointer);
 
   private static native void nativeUpdateSessionConfig(long sessionPointer, byte[] config);
+
+  private static native void nativeAddAudio(long sessionPointer, byte[] rawAudioData);
 }

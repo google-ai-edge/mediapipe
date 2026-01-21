@@ -193,6 +193,8 @@ class PacketResamplerCalculator : public CalculatorBase {
   // between start_time and end_time.
   bool round_limits_;
 
+  bool header_sent_ = false;
+
   // Allow strategies access to all internal calculator state.
   //
   // The calculator and strategies are intimiately tied together so this should

@@ -13,33 +13,23 @@
 # limitations under the License.
 """MediaPipe language detector task."""
 
+import ctypes
 import dataclasses
 from typing import List, Optional
-
-from mediapipe.python import packet_creator
-from mediapipe.python import packet_getter
-from mediapipe.tasks.cc.components.containers.proto import classifications_pb2
-from mediapipe.tasks.cc.components.processors.proto import classifier_options_pb2
-from mediapipe.tasks.cc.text.text_classifier.proto import text_classifier_graph_options_pb2
+from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
+from mediapipe.tasks.python.components.processors import classifier_options as classifier_options_module
+from mediapipe.tasks.python.components.processors import classifier_options_c as classifier_options_c_module
 from mediapipe.tasks.python.core import base_options as base_options_module
-from mediapipe.tasks.python.core import task_info as task_info_module
-from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-from mediapipe.tasks.python.text.core import base_text_task_api
+from mediapipe.tasks.python.core import base_options_c as base_options_c_module
+from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_module
+from mediapipe.tasks.python.core import mediapipe_c_utils
+from mediapipe.tasks.python.core import serial_dispatcher
 
-_ClassificationResult = classification_result_module.ClassificationResult
 _BaseOptions = base_options_module.BaseOptions
-_TextClassifierGraphOptionsProto = (
-    text_classifier_graph_options_pb2.TextClassifierGraphOptions
-)
-_ClassifierOptionsProto = classifier_options_pb2.ClassifierOptions
-_TaskInfo = task_info_module.TaskInfo
-
-_CLASSIFICATIONS_STREAM_NAME = 'classifications_out'
-_CLASSIFICATIONS_TAG = 'CLASSIFICATIONS'
-_TEXT_IN_STREAM_NAME = 'text_in'
-_TEXT_TAG = 'TEXT'
-_TASK_GRAPH_NAME = 'mediapipe.tasks.text.text_classifier.TextClassifierGraph'
+Category = category_module.Category
+Classifications = classification_result_module.Classifications
+ClassifierOptions = classifier_options_module.ClassifierOptions
 
 
 @dataclasses.dataclass
@@ -57,27 +47,44 @@ class LanguageDetectorResult:
   detections: List[Detection]
 
 
-def _extract_language_detector_result(
-    classification_result: classification_result_module.ClassificationResult,
+class LanguageDetectorPredictionC(ctypes.Structure):
+  """A language code and its probability."""
+
+  _fields_ = [
+      ("language_code", ctypes.c_char_p),
+      ("probability", ctypes.c_float),
+  ]
+
+
+class LanguageDetectorResultC(ctypes.Structure):
+  """Language detector output."""
+
+  _fields_ = [
+      ("predictions", ctypes.POINTER(LanguageDetectorPredictionC)),
+      ("predictions_count", ctypes.c_uint32),
+  ]
+
+
+def _convert_to_python_language_detector_result(
+    c_result: LanguageDetectorResultC,
 ) -> LanguageDetectorResult:
-  """Extracts a LanguageDetectorResult from a ClassificationResult."""
-  if len(classification_result.classifications) != 1:
-    raise ValueError(
-        'The LanguageDetector TextClassifierGraph should have exactly one '
-        'classification head.'
+  """Converts a C LanguageDetectorResult to a Python LanguageDetectorResult."""
+  py_result = LanguageDetectorResult(detections=[])
+  for i in range(c_result.predictions_count):
+    c_prediction = c_result.predictions[i]
+    py_prediction = LanguageDetectorResult.Detection(
+        language_code=c_prediction.language_code.decode("utf-8"),
+        probability=c_prediction.probability,
     )
-  languages_and_scores = classification_result.classifications[0]
-  language_detector_result = LanguageDetectorResult([])
-  for category in languages_and_scores.categories:
-    if category.category_name is None:
-      raise ValueError(
-          'LanguageDetector ClassificationResult has a missing language code.'
-      )
-    prediction = LanguageDetectorResult.Detection(
-        category.category_name, category.score
-    )
-    language_detector_result.detections.append(prediction)
-  return language_detector_result
+    py_result.detections.append(py_prediction)
+  return py_result
+
+
+class LanguageDetectorOptionsC(ctypes.Structure):
+  _fields_ = [
+      ("base_options", base_options_c_module.BaseOptionsC),
+      ("classifier_options", classifier_options_c_module.ClassifierOptionsC),
+  ]
 
 
 @dataclasses.dataclass
@@ -101,7 +108,6 @@ class LanguageDetectorOptions:
       or unknown category names are ignored. Mutually exclusive with
       `category_allowlist`.
   """
-
   base_options: _BaseOptions
   display_names_locale: Optional[str] = None
   max_results: Optional[int] = None
@@ -109,25 +115,58 @@ class LanguageDetectorOptions:
   category_allowlist: Optional[List[str]] = None
   category_denylist: Optional[List[str]] = None
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _TextClassifierGraphOptionsProto:
-    """Generates an TextClassifierOptions protobuf object."""
-    base_options_proto = self.base_options.to_pb2()
-    classifier_options_proto = _ClassifierOptionsProto(
-        score_threshold=self.score_threshold,
-        category_allowlist=self.category_allowlist,
-        category_denylist=self.category_denylist,
-        display_names_locale=self.display_names_locale,
-        max_results=self.max_results,
+  def to_ctypes(self) -> LanguageDetectorOptionsC:
+    """Generates a ctypes LanguageDetectorOptionsC."""
+    base_options_c = self.base_options.to_ctypes()
+    classifier_options_c = (
+        classifier_options_c_module.convert_to_classifier_options_c(
+            classifier_options_module.ClassifierOptions(
+                display_names_locale=self.display_names_locale,
+                max_results=self.max_results,
+                score_threshold=self.score_threshold,
+                category_allowlist=self.category_allowlist,
+                category_denylist=self.category_denylist,
+            )
+        )
     )
 
-    return _TextClassifierGraphOptionsProto(
-        base_options=base_options_proto,
-        classifier_options=classifier_options_proto,
-    )
+    c_options = LanguageDetectorOptionsC()
+    c_options.base_options = base_options_c
+    c_options.classifier_options = classifier_options_c
+    return c_options
 
 
-class LanguageDetector(base_text_task_api.BaseTextTaskApi):
+_CTYPES_SIGNATURES = (
+    mediapipe_c_utils.CStatusFunction(
+        "MpLanguageDetectorCreate",
+        (
+            ctypes.POINTER(LanguageDetectorOptionsC),
+            ctypes.POINTER(ctypes.c_void_p),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        "MpLanguageDetectorDetect",
+        (
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.POINTER(LanguageDetectorResultC),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        "MpLanguageDetectorClose",
+        (
+            ctypes.c_void_p,
+        ),
+    ),
+    mediapipe_c_utils.CFunction(
+        "MpLanguageDetectorCloseResult",
+        [ctypes.POINTER(LanguageDetectorResultC)],
+        None,
+    ),
+)
+
+
+class LanguageDetector:
   """Class that predicts the language of an input text.
 
   This API expects a TFLite model with TFLite Model Metadata that contains the
@@ -142,9 +181,17 @@ class LanguageDetector(base_text_task_api.BaseTextTaskApi):
     (kTfLiteFloat32)
     - 1 output tensor of shape`[1 x N]` where `N` is the number of languages.
   """
+  _lib: serial_dispatcher.SerialDispatcher
+  _handle: ctypes.c_void_p
+
+  def __init__(
+      self, lib: serial_dispatcher.SerialDispatcher, handle: ctypes.c_void_p
+  ):
+    self._lib = lib
+    self._detector_handle = handle
 
   @classmethod
-  def create_from_model_path(cls, model_path: str) -> 'LanguageDetector':
+  def create_from_model_path(cls, model_path: str) -> "LanguageDetector":
     """Creates an `LanguageDetector` object from a TensorFlow Lite model and the default `LanguageDetectorOptions`.
 
     Args:
@@ -160,14 +207,16 @@ class LanguageDetector(base_text_task_api.BaseTextTaskApi):
         file such as invalid file path.
       RuntimeError: If other types of error occurred.
     """
-    base_options = _BaseOptions(model_asset_path=model_path)
-    options = LanguageDetectorOptions(base_options=base_options)
-    return cls.create_from_options(options)
+    return cls.create_from_options(
+        LanguageDetectorOptions(
+            base_options=_BaseOptions(model_asset_path=model_path)
+        )
+    )
 
   @classmethod
   def create_from_options(
       cls, options: LanguageDetectorOptions
-  ) -> 'LanguageDetector':
+  ) -> "LanguageDetector":
     """Creates the `LanguageDetector` object from language detector options.
 
     Args:
@@ -181,15 +230,16 @@ class LanguageDetector(base_text_task_api.BaseTextTaskApi):
         `LanguageDetectorOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-    task_info = _TaskInfo(
-        task_graph=_TASK_GRAPH_NAME,
-        input_streams=[':'.join([_TEXT_TAG, _TEXT_IN_STREAM_NAME])],
-        output_streams=[
-            ':'.join([_CLASSIFICATIONS_TAG, _CLASSIFICATIONS_STREAM_NAME])
-        ],
-        task_options=options,
+    lib = mediapipe_c_bindings_module.load_shared_library(_CTYPES_SIGNATURES)
+
+    ctypes_options = options.to_ctypes()
+
+    detector_handle = ctypes.c_void_p()
+    lib.MpLanguageDetectorCreate(
+        ctypes.byref(ctypes_options),
+        ctypes.byref(detector_handle),
     )
-    return cls(task_info.generate_graph_config())
+    return LanguageDetector(lib=lib, handle=detector_handle)
 
   def detect(self, text: str) -> LanguageDetectorResult:
     """Predicts the language of the input `text`.
@@ -205,16 +255,36 @@ class LanguageDetector(base_text_task_api.BaseTextTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If language detection failed to run.
     """
-    output_packets = self._runner.process(
-        {_TEXT_IN_STREAM_NAME: packet_creator.create_string(text)}
-    )
+    ctypes_result = LanguageDetectorResultC()
 
-    classification_result_proto = classifications_pb2.ClassificationResult()
-    classification_result_proto.CopyFrom(
-        packet_getter.get_proto(output_packets[_CLASSIFICATIONS_STREAM_NAME])
+    self._lib.MpLanguageDetectorDetect(
+        self._detector_handle,
+        text.encode("utf-8"),
+        ctypes.byref(ctypes_result),
     )
+    python_result = _convert_to_python_language_detector_result(ctypes_result)
+    self._lib.MpLanguageDetectorCloseResult(ctypes.byref(ctypes_result))
+    return python_result
 
-    classification_result = _ClassificationResult.create_from_pb2(
-        classification_result_proto
-    )
-    return _extract_language_detector_result(classification_result)
+  def close(self):
+    """Shuts down the MediaPipe task instance."""
+    if not self._detector_handle:
+      return
+    self._lib.MpLanguageDetectorClose(self._detector_handle)
+    self._detector_handle = None
+    self._lib.close()
+
+  def __enter__(self):
+    """Returns `self` upon entering the runtime context."""
+    return self
+
+  def __exit__(self, unused_exc_type, unused_exc_value, unused_traceback):
+    """Shuts down the MediaPipe task instance on exit of the context manager.
+
+    Raises:
+      RuntimeError: If the MediaPipe LanguageDetector task failed to close.
+    """
+    self.close()
+
+  def __del__(self):
+    self.close()

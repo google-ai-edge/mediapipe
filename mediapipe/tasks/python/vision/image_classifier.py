@@ -13,47 +13,120 @@
 # limitations under the License.
 """MediaPipe image classifier task."""
 
+import ctypes
 import dataclasses
-from typing import Callable, Mapping, Optional, List
+from typing import Callable, List, Optional, Tuple
 
-from mediapipe.python import packet_creator
-from mediapipe.python import packet_getter
-from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.python._framework_bindings import packet
-from mediapipe.tasks.cc.components.containers.proto import classifications_pb2
-from mediapipe.tasks.cc.components.processors.proto import classifier_options_pb2
-from mediapipe.tasks.cc.vision.image_classifier.proto import image_classifier_graph_options_pb2
 from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
-from mediapipe.tasks.python.components.containers import rect
+from mediapipe.tasks.python.components.containers import classification_result_c
+from mediapipe.tasks.python.components.processors import classifier_options as classifier_options_module
+from mediapipe.tasks.python.components.processors import classifier_options_c
+from mediapipe.tasks.python.core import async_result_dispatcher
 from mediapipe.tasks.python.core import base_options as base_options_module
-from mediapipe.tasks.python.core import task_info as task_info_module
+from mediapipe.tasks.python.core import base_options_c
+from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
+from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-from mediapipe.tasks.python.vision.core import base_vision_task_api
+from mediapipe.tasks.python.vision.core import image as image_lib
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
-from mediapipe.tasks.python.vision.core import vision_task_running_mode
+from mediapipe.tasks.python.vision.core import image_processing_options_c
+from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
 ImageClassifierResult = classification_result_module.ClassificationResult
-_NormalizedRect = rect.NormalizedRect
 _BaseOptions = base_options_module.BaseOptions
-_ImageClassifierGraphOptionsProto = (
-    image_classifier_graph_options_pb2.ImageClassifierGraphOptions
-)
-_ClassifierOptionsProto = classifier_options_pb2.ClassifierOptions
-_RunningMode = vision_task_running_mode.VisionTaskRunningMode
+_ClassifierOptions = classifier_options_module.ClassifierOptions
+_RunningMode = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_TaskInfo = task_info_module.TaskInfo
+_AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 
-_CLASSIFICATIONS_STREAM_NAME = 'classifications_out'
-_CLASSIFICATIONS_TAG = 'CLASSIFICATIONS'
-_IMAGE_IN_STREAM_NAME = 'image_in'
-_IMAGE_OUT_STREAM_NAME = 'image_out'
-_IMAGE_TAG = 'IMAGE'
-_NORM_RECT_STREAM_NAME = 'norm_rect_in'
-_NORM_RECT_TAG = 'NORM_RECT'
-_TASK_GRAPH_NAME = (
-    'mediapipe.tasks.vision.image_classifier.ImageClassifierGraph'
+
+_C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
+    None,
+    ctypes.c_int32,  # MpStatus
+    ctypes.POINTER(classification_result_c.ClassificationResultC),
+    ctypes.c_void_p,  # MpImage
+    ctypes.c_int64,  # timestamp_ms
 )
-_MICRO_SECONDS_PER_MILLISECOND = 1000
+
+
+class ImageClassifierOptionsC(ctypes.Structure):
+  """The ctypes struct for ImageClassifierOptions."""
+
+  _fields_ = [
+      ("base_options", base_options_c.BaseOptionsC),
+      ("running_mode", ctypes.c_int),
+      (
+          "classifier_options",
+          classifier_options_c.ClassifierOptionsC,
+      ),
+      ("result_callback", _C_TYPES_RESULT_CALLBACK),
+  ]
+
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_c_options(
+      cls,
+      base_options: base_options_c.BaseOptionsC,
+      running_mode: _RunningMode,
+      classifier_options: classifier_options_c.ClassifierOptionsC,
+      result_callback: _C_TYPES_RESULT_CALLBACK,
+  ) -> "ImageClassifierOptionsC":
+    """Creates an ImageClassifierOptionsC object from the given options."""
+    return cls(
+        base_options=base_options,
+        running_mode=running_mode.ctype,
+        classifier_options=classifier_options,
+        result_callback=result_callback,
+    )
+
+
+_CTYPES_SIGNATURES = (
+    mediapipe_c_utils.CStatusFunction(
+        "MpImageClassifierCreate",
+        (
+            ctypes.POINTER(ImageClassifierOptionsC),
+            ctypes.POINTER(ctypes.c_void_p),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        "MpImageClassifierClassifyImage",
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.POINTER(classification_result_c.ClassificationResultC),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        "MpImageClassifierClassifyForVideo",
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.c_int64,
+            ctypes.POINTER(classification_result_c.ClassificationResultC),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        "MpImageClassifierClassifyAsync",
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.c_int64,
+        ),
+    ),
+    mediapipe_c_utils.CFunction(
+        "MpImageClassifierCloseResult",
+        [ctypes.POINTER(classification_result_c.ClassificationResultC)],
+        None,
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        "MpImageClassifierClose",
+        (ctypes.c_void_p,),
+    ),
+)
 
 
 @dataclasses.dataclass
@@ -94,31 +167,11 @@ class ImageClassifierOptions:
   category_allowlist: Optional[List[str]] = None
   category_denylist: Optional[List[str]] = None
   result_callback: Optional[
-      Callable[[ImageClassifierResult, image_module.Image, int], None]
+      Callable[[ImageClassifierResult, image_lib.Image, int], None]
   ] = None
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _ImageClassifierGraphOptionsProto:
-    """Generates an ImageClassifierOptions protobuf object."""
-    base_options_proto = self.base_options.to_pb2()
-    base_options_proto.use_stream_mode = (
-        False if self.running_mode == _RunningMode.IMAGE else True
-    )
-    classifier_options_proto = _ClassifierOptionsProto(
-        score_threshold=self.score_threshold,
-        category_allowlist=self.category_allowlist,
-        category_denylist=self.category_denylist,
-        display_names_locale=self.display_names_locale,
-        max_results=self.max_results,
-    )
 
-    return _ImageClassifierGraphOptionsProto(
-        base_options=base_options_proto,
-        classifier_options=classifier_options_proto,
-    )
-
-
-class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
+class ImageClassifier:
   """Class that performs image classification on images.
 
   The API expects a TFLite model with optional, but strongly recommended,
@@ -154,8 +207,33 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
   https://github.com/google/mediapipe/blob/6cdc6443b6a7ed662744e2a2ce2d58d9c83e6d6f/mediapipe/tasks/metadata/metadata_schema.fbs#L456
   """
 
+  _lib: serial_dispatcher.SerialDispatcher
+  _handle: ctypes.c_void_p
+  _dispatcher: _AsyncResultDispatcher
+  _async_callback: _C_TYPES_RESULT_CALLBACK
+
+  def __init__(
+      self,
+      lib: serial_dispatcher.SerialDispatcher,
+      handle: ctypes.c_void_p,
+      dispatcher: _AsyncResultDispatcher,
+      async_callback: _C_TYPES_RESULT_CALLBACK,
+  ):
+    """Initializes the `ImageClassifier` object.
+
+    Args:
+      lib: The dispatch library to use for the image classifier.
+      handle: The C pointer to the image classifier.
+      dispatcher: The async result handler for the image classifier.
+      async_callback: The c callback for the image classifier.
+    """
+    self._lib = lib
+    self._handle = handle
+    self._dispatcher = dispatcher
+    self._async_callback = async_callback
+
   @classmethod
-  def create_from_model_path(cls, model_path: str) -> 'ImageClassifier':
+  def create_from_model_path(cls, model_path: str) -> "ImageClassifier":
     """Creates an `ImageClassifier` object from a TensorFlow Lite model and the default `ImageClassifierOptions`.
 
     Note that the created `ImageClassifier` instance is in image mode, for
@@ -182,7 +260,7 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
   @classmethod
   def create_from_options(
       cls, options: ImageClassifierOptions
-  ) -> 'ImageClassifier':
+  ) -> "ImageClassifier":
     """Creates the `ImageClassifier` object from image classifier options.
 
     Args:
@@ -196,50 +274,62 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
         `ImageClassifierOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
+    running_mode_module.validate_running_mode(
+        options.running_mode, options.result_callback
+    )
 
-    def packets_callback(output_packets: Mapping[str, packet.Packet]):
-      if output_packets[_IMAGE_OUT_STREAM_NAME].is_empty():
-        return
+    lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
-      classification_result_proto = classifications_pb2.ClassificationResult()
-      classification_result_proto.CopyFrom(
-          packet_getter.get_proto(output_packets[_CLASSIFICATIONS_STREAM_NAME])
-      )
-      image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
-      timestamp = output_packets[_IMAGE_OUT_STREAM_NAME].timestamp
-      options.result_callback(
-          ImageClassifierResult.create_from_pb2(classification_result_proto),
-          image,
-          timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
-      )
+    def convert_result(
+        c_result_ptr: ctypes.POINTER(
+            classification_result_c.ClassificationResultC
+        ),
+        image_ptr: ctypes.c_void_p,
+        timestamp_ms: int,
+    ) -> Tuple[ImageClassifierResult, image_lib.Image, int]:
+      c_result = c_result_ptr[0]
+      py_result = ImageClassifierResult.from_ctypes(c_result)
+      py_image = image_lib.Image.create_from_ctypes(image_ptr)
+      return (py_result, py_image, timestamp_ms)
 
-    task_info = _TaskInfo(
-        task_graph=_TASK_GRAPH_NAME,
-        input_streams=[
-            ':'.join([_IMAGE_TAG, _IMAGE_IN_STREAM_NAME]),
-            ':'.join([_NORM_RECT_TAG, _NORM_RECT_STREAM_NAME]),
-        ],
-        output_streams=[
-            ':'.join([_CLASSIFICATIONS_TAG, _CLASSIFICATIONS_STREAM_NAME]),
-            ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME]),
-        ],
-        task_options=options,
+    dispatcher = _AsyncResultDispatcher(converter=convert_result)
+    c_callback = dispatcher.wrap_callback(
+        options.result_callback, _C_TYPES_RESULT_CALLBACK
+    )
+    options_c = ImageClassifierOptionsC.from_c_options(
+        base_options=options.base_options.to_ctypes(),
+        running_mode=options.running_mode,
+        classifier_options=classifier_options_c.convert_to_classifier_options_c(
+            _ClassifierOptions(
+                max_results=options.max_results,
+                score_threshold=options.score_threshold,
+                category_allowlist=options.category_allowlist,
+                category_denylist=options.category_denylist,
+                display_names_locale=options.display_names_locale,
+            )
+        ),
+        result_callback=c_callback,
+    )
+    classifier_handle = ctypes.c_void_p()
+    lib.MpImageClassifierCreate(
+        ctypes.byref(options_c), ctypes.byref(classifier_handle)
     )
     return cls(
-        task_info.generate_graph_config(
-            enable_flow_limiting=options.running_mode
-            == _RunningMode.LIVE_STREAM
-        ),
-        options.running_mode,
-        packets_callback if options.result_callback else None,
+        lib=lib,
+        handle=classifier_handle,
+        dispatcher=dispatcher,
+        async_callback=c_callback,
     )
 
   def classify(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
       image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> ImageClassifierResult:
     """Performs image classification on the provided MediaPipe Image.
+
+    Only use this method when the ImageClassifier is created with the image
+    running mode.
 
     Args:
       image: MediaPipe Image.
@@ -252,26 +342,27 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If image classification failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    c_result = classification_result_c.ClassificationResultC()
+    options_c = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    output_packets = self._process_image_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ),
-    })
-
-    classification_result_proto = classifications_pb2.ClassificationResult()
-    classification_result_proto.CopyFrom(
-        packet_getter.get_proto(output_packets[_CLASSIFICATIONS_STREAM_NAME])
+    self._lib.MpImageClassifierClassifyImage(
+        self._handle,
+        c_image,
+        options_c,
+        ctypes.byref(c_result),
     )
 
-    return ImageClassifierResult.create_from_pb2(classification_result_proto)
+    result = ImageClassifierResult.from_ctypes(c_result)
+    self._lib.MpImageClassifierCloseResult(ctypes.byref(c_result))
+    return result
 
   def classify_for_video(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
       timestamp_ms: int,
       image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> ImageClassifierResult:
@@ -294,28 +385,28 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If image classification failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    c_result = classification_result_c.ClassificationResultC()
+    options_c = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    output_packets = self._process_video_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
-            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
-        ),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-    })
-
-    classification_result_proto = classifications_pb2.ClassificationResult()
-    classification_result_proto.CopyFrom(
-        packet_getter.get_proto(output_packets[_CLASSIFICATIONS_STREAM_NAME])
+    self._lib.MpImageClassifierClassifyForVideo(
+        self._handle,
+        c_image,
+        options_c,
+        timestamp_ms,
+        ctypes.byref(c_result),
     )
 
-    return ImageClassifierResult.create_from_pb2(classification_result_proto)
+    result = ImageClassifierResult.from_ctypes(c_result)
+    self._lib.MpImageClassifierCloseResult(ctypes.byref(c_result))
+    return result
 
   def classify_async(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
       timestamp_ms: int,
       image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> None:
@@ -345,14 +436,46 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If the current input timestamp is smaller than what the image
         classifier has already processed.
     """
-    normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, image
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    options_c = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
     )
-    self._send_live_stream_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
-            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
-        ),
-        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            normalized_rect.to_pb2()
-        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-    })
+    self._lib.MpImageClassifierClassifyAsync(
+        self._handle,
+        c_image,
+        options_c,
+        timestamp_ms,
+    )
+
+  def close(self):
+    """Closes ImageClassifier."""
+    if not self._handle:
+      return
+    self._lib.MpImageClassifierClose(self._handle)
+    self._handle = None
+    self._dispatcher.close()
+    self._lib.close()
+
+  def __enter__(self):
+    """Returns `self` upon entering the runtime context."""
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    """Closes ImageClassifier and exits the context manager.
+
+    Args:
+      exc_type: The exception type that caused the context manager to exit.
+      exc_value: The exception value that caused the context manager to exit.
+      traceback: The exception traceback that caused the context manager to
+        exit.
+
+    Raises:
+      RuntimeError: If the MediaPipe Image Classifier task failed to
+      close.
+    """
+    self.close()
+
+  def __del__(self):
+    self.close()

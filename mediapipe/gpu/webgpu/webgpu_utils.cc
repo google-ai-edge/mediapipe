@@ -1,11 +1,5 @@
 #include "mediapipe/gpu/webgpu/webgpu_utils.h"
 
-#include <webgpu/webgpu_cpp.h>
-#ifdef __EMSCRIPTEN__
-#include <emscripten/em_js.h>
-#include <emscripten/emscripten.h>
-#endif
-
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -17,7 +11,13 @@
 #include "absl/status/statusor.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/gpu/webgpu/webgpu_headers.h"
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten/em_js.h>
+
 #include "mediapipe/web/jspi_check.h"
+#endif  // __EMSCRIPTEN__
 
 namespace mediapipe {
 
@@ -25,7 +25,9 @@ namespace {
 
 static absl::NoDestructor<wgpu::Instance> kWebGpuInstance([] {
   wgpu::InstanceDescriptor instance_desc = {};
-  instance_desc.capabilities.timedWaitAnyEnable = true;
+  static const auto kTimedWaitAny = wgpu::InstanceFeatureName::TimedWaitAny;
+  instance_desc.requiredFeatureCount = 1;
+  instance_desc.requiredFeatures = &kTimedWaitAny;
   return wgpu::CreateInstance(&instance_desc);
 }());
 
@@ -34,7 +36,11 @@ static absl::NoDestructor<wgpu::Instance> kWebGpuInstance([] {
 EM_ASYNC_JS(void, mediapipe_map_buffer_jspi,
             (WGPUBuffer buffer_handle, uint8_t* data), {
               const buffer = WebGPU.getJsObject(buffer_handle);
-              await buffer.mapAsync(GPUMapMode.READ);
+              if ('mapSync' in buffer) {
+                buffer.mapSync(GPUMapMode.READ);
+              } else {
+                await buffer.mapAsync(GPUMapMode.READ);
+              }
               const mapped = buffer.getMappedRange();
               HEAPU8.set(new Uint8Array(mapped), data);
               buffer.unmap();
@@ -128,7 +134,7 @@ template class WebGpuAsyncFuture<wgpu::RenderPipeline>;
 
 wgpu::ShaderModule CreateWgslShader(wgpu::Device device, const char* const code,
                                     const char* label) {
-  wgpu::ShaderModuleWGSLDescriptor wgsl;
+  wgpu::ShaderSourceWGSL wgsl;
   wgsl.code = code;
   wgpu::ShaderModuleDescriptor desc;
   desc.nextInChain = &wgsl;
@@ -295,14 +301,12 @@ absl::StatusOr<wgpu::Texture> CreateWebGpuTexture2dAndUploadData(
   return texture;
 }
 
-#ifdef __EMSCRIPTEN__
-
-// TODO: Implement when not using emscripten.
 absl::Status GetTexture2dData(const wgpu::Device& device,
                               const wgpu::Queue& queue,
                               const wgpu::Texture& texture, uint32_t width,
                               uint32_t height, uint32_t bytes_per_row,
                               uint8_t* dst) {
+#ifdef __EMSCRIPTEN__
   if (!IsJspiAvailable()) {
     return absl::UnimplementedError("GetTexture2dData requires JSPI.");
   }
@@ -330,8 +334,10 @@ absl::Status GetTexture2dData(const wgpu::Device& device,
   webgpu_buffer.Destroy();
 
   return absl::OkStatus();
-}
-
+#else
+  // TODO: Implement when not using emscripten.
+  return absl::UnimplementedError("GetTexture2dData requires __EMSCRIPTEN__.");
 #endif  // __EMSCRIPTEN__
+}
 
 }  // namespace mediapipe

@@ -17,8 +17,6 @@
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe:__subpackages__"])
-
 py_library(
     name = "object_detector_import",
     srcs = ["__init__.py"],

@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/strip.h"
@@ -59,9 +60,10 @@ namespace mpms = mediapipe::mediasequence;
 // Sink calculator to package streams into tf.SequenceExamples.
 //
 // The calculator takes a tf.SequenceExample as a side input and then adds
-// the data from inputs to the SequenceExample with timestamps. Additional
-// context features can be supplied verbatim in the calculator's options. The
-// SequenceExample will conform to the description in media_sequence.h.
+// the data from inputs to the SequenceExample with timestamps. If no SidePacket
+// is provided, an empty SequenceExample is created. Additional context features
+// can be supplied verbatim in the calculator's options. The SequenceExample
+// will conform to the description in media_sequence.h.
 //
 // The supported input stream tags are:
 // * "IMAGE", which stores the encoded images from the
@@ -116,8 +118,12 @@ uint8_t ConvertFloatToByte(const float float_value) {
 class PackMediaSequenceCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
-    RET_CHECK(cc->InputSidePackets().HasTag(kSequenceExampleTag));
-    cc->InputSidePackets().Tag(kSequenceExampleTag).Set<tf::SequenceExample>();
+    if (cc->InputSidePackets().HasTag(kSequenceExampleTag)) {
+      cc->InputSidePackets()
+          .Tag(kSequenceExampleTag)
+          .Set<tf::SequenceExample>();
+    }
+
     if (cc->InputSidePackets().HasTag(kClipMediaIdTag)) {
       cc->InputSidePackets().Tag(kClipMediaIdTag).Set<std::string>();
     }
@@ -214,10 +220,14 @@ class PackMediaSequenceCalculator : public CalculatorBase {
   }
 
   absl::Status Open(CalculatorContext* cc) override {
-    sequence_ = ::absl::make_unique<tf::SequenceExample>(
-        cc->InputSidePackets()
-            .Tag(kSequenceExampleTag)
-            .Get<tf::SequenceExample>());
+    if (cc->InputSidePackets().HasTag(kSequenceExampleTag)) {
+      sequence_ = ::absl::make_unique<tf::SequenceExample>(
+          cc->InputSidePackets()
+              .Tag(kSequenceExampleTag)
+              .Get<tf::SequenceExample>());
+    } else {
+      sequence_ = ::absl::make_unique<tf::SequenceExample>();
+    }
     if (cc->InputSidePackets().HasTag(kClipMediaIdTag) &&
         !cc->InputSidePackets().Tag(kClipMediaIdTag).IsEmpty()) {
       clip_media_id_ =
@@ -671,16 +681,16 @@ class PackMediaSequenceCalculator : public CalculatorBase {
         std::vector<int> predicted_label_ids;
         for (auto& detection :
              cc->Inputs().Tag(tag).Get<std::vector<Detection>>()) {
-          if (detection.location_data().format() ==
-                  LocationData::BOUNDING_BOX ||
-              detection.location_data().format() ==
-                  LocationData::RELATIVE_BOUNDING_BOX) {
+          auto location_format = detection.location_data().format();
+          if (location_format == LocationData::BOUNDING_BOX ||
+              location_format == LocationData::RELATIVE_BOUNDING_BOX) {
             if (mpms::HasImageHeight(*sequence_) &&
                 mpms::HasImageWidth(*sequence_)) {
               image_height = mpms::GetImageHeight(*sequence_);
               image_width = mpms::GetImageWidth(*sequence_);
             }
-            if (image_height == -1 || image_width == -1) {
+            if (location_format != LocationData::RELATIVE_BOUNDING_BOX &&
+                (image_height == -1 || image_width == -1)) {
               return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
                      << "Images must be provided with bounding boxes or the "
                         "image "

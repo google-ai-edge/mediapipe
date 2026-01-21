@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 licenses(["notice"])
 
 package(
@@ -40,6 +42,7 @@ cc_library(
         "//mediapipe:android": [
             "android_asset_util_jni.cc",
             "android_packet_creator_jni.cc",
+            "resources_jni.cc",
         ],
     }) + select({
         "//conditions:default": [
@@ -64,6 +67,7 @@ cc_library(
         "//mediapipe:android": [
             "android_asset_util_jni.h",
             "android_packet_creator_jni.h",
+            "resources_jni.h",
         ],
     }) + select({
         "//conditions:default": [
@@ -113,7 +117,7 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ] + select({
         "//conditions:default": [
             "//mediapipe/framework/port:file_helpers",
@@ -125,6 +129,7 @@ cc_library(
     }) + select({
         "//conditions:default": [
             "//mediapipe/gpu:egl_surface_holder",
+            "//mediapipe/gpu:gl_app_texture_support",
             "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_context",
@@ -148,6 +153,7 @@ cc_library(
     deps = [
         ":class_registry",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/synchronization",
     ] + select({
@@ -207,6 +213,7 @@ cc_library(
     textual_hdrs = [
         "android_asset_util_jni.h",
         "android_packet_creator_jni.h",
+        "resources_jni.h",
     ],
     visibility = ["//visibility:private"],
 )

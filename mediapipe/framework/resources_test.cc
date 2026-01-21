@@ -93,6 +93,30 @@ TEST(Resources, CanCreateDefaultResourcesWithMappingAndReadFileContents) {
   EXPECT_EQ(resource->ToStringView(), "File system calculator contents\n");
 }
 
+TEST(Resources, CanResolveIdWithMapping) {
+  absl::flat_hash_map<std::string, std::string> mapping = {
+      {"$CUSTOM_ID", "mediapipe/framework/testdata/resource_calculator.data"}};
+  std::unique_ptr<Resources> resources =
+      CreateDefaultResourcesWithMapping(std::move(mapping));
+
+  MP_ASSERT_OK_AND_ASSIGN(std::string resolved_id,
+                          resources->ResolveId("$CUSTOM_ID", /*options=*/{}));
+  EXPECT_EQ(resolved_id,
+            "mediapipe/framework/testdata/resource_calculator.data");
+}
+
+TEST(Resources, CanResolveUnmappedIdWithMapping) {
+  absl::flat_hash_map<std::string, std::string> mapping = {
+      {"$CUSTOM_ID", "mediapipe/framework/testdata/resource_calculator.data"}};
+  std::unique_ptr<Resources> resources =
+      CreateDefaultResourcesWithMapping(std::move(mapping));
+
+  MP_ASSERT_OK_AND_ASSIGN(
+      std::string resolved_id,
+      resources->ResolveId("$CUSTOM_ID_UNKNOWN", /*options=*/{}));
+  EXPECT_EQ(resolved_id, "$CUSTOM_ID_UNKNOWN");
+}
+
 class CustomResources : public Resources {
  public:
   absl::StatusOr<std::unique_ptr<Resource>> Get(

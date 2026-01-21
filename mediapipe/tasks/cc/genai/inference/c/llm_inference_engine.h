@@ -157,6 +157,11 @@ typedef struct {
 
   // Optional setting to prefer specific backend instead.
   LlmPreferredBackend preferred_backend;
+
+  // Whether to pass the audio modality settings.
+  bool enable_audio_modality;
+  // Maximum audio sequence length.
+  size_t max_audio_sequence_length;
 } LlmModelSettings;
 
 // LlmPromptTemplates defines the prompt templates for the session.
@@ -206,6 +211,9 @@ typedef struct {
 
   // Whether to configure the graph to include the vision modality.
   bool enable_vision_modality;
+
+  // Whether to configure the graph to include the audio modality.
+  bool enable_audio_modality;
 
   // Prompt templates to use for the session.
   // If not provided, the default prompt templates will be used.
@@ -308,6 +316,10 @@ ODML_EXPORT int LlmInferenceEngine_Session_PredictAsync(
     void (*callback)(void* callback_context,
                      LlmResponseContext* response_context));
 
+// Request cancellation for pending processes.
+ODML_EXPORT int LlmInferenceEngine_Session_PendingProcessCancellation(
+    LlmInferenceEngine_Session* session, char** error_msg);
+
 // Clone the provided session.
 ODML_EXPORT int LlmInferenceEngine_Session_Clone(
     LlmInferenceEngine_Session* session,
@@ -317,6 +329,12 @@ ODML_EXPORT int LlmInferenceEngine_Session_Clone(
 // length in tokens. Returns -1 if tokenization fails.
 ODML_EXPORT int LlmInferenceEngine_Session_SizeInTokens(
     LlmInferenceEngine_Session* session, const char* input, char** error_msg);
+
+// Adds an audio to the session.
+// The audio_bytes is expected to be the raw data of a mono .wav file.
+ODML_EXPORT int LlmInferenceEngine_Session_AddAudio(
+    LlmInferenceEngine_Session* session, const char* audio_bytes,
+    int audio_bytes_size, char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

@@ -66,7 +66,9 @@ class TextEmbedderTest(parameterized.TestCase):
 
   def test_create_from_options_fails_with_invalid_model_path(self):
     with self.assertRaisesRegex(
-        RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'):
+        FileNotFoundError,
+        'Unable to open file at /path/to/invalid/model.tflite',
+    ):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite')
       options = _TextEmbedderOptions(base_options=base_options)
@@ -108,7 +110,7 @@ class TextEmbedderTest(parameterized.TestCase):
           False,
           _BERT_MODEL_FILE,
           ModelFileType.FILE_NAME,
-          0.9624276,
+          0.9624276,∂ç
           512,
           (21.2054, 19.6843),
       ),

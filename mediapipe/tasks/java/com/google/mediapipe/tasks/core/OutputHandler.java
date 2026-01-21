@@ -72,6 +72,8 @@ public class OutputHandler<OutputT extends TaskResult, InputT> {
   protected ErrorListener errorListener;
   // The cached task result for non latency sensitive use cases.
   protected OutputT cachedTaskResult;
+  // The cached exception for non latency sensitive use cases.
+  private MediaPipeException cachedException = null;
   // The latest output timestamp.
   protected long latestOutputTimestamp = -1;
   // Whether the output handler should react to timestamp-bound changes by outputting empty packets.
@@ -122,6 +124,11 @@ public class OutputHandler<OutputT extends TaskResult, InputT> {
 
   /* Returns the cached task result object. */
   public OutputT retrieveCachedTaskResult() {
+    if (cachedException != null) {
+      MediaPipeException e = cachedException;
+      cachedException = null;
+      throw e;
+    }
     OutputT taskResult = cachedTaskResult;
     cachedTaskResult = null;
     return taskResult;
@@ -149,6 +156,7 @@ public class OutputHandler<OutputT extends TaskResult, InputT> {
         resultListener.run(taskResult, taskInput);
       }
     } catch (MediaPipeException e) {
+      cachedException = e;
       if (errorListener != null) {
         errorListener.onError(e);
       } else {

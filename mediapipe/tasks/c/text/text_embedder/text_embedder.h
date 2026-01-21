@@ -19,15 +19,21 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/embedding_result.h"
 #include "mediapipe/tasks/c/components/processors/embedder_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
 
 #ifndef MP_EXPORT
+#if defined(_MSC_VER)
+#define MP_EXPORT __declspec(dllexport)
+#else
 #define MP_EXPORT __attribute__((visibility("default")))
+#endif  // _MSC_VER
 #endif  // MP_EXPORT
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+typedef struct MpTextEmbedderInternal* MpTextEmbedderPtr;
 typedef struct EmbeddingResult TextEmbedderResult;
 
 // The options for configuring a MediaPipe text embedder task.
@@ -42,40 +48,58 @@ struct TextEmbedderOptions {
 };
 
 // Creates a TextEmbedder from the provided `options`.
-// Returns a pointer to the text embedder on success.
-// If an error occurs, returns `nullptr` and sets the error parameter to an
-// an error message (if `error_msg` is not `nullptr`). You must free the memory
-// allocated for the error message.
-MP_EXPORT void* text_embedder_create(struct TextEmbedderOptions* options,
-                                     char** error_msg);
+// If successful, returns `kMpOk` and sets `*embedder` to the new
+// `MpTextEmbedderPtr`.
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `MpErrorFree()`.
+MP_EXPORT MpStatus MpTextEmbedderCreate(struct TextEmbedderOptions* options,
+                                        MpTextEmbedderPtr* embedder,
+                                        char** error_msg);
 
-// Performs embedding extraction on the input `text`. Returns `0` on success.
-// If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not `nullptr`). You must free the memory
-// allocated for the error message.
-MP_EXPORT int text_embedder_embed(void* embedder, const char* utf8_str,
-                                  TextEmbedderResult* result, char** error_msg);
+// Performs embedding extraction on the input `utf8_str`.
+// If successful, returns `kMpOk` and sets `*result` to the new
+// `TextEmbedderResult`.
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `MpErrorFree()`.
+MP_EXPORT MpStatus MpTextEmbedderEmbed(MpTextEmbedderPtr embedder,
+                                       const char* utf8_str,
+                                       TextEmbedderResult* result,
+                                       char** error_msg);
 
 // Frees the memory allocated inside a TextEmbedderResult result. Does not
 // free the result pointer itself.
-MP_EXPORT void text_embedder_close_result(TextEmbedderResult* result);
+MP_EXPORT void MpTextEmbedderCloseResult(TextEmbedderResult* result);
 
 // Shuts down the TextEmbedder when all the work is done. Frees all memory.
-// If an error occurs, returns an error code and sets the error parameter to an
-// an error message (if `error_msg` is not `nullptr`). You must free the memory
-// allocated for the error message.
-MP_EXPORT int text_embedder_close(void* embedder, char** error_msg);
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `MpErrorFree()`.
+MP_EXPORT MpStatus MpTextEmbedderClose(MpTextEmbedderPtr embedder,
+                                       char** error_msg);
 
 // Utility function to compute cosine similarity [1] between two embeddings.
-// May return an InvalidArgumentError if e.g. the embeddings are of different
-// types (quantized vs. float), have different sizes, or have a an L2-norm of
-// 0.
+// Returns `kMpOk` on success, or an error status if e.g. the embeddings are
+// of different types (quantized vs. float), have different sizes, or have a
+// an L2-norm of 0.
+//
+// To obtain a detailed error, `error_msg` must be non-null pointer to a
+// `char*`, which will be populated with a newly-allocated error message upon
+// failure. It's the caller responsibility to free the error message with
+// `MpErrorFree()`.
 //
 // [1]: https://en.wikipedia.org/wiki/Cosine_similarity
-MP_EXPORT int text_embedder_cosine_similarity(const struct Embedding* u,
-                                              const struct Embedding* v,
-                                              double* similarity,
-                                              char** error_msg);
+MP_EXPORT MpStatus MpTextEmbedderCosSimilarity(const struct Embedding* u,
+                                               const struct Embedding* v,
+                                               double* similarity,
+                                               char** error_msg);
 
 #ifdef __cplusplus
 }  // extern C

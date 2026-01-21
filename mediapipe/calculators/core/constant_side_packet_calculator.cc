@@ -96,6 +96,10 @@ class ConstantSidePacketCalculator : public CalculatorBase {
         packet.Set<TimeSeriesHeader>();
       } else if (packet_options.has_int64_value()) {
         packet.Set<int64_t>();
+      } else if (packet_options.has_float_vector_value()) {
+        packet.Set<std::vector<float>>();
+      } else if (packet_options.has_int_vector_value()) {
+        packet.Set<std::vector<int>>();
       } else {
         return absl::InvalidArgumentError(
             "None of supported values were specified in options.");
@@ -145,6 +149,21 @@ class ConstantSidePacketCalculator : public CalculatorBase {
             packet_options.time_series_header_value()));
       } else if (packet_options.has_int64_value()) {
         packet.Set(MakePacket<int64_t>(packet_options.int64_value()));
+      } else if (packet_options.has_float_vector_value()) {
+        std::vector<float> float_vector_values;
+        for (const auto& value :
+             packet_options.float_vector_value().float_value()) {
+          float_vector_values.push_back(value);
+        }
+        packet.Set(
+            MakePacket<std::vector<float>>(std::move(float_vector_values)));
+      } else if (packet_options.has_int_vector_value()) {
+        std::vector<int> int_vector_values;
+        for (const auto& value :
+             packet_options.int_vector_value().int_value()) {
+          int_vector_values.push_back(value);
+        }
+        packet.Set(MakePacket<std::vector<int>>(std::move(int_vector_values)));
       } else {
         return absl::InvalidArgumentError(
             "None of supported values were specified in options.");

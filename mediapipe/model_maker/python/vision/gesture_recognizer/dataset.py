@@ -24,9 +24,9 @@ from mediapipe.model_maker.python.core.data import classification_dataset
 from mediapipe.model_maker.python.core.utils import model_util
 from mediapipe.model_maker.python.vision.gesture_recognizer import constants
 from mediapipe.model_maker.python.vision.gesture_recognizer import metadata_writer
-from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.vision import hand_landmarker as hand_landmarker_module
+from mediapipe.tasks.python.vision.core import image as image_module
 
 _Image = image_module.Image
 _HandLandmarker = hand_landmarker_module.HandLandmarker

@@ -21,7 +21,6 @@ from mediapipe.model_maker.python.vision import image_classifier
 from mediapipe.model_maker.python.vision import gesture_recognizer
 from mediapipe.model_maker.python.text import text_classifier
 from mediapipe.model_maker.python.vision import object_detector
-from mediapipe.model_maker.python.vision import face_stylizer
 
 # Remove duplicated and non-public API
 del python

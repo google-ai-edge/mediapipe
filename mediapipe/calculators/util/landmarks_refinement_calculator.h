@@ -15,30 +15,16 @@
 #ifndef MEDIAPIPE_CALCULATORS_UTIL_LANDMARKS_REFINEMENT_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_UTIL_LANDMARKS_REFINEMENT_CALCULATOR_H_
 
-#include "mediapipe/framework/api2/node.h"
-#include "mediapipe/framework/api2/port.h"
+#include "mediapipe/calculators/util/landmarks_refinement_calculator.pb.h"
+#include "mediapipe/framework/api3/contract.h"
+#include "mediapipe/framework/api3/node.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 
-namespace mediapipe {
-
-namespace api2 {
+namespace mediapipe::api3 {
 
 // A calculator to refine one set of landmarks with another.
 //
-// Inputs:
-//   LANDMARKS: Multiple NormalizedLandmarkList to use for
-//     refinement. They will be applied to the resulting REFINED_LANDMARKS in
-//     the provided order. Each list should be non empty and contain the same
-//     amount of landmarks as indexes in mapping. Number of lists should be the
-//     same as number of refinements in options.
-//
-// Outputs:
-//   REFINED_LANDMARKS: A NormalizedLandmarkList with refined landmarks. Number
-//     of produced landmarks is equal to to the maximum index mapping number in
-//     calculator options (calculator verifies that there are no gaps in the
-//     mapping).
-//
-// Examples config:
+// Example config:
 //   node {
 //     calculator: "LandmarksRefinementCalculator"
 //     input_stream: "LANDMARKS:0:mesh_landmarks"
@@ -68,18 +54,28 @@ namespace api2 {
 //     }
 //   }
 //
-class LandmarksRefinementCalculator : public NodeIntf {
- public:
-  static constexpr Input<::mediapipe::NormalizedLandmarkList>::Multiple
-      kLandmarks{"LANDMARKS"};
-  static constexpr Output<::mediapipe::NormalizedLandmarkList>
-      kRefinedLandmarks{"REFINED_LANDMARKS"};
+struct LandmarksRefinementNode : Node<"LandmarksRefinementCalculator"> {
+  template <typename S>
+  struct Contract {
+    // Multiple NormalizedLandmarkList to use for
+    // refinement. They will be applied to the resulting REFINED_LANDMARKS
+    // in the provided order. Each list should be non empty and contain the
+    // same amount of landmarks as indexes in mapping. Number of lists
+    // should be the same as number of refinements in options.
+    Repeated<Input<S, mediapipe::NormalizedLandmarkList>> landmarks{
+        "LANDMARKS"};
 
-  MEDIAPIPE_NODE_INTERFACE(LandmarksRefinementCalculator, kLandmarks,
-                           kRefinedLandmarks);
+    // A NormalizedLandmarkList with refined landmarks. Number
+    // of produced landmarks is equal to to the maximum index mapping number in
+    // calculator options (calculator verifies that there are no gaps in the
+    // mapping).
+    Output<S, mediapipe::NormalizedLandmarkList> refined_landmarks{
+        "REFINED_LANDMARKS"};
+
+    Options<S, mediapipe::LandmarksRefinementCalculatorOptions> options;
+  };
 };
 
-}  // namespace api2
-}  // namespace mediapipe
+}  // namespace mediapipe::api3
 
 #endif  // MEDIAPIPE_CALCULATORS_UTIL_LANDMARKS_REFINEMENT_CALCULATOR_H_

@@ -20,14 +20,22 @@ self-contained library for packaging.
 
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
-import jax
-from jax import lax
-from jax import numpy as jnp
 import numpy as np
 
+from mediapipe.tasks.python.genai.converter import external_dependencies
+
+jax = external_dependencies.jax
+jnp = external_dependencies.jnp
+lax = external_dependencies.lax
 
 JTensor = jax.Array
 _UINT4_ZP = 8  # Default zero point for unsigned 4-bit.
+
+# The following values are taken from fake_quantizer.py in Gemax.
+_MSE_QUANT_MULS = {
+    8: 0.05408,
+    4: 0.37755,
+}
 
 
 def _get_scan_range() -> np.ndarray:
@@ -218,6 +226,70 @@ def pass_through(x: JTensor, fn: Any) -> JTensor:
   return x - jax.lax.stop_gradient(x) + jax.lax.stop_gradient(fn(x))
 
 
+def mse_reduce_precision(
+    t: JTensor,
+    contract_dims: Optional[Sequence[int]],
+    need_gradient: bool = False,
+    bits: int = 8,
+    use_symmetric: bool = True,
+    use_fp: bool = False,
+) -> Tuple[JTensor, JTensor, Optional[JTensor]]:
+  """Reduce the precision of a tensor using MSE quantization.
+
+  Args:
+    t: Input tensor.
+    contract_dims: Specifies contracting dimensions of the input tensor.
+    need_gradient: If gradient is needed out of this function.
+    bits: Target number of bits.
+    use_symmetric: If the input tensor is quantized symmetrically.
+    use_fp: Use floating point.
+
+  Returns:
+    A tuple of quantized tensor, quantization scale
+      and quantization zero point (optional).
+  """
+  if need_gradient:
+    raise ValueError('need_gradient is not supported for mse_reduce_precision.')
+  if use_fp:
+    raise ValueError('use_fp is not supported for mse_reduce_precision.')
+  if not use_symmetric:
+    raise ValueError('Gemax mse_quant is typically symmetric.')
+
+  scale_multiplier = _MSE_QUANT_MULS.get(bits)
+  if scale_multiplier is None:
+    raise ValueError(f'MSE_QUANT_MULS not defined for {bits} bits.')
+  rms = jnp.sqrt(jnp.mean(t**2, axis=contract_dims, keepdims=True))
+  scale = scale_multiplier * rms + 1e-12  # Add epsilon as in Gemax
+
+  # Calculate the zero point used in fake_quantizer.mse_quant with narrow range.
+  maxq = 2**bits - 1
+  zero_mse_quant = (maxq - 1) / 2.0  # This is 7 for 4 bits
+
+  # Simulate the quantization steps from fake_quantizer.mse_quant:
+  # 1. Scale and shift: t / scale + zero_mse_quant
+  t_shifted = jnp.divide(t, scale) + zero_mse_quant
+  # 2. Rounding
+  q_rounded = jnp.round(t_shifted)
+  # 3. Clipping to [0, maxq - 1]
+  q_clipped = jnp.clip(q_rounded, 0, maxq - 1)  # [0, 14] for 4 bits
+
+  # The quantized value (qvar) to be stored should be
+  # `q_clipped - zero_mse_quant`. This makes the dequantization match:
+  #   (qvar - zp) * scale == (q_clipped - zero_mse_quant) * scale
+  qvar = q_clipped - zero_mse_quant  # Ranges from [-7, 7] for 4 bits
+
+  # ml_drift expects a zero point for dequantization. To match the effective
+  # dequantization of mse_quant, we set the zero point to 0 (or None).
+  zp = None
+
+  container_dtype = (
+      jnp.int8 if bits <= 8 else jnp.int16 if bits <= 16 else jnp.int32
+  )
+  qvar = qvar.astype(container_dtype)
+
+  return qvar, scale, zp
+
+
 def reduce_precision(
     t: JTensor,
     contract_dims: Optional[Sequence[int]],
@@ -327,6 +399,7 @@ def quantize_tensor(
     p_value: float = 1.0,
     per_channel: bool = False,
     block_size: int = 0,
+    use_mse_quant: bool = False,
 ) -> Union[
     Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray, np.ndarray]
 ]:
@@ -346,6 +419,7 @@ def quantize_tensor(
     per_channel: use per-channel clipping optimization.
     block_size:  block size for sub-channel quantization. Defaults to 0, which
       means off.
+    use_mse_quant: Whether to use MSE quantization.
 
   Returns:
     Quantized tensors, along with scales and zero point.
@@ -367,19 +441,29 @@ def quantize_tensor(
     shape[axis[0]] = block_size
     jnp_var = jnp.reshape(jnp_var, shape)
 
-  qvar, scale, zp = reduce_precision(
-      jnp_var,
-      contract_dims=axis,
-      need_gradient=False,
-      bits=number_bits,
-      optimization_on_bound=optimization_on_bound,
-      percentile=factor,
-      use_symmetric=sym,
-      use_fp=use_fp,
-      add_scale_eps=add_scale_eps,
-      p_value=p_value,
-      per_channel=per_channel,
-  )
+  if use_mse_quant:
+    qvar, scale, zp = mse_reduce_precision(
+        jnp_var,
+        contract_dims=axis,
+        need_gradient=False,
+        bits=number_bits,
+        use_symmetric=sym,
+        use_fp=False,
+    )
+  else:
+    qvar, scale, zp = reduce_precision(
+        jnp_var,
+        contract_dims=axis,
+        need_gradient=False,
+        bits=number_bits,
+        optimization_on_bound=optimization_on_bound,
+        percentile=factor,
+        use_symmetric=sym,
+        use_fp=use_fp,
+        add_scale_eps=add_scale_eps,
+        p_value=p_value,
+        per_channel=per_channel,
+    )
   if sym:
     return np.array(qvar), np.array(jnp.squeeze(scale, axis=axis))  # pytype: disable=wrong-arg-types  # jnp-type
   else:

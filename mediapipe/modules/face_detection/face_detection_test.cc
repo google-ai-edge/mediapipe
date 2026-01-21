@@ -106,7 +106,7 @@ FaceDetectionOptions GetFaceDetectionFullRangeOptions() {
 // Returns the FaceDetectionOptions needed to enable CPU processing.
 FaceDetectionOptions GetCpuOptions() {
   FaceDetectionOptions result;
-  result.mutable_delegate()->xnnpack();
+  result.mutable_delegate()->mutable_xnnpack();
   return result;
 }
 

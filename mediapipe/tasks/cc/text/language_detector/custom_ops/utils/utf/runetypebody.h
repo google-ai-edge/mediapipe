@@ -131,7 +131,7 @@ static Rune __isalphas[] = {
 };
 
 int utf_isalpharune(Rune c) {
-  Rune *p;
+  Rune* p;
 
   p = rbsearch(c, __isalphar, nelem(__isalphar) / 2, 2);
   if (p && c >= p[0] && c <= p[1]) return 1;
@@ -197,7 +197,7 @@ static Rune __tolowers[] = {
 };
 
 Rune utf_tolowerrune(Rune c) {
-  Rune *p;
+  Rune* p;
 
   p = rbsearch(c, __tolowerr, nelem(__tolowerr) / 3, 3);
   if (p && c >= p[0] && c <= p[1]) return c + p[2] - 1048576;

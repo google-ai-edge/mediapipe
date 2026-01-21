@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
-package(default_visibility = [
-    "//mediapipe/app/xeno:__subpackages__",
-    "//mediapipe/tasks:internal",
-])
+package(default_visibility = ["//visibility:public"])
 
 mediapipe_proto_library(
     name = "landmarks_to_matrix_calculator_proto",
@@ -32,13 +31,17 @@ mediapipe_proto_library(
 cc_library(
     name = "handedness_to_matrix_calculator",
     srcs = ["handedness_to_matrix_calculator.cc"],
+    hdrs = ["handedness_to_matrix_calculator.h"],
     deps = [
-        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc/vision/gesture_recognizer:handedness_util",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -51,22 +54,29 @@ cc_test(
     srcs = ["handedness_to_matrix_calculator_test.cc"],
     deps = [
         ":handedness_to_matrix_calculator",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/api3:function_runner",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:packet",
+        "//mediapipe/framework/api3:stream",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:parse_text_proto",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
 cc_library(
     name = "landmarks_to_matrix_calculator",
     srcs = ["landmarks_to_matrix_calculator.cc"],
+    hdrs = ["landmarks_to_matrix_calculator.h"],
     deps = [
         ":landmarks_to_matrix_calculator_cc_proto",
-        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:calculator_contract",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:rect_cc_proto",
@@ -83,13 +93,14 @@ cc_test(
     srcs = ["landmarks_to_matrix_calculator_test.cc"],
     deps = [
         ":landmarks_to_matrix_calculator",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/api3:function_runner",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:packet",
+        "//mediapipe/framework/api3:stream",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:parse_text_proto",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -97,7 +108,6 @@ cc_test(
 mediapipe_proto_library(
     name = "combined_prediction_calculator_proto",
     srcs = ["combined_prediction_calculator.proto"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
@@ -107,18 +117,16 @@ mediapipe_proto_library(
 cc_library(
     name = "combined_prediction_calculator",
     srcs = ["combined_prediction_calculator.cc"],
+    hdrs = ["combined_prediction_calculator.h"],
     deps = [
         ":combined_prediction_calculator_cc_proto",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:collection",
-        "//mediapipe/framework/api2:node",
-        "//mediapipe/framework/api2:packet",
-        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
         "//mediapipe/framework/formats:classification_cc_proto",
         "@com_google_absl//absl/container:btree",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:str_format",
     ],
     alwayslink = 1,
 )
@@ -128,11 +136,13 @@ cc_test(
     srcs = ["combined_prediction_calculator_test.cc"],
     deps = [
         ":combined_prediction_calculator",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/api3:function_runner",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:packet",
+        "//mediapipe/framework/api3:stream",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/port:gtest",
         "//mediapipe/framework/port:gtest_main",
-        "@com_google_absl//absl/strings",
+        "//mediapipe/framework/port:status",
     ],
 )

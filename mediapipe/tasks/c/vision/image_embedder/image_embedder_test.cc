@@ -23,25 +23,32 @@ limitations under the License.
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/blocking_counter.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 #include "mediapipe/framework/deps/file_path.h"
-#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/embedding_result.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
-#include "mediapipe/tasks/cc/vision/utils/image_utils.h"
+#include "mediapipe/tasks/c/core/common.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/c/vision/core/image_test_util.h"
 
 namespace {
 
 using ::mediapipe::file::JoinPath;
-using ::mediapipe::tasks::vision::DecodeImageFromFile;
-using testing::HasSubstr;
+using ::mediapipe::tasks::vision::core::CreateEmptyGpuMpImage;
+using ::mediapipe::tasks::vision::core::GetImage;
+using ::mediapipe::tasks::vision::core::ScopedMpImage;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kModelName[] = "mobilenet_v3_small_100_224_embedder.tflite";
 constexpr char kImageFile[] = "burger.jpg";
 constexpr float kPrecision = 1e-6;
-constexpr int kIterations = 100;
+constexpr int kIterations = 5;
+constexpr int kSleepBetweenFramesMilliseconds = 100;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
@@ -49,150 +56,178 @@ std::string GetFullPath(absl::string_view file_name) {
 
 // Utility function to check the sizes, head_index and head_names of a result
 // produced by kMobileNetV3Embedder.
-void CheckMobileNetV3Result(const ImageEmbedderResult& result, bool quantized) {
+void CheckMobileNetV3Result(const ImageEmbedderResult& result) {
   EXPECT_EQ(result.embeddings_count, 1);
   EXPECT_EQ(result.embeddings[0].head_index, 0);
   EXPECT_EQ(std::string{result.embeddings[0].head_name}, "feature");
-  if (quantized) {
-    EXPECT_EQ(result.embeddings[0].values_count, 1024);
-  } else {
-    EXPECT_EQ(result.embeddings[0].values_count, 1024);
-  }
+  EXPECT_EQ(result.embeddings[0].values_count, 1024);
 }
 
 TEST(ImageEmbedderTest, ImageModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+  const ScopedMpImage image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
   ImageEmbedderOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* embedder_options= */
-      {/* l2_normalize= */ true,
-       /* quantize= */ false}};
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .embedder_options = {.l2_normalize = true, .quantize = false}};
 
-  void* embedder = image_embedder_create(&options,
-                                         /* error_msg */ nullptr);
-  EXPECT_NE(embedder, nullptr);
-
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {
-          .format = static_cast<ImageFormat>(
-              image->GetImageFrameSharedPtr()->Format()),
-          .image_buffer = image->GetImageFrameSharedPtr()->PixelData(),
-          .width = image->GetImageFrameSharedPtr()->Width(),
-          .height = image->GetImageFrameSharedPtr()->Height()}};
+  MpImageEmbedderPtr embedder;
+  ASSERT_EQ(
+      MpImageEmbedderCreate(&options, &embedder, /* error_msg= */ nullptr),
+      kMpOk);
+  ASSERT_NE(embedder, nullptr);
 
   ImageEmbedderResult result;
-  image_embedder_embed_image(embedder, &mp_image, &result,
-                             /* error_msg */ nullptr);
-  CheckMobileNetV3Result(result, false);
+  ASSERT_EQ(MpImageEmbedderEmbedImage(embedder, image.get(),
+                                      /* image_processing_options= */ nullptr,
+                                      &result, /* error_msg= */ nullptr),
+            kMpOk);
+  CheckMobileNetV3Result(result);
   EXPECT_NEAR(result.embeddings[0].float_embedding[0], -0.0142344, kPrecision);
-  image_embedder_close_result(&result);
-  image_embedder_close(embedder, /* error_msg */ nullptr);
+  MpImageEmbedderCloseResult(&result);
+  ASSERT_EQ(MpImageEmbedderClose(embedder, /* error_msg= */ nullptr), kMpOk);
+}
+
+TEST(ImageEmbedderTest, ImageModeTestWithQuantization) {
+  const ScopedMpImage image = GetImage(GetFullPath(kImageFile));
+
+  const std::string model_path = GetFullPath(kModelName);
+  ImageEmbedderOptions options = {
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .embedder_options = {.l2_normalize = false, .quantize = true}};
+
+  MpImageEmbedderPtr embedder;
+  ASSERT_EQ(
+      MpImageEmbedderCreate(&options, &embedder, /* error_msg= */ nullptr),
+      kMpOk);
+  ASSERT_NE(embedder, nullptr);
+
+  ImageEmbedderResult result;
+  ASSERT_EQ(MpImageEmbedderEmbedImage(embedder, image.get(),
+                                      /* image_processing_options= */ nullptr,
+                                      &result, /* error_msg= */ nullptr),
+            kMpOk);
+  CheckMobileNetV3Result(result);
+  EXPECT_EQ(result.embeddings[0].quantized_embedding[0], '\xE5');
+  MpImageEmbedderCloseResult(&result);
+  ASSERT_EQ(MpImageEmbedderClose(embedder, /* error_msg= */ nullptr), kMpOk);
+}
+
+TEST(ImageEmbedderTest, ImageModeTestWithRotation) {
+  const ScopedMpImage image = GetImage(GetFullPath("burger_rotated.jpg"));
+  ASSERT_NE(image, nullptr);
+
+  const std::string model_path = GetFullPath(kModelName);
+  ImageEmbedderOptions options = {
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .embedder_options = {.l2_normalize = true, .quantize = false}};
+
+  MpImageEmbedderPtr embedder;
+  ASSERT_EQ(
+      MpImageEmbedderCreate(&options, &embedder, /* error_msg= */ nullptr),
+      kMpOk);
+  ASSERT_NE(embedder, nullptr);
+
+  ImageProcessingOptions image_processing_options;
+  image_processing_options.has_region_of_interest = 0;
+  image_processing_options.rotation_degrees = -90;
+
+  ImageEmbedderResult result;
+  ASSERT_EQ(MpImageEmbedderEmbedImage(embedder, image.get(),
+                                      &image_processing_options, &result,
+                                      /* error_msg= */ nullptr),
+            kMpOk);
+  CheckMobileNetV3Result(result);
+  EXPECT_NEAR(result.embeddings[0].float_embedding[0], -0.0149445, kPrecision);
+  MpImageEmbedderCloseResult(&result);
+  ASSERT_EQ(MpImageEmbedderClose(embedder, /* error_msg= */ nullptr), kMpOk);
 }
 
 TEST(ImageEmbedderTest, SucceedsWithCosineSimilarity) {
-  const auto image = DecodeImageFromFile(GetFullPath("burger.jpg"));
-  ASSERT_TRUE(image.ok());
-  const auto crop = DecodeImageFromFile(GetFullPath("burger_crop.jpg"));
-  ASSERT_TRUE(crop.ok());
+  const ScopedMpImage image = GetImage(GetFullPath("burger.jpg"));
+  const ScopedMpImage crop = GetImage(GetFullPath("burger_crop.jpg"));
 
   const std::string model_path = GetFullPath(kModelName);
   ImageEmbedderOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* embedder_options= */
-      {/* l2_normalize= */ true,
-       /* quantize= */ false}};
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .embedder_options = {.l2_normalize = true, .quantize = false}};
 
-  void* embedder = image_embedder_create(&options,
-                                         /* error_msg */ nullptr);
+  MpImageEmbedderPtr embedder;
+  ASSERT_EQ(
+      MpImageEmbedderCreate(&options, &embedder, /* error_msg= */ nullptr),
+      kMpOk);
   EXPECT_NE(embedder, nullptr);
-
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {
-          .format = static_cast<ImageFormat>(
-              image->GetImageFrameSharedPtr()->Format()),
-          .image_buffer = image->GetImageFrameSharedPtr()->PixelData(),
-          .width = image->GetImageFrameSharedPtr()->Width(),
-          .height = image->GetImageFrameSharedPtr()->Height()}};
-
-  const MpImage mp_crop = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {
-          .format = static_cast<ImageFormat>(
-              crop->GetImageFrameSharedPtr()->Format()),
-          .image_buffer = crop->GetImageFrameSharedPtr()->PixelData(),
-          .width = crop->GetImageFrameSharedPtr()->Width(),
-          .height = crop->GetImageFrameSharedPtr()->Height()}};
 
   // Extract both embeddings.
   ImageEmbedderResult image_result;
-  image_embedder_embed_image(embedder, &mp_image, &image_result,
-                             /* error_msg */ nullptr);
+  ASSERT_EQ(MpImageEmbedderEmbedImage(embedder, image.get(),
+                                      /* image_processing_options= */ nullptr,
+                                      &image_result, /* error_msg= */ nullptr),
+            kMpOk);
   ImageEmbedderResult crop_result;
-  image_embedder_embed_image(embedder, &mp_crop, &crop_result,
-                             /* error_msg */ nullptr);
+  ASSERT_EQ(MpImageEmbedderEmbedImage(embedder, crop.get(),
+                                      /* image_processing_options= */ nullptr,
+                                      &crop_result, /* error_msg= */ nullptr),
+            kMpOk);
 
   // Check results.
-  CheckMobileNetV3Result(image_result, false);
-  CheckMobileNetV3Result(crop_result, false);
+  CheckMobileNetV3Result(image_result);
+  CheckMobileNetV3Result(crop_result);
   // Check cosine similarity.
   double similarity;
-  image_embedder_cosine_similarity(image_result.embeddings[0],
-                                   crop_result.embeddings[0], &similarity,
-                                   /* error_msg */ nullptr);
+  ASSERT_EQ(MpImageEmbedderCosineSimilarity(
+                image_result.embeddings[0], crop_result.embeddings[0],
+                &similarity, /* error_msg= */ nullptr),
+            kMpOk);
   double expected_similarity = 0.925519;
   EXPECT_LE(abs(similarity - expected_similarity), kPrecision);
-  image_embedder_close_result(&image_result);
-  image_embedder_close_result(&crop_result);
-  image_embedder_close(embedder, /* error_msg */ nullptr);
+  MpImageEmbedderCloseResult(&image_result);
+  MpImageEmbedderCloseResult(&crop_result);
+  ASSERT_EQ(MpImageEmbedderClose(embedder, /* error_msg= */ nullptr), kMpOk);
 }
 
 TEST(ImageEmbedderTest, VideoModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+  const ScopedMpImage image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
   ImageEmbedderOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::VIDEO,
-      /* embedder_options= */
-      {/* l2_normalize= */ true,
-       /* quantize= */ false}};
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::VIDEO,
+      .embedder_options = {.l2_normalize = true, .quantize = false}};
 
-  void* embedder = image_embedder_create(&options,
-                                         /* error_msg */ nullptr);
-  EXPECT_NE(embedder, nullptr);
-
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
+  MpImageEmbedderPtr embedder;
+  ASSERT_EQ(
+      MpImageEmbedderCreate(&options, &embedder, /* error_msg= */ nullptr),
+      kMpOk);
+  ASSERT_NE(embedder, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
     ImageEmbedderResult result;
-    image_embedder_embed_for_video(embedder, &mp_image, i, &result,
-                                   /* error_msg */ nullptr);
-    CheckMobileNetV3Result(result, false);
+    ASSERT_EQ(
+        MpImageEmbedderEmbedForVideo(embedder, image.get(),
+                                     /* image_processing_options= */ nullptr, i,
+                                     &result, /* error_msg= */ nullptr),
+        kMpOk);
+    CheckMobileNetV3Result(result);
     EXPECT_NEAR(result.embeddings[0].float_embedding[0], -0.0142344,
                 kPrecision);
-    image_embedder_close_result(&result);
+    MpImageEmbedderCloseResult(&result);
   }
-  image_embedder_close(embedder, /* error_msg */ nullptr);
+  ASSERT_EQ(MpImageEmbedderClose(embedder, /* error_msg= */ nullptr), kMpOk);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -202,57 +237,64 @@ TEST(ImageEmbedderTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(EmbeddingResult* embedder_result, const MpImage* image,
-                 int64_t timestamp, char* error_msg) {
+  static absl::BlockingCounter* blocking_counter;
+  static void Fn(MpStatus status, const EmbeddingResult* embedder_result,
+                 MpImagePtr image, int64_t timestamp) {
+    ASSERT_EQ(status, kMpOk);
     ASSERT_NE(embedder_result, nullptr);
-    ASSERT_EQ(error_msg, nullptr);
-    CheckMobileNetV3Result(*embedder_result, false);
+    CheckMobileNetV3Result(*embedder_result);
     EXPECT_NEAR(embedder_result->embeddings[0].float_embedding[0], -0.0142344,
                 kPrecision);
-    EXPECT_GT(image->image_frame.width, 0);
-    EXPECT_GT(image->image_frame.height, 0);
+    EXPECT_GT(MpImageGetWidth(image), 0);
+    EXPECT_GT(MpImageGetHeight(image), 0);
     EXPECT_GT(timestamp, last_timestamp);
     last_timestamp++;
+
+    if (blocking_counter) {
+      blocking_counter->DecrementCount();
+    }
   }
 };
 int64_t LiveStreamModeCallback::last_timestamp = -1;
+absl::BlockingCounter* LiveStreamModeCallback::blocking_counter = nullptr;
 
-// TODO: Await the callbacks and re-enable test
-TEST(ImageEmbedderTest, DISABLED_LiveStreamModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+TEST(ImageEmbedderTest, LiveStreamModeTest) {
+  const ScopedMpImage image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
 
   ImageEmbedderOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::LIVE_STREAM,
-      /* embedder_options= */
-      {/* l2_normalize= */ true,
-       /* quantize= */ false},
-      /* result_callback= */ LiveStreamModeCallback::Fn,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::LIVE_STREAM,
+      .embedder_options = {.l2_normalize = true, .quantize = false},
+      .result_callback = LiveStreamModeCallback::Fn,
   };
 
-  void* embedder = image_embedder_create(&options,
-                                         /* error_msg */ nullptr);
-  EXPECT_NE(embedder, nullptr);
+  MpImageEmbedderPtr embedder;
+  ASSERT_EQ(
+      MpImageEmbedderCreate(&options, &embedder, /* error_msg= */ nullptr),
+      kMpOk);
+  ASSERT_NE(embedder, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
+  absl::BlockingCounter counter(kIterations);
+  LiveStreamModeCallback::blocking_counter = &counter;
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(image_embedder_embed_async(embedder, &mp_image, i,
-                                         /* error_msg */ nullptr),
-              0);
+    ASSERT_EQ(MpImageEmbedderEmbedAsync(embedder, image.get(),
+                                        /* image_processing_options= */ nullptr,
+                                        i, /* error_msg= */ nullptr),
+              kMpOk);
+    // Short sleep so that MediaPipe does not drop frames.
+    absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
-  image_embedder_close(embedder, /* error_msg */ nullptr);
+
+  // Wait for all callbacks to be invoked.
+  counter.Wait();
+  LiveStreamModeCallback::blocking_counter = nullptr;
+
+  ASSERT_EQ(MpImageEmbedderClose(embedder, /* error_msg= */ nullptr), kMpOk);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -263,44 +305,50 @@ TEST(ImageEmbedderTest, DISABLED_LiveStreamModeTest) {
 TEST(ImageEmbedderTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
   ImageEmbedderOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ nullptr},
-      /* embedder_options= */ {},
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = nullptr},
+      .embedder_options = {},
   };
 
-  char* error_msg;
-  void* embedder = image_embedder_create(&options, &error_msg);
+  char* error_msg = nullptr;
+  MpImageEmbedderPtr embedder = nullptr;
+  MpStatus status = MpImageEmbedderCreate(&options, &embedder, &error_msg);
+  EXPECT_EQ(status, kMpInvalidArgument);
   EXPECT_EQ(embedder, nullptr);
 
-  EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
-
-  free(error_msg);
+  EXPECT_THAT(error_msg,
+              testing::HasSubstr("ExternalFile must specify at least one"));
+  MpErrorFree(error_msg);
 }
 
 TEST(ImageEmbedderTest, FailedEmbeddingHandling) {
   const std::string model_path = GetFullPath(kModelName);
   ImageEmbedderOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* embedder_options= */
-      {/* l2_normalize= */ false,
-       /* quantize= */ false},
-  };
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .embedder_options = {.l2_normalize = false, .quantize = false}};
 
-  void* embedder = image_embedder_create(&options,
-                                         /* error_msg */ nullptr);
+  MpImageEmbedderPtr embedder;
+  ASSERT_EQ(
+      MpImageEmbedderCreate(&options, &embedder, /* error_msg= */ nullptr),
+      kMpOk);
   EXPECT_NE(embedder, nullptr);
 
-  const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
+  const ScopedMpImage image = CreateEmptyGpuMpImage();
+  char* error_msg = nullptr;
   ImageEmbedderResult result;
-  char* error_msg;
-  image_embedder_embed_image(embedder, &mp_image, &result, &error_msg);
-  EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet."));
-  free(error_msg);
-  image_embedder_close(embedder, /* error_msg */ nullptr);
+  MpStatus status = MpImageEmbedderEmbedImage(
+      embedder, image.get(), /* image_processing_options= */ nullptr, &result,
+      &error_msg);
+  EXPECT_EQ(status, kMpInvalidArgument);
+  EXPECT_THAT(error_msg, testing::HasSubstr(
+                             "GPU input images are currently not supported."));
+  MpErrorFree(error_msg);
+
+  ASSERT_EQ(MpImageEmbedderClose(embedder, /* error_msg= */ nullptr), kMpOk);
 }
 
 }  // namespace

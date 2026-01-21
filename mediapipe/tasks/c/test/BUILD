@@ -12,19 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
 cc_library(
     name = "test_utils",
+    testonly = 1,
     srcs = ["test_utils.cc"],
     hdrs = ["test_utils.h"],
     linkstatic = 1,
     deps = [
         "//mediapipe/framework/formats:image",
-        "//mediapipe/tasks/c/vision/core:common",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/status:statusor",
+        "//mediapipe/tasks/c/core:mp_status",
+        "//mediapipe/tasks/c/vision/core:image",
+        "//mediapipe/tasks/c/vision/core:image_frame_util",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )

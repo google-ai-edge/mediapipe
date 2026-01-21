@@ -18,12 +18,20 @@ limitations under the License.
 #include <memory>
 #include <utility>
 
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "mediapipe/tasks/c/components/processors/classifier_options_converter.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/core/mp_status_converter.h"
 #include "mediapipe/tasks/c/text/language_detector/language_detector_result_converter.h"
 #include "mediapipe/tasks/cc/text/language_detector/language_detector.h"
+
+using ::mediapipe::tasks::text::language_detector::LanguageDetector;
+
+struct MpLanguageDetectorInternal {
+  std::unique_ptr<LanguageDetector> instance;
+};
 
 namespace mediapipe::tasks::c::text::language_detector {
 
@@ -36,19 +44,18 @@ using ::mediapipe::tasks::c::components::containers::
 using ::mediapipe::tasks::c::components::processors::
     CppConvertToClassifierOptions;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
+using ::mediapipe::tasks::c::core::ToMpStatus;
 using ::mediapipe::tasks::text::language_detector::LanguageDetector;
 
-int CppProcessError(absl::Status status, char** error_msg) {
-  if (error_msg) {
-    *error_msg = strdup(status.ToString().c_str());
-  }
-  return status.raw_code();
+LanguageDetector* GetCppDetector(MpLanguageDetectorPtr wrapper) {
+  ABSL_CHECK(wrapper != nullptr) << "LanguageDetector is null.";
+  return wrapper->instance.get();
 }
 
 }  // namespace
 
-LanguageDetector* CppLanguageDetectorCreate(
-    const LanguageDetectorOptions& options, char** error_msg) {
+absl::Status CppLanguageDetectorCreate(const LanguageDetectorOptions& options,
+                                       MpLanguageDetectorPtr* detector) {
   auto cpp_options = std::make_unique<
       ::mediapipe::tasks::text::language_detector::LanguageDetectorOptions>();
 
@@ -56,69 +63,76 @@ LanguageDetector* CppLanguageDetectorCreate(
   CppConvertToClassifierOptions(options.classifier_options,
                                 &cpp_options->classifier_options);
 
-  auto detector = LanguageDetector::Create(std::move(cpp_options));
-  if (!detector.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create LanguageDetector: "
-                    << detector.status();
-    CppProcessError(detector.status(), error_msg);
-    return nullptr;
+  auto cpp_detector = LanguageDetector::Create(std::move(cpp_options));
+  if (!cpp_detector.ok()) {
+    return cpp_detector.status();
   }
-  return detector->release();
+  *detector =
+      new MpLanguageDetectorInternal{.instance = std::move(*cpp_detector)};
+  return absl::OkStatus();
 }
 
-int CppLanguageDetectorDetect(void* detector, const char* utf8_str,
-                              LanguageDetectorResult* result,
-                              char** error_msg) {
-  auto cpp_detector = static_cast<LanguageDetector*>(detector);
+absl::Status CppLanguageDetectorDetect(MpLanguageDetectorPtr detector,
+                                       const char* utf8_str,
+                                       LanguageDetectorResult* result) {
+  auto* cpp_detector = GetCppDetector(detector);
   auto cpp_result = cpp_detector->Detect(utf8_str);
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Language Detector failed: " << cpp_result.status();
-    return CppProcessError(cpp_result.status(), error_msg);
+    return cpp_result.status();
   }
 
   CppConvertToLanguageDetectorResult(*cpp_result, result);
-  return 0;
+  return absl::OkStatus();
 }
 
 void CppLanguageDetectorCloseResult(LanguageDetectorResult* result) {
   CppCloseLanguageDetectorResult(result);
 }
 
-int CppLanguageDetectorClose(void* detector, char** error_msg) {
-  auto cpp_detector = static_cast<LanguageDetector*>(detector);
+absl::Status CppLanguageDetectorClose(MpLanguageDetectorPtr detector) {
+  auto* cpp_detector = GetCppDetector(detector);
   auto result = cpp_detector->Close();
   if (!result.ok()) {
-    ABSL_LOG(ERROR) << "Failed to close LanguageDetector: " << result;
-    return CppProcessError(result, error_msg);
+    return result;
   }
-  delete cpp_detector;
-  return 0;
+  delete detector;
+  return absl::OkStatus();
 }
 
 }  // namespace mediapipe::tasks::c::text::language_detector
 
 extern "C" {
 
-void* language_detector_create(struct LanguageDetectorOptions* options,
-                               char** error_msg) {
-  return mediapipe::tasks::c::text::language_detector::
-      CppLanguageDetectorCreate(*options, error_msg);
+MP_EXPORT MpStatus
+MpLanguageDetectorCreate(struct LanguageDetectorOptions* options,
+                         MpLanguageDetectorPtr* detector, char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::text::language_detector::CppLanguageDetectorCreate(
+          *options, detector);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
-int language_detector_detect(void* detector, const char* utf8_str,
-                             LanguageDetectorResult* result, char** error_msg) {
-  return mediapipe::tasks::c::text::language_detector::
-      CppLanguageDetectorDetect(detector, utf8_str, result, error_msg);
+MP_EXPORT MpStatus MpLanguageDetectorDetect(MpLanguageDetectorPtr detector,
+                                            const char* utf8_str,
+                                            LanguageDetectorResult* result,
+                                            char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::text::language_detector::CppLanguageDetectorDetect(
+          detector, utf8_str, result);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
-void language_detector_close_result(LanguageDetectorResult* result) {
+MP_EXPORT void MpLanguageDetectorCloseResult(LanguageDetectorResult* result) {
   mediapipe::tasks::c::text::language_detector::CppLanguageDetectorCloseResult(
       result);
 }
 
-int language_detector_close(void* detector, char** error_ms) {
-  return mediapipe::tasks::c::text::language_detector::CppLanguageDetectorClose(
-      detector, error_ms);
+MP_EXPORT MpStatus MpLanguageDetectorClose(MpLanguageDetectorPtr detector,
+                                           char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::text::language_detector::CppLanguageDetectorClose(
+          detector);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 }  // extern "C"

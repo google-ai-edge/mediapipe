@@ -18,14 +18,21 @@ limitations under the License.
 #include <memory>
 #include <utility>
 
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "mediapipe/tasks/c/components/containers/embedding_result.h"
 #include "mediapipe/tasks/c/components/containers/embedding_result_converter.h"
 #include "mediapipe/tasks/c/components/processors/embedder_options_converter.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/core/mp_status_converter.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder.h"
+
+struct MpTextEmbedderInternal {
+  std::unique_ptr<::mediapipe::tasks::text::text_embedder::TextEmbedder>
+      instance;
+};
 
 namespace mediapipe::tasks::c::text::text_embedder {
 
@@ -38,20 +45,19 @@ using ::mediapipe::tasks::c::components::containers::
 using ::mediapipe::tasks::c::components::processors::
     CppConvertToEmbedderOptions;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
+using ::mediapipe::tasks::c::core::ToMpStatus;
 using ::mediapipe::tasks::text::text_embedder::TextEmbedder;
 typedef ::mediapipe::tasks::components::containers::Embedding CppEmbedding;
 
-int CppProcessError(absl::Status status, char** error_msg) {
-  if (error_msg) {
-    *error_msg = strdup(status.ToString().c_str());
-  }
-  return status.raw_code();
+TextEmbedder* GetCppEmbedder(MpTextEmbedderPtr wrapper) {
+  ABSL_CHECK(wrapper != nullptr) << "TextEmbedder is null.";
+  return wrapper->instance.get();
 }
 
 }  // namespace
 
-TextEmbedder* CppTextEmbedderCreate(const TextEmbedderOptions& options,
-                                    char** error_msg) {
+absl::Status CppTextEmbedderCreate(const TextEmbedderOptions& options,
+                                   MpTextEmbedderPtr* embedder) {
   auto cpp_options = std::make_unique<
       ::mediapipe::tasks::text::text_embedder::TextEmbedderOptions>();
 
@@ -59,44 +65,43 @@ TextEmbedder* CppTextEmbedderCreate(const TextEmbedderOptions& options,
   CppConvertToEmbedderOptions(options.embedder_options,
                               &cpp_options->embedder_options);
 
-  auto embedder = TextEmbedder::Create(std::move(cpp_options));
-  if (!embedder.ok()) {
-    ABSL_LOG(ERROR) << "Failed to create TextEmbedder: " << embedder.status();
-    CppProcessError(embedder.status(), error_msg);
-    return nullptr;
+  auto cpp_embedder = TextEmbedder::Create(std::move(cpp_options));
+  if (!cpp_embedder.ok()) {
+    return cpp_embedder.status();
   }
-  return embedder->release();
+  *embedder = new MpTextEmbedderInternal{.instance = std::move(*cpp_embedder)};
+  return absl::OkStatus();
 }
 
-int CppTextEmbedderEmbed(void* embedder, const char* utf8_str,
-                         TextEmbedderResult* result, char** error_msg) {
-  auto cpp_embedder = static_cast<TextEmbedder*>(embedder);
+absl::Status CppTextEmbedderEmbed(MpTextEmbedderPtr embedder,
+                                  const char* utf8_str,
+                                  TextEmbedderResult* result) {
+  auto cpp_embedder = GetCppEmbedder(embedder);
   auto cpp_result = cpp_embedder->Embed(utf8_str);
   if (!cpp_result.ok()) {
-    ABSL_LOG(ERROR) << "Embedding extraction failed: " << cpp_result.status();
-    return CppProcessError(cpp_result.status(), error_msg);
+    return cpp_result.status();
   }
   CppConvertToEmbeddingResult(*cpp_result, result);
-  return 0;
+  return absl::OkStatus();
 }
 
 void CppTextEmbedderCloseResult(TextEmbedderResult* result) {
   CppCloseEmbeddingResult(result);
 }
 
-int CppTextEmbedderClose(void* embedder, char** error_msg) {
-  auto cpp_embedder = static_cast<TextEmbedder*>(embedder);
+absl::Status CppTextEmbedderClose(MpTextEmbedderPtr embedder) {
+  auto cpp_embedder = GetCppEmbedder(embedder);
   auto result = cpp_embedder->Close();
   if (!result.ok()) {
-    ABSL_LOG(ERROR) << "Failed to close TextEmbedder: " << result;
-    return CppProcessError(result, error_msg);
+    return result;
   }
-  delete cpp_embedder;
-  return 0;
+  delete embedder;
+  return absl::OkStatus();
 }
 
-int CppTextEmbedderCosineSimilarity(const Embedding* u, const Embedding* v,
-                                    double* similarity, char** error_msg) {
+absl::Status CppTextEmbedderCosSimilarity(const Embedding* u,
+                                          const Embedding* v,
+                                          double* similarity) {
   CppEmbedding cpp_u;
   CppConvertToCppEmbedding(*u, &cpp_u);
   CppEmbedding cpp_v;
@@ -106,42 +111,52 @@ int CppTextEmbedderCosineSimilarity(const Embedding* u, const Embedding* v,
           cpp_u, cpp_v);
   if (status_or_similarity.ok()) {
     *similarity = status_or_similarity.value();
-  } else {
-    ABSL_LOG(ERROR) << "Cannot compute cosine similarity.";
-    return CppProcessError(status_or_similarity.status(), error_msg);
   }
-  return 0;
+  return status_or_similarity.status();
 }
 
 }  // namespace mediapipe::tasks::c::text::text_embedder
 
 extern "C" {
 
-void* text_embedder_create(struct TextEmbedderOptions* options,
-                           char** error_msg) {
-  return mediapipe::tasks::c::text::text_embedder::CppTextEmbedderCreate(
-      *options, error_msg);
+MP_EXPORT MpStatus MpTextEmbedderCreate(struct TextEmbedderOptions* options,
+                                        MpTextEmbedderPtr* embedder,
+                                        char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::text::text_embedder::CppTextEmbedderCreate(*options,
+                                                                      embedder);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
-int text_embedder_embed(void* embedder, const char* utf8_str,
-                        TextEmbedderResult* result, char** error_msg) {
-  return mediapipe::tasks::c::text::text_embedder::CppTextEmbedderEmbed(
-      embedder, utf8_str, result, error_msg);
+MP_EXPORT MpStatus MpTextEmbedderEmbed(MpTextEmbedderPtr embedder,
+                                       const char* utf8_str,
+                                       TextEmbedderResult* result,
+                                       char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::text::text_embedder::CppTextEmbedderEmbed(
+          embedder, utf8_str, result);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
-void text_embedder_close_result(TextEmbedderResult* result) {
+MP_EXPORT void MpTextEmbedderCloseResult(TextEmbedderResult* result) {
   mediapipe::tasks::c::text::text_embedder::CppTextEmbedderCloseResult(result);
 }
 
-int text_embedder_close(void* embedder, char** error_ms) {
-  return mediapipe::tasks::c::text::text_embedder::CppTextEmbedderClose(
-      embedder, error_ms);
+MP_EXPORT MpStatus MpTextEmbedderClose(MpTextEmbedderPtr embedder,
+                                       char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::text::text_embedder::CppTextEmbedderClose(embedder);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
-int text_embedder_cosine_similarity(const Embedding* u, const Embedding* v,
-                                    double* similarity, char** error_msg) {
-  return mediapipe::tasks::c::text::text_embedder::
-      CppTextEmbedderCosineSimilarity(u, v, similarity, error_msg);
+MP_EXPORT MpStatus MpTextEmbedderCosSimilarity(const Embedding* u,
+                                               const Embedding* v,
+                                               double* similarity,
+                                               char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::text::text_embedder::CppTextEmbedderCosSimilarity(
+          u, v, similarity);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
 }  // extern "C"

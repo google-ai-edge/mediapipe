@@ -12,26 +12,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 licenses(["notice"])
+
+TEXT_CLASSIFIER_DEPS = [
+    "@com_google_absl//absl/log:absl_log",
+    "@com_google_absl//absl/status",
+    "@com_google_absl//absl/log:absl_check",
+    "//mediapipe/tasks/c/components/containers:classification_result",
+    "//mediapipe/tasks/c/components/containers:classification_result_converter",
+    "//mediapipe/tasks/c/components/processors:classifier_options",
+    "//mediapipe/tasks/c/components/processors:classifier_options_converter",
+    "//mediapipe/tasks/c/core:base_options",
+    "//mediapipe/tasks/c/core:base_options_converter",
+    "//mediapipe/tasks/c/core:mp_status",
+    "//mediapipe/tasks/c/core:mp_status_converter",
+    "//mediapipe/tasks/cc/text/text_classifier",
+]
 
 cc_library(
     name = "text_classifier_lib",
     srcs = ["text_classifier.cc"],
     hdrs = ["text_classifier.h"],
     visibility = ["//visibility:public"],
-    deps = [
-        "//mediapipe/tasks/c/components/containers:classification_result",
-        "//mediapipe/tasks/c/components/containers:classification_result_converter",
-        "//mediapipe/tasks/c/components/processors:classifier_options",
-        "//mediapipe/tasks/c/components/processors:classifier_options_converter",
-        "//mediapipe/tasks/c/core:base_options",
-        "//mediapipe/tasks/c/core:base_options_converter",
-        "//mediapipe/tasks/cc/text/text_classifier",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
-    ],
+    deps = TEXT_CLASSIFIER_DEPS,
+)
+
+cc_library(
+    name = "text_classifier_c_lib",
+    srcs = ["text_classifier.cc"],
+    hdrs = ["text_classifier.h"],
+    visibility = ["//mediapipe/tasks/c:__subpackages__"],
+    deps = TEXT_CLASSIFIER_DEPS,
     alwayslink = 1,
 )
 
@@ -79,6 +94,8 @@ cc_test(
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:gtest",
         "//mediapipe/tasks/c/components/containers:category",
+        "//mediapipe/tasks/c/core:common",
+        "//mediapipe/tasks/c/core:mp_status",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",

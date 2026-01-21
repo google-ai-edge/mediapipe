@@ -17,8 +17,6 @@
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe:__subpackages__"])
-
 # TODO: Remove the unnecessary test data once the demo data are moved to an open-sourced
 # directory.
 filegroup(
@@ -44,9 +42,9 @@ py_library(
         ":metadata_writer",
         "//mediapipe/model_maker/python/core/data:classification_dataset",
         "//mediapipe/model_maker/python/core/utils:model_util",
-        "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/vision:hand_landmarker",
+        "//mediapipe/tasks/python/vision/core:image",
         "@model_maker_pip_deps_tensorflow//:pkg",
     ],
 )

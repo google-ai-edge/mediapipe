@@ -352,9 +352,13 @@ class Tensor {
     GLuint name() const { return name_; }
 
     OpenGlBufferView(OpenGlBufferView&& src) : View(std::move(src.lock_)) {
+      is_write_view_ = src.is_write_view_;
       name_ = std::exchange(src.name_, GL_INVALID_INDEX);
       ssbo_read_ = std::exchange(src.ssbo_read_, nullptr);
+      gl_context_ = std::exchange(src.gl_context_, nullptr);
+      gl_write_read_sync_ = std::exchange(src.gl_write_read_sync_, nullptr);
     }
+
     ~OpenGlBufferView() {
       if (!is_write_view_) {
         // Read view destruction.
@@ -364,14 +368,16 @@ class Tensor {
           *ssbo_read_ = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
         }
       } else {
-        // Write view destruction.
-        *gl_write_read_sync_ = gl_context_->CreateSyncToken();
+        if (gl_write_read_sync_ != nullptr && gl_context_ != nullptr) {
+          *gl_write_read_sync_ = gl_context_->CreateSyncToken();
+        }
       }
     }
 
    protected:
     friend class Tensor;
 
+    // NOTE: Update move constructor if adding params.
     OpenGlBufferView(bool is_write_view, GLuint name,
                      std::unique_ptr<absl::MutexLock>&& lock, GLsync* ssbo_read,
                      GlContext* gl_context,

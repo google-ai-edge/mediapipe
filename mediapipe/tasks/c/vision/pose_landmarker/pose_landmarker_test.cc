@@ -17,23 +17,27 @@ limitations under the License.
 
 #include <cstdint>
 #include <cstdlib>
+#include <memory>
 #include <string>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/blocking_counter.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 #include "mediapipe/framework/deps/file_path.h"
-#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/core/common.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/c/vision/pose_landmarker/pose_landmarker_result.h"
-#include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 namespace {
 
 using ::mediapipe::file::JoinPath;
-using ::mediapipe::tasks::vision::DecodeImageFromFile;
 using testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
@@ -41,9 +45,28 @@ constexpr char kModelName[] = "pose_landmarker.task";
 constexpr char kImageFile[] = "pose.jpg";
 constexpr float kLandmarkPrecision = 1e-1;
 constexpr int kIterations = 5;
+constexpr int kSleepBetweenFramesMilliseconds = 100;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
+}
+
+struct MpImageDeleter {
+  void operator()(MpImagePtr image) const {
+    if (image) {
+      MpImageFree(image);
+    }
+  }
+};
+using ScopedMpImage = std::unique_ptr<MpImageInternal, MpImageDeleter>;
+
+ScopedMpImage GetImage(const std::string& file_name) {
+  MpImagePtr image_ptr = nullptr;
+  MpStatus status = MpImageCreateFromFile(file_name.c_str(), &image_ptr,
+                                          /* error_msg= */ nullptr);
+  EXPECT_EQ(status, kMpOk);
+  EXPECT_NE(image_ptr, nullptr);
+  return ScopedMpImage(image_ptr);
 }
 
 void MatchesPoseLandmarkerResult(const PoseLandmarkerResult* result,
@@ -53,8 +76,8 @@ void MatchesPoseLandmarkerResult(const PoseLandmarkerResult* result,
 
   // Expects to have the same number of segmentation_masks detected.
   EXPECT_EQ(result->segmentation_masks_count, 1);
-  EXPECT_EQ(result->segmentation_masks->image_frame.width, 1000);
-  EXPECT_EQ(result->segmentation_masks->image_frame.height, 667);
+  EXPECT_EQ(MpImageGetWidth(result->segmentation_masks[0]), 1000);
+  EXPECT_EQ(MpImageGetHeight(result->segmentation_masks[0]), 667);
 
   // Actual landmarks match expected landmarks.
   EXPECT_NEAR(result->pose_landmarks[0].landmarks[0].x, 0.4649f,
@@ -72,78 +95,71 @@ void MatchesPoseLandmarkerResult(const PoseLandmarkerResult* result,
 }
 
 TEST(PoseLandmarkerTest, ImageModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+  const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
   PoseLandmarkerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* num_poses= */ 1,
-      /* min_pose_detection_confidence= */ 0.5,
-      /* min_pose_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-      /* output_segmentation_masks= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .num_poses = 1,
+      .min_pose_detection_confidence = 0.5,
+      .min_pose_presence_confidence = 0.5,
+      .min_tracking_confidence = 0.5,
+      .output_segmentation_masks = true,
   };
 
-  void* landmarker = pose_landmarker_create(&options, /* error_msg */ nullptr);
+  MpPoseLandmarkerPtr landmarker;
+  MpStatus status =
+      MpPoseLandmarkerCreate(&options, &landmarker, /* error_msg= */ nullptr);
+  EXPECT_EQ(status, kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
-
   PoseLandmarkerResult result;
-  pose_landmarker_detect_image(landmarker, &mp_image, &result,
-                               /* error_msg */ nullptr);
+  status = MpPoseLandmarkerDetectImage(landmarker, image.get(),
+                                       /* image_processing_options= */ nullptr,
+                                       &result, /* error_msg= */ nullptr);
+  EXPECT_EQ(status, kMpOk);
   MatchesPoseLandmarkerResult(&result, kLandmarkPrecision);
-  pose_landmarker_close_result(&result);
-  pose_landmarker_close(landmarker, /* error_msg */ nullptr);
+  MpPoseLandmarkerCloseResult(&result);
+  EXPECT_EQ(MpPoseLandmarkerClose(landmarker, /* error_msg= */ nullptr), kMpOk);
 }
 
 TEST(PoseLandmarkerTest, VideoModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+  const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
   PoseLandmarkerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::VIDEO,
-      /* num_poses= */ 1,
-      /* min_pose_detection_confidence= */ 0.5,
-      /* min_pose_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-      /* output_segmentation_masks= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::VIDEO,
+      .num_poses = 1,
+      .min_pose_detection_confidence = 0.5,
+      .min_pose_presence_confidence = 0.5,
+      .min_tracking_confidence = 0.5,
+      .output_segmentation_masks = true,
   };
 
-  void* landmarker = pose_landmarker_create(&options, /* error_msg */ nullptr);
+  MpPoseLandmarkerPtr landmarker;
+  MpStatus status =
+      MpPoseLandmarkerCreate(&options, &landmarker, /* error_msg= */ nullptr);
+  EXPECT_EQ(status, kMpOk);
   EXPECT_NE(landmarker, nullptr);
-
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
 
   for (int i = 0; i < kIterations; ++i) {
     PoseLandmarkerResult result;
-    pose_landmarker_detect_for_video(landmarker, &mp_image, i, &result,
-                                     /* error_msg */ nullptr);
+    status =
+        MpPoseLandmarkerDetectForVideo(landmarker, image.get(),
+                                       /* image_processing_options= */ nullptr,
+                                       i, &result, /* error_msg= */ nullptr);
+    EXPECT_EQ(status, kMpOk);
 
     MatchesPoseLandmarkerResult(&result, kLandmarkPrecision);
-    pose_landmarker_close_result(&result);
+    MpPoseLandmarkerCloseResult(&result);
   }
-  pose_landmarker_close(landmarker, /* error_msg */ nullptr);
+  EXPECT_EQ(MpPoseLandmarkerClose(landmarker, /* error_msg= */ nullptr), kMpOk);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -153,58 +169,67 @@ TEST(PoseLandmarkerTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(PoseLandmarkerResult* landmarker_result, const MpImage* image,
-                 int64_t timestamp, char* error_msg) {
+  static absl::BlockingCounter* blocking_counter;
+  static void Fn(MpStatus status, const PoseLandmarkerResult* landmarker_result,
+                 const MpImagePtr image, int64_t timestamp) {
+    ASSERT_EQ(status, kMpOk);
     ASSERT_NE(landmarker_result, nullptr);
-    ASSERT_EQ(error_msg, nullptr);
     MatchesPoseLandmarkerResult(landmarker_result, kLandmarkPrecision);
-    EXPECT_GT(image->image_frame.width, 0);
-    EXPECT_GT(image->image_frame.height, 0);
+    EXPECT_GT(MpImageGetWidth(image), 0);
+    EXPECT_GT(MpImageGetHeight(image), 0);
     EXPECT_GT(timestamp, last_timestamp);
     ++last_timestamp;
 
-    pose_landmarker_close_result(landmarker_result);
+    if (blocking_counter) {
+      blocking_counter->DecrementCount();
+    }
   }
 };
 int64_t LiveStreamModeCallback::last_timestamp = -1;
+absl::BlockingCounter* LiveStreamModeCallback::blocking_counter = nullptr;
 
-// TODO: Await the callbacks and re-enable test
-TEST(PoseLandmarkerTest, DISABLED_LiveStreamModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+TEST(PoseLandmarkerTest, LiveStreamModeTest) {
+  const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
 
   PoseLandmarkerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::LIVE_STREAM,
-      /* num_poses= */ 1,
-      /* min_pose_detection_confidence= */ 0.5,
-      /* min_pose_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-      /* output_segmentation_masks= */ true,
-      /* result_callback= */ LiveStreamModeCallback::Fn,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::LIVE_STREAM,
+      .num_poses = 1,
+      .min_pose_detection_confidence = 0.5,
+      .min_pose_presence_confidence = 0.5,
+      .min_tracking_confidence = 0.5,
+      .output_segmentation_masks = true,
+      .result_callback = LiveStreamModeCallback::Fn,
   };
 
-  void* landmarker = pose_landmarker_create(&options, /* error_msg */ nullptr);
+  MpPoseLandmarkerPtr landmarker;
+  MpStatus status =
+      MpPoseLandmarkerCreate(&options, &landmarker, /* error_msg= */ nullptr);
+  EXPECT_EQ(status, kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
+  absl::BlockingCounter counter(kIterations);
+  LiveStreamModeCallback::blocking_counter = &counter;
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(pose_landmarker_detect_async(landmarker, &mp_image, i,
-                                           /* error_msg */ nullptr),
-              0);
+    EXPECT_EQ(
+        MpPoseLandmarkerDetectAsync(landmarker, image.get(),
+                                    /* image_processing_options= */ nullptr, i,
+                                    /* error_msg= */ nullptr),
+        kMpOk);
+    // Short sleep so that MediaPipe does not drop frames.
+    absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
-  pose_landmarker_close(landmarker, /* error_msg */ nullptr);
+
+  // Wait for all callbacks to be invoked.
+  counter.Wait();
+  LiveStreamModeCallback::blocking_counter = nullptr;
+
+  EXPECT_EQ(MpPoseLandmarkerClose(landmarker, /* error_msg= */ nullptr), kMpOk);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -215,51 +240,25 @@ TEST(PoseLandmarkerTest, DISABLED_LiveStreamModeTest) {
 TEST(PoseLandmarkerTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
   PoseLandmarkerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ nullptr},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* num_poses= */ 1,
-      /* min_pose_detection_confidence= */ 0.5,
-      /* min_pose_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-      /* output_segmentation_masks= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = nullptr},
+      .running_mode = RunningMode::IMAGE,
+      .num_poses = 1,
+      .min_pose_detection_confidence = 0.5,
+      .min_pose_presence_confidence = 0.5,
+      .min_tracking_confidence = 0.5,
+      .output_segmentation_masks = true,
   };
 
-  char* error_msg;
-  void* landmarker = pose_landmarker_create(&options, &error_msg);
+  char* error_msg = nullptr;
+  MpPoseLandmarkerPtr landmarker = nullptr;
+  MpStatus status = MpPoseLandmarkerCreate(&options, &landmarker, &error_msg);
+  EXPECT_EQ(status, kMpInvalidArgument);
   EXPECT_EQ(landmarker, nullptr);
-
-  EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
-
-  free(error_msg);
-}
-
-TEST(PoseLandmarkerTest, FailedRecognitionHandling) {
-  const std::string model_path = GetFullPath(kModelName);
-  PoseLandmarkerOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* num_poses= */ 1,
-      /* min_pose_detection_confidence= */ 0.5,
-      /* min_pose_presence_confidence= */ 0.5,
-      /* min_tracking_confidence= */ 0.5,
-      /* output_segmentation_masks= */ true,
-  };
-
-  void* landmarker = pose_landmarker_create(&options, /* error_msg */
-                                            nullptr);
-  EXPECT_NE(landmarker, nullptr);
-
-  const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
-  PoseLandmarkerResult result;
-  char* error_msg;
-  pose_landmarker_detect_image(landmarker, &mp_image, &result, &error_msg);
-  EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
-  free(error_msg);
-  pose_landmarker_close(landmarker, /* error_msg */ nullptr);
+  EXPECT_THAT(error_msg,
+              testing::HasSubstr("ExternalFile must specify at least one"));
+  MpErrorFree(error_msg);
 }
 
 }  // namespace

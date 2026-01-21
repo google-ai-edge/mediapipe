@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
+
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
@@ -90,6 +92,7 @@ objc_library(
     srcs = ["sources/MPPRegionOfInterest+Helpers.mm"],
     hdrs = ["sources/MPPRegionOfInterest+Helpers.h"],
     deps = [
+        "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_cc_proto",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/components/containers:MPPRegionOfInterest",

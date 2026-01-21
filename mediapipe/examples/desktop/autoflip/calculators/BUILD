@@ -1,3 +1,5 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 # Copyright 2019 The MediaPipe Authors.
@@ -19,7 +21,6 @@ licenses(["notice"])
 package(default_visibility = [
     "//buzz/diffractor/mediapipe:__subpackages__",
     "//mediapipe/examples:__subpackages__",
-    "//mediapipe/viz:__subpackages__",
     "//mediapipe/web/solutions:__subpackages__",
 ])
 

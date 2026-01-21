@@ -23,11 +23,12 @@ limitations under the License.
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/tasks/c/core/common.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
 
 namespace {
 
 using ::mediapipe::file::JoinPath;
-using testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/text/";
 constexpr char kTestLanguageDetectorModelPath[] = "language_detector.tflite";
@@ -43,48 +44,42 @@ std::string GetFullPath(absl::string_view file_name) {
 TEST(LanguageDetectorTest, SmokeTest) {
   std::string model_path = GetFullPath(kTestLanguageDetectorModelPath);
   LanguageDetectorOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* classifier_options= */
-      {/* display_names_locale= */ nullptr,
-       /* max_results= */ -1,
-       /* score_threshold= */ 0.0,
-       /* category_allowlist= */ nullptr,
-       /* category_allowlist_count= */ 0,
-       /* category_denylist= */ nullptr,
-       /* category_denylist_count= */ 0},
+      .base_options = {.model_asset_path = model_path.c_str()},
+      .classifier_options = {.max_results = -1, .score_threshold = 0.0},
   };
 
-  void* detector = language_detector_create(&options, /* error_msg */ nullptr);
+  MpLanguageDetectorPtr detector;
+  ASSERT_EQ(
+      MpLanguageDetectorCreate(&options, &detector, /*error_msg=*/nullptr),
+      kMpOk);
   EXPECT_NE(detector, nullptr);
 
   LanguageDetectorResult result;
-  language_detector_detect(detector, kTestString, &result,
-                           /* error_msg */ nullptr);
+  EXPECT_EQ(MpLanguageDetectorDetect(detector, kTestString, &result,
+                                     /*error_msg=*/nullptr),
+            kMpOk);
   EXPECT_EQ(std::string(result.predictions[0].language_code), "fr");
   EXPECT_NEAR(result.predictions[0].probability, 0.999781, kPrecision);
 
-  language_detector_close_result(&result);
-  language_detector_close(detector, /* error_msg */ nullptr);
+  MpLanguageDetectorCloseResult(&result);
+  EXPECT_EQ(MpLanguageDetectorClose(detector, /*error_msg=*/nullptr), kMpOk);
 }
 
 TEST(LanguageDetectorTest, ErrorHandling) {
   // It is an error to set neither the asset buffer nor the path.
   LanguageDetectorOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ nullptr},
-      /* classifier_options= */ {},
+      .base_options = {.model_asset_path = nullptr},
+      .classifier_options = {},
   };
 
-  char* error_msg;
-  void* detector = language_detector_create(&options, &error_msg);
-  EXPECT_EQ(detector, nullptr);
+  MpLanguageDetectorPtr detector;
+  char* error_msg = nullptr;
+  MpStatus status = MpLanguageDetectorCreate(&options, &detector, &error_msg);
+  EXPECT_EQ(status, kMpInvalidArgument);
 
-  EXPECT_THAT(error_msg, HasSubstr("INVALID_ARGUMENT"));
-
-  free(error_msg);
+  EXPECT_THAT(error_msg,
+              testing::HasSubstr("ExternalFile must specify at least one"));
+  MpErrorFree(error_msg);
 }
 
 }  // namespace

@@ -29,8 +29,8 @@
 #include "mediapipe/tasks/cc/genai/inference/proto/llm_params.pb.h"
 
 // clang-format off
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h",
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h",
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h"
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h"
 // clang-format on
 #include "tensorflow/lite/model_builder.h"
 
@@ -171,6 +171,7 @@ class ModelData {
   struct ModelWithData {
     std::unique_ptr<tflite::FlatBufferModel> model;
     std::unique_ptr<DataHolder<uint8_t>> data;
+    std::shared_ptr<ScopedFile> cache_file;
   };
   // Reads a tflite model from the main model.
   virtual absl::StatusOr<ModelWithData> ReadModel(absl::string_view name) = 0;

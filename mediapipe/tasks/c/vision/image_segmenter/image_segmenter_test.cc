@@ -17,16 +17,24 @@ limitations under the License.
 
 #include <cstdint>
 #include <cstdlib>
+#include <memory>
 #include <string>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/blocking_counter.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 #include "mediapipe/framework/deps/file_path.h"
-#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/tasks/c/core/common.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/test/test_utils.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/c/vision/core/image_test_util.h"
 #include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
@@ -36,14 +44,21 @@ using ::mediapipe::file::JoinPath;
 using ::mediapipe::tasks::c::test::CreateCategoryMaskFromImage;
 using ::mediapipe::tasks::c::test::SimilarToUint8Mask;
 using ::mediapipe::tasks::vision::DecodeImageFromFile;
-using testing::HasSubstr;
+using ::mediapipe::tasks::vision::core::CreateEmptyGpuMpImage;
+using ::mediapipe::tasks::vision::core::GetImage;
+using ::mediapipe::tasks::vision::core::ScopedMpImage;
+using ::testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kModelName[] = "deeplabv3.tflite";
 constexpr char kImageFile[] = "segmentation_input_rotation0.jpg";
 constexpr char kMaskImageFile[] = "segmentation_golden_rotation0.png";
-constexpr int kIterations = 5;
+constexpr char kImageRotatedFile[] = "segmentation_input_rotation90.jpg";
+constexpr int kIterations = 2;
+constexpr int kSleepBetweenFramesMilliseconds = 250;
 constexpr float kGoldenMaskSimilarity = 0.98;
+// Image rotation slightly lossy, so reduce golden similarity threshold a little
+constexpr float kGoldenMaskSimilarityRotated = 0.96;
 
 // Magnification factor used when creating the golden category masks to make
 // them more human-friendly. Each pixel in the golden masks has its value
@@ -56,91 +71,122 @@ std::string GetFullPath(absl::string_view file_name) {
 }
 
 TEST(ImageSegmenterTest, ImageModeTestSucceedsWithCategoryMask) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+  const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
   ImageSegmenterOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* display_names_locale= */ "en",
-      /* output_confidence_masks= */ false,
-      /* output_category_mask= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .display_names_locale = "en",
+      .output_confidence_masks = false,
+      .output_category_mask = true,
   };
 
-  void* segmenter = image_segmenter_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(segmenter, nullptr);
-
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
+  MpImageSegmenterPtr segmenter;
+  ASSERT_EQ(
+      MpImageSegmenterCreate(&options, &segmenter, /* error_msg= */ nullptr),
+      kMpOk);
 
   ImageSegmenterResult result;
-  const int error = image_segmenter_segment_image(segmenter, &mp_image, &result,
-                                                  /* error_msg */ nullptr);
-  EXPECT_EQ(error, 0);
+  ASSERT_EQ(MpImageSegmenterSegmentImage(
+                segmenter, image.get(), /* image_processing_options= */ nullptr,
+                &result, /* error_msg= */ nullptr),
+            kMpOk);
 
-  auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
-  const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
-  const MpMask actual_mask = result.category_mask;
-  EXPECT_GT(SimilarToUint8Mask(&actual_mask, &expected_mask,
+  MP_ASSERT_OK_AND_ASSIGN(auto expected_mask_image,
+                          DecodeImageFromFile(GetFullPath(kMaskImageFile)));
+  const ScopedMpImage expected_mask(
+      CreateCategoryMaskFromImage(expected_mask_image));
+  const MpImagePtr actual_mask = result.category_mask;
+  EXPECT_GT(SimilarToUint8Mask(actual_mask, expected_mask.get(),
                                kGoldenMaskMagnificationFactor),
             kGoldenMaskSimilarity);
-  image_segmenter_close_result(&result);
-  image_segmenter_close(segmenter, /* error_msg */ nullptr);
+  MpImageSegmenterCloseResult(&result);
+  EXPECT_EQ(MpImageSegmenterClose(segmenter, /* error_msg= */ nullptr), kMpOk);
+}
 
-  delete[] expected_mask.image_frame.image_buffer;
+TEST(ImageSegmenterTest, ImageModeWithRotationTestSucceedsWithCategoryMask) {
+  const auto image = GetImage(GetFullPath(kImageRotatedFile));
+
+  const std::string model_path = GetFullPath(kModelName);
+  ImageSegmenterOptions options = {
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .display_names_locale = "en",
+      .output_confidence_masks = false,
+      .output_category_mask = true,
+  };
+
+  MpImageSegmenterPtr segmenter;
+  ASSERT_EQ(
+      MpImageSegmenterCreate(&options, &segmenter, /* error_msg= */ nullptr),
+      kMpOk);
+
+  ImageProcessingOptions image_processing_options;
+  image_processing_options.has_region_of_interest = 0;
+  image_processing_options.rotation_degrees = 90;
+
+  ImageSegmenterResult result;
+  ASSERT_EQ(MpImageSegmenterSegmentImage(segmenter, image.get(),
+                                         &image_processing_options, &result,
+                                         /* error_msg= */ nullptr),
+            kMpOk);
+
+  MP_ASSERT_OK_AND_ASSIGN(auto expected_mask_image,
+                          DecodeImageFromFile(GetFullPath(kMaskImageFile)));
+  const ScopedMpImage expected_mask(
+      CreateCategoryMaskFromImage(expected_mask_image));
+  const MpImagePtr actual_mask = result.category_mask;
+  EXPECT_GT(SimilarToUint8Mask(actual_mask, expected_mask.get(),
+                               kGoldenMaskMagnificationFactor),
+            kGoldenMaskSimilarityRotated);
+  MpImageSegmenterCloseResult(&result);
+  EXPECT_EQ(MpImageSegmenterClose(segmenter, /* error_msg= */ nullptr), kMpOk);
 }
 
 TEST(ImageSegmenterTest, VideoModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+  const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
   ImageSegmenterOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::VIDEO,
-      /* display_names_locale= */ "en",
-      /* output_confidence_masks= */ false,
-      /* output_category_mask= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::VIDEO,
+      .display_names_locale = "en",
+      .output_confidence_masks = false,
+      .output_category_mask = true,
   };
 
-  void* segmenter = image_segmenter_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(segmenter, nullptr);
+  MpImageSegmenterPtr segmenter;
+  ASSERT_EQ(
+      MpImageSegmenterCreate(&options, &segmenter, /* error_msg= */ nullptr),
+      kMpOk);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
-
-  auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
-  const MpMask expected_mask = CreateCategoryMaskFromImage(expected_mask_image);
+  MP_ASSERT_OK_AND_ASSIGN(auto expected_mask_image,
+                          DecodeImageFromFile(GetFullPath(kMaskImageFile)));
+  const ScopedMpImage expected_mask(
+      CreateCategoryMaskFromImage(expected_mask_image));
 
   for (int i = 0; i < kIterations; ++i) {
     ImageSegmenterResult result;
-    image_segmenter_segment_for_video(segmenter, &mp_image, i, &result,
-                                      /* error_msg */ nullptr);
-    const MpMask actual_mask = result.category_mask;
-    EXPECT_GT(SimilarToUint8Mask(&actual_mask, &expected_mask,
+    ASSERT_EQ(
+        MpImageSegmenterSegmentForVideo(segmenter, image.get(),
+                                        /* image_processing_options= */ nullptr,
+                                        i, &result, /* error_msg= */ nullptr),
+        kMpOk);
+    const MpImagePtr actual_mask = result.category_mask;
+    EXPECT_GT(SimilarToUint8Mask(actual_mask, expected_mask.get(),
                                  kGoldenMaskMagnificationFactor),
               kGoldenMaskSimilarity);
 
-    image_segmenter_close_result(&result);
+    MpImageSegmenterCloseResult(&result);
   }
-  image_segmenter_close(segmenter, /* error_msg */ nullptr);
-
-  delete[] expected_mask.image_frame.image_buffer;
+  EXPECT_EQ(MpImageSegmenterClose(segmenter, /* error_msg= */ nullptr), kMpOk);
 }
 
 // A structure to support LiveStreamModeTest below. This structure holds a
@@ -150,62 +196,71 @@ TEST(ImageSegmenterTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static void Fn(ImageSegmenterResult* segmenter_result, const MpImage* image,
-                 int64_t timestamp, char* error_msg) {
+  static absl::BlockingCounter* blocking_counter;
+  static void Fn(MpStatus status, const ImageSegmenterResult* segmenter_result,
+                 MpImagePtr image, int64_t timestamp) {
+    ASSERT_EQ(status, kMpOk);
     ASSERT_NE(segmenter_result, nullptr);
-    ASSERT_EQ(error_msg, nullptr);
-    EXPECT_GT(image->image_frame.width, 0);
-    EXPECT_GT(image->image_frame.height, 0);
-    auto expected_mask_image = DecodeImageFromFile(GetFullPath(kMaskImageFile));
-    const MpMask expected_mask =
-        CreateCategoryMaskFromImage(expected_mask_image);
-    const MpMask actual_mask = segmenter_result->category_mask;
-    EXPECT_GT(SimilarToUint8Mask(&actual_mask, &expected_mask,
+    EXPECT_GT(MpImageGetWidth(image), 0);
+    EXPECT_GT(MpImageGetHeight(image), 0);
+    MP_ASSERT_OK_AND_ASSIGN(auto expected_mask_image,
+                            DecodeImageFromFile(GetFullPath(kMaskImageFile)));
+    const ScopedMpImage expected_mask(
+        CreateCategoryMaskFromImage(expected_mask_image));
+    const MpImagePtr actual_mask = segmenter_result->category_mask;
+    EXPECT_GT(SimilarToUint8Mask(actual_mask, expected_mask.get(),
                                  kGoldenMaskMagnificationFactor),
               kGoldenMaskSimilarity);
     EXPECT_GT(timestamp, last_timestamp);
     ++last_timestamp;
 
-    delete[] expected_mask.image_frame.image_buffer;
+    if (blocking_counter) {
+      blocking_counter->DecrementCount();
+    }
   }
 };
 int64_t LiveStreamModeCallback::last_timestamp = -1;
+absl::BlockingCounter* LiveStreamModeCallback::blocking_counter = nullptr;
 
-// TODO: Await the callbacks and re-enable test
-TEST(ImageSegmenterTest, DISABLED_LiveStreamModeTest) {
-  const auto image = DecodeImageFromFile(GetFullPath(kImageFile));
-  ASSERT_TRUE(image.ok());
+TEST(ImageSegmenterTest, LiveStreamModeTest) {
+  const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
 
   ImageSegmenterOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::LIVE_STREAM,
-      /* display_names_locale= */ "en",
-      /* output_confidence_masks= */ false,
-      /* output_category_mask= */ true,
-      /* result_callback= */ LiveStreamModeCallback::Fn,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::LIVE_STREAM,
+      .display_names_locale = "en",
+      .output_confidence_masks = false,
+      .output_category_mask = true,
+      .result_callback = LiveStreamModeCallback::Fn,
   };
 
-  void* segmenter = image_segmenter_create(&options, /* error_msg */ nullptr);
-  EXPECT_NE(segmenter, nullptr);
+  MpImageSegmenterPtr segmenter;
+  ASSERT_EQ(
+      MpImageSegmenterCreate(&options, &segmenter, /* error_msg= */ nullptr),
+      kMpOk);
 
-  const auto& image_frame = image->GetImageFrameSharedPtr();
-  const MpImage mp_image = {
-      .type = MpImage::IMAGE_FRAME,
-      .image_frame = {.format = static_cast<ImageFormat>(image_frame->Format()),
-                      .image_buffer = image_frame->PixelData(),
-                      .width = image_frame->Width(),
-                      .height = image_frame->Height()}};
+  absl::BlockingCounter counter(kIterations);
+  LiveStreamModeCallback::blocking_counter = &counter;
 
   for (int i = 0; i < kIterations; ++i) {
-    EXPECT_GE(image_segmenter_segment_async(segmenter, &mp_image, i,
-                                            /* error_msg */ nullptr),
-              0);
+    ASSERT_EQ(
+        MpImageSegmenterSegmentAsync(segmenter, image.get(),
+                                     /* image_processing_options= */ nullptr, i,
+                                     /* error_msg= */ nullptr),
+        kMpOk);
+    // Short sleep so that MediaPipe does not drop frames.
+    absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
-  image_segmenter_close(segmenter, /* error_msg */ nullptr);
+
+  // Wait for all callbacks to be invoked.
+  counter.Wait();
+  LiveStreamModeCallback::blocking_counter = nullptr;
+
+  EXPECT_EQ(MpImageSegmenterClose(segmenter, /* error_msg= */ nullptr), kMpOk);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
@@ -216,47 +271,97 @@ TEST(ImageSegmenterTest, DISABLED_LiveStreamModeTest) {
 TEST(ImageSegmenterTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
   ImageSegmenterOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ nullptr},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* display_names_locale= */ "en",
-      /* output_confidence_masks= */ false,
-      /* output_category_mask= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = nullptr},
+      .running_mode = RunningMode::IMAGE,
+      .display_names_locale = "en",
+      .output_confidence_masks = false,
+      .output_category_mask = true,
   };
 
-  char* error_msg;
-  void* segmenter = image_segmenter_create(&options, &error_msg);
+  char* error_msg = nullptr;
+  MpImageSegmenterPtr segmenter = nullptr;
+  MpStatus status = MpImageSegmenterCreate(&options, &segmenter, &error_msg);
+  EXPECT_EQ(status, kMpInvalidArgument);
   EXPECT_EQ(segmenter, nullptr);
 
-  EXPECT_THAT(error_msg, HasSubstr("ExternalFile must specify"));
-
-  free(error_msg);
+  EXPECT_THAT(error_msg,
+              testing::HasSubstr("ExternalFile must specify at least one"));
+  MpErrorFree(error_msg);
 }
 
 TEST(ImageSegmenterTest, FailedRecognitionHandling) {
   const std::string model_path = GetFullPath(kModelName);
   ImageSegmenterOptions options = {
-      /* base_options= */ {/* model_asset_buffer= */ nullptr,
-                           /* model_asset_buffer_count= */ 0,
-                           /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
-      /* display_names_locale= */ "en",
-      /* output_confidence_masks= */ false,
-      /* output_category_mask= */ true,
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .display_names_locale = "en",
+      .output_confidence_masks = false,
+      .output_category_mask = true,
   };
 
-  void* segmenter = image_segmenter_create(&options, /* error_msg */
-                                           nullptr);
-  EXPECT_NE(segmenter, nullptr);
+  MpImageSegmenterPtr segmenter;
+  ASSERT_EQ(
+      MpImageSegmenterCreate(&options, &segmenter, /* error_msg= */ nullptr),
+      kMpOk);
+  ASSERT_NE(segmenter, nullptr);
 
-  const MpImage mp_image = {.type = MpImage::GPU_BUFFER, .gpu_buffer = {}};
+  const ScopedMpImage image = CreateEmptyGpuMpImage();
+  char* error_msg = nullptr;
   ImageSegmenterResult result;
-  char* error_msg;
-  image_segmenter_segment_image(segmenter, &mp_image, &result, &error_msg);
-  EXPECT_THAT(error_msg, HasSubstr("GPU Buffer not supported yet"));
-  free(error_msg);
-  image_segmenter_close(segmenter, /* error_msg */ nullptr);
+  MpStatus status = MpImageSegmenterSegmentImage(
+      segmenter, image.get(), /* image_processing_options= */ nullptr, &result,
+      &error_msg);
+  EXPECT_EQ(status, kMpInvalidArgument);
+  EXPECT_THAT(
+      error_msg,
+      testing::HasSubstr(
+          "Both output_width and output_height must be larger than 0."));
+  MpErrorFree(error_msg);
+
+  EXPECT_EQ(MpImageSegmenterClose(segmenter, /* error_msg= */ nullptr), kMpOk);
+}
+
+TEST(ImageSegmenterTest, GetLabelsSucceeds) {
+  const std::string model_path = GetFullPath(kModelName);
+  ImageSegmenterOptions options = {
+      .base_options = {.model_asset_buffer = nullptr,
+                       .model_asset_buffer_count = 0,
+                       .model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .display_names_locale = "en",
+      .output_confidence_masks = false,
+      .output_category_mask = true,
+  };
+
+  MpImageSegmenterPtr segmenter;
+  ASSERT_EQ(
+      MpImageSegmenterCreate(&options, &segmenter, /* error_msg= */ nullptr),
+      kMpOk);
+  ASSERT_NE(segmenter, nullptr);
+
+  MpStringList labels;
+  ASSERT_EQ(
+      MpImageSegmenterGetLabels(segmenter, &labels, /* error_msg= */ nullptr),
+      kMpOk);
+
+  const std::vector<std::string> expected_labels = {
+      "background", "aeroplane",    "bicycle", "bird",  "boat",
+      "bottle",     "bus",          "car",     "cat",   "chair",
+      "cow",        "dining table", "dog",     "horse", "motorbike",
+      "person",     "potted plant", "sheep",   "sofa",  "train",
+      "tv"};
+
+  ASSERT_EQ(labels.num_strings, expected_labels.size());
+  for (int i = 0; i < expected_labels.size(); ++i) {
+    EXPECT_STREQ(labels.strings[i], expected_labels[i].c_str());
+  }
+
+  MpStringListFree(&labels);
+  EXPECT_EQ(MpImageSegmenterClose(segmenter, /* error_msg= */ nullptr), kMpOk);
 }
 
 }  // namespace

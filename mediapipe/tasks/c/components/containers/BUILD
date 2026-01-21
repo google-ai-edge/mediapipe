@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
@@ -54,7 +57,7 @@ cc_library(
     hdrs = ["matrix_converter.h"],
     deps = [
         ":matrix",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -66,7 +69,7 @@ cc_test(
         ":matrix_converter",
         "//mediapipe/framework/port:gtest",
         "@com_google_googletest//:gtest_main",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 

@@ -22,7 +22,7 @@
 #include <cstring>
 #include <memory>
 
-#include "absl/cleanup/cleanup.h"
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -93,16 +93,29 @@ absl::StatusOr<std::unique_ptr<MemoryMappedFile>> MemoryMappedFile::Create(
 absl::StatusOr<std::unique_ptr<MemoryMappedFile>>
 MemoryMappedFile::CreateMutable(absl::string_view path) {
   MP_ASSIGN_OR_RETURN(auto scoped_file, ScopedFile::OpenWritable(path));
-  int fd = scoped_file.file();
-  RET_CHECK_GE(fd, 0) << "open() failed: " << path;
-  auto close_fd = absl::MakeCleanup([fd] { close(fd); });
+  return CreateMutable(scoped_file.file());
+}
 
-  size_t length = lseek(fd, 0, SEEK_END);
+absl::StatusOr<std::unique_ptr<MemoryMappedFile>>
+MemoryMappedFile::CreateMutable(int file, uint64_t offset, uint64_t length,
+                                absl::string_view key) {
+  RET_CHECK_EQ(offset % GetOffsetAlignment(), 0)
+      << "Offset must be a multiple of page size : " << offset << ", "
+      << GetOffsetAlignment();
 
-  void* data = mmap(nullptr, length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-  RET_CHECK_NE(data, MAP_FAILED)
-      << "Failed to map " << path << ", error: " << strerror(errno);
-  RET_CHECK_NE(data, nullptr) << "Failed to map: " << path;
+  size_t file_size = lseek(file, 0, SEEK_END);
+  RET_CHECK_GE(file_size, length + offset) << "Length and offset too large.";
+  if (length == 0) {
+    length = file_size - offset;
+  }
+  if (length == 0) {
+    return absl::InvalidArgumentError("Cannot mmap empty file.");
+  }
+
+  void* data =
+      mmap(nullptr, length, PROT_READ | PROT_WRITE, MAP_SHARED, file, offset);
+  RET_CHECK_NE(data, MAP_FAILED) << "Failed to map, error: " << strerror(errno);
+  RET_CHECK_NE(data, nullptr) << "Failed to map.";
 
   return std::make_unique<MemoryMappedFilePosix>(length, data);
 }

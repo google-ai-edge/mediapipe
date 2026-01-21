@@ -31,6 +31,7 @@ public class GraphTextureFrame implements TextureFrame {
   private int textureName;
   private int width;
   private int height;
+  private final int format;
   private long timestamp = Long.MIN_VALUE;
   // True when created with PacketGetter.getTextureFrameDeferredSync(). This will result in gpuWait
   // when calling getTextureName().
@@ -56,6 +57,7 @@ public class GraphTextureFrame implements TextureFrame {
     textureName = nativeGetTextureName(nativeBufferHandle);
     width = nativeGetWidth(nativeBufferHandle);
     height = nativeGetHeight(nativeBufferHandle);
+    format = nativeGetFormat(nativeBufferHandle);
     this.timestamp = timestamp;
     this.deferredSync = deferredSync;
   }
@@ -102,6 +104,11 @@ public class GraphTextureFrame implements TextureFrame {
   @Override
   public long getTimestamp() {
     return timestamp;
+  }
+
+  @Override
+  public int getFormat() {
+    return format;
   }
 
   @Override
@@ -190,6 +197,8 @@ public class GraphTextureFrame implements TextureFrame {
   private native int nativeGetWidth(long nativeHandle);
 
   private native int nativeGetHeight(long nativeHandle);
+
+  private native int nativeGetFormat(long nativeHandle);
 
   private native void nativeGpuWait(long nativeHandle);
 

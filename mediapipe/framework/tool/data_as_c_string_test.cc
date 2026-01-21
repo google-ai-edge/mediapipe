@@ -25,7 +25,7 @@ static const char my_graph[] =
 
 TEST(DataAsCString, CanDecodeCalculatorGraphConfig) {
   CalculatorGraphConfig config;
-  bool success = config.ParseFromArray(my_graph, sizeof(my_graph) - 1);
+  bool success = config.ParseFromString(my_graph);
   EXPECT_TRUE(success);
 }
 

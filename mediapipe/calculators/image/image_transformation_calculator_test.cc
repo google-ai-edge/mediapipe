@@ -24,6 +24,7 @@
 #include "testing/base/public/gunit.h"
 #include "third_party/OpenCV/core.hpp"  // IWYU pragma: keep
 #include "third_party/OpenCV/core/base.hpp"
+#include "third_party/OpenCV/core/hal/interface.h"
 #include "third_party/OpenCV/core/mat.hpp"
 #include "third_party/OpenCV/core/types.hpp"
 
@@ -31,12 +32,13 @@ namespace mediapipe {
 
 namespace {
 
-absl::flat_hash_set<int> computeUniqueValues(const cv::Mat& mat) {
+template <typename T, typename U>
+absl::flat_hash_set<T> computeUniqueValues(const cv::Mat& mat) {
   // Compute the unique values in cv::Mat
-  absl::flat_hash_set<int> unique_values;
+  absl::flat_hash_set<T> unique_values;
   for (int i = 0; i < mat.rows; i++) {
     for (int j = 0; j < mat.cols; j++) {
-      unique_values.insert(mat.at<unsigned char>(i, j));
+      unique_values.insert(mat.at<U>(i, j));
     }
   }
   return unique_values;
@@ -92,9 +94,10 @@ TEST(ImageTransformationCalculatorTest, NearestNeighborResizing) {
       ASSERT_EQ(output_dim.first, result.Width());
       ASSERT_EQ(output_dim.second, result.Height());
 
-      auto unique_input_values = computeUniqueValues(input_mat);
+      auto unique_input_values =
+          computeUniqueValues<int, unsigned char>(input_mat);
       auto unique_output_values =
-          computeUniqueValues(formats::MatView(&result));
+          computeUniqueValues<int, unsigned char>(formats::MatView(&result));
       EXPECT_THAT(unique_input_values,
                   ::testing::ContainerEq(unique_output_values));
     }
@@ -154,9 +157,10 @@ TEST(ImageTransformationCalculatorTest,
       ASSERT_EQ(output_dim.first, result.Width());
       ASSERT_EQ(output_dim.second, result.Height());
 
-      auto unique_input_values = computeUniqueValues(packet_mat_view);
+      auto unique_input_values =
+          computeUniqueValues<float, float>(packet_mat_view);
       auto unique_output_values =
-          computeUniqueValues(formats::MatView(&result));
+          computeUniqueValues<float, float>(formats::MatView(&result));
       EXPECT_THAT(unique_input_values,
                   ::testing::ContainerEq(unique_output_values));
     }
@@ -231,9 +235,10 @@ TEST(ImageTransformationCalculatorTest, NearestNeighborResizingGpu) {
       ASSERT_EQ(output_dim.first, output_image.Width());
       ASSERT_EQ(output_dim.second, output_image.Height());
 
-      auto unique_input_values = computeUniqueValues(input_mat);
-      auto unique_output_values =
-          computeUniqueValues(formats::MatView(&output_image));
+      auto unique_input_values =
+          computeUniqueValues<int, unsigned char>(input_mat);
+      auto unique_output_values = computeUniqueValues<int, unsigned char>(
+          formats::MatView(&output_image));
       EXPECT_THAT(unique_input_values,
                   ::testing::ContainerEq(unique_output_values));
     }
@@ -310,9 +315,10 @@ TEST(ImageTransformationCalculatorTest,
       ASSERT_EQ(output_dim.first, output_image.Width());
       ASSERT_EQ(output_dim.second, output_image.Height());
 
-      auto unique_input_values = computeUniqueValues(packet_mat_view);
+      auto unique_input_values =
+          computeUniqueValues<float, float>(packet_mat_view);
       auto unique_output_values =
-          computeUniqueValues(formats::MatView(&output_image));
+          computeUniqueValues<float, float>(formats::MatView(&output_image));
       EXPECT_THAT(unique_input_values,
                   ::testing::ContainerEq(unique_output_values));
     }

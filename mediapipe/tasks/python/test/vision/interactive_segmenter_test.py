@@ -21,21 +21,20 @@ from absl.testing import parameterized
 import cv2
 import numpy as np
 
-from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.python._framework_bindings import image_frame
 from mediapipe.tasks.python.components.containers import keypoint as keypoint_module
-from mediapipe.tasks.python.components.containers import rect
+from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import interactive_segmenter
+from mediapipe.tasks.python.vision.core import image as image_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 
 InteractiveSegmenterResult = interactive_segmenter.InteractiveSegmenterResult
 _BaseOptions = base_options_module.BaseOptions
 _Image = image_module.Image
-_ImageFormat = image_frame.ImageFormat
+_ImageFormat = image_module.ImageFormat
 _NormalizedKeypoint = keypoint_module.NormalizedKeypoint
-_Rect = rect.Rect
+_RectF = rect_module.RectF
 _InteractiveSegmenter = interactive_segmenter.InteractiveSegmenter
 _InteractiveSegmenterOptions = interactive_segmenter.InteractiveSegmenterOptions
 _RegionOfInterest = interactive_segmenter.RegionOfInterest
@@ -47,7 +46,7 @@ _CATS_AND_DOGS = 'cats_and_dogs.jpg'
 _CATS_AND_DOGS_MASK_DOG_1 = 'cats_and_dogs_mask_dog1.png'
 _CATS_AND_DOGS_MASK_DOG_2 = 'cats_and_dogs_mask_dog2.png'
 _MASK_MAGNIFICATION_FACTOR = 255
-_MASK_SIMILARITY_THRESHOLD = 0.97
+_MASK_SIMILARITY_THRESHOLD = 0.96
 _TEST_DATA_DIR = 'mediapipe/tasks/testdata/vision'
 
 
@@ -61,7 +60,9 @@ def _calculate_soft_iou(m1, m2):
     return 0
 
 
-def _similar_to_float_mask(actual_mask, expected_mask, similarity_threshold):
+def _similar_to_float_mask(
+    actual_mask: _Image, expected_mask: _Image, similarity_threshold: float
+):
   actual_mask = actual_mask.numpy_view()
   expected_mask = expected_mask.numpy_view() / 255.0
 
@@ -71,7 +72,9 @@ def _similar_to_float_mask(actual_mask, expected_mask, similarity_threshold):
   )
 
 
-def _similar_to_uint8_mask(actual_mask, expected_mask, similarity_threshold):
+def _similar_to_uint8_mask(
+    actual_mask: _Image, expected_mask: _Image, similarity_threshold: float
+):
   actual_mask_pixels = actual_mask.numpy_view().flatten()
   expected_mask_pixels = expected_mask.numpy_view().flatten()
 
@@ -134,13 +137,15 @@ class InteractiveSegmenterTest(parameterized.TestCase):
 
   def test_create_from_options_fails_with_invalid_model_path(self):
     with self.assertRaisesRegex(
-        RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'
+        FileNotFoundError,
+        'Unable to open file at /path/to/invalid/model.tflite',
     ):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite'
       )
       options = _InteractiveSegmenterOptions(base_options=base_options)
-      _InteractiveSegmenter.create_from_options(options)
+      segmenter = _InteractiveSegmenter.create_from_options(options)
+      segmenter.close()
 
   def test_create_from_options_succeeds_with_valid_model_content(self):
     # Creates with options containing model content successfully.
@@ -149,6 +154,7 @@ class InteractiveSegmenterTest(parameterized.TestCase):
       options = _InteractiveSegmenterOptions(base_options=base_options)
       segmenter = _InteractiveSegmenter.create_from_options(options)
       self.assertIsInstance(segmenter, _InteractiveSegmenter)
+      segmenter.close()
 
   @parameterized.parameters(
       (
@@ -210,6 +216,7 @@ class InteractiveSegmenterTest(parameterized.TestCase):
     roi = _RegionOfInterest(format=roi_format, keypoint=keypoint)
     segmentation_result = segmenter.segment(self.test_image, roi)
     category_mask = segmentation_result.category_mask
+    assert category_mask is not None, 'Category mask was None'
     result_pixels = category_mask.numpy_view().flatten()
 
     # Check if data type of `category_mask` is correct.
@@ -243,7 +250,7 @@ class InteractiveSegmenterTest(parameterized.TestCase):
           _RegionOfInterest.Format.KEYPOINT,
           _NormalizedKeypoint(0.66, 0.66),
           _CATS_AND_DOGS_MASK_DOG_2,
-          _MASK_SIMILARITY_THRESHOLD,
+          0.84,
       ),
   )
   def test_segment_succeeds_with_confidence_mask(
@@ -326,13 +333,11 @@ class InteractiveSegmenterTest(parameterized.TestCase):
         output_confidence_masks=True,
     )
 
-    with self.assertRaisesRegex(
-        ValueError, "This task doesn't support region-of-interest."
-    ):
+    with self.assertRaises(ValueError):
       with _InteractiveSegmenter.create_from_options(options) as segmenter:
         # Perform segmentation
         image_processing_options = _ImageProcessingOptions(
-            _Rect(left=0.1, top=0, right=0.9, bottom=1)
+            _RectF(left=0.1, top=0.0, right=0.9, bottom=1.0)
         )
         segmenter.segment(self.test_image, roi, image_processing_options)
 

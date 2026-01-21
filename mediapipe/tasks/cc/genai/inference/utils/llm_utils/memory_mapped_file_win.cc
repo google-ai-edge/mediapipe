@@ -97,20 +97,29 @@ size_t MemoryMappedFile::GetOffsetAlignment() {
 absl::StatusOr<std::unique_ptr<MemoryMappedFile>> MemoryMappedFile::Create(
     absl::string_view path) {
   MP_ASSIGN_OR_RETURN(auto scoped_file, ScopedFile::Open(path));
-  return CreateImpl(scoped_file.file(), 0, 0, nullptr, false);
+  return CreateImpl(scoped_file.file(), 0, 0, nullptr, /*writable=*/false);
 }
 
 // static
 absl::StatusOr<std::unique_ptr<MemoryMappedFile>> MemoryMappedFile::Create(
     HANDLE file, uint64_t offset, uint64_t length, absl::string_view key) {
   return CreateImpl(file, offset, length, key.empty() ? nullptr : key.data(),
-                    false);
+                    /*writable=*/false);
 }
 
+// static
 absl::StatusOr<std::unique_ptr<MemoryMappedFile>>
 MemoryMappedFile::CreateMutable(absl::string_view path) {
   MP_ASSIGN_OR_RETURN(auto scoped_file, ScopedFile::OpenWritable(path));
-  return CreateImpl(scoped_file.file(), 0, 0, nullptr, true);
+  return CreateImpl(scoped_file.file(), 0, 0, nullptr, /*writable=*/true);
+}
+
+// static
+absl::StatusOr<std::unique_ptr<MemoryMappedFile>>
+MemoryMappedFile::CreateMutable(HANDLE file, uint64_t offset, uint64_t length,
+                                absl::string_view key) {
+  return CreateImpl(file, offset, length, key.empty() ? nullptr : key.data(),
+                    /*writable=*/true);
 }
 
 }  // namespace mediapipe::tasks::genai::llm_utils

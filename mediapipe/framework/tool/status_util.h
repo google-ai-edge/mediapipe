@@ -30,7 +30,7 @@ namespace tool {
 // be called on it again).  When returned from a non-source Calculator
 // it signals that the graph should be cancelled (which is handled by
 // closing all source Calculators and waiting for the graph to finish).
-absl::Status StatusStop();
+const absl::Status& StatusStop();
 
 // Return a status which signals an invalid initial condition (for
 // example an InputSidePacket does not include all necessary fields).

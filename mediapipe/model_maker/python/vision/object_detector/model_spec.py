@@ -116,10 +116,10 @@ class SupportedModels(enum.Enum):
   - MOBILENET_MULTI_AVG: MobileNet-MultiHW-AVG 256x256 input
   - MOBILENET_MULTI_AVG_I384: MobileNet-MultiHW-AVG 384x384 input
   """
-  MOBILENET_V2 = mobilenet_v2_i256_spec
-  MOBILENET_V2_I320 = mobilenet_v2_i320_spec
-  MOBILENET_MULTI_AVG = mobilenet_multi_avg_i256_spec
-  MOBILENET_MULTI_AVG_I384 = mobilenet_multi_avg_i384_spec
+  MOBILENET_V2 = enum.member(mobilenet_v2_i256_spec)
+  MOBILENET_V2_I320 = enum.member(mobilenet_v2_i320_spec)
+  MOBILENET_MULTI_AVG = enum.member(mobilenet_multi_avg_i256_spec)
+  MOBILENET_MULTI_AVG_I384 = enum.member(mobilenet_multi_avg_i384_spec)
 
   @classmethod
   def get(cls, spec: 'SupportedModels') -> 'ModelSpec':

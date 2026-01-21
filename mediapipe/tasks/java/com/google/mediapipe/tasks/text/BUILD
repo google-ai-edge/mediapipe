@@ -12,34 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar_with_jni")
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_jni_binary")
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
 # The native library of all MediaPipe text tasks.
-cc_binary(
-    name = "libmediapipe_tasks_text_jni.so",
-    linkopts = [
-        "-Wl,--no-undefined",
-        "-Wl,--version-script,$(location //mediapipe/tasks/java:version_script.lds)",
-    ],
-    linkshared = 1,
-    linkstatic = 1,
+mediapipe_jni_binary(
+    name = "mediapipe_tasks_text_jni",
     deps = [
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
         "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
-        "//mediapipe/tasks/java:version_script.lds",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
     ],
-)
-
-cc_library(
-    name = "libmediapipe_tasks_text_jni_lib",
-    srcs = [":libmediapipe_tasks_text_jni.so"],
-    alwayslink = 1,
 )
 
 android_library(
@@ -47,9 +34,6 @@ android_library(
     srcs = [
         "textclassifier/TextClassifier.java",
         "textclassifier/TextClassifierResult.java",
-    ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
     ],
     manifest = "textclassifier/AndroidManifest.xml",
     deps = [
@@ -72,9 +56,6 @@ android_library(
     srcs = [
         "textembedder/TextEmbedder.java",
         "textembedder/TextEmbedderResult.java",
-    ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
     ],
     manifest = "textembedder/AndroidManifest.xml",
     deps = [
@@ -100,9 +81,6 @@ android_library(
         "languagedetector/LanguageDetector.java",
         "languagedetector/LanguageDetectorResult.java",
         "languagedetector/LanguagePrediction.java",
-    ],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
     ],
     manifest = "textembedder/AndroidManifest.xml",
     deps = [

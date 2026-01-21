@@ -20,7 +20,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
-#include "mediapipe/tasks/c/vision/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
@@ -53,10 +53,9 @@ TEST(ImageSegmenterResultConverterTest, ConvertsCategoryMaskAndFreesMemory) {
 
   // Verify the conversion
   EXPECT_TRUE(c_result.has_category_mask);
-  EXPECT_EQ(c_result.category_mask.type, MpMask::IMAGE_FRAME);
-  EXPECT_EQ(c_result.category_mask.image_frame.mask_format, MaskFormat::UINT8);
-  EXPECT_EQ(c_result.category_mask.image_frame.width, expected_mask.width());
-  EXPECT_EQ(c_result.category_mask.image_frame.height, expected_mask.height());
+  EXPECT_FALSE(MpImageUsesGpu(c_result.category_mask));
+  EXPECT_EQ(MpImageGetWidth(c_result.category_mask), expected_mask.width());
+  EXPECT_EQ(MpImageGetHeight(c_result.category_mask), expected_mask.height());
 
   CppCloseImageSegmenterResult(&c_result);
   EXPECT_EQ(c_result.confidence_masks, nullptr);

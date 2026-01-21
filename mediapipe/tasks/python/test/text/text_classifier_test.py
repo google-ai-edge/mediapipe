@@ -134,6 +134,38 @@ class TextClassifierTest(parameterized.TestCase):
     self.model_path = test_utils.get_test_data_path(
         os.path.join(_TEST_DATA_DIR, _BERT_MODEL_FILE))
 
+  def assertTextClassifierResultEquals(
+      self,
+      result: TextClassifierResult,
+      expected_result: TextClassifierResult
+  ):
+    self.assertEqual(result.timestamp_ms, expected_result.timestamp_ms)
+    self.assertLen(result.classifications, len(expected_result.classifications))
+    for i, actual_classification in enumerate(result.classifications):
+      expected_classification = expected_result.classifications[i]
+      self.assertEqual(
+          actual_classification.head_index, expected_classification.head_index
+      )
+      self.assertEqual(
+          actual_classification.head_name, expected_classification.head_name
+      )
+      self.assertLen(
+          actual_classification.categories,
+          len(expected_classification.categories),
+      )
+      for j, actual_category in enumerate(actual_classification.categories):
+        expected_category = expected_classification.categories[j]
+        self.assertEqual(actual_category.index, expected_category.index)
+        self.assertEqual(
+            actual_category.display_name or '', expected_category.display_name
+        )
+        self.assertEqual(
+            actual_category.category_name, expected_category.category_name
+        )
+        self.assertAlmostEqual(
+            actual_category.score, expected_category.score, delta=1e-4
+        )
+
   def test_create_from_file_succeeds_with_valid_model_path(self):
     # Creates with default option and valid model file successfully.
     with _TextClassifier.create_from_model_path(self.model_path) as classifier:
@@ -148,7 +180,9 @@ class TextClassifierTest(parameterized.TestCase):
 
   def test_create_from_options_fails_with_invalid_model_path(self):
     with self.assertRaisesRegex(
-        RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'):
+        FileNotFoundError,
+        'Unable to open file at /path/to/invalid/model.tflite',
+    ):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite')
       options = _TextClassifierOptions(base_options=base_options)
@@ -160,6 +194,30 @@ class TextClassifierTest(parameterized.TestCase):
       base_options = _BaseOptions(model_asset_buffer=f.read())
       options = _TextClassifierOptions(base_options=base_options)
       classifier = _TextClassifier.create_from_options(options)
+      self.assertIsInstance(classifier, _TextClassifier)
+
+  def test_create_from_options_succeeds_with_allow_list(self):
+    base_options = _BaseOptions(model_asset_path=self.model_path)
+    options = _TextClassifierOptions(
+        base_options=base_options, category_allowlist=['positive']
+    )
+    with _TextClassifier.create_from_options(options) as classifier:
+      self.assertIsInstance(classifier, _TextClassifier)
+
+  def test_create_from_options_succeeds_with_deny_list(self):
+    base_options = _BaseOptions(model_asset_path=self.model_path)
+    options = _TextClassifierOptions(
+        base_options=base_options, category_denylist=['negative']
+    )
+    with _TextClassifier.create_from_options(options) as classifier:
+      self.assertIsInstance(classifier, _TextClassifier)
+
+  def test_create_from_options_succeeds_with_display_names_locale(self):
+    base_options = _BaseOptions(model_asset_path=self.model_path)
+    options = _TextClassifierOptions(
+        base_options=base_options, display_names_locale='en'
+    )
+    with _TextClassifier.create_from_options(options) as classifier:
       self.assertIsInstance(classifier, _TextClassifier)
 
   @parameterized.parameters(
@@ -196,8 +254,9 @@ class TextClassifierTest(parameterized.TestCase):
     # Performs text classification on the input.
     text_result = classifier.classify(text)
     # Comparing results.
-    test_utils.assert_proto_equals(self, text_result.to_pb2(),
-                                   expected_classification_result.to_pb2())
+    self.assertTextClassifierResultEquals(
+        text_result, expected_classification_result
+    )
     # Closes the classifier explicitly when the classifier is not used in
     # a context.
     classifier.close()
@@ -227,8 +286,9 @@ class TextClassifierTest(parameterized.TestCase):
       # Performs text classification on the input.
       text_result = classifier.classify(text)
       # Comparing results.
-      test_utils.assert_proto_equals(self, text_result.to_pb2(),
-                                     expected_classification_result.to_pb2())
+      self.assertTextClassifierResultEquals(
+          text_result, expected_classification_result
+      )
 
 
 if __name__ == '__main__':

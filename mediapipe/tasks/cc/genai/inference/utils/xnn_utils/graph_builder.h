@@ -152,7 +152,10 @@ class XnnGraphBuilder {
   absl::StatusOr<std::shared_ptr<Tensor>> CapTanh(std::shared_ptr<Tensor> input,
                                                   float cap);
 
-  // Average over last dimension, keep num of dims same.
+  // Reduction over last dimension, keep num of dims same.
+  absl::StatusOr<std::shared_ptr<Tensor>> ReduceLastDim(
+      std::shared_ptr<Tensor> input, xnn_reduce_operator reduce_operator);
+
   absl::StatusOr<std::shared_ptr<Tensor>> AvgLastDim(
       std::shared_ptr<Tensor> input);
 

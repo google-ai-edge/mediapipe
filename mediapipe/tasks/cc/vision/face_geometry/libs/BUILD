@@ -12,9 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(
+    default_visibility = ["//visibility:public"],
+)
 
 cc_library(
     name = "geometry_pipeline",
@@ -35,7 +39,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/face_geometry/proto:geometry_pipeline_metadata_cc_proto",
         "//mediapipe/tasks/cc/vision/face_geometry/proto:mesh_3d_cc_proto",
         "@com_google_absl//absl/memory",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 
@@ -59,7 +63,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
         "@com_google_absl//absl/memory",
-        "@eigen_archive//:eigen3",
+        "@eigen//:eigen3",
     ],
 )
 

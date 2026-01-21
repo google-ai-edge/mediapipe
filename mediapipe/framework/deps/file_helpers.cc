@@ -319,6 +319,8 @@ class PosixMMap : public MemoryMappedFile {
       : MemoryMappedFile(path, base_address, length),
         unique_fd_(std::move(fd)) {}
 
+  absl::StatusOr<int> TryGetFd() const override { return unique_fd_.Get(); }
+
   absl::Status Close() override;
 
  private:

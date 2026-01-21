@@ -15,6 +15,9 @@
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load("//mediapipe/framework:encode_binary_proto.bzl", "encode_binary_proto")
 load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
 load("//mediapipe/framework:more_selects.bzl", "more_selects")
@@ -445,9 +448,12 @@ cc_library_with_tflite(
         ":tensor_span",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:port",
+        "//mediapipe/framework:resources",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
@@ -564,6 +570,7 @@ cc_test(
     data = [
         ":testdata/feedback_tensor_test_model.tflite",
         ":testdata/feedback_tensor_with_state_copy_model.tflite",
+        ":testdata/feedback_tensor_without_passthrough_model.tflite",
     ],
     deps = [
         ":inference_calculator",
@@ -632,8 +639,8 @@ cc_library(
         ":inference_calculator_interface",
         ":inference_io_mapper",
         ":inference_on_disk_cache_helper",
+        ":inference_runner",
         ":tensor_span",
-        "//mediapipe/calculators/tensor:inference_runner",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:mediapipe_profiling",
         "//mediapipe/framework/api2:packet",
@@ -932,6 +939,7 @@ cc_library(
     deps = [
         ":inference_calculator_cpu",
         ":inference_calculator_interface",
+        ":inference_calculator_xnnpack",
     ] + select({
         "//conditions:default": [":inference_calculator_gl_if_compute_shader_available"],
         ":platform_apple_with_gpu": [":inference_calculator_metal"],
@@ -1505,6 +1513,7 @@ cc_test(
 cc_library(
     name = "image_to_tensor_calculator",
     srcs = ["image_to_tensor_calculator.cc"],
+    hdrs = ["image_to_tensor_calculator.h"],
     copts = select({
         "//mediapipe:apple": [
             "-x objective-c++",
@@ -1519,9 +1528,16 @@ cc_library(
         ":image_to_tensor_utils",
         ":loose_headers",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
         "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework:port",
         "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:calculator_contract",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
+        "//mediapipe/framework/api3:one_of",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:rect_cc_proto",
@@ -1534,6 +1550,8 @@ cc_library(
         "//mediapipe/gpu/webgpu:webgpu_check",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:string_view",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [":image_to_tensor_calculator_gpu_deps"],
@@ -1619,10 +1637,15 @@ cc_test(
     tags = ["not_run:arm"],
     deps = [
         ":image_to_tensor_calculator",
+        ":image_to_tensor_calculator_cc_proto",
         ":image_to_tensor_converter",
         ":image_to_tensor_utils",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/api3:function_runner",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:packet",
+        "//mediapipe/framework/api3:stream",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_format_cc_proto",
@@ -1636,6 +1659,7 @@ cc_test(
         "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/util:image_test_utils",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log:absl_check",
@@ -1755,7 +1779,7 @@ cc_library(
     name = "image_to_tensor_converter_gl_texture",
     srcs = ["image_to_tensor_converter_gl_texture.cc"],
     hdrs = ["image_to_tensor_converter_gl_texture.h"],
-    visibility = ["//visibility:private"],
+    visibility = ["//mediapipe/gpu/webgpu:__subpackages__"],
     deps = ["//mediapipe/framework:port"] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
@@ -1900,6 +1924,7 @@ mediapipe_proto_library(
 cc_library(
     name = "tensors_to_segmentation_calculator",
     srcs = ["tensors_to_segmentation_calculator.cc"],
+    hdrs = ["tensors_to_segmentation_calculator.h"],
     copts = select({
         "//mediapipe:apple": [
             "-x objective-c++",
@@ -1915,8 +1940,9 @@ cc_library(
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:port",
-        "//mediapipe/framework/api2:node",
-        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
@@ -2155,6 +2181,10 @@ cc_test(
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework:packet",
         "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/api3:function_runner",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:packet",
+        "//mediapipe/framework/api3:stream",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_opencv",

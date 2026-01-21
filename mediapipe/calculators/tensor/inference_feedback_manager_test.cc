@@ -91,6 +91,27 @@ constexpr char kFeedbackTestWithStateCopyModelPath[] =
     "mediapipe/calculators/tensor/testdata/"
     "feedback_tensor_with_state_copy_model.tflite";
 
+// feedback_tensor_without_passthrough_model.tflite model does not pass through
+// stateless/non-feedback tensors and increments "stateful" tensors by one.
+//
+// testdata/feedback_tensor_without_passthrough_modelgen.txt describes the model
+// in more details.
+//
+// class Wrapper(tf.Module):
+//   @tf.function(input_signature=(tf.TensorSpec(shape=[1,1],
+//                                               dtype=tf.int32,
+//                                               name="regular_int_input"),
+//                                 tf.TensorSpec(shape=[1,1],
+//                                               dtype=tf.int32,
+//                                               name="feedback_int_input")))
+//   def model(self, regular_int_input, feedback_int_input):
+//     return {"regular_int_output": regular_int_input,
+//             "feedback_incremented_int_output": feedback_int_input + 1,
+//             "feedback_incremented_int_copy": feedback_int_input}
+constexpr char kFeedbackTestNoPassthroughModelPath[] =
+    "mediapipe/calculators/tensor/testdata/"
+    "feedback_tensor_without_passthrough_model.tflite";
+
 using ::mediapipe::Packet;
 using ::mediapipe::tool::AddVectorSink;
 using ::testing::HasSubstr;
@@ -633,9 +654,9 @@ TEST_F(InferenceFeedbackManagerTest, ShouldRunE2EWithZeroIoCopiesSmokeTest) {
               # 1 :  regular_int_input :  [1 1] :  I32
               # ~~~~~~~~~~ OUTPUTS ~~~~~~~~~
               # 0 :  feedback_incremented_int_copy :  [1 1] :  I32
+              #      (copy of feedback_int_input)
               # 1 :  regular_int_output :  [1 1] :  I32
               # 2 :  feedback_incremented_int_output :  [1 1] :  I32
-              #      (copy of feedback_incremented_int_output)
               input_stream: "TENSOR:0:regular_int_input"
               output_stream: "TENSOR:0:feedback_incremented_int_copy"
               output_stream: "TENSOR:1:regular_int_output"
@@ -662,7 +683,7 @@ TEST_F(InferenceFeedbackManagerTest, ShouldRunE2EWithZeroIoCopiesSmokeTest) {
               }
             }
           )pb",
-          {{"$model", kFeedbackTestWithStateCopyModelPath}}));
+          {{"$model", kFeedbackTestNoPassthroughModelPath}}));
 
   std::vector<Packet> regular_int_output;
   AddVectorSink("regular_int_output", &graph_config, &regular_int_output);

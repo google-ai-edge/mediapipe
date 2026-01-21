@@ -232,7 +232,7 @@ class StrongInt {
     // We have to pass both the "from" type and the "to" type as args for the
     // conversions to be differentiated.  The converter can not be a template
     // because explicit template call syntax defeats ADL.
-    StrongInt *dummy = NULL;
+    StrongInt* dummy = NULL;
     StrongInt converted = StrongIntConvert(arg, dummy);
     value_ = converted.value();
   }
@@ -273,7 +273,7 @@ class StrongInt {
   }
 
   // Increment and decrement operators.
-  StrongInt &operator++() {  // ++x
+  StrongInt& operator++() {  // ++x
     ValidatorType::template ValidateAdd<ValueType>(value_, ValueType(1));
     ++value_;
     return *this;
@@ -284,7 +284,7 @@ class StrongInt {
     ++value_;
     return temp;
   }
-  StrongInt &operator--() {  // --x
+  StrongInt& operator--() {  // --x
     ValidatorType::template ValidateSubtract<ValueType>(value_, ValueType(1));
     --value_;
     return *this;
@@ -297,55 +297,55 @@ class StrongInt {
   }
 
   // Action-Assignment operators.
-  StrongInt &operator+=(StrongInt arg) {
+  StrongInt& operator+=(StrongInt arg) {
     ValidatorType::template ValidateAdd<ValueType>(value_, arg.value());
     value_ += arg.value();
     return *this;
   }
-  StrongInt &operator-=(StrongInt arg) {
+  StrongInt& operator-=(StrongInt arg) {
     ValidatorType::template ValidateSubtract<ValueType>(value_, arg.value());
     value_ -= arg.value();
     return *this;
   }
   template <typename ArgType>
-  StrongInt &operator*=(ArgType arg) {
+  StrongInt& operator*=(ArgType arg) {
     ValidatorType::template ValidateMultiply<ValueType, ArgType>(value_, arg);
     value_ *= arg;
     return *this;
   }
   template <typename ArgType>
-  StrongInt &operator/=(ArgType arg) {
+  StrongInt& operator/=(ArgType arg) {
     ValidatorType::template ValidateDivide<ValueType, ArgType>(value_, arg);
     value_ /= arg;
     return *this;
   }
   template <typename ArgType>
-  StrongInt &operator%=(ArgType arg) {
+  StrongInt& operator%=(ArgType arg) {
     ValidatorType::template ValidateModulo<ValueType, ArgType>(value_, arg);
     value_ %= arg;
     return *this;
   }
-  StrongInt &operator<<=(int64_t arg) {  // NOLINT(whitespace/operators)
+  StrongInt& operator<<=(int64_t arg) {  // NOLINT(whitespace/operators)
     ValidatorType::template ValidateLeftShift<ValueType>(value_, arg);
     value_ <<= arg;
     return *this;
   }
-  StrongInt &operator>>=(int64_t arg) {  // NOLINT(whitespace/operators)
+  StrongInt& operator>>=(int64_t arg) {  // NOLINT(whitespace/operators)
     ValidatorType::template ValidateRightShift<ValueType>(value_, arg);
     value_ >>= arg;
     return *this;
   }
-  StrongInt &operator&=(StrongInt arg) {
+  StrongInt& operator&=(StrongInt arg) {
     ValidatorType::template ValidateBitAnd<ValueType>(value_, arg.value());
     value_ &= arg.value();
     return *this;
   }
-  StrongInt &operator|=(StrongInt arg) {
+  StrongInt& operator|=(StrongInt arg) {
     ValidatorType::template ValidateBitOr<ValueType>(value_, arg.value());
     value_ |= arg.value();
     return *this;
   }
-  StrongInt &operator^=(StrongInt arg) {
+  StrongInt& operator^=(StrongInt arg) {
     ValidatorType::template ValidateBitXor<ValueType>(value_, arg.value());
     value_ ^= arg.value();
     return *this;
@@ -361,7 +361,7 @@ class StrongInt {
 
 // Provide the << operator, primarily for logging purposes.
 template <typename TagType, typename ValueType, typename ValidatorType>
-std::ostream &operator<<(std::ostream &os,
+std::ostream& operator<<(std::ostream& os,
                          StrongInt<TagType, ValueType, ValidatorType> arg) {
   return os << arg.value();
 }
@@ -369,7 +369,7 @@ std::ostream &operator<<(std::ostream &os,
 // Provide the << operator, primarily for logging purposes. Specialized for
 // int8_t so that an integer and not a character is printed.
 template <typename TagType, typename ValidatorType>
-std::ostream &operator<<(std::ostream &os,
+std::ostream& operator<<(std::ostream& os,
                          StrongInt<TagType, int8_t, ValidatorType> arg) {
   return os << static_cast<int>(arg.value());
 }
@@ -377,7 +377,7 @@ std::ostream &operator<<(std::ostream &os,
 // Provide the << operator, primarily for logging purposes. Specialized for
 // uint8_t so that an integer and not a character is printed.
 template <typename TagType, typename ValidatorType>
-std::ostream &operator<<(std::ostream &os,
+std::ostream& operator<<(std::ostream& os,
                          StrongInt<TagType, uint8_t, ValidatorType> arg) {
   return os << static_cast<unsigned int>(arg.value());
 }

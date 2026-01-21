@@ -104,9 +104,7 @@ class LanguageDetectorTest(parameterized.TestCase):
       self.assertIsInstance(detector, _LanguageDetector)
 
   def test_create_from_options_fails_with_invalid_model_path(self):
-    with self.assertRaisesRegex(
-        RuntimeError, "Unable to open file at /path/to/invalid/model.tflite"
-    ):
+    with self.assertRaises(FileNotFoundError):
       base_options = _BaseOptions(
           model_asset_path="/path/to/invalid/model.tflite"
       )

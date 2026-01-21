@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -20,12 +22,9 @@ cc_library(
     name = "fused_batch_norm",
     srcs = ["fused_batch_norm.cc"],
     hdrs = ["fused_batch_norm.h"],
-    visibility = [
-        "//visibility:public",
-    ],
     deps =
         [
-            "@eigen_archive//:eigen3",
+            "@eigen//:eigen3",
             "@org_tensorflow//tensorflow/lite:framework",
             "@org_tensorflow//tensorflow/lite/c:common",
             "@org_tensorflow//tensorflow/lite/core/c:private_common",

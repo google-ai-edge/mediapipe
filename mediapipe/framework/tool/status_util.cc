@@ -20,6 +20,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "mediapipe/framework/deps/no_destructor.h"
 
 namespace mediapipe {
 namespace tool {
@@ -32,9 +33,10 @@ absl::Status StatusFail(absl::string_view message) {
   return absl::Status(absl::StatusCode::kUnknown, message);
 }
 
-absl::Status StatusStop() {
-  return absl::Status(absl::StatusCode::kOutOfRange,
-                      "mediapipe::tool::StatusStop()");
+const absl::Status& StatusStop() {
+  static const NoDestructor<absl::Status> kStatusStop(
+      absl::StatusCode::kOutOfRange, "mediapipe::tool::StatusStop()");
+  return *kStatusStop;
 }
 
 absl::Status AddStatusPrefix(absl::string_view prefix,
