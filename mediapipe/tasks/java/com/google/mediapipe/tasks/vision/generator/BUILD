@@ -18,15 +18,28 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
+java_library(
+    name = "gradle_plugins",
+    neverlink = True,
+    exports = [
+        "@maven//:com_android_tools_build_gradle_api",
+        "@maven//:org_jetbrains_kotlin_kotlin_gradle_plugin",
+    ],
+)
+
 kt_jvm_library(
     name = "generator",
     srcs = glob(
         ["*.kt"],
-        exclude = ["CodeGeneratorMain.kt"],
+        exclude = [
+            "CodeGeneratorMain.kt",
+        ],
     ),
     deps = [
+        ":gradle_plugins",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision/provider:vision_model",
         "//third_party/java/gson",
         "//third_party/kotlin/kotlinpoet",
+        "@gradle_distribution//:gradle_api",
     ],
 )
