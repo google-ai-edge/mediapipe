@@ -26,6 +26,6 @@ import com.google.gson.annotations.SerializedName
  */
 data class VisionTaskConfig(
   @SerializedName("defaultModel") val defaultModel: String?,
-  @SerializedName("models") val models: List<String>?,
+  @SerializedName("models") val models: List<String>,
   @SerializedName("delivery") val delivery: String?,
 )

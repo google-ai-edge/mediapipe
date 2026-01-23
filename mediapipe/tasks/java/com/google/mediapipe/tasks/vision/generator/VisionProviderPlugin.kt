@@ -106,7 +106,6 @@ class VisionProviderPlugin : Plugin<Project> {
 
   /** Configures Android extensions (dynamic features, bundle, asset packs) */
   private fun configureAndroidProject(project: Project, deviceTargetingConfigFile: File) {
-
     val androidConfigurator = AndroidConfigurationParser(project.rootDir)
     val androidConfig = androidConfigurator.configureAndroidExtensions(deviceTargetingConfigFile)
 

@@ -15,15 +15,15 @@
 package com.google.mediapipe.tasks.vision.provider
 
 /** The quantization type of the model. */
-enum class Quantization(val shortName: String) {
+enum class Quantization(val shortName: String, val gcsDirectoryName: String) {
   /** 16-bit float quantization. */
-  FLOAT16("fp16"),
+  FLOAT16("fp16", "float16"),
 
   /** 32-bit float quantization. */
-  FLOAT32("fp32"),
+  FLOAT32("fp32", "float32"),
 
   /** 8-bit integer quantization. */
-  INT8("int8");
+  INT8("int8", "int8");
 
   companion object {
     /**

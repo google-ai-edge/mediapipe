@@ -33,7 +33,8 @@ abstract class VisionTask {
     } catch (e: IllegalArgumentException) {
       throw IllegalArgumentException(
         "Invalid task name '$name'. No matching BaseTask found for '$enumName'. " +
-          "Available tasks are: ${Type.values().joinToString { it.name }}"
+          "Available tasks are: ${Type.values().joinToString { it.name }}",
+        e,
       )
     }
   }
@@ -52,7 +53,31 @@ abstract class VisionTask {
     IMAGE_SEGMENTER("tflite"),
     INTERACTIVE_SEGMENTER("tflite"),
     OBJECT_DETECTOR("tflite"),
-    POSE_LANDMARKER("task"),
+    POSE_LANDMARKER("task");
+
+    companion object {
+      /**
+       * Converts a PascalCase string name into the corresponding enum constant. For example,
+       * "FaceDetector" becomes Type.FACE_DETECTOR.
+       *
+       * @param name The PascalCase name of the task.
+       * @return The matching [Type] constant.
+       * @throws IllegalArgumentException if the name does not match any known type.
+       */
+      fun fromName(name: String): Type {
+        // Converts a name like "FaceDetector" to "FACE_DETECTOR"
+        val enumName = name.replace(Regex("(?<=[a-z])(?=[A-Z])"), "_").uppercase()
+        return try {
+          valueOf(enumName)
+        } catch (e: IllegalArgumentException) {
+          throw IllegalArgumentException(
+            "No task type found for name '$name'. " +
+              "Available types are: ${values().joinToString { it.name }}",
+            e,
+          )
+        }
+      }
+    }
   }
 
   abstract val defaultModel: String

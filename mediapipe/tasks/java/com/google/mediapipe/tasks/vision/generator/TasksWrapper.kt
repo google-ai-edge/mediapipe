@@ -32,5 +32,5 @@ data class TasksWrapper(
   @SerializedName("minSdk") val minSdk: Int?,
   @SerializedName("npuModuleDelivery") val npuModuleDelivery: String?,
   @SerializedName("deviceTargetingConfiguration") val deviceTargetingConfiguration: String?,
-  @SerializedName("tasks") val tasks: Map<String, VisionTaskConfig>?,
+  @SerializedName("tasks") val tasks: Map<String, VisionTaskConfig>,
 )
