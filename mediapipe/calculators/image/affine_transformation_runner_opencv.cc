@@ -46,6 +46,8 @@ int GetInterpolationForOpenCv(
       return cv::INTER_LINEAR;
     case AffineTransformation::Interpolation::kCubic:
       return cv::INTER_CUBIC;
+    case AffineTransformation::Interpolation::kNearest:
+      return cv::INTER_NEAREST;
   }
 }
 
