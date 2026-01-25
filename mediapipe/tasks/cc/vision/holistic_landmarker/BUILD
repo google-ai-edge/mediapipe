@@ -21,6 +21,34 @@ package(
 )
 
 cc_library(
+    name = "holisitc_landmarker",
+    srcs = ["holistic_landmarker.cc"],
+    hdrs = ["holistic_landmarker.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":holistic_landmarker_graph",
+        ":holistic_landmarker_result",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:base_task_api",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/core:task_runner",
+        "//mediapipe/tasks/cc/core:utils",
+        "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
+        "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/cc/vision/core:running_mode",
+        "//mediapipe/tasks/cc/vision/core:vision_task_api_factory",
+        "//mediapipe/tasks/cc/vision/holistic_landmarker/proto:holistic_result_cc_proto",
+        "//mediapipe/tasks/cc/vision/holistic_landmarker/proto:holistic_landmarker_graph_options_cc_proto",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
+cc_library(
     name = "holistic_face_tracking",
     srcs = ["holistic_face_tracking.cc"],
     hdrs = ["holistic_face_tracking.h"],
@@ -153,4 +181,19 @@ cc_library(
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
+)
+
+cc_test(
+    name = "holistic_landmarker_test",
+    srcs = ["holistic_landmarker_test.cc"],
+    tags = ["not_run:arm"],
+    deps = [
+        ":holistic_landmarker",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/tasks/cc:common",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
 )
