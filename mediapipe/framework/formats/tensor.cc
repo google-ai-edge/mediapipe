@@ -24,6 +24,7 @@
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port.h"
@@ -796,6 +797,31 @@ void Tensor::FreeCpuBuffer() const {
   }
 #endif  // MEDIAPIPE_METAL_ENABLED
   cpu_buffer_ = nullptr;
+}
+
+absl::string_view Tensor::ElementTypeName(Tensor::ElementType element_type) {
+  switch (element_type) {
+    case Tensor::ElementType::kNone:
+      return "None";
+    case Tensor::ElementType::kFloat16:
+      return "Float16";
+    case Tensor::ElementType::kFloat32:
+      return "Float32";
+    case Tensor::ElementType::kUInt8:
+      return "UInt8";
+    case Tensor::ElementType::kInt8:
+      return "Int8";
+    case Tensor::ElementType::kInt32:
+      return "Int32";
+    case Tensor::ElementType::kInt64:
+      return "Int64";
+    case Tensor::ElementType::kChar:
+      return "Char";
+    case Tensor::ElementType::kBool:
+      return "Bool";
+    default:
+      return "Unknown";
+  }
 }
 
 }  // namespace mediapipe

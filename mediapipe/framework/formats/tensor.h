@@ -21,6 +21,8 @@
 #include <initializer_list>
 #include <memory>
 #include <numeric>
+#include <ostream>
+#include <string>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -28,6 +30,7 @@
 
 #include "absl/functional/any_invocable.h"
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/formats/tensor/internal.h"
 #include "mediapipe/framework/memory_manager.h"
@@ -126,6 +129,9 @@ class Tensor {
     kChar,
     kBool
   };
+
+  static absl::string_view ElementTypeName(ElementType element_type);
+
   struct Shape {
     Shape() = default;
     Shape(std::initializer_list<int> dimensions) : dims(dimensions) {}
@@ -171,6 +177,18 @@ class Tensor {
   Tensor(Tensor&& src);
   Tensor& operator=(Tensor&&);
   ~Tensor();
+
+  // Returns a numpy-style string representation of the tensor. If the tensor
+  // has more than max_num_elements elements, all dimensions larger than 8 are
+  // shortened to x1 x2 x3 ... xn-2, xn-1, xn.
+  // Example: Tensor<Float32> [2 2] =
+  // [[-0.21845226  0.5312876 ]
+  //  [-0.1596979   0.40760058]]
+  std::string DebugString(int max_num_elements = 1024) const;
+
+  friend std::ostream& operator<<(std::ostream& stream, const Tensor& tensor) {
+    return stream << tensor.DebugString();
+  }
 
   template <typename T>
   class CpuView : public View {

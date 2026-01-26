@@ -582,6 +582,7 @@ cc_library(
         }) + [
             "tensor.cc",
             "tensor_ahwb.cc",
+            "tensor_debugstring.cc",
         ],
     hdrs = [
         "tensor.h",
@@ -621,9 +622,11 @@ cc_library(
         "@com_google_absl//absl/functional:any_invocable",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
     ] + select({
         "//mediapipe/gpu/webgpu:use_webgpu": [
@@ -776,5 +779,14 @@ cc_test(
         ":yuv_image",
         "//mediapipe/framework/port:gtest_main",
         "@libyuv",
+    ],
+)
+
+cc_test(
+    name = "tensor_debugstring_test",
+    srcs = ["tensor_debugstring_test.cc"],
+    deps = [
+        ":tensor",
+        "//mediapipe/framework/port:gtest_main",
     ],
 )
