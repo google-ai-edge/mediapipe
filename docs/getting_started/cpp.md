@@ -56,6 +56,7 @@ Note: This currently works only on Linux, and please first follow
     bazel build -c opt --copt -DMESA_EGL_NO_X11_HEADERS --copt -DEGL_NO_X11 \
       mediapipe/examples/desktop/hand_tracking:hand_tracking_gpu
     ```
+    Note: add `--copt -DMEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER` for macOS.
 
 2.  To run the application:
 
