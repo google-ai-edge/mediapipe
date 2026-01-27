@@ -222,6 +222,10 @@ LlmParams LlmParams::FromLLMParametersProto(
         params.sa_params.attention_scale_type =
             LlmParams::AttentionScaleType::INV_SQRT_HEAD_DIM;
         break;
+      case TransformerParameters::SCALE_TYPE_INV_SQRT_D_MODEL_DIV_NUM_HEADS:
+        params.sa_params.attention_scale_type = LlmParams::AttentionScaleType::
+            RESCALE_FACTOR_INV_SQRT_D_MODEL_DIV_NUM_HEADS_DIM;
+        break;
       case TransformerParameters::SCALE_TYPE_RESCALE_FACTOR_INV_HEAD_DIM:
         params.sa_params.attention_scale_type =
             LlmParams::AttentionScaleType::RESCALE_FACTOR_INV_HEAD_DIM;

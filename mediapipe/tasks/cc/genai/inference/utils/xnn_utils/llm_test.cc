@@ -135,6 +135,22 @@ GetLlmBuilderAndParamsForBenchmark(size_t seq_size) {
     return {
         std::make_unique<LlmBuilder>(params, GetRunTimeConfigsForBenchmark()),
         params};
+  } else if (absl::EqualsIgnoreCase(model_type_string, "GEMMA3_4B")) {
+    LlmParams params =
+        LlmParams::FromLLMParametersProto(llm_utils::GetGemma3_4BParams());
+    params.seq_size_T = seq_size;
+    params.enable_kv_cache = true;
+    return {
+        std::make_unique<LlmBuilder>(params, GetRunTimeConfigsForBenchmark()),
+        params};
+  } else if (absl::EqualsIgnoreCase(model_type_string, "GEMMA3_27B")) {
+    LlmParams params =
+        LlmParams::FromLLMParametersProto(llm_utils::GetGemma3_27BParams());
+    params.seq_size_T = seq_size;
+    params.enable_kv_cache = true;
+    return {
+        std::make_unique<LlmBuilder>(params, GetRunTimeConfigsForBenchmark()),
+        params};
   } else if (absl::EqualsIgnoreCase(model_type_string, "STABLELM_4E1T_3B")) {
     LlmParams params =
         LlmParams::FromLLMParametersProto(llm_utils::GetStablelm4E1T3BParams());

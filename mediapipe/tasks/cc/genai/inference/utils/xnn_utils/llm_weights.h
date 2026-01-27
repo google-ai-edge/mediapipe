@@ -97,6 +97,8 @@ struct LlmParams {
     INV_SQRT_HEAD_DIM = 2,
     // Query is scaled by rescale_factor / head_dim.
     RESCALE_FACTOR_INV_HEAD_DIM = 3,
+    // Query is scaled by 1/sqrt(model_dim/num_heads).
+    RESCALE_FACTOR_INV_SQRT_D_MODEL_DIV_NUM_HEADS_DIM = 4,
   };
 
   // If false, add absolute positional embeddings.

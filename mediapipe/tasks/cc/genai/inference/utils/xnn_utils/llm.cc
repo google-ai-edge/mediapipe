@@ -902,6 +902,14 @@ absl::StatusOr<std::shared_ptr<Tensor>> LlmBuilder::ScaleQuery(
       MP_ASSIGN_OR_RETURN(query_after_scale, ElementMul(query_proj, scale));
       break;
     }
+    case LlmParams::AttentionScaleType::
+        RESCALE_FACTOR_INV_SQRT_D_MODEL_DIV_NUM_HEADS_DIM: {
+      // Scale the query values by multiplying 1 / sqrt(d_model / num_heads).
+      float scale =
+          1.0f / sqrt(llm_params_.model_dim_D / llm_params_.n_heads_N);
+      MP_ASSIGN_OR_RETURN(query_after_scale, ElementMul(query_proj, scale));
+      break;
+    }
     default:
       return absl::InvalidArgumentError(
           absl::StrCat("Unsupported attention scale type: ",
