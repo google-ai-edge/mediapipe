@@ -751,6 +751,18 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "tensor_test_util",
+    testonly = True,
+    srcs = ["tensor_test_util.cc"],
+    hdrs = ["tensor_test_util.h"],
+    deps = [
+        ":tensor",
+        "//mediapipe/framework/port:gtest",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
 cc_test(
     name = "tensor_opencv_test",
     srcs = ["tensor_opencv_test.cc"],

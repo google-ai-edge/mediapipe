@@ -607,6 +607,10 @@ int BhwcHeightFromShape(const Tensor::Shape& shape);
 int BhwcWidthFromShape(const Tensor::Shape& shape);
 int BhwcDepthFromShape(const Tensor::Shape& shape);
 
+template <typename Sink>
+void AbslStringify(Sink& sink, Tensor::ElementType e) {
+  sink.Append(Tensor::ElementTypeName(e));
+}
 }  // namespace mediapipe
 
 #endif  // MEDIAPIPE_FRAMEWORK_FORMATS_TENSOR_H_
