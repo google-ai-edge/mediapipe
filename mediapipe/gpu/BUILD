@@ -212,6 +212,12 @@ cc_library(
             "-framework AppKit",
         ],
     }),
+    target_compatible_with = select({
+        # This cc_library uses pthread and is not compatible with Windows. Marking it as
+        # incompatible instead of the confusing message "pthread.h" file not found.
+        "@platforms//os:windows": ["//third_party/bazel_platforms:incompatible"],
+        "//conditions:default": [],
+    }),
     visibility = [
         "//visibility:public",
     ],
