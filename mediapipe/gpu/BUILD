@@ -32,7 +32,7 @@ package(default_visibility = ["//visibility:public"])
 selects.config_setting_group(
     name = "disable_gpu",
     match_any = [
-        ":_disable_gpu_flag",
+        ":disable_gpu_flag",
         # The GPU library here use pthread which is not available on Windows.
         "@platforms//os:windows",
     ],
@@ -40,11 +40,10 @@ selects.config_setting_group(
 )
 
 config_setting(
-    name = "_disable_gpu_flag",
+    name = "disable_gpu_flag",
     define_values = {
         "MEDIAPIPE_DISABLE_GPU": "1",
     },
-    visibility = ["//visibility:private"],
 )
 
 cc_library(
