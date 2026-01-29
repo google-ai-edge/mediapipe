@@ -7,6 +7,7 @@ VERS_1.0 {
     MpFlatbuffer*;
     MpGestureRecognizer*;
     MpHandLandmarker*;
+    MpHolisticLandmarker*;
     MpImage*;
     MpInteractiveSegmenter*;
     MpLanguageDetector*;
