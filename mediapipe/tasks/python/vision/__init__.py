@@ -14,19 +14,21 @@
 
 """MediaPipe Tasks Vision API."""
 
-import mediapipe.tasks.python.vision.core
-import mediapipe.tasks.python.vision.drawing_styles
-import mediapipe.tasks.python.vision.drawing_utils
-import mediapipe.tasks.python.vision.face_detector
-import mediapipe.tasks.python.vision.face_landmarker
-import mediapipe.tasks.python.vision.gesture_recognizer
-import mediapipe.tasks.python.vision.hand_landmarker
-import mediapipe.tasks.python.vision.image_classifier
-import mediapipe.tasks.python.vision.image_embedder
-import mediapipe.tasks.python.vision.image_segmenter
-import mediapipe.tasks.python.vision.interactive_segmenter
-import mediapipe.tasks.python.vision.object_detector
-import mediapipe.tasks.python.vision.pose_landmarker
+from mediapipe.tasks.python.vision import drawing_styles
+from mediapipe.tasks.python.vision import drawing_utils
+from mediapipe.tasks.python.vision import face_detector
+from mediapipe.tasks.python.vision import face_landmarker
+from mediapipe.tasks.python.vision import gesture_recognizer
+from mediapipe.tasks.python.vision import hand_landmarker
+from mediapipe.tasks.python.vision import holistic_landmarker
+from mediapipe.tasks.python.vision import image_classifier
+from mediapipe.tasks.python.vision import image_embedder
+from mediapipe.tasks.python.vision import image_segmenter
+from mediapipe.tasks.python.vision import interactive_segmenter
+from mediapipe.tasks.python.vision import object_detector
+from mediapipe.tasks.python.vision import pose_landmarker
+from mediapipe.tasks.python.vision.core import image_processing_options
+from mediapipe.tasks.python.vision.core import vision_task_running_mode
 
 drawing_styles = drawing_styles
 drawing_utils = drawing_utils
@@ -44,6 +46,9 @@ HandLandmarker = hand_landmarker.HandLandmarker
 HandLandmarkerOptions = hand_landmarker.HandLandmarkerOptions
 HandLandmarkerResult = hand_landmarker.HandLandmarkerResult
 HandLandmarksConnections = hand_landmarker.HandLandmarksConnections
+HolisticLandmarker = holistic_landmarker.HolisticLandmarker
+HolisticLandmarkerOptions = holistic_landmarker.HolisticLandmarkerOptions
+HolisticLandmarkerResult = holistic_landmarker.HolisticLandmarkerResult
 ImageClassifier = image_classifier.ImageClassifier
 ImageClassifierOptions = image_classifier.ImageClassifierOptions
 ImageClassifierResult = image_classifier.ImageClassifierResult
@@ -52,7 +57,7 @@ ImageEmbedderOptions = image_embedder.ImageEmbedderOptions
 ImageEmbedderResult = image_embedder.ImageEmbedderResult
 ImageSegmenter = image_segmenter.ImageSegmenter
 ImageSegmenterOptions = image_segmenter.ImageSegmenterOptions
-ImageProcessingOptions = core.image_processing_options.ImageProcessingOptions
+ImageProcessingOptions = image_processing_options.ImageProcessingOptions
 InteractiveSegmenter = interactive_segmenter.InteractiveSegmenter
 InteractiveSegmenterOptions = interactive_segmenter.InteractiveSegmenterOptions
 InteractiveSegmenterRegionOfInterest = interactive_segmenter.RegionOfInterest
@@ -65,18 +70,19 @@ PoseLandmarkerOptions = pose_landmarker.PoseLandmarkerOptions
 PoseLandmarkerResult = pose_landmarker.PoseLandmarkerResult
 PoseLandmarksConnections = pose_landmarker.PoseLandmarksConnections
 
-RunningMode = core.vision_task_running_mode.VisionTaskRunningMode
+RunningMode = vision_task_running_mode.VisionTaskRunningMode
 
 # Remove unnecessary modules to avoid duplication in API docs.
-del core
 del face_detector
 del face_landmarker
 del gesture_recognizer
 del hand_landmarker
+del holistic_landmarker
 del image_classifier
 del image_embedder
+del image_processing_options
 del image_segmenter
 del interactive_segmenter
 del object_detector
 del pose_landmarker
-del mediapipe
+del vision_task_running_mode
