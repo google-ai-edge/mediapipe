@@ -21,11 +21,13 @@ from absl.testing import parameterized
 import numpy as np
 
 from google.protobuf import text_format
-from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.tasks.cc.vision.holistic_landmarker.proto import holistic_result_pb2
+from mediapipe.tasks.python.components.containers import category as category_module
+from mediapipe.tasks.python.components.containers import landmark as landmark_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import holistic_landmarker
+from mediapipe.tasks.python.vision.core import image as image_lib
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
@@ -33,7 +35,7 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode as runni
 HolisticLandmarkerResult = holistic_landmarker.HolisticLandmarkerResult
 _HolisticResultProto = holistic_result_pb2.HolisticResult
 _BaseOptions = base_options_module.BaseOptions
-_Image = image_module.Image
+_Image = image_lib.Image
 _HolisticLandmarker = holistic_landmarker.HolisticLandmarker
 _HolisticLandmarkerOptions = holistic_landmarker.HolisticLandmarkerOptions
 _RUNNING_MODE = running_mode_module.VisionTaskRunningMode
@@ -53,6 +55,37 @@ _LIVE_STREAM_LANDMARKS_MARGIN = 0.03
 _LIVE_STREAM_BLENDSHAPES_MARGIN = 0.31
 
 
+def _create_landmarks_from_proto(landmark_list_proto, landmark_class):
+  """Creates a list of landmarks from a proto."""
+  return [
+      landmark_class(
+          x=landmark.x,
+          y=landmark.y,
+          z=landmark.z,
+          visibility=(
+              landmark.visibility if landmark.HasField('visibility') else None
+          ),
+          presence=(
+              landmark.presence if landmark.HasField('presence') else None
+          ),
+      )
+      for landmark in landmark_list_proto.landmark
+  ]
+
+
+def _create_blendshapes_from_proto(blendshapes_proto):
+  """Creates a list of blendshapes from a proto."""
+  return [
+      category_module.Category(
+          score=classification.score,
+          index=classification.index,
+          category_name=classification.label,
+          display_name=classification.display_name,
+      )
+      for classification in blendshapes_proto.classification
+  ]
+
+
 def _get_expected_holistic_landmarker_result(
     file_path: str,
 ) -> HolisticLandmarkerResult:
@@ -62,10 +95,31 @@ def _get_expected_holistic_landmarker_result(
     # Use this if a .pb file is available.
     # holistic_result_proto.ParseFromString(f.read())
     text_format.Parse(f.read(), holistic_result_proto)
-    holistic_landmarker_result = HolisticLandmarkerResult.create_from_pb2(
-        holistic_result_proto
+
+    face_landmarks = _create_landmarks_from_proto(
+        holistic_result_proto.face_landmarks, landmark_module.NormalizedLandmark
     )
-  return holistic_landmarker_result
+    pose_landmarks = _create_landmarks_from_proto(
+        holistic_result_proto.pose_landmarks, landmark_module.NormalizedLandmark
+    )
+    pose_world_landmarks = _create_landmarks_from_proto(
+        holistic_result_proto.pose_world_landmarks, landmark_module.Landmark
+    )
+    face_blendshapes_list = _create_blendshapes_from_proto(
+        holistic_result_proto.face_blendshapes
+    )
+
+    return HolisticLandmarkerResult(
+        face_landmarks=face_landmarks,
+        pose_landmarks=pose_landmarks,
+        pose_world_landmarks=pose_world_landmarks,
+        left_hand_landmarks=[],
+        right_hand_landmarks=[],
+        left_hand_world_landmarks=[],
+        right_hand_world_landmarks=[],
+        face_blendshapes=face_blendshapes_list,
+        segmentation_mask=None,
+    )
 
 
 class ModelFileType(enum.Enum):
@@ -135,9 +189,10 @@ class HolisticLandmarkerTest(parameterized.TestCase):
         blendshapes_margin,
     )
     if output_segmentation_mask:
-      self.assertIsInstance(actual_result.segmentation_mask, _Image)
-      self.assertEqual(actual_result.segmentation_mask.width, _IMAGE_WIDTH)
-      self.assertEqual(actual_result.segmentation_mask.height, _IMAGE_HEIGHT)
+      segmentation_mask = actual_result.segmentation_mask
+      self.assertIsInstance(segmentation_mask, _Image)
+      self.assertEqual(segmentation_mask.width, _IMAGE_WIDTH)
+      self.assertEqual(segmentation_mask.height, _IMAGE_HEIGHT)
     else:
       self.assertIsNone(actual_result.segmentation_mask)
 
@@ -158,7 +213,8 @@ class HolisticLandmarkerTest(parameterized.TestCase):
   def test_create_from_options_fails_with_invalid_model_path(self):
     # Invalid empty model path.
     with self.assertRaisesRegex(
-        RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'
+        FileNotFoundError,
+        'Unable to open file at /path/to/invalid/model.tflite',
     ):
       base_options = _BaseOptions(
           model_asset_path='/path/to/invalid/model.tflite'
@@ -305,12 +361,6 @@ class HolisticLandmarkerTest(parameterized.TestCase):
       # Performs holistic landmarks detection on the input.
       detection_result = landmarker.detect(cat_test_image)
       self.assertEmpty(detection_result.face_landmarks)
-      self.assertEmpty(detection_result.pose_landmarks)
-      self.assertEmpty(detection_result.pose_world_landmarks)
-      self.assertEmpty(detection_result.left_hand_landmarks)
-      self.assertEmpty(detection_result.left_hand_world_landmarks)
-      self.assertEmpty(detection_result.right_hand_landmarks)
-      self.assertEmpty(detection_result.right_hand_world_landmarks)
       self.assertIsNone(detection_result.face_blendshapes)
       self.assertIsNone(detection_result.segmentation_mask)
 

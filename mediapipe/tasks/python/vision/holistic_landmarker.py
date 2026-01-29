@@ -13,62 +13,56 @@
 # limitations under the License.
 """MediaPipe holistic landmarker task."""
 
+import ctypes
 import dataclasses
-from typing import Callable, List, Mapping, Optional
+from typing import Callable, List, Optional, Tuple
 
-from mediapipe.framework.formats import classification_pb2
-from mediapipe.framework.formats import landmark_pb2
-from mediapipe.python import packet_creator
-from mediapipe.python import packet_getter
-from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.python._framework_bindings import packet as packet_module
-from mediapipe.tasks.cc.vision.holistic_landmarker.proto import holistic_landmarker_graph_options_pb2
-from mediapipe.tasks.cc.vision.holistic_landmarker.proto import holistic_result_pb2
-from mediapipe.tasks.python.components.containers import category as category_module
-from mediapipe.tasks.python.components.containers import landmark as landmark_module
-from mediapipe.tasks.python.core import base_options as base_options_module
-from mediapipe.tasks.python.core import task_info as task_info_module
+from mediapipe.tasks.python.components.containers import category as category_lib
+from mediapipe.tasks.python.components.containers import category_c as category_c_lib
+from mediapipe.tasks.python.components.containers import landmark as landmark_lib
+from mediapipe.tasks.python.components.containers import landmark_c as landmark_c_lib
+from mediapipe.tasks.python.core import async_result_dispatcher
+from mediapipe.tasks.python.core import base_options as base_options_lib
+from mediapipe.tasks.python.core import base_options_c as base_options_c_lib
+from mediapipe.tasks.python.core import mediapipe_c_bindings as mediapipe_c_bindings_lib
+from mediapipe.tasks.python.core import mediapipe_c_utils
+from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-from mediapipe.tasks.python.vision.core import base_vision_task_api
-from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
-from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
+from mediapipe.tasks.python.vision.core import image as image_lib
+from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_lib
+from mediapipe.tasks.python.vision.core import image_processing_options_c as image_processing_options_c_lib
+from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_lib
 
-_BaseOptions = base_options_module.BaseOptions
-_HolisticResultProto = holistic_result_pb2.HolisticResult
-_HolisticLandmarkerGraphOptionsProto = (
-    holistic_landmarker_graph_options_pb2.HolisticLandmarkerGraphOptions
+_BaseOptions = base_options_lib.BaseOptions
+_RunningMode = running_mode_lib.VisionTaskRunningMode
+_ImageProcessingOptions = image_processing_options_lib.ImageProcessingOptions
+_AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
+_LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
+
+
+class HolisticLandmarkerResultC(ctypes.Structure):
+  """The ctypes struct for HolisticLandmarkerResult."""
+
+  _fields_ = [
+      ('face_landmarks', landmark_c_lib.NormalizedLandmarksC),
+      ('pose_landmarks', landmark_c_lib.NormalizedLandmarksC),
+      ('pose_world_landmarks', landmark_c_lib.LandmarksC),
+      ('left_hand_landmarks', landmark_c_lib.NormalizedLandmarksC),
+      ('right_hand_landmarks', landmark_c_lib.NormalizedLandmarksC),
+      ('left_hand_world_landmarks', landmark_c_lib.LandmarksC),
+      ('right_hand_world_landmarks', landmark_c_lib.LandmarksC),
+      ('face_blendshapes', category_c_lib.CategoriesC),
+      ('pose_segmentation_mask', ctypes.c_void_p),
+  ]
+
+
+_C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
+    None,
+    ctypes.c_int32,  # MpStatus
+    ctypes.POINTER(HolisticLandmarkerResultC),
+    ctypes.c_void_p,  # MpImage
+    ctypes.c_int64,  # timestamp_ms
 )
-_RunningMode = running_mode_module.VisionTaskRunningMode
-_ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_TaskInfo = task_info_module.TaskInfo
-
-_IMAGE_IN_STREAM_NAME = 'image_in'
-_IMAGE_OUT_STREAM_NAME = 'image_out'
-_IMAGE_TAG = 'IMAGE'
-
-_POSE_LANDMARKS_STREAM_NAME = 'pose_landmarks'
-_POSE_LANDMARKS_TAG_NAME = 'POSE_LANDMARKS'
-_POSE_WORLD_LANDMARKS_STREAM_NAME = 'pose_world_landmarks'
-_POSE_WORLD_LANDMARKS_TAG = 'POSE_WORLD_LANDMARKS'
-_POSE_SEGMENTATION_MASK_STREAM_NAME = 'pose_segmentation_mask'
-_POSE_SEGMENTATION_MASK_TAG = 'POSE_SEGMENTATION_MASK'
-_FACE_LANDMARKS_STREAM_NAME = 'face_landmarks'
-_FACE_LANDMARKS_TAG = 'FACE_LANDMARKS'
-_FACE_BLENDSHAPES_STREAM_NAME = 'extra_blendshapes'
-_FACE_BLENDSHAPES_TAG = 'FACE_BLENDSHAPES'
-_LEFT_HAND_LANDMARKS_STREAM_NAME = 'left_hand_landmarks'
-_LEFT_HAND_LANDMARKS_TAG = 'LEFT_HAND_LANDMARKS'
-_LEFT_HAND_WORLD_LANDMARKS_STREAM_NAME = 'left_hand_world_landmarks'
-_LEFT_HAND_WORLD_LANDMARKS_TAG = 'LEFT_HAND_WORLD_LANDMARKS'
-_RIGHT_HAND_LANDMARKS_STREAM_NAME = 'right_hand_landmarks'
-_RIGHT_HAND_LANDMARKS_TAG = 'RIGHT_HAND_LANDMARKS'
-_RIGHT_HAND_WORLD_LANDMARKS_STREAM_NAME = 'right_hand_world_landmarks'
-_RIGHT_HAND_WORLD_LANDMARKS_TAG = 'RIGHT_HAND_WORLD_LANDMARKS'
-
-_TASK_GRAPH_NAME = (
-    'mediapipe.tasks.vision.holistic_landmarker.HolisticLandmarkerGraph'
-)
-_MICRO_SECONDS_PER_MILLISECOND = 1000
 
 
 @dataclasses.dataclass
@@ -91,170 +85,141 @@ class HolisticLandmarkerResult:
     segmentation_mask: Optional segmentation mask for pose.
   """
 
-  face_landmarks: List[landmark_module.NormalizedLandmark]
-  pose_landmarks: List[landmark_module.NormalizedLandmark]
-  pose_world_landmarks: List[landmark_module.Landmark]
-  left_hand_landmarks: List[landmark_module.NormalizedLandmark]
-  left_hand_world_landmarks: List[landmark_module.Landmark]
-  right_hand_landmarks: List[landmark_module.NormalizedLandmark]
-  right_hand_world_landmarks: List[landmark_module.Landmark]
-  face_blendshapes: Optional[List[category_module.Category]] = None
-  segmentation_mask: Optional[image_module.Image] = None
+  face_landmarks: List[landmark_lib.NormalizedLandmark]
+  pose_landmarks: List[landmark_lib.NormalizedLandmark]
+  pose_world_landmarks: List[landmark_lib.Landmark]
+  left_hand_landmarks: List[landmark_lib.NormalizedLandmark]
+  left_hand_world_landmarks: List[landmark_lib.Landmark]
+  right_hand_landmarks: List[landmark_lib.NormalizedLandmark]
+  right_hand_world_landmarks: List[landmark_lib.Landmark]
+  face_blendshapes: Optional[List[category_lib.Category]] = None
+  segmentation_mask: Optional[image_lib.Image] = None
 
   @classmethod
   @doc_controls.do_not_generate_docs
-  def create_from_pb2(
-      cls, pb2_obj: _HolisticResultProto
+  def from_ctypes(
+      cls, c_struct: HolisticLandmarkerResultC
   ) -> 'HolisticLandmarkerResult':
-    """Creates a `HolisticLandmarkerResult` object from the given protobuf object."""
-    face_blendshapes = None
-    if hasattr(pb2_obj, 'face_blendshapes'):
-      face_blendshapes = [
-          category_module.Category(
-              score=classification.score,
-              index=classification.index,
-              category_name=classification.label,
-              display_name=classification.display_name,
-          )
-          for classification in pb2_obj.face_blendshapes.classification
-      ]
-
-    return HolisticLandmarkerResult(
-        face_landmarks=[
-            landmark_module.NormalizedLandmark.create_from_pb2(landmark)
-            for landmark in pb2_obj.face_landmarks.landmark
-        ],
-        pose_landmarks=[
-            landmark_module.NormalizedLandmark.create_from_pb2(landmark)
-            for landmark in pb2_obj.pose_landmarks.landmark
-        ],
-        pose_world_landmarks=[
-            landmark_module.Landmark.create_from_pb2(landmark)
-            for landmark in pb2_obj.pose_world_landmarks.landmark
-        ],
-        left_hand_landmarks=[
-            landmark_module.NormalizedLandmark.create_from_pb2(landmark)
-            for landmark in pb2_obj.left_hand_landmarks.landmark
-        ],
-        left_hand_world_landmarks=[],
-        right_hand_landmarks=[
-            landmark_module.NormalizedLandmark.create_from_pb2(landmark)
-            for landmark in pb2_obj.right_hand_landmarks.landmark
-        ],
-        right_hand_world_landmarks=[],
-        face_blendshapes=face_blendshapes,
-        segmentation_mask=None,
+    """Creates a `HolisticLandmarkerResult` object from the given ctypes struct."""
+    face_landmarks = [
+        landmark_lib.NormalizedLandmark.from_ctypes(
+            c_struct.face_landmarks.landmarks[i]
+        )
+        for i in range(c_struct.face_landmarks.landmarks_count)
+    ]
+    pose_landmarks = [
+        landmark_lib.NormalizedLandmark.from_ctypes(
+            c_struct.pose_landmarks.landmarks[i]
+        )
+        for i in range(c_struct.pose_landmarks.landmarks_count)
+    ]
+    pose_world_landmarks = [
+        landmark_lib.Landmark.from_ctypes(
+            c_struct.pose_world_landmarks.landmarks[i]
+        )
+        for i in range(c_struct.pose_world_landmarks.landmarks_count)
+    ]
+    left_hand_landmarks = [
+        landmark_lib.NormalizedLandmark.from_ctypes(
+            c_struct.left_hand_landmarks.landmarks[i]
+        )
+        for i in range(c_struct.left_hand_landmarks.landmarks_count)
+    ]
+    left_hand_world_landmarks = [
+        landmark_lib.Landmark.from_ctypes(
+            c_struct.left_hand_world_landmarks.landmarks[i]
+        )
+        for i in range(c_struct.left_hand_world_landmarks.landmarks_count)
+    ]
+    right_hand_landmarks = [
+        landmark_lib.NormalizedLandmark.from_ctypes(
+            c_struct.right_hand_landmarks.landmarks[i]
+        )
+        for i in range(c_struct.right_hand_landmarks.landmarks_count)
+    ]
+    right_hand_world_landmarks = [
+        landmark_lib.Landmark.from_ctypes(
+            c_struct.right_hand_world_landmarks.landmarks[i]
+        )
+        for i in range(c_struct.right_hand_world_landmarks.landmarks_count)
+    ]
+    face_blendshapes = [
+        category_lib.Category.from_ctypes(
+            c_struct.face_blendshapes.categories[i]
+        )
+        for i in range(c_struct.face_blendshapes.categories_count)
+    ]
+    return cls(
+        face_landmarks=face_landmarks,
+        pose_landmarks=pose_landmarks,
+        pose_world_landmarks=pose_world_landmarks,
+        left_hand_landmarks=left_hand_landmarks,
+        right_hand_landmarks=right_hand_landmarks,
+        left_hand_world_landmarks=left_hand_world_landmarks,
+        right_hand_world_landmarks=right_hand_world_landmarks,
+        face_blendshapes=(
+            face_blendshapes
+            if c_struct.face_blendshapes.categories_count > 0
+            else None
+        ),
+        segmentation_mask=(
+            image_lib.Image.create_from_ctypes(c_struct.pose_segmentation_mask)
+            if c_struct.pose_segmentation_mask
+            else None
+        ),
     )
 
 
-def _build_landmarker_result(
-    output_packets: Mapping[str, packet_module.Packet],
-) -> HolisticLandmarkerResult:
-  """Constructs a `HolisticLandmarksDetectionResult` from output packets."""
-  holistic_landmarker_result = HolisticLandmarkerResult(
-      [], [], [], [], [], [], []
-  )
+class HolisticLandmarkerOptionsC(ctypes.Structure):
+  """The ctypes struct for HolisticLandmarkerOptions."""
 
-  face_landmarks_proto_list = packet_getter.get_proto(
-      output_packets[_FACE_LANDMARKS_STREAM_NAME]
-  )
+  _fields_ = [
+      ('base_options', base_options_c_lib.BaseOptionsC),
+      ('running_mode', ctypes.c_int),
+      ('min_face_detection_confidence', ctypes.c_float),
+      ('min_face_suppression_threshold', ctypes.c_float),
+      ('min_face_landmarks_confidence', ctypes.c_float),
+      ('min_pose_detection_confidence', ctypes.c_float),
+      ('min_pose_suppression_threshold', ctypes.c_float),
+      ('min_pose_landmarks_confidence', ctypes.c_float),
+      ('min_hand_landmarks_confidence', ctypes.c_float),
+      ('output_face_blendshapes', ctypes.c_bool),
+      ('output_segmentation_masks', ctypes.c_bool),
+      ('result_callback', _C_TYPES_RESULT_CALLBACK),
+  ]
 
-  pose_landmarks_proto_list = packet_getter.get_proto(
-      output_packets[_POSE_LANDMARKS_STREAM_NAME]
-  )
-
-  pose_world_landmarks_proto_list = packet_getter.get_proto(
-      output_packets[_POSE_WORLD_LANDMARKS_STREAM_NAME]
-  )
-
-  left_hand_landmarks_proto_list = packet_getter.get_proto(
-      output_packets[_LEFT_HAND_LANDMARKS_STREAM_NAME]
-  )
-
-  left_hand_world_landmarks_proto_list = packet_getter.get_proto(
-      output_packets[_LEFT_HAND_WORLD_LANDMARKS_STREAM_NAME]
-  )
-
-  right_hand_landmarks_proto_list = packet_getter.get_proto(
-      output_packets[_RIGHT_HAND_LANDMARKS_STREAM_NAME]
-  )
-
-  right_hand_world_landmarks_proto_list = packet_getter.get_proto(
-      output_packets[_RIGHT_HAND_WORLD_LANDMARKS_STREAM_NAME]
-  )
-
-  face_landmarks = landmark_pb2.NormalizedLandmarkList()
-  face_landmarks.MergeFrom(face_landmarks_proto_list)
-  for face_landmark in face_landmarks.landmark:
-    holistic_landmarker_result.face_landmarks.append(
-        landmark_module.NormalizedLandmark.create_from_pb2(face_landmark)
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def from_c_options(
+      cls,
+      base_options: base_options_c_lib.BaseOptionsC,
+      running_mode: _RunningMode,
+      min_face_detection_confidence: float,
+      min_face_suppression_threshold: float,
+      min_face_landmarks_confidence: float,
+      min_pose_detection_confidence: float,
+      min_pose_suppression_threshold: float,
+      min_pose_landmarks_confidence: float,
+      min_hand_landmarks_confidence: float,
+      output_face_blendshapes: bool,
+      output_segmentation_masks: bool,
+      result_callback: _C_TYPES_RESULT_CALLBACK,
+  ) -> 'HolisticLandmarkerOptionsC':
+    """Creates a HolisticLandmarkerOptionsC object from the given options."""
+    return cls(
+        base_options=base_options,
+        running_mode=running_mode.ctype,
+        min_face_detection_confidence=min_face_detection_confidence,
+        min_face_suppression_threshold=min_face_suppression_threshold,
+        min_face_landmarks_confidence=min_face_landmarks_confidence,
+        min_pose_detection_confidence=min_pose_detection_confidence,
+        min_pose_suppression_threshold=min_pose_suppression_threshold,
+        min_pose_landmarks_confidence=min_pose_landmarks_confidence,
+        min_hand_landmarks_confidence=min_hand_landmarks_confidence,
+        output_face_blendshapes=output_face_blendshapes,
+        output_segmentation_masks=output_segmentation_masks,
+        result_callback=result_callback,
     )
-
-  pose_landmarks = landmark_pb2.NormalizedLandmarkList()
-  pose_landmarks.MergeFrom(pose_landmarks_proto_list)
-  for pose_landmark in pose_landmarks.landmark:
-    holistic_landmarker_result.pose_landmarks.append(
-        landmark_module.NormalizedLandmark.create_from_pb2(pose_landmark)
-    )
-
-  pose_world_landmarks = landmark_pb2.LandmarkList()
-  pose_world_landmarks.MergeFrom(pose_world_landmarks_proto_list)
-  for pose_world_landmark in pose_world_landmarks.landmark:
-    holistic_landmarker_result.pose_world_landmarks.append(
-        landmark_module.Landmark.create_from_pb2(pose_world_landmark)
-    )
-
-  left_hand_landmarks = landmark_pb2.NormalizedLandmarkList()
-  left_hand_landmarks.MergeFrom(left_hand_landmarks_proto_list)
-  for hand_landmark in left_hand_landmarks.landmark:
-    holistic_landmarker_result.left_hand_landmarks.append(
-        landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark)
-    )
-
-  left_hand_world_landmarks = landmark_pb2.LandmarkList()
-  left_hand_world_landmarks.MergeFrom(left_hand_world_landmarks_proto_list)
-  for left_hand_world_landmark in left_hand_world_landmarks.landmark:
-    holistic_landmarker_result.left_hand_world_landmarks.append(
-        landmark_module.Landmark.create_from_pb2(left_hand_world_landmark)
-    )
-
-  right_hand_landmarks = landmark_pb2.NormalizedLandmarkList()
-  right_hand_landmarks.MergeFrom(right_hand_landmarks_proto_list)
-  for hand_landmark in right_hand_landmarks.landmark:
-    holistic_landmarker_result.right_hand_landmarks.append(
-        landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark)
-    )
-
-  right_hand_world_landmarks = landmark_pb2.LandmarkList()
-  right_hand_world_landmarks.MergeFrom(right_hand_world_landmarks_proto_list)
-  for right_hand_world_landmark in right_hand_world_landmarks.landmark:
-    holistic_landmarker_result.right_hand_world_landmarks.append(
-        landmark_module.Landmark.create_from_pb2(right_hand_world_landmark)
-    )
-
-  if _FACE_BLENDSHAPES_STREAM_NAME in output_packets:
-    face_blendshapes_proto_list = packet_getter.get_proto(
-        output_packets[_FACE_BLENDSHAPES_STREAM_NAME]
-    )
-    face_blendshapes_classifications = classification_pb2.ClassificationList()
-    face_blendshapes_classifications.MergeFrom(face_blendshapes_proto_list)
-    holistic_landmarker_result.face_blendshapes = []
-    for face_blendshapes in face_blendshapes_classifications.classification:
-      holistic_landmarker_result.face_blendshapes.append(
-          category_module.Category(
-              index=face_blendshapes.index,
-              score=face_blendshapes.score,
-              display_name=face_blendshapes.display_name,
-              category_name=face_blendshapes.label,
-          )
-      )
-
-  if _POSE_SEGMENTATION_MASK_STREAM_NAME in output_packets:
-    holistic_landmarker_result.segmentation_mask = packet_getter.get_image(
-        output_packets[_POSE_SEGMENTATION_MASK_STREAM_NAME]
-    )
-
-  return holistic_landmarker_result
 
 
 @dataclasses.dataclass
@@ -304,50 +269,91 @@ class HolisticLandmarkerOptions:
   output_face_blendshapes: bool = False
   output_segmentation_mask: bool = False
   result_callback: Optional[
-      Callable[[HolisticLandmarkerResult, image_module.Image, int], None]
+      Callable[[HolisticLandmarkerResult, image_lib.Image, int], None]
   ] = None
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _HolisticLandmarkerGraphOptionsProto:
-    """Generates an HolisticLandmarkerGraphOptions protobuf object."""
-    base_options_proto = self.base_options.to_pb2()
-    base_options_proto.use_stream_mode = (
-        False if self.running_mode == _RunningMode.IMAGE else True
-    )
 
-    # Initialize the holistic landmarker options from base options.
-    holistic_landmarker_options_proto = _HolisticLandmarkerGraphOptionsProto(
-        base_options=base_options_proto
-    )
-    # Configure face detector and face landmarks detector options.
-    holistic_landmarker_options_proto.face_detector_graph_options.min_detection_confidence = (
-        self.min_face_detection_confidence
-    )
-    holistic_landmarker_options_proto.face_detector_graph_options.min_suppression_threshold = (
-        self.min_face_suppression_threshold
-    )
-    holistic_landmarker_options_proto.face_landmarks_detector_graph_options.min_detection_confidence = (
-        self.min_face_landmarks_confidence
-    )
-    # Configure pose detector and pose landmarks detector options.
-    holistic_landmarker_options_proto.pose_detector_graph_options.min_detection_confidence = (
-        self.min_pose_detection_confidence
-    )
-    holistic_landmarker_options_proto.pose_detector_graph_options.min_suppression_threshold = (
-        self.min_pose_suppression_threshold
-    )
-    holistic_landmarker_options_proto.pose_landmarks_detector_graph_options.min_detection_confidence = (
-        self.min_pose_landmarks_confidence
-    )
-    # Configure hand landmarks detector options.
-    holistic_landmarker_options_proto.hand_landmarks_detector_graph_options.min_detection_confidence = (
-        self.min_hand_landmarks_confidence
-    )
-    return holistic_landmarker_options_proto
+_CTYPES_SIGNATURES = (
+    mediapipe_c_utils.CStatusFunction(
+        'MpHolisticLandmarkerCreate',
+        (
+            ctypes.POINTER(HolisticLandmarkerOptionsC),
+            ctypes.POINTER(ctypes.c_void_p),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpHolisticLandmarkerDetectImage',
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_lib.ImageProcessingOptionsC
+            ),
+            ctypes.POINTER(HolisticLandmarkerResultC),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpHolisticLandmarkerDetectForVideo',
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_lib.ImageProcessingOptionsC
+            ),
+            ctypes.c_int64,
+            ctypes.POINTER(HolisticLandmarkerResultC),
+        ),
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpHolisticLandmarkerDetectAsync',
+        (
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(
+                image_processing_options_c_lib.ImageProcessingOptionsC
+            ),
+            ctypes.c_int64,
+        ),
+    ),
+    mediapipe_c_utils.CFunction(
+        'MpHolisticLandmarkerCloseResult',
+        [ctypes.POINTER(HolisticLandmarkerResultC)],
+        None,
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpHolisticLandmarkerClose',
+        (ctypes.c_void_p,),
+    ),
+)
 
 
-class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
+class HolisticLandmarker:
   """Class that performs holistic landmarks detection on images."""
+
+  _lib: serial_dispatcher.SerialDispatcher
+  _handle: ctypes.c_void_p
+  _dispatcher: _AsyncResultDispatcher
+  _async_callback: _C_TYPES_RESULT_CALLBACK
+
+  def __init__(
+      self,
+      lib: serial_dispatcher.SerialDispatcher,
+      handle: ctypes.c_void_p,
+      dispatcher: _AsyncResultDispatcher,
+      async_callback: _C_TYPES_RESULT_CALLBACK,
+  ):
+    """Initializes the holistic landmarker.
+
+    Args:
+      lib: The dispatch library to use for the holistic landmarker.
+      handle: The C pointer to the holistic landmarker.
+      dispatcher: The async result handler for the holistic landmarker.
+      async_callback: The c callback for the holistic landmarker.
+    """
+    self._lib = lib
+    self._handle = handle
+    self._dispatcher = dispatcher
+    self._async_callback = async_callback
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'HolisticLandmarker':
@@ -391,85 +397,51 @@ class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
         `HolisticLandmarkerOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
-
-    def packets_callback(output_packets: Mapping[str, packet_module.Packet]):
-      if output_packets[_IMAGE_OUT_STREAM_NAME].is_empty():
-        return
-
-      image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
-
-      if output_packets[_FACE_LANDMARKS_STREAM_NAME].is_empty():
-        empty_packet = output_packets[_FACE_LANDMARKS_STREAM_NAME]
-        options.result_callback(
-            HolisticLandmarkerResult([], [], [], [], [], [], []),
-            image,
-            empty_packet.timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
-        )
-        return
-
-      holistic_landmarks_detection_result = _build_landmarker_result(
-          output_packets
-      )
-      timestamp = output_packets[_FACE_LANDMARKS_STREAM_NAME].timestamp
-      options.result_callback(
-          holistic_landmarks_detection_result,
-          image,
-          timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
-      )
-
-    output_streams = [
-        ':'.join([_FACE_LANDMARKS_TAG, _FACE_LANDMARKS_STREAM_NAME]),
-        ':'.join([_POSE_LANDMARKS_TAG_NAME, _POSE_LANDMARKS_STREAM_NAME]),
-        ':'.join(
-            [_POSE_WORLD_LANDMARKS_TAG, _POSE_WORLD_LANDMARKS_STREAM_NAME]
-        ),
-        ':'.join([_LEFT_HAND_LANDMARKS_TAG, _LEFT_HAND_LANDMARKS_STREAM_NAME]),
-        ':'.join([
-            _LEFT_HAND_WORLD_LANDMARKS_TAG,
-            _LEFT_HAND_WORLD_LANDMARKS_STREAM_NAME,
-        ]),
-        ':'.join(
-            [_RIGHT_HAND_LANDMARKS_TAG, _RIGHT_HAND_LANDMARKS_STREAM_NAME]
-        ),
-        ':'.join([
-            _RIGHT_HAND_WORLD_LANDMARKS_TAG,
-            _RIGHT_HAND_WORLD_LANDMARKS_STREAM_NAME,
-        ]),
-        ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME]),
-    ]
-
-    if options.output_segmentation_mask:
-      output_streams.append(
-          ':'.join(
-              [_POSE_SEGMENTATION_MASK_TAG, _POSE_SEGMENTATION_MASK_STREAM_NAME]
-          )
-      )
-
-    if options.output_face_blendshapes:
-      output_streams.append(
-          ':'.join([_FACE_BLENDSHAPES_TAG, _FACE_BLENDSHAPES_STREAM_NAME])
-      )
-
-    task_info = _TaskInfo(
-        task_graph=_TASK_GRAPH_NAME,
-        input_streams=[
-            ':'.join([_IMAGE_TAG, _IMAGE_IN_STREAM_NAME]),
-        ],
-        output_streams=output_streams,
-        task_options=options,
+    running_mode_lib.validate_running_mode(
+        options.running_mode, options.result_callback
     )
-    return cls(
-        task_info.generate_graph_config(
-            enable_flow_limiting=options.running_mode
-            == _RunningMode.LIVE_STREAM
-        ),
-        options.running_mode,
-        packets_callback if options.result_callback else None,
+    lib = mediapipe_c_bindings_lib.load_shared_library(_CTYPES_SIGNATURES)
+
+    def convert_result(
+        c_result_ptr: ctypes.POINTER(HolisticLandmarkerResultC),
+        image_ptr: ctypes.c_void_p,
+        timestamp_ms: int,
+    ) -> Tuple[HolisticLandmarkerResult, image_lib.Image, int]:
+      c_result = c_result_ptr[0]
+      py_result = HolisticLandmarkerResult.from_ctypes(c_result)
+      py_image = image_lib.Image.create_from_ctypes(image_ptr)
+      return py_result, py_image, timestamp_ms
+
+    dispatcher = _AsyncResultDispatcher(converter=convert_result)
+    c_callback = dispatcher.wrap_callback(
+        options.result_callback, _C_TYPES_RESULT_CALLBACK
+    )
+    options_c = HolisticLandmarkerOptionsC.from_c_options(
+        base_options=options.base_options.to_ctypes(),
+        running_mode=options.running_mode,
+        min_face_detection_confidence=options.min_face_detection_confidence,
+        min_face_suppression_threshold=options.min_face_suppression_threshold,
+        min_face_landmarks_confidence=options.min_face_landmarks_confidence,
+        min_pose_detection_confidence=options.min_pose_detection_confidence,
+        min_pose_suppression_threshold=options.min_pose_suppression_threshold,
+        min_pose_landmarks_confidence=options.min_pose_landmarks_confidence,
+        min_hand_landmarks_confidence=options.min_hand_landmarks_confidence,
+        output_face_blendshapes=options.output_face_blendshapes,
+        output_segmentation_masks=options.output_segmentation_mask,
+        result_callback=c_callback,
+    )
+    landmarker = ctypes.c_void_p()
+    lib.MpHolisticLandmarkerCreate(
+        ctypes.byref(options_c), ctypes.byref(landmarker)
+    )
+    return HolisticLandmarker(
+        lib, landmarker, dispatcher=dispatcher, async_callback=c_callback
     )
 
   def detect(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> HolisticLandmarkerResult:
     """Performs holistic landmarks detection on the given image.
 
@@ -480,6 +452,7 @@ class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
 
     Args:
       image: MediaPipe Image.
+      image_processing_options: Options for image processing.
 
     Returns:
       The holistic landmarks detection results.
@@ -488,19 +461,30 @@ class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If holistic landmarker detection failed to run.
     """
-    output_packets = self._process_image_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image),
-    })
-
-    if output_packets[_FACE_LANDMARKS_STREAM_NAME].is_empty():
-      return HolisticLandmarkerResult([], [], [], [], [], [], [])
-
-    return _build_landmarker_result(output_packets)
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    result_c = HolisticLandmarkerResultC()
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
+    )
+    self._lib.MpHolisticLandmarkerDetectImage(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        ctypes.byref(result_c),
+    )
+    try:
+      result = HolisticLandmarkerResult.from_ctypes(result_c)
+    finally:
+      self._lib.MpHolisticLandmarkerCloseResult(ctypes.byref(result_c))
+    return result
 
   def detect_for_video(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
       timestamp_ms: int,
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> HolisticLandmarkerResult:
     """Performs holistic landmarks detection on the provided video frame.
 
@@ -515,6 +499,7 @@ class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
     Args:
       image: MediaPipe Image.
       timestamp_ms: The timestamp of the input video frame in milliseconds.
+      image_processing_options: Options for image processing.
 
     Returns:
       The holistic landmarks detection results.
@@ -523,23 +508,31 @@ class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If holistic landmarker detection failed to run.
     """
-    output_packets = self._process_video_data({
-        _IMAGE_IN_STREAM_NAME: (
-            packet_creator.create_image(image).at(
-                timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
-            )
-        ),
-    })
-
-    if output_packets[_FACE_LANDMARKS_STREAM_NAME].is_empty():
-      return HolisticLandmarkerResult([], [], [], [], [], [], [])
-
-    return _build_landmarker_result(output_packets)
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    result_c = HolisticLandmarkerResultC()
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
+    )
+    self._lib.MpHolisticLandmarkerDetectForVideo(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        timestamp_ms,
+        ctypes.byref(result_c),
+    )
+    try:
+      result = HolisticLandmarkerResult.from_ctypes(result_c)
+    finally:
+      self._lib.MpHolisticLandmarkerCloseResult(ctypes.byref(result_c))
+    return result
 
   def detect_async(
       self,
-      image: image_module.Image,
+      image: image_lib.Image,
       timestamp_ms: int,
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> None:
     """Sends live image data to perform holistic landmarks detection.
 
@@ -566,15 +559,42 @@ class HolisticLandmarker(base_vision_task_api.BaseVisionTaskApi):
     Args:
       image: MediaPipe Image.
       timestamp_ms: The timestamp of the input image in milliseconds.
+      image_processing_options: Options for image processing.
 
     Raises:
       ValueError: If the current input timestamp is smaller than what the
       holistic landmarker has already processed.
     """
-    self._send_live_stream_data({
-        _IMAGE_IN_STREAM_NAME: (
-            packet_creator.create_image(image).at(
-                timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
-            )
-        ),
-    })
+    c_image = image._image_ptr  # pylint: disable=protected-access
+    c_image_processing_options = (
+        ctypes.byref(image_processing_options.to_ctypes())
+        if image_processing_options
+        else None
+    )
+    self._lib.MpHolisticLandmarkerDetectAsync(
+        self._handle,
+        c_image,
+        c_image_processing_options,
+        timestamp_ms,
+    )
+
+  def close(self):
+    """Closes the HolisticLandmarker."""
+    if not self._handle:
+      return
+    self._lib.MpHolisticLandmarkerClose(self._handle)
+    self._handle = None
+    self._dispatcher.close()
+    self._lib.close()
+
+  def __enter__(self):
+    """Returns `self` upon entering the runtime context."""
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    """Shuts down the MediaPipe task instance on exit of the context manager."""
+    del exc_type, exc_value, traceback  # Unused.
+    self.close()
+
+  def __del__(self):
+    self.close()
