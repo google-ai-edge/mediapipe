@@ -16,9 +16,6 @@ syntax = "proto3";
 
 package odml.infra.proto;
 
-option java_package = "com.google.odml.infra.proto";
-option java_outer_classname = "TransformerParametersProto";
-
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
 // Next ID: 47
 message TransformerParameters {

@@ -18,7 +18,7 @@ syntax = "proto3";
 package mediapipe.tasks.genai.llm_inference.proto;
 
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
-import "mediapipe/tasks/cc/genai/inference/proto/sampler_params.proto";
+import "mediapipe/tasks/web/genai/llm_inference/proto/sampler_params.proto";
 
 option java_package = "com.google.mediapipe.tasks.genai.llminference.proto";
 option java_outer_classname = "LlmInferenceGraphOptionsProto";

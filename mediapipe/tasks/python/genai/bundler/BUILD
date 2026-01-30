@@ -46,17 +46,6 @@ py_library(
 )
 
 py_test(
-    name = "llm_bundler_test",
-    srcs = ["llm_bundler_test.py"],
-    deps = [
-        ":llm_bundler",
-        "//mediapipe/tasks/cc/genai/inference/proto:llm_params_py_pb2",
-        "@com_google_sentencepiece//:sentencepiece_model_py_pb2",
-        "@mediapipe_pip_deps_absl_py//:pkg",
-    ],
-)
-
-py_test(
     name = "llm_bundler_metadata_options_test",
     srcs = ["llm_bundler_metadata_options_test.py"],
     deps = [

@@ -18,11 +18,8 @@ syntax = "proto3";
 
 package odml.infra.proto;
 
-import "mediapipe/tasks/cc/genai/inference/proto/prompt_template.proto";
-import "mediapipe/tasks/cc/genai/inference/proto/transformer_params.proto";
-
-option java_package = "com.google.odml.infra.proto";
-option java_outer_classname = "LLMParametersProto";
+import "mediapipe/tasks/web/genai/llm_inference/proto/prompt_template.proto";
+import "mediapipe/tasks/web/genai/llm_inference/proto/transformer_params.proto";
 
 // Naming convention is as following: LLM_MODEL_TYPE_<model_name>_<model_size>.
 enum LlmModelType {

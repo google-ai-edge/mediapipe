@@ -1,4 +1,4 @@
-// Copyright 2024 The ODML Authors.
+// Copyright 2024 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
 syntax = "proto3";
 
 package odml.infra.proto;
-
-option java_package = "com.google.odml.infra.proto";
-option java_outer_classname = "TokenizerCalculatorOptionsProto";
 
 message TokenizerCalculatorOptions {
   // The maximum number of tokens for the calculator's BERT model. Used

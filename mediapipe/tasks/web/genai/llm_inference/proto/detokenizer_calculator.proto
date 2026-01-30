@@ -1,4 +1,4 @@
-// Copyright 2024 The ODML Authors.
+// Copyright 2024 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,15 +16,20 @@ syntax = "proto3";
 
 package odml.infra.proto;
 
-option java_package = "com.google.odml.infra.proto";
-option java_outer_classname = "ModelDataCalculatorOptionsProto";
-
-message ModelDataCalculatorOptions {
-  // The path to the base model data.
-  string weight_path = 1;
-
-  reserved 2;
-
+message DetokenizerCalculatorOptions {
   // The path to the SentencePiece model file.
-  string spm_model_file = 3;
+  string spm_model_file = 1;
+
+  // A set of tokens to stop the decoding process whenever they appear in the
+  // result.
+  repeated string stop_tokens = 4;
+
+  // How many sets of input IDs need to be detokenized.
+  int32 num_output_heads = 5;
+
+  // Whether the detokenizer is used along with a fake weight model. If so,
+  // negative tokens will not be considered as illegal tokens.
+  bool fake_weight_mode = 6;
+
+  reserved 2, 3;
 }

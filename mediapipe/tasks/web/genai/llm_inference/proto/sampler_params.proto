@@ -16,9 +16,6 @@ syntax = "proto3";
 
 package odml.infra.proto;
 
-option java_package = "com.google.odml.infra.proto";
-option java_outer_classname = "SamplerParametersProto";
-
 // Sampling parameters used to configure the decoding strategy.
 message SamplerParameters {
   enum Type {
