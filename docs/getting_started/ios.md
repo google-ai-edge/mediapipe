@@ -23,7 +23,7 @@ as the primary developer documentation site for MediaPipe as of April 3, 2023.*
 
 Please follow instructions below to build iOS example apps in the supported
 MediaPipe [solutions](../solutions/solutions.md). To learn more about these
-example apps, start from, start from
+example apps, start from
 [Hello World! on iOS](./hello_world_ios.md).
 
 ## Building iOS example apps
@@ -39,8 +39,7 @@ example apps, start from, start from
     xcode-select --install
     ```
 
-3.  Install [Bazelisk](https://github.com/bazelbuild/bazelisk)
-.
+3.  Install [Bazelisk](https://github.com/bazelbuild/bazelisk).
 
     We recommend using [Homebrew](https://brew.sh/) to get the latest versions.
 
