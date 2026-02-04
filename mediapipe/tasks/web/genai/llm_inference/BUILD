@@ -21,6 +21,7 @@ mediapipe_ts_library(
     deps = [
         ":llm_inference_types",
         ":model_loading_utils",
+        ":efficient_model_loader",
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/web/core",
@@ -57,4 +58,12 @@ mediapipe_ts_library(
         "model_loading_utils.ts",
     ],
     visibility = ["//visibility:public"],
+)
+
+mediapipe_ts_library(
+    name = "efficient_model_loader",
+    srcs = [
+        "efficient_model_loader.ts",
+    ],
+    deps = [],
 )
