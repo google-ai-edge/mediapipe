@@ -76,15 +76,17 @@ class TaskApiFactory {
         found_task_subgraph = true;
       }
     }
+#if !MEDIAPIPE_DISABLE_GPU
     MP_ASSIGN_OR_RETURN(
         auto runner,
-#if !MEDIAPIPE_DISABLE_GPU
         core::TaskRunner::Create(std::move(graph_config), std::move(resolver),
                                  std::move(packets_callback),
                                  std::move(default_executor),
                                  std::move(input_side_packets),
                                  /*resources=*/nullptr, std::move(error_fn)));
 #else
+    MP_ASSIGN_OR_RETURN(
+        auto runner,
         core::TaskRunner::Create(
             std::move(graph_config), std::move(resolver),
             std::move(packets_callback), std::move(default_executor),
