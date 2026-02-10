@@ -29,16 +29,14 @@ FROM quay.io/pypa/manylinux_2_28_x86_64
 ARG MEDIAPIPE_DISABLE_GPU=1
 ENV MEDIAPIPE_DISABLE_GPU=${MEDIAPIPE_DISABLE_GPU}
 
-RUN yum install -y java-11-openjdk-devel zip
+RUN yum install -y java-21-openjdk-devel zip
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk
 WORKDIR /tmp/bazel_build
-ADD https://github.com/bazelbuild/bazel/releases/download/7.4.1/bazel-7.4.1-dist.zip bazel.zip
-RUN unzip bazel.zip
-RUN rm -f bazel.zip
+RUN curl -fL --retry 5 --retry-delay 5 --retry-connrefused \
+    -o /usr/local/bin/bazel https://github.com/bazelbuild/bazel/releases/download/7.4.1/bazel-7.4.1-linux-x86_64 && \
+    chmod +x /usr/local/bin/bazel
+
 ENV PATH="/opt/python/cp36-cp36m/bin:${PATH}"
-ENV EXTRA_BAZEL_ARGS="--host_javabase=@local_jdk//:jdk"
-ENV BAZEL_LINKLIBS=-lm:-lstdc++
-RUN ./compile.sh
-RUN cp /tmp/bazel_build/output/bazel /bin/bazel
 
 
 # Install Clang 18
@@ -46,6 +44,12 @@ RUN --mount=type=cache,target=/var/cache/dnf dnf install -y wget gcc-c++ && dnf 
 RUN mkdir /tmp/llvm-project && wget -qO - https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-18.1.8.tar.gz | tar -xz -C /tmp/llvm-project --strip-components 1 && \
     mkdir /tmp/llvm-project/build && cd /tmp/llvm-project/build && cmake -DLLVM_ENABLE_PROJECTS='clang;lld' -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/lib/llvm-18/ ../llvm && \
     make -j$(nproc) && make -j$(nproc) install && rm -rf /tmp/llvm-project
+
+# Install newer libstdc++ headers/libs for C++20 <span> support.
+RUN yum install -y gcc-toolset-14-gcc gcc-toolset-14-gcc-c++ gcc-toolset-14-libstdc++-devel
+ENV CPLUS_INCLUDE_PATH="/opt/rh/gcc-toolset-14/root/usr/include/c++/14:/opt/rh/gcc-toolset-14/root/usr/include/c++/14/x86_64-redhat-linux:/opt/rh/gcc-toolset-14/root/usr/include/c++/14/backward"
+ENV LIBRARY_PATH="/opt/rh/gcc-toolset-14/root/usr/lib64"
+ENV LD_LIBRARY_PATH="/opt/rh/gcc-toolset-14/root/usr/lib64"
 
 # Install OpenGL
 RUN yum install -y mesa-libGL mesa-libGL-devel mesa-libEGL mesa-libEGL-devel
@@ -56,8 +60,9 @@ RUN yum install -y  epel-release && yum install -y java-11-openjdk \
     java-11-openjdk-devel zip emacs portaudio-devel
 
 # Copy Protobuf Compiler binary
-ARG PROTOC_ZIP=protoc-25.1-linux-x86_64.zip
-RUN curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v25.1/$PROTOC_ZIP
+ARG PROTOC_VERSION=28.3
+ARG PROTOC_ZIP=protoc-${PROTOC_VERSION}-linux-x86_64.zip
+RUN curl -fLo $PROTOC_ZIP https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/$PROTOC_ZIP
 RUN unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
 RUN unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
 RUN rm -f $PROTOC_ZIP
@@ -71,7 +76,7 @@ RUN cd /tmp/bazel_build/opencv && git checkout 4.10.0 && cd release && cmake .. 
     -DCMAKE_C_COMPILER=/usr/lib/llvm-18/bin/clang -DCMAKE_CXX_COMPILER=/usr/lib/llvm-18/bin/clang++ \
     -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=/usr/local \
     -DBUILD_SHARED_LIBS=OFF -DBUILD_LIST=imgproc,core \
-    -DWITH_ITT=OFF -DWITH_IPP=OFF -DBUILD_EXAMPLES=OFF \
+    -DWITH_ITT=OFF -DWITH_IPP=OFF -DBUILD_EXAMPLES=OFF -DBUILD_opencv_apps=OFF \
     -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_opencv_ts=OFF \
     -DCV_ENABLE_INTRINSICS=ON -DWITH_EIGEN=ON -DWITH_PTHREADS=ON -DWITH_PTHREADS_PF=ON
 RUN cd /tmp/bazel_build/opencv/release && make -j 16 && make install
@@ -85,12 +90,43 @@ RUN export MP_VERSION_NUMBER=$(awk '/MEDIAPIPE_FULL_VERSION/ {split($0, a, "=");
 
 # Set build flags for MediaPipe and OpenCV.
 RUN echo "build --client_env=CC=/usr/lib/llvm-18/bin/clang++" >> .bazelrc && \
+    echo "build --action_env=LIBRARY_PATH=/opt/rh/gcc-toolset-14/root/usr/lib64" >> .bazelrc && \
+    echo "build --action_env=LD_LIBRARY_PATH=/opt/rh/gcc-toolset-14/root/usr/lib64" >> .bazelrc && \
+    echo "build --linkopt=-L/opt/rh/gcc-toolset-14/root/usr/lib64" >> .bazelrc && \
+    echo "build --linkopt=-lstdc++" >> .bazelrc && \
+    echo "build --host_action_env=CC=/opt/rh/gcc-toolset-14/root/usr/bin/gcc" >> .bazelrc && \
+    echo "build --host_action_env=CXX=/opt/rh/gcc-toolset-14/root/usr/bin/g++" >> .bazelrc && \
+    echo "build --host_linkopt=-L/opt/rh/gcc-toolset-14/root/usr/lib64" >> .bazelrc && \
+    echo "build --host_linkopt=-lstdc++" >> .bazelrc && \
+    echo "build --cxxopt=--gcc-toolchain=/opt/rh/gcc-toolset-14/root/usr" >> .bazelrc && \
+    echo "build --linkopt=--gcc-toolchain=/opt/rh/gcc-toolset-14/root/usr" >> .bazelrc && \
+    echo "build --host_cxxopt=--gcc-toolchain=/opt/rh/gcc-toolset-14/root/usr" >> .bazelrc && \
+    echo "build --host_linkopt=--gcc-toolchain=/opt/rh/gcc-toolset-14/root/usr" >> .bazelrc && \
     echo "build --define=xnn_enable_avxvnniint8=false" >> .bazelrc && \
     echo 'cc_library(name = "opencv", srcs = ["local/lib64/libopencv_imgproc.a", "local/lib64/libopencv_core.a"],hdrs = glob(["local/include/opencv4/opencv2/**/*.h*"]), includes = ["local/include/opencv4/"], linkstatic = 1, visibility = ["//visibility:public"])' > third_party/opencv_linux.BUILD && \
     sed -i "s|bazel_command.append('--define=OPENCV=source')|pass|g" setup.py
 
 # Apply diff to reduce the number of OpenCV dependencies.
-RUN patch -p1 < mediapipe_python_build.diff
+ARG MEDIAPIPE_PYTHON_BUILD_DIFF_URL=""
+RUN if [ ! -f mediapipe_python_build.diff ] && [ -n "${MEDIAPIPE_PYTHON_BUILD_DIFF_URL}" ]; then \
+      DIFF_URL="${MEDIAPIPE_PYTHON_BUILD_DIFF_URL}"; \
+      case "${DIFF_URL}" in \
+        https://github.com/*/blob/*) \
+          DIFF_URL="$(echo "${DIFF_URL}" | sed -e 's|^https://github.com/|https://raw.githubusercontent.com/|' -e 's|/blob/|/|')"; \
+          ;; \
+      esac; \
+      curl -fsSL "${DIFF_URL}" -o mediapipe_python_build.diff; \
+    fi && \
+    if [ -f mediapipe_python_build.diff ]; then \
+      patch -p1 < mediapipe_python_build.diff; \
+    else \
+      echo "mediapipe_python_build.diff not found; skipping OpenCV dependency reduction patch." >&2; \
+    fi
+
+# Disable GenAI converter targets when not needed.
+RUN sed -i '/genai\\/converter/d' mediapipe/tasks/c/BUILD && \
+    sed -i "s/ENABLE_ODML_CONVERTER=1/ENABLE_ODML_CONVERTER=0/g" setup.py && \
+    rm -rf mediapipe/tasks/c/genai
 
 ARG PYTHON_BIN="/opt/python/cp312-cp312/bin/python3.12"
 RUN $PYTHON_BIN -m pip install --upgrade pip setuptools

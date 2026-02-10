@@ -14,14 +14,34 @@
 
 """MediaPipe Tasks API."""
 
-from . import audio
-from . import components
-from . import core
-from . import genai
-from . import text
-from . import vision
+import importlib
+import warnings
 
-BaseOptions = core.base_options.BaseOptions
+
+def _safe_import(name: str):
+  try:
+    return importlib.import_module(name)
+  except Exception as e:  # pragma: no cover - optional modules
+    warnings.warn(
+        f"MediaPipe Tasks submodule '{name}' could not be imported: {e}",
+        RuntimeWarning,
+    )
+    return None
+
+
+audio = _safe_import(__name__ + ".audio")
+components = _safe_import(__name__ + ".components")
+core = _safe_import(__name__ + ".core")
+genai = _safe_import(__name__ + ".genai")
+text = _safe_import(__name__ + ".text")
+vision = _safe_import(__name__ + ".vision")
+
+if core is not None:
+  BaseOptions = core.base_options.BaseOptions
+else:
+  BaseOptions = None
 
 # Remove unnecessary modules to avoid duplication in API docs.
-del core
+if core is not None:
+  del core
+

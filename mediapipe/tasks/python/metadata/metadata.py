@@ -30,7 +30,10 @@ import zipfile
 
 import flatbuffers
 
-from mediapipe.tasks.cc.metadata.python import _pywrap_metadata_version
+try:
+  from mediapipe.tasks.cc.metadata.python import _pywrap_metadata_version
+except ModuleNotFoundError:  # pragma: no cover - optional native extension
+  _pywrap_metadata_version = None
 from mediapipe.tasks.metadata import metadata_schema_py_generated as _metadata_fb
 from mediapipe.tasks.metadata import schema_py_generated as _schema_fb
 from mediapipe.tasks.python.core import mediapipe_c_bindings
@@ -391,6 +394,12 @@ class MetadataPopulator(object):
     self._validate_metadata(metadata_buf)
 
     # Gets the minimum metadata parser version of the metadata_buf.
+    if _pywrap_metadata_version is None:
+      raise RuntimeError(
+          "Metadata population requires mediapipe.tasks.cc, which is not "
+          "available in this build. Use a MediaPipe build that ships the "
+          "native metadata bindings or avoid metadata export."
+      )
     min_version = _pywrap_metadata_version.GetMinimumMetadataParserVersion(
         bytes(metadata_buf))
 
