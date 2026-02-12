@@ -115,9 +115,12 @@ RUN if [ ! -f mediapipe_python_build.diff ] && [ -n "${MEDIAPIPE_PYTHON_BUILD_DI
           DIFF_URL="$(echo "${DIFF_URL}" | sed -e 's|^https://github.com/|https://raw.githubusercontent.com/|' -e 's|/blob/|/|')"; \
           ;; \
       esac; \
-      curl -fsSL "${DIFF_URL}" -o mediapipe_python_build.diff; \
+      if ! curl -fsSL "${DIFF_URL}" -o mediapipe_python_build.diff; then \
+        echo "Failed to download mediapipe_python_build.diff; continuing without patch." >&2; \
+        rm -f mediapipe_python_build.diff; \
+      fi; \
     fi && \
-    if [ -f mediapipe_python_build.diff ]; then \
+    if [ -s mediapipe_python_build.diff ]; then \
       patch -p1 < mediapipe_python_build.diff; \
     else \
       echo "mediapipe_python_build.diff not found; skipping OpenCV dependency reduction patch." >&2; \

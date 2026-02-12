@@ -4,7 +4,7 @@ set -euo pipefail
 # Builds the manylinux image and extracts wheels into ./wheelhouse.
 IMAGE_NAME="${IMAGE_NAME:-mp_manylinux}"
 PYTHON_BIN="${PYTHON_BIN:-/opt/python/cp312-cp312/bin/python3.12}"
-MEDIAPIPE_PYTHON_BUILD_DIFF_URL="${MEDIAPIPE_PYTHON_BUILD_DIFF_URL:-https://github.com/chromium/chromium/blob/main/third_party/mediapipe/src/third_party/mediapipe_python_build.diff}"
+MEDIAPIPE_PYTHON_BUILD_DIFF_URL="${MEDIAPIPE_PYTHON_BUILD_DIFF_URL:-}"
 CONTAINER_NAME="${CONTAINER_NAME:-mp_pip_package_container}"
 
 DOCKER_BUILDKIT=1 docker build \
