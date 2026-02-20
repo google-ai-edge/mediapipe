@@ -250,7 +250,7 @@ class ObjectDetector:
   https://tfhub.dev/google/lite-model/object_detection/mobile_object_localizer_v1/1/metadata/1
 
   [1]:
-  https://github.com/google/mediapipe/blob/6cdc6443b6a7ed662744e2a2ce2d58d9c83e6d6f/mediapipe/tasks/metadata/metadata_schema.fbs#L456
+  https://github.com/google-ai-edge/mediapipe/blob/6cdc6443b6a7ed662744e2a2ce2d58d9c83e6d6f/mediapipe/tasks/metadata/metadata_schema.fbs#L456
   """
 
   _lib: serial_dispatcher.SerialDispatcher

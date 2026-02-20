@@ -50,7 +50,7 @@ class GestureClassifierOptions:
     score_thresholding: Parameters to performs thresholding on output tensor
       values [1].
     [1]:
-      https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L468
+      https://github.com/google-ai-edge/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L468
   """
   model_buffer: bytearray
   labels: metadata_writer.Labels

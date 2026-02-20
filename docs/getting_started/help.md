@@ -28,7 +28,7 @@ answers and support from the MediaPipe community.
 ## Bugs and feature requests
 
 To report bugs or make feature requests,
-[file an issue on GitHub](https://github.com/google/mediapipe/issues).
+[file an issue on GitHub](https://github.com/google-ai-edge/mediapipe/issues).
 
 If you open a GitHub issue, here is our policy:
 
