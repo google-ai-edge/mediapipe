@@ -627,29 +627,30 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
           .Add(output_image.release(), cc->InputTimestamp());
       return absl::OkStatus();
     }
-  } else if (input_format_ == ImageFormat::SRGB &&
-             output_format_ == ImageFormat::SRGBA) {
-    image_frame = &cc->Inputs().Get(input_data_id_).Get<ImageFrame>();
-    cv::Mat input_mat = ::mediapipe::formats::MatView(image_frame);
-    converted_image_frame.Reset(ImageFormat::SRGBA, image_frame->Width(),
-                                image_frame->Height(), alignment_boundary_);
-    cv::Mat output_mat = ::mediapipe::formats::MatView(&converted_image_frame);
-    cv::cvtColor(input_mat, output_mat, cv::COLOR_RGB2RGBA,
-                 /*num_output_channels=*/4);
-    image_frame = &converted_image_frame;
-  } else if (input_format_ == ImageFormat::SRGBA &&
-             output_format_ == ImageFormat::SRGB) {
-    image_frame = &cc->Inputs().Get(input_data_id_).Get<ImageFrame>();
-    cv::Mat input_mat = ::mediapipe::formats::MatView(image_frame);
-    converted_image_frame.Reset(ImageFormat::SRGB, image_frame->Width(),
-                                image_frame->Height(), alignment_boundary_);
-    cv::Mat output_mat = ::mediapipe::formats::MatView(&converted_image_frame);
-    cv::cvtColor(input_mat, output_mat, cv::COLOR_RGBA2RGB,
-                 /*num_output_channels=*/3);
-    image_frame = &converted_image_frame;
   } else {
     image_frame = &cc->Inputs().Get(input_data_id_).Get<ImageFrame>();
     MP_RETURN_IF_ERROR(ValidateImageFrame(cc, *image_frame));
+    if (input_format_ == ImageFormat::SRGB &&
+        output_format_ == ImageFormat::SRGBA) {
+      cv::Mat input_mat = ::mediapipe::formats::MatView(image_frame);
+      converted_image_frame.Reset(ImageFormat::SRGBA, image_frame->Width(),
+                                  image_frame->Height(), alignment_boundary_);
+      cv::Mat output_mat =
+          ::mediapipe::formats::MatView(&converted_image_frame);
+      cv::cvtColor(input_mat, output_mat, cv::COLOR_RGB2RGBA,
+                   /*num_output_channels=*/4);
+      image_frame = &converted_image_frame;
+    } else if (input_format_ == ImageFormat::SRGBA &&
+               output_format_ == ImageFormat::SRGB) {
+      cv::Mat input_mat = ::mediapipe::formats::MatView(image_frame);
+      converted_image_frame.Reset(ImageFormat::SRGB, image_frame->Width(),
+                                  image_frame->Height(), alignment_boundary_);
+      cv::Mat output_mat =
+          ::mediapipe::formats::MatView(&converted_image_frame);
+      cv::cvtColor(input_mat, output_mat, cv::COLOR_RGBA2RGB,
+                   /*num_output_channels=*/3);
+      image_frame = &converted_image_frame;
+    }
   }
 
   std::unique_ptr<ImageFrame> cropped_image;

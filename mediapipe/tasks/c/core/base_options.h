@@ -20,6 +20,13 @@ limitations under the License.
 extern "C" {
 #endif
 
+// The delegate to run MediaPipe.
+enum Delegate {
+  CPU = 0,
+  GPU = 1,
+  EDGETPU_NNAPI = 2,
+};
+
 // Base options for MediaPipe C Tasks.
 struct BaseOptions {
   // The model asset file contents as bytes.
@@ -30,6 +37,9 @@ struct BaseOptions {
 
   // The path to the model asset to open and mmap in memory.
   const char* model_asset_path;
+
+  // The delegate to use for the MediaPipe graph.
+  enum Delegate delegate;
 };
 
 #ifdef __cplusplus

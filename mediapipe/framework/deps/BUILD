@@ -377,6 +377,8 @@ cc_library(
     deps = [
         ":status",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 

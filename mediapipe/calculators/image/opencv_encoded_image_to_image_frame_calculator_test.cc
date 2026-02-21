@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <string>
+
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/deps/file_path.h"
@@ -100,6 +103,23 @@ TEST(OpenCvEncodedImageToImageFrameCalculatorTest, TestGrayscaleJpeg) {
   // Expects that the maximum absolute pixel-by-pixel difference is less
   // than 10.
   EXPECT_LE(max_val, 10);
+}
+
+TEST(OpenCvEncodedImageToImageFrameCalculatorTest, TestInvalidJpeg) {
+  Packet input_packet = MakePacket<std::string>("invalid jpeg data");
+
+  CalculatorGraphConfig::Node node_config =
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+        calculator: "OpenCvEncodedImageToImageFrameCalculator"
+        input_stream: "encoded_image"
+        output_stream: "image_frame"
+      )pb");
+  CalculatorRunner runner(node_config);
+  runner.MutableInputs()->Index(0).packets.push_back(
+      input_packet.At(Timestamp(0)));
+  EXPECT_THAT(runner.Run(), testing::status::StatusIs(
+                                absl::StatusCode::kInternal,
+                                testing::HasSubstr("Failed to decode image.")));
 }
 
 }  // namespace

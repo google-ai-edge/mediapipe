@@ -48,3 +48,12 @@ py_test(
         "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )
+
+py_test(
+    name = "base_options_test",
+    srcs = ["base_options_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/core:base_options",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+    ],
+)

@@ -160,9 +160,9 @@ mediapipe_ts_library(
     deps = [
         ":graph_runner_streaming_reader_ts",
         ":graph_runner_ts",
-        "//mediapipe/tasks/cc/genai/inference/proto:sampler_params_jspb_proto",
         "//mediapipe/tasks/web/genai/llm_inference:llm_inference_types",
         "//mediapipe/tasks/web/genai/llm_inference:model_loading_utils",
         "//mediapipe/tasks/web/genai/llm_inference/proto:llm_inference_graph_options_jspb_proto",
+        "//mediapipe/tasks/web/genai/llm_inference/proto:sampler_params_jspb_proto",
     ],
 )

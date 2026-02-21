@@ -39,20 +39,19 @@ MP_DIR_INIT_PY = os.path.join(MP_ROOT_PATH, 'mediapipe/__init__.py')
 MP_THIRD_PARTY_BUILD = os.path.join(MP_ROOT_PATH, 'third_party/BUILD')
 MP_ROOT_INIT_PY = os.path.join(MP_ROOT_PATH, '__init__.py')
 
-GPU_OPTIONS_DISBALED = ['--define=MEDIAPIPE_DISABLE_GPU=1']
-
-GPU_OPTIONS_ENBALED = [
+GPU_OPTIONS_DISABLED = ['--define=MEDIAPIPE_DISABLE_GPU=1']
+GPU_OPTIONS_ENABLED = [
     '--copt=-DTFLITE_GPU_EXTRA_GLES_DEPS',
     '--copt=-DMEDIAPIPE_OMIT_EGL_WINDOW_BIT',
     '--copt=-DMESA_EGL_NO_X11_HEADERS',
     '--copt=-DEGL_NO_X11',
 ]
 if IS_MAC:
-  GPU_OPTIONS_ENBALED.append(
+  GPU_OPTIONS_ENABLED.append(
       '--copt=-DMEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER'
   )
 
-GPU_OPTIONS = GPU_OPTIONS_DISBALED if MP_DISABLE_GPU else GPU_OPTIONS_ENBALED
+GPU_OPTIONS = GPU_OPTIONS_DISABLED if MP_DISABLE_GPU else GPU_OPTIONS_ENABLED
 
 
 def _normalize_path(path):
@@ -151,11 +150,9 @@ def _add_mp_init_files():
 
 def _copy_to_build_lib_dir(build_lib, file):
   """Copy a file from bazel-bin to the build lib dir."""
-  dst = os.path.join(build_lib + '/', file)
-  dst_dir = os.path.dirname(dst)
-  if not os.path.exists(dst_dir):
-    os.makedirs(dst_dir)
-  shutil.copyfile(os.path.join('bazel-bin/', file), dst)
+  dst = os.path.join(build_lib, file)
+  os.makedirs(os.path.dirname(dst), exist_ok=True)
+  shutil.copyfile(os.path.join('bazel-bin', file), dst)
 
 
 def _invoke_shell_command(shell_commands):
@@ -203,13 +200,10 @@ class GenerateMetadataSchema(build_ext.build_ext):
 class BazelExtension(setuptools.Extension):
   """A C/C++ extension that is defined as a Bazel BUILD target."""
 
-  def __init__(self, bazel_target, target_name='', binary_path=None):
+  def __init__(self, bazel_target):
     self.bazel_target = bazel_target
-    self.binary_path = binary_path
     self.relpath, self.target_name = (
         posixpath.relpath(bazel_target, '//').split(':'))
-    if target_name:
-      self.target_name = target_name
     ext_name = os.path.join(
         self.relpath.replace(posixpath.sep, os.path.sep), self.target_name)
     setuptools.Extension.__init__(self, ext_name, sources=[])
@@ -241,11 +235,9 @@ class BuildExtension(build_ext.build_ext):
     else:
       for ext in self.extensions:
         self._build_binary(ext)
-    build_ext.build_ext.run(self)
 
   def _build_binary(self, ext, extra_args=None):
-    if not os.path.exists(self.build_temp):
-      os.makedirs(self.build_temp)
+    os.makedirs(self.build_temp, exist_ok=True)
     bazel_command = [
         'bazel',
         'build',
@@ -263,15 +255,11 @@ class BuildExtension(build_ext.build_ext):
 
     _invoke_shell_command(bazel_command)
 
-    if ext.binary_path:
-      ext_bazel_bin_path = ext.binary_path
-    else:
-      ext_suffix = '.so'
-      ext_bazel_bin_path = os.path.join(
-          'bazel-bin', ext.relpath, ext.target_name + ext_suffix
-      )
+    ext_bazel_bin_path = os.path.join(
+        'bazel-bin', ext.relpath, ext.target_name
+    )
 
-    ext_dest_path = self.get_ext_fullpath(ext.name)
+    ext_dest_path = os.path.join(self.build_lib, ext.relpath, ext.target_name)
     ext_dest_dir = os.path.dirname(ext_dest_path)
     if not os.path.exists(ext_dest_dir):
       os.makedirs(ext_dest_dir)
@@ -376,6 +364,7 @@ setuptools.setup(
             'mediapipe.tasks.*',
         ],
         exclude=[
+            'mediapipe.modules',
             'mediapipe.modules.*',
             'mediapipe.tasks.python.genai.bundler.llm_bundler_test',
             'mediapipe.tasks.python.genai.converter.llm_converter_test',
@@ -383,7 +372,8 @@ setuptools.setup(
             'mediapipe.tasks.python.genai.converter.quantization_util_test',
             'mediapipe.tasks.python.genai.converter.safetensors_converter_test',
             'mediapipe.tasks.python.genai.converter.weight_bins_writer_test',
-            'mediapipe.tasks.python.test.*mediapipe.tasks.benchmark.*',
+            'mediapipe.tasks.python.test.',
+            'mediapipe.tasks.benchmark.*',
         ],
     ),
     install_requires=_parse_requirements('requirements.txt'),
@@ -395,12 +385,7 @@ setuptools.setup(
         'restore': Restore,
     },
     ext_modules=[
-        BazelExtension(
-            '//mediapipe/tasks/c:libmediapipe_c_lib',
-            binary_path=(
-                'bazel-bin/mediapipe/tasks/c/libmediapipe.so'
-            ),
-        ),
+        BazelExtension('//mediapipe/tasks/c:libmediapipe.so'),
     ],
     zip_safe=False,
     include_package_data=True,

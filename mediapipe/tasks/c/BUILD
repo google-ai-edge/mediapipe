@@ -21,9 +21,9 @@ licenses(["notice"])
 exports_files(["mediapipe_tasks_c_version_script.lds"])
 
 # bazel build -c opt --linkopt -s --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
-# //mediapipe/tasks/c:libmediapipe
+# //mediapipe/tasks/c:libmediapipe.so
 cc_binary(
-    name = "libmediapipe",
+    name = "mediapipe_source",
     linkopts = select({
         "@platforms//os:linux": [
             "-Wl,-soname=libmediapipe.so",
@@ -43,6 +43,7 @@ cc_binary(
         ":mediapipe_tasks_c_version_script.lds",
         "//mediapipe/tasks/c/audio/audio_classifier:audio_classifier_c_lib",
         "//mediapipe/tasks/c/core:common",
+        "//mediapipe/tasks/c/genai/bundler:llm_bundler_utils_c_lib",
         "//mediapipe/tasks/c/genai/converter:llm_converter_c_lib",
         "//mediapipe/tasks/c/metadata:flatbuffer_api_c_lib",
         "//mediapipe/tasks/c/text/language_detector:language_detector_c_lib",
@@ -53,6 +54,7 @@ cc_binary(
         "//mediapipe/tasks/c/vision/face_landmarker:face_landmarker_c_lib",
         "//mediapipe/tasks/c/vision/gesture_recognizer:gesture_recognizer_c_lib",
         "//mediapipe/tasks/c/vision/hand_landmarker:hand_landmarker_c_lib",
+        "//mediapipe/tasks/c/vision/holistic_landmarker:holistic_landmarker_c_lib",
         "//mediapipe/tasks/c/vision/image_classifier:image_classifier_c_lib",
         "//mediapipe/tasks/c/vision/image_embedder:image_embedder_c_lib",
         "//mediapipe/tasks/c/vision/image_segmenter:image_segmenter_c_lib",
@@ -65,13 +67,24 @@ cc_binary(
 # Genrule to provide a consistent libmediapipe.so output in bazel-bin.
 # buildifier: disable=constant-glob
 genrule(
-    name = "libmediapipe_c_lib",
-    srcs = select({
-        "@platforms//os:linux": glob(["prebuilts/manylinux/libmediapipe.so"]) or [":libmediapipe"],
-        "@platforms//os:windows": glob(["prebuilts/windows_x86_64/libmediapipe.dll"]) or [":libmediapipe"],
-        "@platforms//os:macos": glob(["prebuilts/darwin_arm64/libmediapipe.dylib"]) or [":libmediapipe"],
-        "//conditions:default": [":libmediapipe"],
-    }),
+    name = "mediapipe_linux",
+    srcs = glob(["prebuilts/manylinux/libmediapipe.so"]) or [":mediapipe_source"],
     outs = ["libmediapipe.so"],
+    cmd = "cp $< $@",
+)
+
+# buildifier: disable=constant-glob
+genrule(
+    name = "mediapipe_windows",
+    srcs = glob(["prebuilts/windows_x86_64/libmediapipe.dll"]) or [":mediapipe_source"],
+    outs = ["libmediapipe.dll"],
+    cmd = "cp $< $@",
+)
+
+# buildifier: disable=constant-glob
+genrule(
+    name = "mediapipe_macos",
+    srcs = glob(["prebuilts/darwin_arm64/libmediapipe.dylib"]) or [":mediapipe_source"],
+    outs = ["libmediapipe.dylib"],
     cmd = "cp $< $@",
 )

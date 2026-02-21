@@ -60,6 +60,7 @@ class BaseOptions:
     options.model_asset_path = (
         self.model_asset_path.encode('utf-8') if self.model_asset_path else None
     )
+    options.delegate = self.delegate.value if self.delegate else 0
     return options
 
   def __eq__(self, other: Any) -> bool:

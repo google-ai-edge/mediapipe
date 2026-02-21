@@ -12,6 +12,7 @@
 #include "absl/log/absl_check.h"
 #include "absl/log/scoped_mock_log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
@@ -616,7 +617,7 @@ TEST_F(LoggingTest, LogHalideBufferRGBPlanar) {
 -----     )"));
 }
 
-TEST_F(LoggingTest, LogHalideBufferOneDimensional) {
+TEST_F(LoggingTest, LogHalideBufferOneDimensionalHorizontal) {
   auto buffer = Halide::Runtime::Buffer<uint8_t>(10);
   buffer.for_each_element(
       [&](int x) { buffer(x) = static_cast<uint8_t>((x + 0.5f) * 255 / 10); });
@@ -624,6 +625,124 @@ TEST_F(LoggingTest, LogHalideBufferOneDimensional) {
 
   EXPECT_THAT(log_lines(), HasSubstr("buffer[10]"));
   EXPECT_THAT(log_lines(), HasSubstr(" .:-=+*#%@"));
+}
+
+TEST_F(LoggingTest, LogHalideBufferOneDimensionalVertical) {
+  auto buffer = Halide::Runtime::Buffer<uint8_t>(1, 300);
+  buffer.for_each_element([&](int x, int y) {
+    buffer(x, y) = static_cast<uint8_t>((y + 0.5f) * 255 / 300);
+  });
+  LogHalideBuffer(buffer);
+
+  EXPECT_THAT(log_lines(), HasSubstr("buffer[1 300]"));
+  EXPECT_THAT(log_lines(), HasConsecutiveLines(R"(.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
+=
++
++
++
++
++
++
++
++
++
++
++
++
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+@
+@
+@
+@
+@
+@
+@
+@
+@
+@
+@
+@)"));
 }
 
 TEST_F(LoggingTest, LogHalideBufferFourDimensional) {

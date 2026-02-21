@@ -16,10 +16,22 @@
 #define MEDIAPIPE_DEPS_RET_CHECK_H_
 
 #include "absl/base/optimization.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/deps/status_builder.h"
 #include "mediapipe/framework/deps/status_macros.h"
 
 namespace mediapipe {
+// Returns a Status given a Status or StatusOr.
+inline const absl::Status& AsStatus(const absl::Status& status) {
+  return status;
+}
+
+template <typename T>
+inline const absl::Status& AsStatus(const absl::StatusOr<T>& status_or) {
+  return status_or.status();
+}
+
 // Returns a StatusBuilder that corresponds to a `RET_CHECK` failure.
 mediapipe::StatusBuilder RetCheckFailSlowPath(
     mediapipe::source_location location);
@@ -47,8 +59,9 @@ inline StatusBuilder RetCheckImpl(const absl::Status& status,
   while (ABSL_PREDICT_FALSE(!(cond))) \
   return mediapipe::RetCheckFailSlowPath(MEDIAPIPE_LOC, #cond)
 
-#define RET_CHECK_OK(status) \
-  MP_RETURN_IF_ERROR(mediapipe::RetCheckImpl((status), #status, MEDIAPIPE_LOC))
+#define RET_CHECK_OK(status)                                              \
+  MP_RETURN_IF_ERROR(mediapipe::RetCheckImpl(mediapipe::AsStatus(status), \
+                                             #status, MEDIAPIPE_LOC))
 
 #define RET_CHECK_FAIL() return mediapipe::RetCheckFailSlowPath(MEDIAPIPE_LOC)
 

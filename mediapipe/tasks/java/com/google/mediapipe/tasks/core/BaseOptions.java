@@ -170,6 +170,25 @@ public abstract class BaseOptions {
         public abstract GpuOptions build();
       }
     }
+
+    /** Options for NPU. */
+    @AutoValue
+    public abstract static class NpuOptions extends DelegateOptions {
+      // The directory containing the NPU dispatch library.
+      abstract String dispatchLibraryDirectory();
+
+      public static Builder builder() {
+        return new AutoValue_BaseOptions_DelegateOptions_NpuOptions.Builder();
+      }
+
+      /** Builder for {@link NpuOptions}. */
+      @AutoValue.Builder
+      public abstract static class Builder {
+        public abstract Builder setDispatchLibraryDirectory(String dispatchLibraryDirectory);
+
+        public abstract NpuOptions build();
+      }
+    }
   }
 
   public static Builder builder() {

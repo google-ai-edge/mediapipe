@@ -28,12 +28,22 @@ package(default_visibility = ["//visibility:public"])
 
 # Disabling GPU support is sometimes useful on desktop Linux because SwiftShader can
 # interfere with desktop GL. b/73494271
-config_setting(
+# Also disable GPU on Windows since it's not supported (use pthread).
+selects.config_setting_group(
     name = "disable_gpu",
+    match_any = [
+        ":disable_gpu_flag",
+        # The GPU library here use pthread which is not available on Windows.
+        "@platforms//os:windows",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "disable_gpu_flag",
     define_values = {
         "MEDIAPIPE_DISABLE_GPU": "1",
     },
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -211,6 +221,12 @@ cc_library(
             "-framework OpenGL",
             "-framework AppKit",
         ],
+    }),
+    target_compatible_with = select({
+        # This cc_library uses pthread and is not compatible with Windows. Marking it as
+        # incompatible instead of the confusing message "pthread.h" file not found.
+        "@platforms//os:windows": ["//third_party/bazel_platforms:incompatible"],
+        "//conditions:default": [],
     }),
     visibility = [
         "//visibility:public",

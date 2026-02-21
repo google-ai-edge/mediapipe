@@ -71,11 +71,13 @@ TransitiveProtoInfo = provider(
     ],
 )
 
-def _gather_transitive_protos_deps(deps, my_protos = [], my_descriptors = [], my_proto_libs = []):
+def _gather_transitive_protos_deps(deps, option_deps = [], my_protos = [], my_descriptors = [], my_proto_libs = []):
     useful_deps = [dep for dep in deps if _TransitiveProtoAspectInfo in dep]
+    option_deps = [dep for dep in option_deps if _TransitiveProtoAspectInfo in dep]
     protos = depset(
         my_protos,
-        transitive = [dep[_TransitiveProtoAspectInfo].protos for dep in useful_deps],
+        transitive = [dep[_TransitiveProtoAspectInfo].protos for dep in useful_deps] +
+                     [dep[_TransitiveProtoAspectInfo].protos for dep in option_deps],
     )
     proto_libs = depset(
         my_proto_libs,
@@ -118,6 +120,7 @@ def _transitive_protos_aspect_impl(target, ctx):
         descriptors = []
 
     deps = ctx.rule.attr.deps[:] if hasattr(ctx.rule.attr, "deps") else []
+    option_deps = ctx.rule.attr.option_deps[:] if hasattr(ctx.rule.attr, "option_deps") else []
 
     proto_libs = []
     if ctx.rule.kind == "proto_library":
@@ -132,12 +135,12 @@ def _transitive_protos_aspect_impl(target, ctx):
     # generates a header, which occurs in the hdrs attribute of the cc_library.
     if hasattr(ctx.rule.attr, "hdrs"):
         deps += ctx.rule.attr.hdrs
-    result = _gather_transitive_protos_deps(deps, protos, descriptors, proto_libs)
+    result = _gather_transitive_protos_deps(deps, option_deps, protos, descriptors, proto_libs)
     return result
 
 transitive_protos_aspect = aspect(
     implementation = _transitive_protos_aspect_impl,
-    attr_aspects = ["deps", "hdrs"],
+    attr_aspects = ["deps", "option_deps", "hdrs"],
     attrs = {},
 )
 

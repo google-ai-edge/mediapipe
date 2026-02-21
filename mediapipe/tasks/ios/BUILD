@@ -159,7 +159,6 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarker.h",
         "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarkerOptions.h",
         "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarkerResult.h",
-        "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine.h",
     ],
 )
 
@@ -385,68 +384,4 @@ apple_static_xcframework(
     deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS + [
         "@org_tensorflow//third_party/icu/data:conversion_data",
     ] + select(OPENCV_DEPS),
-)
-
-apple_static_xcframework(
-    name = "MediaPipeTasksGenAI_framework",
-    avoid_deps = [
-        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
-    ],
-    bundle_name = "MediaPipeTasksGenAI",
-    ios = {
-        "simulator": [
-            "arm64",
-            "x86_64",
-        ],
-        "device": ["arm64"],
-    },
-    minimum_os_versions = {
-        "ios": MPP_TASK_MINIMUM_OS_VERSION,
-    },
-    deps = ["//mediapipe/tasks/ios/genai/inference:LlmInference"],
-)
-
-apple_static_xcframework(
-    name = "MediaPipeTasksGenAIC_framework",
-    bundle_name = "MediaPipeTasksGenAIC",
-    ios = {
-        "simulator": [
-            "arm64",
-            "x86_64",
-        ],
-        "device": ["arm64"],
-    },
-    minimum_os_versions = {
-        "ios": MPP_TASK_MINIMUM_OS_VERSION,
-    },
-    public_hdrs = [
-        "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine.h",
-        "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine_ios.h",
-    ],
-    # Including here the deps that were in avoid_deps in MediaPipeTasksGenAI_library.
-    deps = TENSORFLOW_LITE_C_DEPS + [
-        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
-    ],
-)
-
-apple_static_xcframework(
-    name = "MediaPipeTasksGenAIC_library",
-    # Excluding these to avoid duplicate symbols.
-    avoid_deps = TENSORFLOW_LITE_C_DEPS + [
-        "//mediapipe/gpu:metal_shared_resources",
-    ],
-    bundle_name = "MediaPipeTasksGenAIC_library",
-    ios = {
-        "simulator": [
-            "arm64",
-            "x86_64",
-        ],
-        "device": ["arm64"],
-    },
-    minimum_os_versions = {
-        "ios": MPP_TASK_MINIMUM_OS_VERSION,
-    },
-    deps = [
-        ":empty.plist",
-    ],
 )

@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors.
+# Copyright 2026 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -117,9 +117,58 @@ cc_library(
 )
 
 cc_library(
+    name = "holistic_landmarker_result",
+    hdrs = ["holistic_landmarker_result.h"],
+    deps = [
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/tasks/cc/components/containers:category",
+        "//mediapipe/tasks/cc/components/containers:landmark",
+    ],
+)
+
+cc_library(
+    name = "holistic_landmarker",
+    srcs = ["holistic_landmarker.cc"],
+    hdrs = ["holistic_landmarker.h"],
+    deps = [
+        ":holistic_landmarker_graph",
+        ":holistic_landmarker_result",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/components/containers:category",
+        "//mediapipe/tasks/cc/components/containers:landmark",
+        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
+        "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:base_task_api",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/core:task_runner",
+        "//mediapipe/tasks/cc/core:utils",
+        "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
+        "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/cc/vision/core:image_processing_options",
+        "//mediapipe/tasks/cc/vision/core:running_mode",
+        "//mediapipe/tasks/cc/vision/core:vision_task_api_factory",
+        "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarks_detector_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/holistic_landmarker/proto:holistic_landmarker_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/pose_detector/proto:pose_detector_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/pose_landmarker/proto:pose_landmarks_detector_graph_options_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
+cc_library(
     name = "holistic_landmarker_graph",
     srcs = ["holistic_landmarker_graph.cc"],
-    # Visibility is public until we have a C++ API.
     deps = [
         ":holistic_face_tracking",
         ":holistic_hand_tracking",

@@ -15,24 +15,41 @@
 # Placeholder for internal Python strict library and test compatibility macro.
 # Placeholder for internal Python strict test compatibility macro.
 
-package(default_visibility = ["//third_party/py/ai_edge_torch/google/model_conversion:__subpackages__"])
+package(default_visibility = [
+    "//third_party/py/ai_edge_torch/google/model_conversion:__subpackages__",
+    "//third_party/py/litert_torch/google/model_conversion:__subpackages__",
+])
+
+py_library(
+    name = "llm_bundler_metadata_options_c",
+    srcs = ["llm_bundler_metadata_options_c.py"],
+)
+
+py_library(
+    name = "llm_bundler_metadata_options",
+    srcs = ["llm_bundler_metadata_options.py"],
+    deps = [":llm_bundler_metadata_options_c"],
+)
 
 py_library(
     name = "llm_bundler",
     srcs = ["llm_bundler.py"],
     deps = [
-        "//mediapipe/tasks/cc/genai/inference/proto:llm_params_py_pb2",
+        ":llm_bundler_metadata_options",
+        ":llm_bundler_metadata_options_c",
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:mediapipe_c_utils",
+        "//mediapipe/tasks/python/core:serial_dispatcher",
         "//mediapipe/tasks/python/genai/converter:external_dependencies",
         "//mediapipe/tasks/python/metadata/metadata_writers:model_asset_bundle_utils",
     ],
 )
 
 py_test(
-    name = "llm_bundler_test",
-    srcs = ["llm_bundler_test.py"],
+    name = "llm_bundler_metadata_options_test",
+    srcs = ["llm_bundler_metadata_options_test.py"],
     deps = [
-        ":llm_bundler",
-        "@com_google_sentencepiece//:sentencepiece_model_py_pb2",
+        ":llm_bundler_metadata_options",
         "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )

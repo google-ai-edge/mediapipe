@@ -48,7 +48,6 @@ pybind_extension(
         "//mediapipe/python/pybind:resource_util",
         "//mediapipe/python/pybind:timestamp",
         "//mediapipe/python/pybind:validated_graph_config",
-        "//mediapipe/tasks/python/core/pybind:task_runner",
         "@com_google_absl//absl/strings:str_format",
         "@stblib//:stb_image",
         # Type registration.

@@ -36,7 +36,11 @@ static absl::NoDestructor<wgpu::Instance> kWebGpuInstance([] {
 EM_ASYNC_JS(void, mediapipe_map_buffer_jspi,
             (WGPUBuffer buffer_handle, uint8_t* data), {
               const buffer = WebGPU.getJsObject(buffer_handle);
-              await buffer.mapAsync(GPUMapMode.READ);
+              if ('mapSync' in buffer) {
+                buffer.mapSync(GPUMapMode.READ);
+              } else {
+                await buffer.mapAsync(GPUMapMode.READ);
+              }
               const mapped = buffer.getMappedRange();
               HEAPU8.set(new Uint8Array(mapped), data);
               buffer.unmap();

@@ -7,10 +7,12 @@ VERS_1.0 {
     MpFlatbuffer*;
     MpGestureRecognizer*;
     MpHandLandmarker*;
+    MpHolisticLandmarker*;
     MpImage*;
     MpInteractiveSegmenter*;
     MpLanguageDetector*;
     MpLlmConverter*;
+    MpLlmBundler*;
     MpObjectDetector*;
     MpPoseLandmarker*;
     MpStringList*;

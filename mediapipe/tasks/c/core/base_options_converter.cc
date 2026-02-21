@@ -23,6 +23,18 @@ limitations under the License.
 
 namespace mediapipe::tasks::c::core {
 
+mediapipe::tasks::core::BaseOptions::Delegate CppConvertToDelegate(
+    const Delegate& in) {
+  switch (in) {
+    case CPU:
+      return mediapipe::tasks::core::BaseOptions::Delegate::CPU;
+    case GPU:
+      return mediapipe::tasks::core::BaseOptions::Delegate::GPU;
+    case EDGETPU_NNAPI:
+      return mediapipe::tasks::core::BaseOptions::Delegate::EDGETPU_NNAPI;
+  }
+}
+
 void CppConvertToBaseOptions(const BaseOptions& in,
                              mediapipe::tasks::core::BaseOptions* out) {
   out->model_asset_buffer =
@@ -33,6 +45,7 @@ void CppConvertToBaseOptions(const BaseOptions& in,
           : nullptr;
   out->model_asset_path =
       in.model_asset_path ? std::string(in.model_asset_path) : "";
+  out->delegate = CppConvertToDelegate(in.delegate);
 }
 
 }  // namespace mediapipe::tasks::c::core

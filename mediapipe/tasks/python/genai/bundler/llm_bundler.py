@@ -14,15 +14,40 @@
 
 """Functions to perform llm packing."""
 
+import ctypes
 import dataclasses
 import enum
 from typing import List, Optional
 
+from mediapipe.tasks.python.core import mediapipe_c_bindings
+from mediapipe.tasks.python.core import mediapipe_c_utils
+from mediapipe.tasks.python.core import serial_dispatcher
+from mediapipe.tasks.python.genai.bundler import llm_bundler_metadata_options
+from mediapipe.tasks.python.genai.bundler import llm_bundler_metadata_options_c
 from mediapipe.tasks.python.genai.converter import external_dependencies
 from mediapipe.tasks.python.metadata.metadata_writers import model_asset_bundle_utils
-from mediapipe.tasks.cc.genai.inference.proto import llm_params_pb2
 
 sentencepiece = external_dependencies.sentencepiece
+
+_CTYPES_SIGNATURES = (
+    mediapipe_c_utils.CFunction(
+        func_name="MpLlmBundlerGenerateMetadata",
+        argtypes=[
+            ctypes.POINTER(
+                llm_bundler_metadata_options_c.LlmBundlerMetadataOptionsC
+            ),
+            ctypes.POINTER(ctypes.c_int),
+        ],
+        restype=ctypes.POINTER(ctypes.c_char),
+    ),
+    mediapipe_c_utils.CFunction(
+        func_name="MpLlmBundlerFreeMetadata",
+        argtypes=[
+            ctypes.POINTER(ctypes.c_char),
+        ],
+        restype=None,
+    ),
+)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -151,8 +176,39 @@ def create_bundle(config: BundleConfig):
   with open(config.tokenizer_model, "rb") as f:
     artifacts[_BundleTags.TOKENIZER_MODEL.name] = f.read()
 
-  params = create_metadata_pb(config)
-  artifacts[_BundleTags.METADATA.name] = params.SerializeToString()
+  lib = mediapipe_c_bindings.load_raw_library(_CTYPES_SIGNATURES)
+  with serial_dispatcher.SerialDispatcher(
+      lib, _CTYPES_SIGNATURES
+  ) as bundler_lib:
+    metadata_options = llm_bundler_metadata_options.LlmBundlerMetadataOptions(
+        start_token=config.start_token,
+        stop_tokens=config.stop_tokens,
+        enable_bytes_to_unicode_mapping=config.enable_bytes_to_unicode_mapping,
+        system_prompt=config.system_prompt,
+        prompt_prefix_user=config.prompt_prefix_user,
+        prompt_suffix_user=config.prompt_suffix_user,
+        prompt_prefix_model=config.prompt_prefix_model,
+        prompt_suffix_model=config.prompt_suffix_model,
+        prompt_prefix_system=config.prompt_prefix_system,
+        prompt_suffix_system=config.prompt_suffix_system,
+        user_role_token=config.user_role_token,
+        system_role_token=config.system_role_token,
+        model_role_token=config.model_role_token,
+        end_role_token=config.end_role_token,
+    )
+    metadata_options_c = metadata_options.to_ctypes()
+    buffer_size = ctypes.c_int()
+    metadata_buffer = None
+    try:
+      metadata_buffer = bundler_lib.MpLlmBundlerGenerateMetadata(
+          ctypes.byref(metadata_options_c), ctypes.byref(buffer_size)
+      )
+      artifacts[_BundleTags.METADATA.name] = ctypes.string_at(
+          metadata_buffer, buffer_size.value
+      )
+    finally:
+      if metadata_buffer:
+        bundler_lib.MpLlmBundlerFreeMetadata(metadata_buffer)
 
   if config.tflite_embedder:
     with open(config.tflite_embedder, "rb") as f:
@@ -178,54 +234,3 @@ def create_bundle(config: BundleConfig):
       artifacts,
       output_filename,
   )
-
-
-def create_metadata_pb(config: BundleConfig):
-  """Creates a Metadata proto from the given config."""
-  params = llm_params_pb2.LlmParameters()
-  params.start_token = config.start_token
-  params.stop_tokens.extend(config.stop_tokens)
-  if config.enable_bytes_to_unicode_mapping:
-    params.input_output_normalizations.append(
-        llm_params_pb2.LlmParameters.INPUT_OUTPUT_NORMALIZATION_BYTES_TO_UNICODE
-    )
-  if config.system_prompt:
-    params.prompt_template.session_prefix = config.system_prompt
-  else:
-    if config.prompt_prefix_system:
-      params.prompt_templates.system_template.prompt_prefix = (
-          config.prompt_prefix_system
-      )
-    if config.prompt_suffix_system:
-      params.prompt_templates.system_template.prompt_suffix = (
-          config.prompt_suffix_system
-      )
-  if config.prompt_prefix_user:
-    params.prompt_template.prompt_prefix = config.prompt_prefix_user
-    params.prompt_templates.user_template.prompt_prefix = (
-        config.prompt_prefix_user
-    )
-  if config.prompt_suffix_user:
-    params.prompt_template.prompt_suffix = (
-        config.prompt_suffix_user + config.prompt_prefix_model
-    )
-    params.prompt_templates.user_template.prompt_suffix = (
-        config.prompt_suffix_user
-    )
-  if config.prompt_prefix_model:
-    params.prompt_templates.model_template.prompt_prefix = (
-        config.prompt_prefix_model
-    )
-  if config.prompt_suffix_model:
-    params.prompt_templates.model_template.prompt_suffix = (
-        config.prompt_suffix_model
-    )
-  if config.user_role_token:
-    params.user_role_token = config.user_role_token
-  if config.system_role_token:
-    params.system_role_token = config.system_role_token
-  if config.model_role_token:
-    params.model_role_token = config.model_role_token
-  if config.end_role_token:
-    params.end_role_token = config.end_role_token
-  return params

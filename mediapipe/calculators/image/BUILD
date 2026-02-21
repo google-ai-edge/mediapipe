@@ -571,6 +571,7 @@ cc_test(
         "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/status",
     ],
 )
 
@@ -816,7 +817,6 @@ cc_library(
     hdrs = ["affine_transformation_runner_opencv.h"],
     deps = [
         ":affine_transformation",
-        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/port:opencv_core",
@@ -824,7 +824,6 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status:statusor",
-        "@eigen//:eigen3",
     ],
 )
 
@@ -832,7 +831,6 @@ mediapipe_proto_library(
     name = "warp_affine_calculator_proto",
     srcs = ["warp_affine_calculator.proto"],
     deps = [
-        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/gpu:gpu_origin_proto",
     ],
@@ -918,7 +916,6 @@ cc_test(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",

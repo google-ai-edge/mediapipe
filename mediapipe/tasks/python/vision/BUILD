@@ -19,6 +19,29 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 py_library(
+    name = "drawing_utils",
+    srcs = ["drawing_utils.py"],
+    deps = [
+        ":face_landmarker",
+        "//mediapipe/tasks/python/components/containers:detections",
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//third_party/py/matplotlib",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)
+
+py_library(
+    name = "drawing_styles",
+    srcs = ["drawing_styles.py"],
+    deps = [
+        ":drawing_utils",
+        ":face_landmarker",
+        ":hand_landmarker",
+        ":pose_landmarker",
+    ],
+)
+
+py_library(
     name = "object_detector",
     srcs = [
         "object_detector.py",
@@ -264,5 +287,29 @@ py_library(
         "//mediapipe/tasks/python/vision/core:image_processing_options_c",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)
+
+py_library(
+    name = "holistic_landmarker",
+    srcs = [
+        "holistic_landmarker.py",
+    ],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:category_c",
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//mediapipe/tasks/python/components/containers:landmark_c",
+        "//mediapipe/tasks/python/core:async_result_dispatcher",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:base_options_c",
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:mediapipe_c_utils",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:serial_dispatcher",
+        "//mediapipe/tasks/python/vision/core:image",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:image_processing_options_c",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
     ],
 )
