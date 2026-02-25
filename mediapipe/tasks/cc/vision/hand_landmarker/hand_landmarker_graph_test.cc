@@ -21,6 +21,7 @@ limitations under the License.
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/memory/memory.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -134,7 +135,8 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner() {
           .SetName(kHandRectNextFrameName) >>
       graph[Output<std::vector<NormalizedRect>>(kHandRectNextFrameTag)];
   return TaskRunner::Create(
-      graph.GetConfig(), absl::make_unique<core::MediaPipeBuiltinOpResolver>());
+      graph.GetConfig(), "hand_landmarker_test", "image",
+      absl::make_unique<core::MediaPipeBuiltinOpResolver>());
 }
 
 class HandLandmarkerTest : public tflite::testing::Test {};

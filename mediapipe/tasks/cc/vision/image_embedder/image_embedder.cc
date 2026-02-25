@@ -51,6 +51,7 @@ constexpr char kImageTag[] = "IMAGE";
 constexpr char kNormRectStreamName[] = "norm_rect_in";
 constexpr char kNormRectTag[] = "NORM_RECT";
 
+constexpr char kTaskName[] = "ImageEmbedder";
 constexpr char kGraphTypeName[] =
     "mediapipe.tasks.vision.image_embedder.ImageEmbedderGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
@@ -138,8 +139,8 @@ absl::StatusOr<std::unique_ptr<ImageEmbedder>> ImageEmbedder::Create(
       CreateGraphConfig(
           std::move(options_proto),
           options->running_mode == core::RunningMode::LIVE_STREAM),
-      std::move(options->base_options.op_resolver), options->running_mode,
-      std::move(packets_callback),
+      kTaskName, std::move(options->base_options.op_resolver),
+      options->running_mode, std::move(packets_callback),
       /*disable_default_service=*/
       options->base_options.disable_default_service);
 }

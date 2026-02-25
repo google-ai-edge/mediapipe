@@ -143,6 +143,17 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "image_frame_util_test",
+    srcs = ["image_frame_util_test.cc"],
+    deps = [
+        ":image_frame_util",
+        "//mediapipe/framework/port:benchmark",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:opencv_core",
+    ],
+)
+
 cc_library(
     name = "label_map_util",
     srcs = ["label_map_util.cc"],

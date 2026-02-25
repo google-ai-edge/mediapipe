@@ -119,14 +119,16 @@ static NSString *const kTaskName = @"holisticLandmarker";
     }
 
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
-        initWithTaskGraphName:kTaskGraphName
-                 inputStreams:@[
-                   [NSString stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
-                 ]
-                outputStreams:outputStreams
-                  taskOptions:options
-           enableFlowLimiting:options.runningMode == MPPRunningModeLiveStream
-                        error:error];
+          initWithTaskName:kTaskName
+             taskGraphName:kTaskGraphName
+              inputStreams:@[
+                [NSString stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
+              ]
+             outputStreams:outputStreams
+               taskOptions:options
+        enableFlowLimiting:options.runningMode == MPPRunningModeLiveStream
+               runningMode:MPPRunningModeDisplayName(options.runningMode)
+                     error:error];
 
     if (!taskInfo) {
       return nil;

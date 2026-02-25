@@ -16,6 +16,7 @@ limitations under the License.
 #include <optional>
 
 #include "absl/flags/flag.h"
+#include "absl/memory/memory.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -129,7 +130,8 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateSingleFaceLandmarksTaskRunner(
           .SetName(kFaceRectNextFrameName) >>
       graph[Output<NormalizedRect>(kFaceRectNextFrameTag)];
   return TaskRunner::Create(
-      graph.GetConfig(), absl::make_unique<core::MediaPipeBuiltinOpResolver>());
+      graph.GetConfig(), "face_landmarks_detector_test", "image",
+      absl::make_unique<core::MediaPipeBuiltinOpResolver>());
 }
 
 // Helper function to create a Multi Face Landmark TaskRunner.
@@ -177,7 +179,8 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateMultiFaceLandmarksTaskRunner(
   }
 
   return TaskRunner::Create(
-      graph.GetConfig(), absl::make_unique<core::MediaPipeBuiltinOpResolver>());
+      graph.GetConfig(), "face_landmarks_detector_test", "image",
+      absl::make_unique<core::MediaPipeBuiltinOpResolver>());
 }
 
 NormalizedLandmarkList GetExpectedLandmarkList(absl::string_view filename) {

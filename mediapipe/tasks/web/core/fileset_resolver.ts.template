@@ -32,9 +32,13 @@ const WASM_SIMD_CHECK = new Uint8Array([
 ]);
 
 /** The categories of tasks supported by MediaPipe. */
-type MediaPipeTaskCategory = 'audio'|'genai'|'genai_experimental'|'text'|'vision';
+type MediaPipeTaskCategory = 'audio'|'genai'|'text'|'vision';
 
-async function isSimdSupported(): Promise<boolean> {
+async function isSimdSupported(useModule: boolean): Promise<boolean> {
+  if (useModule) {
+    return true;
+  }
+
   if (supportsSimd === undefined) {
     try {
       await WebAssembly.instantiate(WASM_SIMD_CHECK);
@@ -49,9 +53,11 @@ async function isSimdSupported(): Promise<boolean> {
 
 async function createFileset(
     taskName: MediaPipeTaskCategory,
-    basePath: string = ``): Promise<WasmFileset> {
-  const suffix =
-      await isSimdSupported() ? 'wasm_internal' : 'wasm_nosimd_internal';
+    basePath: string,
+    useModule: boolean): Promise<WasmFileset> {
+  const simdSuffix = await isSimdSupported(useModule) ? '' : '_nosimd';
+  const moduleSuffix = useModule ? '_module' : '';
+  const suffix = `wasm${moduleSuffix}${simdSuffix}_internal`;
 
   return {
     wasmLoaderPath: `${basePath}/${taskName}_${suffix}.js`,
@@ -76,13 +82,14 @@ export class FilesetResolver {
    *
    * If your environment requires custom locations for the MediaPipe Wasm files,
    * you can use `isSimdSupported()` to decide whether to load the SIMD-based
-   * assets.
+   * assets. Note that for ES6 Modules, SIMD is assumed to be always supported.
    *
+   * @param useModule Whether to use ES6 Modules for the Wasm files.
    * @export
    * @return Whether SIMD support was detected in the current environment.
    */
-  static isSimdSupported(): Promise<boolean> {
-    return isSimdSupported();
+  static isSimdSupported(useModule: boolean): Promise<boolean> {
+    return isSimdSupported(useModule);
   }
 
   /**
@@ -92,11 +99,14 @@ export class FilesetResolver {
    * @param basePath An optional base path to specify the directory the Wasm
    *    files should be loaded from. If not specified, the Wasm files are
    *    loaded from the host's root directory.
+   * @param useModule Whether to use ES6 Modules for the Wasm files.
    * @return A `WasmFileset` that can be used to initialize MediaPipe Audio
    *    tasks.
    */
-  static forAudioTasks(basePath?: string): Promise<WasmFileset> {
-    return createFileset('audio', basePath);
+  static forAudioTasks(
+      basePath?: string,
+      useModule = false): Promise<WasmFileset> {
+    return createFileset('audio', basePath ?? ``, useModule);
   }
 
   /**
@@ -106,25 +116,14 @@ export class FilesetResolver {
    * @param basePath An optional base path to specify the directory the Wasm
    *    files should be loaded from. If not specified, the Wasm files are
    *    loaded from the host's root directory.
+   * @param useModule Whether to use ES6 Modules for the Wasm files.
    * @return A `WasmFileset` that can be used to initialize MediaPipe GenAI
    *    tasks.
    */
-  static forGenAiTasks(basePath?: string): Promise<WasmFileset> {
-    return createFileset('genai', basePath);
-  }
-
-  /**
-   * Creates a fileset for the MediaPipe GenAI Experimental tasks.
-   *
-   * @export
-   * @param basePath An optional base path to specify the directory the Wasm
-   *    files should be loaded from. If not specified, the Wasm files are
-   *    loaded from the host's root directory.
-   * @return A `WasmFileset` that can be used to initialize MediaPipe GenAI
-   *    tasks.
-   */
-  static forGenAiExperimentalTasks(basePath?: string): Promise<WasmFileset> {
-    return createFileset('genai_experimental', basePath);
+  static forGenAiTasks(
+      basePath?: string,
+      useModule = false): Promise<WasmFileset> {
+    return createFileset('genai', basePath ?? ``, useModule);
   }
 
   /**
@@ -134,11 +133,14 @@ export class FilesetResolver {
    * @param basePath An optional base path to specify the directory the Wasm
    *    files should be loaded from. If not specified, the Wasm files are
    *    loaded from the host's root directory.
+   * @param useModule Whether to use ES6 Modules for the Wasm files.
    * @return A `WasmFileset` that can be used to initialize MediaPipe Text
    *    tasks.
    */
-  static forTextTasks(basePath?: string): Promise<WasmFileset> {
-    return createFileset('text', basePath);
+  static forTextTasks(
+      basePath?: string,
+      useModule = false): Promise<WasmFileset> {
+    return createFileset('text', basePath ?? ``, useModule);
   }
 
   /**
@@ -148,11 +150,14 @@ export class FilesetResolver {
    * @param basePath An optional base path to specify the directory the Wasm
    *    files should be loaded from. If not specified, the Wasm files are
    *    loaded from the host's root directory.
+   * @param useModule Whether to use ES6 Modules for the Wasm files.
    * @return A `WasmFileset` that can be used to initialize MediaPipe Vision
    *    tasks.
    */
-  static forVisionTasks(basePath?: string): Promise<WasmFileset> {
-    return createFileset('vision', basePath);
+  static forVisionTasks(
+      basePath?: string,
+      useModule = false): Promise<WasmFileset> {
+    return createFileset('vision', basePath ?? `` , useModule);
   }
 }
 

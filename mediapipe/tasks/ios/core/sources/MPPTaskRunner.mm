@@ -14,6 +14,7 @@
 
 #import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
@@ -49,9 +50,11 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 
   self = [super init];
   if (self) {
-    auto taskRunnerResult = TaskRunnerCpp::Create(std::move(graphConfig.value()),
-                                                  absl::make_unique<MediaPipeBuiltinOpResolver>(),
-                                                  std::move(packetsCallback));
+    auto taskRunnerResult =
+        TaskRunnerCpp::Create(std::move(graphConfig.value()), taskInfo.taskName.UTF8String,
+                                taskInfo.runningMode.UTF8String,
+                                absl::make_unique<MediaPipeBuiltinOpResolver>(),
+                                std::move(packetsCallback));
 
     if (![MPPCommonUtils checkCppError:taskRunnerResult.status() toError:error]) {
       return nil;

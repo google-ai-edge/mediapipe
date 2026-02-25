@@ -13,6 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <memory>
+
 #include "absl/flags/flag.h"
 #include "absl/log/absl_check.h"
 #include "absl/status/statusor.h"
@@ -77,6 +79,8 @@ constexpr char kDetectionsTag[] = "DETECTIONS";
 constexpr char kDetectionsName[] = "detections";
 constexpr char kExpandedPoseRectsTag[] = "EXPANDED_POSE_RECTS";
 constexpr char kExpandedPoseRectsName[] = "expanded_pose_rects";
+constexpr char kTaskName[] = "pose_detector_test";
+constexpr char kRunningMode[] = "image";
 
 constexpr float kPoseDetectionMaxDiff = 0.01;
 constexpr float kExpandedPoseRectMaxDiff = 0.01;
@@ -110,7 +114,8 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
       graph[Output<std::vector<NormalizedRect>>(kExpandedPoseRectsTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(), std::make_unique<core::MediaPipeBuiltinOpResolver>());
+      graph.GetConfig(), kTaskName, kRunningMode,
+      std::make_unique<core::MediaPipeBuiltinOpResolver>());
 }
 
 Detection GetExpectedPoseDetectionResult(absl::string_view file_name) {

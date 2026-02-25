@@ -16,6 +16,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder.h"
 
 #include <memory>
+#include <utility>
 
 #include "absl/status/statusor.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
@@ -34,6 +35,7 @@ limitations under the License.
 namespace mediapipe::tasks::text::text_embedder {
 namespace {
 
+constexpr char kTaskName[] = "TextEmbedder";
 constexpr char kTextTag[] = "TEXT";
 constexpr char kEmbeddingsTag[] = "EMBEDDINGS";
 constexpr char kTextInStreamName[] = "text_in";
@@ -83,7 +85,8 @@ absl::StatusOr<std::unique_ptr<TextEmbedder>> TextEmbedder::Create(
   return core::TaskApiFactory::Create<TextEmbedder,
                                       proto::TextEmbedderGraphOptions>(
       CreateGraphConfig(std::move(options_proto)),
-      std::move(options->base_options.op_resolver));
+      std::move(options->base_options.op_resolver), kTaskName,
+      core::TaskApiFactory::kUnknownRunningMode);
 }
 
 absl::StatusOr<TextEmbedderResult> TextEmbedder::Embed(absl::string_view text) {

@@ -63,20 +63,22 @@ static const int kMicrosecondsPerMillisecond = 1000;
   self = [super init];
   if (self) {
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
-        initWithTaskGraphName:kTaskGraphName
-                 inputStreams:@[
-                   [NSString stringWithFormat:@"%@:%@", kAudioTag, kAudioInStreamName],
-                   [NSString stringWithFormat:@"%@:%@", kSampleRateTag, kSampleRateInStreamName]
-                 ]
-                outputStreams:@[
-                  [NSString stringWithFormat:@"%@:%@", kClassificationsTag,
-                                             kClassificationsOutStreamName],
-                  [NSString stringWithFormat:@"%@:%@", kTimestampedClassificationsTag,
-                                             kTimestampedClassificationsOutStreamName]
-                ]
-                  taskOptions:options
-           enableFlowLimiting:NO
-                        error:error];
+          initWithTaskName:kTaskName
+             taskGraphName:kTaskGraphName
+              inputStreams:@[
+                [NSString stringWithFormat:@"%@:%@", kAudioTag, kAudioInStreamName],
+                [NSString stringWithFormat:@"%@:%@", kSampleRateTag, kSampleRateInStreamName]
+              ]
+             outputStreams:@[
+               [NSString
+                   stringWithFormat:@"%@:%@", kClassificationsTag, kClassificationsOutStreamName],
+               [NSString stringWithFormat:@"%@:%@", kTimestampedClassificationsTag,
+                                          kTimestampedClassificationsOutStreamName]
+             ]
+               taskOptions:options
+        enableFlowLimiting:NO
+               runningMode:MPPAudioRunningModeDisplayName(options.runningMode)
+                     error:error];
 
     if (!taskInfo) {
       return nil;

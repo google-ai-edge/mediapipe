@@ -56,6 +56,8 @@ message InferenceCalculatorOptions {
       // This option is valid for TFLite GPU delegate API2 only,
       // Choose any of available APIs to force running inference using it.
       enum Api {
+        reserved 8;
+
         ANY = 0;
         OPENGL = 1;
         OPENCL = 2;

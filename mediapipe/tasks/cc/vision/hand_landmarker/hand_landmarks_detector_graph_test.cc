@@ -145,7 +145,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateSingleHandTaskRunner(
       graph[Output<NormalizedRect>(kHandRectNextFrameTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(),
+      graph.GetConfig(), "hand_landmarks_detector_test", "image",
       absl::make_unique<tflite::ops::builtin::BuiltinOpResolver>());
 }
 
@@ -187,7 +187,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateMultiHandTaskRunner(
       graph[Output<std::vector<NormalizedRect>>(kHandRectNextFrameTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(),
+      graph.GetConfig(), "hand_landmarks_detector_test", "image",
       absl::make_unique<tflite::ops::builtin::BuiltinOpResolver>());
 }
 

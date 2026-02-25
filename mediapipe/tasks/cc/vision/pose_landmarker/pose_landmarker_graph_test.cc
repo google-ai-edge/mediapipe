@@ -82,6 +82,8 @@ constexpr char kNormLandmarksTag[] = "NORM_LANDMARKS";
 constexpr char kNormLandmarksName[] = "norm_landmarks";
 constexpr char kSegmentationMaskTag[] = "SEGMENTATION_MASK";
 constexpr char kSegmentationMaskName[] = "segmentation_mask";
+constexpr char kTaskName[] = "pose_landmarker_test";
+constexpr char kRunningMode[] = "image";
 
 constexpr float kLiteModelFractionDiff = 0.05;  // percentage
 constexpr float kGoldenMaskSimilarity = .98;
@@ -136,7 +138,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreatePoseLandmarkerGraphTaskRunner(
       graph[Output<std::vector<Image>>(kSegmentationMaskTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(),
+      graph.GetConfig(), kTaskName, kRunningMode,
       absl::make_unique<tasks::core::MediaPipeBuiltinOpResolver>());
 }
 

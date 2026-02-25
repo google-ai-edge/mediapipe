@@ -17,7 +17,7 @@ syntax = "proto3";
 package odml.infra.proto;
 
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
-// Next ID: 47
+// Next ID: 50
 message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
@@ -120,6 +120,10 @@ message TransformerParameters {
   Norm post_norm = 14;
   Norm final_norm = 15;
 
+  // Scale shift for V3+ RMSNormalization ops, except for audio, laurel, & PLE.
+  // If set to 0.0f, no scale shift is applied.
+  float rms_norm_scale_shift = 47;
+
   enum AttentionScaleType {
     SCALE_TYPE_UNSPECIFIED = 0;
 
@@ -136,6 +140,9 @@ message TransformerParameters {
 
     // Query is scaled by query_rescale_factor/ head_dim.
     SCALE_TYPE_RESCALE_FACTOR_INV_HEAD_DIM = 4;
+
+    // Query is not rescaled at all.
+    SCALE_TYPE_NONE = 5;
   }
 
   message SelfAttentionParameters {
@@ -197,6 +204,7 @@ message TransformerParameters {
   // value for all global layers (but will not change local attention layers).
   optional float global_rope_wavelength = 32;
 
+  reserved 48, 49;
   reserved 40;
 
   // Audio parameters

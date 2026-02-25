@@ -46,6 +46,7 @@ namespace {
 using FaceLandmarkerGraphOptionsProto = ::mediapipe::tasks::vision::
     face_landmarker::proto::FaceLandmarkerGraphOptions;
 
+constexpr char kTaskName[] = "FaceLandmarker";
 constexpr char kFaceLandmarkerGraphTypeName[] =
     "mediapipe.tasks.vision.face_landmarker.FaceLandmarkerGraph";
 
@@ -188,8 +189,8 @@ absl::StatusOr<std::unique_ptr<FaceLandmarker>> FaceLandmarker::Create(
           std::move(options_proto), options->output_face_blendshapes,
           options->output_facial_transformation_matrixes,
           options->running_mode == core::RunningMode::LIVE_STREAM),
-      std::move(options->base_options.op_resolver), options->running_mode,
-      std::move(packets_callback),
+      kTaskName, std::move(options->base_options.op_resolver),
+      options->running_mode, std::move(packets_callback),
       /*disable_default_service=*/
       options->base_options.disable_default_service);
 }

@@ -180,7 +180,8 @@ absl::StatusOr<std::unique_ptr<tasks::core::TaskRunner>> CreateTaskRunner() {
   auto config = graph.GetConfig();
   core::FixGraphBackEdges(config);
   return TaskRunner::Create(
-      config, std::make_unique<core::MediaPipeBuiltinOpResolver>());
+      config, "holistic_face_tracking_test", "image",
+      std::make_unique<core::MediaPipeBuiltinOpResolver>());
 }
 
 class HolisticFaceTrackingTest : public ::testing::Test {};

@@ -18,8 +18,38 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-genrule(
+mediapipe_jni_binary(
+    name = "llm_inference_engine_jni",
+    uses_explicit_exports = True,
+    deps = [],
+)
+
+android_library(
     name = "tasks_genai_aar_library",
-    outs = ["foo.bar"],
-    cmd = "echo 1 > $@",
+    srcs = glob(["**/*.java"]) + [
+        mediapipe_java_proto_src_extractor(
+            src_out = "com/google/mediapipe/tasks/genai/llminference/jni/proto/LlmOptionsProto.java",
+            target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_options_java_proto_lite",
+        ),
+        mediapipe_java_proto_src_extractor(
+            src_out = "com/google/mediapipe/tasks/genai/llminference/jni/proto/LlmResponseContextProto.java",
+            target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_response_context_java_proto_lite",
+        ),
+    ],
+    exports_manifest = 1,
+    manifest = "AndroidManifest.xml",
+    deps = [
+        ":libllm_inference_engine_jni_lib",
+        "//mediapipe/java/com/google/mediapipe/framework/image",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_options_java_proto_lite",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/genai/llminference/jni/proto:llm_response_context_java_proto_lite",
+        "//third_party:autovalue",
+        "@com_google_protobuf//:protobuf_javalite",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+mediapipe_build_aar_with_jni(
+    name = "tasks_genai",
+    android_library = ":tasks_genai_aar_library",
 )

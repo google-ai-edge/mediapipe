@@ -90,15 +90,17 @@ using ::mediapipe::tasks::core::PacketsCallback;
     }
 
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
-        initWithTaskGraphName:kTaskGraphName
-                 inputStreams:@[
-                   [NSString stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
-                   [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectStreamName]
-                 ]
-                outputStreams:outputStreams
-                  taskOptions:options
-           enableFlowLimiting:options.runningMode == MPPRunningModeLiveStream
-                        error:error];
+          initWithTaskName:kTaskName
+             taskGraphName:kTaskGraphName
+              inputStreams:@[
+                [NSString stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
+                [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectStreamName]
+              ]
+             outputStreams:outputStreams
+               taskOptions:options
+        enableFlowLimiting:options.runningMode == MPPRunningModeLiveStream
+               runningMode:MPPRunningModeDisplayName(options.runningMode)
+                     error:error];
 
     if (!taskInfo) {
       return nil;

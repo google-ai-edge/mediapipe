@@ -64,8 +64,10 @@ cc_library_with_tflite(
         "//mediapipe/tasks/cc/core:task_api_factory",
     ],
     deps = [
+        ":running_mode",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",

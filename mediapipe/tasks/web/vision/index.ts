@@ -30,38 +30,22 @@ import {InteractiveSegmenter as InteractiveSegmenterImpl} from '../../../tasks/w
 import {ObjectDetector as ObjectDetectorImpl} from '../../../tasks/web/vision/object_detector/object_detector';
 import {PoseLandmarker as PoseLandmarkerImpl} from '../../../tasks/web/vision/pose_landmarker/pose_landmarker';
 
-// Declare the variables locally so that Rollup in OSS includes them explicitly
-// as exports.
-const DrawingUtils = DrawingUtilsImpl;
-const FilesetResolver = FilesetResolverImpl;
-const MPImage = MPImageImpl;
-const MPMask = MPMaskImpl;
-const FaceDetector = FaceDetectorImpl;
-const FaceLandmarker = FaceLandmarkerImpl;
-const GestureRecognizer = GestureRecognizerImpl;
-const HandLandmarker = HandLandmarkerImpl;
-const HolisticLandmarker = HolisticLandmarkerImpl;
-const ImageClassifier = ImageClassifierImpl;
-const ImageEmbedder = ImageEmbedderImpl;
-const ImageSegmenter = ImageSegementerImpl;
-const InteractiveSegmenter = InteractiveSegmenterImpl;
-const ObjectDetector = ObjectDetectorImpl;
-const PoseLandmarker = PoseLandmarkerImpl;
+// tslint:disable:enforce-comments-on-exported-symbols
 
-export {
-  DrawingUtils,
-  FaceDetector,
-  FaceLandmarker,
-  FilesetResolver,
-  GestureRecognizer,
-  HandLandmarker,
-  HolisticLandmarker,
-  ImageClassifier,
-  ImageEmbedder,
-  ImageSegmenter,
-  InteractiveSegmenter,
-  MPImage,
-  MPMask,
-  ObjectDetector,
-  PoseLandmarker,
-};
+// Declare and export the variables inline so that Rollup in OSS
+// explicitly retains the bindings and avoids dead-code elimination bugs.
+export const DrawingUtils = DrawingUtilsImpl;
+export const FilesetResolver = FilesetResolverImpl;
+export const MPImage = MPImageImpl;
+export const MPMask = MPMaskImpl;
+export const FaceDetector = FaceDetectorImpl;
+export const FaceLandmarker = FaceLandmarkerImpl;
+export const GestureRecognizer = GestureRecognizerImpl;
+export const HandLandmarker = HandLandmarkerImpl;
+export const HolisticLandmarker = HolisticLandmarkerImpl;
+export const ImageClassifier = ImageClassifierImpl;
+export const ImageEmbedder = ImageEmbedderImpl;
+export const ImageSegmenter = ImageSegementerImpl;
+export const InteractiveSegmenter = InteractiveSegmenterImpl;
+export const ObjectDetector = ObjectDetectorImpl;
+export const PoseLandmarker = PoseLandmarkerImpl;

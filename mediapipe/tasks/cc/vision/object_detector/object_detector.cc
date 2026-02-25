@@ -53,6 +53,7 @@ constexpr char kImageOutStreamName[] = "image_out";
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kNormRectName[] = "norm_rect_in";
 constexpr char kNormRectTag[] = "NORM_RECT";
+constexpr char kTaskName[] = "ObjectDetector";
 constexpr char kSubgraphTypeName[] =
     "mediapipe.tasks.vision.ObjectDetectorGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
@@ -156,8 +157,8 @@ absl::StatusOr<std::unique_ptr<ObjectDetector>> ObjectDetector::Create(
       CreateGraphConfig(
           std::move(options_proto),
           options->running_mode == core::RunningMode::LIVE_STREAM),
-      std::move(options->base_options.op_resolver), options->running_mode,
-      std::move(packets_callback),
+      kTaskName, std::move(options->base_options.op_resolver),
+      options->running_mode, std::move(packets_callback),
       /*disable_default_service=*/
       options->base_options.disable_default_service);
 }

@@ -52,6 +52,7 @@ constexpr char kNormRectStreamName[] = "norm_rect_in";
 constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kQualityScoresStreamName[] = "quality_scores";
 constexpr char kQualityScoresTag[] = "QUALITY_SCORES";
+constexpr char kTaskName[] = "ImageSegmenter";
 constexpr char kSubgraphTypeName[] =
     "mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
@@ -200,8 +201,8 @@ absl::StatusOr<std::unique_ptr<ImageSegmenter>> ImageSegmenter::Create(
               std::move(options_proto), options->output_confidence_masks,
               options->output_category_mask,
               options->running_mode == core::RunningMode::LIVE_STREAM),
-          std::move(options->base_options.op_resolver), options->running_mode,
-          std::move(packets_callback),
+          kTaskName, std::move(options->base_options.op_resolver),
+          options->running_mode, std::move(packets_callback),
           /*disable_default_service=*/
           options->base_options.disable_default_service);
   if (!image_segmenter.ok()) {

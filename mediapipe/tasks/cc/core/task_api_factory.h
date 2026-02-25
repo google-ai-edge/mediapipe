@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <memory>
 #include <optional>
+#include <string>
 #include <type_traits>
 #include <utility>
 
@@ -25,6 +26,7 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/port/requires.h"
@@ -50,15 +52,20 @@ class TaskApiFactory {
  public:
   TaskApiFactory() = delete;
 
+  inline static constexpr char kUnknownRunningMode[] = "unknown";
+
   template <typename T, typename Options,
             EnableIfBaseTaskApiSubclass<T> = nullptr>
   static absl::StatusOr<std::unique_ptr<T>> Create(
       CalculatorGraphConfig graph_config,
       std::unique_ptr<tflite::OpResolver> resolver,
+      const std::string& task_name, const std::string& task_running_mode,
       PacketsCallback packets_callback = nullptr,
       std::shared_ptr<Executor> default_executor = nullptr,
       std::optional<PacketMap> input_side_packets = std::nullopt,
-      std::optional<ErrorFn> error_fn = std::nullopt) {
+      std::optional<ErrorFn> error_fn = std::nullopt,
+      std::optional<absl::string_view> app_id = std::nullopt,
+      std::optional<absl::string_view> app_version = std::nullopt) {
     bool found_task_subgraph = false;
     // This for-loop ensures there's only one subgraph besides
     // FlowLimiterCalculator.
@@ -79,16 +86,19 @@ class TaskApiFactory {
     MP_ASSIGN_OR_RETURN(
         auto runner,
 #if !MEDIAPIPE_DISABLE_GPU
-        core::TaskRunner::Create(std::move(graph_config), std::move(resolver),
-                                 std::move(packets_callback),
-                                 std::move(default_executor),
-                                 std::move(input_side_packets),
-                                 /*resources=*/nullptr, std::move(error_fn)));
+        core::TaskRunner::Create(
+            std::move(graph_config), task_name, task_running_mode,
+            std::move(resolver), std::move(packets_callback),
+            std::move(default_executor), std::move(input_side_packets),
+            /*resources=*/nullptr, std::move(error_fn),
+            /*disable_default_service=*/false, app_id, app_version));
 #else
         core::TaskRunner::Create(
-            std::move(graph_config), std::move(resolver),
-            std::move(packets_callback), std::move(default_executor),
-            std::move(input_side_packets), std::move(error_fn)));
+            std::move(graph_config), task_name, task_running_mode,
+            std::move(resolver), std::move(packets_callback),
+            std::move(default_executor), std::move(input_side_packets),
+            std::move(error_fn),
+            /*disable_default_service=*/false, app_id, app_version));
 #endif
     return std::make_unique<T>(std::move(runner));
   }

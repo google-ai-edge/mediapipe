@@ -13,15 +13,32 @@
 # limitations under the License.
 
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
+package(default_visibility = [
+    "//mediapipe/tasks/cc/core:__subpackages__",
+])
+
+cc_library(
+    name = "logging_client",
+    hdrs = ["logging_client.h"],
+    deps = [
+        "//mediapipe/util/analytics:mediapipe_log_extension_cc_proto",
+    ],
+)
 
 cc_library(
     name = "tasks_dummy_logger",
     hdrs = ["tasks_dummy_logger.h"],
-    deps = [":tasks_logger"],
+    deps = [
+        ":logging_client",
+        ":tasks_logger",
+        "//mediapipe/framework:timestamp",
+        "@com_google_absl//absl/strings:string_view",
+    ],
 )
 
 cc_library(
     name = "tasks_logger",
     hdrs = ["tasks_logger.h"],
+    deps = ["//mediapipe/framework:timestamp"],
 )

@@ -19,11 +19,11 @@ import {LanguageDetector as LanguageDetectorImpl} from '../../../tasks/web/text/
 import {TextClassifier as TextClassifierImpl} from '../../../tasks/web/text/text_classifier/text_classifier';
 import {TextEmbedder as TextEmbedderImpl} from '../../../tasks/web/text/text_embedder/text_embedder';
 
-// Declare the variables locally so that Rollup in OSS includes them explicitly
-// as exports.
-const FilesetResolver = FilesetResolverImpl;
-const LanguageDetector = LanguageDetectorImpl;
-const TextClassifier = TextClassifierImpl;
-const TextEmbedder = TextEmbedderImpl;
+// tslint:disable:enforce-comments-on-exported-symbols
 
-export {LanguageDetector, FilesetResolver, TextClassifier, TextEmbedder};
+// Declare and export the variables inline so that Rollup in OSS
+// explicitly retains the bindings and avoids dead-code elimination bugs.
+export const FilesetResolver = FilesetResolverImpl;
+export const LanguageDetector = LanguageDetectorImpl;
+export const TextClassifier = TextClassifierImpl;
+export const TextEmbedder = TextEmbedderImpl;
