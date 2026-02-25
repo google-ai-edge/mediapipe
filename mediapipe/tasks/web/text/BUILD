@@ -13,8 +13,6 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 mediapipe_files(srcs = [
     "wasm/text_wasm_internal.js",
     "wasm/text_wasm_internal.wasm",
-    "wasm/text_wasm_module_internal.js",
-    "wasm/text_wasm_module_internal.wasm",
     "wasm/text_wasm_nosimd_internal.js",
     "wasm/text_wasm_nosimd_internal.wasm",
 ])
@@ -115,8 +113,6 @@ pkg_npm(
     deps = [
         "wasm/text_wasm_internal.js",
         "wasm/text_wasm_internal.wasm",
-        "wasm/text_wasm_module_internal.js",
-        "wasm/text_wasm_module_internal.wasm",
         "wasm/text_wasm_nosimd_internal.js",
         "wasm/text_wasm_nosimd_internal.wasm",
         ":package_json",

@@ -32,8 +32,6 @@ mediapipe_ts_library(
 mediapipe_files(srcs = [
     "wasm/audio_wasm_internal.js",
     "wasm/audio_wasm_internal.wasm",
-    "wasm/audio_wasm_module_internal.js",
-    "wasm/audio_wasm_module_internal.wasm",
     "wasm/audio_wasm_nosimd_internal.js",
     "wasm/audio_wasm_nosimd_internal.wasm",
 ])
@@ -113,8 +111,6 @@ pkg_npm(
     deps = [
         "wasm/audio_wasm_internal.js",
         "wasm/audio_wasm_internal.wasm",
-        "wasm/audio_wasm_module_internal.js",
-        "wasm/audio_wasm_module_internal.wasm",
         "wasm/audio_wasm_nosimd_internal.js",
         "wasm/audio_wasm_nosimd_internal.wasm",
         ":audio_sources",

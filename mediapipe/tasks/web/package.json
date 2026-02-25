@@ -6,16 +6,10 @@
   "browser": "__NAME___bundle.mjs",
   "module": "__NAME___bundle.mjs",
   "exports": {
-    "import": "./__NAME___bundle.mjs",
+    "import":  "./__NAME___bundle.mjs",
     "require": "./__NAME___bundle.cjs",
-    "default": "./__NAME___bundle.mjs",
-    "types": "./__TYPES__",
-    "./__NAME___wasm_internal.js": "./__NAME___wasm_internal.js",
-    "./__NAME___wasm_internal.wasm": "./__NAME___wasm_internal.wasm",
-    "./__NAME___wasm_nosimd_internal.js": "./__NAME___wasm_nosimd_internal.js",
-    "./__NAME___wasm_nosimd_internal.wasm": "./__NAME___wasm_nosimd_internal.wasm",
-    "./__NAME___wasm_module_internal.js": "./__NAME___wasm_module_internal.js",
-    "./__NAME___wasm_module_internal.wasm": "./__NAME___wasm_module_internal.wasm"
+    "default":  "./__NAME___bundle.mjs",
+    "types":  "./__TYPES__"
   },
   "author": "mediapipe@google.com",
   "license": "Apache-2.0",
