@@ -1,0 +1,8 @@
+name: flutter_mediapipe
+description: MediaPipe bindings.
+
+output: "lib/src/third_party/generated/mediapipe_bindings.dart"
+headers:
+  entry-points:
+    - "third_party/mediapipe/classification_result.h"
+    - "third_party/mediapipe/text_classifier.h"
