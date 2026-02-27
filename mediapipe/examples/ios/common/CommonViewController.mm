@@ -112,6 +112,7 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
                                                                      withExtension:@"mov"]];
       self.videoSource = [[MPPPlayerInputSource alloc] initWithAVAsset:video];
       [self.videoSource setDelegate:self queue:self.videoQueue];
+      [self startGraph];
       dispatch_async(self.videoQueue, ^{
         [self.videoSource start];
       });
@@ -149,7 +150,7 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
   }
 }
 
-- (void)startGraphAndCamera {
+- (void)startGraph {
   // Start running self.mediapipeGraph.
   NSError* error;
   if (![self.mediapipeGraph startWithError:&error]) {
@@ -158,6 +159,10 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
   else if (![self.mediapipeGraph waitUntilIdleWithError:&error]) {
     NSLog(@"Failed to complete graph initial run: %@", error);
   }
+}
+
+- (void)startGraphAndCamera {
+  [self startGraph]; 
 
   // Start fetching frames from the camera.
   dispatch_async(self.videoQueue, ^{
