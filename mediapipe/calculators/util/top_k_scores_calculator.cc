@@ -108,6 +108,8 @@ absl::Status TopKScoresCalculator::GetContract(CalculatorContract* cc) {
 }
 
 absl::Status TopKScoresCalculator::Open(CalculatorContext* cc) {
+  cc->SetOffset(mediapipe::TimestampDiff(0));
+
   const auto& options = cc->Options<::mediapipe::TopKScoresCalculatorOptions>();
   RET_CHECK(options.has_top_k() || options.has_threshold())
       << "Must specify at least one of the top_k and threshold fields in "
