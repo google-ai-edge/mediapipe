@@ -480,7 +480,7 @@ absl::Status ProtoUtilLite::WriteValue(const FieldData& value,
       WireFormatLite::WriteUInt64NoTag(value.uint64_value(), &out);
       break;
     case WireFormatLite::TYPE_DOUBLE:
-      WireFormatLite::WriteDoubleNoTag(value.uint64_value(), &out);
+      WireFormatLite::WriteDoubleNoTag(value.double_value(), &out);
       break;
     case WireFormatLite::TYPE_FLOAT:
       WireFormatLite::WriteFloatNoTag(value.float_value(), &out);
