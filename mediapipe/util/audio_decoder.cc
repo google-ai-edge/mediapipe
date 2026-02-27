@@ -325,13 +325,13 @@ namespace {
 // Converts a PCM_S16LE-encoded input sample to float between -1 and 1.
 inline float PcmEncodedSampleToFloat(const char* data) {
   static const float kMultiplier = 1.f / (1 << 15);
-  return absl::little_endian::Load16(data) * kMultiplier;
+  return static_cast<int16_t>(absl::little_endian::Load16(data)) * kMultiplier;
 }
 
 // Converts a PCM_S32LE-encoded input sample to float between -1 and 1.
 inline float PcmEncodedSampleInt32ToFloat(const char* data) {
   static constexpr float kMultiplier = 1.f / (1u << 31);
-  return absl::little_endian::Load32(data) * kMultiplier;
+  return static_cast<int32_t>(absl::little_endian::Load32(data)) * kMultiplier;
 }
 
 }  // namespace
