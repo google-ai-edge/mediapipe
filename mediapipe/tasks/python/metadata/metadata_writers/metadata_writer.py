@@ -60,7 +60,7 @@ class CalibrationParameter:
       been specified.
 
   [1]:
-    https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L434
+    https://github.com/google-ai-edge/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L434
   """
   scale: float
   slope: float
@@ -89,7 +89,7 @@ class ScoreThresholding:
   Attributes:
     global_score_threshold: The recommended global threshold below which results
       are considered low-confidence and should be filtered out.  [1]:
-    https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L468
+    https://github.com/google-ai-edge/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L468
   """
   global_score_threshold: float
 
@@ -99,7 +99,7 @@ class RegexTokenizer:
   """Parameters of the Regex tokenizer [1] metadata information.
 
   [1]:
-    https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L500
+    https://github.com/google-ai-edge/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L500
 
   Attributes:
     delim_regex_pattern: the regular expression to segment strings and create
@@ -115,7 +115,7 @@ class BertTokenizer:
   """Parameters of the Bert tokenizer [1] metadata information.
 
   [1]:
-    https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L477
+    https://github.com/google-ai-edge/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L477
 
   Attributes:
     vocab_file_path: path to the vocabulary file.
@@ -128,7 +128,7 @@ class SentencePieceTokenizer:
   """Parameters of the sentence piece tokenizer tokenizer [1] metadata information.
 
   [1]:
-    https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L485
+    https://github.com/google-ai-edge/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L485
 
   Attributes:
     sentence_piece_model_path: path to the sentence piece model file.
@@ -244,7 +244,7 @@ class ScoreCalibration:
         score is below min_score or if no parameters were specified for a given
         index.
       [1]:
-        https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L133
+        https://github.com/google-ai-edge/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L133
       [2]:
         https://en.cppreference.com/w/c/string/byte/strtof
 
@@ -335,9 +335,9 @@ def _create_metadata_buffer(
     output_group_md: a list of metadata of output tensor groups [2];
     custom_metadata_md: a lists of custom metadata.
     [1]:
-      https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L655
+      https://github.com/google-ai-edge/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L655
     [2]:
-      https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L677
+      https://github.com/google-ai-edge/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L677
 
   Returns:
     A buffer of the metadata.
@@ -480,9 +480,9 @@ class MetadataWriter(object):
       The MetadataWriter instance, can be used for chained operation.
 
     [1]:
-      https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L389
+      https://github.com/google-ai-edge/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L389
     [2]:
-      https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L198
+      https://github.com/google-ai-edge/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L198
     """
     input_md = metadata_info.InputImageTensorMd(
         name=name,
@@ -512,7 +512,7 @@ class MetadataWriter(object):
       The MetadataWriter instance, can be used for chained operation.
 
     [1]:
-      https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L500
+      https://github.com/google-ai-edge/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L500
     """
     tokenizer_md = metadata_info.RegexTokenizerMd(
         delim_regex_pattern=regex_tokenizer.delim_regex_pattern,
@@ -552,9 +552,9 @@ class MetadataWriter(object):
         SentencePieceTokenizer.
 
     [1]:
-      https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L477
+      https://github.com/google-ai-edge/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L477
     [2]:
-      https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L485
+      https://github.com/google-ai-edge/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L485
     """
     if isinstance(tokenizer, BertTokenizer):
       tokenizer_md = metadata_info.BertTokenizerMd(
