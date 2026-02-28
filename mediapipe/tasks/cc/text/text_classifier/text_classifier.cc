@@ -38,6 +38,7 @@ namespace text_classifier {
 
 namespace {
 
+constexpr char kTaskName[] = "TextClassifier";
 using ::mediapipe::tasks::components::containers::ConvertToClassificationResult;
 using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 
@@ -86,7 +87,8 @@ absl::StatusOr<std::unique_ptr<TextClassifier>> TextClassifier::Create(
   return core::TaskApiFactory::Create<TextClassifier,
                                       proto::TextClassifierGraphOptions>(
       CreateGraphConfig(std::move(options_proto)),
-      std::move(options->base_options.op_resolver));
+      std::move(options->base_options.op_resolver), kTaskName,
+      core::TaskApiFactory::kUnknownRunningMode);
 }
 
 absl::StatusOr<TextClassifierResult> TextClassifier::Classify(

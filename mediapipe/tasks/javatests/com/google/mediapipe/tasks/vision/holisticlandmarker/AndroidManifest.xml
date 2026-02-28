@@ -12,7 +12,6 @@
 
     <application
         android:label="holisticlandmarkertest"
-        android:name="android.support.multidex.MultiDexApplication"
         android:taskAffinity="">
         <uses-library android:name="android.test.runner" />
     </application>

@@ -40,7 +40,7 @@ namespace mediapipe {
 
 using mediapipe::AudioStreamOptions;
 using mediapipe::TimeSeriesHeader;
-
+//
 // The base helper class for a processor which handles decoding of a single
 // stream.
 class BasePacketProcessor {
@@ -125,7 +125,7 @@ class BasePacketProcessor {
   // The buffer of current frames.
   std::deque<Packet> buffer_;
 };
-
+//
 // Class which decodes packets from a single audio stream.
 class AudioPacketProcessor : public BasePacketProcessor {
  public:
@@ -184,7 +184,7 @@ class AudioPacketProcessor : public BasePacketProcessor {
   // Options for the processor.
   AudioStreamOptions options_;
 };
-
+//
 // Decode the audio streams of a media file.  The AudioDecoder is responsible
 // for demuxing the audio streams in the container format, whereas decoding of
 // the content is delegated to AudioPacketProcessor.

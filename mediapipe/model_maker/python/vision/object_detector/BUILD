@@ -165,6 +165,10 @@ py_test(
     tags = [
         "noasan",  # TODO b/352507058 - ASAN, TSAN and MSAN tests take 15-25 minutes.
         "nomsan",
+        # Disabled on TAP as forge attempts to download model checkpoints from aGCS bucket, which is
+        # no longer public (e.g.
+        # https://storage.googleapis.com/tf_model_garden/vision/qat/mobilenetv2_ssd_coco/mobilenetv2_ssd_i256_ckpt.tar.gz).
+        "notap",
         "notsan",
         "requires-net:external",
     ],

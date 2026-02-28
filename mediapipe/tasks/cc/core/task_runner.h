@@ -31,10 +31,12 @@ limitations under the License.
 #include "absl/base/thread_annotations.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/executor.h"
+#include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
 namespace mediapipe {
@@ -77,23 +79,29 @@ class TaskRunner {
   // provide the input packets and receive the output packets.
 #if !MEDIAPIPE_DISABLE_GPU
   static absl::StatusOr<std::unique_ptr<TaskRunner>> Create(
-      CalculatorGraphConfig config,
+      CalculatorGraphConfig config, const std::string& task_name,
+      const std::string& task_running_mode,
       std::unique_ptr<tflite::OpResolver> op_resolver = nullptr,
       PacketsCallback packets_callback = nullptr,
       std::shared_ptr<Executor> default_executor = nullptr,
       std::optional<PacketMap> input_side_packets = std::nullopt,
       std::shared_ptr<::mediapipe::GpuResources> resources = nullptr,
       std::optional<ErrorFn> error_fn = std::nullopt,
-      bool disable_default_service = false);
+      bool disable_default_service = false,
+      std::optional<absl::string_view> app_id = std::nullopt,
+      std::optional<absl::string_view> app_version = std::nullopt);
 #else
   static absl::StatusOr<std::unique_ptr<TaskRunner>> Create(
-      CalculatorGraphConfig config,
+      CalculatorGraphConfig config, const std::string& task_name,
+      const std::string& task_running_mode,
       std::unique_ptr<tflite::OpResolver> op_resolver = nullptr,
       PacketsCallback packets_callback = nullptr,
       std::shared_ptr<Executor> default_executor = nullptr,
       std::optional<PacketMap> input_side_packets = std::nullopt,
       std::optional<ErrorFn> error_fn = std::nullopt,
-      bool disable_default_service = false);
+      bool disable_default_service = false,
+      std::optional<absl::string_view> app_id = std::nullopt,
+      std::optional<absl::string_view> app_version = std::nullopt);
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
   // TaskRunner is neither copyable nor movable.
@@ -137,8 +145,10 @@ class TaskRunner {
  private:
   // Constructor.
   // Creates a TaskRunner instance with an optional PacketsCallback method.
-  explicit TaskRunner(PacketsCallback packets_callback = nullptr)
-      : packets_callback_(packets_callback) {}
+  explicit TaskRunner(PacketsCallback packets_callback,
+                      std::unique_ptr<logging::TasksLogger> tasks_logger)
+      : packets_callback_(packets_callback),
+        tasks_logger_(std::move(tasks_logger)) {}
 
   // Initializes the task runner. Returns an ok status to indicate that the
   // runner is ready to start. Otherwise, returns an error status to indicate
@@ -160,6 +170,7 @@ class TaskRunner {
   PacketsCallback packets_callback_;
   std::vector<std::string> output_stream_names_;
   CalculatorGraph graph_;
+  std::unique_ptr<logging::TasksLogger> tasks_logger_;
   bool initialized_ = false;
   std::atomic_bool is_running_ = false;
 

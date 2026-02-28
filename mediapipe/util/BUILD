@@ -51,6 +51,20 @@ mediapipe_proto_library(
     deps = ["//mediapipe/util:color_proto"],
 )
 
+cc_test(
+    name = "audio_decoder_test",
+    srcs = ["audio_decoder_test.cc"],
+    deps = [
+        ":audio_decoder",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:matrix",
+        "//mediapipe/framework/port:file_helpers",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 cc_library(
     name = "audio_decoder",
     srcs = ["audio_decoder.cc"],
@@ -140,6 +154,17 @@ cc_library(
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@libyuv",
+    ],
+)
+
+cc_test(
+    name = "image_frame_util_test",
+    srcs = ["image_frame_util_test.cc"],
+    deps = [
+        ":image_frame_util",
+        "//mediapipe/framework/port:benchmark",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:opencv_core",
     ],
 )
 

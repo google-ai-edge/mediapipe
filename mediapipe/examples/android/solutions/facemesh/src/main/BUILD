@@ -24,7 +24,6 @@ android_binary(
     manifest_values = {
         "applicationId": "com.google.mediapipe.examples.facemesh",
     },
-    multidex = "native",
     resource_files = ["//mediapipe/examples/android/solutions:resource_files"],
     deps = [
         "//mediapipe/framework/formats:landmark_java_proto_lite",

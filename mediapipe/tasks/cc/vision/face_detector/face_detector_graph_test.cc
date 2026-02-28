@@ -117,7 +117,8 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
       graph[Output<std::vector<Detection>>(kDetectionsTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(), std::make_unique<core::MediaPipeBuiltinOpResolver>());
+      graph.GetConfig(), "face_detector_test", "image",
+      std::make_unique<core::MediaPipeBuiltinOpResolver>());
 }
 
 Detection GetExpectedFaceDetectionResult(absl::string_view file_name) {

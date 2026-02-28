@@ -317,6 +317,25 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "gl_external_texture_view",
+    srcs = select({
+        "//mediapipe:ios": ["gl_external_texture_view_ios.cc"],
+        "//conditions:default": ["gl_external_texture_view_default.cc"],
+    }),
+    hdrs = ["gl_external_texture_view.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_context",
+        ":gl_texture_view",
+        ":gpu_buffer",
+        ":gpu_shared_data_internal",
+        "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
 # Workaround for "Multiple matches are not allowed unless one is unambiguously more specialized".
 more_selects.config_setting_negation(
     name = "not_disable_gpu",

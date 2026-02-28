@@ -34,6 +34,7 @@ static NSString *const kClassificationsTag = @"CLASSIFICATIONS";
 static NSString *const kTextInStreamName = @"text_in";
 static NSString *const kTextTag = @"TEXT";
 static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.TextClassifierGraph";
+static NSString *const kTaskName = @"textClassifier";
 
 @interface MPPTextClassifier () {
   /** iOS Text Task Runner */
@@ -47,13 +48,15 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
   self = [super init];
   if (self) {
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
-        initWithTaskGraphName:kTaskGraphName
-                 inputStreams:@[ [NSString stringWithFormat:@"%@:%@", kTextTag, kTextInStreamName] ]
-                outputStreams:@[ [NSString stringWithFormat:@"%@:%@", kClassificationsTag,
-                                                            kClassificationsStreamName] ]
-                  taskOptions:options
-           enableFlowLimiting:NO
-                        error:error];
+          initWithTaskName:kTaskName
+             taskGraphName:kTaskGraphName
+              inputStreams:@[ [NSString stringWithFormat:@"%@:%@", kTextTag, kTextInStreamName] ]
+             outputStreams:@[ [NSString stringWithFormat:@"%@:%@", kClassificationsTag,
+                                                         kClassificationsStreamName] ]
+               taskOptions:options
+        enableFlowLimiting:NO
+               runningMode:@"unknown"
+                     error:error];
 
     if (!taskInfo) {
       return nil;

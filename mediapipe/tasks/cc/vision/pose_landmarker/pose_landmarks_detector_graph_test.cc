@@ -95,6 +95,8 @@ constexpr char kPresenceScoreTag[] = "PRESENCE_SCORE";
 constexpr char kPresenceScoreName[] = "presence_score";
 constexpr char kSegmentationMaskTag[] = "SEGMENTATION_MASK";
 constexpr char kSegmentationMaskName[] = "segmentation_mask";
+constexpr char kTaskName[] = "pose_landmarks_detector_test";
+constexpr char kRunningMode[] = "image";
 
 // Expected pose landmarks positions, in text proto format.
 constexpr char kExpectedPoseLandmarksFilename[] =
@@ -142,7 +144,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateSinglePoseTaskRunner(
       graph[Output<NormalizedRect>(kPoseRectNextFrameTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(),
+      graph.GetConfig(), kTaskName, kRunningMode,
       absl::make_unique<tflite::ops::builtin::BuiltinOpResolver>());
 }
 
@@ -188,7 +190,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateMultiPoseTaskRunner(
       graph[Output<std::vector<NormalizedRect>>(kPoseRectsNextFrameTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(),
+      graph.GetConfig(), kTaskName, kRunningMode,
       absl::make_unique<tflite::ops::builtin::BuiltinOpResolver>());
 }
 

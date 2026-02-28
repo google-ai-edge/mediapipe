@@ -33,6 +33,7 @@ static NSString *const kEmbeddingsTag = @"EMBEDDINGS";
 static NSString *const kTextInStreamName = @"text_in";
 static NSString *const kTextTag = @"TEXT";
 static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_embedder.TextEmbedderGraph";
+static NSString *const kTaskName = @"textEmbedder";
 
 @interface MPPTextEmbedder () {
   /** iOS Text Task Runner */
@@ -46,13 +47,15 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_embedder.Tex
   self = [super init];
   if (self) {
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
-        initWithTaskGraphName:kTaskGraphName
-                 inputStreams:@[ [NSString stringWithFormat:@"%@:%@", kTextTag, kTextInStreamName] ]
-                outputStreams:@[ [NSString stringWithFormat:@"%@:%@", kEmbeddingsTag,
-                                                            kEmbeddingsOutStreamName] ]
-                  taskOptions:options
-           enableFlowLimiting:NO
-                        error:error];
+          initWithTaskName:kTaskName
+             taskGraphName:kTaskGraphName
+              inputStreams:@[ [NSString stringWithFormat:@"%@:%@", kTextTag, kTextInStreamName] ]
+             outputStreams:@[ [NSString stringWithFormat:@"%@:%@", kEmbeddingsTag,
+                                                         kEmbeddingsOutStreamName] ]
+               taskOptions:options
+        enableFlowLimiting:NO
+               runningMode:@"unknown"
+                     error:error];
 
     if (!taskInfo) {
       return nil;

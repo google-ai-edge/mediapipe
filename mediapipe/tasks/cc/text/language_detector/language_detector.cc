@@ -30,6 +30,7 @@ namespace mediapipe::tasks::text::language_detector {
 
 namespace {
 
+constexpr char kTaskName[] = "LanguageDetector";
 using ::mediapipe::tasks::components::containers::Category;
 using ::mediapipe::tasks::components::containers::ClassificationResult;
 using ::mediapipe::tasks::components::containers::Classifications;
@@ -107,7 +108,8 @@ absl::StatusOr<std::unique_ptr<LanguageDetector>> LanguageDetector::Create(
   return core::TaskApiFactory::Create<LanguageDetector,
                                       TextClassifierGraphOptions>(
       CreateGraphConfig(std::move(options_proto)),
-      std::move(options->base_options.op_resolver));
+      std::move(options->base_options.op_resolver), kTaskName,
+      core::TaskApiFactory::kUnknownRunningMode);
 }
 
 absl::StatusOr<LanguageDetectorResult> LanguageDetector::Detect(

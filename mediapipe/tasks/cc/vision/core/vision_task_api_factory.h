@@ -27,9 +27,11 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/tasks/cc/core/task_api_factory.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
+#include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
 namespace mediapipe {
@@ -49,10 +51,12 @@ class VisionTaskApiFactory {
   template <typename T, typename Options,
             EnableIfBaseVisionTaskApiSubclass<T> = nullptr>
   static absl::StatusOr<std::unique_ptr<T>> Create(
-      CalculatorGraphConfig graph_config,
+      CalculatorGraphConfig graph_config, const std::string& task_name,
       std::unique_ptr<tflite::OpResolver> resolver, RunningMode running_mode,
       tasks::core::PacketsCallback packets_callback = nullptr,
-      bool disable_default_service = false) {
+      bool disable_default_service = false,
+      std::optional<std::string> app_id = std::nullopt,
+      std::optional<std::string> app_version = std::nullopt) {
     bool found_task_subgraph = false;
     for (const auto& node : graph_config.node()) {
       if (node.calculator() == "FlowLimiterCalculator") {
@@ -85,17 +89,21 @@ class VisionTaskApiFactory {
           MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
     }
 #if !MEDIAPIPE_DISABLE_GPU
-    MP_ASSIGN_OR_RETURN(auto runner,
-                        tasks::core::TaskRunner::Create(
-                            std::move(graph_config), std::move(resolver),
-                            std::move(packets_callback), nullptr, std::nullopt,
-                            nullptr, std::nullopt, disable_default_service));
+    MP_ASSIGN_OR_RETURN(
+        auto runner,
+        tasks::core::TaskRunner::Create(
+            std::move(graph_config), task_name,
+            GetRunningModeName(running_mode), std::move(resolver),
+            std::move(packets_callback), nullptr, std::nullopt, nullptr,
+            std::nullopt, disable_default_service, app_id, app_version));
 #else
-    MP_ASSIGN_OR_RETURN(auto runner,
-                        tasks::core::TaskRunner::Create(
-                            std::move(graph_config), std::move(resolver),
-                            std::move(packets_callback), nullptr, std::nullopt,
-                            std::nullopt, disable_default_service));
+    MP_ASSIGN_OR_RETURN(
+        auto runner,
+        tasks::core::TaskRunner::Create(
+            std::move(graph_config), task_name,
+            GetRunningModeName(running_mode), std::move(resolver),
+            std::move(packets_callback), nullptr, std::nullopt, std::nullopt,
+            disable_default_service, app_id, app_version));
 #endif  // !MEDIAPIPE_DISABLE_GPU
     return std::make_unique<T>(std::move(runner), running_mode);
   }

@@ -30,12 +30,14 @@ using ::mediapipe::InputStreamInfo;
 
 @implementation MPPTaskInfo
 
-- (instancetype)initWithTaskGraphName:(NSString *)taskGraphName
-                         inputStreams:(NSArray<NSString *> *)inputStreams
-                        outputStreams:(NSArray<NSString *> *)outputStreams
-                          taskOptions:(id<MPPTaskOptionsProtocol>)taskOptions
-                   enableFlowLimiting:(BOOL)enableFlowLimiting
-                                error:(NSError **)error {
+- (instancetype)initWithTaskName:(NSString *)taskName
+                   taskGraphName:(NSString *)taskGraphName
+                    inputStreams:(NSArray<NSString *> *)inputStreams
+                   outputStreams:(NSArray<NSString *> *)outputStreams
+                     taskOptions:(id<MPPTaskOptionsProtocol>)taskOptions
+              enableFlowLimiting:(BOOL)enableFlowLimiting
+                     runningMode:(NSString *)runningMode
+                           error:(NSError **)error {
   if (!taskGraphName || !inputStreams.count || !outputStreams.count) {
     [MPPCommonUtils
         createCustomError:error
@@ -47,11 +49,13 @@ using ::mediapipe::InputStreamInfo;
   self = [super init];
 
   if (self) {
+    _taskName = taskName;
     _taskGraphName = taskGraphName;
     _inputStreams = inputStreams;
     _outputStreams = outputStreams;
     _taskOptions = taskOptions;
     _enableFlowLimiting = enableFlowLimiting;
+    _runningMode = runningMode;
   }
   return self;
 }
@@ -59,11 +63,13 @@ using ::mediapipe::InputStreamInfo;
 - (id)copyWithZone:(NSZone *)zone {
   MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc] init];
 
+  taskInfo.taskName = self.taskName;
   taskInfo.taskGraphName = self.taskGraphName;
   taskInfo.inputStreams = self.inputStreams;
   taskInfo.outputStreams = self.outputStreams;
   taskInfo.taskOptions = self.taskOptions;
   taskInfo.enableFlowLimiting = self.enableFlowLimiting;
+  taskInfo.runningMode = self.runningMode;
 
   return taskInfo;
 }

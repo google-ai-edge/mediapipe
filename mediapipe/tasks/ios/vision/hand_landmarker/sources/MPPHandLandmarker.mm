@@ -77,21 +77,23 @@ static NSString *const kTaskName = @"handLandmarker";
   self = [super init];
   if (self) {
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
-        initWithTaskGraphName:kTaskGraphName
-                 inputStreams:@[
-                   [NSString stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
-                   [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectInStreamName]
-                 ]
-                outputStreams:@[
-                  [NSString stringWithFormat:@"%@:%@", kLandmarksTag, kLandmarksOutStreamName],
-                  [NSString
-                      stringWithFormat:@"%@:%@", kWorldLandmarksTag, kWorldLandmarksOutStreamName],
-                  [NSString stringWithFormat:@"%@:%@", kHandednessTag, kHandednessOutStreamName],
-                  [NSString stringWithFormat:@"%@:%@", kImageTag, kImageOutStreamName]
-                ]
-                  taskOptions:options
-           enableFlowLimiting:options.runningMode == MPPRunningModeLiveStream
-                        error:error];
+          initWithTaskName:kTaskName
+             taskGraphName:kTaskGraphName
+              inputStreams:@[
+                [NSString stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
+                [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectInStreamName]
+              ]
+             outputStreams:@[
+               [NSString stringWithFormat:@"%@:%@", kLandmarksTag, kLandmarksOutStreamName],
+               [NSString
+                   stringWithFormat:@"%@:%@", kWorldLandmarksTag, kWorldLandmarksOutStreamName],
+               [NSString stringWithFormat:@"%@:%@", kHandednessTag, kHandednessOutStreamName],
+               [NSString stringWithFormat:@"%@:%@", kImageTag, kImageOutStreamName]
+             ]
+               taskOptions:options
+        enableFlowLimiting:options.runningMode == MPPRunningModeLiveStream
+               runningMode:MPPRunningModeDisplayName(options.runningMode)
+                     error:error];
 
     if (!taskInfo) {
       return nil;

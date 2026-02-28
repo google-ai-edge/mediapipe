@@ -18,6 +18,8 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
+exports_files(glob(["sources/*.h"]))
+
 objc_library(
     name = "MPPBaseOptions",
     srcs = ["sources/MPPBaseOptions.m"],
@@ -106,7 +108,6 @@ objc_library(
         "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//third_party/apple_frameworks:Foundation",
-        "@com_google_protobuf//:protobuf",
     ],
 )
 

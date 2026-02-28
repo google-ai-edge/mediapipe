@@ -61,6 +61,7 @@ constexpr absl::string_view kRoiTag{"ROI"};
 constexpr absl::string_view kNormRectTag{"NORM_RECT"};
 constexpr absl::string_view kQualityScoresTag{"QUALITY_SCORES"};
 
+constexpr char kTaskName[] = "InteractiveSegmenter";
 constexpr absl::string_view kSubgraphTypeName{
     "mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph"};
 
@@ -166,7 +167,7 @@ InteractiveSegmenter::Create(
           CreateGraphConfig(std::move(options_proto),
                             options->output_confidence_masks,
                             options->output_category_mask),
-          std::move(options->base_options.op_resolver),
+          kTaskName, std::move(options->base_options.op_resolver),
           core::RunningMode::IMAGE,
           /*packets_callback=*/nullptr,
           /*disable_default_service=*/

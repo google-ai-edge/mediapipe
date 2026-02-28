@@ -50,6 +50,7 @@ using PoseLandmarkerGraphOptionsProto = ::mediapipe::tasks::vision::
 
 using ::mediapipe::NormalizedRect;
 
+constexpr char kTaskName[] = "PoseLandmarker";
 constexpr char kPoseLandmarkerGraphTypeName[] =
     "mediapipe.tasks.vision.pose_landmarker.PoseLandmarkerGraph";
 
@@ -183,8 +184,8 @@ absl::StatusOr<std::unique_ptr<PoseLandmarker>> PoseLandmarker::Create(
               std::move(options_proto),
               options->running_mode == core::RunningMode::LIVE_STREAM,
               options->output_segmentation_masks),
-          std::move(options->base_options.op_resolver), options->running_mode,
-          std::move(packets_callback),
+          kTaskName, std::move(options->base_options.op_resolver),
+          options->running_mode, std::move(packets_callback),
           /*disable_default_service=*/
           options->base_options.disable_default_service)));
 

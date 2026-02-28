@@ -71,7 +71,7 @@ CreateConditionedImageGraphTaskRunner(
   conditioned_image_graph.Out(kImageTag).SetName(kImageOutStream) >>
       graph.Out(kImageTag).Cast<Image>();
   return core::TaskRunner::Create(
-      graph.GetConfig(),
+      graph.GetConfig(), "conditioned_image_graph_test", "image",
       absl::make_unique<tasks::core::MediaPipeBuiltinOpResolver>());
 }
 

@@ -50,6 +50,7 @@ using HandLandmarkerGraphOptionsProto = ::mediapipe::tasks::vision::
 
 using ::mediapipe::NormalizedRect;
 
+constexpr char kTaskName[] = "HandLandmarker";
 constexpr char kHandLandmarkerGraphTypeName[] =
     "mediapipe.tasks.vision.hand_landmarker.HandLandmarkerGraph";
 
@@ -174,8 +175,8 @@ absl::StatusOr<std::unique_ptr<HandLandmarker>> HandLandmarker::Create(
       CreateGraphConfig(
           std::move(options_proto),
           options->running_mode == core::RunningMode::LIVE_STREAM),
-      std::move(options->base_options.op_resolver), options->running_mode,
-      std::move(packets_callback),
+      kTaskName, std::move(options->base_options.op_resolver),
+      options->running_mode, std::move(packets_callback),
       /*disable_default_service=*/
       options->base_options.disable_default_service);
 }

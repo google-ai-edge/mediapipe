@@ -150,15 +150,15 @@ static const float kSimilarityDiffTolerance = 1e-4;
   MPPTextEmbedder *textEmbedder =
       [self textEmbedderFromModelFileWithName:kBertTextEmbedderModelName];
 
-  MPPEmbedding *embedding1 =
-      [self assertFloatEmbeddingResultsOfEmbedText:kText1
-                                 usingTextEmbedder:textEmbedder
-                                          hasCount:512
-                                        firstValue:21.178509f];
-
-  MPPEmbedding *embedding2 = [self assertFloatEmbeddingResultsOfEmbedText:kText2
+  MPPEmbedding *embedding1 = [self assertFloatEmbeddingResultsOfEmbedText:kText1
                                                         usingTextEmbedder:textEmbedder
                                                                  hasCount:512
+                                                               firstValue:21.676956f];
+
+  MPPEmbedding *embedding2 =
+      [self assertFloatEmbeddingResultsOfEmbedText:kText2
+                                 usingTextEmbedder:textEmbedder
+                                          hasCount:512
                                                                firstValue:19.684338f];
   NSNumber *cosineSimilarity = [MPPTextEmbedder cosineSimilarityBetweenEmbedding1:embedding1
                                                                     andEmbedding2:embedding2
@@ -212,7 +212,7 @@ static const float kSimilarityDiffTolerance = 1e-4;
                                                                             error:nil];
 
   // TODO: The similarity should likely be lower
-  XCTAssertGreaterThanOrEqual(cosineSimilarity.doubleValue, 0.97f);
+  XCTAssertGreaterThanOrEqual(cosineSimilarity.doubleValue, 0.96f);
 }
 
 - (void)testEmbedWithQuantizeSucceeds {

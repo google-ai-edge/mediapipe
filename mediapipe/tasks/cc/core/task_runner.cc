@@ -38,7 +38,10 @@ limitations under the License.
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/tasks/cc/core/logging/tasks_dummy_logger.h"
+#include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "mediapipe/tasks/cc/core/model_resources_cache.h"
+#include "mediapipe/util/analytics/mediapipe_logging_enums.pb.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
@@ -96,23 +99,35 @@ absl::StatusOr<PacketMap> GenerateOutputPacketMap(
 /* static */
 #if !MEDIAPIPE_DISABLE_GPU
 absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
-    CalculatorGraphConfig config,
+    CalculatorGraphConfig config, const std::string& task_name,
+    const std::string& task_running_mode,
     std::unique_ptr<tflite::OpResolver> op_resolver,
     PacketsCallback packets_callback,
     std::shared_ptr<Executor> default_executor,
     std::optional<PacketMap> input_side_packets,
     std::shared_ptr<::mediapipe::GpuResources> resources,
-    std::optional<ErrorFn> error_fn, bool disable_default_service) {
+    std::optional<ErrorFn> error_fn, bool disable_default_service,
+    std::optional<absl::string_view> app_id,
+    std::optional<absl::string_view> app_version) {
 #else
 absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
-    CalculatorGraphConfig config,
+    CalculatorGraphConfig config, const std::string& task_name,
+    const std::string& task_running_mode,
     std::unique_ptr<tflite::OpResolver> op_resolver,
     PacketsCallback packets_callback,
     std::shared_ptr<Executor> default_executor,
     std::optional<PacketMap> input_side_packets,
-    std::optional<ErrorFn> error_fn, bool disable_default_service) {
+    std::optional<ErrorFn> error_fn, bool disable_default_service,
+    std::optional<absl::string_view> app_id,
+    std::optional<absl::string_view> app_version) {
 #endif  // !MEDIAPIPE_DISABLE_GPU
-  auto task_runner = absl::WrapUnique(new TaskRunner(packets_callback));
+  std::unique_ptr<logging::TasksLogger> tasks_logger =
+      logging::TasksDummyLogger::Create(
+          task_name, task_running_mode, nullptr,
+          logs::proto::mediapipe::Platform::PLATFORM_UNKNOWN, app_id,
+          app_version);
+  auto task_runner = absl::WrapUnique(
+      new TaskRunner(packets_callback, std::move(tasks_logger)));
   MP_RETURN_IF_ERROR(task_runner->Initialize(
       std::move(config), std::move(op_resolver), std::move(default_executor),
       std::move(input_side_packets), std::move(error_fn),
@@ -167,6 +182,7 @@ absl::Status TaskRunner::Initialize(
         [this](const std::vector<Packet>& packets) {
           packets_callback_(
               GenerateOutputPacketMap(packets, output_stream_names_));
+          tasks_logger_->RecordInvocationEnd(packets.back().Timestamp());
           return;
         },
         &config, &input_side_packets.value(),
@@ -177,6 +193,7 @@ absl::Status TaskRunner::Initialize(
         [this](const std::vector<Packet>& packets) {
           status_or_output_packets_ =
               GenerateOutputPacketMap(packets, output_stream_names_);
+          tasks_logger_->RecordInvocationEnd(packets.back().Timestamp());
           return;
         },
         &config, &input_side_packets.value(),
@@ -233,6 +250,7 @@ absl::Status TaskRunner::Start() {
                  "MediaPipe CalculatorGraph is not successfully started.",
                  MediaPipeTasksStatus::kRunnerFailsToStartError));
   is_running_ = true;
+  tasks_logger_->LogSessionStart();
   return absl::OkStatus();
 }
 
@@ -275,6 +293,8 @@ absl::StatusOr<PacketMap> TaskRunner::Process(PacketMap inputs) {
         "Input timestamp must be monotonically increasing.",
         MediaPipeTasksStatus::kRunnerInvalidTimestampError);
   }
+  // TODO: b/483040083 - Support recording GPU input arrival.
+  tasks_logger_->RecordCpuInputArrival(input_timestamp);
   for (auto& [stream_name, packet] : inputs) {
     MP_RETURN_IF_ERROR(AddPayload(
         graph_.AddPacketToInputStream(stream_name,
@@ -329,6 +349,7 @@ absl::Status TaskRunner::Send(PacketMap inputs) {
         "Input timestamp must be monotonically increasing.",
         MediaPipeTasksStatus::kRunnerInvalidTimestampError);
   }
+  tasks_logger_->RecordCpuInputArrival(input_timestamp);
   for (auto& [stream_name, packet] : inputs) {
     MP_RETURN_IF_ERROR(AddPayload(
         graph_.AddPacketToInputStream(stream_name,
@@ -349,6 +370,7 @@ absl::Status TaskRunner::Close() {
         "Task runner is currently not running.",
         MediaPipeTasksStatus::kRunnerFailsToCloseError);
   }
+  tasks_logger_->LogSessionEnd();
   is_running_ = false;
   MP_RETURN_IF_ERROR(
       AddPayload(graph_.CloseAllInputStreams(), "Fail to close input streams",

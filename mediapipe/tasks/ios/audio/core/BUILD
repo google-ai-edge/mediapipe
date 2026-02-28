@@ -18,6 +18,8 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
+exports_files(glob(["sources/*.h"]))
+
 objc_library(
     name = "MPPAudioData",
     srcs = ["sources/MPPAudioData.m"],

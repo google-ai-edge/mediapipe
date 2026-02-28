@@ -52,6 +52,7 @@ constexpr char kTimestampedClassificationsName[] =
     "timestamped_classifications_out";
 constexpr char kSampleRateName[] = "sample_rate_in";
 constexpr char kSampleRateTag[] = "SAMPLE_RATE";
+constexpr char kTaskName[] = "AudioClassifier";
 constexpr char kSubgraphTypeName[] =
     "mediapipe.tasks.audio.audio_classifier.AudioClassifierGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
@@ -135,7 +136,7 @@ absl::StatusOr<std::unique_ptr<AudioClassifier>> AudioClassifier::Create(
   }
   return core::AudioTaskApiFactory::Create<AudioClassifier,
                                            proto::AudioClassifierGraphOptions>(
-      CreateGraphConfig(std::move(options_proto)),
+      CreateGraphConfig(std::move(options_proto)), kTaskName,
       std::move(options->base_options.op_resolver), options->running_mode,
       std::move(packets_callback));
 }

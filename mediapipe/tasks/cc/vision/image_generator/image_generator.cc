@@ -73,6 +73,7 @@ constexpr absl::string_view kSelectName = "select";
 
 constexpr char kImageGeneratorGraphTypeName[] =
     "mediapipe.tasks.vision.image_generator.ImageGeneratorGraph";
+constexpr char kTaskName[] = "ImageGenerator";
 
 constexpr char kConditionedImageGraphContainerTypeName[] =
     "mediapipe.tasks.vision.image_generator.ConditionedImageGraphContainer";
@@ -311,6 +312,7 @@ absl::StatusOr<std::unique_ptr<ImageGenerator>> ImageGenerator::Create(
           CreateImageGeneratorGraphConfig(
               std::move(options_proto_and_condition_index.options_proto),
               use_condition_image),
+          kTaskName,
           std::make_unique<tasks::core::MediaPipeBuiltinOpResolver>(),
           core::RunningMode::IMAGE,
           /*result_callback=*/nullptr)));
@@ -323,6 +325,7 @@ absl::StatusOr<std::unique_ptr<ImageGenerator>> ImageGenerator::Create(
         tasks::core::TaskRunner::Create(
             CreateConditionedImageGraphContainerConfig(
                 std::move(options_proto_for_condition_image_graphs_container)),
+            kTaskName, "image",
             absl::make_unique<tasks::core::MediaPipeBuiltinOpResolver>()));
   }
   image_generator->init_timestamp_ = absl::Now();

@@ -17,8 +17,12 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 
+#include "absl/strings/string_view.h"
+#include "mediapipe/framework/timestamp.h"
+#include "mediapipe/tasks/cc/core/logging/logging_client.h"
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 
 namespace mediapipe {
@@ -31,7 +35,12 @@ class TasksDummyLogger : public TasksLogger {
  public:
   // Creates the MediaPipe Tasks stats dummy logger.
   static std::unique_ptr<TasksDummyLogger> Create(
-      const std::string& task_name, const std::string& task_running_mode) {
+      const std::string& task_name_str,
+      const std::string& task_running_mode_str,
+      std::unique_ptr<LoggingClient> logging_client,
+      logs::proto::mediapipe::Platform platform,
+      std::optional<absl::string_view> app_id = std::nullopt,
+      std::optional<absl::string_view> app_version = std::nullopt) {
     return std::unique_ptr<TasksDummyLogger>(new TasksDummyLogger());
   }
 
@@ -39,11 +48,11 @@ class TasksDummyLogger : public TasksLogger {
 
   void LogSessionClone() override {}
 
-  void RecordCpuInputArrival(int64_t packet_timestamp) override {}
+  void RecordCpuInputArrival(Timestamp packet_timestamp) override {}
 
-  void RecordGpuInputArrival(int64_t packet_timestamp) override {}
+  void RecordGpuInputArrival(Timestamp packet_timestamp) override {}
 
-  void RecordInvocationEnd(int64_t packet_timestamp) override {}
+  void RecordInvocationEnd(Timestamp packet_timestamp) override {}
 
   void LogInvocationReport(const StatsSnapshot& stats) override {}
 

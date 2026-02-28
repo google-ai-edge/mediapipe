@@ -18,33 +18,33 @@ limitations under the License.
 #include <cmath>
 #include <limits>
 #include <memory>
-#include <optional>
 #include <utility>
 #include <vector>
 
 #include "absl/algorithm/container.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/types/optional.h"
-#include "mediapipe/framework/api2/builder.h"
-#include "mediapipe/framework/api2/node.h"
-#include "mediapipe/framework/api2/port.h"
-#include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/api3/calculator.h"
+#include "mediapipe/framework/api3/calculator_context.h"
+#include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
+#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/tasks/cc/components/containers/rect.h"
 #include "mediapipe/tasks/cc/vision/utils/landmarks_duplicates_finder.h"
 #include "mediapipe/tasks/cc/vision/utils/landmarks_utils.h"
 
-namespace mediapipe::api2 {
+namespace mediapipe {
+namespace tasks {
 namespace {
 
 using ::mediapipe::NormalizedRect;
-using ::mediapipe::api2::Input;
-using ::mediapipe::api2::Output;
-using ::mediapipe::api2::builder::Source;
+using ::mediapipe::api3::Calculator;
+using ::mediapipe::api3::CalculatorContext;
 using ::mediapipe::tasks::components::containers::RectF;
 using ::mediapipe::tasks::vision::utils::CalculateIOU;
 using ::mediapipe::tasks::vision::utils::DuplicatesFinder;
@@ -226,17 +226,15 @@ class HandDuplicatesFinder : public DuplicatesFinder {
   const bool start_from_the_end_;
 };
 
-template <typename InputPortT>
-absl::StatusOr<absl::optional<typename InputPortT::PayloadT>>
-VerifyNumAndMaybeInitOutput(const InputPortT& port, CalculatorContext* cc,
-                            int num_expected_size) {
-  absl::optional<typename InputPortT::PayloadT> output;
-  if (port(cc).IsConnected() && !port(cc).IsEmpty()) {
-    RET_CHECK_EQ(port(cc).Get().size(), num_expected_size);
-    typename InputPortT::PayloadT result;
-    return {{result}};
-  }
-  return {absl::nullopt};
+template <typename T, typename VectorType>
+absl::StatusOr<absl::optional<VectorType>> VerifyNumAndMaybeInitOutput(
+    const mediapipe::api3::Optional<mediapipe::api3::Input<T, VectorType>>&
+        port,
+    int num_expected_size) {
+  if (!port) return {absl::nullopt};
+  const auto& input = port.GetOrDie();
+  RET_CHECK_EQ(input.size(), num_expected_size);
+  return {{VectorType{}}};
 }
 }  // namespace
 
@@ -245,13 +243,22 @@ std::unique_ptr<DuplicatesFinder> CreateHandDuplicatesFinder(
   return absl::make_unique<HandDuplicatesFinder>(start_from_the_end);
 }
 
-absl::Status HandLandmarksDeduplicationCalculator::Process(
-    mediapipe::CalculatorContext* cc) {
-  if (kInLandmarks(cc).IsEmpty()) return absl::OkStatus();
-  if (kInSize(cc).IsEmpty()) return absl::OkStatus();
+class HandLandmarksDeduplicationNodeImpl
+    : public Calculator<HandLandmarksDeduplicationNode,
+                        HandLandmarksDeduplicationNodeImpl> {
+ public:
+  absl::Status Process(
+      CalculatorContext<HandLandmarksDeduplicationNode>& cc) override;
+};
 
-  const std::vector<NormalizedLandmarkList>& in_landmarks = *kInLandmarks(cc);
-  const std::pair<int, int>& image_size = *kInSize(cc);
+absl::Status HandLandmarksDeduplicationNodeImpl::Process(
+    CalculatorContext<HandLandmarksDeduplicationNode>& cc) {
+  if (!cc.landmarks_in) return absl::OkStatus();
+  if (!cc.input_size) return absl::OkStatus();
+
+  const std::vector<NormalizedLandmarkList>& in_landmarks =
+      cc.landmarks_in.GetOrDie();
+  const std::pair<int, int>& image_size = cc.input_size.GetOrDie();
 
   std::unique_ptr<DuplicatesFinder> duplicates_finder =
       CreateHandDuplicatesFinder(/*start_from_the_end=*/false);
@@ -260,53 +267,71 @@ absl::Status HandLandmarksDeduplicationCalculator::Process(
                           in_landmarks, image_size.first, image_size.second));
 
   if (indices_to_remove.empty()) {
-    kOutLandmarks(cc).Send(kInLandmarks(cc));
-    kOutRois(cc).Send(kInRois(cc));
-    kOutWorldLandmarks(cc).Send(kInWorldLandmarks(cc));
-    kOutClassifications(cc).Send(kInClassifications(cc));
+    cc.landmarks_out.Send(cc.landmarks_in.Packet());
+    if (cc.rois_out.IsConnected()) {
+      RET_CHECK(cc.rois_in.IsConnected());
+      cc.rois_out.Send(cc.rois_in.Packet());
+    }
+    if (cc.world_landmarks_out.IsConnected()) {
+      RET_CHECK(cc.world_landmarks_in.IsConnected());
+      cc.world_landmarks_out.Send(cc.world_landmarks_in.Packet());
+    }
+    if (cc.classifications_out.IsConnected()) {
+      RET_CHECK(cc.classifications_in.IsConnected());
+      cc.classifications_out.Send(cc.classifications_in.Packet());
+    }
   } else {
     std::vector<NormalizedLandmarkList> out_landmarks;
     const int num = in_landmarks.size();
 
     MP_ASSIGN_OR_RETURN(absl::optional<std::vector<NormalizedRect>> out_rois,
-                        VerifyNumAndMaybeInitOutput(kInRois, cc, num));
+                        VerifyNumAndMaybeInitOutput(cc.rois_in, num));
     MP_ASSIGN_OR_RETURN(
         absl::optional<std::vector<LandmarkList>> out_world_landmarks,
-        VerifyNumAndMaybeInitOutput(kInWorldLandmarks, cc, num));
+        VerifyNumAndMaybeInitOutput(cc.world_landmarks_in, num));
     MP_ASSIGN_OR_RETURN(
         absl::optional<std::vector<ClassificationList>> out_classifications,
-        VerifyNumAndMaybeInitOutput(kInClassifications, cc, num));
+        VerifyNumAndMaybeInitOutput(cc.classifications_in, num));
+
+    const auto* in_rois = out_rois ? &cc.rois_in.GetOrDie() : nullptr;
+    const auto* in_world_landmarks =
+        out_world_landmarks ? &cc.world_landmarks_in.GetOrDie() : nullptr;
+    const auto* in_classifications =
+        out_classifications ? &cc.classifications_in.GetOrDie() : nullptr;
 
     for (int i = 0; i < num; ++i) {
-      if (indices_to_remove.find(i) != indices_to_remove.end()) continue;
-
-      out_landmarks.push_back(in_landmarks[i]);
-      if (out_rois) {
-        out_rois->push_back(kInRois(cc).Get()[i]);
-      }
-      if (out_world_landmarks) {
-        out_world_landmarks->push_back(kInWorldLandmarks(cc).Get()[i]);
-      }
-      if (out_classifications) {
-        out_classifications->push_back(kInClassifications(cc).Get()[i]);
+      if (!indices_to_remove.contains(i)) {
+        out_landmarks.push_back(in_landmarks[i]);
+        if (in_rois) {
+          out_rois->push_back((*in_rois)[i]);
+        }
+        if (in_world_landmarks) {
+          out_world_landmarks->push_back((*in_world_landmarks)[i]);
+        }
+        if (in_classifications) {
+          out_classifications->push_back((*in_classifications)[i]);
+        }
       }
     }
 
     if (!out_landmarks.empty()) {
-      kOutLandmarks(cc).Send(std::move(out_landmarks));
+      cc.landmarks_out.Send(std::move(out_landmarks));
     }
     if (out_rois && !out_rois->empty()) {
-      kOutRois(cc).Send(std::move(out_rois.value()));
+      RET_CHECK(cc.rois_out.IsConnected());
+      cc.rois_out.Send(std::move(out_rois.value()));
     }
     if (out_world_landmarks && !out_world_landmarks->empty()) {
-      kOutWorldLandmarks(cc).Send(std::move(out_world_landmarks.value()));
+      RET_CHECK(cc.world_landmarks_out.IsConnected());
+      cc.world_landmarks_out.Send(std::move(out_world_landmarks.value()));
     }
     if (out_classifications && !out_classifications->empty()) {
-      kOutClassifications(cc).Send(std::move(out_classifications.value()));
+      RET_CHECK(cc.classifications_out.IsConnected());
+      cc.classifications_out.Send(std::move(out_classifications.value()));
     }
   }
   return absl::OkStatus();
 }
-MEDIAPIPE_REGISTER_NODE(HandLandmarksDeduplicationCalculator);
 
-}  // namespace mediapipe::api2
+}  // namespace tasks
+}  // namespace mediapipe

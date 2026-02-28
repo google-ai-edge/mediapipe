@@ -102,13 +102,13 @@ class TextEmbedderTests: XCTestCase {
       text: TextEmbedderTests.text1,
       using: textEmbedder,
       hasCount: 512,
-      hasFirstValue: 21.178507)
+    hasFirstValue: 21.178507)
 
     let embedding2 = try assertFloatEmbeddingResultsForEmbed(
       text: TextEmbedderTests.text2,
       using: textEmbedder,
       hasCount: 512,
-      hasFirstValue: 19.684338)
+    hasFirstValue: 19.684338)
 
     let cosineSimilarity = try XCTUnwrap(
       TextEmbedder.cosineSimilarity(

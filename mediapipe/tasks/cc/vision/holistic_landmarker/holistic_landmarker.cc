@@ -63,6 +63,7 @@ using ::mediapipe::tasks::components::containers::ConvertToCategory;
 using ::mediapipe::tasks::components::containers::ConvertToLandmarks;
 using ::mediapipe::tasks::components::containers::ConvertToNormalizedLandmarks;
 
+constexpr char kTaskName[] = "HolisticLandmarker";
 constexpr char kHolisticLandmarkerGraphTypeName[] =
     "mediapipe.tasks.vision.holistic_landmarker.HolisticLandmarkerGraph";
 
@@ -286,8 +287,8 @@ absl::StatusOr<std::unique_ptr<HolisticLandmarker>> HolisticLandmarker::Create(
           CreateGraphConfig(
               std::move(options_proto),
               options->running_mode == core::RunningMode::LIVE_STREAM),
-          std::move(options->base_options.op_resolver), options->running_mode,
-          std::move(packets_callback),
+          kTaskName, std::move(options->base_options.op_resolver),
+          options->running_mode, std::move(packets_callback),
           /*disable_default_service=*/
           options->base_options.disable_default_service)));
   landmarker->output_pose_segmentation_masks_ =

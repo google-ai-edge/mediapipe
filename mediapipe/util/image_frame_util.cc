@@ -333,12 +333,13 @@ void LinearRgb16ToSrgb(const cv::Mat& source, cv::Mat* destination) {
   const uint8_t* lookup_table_ptr = kLut.ptr<uint8_t>();
   const int num_channels = source.channels();
   for (int row = 0; row < source.rows; ++row) {
+    uint8_t* ptr = destination->ptr<uint8_t>(row);
+    const uint16_t* ptr16 = source.ptr<uint16_t>(row);
     for (int col = 0; col < source.cols; ++col) {
       for (int channel = 0; channel < num_channels; ++channel) {
-        uint8_t* ptr = destination->ptr<uint8_t>(row);
-        const uint16_t* ptr16 = source.ptr<uint16_t>(row);
-        ptr[col * num_channels + channel] =
-            lookup_table_ptr[ptr16[col * num_channels + channel]];
+        *ptr = lookup_table_ptr[*ptr16];
+        ++ptr;
+        ++ptr16;
       }
     }
   }
