@@ -340,5 +340,12 @@ mediapipe_static_xcframework(
     # `xcframeworks`. Including them with task graphs causes duplicate symbols
     # when installed alongside the respective frameworks since task graphs are
     # built as static libraries and force loaded.
-    deps = MEDIAPIPE_TASKS_COMMON_DEPS,
+    #
+    # FOR SPM: Including CALCULATORS_AND_GRAPHS directly in MediaPipeTasksCommon
+    # to avoid undefined symbols. Vision/Audio/Text frameworks use avoid_deps
+    # to prevent duplicating these, so using multiple frameworks together is safe.
+    # NOTE: conversion_data is required for ICU symbols when using -all_load.
+    deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS + [
+        "@org_tensorflow//third_party/icu/data:conversion_data",
+    ] + select(OPENCV_DEPS),
 )

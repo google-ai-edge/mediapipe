@@ -1,0 +1,19 @@
+# Build and development files
+.bazelrc export-ignore
+.bazelversion export-ignore
+WORKSPACE export-ignore
+BUILD export-ignore
+*.bzl export-ignore
+*.bazel export-ignore
+
+# Build scripts and tools
+spm/ export-ignore
+mediapipe/ export-ignore
+third_party/ export-ignore
+build_ios_framework.sh export-ignore
+
+# Development files
+.github/ export-ignore
+.git/ export-ignore
+docs/ export-ignore
+*.sh export-ignore
