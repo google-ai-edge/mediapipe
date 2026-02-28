@@ -365,6 +365,7 @@ python_init_rules()
 
 load("@org_tensorflow//third_party/xla/third_party/py:python_init_repositories.bzl", "python_init_repositories")
 
+# Set `default_python_version` to a specific version, e.g. "3.12" when building Dockerfile.manylinux_2_28_x86_64
 python_init_repositories(
     default_python_version = "system",
     local_wheel_dist_folder = "dist",

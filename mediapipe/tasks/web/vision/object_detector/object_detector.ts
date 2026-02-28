@@ -167,6 +167,13 @@ export class ObjectDetector extends VisionTaskRunner {
       this.options.clearScoreThreshold();
     }
 
+    if (options.multiclassNms !== undefined) {
+      this.options.setMulticlassNms(options.multiclassNms);
+    } else if ('multiclassNms' in options) {
+      // Check for undefined
+      this.options.clearMulticlassNms();
+    }
+
     if (options.categoryAllowlist !== undefined) {
       this.options.setCategoryAllowlistList(options.categoryAllowlist);
     } else if ('categoryAllowlist' in options) {
