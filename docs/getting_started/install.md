@@ -613,7 +613,7 @@ next section.
 8.  Install OpenCV.
 
     Download the Windows executable from https://opencv.org/releases/ and
-    install. We currently use OpenCV 3.4.10. Remember to edit the [`WORKSPACE`]
+    install. We currently use OpenCV 3.4.12. Remember to edit the [`WORKSPACE`]
     file if OpenCV is not installed at `C:\opencv`.
 
     ```
