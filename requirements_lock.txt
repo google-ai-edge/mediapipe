@@ -16,7 +16,7 @@ cycler==0.12.1
     # via matplotlib
 flatbuffers==24.3.25
     # via -r mediapipe/opensource_only/requirements.txt
-fonttools==4.54.1
+fonttools==4.60.2
     # via matplotlib
 importlib-metadata==8.5.0
     # via jax
@@ -52,9 +52,9 @@ opt-einsum==3.4.0
     # via jax
 packaging==24.1
     # via matplotlib
-pillow==10.4.0
+pillow==12.1.1
     # via matplotlib
-protobuf==4.25.5
+protobuf==5.29.6
     # via -r mediapipe/opensource_only/requirements.txt
 pycparser==2.22
     # via cffi
@@ -66,7 +66,7 @@ scipy==1.13.1
     # via
     #   jax
     #   jaxlib
-sentencepiece==0.2.0
+sentencepiece==0.2.1
     # via -r mediapipe/opensource_only/requirements.txt
 six==1.16.0
     # via python-dateutil
