@@ -10,7 +10,7 @@ For new feature additions (e.g., new graphs and calculators), we are currently n
 Before sending your pull requests, make sure you followed this list.
 
 - Read [contributing guidelines](CONTRIBUTING.md).
-- Read [Code of Conduct](CODE_OF_CONDUCT.md).
+- Read [Code of Conduct](https://github.com/google/.github/blob/master/CODE_OF_CONDUCT.md).
 - Ensure you have signed the [Contributor License Agreement (CLA)](https://cla.developers.google.com/).
 
 ## How to become a contributor and submit your own code
