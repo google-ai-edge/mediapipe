@@ -57,6 +57,40 @@ mediapipe_proto_library(
     ],
 )
 
+cc_library(
+    name = "packet_rate_calculator",
+    srcs = ["packet_rate_calculator.cc"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:collection_item_id",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "packet_rate_calculator_test",
+    timeout = "short",
+    srcs = [
+        "packet_rate_calculator_test.cc",
+    ],
+    deps = [
+        ":packet_rate_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 mediapipe_proto_library(
     name = "packet_resampler_calculator_proto",
     srcs = ["packet_resampler_calculator.proto"],
