@@ -5,3 +5,6 @@ mediapipe/provisioning_profile.mobileprovision
 node_modules/
 .configure.bazelrc
 .user.bazelrc
+
+*.iml
+.idea
