@@ -238,15 +238,15 @@ public class PacketCreator {
   }
 
   public Packet createInt16Vector(short[] data) {
-    throw new UnsupportedOperationException("Not implemented yet");
+    return Packet.create(nativeCreateInt16Vector(mediapipeGraph.getNativeHandle(), data));
   }
 
   public Packet createInt32Vector(int[] data) {
-    throw new UnsupportedOperationException("Not implemented yet");
+    return Packet.create(nativeCreateInt32Vector(mediapipeGraph.getNativeHandle(), data));
   }
 
   public Packet createInt64Vector(long[] data) {
-    throw new UnsupportedOperationException("Not implemented yet");
+    return Packet.create(nativeCreateInt64Vector(mediapipeGraph.getNativeHandle(), data));
   }
 
   public Packet createFloat32Vector(float[] data) {
@@ -254,7 +254,7 @@ public class PacketCreator {
   }
 
   public Packet createFloat64Vector(double[] data) {
-    throw new UnsupportedOperationException("Not implemented yet");
+    return Packet.create(nativeCreateFloat64Vector(mediapipeGraph.getNativeHandle(), data));
   }
 
   public Packet createInt32Array(int[] data) {
@@ -546,7 +546,11 @@ public class PacketCreator {
 
   private native long nativeCreateFloat32Array(long context, float[] data);
 
+  private native long nativeCreateInt16Vector(long context, short[] data);
+  private native long nativeCreateInt32Vector(long context, int[] data);
+  private native long nativeCreateInt64Vector(long context, long[] data);
   private native long nativeCreateFloat32Vector(long context, float[] data);
+  private native long nativeCreateFloat64Vector(long context, double[] data);
 
   private native long nativeCreateStringFromByteArray(long context, byte[] data);
 
