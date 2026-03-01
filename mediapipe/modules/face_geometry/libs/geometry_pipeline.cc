@@ -124,12 +124,15 @@ class ScreenToMetricSpaceConverter {
                        const PerspectiveCameraFrustum& pcf,                 //
                        LandmarkList& metric_landmark_list,                  //
                        Eigen::Matrix4f& pose_transform_mat) const {
-    RET_CHECK_EQ(screen_landmark_list.landmark_size(),
+    RET_CHECK_GE(screen_landmark_list.landmark_size(),
                  canonical_metric_landmarks_.cols())
-        << "The number of landmarks doesn't match the number passed upon "
-           "initialization!";
-
-    Eigen::Matrix3Xf screen_landmarks;
+        << "The number of landmarks doesn't match the number passed upon landmark_size: " 
+        << screen_landmark_list.landmark_size() 
+        << " canonical_metric_landmarks_.cols: " 
+        << canonical_metric_landmarks_.cols() 
+        << " initialization!";
+    
+    Eigen::Matrix3Xf screen_landmarks = Eigen::Matrix3Xf(3, canonical_metric_landmarks_.cols());
     ConvertLandmarkListToEigenMatrix(screen_landmark_list, screen_landmarks);
 
     ProjectXY(pcf, screen_landmarks);
@@ -260,8 +263,7 @@ class ScreenToMetricSpaceConverter {
   static void ConvertLandmarkListToEigenMatrix(
       const NormalizedLandmarkList& landmark_list,
       Eigen::Matrix3Xf& eigen_matrix) {
-    eigen_matrix = Eigen::Matrix3Xf(3, landmark_list.landmark_size());
-    for (int i = 0; i < landmark_list.landmark_size(); ++i) {
+    for (int i = 0; i < eigen_matrix.cols(); ++i) {
       const auto& landmark = landmark_list.landmark(i);
       eigen_matrix(0, i) = landmark.x();
       eigen_matrix(1, i) = landmark.y();
