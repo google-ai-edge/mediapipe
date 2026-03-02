@@ -54,7 +54,7 @@ bazel build \
     --define MEDIAPIPE_DISABLE_GPU=1 \
     --define MEDIAPIPE_EDGE_TPU=usb \
     --linkopt=-l:libusb-1.0.so \
-    mediapipe/examples/coral:face_detection_tpu build
+    mediapipe/examples/coral:face_detection_tpu
 
 # For ARM64 (e.g. Coral Dev Board)
 bazel build \
@@ -65,7 +65,7 @@ bazel build \
     --define MEDIAPIPE_DISABLE_GPU=1 \
     --define MEDIAPIPE_EDGE_TPU=usb \
     --linkopt=-l:libusb-1.0.so \
-    mediapipe/examples/coral:face_detection_tpu build
+    mediapipe/examples/coral:face_detection_tpu
 ```
 
 Our Docker environment defines `${BAZEL_CPU}` value, so you can use it directly:
@@ -79,7 +79,7 @@ bazel build \
     --define MEDIAPIPE_DISABLE_GPU=1 \
     --define MEDIAPIPE_EDGE_TPU=usb \
     --linkopt=-l:libusb-1.0.so \
-    mediapipe/examples/coral:face_detection_tpu build
+    mediapipe/examples/coral:face_detection_tpu
 ```
 
 The command above is already defined in our `Makefile`, so you can simply run:
