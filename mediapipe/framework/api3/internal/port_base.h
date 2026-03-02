@@ -130,6 +130,23 @@ void SetPacketGenerator(V& v, G& generator) {
   v.generator_builder_ = &generator;
 }
 
+template <typename V, typename SC, typename CC, typename G>
+void SetSubgraphContextAndExtras(V& v, SC& subgraph_context, CC& contract,
+                                 G& graph_builder) {
+  ABSL_CHECK(v.graph_builder_ == nullptr);
+  ABSL_CHECK(v.subgraph_context_ == nullptr);
+  ABSL_CHECK(v.contract_ == nullptr);
+  v.graph_builder_ = &graph_builder;
+  v.subgraph_context_ = &subgraph_context;
+  v.contract_ = &contract;
+}
+
+template <typename V, typename SC>
+void SetSubgraphContext(V& v, SC& subgraph_context) {
+  ABSL_CHECK(v.subgraph_context_ == nullptr);
+  v.subgraph_context_ = &subgraph_context;
+}
+
 struct CalculatorContextHolder {
   mediapipe::CalculatorContext* context = nullptr;
 };
@@ -224,6 +241,39 @@ class Port<GraphSpecializer, FieldT> : public TagAndIndex {
 
   // Not owned, set by the framework.
   builder::GraphBuilder* graph_builder_ = nullptr;
+};
+
+template <typename FieldT>
+class Port<SubgraphSpecializer, FieldT> : public TagAndIndex {
+ public:
+  using Field = FieldT;
+  using Specializer = SubgraphSpecializer;
+  using TagAndIndex::TagAndIndex;
+
+ protected:
+  bool IsConnected() const {
+    if constexpr (std::is_same_v<FieldT, InputStreamField>) {
+      return HasTagAndIndex(contract_->Inputs(), *this);
+    } else if constexpr (std::is_same_v<FieldT, OutputStreamField>) {
+      return HasTagAndIndex(contract_->Outputs(), *this);
+    } else if constexpr (std::is_same_v<FieldT, InputSidePacketField>) {
+      return HasTagAndIndex(contract_->InputSidePackets(), *this);
+    } else if constexpr (std::is_same_v<FieldT, OutputSidePacketField>) {
+      return HasTagAndIndex(contract_->OutputSidePackets(), *this);
+    } else {
+      static_assert(dependent_false<FieldT>::value, "Unexpected field type.");
+    }
+  }
+
+  template <typename V, typename SC, typename CC, typename G>
+  friend void SetSubgraphContextAndExtras(V& v, SC& subgraph_context,
+                                          CC& calculator_contract,
+                                          G& graph_builder);
+
+  // Not owned, set by the framework.
+  builder::GraphBuilder* graph_builder_ = nullptr;
+  mediapipe::SubgraphContext* subgraph_context_ = nullptr;
+  mediapipe::CalculatorContract* contract_ = nullptr;
 };
 
 template <typename FieldT>
@@ -358,6 +408,43 @@ class RepeatedBase<GraphNodeSpecializer, FieldT> : public TagAndIndex {
 
   // Not owned, set by the framework.
   builder::NodeBuilder* node_builder_ = nullptr;
+};
+
+template <typename FieldT>
+class RepeatedBase<SubgraphSpecializer, FieldT> : public TagAndIndex {
+ public:
+  using TagAndIndex::TagAndIndex;
+
+  int Count() const {
+    ABSL_CHECK(contract_ != nullptr);
+    if constexpr (std::is_same_v<FieldT, InputStreamField>) {
+      return contract_->Inputs().NumEntries(Tag());
+    } else if constexpr (std::is_same_v<FieldT, OutputStreamField>) {
+      return contract_->Outputs().NumEntries(Tag());
+    } else if constexpr (std::is_same_v<FieldT, InputSidePacketField>) {
+      return contract_->InputSidePackets().NumEntries(Tag());
+    } else if constexpr (std::is_same_v<FieldT, OutputSidePacketField>) {
+      return contract_->OutputSidePackets().NumEntries(Tag());
+    } else {
+      static_assert(dependent_false<FieldT>::value, "Unexpected field type.");
+    }
+  }
+
+ protected:
+  void InitPort(Port<SubgraphSpecializer, FieldT>& p) const {
+    SetSubgraphContextAndExtras(p, *subgraph_context_, *contract_,
+                                *graph_builder_);
+  }
+
+  template <typename V, typename SC, typename CC, typename G>
+  friend void SetSubgraphContextAndExtras(V& v, SC& subgraph_context,
+                                          CC& calculator_contract,
+                                          G& graph_builder);
+
+  // Not owned, set by the framework.
+  builder::GraphBuilder* graph_builder_ = nullptr;
+  mediapipe::SubgraphContext* subgraph_context_ = nullptr;
+  mediapipe::CalculatorContract* contract_ = nullptr;
 };
 
 template <typename P, typename... Vs>
