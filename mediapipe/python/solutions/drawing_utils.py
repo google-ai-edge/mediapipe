@@ -18,7 +18,6 @@ import math
 from typing import List, Mapping, Optional, Tuple, Union
 
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
 
 from mediapipe.framework.formats import detection_pb2
@@ -281,6 +280,11 @@ def plot_landmarks(landmark_list: landmark_pb2.NormalizedLandmarkList,
   """
   if not landmark_list:
     return
+
+  # Matplotlib is used only here: import it lazily to improve the import
+  # time of mediapipe for users not calling this function
+  import matplotlib.pyplot as plt
+
   plt.figure(figsize=(10, 10))
   ax = plt.axes(projection='3d')
   ax.view_init(elev=elevation, azim=azimuth)
