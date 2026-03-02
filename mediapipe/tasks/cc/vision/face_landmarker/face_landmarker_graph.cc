@@ -366,6 +366,14 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
               .face_landmarks_detector_graph_options()
               .has_face_blendshapes_graph_options()));
     }
+    // If the has_face_blendshapes_graph_options() value in FaceLandmarksDetectorGraphOptions is true,
+    // the blendshape graph is created. However, FaceLandmarkerGraphOptions includes face_blendshapes_graph_options
+    // by default, which results in the creation of the blendshape graph regardless.
+    // Therefore, if output_blendshapes is set to 'false', face_blendshapes_graph_options need to be cleared.
+    if (!output_blendshapes) {
+        sc->MutableOptions<FaceLandmarkerGraphOptions>()
+            ->mutable_face_landmarks_detector_graph_options()->clear_face_blendshapes_graph_options();
+    }
     std::optional<Source<NormalizedRect>> norm_rect_in;
     if (HasInput(sc->OriginalNode(), kNormRectTag)) {
       norm_rect_in = graph.In(kNormRectTag).Cast<NormalizedRect>();
