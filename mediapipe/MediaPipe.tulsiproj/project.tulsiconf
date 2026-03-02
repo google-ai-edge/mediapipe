@@ -9,6 +9,7 @@
   "packages" : [
     "",
     "mediapipe",
+    "mediapipe/examples/facial_search/ios",
     "mediapipe/examples/ios",
     "mediapipe/examples/ios/facedetectioncpu",
     "mediapipe/examples/ios/facedetectiongpu",
