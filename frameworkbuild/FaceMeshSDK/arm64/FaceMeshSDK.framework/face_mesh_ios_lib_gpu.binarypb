@@ -1,0 +1,5 @@
+
+€ConstantSidePacketCalculator2PACKET:with_attentionBI
+Atype.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions
+
+¬FaceLandmarkFrontGpuIMAGE:input_video"LANDMARKS:multi_face_landmarks"-ROIS_FROM_LANDMARKS:face_rects_from_landmarks*NUM_FACES:num_faces*WITH_ATTENTION:with_attentionRinput_videozmulti_face_landmarks‚	num_faces
