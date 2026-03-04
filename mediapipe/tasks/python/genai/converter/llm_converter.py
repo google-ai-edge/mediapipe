@@ -297,6 +297,14 @@ class _LlmConverter:
             % action.tensor_value.dtype
         )
       if action.is_quantized:
+        # TODO: b/489825801 - temporary hack until we have proper int2
+        # serialization.
+        if action.tensor_value.dtype == jnp.int2:
+          print(
+              'WARNING: Promoting int2 tensor to int4 for packing ease: ',
+              action.target_name,
+          )
+          action.tensor_value = action.tensor_value.astype(jnp.int4)
         pack = action.tensor_value.dtype == jnp.int4
         if qvalue_suffix in action.target_name:
           target_name = action.target_name[: -len(qvalue_suffix)]
