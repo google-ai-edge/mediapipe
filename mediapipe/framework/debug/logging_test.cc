@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "HalideBuffer.h"
@@ -16,6 +17,7 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -516,6 +518,23 @@ TEST_F(LoggingTest, LogImageRGB) {
 ********+------------.....:..... =================================================::::::::::::::::::-::---------#%######
 ******=---:::-:::--::: . .:..... :-============================================-:::::::::::::::::--:-::-----:-:----=+###
 ****=:::::::::::::::-:-:. .:..... --============================---::::::::::.::..:::::::::::::::::::::-::::::-:-:::----)"));
+}
+
+TEST_F(LoggingTest, LogImageWithImage) {
+  std::string path =
+      file::JoinPath(GetTestRootDir(), kTestDataPath, kTestImageFilename);
+  MP_ASSERT_OK_AND_ASSIGN(auto image_frame,
+                          LoadTestImage(path, ImageFormat::SRGB));
+  Image image(std::move(image_frame));
+
+  LogImage(image);
+
+  EXPECT_THAT(log_lines(), HasSubstr("image[600 600 3]"));
+  EXPECT_THAT(log_lines(), HasConsecutiveLines(R"(
+%%%%%%%%%%%%%%%%%%%%%%%%%%###+::....  ........ . . .                    ... .. . ..:.:=*=+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%*-:-..:....  ..          ..      .           .          ...:::-==**%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%#*+-+-......    .                  . .. ..        .           ..::-=--=--+#%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%+*==::.. ..                                        .          ...:.....:+#%%%%%%%%%%%%%%%%%%%%%%%%)"));
 }
 
 TEST_F(LoggingTest, LogImageRGBAColor) {
