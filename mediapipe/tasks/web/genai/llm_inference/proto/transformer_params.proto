@@ -17,7 +17,7 @@ syntax = "proto3";
 package odml.infra.proto;
 
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
-// Next ID: 51
+// Next ID: 52
 message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
@@ -52,7 +52,7 @@ message TransformerParameters {
   // https://arxiv.org/pdf/2305.13245.pdf for details.
   int32 num_kv_heads = 9;
 
-  reserved 50;
+  reserved 50, 51;
 
   // Different types of attention mask type.
   enum AttentionMaskType {

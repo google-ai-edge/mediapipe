@@ -560,7 +560,6 @@ class _LlmConverter:
         image_adapter_file=config.image_adapter_file,
         submodel_type=config.submodel_type,
         use_dynamic_ple=config.use_dynamic_ple,
-        # Fow now, any pre-quantized model is assumed to require SRQ support.
         apply_srq=config.is_quantized,
         block_size=config.block_size,
     )
