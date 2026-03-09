@@ -25,6 +25,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/tasks/cc/audio/audio_classifier/proto/audio_classifier_graph_options.pb.h"
 #include "mediapipe/tasks/cc/audio/core/audio_task_api_factory.h"
+#include "mediapipe/tasks/cc/audio/core/running_mode.h"
 #include "mediapipe/tasks/cc/components/containers/classification_result.h"
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 #include "mediapipe/tasks/cc/components/processors/classifier_options.h"
@@ -136,9 +137,11 @@ absl::StatusOr<std::unique_ptr<AudioClassifier>> AudioClassifier::Create(
   }
   return core::AudioTaskApiFactory::Create<AudioClassifier,
                                            proto::AudioClassifierGraphOptions>(
-      CreateGraphConfig(std::move(options_proto)), kTaskName,
-      std::move(options->base_options.op_resolver), options->running_mode,
-      std::move(packets_callback));
+      {.config = CreateGraphConfig(std::move(options_proto)),
+       .task_name = kTaskName,
+       .task_running_mode = core::GetRunningModeName(options->running_mode),
+       .op_resolver = std::move(options->base_options.op_resolver),
+       .packets_callback = std::move(packets_callback)});
 }
 
 absl::StatusOr<std::vector<AudioClassifierResult>> AudioClassifier::Classify(

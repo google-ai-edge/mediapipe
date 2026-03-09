@@ -39,6 +39,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_classifier_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_recognizer_graph_options.pb.h"
@@ -207,13 +208,15 @@ absl::StatusOr<std::unique_ptr<GestureRecognizer>> GestureRecognizer::Create(
   }
   return core::VisionTaskApiFactory::Create<GestureRecognizer,
                                             GestureRecognizerGraphOptionsProto>(
-      CreateGraphConfig(
-          std::move(options_proto),
-          options->running_mode == core::RunningMode::LIVE_STREAM),
-      kTaskName, std::move(options->base_options.op_resolver),
-      options->running_mode, std::move(packets_callback),
-      /*disable_default_service=*/
-      options->base_options.disable_default_service);
+      {.config = CreateGraphConfig(
+           std::move(options_proto),
+           options->running_mode == core::RunningMode::LIVE_STREAM),
+       .task_name = kTaskName,
+       .task_running_mode = core::GetRunningModeName(options->running_mode),
+       .op_resolver = std::move(options->base_options.op_resolver),
+       .packets_callback = std::move(packets_callback),
+       .disable_default_service =
+           options->base_options.disable_default_service});
 }
 
 absl::StatusOr<GestureRecognizerResult> GestureRecognizer::Recognize(

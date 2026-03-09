@@ -30,6 +30,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/task_api_factory.h"
+#include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/text/text_embedder/proto/text_embedder_graph_options.pb.h"
 
 namespace mediapipe::tasks::text::text_embedder {
@@ -84,9 +85,11 @@ absl::StatusOr<std::unique_ptr<TextEmbedder>> TextEmbedder::Create(
       ConvertTextEmbedderOptionsToProto(options.get());
   return core::TaskApiFactory::Create<TextEmbedder,
                                       proto::TextEmbedderGraphOptions>(
-      CreateGraphConfig(std::move(options_proto)),
-      std::move(options->base_options.op_resolver), kTaskName,
-      core::TaskApiFactory::kUnknownRunningMode);
+      core::TaskRunnerOptions{
+          .config = CreateGraphConfig(std::move(options_proto)),
+          .task_name = kTaskName,
+          .task_running_mode = core::TaskApiFactory::kUnknownRunningMode,
+          .op_resolver = std::move(options->base_options.op_resolver)});
 }
 
 absl::StatusOr<TextEmbedderResult> TextEmbedder::Embed(absl::string_view text) {

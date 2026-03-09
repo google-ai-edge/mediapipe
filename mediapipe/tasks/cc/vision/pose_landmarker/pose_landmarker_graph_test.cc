@@ -138,8 +138,11 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreatePoseLandmarkerGraphTaskRunner(
       graph[Output<std::vector<Image>>(kSegmentationMaskTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(), kTaskName, kRunningMode,
-      absl::make_unique<tasks::core::MediaPipeBuiltinOpResolver>());
+      {.config = graph.GetConfig(),
+       .task_name = kTaskName,
+       .task_running_mode = kRunningMode,
+       .op_resolver =
+           absl::make_unique<tasks::core::MediaPipeBuiltinOpResolver>()});
 }
 
 // Helper function to construct NormalizeRect proto.

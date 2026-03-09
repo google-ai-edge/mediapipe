@@ -130,8 +130,10 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateSingleFaceLandmarksTaskRunner(
           .SetName(kFaceRectNextFrameName) >>
       graph[Output<NormalizedRect>(kFaceRectNextFrameTag)];
   return TaskRunner::Create(
-      graph.GetConfig(), "face_landmarks_detector_test", "image",
-      absl::make_unique<core::MediaPipeBuiltinOpResolver>());
+      {.config = graph.GetConfig(),
+       .task_name = "face_landmarks_detector_test",
+       .task_running_mode = "image",
+       .op_resolver = absl::make_unique<core::MediaPipeBuiltinOpResolver>()});
 }
 
 // Helper function to create a Multi Face Landmark TaskRunner.
@@ -179,8 +181,10 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateMultiFaceLandmarksTaskRunner(
   }
 
   return TaskRunner::Create(
-      graph.GetConfig(), "face_landmarks_detector_test", "image",
-      absl::make_unique<core::MediaPipeBuiltinOpResolver>());
+      {.config = graph.GetConfig(),
+       .task_name = "face_landmarks_detector_test",
+       .task_running_mode = "image",
+       .op_resolver = absl::make_unique<core::MediaPipeBuiltinOpResolver>()});
 }
 
 NormalizedLandmarkList GetExpectedLandmarkList(absl::string_view filename) {

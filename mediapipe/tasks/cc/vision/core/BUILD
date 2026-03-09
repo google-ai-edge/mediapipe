@@ -22,6 +22,11 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "running_mode",
     hdrs = ["running_mode.h"],
+    deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 cc_library(

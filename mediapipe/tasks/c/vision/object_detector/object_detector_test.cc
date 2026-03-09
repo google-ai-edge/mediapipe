@@ -261,6 +261,7 @@ TEST(ObjectDetectorTest, InvalidArgumentHandling) {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = nullptr},
+      .running_mode = RunningMode::IMAGE,
   };
 
   char* error_msg = nullptr;

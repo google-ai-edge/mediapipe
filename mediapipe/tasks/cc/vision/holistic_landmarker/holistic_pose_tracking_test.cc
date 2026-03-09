@@ -152,8 +152,10 @@ absl::StatusOr<std::unique_ptr<tasks::core::TaskRunner>> CreateTaskRunner() {
   core::FixGraphBackEdges(config);
 
   return TaskRunner::Create(
-      config, "holistic_pose_tracking_test", "image",
-      std::make_unique<core::MediaPipeBuiltinOpResolver>());
+      {.config = config,
+       .task_name = "holistic_pose_tracking_test",
+       .task_running_mode = "image",
+       .op_resolver = std::make_unique<core::MediaPipeBuiltinOpResolver>()});
 }
 
 // Remove fields not to be checked in the result, since the model

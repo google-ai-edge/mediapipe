@@ -134,8 +134,10 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
       graph[Output<std::vector<NormalizedRect>>(kHandRectsTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(), "hand_detector_test", "image",
-      std::make_unique<core::MediaPipeBuiltinOpResolver>());
+      {.config = graph.GetConfig(),
+       .task_name = "hand_detector_test",
+       .task_running_mode = "image",
+       .op_resolver = std::make_unique<core::MediaPipeBuiltinOpResolver>()});
 }
 
 HandDetectorResult GetExpectedHandDetectorResult(absl::string_view file_name) {

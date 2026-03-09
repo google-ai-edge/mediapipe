@@ -144,8 +144,11 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateSinglePoseTaskRunner(
       graph[Output<NormalizedRect>(kPoseRectNextFrameTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(), kTaskName, kRunningMode,
-      absl::make_unique<tflite::ops::builtin::BuiltinOpResolver>());
+      {.config = graph.GetConfig(),
+       .task_name = kTaskName,
+       .task_running_mode = kRunningMode,
+       .op_resolver =
+           absl::make_unique<tflite::ops::builtin::BuiltinOpResolver>()});
 }
 
 // Helper function to create a Multi Pose Landmark TaskRunner.
@@ -190,8 +193,11 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateMultiPoseTaskRunner(
       graph[Output<std::vector<NormalizedRect>>(kPoseRectsNextFrameTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(), kTaskName, kRunningMode,
-      absl::make_unique<tflite::ops::builtin::BuiltinOpResolver>());
+      {.config = graph.GetConfig(),
+       .task_name = kTaskName,
+       .task_running_mode = kRunningMode,
+       .op_resolver =
+           absl::make_unique<tflite::ops::builtin::BuiltinOpResolver>()});
 }
 
 NormalizedLandmarkList GetExpectedLandmarkList(absl::string_view filename) {

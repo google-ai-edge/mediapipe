@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
+#import <Foundation/Foundation.h>
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 
@@ -50,11 +51,19 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 
   self = [super init];
   if (self) {
-    auto taskRunnerResult =
-        TaskRunnerCpp::Create(std::move(graphConfig.value()), taskInfo.taskName.UTF8String,
-                                taskInfo.runningMode.UTF8String,
-                                absl::make_unique<MediaPipeBuiltinOpResolver>(),
-                                std::move(packetsCallback));
+    NSString *appId = [[NSBundle mainBundle] bundleIdentifier];
+    NSString *appVersion =
+        [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+
+    mediapipe::tasks::core::TaskRunnerOptions options = {
+        .config = std::move(graphConfig.value()),
+        .task_name = taskInfo.taskName.UTF8String,
+        .task_running_mode = taskInfo.runningMode.UTF8String,
+        .op_resolver = absl::make_unique<MediaPipeBuiltinOpResolver>(),
+        .packets_callback = std::move(packetsCallback),
+        .app_id = appId ? appId.UTF8String : "",
+        .app_version = appVersion ? appVersion.UTF8String : ""};
+    auto taskRunnerResult = TaskRunnerCpp::Create(std::move(options));
 
     if (![MPPCommonUtils checkCppError:taskRunnerResult.status() toError:error]) {
       return nil;

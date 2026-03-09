@@ -332,8 +332,10 @@ absl::StatusOr<std::unique_ptr<tasks::core::TaskRunner>> CreateTaskRunner(
   core::FixGraphBackEdges(config);
 
   return TaskRunner::Create(
-      config, "holistic_landmarker_test", "image",
-      std::make_unique<core::MediaPipeBuiltinOpResolver>());
+      {.config = config,
+       .task_name = "holistic_landmarker_test",
+       .task_running_mode = "image",
+       .op_resolver = std::make_unique<core::MediaPipeBuiltinOpResolver>()});
 }
 
 template <typename T>

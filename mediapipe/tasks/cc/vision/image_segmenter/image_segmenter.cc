@@ -197,14 +197,16 @@ absl::StatusOr<std::unique_ptr<ImageSegmenter>> ImageSegmenter::Create(
   auto image_segmenter =
       core::VisionTaskApiFactory::Create<ImageSegmenter,
                                          ImageSegmenterGraphOptionsProto>(
-          CreateGraphConfig(
-              std::move(options_proto), options->output_confidence_masks,
-              options->output_category_mask,
-              options->running_mode == core::RunningMode::LIVE_STREAM),
-          kTaskName, std::move(options->base_options.op_resolver),
-          options->running_mode, std::move(packets_callback),
-          /*disable_default_service=*/
-          options->base_options.disable_default_service);
+          {.config = CreateGraphConfig(
+               std::move(options_proto), options->output_confidence_masks,
+               options->output_category_mask,
+               options->running_mode == core::RunningMode::LIVE_STREAM),
+           .task_name = kTaskName,
+           .task_running_mode = core::GetRunningModeName(options->running_mode),
+           .op_resolver = std::move(options->base_options.op_resolver),
+           .packets_callback = std::move(packets_callback),
+           .disable_default_service =
+               options->base_options.disable_default_service});
   if (!image_segmenter.ok()) {
     return image_segmenter.status();
   }

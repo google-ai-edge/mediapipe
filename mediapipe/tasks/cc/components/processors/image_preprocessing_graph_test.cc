@@ -123,8 +123,9 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
   preprocessing.Out(kLetterboxPaddingTag).SetName(kLetterboxPaddingName) >>
       graph[Output<std::array<float, 4>>(kLetterboxPaddingTag)];
 
-  return TaskRunner::Create(graph.GetConfig(), "image_preprocessor_test",
-                            "image");
+  return TaskRunner::Create({.config = graph.GetConfig(),
+                             .task_name = "image_preprocessor_test",
+                             .task_running_mode = "image"});
 }
 
 class ConfigureTest : public tflite::testing::Test {};

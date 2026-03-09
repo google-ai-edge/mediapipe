@@ -18,6 +18,10 @@ limitations under the License.
 
 #include <string>
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
+
 namespace mediapipe {
 namespace tasks {
 namespace audio {
@@ -40,6 +44,18 @@ inline std::string GetRunningModeName(RunningMode mode) {
       return "audio stream mode";
     default:
       return "unknown mode";
+  }
+}
+
+inline absl::StatusOr<RunningMode> GetRunningModeFromString(
+    absl::string_view mode_name) {
+  if (mode_name == "audio clips mode") {
+    return AUDIO_CLIPS;
+  } else if (mode_name == "audio stream mode") {
+    return AUDIO_STREAM;
+  } else {
+    return absl::InvalidArgumentError(
+        absl::StrCat("Unsupported running mode: ", mode_name));
   }
 }
 
