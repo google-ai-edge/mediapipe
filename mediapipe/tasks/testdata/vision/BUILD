@@ -250,6 +250,7 @@ filegroup(
         "portrait_expected_detection.pbtxt",
         "portrait_expected_face_geometry.pbtxt",
         "portrait_expected_face_landmarks.pbtxt",
+        "portrait_expected_full_range_detection.pbtxt",
         "portrait_rotated_expected_detection.pbtxt",
         "pose_expected_detection.pbtxt",
         "pose_expected_expanded_rect.pbtxt",
