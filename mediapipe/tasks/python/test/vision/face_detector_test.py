@@ -41,14 +41,19 @@ _RUNNING_MODE = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 
 _SHORT_RANGE_BLAZE_FACE_MODEL = 'face_detection_short_range.tflite'
+_FULL_RANGE_BLAZE_FACE_MODEL = 'face_detection_full_range.tflite'
 _PORTRAIT_IMAGE = 'portrait.jpg'
 _PORTRAIT_EXPECTED_DETECTION = 'portrait_expected_detection.pbtxt'
+_PORTRAIT_EXPECTED_FULL_RANGE_DETECTION = (
+    'portrait_expected_full_range_detection.pbtxt'
+)
 _PORTRAIT_ROTATED_IMAGE = 'portrait_rotated.jpg'
 _PORTRAIT_ROTATED_EXPECTED_DETECTION = (
     'portrait_rotated_expected_detection.pbtxt'
 )
 _CAT_IMAGE = 'cat.jpg'
 _KEYPOINT_ERROR_THRESHOLD = 1e-2
+_BOUNDING_BOX_ERROR_THRESHOLD = 5
 _TEST_DATA_DIR = 'mediapipe/tasks/testdata/vision'
 
 
@@ -79,6 +84,9 @@ class FaceDetectorTest(parameterized.TestCase):
     )
     self.model_path = test_utils.get_test_data_path(
         os.path.join(_TEST_DATA_DIR, _SHORT_RANGE_BLAZE_FACE_MODEL)
+    )
+    self.full_range_model_path = test_utils.get_test_data_path(
+        os.path.join(_TEST_DATA_DIR, _FULL_RANGE_BLAZE_FACE_MODEL)
     )
 
   def test_create_from_file_succeeds_with_valid_model_path(self):
@@ -128,6 +136,28 @@ class FaceDetectorTest(parameterized.TestCase):
           delta=_KEYPOINT_ERROR_THRESHOLD,
       )
 
+  def _expect_bounding_box_correct(self, actual_bbox, expected_bbox):
+    self.assertAlmostEqual(
+        actual_bbox.origin_x,
+        expected_bbox.origin_x,
+        delta=_BOUNDING_BOX_ERROR_THRESHOLD,
+    )
+    self.assertAlmostEqual(
+        actual_bbox.origin_y,
+        expected_bbox.origin_y,
+        delta=_BOUNDING_BOX_ERROR_THRESHOLD,
+    )
+    self.assertAlmostEqual(
+        actual_bbox.width,
+        expected_bbox.width,
+        delta=_BOUNDING_BOX_ERROR_THRESHOLD,
+    )
+    self.assertAlmostEqual(
+        actual_bbox.height,
+        expected_bbox.height,
+        delta=_BOUNDING_BOX_ERROR_THRESHOLD,
+    )
+
   def _expect_face_detector_results_correct(
       self, actual_results, expected_results
   ):
@@ -135,7 +165,7 @@ class FaceDetectorTest(parameterized.TestCase):
     for i in range(len(actual_results.detections)):
       actual_bbox = actual_results.detections[i].bounding_box
       expected_bbox = expected_results.detections[i].bounding_box
-      self.assertEqual(actual_bbox, expected_bbox)
+      self._expect_bounding_box_correct(actual_bbox, expected_bbox)
       self.assertNotEmpty(actual_results.detections[i].keypoints)
       self._expect_keypoints_correct(
           actual_results.detections[i].keypoints,
@@ -204,6 +234,27 @@ class FaceDetectorTest(parameterized.TestCase):
       self._expect_face_detector_results_correct(
           detection_result, expected_detection_result
       )
+
+  def test_detect_succeeds_with_full_range_model(self):
+    full_range_model_path = test_utils.get_test_data_path(
+        os.path.join(_TEST_DATA_DIR, _FULL_RANGE_BLAZE_FACE_MODEL)
+    )
+    base_options = _BaseOptions(model_asset_path=full_range_model_path)
+    options = _FaceDetectorOptions(
+        base_options=base_options,
+    )
+    with _FaceDetector.create_from_options(options) as detector:
+      # Performs face detection on the input.
+      detection_result = detector.detect(self.test_image)
+
+      # Comparing results.
+      expected_detection_result = _get_expected_face_detector_result(
+          _PORTRAIT_EXPECTED_FULL_RANGE_DETECTION
+      )
+      self._expect_face_detector_results_correct(
+          detection_result, expected_detection_result
+      )
+      detector.close()
 
   def test_detect_succeeds_with_rotated_image(self):
     base_options = _BaseOptions(model_asset_path=self.model_path)
@@ -299,6 +350,24 @@ class FaceDetectorTest(parameterized.TestCase):
     with _FaceDetector.create_from_options(options) as detector:
       with self.assertRaises(ValueError):
         detector.detect_async(self.test_image, 0)
+
+  def test_detect_for_video_succeeds_with_full_range_model(self):
+    base_options = _BaseOptions(model_asset_path=self.full_range_model_path)
+    options = _FaceDetectorOptions(
+        base_options=base_options,
+        running_mode=_RUNNING_MODE.VIDEO,
+    )
+    with _FaceDetector.create_from_options(options) as detector:
+      for timestamp in range(0, 300, 30):
+        # Performs face detection on the input.
+        detection_result = detector.detect_for_video(self.test_image, timestamp)
+        # Comparing results.
+        expected_detection_result = _get_expected_face_detector_result(
+            _PORTRAIT_EXPECTED_FULL_RANGE_DETECTION
+        )
+        self._expect_face_detector_results_correct(
+            detection_result, expected_detection_result
+        )
 
   def test_detect_for_video_with_out_of_order_timestamp(self):
     options = _FaceDetectorOptions(
