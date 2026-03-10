@@ -17,7 +17,7 @@ syntax = "proto3";
 package odml.infra.proto;
 
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
-// Next ID: 52
+// Next ID: 53
 message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
@@ -271,6 +271,7 @@ message TransformerParameters {
   // models, like 4B+). Thus, to ensure correct behavior for these models when
   // not forcing fp32 precision, we allow for applying a special workaround.
   optional bool gemma3_bfloat16_fix = 36;
+  reserved 52;
 
   // Altup configs.
   message AltupConfig {
