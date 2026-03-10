@@ -23,6 +23,7 @@ limitations under the License.
 #include <vector>
 
 #include "absl/memory/memory.h"
+#include "mediapipe/tasks/cc/core/host_environment.h"
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
@@ -107,6 +108,16 @@ struct BaseOptions {
   // Recommendation: do not use unless you have to (for example, default
   // initialization has side effects)
   bool disable_default_service = false;
+
+  // The environment on which the task is running, e.g., iOS, Android, Python.
+  HostEnvironment host_environment = HOST_ENVIRONMENT_UNKNOWN;
+
+  // The OS on which the task is running.
+  HostSystem host_system = HOST_SYSTEM_UNKNOWN;
+
+  // The version of the host environment, e.g., Python or Android version.
+  // Can be left empty string if unknown.
+  std::string host_version;
 };
 
 // Converts a BaseOptions to a BaseOptionsProto.

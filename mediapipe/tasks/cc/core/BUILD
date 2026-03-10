@@ -25,6 +25,7 @@ cc_library(
     srcs = ["base_options.cc"],
     hdrs = ["base_options.h"],
     deps = [
+        ":host_environment",
         ":mediapipe_builtin_op_resolver",
         "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
         "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
@@ -35,6 +36,11 @@ cc_library(
         "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
+)
+
+cc_library(
+    name = "host_environment",
+    hdrs = ["host_environment.h"],
 )
 
 cc_test(
@@ -261,6 +267,7 @@ cc_library_with_tflite(
         ":model_resources_calculator",
     ],
     deps = [
+        ":host_environment",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:executor",

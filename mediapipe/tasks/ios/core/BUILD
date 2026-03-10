@@ -104,6 +104,7 @@ objc_library(
     deps = [
         ":MPPTaskInfo",
         "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/tasks/cc/core:host_environment",
         "//mediapipe/tasks/cc/core:mediapipe_builtin_op_resolver",
         "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",

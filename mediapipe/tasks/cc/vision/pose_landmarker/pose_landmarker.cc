@@ -190,7 +190,10 @@ absl::StatusOr<std::unique_ptr<PoseLandmarker>> PoseLandmarker::Create(
            .op_resolver = std::move(options->base_options.op_resolver),
            .packets_callback = std::move(packets_callback),
            .disable_default_service =
-               options->base_options.disable_default_service})));
+               options->base_options.disable_default_service,
+           .host_environment = options->base_options.host_environment,
+           .host_system = options->base_options.host_system,
+           .host_version = options->base_options.host_version})));
 
   pose_landmarker->output_segmentation_masks_ =
       options->output_segmentation_masks;

@@ -20,8 +20,10 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
+#include "mediapipe/tasks/cc/core/host_environment.h"
 
 namespace mediapipe::tasks::c::core {
+namespace {
 
 mediapipe::tasks::core::BaseOptions::Delegate CppConvertToDelegate(
     const Delegate& in) {
@@ -35,6 +37,36 @@ mediapipe::tasks::core::BaseOptions::Delegate CppConvertToDelegate(
   }
 }
 
+mediapipe::tasks::core::HostEnvironment CppConvertToHostEnvironment(
+    const HostEnvironment& in) {
+  switch (in) {
+    case HOST_ENVIRONMENT_ANDROID:
+      return mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_ANDROID;
+    case HOST_ENVIRONMENT_IOS:
+      return mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_IOS;
+    case HOST_ENVIRONMENT_PYTHON:
+      return mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_PYTHON;
+    default:
+      return mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_UNKNOWN;
+  }
+}
+
+mediapipe::tasks::core::HostSystem CppConvertToHostSystem(
+    const HostSystem& in) {
+  switch (in) {
+    case HOST_SYSTEM_LINUX:
+      return mediapipe::tasks::core::HostSystem::HOST_SYSTEM_LINUX;
+    case HOST_SYSTEM_MAC:
+      return mediapipe::tasks::core::HostSystem::HOST_SYSTEM_MAC;
+    case HOST_SYSTEM_WINDOWS:
+      return mediapipe::tasks::core::HostSystem::HOST_SYSTEM_WINDOWS;
+    default:
+      return mediapipe::tasks::core::HostSystem::HOST_SYSTEM_UNKNOWN;
+  }
+}
+
+}  // namespace
+
 void CppConvertToBaseOptions(const BaseOptions& in,
                              mediapipe::tasks::core::BaseOptions* out) {
   out->model_asset_buffer =
@@ -46,6 +78,11 @@ void CppConvertToBaseOptions(const BaseOptions& in,
   out->model_asset_path =
       in.model_asset_path ? std::string(in.model_asset_path) : "";
   out->delegate = CppConvertToDelegate(in.delegate);
+  out->host_environment = CppConvertToHostEnvironment(in.host_environment);
+  out->host_system = CppConvertToHostSystem(in.host_system);
+  if (in.host_version) {
+    out->host_version = in.host_version;
+  }
 }
 
 }  // namespace mediapipe::tasks::c::core

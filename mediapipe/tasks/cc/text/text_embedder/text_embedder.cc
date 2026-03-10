@@ -89,7 +89,10 @@ absl::StatusOr<std::unique_ptr<TextEmbedder>> TextEmbedder::Create(
           .config = CreateGraphConfig(std::move(options_proto)),
           .task_name = kTaskName,
           .task_running_mode = core::TaskApiFactory::kUnknownRunningMode,
-          .op_resolver = std::move(options->base_options.op_resolver)});
+          .op_resolver = std::move(options->base_options.op_resolver),
+          .host_environment = options->base_options.host_environment,
+          .host_system = options->base_options.host_system,
+          .host_version = options->base_options.host_version});
 }
 
 absl::StatusOr<TextEmbedderResult> TextEmbedder::Embed(absl::string_view text) {

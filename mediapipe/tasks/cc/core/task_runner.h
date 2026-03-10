@@ -36,6 +36,7 @@ limitations under the License.
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/executor.h"
+#include "mediapipe/tasks/cc/core/host_environment.h"
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
@@ -70,6 +71,9 @@ struct TaskRunnerOptions {
 #endif
   std::optional<ErrorFn> error_fn = std::nullopt;
   bool disable_default_service = false;
+  core::HostEnvironment host_environment =
+      core::HostEnvironment::HOST_ENVIRONMENT_UNKNOWN;
+  core::HostSystem host_system = core::HostSystem::HOST_SYSTEM_UNKNOWN;
   std::string host_version = "";
   std::string app_id = "";
   std::string app_version = "";

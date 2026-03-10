@@ -100,8 +100,7 @@ absl::StatusOr<PacketMap> GenerateOutputPacketMap(
 /* static */
 absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
     TaskRunnerOptions options) {
-  std::unique_ptr<logging::TasksLogger> tasks_logger =
-      logging::TasksDummyLogger::Create();
+  auto tasks_logger = logging::TasksDummyLogger::Create();
   auto task_runner = absl::WrapUnique(
       new TaskRunner(options.packets_callback, std::move(tasks_logger)));
   MP_RETURN_IF_ERROR(task_runner->Initialize(
