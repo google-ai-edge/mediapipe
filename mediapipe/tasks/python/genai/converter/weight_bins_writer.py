@@ -71,6 +71,11 @@ class WeightBinsWriter(converter_base.ModelWriterBase):
       output = value[0]
       if use_fake_values:
         output.fill(0)
+      if output.dtype == jnp.int2:
+        print('saving int2 weight: ', var_name)
+        output = output.astype(jnp.int8)
+        output = np.expand_dims(np.ravel(output), axis=-1)
+        output = quantization_util.pack_2bit_into_int8(output, 0)
       if value[1]:
         # Squeeze the tensor to make sure it is a 1D array for packing.
         output = np.expand_dims(np.ravel(output), axis=-1)
