@@ -131,9 +131,6 @@ class ConversionConfig(object):
     use_mse_quant: Whether to use MSE quantization for recomputing scales.
     block_size: Default of 0 is off. Can also be 32 or 128, for using blockwise
       Q4_0 compression on the models and layers which support this.
-    enable_int2_serialization: Whether to allow int2 weights to be serialized as
-      int2. When false, they'll be promoted to int4 weights instead.
-      TODO: b/489825801 - remove when numerical differences are resolved.
   """
 
   def __init__(
@@ -165,7 +162,6 @@ class ConversionConfig(object):
       use_fake_weights: bool = False,
       use_dynamic_ple: bool = True,
       use_mse_quant: bool = False,
-      enable_int2_serialization: bool = True,
   ):
     self.input_ckpt = input_ckpt
     self.ckpt_format = ckpt_format
@@ -191,7 +187,6 @@ class ConversionConfig(object):
     self.use_fake_weights = use_fake_weights
     self.use_dynamic_ple = use_dynamic_ple
     self.use_mse_quant = use_mse_quant
-    self.enable_int2_serialization = enable_int2_serialization
     if output_tflite_file:
       parent_dir = os.path.dirname(output_tflite_file)
       if not os.path.isdir(parent_dir):
@@ -259,7 +254,6 @@ class _LlmConverter:
       is_symmetric: bool,
       use_mse_quant: bool = False,
       block_size: int = 0,
-      enable_int2_serialization: bool = True,
   ):
     """Quantizes the weights by actions.
 
@@ -271,9 +265,6 @@ class _LlmConverter:
       use_mse_quant: Whether to use MSE quantization for recomputing scales.
       block_size: 0 to disable, and 32 or 128 to use blockwise Q4_0 for
         recomputing scales.
-      enable_int2_serialization: Whether to enable int2 serialization in
-        pre-quantized models. Defaults to true. When false, promotes to same-
-        valued int4 weights.
 
     Returns:
       A dictionary that maps from the updated tensor names to the quantized
@@ -306,17 +297,6 @@ class _LlmConverter:
             % action.tensor_value.dtype
         )
       if action.is_quantized:
-        if (
-            not enable_int2_serialization
-        ) and action.tensor_value.dtype == jnp.int2:
-          # TODO: b/489825801 - temporary behavior for testing until we
-          # determine why proper int2 serialization results in different
-          # behavior from this int2 -> int4 promotion.
-          print(
-              'WARNING: Promoting int2 tensor to int4 for packing ease: ',
-              action.target_name,
-          )
-          action.tensor_value = action.tensor_value.astype(jnp.int4)
         pack = action.tensor_value.dtype == jnp.int4
         if qvalue_suffix in action.target_name:
           target_name = action.target_name[: -len(qvalue_suffix)]
@@ -500,7 +480,6 @@ class _LlmConverter:
           config.is_symmetric,
           config.use_mse_quant,
           block_size=config.block_size,
-          enable_int2_serialization=config.enable_int2_serialization,
       )
       del action
       # Write the tensors into file(s).
