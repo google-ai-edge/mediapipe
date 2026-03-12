@@ -173,8 +173,11 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateFaceLandmarkerGraphTaskRunner(
   }
 
   return TaskRunner::Create(
-      graph.GetConfig(), "face_landmarker_test", "image",
-      absl::make_unique<tasks::core::MediaPipeBuiltinOpResolver>());
+      {.config = graph.GetConfig(),
+       .task_name = "face_landmarker_test",
+       .task_running_mode = "image",
+       .op_resolver =
+           absl::make_unique<tasks::core::MediaPipeBuiltinOpResolver>()});
 }
 
 absl::StatusOr<CalculatorGraphConfig> ExpandConfig(

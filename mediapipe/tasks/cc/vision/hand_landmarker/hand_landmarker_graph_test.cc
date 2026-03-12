@@ -135,8 +135,10 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner() {
           .SetName(kHandRectNextFrameName) >>
       graph[Output<std::vector<NormalizedRect>>(kHandRectNextFrameTag)];
   return TaskRunner::Create(
-      graph.GetConfig(), "hand_landmarker_test", "image",
-      absl::make_unique<core::MediaPipeBuiltinOpResolver>());
+      {.config = graph.GetConfig(),
+       .task_name = "hand_landmarker_test",
+       .task_running_mode = "image",
+       .op_resolver = absl::make_unique<core::MediaPipeBuiltinOpResolver>()});
 }
 
 class HandLandmarkerTest : public tflite::testing::Test {};

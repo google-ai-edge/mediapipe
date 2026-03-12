@@ -25,6 +25,7 @@ cc_library(
     srcs = ["base_options.cc"],
     hdrs = ["base_options.h"],
     deps = [
+        ":host_environment",
         ":mediapipe_builtin_op_resolver",
         "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
         "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
@@ -35,6 +36,11 @@ cc_library(
         "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
+)
+
+cc_library(
+    name = "host_environment",
+    hdrs = ["host_environment.h"],
 )
 
 cc_test(
@@ -261,6 +267,7 @@ cc_library_with_tflite(
         ":model_resources_calculator",
     ],
     deps = [
+        ":host_environment",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:executor",
@@ -273,6 +280,7 @@ cc_library_with_tflite(
         "//mediapipe/util/analytics:mediapipe_logging_enums_cc_proto",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

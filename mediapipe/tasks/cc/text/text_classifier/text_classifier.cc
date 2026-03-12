@@ -28,6 +28,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/task_api_factory.h"
+#include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/text/text_classifier/proto/text_classifier_graph_options.pb.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
@@ -86,9 +87,14 @@ absl::StatusOr<std::unique_ptr<TextClassifier>> TextClassifier::Create(
   auto options_proto = ConvertTextClassifierOptionsToProto(options.get());
   return core::TaskApiFactory::Create<TextClassifier,
                                       proto::TextClassifierGraphOptions>(
-      CreateGraphConfig(std::move(options_proto)),
-      std::move(options->base_options.op_resolver), kTaskName,
-      core::TaskApiFactory::kUnknownRunningMode);
+      core::TaskRunnerOptions{
+          .config = CreateGraphConfig(std::move(options_proto)),
+          .task_name = kTaskName,
+          .task_running_mode = core::TaskApiFactory::kUnknownRunningMode,
+          .op_resolver = std::move(options->base_options.op_resolver),
+          .host_environment = options->base_options.host_environment,
+          .host_system = options->base_options.host_system,
+          .host_version = options->base_options.host_version});
 }
 
 absl::StatusOr<TextClassifierResult> TextClassifier::Classify(

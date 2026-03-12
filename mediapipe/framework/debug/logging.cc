@@ -33,6 +33,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/tensor.h"
@@ -325,6 +326,10 @@ void LogTensor(const Tensor& tensor, absl::string_view name, float min_range,
         },
         name);
   }
+}
+
+void LogImage(const Image& image, absl::string_view name) {
+  return LogImage(*image.GetImageFrameSharedPtr(), name);
 }
 
 void LogImage(const ImageFrame& image, absl::string_view name) {

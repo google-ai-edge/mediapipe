@@ -542,6 +542,56 @@ def pack_4bit(
   return np.asarray(x)
 
 
+def pack_2bit_into_int8(x: np.ndarray, pack_dim: int) -> np.ndarray:
+  """Pack (u)int8 tensor with int2 or uint2 values into int8 along pack_dim.
+
+  Args:
+    x: Original int8 or uint8 tensor to pack.
+    pack_dim: Dimension to pack along. x.shape[pack_dim] must be divisible by 4.
+      Also pack_dim must be < x.ndim - 1.
+
+  Returns:
+    int8 packed tensor where the pack_dim size is divided by 4 from the original
+    tensor x.
+  """
+  x = jnp.asarray(x)
+  packed_dtype = jnp.int8
+  bits = 2
+  bits_per_packed_type = 8 // bits  # 4 int2 values per int8
+
+  if x.dtype != jnp.int8 and x.dtype != jnp.uint8:
+    raise ValueError(
+        f'input dtype must be either int8 or uint8. Given {x.dtype}'
+    )
+  if pack_dim >= x.ndim - 1:
+    raise ValueError(
+        f'pack_dim must be < input ndim - 1. input shape {x.shape} and pack_dim'
+        f' {pack_dim}'
+    )
+  if x.shape[pack_dim] % bits_per_packed_type != 0:
+    raise ValueError(
+        f'input shape[pack_dim] must be divisible by {bits_per_packed_type}'
+        f' when packing {bits}-bit values into {packed_dtype}. Given shape'
+        f' {x.shape}'
+    )
+
+  rep_shape = list(x.shape)
+  rep_shape.insert(pack_dim + 1, bits_per_packed_type)
+  rep_shape[pack_dim] //= bits_per_packed_type
+
+  # Create shifts: [0, 1, 2, 3]
+  shifts = lax.broadcasted_iota(packed_dtype, rep_shape, pack_dim + 1)
+  # Adjust shifts for 2-bit packing: [0, 2, 4, 6]
+  shifts <<= bits - 1  # Equivalent to shifts * 2
+
+  # Promote x to packed_dtype and mask to keep only the lowest 2 bits (0x03)
+  x = x & jnp.array(0x03, packed_dtype)
+  x = lax.reshape(x, rep_shape)
+  x = x << shifts
+  x = lax.reduce(x, jnp.array(0x0, packed_dtype), lax.add, [pack_dim + 1])
+  return np.asarray(x)
+
+
 def update_to_uint4(
     qx: np.ndarray, scale: np.ndarray, zp: Optional[np.ndarray] = None
 ):

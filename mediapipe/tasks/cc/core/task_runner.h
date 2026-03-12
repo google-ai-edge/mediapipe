@@ -36,6 +36,7 @@ limitations under the License.
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/executor.h"
+#include "mediapipe/tasks/cc/core/host_environment.h"
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
@@ -55,6 +56,28 @@ using ErrorFn = std::function<void(absl::Status)>;
 using PacketMap = std::map<std::string, Packet>;
 // A callback method to get output packets from the task runner.
 using PacketsCallback = std::function<void(absl::StatusOr<PacketMap>)>;
+
+// The options for configuring a TaskRunner instance.
+struct TaskRunnerOptions {
+  CalculatorGraphConfig config;
+  std::string task_name;
+  std::string task_running_mode;
+  std::unique_ptr<tflite::OpResolver> op_resolver = nullptr;
+  PacketsCallback packets_callback = nullptr;
+  std::shared_ptr<Executor> default_executor = nullptr;
+  std::optional<PacketMap> input_side_packets = std::nullopt;
+#if !MEDIAPIPE_DISABLE_GPU
+  std::shared_ptr<::mediapipe::GpuResources> resources = nullptr;
+#endif
+  std::optional<ErrorFn> error_fn = std::nullopt;
+  bool disable_default_service = false;
+  core::HostEnvironment host_environment =
+      core::HostEnvironment::HOST_ENVIRONMENT_UNKNOWN;
+  core::HostSystem host_system = core::HostSystem::HOST_SYSTEM_UNKNOWN;
+  std::string host_version = "";
+  std::string app_id = "";
+  std::string app_version = "";
+};
 
 // The mediapipe task runner class.
 // The runner has two processing modes: synchronous mode and asynchronous mode.
@@ -77,32 +100,8 @@ class TaskRunner {
   // asynchronous method, Send(), to provide the input packets. If the packets
   // callback is absent, clients must use the synchronous method, Process(), to
   // provide the input packets and receive the output packets.
-#if !MEDIAPIPE_DISABLE_GPU
   static absl::StatusOr<std::unique_ptr<TaskRunner>> Create(
-      CalculatorGraphConfig config, const std::string& task_name,
-      const std::string& task_running_mode,
-      std::unique_ptr<tflite::OpResolver> op_resolver = nullptr,
-      PacketsCallback packets_callback = nullptr,
-      std::shared_ptr<Executor> default_executor = nullptr,
-      std::optional<PacketMap> input_side_packets = std::nullopt,
-      std::shared_ptr<::mediapipe::GpuResources> resources = nullptr,
-      std::optional<ErrorFn> error_fn = std::nullopt,
-      bool disable_default_service = false,
-      std::optional<absl::string_view> app_id = std::nullopt,
-      std::optional<absl::string_view> app_version = std::nullopt);
-#else
-  static absl::StatusOr<std::unique_ptr<TaskRunner>> Create(
-      CalculatorGraphConfig config, const std::string& task_name,
-      const std::string& task_running_mode,
-      std::unique_ptr<tflite::OpResolver> op_resolver = nullptr,
-      PacketsCallback packets_callback = nullptr,
-      std::shared_ptr<Executor> default_executor = nullptr,
-      std::optional<PacketMap> input_side_packets = std::nullopt,
-      std::optional<ErrorFn> error_fn = std::nullopt,
-      bool disable_default_service = false,
-      std::optional<absl::string_view> app_id = std::nullopt,
-      std::optional<absl::string_view> app_version = std::nullopt);
-#endif  // !MEDIAPIPE_DISABLE_GPU
+      TaskRunnerOptions options);
 
   // TaskRunner is neither copyable nor movable.
   TaskRunner(const TaskRunner&) = delete;

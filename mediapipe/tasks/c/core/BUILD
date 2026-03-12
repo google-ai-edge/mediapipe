@@ -38,6 +38,7 @@ cc_library(
     deps = [
         ":base_options",
         "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:host_environment",
     ],
 )
 

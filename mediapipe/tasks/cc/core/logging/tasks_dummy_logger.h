@@ -34,13 +34,7 @@ namespace logging {
 class TasksDummyLogger : public TasksLogger {
  public:
   // Creates the MediaPipe Tasks stats dummy logger.
-  static std::unique_ptr<TasksDummyLogger> Create(
-      const std::string& task_name_str,
-      const std::string& task_running_mode_str,
-      std::unique_ptr<LoggingClient> logging_client,
-      logs::proto::mediapipe::Platform platform,
-      std::optional<absl::string_view> app_id = std::nullopt,
-      std::optional<absl::string_view> app_version = std::nullopt) {
+  static std::unique_ptr<TasksDummyLogger> Create() {
     return std::unique_ptr<TasksDummyLogger>(new TasksDummyLogger());
   }
 

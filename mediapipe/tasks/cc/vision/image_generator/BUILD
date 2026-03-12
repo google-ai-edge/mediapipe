@@ -122,6 +122,7 @@ cc_library(
         "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/cc/vision/core:running_mode",
         "//mediapipe/tasks/cc/vision/core:vision_task_api_factory",
         "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/face_landmarker",

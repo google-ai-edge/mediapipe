@@ -26,6 +26,7 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -97,46 +98,21 @@ absl::StatusOr<PacketMap> GenerateOutputPacketMap(
 }  // namespace
 
 /* static */
-#if !MEDIAPIPE_DISABLE_GPU
 absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
-    CalculatorGraphConfig config, const std::string& task_name,
-    const std::string& task_running_mode,
-    std::unique_ptr<tflite::OpResolver> op_resolver,
-    PacketsCallback packets_callback,
-    std::shared_ptr<Executor> default_executor,
-    std::optional<PacketMap> input_side_packets,
-    std::shared_ptr<::mediapipe::GpuResources> resources,
-    std::optional<ErrorFn> error_fn, bool disable_default_service,
-    std::optional<absl::string_view> app_id,
-    std::optional<absl::string_view> app_version) {
-#else
-absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
-    CalculatorGraphConfig config, const std::string& task_name,
-    const std::string& task_running_mode,
-    std::unique_ptr<tflite::OpResolver> op_resolver,
-    PacketsCallback packets_callback,
-    std::shared_ptr<Executor> default_executor,
-    std::optional<PacketMap> input_side_packets,
-    std::optional<ErrorFn> error_fn, bool disable_default_service,
-    std::optional<absl::string_view> app_id,
-    std::optional<absl::string_view> app_version) {
-#endif  // !MEDIAPIPE_DISABLE_GPU
-  std::unique_ptr<logging::TasksLogger> tasks_logger =
-      logging::TasksDummyLogger::Create(
-          task_name, task_running_mode, nullptr,
-          logs::proto::mediapipe::Platform::PLATFORM_UNKNOWN, app_id,
-          app_version);
+    TaskRunnerOptions options) {
+  auto tasks_logger = logging::TasksDummyLogger::Create();
   auto task_runner = absl::WrapUnique(
-      new TaskRunner(packets_callback, std::move(tasks_logger)));
+      new TaskRunner(options.packets_callback, std::move(tasks_logger)));
   MP_RETURN_IF_ERROR(task_runner->Initialize(
-      std::move(config), std::move(op_resolver), std::move(default_executor),
-      std::move(input_side_packets), std::move(error_fn),
-      disable_default_service));
+      std::move(options.config), std::move(options.op_resolver),
+      std::move(options.default_executor),
+      std::move(options.input_side_packets), std::move(options.error_fn),
+      options.disable_default_service));
 
 #if !MEDIAPIPE_DISABLE_GPU
-  if (resources) {
+  if (options.resources) {
     MP_RETURN_IF_ERROR(
-        task_runner->graph_.SetGpuResources(std::move(resources)));
+        task_runner->graph_.SetGpuResources(std::move(options.resources)));
   }
 #endif  // !MEDIAPIPE_DISABLE_GPU
 

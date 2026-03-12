@@ -145,8 +145,11 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateSingleHandTaskRunner(
       graph[Output<NormalizedRect>(kHandRectNextFrameTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(), "hand_landmarks_detector_test", "image",
-      absl::make_unique<tflite::ops::builtin::BuiltinOpResolver>());
+      {.config = graph.GetConfig(),
+       .task_name = "hand_landmarks_detector_test",
+       .task_running_mode = "image",
+       .op_resolver =
+           absl::make_unique<tflite::ops::builtin::BuiltinOpResolver>()});
 }
 
 // Helper function to create a Multi Hand Landmark TaskRunner.
@@ -187,8 +190,11 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateMultiHandTaskRunner(
       graph[Output<std::vector<NormalizedRect>>(kHandRectNextFrameTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(), "hand_landmarks_detector_test", "image",
-      absl::make_unique<tflite::ops::builtin::BuiltinOpResolver>());
+      {.config = graph.GetConfig(),
+       .task_name = "hand_landmarks_detector_test",
+       .task_running_mode = "image",
+       .op_resolver =
+           absl::make_unique<tflite::ops::builtin::BuiltinOpResolver>()});
 }
 
 NormalizedLandmarkList GetExpectedLandmarkList(absl::string_view filename) {

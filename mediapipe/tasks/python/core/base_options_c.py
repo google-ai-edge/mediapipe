@@ -18,9 +18,23 @@ import ctypes
 
 
 class BaseOptionsC(ctypes.Structure):
+  """C types for BaseOptions.
+
+  Attributes:
+    model_asset_buffer: `bytes`, the model asset buffer.
+    model_asset_buffer_count: `int`, the size of the model asset buffer.
+    model_asset_path: `bytes`, the path to the model asset.
+    delegate: `int`, the delegate to use.
+    host_environment: `int`, the environment in which the task is running.
+    host_system: `int`, the system on which the task is running.
+    host_version: `bytes`, the Python version as a UTF-8 string.
+  """
   _fields_ = [
       ("model_asset_buffer", ctypes.c_char_p),
       ("model_asset_buffer_count", ctypes.c_uint),
       ("model_asset_path", ctypes.c_char_p),
       ("delegate", ctypes.c_int),
+      ("host_environment", ctypes.c_int),
+      ("host_system", ctypes.c_int),
+      ("host_version", ctypes.c_char_p),
   ]

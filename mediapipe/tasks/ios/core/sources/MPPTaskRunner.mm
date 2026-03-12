@@ -13,10 +13,12 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
+#import <Foundation/Foundation.h>
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 
 #include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/tasks/cc/core/host_environment.h"
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 
 namespace {
@@ -50,11 +52,24 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 
   self = [super init];
   if (self) {
-    auto taskRunnerResult =
-        TaskRunnerCpp::Create(std::move(graphConfig.value()), taskInfo.taskName.UTF8String,
-                                taskInfo.runningMode.UTF8String,
-                                absl::make_unique<MediaPipeBuiltinOpResolver>(),
-                                std::move(packetsCallback));
+    NSString *appId = [[NSBundle mainBundle] bundleIdentifier];
+    NSString *appVersion =
+        [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+    NSOperatingSystemVersion osVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
+    NSString *iosVersion =
+        [NSString stringWithFormat:@"%ld.%ld.%ld", (long)osVersion.majorVersion,
+                                   (long)osVersion.minorVersion, (long)osVersion.patchVersion];
+    mediapipe::tasks::core::TaskRunnerOptions options = {
+        .config = std::move(graphConfig.value()),
+        .task_name = taskInfo.taskName.UTF8String,
+        .task_running_mode = taskInfo.runningMode.UTF8String,
+        .op_resolver = absl::make_unique<MediaPipeBuiltinOpResolver>(),
+        .packets_callback = std::move(packetsCallback),
+        .host_environment = mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_IOS,
+        .host_version = iosVersion ? iosVersion.UTF8String : "",
+        .app_id = appId ? appId.UTF8String : "",
+        .app_version = appVersion ? appVersion.UTF8String : ""};
+    auto taskRunnerResult = TaskRunnerCpp::Create(std::move(options));
 
     if (![MPPCommonUtils checkCppError:taskRunnerResult.status() toError:error]) {
       return nil;

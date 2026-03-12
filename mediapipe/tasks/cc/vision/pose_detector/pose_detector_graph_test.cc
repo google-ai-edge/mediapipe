@@ -114,8 +114,10 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
       graph[Output<std::vector<NormalizedRect>>(kExpandedPoseRectsTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(), kTaskName, kRunningMode,
-      std::make_unique<core::MediaPipeBuiltinOpResolver>());
+      {.config = graph.GetConfig(),
+       .task_name = kTaskName,
+       .task_running_mode = kRunningMode,
+       .op_resolver = std::make_unique<core::MediaPipeBuiltinOpResolver>()});
 }
 
 Detection GetExpectedPoseDetectionResult(absl::string_view file_name) {

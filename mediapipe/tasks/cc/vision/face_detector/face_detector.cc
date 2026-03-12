@@ -22,6 +22,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/detection_result.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
+#include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
 #include "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.pb.h"
 
@@ -129,13 +130,17 @@ absl::StatusOr<std::unique_ptr<FaceDetector>> FaceDetector::Create(
   }
   return core::VisionTaskApiFactory::Create<FaceDetector,
                                             FaceDetectorGraphOptionsProto>(
-      CreateGraphConfig(
-          std::move(options_proto),
-          options->running_mode == core::RunningMode::LIVE_STREAM),
-      kTaskName, std::move(options->base_options.op_resolver),
-      options->running_mode, std::move(packets_callback),
-      /*disable_default_service=*/
-      options->base_options.disable_default_service);
+      {.config = CreateGraphConfig(
+           std::move(options_proto),
+           options->running_mode == core::RunningMode::LIVE_STREAM),
+       .task_name = kTaskName,
+       .task_running_mode = core::GetRunningModeName(options->running_mode),
+       .op_resolver = std::move(options->base_options.op_resolver),
+       .packets_callback = std::move(packets_callback),
+       .disable_default_service = options->base_options.disable_default_service,
+       .host_environment = options->base_options.host_environment,
+       .host_system = options->base_options.host_system,
+       .host_version = options->base_options.host_version});
 }
 
 absl::StatusOr<FaceDetectorResult> FaceDetector::Detect(

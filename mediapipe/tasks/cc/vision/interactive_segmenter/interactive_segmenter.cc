@@ -164,14 +164,18 @@ InteractiveSegmenter::Create(
       std::unique_ptr<InteractiveSegmenter> segmenter,
       (core::VisionTaskApiFactory::Create<InteractiveSegmenter,
                                           ImageSegmenterGraphOptionsProto>(
-          CreateGraphConfig(std::move(options_proto),
-                            options->output_confidence_masks,
-                            options->output_category_mask),
-          kTaskName, std::move(options->base_options.op_resolver),
-          core::RunningMode::IMAGE,
-          /*packets_callback=*/nullptr,
-          /*disable_default_service=*/
-          options->base_options.disable_default_service)));
+          {.config = CreateGraphConfig(std::move(options_proto),
+                                       options->output_confidence_masks,
+                                       options->output_category_mask),
+           .task_name = kTaskName,
+           .task_running_mode =
+               core::GetRunningModeName(core::RunningMode::IMAGE),
+           .op_resolver = std::move(options->base_options.op_resolver),
+           .disable_default_service =
+               options->base_options.disable_default_service,
+           .host_environment = options->base_options.host_environment,
+           .host_system = options->base_options.host_system,
+           .host_version = options->base_options.host_version})));
   segmenter->output_category_mask_ = options->output_category_mask;
   segmenter->output_confidence_masks_ = options->output_confidence_masks;
   return segmenter;

@@ -319,6 +319,11 @@ class GenericGraph {
   // To access `builder_` in order to add inputs/outputs to a generic graph.
   template <typename BuildGraphFnT>
   friend class FunctionRunnerBuilder;
+
+  // To access `builder_` to initialize ports and options.
+  template <typename NodeT>
+  friend class SubgraphContext;
+
   // To access `builder_` in order to add input side packets to a generic graph.
   // Used in conjunction with FunctionRunnerBuilder.
   friend class FunctionGraphBuilder;

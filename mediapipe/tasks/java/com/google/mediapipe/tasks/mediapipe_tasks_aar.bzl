@@ -326,7 +326,6 @@ EOF
         name = name + "_dummy_app",
         manifest = name + "_generated_AndroidManifest.xml",
         custom_package = "dummy.package.for.so",
-        multidex = "native",
         deps = [android_library],
     )
 

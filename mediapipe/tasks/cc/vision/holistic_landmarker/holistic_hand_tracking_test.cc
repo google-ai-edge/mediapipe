@@ -202,8 +202,10 @@ absl::StatusOr<std::unique_ptr<tasks::core::TaskRunner>> CreateTaskRunner() {
   core::FixGraphBackEdges(config);
 
   return TaskRunner::Create(
-      config, "holistic_hand_tracking_test", "image",
-      std::make_unique<core::MediaPipeBuiltinOpResolver>());
+      {.config = config,
+       .task_name = "holistic_hand_tracking_test",
+       .task_running_mode = "image",
+       .op_resolver = std::make_unique<core::MediaPipeBuiltinOpResolver>()});
 }
 
 class HolisticHandTrackingTest : public ::testing::Test {};

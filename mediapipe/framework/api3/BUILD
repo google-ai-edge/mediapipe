@@ -384,6 +384,63 @@ cc_test(
 )
 
 cc_library(
+    name = "subgraph_context",
+    hdrs = ["subgraph_context.h"],
+    deps = [
+        ":contract",
+        ":graph",
+        ":side_packet",
+        ":stream",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:graph_service",
+        "//mediapipe/framework:resources",
+        "//mediapipe/framework/api3/internal:contract_fields",
+        "//mediapipe/framework/api3/internal:graph_builder",
+        "//mediapipe/framework/api3/internal:port_base",
+        "//mediapipe/framework/api3/internal:specializers",
+    ],
+)
+
+cc_library(
+    name = "subgraph",
+    hdrs = ["subgraph.h"],
+    deps = [
+        ":graph",
+        ":subgraph_context",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api3/internal:contract_validator",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:options_map",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
+cc_test(
+    name = "subgraph_test",
+    srcs = ["subgraph_test.cc"],
+    deps = [
+        ":calculator",
+        ":calculator_context",
+        ":contract",
+        ":graph",
+        ":node",
+        ":side_packet",
+        ":stream",
+        ":subgraph",
+        ":subgraph_context",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api3/testing:foo_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/status",
+    ],
+)
+
+cc_library(
     name = "one_of",
     hdrs = ["one_of.h"],
 )

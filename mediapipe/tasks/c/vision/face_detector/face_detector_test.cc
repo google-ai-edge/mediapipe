@@ -45,6 +45,7 @@ using ::mediapipe::tasks::vision::core::ScopedMpImage;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kModelName[] = "face_detection_short_range.tflite";
+constexpr char kFullRangeModelName[] = "face_detection_full_range.tflite";
 constexpr char kImageFile[] = "portrait.jpg";
 constexpr char kImageRotatedFile[] = "portrait_rotated.jpg";
 constexpr int kPixelDiffTolerance = 5;
@@ -59,6 +60,13 @@ const NormalizedKeypoint kExpectedKeypoints[] = {
     {0.5609f, 0.1800f, nullptr, 0},
 };
 constexpr MPRect kExpectedBoundingBox = {283, 115, 349, 517};
+
+// Expected results for portrait.jpg with full-range model.
+const NormalizedKeypoint kExpectedFullRangeKeypoints[] = {
+    {0.4397f, 0.1741f, nullptr, 0},
+    {0.5509f, 0.1747f, nullptr, 0},
+};
+constexpr MPRect kExpectedFullRangeBoundingBox = {290, 110, 338, 518};
 
 // Expected results for portrait_rotated.jpg
 const NormalizedKeypoint kExpectedRotatedKeypoints[] = {
@@ -127,6 +135,39 @@ TEST(FaceDetectorTest, ImageModeTest) {
 
   Detection expected_detection = CreateExpectedDetection(
       kExpectedBoundingBox, kExpectedKeypoints, kKeypointCount);
+
+  AssertFaceDetectorResult(&result, expected_detection, kPixelDiffTolerance,
+                           kKeypointErrorThreshold);
+
+  MpFaceDetectorCloseResult(&result);
+  EXPECT_EQ(MpFaceDetectorClose(detector, /* error_msg= */ nullptr), kMpOk);
+}
+
+TEST(FaceDetectorTest, FullRangeImageModeTest) {
+  const auto image = GetImage(GetFullPath(kImageFile));
+
+  const std::string model_path = GetFullPath(kFullRangeModelName);
+  FaceDetectorOptions options = {
+      .base_options = {.model_asset_path = model_path.c_str()},
+      .running_mode = RunningMode::IMAGE,
+      .min_detection_confidence = 0.5,
+      .min_suppression_threshold = 0.5,
+  };
+
+  MpFaceDetectorPtr detector;
+  EXPECT_EQ(MpFaceDetectorCreate(&options, &detector, /* error_msg= */ nullptr),
+            kMpOk);
+  EXPECT_NE(detector, nullptr);
+
+  FaceDetectorResult result;
+  EXPECT_EQ(MpFaceDetectorDetectImage(detector, image.get(),
+                                      /* image_processing_options */ nullptr,
+                                      &result, /* error_msg= */ nullptr),
+            kMpOk);
+
+  Detection expected_detection =
+      CreateExpectedDetection(kExpectedFullRangeBoundingBox,
+                              kExpectedFullRangeKeypoints, kKeypointCount);
 
   AssertFaceDetectorResult(&result, expected_detection, kPixelDiffTolerance,
                            kKeypointErrorThreshold);

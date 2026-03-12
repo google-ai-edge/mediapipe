@@ -51,13 +51,9 @@ class AudioTaskApiFactory {
   template <typename T, typename Options,
             EnableIfBaseAudioTaskApiSubclass<T> = nullptr>
   static absl::StatusOr<std::unique_ptr<T>> Create(
-      CalculatorGraphConfig graph_config, const std::string& task_name,
-      std::unique_ptr<tflite::OpResolver> resolver, RunningMode running_mode,
-      tasks::core::PacketsCallback packets_callback = nullptr,
-      std::optional<std::string> app_id = std::nullopt,
-      std::optional<std::string> app_version = std::nullopt) {
+      tasks::core::TaskRunnerOptions options) {
     bool found_task_subgraph = false;
-    for (const auto& node : graph_config.node()) {
+    for (const auto& node : options.config.node()) {
       if (node.calculator() == "FlowLimiterCalculator") {
         continue;
       }
@@ -72,34 +68,25 @@ class AudioTaskApiFactory {
         found_task_subgraph = true;
       }
     }
+    MP_ASSIGN_OR_RETURN(RunningMode running_mode,
+                        GetRunningModeFromString(options.task_running_mode));
     if (running_mode == RunningMode::AUDIO_STREAM) {
-      if (packets_callback == nullptr) {
+      if (options.packets_callback == nullptr) {
         return CreateStatusWithPayload(
             absl::StatusCode::kInvalidArgument,
             "The audio task is in audio stream mode, a user-defined result "
             "callback must be provided.",
             MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
       }
-    } else if (packets_callback) {
+    } else if (options.packets_callback) {
       return CreateStatusWithPayload(
           absl::StatusCode::kInvalidArgument,
           "The audio task is in audio clips mode, a user-defined result "
           "callback shouldn't be provided.",
           MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
     }
-    MP_ASSIGN_OR_RETURN(
-        auto runner,
-        tasks::core::TaskRunner::Create(
-            std::move(graph_config), task_name,
-            GetRunningModeName(running_mode), std::move(resolver),
-            std::move(packets_callback),
-            /*default_executor=*/nullptr,
-            /*input_side_packets=*/std::nullopt,
-#if !MEDIAPIPE_DISABLE_GPU
-            /*resources=*/nullptr,
-#endif
-            /*error_fn=*/std::nullopt,
-            /*disable_default_service=*/false, app_id, app_version));
+    MP_ASSIGN_OR_RETURN(auto runner,
+                        tasks::core::TaskRunner::Create(std::move(options)));
     return std::make_unique<T>(std::move(runner), running_mode);
   }
 };

@@ -533,6 +533,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_hand_detector_tflite",
+        sha256 = "1b14e9422c6ad006cde6581a46c8b90dd573c07ab7f3934b5589e7cea3f89a54",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/hand_detector.tflite?generation=1772657064308006"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_hand_landmarker_task",
         sha256 = "32d1eab97e80a9a20edb29231e15301ce65abfd0fa9d41cf1757e0ecc8078a4e",
         urls = ["https://storage.googleapis.com/mediapipe-assets/hand_landmarker.task?generation=1677051718270846"],
@@ -548,6 +554,12 @@ def external_files():
         name = "com_google_mediapipe_hand_landmark_lite_tflite",
         sha256 = "048edd3645c9bf7397d19a9f6e3a42957d6e414c9bea6598030a2e9b624156e6",
         urls = ["https://storage.googleapis.com/mediapipe-assets/hand_landmark_lite.tflite?generation=1661875766398729"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_hand_landmarks_detector_tflite",
+        sha256 = "11c272b891e1a99ab034208e23937a8008388cf11ed2a9d776ed3d01d0ba00e3",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/hand_landmarks_detector.tflite?generation=1772657066468467"],
     )
 
     http_file(
