@@ -3,7 +3,7 @@
 set -e
 
 # Configuration
-MPP_BUILD_VERSION="${MPP_BUILD_VERSION:-0.10.26}"
+MPP_BUILD_VERSION="${MPP_BUILD_VERSION:-0.10.32}"
 SPM_OUTPUT_DIR="${SPM_OUTPUT_DIR:-./spm/output}"
 GITHUB_REPO="${GITHUB_REPO:-mihaidimoiu/mediapipe}"
 PACKAGE_SWIFT_PATH="${PACKAGE_SWIFT_PATH:-./Package.swift}"

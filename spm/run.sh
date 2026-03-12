@@ -15,4 +15,4 @@ git push -f
 
 ./upload-release.sh
 
-gh release edit v0.10.26 --repo mihaidimoiu/mediapipe --draft=false
+gh release edit v0.10.32 --repo mihaidimoiu/mediapipe --draft=false

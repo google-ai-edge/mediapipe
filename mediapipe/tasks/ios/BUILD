@@ -347,5 +347,5 @@ mediapipe_static_xcframework(
     # NOTE: conversion_data is required for ICU symbols when using -all_load.
     deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS + [
         "@org_tensorflow//third_party/icu/data:conversion_data",
-    ] + select(OPENCV_DEPS),
+    ],
 )

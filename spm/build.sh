@@ -3,7 +3,7 @@
 set -e
 
 # Configuration
-MPP_BUILD_VERSION="${MPP_BUILD_VERSION:-0.10.26}"
+MPP_BUILD_VERSION="${MPP_BUILD_VERSION:-0.10.32}"
 GITHUB_REPO="${GITHUB_REPO:-mihaidimoiu/mediapipe}"
 # Use /tmp by default to avoid repo-root restriction in build_ios_framework.sh
 # The original build script doesn't allow DEST_DIR under the repo root
