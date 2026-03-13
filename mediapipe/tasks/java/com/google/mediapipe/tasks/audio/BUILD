@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_jni_binary")
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar")
 
 licenses(["notice"])
 
@@ -22,23 +22,15 @@ android_library(
     name = "core",
     srcs = glob(["core/*.java"]),
     deps = [
-        ":libmediapipe_tasks_audio_jni_lib",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:audiodata",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:libmediapipe_tasks_jni_lib",
         "@maven//:com_google_guava_guava",
     ],
 )
 
 # The native library of all MediaPipe audio tasks.
-mediapipe_jni_binary(
-    name = "mediapipe_tasks_audio_jni",
-    deps = [
-        "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
-        "//mediapipe/tasks/cc/audio/audio_classifier:audio_classifier_graph",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
-    ],
-)
 
 android_library(
     name = "audioclassifier",
@@ -68,7 +60,6 @@ android_library(
     srcs = glob(["**/*.java"]),
     manifest = "AndroidManifest.xml",
     deps = [
-        ":libmediapipe_tasks_audio_jni_lib",
         "//mediapipe/framework:calculator_options_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
         "//mediapipe/tasks/cc/audio/audio_classifier/proto:audio_classifier_graph_options_java_proto_lite",
@@ -83,7 +74,7 @@ android_library(
     ],
 )
 
-mediapipe_build_aar_with_jni(
+mediapipe_build_aar(
     name = "tasks_audio",
     android_library = ":tasks_audio_aar_library",
 )

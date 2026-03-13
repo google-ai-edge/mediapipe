@@ -176,13 +176,14 @@ def mediapipe_jni_binary(name, deps, uses_explicit_exports = False, shared_lib_n
             cmd = "cp $< $@",
         )
 
-def mediapipe_tasks_core_aar(name, srcs, manifest):
-    """Builds medaipipe tasks core AAR.
+def mediapipe_tasks_core_aar(name, srcs, manifest, deps = []):
+    """Builds mediapipe tasks core AAR.
 
     Args:
       name: The bazel target name.
       srcs: MediaPipe Tasks' core layer source files.
       manifest: The Android manifest.
+      deps: Any native dependencies.
     """
     mediapipe_tasks_java_proto_srcs = []
     for target in _CORE_TASKS_JAVA_PROTO_LITE_TARGETS:
@@ -235,8 +236,9 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
         src_out = "com/google/mediapipe/calculator/proto/StableDiffusionIterateCalculatorOptionsProto.java",
     ))
 
+    android_library_name = name + "_aar_library"
     android_library(
-        name = name,
+        name = android_library_name,
         srcs = srcs + [
                    "//mediapipe/java/com/google/mediapipe/framework:java_src",
                ] + mediapipe_java_proto_srcs() +
@@ -246,7 +248,7 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
                    "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:enable_tasks_usage_logging": mediapipe_logging_java_proto_srcs(),
                }),
         manifest = manifest,
-        deps = [
+        deps = deps + [
                    "//third_party:any_java_proto",
                    "@com_google_protobuf//:protobuf_javalite",
                    "//mediapipe/calculators/core:flow_limiter_calculator_java_proto_lite",
@@ -287,6 +289,10 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
                    ],
                }),
     )
+    mediapipe_build_aar_with_jni(
+        name = name,
+        android_library = ":" + android_library_name,
+    )
 
 def _mediapipe_tasks_java_proto_src_extractor(target):
     proto_path = "com/google/" + target.split(":")[0].replace("cc/", "").replace("//", "").replace("third_party/", "").replace("_", "") + "/"
@@ -294,6 +300,21 @@ def _mediapipe_tasks_java_proto_src_extractor(target):
     return mediapipe_java_proto_src_extractor(
         target = target,
         src_out = proto_path + proto_name,
+    )
+
+def mediapipe_build_aar(name, android_library):
+    """Builds MediaPipe AAR without jni.
+
+    Args:
+      name: The bazel target name.
+      android_library: the android library to build aar from.
+    """
+    native.genrule(
+        name = name,
+        srcs = [android_library + ".aar"],
+        outs = [name + ".aar"],
+        tags = ["manual"],
+        cmd = "cp $< $@",
     )
 
 def mediapipe_build_aar_with_jni(name, android_library):

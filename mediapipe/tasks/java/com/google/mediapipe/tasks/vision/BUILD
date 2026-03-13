@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_jni_binary")
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar", "mediapipe_jni_binary")
 
 licenses(["notice"])
 
@@ -23,8 +22,8 @@ android_library(
     name = "core",
     exports = [
         ":core_java",
-        ":libmediapipe_tasks_vision_jni_lib",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:libmediapipe_tasks_jni_lib",
     ],
 )
 
@@ -46,31 +45,6 @@ filegroup(
     name = "core_java_src",
     srcs = glob(["core/**/*.java"]),
     visibility = ["//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:__subpackages__"],
-)
-
-cc_library(
-    name = "mediapipe_tasks_vision_oss_deps",
-    deps = [
-        "//mediapipe/calculators/core:flow_limiter_calculator",
-        "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
-        "//mediapipe/tasks/cc/vision/face_detector:face_detector_graph",
-        "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_graph",
-        "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_graph",
-        "//mediapipe/tasks/cc/vision/holistic_landmarker:holistic_landmarker_graph",
-        "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
-        "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
-        "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
-        "//mediapipe/tasks/cc/vision/interactive_segmenter:interactive_segmenter_graph",
-        "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
-        "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
-    ],
-)
-
-# The native library of all 3P MediaPipe vision tasks.
-mediapipe_jni_binary(
-    name = "mediapipe_tasks_vision_jni",
-    deps = [":mediapipe_tasks_vision_oss_deps"],
 )
 
 android_library(
@@ -133,7 +107,6 @@ android_library(
         "//mediapipe/framework/formats:landmark_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/framework/image",
-        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_java_proto_lite",
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_classifier_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_recognizer_graph_options_java_proto_lite",
@@ -229,6 +202,7 @@ android_library(
     manifest = "imagesegmenter/AndroidManifest.xml",
     deps = [
         ":core_java",
+        "//mediapipe/framework:calculator_java_proto_lite",
         "//mediapipe/framework:calculator_options_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
         "//mediapipe/java/com/google/mediapipe/framework/image",
@@ -269,7 +243,6 @@ android_library(
         "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalizedkeypoint",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
-        "//mediapipe/util:color_java_proto_lite",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -405,7 +378,6 @@ android_library(
     ),
     manifest = "AndroidManifest.xml",
     deps = [
-        ":libmediapipe_tasks_vision_jni_lib",
         "//mediapipe/framework:calculator_java_proto_lite",
         "//mediapipe/framework:calculator_options_java_proto_lite",
         "//mediapipe/framework/formats:classification_java_proto_lite",
@@ -461,7 +433,7 @@ android_library(
     ] + OPENCV_DEPS,
 )
 
-mediapipe_build_aar_with_jni(
+mediapipe_build_aar(
     name = "tasks_vision",
     android_library = ":tasks_vision_aar_library",
 )

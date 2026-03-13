@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_tasks_core_aar")
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_jni_binary", "mediapipe_tasks_core_aar")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -25,6 +25,28 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
     ],
     deps = ["@maven//:com_google_guava_guava"],
+)
+
+mediapipe_jni_binary(
+    name = "mediapipe_tasks_jni",
+    deps = [
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
+        "//mediapipe/tasks/cc/audio/audio_classifier:audio_classifier_graph",
+        "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+        "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
+        "//mediapipe/tasks/cc/vision/face_detector:face_detector_graph",
+        "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_graph",
+        "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_graph",
+        "//mediapipe/tasks/cc/vision/holistic_landmarker:holistic_landmarker_graph",
+        "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
+        "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
+        "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter:interactive_segmenter_graph",
+        "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
+        "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
+    ],
 )
 
 android_library(
@@ -104,4 +126,7 @@ mediapipe_tasks_core_aar(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:java_src",
     ],
     manifest = "AndroidManifest.xml",
+    deps = [
+        ":libmediapipe_tasks_jni_lib",
+    ],
 )

@@ -12,22 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_jni_binary")
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar")
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
-
-# The native library of all MediaPipe text tasks.
-mediapipe_jni_binary(
-    name = "mediapipe_tasks_text_jni",
-    deps = [
-        "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
-        "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
-        "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
-    ],
-)
 
 android_library(
     name = "textclassifier",
@@ -45,7 +34,6 @@ android_library(
         "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/text:libmediapipe_tasks_text_jni_lib",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -69,7 +57,7 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embeddingresult",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/text:libmediapipe_tasks_text_jni_lib",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:libmediapipe_tasks_jni_lib",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -84,7 +72,6 @@ android_library(
     ],
     manifest = "textembedder/AndroidManifest.xml",
     deps = [
-        ":libmediapipe_tasks_text_jni_lib",
         "//mediapipe/framework:calculator_options_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_java_proto_lite",
@@ -95,6 +82,7 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classifications",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:libmediapipe_tasks_jni_lib",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -105,7 +93,6 @@ android_library(
     srcs = glob(["**/*.java"]),
     manifest = "AndroidManifest.xml",
     deps = [
-        ":libmediapipe_tasks_text_jni_lib",
         "//mediapipe/framework:calculator_options_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_java_proto_lite",
@@ -127,7 +114,7 @@ android_library(
     ],
 )
 
-mediapipe_build_aar_with_jni(
+mediapipe_build_aar(
     name = "tasks_text",
     android_library = ":tasks_text_aar_library",
 )
