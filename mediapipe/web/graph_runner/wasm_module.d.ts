@@ -1,21 +1,34 @@
-import {EmptyPacketListener, ErrorListener, SimpleListener, VectorListener} from './listener_types';
+import {
+  EmptyPacketListener,
+  ErrorListener,
+  SimpleListener,
+  VectorListener,
+} from './listener_types';
 
 /**
  * Declarations for Emscripten's WebAssembly Module behavior, so TS compiler
  * doesn't break our various JS/C++ bridges. For internal usage.
  */
 export declare interface WasmModule {
-  canvas: HTMLCanvasElement|OffscreenCanvas|null;
+  canvas: HTMLCanvasElement | OffscreenCanvas | null;
   HEAPU8: Uint8Array;
   HEAPU32: Uint32Array;
   HEAPF32: Float32Array;
   HEAPF64: Float64Array;
-  FS_createDataFile:
-      (parent: string, name: string, data: Uint8Array, canRead: boolean,
-       canWrite: boolean, canOwn: boolean) => void;
-  FS_createPath:
-      (parent: string, name: string, canRead: boolean,
-       canWrite: boolean) => void;
+  FS_createDataFile: (
+    parent: string,
+    name: string,
+    data: Uint8Array,
+    canRead: boolean,
+    canWrite: boolean,
+    canOwn: boolean,
+  ) => void;
+  FS_createPath: (
+    parent: string,
+    name: string,
+    canRead: boolean,
+    canWrite: boolean,
+  ) => void;
   FS_unlink(path: string): void;
   gpuOriginForWebTexturesIsBottomLeft?: boolean;
 
@@ -31,76 +44,145 @@ export declare interface WasmModule {
   _waitUntilIdle: () => void;
 
   // Exposed so that clients of this lib can access this field
-  dataFileDownloads?: {[url: string]: {loaded: number, total: number}};
+  dataFileDownloads?: {[url: string]: {loaded: number; total: number}};
 
   // Wasm Module multistream entrypoints.  Require
   // gl_graph_runner_internal_multi_input as a build dependency.
   stringToNewUTF8: (data: string) => number;
   _bindTextureToStream: (streamNamePtr: number) => void;
-  _addBoundTextureToStream:
-      (streamNamePtr: number, width: number, height: number,
-       timestamp: number) => void;
-  _addBoolToInputStream:
-      (data: boolean, streamNamePtr: number, timestamp: number) => void;
-  _addDoubleToInputStream:
-      (data: number, streamNamePtr: number, timestamp: number) => void;
-  _addFloatToInputStream:
-      (data: number, streamNamePtr: number, timestamp: number) => void;
-  _addIntToInputStream:
-      (data: number, streamNamePtr: number, timestamp: number) => void;
-  _addUintToInputStream:
-      (data: number, streamNamePtr: number, timestamp: number) => void;
-  _addStringToInputStream:
-      (dataPtr: number, streamNamePtr: number, timestamp: number) => void;
-  _addBoolVectorToInputStream:
-      (vecPtr: number, streamNamePtr: number, timestamp: number) => void;
-  _addDoubleVectorToInputStream:
-      (vecPtr: number, streamNamePtr: number, timestamp: number) => void;
-  _addFloatVectorToInputStream:
-      (vecPtr: number, streamNamePtr: number, timestamp: number) => void;
-  _addIntVectorToInputStream:
-      (vecPtr: number, streamNamePtr: number, timestamp: number) => void;
-  _addUintVectorToInputStream:
-      (vecPtr: number, streamNamePtr: number, timestamp: number) => void;
-  _addStringVectorToInputStream:
-      (vecPtr: number, streamNamePtr: number, timestamp: number) => void;
-  _addFlatHashMapToInputStream:
-      (keysPtr: number, valuesPtr: number, count: number, streamNamePtr: number,
-       timestamp: number) => void;
-  _addRawDataSpanToInputStream:
-      (dataPtr: number, dataSize: number, streamNamePtr: number,
-       timestamp: number) => void;
-  _addProtoToInputStream:
-      (dataPtr: number, dataSize: number, protoNamePtr: number,
-       streamNamePtr: number, timestamp: number) => void;
-  _addEmptyPacketToInputStream:
-      (streamNamePtr: number, timestamp: number) => void;
+  _addBoundTextureToStream: (
+    streamNamePtr: number,
+    width: number,
+    height: number,
+    timestamp: number,
+  ) => void;
+  _addBoolToInputStream: (
+    data: boolean,
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
+  _addDoubleToInputStream: (
+    data: number,
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
+  _addFloatToInputStream: (
+    data: number,
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
+  _addIntToInputStream: (
+    data: number,
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
+  _addUintToInputStream: (
+    data: number,
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
+  _addStringToInputStream: (
+    dataPtr: number,
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
+  _addBoolVectorToInputStream: (
+    vecPtr: number,
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
+  _addDoubleVectorToInputStream: (
+    vecPtr: number,
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
+  _addFloatVectorToInputStream: (
+    vecPtr: number,
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
+  _addIntVectorToInputStream: (
+    vecPtr: number,
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
+  _addUintVectorToInputStream: (
+    vecPtr: number,
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
+  _addStringVectorToInputStream: (
+    vecPtr: number,
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
+  _addFlatHashMapToInputStream: (
+    keysPtr: number,
+    valuesPtr: number,
+    count: number,
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
+  _addRawDataSpanToInputStream: (
+    dataPtr: number,
+    dataSize: number,
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
+  _addProtoToInputStream: (
+    dataPtr: number,
+    dataSize: number,
+    protoNamePtr: number,
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
+  _addEmptyPacketToInputStream: (
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
 
   // Input side packets
   _addBoolToInputSidePacket: (data: boolean, streamNamePtr: number) => void;
   _addDoubleToInputSidePacket: (data: number, streamNamePtr: number) => void;
   _addFloatToInputSidePacket: (data: number, streamNamePtr: number) => void;
   _addIntToInputSidePacket: (data: number, streamNamePtr: number) => void;
-  _addUintToInputSidePacket:
-      (data: number, streamNamePtr: number) => void;
+  _addUintToInputSidePacket: (data: number, streamNamePtr: number) => void;
   _addStringToInputSidePacket: (dataPtr: number, streamNamePtr: number) => void;
-  _addRawDataSpanToInputSidePacket:
-      (dataPtr: number, dataSize: number, streamNamePtr: number) => void;
-  _addProtoToInputSidePacket:
-      (dataPtr: number, dataSize: number, protoNamePtr: number,
-       streamNamePtr: number) => void;
-  _addBoolVectorToInputSidePacket:
-      (vecPtr: number, streamNamePtr: number) => void;
-  _addDoubleVectorToInputSidePacket:
-      (vecPtr: number, streamNamePtr: number) => void;
-  _addFloatVectorToInputSidePacket:
-      (vecPtr: number, streamNamePtr: number) => void;
-  _addIntVectorToInputSidePacket:
-      (vecPtr: number, streamNamePtr: number) => void;
-  _addUintVectorToInputSidePacket:
-      (vecPtr: number, streamNamePtr: number) => void;
-  _addStringVectorToInputSidePacket:
-      (vecPtr: number, streamNamePtr: number) => void;
+  _addRawDataSpanToInputSidePacket: (
+    dataPtr: number,
+    dataSize: number,
+    streamNamePtr: number,
+  ) => void;
+  _addProtoToInputSidePacket: (
+    dataPtr: number,
+    dataSize: number,
+    protoNamePtr: number,
+    streamNamePtr: number,
+  ) => void;
+  _addBoolVectorToInputSidePacket: (
+    vecPtr: number,
+    streamNamePtr: number,
+  ) => void;
+  _addDoubleVectorToInputSidePacket: (
+    vecPtr: number,
+    streamNamePtr: number,
+  ) => void;
+  _addFloatVectorToInputSidePacket: (
+    vecPtr: number,
+    streamNamePtr: number,
+  ) => void;
+  _addIntVectorToInputSidePacket: (
+    vecPtr: number,
+    streamNamePtr: number,
+  ) => void;
+  _addUintVectorToInputSidePacket: (
+    vecPtr: number,
+    streamNamePtr: number,
+  ) => void;
+  _addStringVectorToInputSidePacket: (
+    vecPtr: number,
+    streamNamePtr: number,
+  ) => void;
 
   // Vector input creation
   _allocateBoolVector: (size: number) => number;
@@ -118,8 +200,10 @@ export declare interface WasmModule {
 
   // Map of output streams to packet listeners.  Also built as part of
   // gl_graph_runner_internal_multi_input.
-  simpleListeners?:
-      Record<string, SimpleListener<unknown>|VectorListener<unknown>>;
+  simpleListeners?: Record<
+    string,
+    SimpleListener<unknown> | VectorListener<unknown>
+  >;
   // Map of output streams to empty packet listeners.
   emptyPacketListeners?: Record<string, EmptyPacketListener>;
   _attachBoolListener: (streamNamePtr: number) => void;
@@ -135,19 +219,29 @@ export declare interface WasmModule {
   _attachStringListener: (streamNamePtr: number) => void;
   _attachStringVectorListener: (streamNamePtr: number) => void;
   _attachProtoListener: (streamNamePtr: number, makeDeepCopy?: boolean) => void;
-  _attachProtoVectorListener:
-      (streamNamePtr: number, makeDeepCopy?: boolean) => void;
+  _attachProtoVectorListener: (
+    streamNamePtr: number,
+    makeDeepCopy?: boolean,
+  ) => void;
 
   // Require dependency ":gl_graph_runner_audio_out"
   _attachAudioListener: (streamNamePtr: number, makeDeepCopy?: boolean) => void;
 
   // Require dependency ":gl_graph_runner_audio"
-  _addAudioToInputStream:
-      (dataPtr: number, numChannels: number, numSamples: number,
-       streamNamePtr: number, timestamp: number) => void;
-  _configureAudio:
-      (channels: number, samples: number, sampleRate: number,
-       streamNamePtr: number, headerNamePtr: number) => void;
+  _addAudioToInputStream: (
+    dataPtr: number,
+    numChannels: number,
+    numSamples: number,
+    streamNamePtr: number,
+    timestamp: number,
+  ) => void;
+  _configureAudio: (
+    channels: number,
+    samples: number,
+    sampleRate: number,
+    streamNamePtr: number,
+    headerNamePtr: number,
+  ) => void;
 
   // Get the graph configuration and invoke the listener configured under
   // streamNamePtr

@@ -90,7 +90,7 @@ public final class HandLandmarker extends BaseVisionTaskApi {
       "mediapipe.tasks.vision.hand_landmarker.HandLandmarkerGraph";
 
   static {
-    System.loadLibrary("mediapipe_tasks_vision_jni");
+    System.loadLibrary("mediapipe_tasks_jni");
   }
 
   /**

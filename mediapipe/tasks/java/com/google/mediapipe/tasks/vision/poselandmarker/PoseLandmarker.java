@@ -87,7 +87,7 @@ public final class PoseLandmarker extends BaseVisionTaskApi {
       "mediapipe.tasks.vision.pose_landmarker.PoseLandmarkerGraph";
 
   static {
-    System.loadLibrary("mediapipe_tasks_vision_jni");
+    System.loadLibrary("mediapipe_tasks_jni");
   }
 
   /**

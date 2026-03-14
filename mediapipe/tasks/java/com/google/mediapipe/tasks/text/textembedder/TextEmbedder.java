@@ -85,7 +85,7 @@ public final class TextEmbedder implements AutoCloseable {
   private final TaskRunner runner;
 
   static {
-    System.loadLibrary("mediapipe_tasks_text_jni");
+    System.loadLibrary("mediapipe_tasks_jni");
     ProtoUtil.registerTypeName(
         EmbeddingsProto.EmbeddingResult.class,
         "mediapipe.tasks.components.containers.proto.EmbeddingResult");
