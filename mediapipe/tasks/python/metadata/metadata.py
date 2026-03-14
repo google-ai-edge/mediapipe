@@ -917,7 +917,7 @@ def convert_to_json(
       custom metadata name [1], value is the filepath that defines custom
       metadata schema. For instance, custom_metadata_schema =
       {"SEGMENTER_METADATA": "metadata/vision_tasks_metadata_schema.fbs"}. [1]:
-        https://github.com/google/mediapipe/blob/46b5c4012d2ef76c9d92bb0d88a6b107aee83814/mediapipe/tasks/metadata/metadata_schema.fbs#L612
+        https://github.com/google-ai-edge/mediapipe/blob/46b5c4012d2ef76c9d92bb0d88a6b107aee83814/mediapipe/tasks/metadata/metadata_schema.fbs#L612
 
   Returns:
     Metadata in JSON format.

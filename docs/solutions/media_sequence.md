@@ -50,7 +50,7 @@ process new data sets, in the documentation of
 1.  Checkout the mediapipe repository
 
     ```bash
-    git clone https://github.com/google/mediapipe.git
+    git clone https://github.com/google-ai-edge/mediapipe.git
     cd mediapipe
     ```
 
