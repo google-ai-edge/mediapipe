@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@build_bazel_rules_apple//apple:apple_static_library.bzl", "apple_static_library")
 load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load(
     "//mediapipe/framework/tool:ios.bzl",
+    "MPP_TASK_MINIMUM_OS_VERSION",
     "strip_api_include_path_prefix",
 )
 load(":ios_build_rules.bzl", "mediapipe_static_xcframework")
@@ -324,15 +326,24 @@ mediapipe_static_xcframework(
     ],
 )
 
-mediapipe_static_xcframework(
+apple_static_library(
     name = "MediaPipeTaskGraphs_library",
-    bundle_name = "MediaPipeTaskGraphs_library",
-    deps = [":MediaPipeTaskGraphs"],
+    avoid_deps = TENSORFLOW_LITE_C_DEPS + [
+        "@zlib//:zlib",
+        "//mediapipe/gpu:metal_shared_resources",
+        ":OpenCV",
+    ],
+    minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
+    platform_type = "ios",
+    deps = CALCULATORS_AND_GRAPHS + [
+        "@org_tensorflow//third_party/icu/data:conversion_data",
+        ":OpenCV",
+    ],
 )
 
 mediapipe_static_xcframework(
     name = "MediaPipeTasksCommon_framework",
-    avoid_deps = CALCULATORS_AND_GRAPHS,
+    avoid_deps = ["@zlib//:zlib"],
     bundle_name = "MediaPipeTasksCommon",
     # Including `OpenCV` and `TensorFlowLiteC` deps of the graphs here to avoid
     # conflicts with `TensorFlowLiteSwift` and `OpenCV` frameworks as iOS
@@ -340,5 +351,12 @@ mediapipe_static_xcframework(
     # `xcframeworks`. Including them with task graphs causes duplicate symbols
     # when installed alongside the respective frameworks since task graphs are
     # built as static libraries and force loaded.
-    deps = MEDIAPIPE_TASKS_COMMON_DEPS,
+    #
+    # FOR SPM: Including CALCULATORS_AND_GRAPHS directly in MediaPipeTasksCommon
+    # to avoid undefined symbols. Vision/Audio/Text frameworks use avoid_deps
+    # to prevent duplicating these, so using multiple frameworks together is safe.
+    # NOTE: conversion_data is required for ICU symbols when using -all_load.
+    deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS + [
+        "@org_tensorflow//third_party/icu/data:conversion_data",
+    ],
 )
