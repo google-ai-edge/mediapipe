@@ -32,6 +32,11 @@ build:linux --define=xnn_enable_avx512amx=false
 build:windows --cxxopt=/std:c++20
 build:windows --host_cxxopt=/std:c++20
 build:windows --copt=/w
+# Fix MSVC preprocessor compatibility (Fixes MP_STATUS_MACROS_IMPL_REM error)
+build:windows --copt=/Zc:preprocessor
+build:windows --host_copt=/Zc:preprocessor
+# Ensure stable Python version for Windows builds (Avoids Python 3.13 crash)
+build:windows --repo_env=HERMETIC_PYTHON_VERSION=3.12
 # For using M_* math constants on Windows with MSVC.
 build:windows --copt=/D_USE_MATH_DEFINES
 build:windows --host_copt=/D_USE_MATH_DEFINES
