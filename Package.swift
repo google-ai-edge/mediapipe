@@ -29,7 +29,7 @@ let package = Package(
         .binaryTarget(
             name: "MediaPipeTasksCommon",
             url: "https://github.com/mihaidimoiu/mediapipe/releases/download/v0.10.32/MediaPipeTasksCommon.xcframework.zip",
-            checksum: "73b3c0362fb1fdc7d4b5e25bcb90ac7c70f59423d345447a795c722d3bea3ed6"
+            checksum: "84bf6892da14f25e9719ec515f46ab670ba006a4d4a039ca966352ce75b31180"
         ),
 
         // Wrapper target for MediaPipeTasksCommon to add system framework dependencies
@@ -56,7 +56,7 @@ let package = Package(
         .binaryTarget(
             name: "MediaPipeTasksVision",
             url: "https://github.com/mihaidimoiu/mediapipe/releases/download/v0.10.32/MediaPipeTasksVision.xcframework.zip",
-            checksum: "614066dae8836ff6e67e077d5a83c7fd3a2910abfe1f021afa42e2bf6e25de70"
+            checksum: "ff3700fa7605be1e41c084bc596df3cebbec78994fd4a75fc6c478c42e9dccab"
         ),
 
         // MediaPipeTasksText - Text task APIs
@@ -64,7 +64,7 @@ let package = Package(
         .binaryTarget(
             name: "MediaPipeTasksText",
             url: "https://github.com/mihaidimoiu/mediapipe/releases/download/v0.10.32/MediaPipeTasksText.xcframework.zip",
-            checksum: "6ed4b6f4a419d4f39ab68761fee4471d0cd14da707ea949575c7ab4f9152db27"
+            checksum: "bdc01a87423d313fb459bbcc72d2653ac2edce41a0b5fa18cee5585ddbec7d80"
         ),
 
         // MediaPipeTasksAudio - Audio task APIs
@@ -72,7 +72,7 @@ let package = Package(
         .binaryTarget(
             name: "MediaPipeTasksAudio",
             url: "https://github.com/mihaidimoiu/mediapipe/releases/download/v0.10.32/MediaPipeTasksAudio.xcframework.zip",
-            checksum: "09be995156680a2d11feab1b5955828e7d33c4ab049afe0cb97bcdae8e53096b"
+            checksum: "e3bc269be8f598dd277bee8d1647baced4896fa776ff634ce93d0c62a3027f88"
         ),
     ]
 )
