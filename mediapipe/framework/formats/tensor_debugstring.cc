@@ -1,10 +1,16 @@
 #include <algorithm>
+#include <array>
+#include <cmath>
 #include <cstdint>
+#include <limits>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "absl/log/absl_check.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
@@ -287,12 +293,157 @@ std::string ValuesString(const Tensor& tensor, int max_num_elements) {
   }
 }
 
+// A class that computes a histogram of the tensor values.
+// Works for float32, uint8, int8, char and int32 tensors. For other types the
+// Create method will return an InvalidArgumentError.
+// If the tensor is float32 and has non finite values, Create method will
+// return an OutOfRangeError.
+// Otherwise, returns a histogram of the tensor values that can be converted to
+// a string using ResultAsString.
+class Histogram {
+ public:
+  static absl::StatusOr<std::unique_ptr<Histogram>> Create(
+      const Tensor& tensor) {
+    const int num_elements = tensor.shape().num_elements();
+    if (num_elements == 0) {
+      return absl::InvalidArgumentError("Tensor has no elements.");
+    }
+    auto view = tensor.GetCpuReadView();
+    const void* data = view.buffer<void>();
+
+    if (tensor.element_type() == Tensor::ElementType::kFloat32) {
+      for (int i = 0; i < num_elements; ++i) {
+        const float value = reinterpret_cast<const float*>(data)[i];
+        if (!std::isfinite(value)) {
+          return absl::OutOfRangeError("Data has non finite values.");
+        }
+      }
+    }
+
+    auto histogram = std::make_unique<Histogram>();
+
+    switch (tensor.element_type()) {
+      case Tensor::ElementType::kFloat32:
+        histogram->ComputeHistogram(reinterpret_cast<const float*>(data),
+                                    num_elements);
+        break;
+      case Tensor::ElementType::kUInt8:
+        histogram->ComputeHistogram(reinterpret_cast<const uint8_t*>(data),
+                                    num_elements);
+        break;
+      case Tensor::ElementType::kInt8:
+        histogram->ComputeHistogram(reinterpret_cast<const int8_t*>(data),
+                                    num_elements);
+        break;
+      case Tensor::ElementType::kChar:
+        histogram->ComputeHistogram(reinterpret_cast<const char*>(data),
+                                    num_elements);
+        break;
+      case Tensor::ElementType::kInt32:
+        histogram->ComputeHistogram(reinterpret_cast<const int32_t*>(data),
+                                    num_elements);
+        break;
+      default:
+        return absl::InvalidArgumentError("Data type not supported.");
+    }
+    return histogram;
+  }
+
+  std::string ResultAsString() const {
+    return absl::StrFormat(
+        "\nThe tensor has a value range of [%g, %g] and the histogram is:\n"
+        "[%s]\n%s\n\n",
+        min_value_, max_value_, absl::StrJoin(bins_, ", "),
+        EncapsulatedSparklineAsString());
+  }
+
+ private:
+  template <typename T>
+  void ComputeHistogram(const T* values, int num_elements) {
+    for (int i = 0; i < num_elements; ++i) {
+      min_value_ = std::min(min_value_, static_cast<double>(values[i]));
+      max_value_ = std::max(max_value_, static_cast<double>(values[i]));
+    }
+    if (max_value_ == min_value_) {
+      bins_[0] = num_elements;
+      return;
+    }
+    for (int i = 0; i < num_elements; ++i) {
+      const double value = static_cast<double>(values[i]);
+      int bin_index = 0;
+      bin_index = static_cast<int>((value - min_value_) /
+                                   (max_value_ - min_value_) * kNumBins);
+      bins_[std::clamp(bin_index, 0, kNumBins - 1)]++;
+    }
+  }
+
+  std::string EncapsulatedSparklineAsString() const {
+    int max_bin = 0;
+    for (int bin : bins_) {
+      max_bin = std::max(max_bin, bin);
+    }
+    const char* kBlocks[] = {" ",
+                             "\xE2\x96\x81",
+                             "\xE2\x96\x82",
+                             "\xE2\x96\x83",
+                             "\xE2\x96\x84",
+                             "\xE2\x96\x85",
+                             "\xE2\x96\x86",
+                             "\xE2\x96\x87",
+                             "\xE2\x96\x88"};
+    std::string top_border = "\xE2\x94\x8C";
+    std::string bottom_border = "\xE2\x94\x94";
+    std::string top_line = "\xE2\x94\x82";
+    std::string bottom_line = "\xE2\x94\x82";
+    for (int i = 0; i < bins_.size(); ++i) {
+      int bin = bins_[i];
+      int v = max_bin == 0 ? 0
+                           : static_cast<int>(std::round(
+                                 static_cast<double>(bin) / max_bin * 16.0));
+      int top_idx = (v > 8) ? (v - 8) : 0;
+      int bottom_idx = (v > 8) ? 8 : v;
+      absl::StrAppend(&top_line, kBlocks[top_idx], "\xE2\x94\x82");
+      absl::StrAppend(&bottom_line, kBlocks[bottom_idx], "\xE2\x94\x82");
+
+      absl::StrAppend(&top_border, "\xE2\x94\x80");
+      absl::StrAppend(&bottom_border, "\xE2\x94\x80");
+
+      if (i < bins_.size() - 1) {
+        absl::StrAppend(&top_border, "\xE2\x94\xAC");
+        absl::StrAppend(&bottom_border, "\xE2\x94\xB4");
+      } else {
+        absl::StrAppend(&top_border, "\xE2\x94\x90");
+        absl::StrAppend(&bottom_border, "\xE2\x94\x98");
+      }
+    }
+
+    return absl::StrCat(top_border, "\n", top_line, "\n", bottom_line, "\n",
+                        bottom_border);
+  }
+
+  static constexpr int kNumBins = 16;
+  double min_value_ = std::numeric_limits<double>::max();
+  double max_value_ = std::numeric_limits<double>::lowest();
+  std::array<int, kNumBins> bins_{};
+};
+
 }  // namespace
 
 std::string Tensor::DebugString(int max_num_elements) const {
-  return absl::StrCat("Tensor<", ElementTypeName(element_type()), "> [",
-                      absl::StrJoin(shape().dims, " "), "] =\n",
-                      ValuesString(*this, max_num_elements));
+  std::string tensor_string =
+      absl::StrCat("Tensor<", ElementTypeName(element_type()), "> [",
+                   absl::StrJoin(shape().dims, " "), "] =\n",
+                   ValuesString(*this, max_num_elements));
+
+  absl::StatusOr<std::unique_ptr<Histogram>> histogram =
+      Histogram::Create(*this);
+  if (histogram.ok()) {
+    tensor_string += histogram.value()->ResultAsString();
+  } else if (histogram.status().code() == absl::StatusCode::kOutOfRange) {
+    tensor_string += "\n\nTensor has non finite values.";
+  }
+
+  return tensor_string;
 }
 
 }  // namespace mediapipe
