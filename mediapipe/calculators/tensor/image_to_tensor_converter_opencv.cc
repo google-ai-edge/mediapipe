@@ -130,14 +130,7 @@ class ImageToTensorOpenCvConverter : public ImageToTensorConverter {
             absl::StrCat("Unsupported tensor type: ", tensor_type_));
     }
 
-    if (std::isnan(roi.center_x) || std::isnan(roi.center_y) ||
-        std::isnan(roi.width) || std::isnan(roi.height) ||
-        std::isnan(roi.rotation)) {
-      return absl::InvalidArgumentError("ROI contains NaN values.");
-    }
-    if (roi.width <= 0 || roi.height <= 0) {
-      return absl::InvalidArgumentError("ROI width and height must be > 0.");
-    }
+    MP_RETURN_IF_ERROR(ValidateRoi(roi));
 
     const cv::RotatedRect rotated_rect(cv::Point2f(roi.center_x, roi.center_y),
                                        cv::Size2f(roi.width, roi.height),

@@ -169,6 +169,7 @@ class ImageToTensorNodeImpl
     MP_ASSIGN_OR_RETURN(auto padding,
                         PadRoi(tensor_width, tensor_height,
                                options_.keep_aspect_ratio(), &roi));
+    MP_RETURN_IF_ERROR(ValidateRoi(roi));
     if (cc.out_letterbox_padding.IsConnected()) {
       cc.out_letterbox_padding.Send(padding);
     }

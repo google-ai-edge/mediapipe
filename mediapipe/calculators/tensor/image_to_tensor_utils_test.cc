@@ -14,8 +14,10 @@
 
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 
+#include <limits>
 #include <optional>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
@@ -106,6 +108,79 @@ TEST(PadRoi, VerticalPadding) {
                   testing::FloatEq(0.0f),
                   testing::FloatNear(expected_horizontal_padding, 1e-6)));
   EXPECT_THAT(roi, EqRotatedRect(21, 21, 1, 2, 3));
+}
+
+TEST(ValidateRoi, ValidRoi) {
+  RotatedRect roi{.center_x = 10,
+                  .center_y = 10,
+                  .width = 100,
+                  .height = 100,
+                  .rotation = 0};
+  MP_EXPECT_OK(ValidateRoi(roi));
+}
+
+TEST(ValidateRoi, NanCenterX) {
+  RotatedRect roi{.center_x = std::numeric_limits<float>::quiet_NaN(),
+                  .center_y = 10,
+                  .width = 100,
+                  .height = 100,
+                  .rotation = 0};
+  EXPECT_THAT(ValidateRoi(roi), StatusIs(absl::StatusCode::kInvalidArgument,
+                                         HasSubstr("ROI contains NaN values")));
+}
+
+TEST(ValidateRoi, NanCenterY) {
+  RotatedRect roi{.center_x = 10,
+                  .center_y = std::numeric_limits<float>::quiet_NaN(),
+                  .width = 100,
+                  .height = 100,
+                  .rotation = 0};
+  EXPECT_THAT(ValidateRoi(roi), StatusIs(absl::StatusCode::kInvalidArgument,
+                                         HasSubstr("ROI contains NaN values")));
+}
+
+TEST(ValidateRoi, NanWidth) {
+  RotatedRect roi{.center_x = 10,
+                  .center_y = 10,
+                  .width = std::numeric_limits<float>::quiet_NaN(),
+                  .height = 100,
+                  .rotation = 0};
+  EXPECT_THAT(ValidateRoi(roi), StatusIs(absl::StatusCode::kInvalidArgument,
+                                         HasSubstr("ROI contains NaN values")));
+}
+
+TEST(ValidateRoi, NanHeight) {
+  RotatedRect roi{.center_x = 10,
+                  .center_y = 10,
+                  .width = 100,
+                  .height = std::numeric_limits<float>::quiet_NaN(),
+                  .rotation = 0};
+  EXPECT_THAT(ValidateRoi(roi), StatusIs(absl::StatusCode::kInvalidArgument,
+                                         HasSubstr("ROI contains NaN values")));
+}
+
+TEST(ValidateRoi, NanRotation) {
+  RotatedRect roi{.center_x = 10,
+                  .center_y = 10,
+                  .width = 100,
+                  .height = 100,
+                  .rotation = std::numeric_limits<float>::quiet_NaN()};
+  EXPECT_THAT(ValidateRoi(roi), StatusIs(absl::StatusCode::kInvalidArgument,
+                                         HasSubstr("ROI contains NaN values")));
+}
+
+TEST(ValidateRoi, InvalidDimensions) {
+  RotatedRect roi{
+      .center_x = 10, .center_y = 10, .width = 0, .height = 100, .rotation = 0};
+  EXPECT_THAT(ValidateRoi(roi),
+              StatusIs(absl::StatusCode::kInvalidArgument,
+                       HasSubstr("ROI width and height must be > 0")));
+
+  roi.width = 100;
+  roi.height = -1;
+  EXPECT_THAT(ValidateRoi(roi),
+              StatusIs(absl::StatusCode::kInvalidArgument,
+                       HasSubstr("ROI width and height must be > 0")));
 }
 
 testing::Matcher<ValueTransformation> EqValueTransformation(float scale,
