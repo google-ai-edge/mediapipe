@@ -372,9 +372,6 @@ export class LlmInference extends TaskRunner {
         'shader-f16',
         'subgroups' as GPUFeatureName,
       ];
-      if (adapter.features.has('subgroups-f16' as GPUFeatureName)) {
-        featuresList.push('subgroups-f16' as GPUFeatureName);
-      }
       deviceDescriptor.requiredFeatures = featuresList;
     }
 
