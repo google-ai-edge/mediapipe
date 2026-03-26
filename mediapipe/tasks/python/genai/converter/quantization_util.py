@@ -432,6 +432,12 @@ def quantize_tensor(
   # (quantize_axis) should increment by one, and the corresponding pack_dim
   # should also increment by one.
   if block_size > 0:
+    # We hard-code in a special case for [0, 1]. It has not been thoroughly
+    # tested or verified yet, so we log a warning.
+    if len(axis) == 2 and axis == [0, 1]:
+      print('Using experimental blockwise int4 axis=[0, 1] compression')
+      jnp_var = jnp.reshape(jnp_var, [-1, jnp_var.shape[-1]])
+      axis = [0]
     shape = list(jnp_var.shape)
     assert len(axis) == 1, 'Only support 1D sub-channel quantization'
     sub_channels, rem = divmod(shape[axis[0]], block_size)

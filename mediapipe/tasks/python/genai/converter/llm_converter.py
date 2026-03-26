@@ -316,8 +316,23 @@ class _LlmConverter:
           output_tensors[action.target_name] = (action.tensor_value, False)
       if action.quantize_axis:
         quant_bits = action.quantize_bits
-        if block_size > 0 and quant_bits == 4 and action.quantize_axis[0] != 0:
-          # Turn off 4bit blockwise quant for quant axis = 1 case.
+        quant_axis = action.quantize_axis.copy()
+        if (
+            block_size > 0
+            and quant_bits == 4
+            and quant_axis != [0]
+            and quant_axis != [1]
+            and quant_axis != [0, 1]
+        ):
+          # Turn off 4bit blockwise quant for unsupported quantization axis
+          # configurations
+          print(
+              'Disabling blockwise 4bit quant for unsupported quantization'
+              ' axis: ',
+              quant_axis,
+              ' on tensor ',
+              action.target_name,
+          )
           quant_bits = 8
         pack = quant_bits == 4
 
@@ -330,9 +345,7 @@ class _LlmConverter:
           output_tensors[action.target_name] = (action.tensor_value, pack)
         else:
           if is_symmetric:
-            # Only support block quant for quant axis 0 for now.
-            use_block_size = pack and action.quantize_axis[0] == 0
-            bs = block_size if use_block_size else 0
+            bs = block_size if pack else 0
             target_var, scale = quantization_util.quantize_tensor(
                 var=action.tensor_value,
                 axis=action.quantize_axis,
@@ -343,12 +356,29 @@ class _LlmConverter:
                 block_size=bs,
             )
             if bs > 0:
+              if len(scale.shape) > 3:
+                raise ValueError(
+                    'Blockwise int4 quantization not yet supported for'
+                    ' 4-dimensional or higher scales.'
+                )
               # Reshape and transpose output from blockwise quant.
               # We want per-block scale values as the last dimension.
-              scale = scale.transpose()
+              if quant_axis == [0] or quant_axis == [0, 1]:
+                if len(scale.shape) <= 2:
+                  scale = scale.transpose()
+                else:
+                  scale = scale.transpose([1, 2, 0])
+              elif quant_axis == [1]:
+                if len(scale.shape) == 3:
+                  # NOTE: This has not been tested yet, so we log a warning
+                  print(
+                      'Untested feature: blockwise int4 quant_axis=[1] with 3d'
+                      ' scale shape'
+                  )
+                  scale = scale.transpose([0, 2, 1])
+
               # Reshape to fold in the per-block dimension
-              orig_shape = target_var.shape
-              target_var = target_var.reshape(-1, orig_shape[-1])
+              target_var = target_var.reshape(action.tensor_value.shape)
             output_tensors[action.target_name] = (target_var, pack)
             output_tensors[action.target_name + scale_suffix] = (
                 scale,
