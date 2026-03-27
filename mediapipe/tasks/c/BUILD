@@ -63,6 +63,7 @@ cc_binary(
         "//mediapipe/tasks/c/vision/pose_landmarker:pose_landmarker_c_lib",
     ] + select({
         "@platforms//os:windows": [],
+        "//mediapipe/tasks:build_for_3p": [],
         "//conditions:default": [
         ],
     }),
