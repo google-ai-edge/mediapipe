@@ -1,4 +1,4 @@
-# Copyright 2025 The MediaPipe Authors.
+# Copyright 2026 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,29 +17,19 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 cc_library(
-    name = "logging_client",
-    hdrs = ["logging_client.h"],
+    name = "logging_factory",
+    srcs = ["logging_factory.cc"],
+    hdrs = ["logging_factory.h"],
     deps = [
-        "//mediapipe/util/analytics:mediapipe_log_extension_cc_proto",
+        "//mediapipe/tasks/cc/core/logging:tasks_dummy_logger",
+        "//mediapipe/tasks/cc/core/logging:tasks_logger",
     ],
 )
 
 cc_library(
-    name = "tasks_dummy_logger",
-    hdrs = ["tasks_dummy_logger.h"],
+    name = "logging_factory_hdr",
+    hdrs = ["logging_factory.h"],
     deps = [
-        ":logging_client",
-        ":tasks_logger",
-        "//mediapipe/framework:timestamp",
-        "@com_google_absl//absl/strings:string_view",
-    ],
-)
-
-cc_library(
-    name = "tasks_logger",
-    hdrs = ["tasks_logger.h"],
-    deps = [
-        "//mediapipe/framework:timestamp",
-        "//mediapipe/tasks/cc/core:host_environment",
+        "//mediapipe/tasks/cc/core/logging:tasks_logger",
     ],
 )

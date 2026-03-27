@@ -16,13 +16,25 @@
 #define MEDIAPIPE_TASKS_CORE_LOGGING_TASKS_STATS_TASKS_LOGGER_H_
 
 #include <cstdint>
+#include <string>
 
 #include "mediapipe/framework/timestamp.h"
+#include "mediapipe/tasks/cc/core/host_environment.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace core {
 namespace logging {
+
+struct LoggingOptions {
+  std::string task_name;
+  std::string task_running_mode;
+  HostEnvironment host_environment = HostEnvironment::HOST_ENVIRONMENT_UNKNOWN;
+  HostSystem host_system = HostSystem::HOST_SYSTEM_UNKNOWN;
+  std::string host_version;
+  std::string app_id;
+  std::string app_version;
+};
 
 // The stats logger interface that defines what MediaPipe Tasks events to log
 class TasksLogger {

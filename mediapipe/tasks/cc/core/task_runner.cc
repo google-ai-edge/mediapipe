@@ -39,7 +39,7 @@ limitations under the License.
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/core/logging/tasks_dummy_logger.h"
+#include "mediapipe/tasks/cc/core/logging/factory/logging_factory.h"
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "mediapipe/tasks/cc/core/model_resources_cache.h"
 #include "mediapipe/util/analytics/mediapipe_logging_enums.pb.h"
@@ -100,7 +100,15 @@ absl::StatusOr<PacketMap> GenerateOutputPacketMap(
 /* static */
 absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
     TaskRunnerOptions options) {
-  auto tasks_logger = logging::TasksDummyLogger::Create();
+  std::unique_ptr<logging::TasksLogger> tasks_logger =
+      logging::CreateTasksLogger(
+          {.task_name = options.task_name,
+           .task_running_mode = options.task_running_mode,
+           .host_environment = options.host_environment,
+           .host_system = options.host_system,
+           .host_version = options.host_version,
+           .app_id = options.app_id,
+           .app_version = options.app_version});
   auto task_runner = absl::WrapUnique(
       new TaskRunner(options.packets_callback, std::move(tasks_logger)));
   MP_RETURN_IF_ERROR(task_runner->Initialize(

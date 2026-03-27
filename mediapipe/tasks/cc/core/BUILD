@@ -277,6 +277,7 @@ cc_library_with_tflite(
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core/logging:tasks_dummy_logger",
         "//mediapipe/tasks/cc/core/logging:tasks_logger",
+        "//mediapipe/tasks/cc/core/logging/factory:logging_factory",
         "//mediapipe/util/analytics:mediapipe_logging_enums_cc_proto",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
