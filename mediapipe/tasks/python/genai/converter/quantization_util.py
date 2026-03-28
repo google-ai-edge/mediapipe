@@ -654,3 +654,41 @@ def update_to_uint4(
 
   qx = qx + _UINT4_ZP
   return qx, scale, np.array(per_tensor_zp, dtype=np.int32)
+
+
+def max_length_axis(shape, axis):
+  """Get the axis with the maximum length."""
+  if axis is None:
+    axis = range(len(shape))
+  elif isinstance(axis, int):
+    axis = [axis]
+  axis = tuple(a % len(shape) for a in axis)
+  axis = sorted(axis, reverse=True)  # Prefers larger dim if there is a tie.
+  max_len_ind = max(enumerate([shape[a] for a in axis]), key=lambda x: x[1])[0]
+  return axis[max_len_ind]
+
+
+def dequantize_blockwise(values, scales, block_size):
+  """Dequantizes a given blockwise-compressed tensor."""
+  contracted_dims = []
+  if len(values.shape) != len(scales.shape):
+    raise ValueError('Values and scales are not the same size')
+
+  # Find the contracted dimensions.
+  for i in range(len(values.shape)):
+    if values.shape[i] != scales.shape[i]:
+      contracted_dims.append(i)
+
+  # Make sure decompressing results in an exact shape match.
+  test_shape = list(scales.shape)
+  for i in contracted_dims:
+    test_shape[i] *= block_size
+
+  if tuple(test_shape) != values.shape:
+    raise ValueError('Expanded dimensions did not match')
+
+  # We need to repeat the scale tensor along the target dimension to match the
+  # shape of the quantized value tensor.
+  target_dim = max_length_axis(values.shape, contracted_dims)
+  scales = jnp.repeat(scales, block_size, axis=target_dim)
+  return values.astype(jnp.int32).astype(jnp.float32) * scales

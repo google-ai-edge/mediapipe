@@ -374,12 +374,10 @@ class _LlmConverter:
                   scale = scale.transpose([1, 2, 0])
               elif quant_axis == [1]:
                 if len(scale.shape) == 3:
-                  # NOTE: This has not been tested yet, so we log a warning
-                  print(
-                      'Untested feature: blockwise int4 quant_axis=[1] with 3d'
-                      ' scale shape'
-                  )
-                  scale = scale.transpose([0, 2, 1])
+                  # Only tested in one case, so not sure if this generalizes.
+                  # Seems to behave identically to our experimental
+                  # quant_axis = [0, 1] support so far.
+                  scale = scale.transpose([2, 0, 1])
 
               # Reshape to fold in the per-block dimension
               target_var = target_var.reshape(action.tensor_value.shape)
