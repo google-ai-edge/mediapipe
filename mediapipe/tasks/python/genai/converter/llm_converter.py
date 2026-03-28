@@ -131,6 +131,8 @@ class ConversionConfig(object):
     use_mse_quant: Whether to use MSE quantization for recomputing scales.
     block_size: Default of 0 is off. Can also be 32 or 128, for using blockwise
       Q4_0 compression on the models and layers which support this.
+    apply_srq: Default of None will apply SRQ for pre-quantized models only.
+      Will override this behavior if set explicitly.
   """
 
   def __init__(
@@ -162,6 +164,7 @@ class ConversionConfig(object):
       use_fake_weights: bool = False,
       use_dynamic_ple: bool = True,
       use_mse_quant: bool = False,
+      apply_srq: Optional[bool] = None,
   ):
     self.input_ckpt = input_ckpt
     self.ckpt_format = ckpt_format
@@ -187,6 +190,7 @@ class ConversionConfig(object):
     self.use_fake_weights = use_fake_weights
     self.use_dynamic_ple = use_dynamic_ple
     self.use_mse_quant = use_mse_quant
+    self.apply_srq = apply_srq
     if output_tflite_file:
       parent_dir = os.path.dirname(output_tflite_file)
       if not os.path.isdir(parent_dir):
@@ -582,7 +586,10 @@ class _LlmConverter:
         image_adapter_file=config.image_adapter_file,
         submodel_type=config.submodel_type,
         use_dynamic_ple=config.use_dynamic_ple,
-        apply_srq=config.is_quantized,
+        # Default SRQ behavior is to match is_quantized
+        apply_srq=config.is_quantized
+        if config.apply_srq is None
+        else config.apply_srq,
         block_size=config.block_size,
     )
 
