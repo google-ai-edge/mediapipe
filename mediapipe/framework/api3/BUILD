@@ -121,6 +121,8 @@ cc_test(
         ":packet_matcher",
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status_matchers",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
