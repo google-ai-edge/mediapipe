@@ -1552,22 +1552,57 @@ cc_test(
 cc_library(
     name = "from_image_calculator",
     srcs = ["from_image_calculator.cc"],
+    hdrs = ["from_image_calculator.h"],
     deps = [
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/api3:any",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:calculator_contract",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
+        "//mediapipe/framework/api3:packet",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",
+        "//mediapipe/gpu:gpu_buffer",
+        "@com_google_absl//absl/status",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gpu_service",
         ],
     }),
     alwayslink = 1,
+)
+
+cc_test(
+    name = "from_image_calculator_test",
+    size = "small",
+    srcs = ["from_image_calculator_test.cc"],
+    deps = [
+        ":from_image_calculator",
+        "//mediapipe/framework/api3:function_runner",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:packet",
+        "//mediapipe/framework/api3:stream",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status_matchers",
+        "@com_google_absl//absl/status",
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gpu_service",
+            "//mediapipe/gpu:gpu_shared_data_internal",
+        ],
+    }),
 )
 
 cc_library(
