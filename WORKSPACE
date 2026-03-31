@@ -942,3 +942,18 @@ http_archive(
     strip_prefix = "gradle-8.4",
     urls = ["https://services.gradle.org/distributions/gradle-8.4-bin.zip"],
 )
+
+http_archive(
+    name = "boringssl",
+    sha256 = "52e2d96759d483e384e3964a2513781ea05cb6b2d677f1f8f5a4049aea30535d",
+    strip_prefix = "boringssl-0.20260211.0",
+    url = "https://github.com/google/boringssl/archive/refs/tags/0.20260211.0.tar.gz",
+)
+
+http_archive(
+    name = "libcurl",
+    build_file = "@//third_party:curl.BUILD",
+    sha256 = "d15ebab765d793e2e96db090f0e172d127859d78ca6f6391d7eafecfd894bbc0",
+    strip_prefix = "curl-8.10.1",
+    url = "https://curl.haxx.se/download/curl-8.10.1.tar.gz",
+)
