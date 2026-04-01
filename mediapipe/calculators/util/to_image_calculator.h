@@ -1,0 +1,63 @@
+// Copyright 2026 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#ifndef MEDIAPIPE_CALCULATORS_UTIL_TO_IMAGE_CALCULATOR_H_
+#define MEDIAPIPE_CALCULATORS_UTIL_TO_IMAGE_CALCULATOR_H_
+
+#include "mediapipe/framework/api3/contract.h"
+#include "mediapipe/framework/api3/node.h"
+#include "mediapipe/framework/api3/one_of.h"
+#include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/image_frame.h"
+
+#if MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/framework/api3/any.h"
+#else
+#include "mediapipe/gpu/gpu_buffer.h"
+#endif
+
+namespace mediapipe::api3 {
+
+// A calculator for converting from legacy MediaPipe datatypes into a
+// unified image container.
+//
+// Note:
+// - Only one of the inputs must be specified.
+// - No CPU/GPU conversion is done.
+struct ToImageNode : Node<"ToImageCalculator"> {
+#if MEDIAPIPE_DISABLE_GPU
+  using GpuBuffer = Any;
+#else
+  using GpuBuffer = mediapipe::GpuBuffer;
+#endif
+
+  template <typename S>
+  struct Contract {
+    // Input image as one of Image, ImageFrame, or GpuBuffer types.
+    Optional<
+        Input<S, OneOf<mediapipe::Image, mediapipe::ImageFrame, GpuBuffer>>>
+        in_image{"IMAGE"};
+    // Input image as ImageFrame type.
+    Optional<Input<S, mediapipe::ImageFrame>> in_image_cpu{"IMAGE_CPU"};
+    // Input image as GpuBuffer type.
+    Optional<Input<S, GpuBuffer>> in_image_gpu{"IMAGE_GPU"};
+
+    // Output image as Image type.
+    Output<S, mediapipe::Image> out_image{"IMAGE"};
+  };
+};
+
+}  // namespace mediapipe::api3
+
+#endif  // MEDIAPIPE_CALCULATORS_UTIL_TO_IMAGE_CALCULATOR_H_
