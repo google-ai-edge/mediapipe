@@ -15,14 +15,9 @@
 #ifndef MEDIAPIPE_TASKS_CC_CORE_LOGGING_TASKS_DUMMY_LOGGER_H_
 #define MEDIAPIPE_TASKS_CC_CORE_LOGGING_TASKS_DUMMY_LOGGER_H_
 
-#include <cstdint>
 #include <memory>
-#include <optional>
-#include <string>
 
-#include "absl/strings/string_view.h"
 #include "mediapipe/framework/timestamp.h"
-#include "mediapipe/tasks/cc/core/logging/logging_client.h"
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 
 namespace mediapipe {

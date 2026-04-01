@@ -42,7 +42,6 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/logging/factory/logging_factory.h"
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "mediapipe/tasks/cc/core/model_resources_cache.h"
-#include "mediapipe/util/analytics/mediapipe_logging_enums.pb.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
 #if !MEDIAPIPE_DISABLE_GPU

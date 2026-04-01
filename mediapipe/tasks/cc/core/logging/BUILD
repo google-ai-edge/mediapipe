@@ -17,21 +17,11 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 cc_library(
-    name = "logging_client",
-    hdrs = ["logging_client.h"],
-    deps = [
-        "//mediapipe/util/analytics:mediapipe_log_extension_cc_proto",
-    ],
-)
-
-cc_library(
     name = "tasks_dummy_logger",
     hdrs = ["tasks_dummy_logger.h"],
     deps = [
-        ":logging_client",
         ":tasks_logger",
         "//mediapipe/framework:timestamp",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
