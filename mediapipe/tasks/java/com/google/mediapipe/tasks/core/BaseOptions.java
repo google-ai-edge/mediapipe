@@ -93,6 +93,10 @@ public abstract class BaseOptions {
             delegateMatchesDelegateOptions =
                 options.delegateOptions().get() instanceof DelegateOptions.GpuOptions;
             break;
+          case NPU:
+            delegateMatchesDelegateOptions =
+                options.delegateOptions().get() instanceof DelegateOptions.NpuOptions;
+            break;
         }
         if (!delegateMatchesDelegateOptions) {
           throw new IllegalArgumentException(
@@ -177,6 +181,9 @@ public abstract class BaseOptions {
       // The directory containing the NPU dispatch library.
       abstract String dispatchLibraryDirectory();
 
+      // The directory containing the NPU compiler plugin library.
+      abstract String compilerPluginLibraryDirectory();
+
       public static Builder builder() {
         return new AutoValue_BaseOptions_DelegateOptions_NpuOptions.Builder();
       }
@@ -185,6 +192,9 @@ public abstract class BaseOptions {
       @AutoValue.Builder
       public abstract static class Builder {
         public abstract Builder setDispatchLibraryDirectory(String dispatchLibraryDirectory);
+
+        public abstract Builder setCompilerPluginLibraryDirectory(
+            String compilerPluginLibraryDirectory);
 
         public abstract NpuOptions build();
       }

@@ -35,6 +35,8 @@ public class BaseOptionsTest {
   static final String SERIALIZED_MODEL_DIR = "dummy_serialized_model_dir";
   static final String MODEL_TOKEN = "dummy_model_token";
   static final String CACHED_KERNEL_PATH = "dummy_cached_kernel_path";
+  static final String DISPATCH_LIBRARY_PATH = "dummy_dispatch_library_path";
+  static final String COMPILER_PLUGIN_LIBRARY_PATH = "dummy_compiler_plugin_library_path";
 
   @RunWith(AndroidJUnit4.class)
   public static final class General extends BaseOptionsTest {
@@ -74,6 +76,28 @@ public class BaseOptionsTest {
                   .cachedKernelPath()
                   .get())
           .isEqualTo(CACHED_KERNEL_PATH);
+    }
+
+    @Test
+    public void succeedsWithNpuOptions() throws Exception {
+      BaseOptions options =
+          BaseOptions.builder()
+              .setModelAssetPath(MODEL_ASSET_PATH)
+              .setDelegate(Delegate.NPU)
+              .setDelegateOptions(
+                  BaseOptions.DelegateOptions.NpuOptions.builder()
+                      .setDispatchLibraryDirectory(DISPATCH_LIBRARY_PATH)
+                      .setCompilerPluginLibraryDirectory(COMPILER_PLUGIN_LIBRARY_PATH)
+                      .build())
+              .build();
+      assertThat(
+              ((BaseOptions.DelegateOptions.NpuOptions) options.delegateOptions().get())
+                  .dispatchLibraryDirectory())
+          .isEqualTo(DISPATCH_LIBRARY_PATH);
+      assertThat(
+              ((BaseOptions.DelegateOptions.NpuOptions) options.delegateOptions().get())
+                  .compilerPluginLibraryDirectory())
+          .isEqualTo(COMPILER_PLUGIN_LIBRARY_PATH);
     }
 
     @Test
@@ -154,6 +178,30 @@ public class BaseOptionsTest {
       assertThat(acceleration.getGpu().hasCachedKernelPath()).isFalse();
       assertThat(acceleration.getGpu().getModelToken()).isEqualTo(MODEL_TOKEN);
       assertThat(acceleration.getGpu().getSerializedModelDir()).isEqualTo(SERIALIZED_MODEL_DIR);
+    }
+
+    @Test
+    public void succeedsWithNpuOptions() throws Exception {
+      BaseOptions options =
+          BaseOptions.builder()
+              .setModelAssetPath(MODEL_ASSET_PATH)
+              .setDelegate(Delegate.NPU)
+              .setDelegateOptions(
+                  BaseOptions.DelegateOptions.NpuOptions.builder()
+                      .setDispatchLibraryDirectory(DISPATCH_LIBRARY_PATH)
+                      .setCompilerPluginLibraryDirectory(COMPILER_PLUGIN_LIBRARY_PATH)
+                      .build())
+              .build();
+      MockTaskOptions taskOptions = new MockTaskOptions(options);
+      AccelerationProto.Acceleration acceleration =
+          taskOptions.getBaseOptionsProto().getAcceleration();
+      assertThat(acceleration.hasTflite()).isFalse();
+      assertThat(acceleration.hasLitert()).isTrue();
+      assertThat(acceleration.getLitert().hasNpu()).isTrue();
+      assertThat(acceleration.getLitert().getNpu().getDispatchLibraryPath())
+          .isEqualTo(DISPATCH_LIBRARY_PATH);
+      assertThat(acceleration.getLitert().getNpu().getCompilerPluginLibraryPath())
+          .isEqualTo(COMPILER_PLUGIN_LIBRARY_PATH);
     }
   }
 }
