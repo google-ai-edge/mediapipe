@@ -15,7 +15,12 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TEST_UTIL_H_
 #define MEDIAPIPE_FRAMEWORK_TEST_UTIL_H_
 
+#include <memory>
+#include <string>
+
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 
@@ -123,6 +128,10 @@ absl::StatusOr<std::unique_ptr<ImageFrame>> LoadTestImage(
 // case of failure.
 std::unique_ptr<ImageFrame> LoadTestPng(
     absl::string_view path, ImageFormat::Format format = ImageFormat::SRGBA);
+
+// Write an ImageFrame as PNG under provided path (e.g. /tmp/output.png).
+absl::Status SavePngOutput(const mediapipe::ImageFrame& image,
+                           absl::string_view path);
 
 // Write an ImageFrame as PNG to the test undeclared outputs directory.
 // The image's name will contain the given prefix and a timestamp.
