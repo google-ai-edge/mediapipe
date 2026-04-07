@@ -28,6 +28,7 @@ class BaseOptionsC(ctypes.Structure):
     host_environment: `int`, the environment in which the task is running.
     host_system: `int`, the system on which the task is running.
     host_version: `bytes`, the Python version as a UTF-8 string.
+    ca_bundle_path: `bytes`, the path to the CA bundle file as a UTF-8 string.
   """
   _fields_ = [
       ("model_asset_buffer", ctypes.c_char_p),
@@ -37,4 +38,5 @@ class BaseOptionsC(ctypes.Structure):
       ("host_environment", ctypes.c_int),
       ("host_system", ctypes.c_int),
       ("host_version", ctypes.c_char_p),
+      ("ca_bundle_path", ctypes.c_char_p),
   ]

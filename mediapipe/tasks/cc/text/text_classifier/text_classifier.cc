@@ -94,7 +94,8 @@ absl::StatusOr<std::unique_ptr<TextClassifier>> TextClassifier::Create(
           .op_resolver = std::move(options->base_options.op_resolver),
           .host_environment = options->base_options.host_environment,
           .host_system = options->base_options.host_system,
-          .host_version = options->base_options.host_version});
+          .host_version = options->base_options.host_version,
+          .ca_bundle_path = options->base_options.ca_bundle_path});
 }
 
 absl::StatusOr<TextClassifierResult> TextClassifier::Classify(

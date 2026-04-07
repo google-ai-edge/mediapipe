@@ -20,6 +20,8 @@ import sys
 import types
 from typing import Any, Optional
 
+import certifi
+
 from mediapipe.tasks.python.core import base_options_c as base_options_c_lib
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
@@ -85,6 +87,7 @@ class BaseOptions:
   @doc_controls.do_not_generate_docs
   def to_ctypes(self) -> base_options_c_lib.BaseOptionsC:
     """Creates a BaseOptionsC struct from the BaseOptions object."""
+    ca_bundle_path = certifi.where()
     host_system = _HOST_SYSTEM_BY_PLATFORM.get(
         platform.system(), _HostSystem.HOST_SYSTEM_UNKNOWN
     )
@@ -101,6 +104,7 @@ class BaseOptions:
     host_version, *_ = sys.version.split(' ')
     options.host_system = host_system
     options.host_version = host_version.encode('utf-8')
+    options.ca_bundle_path = ca_bundle_path.encode('utf-8')
     return options
 
   def __eq__(self, other: Any) -> bool:

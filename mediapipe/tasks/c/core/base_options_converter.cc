@@ -80,9 +80,8 @@ void CppConvertToBaseOptions(const BaseOptions& in,
   out->delegate = CppConvertToDelegate(in.delegate);
   out->host_environment = CppConvertToHostEnvironment(in.host_environment);
   out->host_system = CppConvertToHostSystem(in.host_system);
-  if (in.host_version) {
-    out->host_version = in.host_version;
-  }
+  out->host_version = in.host_version ? std::string(in.host_version) : "";
+  out->ca_bundle_path = in.ca_bundle_path ? std::string(in.ca_bundle_path) : "";
 }
 
 }  // namespace mediapipe::tasks::c::core

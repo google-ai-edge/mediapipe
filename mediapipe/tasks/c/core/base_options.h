@@ -65,6 +65,9 @@ struct BaseOptions {
 
   // The host version, e.g., python version.
   const char* host_version;
+
+  // The path to CA bundle to use for usage logging.
+  const char* ca_bundle_path;
 };
 
 #ifdef __cplusplus

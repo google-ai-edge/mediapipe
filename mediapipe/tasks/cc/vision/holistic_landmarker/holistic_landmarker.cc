@@ -295,7 +295,8 @@ absl::StatusOr<std::unique_ptr<HolisticLandmarker>> HolisticLandmarker::Create(
                options->base_options.disable_default_service,
            .host_environment = options->base_options.host_environment,
            .host_system = options->base_options.host_system,
-           .host_version = options->base_options.host_version})));
+           .host_version = options->base_options.host_version,
+           .ca_bundle_path = options->base_options.ca_bundle_path})));
   landmarker->output_pose_segmentation_masks_ =
       options->output_pose_segmentation_masks;
   landmarker->output_face_blendshapes_ = options->output_face_blendshapes;

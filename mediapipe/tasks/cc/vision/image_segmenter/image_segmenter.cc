@@ -207,7 +207,8 @@ absl::StatusOr<std::unique_ptr<ImageSegmenter>> ImageSegmenter::Create(
        .disable_default_service = options->base_options.disable_default_service,
        .host_environment = options->base_options.host_environment,
        .host_system = options->base_options.host_system,
-       .host_version = options->base_options.host_version});
+       .host_version = options->base_options.host_version,
+       .ca_bundle_path = options->base_options.ca_bundle_path});
   if (!image_segmenter.ok()) {
     return image_segmenter.status();
   }

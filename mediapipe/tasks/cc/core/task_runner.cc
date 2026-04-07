@@ -107,7 +107,8 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
            .host_system = options.host_system,
            .host_version = options.host_version,
            .app_id = options.app_id,
-           .app_version = options.app_version});
+           .app_version = options.app_version,
+           .ca_bundle_path = options.ca_bundle_path});
   auto task_runner = absl::WrapUnique(
       new TaskRunner(options.packets_callback, std::move(tasks_logger)));
   MP_RETURN_IF_ERROR(task_runner->Initialize(

@@ -56,6 +56,7 @@ py_library(
     deps = [
         ":base_options_c",
         ":optional_dependencies",
+        "//third_party/py/certifi",
     ],
 )
 

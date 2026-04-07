@@ -118,6 +118,9 @@ struct BaseOptions {
   // The version of the host environment, e.g., Python or Android version.
   // Can be left empty string if unknown.
   std::string host_version;
+
+  // The path to the CA bundle file.
+  std::string ca_bundle_path;
 };
 
 // Converts a BaseOptions to a BaseOptionsProto.

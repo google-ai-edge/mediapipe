@@ -77,6 +77,7 @@ struct TaskRunnerOptions {
   std::string host_version = "";
   std::string app_id = "";
   std::string app_version = "";
+  std::string ca_bundle_path = "";
 };
 
 // The mediapipe task runner class.

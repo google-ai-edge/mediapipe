@@ -34,6 +34,7 @@ struct LoggingOptions {
   std::string host_version;
   std::string app_id;
   std::string app_version;
+  std::string ca_bundle_path;
 };
 
 // The stats logger interface that defines what MediaPipe Tasks events to log
