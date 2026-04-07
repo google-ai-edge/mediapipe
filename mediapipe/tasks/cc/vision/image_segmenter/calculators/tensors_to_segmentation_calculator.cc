@@ -149,8 +149,8 @@ Image ProcessForCategoryMaskCpu(const Shape& input_shape,
         static_cast<int>(std::max(std::floor(position[1] * width_scale), 0.f));
     int y1 = static_cast<int>(std::min(std::ceil(position[0] * height_scale),
                                        input_shape.height - 1.f));
-    int x1 = static_cast<int>(std ::min(std::ceil(position[1] * width_scale),
-                                        input_shape.width - 1.f));
+    int x1 = static_cast<int>(std::min(std::ceil(position[1] * width_scale),
+                                       input_shape.width - 1.f));
     float t0 = std::max(std::min(position[0] * height_scale - y0, 1.f), 0.f);
     float t1 = std::max(std::min(position[1] * width_scale - x0, 1.f), 0.f);
     for (int i = 0; i < input_channels; ++i) {
