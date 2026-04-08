@@ -94,8 +94,8 @@ class ImageToTensorNodeImpl
     }
 #else  // !MEDIAPIPE_DISABLE_GPU
 #if MEDIAPIPE_METAL_ENABLED
-    MP_RETURN_IF_ERROR(
-        [MPPMetalHelper updateContract:&cc.GetGenericContract()]);
+    MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:&cc.GetGenericContract()
+                                 requestGpuAsOptional:true]);
 #else
 
     cc.UseService(kGpuService).Optional();

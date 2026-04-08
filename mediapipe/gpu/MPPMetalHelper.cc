@@ -65,8 +65,13 @@ class MetalHelperLegacySupport {
       initWithGpuResources:&cc->Service(mediapipe::kGpuService).GetObject()];
 }
 
-+ (absl::Status)updateContract:(mediapipe::CalculatorContract*)cc {
-  cc->UseService(mediapipe::kGpuService);
++ (absl::Status)updateContract:(mediapipe::CalculatorContract*)cc
+          requestGpuAsOptional:(bool)requestGpuAsOptional {
+  if (requestGpuAsOptional) {
+    cc->UseService(mediapipe::kGpuService).Optional();
+  } else {
+    cc->UseService(mediapipe::kGpuService);
+  }
   // Allow the legacy side packet to be provided, too, for backwards
   // compatibility with existing graphs. It will just be ignored.
   auto& input_side_packets = cc->InputSidePackets();
@@ -75,6 +80,10 @@ class MetalHelperLegacySupport {
     input_side_packets.Get(id).Set<mediapipe::GpuSharedData*>();
   }
   return absl::OkStatus();
+}
+
++ (absl::Status)updateContract:(mediapipe::CalculatorContract*)cc {
+  return [self updateContract:cc requestGpuAsOptional:false];
 }
 
 // Legacy support.
