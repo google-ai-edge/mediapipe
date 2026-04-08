@@ -29,6 +29,7 @@
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/output_side_packet.h"
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/tool/type_util.h"
 
 namespace mediapipe {
@@ -451,8 +452,8 @@ class SideFallbackT : public Base {
 
  protected:
   absl::Status AddToContract(CalculatorContract* cc) const {
-    stream_port.AddToContract(cc);
-    side_port.AddToContract(cc);
+    MP_RETURN_IF_ERROR(stream_port.AddToContract(cc));
+    MP_RETURN_IF_ERROR(side_port.AddToContract(cc));
     int connected_count =
         stream_port(cc).IsConnected() + side_port(cc).IsConnected();
     if (connected_count > 1)
