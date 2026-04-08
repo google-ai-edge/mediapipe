@@ -996,10 +996,7 @@ cc_test(
 mediapipe_proto_library(
     name = "landmarks_smoothing_calculator_proto",
     srcs = ["landmarks_smoothing_calculator.proto"],
-    deps = [
-        "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:calculator_proto",
-    ],
+    deps = ["//mediapipe/framework:calculator_options_proto"],
 )
 
 cc_library(
