@@ -22,12 +22,6 @@ let package = Package(
         .library(
             name: "MediaPipeTasksAudio",
             targets: ["MediaPipeTasksAudio"]),
-        .library(
-            name: "MediaPipeTasksGenAI",
-            targets: ["MediaPipeTasksGenAI"]),
-        .library(
-            name: "MediaPipeTasksGenAIC",
-            targets: ["MediaPipeTasksGenAIC", "MediaPipeTasksGenAICWrapper"]),
     ],
     targets: [
         // MediaPipeTasksCommon - Base framework
@@ -35,7 +29,7 @@ let package = Package(
         .binaryTarget(
             name: "MediaPipeTasksCommon",
             url: "https://github.com/mihaidimoiu/mediapipe/releases/download/v0.10.33/MediaPipeTasksCommon.xcframework.zip",
-            checksum: "83726a0e95f354b75e8b705b8cfe85f1f169175249e117678701f9d39a642193"
+            checksum: "1eef9602c00b903f11d5b4e302854ff9b245792867232db0347069b9defd293f"
         ),
 
         // Wrapper target for MediaPipeTasksCommon to add system framework dependencies
@@ -62,7 +56,7 @@ let package = Package(
         .binaryTarget(
             name: "MediaPipeTasksVision",
             url: "https://github.com/mihaidimoiu/mediapipe/releases/download/v0.10.33/MediaPipeTasksVision.xcframework.zip",
-            checksum: "485816db112c47fd453168010601defd0dfa34375d6c2ca8a58762fb2a44ed15"
+            checksum: "f3e50572a668db4e8e9dabd9785061aa67257412d3af94d08ddb8593c49b765e"
         ),
 
         // MediaPipeTasksText - Text task APIs
@@ -70,7 +64,7 @@ let package = Package(
         .binaryTarget(
             name: "MediaPipeTasksText",
             url: "https://github.com/mihaidimoiu/mediapipe/releases/download/v0.10.33/MediaPipeTasksText.xcframework.zip",
-            checksum: "223d03d5cdccf0f1b29502145da8f4385f74d360ddd9a4c31428569a2df7c59d"
+            checksum: "4c71d65eacffaccf10dc8ef55891c80269c7c7b3ca30d12bd8eb13e46093db84"
         ),
 
         // MediaPipeTasksAudio - Audio task APIs
@@ -78,36 +72,7 @@ let package = Package(
         .binaryTarget(
             name: "MediaPipeTasksAudio",
             url: "https://github.com/mihaidimoiu/mediapipe/releases/download/v0.10.33/MediaPipeTasksAudio.xcframework.zip",
-            checksum: "74b718a05d75cb49a08fcf127ed923dda837ccac8726ae64feae141b8772c2e8"
-        ),
-
-        // MediaPipeTasksGenAI - Generative AI APIs (prebuilt, source not open)
-        // Includes: LLM inference (deprecated in favor of LiteRT-LM)
-        .binaryTarget(
-            name: "MediaPipeTasksGenAI",
-            url: "https://github.com/mihaidimoiu/mediapipe/releases/download/v0.10.33/MediaPipeTasksGenAI.xcframework.zip",
-            checksum: "b6b1788204ccb7d24b534b09c780a6263c3f0d8b47f19bfc57b2e74f77db2de5"
-        ),
-
-        // MediaPipeTasksGenAIC - Generative AI C API (prebuilt, source not open)
-        .binaryTarget(
-            name: "MediaPipeTasksGenAIC",
-            url: "https://github.com/mihaidimoiu/mediapipe/releases/download/v0.10.33/MediaPipeTasksGenAIC.xcframework.zip",
-            checksum: "79f06cf250fe3df94d7e7a3c6e32f537fb756b1ac00a7f14848829cef2c74cbe"
-        ),
-
-        // Wrapper target for MediaPipeTasksGenAIC to add system framework and force_load dependencies
-        .target(
-            name: "MediaPipeTasksGenAICWrapper",
-            dependencies: ["MediaPipeTasksGenAIC"],
-            path: "Sources/MediaPipeTasksGenAICWrapper",
-            linkerSettings: [
-                .linkedFramework("Accelerate"),
-                .linkedFramework("CoreVideo"),
-                .linkedFramework("Metal"),
-                .linkedFramework("OpenGLES"),
-                .linkedLibrary("c++")
-            ]
+            checksum: "eccd58048487989ab1c1207d94c778058f77278144fa8515d453dbc8771dd5c6"
         ),
     ]
 )
