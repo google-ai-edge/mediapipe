@@ -1,3 +1,15 @@
+diff -ruN a/zutil.h b/zutil.h
+--- a/zutil.h
++++ b/zutil.h
+@@ -138,7 +138,7 @@
+ #  endif
+ #endif
+
+-#if defined(MACOS) || defined(TARGET_OS_MAC)
++#if defined(MACOS)
+ #  define OS_CODE  7
+ #  ifndef Z_SOLO
+ #    if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os
 diff -ruN a/contrib/minizip/ioapi.h b/contrib/minizip/ioapi.h
 --- a/contrib/minizip/ioapi.h
 +++ b/contrib/minizip/ioapi.h
