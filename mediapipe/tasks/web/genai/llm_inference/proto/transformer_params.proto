@@ -271,7 +271,6 @@ message TransformerParameters {
   // models, like 4B+). Thus, to ensure correct behavior for these models when
   // not forcing fp32 precision, we allow for applying a special workaround.
   optional bool gemma3_bfloat16_fix = 36;
-  reserved 52;
 
   // Altup configs.
   message AltupConfig {
@@ -305,4 +304,6 @@ message TransformerParameters {
 
   // Whether to scale all LoRA weights by their inverse rank.
   optional bool scale_lora = 45;
+
+  reserved 52;
 }
