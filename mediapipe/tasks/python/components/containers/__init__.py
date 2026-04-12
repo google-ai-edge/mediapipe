@@ -23,6 +23,7 @@ import mediapipe.tasks.python.components.containers.embedding_result
 import mediapipe.tasks.python.components.containers.landmark
 import mediapipe.tasks.python.components.containers.landmark_detection_result
 import mediapipe.tasks.python.components.containers.rect
+import mediapipe.tasks.python.components.containers.keypoint
 
 AudioDataFormat = audio_data.AudioDataFormat
 AudioData = audio_data.AudioData
@@ -36,6 +37,7 @@ Embedding = embedding_result.Embedding
 EmbeddingResult = embedding_result.EmbeddingResult
 Landmark = landmark.Landmark
 NormalizedLandmark = landmark.NormalizedLandmark
+NormalizedKeypoint = keypoint.NormalizedKeypoint
 LandmarksDetectionResult = landmark_detection_result.LandmarksDetectionResult
 Rect = rect.Rect
 NormalizedRect = rect.NormalizedRect
@@ -51,3 +53,4 @@ del landmark
 del landmark_detection_result
 del rect
 del mediapipe
+del keypoint
