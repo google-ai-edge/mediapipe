@@ -66,6 +66,7 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
         .op_resolver = absl::make_unique<MediaPipeBuiltinOpResolver>(),
         .packets_callback = std::move(packetsCallback),
         .host_environment = mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_IOS,
+        .host_system = mediapipe::tasks::core::HostSystem::HOST_SYSTEM_IOS,
         .host_version = iosVersion ? iosVersion.UTF8String : "",
         .app_id = appId ? appId.UTF8String : "",
         .app_version = appVersion ? appVersion.UTF8String : ""};
