@@ -49,6 +49,16 @@ filegroup(
 
 android_library(
     name = "objectdetector",
+    manifest = "objectdetector/AndroidManifest.xml",
+    exports = [
+        ":core",
+        ":objectdetector_java",
+    ],
+    deps = ["@maven//:com_google_guava_guava"],
+)
+
+android_library(
+    name = "objectdetector_java",
     srcs = [
         "objectdetector/ObjectDetectionResult.java",
         "objectdetector/ObjectDetector.java",
@@ -56,7 +66,7 @@ android_library(
     ],
     manifest = "objectdetector/AndroidManifest.xml",
     deps = [
-        ":core",
+        ":core_java",
         "//mediapipe/framework:calculator_options_java_proto_lite",
         "//mediapipe/framework/formats:detection_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
@@ -64,6 +74,7 @@ android_library(
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:detection",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
