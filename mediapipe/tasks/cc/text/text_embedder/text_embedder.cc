@@ -16,12 +16,16 @@ limitations under the License.
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder.h"
 
 #include <memory>
+#include <string>
 #include <utility>
 
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
+#include "absl/strings/substitute.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
 #include "mediapipe/tasks/cc/components/processors/embedder_options.h"
@@ -46,6 +50,54 @@ constexpr char kGraphTypeName[] =
 
 using ::mediapipe::tasks::components::containers::ConvertToEmbeddingResult;
 using ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
+
+constexpr absl::string_view kQueryTemplate = "task: $0 | query: $1";
+constexpr absl::string_view kDocumentTemplate = "title: $0 | text: $1";
+
+std::string GetTaskString(const EmbeddingType& task_type) {
+  switch (task_type) {
+    case EmbeddingType::RETRIEVAL_QUERY:
+      return "search result";
+    case EmbeddingType::SEMANTIC_SIMILARITY:
+      return "sentence similarity";
+    case EmbeddingType::CLASSIFICATION:
+      return "classification";
+    case EmbeddingType::CLUSTERING:
+      return "clustering";
+    case EmbeddingType::QUESTION_ANSWERING:
+      return "question answering";
+    case EmbeddingType::FACT_CHECKING:
+      return "fact checking";
+    case EmbeddingType::CODE_RETRIEVAL:
+      return "code retrieval";
+    default:
+      return "search result";
+  }
+}
+
+std::string GetGeckoEmbeddingText(absl::string_view text,
+                                  const TextFormatContext& format_context) {
+  EmbeddingType task_type = format_context.task_type.value();
+  bool is_query = format_context.role != TextRole::kDocument;
+  const std::string title =
+      format_context.title.has_value() && !format_context.title->empty()
+          ? *format_context.title
+          : "none";
+  switch (task_type) {
+    case EmbeddingType::RETRIEVAL_DOCUMENT:
+      return absl::Substitute(kDocumentTemplate, title, text);
+    case EmbeddingType::RETRIEVAL_QUERY:
+      return absl::Substitute(kQueryTemplate, GetTaskString(task_type), text);
+    case EmbeddingType::QUESTION_ANSWERING:
+    case EmbeddingType::FACT_CHECKING:
+    case EmbeddingType::CODE_RETRIEVAL:
+      return is_query ? absl::Substitute(kQueryTemplate,
+                                         GetTaskString(task_type), text)
+                      : absl::Substitute(kDocumentTemplate, title, text);
+    default:
+      return absl::Substitute(kQueryTemplate, GetTaskString(task_type), text);
+  }
+}
 
 // Creates a MediaPipe graph config that contains a single node of type
 // "mediapipe.tasks.text.text_embedder.TextEmbedderGraph".
@@ -101,6 +153,22 @@ absl::StatusOr<TextEmbedderResult> TextEmbedder::Embed(absl::string_view text) {
       auto output_packets,
       runner_->Process(
           {{kTextInStreamName, MakePacket<std::string>(std::string(text))}}));
+  return ConvertToEmbeddingResult(
+      output_packets[kEmbeddingsStreamName].Get<EmbeddingResult>());
+}
+
+absl::StatusOr<TextEmbedderResult> TextEmbedder::Embed(
+    absl::string_view text, const TextFormatContext& format_context) {
+  std::string processed_text;
+  if (format_context.task_type.has_value()) {
+    processed_text = GetGeckoEmbeddingText(text, format_context);
+  } else {
+    processed_text = std::string(text);
+  }
+  MP_ASSIGN_OR_RETURN(
+      auto output_packets,
+      runner_->Process(
+          {{kTextInStreamName, MakePacket<std::string>(processed_text)}}));
   return ConvertToEmbeddingResult(
       output_packets[kEmbeddingsStreamName].Get<EmbeddingResult>());
 }

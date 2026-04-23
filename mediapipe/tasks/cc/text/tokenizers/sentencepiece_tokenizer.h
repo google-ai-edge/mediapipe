@@ -61,6 +61,12 @@ class SentencePieceTokenizer : public Tokenizer {
     return result;
   }
 
+  // Encode to token-ids
+  void Encode(const std::string& input, std::vector<int>* ids) const {
+    const auto status = sp_.Encode(input, ids);
+    ABSL_CHECK(status.ok()) << status;
+  }
+
   // Find the id of a string token.
   bool LookupId(absl::string_view key, int* result) const override {
     *result = sp_.PieceToId(key);
@@ -72,6 +78,10 @@ class SentencePieceTokenizer : public Tokenizer {
     *result = sp_.IdToPiece(vocab_id);
     return true;
   }
+
+  int bos_id() const { return sp_.bos_id(); }
+  int eos_id() const { return sp_.eos_id(); }
+  int pad_id() const { return sp_.pad_id(); }
 
  private:
   sentencepiece::SentencePieceProcessor sp_;

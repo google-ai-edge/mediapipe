@@ -22,6 +22,7 @@ mediapipe_proto_library(
     name = "external_file_proto",
     srcs = ["external_file.proto"],
     visibility = [
+        "//mediapipe/calculators/tensor:__pkg__",
         "//mediapipe/tasks:internal",
     ],
 )

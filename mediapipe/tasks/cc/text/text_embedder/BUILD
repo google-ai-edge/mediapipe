@@ -21,6 +21,7 @@ licenses(["notice"])
 
 # Docs for Mediapipe Tasks Text Embedder
 # https://developers.google.com/mediapipe/solutions/text/text_embedder
+
 cc_library(
     name = "text_embedder",
     srcs = ["text_embedder.cc"],
@@ -29,6 +30,7 @@ cc_library(
         ":text_embedder_graph",
         "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
         "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/tasks/cc/components/containers:embedding_result",
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
@@ -64,11 +66,16 @@ cc_library(
         "//mediapipe/tasks/cc/components/processors/proto:embedding_postprocessing_graph_options_cc_proto",
         "//mediapipe/tasks/cc/components/processors/proto:text_model_type_cc_proto",
         "//mediapipe/tasks/cc/components/processors/proto:text_preprocessing_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/core:external_file_handler",
+        "//mediapipe/tasks/cc/core:model_asset_bundle_resources",
         "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/core:model_resources_cache",
         "//mediapipe/tasks/cc/core:model_task_graph",
         "//mediapipe/tasks/cc/core/proto:model_resources_calculator_cc_proto",
+        "//mediapipe/tasks/cc/metadata/utils:zip_utils",
         "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_cc_proto",
         "//mediapipe/tasks/cc/text/utils:text_model_utils",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

@@ -326,6 +326,41 @@ cc_test(
     ],
 )
 
+mediapipe_proto_library(
+    name = "gecko_preprocessor_calculator_proto",
+    srcs = ["gecko_preprocessor_calculator.proto"],
+    deps = [
+        "//mediapipe/tasks/cc/core/proto:external_file_proto",
+    ],
+)
+
+cc_library(
+    name = "gecko_preprocessor_calculator",
+    srcs = ["gecko_preprocessor_calculator.cc"],
+    hdrs = ["gecko_preprocessor_calculator.h"],
+    deps = [
+        ":gecko_preprocessor_calculator_cc_proto",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc/core:external_file_handler",
+        "//mediapipe/tasks/cc/metadata:metadata_extractor",
+        "//mediapipe/tasks/cc/text/tokenizers:sentencepiece_tokenizer",
+        "//mediapipe/tasks/cc/text/tokenizers:tokenizer",
+        "//mediapipe/tasks/cc/text/tokenizers:tokenizer_utils",
+        "//mediapipe/tasks/metadata:metadata_schema_cc",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+    alwayslink = 1,
+)
+
 cc_library(
     name = "text_to_tensor_calculator",
     srcs = ["text_to_tensor_calculator.cc"],

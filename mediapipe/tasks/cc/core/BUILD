@@ -65,7 +65,6 @@ cc_library(
     srcs = ["external_file_handler.cc"],
     hdrs = ["external_file_handler.h"],
     deps = [
-        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
