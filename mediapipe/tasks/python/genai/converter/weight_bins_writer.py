@@ -16,6 +16,7 @@
 
 import contextlib
 import os
+import re
 from typing import Dict, Tuple
 
 import numpy as np
@@ -25,6 +26,34 @@ from mediapipe.tasks.python.genai.converter import external_dependencies
 from mediapipe.tasks.python.genai.converter import quantization_util
 
 jnp = external_dependencies.jnp
+
+
+# Tensor-name whitelist: letters, digits, dot, underscore, hyphen only.
+# Anything else (including path separators and traversal tokens) is
+# rejected before a path is joined. Crafted .safetensors JSON headers
+# have put "../" and absolute paths in tensor names as a path-traversal
+# arbitrary-file-write primitive.
+_SAFE_TENSOR_NAME_RE = re.compile(r"^[A-Za-z0-9._-]+$")
+
+
+def _safe_join(output_dir: str, var_name: str) -> str:
+  """Join output_dir and var_name, rejecting any name that escapes output_dir.
+
+  Raises ValueError on traversal tokens, absolute paths, embedded path
+  separators, or on a resolved path that lies outside output_dir.
+  """
+  if not _SAFE_TENSOR_NAME_RE.match(var_name):
+    raise ValueError(
+        f"unsafe tensor name {var_name!r}: must match "
+        f"{_SAFE_TENSOR_NAME_RE.pattern}"
+    )
+  base = os.path.realpath(output_dir)
+  candidate = os.path.realpath(os.path.join(base, var_name))
+  if os.path.commonpath([candidate, base]) != base:
+    raise ValueError(
+        f"tensor name {var_name!r} escapes output_dir {output_dir!r}"
+    )
+  return candidate
 
 
 @contextlib.contextmanager
@@ -93,14 +122,14 @@ class WeightBinsWriter(converter_base.ModelWriterBase):
         else:  # LoRA right weight is shared across q, k, v
           weight_q = weight_k = weight_v = output
           weights_info.append(self.get_weight_info(var_name_q, weight_q))
-        path_q = os.path.join(self._output_dir, var_name_q)
+        path_q = _safe_join(self._output_dir, var_name_q)
         with filemanager(path_q, 'wb') as f:
           f.write(weight_q.tobytes())
           weights_info.append(self.get_weight_info(var_name_k, weight_k))
-        path_k = os.path.join(self._output_dir, var_name_k)
+        path_k = _safe_join(self._output_dir, var_name_k)
         with filemanager(path_k, 'wb') as f:
           f.write(weight_k.tobytes())
-        path_v = os.path.join(self._output_dir, var_name_v)
+        path_v = _safe_join(self._output_dir, var_name_v)
         with filemanager(path_v, 'wb') as f:
           f.write(weight_v.tobytes())
           weights_info.append(self.get_weight_info(var_name_v, weight_v))
@@ -111,7 +140,7 @@ class WeightBinsWriter(converter_base.ModelWriterBase):
           var_name = var_name.replace('query', 'q')
         if 'value' in var_name:
           var_name = var_name.replace('value', 'v')
-        path = os.path.join(
+        path = _safe_join(
             self._output_dir, removeprefix(var_name, 'mdl_vars.')
         )
         with filemanager(path, 'wb') as f:
