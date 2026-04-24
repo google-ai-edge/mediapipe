@@ -276,28 +276,21 @@ public final class TextEmbedder implements AutoCloseable {
 
   private static String getTaskString(EmbeddingType taskType) {
     switch (taskType) {
-      case RETRIEVAL_QUERY -> {
+      case RETRIEVAL_QUERY:
         return "search result";
-      }
-      case SEMANTIC_SIMILARITY -> {
+      case SEMANTIC_SIMILARITY:
         return "sentence similarity";
-      }
-      case CLASSIFICATION -> {
+      case CLASSIFICATION:
         return "classification";
-      }
-      case CLUSTERING -> {
+      case CLUSTERING:
         return "clustering";
-      }
-      case QUESTION_ANSWERING -> {
+      case QUESTION_ANSWERING:
         return "question answering";
-      }
-      case FACT_CHECKING -> {
+      case FACT_CHECKING:
         return "fact checking";
-      }
-      case CODE_RETRIEVAL -> {
+      case CODE_RETRIEVAL:
         return "code retrieval";
-      }
-      case RETRIEVAL_DOCUMENT -> {}
+      case RETRIEVAL_DOCUMENT:
     }
     return "search result";
   }
@@ -310,19 +303,21 @@ public final class TextEmbedder implements AutoCloseable {
       title = "none";
     }
     switch (taskType) {
-      case RETRIEVAL_DOCUMENT -> {
+      case RETRIEVAL_DOCUMENT:
         return "title: " + title + " | text: " + text;
-      }
-      case QUESTION_ANSWERING, FACT_CHECKING, CODE_RETRIEVAL -> {
+      case QUESTION_ANSWERING:
+      case FACT_CHECKING:
+      case CODE_RETRIEVAL:
         if (isQuery) {
           return "task: " + getTaskString(taskType) + " | query: " + text;
         } else {
           return "title: " + title + " | text: " + text;
         }
-      }
-      case RETRIEVAL_QUERY, SEMANTIC_SIMILARITY, CLASSIFICATION, CLUSTERING -> {
+      case RETRIEVAL_QUERY:
+      case SEMANTIC_SIMILARITY:
+      case CLASSIFICATION:
+      case CLUSTERING:
         return "task: " + getTaskString(taskType) + " | query: " + text;
-      }
     }
     return "task: " + getTaskString(taskType) + " | query: " + text;
   }
