@@ -14,13 +14,15 @@
 
 #include "mediapipe/gpu/webgpu/webgpu_service.h"
 
+#include <utility>
+
 #ifdef __EMSCRIPTEN__
 #include <cstring>
 #endif  // __EMSCRIPTEN__
 
-#include "absl/base/attributes.h"
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/gpu/webgpu/webgpu_headers.h"
+#include "mediapipe/web/jspi_check.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -68,6 +70,22 @@ EM_JS(char*, GetAdapterVendor, (), {
 #ifdef __EMSCRIPTEN__
 WebGpuService::WebGpuService()
     : canvas_selector_("canvas_webgpu"),
+      instance_([] {
+        // On the web GPUInstance API doesn't exist and Emscripten just calls
+        // into a global event manager. We can just create a new instance with
+        // the required features.
+        if (IsJspiAvailable()) {
+          static const auto kTimedWaitAny =
+              wgpu::InstanceFeatureName::TimedWaitAny;
+          wgpu::InstanceDescriptor instance_desc = {
+              .requiredFeatureCount = 1, .requiredFeatures = &kTimedWaitAny};
+          auto instance = wgpu::CreateInstance(&instance_desc);
+          if (instance.Get() != nullptr) {
+            return instance;
+          }
+        }
+        return wgpu::CreateInstance(nullptr);
+      }()),
       device_(wgpu::Device::Acquire(emscripten_webgpu_get_device())),
       attachment_manager_(internal::WebGpuDeviceAttachmentManager(device_)) {
   adapter_info_.architecture.data = GetAdapterArchitecture();
@@ -82,14 +100,18 @@ WebGpuService::WebGpuService()
 #else
 WebGpuService::WebGpuService()
     : canvas_selector_(""),
+      instance_(WebGpuDeviceRegistration::GetInstance().GetWebGpuInstance()),
       device_(WebGpuDeviceRegistration::GetInstance().GetWebGpuDevice()),
       attachment_manager_(internal::WebGpuDeviceAttachmentManager(device_)) {}
 #endif  // __EMSCRIPTEN__
 
-WebGpuService::WebGpuService(wgpu::Device device)
+WebGpuService::WebGpuService(wgpu::Device device, wgpu::Instance instance)
     : canvas_selector_(""),
-      device_(device),
-      attachment_manager_(internal::WebGpuDeviceAttachmentManager(device)) {}
+      instance_(std::move(instance)),
+      device_(std::move(device)),
+      attachment_manager_(internal::WebGpuDeviceAttachmentManager(device_)) {}
+
+wgpu::Instance WebGpuService::instance() const { return instance_; }
 
 ABSL_CONST_INIT const GraphService<WebGpuService> kWebGpuService(
     "kWebGpuService", GraphServiceBase::kAllowDefaultInitialization);

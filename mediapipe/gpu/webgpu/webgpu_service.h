@@ -101,8 +101,9 @@ class WebGpuService {
   }
 
   static absl::StatusOr<std::shared_ptr<WebGpuService>> Create(
-      wgpu::Device device) {
-    return std::shared_ptr<WebGpuService>(new WebGpuService(std::move(device)));
+      wgpu::Device device, wgpu::Instance instance = nullptr) {
+    return std::shared_ptr<WebGpuService>(
+        new WebGpuService(std::move(device), std::move(instance)));
   }
 
   // Note: some clients set DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=0, so
@@ -113,6 +114,7 @@ class WebGpuService {
   const char* canvas_selector() const { return canvas_selector_; }
 
   wgpu::Device device() const { return device_; }
+  wgpu::Instance instance() const;
 
 #ifdef __EMSCRIPTEN__
   const wgpu::AdapterInfo& adapter_info() const {
@@ -127,9 +129,10 @@ class WebGpuService {
 
  private:
   WebGpuService();
-  explicit WebGpuService(wgpu::Device device);
+  WebGpuService(wgpu::Device device, wgpu::Instance instance);
 
   const char* canvas_selector_;
+  wgpu::Instance instance_;
   wgpu::Device device_;
 #ifdef __EMSCRIPTEN__
   // Adapter is not yet piped through Emscripten (i.e. `device.GetAdapter()`).
