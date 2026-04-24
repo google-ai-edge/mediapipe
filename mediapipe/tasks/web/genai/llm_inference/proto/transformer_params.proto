@@ -17,7 +17,7 @@ syntax = "proto3";
 package odml.infra.proto;
 
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
-// Next ID: 56
+// Next ID: 57
 message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
@@ -190,7 +190,7 @@ message TransformerParameters {
   // before the attention.
   bool skip_absolute_positional_embeddings = 18;
 
-  reserved 20, 21, 23, 24;
+  reserved 20, 21, 23, 24, 56;
 
   // If set, will override the default RoPE scaling factor to be the specified
   // value for all global layers (but will not change local attention layers).
