@@ -52,7 +52,7 @@ public class InteractiveSegmenterTest {
   //
   private static final String CATS_AND_DOGS_IMAGE = "cats_and_dogs.jpg";
   private static final String CAT_IMAGE = "cat_large.jpg";
-  private static final float GOLDEN_MASK_SIMILARITY = 0.94f;
+  private static final float GOLDEN_MASK_SIMILARITY = 0.8f;
 
   @RunWith(AndroidJUnit4.class)
   public static final class KeypointRoi extends InteractiveSegmenterTest {

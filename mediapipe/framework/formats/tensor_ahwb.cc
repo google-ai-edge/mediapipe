@@ -247,6 +247,7 @@ void Tensor::MoveCpuOrSsboToAhwb() const {
     FreeCpuBuffer();
     valid_ &= ~kValidCpu;
   } else if (valid_ & kValidOpenGlBuffer) {
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
     gl_context_->Run([this, dest]() {
       glBindBuffer(GL_SHADER_STORAGE_BUFFER, opengl_buffer_);
       const void* src = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bytes(),
@@ -260,6 +261,9 @@ void Tensor::MoveCpuOrSsboToAhwb() const {
     // Reset OpenGL Buffer validness. The OpenGL buffer will be allocated on top
     // of the Ahwb at the next request to the OpenGlBufferView.
     valid_ &= ~kValidOpenGlBuffer;
+#else
+    ABSL_LOG(FATAL) << "OpenGL ES 3.1 is not spported";
+#endif
   } else {
     ABSL_LOG(FATAL) << "Can't convert tensor with mask " << valid_
                     << " into AHWB.";
@@ -321,6 +325,7 @@ absl::Status Tensor::ReleaseAhwbStuff() {
       }
       if ((gl_operation_maybe_pending || HasIncompleteUsages(ahwb_usages_)) &&
           gl_context_ != nullptr) {
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
         // Delay release until the GPU usage is finished.
         MP_RETURN_IF_ERROR(gl_context_->Run([this]() -> absl::Status {
           auto& releaser = gl_context_->GetCachedAttachment(kAhwbGpuReleaser);
@@ -329,6 +334,9 @@ absl::Status Tensor::ReleaseAhwbStuff() {
                                                     std::move(ahwb_usages_));
         }));
         opengl_buffer_ = GL_INVALID_INDEX;
+#else
+        return absl::InternalError("OpenGL ES 3.1 is not spported.");
+#endif
       } else {
         CompleteAndEraseUsages(ahwb_usages_);
         ahwb_.reset();

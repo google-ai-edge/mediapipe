@@ -49,6 +49,7 @@
 #include "mediapipe/framework/formats/tensor_ahwb_usage.h"
 #include "mediapipe/framework/formats/unique_fd.h"
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
+
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context.h"
@@ -541,6 +542,7 @@ class Tensor {
   mutable wgpu::Device webgpu_device_;
   mutable wgpu::Texture webgpu_texture2d_;
 #endif  // MEDIAPIPE_USE_WEBGPU
+
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   mutable std::shared_ptr<HardwareBuffer> ahwb_;
 
@@ -589,16 +591,21 @@ class Tensor {
   mutable GLuint frame_buffer_ = GL_INVALID_INDEX;
   mutable int texture_width_;
   mutable int texture_height_;
+
 #ifdef __EMSCRIPTEN__
   mutable bool texture_is_half_float_ = false;
 #endif  // __EMSCRIPTEN__
+
   void AllocateOpenGlTexture2d() const;
+
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
   mutable GLuint opengl_buffer_ = GL_INVALID_INDEX;
   void AllocateOpenGlBuffer() const;
   mutable std::shared_ptr<GlSyncPoint> gl_write_read_sync_;
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+
   bool NeedsHalfFloatRenderTarget() const;
+
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 };
 
