@@ -96,6 +96,11 @@ mediapipe_proto_library(
     ],
 )
 
+mediapipe_proto_library(
+    name = "tflite_model_metadata_proto",
+    srcs = ["tflite_model_metadata.proto"],
+)
+
 cc_library(
     name = "ssd_anchors_calculator",
     srcs = ["ssd_anchors_calculator.cc"],

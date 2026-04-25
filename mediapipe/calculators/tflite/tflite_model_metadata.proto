@@ -1,0 +1,28 @@
+// mediapipe/calculators/tflite/tflite_model_metadata.proto
+syntax = "proto2";
+package mediapipe;
+
+// Metadata for a single TFLite tensor (input or output).
+message TfLiteTensorSpec {
+  optional string name = 1;
+  repeated int32 shape = 2;  // e.g. [1, 640, 640, 3]
+
+  enum TensorType {
+    FLOAT32 = 0;
+    INT8    = 1;
+    UINT8   = 2;
+    INT32   = 3;
+    INT64   = 4;
+  }
+  optional TensorType type = 3 [default = FLOAT32];
+
+  // For quantized (INT8/UINT8) tensors. Both 0.0/0 means not quantized.
+  optional float quantization_scale      = 4 [default = 0.0];
+  optional int32 quantization_zero_point = 5 [default = 0];
+}
+
+// Emitted as a side packet by TfLiteInferenceCalculator after Open().
+message TfLiteModelMetadata {
+  repeated TfLiteTensorSpec inputs  = 1;
+  repeated TfLiteTensorSpec outputs = 2;
+}
