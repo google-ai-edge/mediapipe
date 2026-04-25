@@ -14,6 +14,7 @@
 
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
 
@@ -50,5 +51,43 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status_matchers",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+mediapipe_proto_library(
+    name = "auto_nms_calculator_proto",
+    srcs = ["auto_nms_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "auto_nms_calculator",
+    srcs = ["auto_nms_calculator.cc"],
+    deps = [
+        ":auto_nms_calculator_cc_proto",
+        "//mediapipe/calculators/tflite:tflite_model_metadata_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "@com_google_absl//absl/log:absl_log",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "auto_nms_calculator_test",
+    srcs = ["auto_nms_calculator_test.cc"],
+    linkstatic = 1,
+    deps = [
+        ":auto_nms_calculator",
+        "//mediapipe/calculators/tflite:tflite_model_metadata_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
     ],
 )
