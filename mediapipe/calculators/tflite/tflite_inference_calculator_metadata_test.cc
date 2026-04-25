@@ -42,8 +42,8 @@ TEST(TfLiteInferenceCalculatorMetadataTest,
   MP_ASSERT_OK(graph.StartRun({}));
   MP_ASSERT_OK(graph.WaitUntilIdle());
 
-  Packet metadata_packet;
-  MP_ASSERT_OK(graph.GetOutputSidePacket("metadata", &metadata_packet));
+  MP_ASSERT_OK_AND_ASSIGN(Packet metadata_packet,
+                          graph.GetOutputSidePacket("metadata"));
   ASSERT_FALSE(metadata_packet.IsEmpty());
 
   const auto& meta = metadata_packet.Get<TfLiteModelMetadata>();

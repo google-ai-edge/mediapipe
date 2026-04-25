@@ -532,6 +532,7 @@ cc_test(
 cc_test(
     name = "tflite_inference_calculator_metadata_test",
     srcs = ["tflite_inference_calculator_metadata_test.cc"],
+    linkstatic = 1,
     deps = [
         ":tflite_inference_calculator",
         ":tflite_model_metadata_proto",

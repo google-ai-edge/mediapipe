@@ -443,12 +443,13 @@ absl::Status TfLiteInferenceCalculator::Open(CalculatorContext* cc) {
   }
 
   // Emit model metadata side packet when requested.
-  if (cc->OutputSidePackets().HasTag(kModelMetadataTag)) {
+  if (cc->OutputSidePackets().HasTag(kModelMetadataTag) && interpreter_) {
     TfLiteModelMetadata metadata;
     auto fill_spec = [&](const std::vector<int>& indices,
                          google::protobuf::RepeatedPtrField<TfLiteTensorSpec>* specs) {
       for (int idx : indices) {
         const TfLiteTensor* t = interpreter_->tensor(idx);
+        ABSL_CHECK(t != nullptr) << "Unexpected null tensor at index " << idx;
         TfLiteTensorSpec* spec = specs->Add();
         if (t->name) spec->set_name(t->name);
         if (t->dims) {
