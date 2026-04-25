@@ -17,9 +17,9 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/yolo/auto_nms_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
@@ -111,12 +111,25 @@ AutoNmsCalculatorOptions::PostprocessMode ResolvePostprocessMode(
     return AutoNmsCalculatorOptions::APPLY_NMS;
 
   // AUTO: try to infer from model flatbuffer.
+  // Only possible when the model is provided as a file path; for file_content
+  // or file_descriptor_meta assets, fall back to APPLY_NMS (always safe).
+  if (model_path.empty()) {
+    ABSL_LOG(WARNING)
+        << "YoloObjectDetectorGraph: model_asset.file_name is empty; "
+           "cannot infer decode mode from flatbuffer. Defaulting to APPLY_NMS. "
+           "Set decode_mode or postprocess_mode explicitly to override.";
+    return AutoNmsCalculatorOptions::APPLY_NMS;
+  }
   auto dims_or = yolo_object_detector::ExtractModelOutputDims(model_path);
   if (dims_or.ok()) {
     using yolo_object_detector::InferDecodeMode;
     using yolo_object_detector::YoloDecodeMode;
     if (InferDecodeMode(*dims_or) == YoloDecodeMode::kEndToEnd)
       return AutoNmsCalculatorOptions::SKIP_NMS;
+  } else {
+    ABSL_LOG(WARNING)
+        << "YoloObjectDetectorGraph: failed to read output dims from model ("
+        << dims_or.status() << "). Defaulting to APPLY_NMS.";
   }
   // Conservative fallback: always run NMS.
   return AutoNmsCalculatorOptions::APPLY_NMS;
@@ -181,8 +194,18 @@ class YoloObjectDetectorGraph : public core::ModelTaskGraph {
 
     // ── YOLO tensor decode ────────────────────────────────────────────────
     // Get model input H×W for coordinate normalization.
+    // ExtractModelInputShape requires a file path; file_content and
+    // file_descriptor_meta assets are not yet supported.
     const std::string model_path =
         task_options.base_options().model_asset().file_name();
+    if (model_path.empty()) {
+      return CreateStatusWithPayload(
+          absl::StatusCode::kInvalidArgument,
+          "YoloObjectDetectorGraph requires model_asset.file_name. "
+          "Passing the model via file_content or file_descriptor_meta "
+          "is not yet supported.",
+          MediaPipeTasksStatus::kInvalidArgumentError);
+    }
     MP_ASSIGN_OR_RETURN(auto [input_w, input_h],
                         yolo_object_detector::ExtractModelInputShape(model_path));
 
