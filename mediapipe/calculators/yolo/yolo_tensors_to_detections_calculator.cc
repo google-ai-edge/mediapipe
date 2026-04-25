@@ -111,6 +111,8 @@ absl::StatusOr<Options::TensorLayout> ResolveTensorLayout(
   }
   const int first_dim = dims[0];
   const int second_dim = dims[1];
+  // The 512-class cap distinguishes feature count from box count in AUTO mode.
+  // Models with >512 classes (e.g. LVIS) must set tensor_layout explicitly.
   if (decode_mode == Options::END_TO_END) {
     if (second_dim == kEndToEndFeatureCount && first_dim > 0) {
       return Options::BOXES_FIRST;

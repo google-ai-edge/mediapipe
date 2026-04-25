@@ -153,6 +153,12 @@ TEST(YoloTensorsToDetectionsTest, FamilyB_EndToEnd_TwoDetections) {
   EXPECT_NEAR(bb.ymin(),   20.0f / 640.0f, 1e-4f);
   EXPECT_NEAR(bb.width(),  50.0f / 640.0f, 1e-4f);
   EXPECT_NEAR(bb.height(), 60.0f / 640.0f, 1e-4f);
+
+  const auto& bb2 = dets[1].location_data().relative_bounding_box();
+  EXPECT_NEAR(bb2.xmin(),   50.0f / 640.0f, 1e-4f);
+  EXPECT_NEAR(bb2.ymin(),   50.0f / 640.0f, 1e-4f);
+  EXPECT_NEAR(bb2.width(),  40.0f / 640.0f, 1e-4f);
+  EXPECT_NEAR(bb2.height(), 40.0f / 640.0f, 1e-4f);
 }
 
 // ── AUTO: shape [3,6] → END_TO_END ────────────────────────────────────────
@@ -173,18 +179,19 @@ TEST(YoloTensorsToDetectionsTest, Auto_DetectsEndToEndFromDimEqualsSix) {
 
 // ── AUTO: shape [7,5] → ULTRALYTICS ──────────────────────────────────────
 TEST(YoloTensorsToDetectionsTest, Auto_DetectsUltralyticsFromShape) {
-  const int num_features = 7, num_boxes = 5;
-  std::vector<float> data(num_features * num_boxes, 0.0f);
-  // FEATURES_FIRST auto-detected: class 1 of anchor 0
-  data[5 * num_boxes + 0] = 0.9f;
+  const int num_boxes = 7, num_features = 5;
+  std::vector<float> data(num_boxes * num_features, 0.0f);
+  // BOXES_FIRST auto-detected (7>5, 5>4, 5<=512): box 0, class 0 (feature index 4)
+  data[0 * num_features + 4] = 0.9f;  // box 0, class 0 score
 
   auto runner = MakeRunner(
       "decode_mode: DECODE_MODE_AUTO "
       "input_width: 640 input_height: 640 "
       "min_score_threshold: 0.5");
-  auto dets = Run(*runner, MakeFloatTensor({num_features, num_boxes}, data));
+  auto dets = Run(*runner, MakeFloatTensor({num_boxes, num_features}, data));
 
   EXPECT_EQ(dets.size(), 1u);
+  EXPECT_EQ(dets[0].label_id(0), 0);
 }
 
 // ── Ambiguous [6,6] with explicit END_TO_END succeeds ────────────────────
@@ -214,6 +221,74 @@ TEST(YoloTensorsToDetectionsTest, AllBelowThreshold_NoDetections) {
   auto dets = Run(*runner, MakeFloatTensor({3, 6}, data));
 
   EXPECT_EQ(dets.size(), 0u);
+}
+
+// ── INT8 quantized END_TO_END with quantization_scale_override ────────────
+// INT8 tensor: values are int8, dequantized via scale*(val - zero_point).
+// Box 0: raw coords [10,20,60,80] (pixel), score raw=90, class=2.
+// With scale=1.0, zero_point=0 → dequantized values equal raw values.
+// Score dequantized: 90.0 → above threshold 0.5. Passes.
+TEST(YoloTensorsToDetectionsTest, Int8_EndToEnd_QuantizationScaleOverride) {
+  // shape [2, 6]: 2 boxes
+  std::vector<int8_t> raw = {
+      10, 20, 60, 80, 90, 2,   // box 0: coords + score=90*scale + class=2
+       0,  0,  0,  0,  0, 0,   // box 1: all zero
+  };
+  Tensor t(Tensor::ElementType::kInt8, Tensor::Shape({2, 6}));
+  {
+    auto view = t.GetCpuWriteView();
+    std::copy(raw.begin(), raw.end(), view.buffer<int8_t>());
+  }
+
+  auto runner = MakeRunner(
+      "decode_mode: END_TO_END "
+      "tensor_layout: BOXES_FIRST "
+      "input_width: 640 input_height: 640 "
+      "min_score_threshold: 0.5 "
+      "quantization_scale_override: 1.0 "
+      "quantization_zero_point_override: 0");
+
+  std::vector<Tensor> tensors;
+  tensors.push_back(std::move(t));
+  runner->MutableInputs()->Tag("TENSORS").packets.push_back(
+      MakePacket<std::vector<Tensor>>(std::move(tensors)).At(Timestamp(0)));
+  MP_ASSERT_OK(runner->Run());
+
+  const auto& out = runner->Outputs().Tag("DETECTIONS").packets;
+  ASSERT_EQ(out.size(), 1u);
+  const auto& dets = out[0].Get<std::vector<Detection>>();
+  ASSERT_EQ(dets.size(), 1u);
+  EXPECT_EQ(dets[0].label_id(0), 2);
+  EXPECT_NEAR(dets[0].score(0), 90.0f, 0.1f);
+}
+
+// ── Mismatched quantization override → kInvalidArgument ──────────────────
+// Providing scale without zero_point (or vice versa) must fail in Open().
+TEST(YoloTensorsToDetectionsTest, MismatchedQuantizationOverride_ReturnsError) {
+  auto node = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+    calculator: "YoloTensorsToDetectionsCalculator"
+    input_stream:  "TENSORS:tensors"
+    output_stream: "DETECTIONS:detections"
+    options {
+      [mediapipe.tasks.components.processors.proto
+        .YoloTensorsToDetectionsCalculatorOptions.ext] {
+        decode_mode: END_TO_END
+        input_width: 640
+        input_height: 640
+        quantization_scale_override: 1.0
+        # intentionally omitting quantization_zero_point_override
+      }
+    }
+  )pb");
+  CalculatorRunner runner(node);
+  // Run with a dummy tensor — Open() should fail before Process() is reached.
+  std::vector<Tensor> tensors;
+  tensors.push_back(
+      MakeFloatTensor({3, 6}, std::vector<float>(3 * 6, 0.0f)));
+  runner.MutableInputs()->Tag("TENSORS").packets.push_back(
+      MakePacket<std::vector<Tensor>>(std::move(tensors)).At(Timestamp(0)));
+  EXPECT_THAT(runner.Run(),
+              mediapipe::StatusIs(absl::StatusCode::kInvalidArgument));
 }
 
 }  // namespace
