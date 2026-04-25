@@ -31,6 +31,10 @@ enum class YoloDecodeMode { kAuto, kUltralytics, kEndToEnd };
 absl::StatusOr<std::pair<int, int>> ExtractModelInputShape(
     const std::string& model_path);
 
+// Reads TFLite model's first output tensor dims from flatbuffer (no inference).
+absl::StatusOr<std::vector<int>> ExtractModelOutputDims(
+    const std::string& model_path);
+
 // Infer YOLO decode mode from output tensor shape dims.
 // Squeezes leading singleton dims, then checks if any remaining dim == 6.
 // dim==6 → kEndToEnd; otherwise → kUltralytics.

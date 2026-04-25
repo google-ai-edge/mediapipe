@@ -62,6 +62,28 @@ absl::StatusOr<std::pair<int, int>> ExtractModelInputShape(
   return std::make_pair(w, h);
 }
 
+absl::StatusOr<std::vector<int>> ExtractModelOutputDims(
+    const std::string& model_path) {
+  std::string model_buffer;
+  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(model_path, &model_buffer));
+  const tflite::Model* model = tflite::GetModel(model_buffer.data());
+  if (!model || !model->subgraphs() || model->subgraphs()->size() == 0)
+    return absl::InvalidArgumentError("Cannot parse TFLite model.");
+  const auto* subgraph = model->subgraphs()->Get(0);
+  if (!subgraph->outputs() || subgraph->outputs()->size() == 0)
+    return absl::InvalidArgumentError("Model has no outputs.");
+  const int output_idx = subgraph->outputs()->Get(0);
+  if (!subgraph->tensors())
+    return absl::InvalidArgumentError("Model subgraph has no tensors table.");
+  const auto* tensor = subgraph->tensors()->Get(output_idx);
+  if (!tensor || !tensor->shape())
+    return absl::InvalidArgumentError("Output tensor has no shape.");
+  std::vector<int> dims;
+  for (int i = 0; i < tensor->shape()->size(); ++i)
+    dims.push_back(tensor->shape()->Get(i));
+  return dims;
+}
+
 YoloDecodeMode InferDecodeMode(std::vector<int> dims) {
   // Squeeze leading singleton dims.
   while (dims.size() > 2 && dims.front() == 1) {

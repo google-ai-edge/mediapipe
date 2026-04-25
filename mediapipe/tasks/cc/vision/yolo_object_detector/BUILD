@@ -33,6 +33,51 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "yolo_object_detector_graph",
+    srcs = ["yolo_object_detector_graph.cc"],
+    deps = [
+        ":yolo_object_detector_graph_utils",
+        "//mediapipe/calculators/yolo:auto_nms_calculator",
+        "//mediapipe/calculators/yolo:yolo_tensors_to_detections_calculator",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/components/processors:image_preprocessing_graph",
+        "//mediapipe/tasks/cc/components/processors/proto:image_preprocessing_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/components/processors/proto:yolo_tensors_to_detections_calculator_cc_proto",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/core:model_task_graph",
+        "//mediapipe/tasks/cc/vision/yolo_object_detector/proto:yolo_object_detector_options_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "yolo_object_detector_graph_test",
+    srcs = ["yolo_object_detector_graph_test.cc"],
+    linkstatic = 1,
+    deps = [
+        ":yolo_object_detector_graph",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 cc_test(
     name = "yolo_object_detector_graph_utils_test",
     srcs = ["yolo_object_detector_graph_utils_test.cc"],
