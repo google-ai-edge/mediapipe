@@ -47,8 +47,11 @@ absl::StatusOr<std::pair<int, int>> ExtractModelInputShape(
     return absl::InvalidArgumentError("Model has no inputs.");
   }
   const int input_idx = subgraph->inputs()->Get(0);
+  if (!subgraph->tensors()) {
+    return absl::InvalidArgumentError("Model subgraph has no tensors table.");
+  }
   const auto* tensor = subgraph->tensors()->Get(input_idx);
-  if (!tensor->shape() || tensor->shape()->size() < 4) {
+  if (!tensor || !tensor->shape() || tensor->shape()->size() < 4) {
     return absl::InvalidArgumentError(absl::StrFormat(
         "Expected 4-D NHWC input tensor, got rank %d",
         tensor->shape() ? tensor->shape()->size() : 0));

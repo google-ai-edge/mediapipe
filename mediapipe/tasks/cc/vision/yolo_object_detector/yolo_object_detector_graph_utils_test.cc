@@ -55,5 +55,24 @@ TEST(YoloObjectDetectorGraphUtilsTest, InferDecodeMode_WithMultipleLeadingSingle
   EXPECT_EQ(InferDecodeMode({1, 1, 84, 8400}), YoloDecodeMode::kUltralytics);
 }
 
+// InferDecodeMode scans all remaining dims (not just rank-2) for dim==6.
+// A 3-D tensor with a non-leading 6 is treated as END_TO_END.
+// This documents intentional behavior: non-standard 3-D e2e exports are supported.
+TEST(YoloObjectDetectorGraphUtilsTest, InferDecodeMode_3D_WithSixDim) {
+  EXPECT_EQ(InferDecodeMode({1, 300, 6}), YoloDecodeMode::kEndToEnd);
+  EXPECT_EQ(InferDecodeMode({2, 6, 100}), YoloDecodeMode::kEndToEnd);
+}
+
+// ExtractModelInputShape requires a real model file; skip if unavailable.
+TEST(YoloObjectDetectorGraphUtilsTest, DISABLED_ExtractModelInputShape_RealModel) {
+  // Enable by placing a YOLOv8n TFLite model at this path and removing DISABLED_.
+  constexpr char kModelPath[] =
+      "mediapipe/tasks/cc/vision/yolo_object_detector/testdata/"
+      "yolov8n_float32.tflite";
+  MP_ASSERT_OK_AND_ASSIGN(auto shape, ExtractModelInputShape(kModelPath));
+  EXPECT_GT(shape.first, 0);   // width
+  EXPECT_GT(shape.second, 0);  // height
+}
+
 }  // namespace
 }  // namespace mediapipe::tasks::vision::yolo_object_detector
