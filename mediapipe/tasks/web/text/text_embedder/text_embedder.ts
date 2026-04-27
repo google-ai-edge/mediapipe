@@ -30,8 +30,11 @@ import {
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
-
-import {TextEmbedderOptions} from './text_embedder_options';
+import {
+  TextEmbedderOptions,
+  TextEmbeddingType,
+  TextFormatOptions,
+} from './text_embedder_options';
 import {TextEmbedderResult} from './text_embedder_result';
 
 export * from './text_embedder_options';
@@ -155,16 +158,65 @@ export class TextEmbedder extends TaskRunner {
    *
    * @export
    * @param text The text to process.
+   * @param formatOptions The formatting to apply to the input text.
    * @return The embedding results of the text
    */
-  embed(text: string): TextEmbedderResult {
+  embed(text: string, formatOptions?: TextFormatOptions): TextEmbedderResult {
+    const inputText = formatOptions
+      ? this.formatText(text, formatOptions)
+      : text;
     this.graphRunner.addStringToStream(
-      text,
+      inputText,
       INPUT_STREAM,
       this.getSynctheticTimestamp(),
     );
     this.finishProcessing();
     return this.embeddingResult;
+  }
+
+  private formatText(text: string, options: TextFormatOptions): string {
+    const type = options.type;
+    const title =
+      options.title && options.title.length > 0 ? options.title : 'none';
+    const isQuery = options.textRole !== 'DOCUMENT';
+
+    switch (type) {
+      case 'RETRIEVAL_DOCUMENT':
+        return `title: ${title} | text: ${text}`;
+      case 'RETRIEVAL_QUERY':
+        return `task: ${this.getTypeString(type)} | query: ${text}`;
+      case 'QUESTION_ANSWERING':
+      case 'FACT_CHECKING':
+      case 'CODE_RETRIEVAL':
+        if (isQuery) {
+          return `task: ${this.getTypeString(type)} | query: ${text}`;
+        } else {
+          return `title: ${title} | text: ${text}`;
+        }
+      default:
+        return `task: ${this.getTypeString(type)} | query: ${text}`;
+    }
+  }
+
+  private getTypeString(type: TextEmbeddingType): string {
+    switch (type) {
+      case 'RETRIEVAL_QUERY':
+        return 'search result';
+      case 'SEMANTIC_SIMILARITY':
+        return 'sentence similarity';
+      case 'CLASSIFICATION':
+        return 'classification';
+      case 'CLUSTERING':
+        return 'clustering';
+      case 'QUESTION_ANSWERING':
+        return 'question answering';
+      case 'FACT_CHECKING':
+        return 'fact checking';
+      case 'CODE_RETRIEVAL':
+        return 'code retrieval';
+      default:
+        return 'search result';
+    }
   }
 
   /**
