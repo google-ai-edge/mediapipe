@@ -19,6 +19,7 @@
 
 static NSString *const kBertTextEmbedderModelName = @"mobilebert_embedding_with_metadata";
 static NSString *const kRegexTextEmbedderModelName = @"regex_one_embedding_with_metadata";
+static NSString *const kGeckoTextEmbedderModelName = @"gecko";
 static NSString *const kText1 = @"it's a charming and often affecting journey";
 static NSString *const kText2 = @"what a great and fantastic trip";
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
@@ -63,8 +64,9 @@ static const float kSimilarityDiffTolerance = 1e-4;
                                                                       ofType:extension];
 }
 
-- (MPPTextEmbedder *)textEmbedderFromModelFileWithName:(NSString *)modelName {
-  NSString *modelPath = [self filePathWithName:modelName extension:@"tflite"];
+- (MPPTextEmbedder *)textEmbedderFromModelFileWithName:(NSString *)modelName
+                                             extension:(NSString *)extension {
+  NSString *modelPath = [self filePathWithName:modelName extension:extension];
 
   NSError *error = nil;
   MPPTextEmbedder *textEmbedder = [[MPPTextEmbedder alloc] initWithModelPath:modelPath
@@ -75,8 +77,9 @@ static const float kSimilarityDiffTolerance = 1e-4;
   return textEmbedder;
 }
 
-- (MPPTextEmbedderOptions *)textEmbedderOptionsWithModelName:(NSString *)modelName {
-  NSString *modelPath = [self filePathWithName:modelName extension:@"tflite"];
+- (MPPTextEmbedderOptions *)textEmbedderOptionsWithModelName:(NSString *)modelName
+                                                   extension:(NSString *)extension {
+  NSString *modelPath = [self filePathWithName:modelName extension:extension];
   MPPTextEmbedderOptions *textEmbedderOptions = [[MPPTextEmbedderOptions alloc] init];
   textEmbedderOptions.baseOptions.modelAssetPath = modelPath;
 
@@ -147,8 +150,8 @@ static const float kSimilarityDiffTolerance = 1e-4;
 }
 
 - (void)testEmbedWithBertSucceeds {
-  MPPTextEmbedder *textEmbedder =
-      [self textEmbedderFromModelFileWithName:kBertTextEmbedderModelName];
+  MPPTextEmbedder *textEmbedder = [self textEmbedderFromModelFileWithName:kBertTextEmbedderModelName
+                                                                extension:@"tflite"];
 
   MPPEmbedding *embedding1 = [self assertFloatEmbeddingResultsOfEmbedText:kText1
                                                         usingTextEmbedder:textEmbedder
@@ -169,7 +172,7 @@ static const float kSimilarityDiffTolerance = 1e-4;
 
 - (void)testEmbedWithRegexSucceeds {
   MPPTextEmbedder *textEmbedder =
-      [self textEmbedderFromModelFileWithName:kRegexTextEmbedderModelName];
+      [self textEmbedderFromModelFileWithName:kRegexTextEmbedderModelName extension:@"tflite"];
 
   MPPEmbedding *embedding1 = [self assertFloatEmbeddingResultsOfEmbedText:kText1
                                                         usingTextEmbedder:textEmbedder
@@ -189,8 +192,8 @@ static const float kSimilarityDiffTolerance = 1e-4;
 }
 
 - (void)testEmbedWithBertAndDifferentThemesSucceeds {
-  MPPTextEmbedder *textEmbedder =
-      [self textEmbedderFromModelFileWithName:kBertTextEmbedderModelName];
+  MPPTextEmbedder *textEmbedder = [self textEmbedderFromModelFileWithName:kBertTextEmbedderModelName
+                                                                extension:@"tflite"];
 
   MPPEmbedding *embedding1 =
       [self assertFloatEmbeddingResultsOfEmbedText:
@@ -217,7 +220,7 @@ static const float kSimilarityDiffTolerance = 1e-4;
 
 - (void)testEmbedWithQuantizeSucceeds {
   MPPTextEmbedderOptions *options =
-      [self textEmbedderOptionsWithModelName:kBertTextEmbedderModelName];
+      [self textEmbedderOptionsWithModelName:kBertTextEmbedderModelName extension:@"tflite"];
   options.quantize = YES;
 
   MPPTextEmbedder *textEmbedder = [[MPPTextEmbedder alloc] initWithOptions:options error:nil];
