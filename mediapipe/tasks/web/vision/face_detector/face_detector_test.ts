@@ -20,36 +20,45 @@ import 'jasmine';
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {Detection as DetectionProto} from '../../../../framework/formats/detection_pb';
 import {LocationData} from '../../../../framework/formats/location_data_pb';
-import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, MediapipeTasksFake, SpyWasmModule, verifyGraph, verifyListenersRegistered} from '../../../../tasks/web/core/task_runner_test_utils';
+import {
+  addJasmineCustomFloatEqualityTester,
+  createSpyWasmModule,
+  MediapipeTasksFake,
+  SpyWasmModule,
+  verifyGraph,
+  verifyListenersRegistered,
+} from '../../../../tasks/web/core/task_runner_test_utils';
 
 import {FaceDetector} from './face_detector';
-import {FaceDetectorOptions} from './face_detector_options';
+import type {FaceDetectorOptions} from './face_detector_options';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
 
 class FaceDetectorFake extends FaceDetector implements MediapipeTasksFake {
-  lastSampleRate: number|undefined;
+  lastSampleRate: number | undefined;
   calculatorName = 'mediapipe.tasks.vision.face_detector.FaceDetectorGraph';
   attachListenerSpies: jasmine.Spy[] = [];
-  graph: CalculatorGraphConfig|undefined;
+  graph: CalculatorGraphConfig | undefined;
 
   fakeWasmModule: SpyWasmModule;
   protoListener:
-      ((binaryProtos: Uint8Array[], timestamp: number) => void)|undefined;
+    | ((binaryProtos: Uint8Array[], timestamp: number) => void)
+    | undefined;
 
   constructor() {
     super(createSpyWasmModule(), /* glCanvas= */ null);
-    this.fakeWasmModule =
-        this.graphRunner.wasmModule as unknown as SpyWasmModule;
+    this.fakeWasmModule = this.graphRunner
+      .wasmModule as unknown as SpyWasmModule;
 
-    this.attachListenerSpies[0] =
-        spyOn(this.graphRunner, 'attachProtoVectorListener')
-            .and.callFake((stream, listener) => {
-              expect(stream).toEqual('detections');
-              this.protoListener = listener;
-            });
-    spyOn(this.graphRunner, 'setGraph').and.callFake(binaryGraph => {
+    this.attachListenerSpies[0] = spyOn(
+      this.graphRunner,
+      'attachProtoVectorListener',
+    ).and.callFake((stream, listener) => {
+      expect(stream).toEqual('detections');
+      this.protoListener = listener;
+    });
+    spyOn(this.graphRunner, 'setGraph').and.callFake((binaryGraph) => {
       this.graph = CalculatorGraphConfig.deserializeBinary(binaryGraph);
     });
     spyOn(this.graphRunner, 'addGpuBufferAsImageToStream');
@@ -62,8 +71,9 @@ describe('FaceDetector', () => {
   beforeEach(async () => {
     addJasmineCustomFloatEqualityTester();
     faceDetector = new FaceDetectorFake();
-    await faceDetector.setOptions(
-        {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
+    await faceDetector.setOptions({
+      baseOptions: {modelAssetBuffer: new Uint8Array([])},
+    });
   });
 
   afterEach(() => {
@@ -91,21 +101,23 @@ describe('FaceDetector', () => {
     await faceDetector.setOptions({
       baseOptions: {
         modelAssetBuffer: newModel,
-      }
+      },
     });
 
     verifyGraph(
-        faceDetector,
-        /* expectedCalculatorOptions= */ undefined,
-        /* expectedBaseOptions= */
-        [
-          'modelAsset', {
-            fileContent: newModelBase64,
-            fileName: undefined,
-            fileDescriptorMeta: undefined,
-            filePointerMeta: undefined
-          }
-        ]);
+      faceDetector,
+      /* expectedCalculatorOptions= */ undefined,
+      /* expectedBaseOptions= */
+      [
+        'modelAsset',
+        {
+          fileContent: newModelBase64,
+          fileName: undefined,
+          fileDescriptorMeta: undefined,
+          filePointerMeta: undefined,
+        },
+      ],
+    );
   });
 
   it('merges options', async () => {
@@ -128,26 +140,28 @@ describe('FaceDetector', () => {
         optionName: 'minDetectionConfidence',
         protoName: 'minDetectionConfidence',
         customValue: 0.1,
-        defaultValue: 0.5
+        defaultValue: 0.5,
       },
       {
         optionName: 'minSuppressionThreshold',
         protoName: 'minSuppressionThreshold',
         customValue: 0.2,
-        defaultValue: 0.3
+        defaultValue: 0.3,
       },
     ];
 
     for (const testCase of testCases) {
       it(`can set ${testCase.optionName}`, async () => {
-        await faceDetector.setOptions(
-            {[testCase.optionName]: testCase.customValue});
+        await faceDetector.setOptions({
+          [testCase.optionName]: testCase.customValue,
+        });
         verifyGraph(faceDetector, [testCase.protoName, testCase.customValue]);
       });
 
       it(`can clear ${testCase.optionName}`, async () => {
-        await faceDetector.setOptions(
-            {[testCase.optionName]: testCase.customValue});
+        await faceDetector.setOptions({
+          [testCase.optionName]: testCase.customValue,
+        });
         verifyGraph(faceDetector, [testCase.protoName, testCase.customValue]);
         await faceDetector.setOptions({[testCase.optionName]: undefined});
         verifyGraph(faceDetector, [testCase.protoName, testCase.defaultValue]);
@@ -155,12 +169,12 @@ describe('FaceDetector', () => {
     }
   });
 
-  it('doesn\'t support region of interest', () => {
+  it("doesn't support region of interest", () => {
     expect(() => {
-      faceDetector.detect(
-          {} as HTMLImageElement,
-          {regionOfInterest: {left: 0, right: 0, top: 0, bottom: 0}});
-    }).toThrowError('This task doesn\'t support region-of-interest.');
+      faceDetector.detect({} as HTMLImageElement, {
+        regionOfInterest: {left: 0, right: 0, top: 0, bottom: 0},
+      });
+    }).toThrowError("This task doesn't support region-of-interest.");
   });
 
   it('transforms results', async () => {
@@ -185,14 +199,16 @@ describe('FaceDetector', () => {
     expect(faceDetector.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
     expect(detections.length).toEqual(1);
     expect(detections[0]).toEqual({
-      categories: [{
-        score: 0.1,
-        index: -1,
-        categoryName: '',
-        displayName: '',
-      }],
+      categories: [
+        {
+          score: 0.1,
+          index: -1,
+          categoryName: '',
+          displayName: '',
+        },
+      ],
       boundingBox: {originX: 0, originY: 0, width: 0, height: 0, angle: 0},
-      keypoints: []
+      keypoints: [],
     });
   });
 });

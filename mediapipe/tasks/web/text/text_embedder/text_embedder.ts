@@ -30,15 +30,15 @@ import {
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
-import {
+import type {
   TextEmbedderOptions,
   TextEmbeddingType,
   TextFormatOptions,
 } from './text_embedder_options';
-import {TextEmbedderResult} from './text_embedder_result';
+import type {TextEmbedderResult} from './text_embedder_result';
 
-export * from './text_embedder_options';
-export * from './text_embedder_result';
+export type * from './text_embedder_options';
+export type * from './text_embedder_result';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
