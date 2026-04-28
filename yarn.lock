@@ -563,10 +563,10 @@ glob@^8.0.0, glob@^8.0.3:
     minimatch "^5.0.1"
     once "^1.3.0"
 
-google-protobuf@^3.15.5, google-protobuf@^3.21.2, google-protobuf@^3.6.1:
-  version "3.21.2"
-  resolved "https://registry.npmjs.org/google-protobuf/-/google-protobuf-3.21.2.tgz"
-  integrity sha512-3MSOYFO5U9mPGikIYCzK0SaThypfGgS6bHqrUGXG3DPHCrb+txNqeEcns1W0lkGfk0rCyNXm7xB9rMxnCiZOoA==
+google-protobuf@^3.15.5, google-protobuf@^3.21.2, google-protobuf@^3.6.1, google-protobuf@^4.0.2:
+  version "4.0.2"
+  resolved "https://registry.npmjs.org/google-protobuf/-/google-protobuf-4.0.2.tgz"
+  integrity sha512-yD2fqbNgvJPuQwdKJiPdbUcXveNRxgqy070gzsBsCyFJA8Qdj9oxa9xtkddb/JEhcDk0RD5SfGUWg+nhINfMxA==
 
 graceful-fs@^4.1.9:
   version "4.2.10"

@@ -25,8 +25,8 @@ cc_library(
     hdrs = ["murmur.h"],
     deps = [
         "//mediapipe/framework/port:integral_types",
+        "//mediapipe/util:endian",
         "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/base:endian",
     ],
 )
 

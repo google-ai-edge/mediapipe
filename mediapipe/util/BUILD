@@ -82,8 +82,8 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:status_util",
+        "//mediapipe/util:endian",
         "//third_party:libffmpeg",
-        "@com_google_absl//absl/base:endian",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
@@ -437,6 +437,15 @@ cc_library(
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@eigen//:eigen3",
+    ],
+)
+
+cc_library(
+    name = "endian",
+    hdrs = ["endian.h"],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [
+        "//mediapipe/framework/deps:endian",
     ],
 )
 

@@ -25,47 +25,68 @@ load("@bazel_skylib//lib:versions.bzl", "versions")
 
 versions.check(minimum_bazel_version = "3.7.2")
 
-# ABSL on 2023-10-18
+# Provides platforms and constraints that the updated C++, Java, and Protobuf rules require to
+# function correctly.
 http_archive(
-    name = "com_google_absl",
-    patch_args = [
-        "-p1",
+    name = "platforms",
+    urls = [
+        "https://github.com/bazelbuild/platforms/releases/download/0.0.11/platforms-0.0.11.tar.gz",
     ],
-    patches = [
-        "@//third_party:com_google_absl_windows_patch.diff",
-    ],
-    sha256 = "f841f78243f179326f2a80b719f2887c38fe226d288ecdc46e2aa091e6aa43bc",
-    strip_prefix = "abseil-cpp-9687a8ea750bfcddf790372093245a1d041b21a3",
-    urls = ["https://github.com/abseil/abseil-cpp/archive//9687a8ea750bfcddf790372093245a1d041b21a3.tar.gz"],
+    sha256 = "29742e87275809b5e598dc2f04d86960cc7a55b3067d97221c9abbc9926bff0f",
 )
 
+# ABSL on 2025-01-14
+http_archive(
+    name = "com_google_absl",
+    repo_mapping = {"@googletest": "@com_google_googletest"},
+    sha256 = "87e91fb785a2d0233f4599317afd576b7736e6732d557bdcdfdc11990bd333ef",
+    strip_prefix = "abseil-cpp-255c84dadd029fd8ad25c5efb5933e47beaa00c7",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/255c84dadd029fd8ad25c5efb5933e47beaa00c7.tar.gz"],
+)
+
+# RE2 version 2025-11-05 (and later) explicitly adds the missing <cstring> include to prog.h and
+# improves compatibility with newer Abseil versions)
+http_archive(
+    name = "com_googlesource_code_re2",
+    repo_mapping = {"@abseil-cpp": "@com_google_absl"},
+    sha256 = "87f6029d2f6de8aa023654240a03ada90e876ce9a4676e258dd01ea4c26ffd67",
+    strip_prefix = "re2-2025-11-05",
+    urls = [
+        "https://github.com/google/re2/archive/2025-11-05.tar.gz",
+    ],
+)
+
+# We are migrating to the Starlark-native architectural branch of rules_cc. While the 0.1.x series
+# has a higher version number, it is a legacy branch. The 0.0.17 version (and its successor 0.2.x)
+# is required to support the toolchain resolution requirements of Protobuf 6.x and Abseil 2025.
 http_archive(
     name = "rules_cc",
-    patch_args = ["-p1"],
-    patches = ["@//third_party:rules_cc.diff"],
-    sha256 = "0d3b4f984c4c2e1acfd1378e0148d35caf2ef1d9eb95b688f8e19ce0c41bdf5b",
-    strip_prefix = "rules_cc-0.1.4",
-    url = "https://github.com/bazelbuild/rules_cc/releases/download/0.1.4/rules_cc-0.1.4.tar.gz",
+    sha256 = "abc605dd850f813bb37004b77db20106a19311a96b2da1c92b789da529d28fe1",
+    strip_prefix = "rules_cc-0.0.17",
+    urls = ["https://github.com/bazelbuild/rules_cc/releases/download/0.0.17/rules_cc-0.0.17.tar.gz"],
 )
+
+load("@rules_cc//cc:repositories.bzl", "rules_cc_dependencies", "rules_cc_toolchains")
+rules_cc_dependencies()
+rules_cc_toolchains()
 
 http_archive(
     name = "rules_java",
-    sha256 = "c73336802d0b4882e40770666ad055212df4ea62cfa6edf9cb0f9d29828a0934",
-    url = "https://github.com/bazelbuild/rules_java/releases/download/5.3.5/rules_java-5.3.5.tar.gz",
+    sha256 = "eb5447f019734b0c4284eaa5f8248415084da5445ba8201c935a211ab8af43a0",
+    url = "https://github.com/bazelbuild/rules_java/releases/download/7.10.0/rules_java-7.10.0.tar.gz",
 )
 
 http_archive(
     name = "com_google_protobuf",
-    patch_args = [
-        "-p1",
-    ],
-    patches = [
-        "@//third_party:com_google_protobuf_fixes.diff",
-    ],
-    sha256 = "f645e6e42745ce922ca5388b1883ca583bafe4366cc74cf35c3c9299005136e2",
-    strip_prefix = "protobuf-5.28.3",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v5.28.3.zip"],
+    repo_mapping = {"@abseil-cpp": "@com_google_absl"},
+    sha256 = "6e09bbc950ba60c3a7b30280210cd285af8d7d8ed5e0a6ed101c72aff22e8d88",
+    strip_prefix = "protobuf-6.31.1",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v6.31.1.zip"],
 )
+
+load("@com_google_protobuf//bazel/private:proto_bazel_features.bzl", "proto_bazel_features")  # buildifier: disable=bzl-visibility
+
+proto_bazel_features(name = "proto_bazel_features")
 
 http_archive(
     name = "rules_android_ndk",
@@ -118,15 +139,9 @@ http_archive(
 http_archive(
     name = "zlib",
     build_file = "@//third_party:zlib.BUILD",
-    patch_args = [
-        "-p1",
-    ],
-    patches = [
-        "@//third_party:zlib.diff",
-    ],
-    sha256 = "b3a24de97a8fdbc835b9833169501030b8977031bcb54b3b3ac13740f846ab30",
-    strip_prefix = "zlib-1.2.13",
-    url = "http://zlib.net/fossils/zlib-1.2.13.tar.gz",
+    sha256 = "17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c",
+    strip_prefix = "zlib-1.3.1",
+    url = "https://github.com/madler/zlib/archive/refs/tags/v1.3.1.tar.gz",
 )
 
 # gflags needed by glog
@@ -513,9 +528,10 @@ http_archive(
 # ...but the Java download is currently broken, so we use the "source" download.
 http_archive(
     name = "com_google_protobuf_javalite",
-    sha256 = "f645e6e42745ce922ca5388b1883ca583bafe4366cc74cf35c3c9299005136e2",
-    strip_prefix = "protobuf-5.28.3",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v5.28.3.zip"],
+    repo_mapping = {"@abseil-cpp": "@com_google_absl"},
+    sha256 = "6e09bbc950ba60c3a7b30280210cd285af8d7d8ed5e0a6ed101c72aff22e8d88",
+    strip_prefix = "protobuf-6.31.1",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v6.31.1.zip"],
 )
 
 load("@//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
@@ -580,15 +596,6 @@ http_archive(
     strip_prefix = "text-2.2.0",
     urls = [
         "https://github.com/tensorflow/text/archive/v2.2.0.zip",
-    ],
-)
-
-http_archive(
-    name = "com_googlesource_code_re2",
-    sha256 = "ef516fb84824a597c4d5d0d6d330daedb18363b5a99eda87d027e6bdd9cba299",
-    strip_prefix = "re2-03da4fc0857c285e3a26782f6bc8931c4c950df4",
-    urls = [
-        "https://github.com/google/re2/archive/03da4fc0857c285e3a26782f6bc8931c4c950df4.tar.gz",
     ],
 )
 
@@ -818,11 +825,13 @@ http_archive(
     urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/archive/4.2.0.tar.gz"],
 )
 
+# Protobuf Javascript v4.0.2 is compatible with Protobuf v6.31.1
 http_archive(
     name = "com_google_protobuf_javascript",
-    sha256 = "8cef92b4c803429af0c11c4090a76b6a931f82d21e0830760a17f9c6cb358150",
-    strip_prefix = "protobuf-javascript-3.21.4",
-    urls = ["https://github.com/protocolbuffers/protobuf-javascript/archive/refs/tags/v3.21.4.tar.gz"],
+    repo_mapping = {"@abseil-cpp": "@com_google_absl"},
+    sha256 = "a08244115ed0535971ec894abf078da90ad2c0938700612f90dc550f218627ee",
+    strip_prefix = "protobuf-javascript-4.0.2",
+    urls = ["https://github.com/protocolbuffers/protobuf-javascript/archive/refs/tags/v4.0.2.tar.gz"],
 )
 
 load("@rules_proto_grpc//:repositories.bzl", "rules_proto_grpc_repos", "rules_proto_grpc_toolchains")
