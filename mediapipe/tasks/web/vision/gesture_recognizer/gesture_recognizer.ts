@@ -47,11 +47,11 @@ import {
 } from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
-import {GestureRecognizerOptions} from './gesture_recognizer_options';
-import {GestureRecognizerResult} from './gesture_recognizer_result';
+import type {GestureRecognizerOptions} from './gesture_recognizer_options';
+import type {GestureRecognizerResult} from './gesture_recognizer_result';
 
-export * from './gesture_recognizer_options';
-export * from './gesture_recognizer_result';
+export type * from './gesture_recognizer_options';
+export type * from './gesture_recognizer_result';
 export {type ImageSource};
 
 // The OSS JS API does not support the builder pattern.
