@@ -66,11 +66,11 @@ import {
 } from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
-import type {HolisticLandmarkerOptions} from './holistic_landmarker_options';
-import type {HolisticLandmarkerResult} from './holistic_landmarker_result';
+import {HolisticLandmarkerOptions} from './holistic_landmarker_options';
+import {HolisticLandmarkerResult} from './holistic_landmarker_result';
 
-export type * from './holistic_landmarker_options';
-export type * from './holistic_landmarker_result';
+export * from './holistic_landmarker_options';
+export * from './holistic_landmarker_result';
 export {type ImageSource};
 
 // The OSS JS API does not support the builder pattern.

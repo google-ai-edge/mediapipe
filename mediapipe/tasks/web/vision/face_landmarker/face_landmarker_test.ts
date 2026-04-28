@@ -16,30 +16,20 @@
 import 'jasmine';
 
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
-import {
-  Classification,
-  ClassificationList,
-} from '../../../../framework/formats/classification_pb';
+import {Classification, ClassificationList} from '../../../../framework/formats/classification_pb';
 import {MatrixData as MatrixDataProto} from '../../../../framework/formats/matrix_data_pb';
 import {FaceGeometry as FaceGeometryProto} from '../../../../tasks/cc/vision/face_geometry/proto/face_geometry_pb';
 import {createLandmarks} from '../../../../tasks/web/components/processors/landmark_result_test_lib';
-import {
-  addJasmineCustomFloatEqualityTester,
-  createSpyWasmModule,
-  MediapipeTasksFake,
-  SpyWasmModule,
-  verifyGraph,
-  verifyListenersRegistered,
-} from '../../../../tasks/web/core/task_runner_test_utils';
+import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, MediapipeTasksFake, SpyWasmModule, verifyGraph, verifyListenersRegistered} from '../../../../tasks/web/core/task_runner_test_utils';
 import {VisionGraphRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 
 import {FaceLandmarker} from './face_landmarker';
-import type {FaceLandmarkerOptions} from './face_landmarker_options';
+import {FaceLandmarkerOptions} from './face_landmarker_options';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
 
-type ProtoListener = (binaryProtos: Uint8Array[], timestamp: number) => void;
+type ProtoListener = ((binaryProtos: Uint8Array[], timestamp: number) => void);
 
 function createBlendshapes(): ClassificationList {
   const blendshapesProto = new ClassificationList();
@@ -65,24 +55,24 @@ function createFacialTransformationMatrixes(): FaceGeometryProto {
 class FaceLandmarkerFake extends FaceLandmarker implements MediapipeTasksFake {
   calculatorName = 'mediapipe.tasks.vision.face_landmarker.FaceLandmarkerGraph';
   attachListenerSpies: jasmine.Spy[] = [];
-  graph: CalculatorGraphConfig | undefined;
+  graph: CalculatorGraphConfig|undefined;
   fakeWasmModule: SpyWasmModule;
   listeners = new Map<string, ProtoListener>();
 
   constructor() {
     super(createSpyWasmModule(), /* glCanvas= */ null);
-    this.fakeWasmModule = this.graphRunner
-      .wasmModule as unknown as SpyWasmModule;
+    this.fakeWasmModule =
+        this.graphRunner.wasmModule as unknown as SpyWasmModule;
 
-    this.attachListenerSpies[0] = spyOn(
-      this.graphRunner,
-      'attachProtoVectorListener',
-    ).and.callFake((stream, listener) => {
-      expect(stream).toMatch(/(face_landmarks|blendshapes|face_geometry)/);
-      this.listeners.set(stream, listener);
-    });
+    this.attachListenerSpies[0] =
+        spyOn(this.graphRunner, 'attachProtoVectorListener')
+            .and.callFake((stream, listener) => {
+              expect(stream).toMatch(
+                  /(face_landmarks|blendshapes|face_geometry)/);
+              this.listeners.set(stream, listener);
+            });
 
-    spyOn(this.graphRunner, 'setGraph').and.callFake((binaryGraph) => {
+    spyOn(this.graphRunner, 'setGraph').and.callFake(binaryGraph => {
       this.graph = CalculatorGraphConfig.deserializeBinary(binaryGraph);
     });
     spyOn(this.graphRunner, 'addGpuBufferAsImageToStream');
@@ -100,9 +90,8 @@ describe('FaceLandmarker', () => {
   beforeEach(async () => {
     addJasmineCustomFloatEqualityTester();
     faceLandmarker = new FaceLandmarkerFake();
-    await faceLandmarker.setOptions({
-      baseOptions: {modelAssetBuffer: new Uint8Array([])},
-    });
+    await faceLandmarker.setOptions(
+        {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
   afterEach(() => {
@@ -130,13 +119,12 @@ describe('FaceLandmarker', () => {
     await faceLandmarker.setOptions({numFaces: 1});
     await faceLandmarker.setOptions({minFaceDetectionConfidence: 0.5});
     verifyGraph(faceLandmarker, [
-      'faceDetectorGraphOptions',
-      {
+      'faceDetectorGraphOptions', {
         numFaces: 1,
         baseOptions: undefined,
         minDetectionConfidence: 0.5,
-        minSuppressionThreshold: 0.5,
-      },
+        minSuppressionThreshold: 0.5
+      }
     ]);
   });
 
@@ -153,36 +141,32 @@ describe('FaceLandmarker', () => {
         optionPath: ['numFaces'],
         fieldPath: ['faceDetectorGraphOptions', 'numFaces'],
         customValue: 5,
-        defaultValue: 1,
+        defaultValue: 1
       },
       {
         optionPath: ['minFaceDetectionConfidence'],
         fieldPath: ['faceDetectorGraphOptions', 'minDetectionConfidence'],
         customValue: 0.1,
-        defaultValue: 0.5,
+        defaultValue: 0.5
       },
       {
         optionPath: ['minFacePresenceConfidence'],
-        fieldPath: [
-          'faceLandmarksDetectorGraphOptions',
-          'minDetectionConfidence',
-        ],
+        fieldPath:
+            ['faceLandmarksDetectorGraphOptions', 'minDetectionConfidence'],
         customValue: 0.2,
-        defaultValue: 0.5,
+        defaultValue: 0.5
       },
       {
         optionPath: ['minTrackingConfidence'],
         fieldPath: ['minTrackingConfidence'],
         customValue: 0.3,
-        defaultValue: 0.5,
+        defaultValue: 0.5
       },
     ];
 
     /** Creates an options object that can be passed to setOptions() */
     function createOptions(
-      path: string[],
-      value: unknown,
-    ): FaceLandmarkerOptions {
+        path: string[], value: unknown): FaceLandmarkerOptions {
       const options: Record<string, unknown> = {};
       let currentLevel = options;
       for (const element of path.slice(0, -1)) {
@@ -195,32 +179,25 @@ describe('FaceLandmarker', () => {
 
     for (const testCase of testCases) {
       it(`uses default value for ${testCase.optionPath[0]}`, async () => {
-        verifyGraph(faceLandmarker, [
-          testCase.fieldPath,
-          testCase.defaultValue,
-        ]);
+        verifyGraph(
+            faceLandmarker, [testCase.fieldPath, testCase.defaultValue]);
       });
 
       it(`can set ${testCase.optionPath[0]}`, async () => {
         await faceLandmarker.setOptions(
-          createOptions(testCase.optionPath, testCase.customValue),
-        );
+            createOptions(testCase.optionPath, testCase.customValue));
         verifyGraph(faceLandmarker, [testCase.fieldPath, testCase.customValue]);
       });
 
       it(`can clear ${testCase.optionPath[0]}`, async () => {
         await faceLandmarker.setOptions(
-          createOptions(testCase.optionPath, testCase.customValue),
-        );
+            createOptions(testCase.optionPath, testCase.customValue));
         verifyGraph(faceLandmarker, [testCase.fieldPath, testCase.customValue]);
 
         await faceLandmarker.setOptions(
-          createOptions(testCase.optionPath, undefined),
-        );
-        verifyGraph(faceLandmarker, [
-          testCase.fieldPath,
-          testCase.defaultValue,
-        ]);
+            createOptions(testCase.optionPath, undefined));
+        verifyGraph(
+            faceLandmarker, [testCase.fieldPath, testCase.defaultValue]);
       });
     }
 
@@ -241,32 +218,29 @@ describe('FaceLandmarker', () => {
       await faceLandmarker.setOptions({});
       expect(faceLandmarker.graph!.getOutputStreamList()).not.toContain(stream);
 
-      await faceLandmarker.setOptions({
-        outputFacialTransformationMatrixes: false,
-      });
+      await faceLandmarker.setOptions(
+          {outputFacialTransformationMatrixes: false});
       expect(faceLandmarker.graph!.getOutputStreamList()).not.toContain(stream);
 
-      await faceLandmarker.setOptions({
-        outputFacialTransformationMatrixes: true,
-      });
+      await faceLandmarker.setOptions(
+          {outputFacialTransformationMatrixes: true});
       expect(faceLandmarker.graph!.getOutputStreamList()).toContain(stream);
     });
   });
 
-  it("doesn't support region of interest", () => {
+  it('doesn\'t support region of interest', () => {
     expect(() => {
-      faceLandmarker.detect({} as HTMLImageElement, {
-        regionOfInterest: {left: 0, right: 0, top: 0, bottom: 0},
-      });
-    }).toThrowError("This task doesn't support region-of-interest.");
+      faceLandmarker.detect(
+          {} as HTMLImageElement,
+          {regionOfInterest: {left: 0, right: 0, top: 0, bottom: 0}});
+    }).toThrowError('This task doesn\'t support region-of-interest.');
   });
 
   it('transforms results', async () => {
     const landmarksProto = [createLandmarks().serializeBinary()];
     const blendshapesProto = [createBlendshapes().serializeBinary()];
-    const faceGeometryProto = [
-      createFacialTransformationMatrixes().serializeBinary(),
-    ];
+    const faceGeometryProto =
+        [createFacialTransformationMatrixes().serializeBinary()];
 
     // Pass the test data to our listener
     faceLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
@@ -278,45 +252,38 @@ describe('FaceLandmarker', () => {
 
     await faceLandmarker.setOptions({
       outputFaceBlendshapes: true,
-      outputFacialTransformationMatrixes: true,
+      outputFacialTransformationMatrixes: true
     });
 
     // Invoke the face landmarker
     const landmarks = faceLandmarker.detect({} as HTMLImageElement);
-    expect(
-      faceLandmarker.getGraphRunner().addProtoToStream,
-    ).toHaveBeenCalledTimes(1);
-    expect(
-      faceLandmarker.getGraphRunner().addGpuBufferAsImageToStream,
-    ).toHaveBeenCalledTimes(1);
+    expect(faceLandmarker.getGraphRunner().addProtoToStream)
+        .toHaveBeenCalledTimes(1);
+    expect(faceLandmarker.getGraphRunner().addGpuBufferAsImageToStream)
+        .toHaveBeenCalledTimes(1);
     expect(faceLandmarker.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
 
     expect(landmarks).toEqual({
       faceLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]],
-      faceBlendshapes: [
-        {
-          categories: [
-            {
-              index: 1,
-              score: 0.1,
-              categoryName: 'face_label',
-              displayName: 'face_display_name',
-            },
-          ],
-          headIndex: -1,
-          headName: '',
-        },
-      ],
-      facialTransformationMatrixes: [{rows: 1, columns: 1, data: [1]}],
+      faceBlendshapes: [{
+        categories: [{
+          index: 1,
+          score: 0.1,
+          categoryName: 'face_label',
+          displayName: 'face_display_name'
+        }],
+        headIndex: -1,
+        headName: ''
+      }],
+      facialTransformationMatrixes: [({rows: 1, columns: 1, data: [1]})]
     });
   });
 
   it('clears results between invoations', async () => {
     const landmarksProto = [createLandmarks().serializeBinary()];
     const blendshapesProto = [createBlendshapes().serializeBinary()];
-    const faceGeometryProto = [
-      createFacialTransformationMatrixes().serializeBinary(),
-    ];
+    const faceGeometryProto =
+        [createFacialTransformationMatrixes().serializeBinary()];
 
     // Pass the test data to our listener
     faceLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
@@ -327,7 +294,7 @@ describe('FaceLandmarker', () => {
 
     await faceLandmarker.setOptions({
       outputFaceBlendshapes: true,
-      outputFacialTransformationMatrixes: true,
+      outputFacialTransformationMatrixes: true
     });
 
     // Invoke the face landmarker twice

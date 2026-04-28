@@ -37,8 +37,8 @@ import {
 } from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
-import type {FaceLandmarkerOptions} from './face_landmarker_options';
-import type {FaceLandmarkerResult} from './face_landmarker_result';
+import {FaceLandmarkerOptions} from './face_landmarker_options';
+import {FaceLandmarkerResult} from './face_landmarker_result';
 import {
   FACE_LANDMARKS_CONTOURS,
   FACE_LANDMARKS_FACE_OVAL,
@@ -52,8 +52,8 @@ import {
   FACE_LANDMARKS_TESSELATION,
 } from './face_landmarks_connections';
 
-export type * from './face_landmarker_options';
-export type * from './face_landmarker_result';
+export * from './face_landmarker_options';
+export * from './face_landmarker_result';
 export {type ImageSource};
 
 // The OSS JS API does not support the builder pattern.

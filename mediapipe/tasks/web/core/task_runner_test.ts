@@ -29,7 +29,7 @@ import {ErrorListener} from '../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource URL builder
 
 import {CachedGraphRunner, createTaskRunner} from './task_runner';
-import type {TaskRunnerOptions} from './task_runner_options';
+import {TaskRunnerOptions} from './task_runner_options';
 import {WasmFileset} from './wasm_fileset';
 
 type Writeable<T> = {
@@ -179,7 +179,7 @@ describe('TaskRunner', () => {
         status: fetchStatus,
       } as unknown as Response;
     });
-    globalThis.fetch = fetchSpy;
+    global.fetch = fetchSpy;
 
     // Monkeypatch an exported static method for testing!
     oldCreate = graphRunner.createMediaPipeLib;

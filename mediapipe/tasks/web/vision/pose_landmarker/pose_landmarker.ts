@@ -45,11 +45,11 @@ import {
 } from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
-import type {PoseLandmarkerOptions} from './pose_landmarker_options';
+import {PoseLandmarkerOptions} from './pose_landmarker_options';
 import {PoseLandmarkerResult} from './pose_landmarker_result';
 import {POSE_CONNECTIONS} from './pose_landmarks_connections';
 
-export type * from './pose_landmarker_options';
+export * from './pose_landmarker_options';
 export * from './pose_landmarker_result';
 export {type ImageSource};
 
@@ -127,7 +127,7 @@ export class PoseLandmarker extends VisionTaskRunner {
    */
   static createFromModelBuffer(
     wasmFileset: WasmFileset,
-    modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
+    modelAssetBuffer: Uint8Array|ReadableStreamDefaultReader,
   ): Promise<PoseLandmarker> {
     return VisionTaskRunner.createVisionInstance(PoseLandmarker, wasmFileset, {
       baseOptions: {modelAssetBuffer},

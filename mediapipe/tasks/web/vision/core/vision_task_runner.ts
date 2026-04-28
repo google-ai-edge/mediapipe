@@ -34,7 +34,7 @@ import {
 import {supportsOffscreenCanvas} from '../../../../web/graph_runner/platform_utils';
 import {SupportModelResourcesGraphService} from '../../../../web/graph_runner/register_model_resources_graph_service';
 
-import type {VisionTaskOptions} from './vision_task_options';
+import {VisionTaskOptions} from './vision_task_options';
 
 // tslint:disable-next-line:enforce-name-casing
 const GraphRunnerVisionType = SupportModelResourcesGraphService(

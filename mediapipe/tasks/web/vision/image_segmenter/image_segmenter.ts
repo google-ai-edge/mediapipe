@@ -34,10 +34,10 @@ import {
 } from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
-import type {ImageSegmenterOptions} from './image_segmenter_options';
+import {ImageSegmenterOptions} from './image_segmenter_options';
 import {ImageSegmenterResult} from './image_segmenter_result';
 
-export type * from './image_segmenter_options';
+export * from './image_segmenter_options';
 export * from './image_segmenter_result';
 export {type ImageSource}; // Used in the public API
 

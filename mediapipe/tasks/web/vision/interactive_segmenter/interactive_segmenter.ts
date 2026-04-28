@@ -38,10 +38,10 @@ import {
 } from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
-import type {InteractiveSegmenterOptions} from './interactive_segmenter_options';
+import {InteractiveSegmenterOptions} from './interactive_segmenter_options';
 import {InteractiveSegmenterResult} from './interactive_segmenter_result';
 
-export type * from './interactive_segmenter_options';
+export * from './interactive_segmenter_options';
 export * from './interactive_segmenter_result';
 export {type ImageSource, type RegionOfInterest};
 

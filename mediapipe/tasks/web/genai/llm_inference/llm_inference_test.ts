@@ -21,7 +21,7 @@ import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ProgressListener} from '../../../../web/graph_runner/graph_runner_llm_inference_lib';
 // Placeholder for internal dependency on trusted resource URL builder
 import {LlmInference} from './llm_inference';
-import type {LlmInferenceOptions} from './llm_inference_options';
+import {LlmInferenceOptions} from './llm_inference_options';
 
 // These tests take a long time to run.
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 180_000;

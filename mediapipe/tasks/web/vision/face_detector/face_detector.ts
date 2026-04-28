@@ -32,8 +32,8 @@ import {
 } from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
-import type {FaceDetectorOptions} from './face_detector_options';
-import type {FaceDetectorResult} from './face_detector_result';
+import {FaceDetectorOptions} from './face_detector_options';
+import {FaceDetectorResult} from './face_detector_result';
 
 const IMAGE_STREAM = 'image_in';
 const NORM_RECT_STREAM = 'norm_rect_in';
@@ -41,8 +41,8 @@ const DETECTIONS_STREAM = 'detections';
 const FACE_DETECTOR_GRAPH =
   'mediapipe.tasks.vision.face_detector.FaceDetectorGraph';
 
-export type * from './face_detector_options';
-export type * from './face_detector_result';
+export * from './face_detector_options';
+export * from './face_detector_result';
 export {type ImageSource}; // Used in the public API
 
 // The OSS JS API does not support the builder pattern.

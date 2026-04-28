@@ -20,45 +20,36 @@ import 'jasmine';
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {Detection as DetectionProto} from '../../../../framework/formats/detection_pb';
 import {LocationData} from '../../../../framework/formats/location_data_pb';
-import {
-  addJasmineCustomFloatEqualityTester,
-  createSpyWasmModule,
-  MediapipeTasksFake,
-  SpyWasmModule,
-  verifyGraph,
-  verifyListenersRegistered,
-} from '../../../../tasks/web/core/task_runner_test_utils';
+import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, MediapipeTasksFake, SpyWasmModule, verifyGraph, verifyListenersRegistered} from '../../../../tasks/web/core/task_runner_test_utils';
 
 import {ObjectDetector} from './object_detector';
-import type {ObjectDetectorOptions} from './object_detector_options';
+import {ObjectDetectorOptions} from './object_detector_options';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
 
 class ObjectDetectorFake extends ObjectDetector implements MediapipeTasksFake {
-  lastSampleRate: number | undefined;
+  lastSampleRate: number|undefined;
   calculatorName = 'mediapipe.tasks.vision.ObjectDetectorGraph';
   attachListenerSpies: jasmine.Spy[] = [];
-  graph: CalculatorGraphConfig | undefined;
+  graph: CalculatorGraphConfig|undefined;
 
   fakeWasmModule: SpyWasmModule;
   protoListener:
-    | ((binaryProtos: Uint8Array[], timestamp: number) => void)
-    | undefined;
+      ((binaryProtos: Uint8Array[], timestamp: number) => void)|undefined;
 
   constructor() {
     super(createSpyWasmModule(), /* glCanvas= */ null);
-    this.fakeWasmModule = this.graphRunner
-      .wasmModule as unknown as SpyWasmModule;
+    this.fakeWasmModule =
+        this.graphRunner.wasmModule as unknown as SpyWasmModule;
 
-    this.attachListenerSpies[0] = spyOn(
-      this.graphRunner,
-      'attachProtoVectorListener',
-    ).and.callFake((stream, listener) => {
-      expect(stream).toEqual('detections');
-      this.protoListener = listener;
-    });
-    spyOn(this.graphRunner, 'setGraph').and.callFake((binaryGraph) => {
+    this.attachListenerSpies[0] =
+        spyOn(this.graphRunner, 'attachProtoVectorListener')
+            .and.callFake((stream, listener) => {
+              expect(stream).toEqual('detections');
+              this.protoListener = listener;
+            });
+    spyOn(this.graphRunner, 'setGraph').and.callFake(binaryGraph => {
       this.graph = CalculatorGraphConfig.deserializeBinary(binaryGraph);
     });
     spyOn(this.graphRunner, 'addGpuBufferAsImageToStream');
@@ -71,9 +62,8 @@ describe('ObjectDetector', () => {
   beforeEach(async () => {
     addJasmineCustomFloatEqualityTester();
     objectDetector = new ObjectDetectorFake();
-    await objectDetector.setOptions({
-      baseOptions: {modelAssetBuffer: new Uint8Array([])},
-    });
+    await objectDetector.setOptions(
+        {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
   afterEach(() => {
@@ -101,23 +91,21 @@ describe('ObjectDetector', () => {
     await objectDetector.setOptions({
       baseOptions: {
         modelAssetBuffer: newModel,
-      },
+      }
     });
 
     verifyGraph(
-      objectDetector,
-      /* expectedCalculatorOptions= */ undefined,
-      /* expectedBaseOptions= */
-      [
-        'modelAsset',
-        {
-          fileContent: newModelBase64,
-          fileName: undefined,
-          fileDescriptorMeta: undefined,
-          filePointerMeta: undefined,
-        },
-      ],
-    );
+        objectDetector,
+        /* expectedCalculatorOptions= */ undefined,
+        /* expectedBaseOptions= */
+        [
+          'modelAsset', {
+            fileContent: newModelBase64,
+            fileName: undefined,
+            fileDescriptorMeta: undefined,
+            filePointerMeta: undefined
+          }
+        ]);
   });
 
   it('merges options', async () => {
@@ -140,62 +128,58 @@ describe('ObjectDetector', () => {
         optionName: 'maxResults',
         protoName: 'maxResults',
         customValue: 5,
-        defaultValue: -1,
+        defaultValue: -1
       },
       {
         optionName: 'displayNamesLocale',
         protoName: 'displayNamesLocale',
         customValue: 'en',
-        defaultValue: 'en',
+        defaultValue: 'en'
       },
       {
         optionName: 'scoreThreshold',
         protoName: 'scoreThreshold',
         customValue: 0.1,
-        defaultValue: undefined,
+        defaultValue: undefined
       },
       {
         optionName: 'categoryAllowlist',
         protoName: 'categoryAllowlistList',
         customValue: ['foo'],
-        defaultValue: [],
+        defaultValue: []
       },
       {
         optionName: 'categoryDenylist',
         protoName: 'categoryDenylistList',
         customValue: ['bar'],
-        defaultValue: [],
+        defaultValue: []
       },
     ];
 
     for (const testCase of testCases) {
       it(`can set ${testCase.optionName}`, async () => {
-        await objectDetector.setOptions({
-          [testCase.optionName]: testCase.customValue,
-        });
+        await objectDetector.setOptions(
+            {[testCase.optionName]: testCase.customValue});
         verifyGraph(objectDetector, [testCase.protoName, testCase.customValue]);
       });
 
       it(`can clear ${testCase.optionName}`, async () => {
-        await objectDetector.setOptions({
-          [testCase.optionName]: testCase.customValue,
-        });
+        await objectDetector.setOptions(
+            {[testCase.optionName]: testCase.customValue});
         verifyGraph(objectDetector, [testCase.protoName, testCase.customValue]);
         await objectDetector.setOptions({[testCase.optionName]: undefined});
-        verifyGraph(objectDetector, [
-          testCase.protoName,
-          testCase.defaultValue,
-        ]);
+        verifyGraph(
+            objectDetector, [testCase.protoName, testCase.defaultValue]);
       });
     }
   });
 
-  it("doesn't support region of interest", () => {
+  it('doesn\'t support region of interest', () => {
     expect(() => {
-      objectDetector.detect({} as HTMLImageElement, {
-        regionOfInterest: {left: 0, right: 0, top: 0, bottom: 0},
-      });
-    }).toThrowError("This task doesn't support region-of-interest.");
+      objectDetector.detect(
+          {} as HTMLImageElement,
+          {regionOfInterest: {left: 0, right: 0, top: 0, bottom: 0}});
+    }).toThrowError('This task doesn\'t support region-of-interest.');
   });
 
   it('transforms results', async () => {
@@ -220,16 +204,14 @@ describe('ObjectDetector', () => {
     expect(objectDetector.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
     expect(detections.length).toEqual(1);
     expect(detections[0]).toEqual({
-      categories: [
-        {
-          score: 0.1,
-          index: -1,
-          categoryName: '',
-          displayName: '',
-        },
-      ],
+      categories: [{
+        score: 0.1,
+        index: -1,
+        categoryName: '',
+        displayName: '',
+      }],
       boundingBox: {originX: 0, originY: 0, width: 0, height: 0, angle: 0},
-      keypoints: [],
+      keypoints: []
     });
   });
 });
