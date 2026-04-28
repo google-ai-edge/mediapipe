@@ -77,7 +77,7 @@ std::string GetTaskString(const EmbeddingType& task_type) {
 
 std::string GetGeckoEmbeddingText(absl::string_view text,
                                   const TextFormatContext& format_context) {
-  EmbeddingType task_type = format_context.task_type.value();
+  EmbeddingType task_type = format_context.task_type;
   bool is_query = format_context.role != TextRole::kDocument;
   const std::string title =
       format_context.title.has_value() && !format_context.title->empty()
@@ -159,12 +159,7 @@ absl::StatusOr<TextEmbedderResult> TextEmbedder::Embed(absl::string_view text) {
 
 absl::StatusOr<TextEmbedderResult> TextEmbedder::Embed(
     absl::string_view text, const TextFormatContext& format_context) {
-  std::string processed_text;
-  if (format_context.task_type.has_value()) {
-    processed_text = GetGeckoEmbeddingText(text, format_context);
-  } else {
-    processed_text = std::string(text);
-  }
+  std::string processed_text = GetGeckoEmbeddingText(text, format_context);
   MP_ASSIGN_OR_RETURN(
       auto output_packets,
       runner_->Process(

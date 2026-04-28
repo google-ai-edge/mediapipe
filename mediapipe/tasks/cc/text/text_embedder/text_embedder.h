@@ -66,11 +66,16 @@ enum class EmbeddingType {
 };
 
 // The role of the text in the context of the embedding task.
-enum class TextRole { kQuery = 0, kDocument = 1 };
+enum class TextRole {
+  // The embedding is extracted to perform a query.
+  kQuery = 1,
+  // The embedding is extracted to store a document.
+  kDocument = 2
+};
 
 // Encapsulates formatting instructions for models that require it (like Gecko).
 struct TextFormatContext {
-  std::optional<EmbeddingType> task_type = std::nullopt;
+  EmbeddingType task_type = EmbeddingType::RETRIEVAL_QUERY;
   std::optional<std::string> title = std::nullopt;
   TextRole role = TextRole::kQuery;
 };

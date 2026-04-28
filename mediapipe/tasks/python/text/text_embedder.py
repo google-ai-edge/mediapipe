@@ -59,6 +59,7 @@ _CTYPES_SIGNATURES = (
         [
             ctypes.c_void_p,
             ctypes.c_char_p,
+            ctypes.c_void_p,
             ctypes.POINTER(embedding_result_c_module.EmbeddingResultC),
         ],
     ),
@@ -205,6 +206,7 @@ class TextEmbedder:
     self._lib.MpTextEmbedderEmbed(
         self._embedder_handle,
         text.encode('utf-8'),
+        None,  # Format context is not yet supported in Python.
         ctypes.byref(ctypes_result),
     )
     python_result = (
