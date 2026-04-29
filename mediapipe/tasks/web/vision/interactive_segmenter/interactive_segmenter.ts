@@ -41,7 +41,7 @@ import {
 import type {InteractiveSegmenterOptions} from './interactive_segmenter_options';
 import {InteractiveSegmenterResult} from './interactive_segmenter_result';
 
-export type * from './interactive_segmenter_options';
+export type {InteractiveSegmenterOptions} from './interactive_segmenter_options';
 export * from './interactive_segmenter_result';
 export {type ImageSource, type RegionOfInterest};
 

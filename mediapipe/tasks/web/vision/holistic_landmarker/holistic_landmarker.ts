@@ -69,8 +69,13 @@ import {
 import type {HolisticLandmarkerOptions} from './holistic_landmarker_options';
 import type {HolisticLandmarkerResult} from './holistic_landmarker_result';
 
-export type * from './holistic_landmarker_options';
-export type * from './holistic_landmarker_result';
+export type {HolisticLandmarkerOptions} from './holistic_landmarker_options';
+export type {
+  Category,
+  HolisticLandmarkerResult,
+  Landmark,
+  NormalizedLandmark,
+} from './holistic_landmarker_result';
 export {type ImageSource};
 
 // The OSS JS API does not support the builder pattern.

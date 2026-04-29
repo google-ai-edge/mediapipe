@@ -42,8 +42,12 @@ const IMAGE_STREAM = 'input_image';
 const NORM_RECT_STREAM = 'norm_rect';
 const CLASSIFICATIONS_STREAM = 'classifications';
 
-export type * from './image_classifier_options';
-export type * from './image_classifier_result';
+export type {ImageClassifierOptions} from './image_classifier_options';
+export type {
+  Category,
+  Classifications,
+  ImageClassifierResult,
+} from './image_classifier_result';
 export {type ImageSource}; // Used in the public API
 
 // The OSS JS API does not support the builder pattern.

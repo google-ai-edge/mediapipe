@@ -50,8 +50,13 @@ import {
 import type {GestureRecognizerOptions} from './gesture_recognizer_options';
 import type {GestureRecognizerResult} from './gesture_recognizer_result';
 
-export type * from './gesture_recognizer_options';
-export type * from './gesture_recognizer_result';
+export type {GestureRecognizerOptions} from './gesture_recognizer_options';
+export type {
+  Category,
+  GestureRecognizerResult,
+  Landmark,
+  NormalizedLandmark,
+} from './gesture_recognizer_result';
 export {type ImageSource};
 
 // The OSS JS API does not support the builder pattern.

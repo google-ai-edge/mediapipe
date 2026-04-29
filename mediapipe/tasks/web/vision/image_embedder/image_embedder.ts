@@ -47,8 +47,8 @@ const EMBEDDINGS_STREAM = 'embeddings_out';
 const TEXT_EMBEDDER_CALCULATOR =
   'mediapipe.tasks.vision.image_embedder.ImageEmbedderGraph';
 
-export type * from './image_embedder_options';
-export type * from './image_embedder_result';
+export type {ImageEmbedderOptions} from './image_embedder_options';
+export type {Embedding, ImageEmbedderResult} from './image_embedder_result';
 export {type ImageSource}; // Used in the public API
 
 /** Performs embedding extraction on images. */
