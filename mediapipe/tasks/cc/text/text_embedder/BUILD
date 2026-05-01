@@ -88,6 +88,7 @@ cc_test(
     name = "text_embedder_test",
     srcs = ["text_embedder_test.cc"],
     data = [
+        "//mediapipe/tasks/testdata/text:gecko_model",
         "//mediapipe/tasks/testdata/text:mobilebert_embedding_model",
         "//mediapipe/tasks/testdata/text:regex_embedding_with_metadata",
         "//mediapipe/tasks/testdata/text:universal_sentence_encoder_qa",

@@ -243,4 +243,21 @@ static const float kSimilarityDiffTolerance = 1e-4;
   XCTAssertGreaterThanOrEqual(cosineSimilarity.doubleValue, 0.84f);
 }
 
+- (void)testEmbedWithGeckoSucceeds {
+  MPPTextEmbedder *textEmbedder =
+      [self textEmbedderFromModelFileWithName:kGeckoTextEmbedderModelName extension:@"task"];
+
+  MPPTextFormatContext *textFormatContext = [[MPPTextFormatContext alloc] init];
+  textFormatContext.embeddingType = MPPEmbeddingTypeRetrievalQuery;
+  textFormatContext.textRole = MPPTextRoleQuery;
+
+  MPPTextEmbedderResult *result = [textEmbedder embedText:kText1
+                                        textFormatContext:textFormatContext
+                                                    error:nil];
+
+  AssertTextEmbedderResultHasOneEmbedding(result);
+  AssertEmbeddingType(result.embeddingResult.embeddings[0], NO);
+  XCTAssertEqual(result.embeddingResult.embeddings[0].floatEmbedding.count, 768);
+}
+
 @end

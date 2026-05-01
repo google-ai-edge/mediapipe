@@ -32,6 +32,7 @@ using ::mediapipe::file::JoinPath;
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/text/";
 constexpr char kTestBertModelPath[] =
     "mobilebert_embedding_with_metadata.tflite";
+constexpr char kTestGeckoModelPath[] = "gecko.task";
 constexpr char kTestString0[] =
     "When you go to this restaurant, they hold the pancake upside-down "
     "before they hand it to you. It's a great gimmick.";
@@ -124,6 +125,36 @@ TEST(TextEmbedderTest, ErrorHandling) {
   EXPECT_THAT(error_msg,
               testing::HasSubstr("ExternalFile must specify at least one"));
   MpErrorFree(error_msg);
+}
+
+TEST(TextEmbedderTest, SucceedsWithGecko) {
+  std::string model_path = GetFullPath(kTestGeckoModelPath);
+  TextEmbedderOptions options = {
+      .base_options = {.model_asset_path = model_path.c_str()},
+      .embedder_options = {},
+  };
+
+  MpTextEmbedderPtr embedder;
+  ASSERT_EQ(MpTextEmbedderCreate(&options, &embedder, /* error_msg= */ nullptr),
+            kMpOk);
+  ASSERT_NE(embedder, nullptr);
+
+  MpTextEmbedderFormatContext context = {
+      .task_type = MP_TEXT_EMBEDDER_EMBEDDING_TYPE_RETRIEVAL_QUERY,
+      .title = nullptr,
+      .role = MP_TEXT_EMBEDDER_ROLE_QUERY,
+  };
+
+  TextEmbedderResult result;
+  ASSERT_EQ(MpTextEmbedderEmbed(embedder, kTestString0, &context, &result,
+                                /* error_msg= */ nullptr),
+            kMpOk);
+  ASSERT_EQ(result.embeddings_count, 1);
+  ASSERT_EQ(result.embeddings[0].values_count, 768);
+
+  MpTextEmbedderCloseResult(&result);
+  ASSERT_EQ(result.embeddings, nullptr);
+  EXPECT_EQ(MpTextEmbedderClose(embedder, /* error_msg= */ nullptr), kMpOk);
 }
 
 }  // namespace
