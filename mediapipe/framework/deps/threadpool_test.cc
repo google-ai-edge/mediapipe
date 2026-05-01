@@ -41,7 +41,7 @@ TEST(ThreadPoolTest, SingleThread) {
 
     for (int i = 0; i < 100; ++i) {
       thread_pool.Schedule([&n, &mu]() mutable {
-        absl::MutexLock l(&mu);
+        absl::MutexLock l(mu);
         --n;
       });
     }
@@ -60,7 +60,7 @@ TEST(ThreadPoolTest, MultiThreads) {
 
     for (int i = 0; i < 100; ++i) {
       thread_pool.Schedule([&n, &mu]() mutable {
-        absl::MutexLock l(&mu);
+        absl::MutexLock l(mu);
         --n;
       });
     }

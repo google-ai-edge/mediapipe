@@ -23,6 +23,15 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
+exports_files([
+    "MediaPipeTasksAudio.podspec.template",
+    "MediaPipeTasksVision.podspec.template",
+    "MediaPipeTasksText.podspec.template",
+    "MediaPipeTasksCommon.podspec.template",
+    "MediaPipeTasksGenAI.podspec.template",
+    "MediaPipeTasksGenAIC.podspec.template",
+])
+
 TENSORFLOW_LITE_C_DEPS = [
     "@org_tensorflow//tensorflow/lite:builtin_ops",
     "@org_tensorflow//tensorflow/lite/c:c_api",
@@ -223,7 +232,10 @@ strip_api_include_path_prefix(
 
 mediapipe_static_xcframework(
     name = "MediaPipeTasksAudio_framework",
+    bundle_format = "framework",
+    bundle_id = "com.google.mediapipe.tasks.audio",
     bundle_name = "MediaPipeTasksAudio",
+    infoplists = [":empty.plist"],
     public_hdrs = [
         ":MPPAudioClassifier.h",
         ":MPPAudioClassifierOptions.h",
@@ -246,7 +258,10 @@ mediapipe_static_xcframework(
 
 mediapipe_static_xcframework(
     name = "MediaPipeTasksText_framework",
+    bundle_format = "framework",
+    bundle_id = "com.google.mediapipe.tasks.text",
     bundle_name = "MediaPipeTasksText",
+    infoplists = [":empty.plist"],
     public_hdrs = [
         ":MPPBaseOptions.h",
         ":MPPCategory.h",
@@ -270,7 +285,10 @@ mediapipe_static_xcframework(
 
 mediapipe_static_xcframework(
     name = "MediaPipeTasksVision_framework",
+    bundle_format = "framework",
+    bundle_id = "com.google.mediapipe.tasks.vision",
     bundle_name = "MediaPipeTasksVision",
+    infoplists = [":empty.plist"],
     public_hdrs = [
         ":MPPBaseOptions.h",
         ":MPPCategory.h",
@@ -333,7 +351,10 @@ mediapipe_static_xcframework(
 mediapipe_static_xcframework(
     name = "MediaPipeTasksCommon_framework",
     avoid_deps = CALCULATORS_AND_GRAPHS,
+    bundle_format = "framework",
+    bundle_id = "com.google.mediapipe.tasks.common",
     bundle_name = "MediaPipeTasksCommon",
+    infoplists = [":empty.plist"],
     # Including `OpenCV` and `TensorFlowLiteC` deps of the graphs here to avoid
     # conflicts with `TensorFlowLiteSwift` and `OpenCV` frameworks as iOS
     # `xcframeworks` handle duplicate dependencies with other iOS

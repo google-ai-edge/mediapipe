@@ -35,6 +35,21 @@ static NSString *const kTextTag = @"TEXT";
 static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_embedder.TextEmbedderGraph";
 static NSString *const kTaskName = @"textEmbedder";
 
+static NSString *const kQueryTemplate = @"task: %@ | query: %@";
+static NSString *const kDocumentTemplate = @"title: %@ | text: %@";
+
+@implementation MPPTextFormatContext
+
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    _textRole = MPPTextRoleQuery;
+  }
+  return self;
+}
+
+@end
+
 @interface MPPTextEmbedder () {
   /** iOS Text Task Runner */
   MPPTextTaskRunner *_textTaskRunner;
@@ -79,7 +94,66 @@ static NSString *const kTaskName = @"textEmbedder";
 }
 
 - (nullable MPPTextEmbedderResult *)embedText:(NSString *)text error:(NSError **)error {
-  Packet packet = [MPPTextPacketCreator createWithText:text];
+  return [self embedText:text textFormatContext:nil error:error];
+}
+
+- (NSString *)taskStringWithEmbeddingType:(MPPEmbeddingType)embeddingType {
+  switch (embeddingType) {
+    case MPPEmbeddingTypeRetrievalQuery:
+      return @"search result";
+    case MPPEmbeddingTypeSemanticSimilarity:
+      return @"sentence similarity";
+    case MPPEmbeddingTypeClassification:
+      return @"classification";
+    case MPPEmbeddingTypeClustering:
+      return @"clustering";
+    case MPPEmbeddingTypeQuestionAnswering:
+      return @"question answering";
+    case MPPEmbeddingTypeFactChecking:
+      return @"fact checking";
+    case MPPEmbeddingTypeCodeRetrieval:
+      return @"code retrieval";
+    default:
+      return @"search result";
+  }
+}
+
+- (NSString *)formatText:(NSString *)text
+       textFormatContext:(MPPTextFormatContext *)textFormatContext {
+  MPPEmbeddingType embeddingType = textFormatContext.embeddingType;
+  BOOL isQuery = textFormatContext.textRole != MPPTextRoleDocument;
+  NSString *title = textFormatContext.title != nil && textFormatContext.title.length > 0
+                        ? textFormatContext.title
+                        : @"none";
+
+  switch (embeddingType) {
+    case MPPEmbeddingTypeRetrievalDocument:
+      return [NSString stringWithFormat:kDocumentTemplate, title, text];
+    case MPPEmbeddingTypeRetrievalQuery:
+      return [NSString
+          stringWithFormat:kQueryTemplate, [self taskStringWithEmbeddingType:embeddingType], text];
+    case MPPEmbeddingTypeQuestionAnswering:
+    case MPPEmbeddingTypeFactChecking:
+    case MPPEmbeddingTypeCodeRetrieval:
+      return isQuery ? [NSString stringWithFormat:kQueryTemplate,
+                                                  [self taskStringWithEmbeddingType:embeddingType],
+                                                  text]
+                     : [NSString stringWithFormat:kDocumentTemplate, title, text];
+    default:
+      return [NSString
+          stringWithFormat:kQueryTemplate, [self taskStringWithEmbeddingType:embeddingType], text];
+  }
+}
+
+- (nullable MPPTextEmbedderResult *)embedText:(NSString *)text
+                            textFormatContext:(nullable MPPTextFormatContext *)textFormatContext
+                                        error:(NSError **)error {
+  NSString *inputText = text;
+  if (textFormatContext != nil) {
+    inputText = [self formatText:text textFormatContext:textFormatContext];
+  }
+
+  Packet packet = [MPPTextPacketCreator createWithText:inputText];
 
   std::map<std::string, Packet> packetMap = {{kTextInStreamName.cppString, packet}};
 

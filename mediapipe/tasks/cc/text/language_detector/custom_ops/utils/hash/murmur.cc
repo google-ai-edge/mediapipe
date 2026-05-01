@@ -22,14 +22,14 @@ limitations under the License.
 
 #include <cstdint>
 
-#include "absl/base/internal/endian.h"
 #include "absl/base/optimization.h"
+#include "mediapipe/util/endian.h"
 
 namespace mediapipe::tasks::text::language_detector::custom_ops::hash {
 
 namespace {
 
-using ::absl::little_endian::Load64;
+using ::mediapipe::little_endian::Load64;
 
 // Murmur 2.0 multiplication constant.
 static const uint64_t kMul = 0xc6a4a7935bd1e995ULL;

@@ -13,6 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <memory>
+#include <utility>
+
+#include "absl/container/flat_hash_map.h"
 #include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -29,9 +33,13 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/processors/proto/text_model_type.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/text_preprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/components/processors/text_preprocessing_graph.h"
+#include "mediapipe/tasks/cc/core/external_file_handler.h"
+#include "mediapipe/tasks/cc/core/model_asset_bundle_resources.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
+#include "mediapipe/tasks/cc/core/model_resources_cache.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/model_resources_calculator.pb.h"
+#include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
 #include "mediapipe/tasks/cc/text/text_embedder/proto/text_embedder_graph_options.pb.h"
 #include "mediapipe/tasks/cc/text/utils/text_model_utils.h"
 
@@ -44,13 +52,18 @@ using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
 using ::mediapipe::tasks::components::processors::proto::TextModelType;
+using ::mediapipe::tasks::core::kModelResourcesCacheService;
 using ::mediapipe::tasks::core::ModelResources;
+using ::mediapipe::tasks::metadata::SetExternalFile;
 using ::mediapipe::tasks::text::utils::GetModelType;
 
 constexpr char kEmbeddingsTag[] = "EMBEDDINGS";
 constexpr char kTextTag[] = "TEXT";
 constexpr char kMetadataExtractorTag[] = "METADATA_EXTRACTOR";
 constexpr char kTensorsTag[] = "TENSORS";
+
+constexpr char kGeckoTFLiteName[] = "gecko.tflite";
+constexpr char kSentencePieceModelName[] = "sentencepiece.model";
 
 constexpr char kUSEQueryTensorName[] = "query_encoding";
 
@@ -88,9 +101,16 @@ class TextEmbedderGraph : public core::ModelTaskGraph {
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
     ABSL_CHECK(sc != nullptr);
-    MP_ASSIGN_OR_RETURN(
-        const ModelResources* model_resources,
-        CreateModelResources<proto::TextEmbedderGraphOptions>(sc));
+
+    const ModelResources* model_resources = nullptr;
+    MP_RETURN_IF_ERROR(MaybeHandleGeckoBundle(sc, &model_resources));
+
+    if (model_resources == nullptr) {
+      MP_ASSIGN_OR_RETURN(
+          model_resources,
+          CreateModelResources<proto::TextEmbedderGraphOptions>(sc));
+    }
+
     Graph graph;
     MP_ASSIGN_OR_RETURN(
         Source<EmbeddingResult> embedding_result_out,
@@ -102,6 +122,70 @@ class TextEmbedderGraph : public core::ModelTaskGraph {
   }
 
  private:
+  // Handles the Gecko bundle by extracting the gecko.tflite and
+  // sentencepiece.model files from the bundle and creating ModelResources for
+  // the gecko.tflite file. If the model asset is not a Gecko bundle, does
+  // nothing and does not update the model_resources pointer.
+  absl::Status MaybeHandleGeckoBundle(SubgraphContext* sc,
+                                      const ModelResources** model_resources) {
+    *model_resources = nullptr;
+    if (!sc->Options<proto::TextEmbedderGraphOptions>()
+             .base_options()
+             .has_model_asset()) {
+      return absl::OkStatus();
+    }
+    const auto& model_asset = sc->Options<proto::TextEmbedderGraphOptions>()
+                                  .base_options()
+                                  .model_asset();
+    bool is_gecko_bundle = false;
+    auto handler_or =
+        tasks::core::ExternalFileHandler::CreateFromExternalFile(&model_asset);
+    if (handler_or.ok()) {
+      absl::flat_hash_map<std::string, absl::string_view> files;
+      if (tasks::metadata::ExtractFilesfromZipFile(
+              handler_or.value()->GetFileContent().data(),
+              handler_or.value()->GetFileContent().size(), &files)
+              .ok()) {
+        if (files.find(kGeckoTFLiteName) != files.end() &&
+            files.find(kSentencePieceModelName) != files.end()) {
+          is_gecko_bundle = true;
+        }
+      }
+    }
+
+    if (is_gecko_bundle) {
+      MP_ASSIGN_OR_RETURN(
+          const auto* bundle_resources,
+          CreateModelAssetBundleResources<proto::TextEmbedderGraphOptions>(sc));
+      // Extract gecko.tflite
+      MP_ASSIGN_OR_RETURN(auto gecko_model_file,
+                          bundle_resources->GetFile(kGeckoTFLiteName));
+      // Create ModelResources for gecko.tflite
+      auto gecko_external_file =
+          std::make_unique<tasks::core::proto::ExternalFile>();
+      SetExternalFile(gecko_model_file, gecko_external_file.get(),
+                      /*is_copy=*/
+                      !sc->Service(kModelResourcesCacheService).IsAvailable());
+      MP_ASSIGN_OR_RETURN(
+          *model_resources,
+          CreateModelResources(sc, std::move(gecko_external_file),
+                               "gecko_tflite"));
+
+      // Extract sentencepiece.model
+      auto sp_model_file_or =
+          bundle_resources->GetFile(kSentencePieceModelName);
+      if (sp_model_file_or.ok()) {
+        SetExternalFile(
+            sp_model_file_or.value(),
+            sc->MutableOptions<proto::TextEmbedderGraphOptions>()
+                ->mutable_sentence_piece_model(),
+            /*is_copy=*/
+            !sc->Service(kModelResourcesCacheService).IsAvailable());
+      }
+    }
+    return absl::OkStatus();
+  }
+
   // Adds a mediapipe TextEmbedder task graph into the provided
   // builder::Graph instance. The TextEmbedder task takes an input
   // text (std::string) and returns an embedding result.
@@ -119,10 +203,14 @@ class TextEmbedderGraph : public core::ModelTaskGraph {
     // stream.
     auto& preprocessing = graph.AddNode(
         "mediapipe.tasks.components.processors.TextPreprocessingGraph");
+    auto* preproc_options = &preprocessing.GetOptions<
+        components::processors::proto::TextPreprocessingGraphOptions>();
+    if (task_options.has_sentence_piece_model()) {
+      preproc_options->mutable_sentence_piece_model()->CopyFrom(
+          task_options.sentence_piece_model());
+    }
     MP_RETURN_IF_ERROR(components::processors::ConfigureTextPreprocessingGraph(
-        model_resources,
-        preprocessing.GetOptions<
-            components::processors::proto::TextPreprocessingGraphOptions>()));
+        model_resources, *preproc_options));
     text_in >> preprocessing.In(kTextTag);
 
     // Adds both InferenceCalculator and ModelResourcesCalculator.

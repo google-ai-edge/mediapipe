@@ -58,6 +58,7 @@ cc_library(
         "//mediapipe/tasks/cc/components/processors/proto:text_model_type_cc_proto",
         "//mediapipe/tasks/cc/core:model_resources",
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
+        "//mediapipe/tasks/metadata:metadata_schema_cc",
         "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

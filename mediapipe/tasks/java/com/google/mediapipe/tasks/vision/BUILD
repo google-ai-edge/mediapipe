@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar", "mediapipe_jni_binary")
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar")
 
 licenses(["notice"])
 
@@ -49,6 +49,16 @@ filegroup(
 
 android_library(
     name = "objectdetector",
+    manifest = "objectdetector/AndroidManifest.xml",
+    exports = [
+        ":core",
+        ":objectdetector_java",
+    ],
+    deps = ["@maven//:com_google_guava_guava"],
+)
+
+android_library(
+    name = "objectdetector_java",
     srcs = [
         "objectdetector/ObjectDetectionResult.java",
         "objectdetector/ObjectDetector.java",
@@ -56,7 +66,7 @@ android_library(
     ],
     manifest = "objectdetector/AndroidManifest.xml",
     deps = [
-        ":core",
+        ":core_java",
         "//mediapipe/framework:calculator_options_java_proto_lite",
         "//mediapipe/framework/formats:detection_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
@@ -64,7 +74,7 @@ android_library(
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:detection",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -87,7 +97,6 @@ android_library(
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_classifier/proto:image_classifier_graph_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -118,7 +127,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:landmark",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:classifieroptions",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -145,7 +153,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:connection",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:landmark",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -175,7 +182,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:connection",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:landmark",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",
@@ -188,7 +194,6 @@ android_library(
     exports = [
         ":core",
         ":imagesegmenter_java",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
     ],
     deps = ["@maven//:com_google_guava_guava"],
 )
@@ -242,7 +247,6 @@ android_library(
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalizedkeypoint",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -267,7 +271,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embedding",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embeddingresult",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -289,7 +292,6 @@ android_library(
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:detection",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -319,7 +321,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:connection",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -355,7 +356,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:landmark",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:any_java_proto",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",

@@ -29,11 +29,14 @@ import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
-import {LanguageDetectorOptions} from './language_detector_options';
-import {LanguageDetectorResult} from './language_detector_result';
+import type {LanguageDetectorOptions} from './language_detector_options';
+import type {LanguageDetectorResult} from './language_detector_result';
 
-export * from './language_detector_options';
-export * from './language_detector_result';
+export type {LanguageDetectorOptions} from './language_detector_options';
+export type {
+  LanguageDetectorPrediction,
+  LanguageDetectorResult,
+} from './language_detector_result';
 
 const INPUT_STREAM = 'text_in';
 const CLASSIFICATIONS_STREAM = 'classifications_out';

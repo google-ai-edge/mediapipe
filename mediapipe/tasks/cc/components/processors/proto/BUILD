@@ -91,5 +91,6 @@ mediapipe_proto_library(
         ":text_model_type_proto",
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
+        "//mediapipe/tasks/cc/core/proto:external_file_proto",
     ],
 )

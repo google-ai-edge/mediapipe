@@ -46,6 +46,8 @@ mediapipe::tasks::core::HostEnvironment CppConvertToHostEnvironment(
       return mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_IOS;
     case HOST_ENVIRONMENT_PYTHON:
       return mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_PYTHON;
+    case HOST_ENVIRONMENT_WEB:
+      return mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_WEB;
     default:
       return mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_UNKNOWN;
   }
@@ -60,6 +62,10 @@ mediapipe::tasks::core::HostSystem CppConvertToHostSystem(
       return mediapipe::tasks::core::HostSystem::HOST_SYSTEM_MAC;
     case HOST_SYSTEM_WINDOWS:
       return mediapipe::tasks::core::HostSystem::HOST_SYSTEM_WINDOWS;
+    case HOST_SYSTEM_IOS:
+      return mediapipe::tasks::core::HostSystem::HOST_SYSTEM_IOS;
+    case HOST_SYSTEM_ANDROID:
+      return mediapipe::tasks::core::HostSystem::HOST_SYSTEM_ANDROID;
     default:
       return mediapipe::tasks::core::HostSystem::HOST_SYSTEM_UNKNOWN;
   }

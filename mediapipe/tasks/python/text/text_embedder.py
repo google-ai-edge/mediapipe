@@ -14,6 +14,7 @@
 """MediaPipe text embedder task."""
 import ctypes
 import dataclasses
+import enum
 from typing import Optional
 
 from mediapipe.tasks.python.components.containers import embedding_result as embedding_result_module
@@ -26,6 +27,69 @@ from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core import serial_dispatcher
 
 TextEmbedderResult = embedding_result_module.EmbeddingResult
+
+
+class EmbeddingType(enum.Enum):
+  """The embedding type of Gecko embeddings."""
+
+  # Embed text for a retrieval query.
+  RETRIEVAL_QUERY = 1
+  # Embed text for document retrieval.
+  RETRIEVAL_DOCUMENT = 2
+  # Embed text for semantic similarity.
+  SEMANTIC_SIMILARITY = 3
+  # Embed text for classification.
+  CLASSIFICATION = 4
+  # Embed text for clustering.
+  CLUSTERING = 5
+  # Embed text for question answering.
+  QUESTION_ANSWERING = 6
+  # Embed text for fact verification.
+  FACT_CHECKING = 7
+  # Embed text for code retrieval.
+  CODE_RETRIEVAL = 8
+
+
+class TextRole(enum.Enum):
+  """The role of the text in the context of the embedding task."""
+
+  # The embedding is extracted to perform a query.
+  QUERY = 1
+  # The embedding is extracted to store a document.
+  DOCUMENT = 2
+
+
+class _TextFormatContextC(ctypes.Structure):
+  """C struct for text format context."""
+
+  _fields_ = [
+      ('task_type', ctypes.c_int),
+      ('title', ctypes.c_char_p),
+      ('role', ctypes.c_int),
+  ]
+
+
+@dataclasses.dataclass
+class TextFormatContext:
+  """Formatting options for Gecko embeddings.
+
+  Attributes:
+    task_type: The embedding type.
+    title: The title of the text.
+    role: The role of the text.
+  """
+
+  task_type: EmbeddingType
+  title: Optional[str] = None
+  role: TextRole = TextRole.QUERY
+
+  def to_ctypes(self) -> _TextFormatContextC:
+    """Generates a ctypes _TextFormatContextC object."""
+    return _TextFormatContextC(
+        task_type=self.task_type.value,
+        title=self.title.encode('utf-8') if self.title else None,
+        role=self.role.value,
+    )
 
 
 class _EmbedderOptionsC(ctypes.Structure):
@@ -59,6 +123,7 @@ _CTYPES_SIGNATURES = (
         [
             ctypes.c_void_p,
             ctypes.c_char_p,
+            ctypes.POINTER(_TextFormatContextC),
             ctypes.POINTER(embedding_result_c_module.EmbeddingResultC),
         ],
     ),
@@ -188,11 +253,14 @@ class TextEmbedder:
   def embed(
       self,
       text: str,
+      format_context: Optional[TextFormatContext] = None,
   ) -> embedding_result_module.EmbeddingResult:
     """Performs text embedding extraction on the provided text.
 
     Args:
       text: The input text.
+      format_context: Optional formatting options for models that require prompt
+        formatting, such as the family of Gecko models.
 
     Returns:
       An embedding result object that contains a list of embeddings.
@@ -202,15 +270,21 @@ class TextEmbedder:
       RuntimeError: If text embedder failed to run.
     """
     ctypes_result = embedding_result_c_module.EmbeddingResultC()
+    format_context_c = (
+        format_context.to_ctypes() if format_context else None
+    )
+    ctypes_format_context_ref = (
+        ctypes.byref(format_context_c) if format_context_c else None
+    )
+
     self._lib.MpTextEmbedderEmbed(
         self._embedder_handle,
         text.encode('utf-8'),
+        ctypes_format_context_ref,
         ctypes.byref(ctypes_result),
     )
-    python_result = (
-        embedding_result_module.EmbeddingResult.from_ctypes(
-            ctypes_result
-        )
+    python_result = embedding_result_module.EmbeddingResult.from_ctypes(
+        ctypes_result
     )
     self._lib.MpTextEmbedderCloseResult(ctypes.byref(ctypes_result))
     return python_result

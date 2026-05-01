@@ -28,11 +28,13 @@ class WebGpuDeviceRegistration {
   WebGpuDeviceRegistration(const WebGpuDeviceRegistration&) = delete;
   WebGpuDeviceRegistration& operator=(const WebGpuDeviceRegistration&) = delete;
 
-  void RegisterWebGpuDevice(wgpu::Device device);
+  void RegisterWebGpuDevice(wgpu::Device device,
+                            wgpu::Instance instance = nullptr);
 
   void UnRegisterWebGpuDevice();
 
   wgpu::Device GetWebGpuDevice() const { return device_; }
+  wgpu::Instance GetWebGpuInstance() const { return instance_; }
 
  private:
   friend class NoDestructor<WebGpuDeviceRegistration>;
@@ -40,6 +42,7 @@ class WebGpuDeviceRegistration {
   WebGpuDeviceRegistration();
   ~WebGpuDeviceRegistration();
 
+  wgpu::Instance instance_;
   wgpu::Device device_;
 };
 

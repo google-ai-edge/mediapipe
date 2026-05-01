@@ -17,6 +17,8 @@ limitations under the License.
 #define MEDIAPIPE_TASKS_CC_TEXT_TEXT_EMBEDDER_TEXT_EMBEDDER_H_
 
 #include <memory>
+#include <optional>
+#include <string>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -41,6 +43,41 @@ struct TextEmbedderOptions {
   // Options for configuring the embedder behavior, such as L2-normalization or
   // scalar-quantization.
   components::processors::EmbedderOptions embedder_options;
+};
+
+// The embedding task type, used to format input text.
+enum class EmbeddingType {
+  // Embed text for retrieval query.
+  RETRIEVAL_QUERY = 1,
+  // Embed text for retrieval document.
+  RETRIEVAL_DOCUMENT = 2,
+  // Embed text for semantic similarity.
+  SEMANTIC_SIMILARITY = 3,
+  // Embed text for classification.
+  CLASSIFICATION = 4,
+  // Embed text for clustering.
+  CLUSTERING = 5,
+  // Embed text for question answering.
+  QUESTION_ANSWERING = 6,
+  // Embed text for fact verification.
+  FACT_CHECKING = 7,
+  // Embed text for code retrieval.
+  CODE_RETRIEVAL = 8,
+};
+
+// The role of the text in the context of the embedding task.
+enum class TextRole {
+  // The embedding is extracted to perform a query.
+  kQuery = 1,
+  // The embedding is extracted to store a document.
+  kDocument = 2
+};
+
+// Encapsulates formatting instructions for models that require it (like Gecko).
+struct TextFormatContext {
+  EmbeddingType task_type = EmbeddingType::RETRIEVAL_QUERY;
+  std::optional<std::string> title = std::nullopt;
+  TextRole role = TextRole::kQuery;
 };
 
 // Performs embedding extraction on text.
@@ -70,6 +107,16 @@ struct TextEmbedderOptions {
 //    - 2 output tensors with names "query_encoding" and "response_encoding" of
 //      type kTfLiteFloat32. The "query_encoding" is filtered and only the other
 //      output tensor is used for the embedding.
+// 4. Gecko-based model (e.g. gecko-1b-en-cpu)
+//    - 1 input tensor of size `[1 x max_seq_len]` and type kTfLiteInt32
+//      representing the input ids from SentencePiece Tokenizer with BOS/EOS
+//      and padding.
+//    - Input text formatting follows Gecko's instructions. The exact
+//      format depends on EmbeddingType provided in `Embed` method.
+//    - 1 output tensor of type kTfLiteFloat32 with `N` components corresponding
+//      to the `N` dimensions of the returned feature vector and with shape
+//      `[1 x N]`.
+//    - input process units for a SentencePieceTokenizer in model metadata.
 class TextEmbedder : core::BaseTaskApi {
  public:
   using BaseTaskApi::BaseTaskApi;
@@ -82,6 +129,10 @@ class TextEmbedder : core::BaseTaskApi {
 
   // Performs embedding extraction on the input `text`.
   absl::StatusOr<TextEmbedderResult> Embed(absl::string_view text);
+
+  // Performs embedding extraction on the input `text` with formatting options.
+  absl::StatusOr<TextEmbedderResult> Embed(
+      absl::string_view text, const TextFormatContext& format_context);
 
   // Shuts down the TextEmbedder when all the work is done.
   absl::Status Close() { return runner_->Close(); }

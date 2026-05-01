@@ -36,6 +36,44 @@ extern "C" {
 typedef struct MpTextEmbedderInternal* MpTextEmbedderPtr;
 typedef struct EmbeddingResult TextEmbedderResult;
 
+// The embedding type, used to format input text.
+enum MpTextEmbedderEmbeddingType {
+  // Embed text for retrieval query.
+  MP_TEXT_EMBEDDER_EMBEDDING_TYPE_RETRIEVAL_QUERY = 1,
+  // Embed text for retrieval document.
+  MP_TEXT_EMBEDDER_EMBEDDING_TYPE_RETRIEVAL_DOCUMENT = 2,
+  // Embed text for semantic similarity.
+  MP_TEXT_EMBEDDER_EMBEDDING_TYPE_SEMANTIC_SIMILARITY = 3,
+  // Embed text for classification.
+  MP_TEXT_EMBEDDER_EMBEDDING_TYPE_CLASSIFICATION = 4,
+  // Embed text for clustering.
+  MP_TEXT_EMBEDDER_EMBEDDING_TYPE_CLUSTERING = 5,
+  // Embed text for question answering.
+  MP_TEXT_EMBEDDER_EMBEDDING_TYPE_QUESTION_ANSWERING = 6,
+  // Embed text for fact verification.
+  MP_TEXT_EMBEDDER_EMBEDDING_TYPE_FACT_CHECKING = 7,
+  // Embed text for code retrieval.
+  MP_TEXT_EMBEDDER_EMBEDDING_TYPE_CODE_RETRIEVAL = 8,
+};
+
+// The role of the text in the context of the embedding task.
+enum MpTextEmbedderRole {
+  // The embedding is extracted to perform a query.
+  MP_TEXT_EMBEDDER_ROLE_QUERY = 1,
+  // The embedding is extracted to store a document.
+  MP_TEXT_EMBEDDER_ROLE_DOCUMENT = 2
+};
+
+// Encapsulates formatting instructions for models that require it (like Gecko).
+struct MpTextEmbedderFormatContext {
+  // The embedding type, used to format input text.
+  enum MpTextEmbedderEmbeddingType task_type;
+  // The title of the text, used to format the input text.
+  const char* title;
+  // The role of the text in the context of the embedding task.
+  enum MpTextEmbedderRole role;
+};
+
 // The options for configuring a MediaPipe text embedder task.
 struct TextEmbedderOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
@@ -63,14 +101,19 @@ MP_EXPORT MpStatus MpTextEmbedderCreate(struct TextEmbedderOptions* options,
 // If successful, returns `kMpOk` and sets `*result` to the new
 // `TextEmbedderResult`.
 //
+// The optional `format_context` can be used to specify formatting options for
+// models that require them, such as the Gecko family of models. If
+// `format_context` is `nullptr` the input text is passed to the model without
+// modifications.
+//
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
 // `MpErrorFree()`.
-MP_EXPORT MpStatus MpTextEmbedderEmbed(MpTextEmbedderPtr embedder,
-                                       const char* utf8_str,
-                                       TextEmbedderResult* result,
-                                       char** error_msg);
+MP_EXPORT MpStatus
+MpTextEmbedderEmbed(MpTextEmbedderPtr embedder, const char* utf8_str,
+                    const struct MpTextEmbedderFormatContext* format_context,
+                    TextEmbedderResult* result, char** error_msg);
 
 // Frees the memory allocated inside a TextEmbedderResult result. Does not
 // free the result pointer itself.

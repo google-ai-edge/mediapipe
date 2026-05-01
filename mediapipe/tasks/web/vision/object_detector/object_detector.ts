@@ -32,16 +32,21 @@ import {
 } from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
-import {ObjectDetectorOptions} from './object_detector_options';
-import {ObjectDetectorResult} from './object_detector_result';
+import type {ObjectDetectorOptions} from './object_detector_options';
+import type {ObjectDetectorResult} from './object_detector_result';
 
 const IMAGE_STREAM = 'input_frame_gpu';
 const NORM_RECT_STREAM = 'norm_rect';
 const DETECTIONS_STREAM = 'detections';
 const OBJECT_DETECTOR_GRAPH = 'mediapipe.tasks.vision.ObjectDetectorGraph';
 
-export * from './object_detector_options';
-export * from './object_detector_result';
+export type {ObjectDetectorOptions} from './object_detector_options';
+export type {
+  BoundingBox,
+  Category,
+  Detection,
+  ObjectDetectorResult,
+} from './object_detector_result';
 export {type ImageSource}; // Used in the public API
 
 // The OSS JS API does not support the builder pattern.

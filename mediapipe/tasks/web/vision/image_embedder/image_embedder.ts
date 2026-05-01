@@ -35,8 +35,8 @@ import {
 } from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
-import {ImageEmbedderOptions} from './image_embedder_options';
-import {ImageEmbedderResult} from './image_embedder_result';
+import type {ImageEmbedderOptions} from './image_embedder_options';
+import type {ImageEmbedderResult} from './image_embedder_result';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -47,8 +47,8 @@ const EMBEDDINGS_STREAM = 'embeddings_out';
 const TEXT_EMBEDDER_CALCULATOR =
   'mediapipe.tasks.vision.image_embedder.ImageEmbedderGraph';
 
-export * from './image_embedder_options';
-export * from './image_embedder_result';
+export type {ImageEmbedderOptions} from './image_embedder_options';
+export type {Embedding, ImageEmbedderResult} from './image_embedder_result';
 export {type ImageSource}; // Used in the public API
 
 /** Performs embedding extraction on images. */

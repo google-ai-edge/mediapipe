@@ -21,7 +21,6 @@
 #include <string>
 
 #include "Eigen/Core"
-#include "absl/base/internal/endian.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/strings/numbers.h"
@@ -34,6 +33,7 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/status_util.h"
+#include "mediapipe/util/endian.h"
 
 extern "C" {
 #include "libavcodec/avcodec.h"
@@ -325,20 +325,22 @@ namespace {
 // Converts a PCM_S16LE-encoded input sample to float between -1 and 1.
 inline float PcmEncodedSampleToFloat(const char* data) {
   static const float kMultiplier = 1.f / (1 << 15);
-  return static_cast<int16_t>(absl::little_endian::Load16(data)) * kMultiplier;
+  return static_cast<int16_t>(mediapipe::little_endian::Load16(data)) *
+         kMultiplier;
 }
 
 // Converts a PCM_S32LE-encoded input sample to float between -1 and 1.
 inline float PcmEncodedSampleInt32ToFloat(const char* data) {
   static constexpr float kMultiplier = 1.f / (1u << 31);
-  return static_cast<int32_t>(absl::little_endian::Load32(data)) * kMultiplier;
+  return static_cast<int32_t>(mediapipe::little_endian::Load32(data)) *
+         kMultiplier;
 }
 
 }  // namespace
 
 AudioPacketProcessor::AudioPacketProcessor(const AudioStreamOptions& options)
     : sample_time_base_{0, 0}, options_(options) {
-  ABSL_DCHECK(absl::little_endian::IsLittleEndian());
+  ABSL_DCHECK(mediapipe::IsLittleEndian());
 }
 
 absl::Status AudioPacketProcessor::Open(int id, AVStream* stream) {
@@ -525,7 +527,7 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
            ++sample_index) {
         for (int channel = 0; channel < num_channels_; ++channel) {
           (*current_frame)(channel, sample_index) =
-              Uint32ToFloat(absl::little_endian::Load32(sample_ptr));
+              Uint32ToFloat(mediapipe::little_endian::Load32(sample_ptr));
           sample_ptr += bytes_per_sample_;
         }
       }
@@ -547,7 +549,7 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
         for (int64_t sample_index = 0; sample_index < num_samples;
              ++sample_index) {
           (*current_frame)(channel, sample_index) =
-              Uint32ToFloat(absl::little_endian::Load32(sample_ptr));
+              Uint32ToFloat(mediapipe::little_endian::Load32(sample_ptr));
           sample_ptr += bytes_per_sample_;
         }
       }

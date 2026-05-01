@@ -130,10 +130,10 @@ ThreadPool::ThreadPool(const ThreadOptions& thread_options,
 }
 
 ThreadPool::~ThreadPool() {
-  mutex_.Lock();
+  mutex_.lock();
   stopped_ = true;
   condition_.SignalAll();
-  mutex_.Unlock();
+  mutex_.unlock();
 
   for (int i = 0; i < threads_.size(); ++i) {
     threads_[i]->Join();
@@ -150,23 +150,23 @@ void ThreadPool::StartWorkers() {
 }
 
 void ThreadPool::Schedule(std::function<void()> callback) {
-  mutex_.Lock();
+  mutex_.lock();
   tasks_.push_back(std::move(callback));
   condition_.Signal();
-  mutex_.Unlock();
+  mutex_.unlock();
 }
 
 int ThreadPool::num_threads() const { return num_threads_; }
 
 void ThreadPool::RunWorker() {
-  mutex_.Lock();
+  mutex_.lock();
   while (true) {
     if (!tasks_.empty()) {
       std::function<void()> task = std::move(tasks_.front());
       tasks_.pop_front();
-      mutex_.Unlock();
+      mutex_.unlock();
       task();
-      mutex_.Lock();
+      mutex_.lock();
     } else {
       if (stopped_) {
         break;
@@ -175,7 +175,7 @@ void ThreadPool::RunWorker() {
       }
     }
   }
-  mutex_.Unlock();
+  mutex_.unlock();
 }
 
 const ThreadOptions& ThreadPool::thread_options() const {

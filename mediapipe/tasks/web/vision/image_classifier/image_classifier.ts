@@ -33,8 +33,8 @@ import {
 } from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
-import {ImageClassifierOptions} from './image_classifier_options';
-import {ImageClassifierResult} from './image_classifier_result';
+import type {ImageClassifierOptions} from './image_classifier_options';
+import type {ImageClassifierResult} from './image_classifier_result';
 
 const IMAGE_CLASSIFIER_GRAPH =
   'mediapipe.tasks.vision.image_classifier.ImageClassifierGraph';
@@ -42,8 +42,12 @@ const IMAGE_STREAM = 'input_image';
 const NORM_RECT_STREAM = 'norm_rect';
 const CLASSIFICATIONS_STREAM = 'classifications';
 
-export * from './image_classifier_options';
-export * from './image_classifier_result';
+export type {ImageClassifierOptions} from './image_classifier_options';
+export type {
+  Category,
+  Classifications,
+  ImageClassifierResult,
+} from './image_classifier_result';
 export {type ImageSource}; // Used in the public API
 
 // The OSS JS API does not support the builder pattern.

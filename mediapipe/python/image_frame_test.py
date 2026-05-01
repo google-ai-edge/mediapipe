@@ -98,7 +98,7 @@ class ImageFrameTest(absltest.TestCase):
   def test_create_image_frame_from_rgba64_pil_image(self):
     w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 4
     img = PIL.Image.fromarray(
-        np.random.randint(2**16 - 1, size=(h, w, channels), dtype=np.uint16),
+        np.random.randint(2**8 - 1, size=(h, w, channels), dtype=np.uint8),
         'RGBA')
     rgba_image_frame = ImageFrame(
         image_format=ImageFormat.SRGBA64,

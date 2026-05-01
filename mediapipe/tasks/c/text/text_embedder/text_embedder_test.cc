@@ -15,7 +15,6 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/text/text_embedder/text_embedder.h"
 
-#include <cstdlib>
 #include <string>
 
 #include "absl/flags/flag.h"
@@ -57,7 +56,8 @@ TEST(TextEmbedderTest, SmokeTest) {
   EXPECT_NE(embedder, nullptr);
 
   TextEmbedderResult result;
-  EXPECT_EQ(MpTextEmbedderEmbed(embedder, kTestString0, &result,
+  EXPECT_EQ(MpTextEmbedderEmbed(embedder, kTestString0,
+                                /* format_context= */ nullptr, &result,
                                 /* error_msg= */ nullptr),
             kMpOk);
   EXPECT_EQ(result.embeddings_count, 1);
@@ -81,11 +81,13 @@ TEST(TextEmbedderTest, SucceedsWithCosineSimilarity) {
 
   // Extract both embeddings.
   TextEmbedderResult result0;
-  EXPECT_EQ(MpTextEmbedderEmbed(embedder, kTestString0, &result0,
+  EXPECT_EQ(MpTextEmbedderEmbed(embedder, kTestString0,
+                                /* format_context= */ nullptr, &result0,
                                 /* error_msg= */ nullptr),
             kMpOk);
   TextEmbedderResult result1;
-  EXPECT_EQ(MpTextEmbedderEmbed(embedder, kTestString1, &result1,
+  EXPECT_EQ(MpTextEmbedderEmbed(embedder, kTestString1,
+                                /* format_context= */ nullptr, &result1,
                                 /* error_msg= */ nullptr),
             kMpOk);
 
