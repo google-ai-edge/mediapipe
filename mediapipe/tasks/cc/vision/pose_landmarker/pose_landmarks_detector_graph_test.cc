@@ -37,6 +37,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/pose_landmarker/proto/pose_landmarks_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
@@ -55,6 +56,7 @@ using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::file::JoinPath;
+using ::mediapipe::tasks::core::RunningMode;
 using ::mediapipe::tasks::core::TaskRunner;
 using ::mediapipe::tasks::vision::DecodeImageFromFile;
 using ::mediapipe::tasks::vision::pose_landmarker::proto::
@@ -96,7 +98,7 @@ constexpr char kPresenceScoreName[] = "presence_score";
 constexpr char kSegmentationMaskTag[] = "SEGMENTATION_MASK";
 constexpr char kSegmentationMaskName[] = "segmentation_mask";
 constexpr char kTaskName[] = "pose_landmarks_detector_test";
-constexpr char kRunningMode[] = "image";
+constexpr RunningMode kRunningMode = RunningMode::kImage;
 
 // Expected pose landmarks positions, in text proto format.
 constexpr char kExpectedPoseLandmarksFilename[] =

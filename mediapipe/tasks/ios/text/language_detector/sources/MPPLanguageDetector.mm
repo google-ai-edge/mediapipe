@@ -53,7 +53,7 @@ static NSString *const kTaskName = @"languageDetector";
                                                          kClassificationsStreamName] ]
                taskOptions:options
         enableFlowLimiting:NO
-               runningMode:@"unknown"
+               runningMode:MPPCoreRunningModeUnspecified
                      error:error];
 
     if (!taskInfo) {

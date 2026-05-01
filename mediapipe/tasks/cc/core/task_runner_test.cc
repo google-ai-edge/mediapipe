@@ -32,6 +32,7 @@ limitations under the License.
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 #include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
@@ -40,7 +41,7 @@ namespace core {
 namespace {
 
 constexpr char kTaskName[] = "test_task";
-constexpr char kRunningMode[] = "test_mode";
+constexpr RunningMode kRunningMode = RunningMode::kUnspecified;
 
 CalculatorGraphConfig GetPassThroughGraphConfig() {
   return ParseTextProtoOrDie<CalculatorGraphConfig>(

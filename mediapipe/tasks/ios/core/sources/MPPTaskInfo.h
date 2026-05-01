@@ -16,6 +16,7 @@
 
 #include "mediapipe/framework/calculator.pb.h"
 
+#import "mediapipe/tasks/ios/core/sources/MPPCoreRunningMode.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
 
@@ -53,7 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Running mode of the MediaPipe task.
  */
-@property(nonatomic) NSString *runningMode;
+@property(nonatomic) MPPCoreRunningMode runningMode;
 
 + (instancetype)new NS_UNAVAILABLE;
 
@@ -63,7 +64,7 @@ NS_ASSUME_NONNULL_BEGIN
                    outputStreams:(NSArray<NSString *> *)outputStreams
                      taskOptions:(id<MPPTaskOptionsProtocol>)taskOptions
               enableFlowLimiting:(BOOL)enableFlowLimiting
-                     runningMode:(NSString *)runningMode
+                     runningMode:(MPPCoreRunningMode)runningMode
                            error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**

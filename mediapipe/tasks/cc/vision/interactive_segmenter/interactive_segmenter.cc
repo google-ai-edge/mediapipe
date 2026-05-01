@@ -30,8 +30,8 @@ limitations under the License.
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/containers/keypoint.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
-#include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_result.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
@@ -168,8 +168,7 @@ InteractiveSegmenter::Create(
                                        options->output_confidence_masks,
                                        options->output_category_mask),
            .task_name = kTaskName,
-           .task_running_mode =
-               core::GetRunningModeName(core::RunningMode::IMAGE),
+           .task_running_mode = mediapipe::tasks::core::RunningMode::kImage,
            .op_resolver = std::move(options->base_options.op_resolver),
            .disable_default_service =
                options->base_options.disable_default_service,

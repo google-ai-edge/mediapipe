@@ -36,6 +36,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_blendshapes_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options.pb.h"
@@ -132,7 +133,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateSingleFaceLandmarksTaskRunner(
   return TaskRunner::Create(
       {.config = graph.GetConfig(),
        .task_name = "face_landmarks_detector_test",
-       .task_running_mode = "image",
+       .task_running_mode = core::RunningMode::kImage,
        .op_resolver = absl::make_unique<core::MediaPipeBuiltinOpResolver>()});
 }
 
@@ -183,7 +184,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateMultiFaceLandmarksTaskRunner(
   return TaskRunner::Create(
       {.config = graph.GetConfig(),
        .task_name = "face_landmarks_detector_test",
-       .task_running_mode = "image",
+       .task_running_mode = core::RunningMode::kImage,
        .op_resolver = absl::make_unique<core::MediaPipeBuiltinOpResolver>()});
 }
 

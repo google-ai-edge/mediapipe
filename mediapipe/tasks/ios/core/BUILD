@@ -55,6 +55,14 @@ objc_library(
 )
 
 objc_library(
+    name = "MPPCoreRunningMode",
+    hdrs = ["sources/MPPCoreRunningMode.h"],
+    deps = [
+        "//third_party/apple_frameworks:Foundation",
+    ],
+)
+
+objc_library(
     name = "MPPTaskInfo",
     srcs = ["sources/MPPTaskInfo.mm"],
     hdrs = ["sources/MPPTaskInfo.h"],
@@ -64,6 +72,7 @@ objc_library(
         "-Xclang=-fno-cxx-modules",
     ],
     deps = [
+        ":MPPCoreRunningMode",
         ":MPPTaskOptions",
         ":MPPTaskOptionsProtocol",
         "//mediapipe/calculators/core:flow_limiter_calculator_cc_proto",

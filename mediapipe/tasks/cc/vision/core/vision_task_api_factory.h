@@ -69,7 +69,7 @@ class VisionTaskApiFactory {
       }
     }
     MP_ASSIGN_OR_RETURN(RunningMode running_mode,
-                        GetRunningModeFromString(options.task_running_mode));
+                        GetVisionRunningMode(options.task_running_mode));
     if (running_mode == RunningMode::LIVE_STREAM) {
       if (options.packets_callback == nullptr) {
         return CreateStatusWithPayload(

@@ -43,6 +43,11 @@ cc_library(
     hdrs = ["host_environment.h"],
 )
 
+cc_library(
+    name = "running_mode",
+    hdrs = ["running_mode.h"],
+)
+
 cc_test(
     name = "base_options_test",
     srcs = ["base_options_test.cc"],
@@ -267,6 +272,7 @@ cc_library_with_tflite(
     ],
     deps = [
         ":host_environment",
+        ":running_mode",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:executor",
@@ -303,6 +309,7 @@ cc_test_with_tflite(
         "@org_tensorflow//tensorflow/lite:test_util",
     ],
     deps = [
+        ":running_mode",
         "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/calculators/core:side_packet_to_stream_calculator",
         "//mediapipe/framework:calculator_cc_proto",
@@ -336,6 +343,7 @@ cc_library_with_tflite(
         ":task_runner",
     ],
     deps = [
+        ":running_mode",
         ":utils",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:executor",

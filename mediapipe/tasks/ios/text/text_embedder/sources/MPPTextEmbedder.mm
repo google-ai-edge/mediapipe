@@ -69,7 +69,7 @@ static NSString *const kDocumentTemplate = @"title: %@ | text: %@";
                                                          kEmbeddingsOutStreamName] ]
                taskOptions:options
         enableFlowLimiting:NO
-               runningMode:@"unknown"
+               runningMode:MPPCoreRunningModeUnspecified
                      error:error];
 
     if (!taskInfo) {

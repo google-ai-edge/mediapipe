@@ -36,6 +36,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/test_util.h"
@@ -52,6 +53,7 @@ using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::file::JoinPath;
 using ::mediapipe::tasks::core::ModelResources;
+using ::mediapipe::tasks::core::RunningMode;
 using ::mediapipe::tasks::core::TaskRunner;
 using ::mediapipe::tasks::vision::DecodeImageFromFile;
 using ::testing::ContainerEq;
@@ -125,7 +127,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
 
   return TaskRunner::Create({.config = graph.GetConfig(),
                              .task_name = "image_preprocessor_test",
-                             .task_running_mode = "image"});
+                             .task_running_mode = RunningMode::kImage});
 }
 
 class ConfigureTest : public tflite::testing::Test {};

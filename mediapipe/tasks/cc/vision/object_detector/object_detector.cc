@@ -60,6 +60,7 @@ constexpr int kMicroSecondsPerMilliSecond = 1000;
 
 using ::mediapipe::NormalizedRect;
 using ::mediapipe::tasks::components::containers::ConvertToDetectionResult;
+using ::mediapipe::tasks::vision::core::GetCoreRunningMode;
 using ObjectDetectorOptionsProto =
     object_detector::proto::ObjectDetectorOptions;
 
@@ -158,7 +159,7 @@ absl::StatusOr<std::unique_ptr<ObjectDetector>> ObjectDetector::Create(
            std::move(options_proto),
            options->running_mode == core::RunningMode::LIVE_STREAM),
        .task_name = kTaskName,
-       .task_running_mode = core::GetRunningModeName(options->running_mode),
+       .task_running_mode = GetCoreRunningMode(options->running_mode),
        .op_resolver = std::move(options->base_options.op_resolver),
        .packets_callback = std::move(packets_callback),
        .disable_default_service = options->base_options.disable_default_service,

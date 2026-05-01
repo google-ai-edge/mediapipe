@@ -69,7 +69,7 @@ class AudioTaskApiFactory {
       }
     }
     MP_ASSIGN_OR_RETURN(RunningMode running_mode,
-                        GetRunningModeFromString(options.task_running_mode));
+                        GetAudioRunningMode(options.task_running_mode));
     if (running_mode == RunningMode::AUDIO_STREAM) {
       if (options.packets_callback == nullptr) {
         return CreateStatusWithPayload(

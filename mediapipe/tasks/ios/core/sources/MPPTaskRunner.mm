@@ -20,6 +20,7 @@
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/tasks/cc/core/host_environment.h"
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
+#include "mediapipe/tasks/cc/core/task_runner.h"
 
 namespace {
 using ::mediapipe::CalculatorGraphConfig;
@@ -27,6 +28,23 @@ using ::mediapipe::tasks::core::MediaPipeBuiltinOpResolver;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
 using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
+
+mediapipe::tasks::core::RunningMode ToCppRunningMode(MPPCoreRunningMode runningMode) {
+  switch (runningMode) {
+    case MPPCoreRunningModeImage:
+      return mediapipe::tasks::core::RunningMode::kImage;
+    case MPPCoreRunningModeVideo:
+      return mediapipe::tasks::core::RunningMode::kVideo;
+    case MPPCoreRunningModeLiveStream:
+      return mediapipe::tasks::core::RunningMode::kLiveStream;
+    case MPPCoreRunningModeAudioClips:
+      return mediapipe::tasks::core::RunningMode::kAudioClips;
+    case MPPCoreRunningModeAudioStream:
+      return mediapipe::tasks::core::RunningMode::kAudioStream;
+    case MPPCoreRunningModeUnspecified:
+      return mediapipe::tasks::core::RunningMode::kUnspecified;
+  }
+}
 }  // namespace
 
 @interface MPPTaskRunner () {
@@ -62,7 +80,7 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
     mediapipe::tasks::core::TaskRunnerOptions options = {
         .config = std::move(graphConfig.value()),
         .task_name = taskInfo.taskName.UTF8String,
-        .task_running_mode = taskInfo.runningMode.UTF8String,
+        .task_running_mode = ToCppRunningMode(taskInfo.runningMode),
         .op_resolver = absl::make_unique<MediaPipeBuiltinOpResolver>(),
         .packets_callback = std::move(packetsCallback),
         .host_environment = mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_IOS,

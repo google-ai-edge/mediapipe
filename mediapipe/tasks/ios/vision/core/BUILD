@@ -44,7 +44,10 @@ objc_library(
     name = "MPPRunningMode",
     hdrs = ["sources/MPPRunningMode.h"],
     module_name = "MPPRunningMode",
-    deps = ["//third_party/apple_frameworks:Foundation"],
+    deps = [
+        "//mediapipe/tasks/ios/core:MPPCoreRunningMode",
+        "//third_party/apple_frameworks:Foundation",
+    ],
 )
 
 objc_library(

@@ -55,7 +55,7 @@ static NSString *const kTaskName = @"textClassifier";
                                                          kClassificationsStreamName] ]
                taskOptions:options
         enableFlowLimiting:NO
-               runningMode:@"unknown"
+               runningMode:MPPCoreRunningModeUnspecified
                      error:error];
 
     if (!taskInfo) {

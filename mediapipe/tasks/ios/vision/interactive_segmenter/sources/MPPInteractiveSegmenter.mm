@@ -100,7 +100,7 @@ using ::mediapipe::tasks::core::PacketsCallback;
              outputStreams:outputStreams
                taskOptions:options
         enableFlowLimiting:NO
-               runningMode:MPPRunningModeDisplayName(MPPRunningModeImage)
+               runningMode:MPPCoreRunningModeFromVisionRunningMode(MPPRunningModeImage)
                      error:error];
 
     if (!taskInfo) {

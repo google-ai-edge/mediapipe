@@ -27,8 +27,8 @@ limitations under the License.
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
-#include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
 #include "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarker_graph_options.pb.h"
@@ -314,8 +314,7 @@ absl::StatusOr<std::unique_ptr<ImageGenerator>> ImageGenerator::Create(
                std::move(options_proto_and_condition_index.options_proto),
                use_condition_image),
            .task_name = kTaskName,
-           .task_running_mode =
-               core::GetRunningModeName(core::RunningMode::IMAGE),
+           .task_running_mode = mediapipe::tasks::core::RunningMode::kImage,
            .op_resolver =
                std::make_unique<tasks::core::MediaPipeBuiltinOpResolver>()})));
   image_generator->use_condition_image_ = use_condition_image;
@@ -328,7 +327,7 @@ absl::StatusOr<std::unique_ptr<ImageGenerator>> ImageGenerator::Create(
             {.config = CreateConditionedImageGraphContainerConfig(
                  std::move(options_proto_for_condition_image_graphs_container)),
              .task_name = kTaskName,
-             .task_running_mode = "image",
+             .task_running_mode = mediapipe::tasks::core::RunningMode::kImage,
              .op_resolver = absl::make_unique<
                  tasks::core::MediaPipeBuiltinOpResolver>()}));
   }
