@@ -28,6 +28,7 @@ cc_library(
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
+        "//third_party/gloop/base:init_google",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/log:absl_log",
