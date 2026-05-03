@@ -173,7 +173,7 @@ TEST(PacketTest, TypeRegistrationDebugString) {
     expected_type_name = "<unknown>";
   } else {
         #if defined(_MSC_VER)
-          expected_type_name = "struct mediapipe::`anonymous namespace'::UnregisteredPairStruct";
+          expected_type_name = "struct mediapipe::'anonymous namespace'::UnregisteredPairStruct";
         #else
           expected_type_name = "mediapipe::(anonymous namespace)::UnregisteredPairStruct";
         #endif

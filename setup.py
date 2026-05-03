@@ -188,9 +188,7 @@ class GenerateMetadataSchema(build_ext.build_ext):
           '//mediapipe/tasks/metadata:' + target,
       ] + GPU_OPTIONS
 
-      # Activate the windows_arm64 Bazel config when building natively on
-      # Windows ARM64.  This config (defined in .bazelrc) applies all the
-      # ARM64-specific workarounds needed for Windows ARM6
+      # Activate the windows_arm64 Bazel config when building natively on Windows ARM64.
       if IS_WINDOWS_ARM64:
         bazel_command.append('--config=windows_arm64')
 
@@ -257,9 +255,7 @@ class BuildExtension(build_ext.build_ext):
         str(ext.bazel_target),
     ] + GPU_OPTIONS
 
-    # Activate the windows_arm64 Bazel config when building natively on
-    # Windows ARM64.  This config (defined in .bazelrc) applies all the
-    # ARM64-specific workarounds needed for Windows ARM6
+    # Activate the windows_arm64 Bazel config when building natively on Windows ARM64.
     if IS_WINDOWS_ARM64:
       bazel_command.append('--config=windows_arm64')
 

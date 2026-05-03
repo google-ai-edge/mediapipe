@@ -27,6 +27,7 @@ namespace api2 {
 namespace {
 
 using ::mediapipe::MakePacket;
+using ::mediapipe::Packet;
 using ::mediapipe::Tensor;
 using ::mediapipe::api2::builder::Stream;
 using ::testing::HasSubstr;
@@ -54,7 +55,7 @@ absl::StatusOr<Tensor> Create1x3IntTensor(std::vector<int> values) {
 class NestedGraphCalculator : public Node {
  public:
   static constexpr Input<Tensor>::Multiple kInput{"TENSORS"};
-  static constexpr Output<::mediapipe::Packet>::Multiple kOutput{"TENSORS"};
+  static constexpr Output<Packet>::Multiple kOutput{"TENSORS"};
   MEDIAPIPE_NODE_CONTRACT(kInput, kOutput);
 
   absl::Status Process(CalculatorContext* cc) override {
@@ -85,11 +86,11 @@ class NestedGraphCalculator : public Node {
             )pb",
             {{"$model", kInt32ModelFile}}));
 
-    std::vector<::mediapipe::Packet> output_packets;
+    std::vector<Packet> output_packets;
     tool::AddVectorSink("output", &graph_config, &output_packets);
 
     MP_EXPECT_OK(graph.Initialize(graph_config));
-    std::map<std::string, ::mediapipe::Packet> side_packets;
+    std::map<std::string, Packet> side_packets;
     MP_EXPECT_OK(graph.StartRun(side_packets));
     MP_EXPECT_OK(graph.AddPacketToInputStream("input", input_tensor));
     MP_EXPECT_OK(graph.CloseAllInputStreams());
@@ -115,7 +116,7 @@ TEST(NestedCalculatorGraphTest, ExecutedNestedGraphWithInferenceCalculator) {
   CalculatorGraph graph;
 
   // Start graph and configure a sink.
-  std::vector<::mediapipe::Packet> result_packets;
+  std::vector<Packet> result_packets;
   tool::AddVectorSink("output", &graph_config, &result_packets);
 
   MP_ASSERT_OK(graph.Initialize(graph_config));
@@ -129,7 +130,7 @@ TEST(NestedCalculatorGraphTest, ExecutedNestedGraphWithInferenceCalculator) {
   MP_ASSERT_OK(graph.CloseAllInputStreams());
   MP_ASSERT_OK(graph.WaitUntilDone());
   EXPECT_EQ(result_packets.size(), 1);
-  const Tensor& result_tensor = result_packets[0].Get<::mediapipe::Packet>().Get<Tensor>();
+  const Tensor& result_tensor = result_packets[0].Get<Packet>().Get<Tensor>();
   EXPECT_EQ(result_tensor.shape().num_elements(), 3);
   {
     const auto view = result_tensor.GetCpuReadView();
@@ -231,7 +232,7 @@ TEST(NestedCalculatorGraphTest, TestNestedGraphServiceInheriting) {
   constexpr int kTestValue = 123;
   MP_EXPECT_OK(
       graph.SetServiceObject(kTestService, std::make_shared<int>(kTestValue)));
-  std::vector<::mediapipe::Packet> result_status;
+  std::vector<Packet> result_status;
   tool::AddVectorSink("startup_error", &graph_config, &result_status);
   MP_ASSERT_OK(graph.Initialize(graph_config));
 
@@ -256,7 +257,7 @@ TEST(NestedCalculatorGraphTest, NestedGraphsCannotRegisterNewServices) {
           output_stream: "STARTUP_ERROR:startup_error"
         })pb");
   CalculatorGraph graph;
-  std::vector<::mediapipe::Packet> result_status;
+  std::vector<Packet> result_status;
   tool::AddVectorSink("startup_error", &graph_config, &result_status);
   MP_ASSERT_OK(graph.Initialize(graph_config));
   MP_ASSERT_OK(graph.StartRun({}));
