@@ -147,6 +147,10 @@ http_archive(
 # gflags needed by glog
 http_archive(
     name = "com_github_gflags_gflags",
+    patch_args = ["-p1"],
+    patches = [
+        "@//third_party:com_github_gflags_gflags_windows_patch.diff",
+    ],
     sha256 = "19713a36c9f32b33df59d1c79b4958434cb005b5b47dc5400a7a4b078111d9b5",
     strip_prefix = "gflags-2.2.2",
     url = "https://github.com/gflags/gflags/archive/v2.2.2.zip",
@@ -278,6 +282,8 @@ http_archive(
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
+    patch_args = ["-p1", "-l"],
+    patches = ["@//third_party:xnnpack_windows_arm64.diff"],
     sha256 = "7235b2b55fbf11b64f38db130efae0f293d2d6d6fd90613221b598a8847f41c5",
     strip_prefix = "XNNPACK-68167d1fefa50296f0588ec280f48c58357ca898",
     url = "https://github.com/google/XNNPACK/archive/68167d1fefa50296f0588ec280f48c58357ca898.zip",
@@ -325,6 +331,8 @@ http_archive(
 # 2025-09-08
 http_archive(
     name = "cpuinfo",
+    patch_args = ["-p1"],
+    patches = ["@//third_party:cpuinfo.diff"],
     sha256 = "c0254ce97f7abc778dd2df0aaca1e0506dba1cd514fdb9fe88c07849393f8ef4",
     strip_prefix = "cpuinfo-8a9210069b5a37dd89ed118a783945502a30a4ae",
     urls = [
@@ -336,6 +344,8 @@ http_archive(
 http_archive(
     name = "pthreadpool",
     # `curl -L <url> | shasum -a 256`
+    patch_args = ["-p1"],
+    patches = ["@//third_party:pthreadpool.diff"],
     sha256 = "d5a78b017839ee0474e6aef6e21742b03f641b260f29faf9538a0a6b8fae0704",
     strip_prefix = "pthreadpool-995229919303dd98c0f1b3b585b54527067ef893",
     urls = ["https://github.com/google/pthreadpool/archive/995229919303dd98c0f1b3b585b54527067ef893.zip"],
@@ -361,6 +371,8 @@ http_archive(
         # Works around Bazel issue with objc_library.
         # See https://github.com/bazelbuild/bazel/issues/19912
         "@//third_party:org_tensorflow_objc_build_fixes.diff",
+        # Fix ICU build for Windows ARM64: add /utf-8 flag for arm64_windows CPU.
+        "@//third_party:org_tensorflow_icu_windows_arm64.diff",
     ],
     sha256 = _TENSORFLOW_SHA256,
     strip_prefix = "tensorflow-%s" % _TENSORFLOW_GIT_COMMIT,
@@ -552,6 +564,8 @@ http_archive(
 http_archive(
     name = "pffft",
     build_file = "@//third_party:pffft.BUILD",
+    patch_args = ["-p1"],
+    patches = ["@//third_party:pffft.diff"],
     strip_prefix = "jpommier-pffft-7c3b5a7dc510",
     urls = ["https://bitbucket.org/jpommier/pffft/get/7c3b5a7dc510.zip"],
 )
@@ -650,6 +664,12 @@ new_local_repository(
 new_local_repository(
     name = "windows_opencv",
     build_file = "@//third_party:opencv_windows.BUILD",
+    path = "C:\\opencv\\build",
+)
+
+new_local_repository(
+    name = "windows_opencv_arm64",
+    build_file = "@//third_party:opencv_windows_arm64.BUILD",
     path = "C:\\opencv\\build",
 )
 

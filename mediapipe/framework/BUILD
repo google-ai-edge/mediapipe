@@ -1813,9 +1813,11 @@ cc_test(
     name = "packet_delete_test",
     size = "small",
     srcs = ["packet_delete_test.cc"],
-    copts = [
-        "-Werror",
-    ],
+    # MSVC doesn't support -Werror
+    copts = select({
+        "@bazel_tools//src/conditions:windows": ["/WX"],
+        "//conditions:default": ["-Werror"],
+    }),
     linkstatic = 1,
     deps = [
         ":packet",

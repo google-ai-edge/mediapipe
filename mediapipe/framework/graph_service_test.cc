@@ -309,7 +309,7 @@ TEST(ServiceBindingTest, CrashesWhenGettingNullServiceObject) {
         ServiceBinding<TestServiceData> binding(nullptr);
         (void)binding.GetObject();
       },
-      testing::ContainsRegex("Check failed: [a-z_]* Service is unavailable"));
+      "Check failed: service_ Service is unavailable.");
 }
 
 TEST(ServiceBindingTest, IsAvailableReturnsFalsOnNullServiceObject) {
