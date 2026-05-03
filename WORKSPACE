@@ -25,68 +25,47 @@ load("@bazel_skylib//lib:versions.bzl", "versions")
 
 versions.check(minimum_bazel_version = "3.7.2")
 
-# Provides platforms and constraints that the updated C++, Java, and Protobuf rules require to
-# function correctly.
-http_archive(
-    name = "platforms",
-    urls = [
-        "https://github.com/bazelbuild/platforms/releases/download/0.0.11/platforms-0.0.11.tar.gz",
-    ],
-    sha256 = "29742e87275809b5e598dc2f04d86960cc7a55b3067d97221c9abbc9926bff0f",
-)
-
-# ABSL on 2025-01-14
+# ABSL on 2023-10-18
 http_archive(
     name = "com_google_absl",
-    repo_mapping = {"@googletest": "@com_google_googletest"},
-    sha256 = "87e91fb785a2d0233f4599317afd576b7736e6732d557bdcdfdc11990bd333ef",
-    strip_prefix = "abseil-cpp-255c84dadd029fd8ad25c5efb5933e47beaa00c7",
-    urls = ["https://github.com/abseil/abseil-cpp/archive/255c84dadd029fd8ad25c5efb5933e47beaa00c7.tar.gz"],
-)
-
-# RE2 version 2025-11-05 (and later) explicitly adds the missing <cstring> include to prog.h and
-# improves compatibility with newer Abseil versions)
-http_archive(
-    name = "com_googlesource_code_re2",
-    repo_mapping = {"@abseil-cpp": "@com_google_absl"},
-    sha256 = "87f6029d2f6de8aa023654240a03ada90e876ce9a4676e258dd01ea4c26ffd67",
-    strip_prefix = "re2-2025-11-05",
-    urls = [
-        "https://github.com/google/re2/archive/2025-11-05.tar.gz",
+    patch_args = [
+        "-p1",
     ],
+    patches = [
+        "@//third_party:com_google_absl_windows_patch.diff",
+    ],
+    sha256 = "f841f78243f179326f2a80b719f2887c38fe226d288ecdc46e2aa091e6aa43bc",
+    strip_prefix = "abseil-cpp-9687a8ea750bfcddf790372093245a1d041b21a3",
+    urls = ["https://github.com/abseil/abseil-cpp/archive//9687a8ea750bfcddf790372093245a1d041b21a3.tar.gz"],
 )
 
-# We are migrating to the Starlark-native architectural branch of rules_cc. While the 0.1.x series
-# has a higher version number, it is a legacy branch. The 0.0.17 version (and its successor 0.2.x)
-# is required to support the toolchain resolution requirements of Protobuf 6.x and Abseil 2025.
 http_archive(
     name = "rules_cc",
-    sha256 = "abc605dd850f813bb37004b77db20106a19311a96b2da1c92b789da529d28fe1",
-    strip_prefix = "rules_cc-0.0.17",
-    urls = ["https://github.com/bazelbuild/rules_cc/releases/download/0.0.17/rules_cc-0.0.17.tar.gz"],
+    patch_args = ["-p1"],
+    patches = ["@//third_party:rules_cc.diff"],
+    sha256 = "0d3b4f984c4c2e1acfd1378e0148d35caf2ef1d9eb95b688f8e19ce0c41bdf5b",
+    strip_prefix = "rules_cc-0.1.4",
+    url = "https://github.com/bazelbuild/rules_cc/releases/download/0.1.4/rules_cc-0.1.4.tar.gz",
 )
-
-load("@rules_cc//cc:repositories.bzl", "rules_cc_dependencies", "rules_cc_toolchains")
-rules_cc_dependencies()
-rules_cc_toolchains()
 
 http_archive(
     name = "rules_java",
-    sha256 = "eb5447f019734b0c4284eaa5f8248415084da5445ba8201c935a211ab8af43a0",
-    url = "https://github.com/bazelbuild/rules_java/releases/download/7.10.0/rules_java-7.10.0.tar.gz",
+    sha256 = "c73336802d0b4882e40770666ad055212df4ea62cfa6edf9cb0f9d29828a0934",
+    url = "https://github.com/bazelbuild/rules_java/releases/download/5.3.5/rules_java-5.3.5.tar.gz",
 )
 
 http_archive(
     name = "com_google_protobuf",
-    repo_mapping = {"@abseil-cpp": "@com_google_absl"},
-    sha256 = "6e09bbc950ba60c3a7b30280210cd285af8d7d8ed5e0a6ed101c72aff22e8d88",
-    strip_prefix = "protobuf-6.31.1",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v6.31.1.zip"],
+    patch_args = [
+        "-p1",
+    ],
+    patches = [
+        "@//third_party:com_google_protobuf_fixes.diff",
+    ],
+    sha256 = "f645e6e42745ce922ca5388b1883ca583bafe4366cc74cf35c3c9299005136e2",
+    strip_prefix = "protobuf-5.28.3",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v5.28.3.zip"],
 )
-
-load("@com_google_protobuf//bazel/private:proto_bazel_features.bzl", "proto_bazel_features")  # buildifier: disable=bzl-visibility
-
-proto_bazel_features(name = "proto_bazel_features")
 
 http_archive(
     name = "rules_android_ndk",
@@ -139,14 +118,24 @@ http_archive(
 http_archive(
     name = "zlib",
     build_file = "@//third_party:zlib.BUILD",
-    sha256 = "17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c",
-    strip_prefix = "zlib-1.3.1",
-    url = "https://github.com/madler/zlib/archive/refs/tags/v1.3.1.tar.gz",
+    patch_args = [
+        "-p1",
+    ],
+    patches = [
+        "@//third_party:zlib.diff",
+    ],
+    sha256 = "b3a24de97a8fdbc835b9833169501030b8977031bcb54b3b3ac13740f846ab30",
+    strip_prefix = "zlib-1.2.13",
+    url = "http://zlib.net/fossils/zlib-1.2.13.tar.gz",
 )
 
 # gflags needed by glog
 http_archive(
     name = "com_github_gflags_gflags",
+    patch_args = ["-p1"],
+    patches = [
+        "@//third_party:com_github_gflags_gflags_windows_patch.diff",
+    ],
     sha256 = "19713a36c9f32b33df59d1c79b4958434cb005b5b47dc5400a7a4b078111d9b5",
     strip_prefix = "gflags-2.2.2",
     url = "https://github.com/gflags/gflags/archive/v2.2.2.zip",
@@ -278,6 +267,8 @@ http_archive(
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
+    patch_args = ["-p1", "-l"],
+    patches = ["@//third_party:xnnpack_windows_arm64.diff"],
     sha256 = "7235b2b55fbf11b64f38db130efae0f293d2d6d6fd90613221b598a8847f41c5",
     strip_prefix = "XNNPACK-68167d1fefa50296f0588ec280f48c58357ca898",
     url = "https://github.com/google/XNNPACK/archive/68167d1fefa50296f0588ec280f48c58357ca898.zip",
@@ -325,6 +316,8 @@ http_archive(
 # 2025-09-08
 http_archive(
     name = "cpuinfo",
+    patch_args = ["-p1"],
+    patches = ["@//third_party:cpuinfo.diff"],
     sha256 = "c0254ce97f7abc778dd2df0aaca1e0506dba1cd514fdb9fe88c07849393f8ef4",
     strip_prefix = "cpuinfo-8a9210069b5a37dd89ed118a783945502a30a4ae",
     urls = [
@@ -336,6 +329,8 @@ http_archive(
 http_archive(
     name = "pthreadpool",
     # `curl -L <url> | shasum -a 256`
+    patch_args = ["-p1"],
+    patches = ["@//third_party:pthreadpool.diff"],
     sha256 = "d5a78b017839ee0474e6aef6e21742b03f641b260f29faf9538a0a6b8fae0704",
     strip_prefix = "pthreadpool-995229919303dd98c0f1b3b585b54527067ef893",
     urls = ["https://github.com/google/pthreadpool/archive/995229919303dd98c0f1b3b585b54527067ef893.zip"],
@@ -361,6 +356,8 @@ http_archive(
         # Works around Bazel issue with objc_library.
         # See https://github.com/bazelbuild/bazel/issues/19912
         "@//third_party:org_tensorflow_objc_build_fixes.diff",
+        # Fix ICU build for Windows ARM64: add /utf-8 flag for arm64_windows CPU.
+        "@//third_party:org_tensorflow_icu_windows_arm64.diff",
     ],
     sha256 = _TENSORFLOW_SHA256,
     strip_prefix = "tensorflow-%s" % _TENSORFLOW_GIT_COMMIT,
@@ -528,10 +525,9 @@ http_archive(
 # ...but the Java download is currently broken, so we use the "source" download.
 http_archive(
     name = "com_google_protobuf_javalite",
-    repo_mapping = {"@abseil-cpp": "@com_google_absl"},
-    sha256 = "6e09bbc950ba60c3a7b30280210cd285af8d7d8ed5e0a6ed101c72aff22e8d88",
-    strip_prefix = "protobuf-6.31.1",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v6.31.1.zip"],
+    sha256 = "f645e6e42745ce922ca5388b1883ca583bafe4366cc74cf35c3c9299005136e2",
+    strip_prefix = "protobuf-5.28.3",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v5.28.3.zip"],
 )
 
 load("@//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
@@ -552,6 +548,8 @@ http_archive(
 http_archive(
     name = "pffft",
     build_file = "@//third_party:pffft.BUILD",
+    patch_args = ["-p1"],
+    patches = ["@//third_party:pffft.diff"],
     strip_prefix = "jpommier-pffft-7c3b5a7dc510",
     urls = ["https://bitbucket.org/jpommier/pffft/get/7c3b5a7dc510.zip"],
 )
@@ -596,6 +594,15 @@ http_archive(
     strip_prefix = "text-2.2.0",
     urls = [
         "https://github.com/tensorflow/text/archive/v2.2.0.zip",
+    ],
+)
+
+http_archive(
+    name = "com_googlesource_code_re2",
+    sha256 = "ef516fb84824a597c4d5d0d6d330daedb18363b5a99eda87d027e6bdd9cba299",
+    strip_prefix = "re2-03da4fc0857c285e3a26782f6bc8931c4c950df4",
+    urls = [
+        "https://github.com/google/re2/archive/03da4fc0857c285e3a26782f6bc8931c4c950df4.tar.gz",
     ],
 )
 
@@ -650,6 +657,12 @@ new_local_repository(
 new_local_repository(
     name = "windows_opencv",
     build_file = "@//third_party:opencv_windows.BUILD",
+    path = "C:\\opencv\\build",
+)
+
+new_local_repository(
+    name = "windows_opencv_arm64",
+    build_file = "@//third_party:opencv_windows_arm64.BUILD",
     path = "C:\\opencv\\build",
 )
 
@@ -825,13 +838,11 @@ http_archive(
     urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/archive/4.2.0.tar.gz"],
 )
 
-# Protobuf Javascript v4.0.2 is compatible with Protobuf v6.31.1
 http_archive(
     name = "com_google_protobuf_javascript",
-    repo_mapping = {"@abseil-cpp": "@com_google_absl"},
-    sha256 = "a08244115ed0535971ec894abf078da90ad2c0938700612f90dc550f218627ee",
-    strip_prefix = "protobuf-javascript-4.0.2",
-    urls = ["https://github.com/protocolbuffers/protobuf-javascript/archive/refs/tags/v4.0.2.tar.gz"],
+    sha256 = "8cef92b4c803429af0c11c4090a76b6a931f82d21e0830760a17f9c6cb358150",
+    strip_prefix = "protobuf-javascript-3.21.4",
+    urls = ["https://github.com/protocolbuffers/protobuf-javascript/archive/refs/tags/v3.21.4.tar.gz"],
 )
 
 load("@rules_proto_grpc//:repositories.bzl", "rules_proto_grpc_repos", "rules_proto_grpc_toolchains")

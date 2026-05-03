@@ -146,6 +146,7 @@ cc_library(
         "@com_google_absl//absl/strings",
     ] + select({
         "//mediapipe:windows": [],
+        "//mediapipe:windows_arm64": [],
         "//conditions:default": ["//mediapipe/framework/formats:unique_fd"],
     }),
 )
@@ -176,22 +177,6 @@ cc_library(
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
-    ],
-)
-
-cc_library(
-    name = "endian",
-    hdrs = ["endian.h"],
-    deps = ["@com_google_absl//absl/base:config"],
-)
-
-cc_test(
-    name = "endian_test",
-    srcs = ["endian_test.cc"],
-    deps = [
-        ":endian",
-        "//mediapipe/framework/port:gtest_main",
-        "@com_google_absl//absl/base:config",
     ],
 )
 
@@ -407,6 +392,7 @@ cc_library(
     name = "threadpool",
     srcs = select({
         "//mediapipe:windows": ["threadpool_std_thread_impl.cc"],
+        "//mediapipe:windows_arm64": ["threadpool_std_thread_impl.cc"],
         "//conditions:default": ["threadpool_pthread_impl.cc"],
     }),
     hdrs = ["threadpool.h"],
