@@ -385,7 +385,7 @@ TEST_F(LoggingTest, LogImageGrayscale) {
 
   LogImage(*image);
 
-  EXPECT_THAT(log_lines(), HasSubstr("image[600 600 1]"));
+  EXPECT_THAT(log_lines(), HasSubstr("image[600 600 1 8UC1]"));
   EXPECT_THAT(log_lines(), HasConsecutiveLines(R"(
 %%%%%%%%%%%%%%%%%%%%%%%%%%###+::....  ........ . . .                    ... ..  ...:.:=*=+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%*-:-..:....  ...         ..      .           .          ...:::-==**%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -456,7 +456,7 @@ TEST_F(LoggingTest, LogImageRGB) {
   EXPECT_EQ(image->Format(), ImageFormat::SRGB);
 
   LogImage(*image);
-  EXPECT_THAT(log_lines(), HasSubstr("image[600 600 3]"));
+  EXPECT_THAT(log_lines(), HasSubstr("image[600 600 3 8UC3]"));
   EXPECT_THAT(log_lines(), HasConsecutiveLines(R"(
 %%%%%%%%%%%%%%%%%%%%%%%%%%###+::....  ........ . . .                    ... .. . ..:.:=*=+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%*-:-..:....  ..          ..      .           .          ...:::-==**%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -529,7 +529,7 @@ TEST_F(LoggingTest, LogImageWithImage) {
 
   LogImage(image);
 
-  EXPECT_THAT(log_lines(), HasSubstr("image[600 600 3]"));
+  EXPECT_THAT(log_lines(), HasSubstr("image[600 600 3 8UC3]"));
   EXPECT_THAT(log_lines(), HasConsecutiveLines(R"(
 %%%%%%%%%%%%%%%%%%%%%%%%%%###+::....  ........ . . .                    ... .. . ..:.:=*=+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%*-:-..:....  ..          ..      .           .          ...:::-==**%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -575,7 +575,7 @@ TEST_F(LoggingTest, LogMat) {
   }
   LogMat(mat);
 
-  EXPECT_THAT(log_lines(), HasSubstr("mat[10 10 2]"));
+  EXPECT_THAT(log_lines(), HasSubstr("mat[10 10 2 32FC2]"));
   EXPECT_THAT(log_lines(), HasConsecutiveLines(R"(
  ..::--==+
 .::--==++*
