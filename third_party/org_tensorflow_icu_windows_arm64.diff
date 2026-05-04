@@ -1,0 +1,23 @@
+--- a/third_party/icu/icu.BUILD
++++ b/third_party/icu/icu.BUILD
+@@ -58,6 +58,10 @@ cc_library(
+         ":windows": [
+             "/utf-8",
+             "/DLOCALE_ALLOW_NEUTRAL_NAMES=0",
+         ],
++        ":windows_arm64": [
++            "/utf-8",
++            "/DLOCALE_ALLOW_NEUTRAL_NAMES=0",
++        ],
+         "//conditions:default": [],
+     }),
+@@ -83,4 +87,9 @@ config_setting(
+ config_setting(
+     name = "windows",
+     values = {"cpu": "x64_windows"},
+ )
++
++config_setting(
++    name = "windows_arm64",
++    values = {"cpu": "arm64_windows"},
++)

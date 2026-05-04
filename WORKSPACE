@@ -43,6 +43,10 @@ http_archive(
 # gflags needed by glog
 http_archive(
     name = "com_github_gflags_gflags",
+    patch_args = ["-p1"],
+    patches = [
+        "@//third_party:com_github_gflags_gflags_windows_patch.diff",
+    ],
     sha256 = "19713a36c9f32b33df59d1c79b4958434cb005b5b47dc5400a7a4b078111d9b5",
     strip_prefix = "gflags-2.2.2",
     url = "https://github.com/gflags/gflags/archive/v2.2.2.zip",
@@ -179,6 +183,8 @@ http_archive(
 http_archive(
     name = "XNNPACK",
     # `curl -L <url> | shasum -a 256`
+    patch_args = ["-p1", "-l"],
+    patches = ["@//third_party:xnnpack_windows_arm64.diff"],
     sha256 = "13ae01126b6d4a8b6769433c2a942d6204a3f97157d9c83d79cbfeec1041398c",
     strip_prefix = "XNNPACK-53a1797ba4360cbde068f2a984652be0f0b7b6fe",
     url = "https://github.com/google/XNNPACK/archive/53a1797ba4360cbde068f2a984652be0f0b7b6fe.zip",
@@ -227,6 +233,8 @@ http_archive(
 
 http_archive(
     name = "cpuinfo",
+    patch_args = ["-p1"],
+    patches = ["@//third_party:cpuinfo.diff"],
     sha256 = "9213f6f81784eb8679f0621ad1c20eac711e063cb9c7712738720609cbdf1c33",
     strip_prefix = "cpuinfo-ea6b9f1bb6e1001d8b21574d5bc78ddef62e499d",
     urls = [
@@ -238,6 +246,8 @@ http_archive(
 http_archive(
     name = "pthreadpool",
     # `curl -L <url> | shasum -a 256`
+    patch_args = ["-p1"],
+    patches = ["@//third_party:pthreadpool.diff"],
     sha256 = "5ab4e8f63e3dcf62048360c216532bdf62f00dc204883a52d91230402f0feb6a",
     strip_prefix = "pthreadpool-02460584c6092e527c8b89f7df4de143d70e801f",
     urls = ["https://github.com/google/pthreadpool/archive/02460584c6092e527c8b89f7df4de143d70e801f.zip"],
@@ -264,6 +274,8 @@ http_archive(
         # (tensorflow/lite/build_def.bzl) where link_extra_lib is duplicated when rules_cc has
         # a version-suffixed canonical name (e.g., under single_version_override or complex dependency graphs).
         "@//third_party:org_tensorflow_combine_cc_tests_link_extra_lib.diff",
+        # Fix ICU build for Windows ARM64: add /utf-8 flag for arm64_windows CPU.
+        "@//third_party:org_tensorflow_icu_windows_arm64.diff",
     ],
     sha256 = _TENSORFLOW_SHA256,
     strip_prefix = "tensorflow-%s" % _TENSORFLOW_GIT_COMMIT,
@@ -426,6 +438,8 @@ http_archive(
 http_archive(
     name = "pffft",
     build_file = "@//third_party:pffft.BUILD",
+    patch_args = ["-p1"],
+    patches = ["@//third_party:pffft.diff"],
     strip_prefix = "jpommier-pffft-7c3b5a7dc510",
     urls = ["https://bitbucket.org/jpommier/pffft/get/7c3b5a7dc510.zip"],
 )
@@ -537,6 +551,12 @@ new_local_repository(
 new_local_repository(
     name = "windows_opencv",
     build_file = "@//third_party:opencv_windows.BUILD",
+    path = "C:\\opencv\\build",
+)
+
+new_local_repository(
+    name = "windows_opencv_arm64",
+    build_file = "@//third_party:opencv_windows_arm64.BUILD",
     path = "C:\\opencv\\build",
 )
 
@@ -809,7 +829,6 @@ http_archive(
     strip_prefix = "curl-8.10.1",
     url = "https://curl.haxx.se/download/curl-8.10.1.tar.gz",
 )
-
 # LiteRT v2.1.6
 # Fetch just the source tree and let it use our already-defined workspace
 # dependencies (@org_tensorflow, @xla, etc.) to avoid collisions.
