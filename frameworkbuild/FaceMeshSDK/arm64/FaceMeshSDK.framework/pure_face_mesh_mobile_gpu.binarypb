@@ -1,0 +1,3 @@
+
+çFaceLandmarkFrontGpuIMAGE:input_video"LANDMARKS:multi_face_landmarks"-ROIS_FROM_LANDMARKS:face_rects_from_landmarks*NUM_FACES:num_faces
+SPacketPresenceCalculatorPACKET:multi_face_landmarks"PRESENCE:landmark_presenceRinput_videozmulti_face_landmarkszface_rects_from_landmarkszlandmark_presenceÇ	num_faces
