@@ -25,14 +25,18 @@ import shutil
 import subprocess
 import sys
 
+VERSION = {}
+exec(open('mediapipe/version.bzl').read(), VERSION)
+
 import setuptools
 from setuptools.command import build_ext
 from setuptools.command import build_py
 from setuptools.command import install
 
-__version__ = 'dev'
+__version__ = VERSION['MEDIAPIPE_FULL_VERSION']
 MP_DISABLE_GPU = os.environ.get('MEDIAPIPE_DISABLE_GPU') != '0'
 IS_WINDOWS = (platform.system() == 'Windows')
+IS_WINDOWS_ARM64 = IS_WINDOWS and (platform.machine().lower() in ['arm64'])
 IS_MAC = (platform.system() == 'Darwin')
 MP_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 MP_DIR_INIT_PY = os.path.join(MP_ROOT_PATH, 'mediapipe/__init__.py')
@@ -138,7 +142,7 @@ def _add_mp_init_files():
   mp_dir_init_file = open(MP_DIR_INIT_PY, 'a')
   mp_dir_init_file.writelines([
       '\n',
-      'import mediapipe.tasks.python as tasks\n',
+      'from mediapipe.tasks import python as tasks\n',
       'from mediapipe.tasks.python.vision.core.image import Image\n',
       'from mediapipe.tasks.python.vision.core.image import ImageFormat\n',
       '\n\n',
@@ -183,6 +187,10 @@ class GenerateMetadataSchema(build_ext.build_ext):
           '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
           '//mediapipe/tasks/metadata:' + target,
       ] + GPU_OPTIONS
+
+      # Activate the windows_arm64 Bazel config when building natively on Windows ARM64.
+      if IS_WINDOWS_ARM64:
+        bazel_command.append('--config=windows_arm64')
 
       _invoke_shell_command(bazel_command)
       _copy_to_build_lib_dir(
@@ -244,9 +252,17 @@ class BuildExtension(build_ext.build_ext):
         '--compilation_mode=opt',
         '--copt=-DNDEBUG',
         '--keep_going',
-        '--define=ENABLE_ODML_CONVERTER=1',
         str(ext.bazel_target),
     ] + GPU_OPTIONS
+
+    # Activate the windows_arm64 Bazel config when building natively on Windows ARM64.
+    if IS_WINDOWS_ARM64:
+      bazel_command.append('--config=windows_arm64')
+
+    # Only enable ODML converter on non-Windows ARM64 platforms
+    # ODML dependencies are not available for Windows ARM64 builds
+    if not IS_WINDOWS_ARM64:
+      bazel_command.append('--define=ENABLE_ODML_CONVERTER=1')
 
     if extra_args:
       bazel_command += extra_args
