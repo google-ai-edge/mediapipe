@@ -966,3 +966,16 @@ http_archive(
     strip_prefix = "curl-8.10.1",
     url = "https://curl.haxx.se/download/curl-8.10.1.tar.gz",
 )
+http_archive(
+    name = "rules_fuzzing",
+    sha256 = "2cc83f91e3048d275f3ebc8b627ebca5c0fc401b3f093a4de398b11ec3e21137",
+    strip_prefix = "rules_fuzzing-v0.8.0",
+    urls = ["https://github.com/bazelbuild/rules_fuzzing/releases/download/v0.8.0/rules_fuzzing-v0.8.0.tar.gz"],
+)
+
+load("@rules_fuzzing//fuzzing:repositories.bzl", "rules_fuzzing_dependencies")
+rules_fuzzing_dependencies()
+load("@rules_fuzzing//fuzzing:init.bzl", "rules_fuzzing_init")
+rules_fuzzing_init()
+load("@fuzzing_py_deps//:requirements.bzl", "install_deps")
+install_deps()
