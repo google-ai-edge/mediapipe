@@ -17,7 +17,6 @@
 from . import audio
 from . import components
 from . import core
-from . import genai
 from . import text
 from . import vision
 
