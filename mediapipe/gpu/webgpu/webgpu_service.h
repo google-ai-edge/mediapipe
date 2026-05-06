@@ -21,6 +21,7 @@
 #include "absl/base/attributes.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
@@ -29,6 +30,7 @@
 #include "mediapipe/gpu/attachments.h"
 #include "mediapipe/gpu/webgpu/webgpu_check.h"
 #include "mediapipe/gpu/webgpu/webgpu_headers.h"
+#include "mediapipe/web/jspi_check.h"
 
 #ifndef __EMSCRIPTEN__
 #include "mediapipe/gpu/webgpu/webgpu_device_registration.h"
@@ -36,47 +38,76 @@
 
 namespace mediapipe {
 
+struct WebGpuContext {
+  wgpu::Instance instance;
+  wgpu::Device device;
+};
+
 // Attachments can be used to cache common resources that are associated with
 // a device, similarly to what we have for GlContext.
 template <class T>
-using WebGpuDeviceAttachment = internal::Attachment<wgpu::Device, T>;
+using WebGpuContextAttachment = internal::Attachment<WebGpuContext, T>;
 
 namespace internal {
 
-class WebGpuDeviceAttachmentManager {
+class WebGpuContextAttachmentManager {
  public:
-  explicit WebGpuDeviceAttachmentManager(wgpu::Device device)
-      : device_(std::move(device)) {}
+  explicit WebGpuContextAttachmentManager(wgpu::Instance instance,
+                                          wgpu::Device device)
+      : context_({std::move(instance), std::move(device)}) {}
 
   // TODO: const result?
   template <class T>
-  T& GetCachedAttachment(const WebGpuDeviceAttachment<T>& attachment) {
+  T& GetCachedAttachment(const WebGpuContextAttachment<T>& attachment) {
     absl::MutexLock lock(attachments_mutex_);
     internal::AttachmentPtr<void>& entry = attachments_[&attachment];
     if (entry == nullptr) {
-      entry = attachment.factory()(device_);
+      entry = attachment.factory()(context_);
     }
     return *static_cast<T*>(entry.get());
   }
 
-  const wgpu::Device& device() const { return device_; }
+  const wgpu::Device& device() const { return context_.device; }
+  const wgpu::Instance& instance() const { return context_.instance; }
 
  private:
-  wgpu::Device device_;
+  WebGpuContext context_;
   absl::Mutex attachments_mutex_;
-  absl::flat_hash_map<const AttachmentBase<wgpu::Device>*, AttachmentPtr<void>>
+  absl::flat_hash_map<const AttachmentBase<WebGpuContext>*, AttachmentPtr<void>>
       attachments_ ABSL_GUARDED_BY(attachments_mutex_);
 };
 
 #ifdef __EMSCRIPTEN__
-static WebGpuDeviceAttachmentManager& GetEmscriptenDeviceAttachmentManager() {
-  static mediapipe::NoDestructor<WebGpuDeviceAttachmentManager> manager(
+inline wgpu::Instance CreateEmscriptenInstance() {
+  // On the web GPUInstance API doesn't exist and Emscripten just calls
+  // into a global event manager. We can just create a new instance with
+  // the required features.
+  if (IsJspiAvailable()) {
+    wgpu::InstanceDescriptor instance_desc = {};
+    static const auto kTimedWaitAny = wgpu::InstanceFeatureName::TimedWaitAny;
+    instance_desc.requiredFeatureCount = 1;
+    instance_desc.requiredFeatures = &kTimedWaitAny;
+    auto instance = wgpu::CreateInstance(&instance_desc);
+    if (instance.Get() != nullptr) {
+      return instance;
+    }
+    LOG(ERROR) << "Failed to create WebGPU instance with TimedWaitAny feature, "
+                  "falling back to instance without it.";
+  }
+  return wgpu::CreateInstance(nullptr);
+}
+
+static WebGpuContextAttachmentManager& GetEmscriptenContextAttachmentManager() {
+  static mediapipe::NoDestructor<WebGpuContextAttachmentManager> manager(
+      CreateEmscriptenInstance(),
       wgpu::Device::Acquire(emscripten_webgpu_get_device()));
   return *manager;
 }
 #else
-static WebGpuDeviceAttachmentManager& GetNativeDeviceAttachmentManager() {
-  static mediapipe::NoDestructor<WebGpuDeviceAttachmentManager> manager(
+static WebGpuContextAttachmentManager& GetNativeContextAttachmentManager() {
+  static mediapipe::NoDestructor<WebGpuContextAttachmentManager> manager(
+      wgpu::Instance(
+          WebGpuDeviceRegistration::GetInstance().GetWebGpuInstance()),
       wgpu::Device(WebGpuDeviceRegistration::GetInstance().GetWebGpuDevice()));
   return *manager;
 }
@@ -86,8 +117,8 @@ static WebGpuDeviceAttachmentManager& GetNativeDeviceAttachmentManager() {
 
 template <class T>
 ABSL_DEPRECATED("Use WebGpuService::GetAttachment instead.")
-T& GetWebGpuDeviceCachedAttachment(const wgpu::Device& device,
-                                   const WebGpuDeviceAttachment<T>& attachment);
+T& GetWebGpuDeviceCachedAttachment(
+    const wgpu::Device& device, const WebGpuContextAttachment<T>& attachment);
 
 class WebGpuService {
  public:
@@ -123,7 +154,7 @@ class WebGpuService {
 #endif  // __EMSCRIPTEN__
 
   template <class T>
-  T& GetAttachment(const WebGpuDeviceAttachment<T>& attachment) {
+  T& GetAttachment(const WebGpuContextAttachment<T>& attachment) {
     return attachment_manager_.GetCachedAttachment<T>(attachment);
   }
 
@@ -145,7 +176,7 @@ class WebGpuService {
   WGPUAdapterInfo adapter_info_;
 #endif  // __EMSCRIPTEN__
 
-  internal::WebGpuDeviceAttachmentManager attachment_manager_;
+  internal::WebGpuContextAttachmentManager attachment_manager_;
 };
 
 ABSL_CONST_INIT extern const GraphService<WebGpuService> kWebGpuService;
@@ -153,9 +184,9 @@ ABSL_CONST_INIT extern const GraphService<WebGpuService> kWebGpuService;
 #ifdef __EMSCRIPTEN__
 template <class T>
 T& GetWebGpuDeviceCachedAttachment(
-    const wgpu::Device& device, const WebGpuDeviceAttachment<T>& attachment) {
+    const wgpu::Device& device, const WebGpuContextAttachment<T>& attachment) {
   // Currently we only handle the single device given to Emscripten.
-  auto& attachments = internal::GetEmscriptenDeviceAttachmentManager();
+  auto& attachments = internal::GetEmscriptenContextAttachmentManager();
   // Note: emscripten_webgpu_get_device, in spite of its name, creates a new
   // wrapper with a new handle each time it's called, even though they all
   // refer to the same device. TODO: fix it in upstream. For now we
@@ -169,10 +200,10 @@ T& GetWebGpuDeviceCachedAttachment(
 #else
 template <class T>
 T& GetWebGpuDeviceCachedAttachment(
-    const wgpu::Device& device, const WebGpuDeviceAttachment<T>& attachment) {
+    const wgpu::Device& device, const WebGpuContextAttachment<T>& attachment) {
   // Note: GetWebGpuDeviceCachedAttachment free function is deprecated in favor
   // of WebGpuService::GetAttachment and will be removed eventually.
-  auto& attachments = internal::GetNativeDeviceAttachmentManager();
+  auto& attachments = internal::GetNativeContextAttachmentManager();
   return attachments.GetCachedAttachment<T>(attachment);
 }
 #endif  // __EMSCRIPTEN__

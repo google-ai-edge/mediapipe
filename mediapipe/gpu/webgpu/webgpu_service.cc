@@ -70,24 +70,9 @@ EM_JS(char*, GetAdapterVendor, (), {
 #ifdef __EMSCRIPTEN__
 WebGpuService::WebGpuService()
     : canvas_selector_("canvas_webgpu"),
-      instance_([] {
-        // On the web GPUInstance API doesn't exist and Emscripten just calls
-        // into a global event manager. We can just create a new instance with
-        // the required features.
-        if (IsJspiAvailable()) {
-          static const auto kTimedWaitAny =
-              wgpu::InstanceFeatureName::TimedWaitAny;
-          wgpu::InstanceDescriptor instance_desc = {
-              .requiredFeatureCount = 1, .requiredFeatures = &kTimedWaitAny};
-          auto instance = wgpu::CreateInstance(&instance_desc);
-          if (instance.Get() != nullptr) {
-            return instance;
-          }
-        }
-        return wgpu::CreateInstance(nullptr);
-      }()),
+      instance_(internal::CreateEmscriptenInstance()),
       device_(wgpu::Device::Acquire(emscripten_webgpu_get_device())),
-      attachment_manager_(internal::WebGpuDeviceAttachmentManager(device_)) {
+      attachment_manager_(instance_, device_) {
   adapter_info_.architecture.data = GetAdapterArchitecture();
   adapter_info_.architecture.length = strlen(adapter_info_.architecture.data);
   adapter_info_.description.data = GetAdapterDescription();
@@ -102,14 +87,14 @@ WebGpuService::WebGpuService()
     : canvas_selector_(""),
       instance_(WebGpuDeviceRegistration::GetInstance().GetWebGpuInstance()),
       device_(WebGpuDeviceRegistration::GetInstance().GetWebGpuDevice()),
-      attachment_manager_(internal::WebGpuDeviceAttachmentManager(device_)) {}
+      attachment_manager_(instance_, device_) {}
 #endif  // __EMSCRIPTEN__
 
 WebGpuService::WebGpuService(wgpu::Device device, wgpu::Instance instance)
     : canvas_selector_(""),
       instance_(std::move(instance)),
       device_(std::move(device)),
-      attachment_manager_(internal::WebGpuDeviceAttachmentManager(device_)) {}
+      attachment_manager_(instance_, device_) {}
 
 wgpu::Instance WebGpuService::instance() const { return instance_; }
 

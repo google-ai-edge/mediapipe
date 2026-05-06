@@ -133,10 +133,10 @@ class WebGpuTextureBufferMultiPool
   const wgpu::Device device_;
 };
 
-inline const WebGpuDeviceAttachment<WebGpuTextureBufferMultiPool>
-    kWebGpuTexturePool{[](wgpu::Device& device) {
-      return WebGpuDeviceAttachment<WebGpuTextureBufferMultiPool>::MakePtr(
-          device);
+inline const WebGpuContextAttachment<WebGpuTextureBufferMultiPool>
+    kWebGpuTexturePool{[](WebGpuContext& ctx) {
+      return WebGpuContextAttachment<WebGpuTextureBufferMultiPool>::MakePtr(
+          ctx.device);
     }};
 
 }  // namespace mediapipe
