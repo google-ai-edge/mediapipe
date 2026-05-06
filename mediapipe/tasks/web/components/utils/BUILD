@@ -1,9 +1,9 @@
-load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_library")
+load("//mediapipe/framework/port:build_config.bzl", "ts_library")
+load("//mediapipe/tasks/web:build_defs.bzl", "jasmine_node_test")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
-mediapipe_ts_library(
+ts_library(
     name = "cosine_similarity",
     srcs = ["cosine_similarity.ts"],
     deps = [
@@ -11,7 +11,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "cosine_similarity_test_lib",
     testonly = True,
     srcs = ["cosine_similarity_test.ts"],
@@ -26,13 +26,13 @@ jasmine_node_test(
     srcs = [":cosine_similarity_test_lib"],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "numeric_conversion",
     srcs = ["numeric_conversion.ts"],
     visibility = ["//mediapipe:__subpackages__"],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "numeric_conversion_test_lib",
     testonly = True,
     srcs = ["numeric_conversion_test.ts"],

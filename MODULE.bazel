@@ -1,0 +1,83 @@
+module(name = "mediapipe")
+
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "platforms", version = "0.0.11")
+single_version_override(
+    module_name = "platforms",
+    version = "0.0.11",
+)
+
+bazel_dep(name = "rules_cc", version = "0.0.17")
+bazel_dep(name = "rules_java", version = "7.10.0")
+single_version_override(
+    module_name = "rules_java",
+    version = "7.10.0",
+)
+
+bazel_dep(name = "rules_kotlin", version = "1.9.6")
+bazel_dep(name = "rules_shell", version = "0.4.1")
+bazel_dep(name = "rules_pkg", version = "1.0.1")
+bazel_dep(name = "aspect_rules_jasmine", version = "2.0.4")
+bazel_dep(name = "aspect_rules_js", version = "2.7.0")
+bazel_dep(name = "aspect_bazel_lib", version = "2.21.2")
+bazel_dep(name = "aspect_rules_rollup", version = "2.0.0")
+bazel_dep(name = "aspect_rules_ts", version = "3.7.0")
+bazel_dep(name = "rules_proto_grpc_js", version = "5.8.0")
+bazel_dep(name = "rules_rust", version = "0.46.0")
+single_version_override(
+    module_name = "rules_rust",
+    version = "0.46.0",
+)
+
+bazel_dep(name = "rules_python", version = "0.34.0", repo_name = "rules_python_bzlmod")
+single_version_override(
+    module_name = "rules_python",
+    version = "0.34.0",
+)
+
+# ABSL on 2025-01-14
+bazel_dep(name = "abseil-cpp", repo_name = "com_google_absl")
+archive_override(
+    module_name = "abseil-cpp",
+    strip_prefix = "abseil-cpp-255c84dadd029fd8ad25c5efb5933e47beaa00c7",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/255c84dadd029fd8ad25c5efb5933e47beaa00c7.tar.gz"],
+)
+
+# RE2 version 2025-11-05 (and later) explicitly adds the missing <cstring> include to prog.h and
+# improves compatibility with newer Abseil versions)
+bazel_dep(name = "re2", version = "2025-11-05", repo_name = "com_googlesource_code_re2")
+bazel_dep(name = "protobuf", repo_name = "com_google_protobuf")
+archive_override(
+    module_name = "protobuf",
+    strip_prefix = "protobuf-6.31.1",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v6.31.1.zip"],
+)
+
+python = use_extension("@rules_python_bzlmod//python/extensions:python.bzl", "python")
+python.toolchain(
+    ignore_root_user_error = True,
+    is_default = True,
+    python_version = "3.11",
+)
+use_repo(python, "python_3_11")
+
+npm = use_extension("@aspect_rules_js//npm:extensions.bzl", "npm")
+npm.npm_translate_lock(
+    name = "npm",
+    pnpm_lock = "//:pnpm-lock.yaml",
+)
+use_repo(npm, "npm")
+
+rules_ts_ext = use_extension("@aspect_rules_ts//ts:extensions.bzl", "ext")
+rules_ts_ext.deps(
+    ts_version_from = "//:package.json",
+)
+use_repo(rules_ts_ext, "npm_typescript")
+
+bazel_dep(name = "rules_nodejs", version = "6.3.0")
+
+node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node")
+node.toolchain(node_version = "20.14.0")
+use_repo(node, "nodejs_toolchains")
+
+register_toolchains("@nodejs_toolchains//:all")

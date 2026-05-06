@@ -3,15 +3,15 @@
 # This task takes video frames and outputs synchronized frames along with
 # the detection results for one or more face categories, using Face Landmarker.
 
-load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
+load("//mediapipe/framework/port:build_config.bzl", "ts_declaration", "ts_library")
+load("//mediapipe/tasks/web:build_defs.bzl", "jasmine_node_test")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
-mediapipe_ts_library(
+ts_library(
     name = "face_landmarker",
     srcs = ["face_landmarker.ts"],
     visibility = ["//visibility:public"],
@@ -40,14 +40,14 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "face_landmarks_connections",
     srcs = ["face_landmarks_connections.ts"],
     visibility = ["//visibility:public"],
     deps = ["//mediapipe/tasks/web/vision/core:types"],
 )
 
-mediapipe_ts_declaration(
+ts_declaration(
     name = "face_landmarker_types",
     srcs = [
         "face_landmarker_options.d.ts",
@@ -64,7 +64,7 @@ mediapipe_ts_declaration(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "face_landmarker_test_lib",
     testonly = True,
     srcs = [

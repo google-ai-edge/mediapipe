@@ -9,9 +9,10 @@
 #include <vector>
 
 #include "HalideBuffer.h"
-#include "absl/base/log_severity.h"
 #include "absl/log/absl_check.h"
-#include "absl/log/scoped_mock_log.h"
+#include "absl/log/log_entry.h"
+#include "absl/log/log_sink.h"
+#include "absl/log/log_sink_registry.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
@@ -29,9 +30,7 @@
 namespace mediapipe::debug {
 namespace {
 
-using ::testing::_;
 using ::testing::HasSubstr;
-using ::testing::Invoke;
 
 constexpr char kColorTerm[] = "COLORTERM";
 
@@ -104,14 +103,18 @@ Tensor MakeTensor(int width, int height, int num_channels) {
 }
 
 class LoggingTest : public ::testing::Test {
+ private:
+  struct TestLogSink : public absl::LogSink {
+    TestLogSink() { absl::AddLogSink(this); }
+    ~TestLogSink() override { absl::RemoveLogSink(this); }
+    void Send(const absl::LogEntry& e) override {
+      messages += std::string(e.text_message()) + "\n";
+    }
+    std::string messages;
+  } log_sink_;
+
  protected:
   void SetUp() override {
-    EXPECT_CALL(log_, Log(absl::LogSeverity::kInfo, _, _))
-        .WillRepeatedly(Invoke(
-            [&](auto severity, const std::string& file_path,
-                const std::string& message) { log_lines_ += message + "\n"; }));
-    log_.StartCapturingLogs();
-
     // Disable color output.
     prev_colorterm_env_ = std::getenv(kColorTerm);
     setenv(kColorTerm, "invalid", 1);
@@ -125,14 +128,9 @@ class LoggingTest : public ::testing::Test {
     }
   }
 
-  void ExpectLog(absl::string_view message) {}
-
-  const std::string& log_lines() const { return log_lines_; };
-  absl::ScopedMockLog& log() { return log_; }
+  const std::string& log_lines() const { return log_sink_.messages; }
 
  private:
-  absl::ScopedMockLog log_;
-  std::string log_lines_;
   char* prev_colorterm_env_ = nullptr;
 };
 
@@ -334,26 +332,23 @@ TEST_F(LoggingTest, LogTensorChannel) {
 }
 
 TEST_F(LoggingTest, LogTensorChannelWithOutOfBoundsChannelFails) {
-  EXPECT_CALL(log(), Log(absl::LogSeverity::kWarning, _,
-                         HasSubstr("cannot log channel")));
   Tensor tensor =
       MakeTensor<float>(/*width=*/10, /*height=*/10, /*num_channels=*/2);
   debug::LogTensorChannel(tensor, 2);
+  EXPECT_THAT(log_lines(), HasSubstr("cannot log channel"));
 }
 
 TEST_F(LoggingTest, LogTensorWithBadDimensionsFails) {
-  EXPECT_CALL(log(), Log(absl::LogSeverity::kWarning, _,
-                         HasSubstr("cannot log tensor with shape")));
   Tensor tensor(Tensor::ElementType::kFloat32, {1, 2, 3});
   debug::LogTensor(tensor);
+  EXPECT_THAT(log_lines(), HasSubstr("cannot log tensor with shape"));
 }
 
 TEST_F(LoggingTest, LogTensorWithBadElementTypeFails) {
-  EXPECT_CALL(log(), Log(absl::LogSeverity::kWarning, _,
-                         HasSubstr("cannot log tensor of type")));
   Tensor tensor =
       MakeTensor<int>(/*width=*/10, /*height=*/10, /*num_channels=*/2);
   debug::LogTensor(tensor);
+  EXPECT_THAT(log_lines(), HasSubstr("cannot log tensor of type"));
 }
 
 TEST_F(LoggingTest, LogTensorColor) {
@@ -377,9 +372,12 @@ TEST_F(LoggingTest, LogTensorColor) {
                   "38;2;223;223;0m\xE2\x96\x84\x1B[0m\n"));
 }
 
+std::string GetTestImagePath() {
+  return file::JoinPath(kTestDataPath, kTestImageFilename);
+}
+
 TEST_F(LoggingTest, LogImageGrayscale) {
-  std::string path =
-      file::JoinPath(GetTestRootDir(), kTestDataPath, kTestImageFilename);
+  std::string path = GetTestImagePath();
   MP_ASSERT_OK_AND_ASSIGN(auto image, LoadTestImage(path, ImageFormat::GRAY8));
   EXPECT_EQ(image->Format(), ImageFormat::GRAY8);
 
@@ -450,8 +448,7 @@ TEST_F(LoggingTest, LogImageGrayscale) {
 }
 
 TEST_F(LoggingTest, LogImageRGB) {
-  std::string path =
-      file::JoinPath(GetTestRootDir(), kTestDataPath, kTestImageFilename);
+  std::string path = GetTestImagePath();
   MP_ASSERT_OK_AND_ASSIGN(auto image, LoadTestImage(path, ImageFormat::SRGB));
   EXPECT_EQ(image->Format(), ImageFormat::SRGB);
 
@@ -521,8 +518,7 @@ TEST_F(LoggingTest, LogImageRGB) {
 }
 
 TEST_F(LoggingTest, LogImageWithImage) {
-  std::string path =
-      file::JoinPath(GetTestRootDir(), kTestDataPath, kTestImageFilename);
+  std::string path = GetTestImagePath();
   MP_ASSERT_OK_AND_ASSIGN(auto image_frame,
                           LoadTestImage(path, ImageFormat::SRGB));
   Image image(std::move(image_frame));
@@ -538,8 +534,7 @@ TEST_F(LoggingTest, LogImageWithImage) {
 }
 
 TEST_F(LoggingTest, LogImageRGBAColor) {
-  std::string path =
-      file::JoinPath(GetTestRootDir(), kTestDataPath, kTestImageFilename);
+  std::string path = GetTestImagePath();
   MP_ASSERT_OK_AND_ASSIGN(auto image, LoadTestImage(path, ImageFormat::SRGBA));
   EXPECT_EQ(image->Format(), ImageFormat::SRGBA);
 
@@ -765,12 +760,11 @@ TEST_F(LoggingTest, LogHalideBufferOneDimensionalVertical) {
 }
 
 TEST_F(LoggingTest, LogHalideBufferFourDimensional) {
-  EXPECT_CALL(log(),
-              Log(absl::LogSeverity::kWarning, _, HasSubstr("cannot log")));
   auto buffer = Halide::Runtime::Buffer<uint8_t>(1, 2, 3, 4);
   buffer.for_each_element(
       [&](int x, int y, int z, int w) { buffer(x, y, z, w) = 0; });
   LogHalideBuffer(buffer);
+  EXPECT_THAT(log_lines(), HasSubstr("cannot log"));
 }
 
 TEST_F(LoggingTest, LogHalideBufferEmpty) {

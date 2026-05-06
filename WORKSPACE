@@ -8,82 +8,6 @@ bind(
     actual = "@local_config_python//:python_headers",
 )
 
-http_archive(
-    name = "bazel_skylib",
-    sha256 = "bc283cdfcd526a52c3201279cda4bc298652efa898b10b4db0837dc51652756f",
-    urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.7.1/bazel-skylib-1.7.1.tar.gz",
-        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.7.1/bazel-skylib-1.7.1.tar.gz",
-    ],
-)
-
-load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
-
-bazel_skylib_workspace()
-
-load("@bazel_skylib//lib:versions.bzl", "versions")
-
-versions.check(minimum_bazel_version = "3.7.2")
-
-# Provides platforms and constraints that the updated C++, Java, and Protobuf rules require to
-# function correctly.
-http_archive(
-    name = "platforms",
-    urls = [
-        "https://github.com/bazelbuild/platforms/releases/download/0.0.11/platforms-0.0.11.tar.gz",
-    ],
-    sha256 = "29742e87275809b5e598dc2f04d86960cc7a55b3067d97221c9abbc9926bff0f",
-)
-
-# ABSL on 2025-01-14
-http_archive(
-    name = "com_google_absl",
-    repo_mapping = {"@googletest": "@com_google_googletest"},
-    sha256 = "87e91fb785a2d0233f4599317afd576b7736e6732d557bdcdfdc11990bd333ef",
-    strip_prefix = "abseil-cpp-255c84dadd029fd8ad25c5efb5933e47beaa00c7",
-    urls = ["https://github.com/abseil/abseil-cpp/archive/255c84dadd029fd8ad25c5efb5933e47beaa00c7.tar.gz"],
-)
-
-# RE2 version 2025-11-05 (and later) explicitly adds the missing <cstring> include to prog.h and
-# improves compatibility with newer Abseil versions)
-http_archive(
-    name = "com_googlesource_code_re2",
-    repo_mapping = {"@abseil-cpp": "@com_google_absl"},
-    sha256 = "87f6029d2f6de8aa023654240a03ada90e876ce9a4676e258dd01ea4c26ffd67",
-    strip_prefix = "re2-2025-11-05",
-    urls = [
-        "https://github.com/google/re2/archive/2025-11-05.tar.gz",
-    ],
-)
-
-# We are migrating to the Starlark-native architectural branch of rules_cc. While the 0.1.x series
-# has a higher version number, it is a legacy branch. The 0.0.17 version (and its successor 0.2.x)
-# is required to support the toolchain resolution requirements of Protobuf 6.x and Abseil 2025.
-http_archive(
-    name = "rules_cc",
-    sha256 = "abc605dd850f813bb37004b77db20106a19311a96b2da1c92b789da529d28fe1",
-    strip_prefix = "rules_cc-0.0.17",
-    urls = ["https://github.com/bazelbuild/rules_cc/releases/download/0.0.17/rules_cc-0.0.17.tar.gz"],
-)
-
-load("@rules_cc//cc:repositories.bzl", "rules_cc_dependencies", "rules_cc_toolchains")
-rules_cc_dependencies()
-rules_cc_toolchains()
-
-http_archive(
-    name = "rules_java",
-    sha256 = "eb5447f019734b0c4284eaa5f8248415084da5445ba8201c935a211ab8af43a0",
-    url = "https://github.com/bazelbuild/rules_java/releases/download/7.10.0/rules_java-7.10.0.tar.gz",
-)
-
-http_archive(
-    name = "com_google_protobuf",
-    repo_mapping = {"@abseil-cpp": "@com_google_absl"},
-    sha256 = "6e09bbc950ba60c3a7b30280210cd285af8d7d8ed5e0a6ed101c72aff22e8d88",
-    strip_prefix = "protobuf-6.31.1",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v6.31.1.zip"],
-)
-
 load("@com_google_protobuf//bazel/private:proto_bazel_features.bzl", "proto_bazel_features")  # buildifier: disable=bzl-visibility
 
 proto_bazel_features(name = "proto_bazel_features")
@@ -94,19 +18,6 @@ http_archive(
     strip_prefix = "rules_android_ndk-0.1.3",
     url = "https://github.com/bazelbuild/rules_android_ndk/releases/download/v0.1.3/rules_android_ndk-v0.1.3.tar.gz",
 )
-
-http_archive(
-    name = "rules_shell",
-    sha256 = "bc61ef94facc78e20a645726f64756e5e285a045037c7a61f65af2941f4c25e1",
-    strip_prefix = "rules_shell-0.4.1",
-    url = "https://github.com/bazelbuild/rules_shell/releases/download/v0.4.1/rules_shell-v0.4.1.tar.gz",
-)
-
-load("@rules_shell//shell:repositories.bzl", "rules_shell_dependencies", "rules_shell_toolchains")
-
-rules_shell_dependencies()
-
-rules_shell_toolchains()
 
 load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")  # @unused
 
@@ -481,21 +392,6 @@ load(
 
 apple_support_dependencies()
 
-# Kotlin rules
-http_archive(
-    name = "rules_kotlin",
-    sha256 = "e1448a56b2462407b2688dea86df5c375b36a0991bd478c2ddd94c97168125e2",
-    url = "https://github.com/bazelbuild/rules_kotlin/releases/download/v2.1.3/rules_kotlin-v2.1.3.tar.gz",
-)
-
-load("@rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories")
-
-kotlin_repositories()
-
-load("@rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")
-
-kt_register_toolchains()
-
 # This is used to select all contents of the archives for CMake-based packages to give CMake access to them.
 all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
 
@@ -792,59 +688,6 @@ libedgetpu_dependencies()
 load("@coral_crosstool//:configure.bzl", "cc_crosstool")
 
 cc_crosstool(name = "crosstool")
-
-# Node dependencies
-http_archive(
-    name = "build_bazel_rules_nodejs",
-    sha256 = "a1295b168f183218bc88117cf00674bcd102498f294086ff58318f830dd9d9d1",
-    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/5.8.5/rules_nodejs-5.8.5.tar.gz"],
-)
-
-load("@build_bazel_rules_nodejs//:repositories.bzl", "build_bazel_rules_nodejs_dependencies")
-
-build_bazel_rules_nodejs_dependencies()
-
-# fetches nodejs, npm, and yarn
-load("@build_bazel_rules_nodejs//:index.bzl", "node_repositories", "yarn_install")
-
-node_repositories(
-    node_version = "20.14.0",
-)
-
-yarn_install(
-    name = "npm",
-    package_json = "@//:package.json",
-    yarn_lock = "@//:yarn.lock",
-)
-
-# Protobuf for Node dependencies
-http_archive(
-    name = "rules_proto_grpc",
-    sha256 = "bbe4db93499f5c9414926e46f9e35016999a4e9f6e3522482d3760dc61011070",
-    strip_prefix = "rules_proto_grpc-4.2.0",
-    urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/archive/4.2.0.tar.gz"],
-)
-
-# Protobuf Javascript v4.0.2 is compatible with Protobuf v6.31.1
-http_archive(
-    name = "com_google_protobuf_javascript",
-    repo_mapping = {"@abseil-cpp": "@com_google_absl"},
-    sha256 = "a08244115ed0535971ec894abf078da90ad2c0938700612f90dc550f218627ee",
-    strip_prefix = "protobuf-javascript-4.0.2",
-    urls = ["https://github.com/protocolbuffers/protobuf-javascript/archive/refs/tags/v4.0.2.tar.gz"],
-)
-
-load("@rules_proto_grpc//:repositories.bzl", "rules_proto_grpc_repos", "rules_proto_grpc_toolchains")
-
-rules_proto_grpc_toolchains()
-
-rules_proto_grpc_repos()
-
-load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
-
-rules_proto_dependencies()
-
-rules_proto_toolchains()
 
 load("@//third_party:external_files.bzl", "external_files")
 

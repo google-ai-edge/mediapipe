@@ -1,12 +1,11 @@
 # This contains the MediaPipe Vision Tasks.
 
-load("@build_bazel_rules_nodejs//:index.bzl", "pkg_npm")
-load("@npm//@bazel/rollup:index.bzl", "rollup_bundle")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_library")
+load("//mediapipe/framework/port:build_config.bzl", "ts_library")
 load(
     "//mediapipe/framework/tool:mediapipe_files.bzl",
     "mediapipe_files",
 )
+load("//mediapipe/tasks/web:build_defs.bzl", "pkg_npm", "rollup_bundle")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -37,14 +36,14 @@ VISION_LIBS = [
     "//mediapipe/tasks/web/vision/pose_landmarker",
 ]
 
-mediapipe_ts_library(
+ts_library(
     name = "vision_lib",
     srcs = ["index.ts"],
     visibility = ["//visibility:public"],
     deps = VISION_LIBS,
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "vision_types",
     srcs = ["types.ts"],
     visibility = ["//visibility:public"],
@@ -60,10 +59,10 @@ rollup_bundle(
     sourcemap = "true",
     deps = [
         ":vision_lib",
-        "@npm//@rollup/plugin-commonjs",
-        "@npm//@rollup/plugin-node-resolve",
-        "@npm//@rollup/plugin-terser",
-        "@npm//google-protobuf",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
     ],
 )
 
@@ -76,10 +75,10 @@ rollup_bundle(
     sourcemap = "true",
     deps = [
         ":vision_lib",
-        "@npm//@rollup/plugin-commonjs",
-        "@npm//@rollup/plugin-node-resolve",
-        "@npm//@rollup/plugin-terser",
-        "@npm//google-protobuf",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
     ],
 )
 
@@ -106,23 +105,15 @@ genrule(
     ),
 )
 
-genrule(
-    name = "package_json",
-    srcs = ["//mediapipe/tasks/web:package.json"],
-    outs = ["package.json"],
-    cmd = "cp $< $@",
-)
-
 pkg_npm(
     name = "vision_pkg",
-    package_name = "@mediapipe/tasks-__NAME__",
     srcs = ["README.md"],
+    package_json = "//mediapipe/tasks/web:package.json",
     substitutions = {
         "__NAME__": "vision",
         "__DESCRIPTION__": "MediaPipe Vision Tasks",
         "__TYPES__": "vision.d.ts",
     },
-    tgz = "vision_pkg.tgz",
     deps = [
         "wasm/vision_wasm_internal.js",
         "wasm/vision_wasm_internal.wasm",
@@ -130,7 +121,6 @@ pkg_npm(
         "wasm/vision_wasm_module_internal.wasm",
         "wasm/vision_wasm_nosimd_internal.js",
         "wasm/vision_wasm_nosimd_internal.wasm",
-        ":package_json",
         ":vision_sources",
     ],
 )

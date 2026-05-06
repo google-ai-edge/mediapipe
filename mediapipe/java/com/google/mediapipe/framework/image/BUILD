@@ -25,6 +25,7 @@ android_library(
         "//third_party:autovalue",
         "@maven//:androidx_annotation_annotation",
         "@maven//:androidx_legacy_legacy_support_v4",
+        "@maven//:com_google_errorprone_error_prone_annotations",
         "@maven//:com_google_guava_guava",
     ],
 )

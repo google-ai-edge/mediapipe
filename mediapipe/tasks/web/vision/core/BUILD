@@ -1,11 +1,11 @@
 # This package contains options shared by all MediaPipe Vision Tasks for Web.
 
-load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
+load("//mediapipe/framework/port:build_config.bzl", "ts_declaration", "ts_library")
+load("//mediapipe/tasks/web:build_defs.bzl", "jasmine_node_test")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
-mediapipe_ts_declaration(
+ts_declaration(
     name = "image_processing_options",
     srcs = ["image_processing_options.d.ts"],
     deps = [
@@ -13,7 +13,7 @@ mediapipe_ts_declaration(
     ],
 )
 
-mediapipe_ts_declaration(
+ts_declaration(
     name = "vision_task_options",
     srcs = ["vision_task_options.d.ts"],
     deps = [
@@ -21,7 +21,7 @@ mediapipe_ts_declaration(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "types",
     srcs = ["types.ts"],
     deps = [
@@ -29,7 +29,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "drawing_utils",
     srcs = [
         "drawing_utils.ts",
@@ -47,7 +47,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "drawing_utils_test_lib",
     testonly = True,
     srcs = ["drawing_utils.test.ts"],
@@ -64,18 +64,18 @@ jasmine_node_test(
     srcs = [":drawing_utils_test_lib"],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "image",
     srcs = ["image.ts"],
     deps = ["image_shader_context"],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "image_shader_context",
     srcs = ["image_shader_context.ts"],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "image_test_lib",
     testonly = True,
     srcs = ["image.test.ts"],
@@ -90,7 +90,7 @@ jasmine_node_test(
     srcs = [":image_test_lib"],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "mask",
     srcs = ["mask.ts"],
     deps = [
@@ -100,7 +100,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "mask_test_lib",
     testonly = True,
     srcs = ["mask.test.ts"],
@@ -116,7 +116,7 @@ jasmine_node_test(
     srcs = [":mask_test_lib"],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "vision_task_runner",
     srcs = ["vision_task_runner.ts"],
     deps = [
@@ -135,7 +135,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "vision_task_runner_test_lib",
     testonly = True,
     srcs = ["vision_task_runner_test.ts"],
