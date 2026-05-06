@@ -44,7 +44,7 @@ _OUTPUT_DIR = flags.DEFINE_string(
 
 _URL_PREFIX = flags.DEFINE_string(
     'code_url_prefix',
-    'https://github.com/google/mediapipe/blob/master/mediapipe',
+    'https://github.com/google-ai-edge/mediapipe/blob/master/mediapipe',
     'The url prefix for links to code.')
 
 _SEARCH_HINTS = flags.DEFINE_bool(

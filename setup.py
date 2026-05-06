@@ -75,7 +75,7 @@ def _get_long_description():
   # Fix the image urls.
   return re.sub(
       r'(docs/images/|docs/images/mobile/)([A-Za-z0-9_]*\.(png|gif))',
-      r'https://github.com/google/mediapipe/blob/master/\g<1>\g<2>?raw=true',
+      r'https://github.com/google-ai-edge/mediapipe/blob/master/\g<1>\g<2>?raw=true',
       open(os.path.join(MP_ROOT_PATH, 'README.md'),
            'rb').read().decode('utf-8'))
 
@@ -347,7 +347,7 @@ class Restore(setuptools.Command):
 setuptools.setup(
     name='mediapipe',
     version=__version__,
-    url='https://github.com/google/mediapipe',
+    url='https://github.com/google-ai-edge/mediapipe',
     description=(
         'MediaPipe is the simplest way for researchers and developers to build'
         ' world-class ML solutions and applications for mobile, edge, cloud and'

@@ -27,7 +27,7 @@ iOS), web, desktop, edge devices, and IoT, effortlessly.
 
 ## Get started
 
-You can get started with MediaPipe Solutions by by checking out any of the
+You can get started with MediaPipe Solutions by checking out any of the
 developer guides for
 [vision](https://developers.google.com/mediapipe/solutions/vision/object_detector),
 [text](https://developers.google.com/mediapipe/solutions/text/text_classifier),
@@ -46,7 +46,7 @@ apply artificial intelligence (AI) and machine learning (ML) techniques in your
 applications. You can plug these solutions into your applications immediately,
 customize them to your needs, and use them across multiple development
 platforms. MediaPipe Solutions is part of the MediaPipe [open source
-project](https://github.com/google/mediapipe), so you can further customize the
+project](https://github.com/google-ai-edge/mediapipe), so you can further customize the
 solutions code to meet your application needs.
 
 These libraries and resources provide the core functionality for each MediaPipe
@@ -71,11 +71,11 @@ These tools let you customize and evaluate solutions:
 We have ended support for [these MediaPipe Legacy Solutions](https://developers.google.com/mediapipe/solutions/guide#legacy)
 as of March 1, 2023. All other MediaPipe Legacy Solutions will be upgraded to
 a new MediaPipe Solution. See the [Solutions guide](https://developers.google.com/mediapipe/solutions/guide#legacy)
-for details. The [code repository](https://github.com/google/mediapipe/tree/master/mediapipe)
+for details. The [code repository](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe)
 and prebuilt binaries for all MediaPipe Legacy Solutions will continue to be
 provided on an as-is basis.
 
-For more on the legacy solutions, see the [documentation](https://github.com/google/mediapipe/tree/master/docs/solutions).
+For more on the legacy solutions, see the [documentation](https://github.com/google-ai-edge/mediapipe/tree/master/docs/solutions).
 
 ## Framework
 
@@ -108,7 +108,7 @@ concepts](https://developers.google.com/mediapipe/framework/framework_concepts/o
 ## Contributing
 
 We welcome contributions. Please follow these
-[guidelines](https://github.com/google/mediapipe/blob/master/CONTRIBUTING.md).
+[guidelines](https://github.com/google-ai-edge/mediapipe/blob/master/CONTRIBUTING.md).
 
 We use GitHub issues for tracking requests and bugs. Please post questions to
 the MediaPipe Stack Overflow with a `mediapipe` tag.
