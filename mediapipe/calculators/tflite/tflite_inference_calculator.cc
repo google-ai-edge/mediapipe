@@ -21,6 +21,7 @@
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/calculators/tflite/tflite_inference_calculator.pb.h"
+#include "mediapipe/calculators/tflite/tflite_model_metadata.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -85,6 +86,7 @@ size_t RoundUp(size_t n, size_t m) { return ((n + m - 1) / m) * m; }  // NOLINT
 
 constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kTensorsGpuTag[] = "TENSORS_GPU";
+constexpr char kModelMetadataTag[] = "MODEL_METADATA";
 }  // namespace
 
 #if defined(MEDIAPIPE_EDGE_TPU)
@@ -365,6 +367,12 @@ absl::Status TfLiteInferenceCalculator::GetContract(CalculatorContract* cc) {
     cc->InputSidePackets().Tag(kModelTag).Set<TfLiteModelPtr>();
   }
 
+  if (cc->OutputSidePackets().HasTag(kModelMetadataTag)) {
+    cc->OutputSidePackets()
+        .Tag(kModelMetadataTag)
+        .Set<TfLiteModelMetadata>();
+  }
+
   if (ShouldUseGpu(cc)) {
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
     MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
@@ -433,6 +441,47 @@ absl::Status TfLiteInferenceCalculator::Open(CalculatorContext* cc) {
   } else {
     MP_RETURN_IF_ERROR(LoadDelegate(cc));
   }
+
+  // Emit model metadata side packet when requested.
+  if (cc->OutputSidePackets().HasTag(kModelMetadataTag) && interpreter_) {
+    TfLiteModelMetadata metadata;
+    auto fill_spec = [&](const std::vector<int>& indices,
+                         google::protobuf::RepeatedPtrField<TfLiteTensorSpec>* specs) {
+      for (int idx : indices) {
+        const TfLiteTensor* t = interpreter_->tensor(idx);
+        ABSL_CHECK(t != nullptr) << "Unexpected null tensor at index " << idx;
+        TfLiteTensorSpec* spec = specs->Add();
+        if (t->name) spec->set_name(t->name);
+        if (t->dims) {
+          for (int d = 0; d < t->dims->size; ++d)
+            spec->add_shape(t->dims->data[d]);
+        }
+        switch (t->type) {
+          case kTfLiteFloat32: spec->set_type(TfLiteTensorSpec::FLOAT32); break;
+          case kTfLiteInt8:    spec->set_type(TfLiteTensorSpec::INT8);    break;
+          case kTfLiteUInt8:   spec->set_type(TfLiteTensorSpec::UINT8);   break;
+          case kTfLiteInt32:   spec->set_type(TfLiteTensorSpec::INT32);   break;
+          case kTfLiteInt64:   spec->set_type(TfLiteTensorSpec::INT64);   break;
+          default: break;
+        }
+        if (t->quantization.type == kTfLiteAffineQuantization) {
+          const auto* qp =
+              static_cast<TfLiteAffineQuantization*>(t->quantization.params);
+          if (qp && qp->scale && qp->scale->size > 0) {
+            spec->set_quantization_scale(qp->scale->data[0]);
+            spec->set_quantization_zero_point(
+                qp->zero_point ? qp->zero_point->data[0] : 0);
+          }
+        }
+      }
+    };
+    fill_spec(interpreter_->inputs(),  metadata.mutable_inputs());
+    fill_spec(interpreter_->outputs(), metadata.mutable_outputs());
+    cc->OutputSidePackets()
+        .Tag(kModelMetadataTag)
+        .Set(MakePacket<TfLiteModelMetadata>(std::move(metadata)));
+  }
+
   return absl::OkStatus();
 }
 
