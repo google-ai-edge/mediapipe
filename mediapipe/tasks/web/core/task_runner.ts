@@ -118,6 +118,9 @@ export abstract class TaskRunner {
   /** Configures the task with custom options. */
   abstract setOptions(options: TaskRunnerOptions): Promise<void>;
 
+  /** Config graph for auto-resizing canvas. */
+  abstract setAutoResizeCanvas(isAutoResizeCanvas: boolean): void;
+
   /**
    * Applies the current set of options, including optionally any base options
    * that have not been processed by the task implementation. The options are
