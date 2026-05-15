@@ -52,6 +52,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_cc_proto",
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "//mediapipe/util:label_map_cc_proto",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
@@ -86,6 +87,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ] + select({

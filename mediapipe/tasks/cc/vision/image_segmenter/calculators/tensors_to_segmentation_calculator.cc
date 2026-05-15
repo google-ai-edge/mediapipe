@@ -24,6 +24,7 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/types/span.h"
@@ -434,49 +435,59 @@ absl::Status TensorsToSegmentationNodeImpl::Process(
         options_.segmenter_options().output_type() ==
             SegmenterOptions::CONFIDENCE_MASK ||
         (cc.confidence_mask_out.Count() > 0);
-    std::vector<std::unique_ptr<Image>> segmented_masks =
-        postprocessor_.GetSegmentationResultGpu(
-            input_shape, output_shape, input_tensor, produce_confidence_masks,
-            produce_category_mask);
-    bool new_style = cc.category_mask_out.IsConnected() ||
-                     (cc.confidence_mask_out.Count() > 0);
-    if (new_style) {
-      int confidence_mask_count =
-          options_.confidence_mask_options().output_channels().empty()
-              ? input_shape.channels
-              : options_.confidence_mask_options().output_channels_size();
-      if (options_.confidence_mask_options().pack4()) {
-        confidence_mask_count = (confidence_mask_count + 3) / 4;
+    auto gpu_segmented_masks = postprocessor_.GetSegmentationResultGpu(
+        input_shape, output_shape, input_tensor, produce_confidence_masks,
+        produce_category_mask);
+    if (!gpu_segmented_masks.ok()) {
+      if (gpu_segmented_masks.status().code() !=
+          absl::StatusCode::kFailedPrecondition) {
+        return gpu_segmented_masks.status();
       }
-      int category_mask_count = produce_category_mask ? 1 : 0;
+      ABSL_LOG(WARNING) << "Falling back to CPU segmentation postprocessing: "
+                        << gpu_segmented_masks.status();
+    } else {
+      std::vector<std::unique_ptr<Image>> segmented_masks =
+          std::move(*gpu_segmented_masks);
+      bool new_style = cc.category_mask_out.IsConnected() ||
+                       (cc.confidence_mask_out.Count() > 0);
+      if (new_style) {
+        int confidence_mask_count =
+            options_.confidence_mask_options().output_channels().empty()
+                ? input_shape.channels
+                : options_.confidence_mask_options().output_channels_size();
+        if (options_.confidence_mask_options().pack4()) {
+          confidence_mask_count = (confidence_mask_count + 3) / 4;
+        }
+        int category_mask_count = produce_category_mask ? 1 : 0;
 
-      // segmented_masks = [confidence_masks if any, category_mask if any]
-      if (produce_confidence_masks) {
-        RET_CHECK_EQ(segmented_masks.size(),
-                     confidence_mask_count + category_mask_count)
-            << "Confidence mask count mismatch.";
-        RET_CHECK_EQ(cc.confidence_mask_out.Count(),
-                     segmented_masks.size() - category_mask_count)
-            << "Confidence mask output count mismatch.";
-        for (int i = 0; i < confidence_mask_count; ++i) {
-          cc.confidence_mask_out.At(i).Send(std::move(segmented_masks[i]));
+        // segmented_masks = [confidence_masks if any, category_mask if any]
+        if (produce_confidence_masks) {
+          RET_CHECK_EQ(segmented_masks.size(),
+                       confidence_mask_count + category_mask_count)
+              << "Confidence mask count mismatch.";
+          RET_CHECK_EQ(cc.confidence_mask_out.Count(),
+                       segmented_masks.size() - category_mask_count)
+              << "Confidence mask output count mismatch.";
+          for (int i = 0; i < confidence_mask_count; ++i) {
+            cc.confidence_mask_out.At(i).Send(std::move(segmented_masks[i]));
+          }
+        }
+        if (produce_category_mask) {
+          int category_mask_index =
+              produce_confidence_masks ? confidence_mask_count : 0;
+          cc.category_mask_out.Send(
+              std::move(segmented_masks[category_mask_index]));
+        }
+      } else {
+        // TODO: remove deprecated output type support.
+        RET_CHECK_EQ(cc.segmentation_out.Count(), segmented_masks.size())
+            << "Segmentation output count mismatch.";
+        for (int i = 0; i < segmented_masks.size(); ++i) {
+          cc.segmentation_out.At(i).Send(std::move(segmented_masks[i]));
         }
       }
-      if (produce_category_mask) {
-        int category_mask_index =
-            produce_confidence_masks ? confidence_mask_count : 0;
-        cc.category_mask_out.Send(
-            std::move(segmented_masks[category_mask_index]));
-      }
-    } else {
-      // TODO: remove deprecated output type support.
-      RET_CHECK_EQ(cc.segmentation_out.Count(), segmented_masks.size())
-          << "Segmentation output count mismatch.";
-      for (int i = 0; i < segmented_masks.size(); ++i) {
-        cc.segmentation_out.At(i).Send(std::move(segmented_masks[i]));
-      }
+      return absl::OkStatus();
     }
-    return absl::OkStatus();
   }
 #endif  // TASK_SEGMENTATION_USE_GL_POSTPROCESSING
 
