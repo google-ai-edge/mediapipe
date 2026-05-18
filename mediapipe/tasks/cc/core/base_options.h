@@ -120,6 +120,12 @@ struct BaseOptions {
 
   // The path to the CA bundle file.
   std::string ca_bundle_path;
+
+  // The app id of the host environment, e.g., Android package name.
+  std::string app_id;
+
+  // The app version of the host environment, e.g., Android version code.
+  std::string app_version;
 };
 
 // Converts a BaseOptions to a proto::BaseOptions.

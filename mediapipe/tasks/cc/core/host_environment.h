@@ -39,6 +39,9 @@ enum HostSystem {
   HOST_SYSTEM_ANDROID = 5,
 };
 
+HostEnvironment ToHostEnvironment(int host_environment);
+HostSystem ToHostSystem(int host_system);
+
 }  // namespace core
 }  // namespace tasks
 }  // namespace mediapipe

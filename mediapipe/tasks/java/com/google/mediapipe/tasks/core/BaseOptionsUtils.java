@@ -23,6 +23,23 @@ import com.google.protobuf.ByteString;
 
 /** Utility for {@link BaseOptions}. */
 public final class BaseOptionsUtils {
+
+  // C enum values for HostEnvironment.
+  public static final int HOST_ENVIRONMENT_UNKNOWN = 0;
+  public static final int HOST_ENVIRONMENT_ANDROID = 1;
+  public static final int HOST_ENVIRONMENT_IOS = 2;
+  public static final int HOST_ENVIRONMENT_PYTHON = 3;
+  public static final int HOST_ENVIRONMENT_WEB = 4;
+
+  // C enum values for HostSystem.
+  public static final int HOST_SYSTEM_UNKNOWN = 0;
+  public static final int HOST_SYSTEM_LINUX = 1;
+  public static final int HOST_SYSTEM_MAC = 2;
+  public static final int HOST_SYSTEM_WINDOWS = 3;
+  public static final int HOST_SYSTEM_IOS = 4;
+  public static final int HOST_SYSTEM_ANDROID = 5;
+
+
   private BaseOptionsUtils() {}
 
   /**

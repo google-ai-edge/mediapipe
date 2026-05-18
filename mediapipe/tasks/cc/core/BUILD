@@ -46,7 +46,12 @@ cc_library(
 
 cc_library(
     name = "host_environment",
+    srcs = ["host_environment.cc"],
     hdrs = ["host_environment.h"],
+    deps = [
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:absl_log",
+    ],
 )
 
 cc_library(
