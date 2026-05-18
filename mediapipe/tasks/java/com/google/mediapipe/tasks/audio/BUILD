@@ -57,7 +57,9 @@ android_library(
 
 android_library(
     name = "tasks_audio_aar_library",
-    srcs = glob(["**/*.java"]),
+    srcs = glob(
+        ["**/*.java"],
+    ),
     manifest = "AndroidManifest.xml",
     deps = [
         "//mediapipe/framework:calculator_options_java_proto_lite",

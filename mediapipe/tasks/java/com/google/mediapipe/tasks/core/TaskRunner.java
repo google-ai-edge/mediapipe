@@ -55,12 +55,34 @@ public class TaskRunner implements AutoCloseable {
       Context context,
       TaskInfo<? extends TaskOptions> taskInfo,
       OutputHandler<? extends TaskResult, ?> outputHandler) {
+    return create(context, taskInfo, outputHandler, /* extraSidePackets= */ null);
+  }
+
+  /**
+   * Create a {@link TaskRunner} instance.
+   *
+   * @param context an Android {@link Context}.
+   * @param taskInfo a {@link TaskInfo} instance contains task graph name, task options, and graph
+   *     input and output stream names.
+   * @param outputHandler a {@link OutputHandler} instance handles task result object and runtime
+   *     exception.
+   * @param extraSidePackets a map of extra input side packets to initialize graph with.
+   * @throws MediaPipeException for any error during {@link TaskRunner} creation.
+   */
+  public static TaskRunner create(
+      Context context,
+      TaskInfo<? extends TaskOptions> taskInfo,
+      OutputHandler<? extends TaskResult, ?> outputHandler,
+      Map<String, Packet> extraSidePackets) {
     TasksStatsLogger statsLogger =
         TasksStatsLoggerFactory.create(
             context, taskInfo.taskName(), taskInfo.taskRunningModeName());
     AndroidAssetUtil.initializeNativeAssetManager(context);
     Graph mediapipeGraph = new Graph();
     mediapipeGraph.loadBinaryGraph(taskInfo.generateGraphConfig());
+    if (extraSidePackets != null && !extraSidePackets.isEmpty()) {
+      mediapipeGraph.setInputSidePackets(extraSidePackets);
+    }
     ModelResourcesCache graphModelResourcesCache = new ModelResourcesCache();
     mediapipeGraph.setServiceObject(new ModelResourcesCacheService(), graphModelResourcesCache);
     mediapipeGraph.addMultiStreamCallback(
@@ -165,14 +187,27 @@ public class TaskRunner implements AutoCloseable {
         reportError(e);
       }
     }
+
     try {
       graph.startRunningGraph();
       // Waits until all calculators are opened and the graph is fully restarted.
       graph.waitUntilGraphIdle();
       graphStarted.set(true);
+      lastSeenTimestamp = Long.MIN_VALUE;
       statsLogger.logSessionStart();
     } catch (MediaPipeException e) {
       reportError(e);
+    }
+  }
+
+  /**
+   * Cancels the underlying MediaPipe graph.
+   *
+   * <p>Note: This is for internal use only.
+   */
+  public void cancel() {
+    if (graphStarted.get()) {
+      graph.cancelGraph();
     }
   }
 
@@ -205,6 +240,15 @@ public class TaskRunner implements AutoCloseable {
 
   public CalculatorGraphConfig getCalculatorGraphConfig() {
     return graph.getCalculatorGraphConfig();
+  }
+
+  /**
+   * Retrieves the cached task result.
+   *
+   * <p>Note: This is for internal use only.
+   */
+  public synchronized TaskResult retrieveCachedTaskResult() {
+    return outputHandler.retrieveCachedTaskResult();
   }
 
   private synchronized void addPackets(Map<String, Packet> inputs, long inputTimestamp) {
