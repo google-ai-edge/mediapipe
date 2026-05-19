@@ -105,6 +105,8 @@ class BaseOptions:
     options.host_system = host_system
     options.host_version = host_version.encode('utf-8')
     options.ca_bundle_path = ca_bundle_path.encode('utf-8')
+    options.app_id = None
+    options.app_version = None
     return options
 
   def __eq__(self, other: Any) -> bool:

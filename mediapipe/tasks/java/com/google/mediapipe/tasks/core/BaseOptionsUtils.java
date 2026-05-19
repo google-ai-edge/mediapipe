@@ -15,6 +15,9 @@ limitations under the License.
 
 package com.google.mediapipe.tasks.core;
 
+import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import com.google.mediapipe.calculator.proto.InferenceCalculatorProto;
 import com.google.mediapipe.tasks.core.proto.AccelerationProto;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
@@ -41,6 +44,25 @@ public final class BaseOptionsUtils {
 
 
   private BaseOptionsUtils() {}
+
+  /** Returns the app id of the host environment, e.g., Android package name. */
+  public static String getAppId(Context context) {
+    return context.getPackageName();
+  }
+
+  /** Returns the app version of the host environment, e.g., Android version code. */
+  public static String getAppVersion(Context context) {
+    try {
+      PackageInfo packageInfo =
+          context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+      if (packageInfo != null) {
+        return String.valueOf(packageInfo.versionCode);
+      }
+    } catch (NameNotFoundException e) {
+      // Ignore exception and return fallback.
+    }
+    return "<not found>";
+  }
 
   /**
    * Converts a {@link BaseOptions} instance to a {@link BaseOptionsProto.BaseOptions} protobuf

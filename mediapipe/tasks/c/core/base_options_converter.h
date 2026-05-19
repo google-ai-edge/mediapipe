@@ -24,6 +24,9 @@ namespace mediapipe::tasks::c::core {
 void CppConvertToBaseOptions(const MpBaseOptions& in,
                              mediapipe::tasks::core::BaseOptions* out);
 
+MpHostEnvironment ToMpHostEnvironment(int host_environment);
+MpHostSystem ToMpHostSystem(int host_system);
+
 }  // namespace mediapipe::tasks::c::core
 
 #endif  // MEDIAPIPE_TASKS_C_CORE_BASE_OPTIONS_H_

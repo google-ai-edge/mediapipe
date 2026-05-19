@@ -71,6 +71,12 @@ struct MpBaseOptions {
 
   // The path to CA bundle to use for usage logging.
   const char* ca_bundle_path;
+
+  // The app id of the host environment, e.g., Android package name.
+  const char* app_id;
+
+  // The app version of the host environment, e.g., Android version code.
+  const char* app_version;
 };
 
 #ifdef __cplusplus

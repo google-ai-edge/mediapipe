@@ -29,6 +29,8 @@ class MpBaseOptionsC(ctypes.Structure):
     host_system: `int`, the system on which the task is running.
     host_version: `bytes`, the Python version as a UTF-8 string.
     ca_bundle_path: `bytes`, the path to the CA bundle file as a UTF-8 string.
+    app_id: `bytes`, optional application id as a UTF-8 string.
+    app_version: `bytes`, optional application version as a UTF-8 string.
   """
 
   _fields_ = [
@@ -40,4 +42,6 @@ class MpBaseOptionsC(ctypes.Structure):
       ("host_system", ctypes.c_int),
       ("host_version", ctypes.c_char_p),
       ("ca_bundle_path", ctypes.c_char_p),
+      ("app_id", ctypes.c_char_p),
+      ("app_version", ctypes.c_char_p),
   ]

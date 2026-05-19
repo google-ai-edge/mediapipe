@@ -68,4 +68,41 @@ TEST(BaseOptionsConverterTest, ConvertsBaseOptionsDelegate) {
             mediapipe::tasks::core::BaseOptions::GPU);
 }
 
+TEST(BaseOptionsConverterTest, ConvertsBaseOptionsAppId) {
+  MpBaseOptions c_base_options = {};
+  c_base_options.app_id = "test_app_id";
+
+  mediapipe::tasks::core::BaseOptions cpp_base_options = {};
+
+  CppConvertToBaseOptions(c_base_options, &cpp_base_options);
+  EXPECT_EQ(cpp_base_options.app_id, "test_app_id");
+}
+
+TEST(BaseOptionsConverterTest, ConvertsBaseOptionsAppVersion) {
+  MpBaseOptions c_base_options = {};
+  c_base_options.app_version = "test_app_version";
+
+  mediapipe::tasks::core::BaseOptions cpp_base_options = {};
+
+  CppConvertToBaseOptions(c_base_options, &cpp_base_options);
+  EXPECT_EQ(cpp_base_options.app_version, "test_app_version");
+}
+
+TEST(BaseOptionsConverterTest, ToMpHostEnvironmentConvertsValues) {
+  EXPECT_EQ(ToMpHostEnvironment(0), MP_HOST_ENVIRONMENT_UNKNOWN);
+  EXPECT_EQ(ToMpHostEnvironment(1), MP_HOST_ENVIRONMENT_ANDROID);
+  EXPECT_EQ(ToMpHostEnvironment(2), MP_HOST_ENVIRONMENT_IOS);
+  EXPECT_EQ(ToMpHostEnvironment(3), MP_HOST_ENVIRONMENT_PYTHON);
+  EXPECT_EQ(ToMpHostEnvironment(4), MP_HOST_ENVIRONMENT_WEB);
+}
+
+TEST(BaseOptionsConverterTest, ToMpHostSystemConvertsValues) {
+  EXPECT_EQ(ToMpHostSystem(0), MP_HOST_SYSTEM_UNKNOWN);
+  EXPECT_EQ(ToMpHostSystem(1), MP_HOST_SYSTEM_LINUX);
+  EXPECT_EQ(ToMpHostSystem(2), MP_HOST_SYSTEM_MAC);
+  EXPECT_EQ(ToMpHostSystem(3), MP_HOST_SYSTEM_WINDOWS);
+  EXPECT_EQ(ToMpHostSystem(4), MP_HOST_SYSTEM_IOS);
+  EXPECT_EQ(ToMpHostSystem(5), MP_HOST_SYSTEM_ANDROID);
+}
+
 }  // namespace mediapipe::tasks::c::core
