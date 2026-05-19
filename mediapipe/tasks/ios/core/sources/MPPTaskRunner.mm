@@ -70,13 +70,9 @@ mediapipe::tasks::core::RunningMode ToCppRunningMode(MPPCoreRunningMode runningM
 
   self = [super init];
   if (self) {
-    NSString *appId = [[NSBundle mainBundle] bundleIdentifier];
-    NSString *appVersion =
-        [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
-    NSOperatingSystemVersion osVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
-    NSString *iosVersion =
-        [NSString stringWithFormat:@"%ld.%ld.%ld", (long)osVersion.majorVersion,
-                                   (long)osVersion.minorVersion, (long)osVersion.patchVersion];
+    NSString *appId = [MPPCommonUtils appID];
+    NSString *appVersion = [MPPCommonUtils appVersion];
+    NSString *iosVersion = [MPPCommonUtils osVersion];
     mediapipe::tasks::core::TaskRunnerOptions options = {
         .config = std::move(graphConfig.value()),
         .task_name = taskInfo.taskName.UTF8String,
