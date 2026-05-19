@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /** The runner of MediaPipe task graphs. */
 public class TaskRunner implements AutoCloseable {
   private static final String TAG = TaskRunner.class.getSimpleName();
-  private static final long TIMESATMP_UNITS_PER_SECOND = 1000000;
+  private static final long TIMESTAMP_UNITS_PER_SECOND = 1000000;
 
   private final OutputHandler<? extends TaskResult, ?> outputHandler;
   private final AtomicBoolean graphStarted = new AtomicBoolean(false);
@@ -124,7 +124,7 @@ public class TaskRunner implements AutoCloseable {
    */
   public synchronized TaskResult process(Map<String, Packet> inputs) {
     long syntheticInputTimestamp = generateSyntheticTimestamp();
-    // TODO: Support recording GPU input arrival.
+    // TODO: Support recording GPU input arrival. NOLINT
     statsLogger.recordCpuInputArrival(syntheticInputTimestamp);
     addPackets(inputs, syntheticInputTimestamp);
     graph.waitUntilGraphIdle();
@@ -146,7 +146,7 @@ public class TaskRunner implements AutoCloseable {
    * @param inputTimestamp the timestamp of the input packets.
    */
   public synchronized TaskResult process(Map<String, Packet> inputs, long inputTimestamp) {
-    validateInputTimstamp(inputTimestamp);
+    validateInputTimestamp(inputTimestamp);
     statsLogger.recordCpuInputArrival(inputTimestamp);
     addPackets(inputs, inputTimestamp);
     graph.waitUntilGraphIdle();
@@ -167,9 +167,15 @@ public class TaskRunner implements AutoCloseable {
    * @param inputTimestamp the timestamp of the input packets.
    */
   public synchronized void send(Map<String, Packet> inputs, long inputTimestamp) {
-    validateInputTimstamp(inputTimestamp);
+    validateInputTimestamp(inputTimestamp);
     statsLogger.recordCpuInputArrival(inputTimestamp);
     addPackets(inputs, inputTimestamp);
+  }
+
+  /** Flushes the graph and waits until processing is complete. */
+  public void flush() {
+    graph.closeAllPacketSources();
+    graph.waitUntilGraphIdle();
   }
 
   /**
@@ -257,7 +263,7 @@ public class TaskRunner implements AutoCloseable {
           new MediaPipeException(
               MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
               "The task graph hasn't been successfully started or error occurs during graph"
-                  + " initializaton."));
+                  + " initialization."));
     }
     try {
       for (Map.Entry<String, Packet> entry : inputs.entrySet()) {
@@ -268,7 +274,7 @@ public class TaskRunner implements AutoCloseable {
         entry.setValue(null);
       }
     } catch (MediaPipeException e) {
-      // TODO: do not suppress exceptions here!
+      // TODO: do not suppress exceptions here! NOLINT
       if (errorListener == null) {
         Log.e(TAG, "Mediapipe error: ", e);
       } else {
@@ -291,7 +297,7 @@ public class TaskRunner implements AutoCloseable {
    *
    * @param inputTimestamp the input timestamp.
    */
-  private void validateInputTimstamp(long inputTimestamp) {
+  private void validateInputTimestamp(long inputTimestamp) {
     if (lastSeenTimestamp >= inputTimestamp) {
       reportError(
           new MediaPipeException(
@@ -304,7 +310,7 @@ public class TaskRunner implements AutoCloseable {
   /** Generates a synthetic input timestamp in the batch processing mode. */
   private long generateSyntheticTimestamp() {
     long timestamp =
-        lastSeenTimestamp == Long.MIN_VALUE ? 0 : lastSeenTimestamp + TIMESATMP_UNITS_PER_SECOND;
+        lastSeenTimestamp == Long.MIN_VALUE ? 0 : lastSeenTimestamp + TIMESTAMP_UNITS_PER_SECOND;
     lastSeenTimestamp = timestamp;
     return timestamp;
   }
