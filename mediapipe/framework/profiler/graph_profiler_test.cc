@@ -15,12 +15,17 @@
 #include "mediapipe/framework/profiler/graph_profiler.h"
 
 #include <functional>
+#include <memory>
 #include <queue>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
+#include "file/base/helpers.h"
+#include "file/base/options.h"
+#include "file/memfile/mutable_memfile.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
@@ -181,9 +186,9 @@ class GraphProfilerTestPeer : public testing::Test {
 
   void InitializeProfilerWithGraphConfig(const std::string& raw_graph_config) {
     auto graph_config = CreateGraphConfig(raw_graph_config);
-    mediapipe::ValidatedGraphConfig validated_graph;
-    QCHECK_OK(validated_graph.Initialize(graph_config));
-    profiler_.Initialize(validated_graph);
+    validated_graph_ptr_ = std::make_unique<mediapipe::ValidatedGraphConfig>();
+    ABSL_QCHECK_OK(validated_graph_ptr_->Initialize(graph_config));
+    profiler_.Initialize(*validated_graph_ptr_);
     QCHECK_OK(profiler_.Start(nullptr));
   }
 
@@ -235,6 +240,7 @@ class GraphProfilerTestPeer : public testing::Test {
     return result;
   }
 
+  std::unique_ptr<mediapipe::ValidatedGraphConfig> validated_graph_ptr_;
   std::shared_ptr<ProfilingContext> profiler_ptr_ =
       std::make_shared<ProfilingContext>();
   ProfilingContext& profiler_ = *profiler_ptr_;
@@ -1442,6 +1448,34 @@ TEST_F(GraphProfilerTestPeer, ExecutorRunLate) {
   // Destroy the profiler before the executor runs should not crash.
   profiler_ptr_.reset();
   executor.Run();
+}
+
+TEST_F(GraphProfilerTestPeer, WriteToMutableMemfile) {
+  RegisteredMutableMemFile trace_log("/mmemfile/test_trace_log_0.binarypb");
+  InitializeProfilerWithGraphConfig(R"pb(
+    profiler_config {
+      enable_profiler: true
+      trace_enabled: true
+      trace_log_path: "/mmemfile/test_trace_log_"
+      trace_log_count: 1
+      trace_log_interval_count: 1
+    }
+  )pb");
+
+  std::string input_stream_name = "input_stream";
+  Packet packet = MakePacket<std::string>("hello").At(Timestamp(100));
+  profiler_.LogEvent(TraceEvent(GraphTrace::PROCESS)
+                         .set_stream_id(&input_stream_name)
+                         .set_input_ts(packet.Timestamp())
+                         .set_packet_ts(packet.Timestamp())
+                         .set_packet_data_id(&packet));
+
+  MP_EXPECT_OK(profiler_.WriteProfile());
+
+  std::string content;
+  MP_EXPECT_OK(file::GetContents("/mmemfile/test_trace_log_0.binarypb",
+                                 &content, file::Defaults()));
+  EXPECT_FALSE(content.empty());
 }
 
 }  // namespace
