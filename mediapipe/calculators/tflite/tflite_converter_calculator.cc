@@ -163,7 +163,7 @@ class TfLiteConverterCalculator : public CalculatorBase {
 
   bool initialized_ = false;
   bool use_gpu_ = false;
-  absl::optional<std::pair<float, float>> output_range_;
+  std::optional<std::pair<float, float>> output_range_;
   bool flip_vertically_ = false;
   bool row_major_matrix_ = false;
   bool use_quantized_tensors_ = false;
