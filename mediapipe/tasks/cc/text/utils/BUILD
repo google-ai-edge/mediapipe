@@ -99,6 +99,10 @@ cc_library(
     hdrs = [
         "vocab_convert_utils.h",
     ],
+    visibility = [
+        "//mediapipe/python/pybind:__subpackages__",
+        "//mediapipe/tasks:__subpackages__",
+    ],
     deps = [
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:file_helpers",

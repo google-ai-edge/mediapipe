@@ -244,7 +244,6 @@ class BuildExtension(build_ext.build_ext):
         '--compilation_mode=opt',
         '--copt=-DNDEBUG',
         '--keep_going',
-        '--define=ENABLE_ODML_CONVERTER=1',
         str(ext.bazel_target),
     ] + GPU_OPTIONS
 
