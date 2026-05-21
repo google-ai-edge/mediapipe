@@ -36,7 +36,7 @@
 namespace mediapipe {
 
 RotatedRect GetRoi(int input_width, int input_height,
-                   absl::optional<mediapipe::NormalizedRect> norm_rect) {
+                   std::optional<NormalizedRect> norm_rect) {
   if (norm_rect) {
     return {/*center_x=*/norm_rect->x_center() * input_width,
             /*center_y =*/norm_rect->y_center() * input_height,
