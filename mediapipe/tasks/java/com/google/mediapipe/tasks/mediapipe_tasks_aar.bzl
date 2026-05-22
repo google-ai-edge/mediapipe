@@ -93,7 +93,7 @@ _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_java_proto_lite",
 ]
 
-def mediapipe_jni_binary(name, deps, uses_explicit_exports = False, shared_lib_name = None):
+def mediapipe_jni_binary(name, deps, uses_explicit_exports = False, shared_lib_name = None, version_script = None):
     """Builds MediaPipe JNI library. Uses prebuilt libraries if available.
 
     Creates an .so file at name/shared_lib_name. If shared_lib_name is not provided, it will be
@@ -106,11 +106,14 @@ def mediapipe_jni_binary(name, deps, uses_explicit_exports = False, shared_lib_n
       uses_explicit_exports: Whethe this library uses JNIEXPORT to mark exported symbols.
       shared_lib_name: The name of the shared library. If not provided, it will be inferred from
         the name argument.
+      version_script: The version script to use for the library. If not provided, it will use the
+        default version_script.lds.
     """
+    version_script = version_script or "//mediapipe/tasks/java:version_script.lds"
     extra_linkopts = []
     if not uses_explicit_exports:
         extra_linkopts = [
-            "-Wl,--version-script,$(location //mediapipe/tasks/java:version_script.lds)",
+            "-Wl,--version-script,$(location " + version_script + ")",
         ]
 
     target_lib_name = shared_lib_name or "lib" + name + ".so"
@@ -140,7 +143,7 @@ def mediapipe_jni_binary(name, deps, uses_explicit_exports = False, shared_lib_n
         ] + extra_linkopts,
         linkshared = 1,
         deps = deps + [
-            "//mediapipe/tasks/java:version_script.lds",
+            version_script,
         ],
     )
 
