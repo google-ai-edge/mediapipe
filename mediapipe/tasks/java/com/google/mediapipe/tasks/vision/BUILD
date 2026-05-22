@@ -229,12 +229,12 @@ filegroup(
 )
 
 android_library(
-    name = "interactivesegmenter",
+    name = "interactivesegmenterlegacy",
     srcs = [
         "imagesegmenter/ImageSegmenterResult.java",
-        "interactivesegmenter/InteractiveSegmenter.java",
+        "interactivesegmenterlegacy/InteractiveSegmenterLegacy.java",
     ],
-    manifest = "interactivesegmenter/AndroidManifest.xml",
+    manifest = "interactivesegmenterlegacy/AndroidManifest.xml",
     deps = [
         ":core",
         "//mediapipe/framework:calculator_java_proto_lite",
@@ -245,7 +245,7 @@ android_library(
         "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_java_proto_lite",
-        "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto:region_of_interest_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalizedkeypoint",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
@@ -408,7 +408,7 @@ android_library(
         "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_java_proto_lite",
-        "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto:region_of_interest_java_proto_lite",
         "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/pose_detector/proto:pose_detector_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/pose_landmarker/proto:pose_landmarker_graph_options_java_proto_lite",

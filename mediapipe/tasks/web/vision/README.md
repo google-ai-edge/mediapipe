@@ -158,17 +158,17 @@ segment an image by.
 const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
 );
-const interactiveSegmenter = await InteractiveSegmenter.createFromModelPath(
+const interactiveSegmenterLegacy = await InteractiveSegmenterLegacy.createFromModelPath(
     vision,
     "https://storage.googleapis.com/mediapipe-models/interactive_segmenter/magic_touch/float32/1/magic_touch.tflite"
 );
 const image = document.getElementById("image") as HTMLImageElement;
-interactiveSegmenter.segment(image, { keypoint: { x: 0.1, y: 0.2 } },
+interactiveSegmenterLegacy.segment(image, { keypoint: { x: 0.1, y: 0.2 } },
     (masks, width, height) => { ... }
 );
 ```
 
-For more information, refer to the [Interactive Segmenter](https://developers.google.com/mediapipe/solutions/vision/interactive_segmenter/web_js) documentation.
+For more information, refer to the [Interactive Segmenter](https://developers.google.com/mediapipe/solutions/vision/interactive_segmenter_legacy/web_js) documentation.
 
 ## Object Detector
 

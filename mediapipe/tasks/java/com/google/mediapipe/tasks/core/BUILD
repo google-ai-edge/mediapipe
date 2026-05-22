@@ -42,7 +42,7 @@ mediapipe_jni_binary(
         "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
         "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
         "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
-        "//mediapipe/tasks/cc/vision/interactive_segmenter:interactive_segmenter_graph",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter_legacy:interactive_segmenter_legacy_graph",
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
         "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
