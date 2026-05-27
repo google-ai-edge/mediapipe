@@ -74,6 +74,17 @@ class DownloadedFiles:
         tarf = tarfile.open(tempf.name)
         # Use tmpdir to store the extracted contents of the .tar.gz file
         with tempfile.TemporaryDirectory() as tmpdir:
+          # Security fix: use filter='data' to prevent path traversal (CWE-22)
+          # See: https://docs.python.org/3/library/tarfile.html#tarfile-extraction-filter
+          # Python <3.12 backwards-compatible approach used below
+          for member in tarf.getmembers():
+            import os as _os
+            member_path = _os.path.join(tmpdir, member.name)
+            abs_path = _os.path.realpath(member_path)
+            if not abs_path.startswith(_os.path.realpath(tmpdir) + _os.sep):
+              raise RuntimeError(
+                  f'Attempted path traversal in tar file: {member.name}'
+              )
           tarf.extractall(tmpdir)
           tarf.close()
           tempf.close()
