@@ -14,10 +14,21 @@
 
 #include "mediapipe/objc/util.h"
 
-#import <CoreGraphics/CGImage.h>
+#if defined(__APPLE__)
+
+#import <CoreFoundation/CoreFoundation.h>  // IWYU pragma: keep
+#import <CoreGraphics/CGImage.h>           // IWYU pragma: keep
+#import <CoreGraphics/CoreGraphics.h>      // IWYU pragma: keep
+#import <CoreVideo/CoreVideo.h>            // IWYU pragma: keep
+
+#include "mediapipe/objc/CFHolder.h"  // IWYU pragma: keep
+
+#endif  // defined(__APPLE__)
 
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
+#include <memory>
 
 #include "absl/base/macros.h"
 #include "absl/log/absl_check.h"
@@ -629,6 +640,10 @@ std::unique_ptr<mediapipe::ImageFrame> CreateImageFrameForCVPixelBuffer(
 
     case kCVPixelFormatType_OneComponent8:
       image_format = mediapipe::ImageFormat::GRAY8;
+      break;
+
+    case kCVPixelFormatType_OneComponent32Float:
+      image_format = mediapipe::ImageFormat::VEC32F1;
       break;
 
     default: {

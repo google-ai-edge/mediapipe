@@ -164,6 +164,25 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
       }
       break;
     }
+    case kCVPixelFormatType_OneComponent32Float: {
+      destinationChannelCount = 1;
+      destinationBytesPerRow = width * sizeof(float);
+      imageFormat = ImageFormat::VEC32F1;
+      destBuffer = allocatedVImageBuffer((vImagePixelCount)width, (vImagePixelCount)height,
+                                         destinationBytesPerRow);
+      if (stride == destinationBytesPerRow) {
+        memcpy(destBuffer.data, srcBuffer.data, height * stride);
+      } else {
+        uint8_t *dstRow = reinterpret_cast<uint8_t *>(destBuffer.data);
+        const uint8_t *srcRow = reinterpret_cast<const uint8_t *>(srcBuffer.data);
+        for (int y = 0; y < height; ++y) {
+          memcpy(dstRow, srcRow, destinationBytesPerRow);
+          dstRow += destinationBytesPerRow;
+          srcRow += stride;
+        }
+      }
+      break;
+    }
     default: {
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInvalidArgumentError
@@ -269,6 +288,7 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
   switch (pixelBufferFormat) {
     // Core Video only supports pixel data of order BGRA for 32 bit RGBA images.
     // Thus other formats like `kCVPixelFormatType_32BGRA` don't need to be accounted for.
+    case kCVPixelFormatType_OneComponent32Float:
     case kCVPixelFormatType_32BGRA: {
       CVPixelBufferLockBaseAddress(pixelBuffer, 0);
       imageFrame = [MPPPixelDataUtils
@@ -282,10 +302,11 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
       break;
     }
     default: {
-      [MPPCommonUtils createCustomError:error
-                               withCode:MPPTasksErrorCodeInvalidArgumentError
-                            description:@"Unsupported pixel format for CVPixelBuffer. Expected "
-                                        @"kCVPixelFormatType_32BGRA"];
+      [MPPCommonUtils
+          createCustomError:error
+                   withCode:MPPTasksErrorCodeInvalidArgumentError
+                description:@"Unsupported pixel format for CVPixelBuffer. Expected "
+                            @"kCVPixelFormatType_32BGRA or kCVPixelFormatType_OneComponent32Float"];
     }
   }
 
@@ -296,6 +317,7 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
   switch (imageFrame.Format()) {
     case ImageFormat::SRGBA:
     case ImageFormat::SRGB:
+    case ImageFormat::VEC32F1:
       break;
     default: {
       [MPPCommonUtils createCustomError:error
@@ -304,6 +326,42 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
                                         @"output image of the vision task."];
       return nullptr;
     }
+  }
+
+  if (imageFrame.Format() == ImageFormat::VEC32F1) {
+    int width = imageFrame.Width();
+    int height = imageFrame.Height();
+    CVPixelBufferRef outputBuffer;
+    OSType pixelBufferFormatType = kCVPixelFormatType_OneComponent32Float;
+
+    if (CVPixelBufferCreate(kCFAllocatorDefault, width, height, pixelBufferFormatType, nullptr,
+                            &outputBuffer) == kCVReturnSuccess) {
+      CVPixelBufferLockBaseAddress(outputBuffer, 0);
+      float *dstPixelData = reinterpret_cast<float *>(CVPixelBufferGetBaseAddress(outputBuffer));
+      size_t dstStride = CVPixelBufferGetBytesPerRow(outputBuffer);
+      int srcStride = imageFrame.WidthStep();
+
+      if (dstStride == srcStride) {
+        memcpy(dstPixelData, imageFrame.PixelData(), height * srcStride);
+      } else {
+        const uint8_t *srcRow = imageFrame.PixelData();
+        uint8_t *dstRow = reinterpret_cast<uint8_t *>(dstPixelData);
+        size_t bytesToCopy = width * sizeof(float);
+        for (int y = 0; y < height; ++y) {
+          memcpy(dstRow, srcRow, bytesToCopy);
+          srcRow += srcStride;
+          dstRow += dstStride;
+        }
+      }
+      CVPixelBufferUnlockBaseAddress(outputBuffer, 0);
+      return outputBuffer;
+    }
+
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInternalError
+                          description:@"An error occurred while creating a CVPixelBuffer from the "
+                                      @"output float image of the vision task."];
+    return nullptr;
   }
 
   UInt8 *pixelData = [MPPPixelDataUtils rgbaPixelDataFromImageFrame:imageFrame
@@ -511,16 +569,33 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
     return nil;
   }
 
-  if (!sourceImage) {
-    [MPPCommonUtils createCustomError:error
-                             withCode:MPPTasksErrorCodeInvalidArgumentError
-                          description:@"Source image cannot be nil."];
-    return nil;
-  }
-
   switch (sourceImage.imageSourceType) {
     case MPPImageSourceTypeImage: {
-      CGImageRef cgImageRef = [MPPCGImageUtils cgImageFromImageFrame:image.GetImageFrameSharedPtr()
+      auto sharedImageFrame = image.GetImageFrameSharedPtr();
+      if (sharedImageFrame && sharedImageFrame->Format() == ImageFormat::VEC32F1) {
+        if (!shouldCopyPixelData) {
+          // TODO: b/517979398 - Investigate possibility of permuting channels of `mediapipe::Image`
+          // returned by vision tasks in place to ensure that we can support creating
+          // `CVPixelBuffer`s without copying the pixel data.
+          [MPPCommonUtils
+              createCustomError:error
+                       withCode:MPPTasksErrorCodeInvalidArgumentError
+                    description:@"When the format is Float32, you cannot request uncopied data."];
+          return nil;
+        }
+
+        // Fallback to PixelBuffer for Float32 masks as CGImage/UIImage cannot wrap float32
+        // natively.
+        CVPixelBufferRef pixelBuffer =
+            [MPPCVPixelBufferUtils cvPixelBufferFromImageFrame:*sharedImageFrame error:error];
+        MPPImage *mpImage = [self initWithPixelBuffer:pixelBuffer
+                                          orientation:sourceImage.orientation
+                                                error:nil];
+        CVPixelBufferRelease(pixelBuffer);
+        return mpImage;
+      }
+
+      CGImageRef cgImageRef = [MPPCGImageUtils cgImageFromImageFrame:sharedImageFrame
                                                  shouldCopyPixelData:shouldCopyPixelData
                                                                error:error];
 
@@ -548,9 +623,9 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
     }
     case MPPImageSourceTypePixelBuffer: {
       if (!shouldCopyPixelData) {
-        // TODO: Investigate possibility of permuting channels of `mediapipe::Image` returned by
-        // vision tasks in place to ensure that we can support creating `CVPixelBuffer`s without
-        // copying the pixel data.
+        // TODO: b/517979398 - Investigate possibility of permuting channels of `mediapipe::Image`
+        // returned by vision tasks in place to ensure that we can support creating `CVPixelBuffer`s
+        // without copying the pixel data.
         [MPPCommonUtils
             createCustomError:error
                      withCode:MPPTasksErrorCodeInvalidArgumentError
@@ -570,9 +645,9 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
     }
     case MPPImageSourceTypeSampleBuffer: {
       if (!shouldCopyPixelData) {
-        // TODO: Investigate possibility of permuting channels of `mediapipe::Image` returned by
-        // vision tasks in place to ensure that we can support creating `CVPixelBuffer`s without
-        // copying the pixel data.
+        // TODO: b/517979398 - Investigate possibility of permuting channels of `mediapipe::Image`
+        // returned by vision tasks in place to ensure that we can support creating `CVPixelBuffer`s
+        // without copying the pixel data.
         [MPPCommonUtils
             createCustomError:error
                      withCode:MPPTasksErrorCodeInvalidArgumentError
