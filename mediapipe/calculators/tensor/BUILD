@@ -14,6 +14,8 @@
 #
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
+
+# Placeholder: load py_binary
 load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
