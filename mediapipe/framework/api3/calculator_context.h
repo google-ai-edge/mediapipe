@@ -431,8 +431,8 @@ auto VisitPacketOrDie(F&& visitor, const mediapipe::Packet& packet) {
   return std::forward<F>(visitor)(packet.Get<T>());
 }
 
-template <typename T, typename U, typename... Rest, int&... DoNotSpecify,
-          typename F>
+//DoNotSpecify argument removed since it is not being referenced in the function definition nor in any call site
+template <typename T, typename U, typename... Rest, typename F>
 auto VisitPacketOrDie(F&& visitor, const mediapipe::Packet& packet) {
   if (packet.ValidateAsType<T>().ok()) {
     return std::forward<F>(visitor)(packet.Get<T>());
@@ -447,8 +447,8 @@ auto VisitPacketAsPacketOrDie(F&& visitor, const mediapipe::Packet& packet) {
   return std::forward<F>(visitor)(WrapLegacyPacket<T>(packet).value());
 }
 
-template <typename T, typename U, typename... Rest, int&... DoNotSpecify,
-          typename F>
+//DoNotSpecify argument removed since it is not being referenced in the function definition nor in any call site
+template <typename T, typename U, typename... Rest, typename F>
 auto VisitPacketAsPacketOrDie(F&& visitor, const mediapipe::Packet& packet) {
   if (packet.ValidateAsType<T>().ok()) {
     return std::forward<F>(visitor)(WrapLegacyPacket<T>(packet).value());

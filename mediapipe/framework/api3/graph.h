@@ -107,6 +107,12 @@ class Graph;
 class GenericGraph;
 class FunctionGraphBuilder;
 
+// Forward declaration needed for MSVC to correctly resolve the template friend
+// declaration inside GenericGraph (avoids conflict with non-template
+// mediapipe::SubgraphContext from subgraph.h).
+template <typename NodeT>
+class SubgraphContext;
+
 // `GraphNode` is returned by `Graph<...>::AddNode<...>()` function.
 //
 // Common pattern to use it:

@@ -168,10 +168,17 @@ TEST(PacketTest, TypeRegistrationDebugString) {
   // Unregistered type.
   UnregisteredPairStruct u{"s", true};
   Packet packet2 = MakePacket<UnregisteredPairStruct>(u);
-  std::string expected_type_name =
-      (kHaveUnregisteredTypeNames)
-          ? "mediapipe::(anonymous namespace)::UnregisteredPairStruct"
-          : "<unknown>";
+  // MSVC formats type names from anonymous namespaces differently than GCC/Clang, so the expected string must be compiler-specific.
+  std::string expected_type_name;
+  if (!kHaveUnregisteredTypeNames) {
+    expected_type_name = "<unknown>";
+  } else {
+        #if defined(_MSC_VER)
+          expected_type_name = "struct mediapipe::'anonymous namespace'::UnregisteredPairStruct";
+        #else
+          expected_type_name = "mediapipe::(anonymous namespace)::UnregisteredPairStruct";
+        #endif
+  }
   EXPECT_EQ(packet2.DebugString(),
             "mediapipe::Packet with timestamp: Timestamp::Unset() and type: " +
                 expected_type_name);
@@ -248,6 +255,10 @@ TEST(PacketTest, SyncedPacket) {
   EXPECT_EQ(999, packet_new.Get<int>());
 }
 
+// Excluded on Windows: MSVC cannot resolve operator new[] for array types in templates.
+#ifndef _WIN32
+// Array packet tests are disabled on Windows because MSVC has a known
+// limitation with operator new[] ambiguity for array types in templates.
 TEST(PacketTest, MakePacketOfIntArray) {
   Packet int_packet = MakePacket<int>(123);
   EXPECT_EQ(123, int_packet.Get<int>());
@@ -258,6 +269,7 @@ TEST(PacketTest, MakePacketOfIntArray) {
   EXPECT_EQ(64, array_ref[1]);
   EXPECT_EQ(128, array_ref[2]);
 }
+#endif
 
 TEST(PacketTest, MakePacketOfIntVector) {
   std::vector<int> vector({1, 2, 3});
@@ -436,6 +448,10 @@ TEST(PacketTest, TestForeignHolderConsumeOrCopy) {
   EXPECT_EQ(33, *result2.value());
 }
 
+// Excluded on Windows: MSVC cannot resolve operator new[] for array types in templates.
+#ifndef _WIN32
+// Array packet tests are disabled on Windows because MSVC has a known
+// limitation with operator new[] ambiguity for array types in templates.
 TEST(PacketTest, TestConsumeBoundedArray) {
   Packet packet1 = MakePacket<int[3]>(10, 20, 30);
   Packet packet_copy = packet1;
@@ -506,6 +522,7 @@ TEST(PacketTest, TestConsumeOrCopyBoundedArray) {
   EXPECT_EQ(60, (*value3)[2]);
   EXPECT_TRUE(packet2.IsEmpty());
 }
+#endif
 
 TEST(PacketTest, MessageHolderRegistration) {
   using testing::Contains;

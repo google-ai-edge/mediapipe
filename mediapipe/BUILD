@@ -186,6 +186,16 @@ config_setting_and_platform(
     visibility = ["//visibility:public"],
 )
 
+# Windows ARM64.
+config_setting_and_platform(
+    name = "windows_arm64",
+    constraint_values = [
+        "@platforms//os:windows",
+        "@platforms//cpu:arm64",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 # Linux 64-bit.
 config_setting_and_platform(
     name = "linux",

@@ -36,6 +36,45 @@ build:windows --copt=/w
 build:windows --copt=/D_USE_MATH_DEFINES
 build:windows --host_copt=/D_USE_MATH_DEFINES
 
+# windows arm64
+build:windows_arm64 --config=windows
+build:windows_arm64 --cpu=arm64_windows
+build:windows_arm64 --platforms=@//mediapipe:windows_arm64_platform
+build:windows_arm64 --enable_runfiles
+# Disable GPU for ARM64 build
+build:windows_arm64 --define=MEDIAPIPE_DISABLE_GPU=1
+# MSVC does not support __builtin_expect; disable its use in farmhash.
+build:windows_arm64 --copt=/DFARMHASH_NO_BUILTIN_EXPECT
+# MSVC conformant preprocessor and Windows header macros to reduce
+# namespace pollution and avoid macro conflicts (min/max, GDI, etc.)
+build:windows_arm64 --copt=/Zc:preprocessor
+build:windows_arm64 --host_copt=/Zc:preprocessor
+build:windows_arm64 --copt=/DNOMINMAX
+build:windows_arm64 --host_copt=/DNOMINMAX
+build:windows_arm64 --copt=/DWIN32_LEAN_AND_MEAN
+build:windows_arm64 --host_copt=/DWIN32_LEAN_AND_MEAN
+build:windows_arm64 --copt=/DNOGDI
+# MSVC for ARM64 does not support __fp16 arithmetic
+build:windows_arm64 --define=xnn_enable_arm_fp16_scalar=false
+build:windows_arm64 --define=xnn_enable_arm_fp16_vector=false
+build:windows_arm64 --define=xnn_enable_arm_dotprod=false
+# MSVC for ARM64 does not support inline assembly
+build:windows_arm64 --define=xnn_enable_assembly=false
+# MSVC for ARM64 does not support SVE/SVE2 intrinsics. Disable SME/SME2 kernels.
+build:windows_arm64 --define=xnn_enable_arm_sme=false
+build:windows_arm64 --define=xnn_enable_arm_sme2=false
+# Disable TFLite XNNPACK delegate for Windows ARM64.
+build:windows_arm64 --define=tflite_with_xnnpack=false
+# Windows ARM64: Bazel exec config misses protobuf src include path; add
+# external/com_google_protobuf/src so "google/protobuf/..." headers resolve.
+build:windows_arm64 --host_copt=/Iexternal/com_google_protobuf/src
+build:windows_arm64 --copt=/Iexternal/com_google_protobuf/src
+# Exclude WinUser.h to avoid GDI macro conflicts (Rectangle, DrawText, etc.)
+# that clash with identifiers in these source files.
+build:windows_arm64 --per_file_copt=mediapipe/util/annotation_renderer\.cc@/DNOUSER
+build:windows_arm64 --per_file_copt=mediapipe/framework/tool/proto_util_lite\.cc@/DNOUSER
+build:windows_arm64 --per_file_copt=mediapipe/framework/tool/template_parser\.cc@/DNOUSER
+
 # macOS
 build:macos --cxxopt=-std=c++20
 build:macos --host_cxxopt=-std=c++20

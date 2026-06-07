@@ -1,0 +1,15 @@
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -68,7 +68,9 @@ cc_library(
+         "include/pthreadpool.h",
+     ],
+-    copts = [
+-        "-std=c11",
+-    ] + select({
++    copts = select({
++        ":windows_x86_64": ["/std:c11", "/experimental:c11atomics"],
++        ":windows_arm64": ["/std:c11", "/experimental:c11atomics"],
++        "//conditions:default": ["-std=c11"],
++    }) + select({
+         ":optimized_build": ["-O2"],
+         "//conditions:default": [],

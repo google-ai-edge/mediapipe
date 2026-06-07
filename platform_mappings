@@ -57,5 +57,8 @@ flags:
   --cpu=x64_windows
     @mediapipe//mediapipe:windows_platform
 
+  --cpu=arm64_windows
+    @mediapipe//mediapipe:windows_arm64_platform
+
   --cpu=k8
     @mediapipe//mediapipe:linux_platform
