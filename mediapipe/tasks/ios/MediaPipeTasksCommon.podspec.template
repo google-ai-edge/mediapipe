@@ -6,7 +6,7 @@ Pod::Spec.new do |s|
   s.homepage         = 'https://github.com/google/mediapipe'
   s.source           = { :http => '${MPP_COMMON_DOWNLOAD_URL}' }
   s.summary          = 'MediaPipe Task Library - Common'
-  s.description      = 'The common libraries of the MediaPipe Task Library'
+  s.description      = 'The common libraries of the MediaPipe Task Library. See the privacy notice at https://developers.google.com/edge/mediapipe/solutions/tasks#mediapipe_tasks_privacy_notice.'
 
   s.ios.deployment_target = '15.0'
 

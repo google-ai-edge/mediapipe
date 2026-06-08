@@ -1,7 +1,7 @@
 {
   "name": "@mediapipe/tasks-__NAME__",
   "version": "__VERSION__",
-  "description": "__DESCRIPTION__",
+  "description": "__DESCRIPTION__. See the privacy notice at https://developers.google.com/edge/mediapipe/solutions/tasks#mediapipe_tasks_privacy_notice.",
   "main": "__NAME___bundle.cjs",
   "browser": "__NAME___bundle.mjs",
   "module": "__NAME___bundle.mjs",

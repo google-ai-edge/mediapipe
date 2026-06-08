@@ -78,7 +78,6 @@ const landmarks = handLandmarker.detect(image);
 
 For more information, refer to the [Hand Landmarker](https://developers.google.com/mediapipe/solutions/vision/hand_landmarker/web_js) documentation.
 
-
 ## Holistic Landmarker
 
 The MediaPipe Holistic Landmarker task task lets you combine components of the
@@ -206,3 +205,21 @@ const landmarks = poseLandmarker.detect(image);
 ```
 
 For more information, refer to the [Pose Landmarker](https://developers.google.com/mediapipe/solutions/vision/pose_landmarker/web_js) documentation.
+
+### Privacy Notice
+
+Last modified: June 5, 2026
+
+When you use MediaPipe Tasks, processing of the input data (e.g. images, video,
+text) takes place on device, and MediaPipe does not send that input data to
+Google servers. As a result, you can use our MediaPipe Tasks APIs for
+processing data that should not leave the device.
+
+MediaPipe Tasks APIs send metrics about the performance and utilization of the
+APIs in your app to Google. Google uses this metrics data to measure
+performance, usage, debug, maintain and improve the MediaPipe Tasks, as further
+described in our [Privacy Policy](https://policies.google.com/privacy).
+
+**You are responsible for obtaining informed consent from your app users about
+Google's processing of MediaPipe metrics data as required by applicable law.**
+
