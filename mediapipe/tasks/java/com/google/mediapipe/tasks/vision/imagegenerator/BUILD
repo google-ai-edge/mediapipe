@@ -42,6 +42,7 @@ cc_binary(
         "//mediapipe/tasks/cc/vision/image_generator:image_generator_graph",
         "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
         "//mediapipe/tasks/java:version_script.lds",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:base_options_utils_jni",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
     ],
 )

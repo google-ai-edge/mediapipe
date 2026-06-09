@@ -22,7 +22,9 @@ import com.google.mediapipe.calculator.proto.InferenceCalculatorProto;
 import com.google.mediapipe.tasks.core.proto.AccelerationProto;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import com.google.mediapipe.tasks.core.proto.ExternalFileProto;
+import com.google.mediapipe.tasks.core.proto.ExternalFileProto.ExternalFile;
 import com.google.protobuf.ByteString;
+import java.nio.ByteBuffer;
 
 /** Utility for {@link BaseOptions}. */
 public final class BaseOptionsUtils {
@@ -81,10 +83,8 @@ public final class BaseOptionsUtils {
     options
         .modelAssetBuffer()
         .ifPresent(
-            modelBuffer -> {
-              modelBuffer.rewind();
-              externalFileBuilder.setFileContent(ByteString.copyFrom(modelBuffer));
-            });
+            modelBuffer ->
+                externalFileBuilder.mergeFrom(createExternalFileFromBuffer(modelBuffer)));
     AccelerationProto.Acceleration.Builder accelerationBuilder =
         AccelerationProto.Acceleration.newBuilder();
     switch (options.delegate()) {
@@ -139,4 +139,22 @@ public final class BaseOptionsUtils {
     options.modelToken().ifPresent(gpuBuilder::setModelToken);
     accelerationBuilder.setGpu(gpuBuilder.build());
   }
+
+  public static ExternalFile createExternalFileFromBuffer(ByteBuffer modelBuffer) {
+    ExternalFile.Builder externalFileBuilder = ExternalFile.newBuilder();
+    if (modelBuffer.isDirect()) {
+      externalFileBuilder.setFilePointerMeta(
+          ExternalFileProto.FilePointerMeta.newBuilder()
+              .setPointer(nativeGetDirectBufferAddress(modelBuffer) + modelBuffer.position())
+              .setLength(modelBuffer.remaining())
+              .build());
+    } else {
+      ByteBuffer duplicateBuffer = modelBuffer.duplicate();
+      duplicateBuffer.rewind();
+      externalFileBuilder.setFileContent(ByteString.copyFrom(duplicateBuffer));
+    }
+    return externalFileBuilder.build();
+  }
+
+  private static native long nativeGetDirectBufferAddress(ByteBuffer buffer);
 }

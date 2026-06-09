@@ -272,6 +272,7 @@ def mediapipe_tasks_core_aar(name, srcs, manifest, deps = []):
                    "//mediapipe/java/com/google/mediapipe/framework:android_framework",
                    "//mediapipe/java/com/google/mediapipe/framework/image",
                    "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_java_proto_lite",
+                   "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:base_options_utils_jni",
                    "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
                    "//third_party:autovalue",
                    "@maven//:androidx_annotation_annotation",
