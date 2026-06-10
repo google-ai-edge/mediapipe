@@ -30,6 +30,9 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Initializes an `MPPFileInfo` using the given name and type of file.
  *
+ * First, it will try to find the file in the app bundle. If not found, it will
+ * try to find the file in the Documents sandbox directory.
+ *
  * @param name The name of the file.
  * @param type The type of the file.
  *
