@@ -128,7 +128,7 @@ Image ImageMultiPool::GetBuffer(int width, int height, bool use_gpu,
                                 ImageFormat::Format format) {
 #if !MEDIAPIPE_DISABLE_GPU
   if (use_gpu) {
-    absl::MutexLock lock(&mutex_gpu_);
+    absl::MutexLock lock(mutex_gpu_);
     IBufferSpec key(width, height, format);
     auto pool_it = pools_gpu_.find(key);
     if (pool_it == pools_gpu_.end()) {
@@ -158,7 +158,7 @@ Image ImageMultiPool::GetBuffer(int width, int height, bool use_gpu,
   } else  // NOLINT(readability/braces)
 #endif    // !MEDIAPIPE_DISABLE_GPU
   {
-    absl::MutexLock lock(&mutex_cpu_);
+    absl::MutexLock lock(mutex_cpu_);
     IBufferSpec key(width, height, format);
     auto pool_it = pools_cpu_.find(key);
     if (pool_it == pools_cpu_.end()) {

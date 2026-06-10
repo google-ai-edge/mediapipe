@@ -25,30 +25,30 @@ extern "C" {
 #endif
 
 // The holistic landmarks detection result from HolisticLandmarker.
-struct HolisticLandmarkerResult {
+struct MpHolisticLandmarkerResult {
   // Detected face landmarks in normalized image coordinates.
-  struct NormalizedLandmarks face_landmarks;
+  struct MpNormalizedLandmarks face_landmarks;
 
   // Detected pose landmarks in normalized image coordinates.
-  struct NormalizedLandmarks pose_landmarks;
+  struct MpNormalizedLandmarks pose_landmarks;
 
   // Detected pose landmarks in world coordinates.
-  struct Landmarks pose_world_landmarks;
+  struct MpLandmarks pose_world_landmarks;
 
   // Left hand landmarks in normalized image coordinates.
-  struct NormalizedLandmarks left_hand_landmarks;
+  struct MpNormalizedLandmarks left_hand_landmarks;
 
   // Right hand landmarks in normalized image coordinates.
-  struct NormalizedLandmarks right_hand_landmarks;
+  struct MpNormalizedLandmarks right_hand_landmarks;
 
   // Left hand landmarks in world coordinates.
-  struct Landmarks left_hand_world_landmarks;
+  struct MpLandmarks left_hand_world_landmarks;
 
   // Right hand landmarks in world coordinates.
-  struct Landmarks right_hand_world_landmarks;
+  struct MpLandmarks right_hand_world_landmarks;
 
   // Optional face blendshapes.
-  struct Categories face_blendshapes;
+  struct MpCategories face_blendshapes;
 
   // Optional pose segmentation mask.
   MpImagePtr pose_segmentation_mask;

@@ -22,7 +22,7 @@ extern "C" {
 
 // Defines a rectangle, used e.g. as part of detection results or as input
 // region-of-interest.
-struct MPRect {
+struct MpRect {
   int left;
   int top;
   int bottom;
@@ -32,7 +32,7 @@ struct MPRect {
 // The coordinates are normalized wrt the image dimensions, i.e. generally in
 // [0,1] but they may exceed these bounds if describing a region overlapping the
 // image. The origin is on the top-left corner of the image.
-struct MPRectF {
+struct MpRectF {
   float left;
   float top;
   float bottom;

@@ -48,7 +48,7 @@ class NGramHashModel : public tflite::SingleOpModel {
   explicit NGramHashModel(const uint64_t seed,
                           const std::vector<int>& ngram_lengths,
                           const std::vector<int>& vocab_sizes,
-                          const absl::optional<int> max_splits = std::nullopt) {
+                          const std::optional<int> max_splits = std::nullopt) {
     // Setup the model inputs.
     Builder fbb;
     size_t start = fbb.StartMap();

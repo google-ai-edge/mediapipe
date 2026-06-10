@@ -46,7 +46,7 @@ TEST(EmbeddingResultConverterTest, ConvertsEmbeddingResultCustomEmbedding) {
           42  // timestamp in ms
       };
 
-  EmbeddingResult c_embedding_result;
+  MpEmbeddingResult c_embedding_result;
   CppConvertToEmbeddingResult(cpp_embedding_result, &c_embedding_result);
   EXPECT_NE(c_embedding_result.embeddings, nullptr);
   EXPECT_EQ(c_embedding_result.embeddings_count, 2);

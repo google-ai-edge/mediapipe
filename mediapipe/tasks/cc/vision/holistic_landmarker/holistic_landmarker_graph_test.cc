@@ -48,6 +48,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.pb.h"
@@ -334,7 +335,7 @@ absl::StatusOr<std::unique_ptr<tasks::core::TaskRunner>> CreateTaskRunner(
   return TaskRunner::Create(
       {.config = config,
        .task_name = "holistic_landmarker_test",
-       .task_running_mode = "image",
+       .task_running_mode = core::RunningMode::kImage,
        .op_resolver = std::make_unique<core::MediaPipeBuiltinOpResolver>()});
 }
 

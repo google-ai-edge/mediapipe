@@ -23,6 +23,7 @@ cc_library(
     name = "running_mode",
     hdrs = ["running_mode.h"],
     deps = [
+        "//mediapipe/tasks/cc/core:running_mode",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",

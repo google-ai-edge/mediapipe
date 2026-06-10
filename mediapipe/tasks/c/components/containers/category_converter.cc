@@ -24,7 +24,7 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToCategory(
     const mediapipe::tasks::components::containers::Category& in,
-    Category* out) {
+    MpCategory* out) {
   out->index = in.index;
   out->score = in.score;
   out->category_name = in.category_name.has_value()
@@ -34,14 +34,14 @@ void CppConvertToCategory(
       in.display_name.has_value() ? strdup(in.display_name->c_str()) : nullptr;
 }
 
-void CppCloseCategory(Category* in) {
+void CppCloseCategory(MpCategory* in) {
   free(in->category_name);
   in->category_name = nullptr;
   free(in->display_name);
   in->display_name = nullptr;
 }
 
-void CppCloseCategories(Categories* in) {
+void CppCloseCategories(MpCategories* in) {
   for (int i = 0; i < in->categories_count; ++i) {
     CppCloseCategory(&in->categories[i]);
   }

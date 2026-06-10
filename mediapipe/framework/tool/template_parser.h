@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "absl/base/macros.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 
 namespace mediapipe {
@@ -41,12 +42,12 @@ class TemplateParser {
     bool Parse(proto_ns::io::ZeroCopyInputStream* input,
                proto_ns::Message* output);
     // Like TextFormat::ParseFromString().
-    bool ParseFromString(const std::string& input, proto_ns::Message* output);
+    bool ParseFromString(absl::string_view input, proto_ns::Message* output);
     // Like TextFormat::Merge().
     bool Merge(proto_ns::io::ZeroCopyInputStream* input,
                proto_ns::Message* output);
     // Like TextFormat::MergeFromString().
-    bool MergeFromString(const std::string& input, proto_ns::Message* output);
+    bool MergeFromString(absl::string_view input, proto_ns::Message* output);
 
     // Set where to report parse errors.  If NULL (the default), errors will
     // be printed to stderr.
@@ -76,7 +77,7 @@ class TemplateParser {
     }
 
     // Like TextFormat::ParseFieldValueFromString
-    bool ParseFieldValueFromString(const std::string& input,
+    bool ParseFieldValueFromString(absl::string_view input,
                                    const proto_ns::FieldDescriptor* field,
                                    proto_ns::Message* output);
 

@@ -14,6 +14,7 @@
 
 # Placeholder for internal Python strict binary and library compatibility macro.
 # Placeholder for internal Python library rule.
+# Placeholder: load py_test
 
 licenses(["notice"])
 

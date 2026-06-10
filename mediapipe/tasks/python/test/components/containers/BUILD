@@ -87,7 +87,6 @@ py_test(
         "//mediapipe/tasks/python/components/containers:keypoint",
         "//mediapipe/tasks/python/components/containers:keypoint_c",
         "//mediapipe/tasks/python/components/containers:rect_c",
-        "//third_party/py/immutabledict",
         "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )

@@ -77,7 +77,7 @@ static const int kMicrosecondsPerMillisecond = 1000;
              ]
                taskOptions:options
         enableFlowLimiting:NO
-               runningMode:MPPAudioRunningModeDisplayName(options.runningMode)
+               runningMode:MMPCoreRunningModeFromAudioRunningMode(options.runningMode)
                      error:error];
 
     if (!taskInfo) {

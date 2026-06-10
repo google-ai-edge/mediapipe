@@ -20,6 +20,7 @@
 
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/tasks/cc/core/host_environment.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -28,7 +29,7 @@ namespace logging {
 
 struct LoggingOptions {
   std::string task_name;
-  std::string task_running_mode;
+  RunningMode task_running_mode;
   HostEnvironment host_environment = HostEnvironment::HOST_ENVIRONMENT_UNKNOWN;
   HostSystem host_system = HostSystem::HOST_SYSTEM_UNKNOWN;
   std::string host_version;

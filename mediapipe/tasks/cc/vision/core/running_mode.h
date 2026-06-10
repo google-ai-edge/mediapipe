@@ -21,6 +21,7 @@ limitations under the License.
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -47,21 +48,36 @@ inline std::string GetRunningModeName(RunningMode mode) {
       return "video mode";
     case LIVE_STREAM:
       return "live stream mode";
+  }
+  return "unknown mode";
+}
+
+inline mediapipe::tasks::core::RunningMode GetCoreRunningMode(
+    RunningMode mode) {
+  switch (mode) {
+    case IMAGE:
+      return mediapipe::tasks::core::RunningMode::kImage;
+    case VIDEO:
+      return mediapipe::tasks::core::RunningMode::kVideo;
+    case LIVE_STREAM:
+      return mediapipe::tasks::core::RunningMode::kLiveStream;
     default:
-      return "unknown mode";
+      return mediapipe::tasks::core::RunningMode::kUnspecified;
   }
 }
 
-inline absl::StatusOr<RunningMode> GetRunningModeFromString(std::string mode) {
-  if (mode == "image mode") {
-    return IMAGE;
-  } else if (mode == "video mode") {
-    return VIDEO;
-  } else if (mode == "live stream mode") {
-    return LIVE_STREAM;
-  } else {
-    return absl::InvalidArgumentError(
-        absl::StrCat("Unsupported running mode: ", mode));
+inline absl::StatusOr<RunningMode> GetVisionRunningMode(
+    mediapipe::tasks::core::RunningMode mode) {
+  switch (mode) {
+    case mediapipe::tasks::core::RunningMode::kImage:
+      return IMAGE;
+    case mediapipe::tasks::core::RunningMode::kVideo:
+      return VIDEO;
+    case mediapipe::tasks::core::RunningMode::kLiveStream:
+      return LIVE_STREAM;
+    default:
+      return absl::InvalidArgumentError(
+          absl::StrCat("Unsupported running mode: ", static_cast<int>(mode)));
   }
 }
 

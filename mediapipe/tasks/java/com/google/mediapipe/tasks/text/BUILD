@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar")
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_jni_binary")
 
 licenses(["notice"])
 
@@ -93,6 +93,7 @@ android_library(
     srcs = glob(["**/*.java"]),
     manifest = "AndroidManifest.xml",
     deps = [
+        ":libmediapipe_tasks_textgenai_jni_lib",
         "//mediapipe/framework:calculator_options_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_java_proto_lite",
@@ -114,7 +115,14 @@ android_library(
     ],
 )
 
-mediapipe_build_aar(
+mediapipe_build_aar_with_jni(
     name = "tasks_text",
     android_library = ":tasks_text_aar_library",
+)
+
+mediapipe_jni_binary(
+    name = "mediapipe_tasks_textgenai_jni",
+    uses_explicit_exports = False,
+    version_script = "//mediapipe/tasks/java:textgenai_version_script.lds",
+    deps = [],
 )

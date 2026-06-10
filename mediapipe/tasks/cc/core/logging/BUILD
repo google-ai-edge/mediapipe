@@ -31,5 +31,6 @@ cc_library(
     deps = [
         "//mediapipe/framework:timestamp",
         "//mediapipe/tasks/cc/core:host_environment",
+        "//mediapipe/tasks/cc/core:running_mode",
     ],
 )

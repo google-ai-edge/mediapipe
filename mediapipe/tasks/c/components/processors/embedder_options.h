@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 // Embedder options for MediaPipe C embedding extraction tasks.
-struct EmbedderOptions {
+struct MpEmbedderOptions {
   // Whether to normalize the returned feature vector with L2 norm. Use this
   // option only if the model does not already contain a native L2_NORMALIZATION
   // TF Lite Op. In most cases, this is already the case and L2 norm is thus

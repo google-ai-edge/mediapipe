@@ -339,6 +339,14 @@ public final class PacketGetter {
     return nativeGetMatrixData(packet.getNativeHandle());
   }
 
+  /**
+   * Returns a DirectByteBuffer wrapping the memory of the given Matrix Packet. The ByteBuffer is
+   * only valid as long as the Packet is alive.
+   */
+  public static ByteBuffer getMatrixBuffer(final Packet packet) {
+    return nativeGetMatrixBuffer(packet.getNativeHandle());
+  }
+
   public static int getMatrixRows(final Packet packet) {
     return nativeGetMatrixRows(packet.getNativeHandle());
   }
@@ -456,6 +464,8 @@ public final class PacketGetter {
   private static native byte[] nativeGetAudioData(long nativePacketHandle);
   // Native helper functions to access the MediaPipe Matrix data.
   private static native float[] nativeGetMatrixData(long nativePacketHandle);
+
+  private static native ByteBuffer nativeGetMatrixBuffer(long nativePacketHandle);
 
   private static native int nativeGetMatrixRows(long nativePacketHandle);
 

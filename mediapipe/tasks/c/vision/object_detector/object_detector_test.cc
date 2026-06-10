@@ -59,11 +59,11 @@ TEST(ObjectDetectorTest, ImageModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  ObjectDetectorOptions options = {
+  MpObjectDetectorOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .display_names_locale = nullptr,
       .max_results = -1,
       .score_threshold = 0.0,
@@ -78,7 +78,7 @@ TEST(ObjectDetectorTest, ImageModeTest) {
             kMpOk);
   EXPECT_NE(detector, nullptr);
 
-  ObjectDetectorResult result;
+  MpObjectDetectorResult result;
   ASSERT_EQ(MpObjectDetectorDetectImage(detector, image.get(),
                                         /* image_processing_options= */ nullptr,
                                         &result, /*error_msg=*/nullptr),
@@ -96,11 +96,11 @@ TEST(ObjectDetectorTest, ImageModeWithRotationTest) {
   const auto image = GetImage(GetFullPath(kImageRotatedFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  ObjectDetectorOptions options = {
+  MpObjectDetectorOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .display_names_locale = nullptr,
       .max_results = -1,
       .score_threshold = 0.0,
@@ -115,11 +115,11 @@ TEST(ObjectDetectorTest, ImageModeWithRotationTest) {
             kMpOk);
   EXPECT_NE(detector, nullptr);
 
-  ImageProcessingOptions image_processing_options;
+  MpImageProcessingOptions image_processing_options;
   image_processing_options.has_region_of_interest = 0;
   image_processing_options.rotation_degrees = -90;
 
-  ObjectDetectorResult result;
+  MpObjectDetectorResult result;
   ASSERT_EQ(MpObjectDetectorDetectImage(detector, image.get(),
                                         &image_processing_options, &result,
                                         /*error_msg=*/nullptr),
@@ -137,11 +137,11 @@ TEST(ObjectDetectorTest, VideoModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  ObjectDetectorOptions options = {
+  MpObjectDetectorOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::VIDEO,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_VIDEO,
       .display_names_locale = nullptr,
       .max_results = 3,
       .score_threshold = 0.0,
@@ -157,7 +157,7 @@ TEST(ObjectDetectorTest, VideoModeTest) {
   EXPECT_NE(detector, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
-    ObjectDetectorResult result;
+    MpObjectDetectorResult result;
     ASSERT_EQ(
         MpObjectDetectorDetectForVideo(detector, image.get(),
                                        /* image_processing_options= */ nullptr,
@@ -181,7 +181,7 @@ TEST(ObjectDetectorTest, VideoModeTest) {
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
   static absl::BlockingCounter* blocking_counter;
-  static void Fn(MpStatus status, const ObjectDetectorResult* detector_result,
+  static void Fn(MpStatus status, const MpObjectDetectorResult* detector_result,
                  MpImagePtr image, int64_t timestamp) {
     ASSERT_EQ(status, kMpOk);
     ASSERT_NE(detector_result, nullptr);
@@ -210,11 +210,11 @@ TEST(ObjectDetectorTest, LiveStreamModeTest) {
 
   const std::string model_path = GetFullPath(kModelName);
 
-  ObjectDetectorOptions options = {
+  MpObjectDetectorOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::LIVE_STREAM,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM,
       .display_names_locale = nullptr,
       .max_results = 3,
       .score_threshold = 0.0,
@@ -257,11 +257,11 @@ TEST(ObjectDetectorTest, LiveStreamModeTest) {
 
 TEST(ObjectDetectorTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
-  ObjectDetectorOptions options = {
+  MpObjectDetectorOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = nullptr},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
   };
 
   char* error_msg = nullptr;

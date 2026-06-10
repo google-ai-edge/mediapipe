@@ -17,9 +17,9 @@
 from typing import List, Union
 import warnings
 
+from google.protobuf import message
 import numpy as np
 
-from google.protobuf import message
 from mediapipe.python._framework_bindings import _packet_creator
 from mediapipe.python._framework_bindings import image
 from mediapipe.python._framework_bindings import image_frame

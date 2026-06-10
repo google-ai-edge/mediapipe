@@ -49,7 +49,8 @@ bzl_library(
         "//mediapipe/framework/deps:descriptor_set_bzl",
         "//mediapipe/framework/deps:expand_template_bzl",
         "@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite_bzl",
-        "@rules_cc//cc:core_rules",
+        "@rules_cc//cc:action_names_bzl",
+        "@rules_cc//cc:find_cc_toolchain_bzl",
     ],
 )
 

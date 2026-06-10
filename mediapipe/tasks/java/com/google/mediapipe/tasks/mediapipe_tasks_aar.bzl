@@ -51,7 +51,7 @@ _VISION_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_roi_refinement_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/holistic_landmarker/proto:holistic_landmarker_graph_options_java_proto_lite",
-    "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto:region_of_interest_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_classifier/proto:image_classifier_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_embedder/proto:image_embedder_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_java_proto_lite",
@@ -93,7 +93,7 @@ _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_java_proto_lite",
 ]
 
-def mediapipe_jni_binary(name, deps, uses_explicit_exports = False, shared_lib_name = None):
+def mediapipe_jni_binary(name, deps, uses_explicit_exports = False, shared_lib_name = None, version_script = None):
     """Builds MediaPipe JNI library. Uses prebuilt libraries if available.
 
     Creates an .so file at name/shared_lib_name. If shared_lib_name is not provided, it will be
@@ -106,11 +106,14 @@ def mediapipe_jni_binary(name, deps, uses_explicit_exports = False, shared_lib_n
       uses_explicit_exports: Whethe this library uses JNIEXPORT to mark exported symbols.
       shared_lib_name: The name of the shared library. If not provided, it will be inferred from
         the name argument.
+      version_script: The version script to use for the library. If not provided, it will use the
+        default version_script.lds.
     """
+    version_script = version_script or "//mediapipe/tasks/java:version_script.lds"
     extra_linkopts = []
     if not uses_explicit_exports:
         extra_linkopts = [
-            "-Wl,--version-script,$(location //mediapipe/tasks/java:version_script.lds)",
+            "-Wl,--version-script,$(location " + version_script + ")",
         ]
 
     target_lib_name = shared_lib_name or "lib" + name + ".so"
@@ -140,7 +143,7 @@ def mediapipe_jni_binary(name, deps, uses_explicit_exports = False, shared_lib_n
         ] + extra_linkopts,
         linkshared = 1,
         deps = deps + [
-            "//mediapipe/tasks/java:version_script.lds",
+            version_script,
         ],
     )
 
@@ -269,6 +272,7 @@ def mediapipe_tasks_core_aar(name, srcs, manifest, deps = []):
                    "//mediapipe/java/com/google/mediapipe/framework:android_framework",
                    "//mediapipe/java/com/google/mediapipe/framework/image",
                    "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_java_proto_lite",
+                   "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:base_options_utils_jni",
                    "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
                    "//third_party:autovalue",
                    "@maven//:androidx_annotation_annotation",

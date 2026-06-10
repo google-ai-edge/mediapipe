@@ -34,7 +34,7 @@ import {
 import {supportsOffscreenCanvas} from '../../../../web/graph_runner/platform_utils';
 import {SupportModelResourcesGraphService} from '../../../../web/graph_runner/register_model_resources_graph_service';
 
-import {VisionTaskOptions} from './vision_task_options';
+import type {VisionTaskOptions} from './vision_task_options';
 
 // tslint:disable-next-line:enforce-name-casing
 const GraphRunnerVisionType = SupportModelResourcesGraphService(
@@ -131,7 +131,7 @@ export abstract class VisionTaskRunner extends TaskRunner {
           "'runningMode' must be set to 'IMAGE'.",
       );
     }
-    this.process(image, imageProcessingOptions, this.getSynctheticTimestamp());
+    this.process(image, imageProcessingOptions, this.getSyntheticTimestamp());
   }
 
   /** Sends a single video frame to the graph and awaits results. */
@@ -217,6 +217,7 @@ export abstract class VisionTaskRunner extends TaskRunner {
     imageProcessingOptions: ImageProcessingOptions | undefined,
     timestamp: number,
   ): void {
+    this.startProcessing(timestamp);
     if (this.normRectStreamName) {
       const normalizedRect = this.convertToNormalizedRect(
         imageSource,
@@ -234,7 +235,7 @@ export abstract class VisionTaskRunner extends TaskRunner {
       this.imageStreamName,
       timestamp ?? performance.now(),
     );
-    this.finishProcessing();
+    this.finishProcessing(timestamp);
   }
 
   /**

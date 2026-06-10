@@ -17,7 +17,7 @@ syntax = "proto3";
 package odml.infra.proto;
 
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
-// Next ID: 55
+// Next ID: 60
 message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
@@ -190,7 +190,7 @@ message TransformerParameters {
   // before the attention.
   bool skip_absolute_positional_embeddings = 18;
 
-  reserved 20, 21, 23, 24;
+  reserved 20, 21, 23, 24, 56;
 
   // If set, will override the default RoPE scaling factor to be the specified
   // value for all global layers (but will not change local attention layers).
@@ -271,7 +271,6 @@ message TransformerParameters {
   // models, like 4B+). Thus, to ensure correct behavior for these models when
   // not forcing fp32 precision, we allow for applying a special workaround.
   optional bool gemma3_bfloat16_fix = 36;
-  reserved 52;
 
   // Altup configs.
   message AltupConfig {
@@ -305,4 +304,6 @@ message TransformerParameters {
 
   // Whether to scale all LoRA weights by their inverse rank.
   optional bool scale_lora = 45;
+
+  reserved 52, 55, 57, 58, 59;
 }

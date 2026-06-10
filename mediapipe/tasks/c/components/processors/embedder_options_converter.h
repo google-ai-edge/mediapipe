@@ -22,7 +22,7 @@ limitations under the License.
 namespace mediapipe::tasks::c::components::processors {
 
 void CppConvertToEmbedderOptions(
-    const EmbedderOptions& in,
+    const MpEmbedderOptions& in,
     mediapipe::tasks::components::processors::EmbedderOptions* out);
 
 }  // namespace mediapipe::tasks::c::components::processors

@@ -118,4 +118,22 @@ class TextEmbedderTests: XCTestCase {
     XCTAssertGreaterThanOrEqual(
       cosineSimilarity.doubleValue, TextEmbedderTests.cosineSimilarityThreshold)
   }
+
+  func testEmbedWithGeckoSucceeds() throws {
+    let modelPath = try XCTUnwrap(
+      TextEmbedderTests.bundle.path(forResource: "gecko", ofType: "task"))
+    let textEmbedder = try XCTUnwrap(TextEmbedder(modelPath: modelPath))
+
+    let textFormatContext = TextFormatContext()
+    textFormatContext.embeddingType = .retrievalQuery
+    textFormatContext.textRole = .query
+
+    let result = try XCTUnwrap(
+      textEmbedder.embed(
+        text: TextEmbedderTests.text1,
+        textFormatContext: textFormatContext))
+
+    assertTextEmbedderResultHasOneEmbedding(result)
+    XCTAssertEqual(result.embeddingResult.embeddings[0].floatEmbedding?.count, 768)
+  }
 }

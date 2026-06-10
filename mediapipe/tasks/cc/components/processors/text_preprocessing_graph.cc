@@ -20,6 +20,7 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/calculators/tensor/bert_preprocessor_calculator.pb.h"
+#include "mediapipe/calculators/tensor/gecko_preprocessor_calculator.pb.h"
 #include "mediapipe/calculators/tensor/regex_preprocessor_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
@@ -35,6 +36,7 @@ limitations under the License.
 namespace mediapipe::tasks::components::processors {
 namespace {
 
+using ::mediapipe::GeckoPreprocessorCalculatorOptions;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::SideInput;
@@ -65,6 +67,8 @@ absl::StatusOr<std::string> GetCalculatorNameFromModelType(
       return "BertPreprocessorCalculator";
     case TextModelType::REGEX_MODEL:
       return "RegexPreprocessorCalculator";
+    case TextModelType::GECKO_MODEL:
+      return "GeckoPreprocessorCalculator";
     case TextModelType::STRING_MODEL:
       return "TextToTensorCalculator";
     case TextModelType::USE_MODEL:
@@ -191,6 +195,7 @@ absl::Status ConfigureTextPreprocessingGraph(
     case TextModelType::USE_MODEL: {
       break;
     }
+    case TextModelType::GECKO_MODEL:
     case TextModelType::BERT_MODEL:
     case TextModelType::REGEX_MODEL: {
       MP_ASSIGN_OR_RETURN(int max_seq_len, GetMaxSeqLen(model_graph));
@@ -260,6 +265,16 @@ class TextPreprocessingGraph : public mediapipe::Subgraph {
             .set_bert_max_seq_len(options.max_seq_len());
         text_preprocessor.GetOptions<BertPreprocessorCalculatorOptions>()
             .set_has_dynamic_input_tensors(options.has_dynamic_input_tensors());
+        metadata_extractor_in >>
+            text_preprocessor.SideIn(kMetadataExtractorTag);
+        break;
+      }
+      case TextModelType::GECKO_MODEL: {
+        text_preprocessor.GetOptions<GeckoPreprocessorCalculatorOptions>()
+            .set_max_seq_len(options.max_seq_len());
+        text_preprocessor.GetOptions<GeckoPreprocessorCalculatorOptions>()
+            .mutable_sentence_piece_model()
+            ->CopyFrom(options.sentence_piece_model());
         metadata_extractor_in >>
             text_preprocessor.SideIn(kMetadataExtractorTag);
         break;

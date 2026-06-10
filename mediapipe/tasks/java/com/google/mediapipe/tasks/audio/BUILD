@@ -30,6 +30,43 @@ android_library(
     ],
 )
 
+android_library(
+    name = "core_java",
+    srcs = glob(["core/*.java"]),
+    deps = [
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:audiodata",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "audioseparator_java",
+    srcs = [
+        "audioseparator/AudioSeparator.java",
+        "audioseparator/AudioSeparatorResult.java",
+        "audioseparator/AudioSeparatorTaskOptions.java",
+        "audioseparator/SemanticAudioTrack.java",
+    ],
+    deps = [
+        ":core_java",
+        "//java/com/google/android/gmscore/integ/client/tasks",
+        "//mediapipe/calculators/tensor:inference_calculator_java_proto_lite",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
+        "//mediapipe/tasks/cc/audio/audio_separator/proto:audio_separator_graph_options_java_proto_lite",
+        "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
+        "//mediapipe/tasks/cc/core/proto:external_file_java_proto_lite",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:audiodata",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
+        "//third_party:any_java_proto",
+        "//third_party:autovalue",
+        "@maven//:androidx_annotation_annotation",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
 # The native library of all MediaPipe audio tasks.
 
 android_library(
@@ -57,7 +94,9 @@ android_library(
 
 android_library(
     name = "tasks_audio_aar_library",
-    srcs = glob(["**/*.java"]),
+    srcs = glob(
+        ["**/*.java"],
+    ),
     manifest = "AndroidManifest.xml",
     deps = [
         "//mediapipe/framework:calculator_options_java_proto_lite",

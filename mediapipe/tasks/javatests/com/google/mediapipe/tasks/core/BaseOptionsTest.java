@@ -18,9 +18,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import com.google.mediapipe.proto.CalculatorOptionsProto.CalculatorOptions;
-import com.google.mediapipe.tasks.core.proto.AccelerationProto;
-import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -28,7 +25,7 @@ import org.junit.runners.Suite.SuiteClasses;
 
 /** Test for {@link BaseOptions} */
 @RunWith(Suite.class)
-@SuiteClasses({BaseOptionsTest.General.class, BaseOptionsTest.ConvertProtoTest.class})
+@SuiteClasses({BaseOptionsTest.General.class})
 public class BaseOptionsTest {
 
   static final String MODEL_ASSET_PATH = "dummy_model.tflite";
@@ -118,90 +115,6 @@ public class BaseOptionsTest {
       assertThat(exception)
           .hasMessageThat()
           .contains("Specified Delegate type does not match the provided delegate options.");
-    }
-  }
-
-  /** A mock TaskOptions class providing access to convertBaseOptionsToProto. */
-  public static class MockTaskOptions extends TaskOptions {
-
-    public MockTaskOptions(BaseOptions baseOptions) {
-      baseOptionsProto = convertBaseOptionsToProto(baseOptions);
-    }
-
-    public BaseOptionsProto.BaseOptions getBaseOptionsProto() {
-      return baseOptionsProto;
-    }
-
-    private BaseOptionsProto.BaseOptions baseOptionsProto;
-
-    @Override
-    public CalculatorOptions convertToCalculatorOptionsProto() {
-      return CalculatorOptions.newBuilder().build();
-    }
-  }
-
-  /** Test for converting {@link BaseOptions} to {@link BaseOptionsProto} */
-  @RunWith(AndroidJUnit4.class)
-  public static final class ConvertProtoTest extends BaseOptionsTest {
-    @Test
-    public void succeedsWithDefaultOptions() throws Exception {
-      BaseOptions options =
-          BaseOptions.builder()
-              .setModelAssetPath(MODEL_ASSET_PATH)
-              .setDelegate(Delegate.CPU)
-              .setDelegateOptions(BaseOptions.DelegateOptions.CpuOptions.builder().build())
-              .build();
-      MockTaskOptions taskOptions = new MockTaskOptions(options);
-      AccelerationProto.Acceleration acceleration =
-          taskOptions.getBaseOptionsProto().getAcceleration();
-      assertThat(acceleration.hasTflite()).isTrue();
-    }
-
-    @Test
-    public void succeedsWithGpuOptions() throws Exception {
-      BaseOptions options =
-          BaseOptions.builder()
-              .setModelAssetPath(MODEL_ASSET_PATH)
-              .setDelegate(Delegate.GPU)
-              .setDelegateOptions(
-                  BaseOptions.DelegateOptions.GpuOptions.builder()
-                      .setModelToken(MODEL_TOKEN)
-                      .setSerializedModelDir(SERIALIZED_MODEL_DIR)
-                      .build())
-              .build();
-      MockTaskOptions taskOptions = new MockTaskOptions(options);
-      AccelerationProto.Acceleration acceleration =
-          taskOptions.getBaseOptionsProto().getAcceleration();
-      assertThat(acceleration.hasTflite()).isFalse();
-      assertThat(acceleration.hasGpu()).isTrue();
-      assertThat(acceleration.getGpu().getUseAdvancedGpuApi()).isTrue();
-      assertThat(acceleration.getGpu().hasCachedKernelPath()).isFalse();
-      assertThat(acceleration.getGpu().getModelToken()).isEqualTo(MODEL_TOKEN);
-      assertThat(acceleration.getGpu().getSerializedModelDir()).isEqualTo(SERIALIZED_MODEL_DIR);
-    }
-
-    @Test
-    public void succeedsWithNpuOptions() throws Exception {
-      BaseOptions options =
-          BaseOptions.builder()
-              .setModelAssetPath(MODEL_ASSET_PATH)
-              .setDelegate(Delegate.NPU)
-              .setDelegateOptions(
-                  BaseOptions.DelegateOptions.NpuOptions.builder()
-                      .setDispatchLibraryDirectory(DISPATCH_LIBRARY_PATH)
-                      .setCompilerPluginLibraryDirectory(COMPILER_PLUGIN_LIBRARY_PATH)
-                      .build())
-              .build();
-      MockTaskOptions taskOptions = new MockTaskOptions(options);
-      AccelerationProto.Acceleration acceleration =
-          taskOptions.getBaseOptionsProto().getAcceleration();
-      assertThat(acceleration.hasTflite()).isFalse();
-      assertThat(acceleration.hasLitert()).isTrue();
-      assertThat(acceleration.getLitert().hasNpu()).isTrue();
-      assertThat(acceleration.getLitert().getNpu().getDispatchLibraryPath())
-          .isEqualTo(DISPATCH_LIBRARY_PATH);
-      assertThat(acceleration.getLitert().getNpu().getCompilerPluginLibraryPath())
-          .isEqualTo(COMPILER_PLUGIN_LIBRARY_PATH);
     }
   }
 }

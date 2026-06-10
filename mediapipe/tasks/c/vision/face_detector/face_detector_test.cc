@@ -55,43 +55,43 @@ constexpr int kKeypointCount = 2;
 constexpr int kSleepBetweenFramesMilliseconds = 100;
 
 // Expected results for portrait.jpg
-const NormalizedKeypoint kExpectedKeypoints[] = {
+const MpNormalizedKeypoint kExpectedKeypoints[] = {
     {0.4432f, 0.1792f, nullptr, 0},
     {0.5609f, 0.1800f, nullptr, 0},
 };
-constexpr MPRect kExpectedBoundingBox = {283, 115, 349, 517};
+constexpr MpRect kExpectedBoundingBox = {283, 115, 349, 517};
 
 // Expected results for portrait.jpg with full-range model.
-const NormalizedKeypoint kExpectedFullRangeKeypoints[] = {
+const MpNormalizedKeypoint kExpectedFullRangeKeypoints[] = {
     {0.4397f, 0.1741f, nullptr, 0},
     {0.5509f, 0.1747f, nullptr, 0},
 };
-constexpr MPRect kExpectedFullRangeBoundingBox = {290, 110, 338, 518};
+constexpr MpRect kExpectedFullRangeBoundingBox = {290, 110, 338, 518};
 
 // Expected results for portrait_rotated.jpg
-const NormalizedKeypoint kExpectedRotatedKeypoints[] = {
+const MpNormalizedKeypoint kExpectedRotatedKeypoints[] = {
     {0.82075f, 0.44679f, nullptr, 0},
     {0.81965f, 0.56261f, nullptr, 0},
 };
-constexpr MPRect kExpectedRotatedBoundingBox = {674, 283, 519, 910};
+constexpr MpRect kExpectedRotatedBoundingBox = {674, 283, 519, 910};
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
 }
 
-// Creates a Detection object with the given bounding box and keypoints.
-Detection CreateExpectedDetection(const MPRect& bounding_box,
-                                  const NormalizedKeypoint* keypoints,
-                                  uint32_t keypoints_count) {
+// Creates a MpDetection object with the given bounding box and keypoints.
+MpDetection CreateExpectedDetection(const MpRect& bounding_box,
+                                    const MpNormalizedKeypoint* keypoints,
+                                    uint32_t keypoints_count) {
   return {/* categories= */ nullptr,
           /* categories_count= */ 0,
           /* bounding_box= */ bounding_box,
-          /* keypoints= */ const_cast<NormalizedKeypoint*>(keypoints),
+          /* keypoints= */ const_cast<MpNormalizedKeypoint*>(keypoints),
           /* keypoints_count= */ keypoints_count};
 }
 
-void AssertFaceDetectorResult(const FaceDetectorResult* result,
-                              const Detection& expected_detection,
+void AssertFaceDetectorResult(const MpFaceDetectorResult* result,
+                              const MpDetection& expected_detection,
                               const int pixel_diff_tolerance,
                               const float keypoint_error_threshold) {
   ASSERT_NE(result, nullptr);
@@ -115,9 +115,9 @@ TEST(FaceDetectorTest, ImageModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  FaceDetectorOptions options = {
+  MpFaceDetectorOptions options = {
       .base_options = {.model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .min_detection_confidence = 0.5,
       .min_suppression_threshold = 0.5,
   };
@@ -127,13 +127,13 @@ TEST(FaceDetectorTest, ImageModeTest) {
             kMpOk);
   EXPECT_NE(detector, nullptr);
 
-  FaceDetectorResult result;
+  MpFaceDetectorResult result;
   EXPECT_EQ(MpFaceDetectorDetectImage(detector, image.get(),
                                       /* image_processing_options */ nullptr,
                                       &result, /* error_msg= */ nullptr),
             kMpOk);
 
-  Detection expected_detection = CreateExpectedDetection(
+  MpDetection expected_detection = CreateExpectedDetection(
       kExpectedBoundingBox, kExpectedKeypoints, kKeypointCount);
 
   AssertFaceDetectorResult(&result, expected_detection, kPixelDiffTolerance,
@@ -147,9 +147,9 @@ TEST(FaceDetectorTest, FullRangeImageModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kFullRangeModelName);
-  FaceDetectorOptions options = {
+  MpFaceDetectorOptions options = {
       .base_options = {.model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .min_detection_confidence = 0.5,
       .min_suppression_threshold = 0.5,
   };
@@ -159,13 +159,13 @@ TEST(FaceDetectorTest, FullRangeImageModeTest) {
             kMpOk);
   EXPECT_NE(detector, nullptr);
 
-  FaceDetectorResult result;
+  MpFaceDetectorResult result;
   EXPECT_EQ(MpFaceDetectorDetectImage(detector, image.get(),
                                       /* image_processing_options */ nullptr,
                                       &result, /* error_msg= */ nullptr),
             kMpOk);
 
-  Detection expected_detection =
+  MpDetection expected_detection =
       CreateExpectedDetection(kExpectedFullRangeBoundingBox,
                               kExpectedFullRangeKeypoints, kKeypointCount);
 
@@ -180,9 +180,9 @@ TEST(FaceDetectorTest, ImageModeWithRotationTest) {
   const auto image = GetImage(GetFullPath(kImageRotatedFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  FaceDetectorOptions options = {
+  MpFaceDetectorOptions options = {
       .base_options = {.model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .min_detection_confidence = 0.5,
       .min_suppression_threshold = 0.5,
   };
@@ -192,17 +192,17 @@ TEST(FaceDetectorTest, ImageModeWithRotationTest) {
             kMpOk);
   EXPECT_NE(detector, nullptr);
 
-  ImageProcessingOptions image_processing_options;
+  MpImageProcessingOptions image_processing_options;
   image_processing_options.has_region_of_interest = 0;
   image_processing_options.rotation_degrees = -90;
 
-  FaceDetectorResult result;
+  MpFaceDetectorResult result;
   EXPECT_EQ(MpFaceDetectorDetectImage(detector, image.get(),
                                       &image_processing_options, &result,
                                       /* error_msg= */ nullptr),
             kMpOk);
 
-  Detection expected_detection = CreateExpectedDetection(
+  MpDetection expected_detection = CreateExpectedDetection(
       kExpectedRotatedBoundingBox, kExpectedRotatedKeypoints, kKeypointCount);
   AssertFaceDetectorResult(&result, expected_detection, kPixelDiffTolerance,
                            kKeypointErrorThreshold);
@@ -215,9 +215,9 @@ TEST(FaceDetectorTest, VideoModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  FaceDetectorOptions options = {
+  MpFaceDetectorOptions options = {
       .base_options = {.model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::VIDEO,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_VIDEO,
       .min_detection_confidence = 0.5,
       .min_suppression_threshold = 0.5,
   };
@@ -227,10 +227,10 @@ TEST(FaceDetectorTest, VideoModeTest) {
             kMpOk);
   EXPECT_NE(detector, nullptr);
 
-  Detection expected_detection = CreateExpectedDetection(
+  MpDetection expected_detection = CreateExpectedDetection(
       kExpectedBoundingBox, kExpectedKeypoints, kKeypointCount);
   for (int i = 0; i < kIterations; ++i) {
-    FaceDetectorResult result;
+    MpFaceDetectorResult result;
     EXPECT_EQ(
         MpFaceDetectorDetectForVideo(detector, image.get(),
                                      /* image_processing_options */ nullptr, i,
@@ -251,11 +251,11 @@ TEST(FaceDetectorTest, VideoModeTest) {
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
   static absl::BlockingCounter* blocking_counter;
-  static void Fn(MpStatus status, const FaceDetectorResult* detector_result,
+  static void Fn(MpStatus status, const MpFaceDetectorResult* detector_result,
                  const MpImagePtr image, int64_t timestamp) {
     ASSERT_EQ(status, kMpOk);
     ASSERT_NE(detector_result, nullptr);
-    Detection expected_detection = CreateExpectedDetection(
+    MpDetection expected_detection = CreateExpectedDetection(
         kExpectedBoundingBox, kExpectedKeypoints, kKeypointCount);
     AssertFaceDetectorResult(detector_result, expected_detection,
                              kPixelDiffTolerance, kKeypointErrorThreshold);
@@ -277,9 +277,9 @@ TEST(FaceDetectorTest, LiveStreamModeTest) {
 
   const std::string model_path = GetFullPath(kModelName);
 
-  FaceDetectorOptions options = {
+  MpFaceDetectorOptions options = {
       .base_options = {.model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::LIVE_STREAM,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM,
       .min_detection_confidence = 0.5,
       .min_suppression_threshold = 0.5,
       .result_callback = LiveStreamModeCallback::Fn,
@@ -316,9 +316,9 @@ TEST(FaceDetectorTest, LiveStreamModeTest) {
 
 TEST(FaceDetectorTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
-  FaceDetectorOptions options = {
+  MpFaceDetectorOptions options = {
       .base_options = {.model_asset_path = nullptr},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .min_detection_confidence = 0.5,
       .min_suppression_threshold = 0.5,
   };

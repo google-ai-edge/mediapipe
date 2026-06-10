@@ -1,0 +1,934 @@
+
+// Copyright 2026 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+#include <math.h>
+
+#include <cmath>
+#include <complex>
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
+#include <vector>
+
+#include "Eigen/Core"
+#include "absl/status/status.h"
+#include "audio/dsp/number_util.h"
+#include "mediapipe/calculators/audio/spectrogram_calculator.pb.h"
+#include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/calculator_runner.h"
+#include "mediapipe/framework/formats/matrix.h"
+#include "mediapipe/framework/formats/time_series_header.pb.h"
+#include "mediapipe/framework/port/gmock.h"
+#include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/util/time_series_test_util.h"
+#include "mediapipe/util/time_series_util.h"
+namespace mediapipe {
+namespace {
+const int kInitialTimestampOffsetMicroseconds = 4;
+class SpectrogramFloatCalculatorTest
+    : public TimeSeriesCalculatorTest<SpectrogramCalculatorOptions> {
+ protected:
+  void SetUp() override {
+    calculator_name_ = "SpectrogramFloatCalculator";
+    input_sample_rate_ = 4000.0;
+    num_input_channels_ = 1;
+  }
+  // Initializes and runs the test graph.
+  absl::Status Run() {
+    // Now that options are set, we can set up some internal constants.
+    frame_duration_samples_ =
+        round(options_.frame_duration_seconds() * input_sample_rate_);
+    frame_step_samples_ =
+        frame_duration_samples_ -
+        round(options_.frame_overlap_seconds() * input_sample_rate_);
+    // The magnitude of the 0th FFT bin (DC) should be sum(input.*window);
+    // for an input identically 1.0, this is just sum(window).  The average
+    // value of our Hann window is 0.5, hence this is the expected squared-
+    // magnitude output value in the DC bin for constant input of 1.0.
+    expected_dc_squared_magnitude_ =
+        pow((static_cast<float>(frame_duration_samples_) * 0.5), 2.0);
+    return RunGraph();
+  }
+  void SendResetPacket(int64_t timestamp) {
+    runner_->MutableInputs()->Tag("RESET").packets.push_back(
+        mediapipe::MakePacket<bool>(true).At(mediapipe::Timestamp(timestamp)));
+  }
+  // Creates test multichannel input with specified packet sizes and containing
+  // a constant-frequency sinusoid that maintains phase between adjacent
+  // packets.
+  void SetupCosineInputPackets(
+      const std::vector<int>& packet_sizes_samples, float cosine_frequency_hz,
+      float input_scale = 1.0f,
+      int timestamp = kInitialTimestampOffsetMicroseconds) {
+    int total_num_input_samples = 0;
+    for (int packet_size_samples : packet_sizes_samples) {
+      double packet_start_time_seconds =
+          timestamp * 1e-6 + total_num_input_samples / input_sample_rate_;
+      double packet_end_time_seconds =
+          packet_start_time_seconds + packet_size_samples / input_sample_rate_;
+      double angular_freq = 2 * M_PI * cosine_frequency_hz;
+      Matrix* packet_data =
+          new Matrix(num_input_channels_, packet_size_samples);
+      // Use Eigen's vectorized cos() function to fill the vector with a
+      // sinusoid of appropriate frequency & phase.
+      for (int i = 0; i < num_input_channels_; i++) {
+        packet_data->row(i) =
+            Eigen::ArrayXf::LinSpaced(packet_size_samples,
+                                      packet_start_time_seconds * angular_freq,
+                                      packet_end_time_seconds * angular_freq)
+                .cos()
+                .transpose() *
+            input_scale;
+      }
+      int64_t input_timestamp = round(packet_start_time_seconds *
+                                      Timestamp::kTimestampUnitsPerSecond);
+      AppendInputPacket(packet_data, input_timestamp);
+      total_num_input_samples += packet_size_samples;
+    }
+  }
+  // Setup a sequence of input packets of specified sizes, each filled
+  // with samples of 1.0.
+  void SetupConstantInputPackets(const std::vector<int>& packet_sizes_samples,
+                                 float input_scale = 1.0f) {
+    // A 0 Hz cosine is identically 1.0 for all samples.
+    SetupCosineInputPackets(packet_sizes_samples, 0.0, input_scale);
+  }
+  // Setup a sequence of input packets of specified sizes, each containing a
+  // single sample of 1.0 at a specified offset.
+  void SetupImpulseInputPackets(
+      const std::vector<int>& packet_sizes_samples,
+      const std::vector<int>& impulse_offsets_samples) {
+    int total_num_input_samples = 0;
+    for (int i = 0; i < packet_sizes_samples.size(); ++i) {
+      double packet_start_time_seconds =
+          kInitialTimestampOffsetMicroseconds * 1e-6 +
+          total_num_input_samples / input_sample_rate_;
+      int64_t input_timestamp = round(packet_start_time_seconds *
+                                      Timestamp::kTimestampUnitsPerSecond);
+      std::unique_ptr<Matrix> impulse(
+          new Matrix(Matrix::Zero(1, packet_sizes_samples[i])));
+      (*impulse)(0, impulse_offsets_samples[i]) = 1.0;
+      AppendInputPacket(impulse.release(), input_timestamp);
+      total_num_input_samples += packet_sizes_samples[i];
+    }
+  }
+  // Creates test multichannel input with specified packet sizes and containing
+  // constant input packets for the even channels and constant-frequency
+  // sinusoid that maintains phase between adjacent packets for the odd
+  // channels.
+  void SetupMultichannelInputPackets(
+      const std::vector<int>& packet_sizes_samples, float cosine_frequency_hz) {
+    int total_num_input_samples = 0;
+    for (int packet_size_samples : packet_sizes_samples) {
+      double packet_start_time_seconds =
+          kInitialTimestampOffsetMicroseconds * 1e-6 +
+          total_num_input_samples / input_sample_rate_;
+      double packet_end_time_seconds =
+          packet_start_time_seconds + packet_size_samples / input_sample_rate_;
+      double angular_freq;
+      Matrix* packet_data =
+          new Matrix(num_input_channels_, packet_size_samples);
+      // Use Eigen's vectorized cos() function to fill the vector with a
+      // sinusoid of appropriate frequency & phase.
+      for (int i = 0; i < num_input_channels_; i++) {
+        if (i % 2 == 0) {
+          angular_freq = 0;
+        } else {
+          angular_freq = 2 * M_PI * cosine_frequency_hz;
+        }
+        packet_data->row(i) =
+            Eigen::ArrayXf::LinSpaced(packet_size_samples,
+                                      packet_start_time_seconds * angular_freq,
+                                      packet_end_time_seconds * angular_freq)
+                .cos()
+                .transpose();
+      }
+      int64_t input_timestamp = round(packet_start_time_seconds *
+                                      Timestamp::kTimestampUnitsPerSecond);
+      AppendInputPacket(packet_data, input_timestamp);
+      total_num_input_samples += packet_size_samples;
+    }
+  }
+  // Return vector of the numbers of frames in each output packet.
+  std::vector<int> OutputFramesPerPacket() {
+    std::vector<int> frame_counts;
+    for (const Packet& packet : output().packets) {
+      const Matrix& matrix = packet.Get<Matrix>();
+      frame_counts.push_back(matrix.cols());
+    }
+    return frame_counts;
+  }
+  // Checks output headers and Timestamps.
+  void CheckOutputHeadersAndTimestamps(
+      std::optional<int> fft_size_override = std::nullopt) {
+    const int fft_size = fft_size_override.value_or(
+        audio_dsp::NextPowerOfTwo(frame_duration_samples_));
+    TimeSeriesHeader expected_header = input().header.Get<TimeSeriesHeader>();
+    expected_header.set_num_channels(fft_size / 2 + 1);
+    // The output header sample rate should depend on the output frame step.
+    expected_header.set_sample_rate(input_sample_rate_ / frame_step_samples_);
+    // SpectrogramFloatCalculator stores the sample rate of the input in
+    // the TimeSeriesHeader.
+    expected_header.set_audio_sample_rate(input_sample_rate_);
+    // We expect the output header to have num_samples and packet_rate unset.
+    expected_header.clear_num_samples();
+    expected_header.clear_packet_rate();
+    if (!options_.allow_multichannel_input() ||
+        options_.output_layout() ==
+            SpectrogramCalculatorOptions::SPECTROGRAM_CHANNELS_IN_ROWS) {
+      ExpectOutputHeaderEquals(expected_header);
+    } else {
+      EXPECT_THAT(output()
+                      .header.template Get<MultiStreamTimeSeriesHeader>()
+                      .time_series_header(),
+                  mediapipe::EqualsProto(expected_header));
+      EXPECT_THAT(output()
+                      .header.template Get<MultiStreamTimeSeriesHeader>()
+                      .num_streams(),
+                  num_input_channels_);
+    }
+    int cumulative_output_frames = 0;
+    // The timestamps coming out of the spectrogram correspond to the
+    // middle of the first frame's window, hence frame_duration_samples_/2
+    // term.  We use frame_duration_samples_ because that is how it is
+    // actually quantized inside spectrogram.
+    const double packet_timestamp_offset_seconds =
+        kInitialTimestampOffsetMicroseconds * 1e-6;
+    const double frame_step_seconds = frame_step_samples_ / input_sample_rate_;
+    Timestamp initial_timestamp = Timestamp::Unstarted();
+    for (const Packet& packet : output().packets) {
+      // This is the timestamp we expect based on how the spectrogram should
+      // behave (advancing by one step's worth of input samples each frame).
+      const double expected_timestamp_seconds =
+          packet_timestamp_offset_seconds +
+          cumulative_output_frames * frame_step_seconds;
+      const int64_t expected_timestamp_ticks = round(
+          expected_timestamp_seconds * Timestamp::kTimestampUnitsPerSecond);
+      EXPECT_EQ(expected_timestamp_ticks, packet.Timestamp().Value());
+      // Accept the timestamp of the first packet as the baseline for checking
+      // the remainder.
+      if (initial_timestamp == Timestamp::Unstarted()) {
+        initial_timestamp = packet.Timestamp();
+      }
+      // Also check that the timestamp is consistent with the sample_rate
+      // in the output stream's TimeSeriesHeader.
+      EXPECT_TRUE(time_series_util::LogWarningIfTimestampIsInconsistent(
+          packet.Timestamp(), initial_timestamp, cumulative_output_frames,
+          expected_header.sample_rate()));
+      if (options_.output_layout() ==
+          SpectrogramCalculatorOptions::SPECTROGRAM_CHANNELS_IN_ROWS) {
+        // each packet is a one frame with all channels.
+        cumulative_output_frames += 1;
+      } else {
+        if (!options_.allow_multichannel_input()) {
+          if (options_.output_type() == SpectrogramCalculatorOptions::COMPLEX) {
+            const Eigen::MatrixXcf& matrix = packet.Get<Eigen::MatrixXcf>();
+            cumulative_output_frames += matrix.cols();
+          } else {
+            const Matrix& matrix = packet.Get<Matrix>();
+            cumulative_output_frames += matrix.cols();
+          }
+        } else {
+          if (options_.output_type() == SpectrogramCalculatorOptions::COMPLEX) {
+            const Eigen::MatrixXcf& matrix =
+                packet.Get<std::vector<Eigen::MatrixXcf>>().at(0);
+            cumulative_output_frames += matrix.cols();
+          } else {
+            const Matrix& matrix = packet.Get<std::vector<Matrix>>().at(0);
+            cumulative_output_frames += matrix.cols();
+          }
+        }
+      }
+    }
+  }
+  // Verify that the bin corresponding to the specified frequency
+  // is the largest one in one particular frame of a single packet.
+  void CheckPeakFrequencyInPacketFrame(const Packet& packet, int frame,
+                                       float frequency) {
+    const int fft_size = audio_dsp::NextPowerOfTwo(frame_duration_samples_);
+    const int target_bin =
+        round((frequency / input_sample_rate_) * static_cast<float>(fft_size));
+    const Matrix& matrix = packet.Get<Matrix>();
+    // Stop here if the requested frame is not in this packet.
+    ASSERT_GT(matrix.cols(), frame);
+    int actual_largest_bin;
+    matrix.col(frame).maxCoeff(&actual_largest_bin);
+    EXPECT_EQ(actual_largest_bin, target_bin);
+  }
+  // Verify that the bin corresponding to the specified frequency
+  // is the largest one in one particular frame of a single spectrogram Matrix.
+  void CheckPeakFrequencyInMatrix(const Matrix& matrix, int frame,
+                                  float frequency) {
+    const int fft_size = audio_dsp::NextPowerOfTwo(frame_duration_samples_);
+    const int target_bin =
+        round((frequency / input_sample_rate_) * static_cast<float>(fft_size));
+    // Stop here if the requested frame is not in this packet.
+    ASSERT_GT(matrix.cols(), frame);
+    int actual_largest_bin;
+    matrix.col(frame).maxCoeff(&actual_largest_bin);
+    EXPECT_EQ(actual_largest_bin, target_bin);
+  }
+  void CheckPeakFrequencyInMatrixWithChannel(const Matrix& matrix, int channel,
+                                             float frequency) {
+    const int fft_size = audio_dsp::NextPowerOfTwo(frame_duration_samples_);
+    const int target_bin =
+        round((frequency / input_sample_rate_) * static_cast<float>(fft_size));
+    int actual_largest_bin;
+    matrix.row(channel).maxCoeff(&actual_largest_bin);
+    EXPECT_EQ(actual_largest_bin, target_bin);
+  }
+  int frame_duration_samples_;
+  int frame_step_samples_;
+  // Expected DC output for a window of pure 1.0, set when window length
+  // is set.
+  float expected_dc_squared_magnitude_;
+};
+TEST_F(SpectrogramFloatCalculatorTest, IntegerFrameDurationNoOverlap) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(0.0 / input_sample_rate_);
+  options_.set_pad_final_packet(false);
+  const std::vector<int> input_packet_sizes = {500, 200};
+  const std::vector<int> expected_output_packet_sizes = {5, 2};
+  InitializeGraph();
+  FillInputHeader();
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
+}
+TEST_F(SpectrogramFloatCalculatorTest, IntegerFrameDurationNoOverlap2XFftSize) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(0.0 / input_sample_rate_);
+  options_.set_pad_final_packet(false);
+  constexpr int kFFtSize = 512;
+  options_.set_fft_size(kFFtSize);
+  const std::vector<int> input_packet_sizes = {500, 200};
+  const std::vector<int> expected_output_packet_sizes = {5, 2};
+  InitializeGraph();
+  FillInputHeader();
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps(kFFtSize);
+  EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
+}
+TEST_F(SpectrogramFloatCalculatorTest, IntegerFrameDurationSomeOverlap) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_pad_final_packet(false);
+  const std::vector<int> input_packet_sizes = {500, 200};
+  // complete_output_frames = 1 + floor((input_samples - window_length)/step)
+  //   = 1 + floor((500 - 100)/40) = 1 + 10 = 11 for the first packet
+  //   = 1 + floor((700 - 100)/40) = 1 + 15 = 16 for the whole stream
+  // so expect 16 - 11 = 5 in the second packet.
+  const std::vector<int> expected_output_packet_sizes = {11, 5};
+  InitializeGraph();
+  FillInputHeader();
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
+}
+TEST_F(SpectrogramFloatCalculatorTest, NonintegerFrameDurationAndOverlap) {
+  options_.set_frame_duration_seconds(98.5 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(58.4 / input_sample_rate_);
+  options_.set_pad_final_packet(false);
+  const std::vector<int> input_packet_sizes = {500, 200};
+  // now frame_duration_samples will be 99 (rounded), and frame_step_samples
+  // will be (99-58) = 41, so the first packet of 500 samples will generate
+  // 1 + floor(500-99)/41 = 10 samples.
+  const std::vector<int> expected_output_packet_sizes = {10, 5};
+  InitializeGraph();
+  FillInputHeader();
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
+}
+TEST_F(SpectrogramFloatCalculatorTest, ShortInitialPacketNoOverlap) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(0.0 / input_sample_rate_);
+  options_.set_pad_final_packet(false);
+  const std::vector<int> input_packet_sizes = {90, 100, 110};
+  // The first input packet is too small to generate any frames,
+  // but zero-length packets would result in a timestamp monotonicity
+  // violation, so they are suppressed.  Thus, only the second and third
+  // input packets generate output packets.
+  const std::vector<int> expected_output_packet_sizes = {1, 2};
+  InitializeGraph();
+  FillInputHeader();
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
+}
+TEST_F(SpectrogramFloatCalculatorTest, TrailingSamplesNoPad) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_pad_final_packet(false);
+  const std::vector<int> input_packet_sizes = {140, 90};
+  const std::vector<int> expected_output_packet_sizes = {2, 2};
+  InitializeGraph();
+  FillInputHeader();
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
+}
+TEST_F(SpectrogramFloatCalculatorTest, NoTrailingSamplesWithPad) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_pad_final_packet(true);
+  const std::vector<int> input_packet_sizes = {140, 80};
+  const std::vector<int> expected_output_packet_sizes = {2, 2};
+  InitializeGraph();
+  FillInputHeader();
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
+}
+TEST_F(SpectrogramFloatCalculatorTest, TrailingSamplesWithPad) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_pad_final_packet(true);
+  const std::vector<int> input_packet_sizes = {140, 90};
+  // In contrast to NoTrailingSamplesWithPad and TrailingSamplesNoPad,
+  // this time we get an extra frame in an extra final packet.
+  const std::vector<int> expected_output_packet_sizes = {2, 2, 1};
+  InitializeGraph();
+  FillInputHeader();
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
+}
+TEST_F(SpectrogramFloatCalculatorTest, VeryShortInputWillPad) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_pad_final_packet(true);
+  const std::vector<int> input_packet_sizes = {30};
+  const std::vector<int> expected_output_packet_sizes = {1};
+  InitializeGraph();
+  FillInputHeader();
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
+}
+TEST_F(SpectrogramFloatCalculatorTest, VeryShortInputZeroOutputFramesIfNoPad) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_pad_final_packet(false);
+  const std::vector<int> input_packet_sizes = {90};
+  const std::vector<int> expected_output_packet_sizes = {};
+  InitializeGraph();
+  FillInputHeader();
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
+}
+TEST_F(SpectrogramFloatCalculatorTest, DCSignalIsPeakBin) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  const std::vector<int> input_packet_sizes = {140};  // Gives 2 output frames.
+  InitializeGraph();
+  FillInputHeader();
+  // Setup packets with DC input (non-zero constant value).
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  const float dc_frequency_hz = 0.0;
+  CheckPeakFrequencyInPacketFrame(output().packets[0], 0, dc_frequency_hz);
+  CheckPeakFrequencyInPacketFrame(output().packets[0], 1, dc_frequency_hz);
+}
+TEST_F(SpectrogramFloatCalculatorTest, A440ToneIsPeakBin) {
+  const std::vector<int> input_packet_sizes = {
+      460};  // 100 + 9*40 for 10 frames.
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  InitializeGraph();
+  FillInputHeader();
+  const float tone_frequency_hz = 440.0;
+  SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  int num_output_frames = output().packets[0].Get<Matrix>().cols();
+  for (int frame = 0; frame < num_output_frames; ++frame) {
+    CheckPeakFrequencyInPacketFrame(output().packets[0], frame,
+                                    tone_frequency_hz);
+  }
+}
+TEST_F(SpectrogramFloatCalculatorTest, SquaredMagnitudeOutputLooksRight) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_output_type(SpectrogramCalculatorOptions::SQUARED_MAGNITUDE);
+  const std::vector<int> input_packet_sizes = {140};
+  InitializeGraph();
+  FillInputHeader();
+  // Setup packets with DC input (non-zero constant value).
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0),
+                  expected_dc_squared_magnitude_);
+}
+TEST_F(SpectrogramFloatCalculatorTest, DefaultOutputIsSquaredMagnitude) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  // Let the output_type be its default
+  const std::vector<int> input_packet_sizes = {140};
+  InitializeGraph();
+  FillInputHeader();
+  // Setup packets with DC input (non-zero constant value).
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0),
+                  expected_dc_squared_magnitude_);
+}
+TEST_F(SpectrogramFloatCalculatorTest, LinearMagnitudeOutputLooksRight) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_output_type(SpectrogramCalculatorOptions::LINEAR_MAGNITUDE);
+  const std::vector<int> input_packet_sizes = {140};
+  InitializeGraph();
+  FillInputHeader();
+  // Setup packets with DC input (non-zero constant value).
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0),
+                  std::sqrt(expected_dc_squared_magnitude_));
+}
+TEST_F(SpectrogramFloatCalculatorTest, DbMagnitudeOutputLooksRight) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_output_type(SpectrogramCalculatorOptions::DECIBELS);
+  const std::vector<int> input_packet_sizes = {140};
+  InitializeGraph();
+  FillInputHeader();
+  // Setup packets with DC input (non-zero constant value).
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0),
+                  10.0 * std::log10(expected_dc_squared_magnitude_));
+}
+TEST_F(SpectrogramFloatCalculatorTest, InputScalingLooksRight) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_output_type(SpectrogramCalculatorOptions::DECIBELS);
+  float input_scale = 32768.0;
+  float expected_output_value = 214.5974;
+  options_.set_input_scale(input_scale);
+  const std::vector<int> input_packet_sizes = {140};
+  InitializeGraph();
+  FillInputHeader();
+  // Setup packets with DC input (non-zero constant value).
+  SetupConstantInputPackets(input_packet_sizes, input_scale);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>()(0, 0),
+                  expected_output_value);
+}
+TEST_F(SpectrogramFloatCalculatorTest, SampleBufferModeNone) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_output_type(SpectrogramCalculatorOptions::DECIBELS);
+  options_.set_sample_buffer_mode(SpectrogramCalculatorOptions::NONE);
+  const std::vector<int> input_packet_sizes = {460};
+  const float tone_frequency_hz = 440.0;
+  InitializeGraph();
+  FillInputHeader();
+  SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz, 1.0, 4);
+  MP_ASSERT_OK(Run());
+  SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz, 1.0, 5);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(output().packets.size(), 3);
+  EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>().cols(), 10);
+  EXPECT_NEAR(output().packets[0].Get<Matrix>()(0, 0), -60.938908, 0.01);
+  EXPECT_FLOAT_EQ(output().packets[1].Get<Matrix>().cols(), 11);
+  EXPECT_NEAR(output().packets[1].Get<Matrix>()(0, 0), -4.00845, 0.01);
+  EXPECT_FLOAT_EQ(output().packets[2].Get<Matrix>().cols(), 1);
+  EXPECT_NEAR(output().packets[2].Get<Matrix>()(0, 0), -7.70911, 0.01);
+}
+TEST_F(SpectrogramFloatCalculatorTest, SampleBufferModeReset) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_output_type(SpectrogramCalculatorOptions::DECIBELS);
+  options_.set_sample_buffer_mode(SpectrogramCalculatorOptions::RESET);
+  const std::vector<int> input_packet_sizes = {460};
+  const float tone_frequency_hz = 440.0;
+  InitializeGraph();
+  FillInputHeader();
+  SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz, 1.0, 4);
+  MP_ASSERT_OK(Run());
+  SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz, 1.0, 5);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(output().packets.size(), 2);
+  EXPECT_FLOAT_EQ(output().packets[0].Get<Matrix>().cols(), 10);
+  EXPECT_NEAR(output().packets[0].Get<Matrix>()(0, 0), -60.938908, 0.01);
+  // Although RESET mode is used, produced spectrograms are still slightly
+  // different.
+  EXPECT_FLOAT_EQ(output().packets[1].Get<Matrix>().cols(), 10);
+  EXPECT_NEAR(output().packets[0].Get<Matrix>()(0, 0), -60.938908, 0.01);
+}
+TEST_F(SpectrogramFloatCalculatorTest, OutputScalingLooksRight) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_output_type(SpectrogramCalculatorOptions::DECIBELS);
+  double output_scale = 2.5;
+  options_.set_output_scale(output_scale);
+  const std::vector<int> input_packet_sizes = {140};
+  InitializeGraph();
+  FillInputHeader();
+  // Setup packets with DC input (non-zero constant value).
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_FLOAT_EQ(
+      output().packets[0].Get<Matrix>()(0, 0),
+      output_scale * 10.0 * std::log10(expected_dc_squared_magnitude_));
+}
+TEST_F(SpectrogramFloatCalculatorTest, ComplexOutputLooksRight) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_output_type(SpectrogramCalculatorOptions::COMPLEX);
+  const std::vector<int> input_packet_sizes = {140};
+  InitializeGraph();
+  FillInputHeader();
+  // Setup packets with DC input (non-zero constant value).
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_FLOAT_EQ(std::norm(output().packets[0].Get<Eigen::MatrixXcf>()(0, 0)),
+                  expected_dc_squared_magnitude_);
+}
+TEST_F(SpectrogramFloatCalculatorTest, ComplexOutputLooksRightForImpulses) {
+  const int frame_size_samples = 100;
+  options_.set_frame_duration_seconds(frame_size_samples / input_sample_rate_);
+  options_.set_frame_overlap_seconds(0.0 / input_sample_rate_);
+  options_.set_pad_final_packet(false);
+  options_.set_output_type(SpectrogramCalculatorOptions::COMPLEX);
+  const std::vector<int> input_packet_sizes = {frame_size_samples,
+                                               frame_size_samples};
+  const std::vector<int> input_packet_impulse_offsets = {49, 50};
+  InitializeGraph();
+  FillInputHeader();
+  // Make two impulse packets offset one sample from each other
+  SetupImpulseInputPackets(input_packet_sizes, input_packet_impulse_offsets);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  const int num_buckets =
+      (audio_dsp::NextPowerOfTwo(frame_size_samples) / 2) + 1;
+  const float precision = 0.01f;
+  auto norm_fn = [](const std::complex<float>& cf) { return std::norm(cf); };
+  // Both impulses should have (approximately) constant power across all
+  // frequency bins
+  EXPECT_TRUE(output()
+                  .packets[0]
+                  .Get<Eigen::MatrixXcf>()
+                  .unaryExpr(norm_fn)
+                  .isApproxToConstant(1.0f, precision));
+  EXPECT_TRUE(output()
+                  .packets[1]
+                  .Get<Eigen::MatrixXcf>()
+                  .unaryExpr(norm_fn)
+                  .isApproxToConstant(1.0f, precision));
+  // Because the second Packet's impulse is delayed by exactly one sample with
+  // respect to the first Packet's impulse, the second impulse should have
+  // greater phase, and in the highest frequency bin, the real part should
+  // (approximately) flip sign from the first Packet to the second
+  EXPECT_LT(std::arg(output().packets[0].Get<Eigen::MatrixXcf>()(1, 0)),
+            std::arg(output().packets[1].Get<Eigen::MatrixXcf>()(1, 0)));
+  const float highest_bucket_real_ratio =
+      output().packets[0].Get<Eigen::MatrixXcf>()(num_buckets - 1, 0).real() /
+      output().packets[1].Get<Eigen::MatrixXcf>()(num_buckets - 1, 0).real();
+  EXPECT_NEAR(highest_bucket_real_ratio, -1.0f, precision);
+}
+TEST_F(SpectrogramFloatCalculatorTest,
+       SquaredMagnitudeOutputLooksRightForNonDC) {
+  const int frame_size_samples = 100;
+  options_.set_frame_duration_seconds(frame_size_samples / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_output_type(SpectrogramCalculatorOptions::SQUARED_MAGNITUDE);
+  const std::vector<int> input_packet_sizes = {140};
+  InitializeGraph();
+  FillInputHeader();
+  // Make the tone have an integral number of cycles within the window
+  const int target_bin = 16;
+  const int fft_size = audio_dsp::NextPowerOfTwo(frame_size_samples);
+  const float tone_frequency_hz = target_bin * (input_sample_rate_ / fft_size);
+  SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  // For a non-DC bin, the magnitude will be split between positive and
+  // negative frequency bins, so it should about be half-magnitude
+  // = quarter-power.
+  // It's not quite exact because of the interference from the hann(100)
+  // spread from the negative-frequency half.
+  EXPECT_GT(output().packets[0].Get<Matrix>()(target_bin, 0),
+            0.98 * expected_dc_squared_magnitude_ / 4.0);
+  EXPECT_LT(output().packets[0].Get<Matrix>()(target_bin, 0),
+            1.02 * expected_dc_squared_magnitude_ / 4.0);
+}
+TEST_F(SpectrogramFloatCalculatorTest,
+       ZeroOutputsForZeroInputsWithPaddingEnabled) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_pad_final_packet(true);
+  const std::vector<int> input_packet_sizes = {};
+  const std::vector<int> expected_output_packet_sizes = {};
+  InitializeGraph();
+  FillInputHeader();
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(OutputFramesPerPacket(), expected_output_packet_sizes);
+}
+TEST_F(SpectrogramFloatCalculatorTest, NumChannelsIsRight) {
+  const std::vector<int> input_packet_sizes = {460};
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_pad_final_packet(false);
+  options_.set_allow_multichannel_input(true);
+  num_input_channels_ = 3;
+  InitializeGraph();
+  FillInputHeader();
+  const float tone_frequency_hz = 440.0;
+  SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(output().packets[0].Get<std::vector<Matrix>>().size(),
+            num_input_channels_);
+}
+TEST_F(SpectrogramFloatCalculatorTest, NumSamplesAndPacketRateAreCleared) {
+  num_input_samples_ = 500;
+  input_packet_rate_ = 1.0;
+  const std::vector<int> input_packet_sizes = {num_input_samples_};
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(0.0);
+  options_.set_pad_final_packet(false);
+  InitializeGraph();
+  FillInputHeader();
+  SetupConstantInputPackets(input_packet_sizes);
+  MP_ASSERT_OK(Run());
+  const TimeSeriesHeader& output_header =
+      output().header.Get<TimeSeriesHeader>();
+  EXPECT_FALSE(output_header.has_num_samples());
+  EXPECT_FALSE(output_header.has_packet_rate());
+}
+TEST_F(SpectrogramFloatCalculatorTest, MultichannelSpectrogramSizesAreRight) {
+  const std::vector<int> input_packet_sizes = {420};  // less than 10 frames
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_pad_final_packet(false);
+  options_.set_allow_multichannel_input(true);
+  num_input_channels_ = 10;
+  InitializeGraph();
+  FillInputHeader();
+  const float tone_frequency_hz = 440.0;
+  SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  auto spectrograms = output().packets[0].Get<std::vector<Matrix>>();
+  EXPECT_FLOAT_EQ(spectrograms.size(), num_input_channels_);
+  int spectrogram_num_rows = spectrograms[0].rows();
+  int spectrogram_num_cols = spectrograms[0].cols();
+  for (int i = 1; i < num_input_channels_; i++) {
+    EXPECT_EQ(spectrogram_num_rows, spectrograms[i].rows());
+    EXPECT_EQ(spectrogram_num_cols, spectrograms[i].cols());
+  }
+}
+TEST_F(SpectrogramFloatCalculatorTest, MultichannelSpectrogramValuesAreRight) {
+  const std::vector<int> input_packet_sizes = {
+      460};  // 100 + 9*40 for 10 frames.
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_allow_multichannel_input(true);
+  num_input_channels_ = 10;
+  InitializeGraph();
+  FillInputHeader();
+  const float tone_frequency_hz = 440.0;
+  SetupMultichannelInputPackets(input_packet_sizes, tone_frequency_hz);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  auto spectrograms = output().packets[0].Get<std::vector<Matrix>>();
+  int num_output_frames = spectrograms[0].cols();
+  for (int i = 0; i < num_input_channels_; i++) {
+    for (int frame = 0; frame < num_output_frames; ++frame) {
+      if (i % 2 == 0) {
+        CheckPeakFrequencyInMatrix(spectrograms[i], frame, 0);
+      } else {
+        CheckPeakFrequencyInMatrix(spectrograms[i], frame, tone_frequency_hz);
+      }
+    }
+  }
+}
+TEST_F(SpectrogramFloatCalculatorTest, MultichannelHandlesShortInitialPacket) {
+  // First packet is less than one frame, but second packet should trigger a
+  // complete frame from all channels.
+  const std::vector<int> input_packet_sizes = {50, 50};
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_pad_final_packet(false);
+  options_.set_allow_multichannel_input(true);
+  num_input_channels_ = 2;
+  InitializeGraph();
+  FillInputHeader();
+  const float tone_frequency_hz = 440.0;
+  SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  auto spectrograms = output().packets[0].Get<std::vector<Matrix>>();
+  EXPECT_FLOAT_EQ(spectrograms.size(), num_input_channels_);
+  int spectrogram_num_rows = spectrograms[0].rows();
+  int spectrogram_num_cols = spectrograms[0].cols();
+  for (int i = 1; i < num_input_channels_; i++) {
+    EXPECT_EQ(spectrogram_num_rows, spectrograms[i].rows());
+    EXPECT_EQ(spectrogram_num_cols, spectrograms[i].cols());
+  }
+}
+TEST_F(SpectrogramFloatCalculatorTest,
+       MultichannelComplexHandlesShortInitialPacket) {
+  // First packet is less than one frame, but second packet should trigger a
+  // complete frame from all channels, even for complex output.
+  const std::vector<int> input_packet_sizes = {50, 50};
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_pad_final_packet(false);
+  options_.set_allow_multichannel_input(true);
+  options_.set_output_type(SpectrogramCalculatorOptions::COMPLEX);
+  num_input_channels_ = 2;
+  InitializeGraph();
+  FillInputHeader();
+  const float tone_frequency_hz = 440.0;
+  SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  auto spectrograms = output().packets[0].Get<std::vector<Eigen::MatrixXcf>>();
+  EXPECT_FLOAT_EQ(spectrograms.size(), num_input_channels_);
+  int spectrogram_num_rows = spectrograms[0].rows();
+  int spectrogram_num_cols = spectrograms[0].cols();
+  for (int i = 1; i < num_input_channels_; i++) {
+    EXPECT_EQ(spectrogram_num_rows, spectrograms[i].rows());
+    EXPECT_EQ(spectrogram_num_cols, spectrograms[i].cols());
+  }
+}
+TEST_F(SpectrogramFloatCalculatorTest,
+       SingleChannelOutputFramesWithAllChannelsIsRight) {
+  const std::vector<int> input_packet_sizes = {460};
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_pad_final_packet(false);
+  options_.set_allow_multichannel_input(false);
+  options_.set_output_layout(
+      SpectrogramCalculatorOptions::SPECTROGRAM_CHANNELS_IN_ROWS);
+  num_input_channels_ = 1;
+  InitializeGraph();
+  FillInputHeader();
+  const float tone_frequency_hz = 440.0;
+  SetupCosineInputPackets(input_packet_sizes, tone_frequency_hz);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(output().packets.size(), 10);
+  for (int i = 0; i < output().packets.size(); ++i) {
+    const Matrix& matrix = output().packets[i].Get<Matrix>();
+    EXPECT_EQ(matrix.rows(), num_input_channels_);
+    for (int channel_idx = 0; channel_idx < num_input_channels_;
+         ++channel_idx) {
+      CheckPeakFrequencyInMatrixWithChannel(matrix, channel_idx,
+                                            tone_frequency_hz);
+    }
+  }
+}
+TEST_F(SpectrogramFloatCalculatorTest,
+       MultichannelOutputFramesWithAllChannelsIsRight) {
+  const std::vector<int> input_packet_sizes = {460};
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(60.0 / input_sample_rate_);
+  options_.set_pad_final_packet(false);
+  options_.set_allow_multichannel_input(true);
+  options_.set_output_layout(
+      SpectrogramCalculatorOptions::SPECTROGRAM_CHANNELS_IN_ROWS);
+  num_input_channels_ = 3;
+  InitializeGraph();
+  FillInputHeader();
+  const float tone_frequency_hz = 440.0;
+  SetupMultichannelInputPackets(input_packet_sizes, tone_frequency_hz);
+  MP_ASSERT_OK(Run());
+  CheckOutputHeadersAndTimestamps();
+  EXPECT_EQ(output().packets.size(), 10);
+  for (int i = 0; i < output().packets.size(); ++i) {
+    const Matrix& matrix = output().packets[i].Get<Matrix>();
+    EXPECT_EQ(matrix.rows(), num_input_channels_);
+    for (int channel_idx = 0; channel_idx < num_input_channels_;
+         ++channel_idx) {
+      if (channel_idx % 2 == 0) {
+        CheckPeakFrequencyInMatrixWithChannel(matrix, channel_idx, 0);
+      } else {
+        CheckPeakFrequencyInMatrixWithChannel(matrix, channel_idx,
+                                              tone_frequency_hz);
+      }
+    }
+  }
+}
+TEST_F(SpectrogramFloatCalculatorTest, ResetInput) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(0.0);
+  options_.set_output_type(SpectrogramCalculatorOptions::SQUARED_MAGNITUDE);
+  CalculatorGraphConfig::Node node_config;
+  node_config.set_calculator(calculator_name_);
+  node_config.add_input_stream("input_audio");
+  node_config.add_input_stream("RESET:reset");
+  node_config.add_output_stream("output_audio");
+  node_config.mutable_options()
+      ->MutableExtension(SpectrogramCalculatorOptions::ext)
+      ->CopyFrom(options_);
+  runner_ = std::make_unique<CalculatorRunner>(node_config);
+  FillInputHeader(0);
+  // Send first packet.
+  Matrix frame1 = Matrix::Ones(num_input_channels_, 100);
+  runner_->MutableInputs()->Index(0).packets.push_back(
+      Adopt(new Matrix(frame1)).At(Timestamp(0)));
+  // Send RESET packet.
+  SendResetPacket(1000000);
+  // Send second packet after RESET.
+  Matrix frame2 = Matrix::Ones(num_input_channels_, 100);
+  runner_->MutableInputs()->Index(0).packets.push_back(
+      Adopt(new Matrix(frame2)).At(Timestamp(2000000)));
+  MP_ASSERT_OK(Run());
+  const auto& packets = output().packets;
+  ASSERT_GE(packets.size(), 1);
+  // The first output might be at 0.
+  bool found_packet_at_0 = false;
+  bool found_packet_after_reset = false;
+  for (const auto& packet : packets) {
+    if (packet.Timestamp().Value() == 0) {
+      found_packet_at_0 = true;
+    }
+    if (packet.Timestamp().Value() >= 2000000) {
+      EXPECT_EQ(packet.Timestamp().Value(), 2000000);
+      found_packet_after_reset = true;
+    }
+  }
+  EXPECT_TRUE(found_packet_at_0);
+  EXPECT_TRUE(found_packet_after_reset);
+}
+}  // anonymous namespace
+}  // namespace mediapipe

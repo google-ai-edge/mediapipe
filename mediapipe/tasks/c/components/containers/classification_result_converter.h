@@ -23,9 +23,9 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToClassificationResult(
     const mediapipe::tasks::components::containers::ClassificationResult& in,
-    ClassificationResult* out);
+    MpClassificationResult* out);
 
-void CppCloseClassificationResult(ClassificationResult* in);
+void CppCloseClassificationResult(MpClassificationResult* in);
 
 }  // namespace mediapipe::tasks::c::components::containers
 

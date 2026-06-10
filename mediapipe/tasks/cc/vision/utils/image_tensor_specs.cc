@@ -70,7 +70,7 @@ absl::StatusOr<const ImageProperties*> GetImagePropertiesIfAny(
   return tensor_metadata.content()->content_properties_as_ImageProperties();
 }
 
-absl::StatusOr<absl::optional<NormalizationOptions>>
+absl::StatusOr<std::optional<NormalizationOptions>>
 GetNormalizationOptionsIfAny(const TensorMetadata& tensor_metadata) {
   MP_ASSIGN_OR_RETURN(
       const tflite::ProcessUnit* normalization_process_unit,
@@ -91,7 +91,7 @@ GetNormalizationOptionsIfAny(const TensorMetadata& tensor_metadata) {
                      mean_values.size(), " and ", std_values.size(), "."),
         MediaPipeTasksStatus::kMetadataInvalidProcessUnitsError);
   }
-  absl::optional<NormalizationOptions> normalization_options;
+  std::optional<NormalizationOptions> normalization_options;
   if (mean_values.size() == 1) {
     normalization_options = NormalizationOptions{
         /* mean_values= */ {mean_values[0], mean_values[0], mean_values[0]},
@@ -143,7 +143,7 @@ absl::StatusOr<ImageTensorSpecs> BuildInputImageTensorSpecs(
     const tflite::Tensor& image_tensor,
     const tflite::TensorMetadata* image_tensor_metadata) {
   const ImageProperties* props = nullptr;
-  absl::optional<NormalizationOptions> normalization_options;
+  std::optional<NormalizationOptions> normalization_options;
   if (image_tensor_metadata != nullptr) {
     MP_ASSIGN_OR_RETURN(props, GetImagePropertiesIfAny(*image_tensor_metadata));
     MP_ASSIGN_OR_RETURN(normalization_options,

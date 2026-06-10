@@ -12,25 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""C types for ClassificationResult."""
+"""C types for MpClassificationResult."""
 
 import ctypes
 
 from mediapipe.tasks.python.components.containers import category_c
 
 
-class ClassificationsC(ctypes.Structure):
+class MpClassificationsC(ctypes.Structure):
   _fields_ = [
-      ("categories", ctypes.POINTER(category_c.CategoryC)),
+      ("categories", ctypes.POINTER(category_c.MpCategoryC)),
       ("categories_count", ctypes.c_uint32),
       ("head_index", ctypes.c_int),
       ("head_name", ctypes.c_char_p),
   ]
 
 
-class ClassificationResultC(ctypes.Structure):
+class MpClassificationResultC(ctypes.Structure):
   _fields_ = [
-      ("classifications", ctypes.POINTER(ClassificationsC)),
+      ("classifications", ctypes.POINTER(MpClassificationsC)),
       ("classifications_count", ctypes.c_uint32),
       ("timestamp_ms", ctypes.c_int64),
       ("has_timestamp_ms", ctypes.c_bool),

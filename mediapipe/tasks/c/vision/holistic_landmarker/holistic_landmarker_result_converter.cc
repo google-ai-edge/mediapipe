@@ -43,7 +43,7 @@ using mediapipe::tasks::c::components::containers::
 void CppConvertToHolisticLandmarkerResult(
     const ::mediapipe::tasks::vision::holistic_landmarker::
         HolisticLandmarkerResult& in,
-    HolisticLandmarkerResult* out) {
+    MpHolisticLandmarkerResult* out) {
   // Convert face_landmarks
   CppConvertToNormalizedLandmarks(in.face_landmarks.landmarks,
                                   &out->face_landmarks);
@@ -52,7 +52,7 @@ void CppConvertToHolisticLandmarkerResult(
   if (in.face_blendshapes.has_value()) {
     const auto& blendshapes = in.face_blendshapes.value();
     out->face_blendshapes.categories_count = blendshapes.size();
-    out->face_blendshapes.categories = new Category[blendshapes.size()];
+    out->face_blendshapes.categories = new MpCategory[blendshapes.size()];
     for (uint32_t i = 0; i < blendshapes.size(); ++i) {
       CppConvertToCategory(blendshapes[i],
                            &out->face_blendshapes.categories[i]);
@@ -89,7 +89,7 @@ void CppConvertToHolisticLandmarkerResult(
   }
 }
 
-void CppCloseHolisticLandmarkerResult(HolisticLandmarkerResult* result) {
+void CppCloseHolisticLandmarkerResult(MpHolisticLandmarkerResult* result) {
   CppCloseNormalizedLandmarks(&result->face_landmarks);
   if (result->face_blendshapes.categories) {
     for (uint32_t i = 0; i < result->face_blendshapes.categories_count; ++i) {

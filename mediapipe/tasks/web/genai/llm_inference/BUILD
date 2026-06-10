@@ -6,13 +6,13 @@
 # TODO: See if we can migrate to the new js_test_* rules eventually
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
+load("//mediapipe/framework/port:build_config.bzl", "ts_declaration", "ts_library")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
-mediapipe_ts_library(
+ts_library(
     name = "llm_inference",
     srcs = [
         "llm_inference.ts",
@@ -40,7 +40,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_declaration(
+ts_declaration(
     name = "llm_inference_types",
     srcs = [
         "llm_inference_options.d.ts",
@@ -51,7 +51,7 @@ mediapipe_ts_declaration(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "model_loading_utils",
     srcs = [
         "model_loading_utils.ts",

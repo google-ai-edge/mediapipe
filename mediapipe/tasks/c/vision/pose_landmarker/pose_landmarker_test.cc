@@ -69,7 +69,7 @@ ScopedMpImage GetImage(const std::string& file_name) {
   return ScopedMpImage(image_ptr);
 }
 
-void MatchesPoseLandmarkerResult(const PoseLandmarkerResult* result,
+void MatchesPoseLandmarkerResult(const MpPoseLandmarkerResult* result,
                                  const float landmark_precision) {
   // Expects to have the same number of poses detected.
   EXPECT_EQ(result->pose_landmarks_count, 1);
@@ -98,11 +98,11 @@ TEST(PoseLandmarkerTest, ImageModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  PoseLandmarkerOptions options = {
+  MpPoseLandmarkerOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .num_poses = 1,
       .min_pose_detection_confidence = 0.5,
       .min_pose_presence_confidence = 0.5,
@@ -116,7 +116,7 @@ TEST(PoseLandmarkerTest, ImageModeTest) {
   EXPECT_EQ(status, kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
-  PoseLandmarkerResult result;
+  MpPoseLandmarkerResult result;
   status = MpPoseLandmarkerDetectImage(landmarker, image.get(),
                                        /* image_processing_options= */ nullptr,
                                        &result, /* error_msg= */ nullptr);
@@ -130,11 +130,11 @@ TEST(PoseLandmarkerTest, VideoModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  PoseLandmarkerOptions options = {
+  MpPoseLandmarkerOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::VIDEO,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_VIDEO,
       .num_poses = 1,
       .min_pose_detection_confidence = 0.5,
       .min_pose_presence_confidence = 0.5,
@@ -149,7 +149,7 @@ TEST(PoseLandmarkerTest, VideoModeTest) {
   EXPECT_NE(landmarker, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
-    PoseLandmarkerResult result;
+    MpPoseLandmarkerResult result;
     status =
         MpPoseLandmarkerDetectForVideo(landmarker, image.get(),
                                        /* image_processing_options= */ nullptr,
@@ -170,7 +170,8 @@ TEST(PoseLandmarkerTest, VideoModeTest) {
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
   static absl::BlockingCounter* blocking_counter;
-  static void Fn(MpStatus status, const PoseLandmarkerResult* landmarker_result,
+  static void Fn(MpStatus status,
+                 const MpPoseLandmarkerResult* landmarker_result,
                  const MpImagePtr image, int64_t timestamp) {
     ASSERT_EQ(status, kMpOk);
     ASSERT_NE(landmarker_result, nullptr);
@@ -193,11 +194,11 @@ TEST(PoseLandmarkerTest, LiveStreamModeTest) {
 
   const std::string model_path = GetFullPath(kModelName);
 
-  PoseLandmarkerOptions options = {
+  MpPoseLandmarkerOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::LIVE_STREAM,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM,
       .num_poses = 1,
       .min_pose_detection_confidence = 0.5,
       .min_pose_presence_confidence = 0.5,
@@ -239,11 +240,11 @@ TEST(PoseLandmarkerTest, LiveStreamModeTest) {
 
 TEST(PoseLandmarkerTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
-  PoseLandmarkerOptions options = {
+  MpPoseLandmarkerOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = nullptr},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .num_poses = 1,
       .min_pose_detection_confidence = 0.5,
       .min_pose_presence_confidence = 0.5,

@@ -53,7 +53,7 @@ Scheduler::Scheduler(CalculatorGraph* graph)
 
 Scheduler::~Scheduler() {
   {
-    absl::MutexLock lock(&state_mutex_);
+    absl::MutexLock lock(state_mutex_);
     if (state_ == STATE_NOT_STARTED) {
       return;
     }
@@ -67,7 +67,7 @@ Scheduler::~Scheduler() {
 
 void Scheduler::Reset() {
   {
-    absl::MutexLock lock(&state_mutex_);
+    absl::MutexLock lock(state_mutex_);
     state_ = STATE_NOT_STARTED;
     graph_input_streams_closed_ = graph_->GraphInputStreamsClosed();
     throttled_graph_input_stream_count_ = 0;
@@ -163,9 +163,9 @@ void Scheduler::HandleIdle() {
     // they must be throttled.
     if (!active_sources_.empty() || throttled_graph_input_stream_count_ > 0) {
       VLOG(2) << "HandleIdle: unthrottling";
-      state_mutex_.Unlock();
+      state_mutex_.unlock();
       bool did_unthrottle = graph_->UnthrottleSources();
-      state_mutex_.Lock();
+      state_mutex_.lock();
       if (did_unthrottle) {
         continue;
       }
@@ -204,7 +204,7 @@ void Scheduler::Start() {
   VLOG(2) << "Starting scheduler";
   shared_.timer.StartRun();
   {
-    absl::MutexLock lock(&state_mutex_);
+    absl::MutexLock lock(state_mutex_);
     ABSL_CHECK_EQ(state_, STATE_NOT_STARTED);
     state_ = STATE_RUNNING;
     SetQueuesRunning(true);
@@ -216,7 +216,7 @@ void Scheduler::Start() {
 }
 
 void Scheduler::AddApplicationThreadTask(std::function<void()> task) {
-  absl::MutexLock lock(&state_mutex_);
+  absl::MutexLock lock(state_mutex_);
   app_thread_tasks_.push_back(std::move(task));
   if (app_thread_tasks_.size() == 1) {
     state_cond_var_.SignalAll();
@@ -224,12 +224,12 @@ void Scheduler::AddApplicationThreadTask(std::function<void()> task) {
 }
 
 void Scheduler::ThrottledGraphInputStream() {
-  absl::MutexLock lock(&state_mutex_);
+  absl::MutexLock lock(state_mutex_);
   ++throttled_graph_input_stream_count_;
 }
 
 void Scheduler::UnthrottledGraphInputStream() {
-  absl::MutexLock lock(&state_mutex_);
+  absl::MutexLock lock(state_mutex_);
   --throttled_graph_input_stream_count_;
   ++unthrottle_seq_num_;
   state_cond_var_.SignalAll();
@@ -245,19 +245,19 @@ void Scheduler::WaitUntilGraphInputStreamUnthrottled(
   // that point, the sequence number will differ.
   int seq_num;
   {
-    absl::MutexLock lock(&state_mutex_);
+    absl::MutexLock lock(state_mutex_);
     seq_num = unthrottle_seq_num_;
   }
-  secondary_mutex->Unlock();
+  secondary_mutex->unlock();
   ApplicationThreadAwait(
       [this, seq_num]() ABSL_EXCLUSIVE_LOCKS_REQUIRED(state_mutex_) {
         return (unthrottle_seq_num_ != seq_num) || state_ == STATE_TERMINATED;
       });
-  secondary_mutex->Lock();
+  secondary_mutex->lock();
 }
 
 void Scheduler::EmittedObservedOutput() {
-  absl::MutexLock lock(&state_mutex_);
+  absl::MutexLock lock(state_mutex_);
   observed_output_signal_ = true;
   if (waiting_for_observed_output_) {
     state_cond_var_.SignalAll();
@@ -293,16 +293,16 @@ absl::Status Scheduler::WaitUntilDone() {
 
 void Scheduler::ApplicationThreadAwait(
     const std::function<bool()>& stop_condition) {
-  absl::MutexLock lock(&state_mutex_);
+  absl::MutexLock lock(state_mutex_);
   while (!stop_condition()) {
     if (app_thread_tasks_.empty()) {
       state_cond_var_.Wait(&state_mutex_);
     } else {
       std::function<void()> task = std::move(app_thread_tasks_.front());
       app_thread_tasks_.pop_front();
-      state_mutex_.Unlock();
+      state_mutex_.unlock();
       task();
-      state_mutex_.Lock();
+      state_mutex_.lock();
     }
   }
 }
@@ -313,7 +313,7 @@ void Scheduler::AddedPacketToGraphInputStream() {
   if (state_ == STATE_TERMINATED) {
     return;
   }
-  absl::MutexLock lock(&state_mutex_);
+  absl::MutexLock lock(state_mutex_);
   // It seems that the only thing it really needs to do is to check if more
   // unthrottling needs to be done.
   HandleIdle();
@@ -321,7 +321,7 @@ void Scheduler::AddedPacketToGraphInputStream() {
 
 // Note: This may be called while we are already in STATE_TERMINATED.
 void Scheduler::ClosedAllGraphInputStreams() {
-  absl::MutexLock lock(&state_mutex_);
+  absl::MutexLock lock(state_mutex_);
   graph_input_streams_closed_ = true;
   // This is called to check whether we should quit.
   HandleIdle();
@@ -410,7 +410,7 @@ bool Scheduler::TryToScheduleNextSourceLayer() {
     return false;
   }
 
-  state_mutex_.Unlock();
+  state_mutex_.unlock();
   // Add all the sources in a layer to the scheduler queue at once to
   // guarantee they are scheduled in a round-robin fashion. Pause the
   // scheduler queue until all the sources have been added.
@@ -422,7 +422,7 @@ bool Scheduler::TryToScheduleNextSourceLayer() {
   }
   SetQueuesRunning(true);
   SubmitWaitingTasksOnQueues();
-  state_mutex_.Lock();
+  state_mutex_.lock();
   return true;
 }
 
@@ -437,7 +437,7 @@ void Scheduler::AddNodeToSourcesQueue(CalculatorNode* node) {
   // Source nodes always reuse the default calculator context because they
   // can't be executed in parallel.
   CalculatorContext* default_context = node->GetDefaultCalculatorContext();
-  absl::MutexLock lock(&state_mutex_);
+  absl::MutexLock lock(state_mutex_);
   sources_queue_.push(SchedulerQueue::Item(node, default_context));
   unopened_sources_.erase(node);
 }
@@ -455,7 +455,7 @@ void Scheduler::AssignNodeToSchedulerQueue(CalculatorNode* node) {
 }
 
 void Scheduler::QueueIdleStateChanged(bool idle) {
-  absl::MutexLock lock(&state_mutex_);
+  absl::MutexLock lock(state_mutex_);
   non_idle_queue_count_ += (idle ? -1 : 1);
   VLOG(2) << "active queues: " << non_idle_queue_count_;
   if (non_idle_queue_count_ == 0) {
@@ -472,7 +472,7 @@ void Scheduler::QueueIdleStateChanged(bool idle) {
 }
 
 void Scheduler::Pause() {
-  absl::MutexLock lock(&state_mutex_);
+  absl::MutexLock lock(state_mutex_);
   if (state_ != STATE_RUNNING) {
     return;
   }
@@ -482,7 +482,7 @@ void Scheduler::Pause() {
 
 void Scheduler::Resume() {
   {
-    absl::MutexLock lock(&state_mutex_);
+    absl::MutexLock lock(state_mutex_);
     if (state_ != STATE_PAUSED) {
       return;
     }
@@ -497,7 +497,7 @@ void Scheduler::Resume() {
 
 void Scheduler::Cancel() {
   {
-    absl::MutexLock lock(&state_mutex_);
+    absl::MutexLock lock(state_mutex_);
     if (state_ != STATE_RUNNING && state_ != STATE_PAUSED) {
       return;
     }
@@ -514,18 +514,18 @@ void Scheduler::Cancel() {
 }
 
 bool Scheduler::IsPaused() {
-  absl::MutexLock lock(&state_mutex_);
+  absl::MutexLock lock(state_mutex_);
   return state_ == STATE_PAUSED;
 }
 
 bool Scheduler::IsTerminated() {
-  absl::MutexLock lock(&state_mutex_);
+  absl::MutexLock lock(state_mutex_);
   return state_ == STATE_TERMINATED;
 }
 
 void Scheduler::CleanupAfterRun() {
   {
-    absl::MutexLock lock(&state_mutex_);
+    absl::MutexLock lock(state_mutex_);
     while (!sources_queue_.empty()) {
       sources_queue_.pop();
     }

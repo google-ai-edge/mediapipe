@@ -22,6 +22,7 @@ android_library(
     exports = [
         ":core_java",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:base_options_utils_jni",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
     ],
     deps = ["@maven//:com_google_guava_guava"],
@@ -42,9 +43,10 @@ mediapipe_jni_binary(
         "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
         "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
         "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
-        "//mediapipe/tasks/cc/vision/interactive_segmenter:interactive_segmenter_graph",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter_legacy:interactive_segmenter_legacy_graph",
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
         "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:base_options_utils_jni",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
     ],
 )

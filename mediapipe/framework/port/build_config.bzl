@@ -3,18 +3,15 @@
 
 """.bzl file for mediapipe open source build configs."""
 
-load("@npm//@bazel/typescript:index.bzl", "ts_project")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_project")
 load(
     "//mediapipe/framework/tool:mediapipe_proto.bzl",
     _mediapipe_cc_proto_library = "mediapipe_cc_proto_library",
     _mediapipe_proto_library = "mediapipe_proto_library",
 )
 
-# TODO: enable def_rewrite once alias proto sources are generated.
-def mediapipe_proto_library(def_rewrite = False, **kwargs):
-    _mediapipe_proto_library(def_rewrite = def_rewrite, **kwargs)
-
 mediapipe_cc_proto_library = _mediapipe_cc_proto_library
+mediapipe_proto_library = _mediapipe_proto_library
 
 def provided_args(**kwargs):
     """Returns the keyword arguments omitting None arguments."""
@@ -24,7 +21,7 @@ def replace_suffix(string, old, new):
     """Returns a string with an old suffix replaced by a new suffix."""
     return string.endswith(old) and string[:-len(old)] + new or string
 
-def mediapipe_ts_library(
+def ts_library(
         name,
         srcs = [],
         visibility = None,
@@ -34,32 +31,47 @@ def mediapipe_ts_library(
     """Generate ts_project for MediaPipe open source version.
 
     Args:
-      name: the name of the mediapipe_ts_library.
-      srcs: the .ts files of the mediapipe_ts_library for Bazel use.
-      visibility: visibility of this target.
-      deps: a list of dependency labels for Bazel use.
-      testonly: test only or not.
-      allow_unoptimized_namespaces: ignored, used only internally
+        name: The name of the target.
+        srcs: The list of source files.
+        visibility: The visibility of the target.
+        deps: The list of dependencies.
+        testonly: Whether the target is testonly.
+        allow_unoptimized_namespaces: Whether to allow unoptimized namespaces.
     """
     _ignore = [allow_unoptimized_namespaces]  # buildifier: disable=unused-variable
 
+    # aspect_rules_ts automatically generates a `{name}_types`
+    # target when `declaration = True`. By suffixing the underlying ts_project
+    # target name and exposing an alias, we dodge collisions with existing
+    # explicit `_types` targets (like ts_declaration) defined in MediaPipe
+    # BUILDs.
+    internal_name = name + "_internal"
+
     ts_project(**provided_args(
-        name = name,
+        name = internal_name,
         srcs = srcs,
         visibility = visibility,
         deps = deps + [
-            "@npm//@types/jasmine",
-            "@npm//@types/node",
-            "@npm//@types/offscreencanvas",
-            "@npm//@types/google-protobuf",
-            "@npm//@webgpu/types",
+            "//:node_modules/@types/jasmine",
+            "//:node_modules/@types/node",
+            "//:node_modules/@types/offscreencanvas",
+            "//:node_modules/@types/google-protobuf",
+            "//:node_modules/@webgpu/types",
         ],
         testonly = testonly,
         declaration = True,
-        tsconfig = "//:tsconfig.json",
+        transpiler = "tsc",
+        tsconfig = "//:tsconfig",
     ))
 
-def mediapipe_ts_declaration(
+    # Proxy the internal target back to the requested name.
+    native.alias(
+        name = name,
+        actual = internal_name,
+        visibility = visibility,
+    )
+
+def ts_declaration(
         name,
         srcs,
         visibility = None,
@@ -67,15 +79,11 @@ def mediapipe_ts_declaration(
     """Generate ts_declaration for MediaPipe open source version.
 
     Args:
-      name: the name of the mediapipe_ts_declaration.
-      srcs: the .d.ts files of the mediapipe_ts_declaration for Bazel use.
-      visibility: visibility of this target.
-      deps: a list of dependency labels for Bazel use
+        name: The name of the target.
+        srcs: The list of source files.
+        visibility: The visibility of the target.
+        deps: The list of dependencies.
     """
-
-    # Bazel does not create JS files for .d.ts files, which leads to import
-    # failures in our open source build. We simply re-name the .d.ts files
-    # to .ts to work around this problem.
     for src in srcs:
         native.genrule(
             name = replace_suffix(src, ".d.ts", "_d_ts"),
@@ -85,7 +93,7 @@ def mediapipe_ts_declaration(
             cmd = "cp -n $< $@;",
         )
 
-    mediapipe_ts_library(
+    ts_library(
         name = name,
         srcs = [replace_suffix(src, ".d.ts", "_d_ts") for src in srcs],
         visibility = visibility,

@@ -25,6 +25,13 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
+exports_files([
+    "MediaPipeTasksAudio.podspec.template",
+    "MediaPipeTasksVision.podspec.template",
+    "MediaPipeTasksText.podspec.template",
+    "MediaPipeTasksCommon.podspec.template",
+])
+
 TENSORFLOW_LITE_C_DEPS = [
     "@org_tensorflow//tensorflow/lite:builtin_ops",
     "@org_tensorflow//tensorflow/lite/c:c_api",
@@ -97,7 +104,7 @@ CALCULATORS_AND_GRAPHS = [
     "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
     "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
     "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
-    "//mediapipe/tasks/cc/vision/interactive_segmenter:interactive_segmenter_graph",
+    "//mediapipe/tasks/cc/vision/interactive_segmenter_legacy:interactive_segmenter_legacy_graph",
     "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
     "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
     "//mediapipe/tasks/cc/vision/holistic_landmarker:holistic_landmarker_graph",
@@ -140,7 +147,7 @@ MEDIAPIPE_TASKS_COMMON_DEPS = TENSORFLOW_LITE_C_DEPS + [
     "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
     "//mediapipe/tasks/ios/vision/image_embedder:MPPImageEmbedder",
     "//mediapipe/tasks/ios/vision/image_segmenter:MPPImageSegmenter",
-    "//mediapipe/tasks/ios/vision/interactive_segmenter:MPPInteractiveSegmenter",
+    "//mediapipe/tasks/ios/vision/interactive_segmenter_legacy:MPPInteractiveSegmenterLegacy",
     "//mediapipe/tasks/ios/vision/object_detector:MPPObjectDetector",
     "//mediapipe/tasks/ios/vision/pose_landmarker:MPPPoseLandmarker",
 ]
@@ -211,9 +218,9 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/vision/image_segmenter:sources/MPPImageSegmenter.h",
         "//mediapipe/tasks/ios/vision/image_segmenter:sources/MPPImageSegmenterOptions.h",
         "//mediapipe/tasks/ios/vision/image_segmenter:sources/MPPImageSegmenterResult.h",
-        "//mediapipe/tasks/ios/vision/interactive_segmenter:sources/MPPInteractiveSegmenter.h",
-        "//mediapipe/tasks/ios/vision/interactive_segmenter:sources/MPPInteractiveSegmenterOptions.h",
-        "//mediapipe/tasks/ios/vision/interactive_segmenter:sources/MPPInteractiveSegmenterResult.h",
+        "//mediapipe/tasks/ios/vision/interactive_segmenter_legacy:sources/MPPInteractiveSegmenterLegacy.h",
+        "//mediapipe/tasks/ios/vision/interactive_segmenter_legacy:sources/MPPInteractiveSegmenterLegacyOptions.h",
+        "//mediapipe/tasks/ios/vision/interactive_segmenter_legacy:sources/MPPInteractiveSegmenterLegacyResult.h",
         "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetector.h",
         "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetectorOptions.h",
         "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetectorResult.h",
@@ -225,7 +232,10 @@ strip_api_include_path_prefix(
 
 mediapipe_static_xcframework(
     name = "MediaPipeTasksAudio_framework",
+    bundle_format = "framework",
+    bundle_id = "com.google.mediapipe.tasks.audio",
     bundle_name = "MediaPipeTasksAudio",
+    infoplists = [":empty.plist"],
     public_hdrs = [
         ":MPPAudioClassifier.h",
         ":MPPAudioClassifierOptions.h",
@@ -248,7 +258,10 @@ mediapipe_static_xcframework(
 
 mediapipe_static_xcframework(
     name = "MediaPipeTasksText_framework",
+    bundle_format = "framework",
+    bundle_id = "com.google.mediapipe.tasks.text",
     bundle_name = "MediaPipeTasksText",
+    infoplists = [":empty.plist"],
     public_hdrs = [
         ":MPPBaseOptions.h",
         ":MPPCategory.h",
@@ -272,7 +285,10 @@ mediapipe_static_xcframework(
 
 mediapipe_static_xcframework(
     name = "MediaPipeTasksVision_framework",
+    bundle_format = "framework",
+    bundle_id = "com.google.mediapipe.tasks.vision",
     bundle_name = "MediaPipeTasksVision",
+    infoplists = [":empty.plist"],
     public_hdrs = [
         ":MPPBaseOptions.h",
         ":MPPCategory.h",
@@ -305,9 +321,9 @@ mediapipe_static_xcframework(
         ":MPPImageSegmenter.h",
         ":MPPImageSegmenterOptions.h",
         ":MPPImageSegmenterResult.h",
-        ":MPPInteractiveSegmenter.h",
-        ":MPPInteractiveSegmenterOptions.h",
-        ":MPPInteractiveSegmenterResult.h",
+        ":MPPInteractiveSegmenterLegacy.h",
+        ":MPPInteractiveSegmenterLegacyOptions.h",
+        ":MPPInteractiveSegmenterLegacyResult.h",
         ":MPPHandLandmarker.h",
         ":MPPHandLandmarkerOptions.h",
         ":MPPHandLandmarkerResult.h",
@@ -344,7 +360,10 @@ apple_static_library(
 mediapipe_static_xcframework(
     name = "MediaPipeTasksCommon_framework",
     avoid_deps = ["@zlib//:zlib"],
+    bundle_format = "framework",
+    bundle_id = "com.google.mediapipe.tasks.common",
     bundle_name = "MediaPipeTasksCommon",
+    infoplists = [":empty.plist"],
     # Including `OpenCV` and `TensorFlowLiteC` deps of the graphs here to avoid
     # conflicts with `TensorFlowLiteSwift` and `OpenCV` frameworks as iOS
     # `xcframeworks` handle duplicate dependencies with other iOS

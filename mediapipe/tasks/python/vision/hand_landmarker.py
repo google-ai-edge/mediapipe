@@ -41,35 +41,36 @@ _CFunction = mediapipe_c_utils.CFunction
 _AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 
 
-class HandLandmarkerResultC(ctypes.Structure):
+class MpHandLandmarkerResultC(ctypes.Structure):
   """The hand landmarker result from HandLandmarker in ctypes."""
 
   _fields_ = [
-      ('handedness', ctypes.POINTER(category_c.CategoriesC)),
+      ('handedness', ctypes.POINTER(category_c.MpCategoriesC)),
       ('handedness_count', ctypes.c_uint32),
       (
           'hand_landmarks',
-          ctypes.POINTER(landmark_c.NormalizedLandmarksC),
+          ctypes.POINTER(landmark_c.MpNormalizedLandmarksC),
       ),
       ('hand_landmarks_count', ctypes.c_uint32),
-      ('hand_world_landmarks', ctypes.POINTER(landmark_c.LandmarksC)),
+      ('hand_world_landmarks', ctypes.POINTER(landmark_c.MpLandmarksC)),
       ('hand_world_landmarks_count', ctypes.c_uint32),
   ]
+
 
 _C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
     None,
     ctypes.c_int32,  # MpStatus
-    ctypes.POINTER(HandLandmarkerResultC),
+    ctypes.POINTER(MpHandLandmarkerResultC),
     ctypes.c_void_p,  # MpImage
     ctypes.c_int64,  # timestamp_ms
 )
 
 
-class HandLandmarkerOptionsC(ctypes.Structure):
+class MpHandLandmarkerOptionsC(ctypes.Structure):
   """The hand landmarker options used in the C API."""
 
   _fields_ = [
-      ('base_options', base_options_c.BaseOptionsC),
+      ('base_options', base_options_c.MpBaseOptionsC),
       ('running_mode', ctypes.c_int),
       ('num_hands', ctypes.c_int),
       ('min_hand_detection_confidence', ctypes.c_float),
@@ -82,15 +83,15 @@ class HandLandmarkerOptionsC(ctypes.Structure):
   @doc_controls.do_not_generate_docs
   def from_c_options(
       cls,
-      base_options: base_options_c.BaseOptionsC,
+      base_options: base_options_c.MpBaseOptionsC,
       running_mode: _RunningMode,
       num_hands: int,
       min_hand_detection_confidence: float,
       min_hand_presence_confidence: float,
       min_tracking_confidence: float,
       result_callback: _C_TYPES_RESULT_CALLBACK,
-  ) -> 'HandLandmarkerOptionsC':
-    """Creates a HandLandmarkerOptionsC object from the given options."""
+  ) -> 'MpHandLandmarkerOptionsC':
+    """Creates a MpHandLandmarkerOptionsC object from the given options."""
     return cls(
         base_options=base_options,
         running_mode=running_mode.ctype,
@@ -106,7 +107,7 @@ _CTYPES_SIGNATURES = (
     mediapipe_c_utils.CStatusFunction(
         'MpHandLandmarkerCreate',
         (
-            ctypes.POINTER(HandLandmarkerOptionsC),
+            ctypes.POINTER(MpHandLandmarkerOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
         ),
     ),
@@ -115,8 +116,10 @@ _CTYPES_SIGNATURES = (
         (
             ctypes.c_void_p,
             ctypes.c_void_p,
-            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
-            ctypes.POINTER(HandLandmarkerResultC),
+            ctypes.POINTER(
+                image_processing_options_c.MpImageProcessingOptionsC
+            ),
+            ctypes.POINTER(MpHandLandmarkerResultC),
         ),
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -124,9 +127,11 @@ _CTYPES_SIGNATURES = (
         (
             ctypes.c_void_p,
             ctypes.c_void_p,
-            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.POINTER(
+                image_processing_options_c.MpImageProcessingOptionsC
+            ),
             ctypes.c_int64,
-            ctypes.POINTER(HandLandmarkerResultC),
+            ctypes.POINTER(MpHandLandmarkerResultC),
         ),
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -134,13 +139,15 @@ _CTYPES_SIGNATURES = (
         (
             ctypes.c_void_p,
             ctypes.c_void_p,
-            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.POINTER(
+                image_processing_options_c.MpImageProcessingOptionsC
+            ),
             ctypes.c_int64,
         ),
     ),
     _CFunction(
         'MpHandLandmarkerCloseResult',
-        [ctypes.POINTER(HandLandmarkerResultC)],
+        [ctypes.POINTER(MpHandLandmarkerResultC)],
         None,
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -251,8 +258,10 @@ class HandLandmarkerResult:
 
   @classmethod
   @doc_controls.do_not_generate_docs
-  def from_ctypes(cls, c_obj: HandLandmarkerResultC) -> 'HandLandmarkerResult':
-    """Creates a `HandLandmarkerResult` from a `HandLandmarkerResultC`."""
+  def from_ctypes(
+      cls, c_obj: MpHandLandmarkerResultC
+  ) -> 'HandLandmarkerResult':
+    """Creates a `HandLandmarkerResult` from a `MpHandLandmarkerResultC`."""
     handedness = [
         category.create_list_of_categories_from_ctypes(c_obj.handedness[i])
         for i in range(c_obj.handedness_count)
@@ -395,7 +404,7 @@ class HandLandmarker:
     lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
     def convert_result(
-        c_result_ptr: ctypes.POINTER(HandLandmarkerResultC),
+        c_result_ptr: ctypes.POINTER(MpHandLandmarkerResultC),
         image_ptr: ctypes.c_void_p,
         timestamp_ms: int,
     ) -> Tuple[HandLandmarkerResult, image_lib.Image, int]:
@@ -408,7 +417,7 @@ class HandLandmarker:
     c_callback = dispatcher.wrap_callback(
         options.result_callback, _C_TYPES_RESULT_CALLBACK
     )
-    ctypes_options = HandLandmarkerOptionsC.from_c_options(
+    ctypes_options = MpHandLandmarkerOptionsC.from_c_options(
         base_options=options.base_options.to_ctypes(),
         running_mode=options.running_mode,
         num_hands=options.num_hands,
@@ -456,7 +465,7 @@ class HandLandmarker:
       RuntimeError: If hand landmarker detection failed to run.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    c_result = HandLandmarkerResultC()
+    c_result = MpHandLandmarkerResultC()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())
@@ -503,7 +512,7 @@ class HandLandmarker:
       RuntimeError: If hand landmarker detection failed to run.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    c_result = HandLandmarkerResultC()
+    c_result = MpHandLandmarkerResultC()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())

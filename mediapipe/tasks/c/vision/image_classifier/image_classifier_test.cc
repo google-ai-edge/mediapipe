@@ -54,11 +54,11 @@ TEST(ImageClassifierTest, ImageModeTest) {
   const ScopedMpImage image = GetImage(GetFullPath("burger.jpg"));
 
   const std::string model_path = GetFullPath(kModelName);
-  ImageClassifierOptions options = {
+  MpImageClassifierOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_IMAGE,
       /* classifier_options= */
       {/* display_names_locale= */ nullptr,
        /* max_results= */ -1,
@@ -75,7 +75,7 @@ TEST(ImageClassifierTest, ImageModeTest) {
       kMpOk);
   ASSERT_NE(classifier, nullptr);
 
-  ImageClassifierResult result;
+  MpImageClassifierResult result;
   EXPECT_EQ(
       MpImageClassifierClassifyImage(classifier, image.get(),
                                      /* image_processing_options */ nullptr,
@@ -96,11 +96,11 @@ TEST(ImageClassifierTest, ImageModeTestWithRotation) {
   const ScopedMpImage image = GetImage(GetFullPath("burger_rotated.jpg"));
 
   const std::string model_path = GetFullPath(kModelName);
-  ImageClassifierOptions options = {
+  MpImageClassifierOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_IMAGE,
       /* classifier_options= */
       {/* display_names_locale= */ nullptr,
        /* max_results= */ -1,
@@ -117,11 +117,11 @@ TEST(ImageClassifierTest, ImageModeTestWithRotation) {
       kMpOk);
   ASSERT_NE(classifier, nullptr);
 
-  ImageProcessingOptions image_processing_options;
+  MpImageProcessingOptions image_processing_options;
   image_processing_options.has_region_of_interest = 0;
   image_processing_options.rotation_degrees = -90;
 
-  ImageClassifierResult result;
+  MpImageClassifierResult result;
   EXPECT_EQ(MpImageClassifierClassifyImage(classifier, image.get(),
                                            &image_processing_options, &result,
                                            /* error_msg= */ nullptr),
@@ -141,11 +141,11 @@ TEST(ImageClassifierTest, VideoModeTest) {
   const ScopedMpImage image = GetImage(GetFullPath("burger.jpg"));
 
   const std::string model_path = GetFullPath(kModelName);
-  ImageClassifierOptions options = {
+  MpImageClassifierOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::VIDEO,
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_VIDEO,
       /* classifier_options= */
       {/* display_names_locale= */ nullptr,
        /* max_results= */ 3,
@@ -164,7 +164,7 @@ TEST(ImageClassifierTest, VideoModeTest) {
   ASSERT_NE(classifier, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
-    ImageClassifierResult result;
+    MpImageClassifierResult result;
     EXPECT_EQ(MpImageClassifierClassifyForVideo(
                   classifier, image.get(),
                   /* image_processing_options */ nullptr, i, &result,
@@ -192,7 +192,7 @@ struct LiveStreamModeCallback {
   static int64_t last_timestamp;
   static absl::BlockingCounter* blocking_counter;
   static void Fn(MpStatus status,
-                 const ImageClassifierResult* classifier_result,
+                 const MpImageClassifierResult* classifier_result,
                  const MpImagePtr image, int64_t timestamp) {
     ASSERT_EQ(status, kMpOk);
     ASSERT_NE(classifier_result, nullptr);
@@ -220,11 +220,11 @@ TEST(ImageClassifierTest, LiveStreamModeTest) {
 
   const std::string model_path = GetFullPath(kModelName);
 
-  ImageClassifierOptions options = {
+  MpImageClassifierOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::LIVE_STREAM,
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM,
       /* classifier_options= */
       {/* display_names_locale= */ nullptr,
        /* max_results= */ 3,
@@ -270,11 +270,11 @@ TEST(ImageClassifierTest, LiveStreamModeTest) {
 
 TEST(ImageClassifierTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
-  ImageClassifierOptions options = {
+  MpImageClassifierOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ nullptr},
-      /* running_mode= */ RunningMode::IMAGE,
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_IMAGE,
       /* classifier_options= */ {},
   };
 
@@ -290,11 +290,11 @@ TEST(ImageClassifierTest, InvalidArgumentHandling) {
 
 TEST(ImageClassifierTest, FailedClassificationHandling) {
   const std::string model_path = GetFullPath(kModelName);
-  ImageClassifierOptions options = {
+  MpImageClassifierOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_IMAGE,
       /* classifier_options= */
       {/* display_names_locale= */ nullptr,
        /* max_results= */ -1,
@@ -313,7 +313,7 @@ TEST(ImageClassifierTest, FailedClassificationHandling) {
 
   const ScopedMpImage image = CreateEmptyGpuMpImage();
   char* error_msg = nullptr;
-  ImageClassifierResult result;
+  MpImageClassifierResult result;
   MpStatus status = MpImageClassifierClassifyImage(
       classifier, image.get(),
       /* image_processing_options */ nullptr, &result, &error_msg);

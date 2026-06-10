@@ -108,6 +108,27 @@ GetMatElementAccessor(const cv::Mat& mat) {
   }
 }
 
+const char* MatDepthToString(int depth) {
+  switch (depth) {
+    case CV_8U:
+      return "8U";
+    case CV_8S:
+      return "8S";
+    case CV_16U:
+      return "16U";
+    case CV_16S:
+      return "16S";
+    case CV_32S:
+      return "32S";
+    case CV_32F:
+      return "32F";
+    case CV_64F:
+      return "64F";
+    default:
+      return "UnknownDepth";
+  }
+}
+
 std::tuple<int, int, int> GetRGB(
     const std::function<double(const uint8_t*, int)>& accessor,
     const uint8_t* ptr, int x, int y, int num_channels) {
@@ -343,7 +364,8 @@ void LogMat(const cv::Mat& mat, absl::string_view name) {
   int num_channels = mat.channels();
 
   ABSL_LOG(INFO) << name << "[" << width << " " << height << " " << num_channels
-                 << "] =";
+                 << " " << MatDepthToString(mat.depth()) << "C"
+                 << mat.channels() << "] =";
 
   if (width == 0 || height == 0 || num_channels == 0) {
     ABSL_LOG(INFO) << "  <empty>";

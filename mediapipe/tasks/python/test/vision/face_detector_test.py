@@ -20,8 +20,8 @@ from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
-
 from google.protobuf import text_format
+
 from mediapipe.framework.formats import detection_pb2
 from mediapipe.tasks.python.components.containers import detections as detections_module
 from mediapipe.tasks.python.core import base_options as base_options_module

@@ -16,8 +16,8 @@
 import ctypes
 
 
-class EmbeddingC(ctypes.Structure):
-  """C struct for an embedding."""
+class MpEmbeddingC(ctypes.Structure):
+  """C struct for an MpEmbedding."""
 
   _fields_ = [
       ('float_embedding', ctypes.POINTER(ctypes.c_float)),
@@ -28,11 +28,11 @@ class EmbeddingC(ctypes.Structure):
   ]
 
 
-class EmbeddingResultC(ctypes.Structure):
-  """C struct for embedding result."""
+class MpEmbeddingResultC(ctypes.Structure):
+  """C struct for MpEmbeddingResult."""
 
   _fields_ = [
-      ('embeddings', ctypes.POINTER(EmbeddingC)),
+      ('embeddings', ctypes.POINTER(MpEmbeddingC)),
       ('embeddings_count', ctypes.c_uint32),
       ('has_timestamp_ms', ctypes.c_bool),
       ('timestamp_ms', ctypes.c_int64),

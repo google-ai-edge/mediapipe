@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <utility>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -19,9 +20,11 @@ class WebGpuAsyncFuture {
   WebGpuAsyncFuture<T>(WebGpuAsyncFuture<T>&& other);
   ~WebGpuAsyncFuture();
   inline explicit WebGpuAsyncFuture(
-      std::optional<wgpu::Future> future,
+      wgpu::Instance instance, std::optional<wgpu::Future> future,
       std::unique_ptr<std::optional<absl::StatusOr<T>>> result)
-      : future_(future), result_(std::move(result)) {}
+      : instance_(std::move(instance)),
+        future_(future),
+        result_(std::move(result)) {}
 
   WebGpuAsyncFuture<T>& operator=(WebGpuAsyncFuture<T>&& other);
 
@@ -29,6 +32,7 @@ class WebGpuAsyncFuture {
   void Reset();
 
  private:
+  wgpu::Instance instance_;
   std::optional<wgpu::Future> future_;
   std::unique_ptr<std::optional<absl::StatusOr<T>>> result_;
 };
@@ -36,10 +40,10 @@ class WebGpuAsyncFuture {
 wgpu::ShaderModule CreateWgslShader(wgpu::Device device, const char* code,
                                     const char* label);
 WebGpuAsyncFuture<wgpu::ComputePipeline> WebGpuCreateComputePipelineAsync(
-    const wgpu::Device& device,
+    const wgpu::Instance& instance, const wgpu::Device& device,
     wgpu::ComputePipelineDescriptor const* descriptor);
 WebGpuAsyncFuture<wgpu::RenderPipeline> WebGpuCreateRenderPipelineAsync(
-    const wgpu::Device& device,
+    const wgpu::Instance& instance, const wgpu::Device& device,
     wgpu::RenderPipelineDescriptor const* descriptor);
 
 absl::StatusOr<uint32_t> WebGpuTextureFormatBytesPerPixel(

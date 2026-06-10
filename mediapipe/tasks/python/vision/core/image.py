@@ -362,6 +362,17 @@ class Image:
     new_image._image_ptr = output_image_ptr
     return new_image
 
+  @classmethod
+  @doc_controls.do_not_generate_docs
+  def free_ctypes(cls, image_ptr: ctypes.c_void_p) -> None:
+    """Frees a ctypes pointer to an image.
+
+    Args:
+      image_ptr: A ctypes pointer to the image data.
+    """
+    lib = mediapipe_c_bindings.load_raw_library(_CTYPES_SIGNATURES)
+    lib.MpImageFree(image_ptr)
+
   def numpy_view(self) -> np.ndarray:
     """Returns the image pixel data as an unwritable numpy ndarray.
 

@@ -67,7 +67,7 @@ HolisticLandmarker* GetCppLandmarker(MpHolisticLandmarkerPtr wrapper) {
 }  // namespace
 
 void CppConvertToHolisticLandmarkerOptions(
-    const HolisticLandmarkerOptions& in,
+    const MpHolisticLandmarkerOptions& in,
     mediapipe::tasks::vision::holistic_landmarker::HolisticLandmarkerOptions*
         out) {
   out->min_face_detection_confidence = in.min_face_detection_confidence;
@@ -82,7 +82,7 @@ void CppConvertToHolisticLandmarkerOptions(
 }
 
 absl::Status CppHolisticLandmarkerCreate(
-    const HolisticLandmarkerOptions& options,
+    const MpHolisticLandmarkerOptions& options,
     MpHolisticLandmarkerPtr* landmarker) {
   auto cpp_options =
       std::make_unique<::mediapipe::tasks::vision::holistic_landmarker::
@@ -90,17 +90,19 @@ absl::Status CppHolisticLandmarkerCreate(
 
   CppConvertToBaseOptions(options.base_options, &cpp_options->base_options);
   CppConvertToHolisticLandmarkerOptions(options, cpp_options.get());
-  cpp_options->running_mode = static_cast<RunningMode>(options.running_mode);
+  cpp_options->running_mode =
+      static_cast<::mediapipe::tasks::vision::core::RunningMode>(
+          options.running_mode);
 
   // Enable callback for processing live stream data when the running mode is
-  // set to RunningMode::LIVE_STREAM.
-  if (cpp_options->running_mode == RunningMode::LIVE_STREAM) {
+  // set to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM.
+  if (cpp_options->running_mode == MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM) {
     if (options.result_callback == nullptr) {
       return absl::InvalidArgumentError(
           "Provided null pointer to callback function.");
     }
 
-    HolisticLandmarkerOptions::result_callback_fn result_callback =
+    MpHolisticLandmarkerOptions::result_callback_fn result_callback =
         options.result_callback;
     cpp_options->result_callback =
         [result_callback](
@@ -113,7 +115,7 @@ absl::Status CppHolisticLandmarkerCreate(
             return;
           }
 
-          HolisticLandmarkerResult result;
+          MpHolisticLandmarkerResult result;
           CppConvertToHolisticLandmarkerResult(*cpp_result, &result);
           result_callback(kMpOk, &result, &mp_image, timestamp);
           CppCloseHolisticLandmarkerResult(&result);
@@ -131,8 +133,8 @@ absl::Status CppHolisticLandmarkerCreate(
 
 absl::Status CppHolisticLandmarkerDetect(
     MpHolisticLandmarkerPtr landmarker, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
-    HolisticLandmarkerResult* result) {
+    const MpImageProcessingOptions* image_processing_options,
+    MpHolisticLandmarkerResult* result) {
   auto* cpp_landmarker = GetCppLandmarker(landmarker);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
@@ -152,8 +154,8 @@ absl::Status CppHolisticLandmarkerDetect(
 
 absl::Status CppHolisticLandmarkerDetectForVideo(
     MpHolisticLandmarkerPtr landmarker, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms, HolisticLandmarkerResult* result) {
+    const MpImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, MpHolisticLandmarkerResult* result) {
   auto* cpp_landmarker = GetCppLandmarker(landmarker);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
@@ -173,7 +175,7 @@ absl::Status CppHolisticLandmarkerDetectForVideo(
 
 absl::Status CppHolisticLandmarkerDetectAsync(
     MpHolisticLandmarkerPtr landmarker, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
+    const MpImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms) {
   auto* cpp_landmarker = GetCppLandmarker(landmarker);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
@@ -201,7 +203,7 @@ absl::Status CppHolisticLandmarkerClose(MpHolisticLandmarkerPtr landmarker) {
 
 extern "C" {
 
-MpStatus MpHolisticLandmarkerCreate(struct HolisticLandmarkerOptions* options,
+MpStatus MpHolisticLandmarkerCreate(struct MpHolisticLandmarkerOptions* options,
                                     MpHolisticLandmarkerPtr* landmarker,
                                     char** error_msg) {
   absl::Status status = mediapipe::tasks::c::vision::holistic_landmarker::
@@ -211,8 +213,8 @@ MpStatus MpHolisticLandmarkerCreate(struct HolisticLandmarkerOptions* options,
 
 MpStatus MpHolisticLandmarkerDetectImage(
     MpHolisticLandmarkerPtr landmarker, MpImagePtr image,
-    const struct ImageProcessingOptions* image_processing_options,
-    HolisticLandmarkerResult* result, char** error_msg) {
+    const struct MpImageProcessingOptions* image_processing_options,
+    MpHolisticLandmarkerResult* result, char** error_msg) {
   absl::Status status = mediapipe::tasks::c::vision::holistic_landmarker::
       CppHolisticLandmarkerDetect(landmarker, image, image_processing_options,
                                   result);
@@ -221,8 +223,9 @@ MpStatus MpHolisticLandmarkerDetectImage(
 
 MpStatus MpHolisticLandmarkerDetectForVideo(
     MpHolisticLandmarkerPtr landmarker, MpImagePtr image,
-    const struct ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms, HolisticLandmarkerResult* result, char** error_msg) {
+    const struct MpImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, MpHolisticLandmarkerResult* result,
+    char** error_msg) {
   absl::Status status = mediapipe::tasks::c::vision::holistic_landmarker::
       CppHolisticLandmarkerDetectForVideo(
           landmarker, image, image_processing_options, timestamp_ms, result);
@@ -231,7 +234,7 @@ MpStatus MpHolisticLandmarkerDetectForVideo(
 
 MpStatus MpHolisticLandmarkerDetectAsync(
     MpHolisticLandmarkerPtr landmarker, MpImagePtr image,
-    const struct ImageProcessingOptions* image_processing_options,
+    const struct MpImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, char** error_msg) {
   absl::Status status = mediapipe::tasks::c::vision::holistic_landmarker::
       CppHolisticLandmarkerDetectAsync(landmarker, image,
@@ -239,7 +242,7 @@ MpStatus MpHolisticLandmarkerDetectAsync(
   return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
-void MpHolisticLandmarkerCloseResult(HolisticLandmarkerResult* result) {
+void MpHolisticLandmarkerCloseResult(MpHolisticLandmarkerResult* result) {
   mediapipe::tasks::c::vision::holistic_landmarker::
       CppCloseHolisticLandmarkerResult(result);
 }

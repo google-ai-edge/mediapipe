@@ -29,7 +29,7 @@ ImageFrameSharedPtr ImageFramePool::GetBuffer() {
   std::unique_ptr<ImageFrame> buffer;
 
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     if (available_.empty()) {
       // Fix alignment at 4 for best compatability with OpenGL.
       buffer = std::make_unique<ImageFrame>(
@@ -58,14 +58,14 @@ ImageFrameSharedPtr ImageFramePool::GetBuffer() {
 }
 
 std::pair<int, int> ImageFramePool::GetInUseAndAvailableCounts() {
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   return {in_use_count_, available_.size()};
 }
 
 void ImageFramePool::Return(ImageFrame* buf) {
   std::vector<std::unique_ptr<ImageFrame>> trimmed;
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     --in_use_count_;
     available_.emplace_back(buf);
     TrimAvailable(&trimmed);

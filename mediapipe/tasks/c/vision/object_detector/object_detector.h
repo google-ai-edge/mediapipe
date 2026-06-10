@@ -38,13 +38,13 @@ extern "C" {
 #endif
 
 typedef struct MpObjectDetectorInternal* MpObjectDetectorPtr;
-typedef DetectionResult ObjectDetectorResult;
+typedef MpDetectionResult MpObjectDetectorResult;
 
 // The options for configuring a MediaPipe object detector task.
-struct ObjectDetectorOptions {
+struct MpObjectDetectorOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
-  struct BaseOptions base_options;
+  struct MpBaseOptions base_options;
 
   // The running mode of the task. Default to the image mode.
   // Object detector has three running modes:
@@ -53,7 +53,7 @@ struct ObjectDetectorOptions {
   // 3) The live stream mode for detecting objects on the live stream of input
   // data, such as from camera. In this mode, the "result_callback" below must
   // be specified to receive the detection results asynchronously.
-  RunningMode running_mode;
+  MpRunningMode running_mode;
 
   // The locale to use for display names specified through the TFLite Model
   // Metadata, if any. Defaults to English.
@@ -84,15 +84,15 @@ struct ObjectDetectorOptions {
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
-  // to RunningMode::LIVE_STREAM. Arguments of the callback function include:
-  // the pointer to detection result, the image that result was obtained
-  // on, the timestamp relevant to detection results and pointer to error
-  // message in case of any failure. The validity of the passed arguments is
-  // true for the lifetime of the callback function.
+  // to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
+  // function include: the pointer to detection result, the image that result
+  // was obtained on, the timestamp relevant to detection results and pointer to
+  // error message in case of any failure. The validity of the passed arguments
+  // is true for the lifetime of the callback function.
   //
   // The passed arguments are only valid for the lifetime of the callback.
   typedef void (*result_callback_fn)(MpStatus status,
-                                     const ObjectDetectorResult* result,
+                                     const MpObjectDetectorResult* result,
                                      const MpImagePtr image,
                                      int64_t timestamp_ms);
   result_callback_fn result_callback;
@@ -103,9 +103,9 @@ struct ObjectDetectorOptions {
 // If an error occurs, returns `nullptr` and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT MpStatus MpObjectDetectorCreate(struct ObjectDetectorOptions* options,
-                                          MpObjectDetectorPtr* detector_out,
-                                          char** error_msg);
+MP_EXPORT MpStatus
+MpObjectDetectorCreate(struct MpObjectDetectorOptions* options,
+                       MpObjectDetectorPtr* detector_out, char** error_msg);
 
 // Performs image detection on the input `image`. Returns `0` on success.
 // If an error occurs, returns an error code and sets the error parameter to an
@@ -113,8 +113,8 @@ MP_EXPORT MpStatus MpObjectDetectorCreate(struct ObjectDetectorOptions* options,
 // allocated for the error message.
 MP_EXPORT MpStatus
 MpObjectDetectorDetectImage(MpObjectDetectorPtr detector, MpImagePtr image,
-                            const struct ImageProcessingOptions* options,
-                            ObjectDetectorResult* result, char** error_msg);
+                            const struct MpImageProcessingOptions* options,
+                            MpObjectDetectorResult* result, char** error_msg);
 
 // Performs image detection on the provided video frame.
 // Only use this method when the ObjectDetector is created with the video
@@ -127,11 +127,11 @@ MpObjectDetectorDetectImage(MpObjectDetectorPtr detector, MpImagePtr image,
 // allocated for the error message.
 MP_EXPORT MpStatus MpObjectDetectorDetectForVideo(
     MpObjectDetectorPtr detector, MpImagePtr image,
-    const struct ImageProcessingOptions* options, int64_t timestamp_ms,
-    ObjectDetectorResult* result, char** error_msg);
+    const struct MpImageProcessingOptions* options, int64_t timestamp_ms,
+    MpObjectDetectorResult* result, char** error_msg);
 
 // Sends live image data to image detection, and the results will be
-// available via the `result_callback` provided in the ObjectDetectorOptions.
+// available via the `result_callback` provided in the MpObjectDetectorOptions.
 // Only use this method when the ObjectDetector is created with the live
 // stream running mode.
 // The image can be of any size with format RGB or RGBA. It's required to
@@ -139,7 +139,7 @@ MP_EXPORT MpStatus MpObjectDetectorDetectForVideo(
 // sent to the object detector. The input timestamps must be monotonically
 // increasing.
 // The `result_callback` provides:
-//   - The detection results as an ObjectDetectorResult object.
+//   - The detection results as an MpObjectDetectorResult object.
 //   - The const reference to the corresponding input image that the image
 //     detector runs on. Note that the const reference to the image will no
 //     longer be valid when the callback returns. To access the image data
@@ -150,12 +150,12 @@ MP_EXPORT MpStatus MpObjectDetectorDetectForVideo(
 // allocated for the error message.
 MP_EXPORT MpStatus
 MpObjectDetectorDetectAsync(MpObjectDetectorPtr detector, MpImagePtr image,
-                            const struct ImageProcessingOptions* options,
+                            const struct MpImageProcessingOptions* options,
                             int64_t timestamp_ms, char** error_msg);
 
-// Frees the memory allocated inside a ObjectDetectorResult result.
+// Frees the memory allocated inside a MpObjectDetectorResult result.
 // Does not free the result pointer itself.
-MP_EXPORT void MpObjectDetectorCloseResult(ObjectDetectorResult* result);
+MP_EXPORT void MpObjectDetectorCloseResult(MpObjectDetectorResult* result);
 
 // Frees object detector.
 // If an error occurs, returns an error code and sets the error parameter to an

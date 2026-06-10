@@ -25,15 +25,15 @@ extern "C" {
 #endif
 
 // Detection for a single bounding box.
-struct Detection {
+struct MpDetection {
   // An array of detected categories.
-  struct Category* categories;
+  struct MpCategory* categories;
 
   // The number of elements in the categories array.
   uint32_t categories_count;
 
   // The bounding box location.
-  struct MPRect bounding_box;
+  struct MpRect bounding_box;
 
   // Optional list of keypoints associated with the detection. Keypoints
   // represent interesting points related to the detection. For example, the
@@ -41,16 +41,16 @@ struct Detection {
   // in the template matching detection, e.g. KNIFT, they can represent the
   // feature points for template matching.
   // `nullptr` if keypoints is not present.
-  struct NormalizedKeypoint* keypoints;
+  struct MpNormalizedKeypoint* keypoints;
 
   // The number of elements in the keypoints array. 0 if keypoints do not exist.
   uint32_t keypoints_count;
 };
 
 // Detection results of a model.
-struct DetectionResult {
+struct MpDetectionResult {
   // An array of Detections.
-  struct Detection* detections;
+  struct MpDetection* detections;
 
   // The number of detections in the detections array.
   uint32_t detections_count;

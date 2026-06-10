@@ -179,6 +179,18 @@ class MetalHelperLegacySupport {
       width = CVPixelBufferGetWidthOfPlane(pixel_buffer, plane);
       height = CVPixelBufferGetHeightOfPlane(pixel_buffer, plane);
       break;
+    case kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange:
+    case kCVPixelFormatType_420YpCbCr10BiPlanarFullRange:
+      if (plane == 0) {
+        metalPixelFormat = MTLPixelFormatR16Unorm;
+      } else if (plane == 1) {
+        metalPixelFormat = MTLPixelFormatRG16Unorm;
+      } else {
+        NSCAssert(NO, @"Invalid plane number");
+      }
+      width = CVPixelBufferGetWidthOfPlane(pixel_buffer, plane);
+      height = CVPixelBufferGetHeightOfPlane(pixel_buffer, plane);
+      break;
     case kCVPixelFormatType_TwoComponent16Half:
       metalPixelFormat = MTLPixelFormatRG16Float;
       NSCAssert(plane == 0, @"Invalid plane number");

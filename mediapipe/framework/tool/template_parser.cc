@@ -1959,7 +1959,7 @@ bool TemplateParser::Parser::Parse(io::ZeroCopyInputStream* input,
   return MergeUsingImpl(input, output, &parser);
 }
 
-bool TemplateParser::Parser::ParseFromString(const std::string& input,
+bool TemplateParser::Parser::ParseFromString(absl::string_view input,
                                              Message* output) {
   io::ArrayInputStream input_stream(input.data(), input.size());
   return Parse(&input_stream, output);
@@ -1978,7 +1978,7 @@ bool TemplateParser::Parser::Merge(io::ZeroCopyInputStream* input,
   return MergeUsingImpl(input, output, &parser);
 }
 
-bool TemplateParser::Parser::MergeFromString(const std::string& input,
+bool TemplateParser::Parser::MergeFromString(absl::string_view input,
                                              Message* output) {
   io::ArrayInputStream input_stream(input.data(), input.size());
   return Merge(&input_stream, output);
@@ -2000,7 +2000,7 @@ bool TemplateParser::Parser::MergeUsingImpl(
 }
 
 bool TemplateParser::Parser::ParseFieldValueFromString(
-    const std::string& input, const FieldDescriptor* field, Message* output) {
+    absl::string_view input, const FieldDescriptor* field, Message* output) {
   io::ArrayInputStream input_stream(input.data(), input.size());
   int recursion_limit = std::numeric_limits<int>::max();
   bool allow_unknown_extension = false;

@@ -41,6 +41,7 @@ namespace audio_classifier {
 
 namespace {
 
+using ::mediapipe::tasks::audio::core::GetCoreRunningMode;
 using ::mediapipe::tasks::components::containers::ConvertToClassificationResult;
 using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 
@@ -139,7 +140,7 @@ absl::StatusOr<std::unique_ptr<AudioClassifier>> AudioClassifier::Create(
                                            proto::AudioClassifierGraphOptions>(
       {.config = CreateGraphConfig(std::move(options_proto)),
        .task_name = kTaskName,
-       .task_running_mode = core::GetRunningModeName(options->running_mode),
+       .task_running_mode = GetCoreRunningMode(options->running_mode),
        .op_resolver = std::move(options->base_options.op_resolver),
        .packets_callback = std::move(packets_callback),
        .host_environment = options->base_options.host_environment,

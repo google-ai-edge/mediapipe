@@ -29,9 +29,9 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToDetection(
     const mediapipe::tasks::components::containers::Detection& in,
-    ::Detection* out) {
+    MpDetection* out) {
   out->categories_count = in.categories.size();
-  out->categories = new Category[out->categories_count];
+  out->categories = new MpCategory[out->categories_count];
   for (size_t i = 0; i < out->categories_count; ++i) {
     CppConvertToCategory(in.categories[i], &out->categories[i]);
   }
@@ -41,7 +41,7 @@ void CppConvertToDetection(
   if (in.keypoints.has_value()) {
     auto& keypoints = in.keypoints.value();
     out->keypoints_count = keypoints.size();
-    out->keypoints = new NormalizedKeypoint[out->keypoints_count];
+    out->keypoints = new MpNormalizedKeypoint[out->keypoints_count];
     for (size_t i = 0; i < out->keypoints_count; ++i) {
       CppConvertToNormalizedKeypoint(keypoints[i], &out->keypoints[i]);
     }
@@ -53,16 +53,16 @@ void CppConvertToDetection(
 
 void CppConvertToDetectionResult(
     const mediapipe::tasks::components::containers::DetectionResult& in,
-    ::DetectionResult* out) {
+    MpDetectionResult* out) {
   out->detections_count = in.detections.size();
-  out->detections = new ::Detection[out->detections_count];
+  out->detections = new MpDetection[out->detections_count];
   for (size_t i = 0; i < out->detections_count; ++i) {
     CppConvertToDetection(in.detections[i], &out->detections[i]);
   }
 }
 
 // Functions to free the memory of C structures.
-void CppCloseDetection(::Detection* in) {
+void CppCloseDetection(MpDetection* in) {
   for (size_t i = 0; i < in->categories_count; ++i) {
     CppCloseCategory(&in->categories[i]);
   }
@@ -75,7 +75,7 @@ void CppCloseDetection(::Detection* in) {
   in->keypoints = nullptr;
 }
 
-void CppCloseDetectionResult(::DetectionResult* in) {
+void CppCloseDetectionResult(MpDetectionResult* in) {
   for (size_t i = 0; i < in->detections_count; ++i) {
     CppCloseDetection(&in->detections[i]);
   }

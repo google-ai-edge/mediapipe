@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""C types for Category."""
+"""C types for MpCategory."""
 
 import ctypes
 
 
-class CategoryC(ctypes.Structure):
-  """The ctypes struct for Category."""
+class MpCategoryC(ctypes.Structure):
+  """The ctypes struct for MpCategory."""
 
   _fields_ = [
       ("index", ctypes.c_int),
@@ -28,10 +28,10 @@ class CategoryC(ctypes.Structure):
   ]
 
 
-class CategoriesC(ctypes.Structure):
-  """C types for a list of Categories."""
+class MpCategoriesC(ctypes.Structure):
+  """C types for a list of MpCategories."""
 
   _fields_ = [
-      ("categories", ctypes.POINTER(CategoryC)),
+      ("categories", ctypes.POINTER(MpCategoryC)),
       ("categories_count", ctypes.c_uint32),
   ]

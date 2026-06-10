@@ -17,7 +17,7 @@
 import ctypes
 
 
-class RectC(ctypes.Structure):
+class MpRectC(ctypes.Structure):
   """A rectangle, used as part of detection results."""
 
   _fields_ = [
@@ -28,7 +28,7 @@ class RectC(ctypes.Structure):
   ]
 
 
-class RectFC(ctypes.Structure):
+class MpRectFC(ctypes.Structure):
   """A rectangle (operating on floats), used as part of processing options."""
 
   _fields_ = [
@@ -39,7 +39,7 @@ class RectFC(ctypes.Structure):
   ]
 
 
-class NormalizedRectC(ctypes.Structure):
+class MpNormalizedRectC(ctypes.Structure):
   """A rectangle with rotation in normalized coordinates."""
 
   _fields_ = [

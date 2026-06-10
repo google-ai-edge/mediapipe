@@ -2,18 +2,17 @@
 
 # Python version set to 12
 common --repo_env=HERMETIC_PYTHON_VERSION=3.12
+common --enable_bzlmod
 
 # Tensorflow needs remote repo
 common --experimental_repo_remote_exec
 
-# WORKSPACE support
-common --noenable_bzlmod
 
 # Turn off toolchain resolution for cc rules and android rules.
-common --noincompatible_enable_cc_toolchain_resolution
 common --noincompatible_enable_android_toolchain_resolution
 
 # Basic build settings
+build --repo_env=RULES_PYTHON_IGNORE_ROOT_USER_ERROR=1
 build --jobs 128
 build --define='absl=1'  # for gtest
 build --enable_platform_specific_config

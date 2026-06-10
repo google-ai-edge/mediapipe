@@ -42,28 +42,29 @@ _AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 _LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
 
 
-class AudioClassifierResultC(ctypes.Structure):
+class MpAudioClassifierResultC(ctypes.Structure):
   """The C representation of a list of audio classification results."""
 
   _fields_ = [
       (
           'results',
-          ctypes.POINTER(classification_result_c.ClassificationResultC),
+          ctypes.POINTER(classification_result_c.MpClassificationResultC),
       ),
       ('results_count', ctypes.c_int),
   ]
 
+
 _C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
-    None, ctypes.c_int32, ctypes.POINTER(AudioClassifierResultC)
+    None, ctypes.c_int32, ctypes.POINTER(MpAudioClassifierResultC)
 )
 
 
-class AudioClassifierOptionsC(ctypes.Structure):
+class MpAudioClassifierOptionsC(ctypes.Structure):
   """The audio classifier options used in the C API."""
 
   _fields_ = [
-      ('base_options', base_options_c.BaseOptionsC),
-      ('classifier_options', classifier_options_c.ClassifierOptionsC),
+      ('base_options', base_options_c.MpBaseOptionsC),
+      ('classifier_options', classifier_options_c.MpClassifierOptionsC),
       ('running_mode', ctypes.c_int),
       ('result_callback', _C_TYPES_RESULT_CALLBACK),
   ]
@@ -72,12 +73,12 @@ class AudioClassifierOptionsC(ctypes.Structure):
   @doc_controls.do_not_generate_docs
   def from_c_options(
       cls,
-      base_options: base_options_c.BaseOptionsC,
-      classifier_options: classifier_options_c.ClassifierOptionsC,
+      base_options: base_options_c.MpBaseOptionsC,
+      classifier_options: classifier_options_c.MpClassifierOptionsC,
       running_mode: _RunningMode,
       result_callback: _C_TYPES_RESULT_CALLBACK,
-  ) -> 'AudioClassifierOptionsC':
-    """Creates an AudioClassifierOptionsC object from the given options."""
+  ) -> 'MpAudioClassifierOptionsC':
+    """Creates an MpAudioClassifierOptionsC object from the given options."""
     return cls(
         base_options=base_options,
         classifier_options=classifier_options,
@@ -90,7 +91,7 @@ _CTYPES_SIGNATURES = (
     mediapipe_c_utils.CStatusFunction(
         'MpAudioClassifierCreate',
         (
-            ctypes.POINTER(AudioClassifierOptionsC),
+            ctypes.POINTER(MpAudioClassifierOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
         ),
     ),
@@ -98,21 +99,21 @@ _CTYPES_SIGNATURES = (
         'MpAudioClassifierClassify',
         (
             ctypes.c_void_p,
-            ctypes.POINTER(audio_data_c.AudioDataC),
-            ctypes.POINTER(AudioClassifierResultC),
+            ctypes.POINTER(audio_data_c.MpAudioDataC),
+            ctypes.POINTER(MpAudioClassifierResultC),
         ),
     ),
     mediapipe_c_utils.CStatusFunction(
         'MpAudioClassifierClassifyAsync',
         (
             ctypes.c_void_p,
-            ctypes.POINTER(audio_data_c.AudioDataC),
+            ctypes.POINTER(audio_data_c.MpAudioDataC),
             ctypes.c_int64,
         ),
     ),
     mediapipe_c_utils.CFunction(
         'MpAudioClassifierCloseResult',
-        [ctypes.POINTER(AudioClassifierResultC)],
+        [ctypes.POINTER(MpAudioClassifierResultC)],
         None,
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -256,7 +257,7 @@ class AudioClassifier:
     """
     lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
-    def convert_result(c_result_ptr: ctypes.POINTER(AudioClassifierResultC)):
+    def convert_result(c_result_ptr: ctypes.POINTER(MpAudioClassifierResultC)):
       c_result = c_result_ptr[0]
       if c_result.results_count == 0:
         raise RuntimeError('No results returned from audio classifier.')
@@ -268,7 +269,7 @@ class AudioClassifier:
     c_callback = dispatcher.wrap_callback(
         options.result_callback, _C_TYPES_RESULT_CALLBACK
     )
-    ctypes_options = AudioClassifierOptionsC.from_c_options(
+    ctypes_options = MpAudioClassifierOptionsC.from_c_options(
         base_options=options.base_options.to_ctypes(),
         classifier_options=classifier_options_c.convert_to_classifier_options_c(
             classifier_options_lib.ClassifierOptions(
@@ -344,7 +345,7 @@ class AudioClassifier:
     if not audio_clip.audio_format.sample_rate:
       raise ValueError('Must provide the audio sample rate in audio data.')
 
-    c_result = AudioClassifierResultC()
+    c_result = MpAudioClassifierResultC()
     self._lib.MpAudioClassifierClassify(
         self._handle,
         audio_clip.to_ctypes(),

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""C types for Matrix."""
+"""C types for MpMatrix."""
 
 import ctypes
 
@@ -21,8 +21,8 @@ import numpy as np
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 
-class MatrixC(ctypes.Structure):
-  """The ctypes struct for Matrix."""
+class MpMatrixC(ctypes.Structure):
+  """The ctypes struct for MpMatrix."""
 
   _fields_ = [
       ('rows', ctypes.c_uint32),
@@ -32,14 +32,14 @@ class MatrixC(ctypes.Structure):
 
   @doc_controls.do_not_generate_docs
   def to_numpy(self) -> np.ndarray:
-    """Copies the MatrixC struct to a numpy array.
+    """Copies the MpMatrixC struct to a numpy array.
 
     The data is reshaped from column-major order to (cols, rows) and then
     transposed to a row-major numpy array. The underlying data is copied to
     ensure the data is not freed when the underlying C Matrix is closed.
 
     Returns:
-      A numpy array representing the MatrixC struct.
+      A numpy array representing the MpMatrixC struct.
     """
     if not self.data or self.rows == 0 or self.cols == 0:
       return np.empty((0,))

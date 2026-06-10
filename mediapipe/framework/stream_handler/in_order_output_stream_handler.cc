@@ -54,11 +54,11 @@ void InOrderOutputStreamHandler::PropagationLoop() {
 
 void InOrderOutputStreamHandler::PropagatePackets(
     CalculatorContext** calculator_context, Timestamp* context_timestamp) {
-  timestamp_mutex_.Unlock();
+  timestamp_mutex_.unlock();
   // Propagates packets without holding timestamp_mutex_.
   PropagateOutputPackets(*context_timestamp, &(*calculator_context)->Outputs());
   calculator_context_manager_->RecycleCalculatorContext();
-  timestamp_mutex_.Lock();
+  timestamp_mutex_.lock();
   completed_input_timestamps_.erase(completed_input_timestamps_.begin());
   // The first check is for performance reasons (it's cheaper).
   // Note that completed_input_timestamps_ is a subset of the input
@@ -93,10 +93,10 @@ void InOrderOutputStreamHandler::PropagatePackets(
 void InOrderOutputStreamHandler::PropagationBound(
     CalculatorContext** calculator_context, Timestamp* context_timestamp) {
   Timestamp bound_to_propagate = task_timestamp_bound_;
-  timestamp_mutex_.Unlock();
+  timestamp_mutex_.unlock();
   // Timestamp bound propagation without holding timestamp_mutex_.
   TryPropagateTimestampBound(bound_to_propagate);
-  timestamp_mutex_.Lock();
+  timestamp_mutex_.lock();
   if (propagation_state_ == kPropagatingBound) {
     // There is no invocation completed and no newly arrived timestamp
     // bound during the timestamp bound propagation. So the propagation

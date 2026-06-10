@@ -54,8 +54,9 @@ import java.nio.FloatBuffer;
 public class AudioData {
 
   private static final String TAG = AudioData.class.getSimpleName();
-  private final FloatRingBuffer buffer;
+
   private final AudioDataFormat format;
+  private final AudioStorageBackend backend;
 
   /**
    * Creates a {@link android.media.AudioRecord} instance with a ring buffer whose size is {@code
@@ -65,7 +66,12 @@ public class AudioData {
    * @param sampleCounts the number of samples.
    */
   public static AudioData create(AudioDataFormat format, int sampleCounts) {
-    return new AudioData(format, sampleCounts);
+    return new AudioData(format, new RingBufferBackend(sampleCounts * format.getNumOfChannels()));
+  }
+
+  /** Creates an {@link AudioData} instance wrapping a pre-allocated direct {@link ByteBuffer}. */
+  public static AudioData create(AudioDataFormat format, ByteBuffer buffer, int sampleCounts) {
+    return new AudioData(format, new DirectBufferBackend(buffer, sampleCounts));
   }
 
   /**
@@ -77,7 +83,9 @@ public class AudioData {
    * @param sampleCounts the number of samples to be fed into the model
    */
   public static AudioData create(AudioFormat format, int sampleCounts) {
-    return new AudioData(AudioDataFormat.create(format), sampleCounts);
+    return new AudioData(
+        AudioDataFormat.create(format),
+        new RingBufferBackend(sampleCounts * format.getChannelCount()));
   }
 
   /**
@@ -155,7 +163,7 @@ public class AudioData {
               "Size (%d) needs to be a multiplier of the number of channels (%d)",
               sizeInFloat, format.getNumOfChannels()));
     }
-    buffer.load(src, offsetInFloat, sizeInFloat);
+    backend.load(src, offsetInFloat, sizeInFloat);
   }
 
   /**
@@ -251,25 +259,93 @@ public class AudioData {
    * android.media.AudioFormat#ENCODING_PCM_FLOAT} i.e. values are in the range of [-1, 1].
    */
   public float[] getBuffer() {
-    float[] bufferData = new float[buffer.getCapacity()];
-    ByteBuffer byteBuffer = buffer.getBuffer();
+    ByteBuffer byteBuffer = backend.getBuffer();
+    float[] bufferData = new float[byteBuffer.remaining() / (Float.SIZE / 8)];
     byteBuffer.asFloatBuffer().get(bufferData);
     return bufferData;
   }
 
-  /* Returns the {@link AudioDataFormat} associated with the tensor. */
+  /** Returns a ByteBuffer containing the ordered audio float samples. */
+  public ByteBuffer getByteBuffer() {
+    return backend.getBuffer();
+  }
+
+  /** Returns the {@link AudioDataFormat} associated with the tensor. */
   public AudioDataFormat getFormat() {
     return format;
   }
 
   /* Returns the audio buffer length. */
   public int getBufferLength() {
-    return buffer.getCapacity() / format.getNumOfChannels();
+    return backend.getSampleCount(format.getNumOfChannels());
   }
 
-  private AudioData(AudioDataFormat format, int sampleCounts) {
+  private AudioData(AudioDataFormat format, AudioStorageBackend backend) {
     this.format = format;
-    this.buffer = new FloatRingBuffer(sampleCounts * format.getNumOfChannels());
+    this.backend = backend;
+  }
+
+  // =====================================================================================
+  // STORAGE BACKENDS
+  // =====================================================================================
+
+  private interface AudioStorageBackend {
+    void load(float[] src, int offsetInFloat, int sizeInFloat);
+
+    ByteBuffer getBuffer();
+
+    int getSampleCount(int numOfChannels);
+  }
+
+  /** Backend used when AudioData manages its own internal ring buffer. */
+  private static class RingBufferBackend implements AudioStorageBackend {
+    private final FloatRingBuffer ringBuffer;
+
+    RingBufferBackend(int flatSize) {
+      this.ringBuffer = new FloatRingBuffer(flatSize);
+    }
+
+    @Override
+    public void load(float[] src, int offsetInFloat, int sizeInFloat) {
+      ringBuffer.load(src, offsetInFloat, sizeInFloat);
+    }
+
+    @Override
+    public ByteBuffer getBuffer() {
+      return ringBuffer.getBuffer();
+    }
+
+    @Override
+    public int getSampleCount(int numOfChannels) {
+      return ringBuffer.getCapacity() / numOfChannels;
+    }
+  }
+
+  /** Backend used when AudioData wraps an external, pre-allocated direct buffer. */
+  private static class DirectBufferBackend implements AudioStorageBackend {
+    private final ByteBuffer directBuffer;
+    private final int sampleCounts;
+
+    DirectBufferBackend(ByteBuffer directBuffer, int sampleCounts) {
+      this.directBuffer = directBuffer;
+      this.sampleCounts = sampleCounts;
+    }
+
+    @Override
+    public void load(float[] src, int offsetInFloat, int sizeInFloat) {
+      throw new IllegalStateException(
+          "AudioData is initialized with a direct buffer and cannot be updated via load().");
+    }
+
+    @Override
+    public ByteBuffer getBuffer() {
+      return directBuffer;
+    }
+
+    @Override
+    public int getSampleCount(int numOfChannels) {
+      return sampleCounts;
+    }
   }
 
   /** Actual implementation of the ring buffer. */

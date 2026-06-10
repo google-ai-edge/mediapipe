@@ -19,6 +19,7 @@ package mediapipe.tasks.components.processors.proto;
 
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/tasks/cc/components/processors/proto/text_model_type.proto";
+import "mediapipe/tasks/cc/core/proto/external_file.proto";
 
 message TextPreprocessingGraphOptions {
   extend mediapipe.CalculatorOptions {
@@ -34,4 +35,7 @@ message TextPreprocessingGraphOptions {
   // The model's input tensors are dynamic rather than static.
   // Used with BERT_MODEL.
   optional bool has_dynamic_input_tensors = 3;
+
+  // The sentence piece model file. This is only used for Gecko models.
+  optional core.proto.ExternalFile sentence_piece_model = 4;
 }

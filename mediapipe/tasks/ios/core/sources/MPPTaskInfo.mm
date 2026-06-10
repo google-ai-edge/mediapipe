@@ -36,7 +36,7 @@ using ::mediapipe::InputStreamInfo;
                    outputStreams:(NSArray<NSString *> *)outputStreams
                      taskOptions:(id<MPPTaskOptionsProtocol>)taskOptions
               enableFlowLimiting:(BOOL)enableFlowLimiting
-                     runningMode:(NSString *)runningMode
+                     runningMode:(MPPCoreRunningMode)runningMode
                            error:(NSError **)error {
   if (!taskGraphName || !inputStreams.count || !outputStreams.count) {
     [MPPCommonUtils

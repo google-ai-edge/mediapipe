@@ -57,9 +57,9 @@ class Detection:
 
   @classmethod
   @doc_controls.do_not_generate_docs
-  def from_ctypes(cls, c_obj: detections_c_lib.DetectionC) -> 'Detection':
-    """Creates a `Detection` object from the given `DetectionC` object."""
-    c_categories = category_c_lib.CategoriesC(
+  def from_ctypes(cls, c_obj: detections_c_lib.MpDetectionC) -> 'Detection':
+    """Creates a `Detection` object from the given `MpDetectionC` object."""
+    c_categories = category_c_lib.MpCategoriesC(
         categories=c_obj.categories, categories_count=c_obj.categories_count
     )
 
@@ -111,9 +111,9 @@ class DetectionResult:
   @classmethod
   @doc_controls.do_not_generate_docs
   def from_ctypes(
-      cls, c_obj: detections_c_lib.DetectionResultC
+      cls, c_obj: detections_c_lib.MpDetectionResultC
   ) -> 'DetectionResult':
-    """Creates a `DetectionResult` object from a `DetectionResultC` object."""
+    """Creates a `DetectionResult` object from a `MpDetectionResultC` object."""
     return DetectionResult(
         detections=[
             Detection.from_ctypes(c_obj.detections[i])

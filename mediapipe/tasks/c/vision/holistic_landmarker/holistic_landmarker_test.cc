@@ -73,7 +73,7 @@ HolisticResultProto GetExpectedHolisticResult(absl::string_view result_file) {
 }
 
 void AssertFaceBlendshapes(
-    const Categories& face_blendshapes,
+    const MpCategories& face_blendshapes,
     const mediapipe::ClassificationList& expected_face_blendshapes,
     float margin = kBlendshapesAbsMargin) {
   ASSERT_EQ(face_blendshapes.categories_count,
@@ -89,7 +89,7 @@ void AssertFaceBlendshapes(
 }
 
 void AssertLandmarks(
-    const NormalizedLandmarks& landmarks,
+    const MpNormalizedLandmarks& landmarks,
     const mediapipe::NormalizedLandmarkList& expected_landmark_list,
     float margin = kLandmarksAbsMargin) {
   ASSERT_EQ(landmarks.landmarks_count, expected_landmark_list.landmark_size());
@@ -102,7 +102,7 @@ void AssertLandmarks(
 }
 
 void AssertHolisticLandmarkerResult(
-    const HolisticLandmarkerResult* result,
+    const MpHolisticLandmarkerResult* result,
     const HolisticResultProto& expected_result_proto) {
   EXPECT_TRUE(result);
 
@@ -141,9 +141,9 @@ TEST(HolisticLandmarkerTest, ImageModeSucceeds) {
   const auto expected_result = GetExpectedHolisticResult(kHolisticResultProto);
   const auto image = GetImage(GetFullPath(kTestImageFile));
   const std::string model_path = GetFullPath(kModelFile);
-  HolisticLandmarkerOptions options;
+  MpHolisticLandmarkerOptions options;
   options.base_options = {.model_asset_path = model_path.c_str()};
-  options.running_mode = RunningMode::IMAGE;
+  options.running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE;
   options.output_face_blendshapes = true;
   options.output_pose_segmentation_masks = true;
 
@@ -155,7 +155,7 @@ TEST(HolisticLandmarkerTest, ImageModeSucceeds) {
   ASSERT_EQ(status, kMpOk);
   ASSERT_EQ(error_msg, nullptr);
 
-  HolisticLandmarkerResult result;
+  MpHolisticLandmarkerResult result;
   status = MpHolisticLandmarkerDetectImage(landmarker_ptr, image.get(), nullptr,
                                            &result, &error_msg);
   ASSERT_EQ(status, kMpOk);
@@ -171,9 +171,9 @@ TEST(HolisticLandmarkerTest, VideoModeSucceeds) {
   const auto expected_result = GetExpectedHolisticResult(kHolisticResultProto);
   const auto image = GetImage(GetFullPath(kTestImageFile));
   const std::string model_path = GetFullPath(kModelFile);
-  HolisticLandmarkerOptions options;
+  MpHolisticLandmarkerOptions options;
   options.base_options = {.model_asset_path = model_path.c_str()};
-  options.running_mode = RunningMode::VIDEO;
+  options.running_mode = MpRunningMode::MP_RUNNING_MODE_VIDEO;
   options.output_face_blendshapes = true;
   options.output_pose_segmentation_masks = true;
 
@@ -187,7 +187,7 @@ TEST(HolisticLandmarkerTest, VideoModeSucceeds) {
 
   int iterations = 3;
   for (int i = 0; i < iterations; ++i) {
-    HolisticLandmarkerResult result;
+    MpHolisticLandmarkerResult result;
     status = MpHolisticLandmarkerDetectForVideo(
         landmarker_ptr, image.get(), nullptr, i * kMicroSecondsPerMilliSecond,
         &result, &error_msg);
@@ -204,9 +204,9 @@ TEST(HolisticLandmarkerTest, VideoModeSucceeds) {
 TEST(HolisticLandmarkerTest, ReturnsEmptyResultsWithHighThresholds) {
   const auto image = GetImage(GetFullPath(kTestImageFile));
   const std::string model_path = GetFullPath(kModelFile);
-  HolisticLandmarkerOptions options;
+  MpHolisticLandmarkerOptions options;
   options.base_options = {.model_asset_path = model_path.c_str()};
-  options.running_mode = RunningMode::IMAGE;
+  options.running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE;
   options.output_face_blendshapes = true;
   options.output_pose_segmentation_masks = true;
   options.min_face_detection_confidence = 1.0f;
@@ -225,7 +225,7 @@ TEST(HolisticLandmarkerTest, ReturnsEmptyResultsWithHighThresholds) {
   ASSERT_EQ(status, kMpOk);
   ASSERT_EQ(error_msg, nullptr);
 
-  HolisticLandmarkerResult result;
+  MpHolisticLandmarkerResult result;
   status = MpHolisticLandmarkerDetectImage(landmarker_ptr, image.get(), nullptr,
                                            &result, &error_msg);
   ASSERT_EQ(status, kMpOk);
@@ -255,7 +255,7 @@ struct LiveStreamModeCallback {
   static int64_t last_timestamp;
   static absl::BlockingCounter* blocking_counter;
   static void LiveStreamCallback(MpStatus status_code,
-                                 const HolisticLandmarkerResult* result,
+                                 const MpHolisticLandmarkerResult* result,
                                  MpImagePtr image, int64_t timestamp) {
     ASSERT_EQ(status_code, kMpOk);
     const HolisticResultProto expected_result =
@@ -276,9 +276,9 @@ absl::BlockingCounter* LiveStreamModeCallback::blocking_counter = nullptr;
 TEST(HolisticLandmarkerTest, LiveStreamModeSucceeds) {
   const auto image = GetImage(GetFullPath(kTestImageFile));
   const std::string model_path = GetFullPath(kModelFile);
-  HolisticLandmarkerOptions options;
+  MpHolisticLandmarkerOptions options;
   options.base_options = {.model_asset_path = model_path.c_str()};
-  options.running_mode = RunningMode::LIVE_STREAM;
+  options.running_mode = MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM;
   options.output_face_blendshapes = true;
   options.output_pose_segmentation_masks = true;
   options.result_callback = &LiveStreamModeCallback::LiveStreamCallback;

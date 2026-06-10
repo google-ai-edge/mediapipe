@@ -72,7 +72,7 @@ void CreateHolisticLandmarkerResult(CppHolisticLandmarkerResult* cpp_result) {
   cpp_result->pose_segmentation_masks = mask_image;
 }
 
-void AssertLandmarksEqual(const Landmarks& c_landmarks,
+void AssertLandmarksEqual(const MpLandmarks& c_landmarks,
                           const std::vector<CppLandmark>& cpp_landmarks) {
   EXPECT_EQ(c_landmarks.landmarks_count, cpp_landmarks.size());
   for (int i = 0; i < c_landmarks.landmarks_count; ++i) {
@@ -83,7 +83,7 @@ void AssertLandmarksEqual(const Landmarks& c_landmarks,
 }
 
 void AssertNormalizedLandmarksEqual(
-    const NormalizedLandmarks& c_landmarks,
+    const MpNormalizedLandmarks& c_landmarks,
     const std::vector<CppNormalizedLandmark>& cpp_landmarks) {
   EXPECT_EQ(c_landmarks.landmarks_count, cpp_landmarks.size());
   for (int i = 0; i < c_landmarks.landmarks_count; ++i) {
@@ -97,7 +97,7 @@ TEST(HolisticLandmarkerResultConverterTest, ConvertsCustomResult) {
   CppHolisticLandmarkerResult cpp_result;
   CreateHolisticLandmarkerResult(&cpp_result);
 
-  HolisticLandmarkerResult c_result;
+  MpHolisticLandmarkerResult c_result;
   CppConvertToHolisticLandmarkerResult(cpp_result, &c_result);
 
   AssertNormalizedLandmarksEqual(c_result.face_landmarks,
@@ -137,7 +137,7 @@ TEST(HolisticLandmarkerResultConverterTest, FreesMemory) {
   CppHolisticLandmarkerResult cpp_result;
   CreateHolisticLandmarkerResult(&cpp_result);
 
-  HolisticLandmarkerResult c_result;
+  MpHolisticLandmarkerResult c_result;
   CppConvertToHolisticLandmarkerResult(cpp_result, &c_result);
 
   EXPECT_NE(c_result.face_landmarks.landmarks, nullptr);

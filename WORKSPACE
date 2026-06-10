@@ -8,14 +8,7 @@ bind(
     actual = "@local_config_python//:python_headers",
 )
 
-http_archive(
-    name = "bazel_skylib",
-    sha256 = "bc283cdfcd526a52c3201279cda4bc298652efa898b10b4db0837dc51652756f",
-    urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.7.1/bazel-skylib-1.7.1.tar.gz",
-        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.7.1/bazel-skylib-1.7.1.tar.gz",
-    ],
-)
+load("@com_google_protobuf//bazel/private:proto_bazel_features.bzl", "proto_bazel_features")  # buildifier: disable=bzl-visibility
 
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 
@@ -80,25 +73,14 @@ http_archive(
     urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v5.28.3.zip"],
 )
 
+proto_bazel_features(name = "proto_bazel_features")
+
 http_archive(
     name = "rules_android_ndk",
     sha256 = "89bf5012567a5bade4c78eac5ac56c336695c3bfd281a9b0894ff6605328d2d5",
     strip_prefix = "rules_android_ndk-0.1.3",
     url = "https://github.com/bazelbuild/rules_android_ndk/releases/download/v0.1.3/rules_android_ndk-v0.1.3.tar.gz",
 )
-
-http_archive(
-    name = "rules_shell",
-    sha256 = "bc61ef94facc78e20a645726f64756e5e285a045037c7a61f65af2941f4c25e1",
-    strip_prefix = "rules_shell-0.4.1",
-    url = "https://github.com/bazelbuild/rules_shell/releases/download/v0.4.1/rules_shell-v0.4.1.tar.gz",
-)
-
-load("@rules_shell//shell:repositories.bzl", "rules_shell_dependencies", "rules_shell_toolchains")
-
-rules_shell_dependencies()
-
-rules_shell_toolchains()
 
 load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")  # @unused
 
@@ -144,15 +126,9 @@ http_archive(
 http_archive(
     name = "zlib",
     build_file = "@//third_party:zlib.BUILD",
-    patch_args = [
-        "-p1",
-    ],
-    patches = [
-        "@//third_party:zlib.diff",
-    ],
-    sha256 = "9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23",
+    sha256 = "17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c",
     strip_prefix = "zlib-1.3.1",
-    url = "https://zlib.net/fossils/zlib-1.3.1.tar.gz",
+    url = "https://github.com/madler/zlib/archive/refs/tags/v1.3.1.tar.gz",
 )
 
 # gflags needed by glog
@@ -488,21 +464,6 @@ load(
 
 apple_support_dependencies()
 
-# Kotlin rules
-http_archive(
-    name = "rules_kotlin",
-    sha256 = "e1448a56b2462407b2688dea86df5c375b36a0991bd478c2ddd94c97168125e2",
-    url = "https://github.com/bazelbuild/rules_kotlin/releases/download/v2.1.3/rules_kotlin-v2.1.3.tar.gz",
-)
-
-load("@rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories")
-
-kotlin_repositories()
-
-load("@rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")
-
-kt_register_toolchains()
-
 # This is used to select all contents of the archives for CMake-based packages to give CMake access to them.
 all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
 
@@ -528,16 +489,20 @@ http_archive(
     name = "libyuv",
     build_file = "@//third_party:libyuv.BUILD",
     # Error: operand type mismatch for `vbroadcastss' caused by commit 8a13626e42f7fdcf3a6acbb0316760ee54cda7d8.
-    urls = ["https://chromium.googlesource.com/libyuv/libyuv/+archive/2525698acba9bf9b701ba6b4d9584291a1f62257.tar.gz"],
+    urls = [
+        "https://storage.googleapis.com/tensorstore-bazel-mirror/chromium.googlesource.com/libyuv/libyuv/+archive/2525698acba9bf9b701ba6b4d9584291a1f62257.tar.gz",
+        "https://chromium.googlesource.com/libyuv/libyuv/+archive/2525698acba9bf9b701ba6b4d9584291a1f62257.tar.gz",
+    ],
 )
 
 # Note: protobuf-javalite is no longer released as a separate download, it's included in the main Java download.
 # ...but the Java download is currently broken, so we use the "source" download.
 http_archive(
     name = "com_google_protobuf_javalite",
-    sha256 = "f645e6e42745ce922ca5388b1883ca583bafe4366cc74cf35c3c9299005136e2",
-    strip_prefix = "protobuf-5.28.3",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v5.28.3.zip"],
+    repo_mapping = {"@abseil-cpp": "@com_google_absl"},
+    sha256 = "6e09bbc950ba60c3a7b30280210cd285af8d7d8ed5e0a6ed101c72aff22e8d88",
+    strip_prefix = "protobuf-6.31.1",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v6.31.1.zip"],
 )
 
 load("@//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
@@ -602,15 +567,6 @@ http_archive(
     strip_prefix = "text-2.2.0",
     urls = [
         "https://github.com/tensorflow/text/archive/v2.2.0.zip",
-    ],
-)
-
-http_archive(
-    name = "com_googlesource_code_re2",
-    sha256 = "ef516fb84824a597c4d5d0d6d330daedb18363b5a99eda87d027e6bdd9cba299",
-    strip_prefix = "re2-03da4fc0857c285e3a26782f6bc8931c4c950df4",
-    urls = [
-        "https://github.com/google/re2/archive/03da4fc0857c285e3a26782f6bc8931c4c950df4.tar.gz",
     ],
 )
 
@@ -807,57 +763,6 @@ libedgetpu_dependencies()
 load("@coral_crosstool//:configure.bzl", "cc_crosstool")
 
 cc_crosstool(name = "crosstool")
-
-# Node dependencies
-http_archive(
-    name = "build_bazel_rules_nodejs",
-    sha256 = "a1295b168f183218bc88117cf00674bcd102498f294086ff58318f830dd9d9d1",
-    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/5.8.5/rules_nodejs-5.8.5.tar.gz"],
-)
-
-load("@build_bazel_rules_nodejs//:repositories.bzl", "build_bazel_rules_nodejs_dependencies")
-
-build_bazel_rules_nodejs_dependencies()
-
-# fetches nodejs, npm, and yarn
-load("@build_bazel_rules_nodejs//:index.bzl", "node_repositories", "yarn_install")
-
-node_repositories(
-    node_version = "20.14.0",
-)
-
-yarn_install(
-    name = "npm",
-    package_json = "@//:package.json",
-    yarn_lock = "@//:yarn.lock",
-)
-
-# Protobuf for Node dependencies
-http_archive(
-    name = "rules_proto_grpc",
-    sha256 = "bbe4db93499f5c9414926e46f9e35016999a4e9f6e3522482d3760dc61011070",
-    strip_prefix = "rules_proto_grpc-4.2.0",
-    urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/archive/4.2.0.tar.gz"],
-)
-
-http_archive(
-    name = "com_google_protobuf_javascript",
-    sha256 = "8cef92b4c803429af0c11c4090a76b6a931f82d21e0830760a17f9c6cb358150",
-    strip_prefix = "protobuf-javascript-3.21.4",
-    urls = ["https://github.com/protocolbuffers/protobuf-javascript/archive/refs/tags/v3.21.4.tar.gz"],
-)
-
-load("@rules_proto_grpc//:repositories.bzl", "rules_proto_grpc_repos", "rules_proto_grpc_toolchains")
-
-rules_proto_grpc_toolchains()
-
-rules_proto_grpc_repos()
-
-load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
-
-rules_proto_dependencies()
-
-rules_proto_toolchains()
 
 load("@//third_party:external_files.bzl", "external_files")
 

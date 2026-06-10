@@ -35,7 +35,7 @@ using CppNormalizedLandmark =
 
 void CppConvertToPoseLandmarkerResult(
     const mediapipe::tasks::vision::pose_landmarker::PoseLandmarkerResult& in,
-    PoseLandmarkerResult* out) {
+    MpPoseLandmarkerResult* out) {
   if (in.segmentation_masks.has_value()) {
     out->segmentation_masks_count = in.segmentation_masks.value().size();
     out->segmentation_masks = new MpImagePtr[out->segmentation_masks_count];
@@ -50,7 +50,7 @@ void CppConvertToPoseLandmarkerResult(
   }
 
   out->pose_landmarks_count = in.pose_landmarks.size();
-  out->pose_landmarks = new NormalizedLandmarks[out->pose_landmarks_count];
+  out->pose_landmarks = new MpNormalizedLandmarks[out->pose_landmarks_count];
   for (uint32_t i = 0; i < out->pose_landmarks_count; ++i) {
     std::vector<CppNormalizedLandmark> cpp_normalized_landmarks;
     for (uint32_t j = 0; j < in.pose_landmarks[i].landmarks.size(); ++j) {
@@ -62,7 +62,7 @@ void CppConvertToPoseLandmarkerResult(
   }
 
   out->pose_world_landmarks_count = in.pose_world_landmarks.size();
-  out->pose_world_landmarks = new Landmarks[out->pose_world_landmarks_count];
+  out->pose_world_landmarks = new MpLandmarks[out->pose_world_landmarks_count];
   for (uint32_t i = 0; i < out->pose_world_landmarks_count; ++i) {
     std::vector<CppLandmark> cpp_landmarks;
     for (uint32_t j = 0; j < in.pose_world_landmarks[i].landmarks.size(); ++j) {
@@ -73,7 +73,7 @@ void CppConvertToPoseLandmarkerResult(
   }
 }
 
-void CppClosePoseLandmarkerResult(PoseLandmarkerResult* result) {
+void CppClosePoseLandmarkerResult(MpPoseLandmarkerResult* result) {
   if (result->segmentation_masks) {
     for (uint32_t i = 0; i < result->segmentation_masks_count; ++i) {
       MpImageFree(result->segmentation_masks[i]);

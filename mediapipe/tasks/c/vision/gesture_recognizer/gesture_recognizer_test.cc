@@ -55,7 +55,7 @@ std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
 }
 
-void MatchesGestureRecognizerResult(const GestureRecognizerResult* result,
+void MatchesGestureRecognizerResult(const MpGestureRecognizerResult* result,
                                     const float score_precision,
                                     const float landmark_precision) {
   // Expects to have the same number of hands detected.
@@ -91,9 +91,9 @@ TEST(GestureRecognizerTest, ImageModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  GestureRecognizerOptions options = {
+  MpGestureRecognizerOptions options = {
       .base_options = {.model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .num_hands = 1,
       .min_hand_detection_confidence = 0.5,
       .min_hand_presence_confidence = 0.5,
@@ -109,7 +109,7 @@ TEST(GestureRecognizerTest, ImageModeTest) {
             kMpOk);
   ASSERT_NE(recognizer, nullptr);
 
-  GestureRecognizerResult result;
+  MpGestureRecognizerResult result;
   ASSERT_EQ(
       MpGestureRecognizerRecognizeImage(recognizer, image.get(),
                                         /* image_processing_options */ nullptr,
@@ -125,9 +125,9 @@ TEST(GestureRecognizerTest, VideoModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  GestureRecognizerOptions options = {
+  MpGestureRecognizerOptions options = {
       .base_options = {.model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::VIDEO,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_VIDEO,
       .num_hands = 1,
       .min_hand_detection_confidence = 0.5,
       .min_hand_presence_confidence = 0.5,
@@ -144,7 +144,7 @@ TEST(GestureRecognizerTest, VideoModeTest) {
   ASSERT_NE(recognizer, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
-    GestureRecognizerResult result;
+    MpGestureRecognizerResult result;
     ASSERT_EQ(MpGestureRecognizerRecognizeForVideo(
                   recognizer, image.get(),
                   /* image_processing_options */ nullptr, i, &result,
@@ -163,9 +163,9 @@ TEST(GestureRecognizerTest, ImageModeTestWithRotation) {
   const ScopedMpImage image = GetImage(GetFullPath("pointing_up_rotated.jpg"));
 
   const std::string model_path = GetFullPath(kModelName);
-  GestureRecognizerOptions options = {
+  MpGestureRecognizerOptions options = {
       .base_options = {.model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .num_hands = 1,
       .min_hand_detection_confidence = 0.5,
       .min_hand_presence_confidence = 0.5,
@@ -181,11 +181,11 @@ TEST(GestureRecognizerTest, ImageModeTestWithRotation) {
             kMpOk);
   ASSERT_NE(recognizer, nullptr);
 
-  ImageProcessingOptions image_processing_options;
+  MpImageProcessingOptions image_processing_options;
   image_processing_options.has_region_of_interest = 0;
   image_processing_options.rotation_degrees = -90;
 
-  GestureRecognizerResult result;
+  MpGestureRecognizerResult result;
   EXPECT_EQ(MpGestureRecognizerRecognizeImage(
                 recognizer, image.get(), &image_processing_options, &result,
                 /* &error_msg= */ nullptr),
@@ -212,7 +212,7 @@ struct LiveStreamModeCallback {
   static int64_t last_timestamp;
   static absl::BlockingCounter* blocking_counter;
   static void Fn(MpStatus status,
-                 const GestureRecognizerResult* recognizer_result,
+                 const MpGestureRecognizerResult* recognizer_result,
                  const MpImagePtr image, int64_t timestamp) {
     ASSERT_EQ(status, kMpOk);
     ASSERT_NE(recognizer_result, nullptr);
@@ -236,9 +236,9 @@ TEST(GestureRecognizerTest, LiveStreamModeTest) {
 
   const std::string model_path = GetFullPath(kModelName);
 
-  GestureRecognizerOptions options = {
+  MpGestureRecognizerOptions options = {
       .base_options = {.model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::LIVE_STREAM,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM,
       .num_hands = 1,
       .min_hand_detection_confidence = 0.5,
       .min_hand_presence_confidence = 0.5,
@@ -284,9 +284,9 @@ TEST(GestureRecognizerTest, LiveStreamModeTest) {
 
 TEST(GestureRecognizerTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
-  GestureRecognizerOptions options = {
+  MpGestureRecognizerOptions options = {
       .base_options = {.model_asset_path = nullptr},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .num_hands = 1,
       .min_hand_detection_confidence = 0.5,
       .min_hand_presence_confidence = 0.5,
@@ -307,9 +307,9 @@ TEST(GestureRecognizerTest, InvalidArgumentHandling) {
 
 TEST(GestureRecognizerTest, FailedRecognitionHandling) {
   const std::string model_path = GetFullPath(kModelName);
-  GestureRecognizerOptions options = {
+  MpGestureRecognizerOptions options = {
       .base_options = {.model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .num_hands = 1,
       .min_hand_detection_confidence = 0.5,
       .min_hand_presence_confidence = 0.5,
@@ -327,7 +327,7 @@ TEST(GestureRecognizerTest, FailedRecognitionHandling) {
   ASSERT_NE(recognizer, nullptr);
 
   const ScopedMpImage image = CreateEmptyGpuMpImage();
-  GestureRecognizerResult result;
+  MpGestureRecognizerResult result;
 
   char* error_msg = nullptr;
   MpStatus status = MpGestureRecognizerRecognizeImage(

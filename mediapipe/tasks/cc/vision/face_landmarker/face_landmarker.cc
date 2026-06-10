@@ -191,7 +191,7 @@ absl::StatusOr<std::unique_ptr<FaceLandmarker>> FaceLandmarker::Create(
            options->output_facial_transformation_matrixes,
            options->running_mode == core::RunningMode::LIVE_STREAM),
        .task_name = kTaskName,
-       .task_running_mode = core::GetRunningModeName(options->running_mode),
+       .task_running_mode = core::GetCoreRunningMode(options->running_mode),
        .op_resolver = std::move(options->base_options.op_resolver),
        .packets_callback = std::move(packets_callback),
        .disable_default_service = options->base_options.disable_default_service,

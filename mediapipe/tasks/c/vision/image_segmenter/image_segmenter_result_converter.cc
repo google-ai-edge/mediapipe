@@ -30,7 +30,7 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToImageSegmenterResult(
     const mediapipe::tasks::vision::image_segmenter::ImageSegmenterResult& in,
-    ImageSegmenterResult* out) {
+    MpImageSegmenterResult* out) {
   // Convert confidence_masks
   if (in.confidence_masks.has_value()) {
     out->confidence_masks_count = in.confidence_masks->size();
@@ -62,7 +62,7 @@ void CppConvertToImageSegmenterResult(
             out->quality_scores);
 }
 
-void CppCloseImageSegmenterResult(ImageSegmenterResult* result) {
+void CppCloseImageSegmenterResult(MpImageSegmenterResult* result) {
   if (result->confidence_masks_count > 0) {
     for (uint32_t i = 0; i < result->confidence_masks_count; ++i) {
       MpImageFree(result->confidence_masks[i]);

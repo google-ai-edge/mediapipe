@@ -30,6 +30,7 @@ cc_library(
         "//mediapipe/tasks/cc/components/processors:classifier_options",
         "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core:base_task_api",
+        "//mediapipe/tasks/cc/core:running_mode",
         "//mediapipe/tasks/cc/core:task_api_factory",
         "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",

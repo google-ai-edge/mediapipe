@@ -210,7 +210,7 @@ void GlTextureBuffer::Reuse() {
   // while holding the mutex.
   std::unique_ptr<GlMultiSyncPoint> old_consumer_sync;
   {
-    absl::MutexLock lock(&consumer_sync_mutex_);
+    absl::MutexLock lock(consumer_sync_mutex_);
     // Reset the sync points.
     old_consumer_sync = std::move(consumer_multi_sync_);
     consumer_multi_sync_ = std::make_unique<GlMultiSyncPoint>();
@@ -231,7 +231,7 @@ void GlTextureBuffer::Updated(std::shared_ptr<GlSyncPoint> prod_token) {
 }
 
 void GlTextureBuffer::DidRead(std::shared_ptr<GlSyncPoint> cons_token) const {
-  absl::MutexLock lock(&consumer_sync_mutex_);
+  absl::MutexLock lock(consumer_sync_mutex_);
   if (cons_token) {
     consumer_multi_sync_->Add(std::move(cons_token));
   } else {
@@ -268,12 +268,12 @@ void GlTextureBuffer::WaitOnGpu() const {
 }
 
 void GlTextureBuffer::WaitForConsumers() {
-  absl::MutexLock lock(&consumer_sync_mutex_);
+  absl::MutexLock lock(consumer_sync_mutex_);
   consumer_multi_sync_->Wait();
 }
 
 void GlTextureBuffer::WaitForConsumersOnGpu() {
-  absl::MutexLock lock(&consumer_sync_mutex_);
+  absl::MutexLock lock(consumer_sync_mutex_);
   consumer_multi_sync_->WaitOnGpu();
   // TODO: should we clear the consumer_multi_sync_ here?
   // It would mean that WaitForConsumersOnGpu can be called only once, or more

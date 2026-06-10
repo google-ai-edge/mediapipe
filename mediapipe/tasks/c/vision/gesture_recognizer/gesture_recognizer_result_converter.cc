@@ -37,14 +37,14 @@ using CppNormalizedLandmark =
 void CppConvertToGestureRecognizerResult(
     const mediapipe::tasks::vision::gesture_recognizer::GestureRecognizerResult&
         in,
-    GestureRecognizerResult* out) {
+    MpGestureRecognizerResult* out) {
   out->gestures_count = in.gestures.size();
-  out->gestures = new Categories[out->gestures_count];
+  out->gestures = new MpCategories[out->gestures_count];
 
   for (uint32_t i = 0; i < out->gestures_count; ++i) {
     uint32_t categories_count = in.gestures[i].classification_size();
     out->gestures[i].categories_count = categories_count;
-    out->gestures[i].categories = new Category[categories_count];
+    out->gestures[i].categories = new MpCategory[categories_count];
 
     for (uint32_t j = 0; j < categories_count; ++j) {
       const auto& classification = in.gestures[i].classification(j);
@@ -65,12 +65,12 @@ void CppConvertToGestureRecognizerResult(
   }
 
   out->handedness_count = in.handedness.size();
-  out->handedness = new Categories[out->handedness_count];
+  out->handedness = new MpCategories[out->handedness_count];
 
   for (uint32_t i = 0; i < out->handedness_count; ++i) {
     uint32_t categories_count = in.handedness[i].classification_size();
     out->handedness[i].categories_count = categories_count;
-    out->handedness[i].categories = new Category[categories_count];
+    out->handedness[i].categories = new MpCategory[categories_count];
 
     for (uint32_t j = 0; j < categories_count; ++j) {
       const auto& classification = in.handedness[i].classification(j);
@@ -91,7 +91,7 @@ void CppConvertToGestureRecognizerResult(
   }
 
   out->hand_landmarks_count = in.hand_landmarks.size();
-  out->hand_landmarks = new NormalizedLandmarks[out->hand_landmarks_count];
+  out->hand_landmarks = new MpNormalizedLandmarks[out->hand_landmarks_count];
   for (uint32_t i = 0; i < out->hand_landmarks_count; ++i) {
     std::vector<CppNormalizedLandmark> cpp_normalized_landmarks;
     for (uint32_t j = 0; j < in.hand_landmarks[i].landmark_size(); ++j) {
@@ -113,7 +113,7 @@ void CppConvertToGestureRecognizerResult(
   }
 
   out->hand_world_landmarks_count = in.hand_world_landmarks.size();
-  out->hand_world_landmarks = new Landmarks[out->hand_world_landmarks_count];
+  out->hand_world_landmarks = new MpLandmarks[out->hand_world_landmarks_count];
   for (uint32_t i = 0; i < out->hand_world_landmarks_count; ++i) {
     std::vector<CppLandmark> cpp_landmarks;
     for (uint32_t j = 0; j < in.hand_world_landmarks[i].landmark_size(); ++j) {
@@ -134,7 +134,7 @@ void CppConvertToGestureRecognizerResult(
   }
 }
 
-void CppCloseGestureRecognizerResult(GestureRecognizerResult* result) {
+void CppCloseGestureRecognizerResult(MpGestureRecognizerResult* result) {
   for (uint32_t i = 0; i < result->gestures_count; ++i) {
     CppCloseCategories(&result->gestures[i]);
   }

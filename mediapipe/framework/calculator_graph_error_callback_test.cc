@@ -58,7 +58,7 @@ TEST(CalculatorGraphAsyncErrorsTest, ErrorCallbackReceivesProcessErrors) {
                             &is_error_received](absl::Status error) {
     EXPECT_TRUE(graph.HasError());
 
-    absl::MutexLock lock(&m);
+    absl::MutexLock lock(m);
     output_error = std::move(error);
     is_error_received = true;
   };
@@ -70,7 +70,7 @@ TEST(CalculatorGraphAsyncErrorsTest, ErrorCallbackReceivesProcessErrors) {
       "input", MakePacket<int>(0).At(Timestamp(10))));
 
   {
-    absl::MutexLock lock(&m);
+    absl::MutexLock lock(m);
     ASSERT_TRUE(m.AwaitWithTimeout(absl::Condition(&is_error_received),
                                    absl::Seconds(1)));
   }
@@ -119,7 +119,7 @@ TEST(CalculatorGraphAsyncErrorsTest, ErrorCallbackReceivesOpenErrors) {
                             &is_error_received](absl::Status error) {
     EXPECT_TRUE(graph.HasError());
 
-    absl::MutexLock lock(&m);
+    absl::MutexLock lock(m);
     output_error = std::move(error);
     is_error_received = true;
   };
@@ -129,7 +129,7 @@ TEST(CalculatorGraphAsyncErrorsTest, ErrorCallbackReceivesOpenErrors) {
   MP_ASSERT_OK(graph.StartRun({}));
 
   {
-    absl::MutexLock lock(&m);
+    absl::MutexLock lock(m);
     ASSERT_TRUE(m.AwaitWithTimeout(absl::Condition(&is_error_received),
                                    absl::Seconds(1)));
   }

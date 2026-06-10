@@ -71,7 +71,7 @@ TEST(ImageEmbedderTest, ImageModeTest) {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .embedder_options = {.l2_normalize = true, .quantize = false}};
 
   MpImageEmbedderPtr embedder;
@@ -99,7 +99,7 @@ TEST(ImageEmbedderTest, ImageModeTestWithQuantization) {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .embedder_options = {.l2_normalize = false, .quantize = true}};
 
   MpImageEmbedderPtr embedder;
@@ -128,7 +128,7 @@ TEST(ImageEmbedderTest, ImageModeTestWithRotation) {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .embedder_options = {.l2_normalize = true, .quantize = false}};
 
   MpImageEmbedderPtr embedder;
@@ -137,7 +137,7 @@ TEST(ImageEmbedderTest, ImageModeTestWithRotation) {
       kMpOk);
   ASSERT_NE(embedder, nullptr);
 
-  ImageProcessingOptions image_processing_options;
+  MpImageProcessingOptions image_processing_options;
   image_processing_options.has_region_of_interest = 0;
   image_processing_options.rotation_degrees = -90;
 
@@ -161,7 +161,7 @@ TEST(ImageEmbedderTest, SucceedsWithCosineSimilarity) {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .embedder_options = {.l2_normalize = true, .quantize = false}};
 
   MpImageEmbedderPtr embedder;
@@ -206,7 +206,7 @@ TEST(ImageEmbedderTest, VideoModeTest) {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::VIDEO,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_VIDEO,
       .embedder_options = {.l2_normalize = true, .quantize = false}};
 
   MpImageEmbedderPtr embedder;
@@ -238,7 +238,7 @@ TEST(ImageEmbedderTest, VideoModeTest) {
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
   static absl::BlockingCounter* blocking_counter;
-  static void Fn(MpStatus status, const EmbeddingResult* embedder_result,
+  static void Fn(MpStatus status, const MpEmbeddingResult* embedder_result,
                  MpImagePtr image, int64_t timestamp) {
     ASSERT_EQ(status, kMpOk);
     ASSERT_NE(embedder_result, nullptr);
@@ -267,7 +267,7 @@ TEST(ImageEmbedderTest, LiveStreamModeTest) {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::LIVE_STREAM,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM,
       .embedder_options = {.l2_normalize = true, .quantize = false},
       .result_callback = LiveStreamModeCallback::Fn,
   };
@@ -308,7 +308,7 @@ TEST(ImageEmbedderTest, InvalidArgumentHandling) {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = nullptr},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .embedder_options = {},
   };
 
@@ -329,7 +329,7 @@ TEST(ImageEmbedderTest, FailedEmbeddingHandling) {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .embedder_options = {.l2_normalize = false, .quantize = false}};
 
   MpImageEmbedderPtr embedder;

@@ -47,6 +47,20 @@ py_library(
 )
 
 py_library(
+    name = "mediapipe_c_bindings_shim",
+    srcs = [
+        "mediapipe_c_bindings.py",
+    ],
+    data = [
+        "//mediapipe/tasks/c:libmediapipe.so",
+    ],
+    deps = [
+        ":mediapipe_c_utils",
+        ":serial_dispatcher",
+    ],
+)
+
+py_library(
     name = "base_options",
     srcs = ["base_options.py"],
     visibility = [

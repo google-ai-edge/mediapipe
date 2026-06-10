@@ -14,13 +14,15 @@
 
 #include "mediapipe/gpu/webgpu/webgpu_service.h"
 
+#include <utility>
+
 #ifdef __EMSCRIPTEN__
 #include <cstring>
 #endif  // __EMSCRIPTEN__
 
-#include "absl/base/attributes.h"
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/gpu/webgpu/webgpu_headers.h"
+#include "mediapipe/web/jspi_check.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -68,8 +70,9 @@ EM_JS(char*, GetAdapterVendor, (), {
 #ifdef __EMSCRIPTEN__
 WebGpuService::WebGpuService()
     : canvas_selector_("canvas_webgpu"),
+      instance_(internal::CreateEmscriptenInstance()),
       device_(wgpu::Device::Acquire(emscripten_webgpu_get_device())),
-      attachment_manager_(internal::WebGpuDeviceAttachmentManager(device_)) {
+      attachment_manager_(instance_, device_) {
   adapter_info_.architecture.data = GetAdapterArchitecture();
   adapter_info_.architecture.length = strlen(adapter_info_.architecture.data);
   adapter_info_.description.data = GetAdapterDescription();
@@ -82,14 +85,18 @@ WebGpuService::WebGpuService()
 #else
 WebGpuService::WebGpuService()
     : canvas_selector_(""),
+      instance_(WebGpuDeviceRegistration::GetInstance().GetWebGpuInstance()),
       device_(WebGpuDeviceRegistration::GetInstance().GetWebGpuDevice()),
-      attachment_manager_(internal::WebGpuDeviceAttachmentManager(device_)) {}
+      attachment_manager_(instance_, device_) {}
 #endif  // __EMSCRIPTEN__
 
-WebGpuService::WebGpuService(wgpu::Device device)
+WebGpuService::WebGpuService(wgpu::Device device, wgpu::Instance instance)
     : canvas_selector_(""),
-      device_(device),
-      attachment_manager_(internal::WebGpuDeviceAttachmentManager(device)) {}
+      instance_(std::move(instance)),
+      device_(std::move(device)),
+      attachment_manager_(instance_, device_) {}
+
+wgpu::Instance WebGpuService::instance() const { return instance_; }
 
 ABSL_CONST_INIT const GraphService<WebGpuService> kWebGpuService(
     "kWebGpuService", GraphServiceBase::kAllowDefaultInitialization);

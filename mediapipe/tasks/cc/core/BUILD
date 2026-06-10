@@ -21,6 +21,12 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 cc_library(
+    name = "tasks_logging_factory",
+    visibility = ["//mediapipe/tasks:__subpackages__"],
+    deps = ["//mediapipe/tasks/cc/core/logging/factory:logging_factory"],
+)
+
+cc_library(
     name = "base_options",
     srcs = ["base_options.cc"],
     hdrs = ["base_options.h"],
@@ -40,7 +46,17 @@ cc_library(
 
 cc_library(
     name = "host_environment",
+    srcs = ["host_environment.cc"],
     hdrs = ["host_environment.h"],
+    deps = [
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:absl_log",
+    ],
+)
+
+cc_library(
+    name = "running_mode",
+    hdrs = ["running_mode.h"],
 )
 
 cc_test(
@@ -65,7 +81,6 @@ cc_library(
     srcs = ["external_file_handler.cc"],
     hdrs = ["external_file_handler.h"],
     deps = [
-        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
@@ -268,6 +283,8 @@ cc_library_with_tflite(
     ],
     deps = [
         ":host_environment",
+        ":running_mode",
+        ":tasks_logging_factory",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:executor",
@@ -277,7 +294,6 @@ cc_library_with_tflite(
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core/logging:tasks_dummy_logger",
         "//mediapipe/tasks/cc/core/logging:tasks_logger",
-        "//mediapipe/tasks/cc/core/logging/factory:logging_factory",
         "//mediapipe/tasks/cc/core/logging/factory:logging_factory_hdr",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
@@ -304,6 +320,7 @@ cc_test_with_tflite(
         "@org_tensorflow//tensorflow/lite:test_util",
     ],
     deps = [
+        ":running_mode",
         "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/calculators/core:side_packet_to_stream_calculator",
         "//mediapipe/framework:calculator_cc_proto",
@@ -337,6 +354,7 @@ cc_library_with_tflite(
         ":task_runner",
     ],
     deps = [
+        ":running_mode",
         ":utils",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:executor",

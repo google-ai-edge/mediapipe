@@ -1,14 +1,14 @@
 # The TypeScript graph runner used by all MediaPipe Web tasks.
 
-load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
+load("//mediapipe/framework/port:build_config.bzl", "ts_declaration", "ts_library")
+load("//mediapipe/tasks/web:build_defs.bzl", "jasmine_node_test")
 
 package(default_visibility = [
     "//mediapipe/tasks:internal",
 ])
 
 # Public types for GraphRunner listeners
-mediapipe_ts_declaration(
+ts_declaration(
     name = "listener_types",
     srcs = [
         "listener_types.d.ts",
@@ -17,7 +17,7 @@ mediapipe_ts_declaration(
 )
 
 # Public API for GraphRunner
-mediapipe_ts_declaration(
+ts_declaration(
     name = "graph_runner_api",
     srcs = [
         "graph_runner_api.d.ts",
@@ -29,7 +29,7 @@ mediapipe_ts_declaration(
 )
 
 # Public API for GraphRunner creation factory functions
-mediapipe_ts_library(
+ts_library(
     name = "graph_runner_factory_api",
     srcs = [
         "graph_runner_factory_api.d.ts",
@@ -41,7 +41,7 @@ mediapipe_ts_library(
 )
 
 # Private declarations for the Wasm module
-mediapipe_ts_declaration(
+ts_declaration(
     name = "wasm_module_private",
     srcs = ["wasm_module.d.ts"],
     visibility = ["//visibility:private"],
@@ -49,7 +49,7 @@ mediapipe_ts_declaration(
 )
 
 # Internal GraphRunner implementation
-mediapipe_ts_library(
+ts_library(
     name = "graph_runner_ts",
     srcs = [
         ":graph_runner.ts",
@@ -65,7 +65,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "graph_runner_image_lib_ts",
     srcs = [
         ":graph_runner_image_lib.ts",
@@ -74,7 +74,7 @@ mediapipe_ts_library(
     deps = [":graph_runner_ts"],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "register_model_resources_graph_service_ts",
     srcs = [
         ":register_model_resources_graph_service.ts",
@@ -83,14 +83,14 @@ mediapipe_ts_library(
     deps = [":graph_runner_ts"],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "platform_utils",
     srcs = [
         "platform_utils.ts",
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "platform_utils_test_lib",
     testonly = True,
     srcs = [
@@ -106,7 +106,7 @@ genrule(
     cmd = "cp $< $@",
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "run_script_helper",
     srcs = ["run_script_helper.ts"],
 )
@@ -118,7 +118,7 @@ jasmine_node_test(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "graph_runner_webgpu_ts",
     srcs = [
         "graph_runner_webgpu.ts",
@@ -129,7 +129,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "graph_runner_wasm_file_reference_ts",
     srcs = [
         "graph_runner_wasm_file_reference.ts",
@@ -140,7 +140,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "graph_runner_streaming_reader_ts",
     srcs = [
         "graph_runner_streaming_reader.ts",
@@ -151,7 +151,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "graph_runner_llm_inference_lib_ts",
     srcs = [
         "graph_runner_llm_inference_lib.ts",

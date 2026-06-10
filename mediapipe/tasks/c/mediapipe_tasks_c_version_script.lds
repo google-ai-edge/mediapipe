@@ -9,10 +9,8 @@ VERS_1.0 {
     MpHandLandmarker*;
     MpHolisticLandmarker*;
     MpImage*;
-    MpInteractiveSegmenter*;
+    MpInteractiveSegmenterLegacy*;
     MpLanguageDetector*;
-    MpLlmConverter*;
-    MpLlmBundler*;
     MpObjectDetector*;
     MpPoseLandmarker*;
     MpStringList*;

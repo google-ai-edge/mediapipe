@@ -16,7 +16,7 @@
 import ctypes
 
 
-class NormalizedKeypointC(ctypes.Structure):
+class MpNormalizedKeypointC(ctypes.Structure):
   """A keypoint in normalized coordinates."""
 
   _fields_ = [

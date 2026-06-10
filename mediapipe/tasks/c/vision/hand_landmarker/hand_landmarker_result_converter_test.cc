@@ -65,7 +65,7 @@ TEST(HandLandmarkerResultConverterTest, ConvertsCustomResult) {
   ::mediapipe::tasks::vision::hand_landmarker::HandLandmarkerResult cpp_result;
   InitHandLandmarkerResult(&cpp_result);
 
-  HandLandmarkerResult c_result;
+  MpHandLandmarkerResult c_result;
   CppConvertToHandLandmarkerResult(cpp_result, &c_result);
 
   // Verify conversion of hand_landmarks
@@ -110,7 +110,7 @@ TEST(HandLandmarkerResultConverterTest, FreesMemory) {
   ::mediapipe::tasks::vision::hand_landmarker::HandLandmarkerResult cpp_result;
   InitHandLandmarkerResult(&cpp_result);
 
-  HandLandmarkerResult c_result;
+  MpHandLandmarkerResult c_result;
   CppConvertToHandLandmarkerResult(cpp_result, &c_result);
 
   EXPECT_NE(c_result.handedness, nullptr);

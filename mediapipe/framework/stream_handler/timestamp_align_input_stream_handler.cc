@@ -62,7 +62,7 @@ void TimestampAlignInputStreamHandler::PrepareForRun(
     std::function<void(CalculatorContext*)> schedule_callback,
     std::function<void(absl::Status)> error_callback) {
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     offsets_initialized_ = (input_stream_managers_.NumEntries() == 1);
   }
 
@@ -78,7 +78,7 @@ NodeReadiness TimestampAlignInputStreamHandler::GetNodeReadiness(
   Timestamp min_bound = Timestamp::Done();
 
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     if (!offsets_initialized_) {
       bool timestamp_base_empty;
       *min_stream_timestamp =
@@ -141,7 +141,7 @@ void TimestampAlignInputStreamHandler::FillInputSet(
   ABSL_CHECK(input_timestamp.IsAllowedInStream());
   ABSL_CHECK(input_set);
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     if (!offsets_initialized_) {
       for (CollectionItemId id = input_stream_managers_.BeginId();
            id < input_stream_managers_.EndId(); ++id) {

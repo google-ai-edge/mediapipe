@@ -35,7 +35,7 @@ extern "C" {
 
 // The hand landmarker result from PoseLandmarker, where each vector
 // element represents a single hand detected in the image.
-struct PoseLandmarkerResult {
+struct MpPoseLandmarkerResult {
   // Segmentation masks for pose.
   MpImagePtr* segmentation_masks;
 
@@ -43,13 +43,13 @@ struct PoseLandmarkerResult {
   uint32_t segmentation_masks_count;
 
   // Detected hand landmarks in normalized image coordinates.
-  struct NormalizedLandmarks* pose_landmarks;
+  struct MpNormalizedLandmarks* pose_landmarks;
 
   // The number of elements in the pose_landmarks array.
   uint32_t pose_landmarks_count;
 
   // Detected hand landmarks in world coordinates.
-  struct Landmarks* pose_world_landmarks;
+  struct MpLandmarks* pose_world_landmarks;
 
   // The number of elements in the pose_world_landmarks array.
   uint32_t pose_world_landmarks_count;

@@ -29,7 +29,7 @@ import {ErrorListener} from '../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource URL builder
 
 import {CachedGraphRunner, createTaskRunner} from './task_runner';
-import {TaskRunnerOptions} from './task_runner_options';
+import type {TaskRunnerOptions} from './task_runner_options';
 import {WasmFileset} from './wasm_fileset';
 
 type Writeable<T> = {
@@ -80,8 +80,8 @@ class TaskRunnerFake extends TaskRunner {
     this.errors.push(message);
   }
 
-  override finishProcessing(): void {
-    super.finishProcessing();
+  override finishProcessing(timestamp: number): void {
+    super.finishProcessing(timestamp);
   }
 
   override refreshGraph(): void {}
@@ -141,6 +141,7 @@ describe('TaskRunner', () => {
         usage:
           InferenceCalculatorOptions.Delegate.Gpu.InferenceUsage
             .SUSTAINED_SPEED,
+        webnn: undefined,
       },
       tflite: undefined,
       nnapi: undefined,
@@ -179,7 +180,7 @@ describe('TaskRunner', () => {
         status: fetchStatus,
       } as unknown as Response;
     });
-    global.fetch = fetchSpy;
+    globalThis.fetch = fetchSpy;
 
     // Monkeypatch an exported static method for testing!
     oldCreate = graphRunner.createMediaPipeLib;
@@ -261,7 +262,7 @@ describe('TaskRunner', () => {
     taskRunner.enqueueError('Test error');
 
     expect(() => {
-      taskRunner.finishProcessing();
+      taskRunner.finishProcessing(0);
     }).toThrowError('Test error');
   });
 

@@ -220,7 +220,7 @@ absl::Status TaskRunner::Start() {
         MediaPipeTasksStatus::kRunnerFailsToStartError);
   }
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     last_seen_ = Timestamp::Unset();
   }
   MP_RETURN_IF_ERROR(
@@ -261,7 +261,7 @@ absl::StatusOr<PacketMap> TaskRunner::Process(PacketMap inputs) {
   // invocation can be processed in the graph concurrently.
   // TODO: Switches back to the original high performance implementation
   // when the MediaPipe CalculatorGraph can report errors in output streams.
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   // Assigns an internal synthetic timestamp when the input packets has no
   // assigned timestamp (packets are with the default Timestamp::Unset()).
   // Using Timestamp increment one second is to avoid interfering with the other
@@ -326,7 +326,7 @@ absl::Status TaskRunner::Send(PacketMap inputs) {
         "timestamp.",
         MediaPipeTasksStatus::kRunnerInvalidTimestampError);
   }
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   if (input_timestamp <= last_seen_) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,

@@ -6,7 +6,6 @@
 #include <string>
 #include <utility>
 
-#include "absl/base/no_destructor.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/time/time.h"
@@ -22,14 +21,6 @@
 namespace mediapipe {
 
 namespace {
-
-static absl::NoDestructor<wgpu::Instance> kWebGpuInstance([] {
-  wgpu::InstanceDescriptor instance_desc = {};
-  static const auto kTimedWaitAny = wgpu::InstanceFeatureName::TimedWaitAny;
-  instance_desc.requiredFeatureCount = 1;
-  instance_desc.requiredFeatures = &kTimedWaitAny;
-  return wgpu::CreateInstance(&instance_desc);
-}());
 
 #ifdef __EMSCRIPTEN__
 
@@ -64,7 +55,9 @@ void PadElementDepth(uint8_t* src_buffer, uint8_t* dst_buffer, int num_elements,
 
 template <typename T>
 WebGpuAsyncFuture<T>::WebGpuAsyncFuture(WebGpuAsyncFuture<T>&& other)
-    : future_(other.future_), result_(std::move(other.result_)) {
+    : instance_(std::move(other.instance_)),
+      future_(other.future_),
+      result_(std::move(other.result_)) {
   other.future_ = std::nullopt;
 }
 
@@ -77,6 +70,7 @@ template <typename T>
 WebGpuAsyncFuture<T>& WebGpuAsyncFuture<T>::operator=(
     WebGpuAsyncFuture<T>&& other) {
   Reset();  // Free the current future if any.
+  instance_ = std::move(other.instance_);
   future_ = other.future_;
   other.future_ = std::nullopt;
   result_ = std::move(other.result_);
@@ -94,7 +88,7 @@ absl::StatusOr<T*> WebGpuAsyncFuture<T>::Get(absl::Duration timeout) {
       return absl::FailedPreconditionError("No value and no pending future.");
     }
 
-    wgpu::WaitStatus wait_status = kWebGpuInstance->WaitAny(
+    wgpu::WaitStatus wait_status = instance_.WaitAny(
         future_.value(), timeout == absl::InfiniteDuration()
                              ? UINT64_MAX
                              : absl::ToInt64Nanoseconds(timeout));
@@ -143,7 +137,7 @@ wgpu::ShaderModule CreateWgslShader(wgpu::Device device, const char* const code,
 }
 
 WebGpuAsyncFuture<wgpu::ComputePipeline> WebGpuCreateComputePipelineAsync(
-    const wgpu::Device& device,
+    const wgpu::Instance& instance, const wgpu::Device& device,
     wgpu::ComputePipelineDescriptor const* descriptor) {
   auto holder =
       std::make_unique<std::optional<absl::StatusOr<wgpu::ComputePipeline>>>();
@@ -152,7 +146,7 @@ WebGpuAsyncFuture<wgpu::ComputePipeline> WebGpuCreateComputePipelineAsync(
 #ifdef __EMSCRIPTEN__
   if (!IsJspiAvailable()) {
     *holder_ptr = device.CreateComputePipeline(descriptor);
-    return WebGpuAsyncFuture<wgpu::ComputePipeline>(std::nullopt,
+    return WebGpuAsyncFuture<wgpu::ComputePipeline>(instance, std::nullopt,
                                                     std::move(holder));
   }
 #endif  // __EMSCRIPTEN__
@@ -167,11 +161,12 @@ WebGpuAsyncFuture<wgpu::ComputePipeline> WebGpuCreateComputePipelineAsync(
         }
         *holder_ptr = pipeline;
       });
-  return WebGpuAsyncFuture<wgpu::ComputePipeline>(future, std::move(holder));
+  return WebGpuAsyncFuture<wgpu::ComputePipeline>(instance, future,
+                                                  std::move(holder));
 }
 
 WebGpuAsyncFuture<wgpu::RenderPipeline> WebGpuCreateRenderPipelineAsync(
-    const wgpu::Device& device,
+    const wgpu::Instance& instance, const wgpu::Device& device,
     wgpu::RenderPipelineDescriptor const* descriptor) {
   auto holder =
       std::make_unique<std::optional<absl::StatusOr<wgpu::RenderPipeline>>>();
@@ -180,7 +175,7 @@ WebGpuAsyncFuture<wgpu::RenderPipeline> WebGpuCreateRenderPipelineAsync(
 #ifdef __EMSCRIPTEN__
   if (!IsJspiAvailable()) {
     *holder_ptr = device.CreateRenderPipeline(descriptor);
-    return WebGpuAsyncFuture<wgpu::RenderPipeline>(std::nullopt,
+    return WebGpuAsyncFuture<wgpu::RenderPipeline>(instance, std::nullopt,
                                                    std::move(holder));
   }
 #endif  // __EMSCRIPTEN__
@@ -195,7 +190,8 @@ WebGpuAsyncFuture<wgpu::RenderPipeline> WebGpuCreateRenderPipelineAsync(
         }
         *holder_ptr = pipeline;
       });
-  return WebGpuAsyncFuture<wgpu::RenderPipeline>(future, std::move(holder));
+  return WebGpuAsyncFuture<wgpu::RenderPipeline>(instance, future,
+                                                 std::move(holder));
 }
 
 absl::StatusOr<uint32_t> WebGpuTextureFormatBytesPerPixel(

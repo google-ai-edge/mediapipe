@@ -26,7 +26,7 @@ import {HolisticLandmarker as HolisticLandmarkerImpl} from '../../../tasks/web/v
 import {ImageClassifier as ImageClassifierImpl} from '../../../tasks/web/vision/image_classifier/image_classifier';
 import {ImageEmbedder as ImageEmbedderImpl} from '../../../tasks/web/vision/image_embedder/image_embedder';
 import {ImageSegmenter as ImageSegementerImpl} from '../../../tasks/web/vision/image_segmenter/image_segmenter';
-import {InteractiveSegmenter as InteractiveSegmenterImpl} from '../../../tasks/web/vision/interactive_segmenter/interactive_segmenter';
+import {InteractiveSegmenterLegacy as InteractiveSegmenterLegacyImpl} from '../../../tasks/web/vision/interactive_segmenter_legacy/interactive_segmenter_legacy';
 import {ObjectDetector as ObjectDetectorImpl} from '../../../tasks/web/vision/object_detector/object_detector';
 import {PoseLandmarker as PoseLandmarkerImpl} from '../../../tasks/web/vision/pose_landmarker/pose_landmarker';
 
@@ -46,6 +46,6 @@ export const HolisticLandmarker = HolisticLandmarkerImpl;
 export const ImageClassifier = ImageClassifierImpl;
 export const ImageEmbedder = ImageEmbedderImpl;
 export const ImageSegmenter = ImageSegementerImpl;
-export const InteractiveSegmenter = InteractiveSegmenterImpl;
+export const InteractiveSegmenterLegacy = InteractiveSegmenterLegacyImpl;
 export const ObjectDetector = ObjectDetectorImpl;
 export const PoseLandmarker = PoseLandmarkerImpl;

@@ -48,7 +48,7 @@ TEST(ImageSegmenterResultConverterTest, ConvertsCategoryMaskAndFreesMemory) {
   cpp_result.quality_scores = {0.9f, 0.8f, 0.95f};  // Example quality scores
 
   // Convert the C++ result to C struct
-  ImageSegmenterResult c_result;
+  MpImageSegmenterResult c_result;
   CppConvertToImageSegmenterResult(cpp_result, &c_result);
 
   // Verify the conversion

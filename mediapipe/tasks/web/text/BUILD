@@ -1,12 +1,11 @@
 # This contains the MediaPipe Text Tasks.
 
-load("@build_bazel_rules_nodejs//:index.bzl", "pkg_npm")
-load("@npm//@bazel/rollup:index.bzl", "rollup_bundle")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_library")
+load("//mediapipe/framework/port:build_config.bzl", "ts_library")
 load(
     "//mediapipe/framework/tool:mediapipe_files.bzl",
     "mediapipe_files",
 )
+load("//mediapipe/tasks/web:build_defs.bzl", "pkg_npm", "rollup_bundle")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -26,14 +25,14 @@ TEXT_LIBS = [
     "//mediapipe/tasks/web/text/text_embedder",
 ]
 
-mediapipe_ts_library(
+ts_library(
     name = "text_lib",
     srcs = ["index.ts"],
     visibility = ["//visibility:public"],
     deps = TEXT_LIBS,
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "text_types",
     srcs = ["types.ts"],
     visibility = ["//visibility:public"],
@@ -49,10 +48,10 @@ rollup_bundle(
     sourcemap = "true",
     deps = [
         ":text_lib",
-        "@npm//@rollup/plugin-commonjs",
-        "@npm//@rollup/plugin-node-resolve",
-        "@npm//@rollup/plugin-terser",
-        "@npm//google-protobuf",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
     ],
 )
 
@@ -65,10 +64,10 @@ rollup_bundle(
     sourcemap = "true",
     deps = [
         ":text_lib",
-        "@npm//@rollup/plugin-commonjs",
-        "@npm//@rollup/plugin-node-resolve",
-        "@npm//@rollup/plugin-terser",
-        "@npm//google-protobuf",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
     ],
 )
 
@@ -95,23 +94,15 @@ genrule(
     ),
 )
 
-genrule(
-    name = "package_json",
-    srcs = ["//mediapipe/tasks/web:package.json"],
-    outs = ["package.json"],
-    cmd = "cp $< $@",
-)
-
 pkg_npm(
     name = "text_pkg",
-    package_name = "@mediapipe/tasks-__NAME__",
     srcs = ["README.md"],
+    package_json = "//mediapipe/tasks/web:package.json",
     substitutions = {
         "__NAME__": "text",
         "__DESCRIPTION__": "MediaPipe Text Tasks",
         "__TYPES__": "text.d.ts",
     },
-    tgz = "text.tgz",
     deps = [
         "wasm/text_wasm_internal.js",
         "wasm/text_wasm_internal.wasm",
@@ -119,7 +110,6 @@ pkg_npm(
         "wasm/text_wasm_module_internal.wasm",
         "wasm/text_wasm_nosimd_internal.js",
         "wasm/text_wasm_nosimd_internal.wasm",
-        ":package_json",
         ":text_sources",
     ],
 )

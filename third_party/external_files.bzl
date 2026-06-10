@@ -294,8 +294,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_efficientdet_lite0_fp16_no_nms_tflite",
-        sha256 = "237a58389081333e5cf4154e42b593ce7dd357445536fcaf4ca5bc51c2c50f1c",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_fp16_no_nms.tflite?generation=1765328489177346"],
+        sha256 = "bcda125c96d3767bca894c8cbe7bc458379c9974c9fd8bdc6204e7124a74082a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_fp16_no_nms.tflite?generation=1777652206010837"],
     )
 
     http_file(
@@ -482,6 +482,12 @@ def external_files():
         name = "com_google_mediapipe_fist_png",
         sha256 = "4397b3d3f590c88a8de7d21c08d73a0df4a97fd93f92cbd086eef37fd246daaa",
         urls = ["https://storage.googleapis.com/mediapipe-assets/fist.png?generation=1672952068696274"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_gecko_task",
+        sha256 = "165aded023aa067d8c29dae73eece2bbdec49bcb48e83c69083b83ff3928bc9c",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/gecko.task?generation=1777652210693476"],
     )
 
     http_file(
@@ -1272,8 +1278,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_README_md",
-        sha256 = "a96d08c9c70cd9717207ed72c926e02e5eada751f00bdc5d3a7e82e3492b72cb",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/README.md?generation=1668124179156767"],
+        sha256 = "3ac6f0fb9954d5a7a78aff441b471cbacb4c35a73dbdbb450e12bbec4f29c581",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/README.md?generation=1777652216088994"],
     )
 
     http_file(

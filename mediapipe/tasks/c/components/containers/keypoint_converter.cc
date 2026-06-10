@@ -26,7 +26,7 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToNormalizedKeypoint(
     const mediapipe::tasks::components::containers::NormalizedKeypoint& in,
-    NormalizedKeypoint* out) {
+    MpNormalizedKeypoint* out) {
   out->x = in.x;
   out->y = in.y;
 
@@ -35,7 +35,7 @@ void CppConvertToNormalizedKeypoint(
   out->score = out->has_score ? in.score.value() : 0;
 }
 
-void CppCloseNormalizedKeypoint(NormalizedKeypoint* keypoint) {
+void CppCloseNormalizedKeypoint(MpNormalizedKeypoint* keypoint) {
   if (keypoint && keypoint->label) {
     free(keypoint->label);
     keypoint->label = nullptr;

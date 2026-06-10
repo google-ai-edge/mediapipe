@@ -51,7 +51,7 @@ class Landmark:
 
   @classmethod
   @doc_controls.do_not_generate_docs
-  def from_ctypes(cls, c_struct: landmark_c_module.LandmarkC) -> 'Landmark':
+  def from_ctypes(cls, c_struct: landmark_c_module.MpLandmarkC) -> 'Landmark':
     """Creates a `Landmark` object from the given ctypes struct."""
     return Landmark(
         x=c_struct.x,
@@ -95,7 +95,7 @@ class NormalizedLandmark:
   @classmethod
   @doc_controls.do_not_generate_docs
   def from_ctypes(
-      cls, c_struct: landmark_c_module.NormalizedLandmarkC
+      cls, c_struct: landmark_c_module.MpNormalizedLandmarkC
   ) -> 'NormalizedLandmark':
     """Creates a `NormalizedLandmark` object from the given ctypes struct."""
     return NormalizedLandmark(

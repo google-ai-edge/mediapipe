@@ -27,7 +27,6 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/kernels/register.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -121,10 +120,19 @@ struct BaseOptions {
 
   // The path to the CA bundle file.
   std::string ca_bundle_path;
+
+  // The app id of the host environment, e.g., Android package name.
+  std::string app_id;
+
+  // The app version of the host environment, e.g., Android version code.
+  std::string app_version;
 };
 
-// Converts a BaseOptions to a BaseOptionsProto.
+// Converts a BaseOptions to a proto::BaseOptions.
 proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options);
+
+// Converts a proto::BaseOptions to a BaseOptions.
+BaseOptions ConvertProtoToBaseOptions(proto::BaseOptions&& base_options_proto);
 
 }  // namespace core
 }  // namespace tasks

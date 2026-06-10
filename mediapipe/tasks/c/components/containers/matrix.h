@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 // Data are stored in column-major order by default.
-struct Matrix {
+struct MpMatrix {
   // The number of rows in the matrix.
   uint32_t rows;
 

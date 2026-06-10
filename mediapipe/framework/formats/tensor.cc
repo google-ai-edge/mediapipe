@@ -191,7 +191,8 @@ Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dReadView() const {
         texture_height_ * texture_width_ * 4 * element_size();
     auto temp_buffer = std::make_unique<uint8_t[]>(padded_size);
     uint8_t* dest_buffer = temp_buffer.get();
-    uint8_t* src_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
+    CpuBufferHandle<const void> cpu_buffer_handle = AcquireCpuBufferHandle();
+    const uint8_t* src_buffer = cpu_buffer_handle.buffer<const uint8_t>();
     const int num_elements = BhwcWidthFromShape(shape_) *
                              BhwcHeightFromShape(shape_) *
                              BhwcBatchFromShape(shape_);
@@ -552,7 +553,7 @@ absl::Status Tensor::Invalidate() {
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   {
-    absl::MutexLock lock(&view_mutex_);
+    absl::MutexLock lock(view_mutex_);
     MP_RETURN_IF_ERROR(ReleaseAhwbStuff());
 
     // Don't need to wait for the resource to be deleted because if will be
@@ -702,8 +703,7 @@ absl::Status Tensor::ReadBackGpuToCpu() const {
       "Failed to read back data from GPU to CPU. Valid formats: ", valid_));
 }
 
-Tensor::CpuReadView Tensor::GetCpuReadView() const {
-  auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
+Tensor::CpuBufferHandle<const void> Tensor::AcquireCpuBufferHandle() const {
   ABSL_LOG_IF(FATAL, valid_ == kValidNone)
       << "Tensor must be written prior to read from.";
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
@@ -711,9 +711,9 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
     void* ptr = MapAhwbToCpuRead();
     if (ptr) {
       valid_ |= kValidCpu;
-      return {ptr, std::move(lock), [ahwb = ahwb_.get()] {
-                ABSL_CHECK_OK(ahwb->Unlock()) << "Unlock failed.";
-              }};
+      return CpuBufferHandle<const void>(ptr, [ahwb = ahwb_.get()] {
+        ABSL_CHECK_OK(ahwb->Unlock()) << "Unlock failed.";
+      });
     }
   }
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
@@ -723,7 +723,13 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
     ABSL_CHECK_OK(ReadBackGpuToCpu()) << "ReadBackGpuToCpu failed.";
     valid_ |= kValidCpu;
   }
-  return {cpu_buffer_, std::move(lock)};
+  return CpuBufferHandle<const void>(cpu_buffer_, nullptr);
+}
+
+Tensor::CpuReadView Tensor::GetCpuReadView() const {
+  auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
+  view_mutex_.AssertHeld();
+  return AcquireCpuBufferHandle().ToCpuView(std::move(lock));
 }
 
 Tensor::CpuWriteView Tensor::GetCpuWriteView(

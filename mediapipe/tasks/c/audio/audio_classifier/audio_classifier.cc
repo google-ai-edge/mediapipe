@@ -74,7 +74,7 @@ void CppResultCallback(
     return;
   }
 
-  auto classification_result = std::make_unique<::ClassificationResult>();
+  auto classification_result = std::make_unique<MpClassificationResult>();
   CppConvertToClassificationResult(*result, classification_result.get());
 
   // The C++ async callback receives one classification result at a time, so we
@@ -146,7 +146,7 @@ absl::Status MpAudioClassifierClassify(MpAudioClassifierPtr classifier,
   }
 
   auto c_classifications =
-      std::make_unique<::ClassificationResult[]>(cpp_result->size());
+      std::make_unique<MpClassificationResult[]>(cpp_result->size());
   result_out->results_count = cpp_result->size();
   for (int i = 0; i < result_out->results_count; ++i) {
     CppConvertToClassificationResult(cpp_result->at(i),

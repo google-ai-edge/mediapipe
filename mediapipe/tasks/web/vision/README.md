@@ -78,7 +78,6 @@ const landmarks = handLandmarker.detect(image);
 
 For more information, refer to the [Hand Landmarker](https://developers.google.com/mediapipe/solutions/vision/hand_landmarker/web_js) documentation.
 
-
 ## Holistic Landmarker
 
 The MediaPipe Holistic Landmarker task task lets you combine components of the
@@ -158,17 +157,17 @@ segment an image by.
 const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
 );
-const interactiveSegmenter = await InteractiveSegmenter.createFromModelPath(
+const interactiveSegmenterLegacy = await InteractiveSegmenterLegacy.createFromModelPath(
     vision,
     "https://storage.googleapis.com/mediapipe-models/interactive_segmenter/magic_touch/float32/1/magic_touch.tflite"
 );
 const image = document.getElementById("image") as HTMLImageElement;
-interactiveSegmenter.segment(image, { keypoint: { x: 0.1, y: 0.2 } },
+interactiveSegmenterLegacy.segment(image, { keypoint: { x: 0.1, y: 0.2 } },
     (masks, width, height) => { ... }
 );
 ```
 
-For more information, refer to the [Interactive Segmenter](https://developers.google.com/mediapipe/solutions/vision/interactive_segmenter/web_js) documentation.
+For more information, refer to the [Interactive Segmenter](https://developers.google.com/mediapipe/solutions/vision/interactive_segmenter_legacy/web_js) documentation.
 
 ## Object Detector
 
@@ -206,3 +205,21 @@ const landmarks = poseLandmarker.detect(image);
 ```
 
 For more information, refer to the [Pose Landmarker](https://developers.google.com/mediapipe/solutions/vision/pose_landmarker/web_js) documentation.
+
+### Privacy Notice
+
+Last modified: June 5, 2026
+
+When you use MediaPipe Tasks, processing of the input data (e.g. images, video,
+text) takes place on device, and MediaPipe does not send that input data to
+Google servers. As a result, you can use our MediaPipe Tasks APIs for
+processing data that should not leave the device.
+
+MediaPipe Tasks APIs send metrics about the performance and utilization of the
+APIs in your app to Google. Google uses this metrics data to measure
+performance, usage, debug, maintain and improve the MediaPipe Tasks, as further
+described in our [Privacy Policy](https://policies.google.com/privacy).
+
+**You are responsible for obtaining informed consent from your app users about
+Google's processing of MediaPipe metrics data as required by applicable law.**
+

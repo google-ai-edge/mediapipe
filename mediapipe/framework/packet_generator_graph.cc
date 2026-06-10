@@ -208,7 +208,7 @@ void GeneratorScheduler::GenerateAndScheduleNext(
     int generator_index, std::map<std::string, Packet>* side_packets,
     std::unique_ptr<PacketSet> input_side_packet_set) {
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     if (!statuses_.empty()) {
       // Return early, don't run the generator if we already have errors.
       return;
@@ -224,7 +224,7 @@ void GeneratorScheduler::GenerateAndScheduleNext(
                &output_side_packet_set);
 
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     if (!status.ok()) {
       statuses_.push_back(std::move(status));
       return;
@@ -252,7 +252,7 @@ void GeneratorScheduler::GenerateAndScheduleNext(
 
 void GeneratorScheduler::ScheduleAllRunnableGenerators(
     std::map<std::string, Packet>* side_packets) {
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   const auto& generators = validated_graph_->Config().packet_generator();
 
   for (int index = 0; index < generators.size(); ++index) {
@@ -283,21 +283,21 @@ void GeneratorScheduler::ScheduleAllRunnableGenerators(
     // means a memory leak will result if the lambda is not run).
     PacketSet* input_side_packet_set_ptr = input_side_packet_set.release();
     ++num_tasks_;
-    mutex_.Unlock();
+    mutex_.unlock();
     executor_->Schedule(
         [this, index, side_packets, input_side_packet_set_ptr]() {
           GenerateAndScheduleNext(
               index, side_packets,
               std::unique_ptr<PacketSet>(input_side_packet_set_ptr));
           {
-            absl::MutexLock lock(&mutex_);
+            absl::MutexLock lock(mutex_);
             --num_tasks_;
             if (num_tasks_ == 0) {
               idle_condvar_.Signal();
             }
           }
         });
-    mutex_.Lock();
+    mutex_.lock();
   }
 }
 
@@ -306,7 +306,7 @@ void GeneratorScheduler::WaitUntilIdle() {
     // Run the tasks on the application thread.
     RunApplicationThreadTasks();
   } else {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     while (num_tasks_ != 0) {
       idle_condvar_.Wait(&mutex_);
     }
@@ -317,7 +317,7 @@ absl::Status GeneratorScheduler::GetNonScheduledGenerators(
     std::vector<int>* non_scheduled_generators) const {
   non_scheduled_generators->clear();
 
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   if (!statuses_.empty()) {
     return tool::CombinedStatus("PacketGeneratorGraph failed.", statuses_);
   }
@@ -330,7 +330,7 @@ absl::Status GeneratorScheduler::GetNonScheduledGenerators(
 }
 
 void GeneratorScheduler::AddApplicationThreadTask(std::function<void()> task) {
-  absl::MutexLock lock(&app_thread_mutex_);
+  absl::MutexLock lock(app_thread_mutex_);
   app_thread_tasks_.push_back(std::move(task));
 }
 
@@ -339,7 +339,7 @@ void GeneratorScheduler::RunApplicationThreadTasks() {
     std::function<void()> task_callback;
     {
       // Get the next task.
-      absl::MutexLock lock(&app_thread_mutex_);
+      absl::MutexLock lock(app_thread_mutex_);
       if (app_thread_tasks_.empty()) {
         break;
       }

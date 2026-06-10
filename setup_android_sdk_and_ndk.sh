@@ -97,4 +97,5 @@ echo "android_sdk_repository(name = \"androidsdk\", path = \"${android_sdk_path}
 echo "android_ndk_repository(name = \"androidndk\", api_level = 21, path = \"${android_ndk_path}/android-ndk-${ndk_version}\")" >> $workspace_file
 # See https://github.com/bazelbuild/rules_android_ndk/issues/31#issuecomment-1396182185
 echo "bind(name = \"android/crosstool\", actual = \"@androidndk//:toolchain\")" >> $workspace_file
+echo "register_toolchains(\"@androidsdk//:all\", \"@androidndk//:all\")" >> $workspace_file
 echo "Done"

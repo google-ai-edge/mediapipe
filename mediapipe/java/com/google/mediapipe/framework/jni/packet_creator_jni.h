@@ -97,6 +97,10 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateMatrix)(
     JNIEnv* env, jobject thiz, jlong context, jint rows, jint cols,
     jfloatArray data);
 
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateMatrixDirect)(
+    JNIEnv* env, jobject thiz, jlong context, jint rows, jint cols,
+    jobject data);
+
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateCpuImage)(
     JNIEnv* env, jobject thiz, jlong context, jobject byte_buffer, jint width,
     jint height, jint width_step, jint num_channels);

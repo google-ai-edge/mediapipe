@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Performs embedding extraction on text.
@@ -190,6 +191,20 @@ public final class TextEmbedder implements AutoCloseable {
     return (TextEmbedderResult) runner.process(inputPackets);
   }
 
+  /**
+   * Performs embedding extraction on the input text, with optional formatting support for Gecko
+   * models.
+   *
+   * @param inputText a {@link String} for processing.
+   * @param formatContext a {@link TextFormatContext} for Gecko model formatting.
+   */
+  public TextEmbedderResult embed(String inputText, TextFormatContext formatContext) {
+    Map<String, Packet> inputPackets = new HashMap<>();
+    String processedText = getGeckoEmbeddingText(inputText, formatContext);
+    inputPackets.put(TEXT_IN_STREAM_NAME, runner.getPacketCreator().createString(processedText));
+    return (TextEmbedderResult) runner.process(inputPackets);
+  }
+
   /** Closes and cleans up the {@link TextEmbedder}. */
   @Override
   public void close() {
@@ -205,6 +220,106 @@ public final class TextEmbedder implements AutoCloseable {
    */
   public static double cosineSimilarity(Embedding u, Embedding v) {
     return CosineSimilarity.compute(u, v);
+  }
+
+  /** The embedding task type, used to format input text. */
+  public enum EmbeddingType {
+    /** Embed text for retrieval query. */
+    RETRIEVAL_QUERY,
+    /** Embed text for retrieval document. */
+    RETRIEVAL_DOCUMENT,
+    /** Embed text for semantic similarity. */
+    SEMANTIC_SIMILARITY,
+    /** Embed text for classification. */
+    CLASSIFICATION,
+    /** Embed text for clustering. */
+    CLUSTERING,
+    /** Embed text for question answering. */
+    QUESTION_ANSWERING,
+    /** Embed text for fact verification. */
+    FACT_CHECKING,
+    /** Embed text for code retrieval. */
+    CODE_RETRIEVAL,
+  }
+
+  /** The role of the text in the context of the embedding task. */
+  public enum TextRole {
+    QUERY,
+    DOCUMENT,
+  }
+
+  /** Encapsulates formatting instructions for models that require it (like Gecko). */
+  @AutoValue
+  public abstract static class TextFormatContext {
+    public abstract EmbeddingType taskType();
+
+    public abstract Optional<String> title();
+
+    public abstract TextRole role();
+
+    public static Builder builder() {
+      return new AutoValue_TextEmbedder_TextFormatContext.Builder().setRole(TextRole.QUERY);
+    }
+
+    /** Builder for {@link TextFormatContext}. */
+    @AutoValue.Builder
+    public abstract static class Builder {
+      public abstract Builder setTaskType(EmbeddingType value);
+
+      public abstract Builder setTitle(String value);
+
+      public abstract Builder setRole(TextRole value);
+
+      public abstract TextFormatContext build();
+    }
+  }
+
+  private static String getTaskString(EmbeddingType taskType) {
+    switch (taskType) {
+      case RETRIEVAL_QUERY:
+        return "search result";
+      case SEMANTIC_SIMILARITY:
+        return "sentence similarity";
+      case CLASSIFICATION:
+        return "classification";
+      case CLUSTERING:
+        return "clustering";
+      case QUESTION_ANSWERING:
+        return "question answering";
+      case FACT_CHECKING:
+        return "fact checking";
+      case CODE_RETRIEVAL:
+        return "code retrieval";
+      case RETRIEVAL_DOCUMENT:
+    }
+    return "search result";
+  }
+
+  private static String getGeckoEmbeddingText(String text, TextFormatContext formatContext) {
+    EmbeddingType taskType = formatContext.taskType();
+    boolean isQuery = formatContext.role() != TextRole.DOCUMENT;
+    String title = formatContext.title().orElse("none");
+    if (title.isEmpty()) {
+      title = "none";
+    }
+    switch (taskType) {
+      case RETRIEVAL_DOCUMENT:
+        return "title: " + title + " | text: " + text;
+      case QUESTION_ANSWERING:
+      case FACT_CHECKING:
+      case CODE_RETRIEVAL:
+        if (isQuery) {
+          return "task: " + getTaskString(taskType) + " | query: " + text;
+        } else {
+          return "title: " + title + " | text: " + text;
+        }
+      case RETRIEVAL_QUERY:
+      case SEMANTIC_SIMILARITY:
+      case CLASSIFICATION:
+      case CLUSTERING:
+        return "task: " + getTaskString(taskType) + " | query: " + text;
+    }
+    return "task: " + getTaskString(taskType) + " | query: " + text;
   }
 
   /** Options for setting up a {@link TextEmbedder}. */

@@ -28,6 +28,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/thread_annotations.h"
 #include "absl/functional/any_invocable.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
@@ -49,6 +50,7 @@
 #include "mediapipe/framework/formats/tensor_ahwb_usage.h"
 #include "mediapipe/framework/formats/unique_fd.h"
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
+
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context.h"
@@ -505,9 +507,44 @@ class Tensor {
 
  private:
   friend class MtlBufferView;
+
+  // RAII object to own CPU buffer and release callback. It is intended to be
+  // used internally to access tensor CPU data when lock is already in place.
+  template <typename T>
+  class CpuBufferHandle {
+   public:
+    explicit CpuBufferHandle(T* buffer,
+                             absl::AnyInvocable<void()> release_callback)
+        : buffer_(buffer), release_callback_(std::move(release_callback)) {}
+    CpuBufferHandle(const CpuBufferHandle&) = delete;
+    CpuBufferHandle& operator=(const CpuBufferHandle&) = delete;
+    CpuBufferHandle(CpuBufferHandle&&) = delete;
+    CpuBufferHandle& operator=(CpuBufferHandle&&) = delete;
+
+    ~CpuBufferHandle() {
+      if (release_callback_) release_callback_();
+    }
+    template <typename P>
+    auto buffer() const {
+      // const and non-const return type selection.
+      return static_cast<typename std::tuple_element<
+          std::is_const<T>::value, std::tuple<P*, const P*>>::type>(buffer_);
+    }
+    CpuView<T> ToCpuView(std::unique_ptr<absl::MutexLock> lock) && {
+      return CpuView<T>(buffer_, std::move(lock), std::move(release_callback_));
+    }
+
+   private:
+    T* buffer_;
+    absl::AnyInvocable<void()> release_callback_;
+  };
+
   void Move(Tensor*);
   absl::Status Invalidate();
   absl::Status ReadBackGpuToCpu() const;
+  // Returns a CPU buffer handle of the tensor. view_mutex_ must be held during
+  // the function call and the lifetime of the returned handle.
+  CpuBufferHandle<const void> AcquireCpuBufferHandle() const;
 
   ElementType element_type_;
   Shape shape_;
@@ -541,6 +578,7 @@ class Tensor {
   mutable wgpu::Device webgpu_device_;
   mutable wgpu::Texture webgpu_texture2d_;
 #endif  // MEDIAPIPE_USE_WEBGPU
+
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   mutable std::shared_ptr<HardwareBuffer> ahwb_;
 
@@ -589,16 +627,21 @@ class Tensor {
   mutable GLuint frame_buffer_ = GL_INVALID_INDEX;
   mutable int texture_width_;
   mutable int texture_height_;
+
 #ifdef __EMSCRIPTEN__
   mutable bool texture_is_half_float_ = false;
 #endif  // __EMSCRIPTEN__
+
   void AllocateOpenGlTexture2d() const;
+
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
   mutable GLuint opengl_buffer_ = GL_INVALID_INDEX;
   void AllocateOpenGlBuffer() const;
   mutable std::shared_ptr<GlSyncPoint> gl_write_read_sync_;
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+
   bool NeedsHalfFloatRenderTarget() const;
+
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 };
 

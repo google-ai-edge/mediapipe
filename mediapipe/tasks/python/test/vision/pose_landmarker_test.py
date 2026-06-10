@@ -20,9 +20,9 @@ from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
+from google.protobuf import text_format
 import numpy as np
 
-from google.protobuf import text_format
 from mediapipe.tasks.cc.components.containers.proto import landmarks_detection_result_pb2
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
 from mediapipe.tasks.python.components.containers import landmark_detection_result as landmark_detection_result_module

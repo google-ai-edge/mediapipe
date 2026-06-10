@@ -127,7 +127,7 @@ static NSString *const kTaskName = @"holisticLandmarker";
              outputStreams:outputStreams
                taskOptions:options
         enableFlowLimiting:options.runningMode == MPPRunningModeLiveStream
-               runningMode:MPPRunningModeDisplayName(options.runningMode)
+               runningMode:MPPCoreRunningModeFromVisionRunningMode(options.runningMode)
                      error:error];
 
     if (!taskInfo) {

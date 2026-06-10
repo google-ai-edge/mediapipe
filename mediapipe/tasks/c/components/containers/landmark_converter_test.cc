@@ -28,7 +28,7 @@ TEST(LandmarkConverterTest, ConvertsCustomLandmark) {
   mediapipe::tasks::components::containers::Landmark cpp_landmark = {0.1f, 0.2f,
                                                                      0.3f};
 
-  ::Landmark c_landmark;
+  MpLandmark c_landmark;
   CppConvertToLandmark(cpp_landmark, &c_landmark);
   EXPECT_FLOAT_EQ(c_landmark.x, cpp_landmark.x);
   EXPECT_FLOAT_EQ(c_landmark.y, cpp_landmark.y);
@@ -39,11 +39,11 @@ TEST(LandmarkConverterTest, ConvertsCustomLandmark) {
 TEST(LandmarksConverterTest, ConvertsCustomLandmarks) {
   std::vector<mediapipe::tasks::components::containers::Landmark>
       cpp_landmarks = {
-          {0.1f, 0.2f, 0.3f},  // First Landmark
-          {0.4f, 0.5f, 0.6f}   // Second Landmark
+          {0.1f, 0.2f, 0.3f},  // First MpLandmark
+          {0.4f, 0.5f, 0.6f}   // Second MpLandmark
       };
 
-  ::Landmarks c_landmarks;
+  MpLandmarks c_landmarks;
   CppConvertToLandmarks(cpp_landmarks, &c_landmarks);
 
   EXPECT_EQ(c_landmarks.landmarks_count, cpp_landmarks.size());
@@ -60,7 +60,7 @@ TEST(NormalizedLandmarkConverterTest, ConvertsCustomNormalizedLandmark) {
   mediapipe::tasks::components::containers::NormalizedLandmark
       cpp_normalized_landmark = {0.7f, 0.8f, 0.9f};
 
-  ::NormalizedLandmark c_normalized_landmark;
+  MpNormalizedLandmark c_normalized_landmark;
   CppConvertToNormalizedLandmark(cpp_normalized_landmark,
                                  &c_normalized_landmark);
 
@@ -74,11 +74,11 @@ TEST(NormalizedLandmarkConverterTest, ConvertsCustomNormalizedLandmark) {
 TEST(NormalizedLandmarksConverterTest, ConvertsCustomNormalizedLandmarks) {
   std::vector<mediapipe::tasks::components::containers::NormalizedLandmark>
       cpp_normalized_landmarks = {
-          {0.1f, 0.2f, 0.3f},  // First NormalizedLandmark
-          {0.4f, 0.5f, 0.6f}   // Second NormalizedLandmark
+          {0.1f, 0.2f, 0.3f},  // First MpNormalizedLandmark
+          {0.4f, 0.5f, 0.6f}   // Second MpNormalizedLandmark
       };
 
-  ::NormalizedLandmarks c_normalized_landmarks;
+  MpNormalizedLandmarks c_normalized_landmarks;
   CppConvertToNormalizedLandmarks(cpp_normalized_landmarks,
                                   &c_normalized_landmarks);
 
@@ -100,7 +100,7 @@ TEST(LandmarkConverterTest, FreesMemory) {
   mediapipe::tasks::components::containers::Landmark cpp_landmark = {
       0.1f, 0.2f, 0.3f, 0.0f, 0.0f, "foo"};
 
-  ::Landmark c_landmark;
+  MpLandmark c_landmark;
   CppConvertToLandmark(cpp_landmark, &c_landmark);
   EXPECT_NE(c_landmark.name, nullptr);
 
@@ -112,7 +112,7 @@ TEST(NormalizedLandmarkConverterTest, FreesMemory) {
   mediapipe::tasks::components::containers::NormalizedLandmark cpp_landmark = {
       0.1f, 0.2f, 0.3f, 0.0f, 0.0f, "foo"};
 
-  ::NormalizedLandmark c_landmark;
+  MpNormalizedLandmark c_landmark;
   CppConvertToNormalizedLandmark(cpp_landmark, &c_landmark);
   EXPECT_NE(c_landmark.name, nullptr);
 
@@ -124,7 +124,7 @@ TEST(LandmarksConverterTest, FreesMemory) {
   std::vector<mediapipe::tasks::components::containers::Landmark>
       cpp_landmarks = {{0.1f, 0.2f, 0.3f}, {0.4f, 0.5f, 0.6f}};
 
-  ::Landmarks c_landmarks;
+  MpLandmarks c_landmarks;
   CppConvertToLandmarks(cpp_landmarks, &c_landmarks);
   EXPECT_NE(c_landmarks.landmarks, nullptr);
 
@@ -136,7 +136,7 @@ TEST(NormalizedLandmarksConverterTest, FreesMemory) {
   std::vector<mediapipe::tasks::components::containers::NormalizedLandmark>
       cpp_normalized_landmarks = {{0.1f, 0.2f, 0.3f}, {0.4f, 0.5f, 0.6f}};
 
-  ::NormalizedLandmarks c_normalized_landmarks;
+  MpNormalizedLandmarks c_normalized_landmarks;
   CppConvertToNormalizedLandmarks(cpp_normalized_landmarks,
                                   &c_normalized_landmarks);
   EXPECT_NE(c_normalized_landmarks.landmarks, nullptr);

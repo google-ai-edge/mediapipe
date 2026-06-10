@@ -23,6 +23,7 @@ limitations under the License.
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/tasks/cc/components/containers/category.h"
 #include "mediapipe/tasks/cc/components/containers/classification_result.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_api_factory.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/text/text_classifier/proto/text_classifier_graph_options.pb.h"
@@ -111,7 +112,7 @@ absl::StatusOr<std::unique_ptr<LanguageDetector>> LanguageDetector::Create(
       core::TaskRunnerOptions{
           .config = CreateGraphConfig(std::move(options_proto)),
           .task_name = kTaskName,
-          .task_running_mode = core::TaskApiFactory::kUnknownRunningMode,
+          .task_running_mode = core::RunningMode::kUnspecified,
           .op_resolver = std::move(options->base_options.op_resolver),
           .host_environment = options->base_options.host_environment,
           .host_system = options->base_options.host_system,

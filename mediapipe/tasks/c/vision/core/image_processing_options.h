@@ -26,18 +26,18 @@ extern "C" {
 // If both region_of_interest and rotation are specified, the crop around the
 // region-of-interest is extracted first, then the specified rotation is applied
 // to the crop.
-typedef struct ImageProcessingOptions {
+typedef struct MpImageProcessingOptions {
   // The optional region-of-interest to crop from the image.
   // If has_region_of_interest is 0, the full image is used.
   // Coordinates must be in [0,1] with 'left' < 'right' and 'top' < 'bottom'.
   int has_region_of_interest;
-  MPRectF region_of_interest;
+  struct MpRectF region_of_interest;
 
   // The rotation to apply to the image (or cropped region-of-interest),
   // in degrees clockwise. The rotation must be a multiple (positive or
   // negative) of 90°.
   int rotation_degrees;
-} ImageProcessingOptions;
+} MpImageProcessingOptions;
 
 #ifdef __cplusplus
 }  // extern C

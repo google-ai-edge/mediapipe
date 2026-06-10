@@ -508,6 +508,8 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
         task_options, model_resources,
         &tensor_to_images
              .GetOptions<TensorsToSegmentationCalculatorOptions>()));
+    tensor_to_images.GetOptions<TensorsToSegmentationCalculatorOptions>()
+        .set_use_gpu_postprocessing(use_gpu);
     const auto& tensor_to_images_options =
         tensor_to_images.GetOptions<TensorsToSegmentationCalculatorOptions>();
 

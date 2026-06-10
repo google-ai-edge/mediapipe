@@ -19,6 +19,7 @@ from typing import List
 from google.protobuf import message
 from google.protobuf import message_factory
 from google.protobuf import symbol_database
+
 from mediapipe.python._framework_bindings import _packet_getter
 from mediapipe.python._framework_bindings import packet as mp_packet
 

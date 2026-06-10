@@ -25,11 +25,11 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToLanguageDetectorResult(
     const mediapipe::tasks::text::language_detector::LanguageDetectorResult& in,
-    LanguageDetectorResult* out) {
+    MpLanguageDetectorResult* out) {
   out->predictions_count = in.size();
   out->predictions =
       out->predictions_count
-          ? new LanguageDetectorPrediction[out->predictions_count]
+          ? new MpLanguageDetectorPrediction[out->predictions_count]
           : nullptr;
 
   for (uint32_t i = 0; i < out->predictions_count; ++i) {
@@ -42,7 +42,7 @@ void CppConvertToLanguageDetectorResult(
   }
 }
 
-void CppCloseLanguageDetectorResult(LanguageDetectorResult* in) {
+void CppCloseLanguageDetectorResult(MpLanguageDetectorResult* in) {
   for (uint32_t i = 0; i < in->predictions_count; ++i) {
     auto prediction_in = in->predictions[i];
 

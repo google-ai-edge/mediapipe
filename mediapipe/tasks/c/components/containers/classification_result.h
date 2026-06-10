@@ -24,10 +24,11 @@ extern "C" {
 #endif
 
 // Defines classification results for a given classifier head.
-struct Classifications {
+struct MpClassifications {
   // The array of predicted categories, usually sorted by descending scores,
   // e.g. from high to low probability.
-  struct Category* categories;
+  struct MpCategory* categories;
+
   // The number of elements in the categories array.
   uint32_t categories_count;
 
@@ -43,9 +44,9 @@ struct Classifications {
 };
 
 // Defines classification results of a model.
-struct ClassificationResult {
+struct MpClassificationResult {
   // The classification results for each head of the model.
-  struct Classifications* classifications;
+  struct MpClassifications* classifications;
   // The number of classifications in the classifications array.
   uint32_t classifications_count;
 

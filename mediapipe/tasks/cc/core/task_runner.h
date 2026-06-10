@@ -38,6 +38,7 @@ limitations under the License.
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/tasks/cc/core/host_environment.h"
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
 namespace mediapipe {
@@ -61,7 +62,7 @@ using PacketsCallback = std::function<void(absl::StatusOr<PacketMap>)>;
 struct TaskRunnerOptions {
   CalculatorGraphConfig config;
   std::string task_name;
-  std::string task_running_mode;
+  RunningMode task_running_mode;
   std::unique_ptr<tflite::OpResolver> op_resolver = nullptr;
   PacketsCallback packets_callback = nullptr;
   std::shared_ptr<Executor> default_executor = nullptr;

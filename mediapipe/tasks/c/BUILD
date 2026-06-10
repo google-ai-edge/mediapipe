@@ -43,8 +43,6 @@ cc_binary(
         ":mediapipe_tasks_c_version_script.lds",
         "//mediapipe/tasks/c/audio/audio_classifier:audio_classifier_c_lib",
         "//mediapipe/tasks/c/core:common",
-        "//mediapipe/tasks/c/genai/bundler:llm_bundler_utils_c_lib",
-        "//mediapipe/tasks/c/genai/converter:llm_converter_c_lib",
         "//mediapipe/tasks/c/metadata:flatbuffer_api_c_lib",
         "//mediapipe/tasks/c/text/language_detector:language_detector_c_lib",
         "//mediapipe/tasks/c/text/text_classifier:text_classifier_c_lib",
@@ -58,7 +56,7 @@ cc_binary(
         "//mediapipe/tasks/c/vision/image_classifier:image_classifier_c_lib",
         "//mediapipe/tasks/c/vision/image_embedder:image_embedder_c_lib",
         "//mediapipe/tasks/c/vision/image_segmenter:image_segmenter_c_lib",
-        "//mediapipe/tasks/c/vision/interactive_segmenter:interactive_segmenter_c_lib",
+        "//mediapipe/tasks/c/vision/interactive_segmenter_legacy:interactive_segmenter_legacy_c_lib",
         "//mediapipe/tasks/c/vision/object_detector:object_detector_c_lib",
         "//mediapipe/tasks/c/vision/pose_landmarker:pose_landmarker_c_lib",
     ] + select({

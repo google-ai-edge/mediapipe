@@ -16,7 +16,7 @@
 
 #import "mediapipe/tasks/ios/components/containers/sources/MPPRegionOfInterest.h"
 
-#include "mediapipe/tasks/cc/vision/interactive_segmenter/proto/region_of_interest.pb.h"
+#include "mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto/region_of_interest.pb.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -30,7 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * @return A `RegionOfInterest` proto created from the region of interest.
  */
-- (std::optional<mediapipe::tasks::vision::interactive_segmenter::proto::RegionOfInterest>)
+- (std::optional<mediapipe::tasks::vision::interactive_segmenter_legacy::proto::RegionOfInterest>)
     getRegionOfInteresProtoWithError:(NSError **)error;
 
 @end

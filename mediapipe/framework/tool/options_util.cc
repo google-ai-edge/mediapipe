@@ -91,8 +91,12 @@ absl::Status CopyLiteralOptions(CalculatorGraphConfig::Node parent_node,
       MP_ASSIGN_OR_RETURN(graph_options,
                           MergeMessages(graph_options, parent_options));
       FieldData node_options;
-      MP_ASSIGN_OR_RETURN(node_options,
-                          GetNodeOptions(node_data, node_extension_type));
+      MP_ASSIGN_OR_RETURN(
+          node_options, GetNodeOptions(node_data, node_extension_type),
+          _ << " for node (name='" << node.name() << "', calculator='"
+            << node.calculator()
+            << "'); verify that the node has options or node_options set, and "
+               "that the corresponding options_lib is linked in.");
       if (!node_options.has_message_value() ||
           !graph_options.has_message_value()) {
         continue;

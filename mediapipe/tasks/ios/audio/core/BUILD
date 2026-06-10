@@ -118,6 +118,10 @@ objc_library(
 objc_library(
     name = "MPPAudioRunningMode",
     hdrs = ["sources/MPPAudioRunningMode.h"],
+    deps = [
+        "//mediapipe/tasks/ios/core:MPPCoreRunningMode",
+        "//third_party/apple_frameworks:Foundation",
+    ],
 )
 
 objc_library(

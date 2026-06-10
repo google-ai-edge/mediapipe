@@ -52,7 +52,7 @@ import {SamplerParameters} from '../../../../tasks/web/genai/llm_inference/proto
 import {TransformerParameters} from '../../../../tasks/web/genai/llm_inference/proto/transformer_params_pb';
 // Placeholder for internal dependency on trusted resource url
 
-import {LlmInferenceOptions} from './llm_inference_options';
+import type {LlmInferenceOptions} from './llm_inference_options';
 import {
   getModelFormatAndClose,
   ModelFormat,
@@ -67,7 +67,11 @@ export type {
   ProgressListener,
   Prompt,
 } from '../../../../web/graph_runner/graph_runner_llm_inference_lib';
-export * from './llm_inference_options';
+export type {
+  LlmBaseOptions,
+  LlmInferenceOptions,
+  WebGpuOptions,
+} from './llm_inference_options';
 
 declare interface CancelModule {
   LLM_CANCEL_FLAG: number | undefined;
@@ -849,7 +853,7 @@ export class LlmInference extends TaskRunner {
     for (let i = 0; i < this.options.getNumResponses(); i++) {
       this.generationResults[i] = [];
     }
-    const timeStamp = this.getSynctheticTimestamp();
+    const timeStamp = this.getSyntheticTimestamp();
 
     // This code is only run when the prompt is text-only, so condense into a
     // single string.
@@ -911,7 +915,7 @@ export class LlmInference extends TaskRunner {
     this.graphRunner.addStringToStream(
       text,
       TOKEN_COST_INPUT_STREAM,
-      this.getSynctheticTimestamp(),
+      this.getSyntheticTimestamp(),
     );
     this.finishProcessing();
     this.isProcessing = false;
@@ -985,7 +989,7 @@ export class LlmInference extends TaskRunner {
       );
     }
     const loraModel = new LoraModel(this);
-    const syntheticTimestamp = this.getSynctheticTimestamp();
+    const syntheticTimestamp = this.getSyntheticTimestamp();
     (
       this.graphRunner as unknown as LlmGraphRunner
     ).addWasmFileReferenceToStream(

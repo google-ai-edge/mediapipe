@@ -39,9 +39,9 @@ class Rect:
   right: int
 
   @doc_controls.do_not_generate_docs
-  def to_ctypes(self) -> rect_c_module.RectC:
-    """Generates a C API RectC object."""
-    return rect_c_module.RectC(
+  def to_ctypes(self) -> rect_c_module.MpRectC:
+    """Generates a C API MpRectC object."""
+    return rect_c_module.MpRectC(
         left=self.left, top=self.top, bottom=self.bottom, right=self.right
     )
 
@@ -67,9 +67,9 @@ class RectF:
   right: float
 
   @doc_controls.do_not_generate_docs
-  def to_ctypes(self) -> rect_c_module.RectFC:
-    """Generates a C API RectFC object."""
-    return rect_c_module.RectFC(
+  def to_ctypes(self) -> rect_c_module.MpRectFC:
+    """Generates a C API MpRectFC object."""
+    return rect_c_module.MpRectFC(
         left=self.left, top=self.top, bottom=self.bottom, right=self.right
     )
 

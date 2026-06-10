@@ -22,8 +22,8 @@ limitations under the License.
 namespace mediapipe::tasks::c::components::processors {
 
 TEST(EmbedderOptionsConverterTest, ConvertsEmbedderOptionsCustomValues) {
-  EmbedderOptions c_embedder_options = {/* l2_normalize= */ true,
-                                        /* quantize= */ false};
+  MpEmbedderOptions c_embedder_options = {/* l2_normalize= */ true,
+                                          /* quantize= */ false};
 
   mediapipe::tasks::components::processors::EmbedderOptions
       cpp_embedder_options = {};

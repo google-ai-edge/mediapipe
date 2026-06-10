@@ -76,4 +76,9 @@ message TensorsToSegmentationCalculatorOptions {
   }
 
   optional ConfidenceMaskOptions confidence_mask_options = 3;
+
+  // Whether to run postprocessing on GPU if the input tensor is on GPU.
+  // Set to false to force CPU postprocessing even if the input tensor is on
+  // GPU.
+  optional bool use_gpu_postprocessing = 4 [default = true];
 }

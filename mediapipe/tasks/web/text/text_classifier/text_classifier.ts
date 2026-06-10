@@ -29,11 +29,15 @@ import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
-import {TextClassifierOptions} from './text_classifier_options';
-import {TextClassifierResult} from './text_classifier_result';
+import type {TextClassifierOptions} from './text_classifier_options';
+import type {TextClassifierResult} from './text_classifier_result';
 
-export * from './text_classifier_options';
-export * from './text_classifier_result';
+export type {TextClassifierOptions} from './text_classifier_options';
+export type {
+  Category,
+  Classifications,
+  TextClassifierResult,
+} from './text_classifier_result';
 
 const INPUT_STREAM = 'text_in';
 const CLASSIFICATIONS_STREAM = 'classifications_out';
@@ -158,12 +162,10 @@ export class TextClassifier extends TaskRunner {
    */
   classify(text: string): TextClassifierResult {
     this.classificationResult = {classifications: []};
-    this.graphRunner.addStringToStream(
-      text,
-      INPUT_STREAM,
-      this.getSynctheticTimestamp(),
-    );
-    this.finishProcessing();
+    const timestamp = this.getSyntheticTimestamp();
+    this.startProcessing(timestamp);
+    this.graphRunner.addStringToStream(text, INPUT_STREAM, timestamp);
+    this.finishProcessing(timestamp);
     return this.classificationResult;
   }
 

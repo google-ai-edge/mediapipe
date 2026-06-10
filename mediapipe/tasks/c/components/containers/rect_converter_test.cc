@@ -24,7 +24,7 @@ namespace mediapipe::tasks::c::components::containers {
 TEST(RectConverterTest, ConvertsRectCustomValues) {
   mediapipe::tasks::components::containers::Rect cpp_rect = {0, 1, 2, 3};
 
-  MPRect c_rect;
+  MpRect c_rect;
   CppConvertToRect(cpp_rect, &c_rect);
   EXPECT_EQ(c_rect.left, 0);
   EXPECT_EQ(c_rect.top, 1);
@@ -36,7 +36,7 @@ TEST(RectFConverterTest, ConvertsRectFCustomValues) {
   mediapipe::tasks::components::containers::RectF cpp_rect = {0.1, 0.2, 0.3,
                                                               0.4};
 
-  MPRectF c_rect;
+  MpRectF c_rect;
   CppConvertToRectF(cpp_rect, &c_rect);
   EXPECT_FLOAT_EQ(c_rect.left, 0.1);
   EXPECT_FLOAT_EQ(c_rect.top, 0.2);

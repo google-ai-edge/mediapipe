@@ -85,13 +85,13 @@ class BaseOptions:
   delegate: Optional[Delegate] = None
 
   @doc_controls.do_not_generate_docs
-  def to_ctypes(self) -> base_options_c_lib.BaseOptionsC:
-    """Creates a BaseOptionsC struct from the BaseOptions object."""
+  def to_ctypes(self) -> base_options_c_lib.MpBaseOptionsC:
+    """Creates a MpBaseOptionsC struct from the BaseOptions object."""
     ca_bundle_path = certifi.where()
     host_system = _HOST_SYSTEM_BY_PLATFORM.get(
         platform.system(), _HostSystem.HOST_SYSTEM_UNKNOWN
     )
-    options = base_options_c_lib.BaseOptionsC()
+    options = base_options_c_lib.MpBaseOptionsC()
     options.model_asset_buffer = self.model_asset_buffer
     options.model_asset_buffer_count = (
         len(self.model_asset_buffer) if self.model_asset_buffer else 0
@@ -105,6 +105,8 @@ class BaseOptions:
     options.host_system = host_system
     options.host_version = host_version.encode('utf-8')
     options.ca_bundle_path = ca_bundle_path.encode('utf-8')
+    options.app_id = None
+    options.app_version = None
     return options
 
   def __eq__(self, other: Any) -> bool:
