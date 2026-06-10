@@ -272,6 +272,7 @@ http_archive(
         # Works around Bazel issue with objc_library.
         # See https://github.com/bazelbuild/bazel/issues/19912
         "@//third_party:org_tensorflow_objc_build_fixes.diff",
+        "@//third_party:org_tensorflow_verifier_int4.diff",
     ],
     sha256 = _TENSORFLOW_SHA256,
     strip_prefix = "tensorflow-%s" % _TENSORFLOW_GIT_COMMIT,

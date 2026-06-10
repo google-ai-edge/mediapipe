@@ -294,8 +294,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_efficientdet_lite0_fp16_no_nms_tflite",
-        sha256 = "bcda125c96d3767bca894c8cbe7bc458379c9974c9fd8bdc6204e7124a74082a",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_fp16_no_nms.tflite?generation=1777652206010837"],
+        sha256 = "237a58389081333e5cf4154e42b593ce7dd357445536fcaf4ca5bc51c2c50f1c",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_fp16_no_nms.tflite?generation=1781023858363184"],
     )
 
     http_file(
@@ -1598,6 +1598,12 @@ def external_files():
         name = "com_google_mediapipe_yamnet_embedding_metadata_tflite",
         sha256 = "7baa72708e3919bae5a5dc78d932847bc28008af14febd083eff62d28af9c72a",
         urls = ["https://storage.googleapis.com/mediapipe-assets/yamnet_embedding_metadata.tflite?generation=1668295071595506"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_embedding_gemma_task",
+        sha256 = "913b7a1edc7c7c3d1da3979ec1d0648ed9e0a370f181bb59ab177ca4b97707ad",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/embedding_gemma/embedding_gemma.task?generation=1781023870994902"],
     )
 
     http_file(

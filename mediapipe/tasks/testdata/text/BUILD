@@ -30,6 +30,7 @@ mediapipe_files(srcs = [
     "30k-clean.model",
     "albert_with_metadata.tflite",
     "bert_text_classifier.tflite",
+    "embedding_gemma.task",
     "gecko.task",
     "language_detector.tflite",
     "mobilebert_embedding_with_metadata.tflite",
@@ -112,6 +113,11 @@ filegroup(
 filegroup(
     name = "gecko_model",
     srcs = ["gecko.task"],
+)
+
+filegroup(
+    name = "embedding_gemma_model",
+    srcs = ["embedding_gemma.task"],
 )
 
 # models for use with text classifier task

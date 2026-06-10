@@ -136,4 +136,37 @@ class TextEmbedderTests: XCTestCase {
     assertTextEmbedderResultHasOneEmbedding(result)
     XCTAssertEqual(result.embeddingResult.embeddings[0].floatEmbedding?.count, 768)
   }
+
+  func testEmbedWithEmbeddingGemmaSucceeds() throws {
+    let modelPath = try XCTUnwrap(
+      TextEmbedderTests.bundle.path(forResource: "embedding_gemma", ofType: "task"))
+    let textEmbedder = try XCTUnwrap(TextEmbedder(modelPath: modelPath))
+
+    let textFormatContext = TextFormatContext()
+    textFormatContext.embeddingType = .retrievalQuery
+    textFormatContext.textRole = .query
+
+    let result1 = try XCTUnwrap(
+      textEmbedder.embed(
+        text: TextEmbedderTests.text1,
+        textFormatContext: textFormatContext))
+
+    assertTextEmbedderResultHasOneEmbedding(result1)
+    XCTAssertEqual(result1.embeddingResult.embeddings[0].floatEmbedding?.count, 768)
+
+    let result2 = try XCTUnwrap(
+      textEmbedder.embed(
+        text: TextEmbedderTests.text2,
+        textFormatContext: textFormatContext))
+
+    assertTextEmbedderResultHasOneEmbedding(result2)
+    XCTAssertEqual(result2.embeddingResult.embeddings[0].floatEmbedding?.count, 768)
+
+    let cosineSimilarity = try XCTUnwrap(
+      TextEmbedder.cosineSimilarity(
+        embedding1: result1.embeddingResult.embeddings[0],
+        embedding2: result2.embeddingResult.embeddings[0]))
+
+    XCTAssertEqual(cosineSimilarity.doubleValue, 0.52, accuracy: 0.05)
+  }
 }
