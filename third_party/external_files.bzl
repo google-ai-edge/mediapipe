@@ -294,8 +294,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_efficientdet_lite0_fp16_no_nms_tflite",
-        sha256 = "237a58389081333e5cf4154e42b593ce7dd357445536fcaf4ca5bc51c2c50f1c",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_fp16_no_nms.tflite?generation=1781023858363184"],
+        sha256 = "bcda125c96d3767bca894c8cbe7bc458379c9974c9fd8bdc6204e7124a74082a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_fp16_no_nms.tflite?generation=1777652206010837"],
     )
 
     http_file(
@@ -1664,6 +1664,12 @@ def external_files():
         name = "com_google_mediapipe_object_detection_saved_model_saved_model_pb",
         sha256 = "f29606cf218397d5580c496e50fd28cddf66e2f59b819ab9c761b72270a5adf3",
         urls = ["https://storage.googleapis.com/mediapipe-assets/object_detection_saved_model/saved_model.pb?generation=1661875999264354"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_summarization_200m_summarization_quant_200m_2modes_litertlm",
+        sha256 = "8b2d4ef09236adb9ead3127325526ba1aa5a59feb7c5de2d3f5958f27479de59",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/summarization_200m/summarization_quant_200m_2modes.litertlm?generation=1781027466234011"],
     )
 
     http_file(
