@@ -16,7 +16,11 @@ limitations under the License.
 #include "mediapipe/tasks/cc/text/utils/genai_utils.h"
 
 #include <string>
+#include <vector>
 
+#include "absl/strings/ascii.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/gtest.h"
 
 namespace mediapipe::tasks::text::utils {
@@ -82,6 +86,105 @@ INSTANTIATE_TEST_SUITE_P(
     }),
     [](const ::testing::TestParamInfo<HasRepeatingSuffixTest::ParamType>&
            info) { return info.param.test_name; });
+
+int WordCount(absl::string_view text) {
+  int count = 0;
+  bool in_word = false;
+  for (char c : text) {
+    if (absl::ascii_isspace(c)) {
+      if (in_word) {
+        ++count;
+        in_word = false;
+      }
+    } else {
+      in_word = true;
+    }
+  }
+  if (in_word) {
+    ++count;
+  }
+  return count;
+}
+
+TEST(GenaiUtilsTest, ChunkTextShortInput) {
+  std::string input = "This is a short input.";
+  auto result = ChunkText(input);
+  ASSERT_EQ(result.size(), 1);
+  EXPECT_EQ(result[0].text, "This is a short input.");
+  EXPECT_EQ(result[0].trailing_separator, "");
+}
+
+TEST(GenaiUtilsTest, ChunkTextLongInputNoSpecialPunctuation) {
+  // Construct 550 words without periods or newlines.
+  std::string input;
+  for (int i = 0; i < 550; ++i) {
+    input += "word ";
+  }
+  auto result = ChunkText(input);
+  // Should force split at 500 words.
+  ASSERT_EQ(result.size(), 2);
+  EXPECT_EQ(WordCount(result[0].text), 500);
+  EXPECT_EQ(result[0].trailing_separator, " ");
+  EXPECT_EQ(WordCount(result[1].text), 50);
+  EXPECT_EQ(result[1].trailing_separator, " ");
+}
+
+TEST(GenaiUtilsTest, ChunkTextLongInputWithPeriod) {
+  // Construct 550 words with a period at 480th word.
+  std::string input;
+  for (int i = 0; i < 479; ++i) {
+    input += "word ";
+  }
+  input += "word. ";  // 480th word
+  for (int i = 0; i < 70; ++i) {
+    input += "word ";
+  }
+
+  auto result = ChunkText(input);
+  // Should split at the period (480 words).
+  ASSERT_EQ(result.size(), 2);
+  EXPECT_EQ(WordCount(result[0].text), 480);
+  EXPECT_EQ(result[0].trailing_separator, " ");
+  EXPECT_EQ(WordCount(result[1].text), 70);
+  EXPECT_EQ(result[1].trailing_separator, " ");
+}
+
+TEST(GenaiUtilsTest, ChunkTextLongInputWithNewline) {
+  // Construct 550 words with a newline at 460th word.
+  std::string input;
+  for (int i = 0; i < 459; ++i) {
+    input += "word ";
+  }
+  input += "word\n";  // 460th word ends with newline
+  for (int i = 0; i < 90; ++i) {
+    input += "word ";
+  }
+
+  auto result = ChunkText(input);
+  // Should split at the newline (460 words).
+  ASSERT_EQ(result.size(), 2);
+  EXPECT_EQ(WordCount(result[0].text), 460);
+  EXPECT_EQ(result[0].trailing_separator, "\n");
+  EXPECT_EQ(WordCount(result[1].text), 90);
+  EXPECT_EQ(result[1].trailing_separator, " ");
+}
+
+TEST(GenaiUtilsTest, ChunkTextLayoutPreservation) {
+  std::string input = "Hello\n\nworld!   This is  a test.   \n";
+  auto result = ChunkText(input);
+
+  ASSERT_EQ(result.size(), 2);
+  EXPECT_EQ(result[0].text, "Hello");
+  EXPECT_EQ(result[0].trailing_separator, "\n\n");
+  EXPECT_EQ(result[1].text, "world!   This is  a test.");
+  EXPECT_EQ(result[1].trailing_separator, "   \n");
+
+  std::string reconstructed;
+  for (const auto& chunk : result) {
+    absl::StrAppend(&reconstructed, chunk.text, chunk.trailing_separator);
+  }
+  EXPECT_EQ(reconstructed, input);
+}
 
 }  // namespace
 }  // namespace mediapipe::tasks::text::utils
