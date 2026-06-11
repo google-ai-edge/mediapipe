@@ -71,22 +71,45 @@ rollup_bundle(
     ],
 )
 
+rollup_bundle(
+    name = "text_bundle_iife",
+    args = [
+        "--name",
+        "Text",
+    ],
+    config_file = "//mediapipe/tasks/web:rollup.config.mjs",
+    entry_point = "index.ts",
+    format = "iife",
+    output_dir = False,
+    sourcemap = "true",
+    deps = [
+        ":text_lib",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
+    ],
+)
+
 genrule(
     name = "text_sources",
     srcs = [
         ":text_bundle_cjs",
         ":text_bundle_mjs",
+        ":text_bundle_iife",
     ],
     outs = [
         "text_bundle.cjs",
         "text_bundle.cjs.map",
         "text_bundle.mjs",
         "text_bundle.mjs.map",
+        "text_bundle.js",
+        "text_bundle.js.map",
     ],
     cmd = (
         "for FILE in $(SRCS); do " +
         "  OUT_FILE=$(GENDIR)/mediapipe/tasks/web/text/$$(" +
-        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/'" +
+        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/; s/_iife\\.js/.js/'" +
         "  ); " +
         "  echo $$FILE ; echo $$OUT_FILE ; " +
         "  cp $$FILE $$OUT_FILE ; " +
