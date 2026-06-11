@@ -368,6 +368,7 @@ setuptools.setup(
     author_email='mediapipe@google.com',
     long_description=_get_long_description(),
     long_description_content_type='text/markdown',
+    license_files=['LICENSE', 'NOTICE'],
     packages=setuptools.find_packages(
         include=[
             'mediapipe',
