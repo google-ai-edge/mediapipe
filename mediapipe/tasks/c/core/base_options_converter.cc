@@ -91,6 +91,8 @@ void CppConvertToBaseOptions(const MpBaseOptions& in,
   out->ca_bundle_path = in.ca_bundle_path ? std::string(in.ca_bundle_path) : "";
   out->app_id = in.app_id ? std::string(in.app_id) : "";
   out->app_version = in.app_version ? std::string(in.app_version) : "";
+  out->model_asset_descriptor_meta.fd =
+      in.file_descriptor != 0 ? in.file_descriptor : -1;
 }
 
 MpHostEnvironment ToMpHostEnvironment(int host_environment) {
