@@ -126,3 +126,19 @@ mediapipe_jni_binary(
     version_script = "//mediapipe/tasks/java:textgenai_version_script.lds",
     deps = [],
 )
+
+android_library(
+    name = "textsummarizer",
+    srcs = [
+        "textsummarizer/TextSummarizer.java",
+        "textsummarizer/TextSummarizerResult.java",
+        "textsummarizer/TextSummarizerStreamingResult.java",
+    ],
+    manifest = "textsummarizer/AndroidManifest.xml",
+    deps = [
+        ":libmediapipe_tasks_textgenai_jni_lib",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)

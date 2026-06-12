@@ -69,22 +69,45 @@ rollup_bundle(
     ],
 )
 
+rollup_bundle(
+    name = "audio_bundle_iife",
+    args = [
+        "--name",
+        "Audio",
+    ],
+    config_file = "//mediapipe/tasks/web:rollup.config.mjs",
+    entry_point = "index.ts",
+    format = "iife",
+    output_dir = False,
+    sourcemap = "true",
+    deps = [
+        ":audio_lib",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
+    ],
+)
+
 genrule(
     name = "audio_sources",
     srcs = [
         ":audio_bundle_cjs",
         ":audio_bundle_mjs",
+        ":audio_bundle_iife",
     ],
     outs = [
         "audio_bundle.cjs",
         "audio_bundle.cjs.map",
         "audio_bundle.mjs",
         "audio_bundle.mjs.map",
+        "audio_bundle.js",
+        "audio_bundle.js.map",
     ],
     cmd = (
         "for FILE in $(SRCS); do " +
         "  OUT_FILE=$(GENDIR)/mediapipe/tasks/web/audio/$$(" +
-        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/'" +
+        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/; s/_iife\\.js/.js/'" +
         "  ); " +
         "  echo $$FILE ; echo $$OUT_FILE ; " +
         "  cp $$FILE $$OUT_FILE ; " +

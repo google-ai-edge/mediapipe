@@ -69,22 +69,45 @@ rollup_bundle(
     ],
 )
 
+rollup_bundle(
+    name = "genai_bundle_iife",
+    args = [
+        "--name",
+        "GenAI",
+    ],
+    config_file = "//mediapipe/tasks/web:rollup.config.mjs",
+    entry_point = "index.ts",
+    format = "iife",
+    output_dir = False,
+    sourcemap = "true",
+    deps = [
+        ":genai_lib",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
+    ],
+)
+
 genrule(
     name = "genai_sources",
     srcs = [
         ":genai_bundle_cjs",
         ":genai_bundle_mjs",
+        ":genai_bundle_iife",
     ],
     outs = [
         "genai_bundle.cjs",
         "genai_bundle.cjs.map",
         "genai_bundle.mjs",
         "genai_bundle.mjs.map",
+        "genai_bundle.js",
+        "genai_bundle.js.map",
     ],
     cmd = (
         "for FILE in $(SRCS); do " +
         "  OUT_FILE=$(GENDIR)/mediapipe/tasks/web/genai/$$(" +
-        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/'" +
+        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/; s/_iife\\.js/.js/'" +
         "  ); " +
         "  echo $$FILE ; echo $$OUT_FILE ; " +
         "  cp $$FILE $$OUT_FILE ; " +

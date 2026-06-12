@@ -20,6 +20,7 @@
 static NSString *const kBertTextEmbedderModelName = @"mobilebert_embedding_with_metadata";
 static NSString *const kRegexTextEmbedderModelName = @"regex_one_embedding_with_metadata";
 static NSString *const kGeckoTextEmbedderModelName = @"gecko";
+static NSString *const kEmbeddingGemmaTextEmbedderModelName = @"embedding_gemma";
 static NSString *const kText1 = @"it's a charming and often affecting journey";
 static NSString *const kText2 = @"what a great and fantastic trip";
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
@@ -258,6 +259,37 @@ static const float kSimilarityDiffTolerance = 1e-4;
   AssertTextEmbedderResultHasOneEmbedding(result);
   AssertEmbeddingType(result.embeddingResult.embeddings[0], NO);
   XCTAssertEqual(result.embeddingResult.embeddings[0].floatEmbedding.count, 768);
+}
+
+- (void)testEmbedWithEmbeddingGemmaSucceeds {
+  MPPTextEmbedder *textEmbedder =
+      [self textEmbedderFromModelFileWithName:kEmbeddingGemmaTextEmbedderModelName
+                                    extension:@"task"];
+
+  MPPTextFormatContext *textFormatContext = [[MPPTextFormatContext alloc] init];
+  textFormatContext.embeddingType = MPPEmbeddingTypeRetrievalQuery;
+  textFormatContext.textRole = MPPTextRoleQuery;
+
+  MPPTextEmbedderResult *result1 = [textEmbedder embedText:kText1
+                                         textFormatContext:textFormatContext
+                                                     error:nil];
+  AssertTextEmbedderResultHasOneEmbedding(result1);
+  AssertEmbeddingType(result1.embeddingResult.embeddings[0], NO);
+  XCTAssertEqual(result1.embeddingResult.embeddings[0].floatEmbedding.count, 768);
+
+  MPPTextEmbedderResult *result2 = [textEmbedder embedText:kText2
+                                         textFormatContext:textFormatContext
+                                                     error:nil];
+  AssertTextEmbedderResultHasOneEmbedding(result2);
+  AssertEmbeddingType(result2.embeddingResult.embeddings[0], NO);
+  XCTAssertEqual(result2.embeddingResult.embeddings[0].floatEmbedding.count, 768);
+
+  NSNumber *cosineSimilarity =
+      [MPPTextEmbedder cosineSimilarityBetweenEmbedding1:result1.embeddingResult.embeddings[0]
+                                           andEmbedding2:result2.embeddingResult.embeddings[0]
+                                                   error:nil];
+
+  XCTAssertEqualWithAccuracy(cosineSimilarity.doubleValue, 0.52f, 0.05f);
 }
 
 @end

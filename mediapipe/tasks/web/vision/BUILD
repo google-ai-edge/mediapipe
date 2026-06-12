@@ -82,22 +82,45 @@ rollup_bundle(
     ],
 )
 
+rollup_bundle(
+    name = "vision_bundle_iife",
+    args = [
+        "--name",
+        "Vision",
+    ],
+    config_file = "//mediapipe/tasks/web:rollup.config.mjs",
+    entry_point = "index.ts",
+    format = "iife",
+    output_dir = False,
+    sourcemap = "true",
+    deps = [
+        ":vision_lib",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
+    ],
+)
+
 genrule(
     name = "vision_sources",
     srcs = [
         ":vision_bundle_cjs",
         ":vision_bundle_mjs",
+        ":vision_bundle_iife",
     ],
     outs = [
         "vision_bundle.cjs",
         "vision_bundle.cjs.map",
         "vision_bundle.mjs",
         "vision_bundle.mjs.map",
+        "vision_bundle.js",
+        "vision_bundle.js.map",
     ],
     cmd = (
         "for FILE in $(SRCS); do " +
         "  OUT_FILE=$(GENDIR)/mediapipe/tasks/web/vision/$$(" +
-        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/'" +
+        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/; s/_iife\\.js/.js/'" +
         "  ); " +
         "  echo $$FILE ; echo $$OUT_FILE ; " +
         "  cp $$FILE $$OUT_FILE ; " +
