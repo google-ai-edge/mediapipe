@@ -362,7 +362,10 @@ apple_static_library(
 
 mediapipe_static_xcframework(
     name = "MediaPipeTasksCommon_framework",
-    avoid_deps = ["@zlib//:zlib"],
+    avoid_deps = [
+        "@zlib//:zlib",
+        "@@zlib~//:z",
+    ],
     bundle_format = "framework",
     bundle_id = "com.google.mediapipe.tasks.common",
     bundle_name = "MediaPipeTasksCommon",
