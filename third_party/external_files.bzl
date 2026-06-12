@@ -1277,12 +1277,6 @@ def external_files():
     )
 
     http_file(
-        name = "com_google_mediapipe_README_md",
-        sha256 = "3ac6f0fb9954d5a7a78aff441b471cbacb4c35a73dbdbb450e12bbec4f29c581",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/README.md?generation=1777652216088994"],
-    )
-
-    http_file(
         name = "com_google_mediapipe_regex_one_embedding_with_metadata_tflite",
         sha256 = "b8f5d6d090c2c73984b2b92cd2fda27e5630562741a93d127b9a744d60505bc0",
         urls = ["https://storage.googleapis.com/mediapipe-assets/regex_one_embedding_with_metadata.tflite?generation=1667888045310541"],
