@@ -142,3 +142,19 @@ android_library(
         "@maven//:com_google_guava_guava",
     ],
 )
+
+android_library(
+    name = "textproofreader",
+    srcs = [
+        "textproofreader/TextProofreader.java",
+        "textproofreader/TextProofreaderResult.java",
+        "textproofreader/TextProofreaderStreamingResult.java",
+    ],
+    manifest = "textproofreader/AndroidManifest.xml",
+    deps = [
+        ":libmediapipe_tasks_textgenai_jni_lib",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)

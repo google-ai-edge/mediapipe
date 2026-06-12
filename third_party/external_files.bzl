@@ -1661,6 +1661,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_proofread_200m_proofread_quant_200m_litertlm",
+        sha256 = "2caa317d5a6f951af6e437edce3bb3a9fdedc85a7a8c2a8fcaec96318d7708cc",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/proofread_200m/proofread_quant_200m.litertlm?generation=1781220008710538"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_summarization_200m_summarization_quant_200m_2modes_litertlm",
         sha256 = "8b2d4ef09236adb9ead3127325526ba1aa5a59feb7c5de2d3f5958f27479de59",
         urls = ["https://storage.googleapis.com/mediapipe-assets/summarization_200m/summarization_quant_200m_2modes.litertlm?generation=1781027466234011"],
