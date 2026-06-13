@@ -81,7 +81,7 @@ message Channel {
 }
 
 // Parameters for Large Language Models (LLM).
-// Next ID: 20
+// Next ID: 21
 message LlmParameters {
   TransformerParameters transformer_parameters = 1;
 
@@ -138,4 +138,7 @@ message LlmParameters {
 
   // The channels defined for this model.
   repeated Channel channels = 19;
+
+  // Tokens to suppress during decode.
+  repeated int32 suppressed_tokens = 20;
 }
