@@ -23,9 +23,9 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToPoseLandmarkerResult(
     const mediapipe::tasks::vision::pose_landmarker::PoseLandmarkerResult& in,
-    PoseLandmarkerResult* out);
+    MpPoseLandmarkerResult* out);
 
-void CppClosePoseLandmarkerResult(PoseLandmarkerResult* result);
+void CppClosePoseLandmarkerResult(MpPoseLandmarkerResult* result);
 
 }  // namespace mediapipe::tasks::c::components::containers
 

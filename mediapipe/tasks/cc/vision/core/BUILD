@@ -22,6 +22,12 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
     name = "running_mode",
     hdrs = ["running_mode.h"],
+    deps = [
+        "//mediapipe/tasks/cc/core:running_mode",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 cc_library(
@@ -64,8 +70,10 @@ cc_library_with_tflite(
         "//mediapipe/tasks/cc/core:task_api_factory",
     ],
     deps = [
+        ":running_mode",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",

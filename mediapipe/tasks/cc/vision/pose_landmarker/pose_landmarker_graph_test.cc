@@ -37,6 +37,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/pose_detector/proto/pose_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/pose_landmarker/proto/pose_landmarker_graph_options.pb.h"
@@ -56,6 +57,7 @@ using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::file::JoinPath;
+using ::mediapipe::tasks::core::RunningMode;
 using ::mediapipe::tasks::core::TaskRunner;
 using ::mediapipe::tasks::vision::DecodeImageFromFile;
 using ::mediapipe::tasks::vision::pose_landmarker::proto::
@@ -82,6 +84,8 @@ constexpr char kNormLandmarksTag[] = "NORM_LANDMARKS";
 constexpr char kNormLandmarksName[] = "norm_landmarks";
 constexpr char kSegmentationMaskTag[] = "SEGMENTATION_MASK";
 constexpr char kSegmentationMaskName[] = "segmentation_mask";
+constexpr char kTaskName[] = "pose_landmarker_test";
+constexpr RunningMode kRunningMode = RunningMode::kImage;
 
 constexpr float kLiteModelFractionDiff = 0.05;  // percentage
 constexpr float kGoldenMaskSimilarity = .98;
@@ -136,8 +140,11 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreatePoseLandmarkerGraphTaskRunner(
       graph[Output<std::vector<Image>>(kSegmentationMaskTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(),
-      absl::make_unique<tasks::core::MediaPipeBuiltinOpResolver>());
+      {.config = graph.GetConfig(),
+       .task_name = kTaskName,
+       .task_running_mode = kRunningMode,
+       .op_resolver =
+           absl::make_unique<tasks::core::MediaPipeBuiltinOpResolver>()});
 }
 
 // Helper function to construct NormalizeRect proto.

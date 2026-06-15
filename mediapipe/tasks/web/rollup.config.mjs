@@ -3,6 +3,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
 
 export default {
+  treeshake: false,
   plugins: [
     resolve(),
     commonjs(),

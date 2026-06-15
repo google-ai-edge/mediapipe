@@ -42,17 +42,17 @@ _LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
 _C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
     None,
     ctypes.c_int32,  # MpStatus
-    ctypes.POINTER(detections_c_module.DetectionResultC),
+    ctypes.POINTER(detections_c_module.MpDetectionResultC),
     ctypes.c_void_p,  # MpImage
     ctypes.c_int64,  # timestamp_ms
 )
 
 
-class ObjectDetectorOptionsC(ctypes.Structure):
+class MpObjectDetectorOptionsC(ctypes.Structure):
   """The object detector options used in the C API."""
 
   _fields_ = [
-      ('base_options', base_options_c_module.BaseOptionsC),
+      ('base_options', base_options_c_module.MpBaseOptionsC),
       ('running_mode', ctypes.c_int),
       ('display_names_locale', ctypes.c_char_p),
       ('max_results', ctypes.c_int),
@@ -61,14 +61,14 @@ class ObjectDetectorOptionsC(ctypes.Structure):
       ('category_allowlist_count', ctypes.c_int),
       ('category_denylist', ctypes.POINTER(ctypes.c_char_p)),
       ('category_denylist_count', ctypes.c_int),
-      ('result_callback', _C_TYPES_RESULT_CALLBACK)
+      ('result_callback', _C_TYPES_RESULT_CALLBACK),
   ]
 
   @classmethod
   @doc_controls.do_not_generate_docs
   def from_c_options(
       cls,
-      base_options: base_options_c_module.BaseOptionsC,
+      base_options: base_options_c_module.MpBaseOptionsC,
       running_mode: _RunningMode,
       display_names_locale: Optional[str],
       max_results: Optional[int],
@@ -76,8 +76,8 @@ class ObjectDetectorOptionsC(ctypes.Structure):
       category_allowlist: Optional[List[str]],
       category_denylist: Optional[List[str]],
       result_callback: _C_TYPES_RESULT_CALLBACK,
-  ) -> 'ObjectDetectorOptionsC':
-    """Creates an ObjectDetectorOptionsC object from the given options."""
+  ) -> 'MpObjectDetectorOptionsC':
+    """Creates an MpObjectDetectorOptionsC object from the given options."""
     category_allowlist_c = (
         mediapipe_c_bindings_c_module.convert_strings_to_ctypes_array(
             category_allowlist
@@ -114,7 +114,7 @@ _CTYPES_SIGNATURES = (
     mediapipe_c_utils.CStatusFunction(
         'MpObjectDetectorCreate',
         (
-            ctypes.POINTER(ObjectDetectorOptionsC),
+            ctypes.POINTER(MpObjectDetectorOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
         ),
     ),
@@ -124,9 +124,9 @@ _CTYPES_SIGNATURES = (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(
-                image_processing_options_c_module.ImageProcessingOptionsC
+                image_processing_options_c_module.MpImageProcessingOptionsC
             ),
-            ctypes.POINTER(detections_c_module.DetectionResultC),
+            ctypes.POINTER(detections_c_module.MpDetectionResultC),
         ),
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -135,10 +135,10 @@ _CTYPES_SIGNATURES = (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(
-                image_processing_options_c_module.ImageProcessingOptionsC
+                image_processing_options_c_module.MpImageProcessingOptionsC
             ),
             ctypes.c_int64,
-            ctypes.POINTER(detections_c_module.DetectionResultC),
+            ctypes.POINTER(detections_c_module.MpDetectionResultC),
         ),
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -147,14 +147,14 @@ _CTYPES_SIGNATURES = (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(
-                image_processing_options_c_module.ImageProcessingOptionsC
+                image_processing_options_c_module.MpImageProcessingOptionsC
             ),
             ctypes.c_int64,
         ),
     ),
     mediapipe_c_utils.CFunction(
         'MpObjectDetectorCloseResult',
-        [ctypes.POINTER(detections_c_module.DetectionResultC)],
+        [ctypes.POINTER(detections_c_module.MpDetectionResultC)],
         None,
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -328,7 +328,7 @@ class ObjectDetector:
     lib = mediapipe_c_bindings_c_module.load_shared_library(_CTYPES_SIGNATURES)
 
     def convert_result(
-        c_result_ptr: ctypes.POINTER(detections_c_module.DetectionResultC),
+        c_result_ptr: ctypes.POINTER(detections_c_module.MpDetectionResultC),
         image_ptr: ctypes.c_void_p,
         timestamp_ms: int,
     ) -> Tuple[ObjectDetectorResult, image_module.Image, int]:
@@ -341,7 +341,7 @@ class ObjectDetector:
     c_callback = dispatcher.wrap_callback(
         options.result_callback, _C_TYPES_RESULT_CALLBACK
     )
-    ctypes_options = ObjectDetectorOptionsC.from_c_options(
+    ctypes_options = MpObjectDetectorOptionsC.from_c_options(
         base_options=options.base_options.to_ctypes(),
         running_mode=options.running_mode,
         display_names_locale=options.display_names_locale,
@@ -392,7 +392,7 @@ class ObjectDetector:
     """
 
     c_image = image._image_ptr  # pylint: disable=protected-access
-    c_result = detections_c_module.DetectionResultC()
+    c_result = detections_c_module.MpDetectionResultC()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())
@@ -439,7 +439,7 @@ class ObjectDetector:
       RuntimeError: If object detection failed to run.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    c_result = detections_c_module.DetectionResultC()
+    c_result = detections_c_module.MpDetectionResultC()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())

@@ -26,6 +26,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/containers/detection_result.h"
 #include "mediapipe/tasks/cc/components/containers/keypoint.h"
+#include "mediapipe/tasks/cc/components/containers/rect.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "testing/base/public/gunit.h"
@@ -39,6 +40,7 @@ namespace {
 using ::file::Defaults;
 using ::mediapipe::file::JoinPath;
 using ::mediapipe::tasks::components::containers::NormalizedKeypoint;
+using ::mediapipe::tasks::components::containers::Rect;
 using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 using ::testing::TestParamInfo;
 using ::testing::TestWithParam;
@@ -47,14 +49,18 @@ using ::testing::Values;
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kShortRangeBlazeFaceModel[] =
     "face_detection_short_range.tflite";
+constexpr char kFullRangeBlazeFaceModel[] = "face_detection_full_range.tflite";
 constexpr char kPortraitImage[] = "portrait.jpg";
 constexpr char kPortraitRotatedImage[] = "portrait_rotated.jpg";
 constexpr char kPortraitExpectedDetection[] =
     "portrait_expected_detection.pbtxt";
 constexpr char kPortraitRotatedExpectedDetection[] =
     "portrait_rotated_expected_detection.pbtxt";
+constexpr char kPortraitExpectedFullRangeDetection[] =
+    "portrait_expected_full_range_detection.pbtxt";
 constexpr char kCatImageName[] = "cat.jpg";
 constexpr float kKeypointErrorThreshold = 1e-2;
+constexpr float kBoundingBoxErrorThreshold = 5;
 
 FaceDetectorResult GetExpectedFaceDetectorResult(absl::string_view file_name) {
   mediapipe::Detection detection;
@@ -77,6 +83,16 @@ void ExpectKeypointsCorrect(
   }
 }
 
+void ExpectBoundingBoxCorrect(const Rect& actual_bbox,
+                              const Rect& expected_bbox) {
+  EXPECT_NEAR(actual_bbox.left, expected_bbox.left, kBoundingBoxErrorThreshold);
+  EXPECT_NEAR(actual_bbox.top, expected_bbox.top, kBoundingBoxErrorThreshold);
+  EXPECT_NEAR(actual_bbox.right, expected_bbox.right,
+              kBoundingBoxErrorThreshold);
+  EXPECT_NEAR(actual_bbox.bottom, expected_bbox.bottom,
+              kBoundingBoxErrorThreshold);
+}
+
 void ExpectFaceDetectorResultsCorrect(
     const FaceDetectorResult& actual_results,
     const FaceDetectorResult& expected_results) {
@@ -85,7 +101,7 @@ void ExpectFaceDetectorResultsCorrect(
   for (int i = 0; i < actual_results.detections.size(); i++) {
     const auto& actual_bbox = actual_results.detections[i].bounding_box;
     const auto& expected_bbox = expected_results.detections[i].bounding_box;
-    EXPECT_EQ(actual_bbox, expected_bbox);
+    ExpectBoundingBoxCorrect(actual_bbox, expected_bbox);
     ASSERT_TRUE(actual_results.detections[i].keypoints.has_value());
     ExpectKeypointsCorrect(actual_results.detections[i].keypoints.value(),
                            expected_results.detections[i].keypoints.value());
@@ -151,6 +167,13 @@ INSTANTIATE_TEST_SUITE_P(
             /* rotation= */ -90,
             /* expected_result = */
             GetExpectedFaceDetectorResult(kPortraitRotatedExpectedDetection)},
+        TestParams{
+            /* test_name= */ "PortraitFullRange",
+            /* test_image_name= */ kPortraitImage,
+            /* face_detection_model_name= */ kFullRangeBlazeFaceModel,
+            /* rotation= */ 0,
+            /* expected_result = */
+            GetExpectedFaceDetectorResult(kPortraitExpectedFullRangeDetection)},
         TestParams{/* test_name= */ "NoFace",
                    /* test_image_name= */ kCatImageName,
                    /* face_detection_model_name= */ kShortRangeBlazeFaceModel,
@@ -211,6 +234,13 @@ INSTANTIATE_TEST_SUITE_P(
             /* rotation= */ -90,
             /* expected_result = */
             GetExpectedFaceDetectorResult(kPortraitRotatedExpectedDetection)},
+        TestParams{
+            /* test_name= */ "PortraitFullRange",
+            /* test_image_name= */ kPortraitImage,
+            /* face_detection_model_name= */ kFullRangeBlazeFaceModel,
+            /* rotation= */ 0,
+            /* expected_result = */
+            GetExpectedFaceDetectorResult(kPortraitExpectedFullRangeDetection)},
         TestParams{/* test_name= */ "NoFace",
                    /* test_image_name= */ kCatImageName,
                    /* face_detection_model_name= */ kShortRangeBlazeFaceModel,
@@ -294,6 +324,13 @@ INSTANTIATE_TEST_SUITE_P(
             /* rotation= */ -90,
             /* expected_result = */
             GetExpectedFaceDetectorResult(kPortraitRotatedExpectedDetection)},
+        TestParams{
+            /* test_name= */ "PortraitFullRange",
+            /* test_image_name= */ kPortraitImage,
+            /* face_detection_model_name= */ kFullRangeBlazeFaceModel,
+            /* rotation= */ 0,
+            /* expected_result = */
+            GetExpectedFaceDetectorResult(kPortraitExpectedFullRangeDetection)},
         TestParams{/* test_name= */ "NoFace",
                    /* test_image_name= */ kCatImageName,
                    /* face_detection_model_name= */ kShortRangeBlazeFaceModel,

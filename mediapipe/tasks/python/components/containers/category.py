@@ -44,14 +44,15 @@ class Category:
 
   @classmethod
   @doc_controls.do_not_generate_docs
-  def from_ctypes(cls, c_obj: category_c_module.CategoryC) -> "Category":
-    """Creates a `Category` object from the given `CategoryC` object.
+  def from_ctypes(cls, c_obj: category_c_module.MpCategoryC) -> "Category":
+    """Creates a `Category` object from the given `MpCategoryC` object.
 
-    This function converts the `CategoryC` index of -1 to a Python value of None
+    This function converts the `MpCategoryC` index of -1 to a Python value of
+    None
     to retain the same semantic meaning. All other values are converted as-is.
 
     Args:
-      c_obj: The `CategoryC` object to be converted.
+      c_obj: The `MpCategoryC` object to be converted.
 
     Returns:
       A `Category` object.
@@ -88,9 +89,9 @@ class Category:
 
 @doc_controls.do_not_generate_docs
 def create_list_of_categories_from_ctypes(
-    c_obj: category_c_module.CategoriesC,
+    c_obj: category_c_module.MpCategoriesC,
 ) -> list[Category]:
-  """Creates a list of `Category` objects from a `CategoriesC` object."""
+  """Creates a list of `Category` objects from a `MpCategoriesC` object."""
   return [
       Category.from_ctypes(c_obj.categories[i])
       for i in range(c_obj.categories_count)

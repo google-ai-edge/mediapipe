@@ -32,12 +32,16 @@ limitations under the License.
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 #include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace core {
 namespace {
+
+constexpr char kTaskName[] = "test_task";
+constexpr RunningMode kRunningMode = RunningMode::kUnspecified;
 
 CalculatorGraphConfig GetPassThroughGraphConfig() {
   return ParseTextProtoOrDie<CalculatorGraphConfig>(
@@ -122,15 +126,20 @@ TEST_F(TaskRunnerTest, ConfigWithNoOutputStream) {
       input_stream: 'INPUT:in'
       output_stream: 'OUTPUT:output'
     })pb");
-  auto status_or_runner = TaskRunner::Create(proto);
+  auto status_or_runner =
+      TaskRunner::Create({.config = proto,
+                          .task_name = kTaskName,
+                          .task_running_mode = kRunningMode});
   ASSERT_FALSE(status_or_runner.ok());
   ASSERT_THAT(status_or_runner.status().message(),
               testing::HasSubstr("no valid output streams"));
 }
 
 TEST_F(TaskRunnerTest, RunnerIsNotRunning) {
-  MP_ASSERT_OK_AND_ASSIGN(auto runner,
-                          TaskRunner::Create(GetPassThroughGraphConfig()));
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner, TaskRunner::Create({.config = GetPassThroughGraphConfig(),
+                                       .task_name = kTaskName,
+                                       .task_running_mode = kRunningMode}));
 
   MP_ASSERT_OK(runner->Close());
   // Sends input data to runner after it gets closed.
@@ -140,8 +149,10 @@ TEST_F(TaskRunnerTest, RunnerIsNotRunning) {
 }
 
 TEST_F(TaskRunnerTest, WrongProcessingMode) {
-  MP_ASSERT_OK_AND_ASSIGN(auto runner,
-                          TaskRunner::Create(GetPassThroughGraphConfig()));
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner, TaskRunner::Create({.config = GetPassThroughGraphConfig(),
+                                       .task_name = kTaskName,
+                                       .task_running_mode = kRunningMode}));
   auto status = runner->Send({{"in", MakePacket<int>(0)}});
   ASSERT_FALSE(status.ok());
   ASSERT_THAT(status.message(),
@@ -150,9 +161,12 @@ TEST_F(TaskRunnerTest, WrongProcessingMode) {
 
   MP_ASSERT_OK_AND_ASSIGN(
       auto runner2,
-      TaskRunner::Create(GetPassThroughGraphConfig(),
-                         /*model_resources=*/nullptr,
-                         [](absl::StatusOr<PacketMap> status_or_packets) {}));
+      TaskRunner::Create(
+          {.config = GetPassThroughGraphConfig(),
+           .task_name = kTaskName,
+           .task_running_mode = kRunningMode,
+           .packets_callback = [](absl::StatusOr<PacketMap> status_or_packets) {
+           }}));
   auto status_or_result = runner2->Process({{"in", MakePacket<int>(0)}});
   ASSERT_FALSE(status_or_result.ok());
   ASSERT_THAT(status_or_result.status().message(),
@@ -161,8 +175,10 @@ TEST_F(TaskRunnerTest, WrongProcessingMode) {
 }
 
 TEST_F(TaskRunnerTest, WrongTimestampOrderInSyncCalls) {
-  MP_ASSERT_OK_AND_ASSIGN(auto runner,
-                          TaskRunner::Create(GetPassThroughGraphConfig()));
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner, TaskRunner::Create({.config = GetPassThroughGraphConfig(),
+                                       .task_name = kTaskName,
+                                       .task_running_mode = kRunningMode}));
   MP_ASSERT_OK_AND_ASSIGN(
       auto results,
       runner->Process({{"in", MakePacket<int>(1).At(Timestamp(1))}}));
@@ -193,8 +209,10 @@ TEST_F(TaskRunnerTest, WrongTimestampOrderInAsyncCalls) {
         EXPECT_EQ(out_packet.Timestamp().Value(), out_packet.Get<int>());
       });
   MP_ASSERT_OK_AND_ASSIGN(
-      auto runner, TaskRunner::Create(GetPassThroughGraphConfig(),
-                                      /*model_resources=*/nullptr, callback));
+      auto runner, TaskRunner::Create({.config = GetPassThroughGraphConfig(),
+                                       .task_name = kTaskName,
+                                       .task_running_mode = kRunningMode,
+                                       .packets_callback = callback}));
   MP_ASSERT_OK(runner->Send({{"in", MakePacket<int>(1).At(Timestamp(1))}}));
   // Sends a packet with an earlier timestamp, which is not allowed.
   auto status = runner->Send({{"in", MakePacket<int>(0).At(Timestamp(0))}});
@@ -211,8 +229,10 @@ TEST_F(TaskRunnerTest, WrongTimestampOrderInAsyncCalls) {
 }
 
 TEST_F(TaskRunnerTest, OneThreadSyncAPICalls) {
-  MP_ASSERT_OK_AND_ASSIGN(auto runner,
-                          TaskRunner::Create(GetPassThroughGraphConfig()));
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner, TaskRunner::Create({.config = GetPassThroughGraphConfig(),
+                                       .task_name = kTaskName,
+                                       .task_running_mode = kRunningMode}));
   // Calls Process() 100 times from the same thread.
   for (int i = 0; i < 100; ++i) {
     auto status_or_result = runner->Process({{"in", MakePacket<int>(i)}});
@@ -229,8 +249,10 @@ TEST_F(TaskRunnerTest, OneThreadSyncAPICalls) {
 }
 
 TEST_F(TaskRunnerTest, MultiThreadSyncAPICallsWithoutTimestamp) {
-  MP_ASSERT_OK_AND_ASSIGN(auto runner,
-                          TaskRunner::Create(GetPassThroughGraphConfig()));
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner, TaskRunner::Create({.config = GetPassThroughGraphConfig(),
+                                       .task_name = kTaskName,
+                                       .task_running_mode = kRunningMode}));
 
   constexpr int kNumThreads = 10;
   std::atomic<int> active_worker_threads = 0;
@@ -263,8 +285,10 @@ TEST_F(TaskRunnerTest, AsyncAPICalls) {
         EXPECT_EQ(out_packet.Timestamp().Value(), out_packet.Get<int>());
       });
   MP_ASSERT_OK_AND_ASSIGN(
-      auto runner, TaskRunner::Create(GetPassThroughGraphConfig(),
-                                      /*model_resources=*/nullptr, callback));
+      auto runner, TaskRunner::Create({.config = GetPassThroughGraphConfig(),
+                                       .task_name = kTaskName,
+                                       .task_running_mode = kRunningMode,
+                                       .packets_callback = callback}));
   for (int i = 0; i < 100; ++i) {
     MP_ASSERT_OK(runner->Send({{"in", MakePacket<int>(i).At(Timestamp(i))}}));
   }
@@ -276,8 +300,11 @@ TEST_F(TaskRunnerTest, AsyncAPICalls) {
 }
 
 TEST_F(TaskRunnerTest, ReportErrorInSyncAPICall) {
-  MP_ASSERT_OK_AND_ASSIGN(auto runner,
-                          TaskRunner::Create(GetErrorCalculatorGraphConfig()));
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner,
+      TaskRunner::Create({.config = GetErrorCalculatorGraphConfig(),
+                          .task_name = kTaskName,
+                          .task_running_mode = kRunningMode}));
   auto status_or_result = runner->Process({{"in", MakePacket<int>(0)}});
   ASSERT_FALSE(status_or_result.ok());
   ASSERT_THAT(status_or_result.status().message(),
@@ -293,8 +320,11 @@ TEST_F(TaskRunnerTest, ReportErrorInAsyncAPICall) {
         EXPECT_EQ(out_packet.Timestamp().Value(), out_packet.Get<int>());
       });
   MP_ASSERT_OK_AND_ASSIGN(
-      auto runner, TaskRunner::Create(GetErrorCalculatorGraphConfig(),
-                                      /*model_resources=*/nullptr, callback));
+      auto runner,
+      TaskRunner::Create({.config = GetErrorCalculatorGraphConfig(),
+                          .task_name = kTaskName,
+                          .task_running_mode = kRunningMode,
+                          .packets_callback = callback}));
   MP_ASSERT_OK(runner->Send({{"in", MakePacket<int>(0).At(Timestamp(0))}}));
   auto status = runner->Close();
   ASSERT_FALSE(status.ok());

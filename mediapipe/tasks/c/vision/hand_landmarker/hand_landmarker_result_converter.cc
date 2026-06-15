@@ -36,14 +36,14 @@ using CppNormalizedLandmark =
 
 void CppConvertToHandLandmarkerResult(
     const mediapipe::tasks::vision::hand_landmarker::HandLandmarkerResult& in,
-    HandLandmarkerResult* out) {
+    MpHandLandmarkerResult* out) {
   out->handedness_count = in.handedness.size();
-  out->handedness = new Categories[out->handedness_count];
+  out->handedness = new MpCategories[out->handedness_count];
 
   for (uint32_t i = 0; i < out->handedness_count; ++i) {
     uint32_t categories_count = in.handedness[i].categories.size();
     out->handedness[i].categories_count = categories_count;
-    out->handedness[i].categories = new Category[categories_count];
+    out->handedness[i].categories = new MpCategory[categories_count];
 
     for (uint32_t j = 0; j < categories_count; ++j) {
       const auto& cpp_category = in.handedness[i].categories[j];
@@ -52,7 +52,7 @@ void CppConvertToHandLandmarkerResult(
   }
 
   out->hand_landmarks_count = in.hand_landmarks.size();
-  out->hand_landmarks = new NormalizedLandmarks[out->hand_landmarks_count];
+  out->hand_landmarks = new MpNormalizedLandmarks[out->hand_landmarks_count];
   for (uint32_t i = 0; i < out->hand_landmarks_count; ++i) {
     std::vector<CppNormalizedLandmark> cpp_normalized_landmarks;
     for (uint32_t j = 0; j < in.hand_landmarks[i].landmarks.size(); ++j) {
@@ -64,7 +64,7 @@ void CppConvertToHandLandmarkerResult(
   }
 
   out->hand_world_landmarks_count = in.hand_world_landmarks.size();
-  out->hand_world_landmarks = new Landmarks[out->hand_world_landmarks_count];
+  out->hand_world_landmarks = new MpLandmarks[out->hand_world_landmarks_count];
   for (uint32_t i = 0; i < out->hand_world_landmarks_count; ++i) {
     std::vector<CppLandmark> cpp_landmarks;
     for (uint32_t j = 0; j < in.hand_world_landmarks[i].landmarks.size(); ++j) {
@@ -75,7 +75,7 @@ void CppConvertToHandLandmarkerResult(
   }
 }
 
-void CppCloseHandLandmarkerResult(HandLandmarkerResult* result) {
+void CppCloseHandLandmarkerResult(MpHandLandmarkerResult* result) {
   for (uint32_t i = 0; i < result->handedness_count; ++i) {
     CppCloseCategories(&result->handedness[i]);
   }

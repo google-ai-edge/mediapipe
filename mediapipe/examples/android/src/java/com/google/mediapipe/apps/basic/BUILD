@@ -79,7 +79,6 @@ android_binary(
         "flipFramesVertically": "True",
         "converterNumBuffers": "2",
     },
-    multidex = "native",
     deps = [
         ":basic_lib",
         ":mediapipe_jni_lib",

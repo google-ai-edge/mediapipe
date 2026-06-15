@@ -14,7 +14,13 @@
 
 package com.google.mediapipe.tasks.genai.llminference;
 
-/** Interface for the MediaPipe GenAI task error listener. */
+/**
+ * Interface for the MediaPipe GenAI task error listener.
+ *
+ * @deprecated Migrate to LiteRT LM instead. For more details, refer to LiteRT LM on GitHub:
+ *     https://github.com/google-ai-edge/LiteRT-LM
+ */
+@Deprecated
 public interface ErrorListener {
   void onError(RuntimeException e);
 }

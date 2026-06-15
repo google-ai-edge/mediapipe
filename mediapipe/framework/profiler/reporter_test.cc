@@ -61,8 +61,7 @@ std::unique_ptr<Reporter> loadReporter(const std::vector<std::string>& paths) {
   for (const auto path : paths) {
     GraphProfile profile;
     LoadGraphProfile(
-        absl::StrCat(GetTestDataDir("mediapipe/framework/profiler"), path),
-        &profile);
+        absl::StrCat("mediapipe/framework/profiler/testdata/", path), &profile);
     reporter->Accumulate(profile);
   }
   return reporter;
@@ -107,7 +106,7 @@ TEST(Reporter, AggregatesAreRecorded) {
   MEDIAPIPE_CHECK_OK(reporter->set_columns({"time_*", "*latency*"}));
   const auto& report = reporter->Report();
   const auto& lines = report->lines();
-  EXPECT_EQ(lines.size(), 3);
+  ASSERT_EQ(lines.size(), 3);
   EXPECT_THAT(lines[2],
               ElementsAre("OpenCvWriteTextCalculator", "13823.77", "100.00",
                           "5541.47", "1976799", "245.13", "464.27", "35054"));
@@ -121,7 +120,7 @@ TEST(Reporter, JoinsFiles) {
   MEDIAPIPE_CHECK_OK(reporter->set_columns({"time_*", "*latency*"}));
   const auto& report = reporter->Report();
   const auto& lines = report->lines();
-  EXPECT_EQ(lines.size(), 3);
+  ASSERT_EQ(lines.size(), 3);
   EXPECT_THAT(lines[2],
               ElementsAre("OpenCvWriteTextCalculator", "14707.77", "100.00",
                           "5630.52", "3000385", "237.50", "389.35", "48449"));

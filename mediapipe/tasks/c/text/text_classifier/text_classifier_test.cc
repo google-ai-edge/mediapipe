@@ -43,7 +43,7 @@ std::string GetFullPath(absl::string_view file_name) {
 
 TEST(TextClassifierTest, SmokeTest) {
   const std::string model_path = GetFullPath(kTestBertModelPath);
-  TextClassifierOptions options = {
+  MpTextClassifierOptions options = {
       .base_options = {.model_asset_path = model_path.c_str()},
       .classifier_options = {.max_results = -1, .score_threshold = 0.0},
   };
@@ -54,7 +54,7 @@ TEST(TextClassifierTest, SmokeTest) {
       kMpOk);
   ASSERT_NE(classifier, nullptr);
 
-  TextClassifierResult result;
+  MpTextClassifierResult result;
   ASSERT_EQ(MpTextClassifierClassify(classifier, kTestString, &result,
                                      /*error_msg=*/nullptr),
             kMpOk);
@@ -72,7 +72,7 @@ TEST(TextClassifierTest, SmokeTest) {
 
 TEST(TextClassifierTest, ErrorHandling) {
   // It is an error to set neither the asset buffer nor the path.
-  TextClassifierOptions options = {
+  MpTextClassifierOptions options = {
       .base_options = {.model_asset_path = nullptr},
       .classifier_options = {},
   };

@@ -270,7 +270,8 @@ absl::Status TensorsToDetectionsCalculator::UpdateContract(
     MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(
         cc, /*request_gpu_as_optional=*/true));
 #elif MEDIAPIPE_METAL_ENABLED
-    MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
+    MP_RETURN_IF_ERROR(
+        [MPPMetalHelper updateContract:cc requestGpuAsOptional:true]);
 #endif  // !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
   }
 

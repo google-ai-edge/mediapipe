@@ -22,7 +22,7 @@ import immutabledict
 from mediapipe.tasks.python.components.containers import category as category_lib
 from mediapipe.tasks.python.components.containers import category_c as category_c_lib
 
-_CATEGORY_WITH_NAMES = category_c_lib.CategoryC(
+_CATEGORY_WITH_NAMES = category_c_lib.MpCategoryC(
     index=1,
     score=0.9,
     category_name=b'test_category_with_names',
@@ -34,7 +34,7 @@ _DICT_WITH_NAMES = immutabledict.immutabledict({
     'category_name': 'test_category_with_names',
     'display_name': 'Test Category 1',
 })
-_CATEGORY_WITHOUT_NAMES = category_c_lib.CategoryC(
+_CATEGORY_WITHOUT_NAMES = category_c_lib.MpCategoryC(
     index=2,
     score=0.8,
     category_name=None,
@@ -69,7 +69,7 @@ class CategoryTest(absltest.TestCase):
     self._expect_category_equal(actual_category, _DICT_WITHOUT_NAMES)
 
   def test_create_category_from_ctypes_with_unknown_index(self):
-    values = category_c_lib.CategoryC(
+    values = category_c_lib.MpCategoryC(
         index=-1,
         score=0.8,
         category_name=None,
@@ -85,10 +85,10 @@ class CategoryTest(absltest.TestCase):
     })
 
   def test_create_categories_from_ctypes(self):
-    c_categories = (category_c_lib.CategoryC * 2)(
+    c_categories = (category_c_lib.MpCategoryC * 2)(
         _CATEGORY_WITH_NAMES, _CATEGORY_WITHOUT_NAMES
     )
-    c_categories_ptr = category_c_lib.CategoriesC(
+    c_categories_ptr = category_c_lib.MpCategoriesC(
         categories=c_categories,
         categories_count=2,
     )

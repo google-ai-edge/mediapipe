@@ -46,7 +46,7 @@ class GestureRecognizerResult:
   @classmethod
   @doc_controls.do_not_generate_docs
   def from_ctypes(
-      cls, c_result: gesture_recognizer_result_c.GestureRecognizerResultC
+      cls, c_result: gesture_recognizer_result_c.MpGestureRecognizerResultC
   ) -> "GestureRecognizerResult":
     """Creates a `GestureRecognizerResult` object from the given ctypes struct."""
     gestures = []

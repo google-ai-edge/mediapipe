@@ -131,9 +131,9 @@ py_library(
 )
 
 py_library(
-    name = "interactive_segmenter",
+    name = "interactive_segmenter_legacy",
     srcs = [
-        "interactive_segmenter.py",
+        "interactive_segmenter_legacy.py",
     ],
     deps = [
         ":image_segmenter",

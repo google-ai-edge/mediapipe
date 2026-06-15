@@ -122,7 +122,7 @@ absl::Status GlSurfaceSinkCalculator::Open(CalculatorContext* cc) {
 
 absl::Status GlSurfaceSinkCalculator::Process(CalculatorContext* cc) {
   return helper_.RunInGlContext([this, &cc]() -> absl::Status {
-    absl::MutexLock lock(&surface_holder_->mutex);
+    absl::MutexLock lock(surface_holder_->mutex);
     EGLSurface surface = surface_holder_->surface;
     if (surface == EGL_NO_SURFACE) {
       ABSL_LOG_EVERY_N(INFO, 300) << "GlSurfaceSinkCalculator: no surface";

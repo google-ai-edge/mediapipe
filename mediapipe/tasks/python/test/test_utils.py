@@ -17,11 +17,11 @@ import difflib
 import os
 
 from absl import flags
-import six
-
 from google.protobuf import descriptor
 from google.protobuf import descriptor_pool
 from google.protobuf import text_format
+import six
+
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import image_frame as image_frame_module
 

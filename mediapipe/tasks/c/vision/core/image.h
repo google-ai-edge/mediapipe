@@ -31,10 +31,10 @@ extern "C" {
 #endif
 
 // Supported processing modes.
-enum RunningMode {
-  IMAGE = 1,
-  VIDEO = 2,
-  LIVE_STREAM = 3,
+enum MpRunningMode {
+  MP_RUNNING_MODE_IMAGE = 1,
+  MP_RUNNING_MODE_VIDEO = 2,
+  MP_RUNNING_MODE_LIVE_STREAM = 3,
 };
 
 // An enum describing supported raw image formats.

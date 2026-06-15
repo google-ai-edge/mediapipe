@@ -21,9 +21,9 @@ limitations under the License.
 
 namespace mediapipe::tasks::c::components::containers {
 
-void CppConvertToMatrix(const Eigen::MatrixXf& in, ::Matrix* out);
+void CppConvertToMatrix(const Eigen::MatrixXf& in, MpMatrix* out);
 
-void CppCloseMatrix(::Matrix* m);
+void CppCloseMatrix(MpMatrix* m);
 
 }  // namespace mediapipe::tasks::c::components::containers
 

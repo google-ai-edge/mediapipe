@@ -29,9 +29,9 @@ using ::absl::StrFormat;
 
 namespace tf = ::tensorflow;
 
-Detection TensorToDetection(
-    float box_ymin, float box_xmin, float box_ymax, float box_xmax,
-    const float score, const absl::variant<int, std::string>& class_label) {
+Detection TensorToDetection(float box_ymin, float box_xmin, float box_ymax,
+                            float box_xmax, const float score,
+                            const std::variant<int, std::string>& class_label) {
   Detection detection;
   detection.add_score(score);
 

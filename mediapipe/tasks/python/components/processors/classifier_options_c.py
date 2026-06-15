@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""C types for ClassifierOptions."""
+"""C types for MpClassifierOptions."""
 
 import ctypes
 
 import mediapipe.tasks.python.components.processors.classifier_options as classifier_options_module
 
 
-class ClassifierOptionsC(ctypes.Structure):
+class MpClassifierOptionsC(ctypes.Structure):
   _fields_ = [
       ("display_names_locale", ctypes.c_char_p),
       ("max_results", ctypes.c_int),
@@ -33,9 +33,9 @@ class ClassifierOptionsC(ctypes.Structure):
 
 def convert_to_classifier_options_c(
     src: classifier_options_module.ClassifierOptions,
-) -> ClassifierOptionsC:
-  """Converts a Python ClassifierOptions object to a ClassifierOptionsC object."""
-  options = ClassifierOptionsC()
+) -> MpClassifierOptionsC:
+  """Converts a Python ClassifierOptions object to a MpClassifierOptionsC object."""
+  options = MpClassifierOptionsC()
 
   if src.display_names_locale is not None:
     options.display_names_locale = src.display_names_locale.encode("utf-8")

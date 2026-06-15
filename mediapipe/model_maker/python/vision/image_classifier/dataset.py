@@ -19,6 +19,7 @@ import os
 import random
 from typing import List, Optional
 
+from google.protobuf import text_format
 import tensorflow as tf
 
 from mediapipe.model_maker.python.core.data import classification_dataset

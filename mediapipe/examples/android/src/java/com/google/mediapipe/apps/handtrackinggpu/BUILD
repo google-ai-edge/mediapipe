@@ -60,7 +60,6 @@ android_binary(
         "converterNumBuffers": "2",
         # "modelComplexity": "0" # 0=lite, 1=heavy, not specified=heavy
     },
-    multidex = "native",
     deps = [
         ":mediapipe_jni_lib",
         "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:basic_lib",

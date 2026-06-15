@@ -29,6 +29,8 @@ public class TextEmbedderTest {
   private static final String BERT_MODEL_FILE = "mobilebert_embedding_with_metadata.tflite";
   private static final String REGEX_MODEL_FILE = "regex_one_embedding_with_metadata.tflite";
   private static final String USE_MODEL_FILE = "universal_sentence_encoder_qa_with_metadata.tflite";
+  private static final String GECKO_MODEL_FILE = "gecko.task";
+  private static final String EMBEDDING_GEMMA_MODEL_FILE = "embedding_gemma.task";
 
   private static final double DOUBLE_DIFF_TOLERANCE = 0.05;
   private static final float FLOAT_DIFF_TOLERANCE = 0.05f;
@@ -51,13 +53,13 @@ public class TextEmbedderTest {
         TextEmbedder.createFromFile(ApplicationProvider.getApplicationContext(), BERT_MODEL_FILE);
 
     TextEmbedderResult result0 = textEmbedder.embed("it's a charming and often affecting journey");
-    assertThat(result0.embeddingResult().embeddings().size()).isEqualTo(1);
+    assertThat(result0.embeddingResult().embeddings()).hasSize(1);
     assertThat(result0.embeddingResult().embeddings().get(0).floatEmbedding()).hasLength(512);
     assertThat(result0.embeddingResult().embeddings().get(0).floatEmbedding()[0])
         .isWithin(FLOAT_DIFF_TOLERANCE)
         .of(21.17f);
     TextEmbedderResult result1 = textEmbedder.embed("what a great and fantastic trip");
-    assertThat(result1.embeddingResult().embeddings().size()).isEqualTo(1);
+    assertThat(result1.embeddingResult().embeddings()).hasSize(1);
     assertThat(result1.embeddingResult().embeddings().get(0).floatEmbedding()).hasLength(512);
     assertThat(result1.embeddingResult().embeddings().get(0).floatEmbedding()[0])
         .isWithin(FLOAT_DIFF_TOLERANCE)
@@ -77,13 +79,13 @@ public class TextEmbedderTest {
         TextEmbedder.createFromFile(ApplicationProvider.getApplicationContext(), USE_MODEL_FILE);
 
     TextEmbedderResult result0 = textEmbedder.embed("it's a charming and often affecting journey");
-    assertThat(result0.embeddingResult().embeddings().size()).isEqualTo(1);
+    assertThat(result0.embeddingResult().embeddings()).hasSize(1);
     assertThat(result0.embeddingResult().embeddings().get(0).floatEmbedding()).hasLength(100);
     assertThat(result0.embeddingResult().embeddings().get(0).floatEmbedding()[0])
         .isWithin(FLOAT_DIFF_TOLERANCE)
         .of(1.42f);
     TextEmbedderResult result1 = textEmbedder.embed("what a great and fantastic trip");
-    assertThat(result1.embeddingResult().embeddings().size()).isEqualTo(1);
+    assertThat(result1.embeddingResult().embeddings()).hasSize(1);
     assertThat(result1.embeddingResult().embeddings().get(0).floatEmbedding()).hasLength(100);
     assertThat(result1.embeddingResult().embeddings().get(0).floatEmbedding()[0])
         .isWithin(FLOAT_DIFF_TOLERANCE)
@@ -103,13 +105,13 @@ public class TextEmbedderTest {
         TextEmbedder.createFromFile(ApplicationProvider.getApplicationContext(), REGEX_MODEL_FILE);
 
     TextEmbedderResult result0 = textEmbedder.embed("it's a charming and often affecting journey");
-    assertThat(result0.embeddingResult().embeddings().size()).isEqualTo(1);
+    assertThat(result0.embeddingResult().embeddings()).hasSize(1);
     assertThat(result0.embeddingResult().embeddings().get(0).floatEmbedding()).hasLength(16);
     assertThat(result0.embeddingResult().embeddings().get(0).floatEmbedding()[0])
         .isWithin(FLOAT_DIFF_TOLERANCE)
         .of(0.03f);
     TextEmbedderResult result1 = textEmbedder.embed("what a great and fantastic trip");
-    assertThat(result1.embeddingResult().embeddings().size()).isEqualTo(1);
+    assertThat(result1.embeddingResult().embeddings()).hasSize(1);
     assertThat(result1.embeddingResult().embeddings().get(0).floatEmbedding()).hasLength(16);
     assertThat(result1.embeddingResult().embeddings().get(0).floatEmbedding()[0])
         .isWithin(FLOAT_DIFF_TOLERANCE)
@@ -161,5 +163,59 @@ public class TextEmbedderTest {
             result0.embeddingResult().embeddings().get(0),
             result1.embeddingResult().embeddings().get(0));
     assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.78);
+  }
+
+  @Test
+  public void embed_succeedsWithGecko() throws Exception {
+    TextEmbedder textEmbedder =
+        TextEmbedder.createFromFile(ApplicationProvider.getApplicationContext(), GECKO_MODEL_FILE);
+
+    TextEmbedder.TextFormatContext context =
+        TextEmbedder.TextFormatContext.builder()
+            .setTaskType(TextEmbedder.EmbeddingType.RETRIEVAL_QUERY)
+            .setRole(TextEmbedder.TextRole.QUERY)
+            .build();
+
+    TextEmbedderResult result0 =
+        textEmbedder.embed("it's a charming and often affecting journey", context);
+    assertThat(result0.embeddingResult().embeddings()).hasSize(1);
+    assertThat(result0.embeddingResult().embeddings().get(0).floatEmbedding()).hasLength(768);
+    TextEmbedderResult result1 = textEmbedder.embed("what a great and fantastic trip", context);
+    assertThat(result1.embeddingResult().embeddings()).hasSize(1);
+    assertThat(result1.embeddingResult().embeddings().get(0).floatEmbedding()).hasLength(768);
+
+    // Check cosine similarity.
+    double similarity =
+        TextEmbedder.cosineSimilarity(
+            result0.embeddingResult().embeddings().get(0),
+            result1.embeddingResult().embeddings().get(0));
+    assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.78);
+  }
+
+  @Test
+  public void embed_succeedsWithEmbeddingGemma() throws Exception {
+    TextEmbedder textEmbedder =
+        TextEmbedder.createFromFile(
+            ApplicationProvider.getApplicationContext(), EMBEDDING_GEMMA_MODEL_FILE);
+
+    TextEmbedder.TextFormatContext context =
+        TextEmbedder.TextFormatContext.builder()
+            .setTaskType(TextEmbedder.EmbeddingType.RETRIEVAL_QUERY)
+            .setRole(TextEmbedder.TextRole.QUERY)
+            .build();
+
+    TextEmbedderResult result0 =
+        textEmbedder.embed("it's a charming and often affecting journey", context);
+    assertThat(result0.embeddingResult().embeddings()).hasSize(1);
+    assertThat(result0.embeddingResult().embeddings().get(0).floatEmbedding()).hasLength(768);
+    TextEmbedderResult result1 = textEmbedder.embed("what a great and fantastic trip", context);
+    assertThat(result1.embeddingResult().embeddings()).hasSize(1);
+    assertThat(result1.embeddingResult().embeddings().get(0).floatEmbedding()).hasLength(768);
+    // Check cosine similarity.
+    double similarity =
+        TextEmbedder.cosineSimilarity(
+            result0.embeddingResult().embeddings().get(0),
+            result1.embeddingResult().embeddings().get(0));
+    assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.52);
   }
 }

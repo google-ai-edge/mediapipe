@@ -18,6 +18,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <limits>
 #include <memory>
@@ -36,6 +37,8 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
@@ -354,11 +357,8 @@ std::unique_ptr<ImageFrame> LoadTestPng(absl::string_view path,
   return nullptr;
 }
 
-// Write an ImageFrame as PNG to the test undeclared outputs directory.
-// The image's name will contain the given prefix and a timestamp.
-// Returns the path to the output if successful.
-absl::StatusOr<std::string> SavePngTestOutput(
-    const mediapipe::ImageFrame& image, absl::string_view prefix) {
+absl::Status SavePngOutput(const mediapipe::ImageFrame& image,
+                           absl::string_view path) {
   absl::flat_hash_set<ImageFormat::Format> supported_formats = {
       ImageFormat::GRAY8, ImageFormat::SRGB, ImageFormat::SRGBA,
       ImageFormat::LAB8, ImageFormat::SBGRA};
@@ -366,15 +366,24 @@ absl::StatusOr<std::string> SavePngTestOutput(
     return absl::CancelledError(
         absl::StrFormat("Format %d can not be saved to PNG.", image.Format()));
   }
+  RET_CHECK(stbi_write_png(path.data(), image.Width(), image.Height(),
+                           image.NumberOfChannels(), image.PixelData(),
+                           image.WidthStep()))
+      << " path: " << path;
+  return absl::OkStatus();
+}
+
+// Write an ImageFrame as PNG to the test undeclared outputs directory.
+// The image's name will contain the given prefix and a timestamp.
+// Returns the path to the output if successful.
+absl::StatusOr<std::string> SavePngTestOutput(
+    const mediapipe::ImageFrame& image, absl::string_view prefix) {
   std::string now_string = absl::FormatTime(absl::Now());
   std::string output_relative_path =
       absl::StrCat(prefix, "_", now_string, ".png");
   std::string output_full_path =
       file::JoinPath(GetTestOutputsDir(), output_relative_path);
-  RET_CHECK(stbi_write_png(output_full_path.c_str(), image.Width(),
-                           image.Height(), image.NumberOfChannels(),
-                           image.PixelData(), image.WidthStep()))
-      << " path: " << output_full_path;
+  MP_RETURN_IF_ERROR(SavePngOutput(image, output_full_path));
   return output_relative_path;
 }
 

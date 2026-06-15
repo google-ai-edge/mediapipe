@@ -277,8 +277,10 @@ ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
       return ImageFormat::GRAY8;
     case GpuBufferFormat::kBiPlanar420YpCbCr8VideoRange:
     case GpuBufferFormat::kBiPlanar420YpCbCr8FullRange:
-      // TODO: should either of these be YCBCR420P10?
       return ImageFormat::YCBCR420P;
+    case GpuBufferFormat::kBiPlanar420YpCbCr10VideoRange:
+    case GpuBufferFormat::kBiPlanar420YpCbCr10FullRange:
+      return ImageFormat::YCBCR420P10;
     case GpuBufferFormat::kRGB24:
       return ImageFormat::SRGB;
     case GpuBufferFormat::kTwoComponentFloat32:
@@ -320,6 +322,9 @@ GpuBufferFormat GpuBufferFormatForImageFormat(ImageFormat::Format format) {
     case ImageFormat::YCBCR420P:
       // TODO: or video range?
       return GpuBufferFormat::kBiPlanar420YpCbCr8FullRange;
+    case ImageFormat::YCBCR420P10:
+      // TODO: or video range?
+      return GpuBufferFormat::kBiPlanar420YpCbCr10FullRange;
     case ImageFormat::UNKNOWN:
     default:
       return GpuBufferFormat::kUnknown;

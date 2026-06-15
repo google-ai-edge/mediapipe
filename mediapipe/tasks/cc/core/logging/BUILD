@@ -13,15 +13,24 @@
 # limitations under the License.
 
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
+package(default_visibility = ["//mediapipe/tasks:internal"])
 
 cc_library(
     name = "tasks_dummy_logger",
     hdrs = ["tasks_dummy_logger.h"],
-    deps = [":tasks_logger"],
+    deps = [
+        ":tasks_logger",
+        "//mediapipe/framework:timestamp",
+    ],
 )
 
 cc_library(
     name = "tasks_logger",
     hdrs = ["tasks_logger.h"],
+    deps = [
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/tasks/cc/core:host_environment",
+        "//mediapipe/tasks/cc/core:running_mode",
+    ],
 )

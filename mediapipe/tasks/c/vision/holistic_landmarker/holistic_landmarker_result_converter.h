@@ -24,9 +24,9 @@ namespace mediapipe::tasks::c::vision::holistic_landmarker {
 void CppConvertToHolisticLandmarkerResult(
     const mediapipe::tasks::vision::holistic_landmarker::
         HolisticLandmarkerResult& in,
-    HolisticLandmarkerResult* out);
+    MpHolisticLandmarkerResult* out);
 
-void CppCloseHolisticLandmarkerResult(HolisticLandmarkerResult* result);
+void CppCloseHolisticLandmarkerResult(MpHolisticLandmarkerResult* result);
 
 }  // namespace mediapipe::tasks::c::vision::holistic_landmarker
 

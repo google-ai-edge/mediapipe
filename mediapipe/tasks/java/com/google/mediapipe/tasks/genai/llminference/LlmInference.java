@@ -11,7 +11,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-/** LlmInference Task Java API */
+/**
+ * LlmInference Task Java API.
+ *
+ * @deprecated Migrate to LiteRT LM instead. For more details, refer to LiteRT LM on GitHub:
+ *     https://github.com/google-ai-edge/LiteRT-LM
+ */
+@Deprecated
 public class LlmInference implements AutoCloseable {
   /** The backend to use for inference. */
   public enum Backend {

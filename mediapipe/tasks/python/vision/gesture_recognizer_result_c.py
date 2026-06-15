@@ -19,22 +19,22 @@ from mediapipe.tasks.python.components.containers import category_c
 from mediapipe.tasks.python.components.containers import landmark_c
 
 
-class GestureRecognizerResultC(ctypes.Structure):
+class MpGestureRecognizerResultC(ctypes.Structure):
   """The gesture recognition result from GestureRecognizer in C API."""
 
   _fields_ = [
-      ("gestures", ctypes.POINTER(category_c.CategoriesC)),
+      ("gestures", ctypes.POINTER(category_c.MpCategoriesC)),
       ("gestures_count", ctypes.c_uint32),
-      ("handedness", ctypes.POINTER(category_c.CategoriesC)),
+      ("handedness", ctypes.POINTER(category_c.MpCategoriesC)),
       ("handedness_count", ctypes.c_uint32),
       (
           "hand_landmarks",
-          ctypes.POINTER(landmark_c.NormalizedLandmarksC),
+          ctypes.POINTER(landmark_c.MpNormalizedLandmarksC),
       ),
       ("hand_landmarks_count", ctypes.c_uint32),
       (
           "hand_world_landmarks",
-          ctypes.POINTER(landmark_c.LandmarksC),
+          ctypes.POINTER(landmark_c.MpLandmarksC),
       ),
       ("hand_world_landmarks_count", ctypes.c_uint32),
   ]

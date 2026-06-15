@@ -35,11 +35,9 @@
 #include <vector>
 
 #include "absl/base/attributes.h"
-#include "absl/base/macros.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "mediapipe/framework/calculator_base.h"
-#include "mediapipe/framework/packet_type.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 
@@ -134,6 +132,17 @@ void AddMultiStreamCallback(
     std::function<void(const std::vector<Packet>&)> callback,
     CalculatorGraphConfig* config, std::map<std::string, Packet>* side_packets,
     bool observe_timestamp_bounds = false);
+
+using PacketMap = absl::flat_hash_map<std::string, Packet>;
+
+// Same as above, but returns a map of stream name to packet. When the callback
+// is called, all stream names are guaranteed to be represent in the map, though
+// some of them can be empty packets.
+void AddMultiStreamCallback(const std::vector<std::string>& streams,
+                            std::function<void(PacketMap)> callback,
+                            CalculatorGraphConfig* config,
+                            std::map<std::string, Packet>* side_packets,
+                            bool observe_timestamp_bounds = false);
 
 // Add a CallbackWithHeaderCalculator to intercept packets sent on
 // stream stream_name, and the header packet on stream stream_header.

@@ -2,7 +2,13 @@ package com.google.mediapipe.tasks.genai.llminference;
 
 import com.google.auto.value.AutoValue;
 
-/** Configuration for the inference graph. */
+/**
+ * Configuration for the inference graph.
+ *
+ * @deprecated Migrate to LiteRT LM instead. For more details, refer to LiteRT LM on GitHub:
+ *     https://github.com/google-ai-edge/LiteRT-LM
+ */
+@Deprecated
 @AutoValue
 public abstract class GraphOptions {
 

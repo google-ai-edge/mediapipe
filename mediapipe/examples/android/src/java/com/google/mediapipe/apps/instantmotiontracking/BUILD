@@ -95,7 +95,6 @@ android_binary(
         "flipFramesVertically": "True",
         "converterNumBuffers": "2",
     },
-    multidex = "native",
     deps = [
         ":instantmotiontracking_lib",
         ":mediapipe_jni_lib",

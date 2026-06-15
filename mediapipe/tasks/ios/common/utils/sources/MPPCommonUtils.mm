@@ -138,4 +138,18 @@ using absl::StatusCode;
   return NO;
 }
 
++ (NSString *)appID {
+  return [[NSBundle mainBundle] bundleIdentifier];
+}
+
++ (NSString *)appVersion {
+  return [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+}
+
++ (NSString *)osVersion {
+  NSOperatingSystemVersion osVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
+  return [NSString stringWithFormat:@"%ld.%ld.%ld", (long)osVersion.majorVersion,
+                                    (long)osVersion.minorVersion, (long)osVersion.patchVersion];
+}
+
 @end

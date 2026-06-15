@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Placeholder for internal Python strict binary and library compatibility macro.
-# Placeholder for internal Python strict test compatibility macro.
+# Placeholder: load py_test
 
 package(default_visibility = [
     "//learning/tfx/autotfx:__subpackages__",

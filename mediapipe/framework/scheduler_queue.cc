@@ -87,7 +87,7 @@ bool SchedulerQueue::Item::operator<(const SchedulerQueue::Item& that) const {
 }
 
 void SchedulerQueue::Reset() {
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   num_pending_tasks_ = 0;
   num_tasks_to_add_ = 0;
   running_count_ = 0;
@@ -102,7 +102,7 @@ bool SchedulerQueue::IsIdle() {
 }
 
 void SchedulerQueue::SetRunning(bool running) {
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   running_count_ += running ? 1 : -1;
   ABSL_DCHECK_LE(running_count_, 1);
 }
@@ -135,7 +135,7 @@ void SchedulerQueue::AddItemToQueue(Item item) {
   bool was_idle;
   int tasks_to_add = 0;
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     was_idle = IsIdle();
     queue_.push(std::move(item));
     ++num_tasks_to_add_;
@@ -175,7 +175,7 @@ void SchedulerQueue::SubmitWaitingTasksToExecutor() {
   // such waiting tasks, and submit them.
   int tasks_to_add = 0;
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     if (running_count_ > 0) {
       tasks_to_add = GetTasksToSubmitToExecutor();
     }
@@ -191,7 +191,7 @@ void SchedulerQueue::RunNextTask() {
   CalculatorContext* calculator_context;
   bool is_open_node;
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
 
     ABSL_CHECK(!queue_.empty())
         << "Called RunNextTask when the queue is empty. "
@@ -222,7 +222,7 @@ void SchedulerQueue::RunNextTask() {
 
   bool is_idle;
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     ABSL_DCHECK_GT(num_pending_tasks_, 0);
     --num_pending_tasks_;
     is_idle = IsIdle();
@@ -306,7 +306,7 @@ void SchedulerQueue::OpenCalculatorNode(CalculatorNode* node) {
 void SchedulerQueue::CleanupAfterRun() {
   bool was_idle;
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     was_idle = IsIdle();
     ABSL_CHECK_EQ(num_pending_tasks_, 0);
     ABSL_CHECK_EQ(num_tasks_to_add_, queue_.size());

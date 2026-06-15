@@ -23,9 +23,9 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToHandLandmarkerResult(
     const mediapipe::tasks::vision::hand_landmarker::HandLandmarkerResult& in,
-    HandLandmarkerResult* out);
+    MpHandLandmarkerResult* out);
 
-void CppCloseHandLandmarkerResult(HandLandmarkerResult* result);
+void CppCloseHandLandmarkerResult(MpHandLandmarkerResult* result);
 
 }  // namespace mediapipe::tasks::c::components::containers
 

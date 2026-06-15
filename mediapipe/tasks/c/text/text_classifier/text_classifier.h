@@ -34,17 +34,17 @@ extern "C" {
 #endif
 
 typedef struct MpTextClassifierInternal* MpTextClassifierPtr;
-typedef struct ClassificationResult TextClassifierResult;
+typedef struct MpClassificationResult MpTextClassifierResult;
 
 // The options for configuring a MediaPipe text classifier task.
-struct TextClassifierOptions {
+struct MpTextClassifierOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
-  struct BaseOptions base_options;
+  struct MpBaseOptions base_options;
 
   // Options for configuring the classifier behavior, such as score threshold,
   // number of results, etc.
-  struct ClassifierOptions classifier_options;
+  struct MpClassifierOptions classifier_options;
 };
 
 // Creates a TextClassifier from the provided `options`.
@@ -53,24 +53,24 @@ struct TextClassifierOptions {
 // To obtain a detailed error, error_msg must be non-null pointer to a char*,
 // which will be populated with a newly-allocated error message upon failure.
 // It's the caller responsibility to free the error message with MpErrorFree().
-MP_EXPORT MpStatus MpTextClassifierCreate(struct TextClassifierOptions* options,
-                                          MpTextClassifierPtr* classifier,
-                                          char** error_msg);
+MP_EXPORT MpStatus
+MpTextClassifierCreate(struct MpTextClassifierOptions* options,
+                       MpTextClassifierPtr* classifier, char** error_msg);
 
 // Performs classification on the input `utf8_str`.
 // If successful, returns `kMpOk` and sets `*result` to the new
-// `TextClassifierResult`.
+// `MpTextClassifierResult`.
 // To obtain a detailed error, error_msg must be non-null pointer to a char*,
 // which will be populated with a newly-allocated error message upon failure.
 // It's the caller responsibility to free the error message with MpErrorFree().
 MP_EXPORT MpStatus MpTextClassifierClassify(MpTextClassifierPtr classifier,
                                             const char* utf8_str,
-                                            TextClassifierResult* result,
+                                            MpTextClassifierResult* result,
                                             char** error_msg);
 
-// Frees the memory allocated inside a TextClassifierResult result. Does not
+// Frees the memory allocated inside a MpTextClassifierResult result. Does not
 // free the result pointer itself.
-MP_EXPORT void MpTextClassifierCloseResult(TextClassifierResult* result);
+MP_EXPORT void MpTextClassifierCloseResult(MpTextClassifierResult* result);
 
 // Shuts down the TextClassifier when all the work is done. Frees all memory.
 //

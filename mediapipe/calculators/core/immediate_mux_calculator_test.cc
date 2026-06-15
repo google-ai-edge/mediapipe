@@ -442,12 +442,12 @@ TEST_F(ImmediateMuxCalculatorTest, Demux) {
   std::vector<Packet> out_packets;
   absl::Mutex out_mutex;
   auto out_cb = [&](const Packet& p) {
-    absl::MutexLock lock(&out_mutex);
+    absl::MutexLock lock(out_mutex);
     out_packets.push_back(p);
     return absl::OkStatus();
   };
   auto wait_for = [&](std::function<bool()> cond) {
-    absl::MutexLock lock(&out_mutex);
+    absl::MutexLock lock(out_mutex);
     out_mutex.Await(absl::Condition(&cond));
   };
   SetUpDemuxGraph();

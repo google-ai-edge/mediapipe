@@ -33,7 +33,7 @@ class BoundingBoxTest(absltest.TestCase):
     self.assertDictAlmostEqual(actual_values, expected_values)
 
   def test_create_bounding_box_from_ctypes_converts_values(self):
-    c_rect = rect_c_lib.RectC(left=10, top=20, right=50, bottom=70)
+    c_rect = rect_c_lib.MpRectC(left=10, top=20, right=50, bottom=70)
 
     actual_bounding_box = bounding_box_lib.BoundingBox.from_ctypes(c_rect)
 

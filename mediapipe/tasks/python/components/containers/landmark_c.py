@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""C types for Landmark."""
+"""C types for MpLandmark."""
 
 import ctypes
 
 
-class LandmarkC(ctypes.Structure):
-  """The ctypes struct for Landmark."""
+class MpLandmarkC(ctypes.Structure):
+  """The ctypes struct for MpLandmark."""
 
   _fields_ = [
       ('x', ctypes.c_float),
@@ -32,17 +32,17 @@ class LandmarkC(ctypes.Structure):
   ]
 
 
-class LandmarksC(ctypes.Structure):
-  """The ctypes struct for a list of Landmarks."""
+class MpLandmarksC(ctypes.Structure):
+  """The ctypes struct for a list of MpLandmarks."""
 
   _fields_ = [
-      ('landmarks', ctypes.POINTER(LandmarkC)),
+      ('landmarks', ctypes.POINTER(MpLandmarkC)),
       ('landmarks_count', ctypes.c_uint32),
   ]
 
 
-class NormalizedLandmarkC(ctypes.Structure):
-  """The ctypes struct for NormalizedLandmark."""
+class MpNormalizedLandmarkC(ctypes.Structure):
+  """The ctypes struct for MpNormalizedLandmark."""
 
   _fields_ = [
       ('x', ctypes.c_float),
@@ -56,10 +56,10 @@ class NormalizedLandmarkC(ctypes.Structure):
   ]
 
 
-class NormalizedLandmarksC(ctypes.Structure):
-  """The ctypes struct for a list of NormalizedLandmarks."""
+class MpNormalizedLandmarksC(ctypes.Structure):
+  """The ctypes struct for a list of MpNormalizedLandmarks."""
 
   _fields_ = [
-      ('landmarks', ctypes.POINTER(NormalizedLandmarkC)),
+      ('landmarks', ctypes.POINTER(MpNormalizedLandmarkC)),
       ('landmarks_count', ctypes.c_uint32),
   ]

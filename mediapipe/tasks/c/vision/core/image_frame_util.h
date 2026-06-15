@@ -53,7 +53,7 @@ std::unique_ptr<ImageFrame> CreateImageFrame(
         static_cast<uint8_t*>(data), ImageFrame::PixelDataDeleter::kNone);
     auto image_frame_copy = absl::make_unique<ImageFrame>();
     // Set alignment_boundary to kGlDefaultAlignmentBoundary so that both
-    // GPU and CPU can process it.
+    // MP_DELEGATE_GPU and MP_DELEGATE_CPU can process it.
     image_frame_copy->CopyFrom(*image_frame,
                                ImageFrame::kGlDefaultAlignmentBoundary);
     return image_frame_copy;

@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_jni_binary")
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_build_aar")
 
 licenses(["notice"])
 
@@ -23,8 +22,8 @@ android_library(
     name = "core",
     exports = [
         ":core_java",
-        ":libmediapipe_tasks_vision_jni_lib",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:libmediapipe_tasks_jni_lib",
     ],
 )
 
@@ -48,33 +47,18 @@ filegroup(
     visibility = ["//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:__subpackages__"],
 )
 
-cc_library(
-    name = "mediapipe_tasks_vision_oss_deps",
-    deps = [
-        "//mediapipe/calculators/core:flow_limiter_calculator",
-        "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
-        "//mediapipe/tasks/cc/vision/face_detector:face_detector_graph",
-        "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_graph",
-        "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_graph",
-        "//mediapipe/tasks/cc/vision/holistic_landmarker:holistic_landmarker_graph",
-        "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
-        "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
-        "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
-        "//mediapipe/tasks/cc/vision/interactive_segmenter:interactive_segmenter_graph",
-        "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
-        "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
+android_library(
+    name = "objectdetector",
+    manifest = "objectdetector/AndroidManifest.xml",
+    exports = [
+        ":core",
+        ":objectdetector_java",
     ],
-)
-
-# The native library of all 3P MediaPipe vision tasks.
-mediapipe_jni_binary(
-    name = "mediapipe_tasks_vision_jni",
-    deps = [":mediapipe_tasks_vision_oss_deps"],
+    deps = ["@maven//:com_google_guava_guava"],
 )
 
 android_library(
-    name = "objectdetector",
+    name = "objectdetector_java",
     srcs = [
         "objectdetector/ObjectDetectionResult.java",
         "objectdetector/ObjectDetector.java",
@@ -82,7 +66,7 @@ android_library(
     ],
     manifest = "objectdetector/AndroidManifest.xml",
     deps = [
-        ":core",
+        ":core_java",
         "//mediapipe/framework:calculator_options_java_proto_lite",
         "//mediapipe/framework/formats:detection_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
@@ -90,7 +74,7 @@ android_library(
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:detection",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -113,7 +97,6 @@ android_library(
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_classifier/proto:image_classifier_graph_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -133,7 +116,6 @@ android_library(
         "//mediapipe/framework/formats:landmark_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/framework/image",
-        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_java_proto_lite",
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_classifier_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_recognizer_graph_options_java_proto_lite",
@@ -145,7 +127,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:landmark",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:classifieroptions",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -172,7 +153,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:connection",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:landmark",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -202,7 +182,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:connection",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:landmark",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",
@@ -215,7 +194,6 @@ android_library(
     exports = [
         ":core",
         ":imagesegmenter_java",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
     ],
     deps = ["@maven//:com_google_guava_guava"],
 )
@@ -229,6 +207,7 @@ android_library(
     manifest = "imagesegmenter/AndroidManifest.xml",
     deps = [
         ":core_java",
+        "//mediapipe/framework:calculator_java_proto_lite",
         "//mediapipe/framework:calculator_options_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
         "//mediapipe/java/com/google/mediapipe/framework/image",
@@ -250,12 +229,12 @@ filegroup(
 )
 
 android_library(
-    name = "interactivesegmenter",
+    name = "interactivesegmenterlegacy",
     srcs = [
         "imagesegmenter/ImageSegmenterResult.java",
-        "interactivesegmenter/InteractiveSegmenter.java",
+        "interactivesegmenterlegacy/InteractiveSegmenterLegacy.java",
     ],
-    manifest = "interactivesegmenter/AndroidManifest.xml",
+    manifest = "interactivesegmenterlegacy/AndroidManifest.xml",
     deps = [
         ":core",
         "//mediapipe/framework:calculator_java_proto_lite",
@@ -266,10 +245,8 @@ android_library(
         "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_java_proto_lite",
-        "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto:region_of_interest_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalizedkeypoint",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
-        "//mediapipe/util:color_java_proto_lite",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -294,7 +271,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embedding",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embeddingresult",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -316,7 +292,6 @@ android_library(
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:detection",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -346,7 +321,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:connection",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -382,7 +356,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:landmark",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:any_java_proto",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
@@ -405,7 +378,6 @@ android_library(
     ),
     manifest = "AndroidManifest.xml",
     deps = [
-        ":libmediapipe_tasks_vision_jni_lib",
         "//mediapipe/framework:calculator_java_proto_lite",
         "//mediapipe/framework:calculator_options_java_proto_lite",
         "//mediapipe/framework/formats:classification_java_proto_lite",
@@ -436,7 +408,7 @@ android_library(
         "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_java_proto_lite",
-        "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto:region_of_interest_java_proto_lite",
         "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/pose_detector/proto:pose_detector_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/pose_landmarker/proto:pose_landmarker_graph_options_java_proto_lite",
@@ -461,7 +433,7 @@ android_library(
     ] + OPENCV_DEPS,
 )
 
-mediapipe_build_aar_with_jni(
+mediapipe_build_aar(
     name = "tasks_vision",
     android_library = ":tasks_vision_aar_library",
 )

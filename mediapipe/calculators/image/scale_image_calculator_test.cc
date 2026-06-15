@@ -187,5 +187,29 @@ TEST(ScaleImageCalculatorTest, ScaleRgbToRgb) {
   EXPECT_EQ(output_frame.Height(), 720);
 }
 
+void ExpectEmptyImageFails(int width, int height) {
+  auto calculator_node = GetTestingGraphNode();
+  mediapipe::CalculatorRunner runner(calculator_node);
+
+  mediapipe::ImageFrame input_frame(mediapipe::ImageFormat::SRGB, width, height,
+                                    1);
+  auto input_frame_packet =
+      mediapipe::MakePacket<mediapipe::ImageFrame>(std::move(input_frame));
+  runner.MutableInputs()->Index(0).packets.push_back(
+      input_frame_packet.At(mediapipe::Timestamp(1)));
+  ASSERT_THAT(runner.Run(), StatusIs(absl::StatusCode::kInvalidArgument,
+                                     HasSubstr("Input image frame is empty.")));
+}
+
+TEST(ScaleImageCalculatorTest, ScaleEmptyImage) { ExpectEmptyImageFails(0, 0); }
+
+TEST(ScaleImageCalculatorTest, ScaleImageWithZeroWidth) {
+  ExpectEmptyImageFails(0, 100);
+}
+
+TEST(ScaleImageCalculatorTest, ScaleImageWithZeroHeight) {
+  ExpectEmptyImageFails(100, 0);
+}
+
 }  // namespace
 }  // namespace mediapipe

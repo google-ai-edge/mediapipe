@@ -14,6 +14,8 @@
 #
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
+
+# Placeholder: load py_binary
 load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
@@ -324,6 +326,41 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@com_google_sentencepiece//:sentencepiece_processor",  # fixdeps: keep
     ],
+)
+
+mediapipe_proto_library(
+    name = "gecko_preprocessor_calculator_proto",
+    srcs = ["gecko_preprocessor_calculator.proto"],
+    deps = [
+        "//mediapipe/tasks/cc/core/proto:external_file_proto",
+    ],
+)
+
+cc_library(
+    name = "gecko_preprocessor_calculator",
+    srcs = ["gecko_preprocessor_calculator.cc"],
+    hdrs = ["gecko_preprocessor_calculator.h"],
+    deps = [
+        ":gecko_preprocessor_calculator_cc_proto",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc/core:external_file_handler",
+        "//mediapipe/tasks/cc/metadata:metadata_extractor",
+        "//mediapipe/tasks/cc/text/tokenizers:sentencepiece_tokenizer",
+        "//mediapipe/tasks/cc/text/tokenizers:tokenizer",
+        "//mediapipe/tasks/cc/text/tokenizers:tokenizer_utils",
+        "//mediapipe/tasks/metadata:metadata_schema_cc",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+    alwayslink = 1,
 )
 
 cc_library(
@@ -1894,12 +1931,12 @@ cc_test(
     name = "image_to_tensor_utils_test",
     srcs = ["image_to_tensor_utils_test.cc"],
     deps = [
-        ":image_to_tensor_calculator_cc_proto",
         ":image_to_tensor_utils",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
     ],
 )
 

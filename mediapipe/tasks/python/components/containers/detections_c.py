@@ -20,22 +20,22 @@ from mediapipe.tasks.python.components.containers import keypoint_c
 from mediapipe.tasks.python.components.containers import rect_c
 
 
-class DetectionC(ctypes.Structure):
+class MpDetectionC(ctypes.Structure):
   """CTypes for a single detection."""
 
   _fields_ = [
-      ('categories', ctypes.POINTER(category_c.CategoryC)),
+      ('categories', ctypes.POINTER(category_c.MpCategoryC)),
       ('categories_count', ctypes.c_uint32),
-      ('bounding_box', rect_c.RectC),
-      ('keypoints', ctypes.POINTER(keypoint_c.NormalizedKeypointC)),
+      ('bounding_box', rect_c.MpRectC),
+      ('keypoints', ctypes.POINTER(keypoint_c.MpNormalizedKeypointC)),
       ('keypoints_count', ctypes.c_uint32),
   ]
 
 
-class DetectionResultC(ctypes.Structure):
+class MpDetectionResultC(ctypes.Structure):
   """CTypes for the detection result."""
 
   _fields_ = [
-      ('detections', ctypes.POINTER(DetectionC)),
+      ('detections', ctypes.POINTER(MpDetectionC)),
       ('detections_count', ctypes.c_uint32),
   ]

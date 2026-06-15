@@ -27,13 +27,13 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToClassificationResult(
     const mediapipe::tasks::components::containers::ClassificationResult& in,
-    ClassificationResult* out) {
+    MpClassificationResult* out) {
   out->has_timestamp_ms = in.timestamp_ms.has_value();
   out->timestamp_ms = out->has_timestamp_ms ? in.timestamp_ms.value() : 0;
 
   out->classifications_count = in.classifications.size();
   out->classifications = out->classifications_count
-                             ? new Classifications[out->classifications_count]
+                             ? new MpClassifications[out->classifications_count]
                              : nullptr;
 
   for (uint32_t i = 0; i < out->classifications_count; ++i) {
@@ -43,7 +43,7 @@ void CppConvertToClassificationResult(
     classification_out.categories_count = classification_in.categories.size();
     classification_out.categories =
         classification_out.categories_count
-            ? new Category[classification_out.categories_count]
+            ? new MpCategory[classification_out.categories_count]
             : nullptr;
     for (uint32_t j = 0; j < classification_out.categories_count; ++j) {
       CppConvertToCategory(classification_in.categories[j],
@@ -58,7 +58,7 @@ void CppConvertToClassificationResult(
   }
 }
 
-void CppCloseClassificationResult(ClassificationResult* in) {
+void CppCloseClassificationResult(MpClassificationResult* in) {
   for (uint32_t i = 0; i < in->classifications_count; ++i) {
     auto& classification_in = in->classifications[i];
 

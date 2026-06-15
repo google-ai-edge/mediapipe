@@ -24,7 +24,7 @@ extern "C" {
 
 // A keypoint, defined by the coordinates (x, y), normalized by the image
 // dimensions.
-struct NormalizedKeypoint {
+struct MpNormalizedKeypoint {
   // x in normalized image coordinates.
   float x;
 

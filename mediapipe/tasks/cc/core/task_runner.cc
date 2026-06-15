@@ -26,6 +26,7 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -38,6 +39,8 @@ limitations under the License.
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/tasks/cc/core/logging/factory/logging_factory.h"
+#include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "mediapipe/tasks/cc/core/model_resources_cache.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
@@ -94,34 +97,30 @@ absl::StatusOr<PacketMap> GenerateOutputPacketMap(
 }  // namespace
 
 /* static */
-#if !MEDIAPIPE_DISABLE_GPU
 absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
-    CalculatorGraphConfig config,
-    std::unique_ptr<tflite::OpResolver> op_resolver,
-    PacketsCallback packets_callback,
-    std::shared_ptr<Executor> default_executor,
-    std::optional<PacketMap> input_side_packets,
-    std::shared_ptr<::mediapipe::GpuResources> resources,
-    std::optional<ErrorFn> error_fn, bool disable_default_service) {
-#else
-absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
-    CalculatorGraphConfig config,
-    std::unique_ptr<tflite::OpResolver> op_resolver,
-    PacketsCallback packets_callback,
-    std::shared_ptr<Executor> default_executor,
-    std::optional<PacketMap> input_side_packets,
-    std::optional<ErrorFn> error_fn, bool disable_default_service) {
-#endif  // !MEDIAPIPE_DISABLE_GPU
-  auto task_runner = absl::WrapUnique(new TaskRunner(packets_callback));
+    TaskRunnerOptions options) {
+  std::unique_ptr<logging::TasksLogger> tasks_logger =
+      logging::CreateTasksLogger(
+          {.task_name = options.task_name,
+           .task_running_mode = options.task_running_mode,
+           .host_environment = options.host_environment,
+           .host_system = options.host_system,
+           .host_version = options.host_version,
+           .app_id = options.app_id,
+           .app_version = options.app_version,
+           .ca_bundle_path = options.ca_bundle_path});
+  auto task_runner = absl::WrapUnique(
+      new TaskRunner(options.packets_callback, std::move(tasks_logger)));
   MP_RETURN_IF_ERROR(task_runner->Initialize(
-      std::move(config), std::move(op_resolver), std::move(default_executor),
-      std::move(input_side_packets), std::move(error_fn),
-      disable_default_service));
+      std::move(options.config), std::move(options.op_resolver),
+      std::move(options.default_executor),
+      std::move(options.input_side_packets), std::move(options.error_fn),
+      options.disable_default_service));
 
 #if !MEDIAPIPE_DISABLE_GPU
-  if (resources) {
+  if (options.resources) {
     MP_RETURN_IF_ERROR(
-        task_runner->graph_.SetGpuResources(std::move(resources)));
+        task_runner->graph_.SetGpuResources(std::move(options.resources)));
   }
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
@@ -167,6 +166,7 @@ absl::Status TaskRunner::Initialize(
         [this](const std::vector<Packet>& packets) {
           packets_callback_(
               GenerateOutputPacketMap(packets, output_stream_names_));
+          tasks_logger_->RecordInvocationEnd(packets.back().Timestamp());
           return;
         },
         &config, &input_side_packets.value(),
@@ -177,6 +177,7 @@ absl::Status TaskRunner::Initialize(
         [this](const std::vector<Packet>& packets) {
           status_or_output_packets_ =
               GenerateOutputPacketMap(packets, output_stream_names_);
+          tasks_logger_->RecordInvocationEnd(packets.back().Timestamp());
           return;
         },
         &config, &input_side_packets.value(),
@@ -219,7 +220,7 @@ absl::Status TaskRunner::Start() {
         MediaPipeTasksStatus::kRunnerFailsToStartError);
   }
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     last_seen_ = Timestamp::Unset();
   }
   MP_RETURN_IF_ERROR(
@@ -233,6 +234,7 @@ absl::Status TaskRunner::Start() {
                  "MediaPipe CalculatorGraph is not successfully started.",
                  MediaPipeTasksStatus::kRunnerFailsToStartError));
   is_running_ = true;
+  tasks_logger_->LogSessionStart();
   return absl::OkStatus();
 }
 
@@ -259,7 +261,7 @@ absl::StatusOr<PacketMap> TaskRunner::Process(PacketMap inputs) {
   // invocation can be processed in the graph concurrently.
   // TODO: Switches back to the original high performance implementation
   // when the MediaPipe CalculatorGraph can report errors in output streams.
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   // Assigns an internal synthetic timestamp when the input packets has no
   // assigned timestamp (packets are with the default Timestamp::Unset()).
   // Using Timestamp increment one second is to avoid interfering with the other
@@ -275,6 +277,8 @@ absl::StatusOr<PacketMap> TaskRunner::Process(PacketMap inputs) {
         "Input timestamp must be monotonically increasing.",
         MediaPipeTasksStatus::kRunnerInvalidTimestampError);
   }
+  // TODO: b/483040083 - Support recording GPU input arrival.
+  tasks_logger_->RecordCpuInputArrival(input_timestamp);
   for (auto& [stream_name, packet] : inputs) {
     MP_RETURN_IF_ERROR(AddPayload(
         graph_.AddPacketToInputStream(stream_name,
@@ -322,13 +326,14 @@ absl::Status TaskRunner::Send(PacketMap inputs) {
         "timestamp.",
         MediaPipeTasksStatus::kRunnerInvalidTimestampError);
   }
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   if (input_timestamp <= last_seen_) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         "Input timestamp must be monotonically increasing.",
         MediaPipeTasksStatus::kRunnerInvalidTimestampError);
   }
+  tasks_logger_->RecordCpuInputArrival(input_timestamp);
   for (auto& [stream_name, packet] : inputs) {
     MP_RETURN_IF_ERROR(AddPayload(
         graph_.AddPacketToInputStream(stream_name,
@@ -349,6 +354,7 @@ absl::Status TaskRunner::Close() {
         "Task runner is currently not running.",
         MediaPipeTasksStatus::kRunnerFailsToCloseError);
   }
+  tasks_logger_->LogSessionEnd();
   is_running_ = false;
   MP_RETURN_IF_ERROR(
       AddPayload(graph_.CloseAllInputStreams(), "Fail to close input streams",

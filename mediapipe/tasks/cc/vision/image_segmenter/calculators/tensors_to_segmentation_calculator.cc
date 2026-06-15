@@ -42,10 +42,15 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "mediapipe/util/label_map.pb.h"
 
+// MEDIAPIPE_DISABLE_GPU_POSTPROCESSING is defined on x86 emulators to
+// compile out GL postprocessing without changing the GL version (which
+// would cause ODR violations for Tensor).
 #ifdef __EMSCRIPTEN__
 #define TASK_SEGMENTATION_USE_GL_POSTPROCESSING 1
 #elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 && \
-    !MEDIAPIPE_USING_LEGACY_SWIFTSHADER && defined(MEDIAPIPE_ANDROID)
+    !MEDIAPIPE_USING_LEGACY_SWIFTSHADER &&                     \
+    !defined(MEDIAPIPE_DISABLE_GPU_POSTPROCESSING) &&          \
+    defined(MEDIAPIPE_ANDROID)
 #define TASK_SEGMENTATION_USE_GL_POSTPROCESSING 1
 #else
 #undef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
@@ -149,8 +154,8 @@ Image ProcessForCategoryMaskCpu(const Shape& input_shape,
         static_cast<int>(std::max(std::floor(position[1] * width_scale), 0.f));
     int y1 = static_cast<int>(std::min(std::ceil(position[0] * height_scale),
                                        input_shape.height - 1.f));
-    int x1 = static_cast<int>(std ::min(std::ceil(position[1] * width_scale),
-                                        input_shape.width - 1.f));
+    int x1 = static_cast<int>(std::min(std::ceil(position[1] * width_scale),
+                                       input_shape.width - 1.f));
     float t0 = std::max(std::min(position[0] * height_scale - y0, 1.f), 0.f);
     float t1 = std::max(std::min(position[1] * width_scale - x0, 1.f), 0.f);
     for (int i = 0; i < input_channels; ++i) {
@@ -330,11 +335,13 @@ class TensorsToSegmentationNodeImpl
 absl::Status TensorsToSegmentationNodeImpl::UpdateContract(
     CalculatorContract<TensorsToSegmentationNode>& cc) {
 #ifdef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
-  return tasks::SegmentationPostprocessorGl::UpdateContract(
-      &cc.GetGenericContract());
-#else
-  return absl::OkStatus();
+  const TensorsToSegmentationCalculatorOptions& options = cc.options.Get();
+  if (options.use_gpu_postprocessing()) {
+    return SegmentationPostprocessorGl::UpdateContract(
+        &cc.GetGenericContract());
+  }
 #endif  // TASK_SEGMENTATION_USE_GL_POSTPROCESSING
+  return absl::OkStatus();
 }
 
 absl::Status TensorsToSegmentationNodeImpl::Open(
@@ -355,8 +362,10 @@ absl::Status TensorsToSegmentationNodeImpl::Open(
     }
   }
 #ifdef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
-  MP_RETURN_IF_ERROR(
-      postprocessor_.Initialize(&cc.GetGenericContext(), options_));
+  if (options_.use_gpu_postprocessing()) {
+    MP_RETURN_IF_ERROR(
+        postprocessor_.Initialize(&cc.GetGenericContext(), options_));
+  }
 #endif  // TASK_SEGMENTATION_USE_GL_POSTPROCESSING
   return absl::OkStatus();
 }
@@ -423,10 +432,10 @@ absl::Status TensorsToSegmentationNodeImpl::Process(
   }
   // Use GPU postprocessing on web when Tensor is there already.
 #ifdef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
-  Shape output_shape = {/* height= */ output_height,
-                        /* width= */ output_width,
-                        /* channels= */ input_shape.channels};
-  if (input_tensor.ready_on_gpu()) {
+  if (options_.use_gpu_postprocessing() && input_tensor.ready_on_gpu()) {
+    const Shape output_shape = {/* height= */ output_height,
+                                /* width= */ output_width,
+                                /* channels= */ input_shape.channels};
     bool produce_category_mask = options_.segmenter_options().output_type() ==
                                      SegmenterOptions::CATEGORY_MASK ||
                                  cc.category_mask_out.IsConnected();

@@ -18,6 +18,8 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
+exports_files(glob(["sources/*.h"]))
+
 objc_library(
     name = "MPPCategoryHelpers",
     srcs = ["sources/MPPCategory+Helpers.mm"],
@@ -92,7 +94,7 @@ objc_library(
     srcs = ["sources/MPPRegionOfInterest+Helpers.mm"],
     hdrs = ["sources/MPPRegionOfInterest+Helpers.h"],
     deps = [
-        "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_cc_proto",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto:region_of_interest_cc_proto",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/components/containers:MPPRegionOfInterest",

@@ -79,7 +79,7 @@ REGISTER_CALCULATOR(SlowPlusOneCalculator);
 class ParallelExecutionTest : public testing::Test {
  public:
   void AddThreadSafeVectorSink(const Packet& packet) {
-    absl::WriterMutexLock lock(&output_packets_mutex_);
+    absl::WriterMutexLock lock(output_packets_mutex_);
     output_packets_.push_back(packet);
   }
 
@@ -137,7 +137,7 @@ TEST_F(ParallelExecutionTest, SlowPlusOneCalculatorsTest) {
     // Waits properly via the API until the graph is done.
     MP_ASSERT_OK(graph.WaitUntilDone());
 
-    absl::ReaderMutexLock lock(&output_packets_mutex_);
+    absl::ReaderMutexLock lock(output_packets_mutex_);
     ASSERT_EQ(kTotalNums - kTotalNums / 4, output_packets_.size());
     int index = 1;
     for (const Packet& packet : output_packets_) {

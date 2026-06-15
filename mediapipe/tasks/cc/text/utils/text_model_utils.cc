@@ -23,6 +23,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/processors/proto/text_model_type.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
+#include "mediapipe/tasks/metadata/metadata_schema_generated.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 
 namespace mediapipe::tasks::text::utils {
@@ -36,6 +37,7 @@ constexpr int kNumInputTensorsForBert = 3;
 constexpr int kNumInputTensorsForRegex = 1;
 constexpr int kNumInputTensorsForStringPreprocessor = 1;
 constexpr int kNumInputTensorsForUSE = 3;
+constexpr int kNumInputTensorsForGecko = 1;
 
 // Determines the ModelType for a model with int32 input tensors based
 // on the number of input tensors. Returns an error if there is missing metadata
@@ -46,6 +48,9 @@ absl::StatusOr<TextModelType::ModelType> GetIntTensorModelType(
       model_resources.GetMetadataExtractor();
   if (metadata_extractor->GetModelMetadata() == nullptr ||
       metadata_extractor->GetModelMetadata()->subgraph_metadata() == nullptr) {
+    if (num_input_tensors == kNumInputTensorsForGecko) {
+      return TextModelType::GECKO_MODEL;
+    }
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         "Text models with int32 input tensors require TFLite Model "
@@ -57,8 +62,23 @@ absl::StatusOr<TextModelType::ModelType> GetIntTensorModelType(
     return TextModelType::BERT_MODEL;
   }
 
-  if (num_input_tensors == kNumInputTensorsForRegex) {
-    return TextModelType::REGEX_MODEL;
+  if (num_input_tensors == kNumInputTensorsForGecko) {
+    if (metadata_extractor->GetInputTensorMetadata() != nullptr) {
+      for (const auto* input_metadata :
+           *metadata_extractor->GetInputTensorMetadata()) {
+        if (input_metadata->process_units() != nullptr) {
+          for (const auto* process_unit : *input_metadata->process_units()) {
+            if (process_unit->options_type() ==
+                tflite::ProcessUnitOptions_RegexTokenizerOptions) {
+              return TextModelType::REGEX_MODEL;
+            }
+          }
+        }
+      }
+    }
+    // If it has 1 INT32 tensor and no RegexTokenizerOptions, it is a Gecko
+    // model.
+    return TextModelType::GECKO_MODEL;
   }
 
   return CreateStatusWithPayload(

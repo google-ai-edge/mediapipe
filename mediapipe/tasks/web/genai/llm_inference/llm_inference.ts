@@ -44,15 +44,15 @@ import {
   WasmFileReference,
 } from '../../../../web/graph_runner/graph_runner_wasm_file_reference';
 import {SupportWebGpu} from '../../../../web/graph_runner/graph_runner_webgpu';
-import {DetokenizerCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/detokenizer_calculator_pb';
-import {LlmGpuCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/llm_gpu_calculator_pb';
-import {TokenizerCalculatorOptions} from '../../../../tasks/cc/genai/inference/calculators/tokenizer_calculator_pb';
-import {LlmParameters} from '../../../../tasks/cc/genai/inference/proto/llm_params_pb';
-import {SamplerParameters} from '../../../../tasks/cc/genai/inference/proto/sampler_params_pb';
-import {TransformerParameters} from '../../../../tasks/cc/genai/inference/proto/transformer_params_pb';
+import {DetokenizerCalculatorOptions} from '../../../../tasks/web/genai/llm_inference/proto/detokenizer_calculator_pb';
+import {LlmGpuCalculatorOptions} from '../../../../tasks/web/genai/llm_inference/proto/llm_gpu_calculator_pb';
+import {TokenizerCalculatorOptions} from '../../../../tasks/web/genai/llm_inference/proto/tokenizer_calculator_pb';
+import {LlmParameters} from '../../../../tasks/web/genai/llm_inference/proto/llm_params_pb';
+import {SamplerParameters} from '../../../../tasks/web/genai/llm_inference/proto/sampler_params_pb';
+import {TransformerParameters} from '../../../../tasks/web/genai/llm_inference/proto/transformer_params_pb';
 // Placeholder for internal dependency on trusted resource url
 
-import {LlmInferenceOptions} from './llm_inference_options';
+import type {LlmInferenceOptions} from './llm_inference_options';
 import {
   getModelFormatAndClose,
   ModelFormat,
@@ -67,7 +67,11 @@ export type {
   ProgressListener,
   Prompt,
 } from '../../../../web/graph_runner/graph_runner_llm_inference_lib';
-export * from './llm_inference_options';
+export type {
+  LlmBaseOptions,
+  LlmInferenceOptions,
+  WebGpuOptions,
+} from './llm_inference_options';
 
 declare interface CancelModule {
   LLM_CANCEL_FLAG: number | undefined;
@@ -372,9 +376,6 @@ export class LlmInference extends TaskRunner {
         'shader-f16',
         'subgroups' as GPUFeatureName,
       ];
-      if (adapter.features.has('subgroups-f16' as GPUFeatureName)) {
-        featuresList.push('subgroups-f16' as GPUFeatureName);
-      }
       deviceDescriptor.requiredFeatures = featuresList;
     }
 
@@ -852,7 +853,7 @@ export class LlmInference extends TaskRunner {
     for (let i = 0; i < this.options.getNumResponses(); i++) {
       this.generationResults[i] = [];
     }
-    const timeStamp = this.getSynctheticTimestamp();
+    const timeStamp = this.getSyntheticTimestamp();
 
     // This code is only run when the prompt is text-only, so condense into a
     // single string.
@@ -914,7 +915,7 @@ export class LlmInference extends TaskRunner {
     this.graphRunner.addStringToStream(
       text,
       TOKEN_COST_INPUT_STREAM,
-      this.getSynctheticTimestamp(),
+      this.getSyntheticTimestamp(),
     );
     this.finishProcessing();
     this.isProcessing = false;
@@ -988,7 +989,7 @@ export class LlmInference extends TaskRunner {
       );
     }
     const loraModel = new LoraModel(this);
-    const syntheticTimestamp = this.getSynctheticTimestamp();
+    const syntheticTimestamp = this.getSyntheticTimestamp();
     (
       this.graphRunner as unknown as LlmGraphRunner
     ).addWasmFileReferenceToStream(

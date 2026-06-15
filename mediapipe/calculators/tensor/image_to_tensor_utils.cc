@@ -19,6 +19,7 @@
 #include <memory>
 #include <utility>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/types/optional.h"
 #include "mediapipe/framework/api2/packet.h"
@@ -35,7 +36,7 @@
 namespace mediapipe {
 
 RotatedRect GetRoi(int input_width, int input_height,
-                   absl::optional<mediapipe::NormalizedRect> norm_rect) {
+                   std::optional<NormalizedRect> norm_rect) {
   if (norm_rect) {
     return {/*center_x=*/norm_rect->x_center() * input_width,
             /*center_y =*/norm_rect->y_center() * input_height,
@@ -86,6 +87,18 @@ absl::StatusOr<std::array<float, 4>> PadRoi(int input_tensor_width,
 
   return std::array<float, 4>{horizontal_padding, vertical_padding,
                               horizontal_padding, vertical_padding};
+}
+
+absl::Status ValidateRoi(const RotatedRect& roi) {
+  if (std::isnan(roi.center_x) || std::isnan(roi.center_y) ||
+      std::isnan(roi.width) || std::isnan(roi.height) ||
+      std::isnan(roi.rotation)) {
+    return absl::InvalidArgumentError("ROI contains NaN values.");
+  }
+  if (roi.width <= 0 || roi.height <= 0) {
+    return absl::InvalidArgumentError("ROI width and height must be > 0.");
+  }
+  return absl::OkStatus();
 }
 
 absl::StatusOr<ValueTransformation> GetValueRangeTransformation(

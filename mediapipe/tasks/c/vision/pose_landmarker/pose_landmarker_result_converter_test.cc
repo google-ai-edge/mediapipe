@@ -74,7 +74,7 @@ TEST(PoseLandmarkerResultConverterTest, ConvertsCustomResult) {
   ::mediapipe::tasks::vision::pose_landmarker::PoseLandmarkerResult cpp_result;
   InitPoseLandmarkerResult(&cpp_result);
 
-  PoseLandmarkerResult c_result;
+  MpPoseLandmarkerResult c_result;
   CppConvertToPoseLandmarkerResult(cpp_result, &c_result);
 
   // Verify conversion of pose_landmarks
@@ -119,7 +119,7 @@ TEST(PoseLandmarkerResultConverterTest, FreesMemory) {
   ::mediapipe::tasks::vision::pose_landmarker::PoseLandmarkerResult cpp_result;
   InitPoseLandmarkerResult(&cpp_result);
 
-  PoseLandmarkerResult c_result;
+  MpPoseLandmarkerResult c_result;
   CppConvertToPoseLandmarkerResult(cpp_result, &c_result);
 
   EXPECT_NE(c_result.pose_landmarks, nullptr);

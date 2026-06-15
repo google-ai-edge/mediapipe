@@ -101,13 +101,15 @@ static NSString *const kTaskName = @"faceLandmarker";
                                                           kFaceGeometryOutStreamName]];
     }
 
-    MPPTaskInfo *taskInfo =
-        [[MPPTaskInfo alloc] initWithTaskGraphName:kTaskGraphName
-                                      inputStreams:inputStreams
-                                     outputStreams:outputStreams
-                                       taskOptions:options
-                                enableFlowLimiting:options.runningMode == MPPRunningModeLiveStream
-                                             error:error];
+    MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
+          initWithTaskName:kTaskName
+             taskGraphName:kTaskGraphName
+              inputStreams:inputStreams
+             outputStreams:outputStreams
+               taskOptions:options
+        enableFlowLimiting:options.runningMode == MPPRunningModeLiveStream
+               runningMode:MPPCoreRunningModeFromVisionRunningMode(options.runningMode)
+                     error:error];
 
     if (!taskInfo) {
       return nil;

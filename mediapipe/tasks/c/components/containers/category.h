@@ -28,7 +28,7 @@ extern "C" {
 // the 'category_name' and 'display_name' fields.
 //
 // [1]: https://www.tensorflow.org/lite/convert/metadata
-struct Category {
+struct MpCategory {
   // The index of the category in the classification model output.
   int index;
 
@@ -46,8 +46,8 @@ struct Category {
 };
 
 // A list of categories.
-struct Categories {
-  struct Category* categories;
+struct MpCategories {
+  struct MpCategory* categories;
   uint32_t categories_count;
 };
 

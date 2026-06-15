@@ -231,7 +231,7 @@ CalculatorRuntimeInfo CalculatorNode::GetStreamMonitoringInfo() const {
   CalculatorRuntimeInfo calculator_info;
   calculator_info.set_calculator_name(DebugName());
   {
-    absl::MutexLock lock(&runtime_info_mutex_);
+    absl::MutexLock lock(runtime_info_mutex_);
     calculator_info.set_last_process_start_unix_us(
         absl::ToUnixMicros(last_process_start_ts_));
     calculator_info.set_last_process_finish_unix_us(
@@ -389,28 +389,28 @@ absl::Status CalculatorNode::ConnectShardsToStreams(
 }
 
 void CalculatorNode::SetExecutor(const std::string& executor) {
-  absl::MutexLock status_lock(&status_mutex_);
+  absl::MutexLock status_lock(status_mutex_);
   ABSL_CHECK_LT(status_, kStateOpened);
   executor_ = executor;
 }
 
 bool CalculatorNode::Prepared() const {
-  absl::MutexLock status_lock(&status_mutex_);
+  absl::MutexLock status_lock(status_mutex_);
   return status_ >= kStatePrepared;
 }
 
 bool CalculatorNode::Opened() const {
-  absl::MutexLock status_lock(&status_mutex_);
+  absl::MutexLock status_lock(status_mutex_);
   return status_ >= kStateOpened;
 }
 
 bool CalculatorNode::Active() const {
-  absl::MutexLock status_lock(&status_mutex_);
+  absl::MutexLock status_lock(status_mutex_);
   return status_ >= kStateActive;
 }
 
 bool CalculatorNode::Closed() const {
-  absl::MutexLock status_lock(&status_mutex_);
+  absl::MutexLock status_lock(status_mutex_);
   return status_ >= kStateClosed;
 }
 
@@ -477,7 +477,7 @@ absl::Status CalculatorNode::PrepareForRun(
   needs_to_close_ = false;
 
   {
-    absl::MutexLock status_lock(&status_mutex_);
+    absl::MutexLock status_lock(status_mutex_);
     status_ = kStatePrepared;
     scheduling_state_ = kIdle;
     current_in_flight_ = 0;
@@ -579,7 +579,7 @@ absl::Status CalculatorNode::OpenNode() {
   output_stream_handler_->Open(outputs);
 
   {
-    absl::MutexLock status_lock(&status_mutex_);
+    absl::MutexLock status_lock(status_mutex_);
     status_ = kStateOpened;
   }
 
@@ -587,14 +587,14 @@ absl::Status CalculatorNode::OpenNode() {
 }
 
 void CalculatorNode::ActivateNode() {
-  absl::MutexLock status_lock(&status_mutex_);
+  absl::MutexLock status_lock(status_mutex_);
   ABSL_CHECK_EQ(status_, kStateOpened) << DebugName();
   status_ = kStateActive;
 }
 
 void CalculatorNode::CloseInputStreams() {
   {
-    absl::MutexLock status_lock(&status_mutex_);
+    absl::MutexLock status_lock(status_mutex_);
     if (status_ == kStateClosed) {
       return;
     }
@@ -608,7 +608,7 @@ void CalculatorNode::CloseInputStreams() {
 
 void CalculatorNode::CloseOutputStreams(OutputStreamShardSet* outputs) {
   {
-    absl::MutexLock status_lock(&status_mutex_);
+    absl::MutexLock status_lock(status_mutex_);
     if (status_ == kStateClosed) {
       return;
     }
@@ -620,7 +620,7 @@ void CalculatorNode::CloseOutputStreams(OutputStreamShardSet* outputs) {
 absl::Status CalculatorNode::CloseNode(const absl::Status& graph_status,
                                        bool graph_run_ended) {
   {
-    absl::MutexLock status_lock(&status_mutex_);
+    absl::MutexLock status_lock(status_mutex_);
     RET_CHECK_NE(status_, kStateClosed)
         << "CloseNode() must only be called once.";
   }
@@ -664,7 +664,7 @@ absl::Status CalculatorNode::CloseNode(const absl::Status& graph_status,
   }
 
   {
-    absl::MutexLock status_lock(&status_mutex_);
+    absl::MutexLock status_lock(status_mutex_);
     status_ = kStateClosed;
   }
 
@@ -692,7 +692,7 @@ void CalculatorNode::CleanupAfterRun(const absl::Status& graph_status) {
   CloseOutputStreams(/*outputs=*/nullptr);
 
   {
-    absl::MutexLock lock(&status_mutex_);
+    absl::MutexLock lock(status_mutex_);
     status_ = kStateUninitialized;
     scheduling_state_ = kIdle;
     current_in_flight_ = 0;
@@ -702,7 +702,7 @@ void CalculatorNode::CleanupAfterRun(const absl::Status& graph_status) {
 void CalculatorNode::SchedulingLoop() {
   int max_allowance = 0;
   {
-    absl::MutexLock lock(&status_mutex_);
+    absl::MutexLock lock(status_mutex_);
     if (status_ == kStateClosed) {
       scheduling_state_ = kIdle;
       return;
@@ -721,7 +721,7 @@ void CalculatorNode::SchedulingLoop() {
     }
 
     {
-      absl::MutexLock lock(&status_mutex_);
+      absl::MutexLock lock(status_mutex_);
       if (scheduling_state_ == kSchedulingPending &&
           current_in_flight_ < max_in_flight_) {
         max_allowance = max_in_flight_ - current_in_flight_;
@@ -735,14 +735,14 @@ void CalculatorNode::SchedulingLoop() {
 }
 
 bool CalculatorNode::ReadyForOpen() const {
-  absl::MutexLock lock(&status_mutex_);
+  absl::MutexLock lock(status_mutex_);
   return input_stream_headers_ready_ && input_side_packets_ready_;
 }
 
 void CalculatorNode::InputStreamHeadersReady() {
   bool ready_for_open = false;
   {
-    absl::MutexLock lock(&status_mutex_);
+    absl::MutexLock lock(status_mutex_);
     ABSL_CHECK_EQ(status_, kStatePrepared) << DebugName();
     ABSL_CHECK(!input_stream_headers_ready_called_);
     input_stream_headers_ready_called_ = true;
@@ -757,7 +757,7 @@ void CalculatorNode::InputStreamHeadersReady() {
 void CalculatorNode::InputSidePacketsReady() {
   bool ready_for_open = false;
   {
-    absl::MutexLock lock(&status_mutex_);
+    absl::MutexLock lock(status_mutex_);
     ABSL_CHECK_EQ(status_, kStatePrepared) << DebugName();
     ABSL_CHECK(!input_side_packets_ready_called_);
     input_side_packets_ready_called_ = true;
@@ -771,7 +771,7 @@ void CalculatorNode::InputSidePacketsReady() {
 
 void CalculatorNode::CheckIfBecameReady() {
   {
-    absl::MutexLock lock(&status_mutex_);
+    absl::MutexLock lock(status_mutex_);
     // Doesn't check if status_ is kStateActive since the function can only be
     // invoked by non-source nodes.
     if (status_ != kStateOpened) {
@@ -804,7 +804,7 @@ void CalculatorNode::NodeOpened() {
 
 void CalculatorNode::EndScheduling() {
   {
-    absl::MutexLock lock(&status_mutex_);
+    absl::MutexLock lock(status_mutex_);
     if (status_ != kStateOpened && status_ != kStateActive) {
       return;
     }
@@ -826,7 +826,7 @@ void CalculatorNode::EndScheduling() {
 }
 
 bool CalculatorNode::TryToBeginScheduling() {
-  absl::MutexLock lock(&status_mutex_);
+  absl::MutexLock lock(status_mutex_);
   if (current_in_flight_ < max_in_flight_) {
     ++current_in_flight_;
     return true;
@@ -848,12 +848,12 @@ absl::Status CalculatorNode::ProcessNode(
     CalculatorContext* calculator_context) {
   // Update calculator runtime info.
   {
-    absl::MutexLock lock(&runtime_info_mutex_);
+    absl::MutexLock lock(runtime_info_mutex_);
     last_process_start_ts_ = Clock::RealClock()->TimeNow();
   }
   absl::Cleanup last_process_finish_ts_cleanup([this]() {
     {
-      absl::MutexLock lock(&runtime_info_mutex_);
+      absl::MutexLock lock(runtime_info_mutex_);
       last_process_finish_ts_ = Clock::RealClock()->TimeNow();
     }
   });

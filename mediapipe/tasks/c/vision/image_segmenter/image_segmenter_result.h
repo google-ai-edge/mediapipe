@@ -24,7 +24,7 @@ limitations under the License.
 extern "C" {
 #endif
 
-struct ImageSegmenterResult {
+struct MpImageSegmenterResult {
   // Multiple masks of float image in VEC32F1 format where, for each mask, each
   // pixel represents the prediction confidence, usually in the [0, 1] range.
   MpImagePtr* confidence_masks;

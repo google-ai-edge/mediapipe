@@ -1,18 +1,19 @@
 # This contains the MediaPipe GenAI Tasks.
 
-load("@build_bazel_rules_nodejs//:index.bzl", "pkg_npm")
-load("@npm//@bazel/rollup:index.bzl", "rollup_bundle")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_library")
+load("//mediapipe/framework/port:build_config.bzl", "ts_library")
 load(
     "//mediapipe/framework/tool:mediapipe_files.bzl",
     "mediapipe_files",
 )
+load("//mediapipe/tasks/web:build_defs.bzl", "pkg_npm", "rollup_bundle")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 mediapipe_files(srcs = [
     "wasm/genai_wasm_internal.js",
     "wasm/genai_wasm_internal.wasm",
+    "wasm/genai_wasm_module_internal.js",
+    "wasm/genai_wasm_module_internal.wasm",
     "wasm/genai_wasm_nosimd_internal.js",
     "wasm/genai_wasm_nosimd_internal.wasm",
 ])
@@ -22,14 +23,14 @@ GENAI_LIBS = [
     "//mediapipe/tasks/web/genai/llm_inference",
 ]
 
-mediapipe_ts_library(
+ts_library(
     name = "genai_lib",
     srcs = ["index.ts"],
     visibility = ["//visibility:public"],
     deps = GENAI_LIBS,
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "genai_types",
     srcs = ["types.ts"],
     visibility = ["//visibility:public"],
@@ -45,10 +46,10 @@ rollup_bundle(
     sourcemap = "true",
     deps = [
         ":genai_lib",
-        "@npm//@rollup/plugin-commonjs",
-        "@npm//@rollup/plugin-node-resolve",
-        "@npm//@rollup/plugin-terser",
-        "@npm//google-protobuf",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
     ],
 )
 
@@ -61,10 +62,30 @@ rollup_bundle(
     sourcemap = "true",
     deps = [
         ":genai_lib",
-        "@npm//@rollup/plugin-commonjs",
-        "@npm//@rollup/plugin-node-resolve",
-        "@npm//@rollup/plugin-terser",
-        "@npm//google-protobuf",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
+    ],
+)
+
+rollup_bundle(
+    name = "genai_bundle_iife",
+    args = [
+        "--name",
+        "GenAI",
+    ],
+    config_file = "//mediapipe/tasks/web:rollup.config.mjs",
+    entry_point = "index.ts",
+    format = "iife",
+    output_dir = False,
+    sourcemap = "true",
+    deps = [
+        ":genai_lib",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
     ],
 )
 
@@ -73,17 +94,20 @@ genrule(
     srcs = [
         ":genai_bundle_cjs",
         ":genai_bundle_mjs",
+        ":genai_bundle_iife",
     ],
     outs = [
         "genai_bundle.cjs",
         "genai_bundle.cjs.map",
         "genai_bundle.mjs",
         "genai_bundle.mjs.map",
+        "genai_bundle.js",
+        "genai_bundle.js.map",
     ],
     cmd = (
         "for FILE in $(SRCS); do " +
         "  OUT_FILE=$(GENDIR)/mediapipe/tasks/web/genai/$$(" +
-        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/'" +
+        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/; s/_iife\\.js/.js/'" +
         "  ); " +
         "  echo $$FILE ; echo $$OUT_FILE ; " +
         "  cp $$FILE $$OUT_FILE ; " +
@@ -91,29 +115,22 @@ genrule(
     ),
 )
 
-genrule(
-    name = "package_json",
-    srcs = ["//mediapipe/tasks/web:package.json"],
-    outs = ["package.json"],
-    cmd = "cp $< $@",
-)
-
 pkg_npm(
     name = "genai_pkg",
-    package_name = "@mediapipe/tasks-__NAME__",
     srcs = ["README.md"],
+    package_json = "//mediapipe/tasks/web:package.json",
     substitutions = {
         "__NAME__": "genai",
         "__DESCRIPTION__": "MediaPipe GenAI Tasks",
         "__TYPES__": "genai.d.ts",
     },
-    tgz = "genai.tgz",
     deps = [
         "wasm/genai_wasm_internal.js",
         "wasm/genai_wasm_internal.wasm",
+        "wasm/genai_wasm_module_internal.js",
+        "wasm/genai_wasm_module_internal.wasm",
         "wasm/genai_wasm_nosimd_internal.js",
         "wasm/genai_wasm_nosimd_internal.wasm",
         ":genai_sources",
-        ":package_json",
     ],
 )

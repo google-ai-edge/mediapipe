@@ -463,6 +463,9 @@ absl::Status ScaleImageCalculator::ValidateImageFormats() const {
 
 absl::Status ScaleImageCalculator::ValidateImageFrame(
     CalculatorContext* cc, const ImageFrame& image_frame) {
+  if (image_frame.Width() == 0 || image_frame.Height() == 0) {
+    return absl::InvalidArgumentError("Input image frame is empty.");
+  }
   if (!has_header_) {
     if (input_width_ != image_frame.Width() ||
         input_height_ != image_frame.Height() ||
@@ -517,6 +520,9 @@ absl::Status ScaleImageCalculator::ValidateImageFrame(
 
 absl::Status ScaleImageCalculator::ValidateYUVImage(CalculatorContext* cc,
                                                     const YUVImage& yuv_image) {
+  if (yuv_image.width() == 0 || yuv_image.height() == 0) {
+    return absl::InvalidArgumentError("Input YUV image frame is empty.");
+  }
   ABSL_CHECK_EQ(input_format_, ImageFormat::YCBCR420P);
   if (!has_header_) {
     if (input_width_ != yuv_image.width() ||

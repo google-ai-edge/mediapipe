@@ -12,44 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@build_bazel_rules_apple//apple:apple.bzl", "apple_static_xcframework")
-load("@build_bazel_rules_apple//apple:apple_static_library.bzl", "apple_static_library")
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load(
     "//mediapipe/framework/tool:ios.bzl",
-    "MPP_TASK_MINIMUM_OS_VERSION",
     "strip_api_include_path_prefix",
 )
+load(":ios_build_rules.bzl", "mediapipe_static_xcframework")
 
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
-# List of targets to be added in avoid_deps of ":MediaPipeTasksVision_framework"
-# and ":MediaPipeTasksText_framework".
-# The transitive closure of the following targets are used for building the
-# frameworks but are avoided from the framework binaries to avoid duplicate symbols
-# error when included in an xcode project:
-# 1. iOS classes shared amongst the various vision and text tasks. These classes
-# will be built with ":MediaPipeTasksCommon_framework"
-# 2. Task graphs. These will be built with ":MediaPipeTaskGraphs_library".
-# 3. gpu targets which will be built with the ":MediaPipeTaskGraphs_library".
-#
-# Instead of linking options and containers, we link their helpers to
-# `MPPTasksCommon` to avoid duplicated method warnings in categories when text
-# and vision frameworks are installed in the same Xcode project.
-OBJC_TASK_COMMON_DEPS = [
-    "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
-    "//mediapipe/tasks/ios/core:MPPTaskInfo",
-    "//mediapipe/tasks/ios/core:MPPTaskOptions",
-    "//mediapipe/tasks/ios/core:MPPTaskResult",
-    "//mediapipe/tasks/ios/core:MPPTaskRunner",
-    "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
-    "//mediapipe/tasks/ios/components/containers/utils:MPPCategoryHelpers",
-    "//mediapipe/tasks/ios/components/containers/utils:MPPEmbeddingHelpers",
-    "//mediapipe/tasks/ios/components/containers/utils:MPPEmbeddingResultHelpers",
-    "//mediapipe/tasks/ios/components/utils:MPPCosineSimilarity",
-    "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-]
+exports_files([
+    "MediaPipeTasksAudio.podspec.template",
+    "MediaPipeTasksVision.podspec.template",
+    "MediaPipeTasksText.podspec.template",
+    "MediaPipeTasksCommon.podspec.template",
+])
 
 TENSORFLOW_LITE_C_DEPS = [
     "@org_tensorflow//tensorflow/lite:builtin_ops",
@@ -61,6 +40,55 @@ TENSORFLOW_LITE_C_DEPS = [
     "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate",
     "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate_internal",
 ]
+
+# MediaPipe iOS OpenCV build rules
+config_setting(
+    name = "opencv_ios_arm64_source_build",
+    define_values = {
+        "OPENCV": "source",
+    },
+    values = {
+        "apple_platform_type": "ios",
+        "ios_multi_cpus": "arm64",
+    },
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "opencv_ios_sim_arm64_source_build",
+    define_values = {
+        "OPENCV": "source",
+    },
+    values = {
+        "apple_platform_type": "ios",
+        "ios_multi_cpus": "sim_arm64",
+    },
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "opencv_ios_x86_64_source_build",
+    define_values = {
+        "OPENCV": "source",
+    },
+    values = {
+        "apple_platform_type": "ios",
+        "ios_multi_cpus": "x86_64",
+    },
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "opencv_ios_sim_fat_source_build",
+    define_values = {
+        "OPENCV": "source",
+    },
+    values = {
+        "apple_platform_type": "ios",
+        "ios_multi_cpus": "sim_arm64,x86_64",
+    },
+    visibility = ["//visibility:public"],
+)
 
 CALCULATORS_AND_GRAPHS = [
     "//mediapipe/calculators/core:flow_limiter_calculator",
@@ -74,21 +102,59 @@ CALCULATORS_AND_GRAPHS = [
     "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
     "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
     "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
-    "//mediapipe/tasks/cc/vision/interactive_segmenter:interactive_segmenter_graph",
+    "//mediapipe/tasks/cc/vision/interactive_segmenter_legacy:interactive_segmenter_legacy_graph",
     "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
     "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
     "//mediapipe/tasks/cc/vision/holistic_landmarker:holistic_landmarker_graph",
 ]
 
-OPENCV_DEPS = {
-    "//third_party:opencv_ios_sim_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
-    "//third_party:opencv_ios_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
-    "//third_party:opencv_ios_x86_64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
-    "//third_party:opencv_ios_sim_fat_source_build": ["@ios_opencv_source//:opencv_xcframework"],
-    "//conditions:default": ["@ios_opencv//:OpencvFramework"],
-}
+objc_library(
+    name = "OpenCV",
+    deps = select({
+        ":opencv_ios_sim_arm64_source_build": [
+            "//third_party:opencv",
+        ],
+        ":opencv_ios_arm64_source_build": [
+            "//third_party:opencv",
+        ],
+        ":opencv_ios_x86_64_source_build": [
+            "//third_party:opencv",
+        ],
+        ":opencv_ios_sim_fat_source_build": [
+            "//third_party:opencv",
+        ],
+        "//conditions:default": [
+            "//third_party:opencv",
+        ],
+    }),
+    alwayslink = 1,
+)
 
-MEDIAPIPE_TASKS_COMMON_DEPS = OBJC_TASK_COMMON_DEPS + TENSORFLOW_LITE_C_DEPS + ["//mediapipe/gpu:metal_shared_resources"]
+MEDIAPIPE_TASKS_COMMON_DEPS = TENSORFLOW_LITE_C_DEPS + [
+    ":OpenCV",
+    "//mediapipe/gpu:metal_shared_resources",
+    "//mediapipe/tasks/ios/audio/audio_classifier:MPPAudioClassifier",
+    "//mediapipe/tasks/ios/text/language_detector:MPPLanguageDetector",
+    "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifier",
+    "//mediapipe/tasks/ios/text/text_embedder:MPPTextEmbedder",
+    "//mediapipe/tasks/ios/vision/face_detector:MPPFaceDetector",
+    "//mediapipe/tasks/ios/vision/face_landmarker:MPPFaceLandmarker",
+    "//mediapipe/tasks/ios/vision/gesture_recognizer:MPPGestureRecognizer",
+    "//mediapipe/tasks/ios/vision/hand_landmarker:MPPHandLandmarker",
+    "//mediapipe/tasks/ios/vision/holistic_landmarker:MPPHolisticLandmarker",
+    "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
+    "//mediapipe/tasks/ios/vision/image_embedder:MPPImageEmbedder",
+    "//mediapipe/tasks/ios/vision/image_segmenter:MPPImageSegmenter",
+    "//mediapipe/tasks/ios/vision/interactive_segmenter_legacy:MPPInteractiveSegmenterLegacy",
+    "//mediapipe/tasks/ios/vision/object_detector:MPPObjectDetector",
+    "//mediapipe/tasks/ios/vision/pose_landmarker:MPPPoseLandmarker",
+]
+
+objc_library(
+    name = "MediaPipeTaskGraphs",
+    deps = CALCULATORS_AND_GRAPHS,
+    alwayslink = 1,
+)
 
 strip_api_include_path_prefix(
     name = "strip_api_include_path",
@@ -150,36 +216,24 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/vision/image_segmenter:sources/MPPImageSegmenter.h",
         "//mediapipe/tasks/ios/vision/image_segmenter:sources/MPPImageSegmenterOptions.h",
         "//mediapipe/tasks/ios/vision/image_segmenter:sources/MPPImageSegmenterResult.h",
-        "//mediapipe/tasks/ios/vision/interactive_segmenter:sources/MPPInteractiveSegmenter.h",
-        "//mediapipe/tasks/ios/vision/interactive_segmenter:sources/MPPInteractiveSegmenterOptions.h",
-        "//mediapipe/tasks/ios/vision/interactive_segmenter:sources/MPPInteractiveSegmenterResult.h",
+        "//mediapipe/tasks/ios/vision/interactive_segmenter_legacy:sources/MPPInteractiveSegmenterLegacy.h",
+        "//mediapipe/tasks/ios/vision/interactive_segmenter_legacy:sources/MPPInteractiveSegmenterLegacyOptions.h",
+        "//mediapipe/tasks/ios/vision/interactive_segmenter_legacy:sources/MPPInteractiveSegmenterLegacyResult.h",
         "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetector.h",
         "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetectorOptions.h",
         "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetectorResult.h",
         "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarker.h",
         "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarkerOptions.h",
         "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarkerResult.h",
-        "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine.h",
     ],
 )
 
-apple_static_xcframework(
+mediapipe_static_xcframework(
     name = "MediaPipeTasksAudio_framework",
-    # Avoid dependencies of ":MediaPipeTasksCommon_framework" and
-    # ":MediaPipeTaskGraphs_library in order to prevent duplicate symbols error
-    # when the frameworks are imported in iOS projects.
-    avoid_deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS,
+    bundle_format = "framework",
+    bundle_id = "com.google.mediapipe.tasks.audio",
     bundle_name = "MediaPipeTasksAudio",
-    ios = {
-        "simulator": [
-            "arm64",
-            "x86_64",
-        ],
-        "device": ["arm64"],
-    },
-    minimum_os_versions = {
-        "ios": MPP_TASK_MINIMUM_OS_VERSION,
-    },
+    infoplists = [":empty.plist"],
     public_hdrs = [
         ":MPPAudioClassifier.h",
         ":MPPAudioClassifierOptions.h",
@@ -198,28 +252,14 @@ apple_static_xcframework(
         ":MPPTaskOptions.h",
         ":MPPTaskResult.h",
     ],
-    deps = [
-        "//mediapipe/tasks/ios/audio/audio_classifier:MPPAudioClassifier",
-    ],
 )
 
-apple_static_xcframework(
+mediapipe_static_xcframework(
     name = "MediaPipeTasksText_framework",
-    # Avoid dependencies of ":MediaPipeTasksCommon_framework" and
-    # ":MediaPipeTaskGraphs_library in order to prevent duplicate symbols error
-    # when the frameworks are imported in iOS projects.
-    avoid_deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS,
+    bundle_format = "framework",
+    bundle_id = "com.google.mediapipe.tasks.text",
     bundle_name = "MediaPipeTasksText",
-    ios = {
-        "simulator": [
-            "arm64",
-            "x86_64",
-        ],
-        "device": ["arm64"],
-    },
-    minimum_os_versions = {
-        "ios": MPP_TASK_MINIMUM_OS_VERSION,
-    },
+    infoplists = [":empty.plist"],
     public_hdrs = [
         ":MPPBaseOptions.h",
         ":MPPCategory.h",
@@ -239,32 +279,14 @@ apple_static_xcframework(
         ":MPPLanguageDetectorOptions.h",
         ":MPPLanguageDetectorResult.h",
     ],
-    deps = [
-        "//mediapipe/tasks/ios/text/language_detector:MPPLanguageDetector",
-        "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifier",
-        "//mediapipe/tasks/ios/text/text_embedder:MPPTextEmbedder",
-    ],
 )
 
-apple_static_xcframework(
+mediapipe_static_xcframework(
     name = "MediaPipeTasksVision_framework",
-    # Avoids dependencies of ":MediaPipeTasksCommon_framework" and
-    # ":MediaPipeTaskGraphs_library in order to prevent duplicate symbols error
-    # when the frameworks are imported in iOS projects.
-    # Also avoids opencv since it will be built with
-    # ":MediaPipeTaskGraphs_library".
-    avoid_deps = MEDIAPIPE_TASKS_COMMON_DEPS + CALCULATORS_AND_GRAPHS,
+    bundle_format = "framework",
+    bundle_id = "com.google.mediapipe.tasks.vision",
     bundle_name = "MediaPipeTasksVision",
-    ios = {
-        "simulator": [
-            "arm64",
-            "x86_64",
-        ],
-        "device": ["arm64"],
-    },
-    minimum_os_versions = {
-        "ios": MPP_TASK_MINIMUM_OS_VERSION,
-    },
+    infoplists = [":empty.plist"],
     public_hdrs = [
         ":MPPBaseOptions.h",
         ":MPPCategory.h",
@@ -297,9 +319,9 @@ apple_static_xcframework(
         ":MPPImageSegmenter.h",
         ":MPPImageSegmenterOptions.h",
         ":MPPImageSegmenterResult.h",
-        ":MPPInteractiveSegmenter.h",
-        ":MPPInteractiveSegmenterOptions.h",
-        ":MPPInteractiveSegmenterResult.h",
+        ":MPPInteractiveSegmenterLegacy.h",
+        ":MPPInteractiveSegmenterLegacyOptions.h",
+        ":MPPInteractiveSegmenterLegacyResult.h",
         ":MPPHandLandmarker.h",
         ":MPPHandLandmarkerOptions.h",
         ":MPPHandLandmarkerResult.h",
@@ -316,130 +338,26 @@ apple_static_xcframework(
         ":MPPPoseLandmarkerOptions.h",
         ":MPPPoseLandmarkerResult.h",
     ],
-    deps = [
-        "//mediapipe/tasks/ios/vision/face_detector:MPPFaceDetector",
-        "//mediapipe/tasks/ios/vision/face_landmarker:MPPFaceLandmarker",
-        "//mediapipe/tasks/ios/vision/gesture_recognizer:MPPGestureRecognizer",
-        "//mediapipe/tasks/ios/vision/hand_landmarker:MPPHandLandmarker",
-        "//mediapipe/tasks/ios/vision/holistic_landmarker:MPPHolisticLandmarker",
-        "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
-        "//mediapipe/tasks/ios/vision/image_embedder:MPPImageEmbedder",
-        "//mediapipe/tasks/ios/vision/image_segmenter:MPPImageSegmenter",
-        "//mediapipe/tasks/ios/vision/interactive_segmenter:MPPInteractiveSegmenter",
-        "//mediapipe/tasks/ios/vision/object_detector:MPPObjectDetector",
-        "//mediapipe/tasks/ios/vision/pose_landmarker:MPPPoseLandmarker",
-    ],
 )
 
-apple_static_library(
+mediapipe_static_xcframework(
     name = "MediaPipeTaskGraphs_library",
-    # There is no way to turn off zlib dependency in custom opencv builds.
-    # Hence zlib is avoided to prevent duplicate symbols because of conflicts
-    # between opencv's zlib and "@zlib//:zlib"
-    #
-    # Avoiding `OpenCV` and `TensorFlowLiteC` deps of the graphs here to prevent
-    # conflicts with `TensorFlowLiteSwift` and `OpenCV` frameworks since
-    # this static library is force loaded. They are include with
-    # `MediaPipeTasksCommon` xcframework instead.
-    avoid_deps = TENSORFLOW_LITE_C_DEPS + [
-        "@zlib//:zlib",
-        "//mediapipe/gpu:metal_shared_resources",
-    ] + select(OPENCV_DEPS),
-    minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
-    platform_type = "ios",
-    deps = CALCULATORS_AND_GRAPHS + [
-        "@org_tensorflow//third_party/icu/data:conversion_data",
-    ] + select(OPENCV_DEPS),
+    bundle_name = "MediaPipeTaskGraphs_library",
+    deps = [":MediaPipeTaskGraphs"],
 )
 
-apple_static_xcframework(
+mediapipe_static_xcframework(
     name = "MediaPipeTasksCommon_framework",
-    # avoids gpu targets since they will be built with
-    # ":MediaPipeTaskGraphs_library". Otherwise it will result in
-    # duplicate symbols error when the frameworks are imported in iOS.
-    avoid_deps = [
-        "@zlib//:zlib",
-    ],
+    avoid_deps = CALCULATORS_AND_GRAPHS,
+    bundle_format = "framework",
+    bundle_id = "com.google.mediapipe.tasks.common",
     bundle_name = "MediaPipeTasksCommon",
-    ios = {
-        "simulator": [
-            "arm64",
-            "x86_64",
-        ],
-        "device": ["arm64"],
-    },
-    minimum_os_versions = {
-        "ios": MPP_TASK_MINIMUM_OS_VERSION,
-    },
+    infoplists = [":empty.plist"],
     # Including `OpenCV` and `TensorFlowLiteC` deps of the graphs here to avoid
     # conflicts with `TensorFlowLiteSwift` and `OpenCV` frameworks as iOS
     # `xcframeworks` handle duplicate dependencies with other iOS
     # `xcframeworks`. Including them with task graphs causes duplicate symbols
     # when installed alongside the respective frameworks since task graphs are
     # built as static libraries and force loaded.
-    deps = MEDIAPIPE_TASKS_COMMON_DEPS + select(OPENCV_DEPS),
-)
-
-apple_static_xcframework(
-    name = "MediaPipeTasksGenAI_framework",
-    avoid_deps = [
-        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
-    ],
-    bundle_name = "MediaPipeTasksGenAI",
-    ios = {
-        "simulator": [
-            "arm64",
-            "x86_64",
-        ],
-        "device": ["arm64"],
-    },
-    minimum_os_versions = {
-        "ios": MPP_TASK_MINIMUM_OS_VERSION,
-    },
-    deps = ["//mediapipe/tasks/ios/genai/inference:LlmInference"],
-)
-
-apple_static_xcframework(
-    name = "MediaPipeTasksGenAIC_framework",
-    bundle_name = "MediaPipeTasksGenAIC",
-    ios = {
-        "simulator": [
-            "arm64",
-            "x86_64",
-        ],
-        "device": ["arm64"],
-    },
-    minimum_os_versions = {
-        "ios": MPP_TASK_MINIMUM_OS_VERSION,
-    },
-    public_hdrs = [
-        "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine.h",
-        "//mediapipe/tasks/cc/genai/inference/c:llm_inference_engine_ios.h",
-    ],
-    # Including here the deps that were in avoid_deps in MediaPipeTasksGenAI_library.
-    deps = TENSORFLOW_LITE_C_DEPS + [
-        "//mediapipe/tasks/cc/genai/inference/c:libllm_inference_engine_cpu",
-    ],
-)
-
-apple_static_xcframework(
-    name = "MediaPipeTasksGenAIC_library",
-    # Excluding these to avoid duplicate symbols.
-    avoid_deps = TENSORFLOW_LITE_C_DEPS + [
-        "//mediapipe/gpu:metal_shared_resources",
-    ],
-    bundle_name = "MediaPipeTasksGenAIC_library",
-    ios = {
-        "simulator": [
-            "arm64",
-            "x86_64",
-        ],
-        "device": ["arm64"],
-    },
-    minimum_os_versions = {
-        "ios": MPP_TASK_MINIMUM_OS_VERSION,
-    },
-    deps = [
-        ":empty.plist",
-    ],
+    deps = MEDIAPIPE_TASKS_COMMON_DEPS,
 )

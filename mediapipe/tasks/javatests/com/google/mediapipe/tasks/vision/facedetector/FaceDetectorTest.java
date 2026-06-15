@@ -46,6 +46,7 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({FaceDetectorTest.General.class, FaceDetectorTest.RunningModeTest.class})
 public class FaceDetectorTest {
   private static final String MODEL_FILE = "face_detection_short_range.tflite";
+  private static final String FULL_RANGE_MODEL_FILE = "face_detection_full_range.tflite";
   private static final String CAT_IMAGE = "cat.jpg";
   private static final String PORTRAIT_IMAGE = "portrait.jpg";
   private static final String PORTRAIT_ROTATED_IMAGE = "portrait_rotated.jpg";
@@ -61,6 +62,16 @@ public class FaceDetectorTest {
               NormalizedKeypoint.create(0.50227f, 0.27199f),
               NormalizedKeypoint.create(0.36063f, 0.20143f),
               NormalizedKeypoint.create(0.60841f, 0.20409f)));
+  private static final RectF PORTRAIT_FACE_BOUNDING_BOX_FULL_RANGE = new RectF(290, 110, 518, 338);
+  private static final List<NormalizedKeypoint> PORTRAIT_FACE_KEYPOINTS_FULL_RANGE =
+      Collections.unmodifiableList(
+          Arrays.asList(
+              NormalizedKeypoint.create(0.44089f, 0.17410f),
+              NormalizedKeypoint.create(0.55402f, 0.17959f),
+              NormalizedKeypoint.create(0.49858f, 0.22156f),
+              NormalizedKeypoint.create(0.49662f, 0.26796f),
+              NormalizedKeypoint.create(0.37493f, 0.20281f),
+              NormalizedKeypoint.create(0.61059f, 0.20888f)));
   private static final RectF PORTRAIT_ROTATED_FACE_BOUNDING_BOX = new RectF(674, 283, 910, 519);
   private static final List<NormalizedKeypoint> PORTRAIT_ROTATED_FACE_KEYPOINTS =
       Collections.unmodifiableList(
@@ -86,6 +97,20 @@ public class FaceDetectorTest {
       FaceDetectorResult results = faceDetector.detect(getImageFromAsset(PORTRAIT_IMAGE));
       assertContainsSinglePortraitFace(
           results, PORTRAIT_FACE_BOUNDING_BOX, PORTRAIT_FACE_KEYPOINTS);
+    }
+
+    @Test
+    public void detect_successWithFullRangeModel() throws Exception {
+      FaceDetectorOptions options =
+          FaceDetectorOptions.builder()
+              .setBaseOptions(
+                  BaseOptions.builder().setModelAssetPath(FULL_RANGE_MODEL_FILE).build())
+              .build();
+      FaceDetector faceDetector =
+          FaceDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      FaceDetectorResult results = faceDetector.detect(getImageFromAsset(PORTRAIT_IMAGE));
+      assertContainsSinglePortraitFace(
+          results, PORTRAIT_FACE_BOUNDING_BOX_FULL_RANGE, PORTRAIT_FACE_KEYPOINTS_FULL_RANGE);
     }
 
     @Test
@@ -274,14 +299,14 @@ public class FaceDetectorTest {
               MediaPipeException.class,
               () ->
                   faceDetector.detectForVideo(
-                      getImageFromAsset(PORTRAIT_IMAGE), /* timestampsMs= */ 0));
+                      getImageFromAsset(PORTRAIT_IMAGE), /* timestampMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
       exception =
           assertThrows(
               MediaPipeException.class,
               () ->
                   faceDetector.detectAsync(
-                      getImageFromAsset(PORTRAIT_IMAGE), /* timestampsMs= */ 0));
+                      getImageFromAsset(PORTRAIT_IMAGE), /* timestampMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
     }
 
@@ -305,7 +330,7 @@ public class FaceDetectorTest {
               MediaPipeException.class,
               () ->
                   faceDetector.detectAsync(
-                      getImageFromAsset(PORTRAIT_IMAGE), /* timestampsMs= */ 0));
+                      getImageFromAsset(PORTRAIT_IMAGE), /* timestampMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
     }
 
@@ -331,7 +356,7 @@ public class FaceDetectorTest {
               MediaPipeException.class,
               () ->
                   faceDetector.detectForVideo(
-                      getImageFromAsset(PORTRAIT_IMAGE), /* timestampsMs= */ 0));
+                      getImageFromAsset(PORTRAIT_IMAGE), /* timestampMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
     }
 
@@ -360,7 +385,7 @@ public class FaceDetectorTest {
           FaceDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       for (int i = 0; i < 3; i++) {
         FaceDetectorResult results =
-            faceDetector.detectForVideo(getImageFromAsset(PORTRAIT_IMAGE), /* timestampsMs= */ i);
+            faceDetector.detectForVideo(getImageFromAsset(PORTRAIT_IMAGE), /* timestampMs= */ i);
         assertContainsSinglePortraitFace(
             results, PORTRAIT_FACE_BOUNDING_BOX, PORTRAIT_FACE_KEYPOINTS);
       }
@@ -381,11 +406,11 @@ public class FaceDetectorTest {
               .build();
       try (FaceDetector faceDetector =
           FaceDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
-        faceDetector.detectAsync(image, /* timestampsMs= */ 1);
+        faceDetector.detectAsync(image, /* timestampMs= */ 1);
         MediaPipeException exception =
             assertThrows(
                 MediaPipeException.class,
-                () -> faceDetector.detectAsync(image, /* timestampsMs= */ 0));
+                () -> faceDetector.detectAsync(image, /* timestampMs= */ 0));
         assertThat(exception)
             .hasMessageThat()
             .contains("having a smaller timestamp than the processed timestamp");
@@ -408,7 +433,7 @@ public class FaceDetectorTest {
       try (FaceDetector faceDetector =
           FaceDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
         for (int i = 0; i < 3; i++) {
-          faceDetector.detectAsync(image, /* timestampsMs= */ i);
+          faceDetector.detectAsync(image, /* timestampMs= */ i);
         }
       }
     }

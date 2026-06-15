@@ -18,6 +18,8 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
+exports_files(glob(["sources/*.h"]))
+
 objc_library(
     name = "MPPHandLandmarkerResult",
     srcs = ["sources/MPPHandLandmarkerResult.m"],

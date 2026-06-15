@@ -22,7 +22,7 @@ import {addJasmineCustomFloatEqualityTester} from '../../../../tasks/web/core/ta
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {ImageSource} from '../../../../web/graph_runner/graph_runner';
 
-import {VisionTaskOptions} from './vision_task_options';
+import type {VisionTaskOptions} from './vision_task_options';
 import {VisionGraphRunner, VisionTaskRunner} from './vision_task_runner';
 
 // The OSS JS API does not support the builder pattern.

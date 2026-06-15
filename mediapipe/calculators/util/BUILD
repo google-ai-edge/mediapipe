@@ -996,10 +996,7 @@ cc_test(
 mediapipe_proto_library(
     name = "landmarks_smoothing_calculator_proto",
     srcs = ["landmarks_smoothing_calculator.proto"],
-    deps = [
-        "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:calculator_proto",
-    ],
+    deps = ["//mediapipe/framework:calculator_options_proto"],
 )
 
 cc_library(
@@ -1480,19 +1477,22 @@ cc_library(
 cc_library(
     name = "to_image_calculator",
     srcs = ["to_image_calculator.cc"],
+    hdrs = ["to_image_calculator.h"],
     deps = [
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:calculator_options_cc_proto",
-        "//mediapipe/framework/api2:node",
-        "//mediapipe/framework/api2:packet",
-        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/api3:any",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:calculator_contract",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
+        "//mediapipe/framework/api3:one_of",
+        "//mediapipe/framework/api3:packet",
         "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:vector",
+        "@com_google_absl//absl/functional:overload",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
@@ -1501,6 +1501,30 @@ cc_library(
         ],
     }),
     alwayslink = 1,
+)
+
+cc_test(
+    name = "to_image_calculator_test",
+    size = "small",
+    srcs = ["to_image_calculator_test.cc"],
+    deps = [
+        ":to_image_calculator",
+        "//mediapipe/framework/api3:function_runner",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:packet",
+        "//mediapipe/framework/api3:stream",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status_matchers",
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gpu_buffer_storage_image_frame",
+        ],
+    }),
 )
 
 mediapipe_proto_library(
@@ -1552,22 +1576,57 @@ cc_test(
 cc_library(
     name = "from_image_calculator",
     srcs = ["from_image_calculator.cc"],
+    hdrs = ["from_image_calculator.h"],
     deps = [
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/api3:any",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:calculator_contract",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
+        "//mediapipe/framework/api3:packet",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",
+        "//mediapipe/gpu:gpu_buffer",
+        "@com_google_absl//absl/status",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gpu_service",
         ],
     }),
     alwayslink = 1,
+)
+
+cc_test(
+    name = "from_image_calculator_test",
+    size = "small",
+    srcs = ["from_image_calculator_test.cc"],
+    deps = [
+        ":from_image_calculator",
+        "//mediapipe/framework/api3:function_runner",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:packet",
+        "//mediapipe/framework/api3:stream",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status_matchers",
+        "@com_google_absl//absl/status",
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gpu_service",
+            "//mediapipe/gpu:gpu_shared_data_internal",
+        ],
+    }),
 )
 
 cc_library(

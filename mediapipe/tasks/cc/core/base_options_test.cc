@@ -3,6 +3,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <variant>
 
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
@@ -82,6 +83,39 @@ TEST(DelegateOptionsDeathTest, FailWrongDelegateOptionsType) {
       { proto::BaseOptions proto = ConvertBaseOptionsToProto(&base_options); },
       "Specified Delegate type does not match the provided "
       "delegate options.");
+}
+
+TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithFile) {
+  proto::BaseOptions proto;
+  proto.mutable_model_asset()->set_file_content("dummy_content");
+  proto.mutable_model_asset()->mutable_file_descriptor_meta()->set_fd(123);
+  BaseOptions base_options = ConvertProtoToBaseOptions(std::move(proto));
+  ASSERT_NE(base_options.model_asset_buffer, nullptr);
+  EXPECT_EQ(*base_options.model_asset_buffer, "dummy_content");
+  EXPECT_EQ(base_options.model_asset_descriptor_meta.fd, 123);
+}
+
+TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithCpuDelegate) {
+  proto::BaseOptions proto;
+  proto.mutable_acceleration()->mutable_tflite();
+  BaseOptions base_options = ConvertProtoToBaseOptions(std::move(proto));
+  EXPECT_EQ(base_options.delegate, BaseOptions::Delegate::CPU);
+}
+
+TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithGpuDelegate) {
+  proto::BaseOptions proto;
+  auto* gpu = proto.mutable_acceleration()->mutable_gpu();
+  gpu->set_serialized_model_dir(kCachedModelDir);
+  gpu->set_model_token(kModelToken);
+  BaseOptions base_options = ConvertProtoToBaseOptions(std::move(proto));
+  EXPECT_EQ(base_options.delegate, BaseOptions::Delegate::GPU);
+  ASSERT_TRUE(base_options.delegate_options.has_value());
+  ASSERT_TRUE(std::holds_alternative<BaseOptions::GpuOptions>(
+      *base_options.delegate_options));
+  const auto& gpu_opts =
+      std::get<BaseOptions::GpuOptions>(*base_options.delegate_options);
+  EXPECT_EQ(gpu_opts.serialized_model_dir, kCachedModelDir);
+  EXPECT_EQ(gpu_opts.model_token, kModelToken);
 }
 
 }  // namespace

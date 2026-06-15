@@ -35,7 +35,7 @@
   // For a gray scale image (single component) with no alpha, the bitmap info is
   // `kCGImageAlphaNone` in combination with bytesPerRow being equal to width.
   CGContextRef context = CGBitmapContextCreate(nil, width, height, bitsPerComponent, width,
-                                               colorSpace, kCGImageAlphaNone);
+                                               colorSpace, (CGBitmapInfo)kCGImageAlphaNone);
 
   if (!context) {
     CGColorSpaceRelease(colorSpace);

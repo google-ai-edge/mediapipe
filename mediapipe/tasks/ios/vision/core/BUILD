@@ -18,6 +18,8 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
+exports_files(glob(["sources/*.h"]))
+
 objc_library(
     name = "MPPImage",
     srcs = ["sources/MPPImage.m"],
@@ -42,7 +44,10 @@ objc_library(
     name = "MPPRunningMode",
     hdrs = ["sources/MPPRunningMode.h"],
     module_name = "MPPRunningMode",
-    deps = ["//third_party/apple_frameworks:Foundation"],
+    deps = [
+        "//mediapipe/tasks/ios/core:MPPCoreRunningMode",
+        "//third_party/apple_frameworks:Foundation",
+    ],
 )
 
 objc_library(
@@ -60,7 +65,7 @@ objc_library(
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:rect_cc_proto",
-        "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_cc_proto",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto:region_of_interest_cc_proto",
         "//mediapipe/tasks/ios/components/containers:MPPRegionOfInterest",
         "//mediapipe/tasks/ios/components/containers/utils:MPPRegionOfInterestHelpers",
         "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",

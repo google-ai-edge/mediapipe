@@ -755,15 +755,16 @@ absl::Status GraphProfiler::WriteProfile() {
   // Write the GraphProfile to the trace_log_path.
   int log_index = previous_log_index / log_interval_count % log_file_count;
   std::string log_path = absl::StrCat(trace_log_path, log_index, ".binarypb");
-  std::ofstream ofs;
+  std::string profile_bytes;
+  RET_CHECK(profile.SerializeToString(&profile_bytes))
+      << "Could not serialize GraphProfile";
   if (is_new_file) {
-    ofs.open(log_path, std::ofstream::out | std::ofstream::trunc);
+    RET_CHECK(mediapipe::file::SetContents(log_path, profile_bytes).ok())
+        << "Could not write binary GraphProfile to: " << log_path;
   } else {
-    ofs.open(log_path, std::ofstream::out | std::ofstream::app);
+    RET_CHECK(mediapipe::file::AppendStringToFile(log_path, profile_bytes).ok())
+        << "Could not write binary GraphProfile to: " << log_path;
   }
-  OstreamStream out(&ofs);
-  RET_CHECK(profile.SerializeToZeroCopyStream(&out))
-      << "Could not write binary GraphProfile to: " << log_path;
   return absl::OkStatus();
 }
 

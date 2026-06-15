@@ -104,7 +104,7 @@ class ShardedMap {
     return iterator{maps_.size() - 1, maps_.back().end(), this};
   }
 
-  inline const_iterator begin() const {
+  inline const_iterator begin() const ABSL_NO_THREAD_SAFETY_ANALYSIS {
     mutexes_[0].Lock();
     const_iterator result{0, maps_[0].begin(), this};
     result.NextEntryShard();

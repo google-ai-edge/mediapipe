@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 // Classifier options for MediaPipe C classification Tasks.
-struct ClassifierOptions {
+struct MpClassifierOptions {
   // The locale to use for display names specified through the TFLite Model
   // Metadata, if any. Defaults to English.
   const char* display_names_locale;

@@ -76,7 +76,7 @@ constexpr char kImageSizeTag[] = "IMAGE_SIZE";
 }
 
 ::absl::Status
-HandDetectionsFromPoseToRectsCalculator ::DetectionToNormalizedRect(
+HandDetectionsFromPoseToRectsCalculator::DetectionToNormalizedRect(
     const Detection& detection, const DetectionSpec& detection_spec,
     NormalizedRect* rect) {
   const auto& location_data = detection.location_data();

@@ -21,6 +21,7 @@ limitations under the License.
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/memory/memory.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -37,6 +38,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_graph_options.pb.h"
@@ -134,7 +136,10 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner() {
           .SetName(kHandRectNextFrameName) >>
       graph[Output<std::vector<NormalizedRect>>(kHandRectNextFrameTag)];
   return TaskRunner::Create(
-      graph.GetConfig(), absl::make_unique<core::MediaPipeBuiltinOpResolver>());
+      {.config = graph.GetConfig(),
+       .task_name = "hand_landmarker_test",
+       .task_running_mode = core::RunningMode::kImage,
+       .op_resolver = absl::make_unique<core::MediaPipeBuiltinOpResolver>()});
 }
 
 class HandLandmarkerTest : public tflite::testing::Test {};

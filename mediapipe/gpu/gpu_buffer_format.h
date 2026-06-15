@@ -52,6 +52,8 @@ enum class GpuBufferFormat : uint32_t {
   kTwoComponentFloat32 = MEDIAPIPE_FOURCC('2', 'C', '0', 'f'),
   kBiPlanar420YpCbCr8VideoRange = MEDIAPIPE_FOURCC('4', '2', '0', 'v'),
   kBiPlanar420YpCbCr8FullRange = MEDIAPIPE_FOURCC('4', '2', '0', 'f'),
+  kBiPlanar420YpCbCr10VideoRange = MEDIAPIPE_FOURCC('x', '4', '2', '0'),
+  kBiPlanar420YpCbCr10FullRange = MEDIAPIPE_FOURCC('x', 'f', '2', '0'),
   kRGB24 = 0x00000018,  // Note: prefer BGRA32 whenever possible.
   kRGBAHalf64 = MEDIAPIPE_FOURCC('R', 'G', 'h', 'A'),
   kRGBAFloat128 = MEDIAPIPE_FOURCC('R', 'G', 'f', 'A'),
@@ -126,6 +128,10 @@ inline OSType CVPixelFormatForGpuBufferFormat(GpuBufferFormat format) {
       return kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
     case GpuBufferFormat::kBiPlanar420YpCbCr8FullRange:
       return kCVPixelFormatType_420YpCbCr8BiPlanarFullRange;
+    case GpuBufferFormat::kBiPlanar420YpCbCr10VideoRange:
+      return kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange;
+    case GpuBufferFormat::kBiPlanar420YpCbCr10FullRange:
+      return kCVPixelFormatType_420YpCbCr10BiPlanarFullRange;
     case GpuBufferFormat::kRGB24:
       return kCVPixelFormatType_24RGB;
     case GpuBufferFormat::kRGBAHalf64:
@@ -168,6 +174,10 @@ inline GpuBufferFormat GpuBufferFormatForCVPixelFormat(OSType format) {
       return GpuBufferFormat::kBiPlanar420YpCbCr8VideoRange;
     case kCVPixelFormatType_420YpCbCr8BiPlanarFullRange:
       return GpuBufferFormat::kBiPlanar420YpCbCr8FullRange;
+    case kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange:
+      return GpuBufferFormat::kBiPlanar420YpCbCr10VideoRange;
+    case kCVPixelFormatType_420YpCbCr10BiPlanarFullRange:
+      return GpuBufferFormat::kBiPlanar420YpCbCr10FullRange;
     case kCVPixelFormatType_24RGB:
       return GpuBufferFormat::kRGB24;
     case kCVPixelFormatType_64RGBAHalf:

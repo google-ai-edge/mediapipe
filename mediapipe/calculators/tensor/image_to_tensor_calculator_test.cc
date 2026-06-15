@@ -16,6 +16,7 @@
 #include <sys/types.h>
 
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
@@ -589,6 +590,96 @@ TEST(ImageToTensorCalculatorTest,
                        HasSubstr("GPU service not available")));
 }
 #endif  // !MEDIAPIPE_DISABLE_GPU && !MEDIAPIPE_METAL_ENABLED
+
+TEST(ImageToTensorCalculatorTest, InvalidRoiNaNValuesCausesError) {
+  auto graph_config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "image"
+        input_stream: "norm_rect"
+        node {
+          calculator: "ImageToTensorCalculator"
+          input_stream: "IMAGE:image"
+          input_stream: "NORM_RECT:norm_rect"
+          output_stream: "TENSORS:tensor"
+          options {
+            [mediapipe.ImageToTensorCalculatorOptions.ext] {
+              output_tensor_float_range { min: 0.0f max: 1.0f }
+              output_tensor_width: 128
+              output_tensor_height: 128
+            }
+          }
+        }
+      )pb");
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  auto image_frame = std::make_shared<ImageFrame>(ImageFormat::SRGB, 128, 128);
+  Image image = Image(std::move(image_frame));
+
+  NormalizedRect norm_rect;
+  norm_rect.set_x_center(std::numeric_limits<float>::quiet_NaN());
+  norm_rect.set_y_center(0.5f);
+  norm_rect.set_width(0.5f);
+  norm_rect.set_height(0.5f);
+
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "image", MakePacket<Image>(std::move(image)).At(Timestamp(1))));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "norm_rect",
+      MakePacket<NormalizedRect>(std::move(norm_rect)).At(Timestamp(1))));
+
+  using ::testing::HasSubstr;
+  using ::testing::status::StatusIs;
+  EXPECT_THAT(graph.WaitUntilIdle(),
+              StatusIs(absl::StatusCode::kInvalidArgument,
+                       HasSubstr("ROI contains NaN values")));
+}
+
+TEST(ImageToTensorCalculatorTest, InvalidRoiZeroDimensionsCausesError) {
+  auto graph_config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "image"
+        input_stream: "norm_rect"
+        node {
+          calculator: "ImageToTensorCalculator"
+          input_stream: "IMAGE:image"
+          input_stream: "NORM_RECT:norm_rect"
+          output_stream: "TENSORS:tensor"
+          options {
+            [mediapipe.ImageToTensorCalculatorOptions.ext] {
+              output_tensor_float_range { min: 0.0f max: 1.0f }
+              output_tensor_width: 128
+              output_tensor_height: 128
+            }
+          }
+        }
+      )pb");
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  auto image_frame = std::make_shared<ImageFrame>(ImageFormat::SRGB, 128, 128);
+  Image image = Image(std::move(image_frame));
+
+  NormalizedRect norm_rect;
+  norm_rect.set_x_center(0.5f);
+  norm_rect.set_y_center(0.5f);
+  norm_rect.set_width(0.0f);
+  norm_rect.set_height(0.5f);
+
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "image", MakePacket<Image>(std::move(image)).At(Timestamp(1))));
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "norm_rect",
+      MakePacket<NormalizedRect>(std::move(norm_rect)).At(Timestamp(1))));
+
+  using ::testing::HasSubstr;
+  using ::testing::status::StatusIs;
+  EXPECT_THAT(graph.WaitUntilIdle(),
+              StatusIs(absl::StatusCode::kInvalidArgument,
+                       HasSubstr("ROI width and height must be > 0")));
+}
 
 }  // namespace
 }  // namespace mediapipe

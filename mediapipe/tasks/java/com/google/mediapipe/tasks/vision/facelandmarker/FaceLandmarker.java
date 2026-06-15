@@ -87,7 +87,7 @@ public final class FaceLandmarker extends BaseVisionTaskApi {
       "mediapipe.tasks.vision.face_landmarker.FaceLandmarkerGraph";
 
   static {
-    System.loadLibrary("mediapipe_tasks_vision_jni");
+    System.loadLibrary("mediapipe_tasks_jni");
   }
 
   /**

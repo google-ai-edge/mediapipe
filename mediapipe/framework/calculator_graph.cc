@@ -269,7 +269,7 @@ absl::Status CalculatorGraph::InitializeStreams() {
 
   // Set the default mode for graph input streams.
   {
-    absl::MutexLock lock(&full_input_streams_mutex_);
+    absl::MutexLock lock(full_input_streams_mutex_);
     graph_input_stream_add_mode_ = GraphInputStreamAddMode::WAIT_TILL_NOT_FULL;
   }
 
@@ -749,7 +749,7 @@ absl::Status CalculatorGraph::PrepareForRun(
   }
 
   {
-    absl::MutexLock lock(&error_mutex_);
+    absl::MutexLock lock(error_mutex_);
     errors_.clear();
     has_error_ = false;
   }
@@ -817,7 +817,7 @@ absl::Status CalculatorGraph::PrepareForRun(
   MP_RETURN_IF_ERROR(InitializePacketGeneratorNodes(non_scheduled_generators));
 
   {
-    absl::MutexLock lock(&full_input_streams_mutex_);
+    absl::MutexLock lock(full_input_streams_mutex_);
     // Initialize a count per source node to store the number of input streams
     // that are full and are affected by the source node. A node is considered
     // to be throttled if the count corresponding to this node is non-zero.
@@ -1028,7 +1028,7 @@ absl::Status CalculatorGraph::AddPacketToInputStreamInternal(
   int node_id = node_id_it->second;
   ABSL_CHECK_GE(node_id, validated_graph_->CalculatorInfos().size());
   {
-    absl::MutexLock lock(&full_input_streams_mutex_);
+    absl::MutexLock lock(full_input_streams_mutex_);
     if (full_input_streams_.empty()) {
       return mediapipe::FailedPreconditionErrorBuilder(MEDIAPIPE_LOC)
              << "CalculatorGraph::AddPacketToInputStream() is called before "
@@ -1156,7 +1156,7 @@ absl::Status CalculatorGraph::CloseAllPacketSources() {
 void CalculatorGraph::RecordError(const absl::Status& error) {
   VLOG(2) << "RecordError called with " << error;
   {
-    absl::MutexLock lock(&error_mutex_);
+    absl::MutexLock lock(error_mutex_);
     errors_.push_back(error);
     has_error_ = true;
     scheduler_.SetHasError(true);
@@ -1183,7 +1183,7 @@ bool CalculatorGraph::GetCombinedErrors(absl::Status* error_status) {
 
 bool CalculatorGraph::GetCombinedErrors(const std::string& error_prefix,
                                         absl::Status* error_status) {
-  absl::MutexLock lock(&error_mutex_);
+  absl::MutexLock lock(error_mutex_);
   if (!errors_.empty()) {
     *error_status = tool::CombinedStatus(error_prefix, errors_);
     return true;
@@ -1263,7 +1263,7 @@ void CalculatorGraph::UpdateThrottledNodes(InputStreamManager* stream,
   std::vector<CalculatorNode*> nodes_to_schedule;
 
   {
-    absl::MutexLock lock(&full_input_streams_mutex_);
+    absl::MutexLock lock(full_input_streams_mutex_);
     // Note that the change in stream status is recomputed here within the
     // MutexLock in order to avoid interference between callbacks arriving
     // out of order.
@@ -1320,7 +1320,7 @@ void CalculatorGraph::UpdateThrottledNodes(InputStreamManager* stream,
 }
 
 bool CalculatorGraph::IsNodeThrottled(int node_id) {
-  absl::MutexLock lock(&full_input_streams_mutex_);
+  absl::MutexLock lock(full_input_streams_mutex_);
   return max_queue_size_ != -1 && !full_input_streams_[node_id].empty();
 }
 
@@ -1346,7 +1346,7 @@ bool CalculatorGraph::UnthrottleSources() {
   // each deadlock.
   absl::flat_hash_set<InputStreamManager*> full_streams;
   {
-    absl::MutexLock lock(&full_input_streams_mutex_);
+    absl::MutexLock lock(full_input_streams_mutex_);
     for (absl::flat_hash_set<InputStreamManager*>& s : full_input_streams_) {
       for (auto& stream : s) {
         // The queue size of a graph output stream shouldn't change. Throttling
@@ -1381,12 +1381,12 @@ bool CalculatorGraph::UnthrottleSources() {
 
 CalculatorGraph::GraphInputStreamAddMode
 CalculatorGraph::GetGraphInputStreamAddMode() const {
-  absl::MutexLock lock(&full_input_streams_mutex_);
+  absl::MutexLock lock(full_input_streams_mutex_);
   return graph_input_stream_add_mode_;
 }
 
 void CalculatorGraph::SetGraphInputStreamAddMode(GraphInputStreamAddMode mode) {
-  absl::MutexLock lock(&full_input_streams_mutex_);
+  absl::MutexLock lock(full_input_streams_mutex_);
   graph_input_stream_add_mode_ = mode;
 }
 
@@ -1484,13 +1484,13 @@ void CalculatorGraph::CleanupAfterRun(absl::Status* status) {
   scheduler_.CleanupAfterRun();
 
   {
-    absl::MutexLock lock(&error_mutex_);
+    absl::MutexLock lock(error_mutex_);
     errors_.clear();
     has_error_ = false;
   }
 
   {
-    absl::MutexLock lock(&full_input_streams_mutex_);
+    absl::MutexLock lock(full_input_streams_mutex_);
     full_input_streams_.clear();
   }
   // Note: output_side_packets_ and current_run_side_packets_ are not cleared

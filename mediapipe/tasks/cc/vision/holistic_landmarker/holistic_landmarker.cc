@@ -63,6 +63,7 @@ using ::mediapipe::tasks::components::containers::ConvertToCategory;
 using ::mediapipe::tasks::components::containers::ConvertToLandmarks;
 using ::mediapipe::tasks::components::containers::ConvertToNormalizedLandmarks;
 
+constexpr char kTaskName[] = "HolisticLandmarker";
 constexpr char kHolisticLandmarkerGraphTypeName[] =
     "mediapipe.tasks.vision.holistic_landmarker.HolisticLandmarkerGraph";
 
@@ -283,13 +284,19 @@ absl::StatusOr<std::unique_ptr<HolisticLandmarker>> HolisticLandmarker::Create(
       auto landmarker,
       (core::VisionTaskApiFactory::Create<HolisticLandmarker,
                                           HolisticLandmarkerGraphOptionsProto>(
-          CreateGraphConfig(
-              std::move(options_proto),
-              options->running_mode == core::RunningMode::LIVE_STREAM),
-          std::move(options->base_options.op_resolver), options->running_mode,
-          std::move(packets_callback),
-          /*disable_default_service=*/
-          options->base_options.disable_default_service)));
+          {.config = CreateGraphConfig(
+               std::move(options_proto),
+               options->running_mode == core::RunningMode::LIVE_STREAM),
+           .task_name = kTaskName,
+           .task_running_mode = core::GetCoreRunningMode(options->running_mode),
+           .op_resolver = std::move(options->base_options.op_resolver),
+           .packets_callback = std::move(packets_callback),
+           .disable_default_service =
+               options->base_options.disable_default_service,
+           .host_environment = options->base_options.host_environment,
+           .host_system = options->base_options.host_system,
+           .host_version = options->base_options.host_version,
+           .ca_bundle_path = options->base_options.ca_bundle_path})));
   landmarker->output_pose_segmentation_masks_ =
       options->output_pose_segmentation_masks;
   landmarker->output_face_blendshapes_ = options->output_face_blendshapes;

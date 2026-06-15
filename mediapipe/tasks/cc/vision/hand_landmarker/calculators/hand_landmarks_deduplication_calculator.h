@@ -15,43 +15,23 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_VISION_HAND_LANDMARKER_CALCULATORS_HAND_LANDMARKS_DEDUPLICATION_CALCULATOR_H_
 #define MEDIAPIPE_TASKS_CC_VISION_HAND_LANDMARKER_CALCULATORS_HAND_LANDMARKS_DEDUPLICATION_CALCULATOR_H_
 
-#include "mediapipe/framework/api2/builder.h"
-#include "mediapipe/framework/api2/node.h"
-#include "mediapipe/framework/api2/port.h"
+#include <vector>
+
+#include "mediapipe/framework/api3/contract.h"
+#include "mediapipe/framework/api3/node.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/landmarks_duplicates_finder.h"
 
-namespace mediapipe::api2 {
+namespace mediapipe {
+namespace tasks {
 
 // Create a DuplicatesFinder dedicated for finding hand duplications.
 std::unique_ptr<tasks::vision::utils::DuplicatesFinder>
 CreateHandDuplicatesFinder(bool start_from_the_end = false);
 
 // Filter duplicate hand landmarks by finding the overlapped hands.
-// Inputs:
-//   MULTI_LANDMARKS - std::vector<NormalizedLandmarkList>
-//     The hand landmarks to be filtered.
-//   MULTI_ROIS - std::vector<NormalizedRect>
-//     The regions where each encloses the landmarks of a single hand.
-//   MULTI_WORLD_LANDMARKS - std::vector<LandmarkList>
-//      The hand landmarks to be filtered in world coordinates.
-//   MULTI_CLASSIFICATIONS - std::vector<ClassificationList>
-//      The handedness of hands.
-//   IMAGE_SIZE - std::pair<int, int>
-//     The size of the image which the hand landmarks are detected on.
-//
-// Outputs:
-//   MULTI_LANDMARKS - std::vector<NormalizedLandmarkList>
-//     The hand landmarks with duplication removed.
-//   MULTI_ROIS - std::vector<NormalizedRect>
-//     The regions where each encloses the landmarks of a single hand with
-//     duplicate hands removed.
-//   MULTI_WORLD_LANDMARKS - std::vector<LandmarkList>
-//      The hand landmarks with duplication removed in world coordinates.
-//   MULTI_CLASSIFICATIONS - std::vector<ClassificationList>
-//      The handedness of hands with duplicate hands removed.
 //
 // Example:
 // node {
@@ -66,32 +46,49 @@ CreateHandDuplicatesFinder(bool start_from_the_end = false);
 //   output_stream: "MULTI_WORLD_LANDMARKS:world_landmarks_out"
 //   output_stream: "MULTI_CLASSIFICATIONS:handedness_out"
 // }
-class HandLandmarksDeduplicationCalculator : public Node {
- public:
-  constexpr static Input<std::vector<mediapipe::NormalizedLandmarkList>>
-      kInLandmarks{"MULTI_LANDMARKS"};
-  constexpr static Input<std::vector<mediapipe::NormalizedRect>>::Optional
-      kInRois{"MULTI_ROIS"};
-  constexpr static Input<std::vector<mediapipe::LandmarkList>>::Optional
-      kInWorldLandmarks{"MULTI_WORLD_LANDMARKS"};
-  constexpr static Input<std::vector<mediapipe::ClassificationList>>::Optional
-      kInClassifications{"MULTI_CLASSIFICATIONS"};
-  constexpr static Input<std::pair<int, int>> kInSize{"IMAGE_SIZE"};
+struct HandLandmarksDeduplicationNode
+    : public api3::Node<"HandLandmarksDeduplicationCalculator"> {
+  template <typename S>
+  struct Contract {
+    // The hand landmarks to be filtered.
+    api3::Input<S, std::vector<mediapipe::NormalizedLandmarkList>> landmarks_in{
+        "MULTI_LANDMARKS"};
 
-  constexpr static Output<std::vector<mediapipe::NormalizedLandmarkList>>
-      kOutLandmarks{"MULTI_LANDMARKS"};
-  constexpr static Output<std::vector<mediapipe::NormalizedRect>>::Optional
-      kOutRois{"MULTI_ROIS"};
-  constexpr static Output<std::vector<mediapipe::LandmarkList>>::Optional
-      kOutWorldLandmarks{"MULTI_WORLD_LANDMARKS"};
-  constexpr static Output<std::vector<mediapipe::ClassificationList>>::Optional
-      kOutClassifications{"MULTI_CLASSIFICATIONS"};
-  MEDIAPIPE_NODE_CONTRACT(kInLandmarks, kInRois, kInWorldLandmarks,
-                          kInClassifications, kInSize, kOutLandmarks, kOutRois,
-                          kOutWorldLandmarks, kOutClassifications);
-  absl::Status Process(mediapipe::CalculatorContext* cc) override;
+    // The regions where each encloses the landmarks of a single hand.
+    api3::Optional<api3::Input<S, std::vector<mediapipe::NormalizedRect>>>
+        rois_in{"MULTI_ROIS"};
+
+    // The hand landmarks to be filtered in world coordinates.
+    api3::Optional<api3::Input<S, std::vector<mediapipe::LandmarkList>>>
+        world_landmarks_in{"MULTI_WORLD_LANDMARKS"};
+
+    // The handedness of hands.
+    api3::Optional<api3::Input<S, std::vector<mediapipe::ClassificationList>>>
+        classifications_in{"MULTI_CLASSIFICATIONS"};
+
+    // The size of the image which the hand landmarks are detected on.
+    api3::Input<S, std::pair<int, int>> input_size{"IMAGE_SIZE"};
+
+    // The hand landmarks with duplication removed.
+    api3::Output<S, std::vector<mediapipe::NormalizedLandmarkList>>
+        landmarks_out{"MULTI_LANDMARKS"};
+
+    // The regions where each encloses the landmarks of a single hand with
+    // duplicate hands removed.
+    api3::Optional<api3::Output<S, std::vector<mediapipe::NormalizedRect>>>
+        rois_out{"MULTI_ROIS"};
+
+    // The hand landmarks with duplication removed in world coordinates.
+    api3::Optional<api3::Output<S, std::vector<mediapipe::LandmarkList>>>
+        world_landmarks_out{"MULTI_WORLD_LANDMARKS"};
+
+    // The handedness of hands with duplicate hands removed.
+    api3::Optional<api3::Output<S, std::vector<mediapipe::ClassificationList>>>
+        classifications_out{"MULTI_CLASSIFICATIONS"};
+  };
 };
 
-}  // namespace mediapipe::api2
+}  // namespace tasks
+}  // namespace mediapipe
 
 #endif  // MEDIAPIPE_TASKS_CC_VISION_HAND_LANDMARKER_CALCULATORS_HAND_LANDMARKS_DEDUPLICATION_CALCULATOR_H_

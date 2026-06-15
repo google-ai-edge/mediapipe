@@ -3,7 +3,13 @@ package com.google.mediapipe.tasks.genai.llminference;
 import com.google.auto.value.AutoValue;
 import java.util.Optional;
 
-/** Options for configuring vision modality */
+/**
+ * Options for configuring vision modality.
+ *
+ * @deprecated Migrate to LiteRT LM instead. For more details, refer to LiteRT LM on GitHub:
+ *     https://github.com/google-ai-edge/LiteRT-LM
+ */
+@Deprecated
 @AutoValue
 public abstract class VisionModelOptions {
   /** Returns the path to the vision encoder model file. */

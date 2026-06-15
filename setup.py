@@ -38,6 +38,7 @@ MP_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 MP_DIR_INIT_PY = os.path.join(MP_ROOT_PATH, 'mediapipe/__init__.py')
 MP_THIRD_PARTY_BUILD = os.path.join(MP_ROOT_PATH, 'third_party/BUILD')
 MP_ROOT_INIT_PY = os.path.join(MP_ROOT_PATH, '__init__.py')
+MP_TASKS_C_INIT_PY = 'mediapipe/tasks/c/__init__.py'
 
 GPU_OPTIONS_DISABLED = ['--define=MEDIAPIPE_DISABLE_GPU=1']
 GPU_OPTIONS_ENABLED = [
@@ -130,12 +131,14 @@ def _modify_opencv_cmake_rule(link_opencv):
     build_file.close()
 
 
-def _add_mp_init_files():
+def _add_mp_init_files(root_init_py, mp_dir_init_py, ext_init_py):
   """Add __init__.py to mediapipe root directories to make the subdirectories indexable."""
-  open(MP_ROOT_INIT_PY, 'w').close()
+  # Create an empty __init__.py file in the root directory.
+  open(root_init_py, 'w').close()
+
   # Save the original mediapipe/__init__.py file.
-  shutil.copyfile(MP_DIR_INIT_PY, _get_backup_file(MP_DIR_INIT_PY))
-  mp_dir_init_file = open(MP_DIR_INIT_PY, 'a')
+  shutil.copyfile(mp_dir_init_py, _get_backup_file(mp_dir_init_py))
+  mp_dir_init_file = open(mp_dir_init_py, 'a')
   mp_dir_init_file.writelines([
       '\n',
       'import mediapipe.tasks.python as tasks\n',
@@ -146,6 +149,15 @@ def _add_mp_init_files():
       '\n',
   ])
   mp_dir_init_file.close()
+
+  # Create an empty __init__.py file in the extension directory.
+  os.makedirs(os.path.dirname(ext_init_py), exist_ok=True)
+  print(
+      'Creating empty __init__.py file in the build lib dir:',
+      ext_init_py,
+  )
+  with open(ext_init_py, 'w') as f:
+    f.write('"""Empty __init__.py file"""')
 
 
 def _copy_to_build_lib_dir(build_lib, file):
@@ -219,12 +231,16 @@ class BuildExtension(build_ext.build_ext):
 
   def initialize_options(self):
     self.link_opencv = False
+    self.skip_build_ext = os.environ.get('SKIP_LIBMEDIAPIPE_BUILD') is not None
     build_ext.build_ext.initialize_options(self)
 
   def finalize_options(self):
     build_ext.build_ext.finalize_options(self)
 
   def run(self):
+    if self.skip_build_ext:
+      return
+
     _check_bazel()
     if IS_MAC:
       for ext in self.extensions:
@@ -244,7 +260,6 @@ class BuildExtension(build_ext.build_ext):
         '--compilation_mode=opt',
         '--copt=-DNDEBUG',
         '--keep_going',
-        '--define=ENABLE_ODML_CONVERTER=1',
         str(ext.bazel_target),
     ] + GPU_OPTIONS
 
@@ -269,12 +284,6 @@ class BuildExtension(build_ext.build_ext):
           os.path.join('bazel-bin', ext.relpath, '*opencv*.dll')):
         shutil.copy(opencv_dll, ext_dest_dir)
 
-    # Now create an empty __init__.py file in the extension directory to make
-    # the extension directory indexable.
-    init_file_path = os.path.join(ext_dest_dir, '__init__.py')
-    with open(init_file_path, 'w') as f:
-      f.write('"""Empty __init__.py file"""')
-
 
 class BuildPy(build_py.build_py):
   """Build command that generates protos, builds binary graphs and extension, builds python source, and performs a cleanup afterwards."""
@@ -293,7 +302,8 @@ class BuildPy(build_py.build_py):
 
   def run(self):
     _modify_opencv_cmake_rule(self.link_opencv)
-    _add_mp_init_files()
+    ext_init_py = os.path.join(self.build_lib, MP_TASKS_C_INIT_PY)
+    _add_mp_init_files(MP_ROOT_INIT_PY, MP_DIR_INIT_PY, ext_init_py)
     self.run_command('generate_metadata_schema')
     self.run_command('build_ext')
     build_py.build_py.run(self)
@@ -351,12 +361,14 @@ setuptools.setup(
     description=(
         'MediaPipe is the simplest way for researchers and developers to build'
         ' world-class ML solutions and applications for mobile, edge, cloud and'
-        ' the web.'
+        ' the web. See the privacy notice at'
+        ' https://developers.google.com/edge/mediapipe/solutions/tasks#mediapipe_tasks_privacy_notice.'
     ),
     author='The MediaPipe Authors',
     author_email='mediapipe@google.com',
     long_description=_get_long_description(),
     long_description_content_type='text/markdown',
+    license_files=['LICENSE', 'NOTICE'],
     packages=setuptools.find_packages(
         include=[
             'mediapipe',

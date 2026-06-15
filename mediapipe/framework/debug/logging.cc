@@ -33,6 +33,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/tensor.h"
@@ -104,6 +105,27 @@ GetMatElementAccessor(const cv::Mat& mat) {
     default:
       return absl::UnimplementedError(
           absl::StrCat("Unhandled mat depth ", mat.depth()));
+  }
+}
+
+const char* MatDepthToString(int depth) {
+  switch (depth) {
+    case CV_8U:
+      return "8U";
+    case CV_8S:
+      return "8S";
+    case CV_16U:
+      return "16U";
+    case CV_16S:
+      return "16S";
+    case CV_32S:
+      return "32S";
+    case CV_32F:
+      return "32F";
+    case CV_64F:
+      return "64F";
+    default:
+      return "UnknownDepth";
   }
 }
 
@@ -327,6 +349,10 @@ void LogTensor(const Tensor& tensor, absl::string_view name, float min_range,
   }
 }
 
+void LogImage(const Image& image, absl::string_view name) {
+  return LogImage(*image.GetImageFrameSharedPtr(), name);
+}
+
 void LogImage(const ImageFrame& image, absl::string_view name) {
   return LogMat(formats::MatView(&image), name);
 }
@@ -338,7 +364,8 @@ void LogMat(const cv::Mat& mat, absl::string_view name) {
   int num_channels = mat.channels();
 
   ABSL_LOG(INFO) << name << "[" << width << " " << height << " " << num_channels
-                 << "] =";
+                 << " " << MatDepthToString(mat.depth()) << "C"
+                 << mat.channels() << "] =";
 
   if (width == 0 || height == 0 || num_channels == 0) {
     ABSL_LOG(INFO) << "  <empty>";

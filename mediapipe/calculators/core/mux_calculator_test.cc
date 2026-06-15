@@ -327,7 +327,7 @@ class ToOptionalNode : public mediapipe::api2::Node {
  public:
   static constexpr mediapipe::api2::Input<int> kTick{"TICK"};
   static constexpr mediapipe::api2::Input<int> kInValue{"VALUE"};
-  static constexpr mediapipe::api2::Output<absl::optional<int>> kOutValue{
+  static constexpr mediapipe::api2::Output<std::optional<int>> kOutValue{
       "OUTPUT"};
   MEDIAPIPE_NODE_CONTRACT(kTick, kInValue, kOutValue);
 
@@ -384,15 +384,15 @@ TEST(MuxCalculatorTest, HandleTimestampBoundUpdates) {
 
   MP_ASSERT_OK(send_value_fn(0, Timestamp(1)));
   ASSERT_EQ(output_packets.size(), 1);
-  EXPECT_EQ(output_packets[0].Get<absl::optional<int>>(), 0);
+  EXPECT_EQ(output_packets[0].Get<std::optional<int>>(), 0);
 
   MP_ASSERT_OK(send_value_fn(1, Timestamp(2)));
   ASSERT_EQ(output_packets.size(), 2);
-  EXPECT_EQ(output_packets[1].Get<absl::optional<int>>(), absl::nullopt);
+  EXPECT_EQ(output_packets[1].Get<std::optional<int>>(), absl::nullopt);
 
   MP_ASSERT_OK(send_value_fn(0, Timestamp(3)));
   ASSERT_EQ(output_packets.size(), 3);
-  EXPECT_EQ(output_packets[2].Get<absl::optional<int>>(), 0);
+  EXPECT_EQ(output_packets[2].Get<std::optional<int>>(), 0);
 
   MP_ASSERT_OK(graph.CloseAllInputStreams());
   MP_ASSERT_OK(graph.WaitUntilDone());

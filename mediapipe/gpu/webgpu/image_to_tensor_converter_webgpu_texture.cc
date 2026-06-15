@@ -18,7 +18,6 @@
 #include "mediapipe/gpu/webgpu/webgpu_service.h"
 #include "mediapipe/gpu/webgpu/webgpu_texture_view.h"
 #include "mediapipe/gpu/webgpu/webgpu_utils.h"
-
 namespace mediapipe {
 namespace {
 
@@ -158,8 +157,8 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
                 .constants = nullptr,
             },
     };
-    pipeline_ =
-        WebGpuCreateComputePipelineAsync(service_.device(), &pipeline_desc);
+    pipeline_ = WebGpuCreateComputePipelineAsync(
+        service_.instance(), service_.device(), &pipeline_desc);
 
     // Create a uniform buffer for the parameters.
     wgpu::BufferDescriptor buffer_desc = {

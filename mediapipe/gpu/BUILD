@@ -32,7 +32,7 @@ package(default_visibility = ["//visibility:public"])
 selects.config_setting_group(
     name = "disable_gpu",
     match_any = [
-        ":_disable_gpu_flag",
+        ":disable_gpu_flag",
         # The GPU library here use pthread which is not available on Windows.
         "@platforms//os:windows",
     ],
@@ -40,11 +40,10 @@ selects.config_setting_group(
 )
 
 config_setting(
-    name = "_disable_gpu_flag",
+    name = "disable_gpu_flag",
     define_values = {
         "MEDIAPIPE_DISABLE_GPU": "1",
     },
-    visibility = ["//visibility:private"],
 )
 
 cc_library(
@@ -315,6 +314,25 @@ cc_library(
         ":gl_base",
         ":gl_context",
         ":gpu_buffer_storage",
+    ],
+)
+
+cc_library(
+    name = "gl_external_texture_view",
+    srcs = select({
+        "//mediapipe:ios": ["gl_external_texture_view_ios.cc"],
+        "//conditions:default": ["gl_external_texture_view_default.cc"],
+    }),
+    hdrs = ["gl_external_texture_view.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_context",
+        ":gl_texture_view",
+        ":gpu_buffer",
+        ":gpu_shared_data_internal",
+        "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
@@ -636,7 +654,6 @@ cc_library(
     hdrs = ["pixel_buffer_pool_util.h"],
     copts = [
         "-x objective-c++",
-        "-Wno-shorten-64-to-32",
         "-fobjc-arc",  # enable reference-counting
     ],
     visibility = ["//visibility:public"],
@@ -654,7 +671,6 @@ cc_library(
     hdrs = ["metal_shared_resources.h"],
     copts = [
         "-x objective-c++",
-        "-Wno-shorten-64-to-32",
         "-fobjc-arc",  # enable reference-counting
     ],
     features = ["-layering_check"],
@@ -675,7 +691,6 @@ cc_library(
     hdrs = ["MPPMetalUtil.h"],
     copts = [
         "-x objective-c++",
-        "-Wno-shorten-64-to-32",
         "-fobjc-arc",  # enable reference-counting
     ],
     visibility = ["//visibility:public"],
@@ -693,12 +708,6 @@ cc_library(
     name = "gl_app_texture_support",
     srcs = ["gl_app_texture_support.cc"],
     hdrs = ["gl_app_texture_support.h"],
-    copts = select({
-        "//conditions:default": [],
-        "//mediapipe:macos": [
-            "-Wno-shorten-64-to-32",
-        ],
-    }),
     deps = [
         ":gl_base",
         ":gl_context",
@@ -1072,7 +1081,6 @@ cc_library(
     srcs = ["MPPMetalHelper.cc"],
     hdrs = ["MPPMetalHelper.h"],
     copts = [
-        "-Wno-shorten-64-to-32",
         "-x objective-c++",
         "-fobjc-arc",
     ],
@@ -1440,10 +1448,17 @@ objc_library(
     deps = [
         ":MPPMetalHelper",
         ":copy_calculator_cc_proto",
+        ":gpu_buffer",
+        ":gpu_shared_data_internal_actual",
         ":simple_shaders_mtl",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/objc:mediapipe_framework_ios",
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:Metal",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -1455,10 +1470,17 @@ objc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
+        ":gpu_buffer",
+        ":gpu_shared_data_internal_actual",
         ":simple_shaders_mtl",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/objc:mediapipe_framework_ios",
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:Metal",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -1470,10 +1492,17 @@ objc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
+        ":gpu_buffer",
+        ":gpu_shared_data_internal_actual",
         ":simple_shaders_mtl",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/objc:mediapipe_framework_ios",
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:Metal",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -1485,10 +1514,17 @@ objc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
+        ":gpu_buffer",
+        ":gpu_shared_data_internal_actual",
         ":simple_shaders_mtl",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/objc:mediapipe_framework_ios",
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:Metal",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -1500,10 +1536,17 @@ objc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
+        ":gpu_buffer",
+        ":gpu_shared_data_internal_actual",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/objc:mediapipe_framework_ios",
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:Metal",
         "//third_party/apple_frameworks:MetalPerformanceShaders",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -1514,10 +1557,17 @@ objc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
+        ":gpu_buffer",
+        ":gpu_shared_data_internal_actual",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/objc:mediapipe_framework_ios",
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:Metal",
         "//third_party/apple_frameworks:MetalPerformanceShaders",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -1540,9 +1590,6 @@ objc_library(
     srcs = [
         "gl_ios_test.mm",
         "metal_shared_resources_test.mm",
-    ],
-    copts = [
-        "-Wno-shorten-64-to-32",
     ],
     data = [
         "//mediapipe/objc:testdata/googlelogo_color_272x92dp.png",

@@ -83,7 +83,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 + (NSArray<MPPCategory *> *)expectedBertResultCategoriesForEdgeCaseTests {
   return @[ [[MPPCategory alloc] initWithIndex:0
-                                         score:0.963325f
+                                                                       score:0.963325f
                                   categoryName:@"negative"
                                    displayName:nil] ];
 }

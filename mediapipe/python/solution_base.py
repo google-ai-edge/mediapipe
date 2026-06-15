@@ -26,11 +26,11 @@ import enum
 import os
 from typing import Any, Iterable, List, Mapping, NamedTuple, Optional, Union
 
-import numpy as np
-
-from google.protobuf.internal import containers
 from google.protobuf import descriptor
 from google.protobuf import message
+from google.protobuf.internal import containers
+import numpy as np
+
 # resources dependency
 # pylint: disable=unused-import
 from mediapipe.calculators.core import constant_side_packet_calculator_pb2

@@ -38,6 +38,7 @@
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
 #include "mediapipe/gpu/gpu_origin_utils.h"
@@ -94,8 +95,8 @@ class ImageToTensorNodeImpl
     }
 #else  // !MEDIAPIPE_DISABLE_GPU
 #if MEDIAPIPE_METAL_ENABLED
-    MP_RETURN_IF_ERROR(
-        [MPPMetalHelper updateContract:&cc.GetGenericContract()]);
+    MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:&cc.GetGenericContract()
+                                 requestGpuAsOptional:true]);
 #else
 
     cc.UseService(kGpuService).Optional();
@@ -169,6 +170,7 @@ class ImageToTensorNodeImpl
     MP_ASSIGN_OR_RETURN(auto padding,
                         PadRoi(tensor_width, tensor_height,
                                options_.keep_aspect_ratio(), &roi));
+    MP_RETURN_IF_ERROR(ValidateRoi(roi));
     if (cc.out_letterbox_padding.IsConnected()) {
       cc.out_letterbox_padding.Send(padding);
     }

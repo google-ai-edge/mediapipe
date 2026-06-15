@@ -21,7 +21,6 @@
 #include <string>
 
 #include "Eigen/Core"
-#include "absl/base/internal/endian.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/strings/numbers.h"
@@ -34,6 +33,7 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/status_util.h"
+#include "mediapipe/util/endian.h"
 
 extern "C" {
 #include "libavcodec/avcodec.h"
@@ -156,6 +156,27 @@ std::string AvErrorToString(int error) {
   return absl::StrCat("Unknown AVERROR number ", error);
 }
 
+// Returns the number of channels for a given FFmpeg struct. FFmpeg 6.1 uses
+// the channels field, while 8.1 uses ch_layout.nb_channels.
+template <typename AvStruct>
+int AvStructChannels(const AvStruct& s) {
+#if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(60, 26, 100)
+  return s.channels;
+#else
+  return s.ch_layout.nb_channels;
+#endif
+}
+
+// Return the frame numbers. Only supported in ffmpeg 6.X and below. The field
+// was removed in ffmpeg 7.X
+int GetFrameNumber(const AVCodecContext& av_ctx) {
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(61, 0, 0)
+  return 0;
+#else
+  return av_ctx.frame_number;
+#endif
+}
+
 // Send a packet to the decoder.
 absl::Status SendPacket(const AVPacket& packet, AVCodecContext* avcodec_ctx) {
   const int error = avcodec_send_packet(avcodec_ctx, &packet);
@@ -195,7 +216,7 @@ absl::Status LogStatus(const absl::Status& status,
           << " media_type:"
           << (avcodec_ctx.codec_type == AVMEDIA_TYPE_VIDEO ? "video" : "audio")
           << " codec_id:" << avcodec_ctx.codec_id
-          << " frame_number:" << avcodec_ctx.frame_number
+          << " frame_number:" << GetFrameNumber(avcodec_ctx)
           << " pts:" << TimestampToString(packet.pts)
           << " dts:" << TimestampToString(packet.dts) << " size:" << packet.size
           << (packet.flags & AV_PKT_FLAG_KEY ? " Key Frame." : "");
@@ -260,10 +281,14 @@ absl::Status BasePacketProcessor::Flush() {
 
 void BasePacketProcessor::Close() {
   if (avcodec_ctx_) {
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(61, 0, 0)
+    avcodec_free_context(&avcodec_ctx_);
+#else
     if (avcodec_ctx_->codec) {
       avcodec_close(avcodec_ctx_);
       av_free(avcodec_ctx_);
     }
+#endif
     avcodec_ctx_ = nullptr;
   }
   if (avcodec_opts_) {
@@ -325,20 +350,22 @@ namespace {
 // Converts a PCM_S16LE-encoded input sample to float between -1 and 1.
 inline float PcmEncodedSampleToFloat(const char* data) {
   static const float kMultiplier = 1.f / (1 << 15);
-  return absl::little_endian::Load16(data) * kMultiplier;
+  return static_cast<int16_t>(mediapipe::little_endian::Load16(data)) *
+         kMultiplier;
 }
 
 // Converts a PCM_S32LE-encoded input sample to float between -1 and 1.
 inline float PcmEncodedSampleInt32ToFloat(const char* data) {
   static constexpr float kMultiplier = 1.f / (1u << 31);
-  return absl::little_endian::Load32(data) * kMultiplier;
+  return static_cast<int32_t>(mediapipe::little_endian::Load32(data)) *
+         kMultiplier;
 }
 
 }  // namespace
 
 AudioPacketProcessor::AudioPacketProcessor(const AudioStreamOptions& options)
     : sample_time_base_{0, 0}, options_(options) {
-  ABSL_DCHECK(absl::little_endian::IsLittleEndian());
+  ABSL_DCHECK(mediapipe::IsLittleEndian());
 }
 
 absl::Status AudioPacketProcessor::Open(int id, AVStream* stream) {
@@ -360,7 +387,7 @@ absl::Status AudioPacketProcessor::Open(int id, AVStream* stream) {
 
   MP_RETURN_IF_ERROR(ValidateSampleFormat());
   bytes_per_sample_ = av_get_bytes_per_sample(avcodec_ctx_->sample_fmt);
-  num_channels_ = avcodec_ctx_->channels;
+  num_channels_ = AvStructChannels(*avcodec_ctx_);
   sample_rate_ = avcodec_ctx_->sample_rate;
 
   if (num_channels_ <= 0) {
@@ -427,11 +454,11 @@ absl::Status AudioPacketProcessor::ProcessPacket(AVPacket* packet) {
 }
 
 absl::Status AudioPacketProcessor::ProcessDecodedFrame(const AVPacket& packet) {
-  RET_CHECK_EQ(decoded_frame_->channels, num_channels_);
+  RET_CHECK_EQ(AvStructChannels(*decoded_frame_), num_channels_);
   int buf_size_bytes = av_samples_get_buffer_size(nullptr, num_channels_,
                                                   decoded_frame_->nb_samples,
                                                   avcodec_ctx_->sample_fmt, 1);
-  VLOG(3) << "Audio packet " << avcodec_ctx_->frame_number
+  VLOG(3) << "Audio packet " << GetFrameNumber(*avcodec_ctx_)
           << " pts: " << TimestampToString(packet.pts)
           << " frame.pts:" << TimestampToString(decoded_frame_->pts)
           << " pkt_dts:" << TimestampToString(decoded_frame_->pkt_dts)
@@ -525,7 +552,7 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
            ++sample_index) {
         for (int channel = 0; channel < num_channels_; ++channel) {
           (*current_frame)(channel, sample_index) =
-              Uint32ToFloat(absl::little_endian::Load32(sample_ptr));
+              Uint32ToFloat(mediapipe::little_endian::Load32(sample_ptr));
           sample_ptr += bytes_per_sample_;
         }
       }
@@ -547,7 +574,7 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
         for (int64_t sample_index = 0; sample_index < num_samples;
              ++sample_index) {
           (*current_frame)(channel, sample_index) =
-              Uint32ToFloat(absl::little_endian::Load32(sample_ptr));
+              Uint32ToFloat(mediapipe::little_endian::Load32(sample_ptr));
           sample_ptr += bytes_per_sample_;
         }
       }

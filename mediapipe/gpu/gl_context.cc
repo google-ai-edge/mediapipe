@@ -116,7 +116,7 @@ void GlContext::DedicatedThread::SelfDestruct() {
 }
 
 GlContext::DedicatedThread::Job GlContext::DedicatedThread::GetJob() {
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   while (jobs_.empty()) {
     has_jobs_cv_.Wait(&mutex_);
   }
@@ -126,7 +126,7 @@ GlContext::DedicatedThread::Job GlContext::DedicatedThread::GetJob() {
 }
 
 void GlContext::DedicatedThread::PutJob(Job job) {
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   jobs_.push_back(std::move(job));
   has_jobs_cv_.SignalAll();
 }
@@ -179,7 +179,7 @@ absl::Status GlContext::DedicatedThread::Run(GlStatusFunction gl_func) {
   PutJob(
       util::functional::WithCurrentContext([this, gl_func, &done, &status]() {
         status = gl_func();
-        absl::MutexLock lock(&mutex_);
+        absl::MutexLock lock(mutex_);
         done = true;
         gl_job_done_cv_.SignalAll();
         ENDO_EVENT("Done signal");
@@ -193,7 +193,7 @@ absl::Status GlContext::DedicatedThread::Run(GlStatusFunction gl_func) {
   });
 #endif
 
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   while (!done) {
     gl_job_done_cv_.Wait(&mutex_);
   }
@@ -576,17 +576,17 @@ absl::Status GlContext::SwitchContext(ContextBinding* saved_context,
     // 2. We need to unset the old context before we unlock the old mutex,
     // Therefore, we first unset the old one before setting the new one.
     MP_RETURN_IF_ERROR(SetCurrentContextBinding({}));
-    old_context_obj->context_use_mutex_.Unlock();
+    old_context_obj->context_use_mutex_.unlock();
     CurrentContext().reset();
   }
 
   if (new_context_obj) {
-    new_context_obj->context_use_mutex_.Lock();
+    new_context_obj->context_use_mutex_.lock();
     auto status = SetCurrentContextBinding(new_context);
     if (status.ok()) {
       CurrentContext() = new_context_obj;
     } else {
-      new_context_obj->context_use_mutex_.Unlock();
+      new_context_obj->context_use_mutex_.unlock();
     }
     return status;
   } else {
@@ -620,7 +620,7 @@ std::shared_ptr<GlContext> GlContext::GetCurrent() {
 }
 
 void GlContext::GlFinishCalled() {
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   ++gl_finish_count_;
   wait_for_gl_finish_cv_.SignalAll();
 }
@@ -997,7 +997,7 @@ void GlContext::WaitForGlFinishCountPast(int64_t count_to_pass) {
   // If we've been asked to do a glFinish, note the count we need to reach and
   // signal the context our thread may currently be blocked on.
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     assign_larger_value(&gl_finish_count_target_, count_to_pass + 1);
     wait_for_gl_finish_cv_.SignalAll();
     if (context_waiting_on_) {
@@ -1030,7 +1030,7 @@ void GlContext::WaitForGlFinishCountPast(int64_t count_to_pass) {
     // If another context is current, make a note that it is blocked on us, so
     // it can signal the right condition variable if it is asked to do a
     // glFinish.
-    absl::MutexLock other_lock(&other->mutex_);
+    absl::MutexLock other_lock(other->mutex_);
     ABSL_DCHECK(!other->context_waiting_on_);
     other->context_waiting_on_ = this;
   }
@@ -1039,7 +1039,7 @@ void GlContext::WaitForGlFinishCountPast(int64_t count_to_pass) {
   // sooner, we are done.
   RunWithoutWaiting(std::move(finish_task));
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     while (gl_finish_count_ <= count_to_pass) {
       if (other && other->gl_finish_count_ < other->gl_finish_count_target_) {
         // If another context's dedicated thread is current, it is blocked
@@ -1052,12 +1052,12 @@ void GlContext::WaitForGlFinishCountPast(int64_t count_to_pass) {
         //
         // We unlock this context's mutex to avoid holding both at the same
         // time.
-        mutex_.Unlock();
+        mutex_.unlock();
         {
           glFinish();
           other->GlFinishCalled();
         }
-        mutex_.Lock();
+        mutex_.lock();
         // Because we temporarily unlocked mutex_, we cannot wait on the
         // condition variable wait away; we need to go back to re-checking the
         // condition. Otherwise we might miss a signal.
@@ -1069,7 +1069,7 @@ void GlContext::WaitForGlFinishCountPast(int64_t count_to_pass) {
 
   if (other) {
     // The other context is no longer waiting on us.
-    absl::MutexLock other_lock(&other->mutex_);
+    absl::MutexLock other_lock(other->mutex_);
     other->context_waiting_on_ = nullptr;
   }
 }

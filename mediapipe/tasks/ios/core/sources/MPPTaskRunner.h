@@ -14,7 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
+@class MPPTaskInfo;
 
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"

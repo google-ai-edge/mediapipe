@@ -20,6 +20,8 @@ package(default_visibility = [
 
 licenses(["notice"])
 
+exports_files(glob(["sources/*.h"]))
+
 objc_library(
     name = "MPPTextClassifierOptions",
     srcs = ["sources/MPPTextClassifierOptions.m"],

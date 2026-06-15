@@ -37,9 +37,9 @@ using Node = ::mediapipe::CalculatorGraphConfig::Node;
 struct SetJointsVisibilityTestCase {
   std::string test_name;
   std::string mapping;
-  std::vector<absl::optional<float>> in_joint_visibilities;
-  std::vector<absl::optional<float>> landmark_visibilities;
-  std::vector<absl::optional<float>> out_joint_visibilities;
+  std::vector<std::optional<float>> in_joint_visibilities;
+  std::vector<std::optional<float>> landmark_visibilities;
+  std::vector<std::optional<float>> out_joint_visibilities;
 };
 
 using SetJointsVisibilityTest =

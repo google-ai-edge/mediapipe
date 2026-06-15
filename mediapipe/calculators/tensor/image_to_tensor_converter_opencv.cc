@@ -130,6 +130,8 @@ class ImageToTensorOpenCvConverter : public ImageToTensorConverter {
             absl::StrCat("Unsupported tensor type: ", tensor_type_));
     }
 
+    MP_RETURN_IF_ERROR(ValidateRoi(roi));
+
     const cv::RotatedRect rotated_rect(cv::Point2f(roi.center_x, roi.center_y),
                                        cv::Size2f(roi.width, roi.height),
                                        roi.rotation * 180.f / M_PI);

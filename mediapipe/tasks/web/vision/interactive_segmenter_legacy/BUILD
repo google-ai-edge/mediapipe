@@ -1,0 +1,68 @@
+# This contains the MediaPipe Interactive Segmenter Task.
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//mediapipe/framework/port:build_config.bzl", "ts_declaration", "ts_library")
+load("//mediapipe/tasks/web:build_defs.bzl", "jasmine_node_test")
+
+package(default_visibility = ["//mediapipe/tasks:internal"])
+
+licenses(["notice"])
+
+ts_library(
+    name = "interactive_segmenter_legacy",
+    srcs = [
+        "interactive_segmenter_legacy.ts",
+        "interactive_segmenter_legacy_result.ts",
+    ],
+    deps = [
+        ":interactive_segmenter_legacy_types",
+        "//mediapipe/framework:calculator_jspb_proto",
+        "//mediapipe/framework:calculator_options_jspb_proto",
+        "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
+        "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_jspb_proto",
+        "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_jspb_proto",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto:region_of_interest_jspb_proto",
+        "//mediapipe/tasks/web/components/containers:keypoint",
+        "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/core:classifier_options",
+        "//mediapipe/tasks/web/vision/core:image_processing_options",
+        "//mediapipe/tasks/web/vision/core:mask",
+        "//mediapipe/tasks/web/vision/core:types",
+        "//mediapipe/tasks/web/vision/core:vision_task_runner",
+        "//mediapipe/util:color_jspb_proto",
+        "//mediapipe/web/graph_runner:graph_runner_ts",
+    ],
+)
+
+ts_declaration(
+    name = "interactive_segmenter_legacy_types",
+    srcs = ["interactive_segmenter_legacy_options.d.ts"],
+    deps = [
+        "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/vision/core:vision_task_options",
+    ],
+)
+
+ts_library(
+    name = "interactive_segmenter_legacy_test_lib",
+    testonly = True,
+    srcs = [
+        "interactive_segmenter_legacy_test.ts",
+    ],
+    deps = [
+        ":interactive_segmenter_legacy",
+        "//mediapipe/framework:calculator_jspb_proto",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto:region_of_interest_jspb_proto",
+        "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/core:task_runner_test_utils",
+        "//mediapipe/tasks/web/vision/core:mask",
+        "//mediapipe/util:render_data_jspb_proto",
+        "//mediapipe/web/graph_runner:graph_runner_image_lib_ts",
+    ],
+)
+
+jasmine_node_test(
+    name = "interactive_segmenter_legacy_test",
+    srcs = [":interactive_segmenter_legacy_test_lib"],
+    tags = ["nomsan"],
+)

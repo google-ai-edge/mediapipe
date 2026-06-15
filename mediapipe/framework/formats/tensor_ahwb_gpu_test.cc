@@ -292,6 +292,55 @@ TEST_F(TensorAhwbGpuTest, TestGetOpenGlBufferReadViewAhwbFromGpu) {
   });
 }
 
+std::vector<float> ReadGlTextureView(const Tensor::OpenGlTexture2dView& view,
+                                     int width, int height) {
+  glBindTexture(GL_TEXTURE_2D, view.name());
+
+  GLuint fbo = 0;
+  glGenFramebuffers(1, &fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                         view.name(), 0);
+
+  std::vector<float> data;
+  data.resize(width * height);
+  glReadPixels(0, 0, width / 4, height, GL_RGBA, GL_FLOAT, data.data());
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glDeleteFramebuffers(1, &fbo);
+  return data;
+}
+
+TEST_F(TensorAhwbGpuTest, TestGetOpenGlTextureReadViewAhwbFromCpu) {
+  constexpr size_t kWidth = 20;
+  constexpr size_t kHeight = 10;
+  // Tensor uses RGBA as OpenGL format. Ensure all 4 channels are filled for
+  // convenience.
+  ASSERT_EQ(kWidth % 4, 0);
+  std::vector<float> reference = CreateReferenceData(kWidth * kHeight);
+
+  Tensor tensor(Tensor::ElementType::kFloat32,
+                Tensor::Shape({kHeight, kWidth}));
+  {
+    // Make tensor to allocate ahwb and make sure view is destroyed.
+    ASSERT_NE(tensor.GetAHardwareBufferWriteView().handle(), nullptr);
+  }
+  {
+    // Populate tensor on CPU and make sure view is destroyed
+    absl::c_copy(reference, tensor.GetCpuWriteView().buffer<float>());
+  }
+
+  RunInGlContext([&] {
+    // Triggers conversion to GL texture.
+    auto texture_view = tensor.GetOpenGlTexture2dReadView();
+    ASSERT_NE(texture_view.name(), 0);
+
+    std::vector<float> output =
+        ReadGlTextureView(texture_view, kWidth, kHeight);
+    EXPECT_THAT(output, testing::Pointwise(testing::FloatEq(), reference));
+  });
+}
+
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 }  // namespace mediapipe
 

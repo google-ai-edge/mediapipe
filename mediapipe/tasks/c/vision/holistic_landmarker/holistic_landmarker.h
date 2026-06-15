@@ -41,10 +41,10 @@ extern "C" {
 typedef struct MpHolisticLandmarkerInternal* MpHolisticLandmarkerPtr;
 
 // The options for configuring a MediaPipe holistic landmarker task.
-struct HolisticLandmarkerOptions {
+struct MpHolisticLandmarkerOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
-  struct BaseOptions base_options;
+  struct MpBaseOptions base_options;
 
   // The running mode of the task. Default to the image mode.
   // HolisticLandmarker has three running modes:
@@ -54,7 +54,7 @@ struct HolisticLandmarkerOptions {
   // 3) The live stream mode for detecting holistic landmarks on the live stream
   //    of input data, such as from camera. In this mode, the "result_callback"
   //    below must be specified to receive the detection results asynchronously.
-  RunningMode running_mode = RunningMode::IMAGE;
+  MpRunningMode running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE;
 
   // The minimum confidence score for the face detection to be considered
   // successful.
@@ -91,14 +91,14 @@ struct HolisticLandmarkerOptions {
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
-  // to RunningMode::LIVE_STREAM. Arguments of the callback function include:
-  // the status code, the pointer to recognition result, the image that result
-  // was obtained on, the timestamp relevant to recognition results and pointer
-  // to error message in case of any failure. The data passed to the callback is
-  // only valid for the lifetime of the callback and must not be freed by the
-  // user.
+  // to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
+  // function include: the status code, the pointer to recognition result, the
+  // image that result was obtained on, the timestamp relevant to recognition
+  // results and pointer to error message in case of any failure. The data
+  // passed to the callback is only valid for the lifetime of the callback and
+  // must not be freed by the user.
   typedef void (*result_callback_fn)(MpStatus status,
-                                     const HolisticLandmarkerResult* result,
+                                     const MpHolisticLandmarkerResult* result,
                                      MpImagePtr image, int64_t timestamp_ms);
   result_callback_fn result_callback;
 };
@@ -111,19 +111,19 @@ struct HolisticLandmarkerOptions {
 // error message upon failure. It's the caller responsibility to free the error
 // message with `MpErrorFree()`.
 MP_EXPORT MpStatus MpHolisticLandmarkerCreate(
-    struct HolisticLandmarkerOptions* options,
+    struct MpHolisticLandmarkerOptions* options,
     MpHolisticLandmarkerPtr* landmarker, char** error_msg);
 
 // Performs holistic landmark detection on the input `image`.
 // If successful, returns `kMpOk` and sets `*result` to the new
-// `HolisticLandmarkerResult`. To obtain a detailed error, `error_msg` must be
+// `MpHolisticLandmarkerResult`. To obtain a detailed error, `error_msg` must be
 // non-null pointer to a `char*`, which will be populated with a newly-allocated
 // error message upon failure. It's the caller responsibility to free the error
 // message with `MpErrorFree()`.
 MP_EXPORT MpStatus MpHolisticLandmarkerDetectImage(
     MpHolisticLandmarkerPtr landmarker, MpImagePtr image,
-    const struct ImageProcessingOptions* options,
-    HolisticLandmarkerResult* result, char** error_msg);
+    const struct MpImageProcessingOptions* options,
+    MpHolisticLandmarkerResult* result, char** error_msg);
 
 // Performs holistic landmark detection on the provided video frame.
 // Only use this method when the HolisticLandmarker is created with the video
@@ -140,18 +140,18 @@ MP_EXPORT MpStatus MpHolisticLandmarkerDetectImage(
 // message with `MpErrorFree()`.
 MP_EXPORT MpStatus MpHolisticLandmarkerDetectForVideo(
     MpHolisticLandmarkerPtr landmarker, MpImagePtr image,
-    const struct ImageProcessingOptions* options, int64_t timestamp_ms,
-    HolisticLandmarkerResult* result, char** error_msg);
+    const struct MpImageProcessingOptions* options, int64_t timestamp_ms,
+    MpHolisticLandmarkerResult* result, char** error_msg);
 
 // Sends live image data to holistic landmark detection, and the results will be
 // available via the `result_callback` provided in the
-// HolisticLandmarkerOptions. Only use this method when the HolisticLandmarker
+// MpHolisticLandmarkerOptions. Only use this method when the HolisticLandmarker
 // is created with the live stream running mode. The image can be of any size
 // with format RGB or RGBA. It's required to provide a timestamp (in
 // milliseconds) to indicate when the input image is sent to the holistic
 // landmarker. The input timestamps must be monotonically increasing. The
 // `result_callback` provides:
-//   - The recognition results as an HolisticLandmarkerResult object.
+//   - The recognition results as an MpHolisticLandmarkerResult object.
 //   - The const reference to the corresponding input image that the holistic
 //     landmarker runs on. Note that the const reference to the image will no
 //     longer be valid when the callback returns. To access the image data
@@ -164,13 +164,13 @@ MP_EXPORT MpStatus MpHolisticLandmarkerDetectForVideo(
 // message with MpErrorFree().
 MP_EXPORT MpStatus MpHolisticLandmarkerDetectAsync(
     MpHolisticLandmarkerPtr landmarker, MpImagePtr image,
-    const struct ImageProcessingOptions* options, int64_t timestamp_ms,
+    const struct MpImageProcessingOptions* options, int64_t timestamp_ms,
     char** error_msg);
 
-// Frees the memory allocated inside a HolisticLandmarkerResult result.
+// Frees the memory allocated inside a MpHolisticLandmarkerResult result.
 // Does not free the result pointer itself.
 MP_EXPORT void MpHolisticLandmarkerCloseResult(
-    HolisticLandmarkerResult* result);
+    MpHolisticLandmarkerResult* result);
 
 // Frees holistic landmarker.
 // Returns `kMpOk` on success. To obtain a detailed error, error_msg must be

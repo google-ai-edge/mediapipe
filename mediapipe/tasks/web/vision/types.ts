@@ -26,6 +26,6 @@ export * from '../../../tasks/web/vision/holistic_landmarker/holistic_landmarker
 export * from '../../../tasks/web/vision/image_classifier/image_classifier';
 export * from '../../../tasks/web/vision/image_embedder/image_embedder';
 export * from '../../../tasks/web/vision/image_segmenter/image_segmenter';
-export * from '../../../tasks/web/vision/interactive_segmenter/interactive_segmenter';
+export * from '../../../tasks/web/vision/interactive_segmenter_legacy/interactive_segmenter_legacy';
 export * from '../../../tasks/web/vision/object_detector/object_detector';
 export * from '../../../tasks/web/vision/pose_landmarker/pose_landmarker';

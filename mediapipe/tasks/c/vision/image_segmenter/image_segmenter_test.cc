@@ -74,11 +74,11 @@ TEST(ImageSegmenterTest, ImageModeTestSucceedsWithCategoryMask) {
   const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  ImageSegmenterOptions options = {
+  MpImageSegmenterOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .display_names_locale = "en",
       .output_confidence_masks = false,
       .output_category_mask = true,
@@ -89,7 +89,7 @@ TEST(ImageSegmenterTest, ImageModeTestSucceedsWithCategoryMask) {
       MpImageSegmenterCreate(&options, &segmenter, /* error_msg= */ nullptr),
       kMpOk);
 
-  ImageSegmenterResult result;
+  MpImageSegmenterResult result;
   ASSERT_EQ(MpImageSegmenterSegmentImage(
                 segmenter, image.get(), /* image_processing_options= */ nullptr,
                 &result, /* error_msg= */ nullptr),
@@ -111,11 +111,11 @@ TEST(ImageSegmenterTest, ImageModeWithRotationTestSucceedsWithCategoryMask) {
   const auto image = GetImage(GetFullPath(kImageRotatedFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  ImageSegmenterOptions options = {
+  MpImageSegmenterOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .display_names_locale = "en",
       .output_confidence_masks = false,
       .output_category_mask = true,
@@ -126,11 +126,11 @@ TEST(ImageSegmenterTest, ImageModeWithRotationTestSucceedsWithCategoryMask) {
       MpImageSegmenterCreate(&options, &segmenter, /* error_msg= */ nullptr),
       kMpOk);
 
-  ImageProcessingOptions image_processing_options;
+  MpImageProcessingOptions image_processing_options;
   image_processing_options.has_region_of_interest = 0;
   image_processing_options.rotation_degrees = 90;
 
-  ImageSegmenterResult result;
+  MpImageSegmenterResult result;
   ASSERT_EQ(MpImageSegmenterSegmentImage(segmenter, image.get(),
                                          &image_processing_options, &result,
                                          /* error_msg= */ nullptr),
@@ -152,11 +152,11 @@ TEST(ImageSegmenterTest, VideoModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  ImageSegmenterOptions options = {
+  MpImageSegmenterOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::VIDEO,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_VIDEO,
       .display_names_locale = "en",
       .output_confidence_masks = false,
       .output_category_mask = true,
@@ -173,7 +173,7 @@ TEST(ImageSegmenterTest, VideoModeTest) {
       CreateCategoryMaskFromImage(expected_mask_image));
 
   for (int i = 0; i < kIterations; ++i) {
-    ImageSegmenterResult result;
+    MpImageSegmenterResult result;
     ASSERT_EQ(
         MpImageSegmenterSegmentForVideo(segmenter, image.get(),
                                         /* image_processing_options= */ nullptr,
@@ -197,7 +197,8 @@ TEST(ImageSegmenterTest, VideoModeTest) {
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
   static absl::BlockingCounter* blocking_counter;
-  static void Fn(MpStatus status, const ImageSegmenterResult* segmenter_result,
+  static void Fn(MpStatus status,
+                 const MpImageSegmenterResult* segmenter_result,
                  MpImagePtr image, int64_t timestamp) {
     ASSERT_EQ(status, kMpOk);
     ASSERT_NE(segmenter_result, nullptr);
@@ -227,11 +228,11 @@ TEST(ImageSegmenterTest, LiveStreamModeTest) {
 
   const std::string model_path = GetFullPath(kModelName);
 
-  ImageSegmenterOptions options = {
+  MpImageSegmenterOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::LIVE_STREAM,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM,
       .display_names_locale = "en",
       .output_confidence_masks = false,
       .output_category_mask = true,
@@ -270,11 +271,11 @@ TEST(ImageSegmenterTest, LiveStreamModeTest) {
 
 TEST(ImageSegmenterTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
-  ImageSegmenterOptions options = {
+  MpImageSegmenterOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = nullptr},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .display_names_locale = "en",
       .output_confidence_masks = false,
       .output_category_mask = true,
@@ -293,11 +294,11 @@ TEST(ImageSegmenterTest, InvalidArgumentHandling) {
 
 TEST(ImageSegmenterTest, FailedRecognitionHandling) {
   const std::string model_path = GetFullPath(kModelName);
-  ImageSegmenterOptions options = {
+  MpImageSegmenterOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .display_names_locale = "en",
       .output_confidence_masks = false,
       .output_category_mask = true,
@@ -311,7 +312,7 @@ TEST(ImageSegmenterTest, FailedRecognitionHandling) {
 
   const ScopedMpImage image = CreateEmptyGpuMpImage();
   char* error_msg = nullptr;
-  ImageSegmenterResult result;
+  MpImageSegmenterResult result;
   MpStatus status = MpImageSegmenterSegmentImage(
       segmenter, image.get(), /* image_processing_options= */ nullptr, &result,
       &error_msg);
@@ -327,11 +328,11 @@ TEST(ImageSegmenterTest, FailedRecognitionHandling) {
 
 TEST(ImageSegmenterTest, GetLabelsSucceeds) {
   const std::string model_path = GetFullPath(kModelName);
-  ImageSegmenterOptions options = {
+  MpImageSegmenterOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
-      .running_mode = RunningMode::IMAGE,
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
       .display_names_locale = "en",
       .output_confidence_masks = false,
       .output_category_mask = true,

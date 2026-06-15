@@ -44,6 +44,8 @@ constexpr char kRegexOneEmbeddingModel[] =
     "regex_one_embedding_with_metadata.tflite";
 constexpr char kUniversalSentenceEncoderModel[] =
     "universal_sentence_encoder_qa_with_metadata.tflite";
+constexpr char kGeckoModel[] = "gecko.task";
+constexpr char kEmbeddingGemmaModel[] = "embedding_gemma.task";
 
 // Tolerance for cosine similarity evaluation.
 constexpr double kSimilarityTolerancy = 2e-2;
@@ -222,6 +224,79 @@ TEST_F(EmbedderTest, SucceedsWithUSEAndDifferentThemes) {
       double similarity, TextEmbedder::CosineSimilarity(result0.embeddings[0],
                                                         result1.embeddings[0]));
   EXPECT_NEAR(similarity, 0.78f, kSimilarityTolerancy);
+
+  MP_ASSERT_OK(text_embedder->Close());
+}
+
+TEST_F(EmbedderTest, SucceedsWithGecko) {
+  auto options = std::make_unique<TextEmbedderOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kGeckoModel);
+
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<TextEmbedder> text_embedder,
+                          TextEmbedder::Create(std::move(options)));
+  TextFormatContext context;
+  context.task_type = EmbeddingType::RETRIEVAL_QUERY;
+  context.role = TextRole::kQuery;
+  MP_ASSERT_OK_AND_ASSIGN(
+      TextEmbedderResult result0,
+      text_embedder->Embed("it's a charming and often affecting journey",
+                           context));
+  ASSERT_EQ(result0.embeddings.size(), 1);
+  ASSERT_EQ(result0.embeddings[0].float_embedding.size(), 768);
+
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto result1,
+      text_embedder->Embed("what a great and fantastic trip", context));
+  ASSERT_EQ(result1.embeddings.size(), 1);
+  ASSERT_EQ(result1.embeddings[0].float_embedding.size(), 768);
+
+  // Check cosine similarity.
+  MP_ASSERT_OK_AND_ASSIGN(
+      double similarity, TextEmbedder::CosineSimilarity(result0.embeddings[0],
+                                                        result1.embeddings[0]));
+  EXPECT_NEAR(similarity, 0.78f, kSimilarityTolerancy);
+
+  MP_ASSERT_OK(text_embedder->Close());
+}
+
+TEST_F(EmbedderTest, SucceedsWithEmbeddingGemma) {
+  auto options = std::make_unique<TextEmbedderOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kEmbeddingGemmaModel);
+
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<TextEmbedder> text_embedder,
+                          TextEmbedder::Create(std::move(options)));
+  TextFormatContext context;
+  context.task_type = EmbeddingType::RETRIEVAL_QUERY;
+  context.role = TextRole::kQuery;
+  MP_ASSERT_OK_AND_ASSIGN(
+      TextEmbedderResult result0,
+      text_embedder->Embed("it's a charming and often affecting journey",
+                           context));
+  ASSERT_EQ(result0.embeddings.size(), 1);
+
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto result1,
+      text_embedder->Embed("what a great and fantastic trip", context));
+  ASSERT_EQ(result1.embeddings.size(), 1);
+
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto result2,
+      text_embedder->Embed("I love this movie, it's so inspiring!", context));
+  ASSERT_EQ(result2.embeddings.size(), 1);
+
+  // Check cosine similarity.
+  MP_ASSERT_OK_AND_ASSIGN(double similarity1,
+                          TextEmbedder::CosineSimilarity(
+                              result0.embeddings[0], result1.embeddings[0]));
+  MP_ASSERT_OK_AND_ASSIGN(double similarity2,
+                          TextEmbedder::CosineSimilarity(
+                              result0.embeddings[0], result2.embeddings[0]));
+
+  EXPECT_NEAR(similarity1, 0.51f, kSimilarityTolerancy);
+  EXPECT_NEAR(similarity2, 0.30f, kSimilarityTolerancy);
+  EXPECT_GE(similarity1, similarity2);
 
   MP_ASSERT_OK(text_embedder->Close());
 }

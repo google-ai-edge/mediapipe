@@ -181,7 +181,6 @@ android_binary(
         ":use_shoe_1stage": generate_manifest_values("com.google.mediapipe.apps.objectdetection3d_shoe_1stage", "Single Stage Shoe Objectron"),
         ":use_chair_1stage": generate_manifest_values("com.google.mediapipe.apps.objectdetection3d_chair_1stage", "Single Stage Chair Objectron"),
     }),
-    multidex = "native",
     deps = [
         ":manifest_lib",
         ":mediapipe_jni_lib",

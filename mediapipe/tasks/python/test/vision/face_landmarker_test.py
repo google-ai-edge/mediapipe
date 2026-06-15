@@ -19,9 +19,9 @@ from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
+from google.protobuf import text_format
 import numpy as np
 
-from google.protobuf import text_format
 from mediapipe.framework.formats import classification_pb2
 from mediapipe.framework.formats import landmark_pb2
 from mediapipe.tasks.python.core import base_options as base_options_module

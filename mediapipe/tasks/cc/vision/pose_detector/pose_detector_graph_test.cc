@@ -13,6 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <memory>
+
 #include "absl/flags/flag.h"
 #include "absl/log/absl_check.h"
 #include "absl/status/statusor.h"
@@ -33,6 +35,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/pose_detector/proto/pose_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
@@ -77,6 +80,7 @@ constexpr char kDetectionsTag[] = "DETECTIONS";
 constexpr char kDetectionsName[] = "detections";
 constexpr char kExpandedPoseRectsTag[] = "EXPANDED_POSE_RECTS";
 constexpr char kExpandedPoseRectsName[] = "expanded_pose_rects";
+constexpr char kTaskName[] = "pose_detector_test";
 
 constexpr float kPoseDetectionMaxDiff = 0.01;
 constexpr float kExpandedPoseRectMaxDiff = 0.01;
@@ -110,7 +114,10 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
       graph[Output<std::vector<NormalizedRect>>(kExpandedPoseRectsTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(), std::make_unique<core::MediaPipeBuiltinOpResolver>());
+      {.config = graph.GetConfig(),
+       .task_name = kTaskName,
+       .task_running_mode = core::RunningMode::kImage,
+       .op_resolver = std::make_unique<core::MediaPipeBuiltinOpResolver>()});
 }
 
 Detection GetExpectedPoseDetectionResult(absl::string_view file_name) {

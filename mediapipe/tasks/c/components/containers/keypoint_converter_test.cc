@@ -29,7 +29,7 @@ TEST(KeypointConverterTest, ConvertsKeypointCustomValues) {
   mediapipe::tasks::components::containers::NormalizedKeypoint cpp_keypoint = {
       0.1, 0.2, "foo", 0.5};
 
-  NormalizedKeypoint c_keypoint;
+  MpNormalizedKeypoint c_keypoint;
   CppConvertToNormalizedKeypoint(cpp_keypoint, &c_keypoint);
   EXPECT_NEAR(c_keypoint.x, 0.1f, kPrecision);
   EXPECT_NEAR(c_keypoint.y, 0.2f, kPrecision);
@@ -42,7 +42,7 @@ TEST(KeypointConverterTest, FreesMemory) {
   mediapipe::tasks::components::containers::NormalizedKeypoint cpp_keypoint = {
       0.1, 0.2, "foo", 0.5};
 
-  NormalizedKeypoint c_keypoint;
+  MpNormalizedKeypoint c_keypoint;
   CppConvertToNormalizedKeypoint(cpp_keypoint, &c_keypoint);
   EXPECT_NE(c_keypoint.label, nullptr);
   CppCloseNormalizedKeypoint(&c_keypoint);

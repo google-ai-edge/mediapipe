@@ -59,7 +59,7 @@ class EmbeddingResult:
   @classmethod
   @doc_controls.do_not_generate_docs
   def from_ctypes(
-      cls, c_result: embedding_result_c.EmbeddingResultC
+      cls, c_result: embedding_result_c.MpEmbeddingResultC
   ) -> 'EmbeddingResult':
     """Converts a C EmbeddingResult to a Python EmbeddingResult."""
     python_embeddings = []

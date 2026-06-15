@@ -16,9 +16,11 @@
 
 #include <memory>
 
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/api3/packet_matcher.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/timestamp.h"
 
 namespace mediapipe::api3 {
@@ -60,6 +62,18 @@ TEST(PacketTest, PacketValidationWorks) {
   p = MakePacket<int>(42);
   EXPECT_TRUE(p);
   EXPECT_FALSE(p.IsEmpty());
+}
+
+TEST(PacketTest, PacketSharingWorks) {
+  std::shared_ptr<const int> ptr;
+  {
+    Packet<int> p = MakePacket<int>(42);
+    MP_ASSERT_OK_AND_ASSIGN(ptr, p.Share());
+  }
+  EXPECT_EQ(*ptr, 42);
+
+  Packet<int> empty;
+  EXPECT_FALSE(empty.Share().ok());
 }
 
 }  // namespace

@@ -23,13 +23,16 @@ limitations under the License.
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/tasks/cc/components/containers/category.h"
 #include "mediapipe/tasks/cc/components/containers/classification_result.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_api_factory.h"
+#include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/text/text_classifier/proto/text_classifier_graph_options.pb.h"
 
 namespace mediapipe::tasks::text::language_detector {
 
 namespace {
 
+constexpr char kTaskName[] = "LanguageDetector";
 using ::mediapipe::tasks::components::containers::Category;
 using ::mediapipe::tasks::components::containers::ClassificationResult;
 using ::mediapipe::tasks::components::containers::Classifications;
@@ -106,8 +109,15 @@ absl::StatusOr<std::unique_ptr<LanguageDetector>> LanguageDetector::Create(
   auto options_proto = ConvertLanguageDetectorOptionsToProto(options.get());
   return core::TaskApiFactory::Create<LanguageDetector,
                                       TextClassifierGraphOptions>(
-      CreateGraphConfig(std::move(options_proto)),
-      std::move(options->base_options.op_resolver));
+      core::TaskRunnerOptions{
+          .config = CreateGraphConfig(std::move(options_proto)),
+          .task_name = kTaskName,
+          .task_running_mode = core::RunningMode::kUnspecified,
+          .op_resolver = std::move(options->base_options.op_resolver),
+          .host_environment = options->base_options.host_environment,
+          .host_system = options->base_options.host_system,
+          .host_version = options->base_options.host_version,
+          .ca_bundle_path = options->base_options.ca_bundle_path});
 }
 
 absl::StatusOr<LanguageDetectorResult> LanguageDetector::Detect(

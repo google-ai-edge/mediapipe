@@ -28,7 +28,7 @@ using ::mediapipe::tasks::components::containers::RectF;
 }  // namespace
 
 void CppConvertToImageProcessingOptions(
-    const ImageProcessingOptions& in,
+    const MpImageProcessingOptions& in,
     mediapipe::tasks::vision::core::ImageProcessingOptions* out) {
   out->rotation_degrees = in.rotation_degrees;
   if (in.has_region_of_interest) {

@@ -40,8 +40,8 @@ _AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 _LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
 
 
-class _EmbedderOptionsC(ctypes.Structure):
-  """C struct for embedder options."""
+class _MpEmbedderOptionsC(ctypes.Structure):
+  """C struct for MpEmbedderOptions."""
 
   _fields_ = [
       ('l2_normalize', ctypes.c_bool),
@@ -49,19 +49,19 @@ class _EmbedderOptionsC(ctypes.Structure):
   ]
 
 
-class ImageEmbedderOptionsC(ctypes.Structure):
-  """The MediaPipe Tasks ImageEmbedderOptions CTypes struct."""
+class MpImageEmbedderOptionsC(ctypes.Structure):
+  """The MediaPipe Tasks MpImageEmbedderOptions CTypes struct."""
 
   _fields_ = [
-      ('base_options', base_options_c_module.BaseOptionsC),
+      ('base_options', base_options_c_module.MpBaseOptionsC),
       ('running_mode', ctypes.c_int),
-      ('embedder_options', _EmbedderOptionsC),
+      ('embedder_options', _MpEmbedderOptionsC),
       (
           'result_callback',
           ctypes.CFUNCTYPE(
               None,
               ctypes.c_int32,  # MpStatus
-              ctypes.POINTER(embedding_result_c_module.EmbeddingResultC),
+              ctypes.POINTER(embedding_result_c_module.MpEmbeddingResultC),
               ctypes.c_void_p,  # image
               ctypes.c_int64,  # timestamp_ms
           ),
@@ -73,7 +73,7 @@ _CTYPES_SIGNATURES = (
     mediapipe_c_utils.CStatusFunction(
         'MpImageEmbedderCreate',
         (
-            ctypes.POINTER(ImageEmbedderOptionsC),
+            ctypes.POINTER(MpImageEmbedderOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
         ),
     ),
@@ -83,9 +83,9 @@ _CTYPES_SIGNATURES = (
             ctypes.c_void_p,
             ctypes.c_void_p,  # image
             ctypes.POINTER(
-                image_processing_options_c_module.ImageProcessingOptionsC
+                image_processing_options_c_module.MpImageProcessingOptionsC
             ),
-            ctypes.POINTER(embedding_result_c_module.EmbeddingResultC),
+            ctypes.POINTER(embedding_result_c_module.MpEmbeddingResultC),
         ),
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -94,10 +94,10 @@ _CTYPES_SIGNATURES = (
             ctypes.c_void_p,
             ctypes.c_void_p,  # image
             ctypes.POINTER(
-                image_processing_options_c_module.ImageProcessingOptionsC
+                image_processing_options_c_module.MpImageProcessingOptionsC
             ),
             ctypes.c_int64,  # timestamp_ms
-            ctypes.POINTER(embedding_result_c_module.EmbeddingResultC),
+            ctypes.POINTER(embedding_result_c_module.MpEmbeddingResultC),
         ),
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -106,14 +106,14 @@ _CTYPES_SIGNATURES = (
             ctypes.c_void_p,
             ctypes.c_void_p,  # image
             ctypes.POINTER(
-                image_processing_options_c_module.ImageProcessingOptionsC
+                image_processing_options_c_module.MpImageProcessingOptionsC
             ),
             ctypes.c_int64,  # timestamp_ms
         ),
     ),
     mediapipe_c_utils.CFunction(
         'MpImageEmbedderCloseResult',
-        [ctypes.POINTER(embedding_result_c_module.EmbeddingResultC)],
+        [ctypes.POINTER(embedding_result_c_module.MpEmbeddingResultC)],
         None,
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -125,7 +125,7 @@ _CTYPES_SIGNATURES = (
 C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
     None,
     ctypes.c_int32,  # MpStatus
-    ctypes.POINTER(embedding_result_c_module.EmbeddingResultC),
+    ctypes.POINTER(embedding_result_c_module.MpEmbeddingResultC),
     ctypes.c_void_p,  # MpImage
     ctypes.c_int64,  # timestamp_ms
 )
@@ -167,7 +167,7 @@ class ImageEmbedderOptions:
       Callable[
           [
               ctypes.c_int32,  # MpStatus
-              ctypes.c_void_p,  # EmbeddingResultC
+              ctypes.c_void_p,  # MpEmbeddingResultC
               ctypes.c_void_p,  # MpImage
               ctypes.c_int64,  # timestamp_ms
           ],
@@ -178,16 +178,16 @@ class ImageEmbedderOptions:
   @doc_controls.do_not_generate_docs
   def to_ctypes(
       self, dispatcher: async_result_dispatcher.AsyncResultDispatcher
-  ) -> ImageEmbedderOptionsC:
-    """Generates an ImageEmbedderOptionsC object."""
+  ) -> MpImageEmbedderOptionsC:
+    """Generates an MpImageEmbedderOptionsC object."""
     self._result_callback_c = dispatcher.wrap_callback(
         self.result_callback, C_TYPES_RESULT_CALLBACK
     )
     base_options_c = self.base_options.to_ctypes()
-    embedder_options_c = _EmbedderOptionsC(
+    embedder_options_c = _MpEmbedderOptionsC(
         l2_normalize=self.l2_normalize, quantize=self.quantize
     )
-    return ImageEmbedderOptionsC(
+    return MpImageEmbedderOptionsC(
         base_options=base_options_c,
         running_mode=self.running_mode.ctype,
         embedder_options=embedder_options_c,
@@ -285,7 +285,7 @@ class ImageEmbedder:
 
     def convert_result(
         c_result_ptr: ctypes.POINTER(
-            embedding_result_c_module.EmbeddingResultC
+            embedding_result_c_module.MpEmbeddingResultC
         ),
         image_ptr: ctypes.c_void_p,
         timestamp_ms: int,
@@ -336,7 +336,7 @@ class ImageEmbedder:
       RuntimeError: If image embedder failed to run.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    c_result = embedding_result_c_module.EmbeddingResultC()
+    c_result = embedding_result_c_module.MpEmbeddingResultC()
     options_c = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
@@ -381,7 +381,7 @@ class ImageEmbedder:
       RuntimeError: If image embedder failed to run.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    c_result = embedding_result_c_module.EmbeddingResultC()
+    c_result = embedding_result_c_module.MpEmbeddingResultC()
     options_c = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options

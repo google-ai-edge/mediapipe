@@ -23,19 +23,19 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToEmbedding(
     const mediapipe::tasks::components::containers::EmbeddingResult& in,
-    Embedding* out);
+    MpEmbedding* out);
 
 void CppConvertToEmbeddingResult(
     const mediapipe::tasks::components::containers::EmbeddingResult& in,
-    EmbeddingResult* out);
+    MpEmbeddingResult* out);
 
 void CppConvertToCppEmbedding(
-    const Embedding& in,
+    const MpEmbedding& in,
     mediapipe::tasks::components::containers::Embedding* out);
 
-void CppCloseEmbedding(Embedding* in);
+void CppCloseEmbedding(MpEmbedding* in);
 
-void CppCloseEmbeddingResult(EmbeddingResult* in);
+void CppCloseEmbeddingResult(MpEmbeddingResult* in);
 
 }  // namespace mediapipe::tasks::c::components::containers
 

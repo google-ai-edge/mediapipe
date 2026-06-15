@@ -21,6 +21,7 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/framework/calculator_options.proto";
 import "mediapipe/tasks/cc/components/processors/proto/embedder_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
+import "mediapipe/tasks/cc/core/proto/external_file.proto";
 
 option java_package = "com.google.mediapipe.tasks.text.textembedder.proto";
 option java_outer_classname = "TextEmbedderGraphOptionsProto";
@@ -37,4 +38,11 @@ message TextEmbedderGraphOptions {
   // Options for configuring the embedder behavior, such as normalization or
   // quantization.
   optional components.processors.proto.EmbedderOptions embedder_options = 2;
+
+  reserved 3;
+  reserved "sentence_piece_model_path";
+
+  // The sentence piece model file. This is only used for Gecko models without
+  // TFLite Model Metadata.
+  optional core.proto.ExternalFile sentence_piece_model = 4;
 }

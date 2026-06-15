@@ -23,7 +23,6 @@ package(default_visibility = ["//visibility:public"])
 
 mediapipe_files(
     srcs = [
-        "README.md",
         "hair_segmentation.tflite",
         "knift_float.tflite",
         "knift_float_1k.tflite",

@@ -73,12 +73,16 @@ constexpr char kFrameOverlapTag[] = "FRAME_OVERLAP";
 // If output_layout is set to SPECTROGRAM_CHANNELS_IN_ROWS, the output will be a
 // matrix with each row being one channel of the spectrogram regardless of the
 // number of channels that need to be output.
+//
+// Input tag:
+//   RESET: (Optional) If a packet is received on this tag, the calculator's
+//          internal state is reset. This clears all internal buffers and
+//          resets cumulative counters and timestamps.
 class SpectrogramCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Index(0).Set<Matrix>(
-        // Input stream with TimeSeriesHeader.
-    );
+    cc->Inputs().Index(0).Set<Matrix>();
+    cc->Inputs().Tag("RESET").SetAny().Optional();
 
     if (cc->InputSidePackets().HasTag(kFrameDurationTag)) {
       cc->InputSidePackets()
@@ -140,6 +144,8 @@ class SpectrogramCalculator : public CalculatorBase {
   absl::Status Close(CalculatorContext* cc) override;
 
  private:
+  void Reset();
+
   Timestamp CurrentOutputTimestamp(CalculatorContext* cc) {
     if (use_local_timestamp_) {
       const Timestamp now = cc->InputTimestamp();
@@ -389,6 +395,14 @@ absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
 }
 
 absl::Status SpectrogramCalculator::Process(CalculatorContext* cc) {
+  if (cc->Inputs().HasTag("RESET") && !cc->Inputs().Tag("RESET").IsEmpty()) {
+    Reset();
+  }
+
+  if (cc->Inputs().Index(0).IsEmpty()) {
+    return absl::OkStatus();
+  }
+
   if (initial_input_timestamp_ == Timestamp::Unstarted()) {
     initial_input_timestamp_ = cc->InputTimestamp();
   }
@@ -401,6 +415,16 @@ absl::Status SpectrogramCalculator::Process(CalculatorContext* cc) {
   cumulative_input_samples_ += input_stream.cols();
 
   return ProcessVector(input_stream, cc);
+}
+
+void SpectrogramCalculator::Reset() {
+  for (int i = 0; i < spectrogram_generators_.size(); ++i) {
+    spectrogram_generators_[i]->ResetSampleBuffer();
+  }
+  cumulative_input_samples_ = 0;
+  cumulative_completed_frames_ = 0;
+  last_completed_frames_ = 0;
+  initial_input_timestamp_ = Timestamp::Unstarted();
 }
 
 template <class OutputMatrixType>

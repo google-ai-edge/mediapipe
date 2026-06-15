@@ -20,6 +20,7 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "yt8m_feature_extraction_calculators",
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/calculators/audio:audio_decoder_calculator",
         "//mediapipe/calculators/audio:basic_time_series_calculators",
@@ -49,6 +50,7 @@ cc_library(
 
 cc_library(
     name = "yt8m_inference_calculators_deps",
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/calculators/core:concatenate_vector_calculator",
         "//mediapipe/calculators/core:dequantize_byte_array_calculator",

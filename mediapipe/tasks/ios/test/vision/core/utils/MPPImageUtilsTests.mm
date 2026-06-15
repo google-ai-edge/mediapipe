@@ -17,6 +17,8 @@
 #import "mediapipe/tasks/ios/test/vision/utils/sources/MPPImage+TestUtils.h"
 #import "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+Utils.h"
 
+#include <algorithm>
+#include <vector>
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
@@ -254,6 +256,80 @@ Image CppImageWithMPImage(MPPImage *image) {
                    NSLocalizedDescriptionKey :
                        @"When the source type is sample buffer, you cannot request uncopied data."
                  }]);
+}
+
+- (void)testInitMPImageOfSourceTypePixelBufferWithCppFloatImageSucceeds {
+  // Create a float CVPixelBuffer to serve as the source image.
+  int width = 100;
+  int height = 100;
+  int size = width * height;
+  std::vector<float> floatData(size);
+  for (int i = 0; i < size; i++) {
+    floatData[i] = static_cast<float>(i) / static_cast<float>(size);
+  }
+
+  CVPixelBufferRef sourcePixelBuffer;
+  CVReturn status =
+      CVPixelBufferCreate(kCFAllocatorDefault, width, height,
+                          kCVPixelFormatType_OneComponent32Float, nullptr, &sourcePixelBuffer);
+  XCTAssertEqual(status, kCVReturnSuccess);
+
+  CVPixelBufferLockBaseAddress(sourcePixelBuffer, 0);
+  uint8_t *dstBytes = reinterpret_cast<uint8_t *>(CVPixelBufferGetBaseAddress(sourcePixelBuffer));
+  size_t sourceStride = CVPixelBufferGetBytesPerRow(sourcePixelBuffer);
+  const uint8_t *srcBytes = reinterpret_cast<const uint8_t *>(floatData.data());
+  size_t rowBytes = width * sizeof(float);
+  for (int y = 0; y < height; y++) {
+    memcpy(dstBytes + y * sourceStride, srcBytes + y * rowBytes, rowBytes);
+  }
+  CVPixelBufferUnlockBaseAddress(sourcePixelBuffer, 0);
+
+  MPPImage *sourceImage = [[MPPImage alloc] initWithPixelBuffer:sourcePixelBuffer error:nil];
+  XCTAssertNotNil(sourceImage);
+
+  // Create a C++ Image of format VEC32F1.
+  auto cppImageFrame = std::make_unique<ImageFrame>(mediapipe::ImageFormat::VEC32F1, width, height);
+  float *cppImagePixels = reinterpret_cast<float *>(cppImageFrame->MutablePixelData());
+  for (int i = 0; i < size; i++) {
+    cppImagePixels[i] = floatData[i];
+  }
+  Image sourceCppImage(std::move(cppImageFrame));
+
+  // Create the target MPPImage using the C++ Image and cloning the source.
+  NSError *error = nil;
+  MPPImage *image = [[MPPImage alloc] initWithCppImage:sourceCppImage
+                        cloningPropertiesOfSourceImage:sourceImage
+                                   shouldCopyPixelData:YES
+                                                 error:&error];
+  XCTAssertNotNil(image);
+  XCTAssertNil(error);
+  XCTAssertTrue(image.pixelBuffer != nullptr);
+  XCTAssertEqual(image.imageSourceType, MPPImageSourceTypePixelBuffer);
+
+  // Verify the target's underlying CVPixelBufferRef.
+  CVPixelBufferRef targetPixelBuffer = image.pixelBuffer;
+  XCTAssertEqual(CVPixelBufferGetPixelFormatType(targetPixelBuffer),
+                 kCVPixelFormatType_OneComponent32Float);
+  XCTAssertEqual(CVPixelBufferGetWidth(targetPixelBuffer), width);
+  XCTAssertEqual(CVPixelBufferGetHeight(targetPixelBuffer), height);
+
+  CVPixelBufferLockBaseAddress(targetPixelBuffer, 0);
+  const uint8_t *targetPixelsBytes =
+      reinterpret_cast<const uint8_t *>(CVPixelBufferGetBaseAddress(targetPixelBuffer));
+  size_t targetStride = CVPixelBufferGetBytesPerRow(targetPixelBuffer);
+  XCTAssertNotEqual(targetPixelsBytes,
+                    reinterpret_cast<const uint8_t *>(floatData.data()));  // Confirm it is a copy!
+
+  for (int y = 0; y < height; y++) {
+    const float *rowPixels = reinterpret_cast<const float *>(targetPixelsBytes + y * targetStride);
+    for (int x = 0; x < width; x++) {
+      int flatIndex = y * width + x;
+      XCTAssertEqualWithAccuracy(rowPixels[x], floatData[flatIndex], 1e-5);
+    }
+  }
+  CVPixelBufferUnlockBaseAddress(targetPixelBuffer, 0);
+
+  CVPixelBufferRelease(sourcePixelBuffer);
 }
 
 #pragma mark - Helper Methods
