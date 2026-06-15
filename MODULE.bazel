@@ -8,6 +8,11 @@ single_version_override(
 )
 
 bazel_dep(name = "rules_cc", version = "0.2.9")
+single_version_override(
+    module_name = "rules_cc",
+    version = "0.2.9",
+)
+
 bazel_dep(name = "rules_java", version = "7.10.0")
 single_version_override(
     module_name = "rules_java",
@@ -22,6 +27,9 @@ bazel_dep(name = "aspect_rules_js", version = "2.7.0")
 bazel_dep(name = "aspect_bazel_lib", version = "2.21.2")
 bazel_dep(name = "aspect_rules_rollup", version = "2.0.0")
 bazel_dep(name = "aspect_rules_ts", version = "3.7.0")
+bazel_dep(name = "apple_support", version = "2.6.1", repo_name = "build_bazel_apple_support")
+bazel_dep(name = "rules_apple", version = "3.16.1", repo_name = "build_bazel_rules_apple")
+bazel_dep(name = "rules_swift", version = "2.3.0", repo_name = "build_bazel_rules_swift")
 bazel_dep(name = "rules_proto_grpc_js", version = "5.8.0")
 bazel_dep(name = "rules_rust", version = "0.46.0")
 single_version_override(

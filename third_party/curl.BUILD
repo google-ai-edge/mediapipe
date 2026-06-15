@@ -52,33 +52,31 @@ cc_library(
     ],
 )
 
-sizeof_short = select({
-    "@platforms//cpu:aarch64": "2",
-    "//conditions:default": "2",
-})
+sizeof_short = "2"
 
-sizeof_int = select({
-    "@platforms//cpu:aarch64": "4",
-    "//conditions:default": "4",
-})
+sizeof_int = "4"
 
 sizeof_long = select({
-    "@platforms//cpu:aarch64": "4",
+    "@platforms//cpu:armv7": "4",
+    "@platforms//cpu:x86_32": "4",
+    "@platforms//cpu:wasm32": "4",
     "//conditions:default": "8",
 })
 
 sizeof_ptr = select({
-    "@platforms//cpu:aarch64": "4",
+    "@platforms//cpu:armv7": "4",
+    "@platforms//cpu:x86_32": "4",
+    "@platforms//cpu:wasm32": "4",
     "//conditions:default": "8",
 })
 
-sizeof_off_t = sizeof_long
+sizeof_off_t = "8"
 
-sizeof_size_t = sizeof_long
+sizeof_size_t = sizeof_ptr
 
 sizeof_socklen_t = "4"
 
-sizeof_time_t = sizeof_long
+sizeof_time_t = "8"
 
 genrule(
     name = "generate_curl_config_h",

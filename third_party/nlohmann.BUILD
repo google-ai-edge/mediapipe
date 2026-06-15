@@ -18,14 +18,17 @@ package(
 
 cc_library(
     name = "json",
-    srcs = glob(
+    hdrs = glob(
         [
             "single_include/nlohmann/json.hpp",
-            "include/nlohmann/*.h",
+            "include/nlohmann/**/*.hpp",
         ],
     ),
     copts = [
         "-std=c++17",
     ],
-    includes = ["single_include"],
+    includes = [
+        "include",
+        "single_include",
+    ],
 )

@@ -21,21 +21,6 @@ http_archive(
 
 load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")  # @unused
 
-http_archive(
-    name = "build_bazel_rules_apple",
-    patch_args = [
-        "-p1",
-    ],
-    patches = [
-        # Bypass checking ios unit test runner when building MP ios applications.
-        "@//third_party:build_bazel_rules_apple_bypass_test_runner_check.diff",
-        # https://github.com/bazelbuild/rules_apple/commit/95b1305255dc29874cacc3dc7fdc017f16d8dbe8
-        "@//third_party:build_bazel_rules_apple_multi_arch_split_with_new_transition.diff",
-    ],
-    sha256 = "3e2c7ae0ddd181c4053b6491dad1d01ae29011bc322ca87eea45957c76d3a0c3",
-    url = "https://github.com/bazelbuild/rules_apple/releases/download/2.1.0/rules_apple.2.1.0.tar.gz",
-)
-
 # GoogleTest/GoogleMock framework. Used by most unit-tests.
 # Last updated 2021-07-02.
 http_archive(
@@ -364,34 +349,6 @@ rules_foreign_cc_dependencies()
 load("@bazel_features//:deps.bzl", "bazel_features_deps")
 
 bazel_features_deps()
-
-load(
-    "@build_bazel_rules_apple//apple:repositories.bzl",
-    "apple_rules_dependencies",
-)
-
-apple_rules_dependencies()
-
-load(
-    "@build_bazel_rules_swift//swift:repositories.bzl",
-    "swift_rules_dependencies",
-)
-
-swift_rules_dependencies()
-
-load(
-    "@build_bazel_rules_swift//swift:extras.bzl",
-    "swift_rules_extra_dependencies",
-)
-
-swift_rules_extra_dependencies()
-
-load(
-    "@build_bazel_apple_support//lib:repositories.bzl",
-    "apple_support_dependencies",
-)
-
-apple_support_dependencies()
 
 # This is used to select all contents of the archives for CMake-based packages to give CMake access to them.
 all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
