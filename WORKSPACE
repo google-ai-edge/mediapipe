@@ -10,6 +10,69 @@ bind(
 
 load("@com_google_protobuf//bazel/private:proto_bazel_features.bzl", "proto_bazel_features")  # buildifier: disable=bzl-visibility
 
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+
+bazel_skylib_workspace()
+
+load("@bazel_skylib//lib:versions.bzl", "versions")
+
+versions.check(minimum_bazel_version = "3.7.2")
+
+http_archive(
+    name = "bazel_features",
+    sha256 = "07271d0f6b12633777b69020c4cb1eb67b1939c0cf84bb3944dc85cc250c0c01",
+    strip_prefix = "bazel_features-1.38.0",
+    url = "https://github.com/bazel-contrib/bazel_features/releases/download/v1.38.0/bazel_features-v1.38.0.tar.gz",
+)
+
+load("@bazel_features//:deps.bzl", "bazel_features_deps")
+
+bazel_features_deps()
+
+# ABSL on 2023-10-18
+http_archive(
+    name = "com_google_absl",
+    patch_args = [
+        "-p1",
+    ],
+    patches = [
+        "@//third_party:com_google_absl_windows_patch.diff",
+    ],
+    sha256 = "f841f78243f179326f2a80b719f2887c38fe226d288ecdc46e2aa091e6aa43bc",
+    strip_prefix = "abseil-cpp-9687a8ea750bfcddf790372093245a1d041b21a3",
+    urls = ["https://github.com/abseil/abseil-cpp/archive//9687a8ea750bfcddf790372093245a1d041b21a3.tar.gz"],
+)
+
+http_archive(
+    name = "rules_cc",
+    sha256 = "a2fdfde2ab9b2176bd6a33afca14458039023edb1dd2e73e6823810809df4027",
+    strip_prefix = "rules_cc-0.2.14",
+    url = "https://github.com/bazelbuild/rules_cc/releases/download/0.2.14/rules_cc-0.2.14.tar.gz",
+)
+
+load("@rules_cc//cc:extensions.bzl", "compatibility_proxy_repo")
+
+compatibility_proxy_repo()
+
+http_archive(
+    name = "rules_java",
+    sha256 = "c73336802d0b4882e40770666ad055212df4ea62cfa6edf9cb0f9d29828a0934",
+    url = "https://github.com/bazelbuild/rules_java/releases/download/5.3.5/rules_java-5.3.5.tar.gz",
+)
+
+http_archive(
+    name = "com_google_protobuf",
+    patch_args = [
+        "-p1",
+    ],
+    patches = [
+        "@//third_party:com_google_protobuf_fixes.diff",
+    ],
+    sha256 = "f645e6e42745ce922ca5388b1883ca583bafe4366cc74cf35c3c9299005136e2",
+    strip_prefix = "protobuf-5.28.3",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v5.28.3.zip"],
+)
+
 proto_bazel_features(name = "proto_bazel_features")
 
 http_archive(
@@ -21,19 +84,32 @@ http_archive(
 
 load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")  # @unused
 
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "build_bazel_rules_swift",
+    sha256 = "13219bde174594c7af5403c7f3f41c37d1a62041294a0fd14c0834ca472fa8dc",
+    url = "https://github.com/bazelbuild/rules_swift/releases/download/3.4.0/rules_swift.3.4.0.tar.gz",
+)
+
+load(
+    "@build_bazel_rules_swift//swift:repositories.bzl",
+    "swift_rules_dependencies",
+)
+
+swift_rules_dependencies()
+
+load(
+    "@build_bazel_rules_swift//swift:extras.bzl",
+    "swift_rules_extra_dependencies",
+)
+
+swift_rules_extra_dependencies()
+
 http_archive(
     name = "build_bazel_rules_apple",
-    patch_args = [
-        "-p1",
-    ],
-    patches = [
-        # Bypass checking ios unit test runner when building MP ios applications.
-        "@//third_party:build_bazel_rules_apple_bypass_test_runner_check.diff",
-        # https://github.com/bazelbuild/rules_apple/commit/95b1305255dc29874cacc3dc7fdc017f16d8dbe8
-        "@//third_party:build_bazel_rules_apple_multi_arch_split_with_new_transition.diff",
-    ],
-    sha256 = "3e2c7ae0ddd181c4053b6491dad1d01ae29011bc322ca87eea45957c76d3a0c3",
-    url = "https://github.com/bazelbuild/rules_apple/releases/download/2.1.0/rules_apple.2.1.0.tar.gz",
+    sha256 = "f2b4117fe17b0f1f8a3769e6d760d433fcbf97a8b6ff1797077ec106ccfbe2f2",
+    url = "https://github.com/bazelbuild/rules_apple/releases/download/4.3.2/rules_apple.4.3.2.tar.gz",
 )
 
 # GoogleTest/GoogleMock framework. Used by most unit-tests.
@@ -361,10 +437,6 @@ load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_depende
 
 rules_foreign_cc_dependencies()
 
-load("@bazel_features//:deps.bzl", "bazel_features_deps")
-
-bazel_features_deps()
-
 load(
     "@build_bazel_rules_apple//apple:repositories.bzl",
     "apple_rules_dependencies",
@@ -535,10 +607,10 @@ new_local_repository(
 new_local_repository(
     name = "macos_opencv",
     build_file = "@//third_party:opencv_macos.BUILD",
-    # For local MacOS builds, the path should point to an opencv@3 installation.
+    # For local MacOS builds, the path should point to an OpenCV installation.
     # If you edit the path here, you will also need to update the corresponding
     # prefix in "opencv_macos.BUILD".
-    path = "/usr/local",  # e.g. /usr/local/Cellar for HomeBrew
+    path = "/opt/homebrew/Cellar",  # e.g. /usr/local for v3
 )
 
 new_local_repository(

@@ -5,3 +5,16 @@ mediapipe/provisioning_profile.mobileprovision
 node_modules/
 .configure.bazelrc
 .user.bazelrc
+.build
+
+# SPM build outputs
+spm/output/
+spm/.build
+
+# Temporary build artifacts
+*.xcarchive
+*.framework
+*.xcframework
+
+# macOS
+.DS_Store
