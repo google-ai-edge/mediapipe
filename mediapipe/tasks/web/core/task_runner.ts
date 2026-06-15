@@ -93,7 +93,7 @@ export async function createTaskRunner<T extends TaskRunner>(
 /** Base class for all MediaPipe Tasks. */
 export abstract class TaskRunner {
   protected abstract baseOptions: BaseOptionsProto;
-  private logger?: TaskLogger;
+  protected logger?: TaskLogger;
   private processingErrors: Error[] = [];
   private latestOutputTimestamp = 0;
   private keepaliveNode?: CalculatorGraphConfig.Node;
