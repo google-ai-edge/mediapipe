@@ -178,6 +178,9 @@ message TransformerParameters {
     // unweighted, (like Gemma 3n), setting this determines which of those is
     // the case.
     optional bool qk_norm_has_scale = 8;
+
+    // If set, enables bidirectional attention for vision tokens.
+    optional bool vision_bidirectional_attention = 9;
   }
 
   SelfAttentionParameters self_attention_parameters = 16;
