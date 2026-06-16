@@ -16,6 +16,7 @@
 
 #if defined(__APPLE__)
 
+#import <Accelerate/Accelerate.h>          // IWYU pragma: keep
 #import <CoreFoundation/CoreFoundation.h>  // IWYU pragma: keep
 #import <CoreGraphics/CGImage.h>           // IWYU pragma: keep
 #import <CoreGraphics/CoreGraphics.h>      // IWYU pragma: keep
@@ -29,6 +30,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <memory>
+#include <vector>
 
 #include "absl/base/macros.h"
 #include "absl/log/absl_check.h"
@@ -748,4 +750,40 @@ void DumpCVPixelFormats() {
     CFRelease(desc);
   }
   CFRelease(pf_descs);
+}
+
+vImage_Error vImageExtractChannelAndConvertToFloat(const vImage_Buffer* src,
+                                                   vImage_Buffer* dst,
+                                                   int channel_index) {
+  if (src == nullptr || dst == nullptr || src->data == nullptr ||
+      dst->data == nullptr) {
+    return kvImageNullPointerArgument;
+  }
+  if (channel_index < 0 || channel_index > 3) {
+    return kvImageInvalidParameter;
+  }
+  if (src->width != dst->width || src->height != dst->height) {
+    return kvImageBufferSizeMismatch;
+  }
+
+  vImagePixelCount width = src->width;
+  vImagePixelCount height = src->height;
+
+  // Performs dynamic heap allocation via std::vector.
+  std::vector<uint8_t> temp_buffer(width * height);
+  vImage_Buffer temp_vimage_buffer = {
+      .data = temp_buffer.data(),
+      .height = height,
+      .width = width,
+      .rowBytes = static_cast<size_t>(width),
+  };
+
+  vImage_Error vimage_error = vImageExtractChannel_ARGB8888(
+      src, &temp_vimage_buffer, channel_index, kvImageNoFlags);
+  if (vimage_error != kvImageNoError) {
+    return vimage_error;
+  }
+
+  return vImageConvert_Planar8toPlanarF(&temp_vimage_buffer, dst, 1.0f, 0.0f,
+                                        kvImageNoFlags);
 }

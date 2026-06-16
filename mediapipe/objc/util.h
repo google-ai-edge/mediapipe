@@ -55,6 +55,12 @@ vImage_Error vImageBGRAToGray(const vImage_Buffer* src, vImage_Buffer* dst);
 /// Converts an RGBA image to grayscale without alpha.
 vImage_Error vImageRGBAToGray(const vImage_Buffer* src, vImage_Buffer* dst);
 
+/// Extracts a channel (e.g. Red at index 0 for SRGBA) from a 4-channel 8-bit
+/// buffer and converts it to a 1-channel float buffer.
+vImage_Error vImageExtractChannelAndConvertToFloat(const vImage_Buffer* src,
+                                                   vImage_Buffer* dst,
+                                                   int channel_index);
+
 /// Copy from a pixel buffer to another, converting pixel format.
 /// Both pixel buffers should be locked before calling this.
 vImage_Error vImageConvertCVPixelBuffers(CVPixelBufferRef src,
