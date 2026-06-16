@@ -1572,7 +1572,7 @@ objc_library(
     alwayslink = 1,
 )
 
-MIN_IOS_VERSION = "12.0"
+MIN_IOS_VERSION = "15.0"
 
 test_suite(
     name = "ios",
