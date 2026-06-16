@@ -117,7 +117,9 @@ mediapipe_files(srcs = [
 
 exports_files(
     srcs = [
+        "cats_and_dogs_mask_dog1_dog2_minus_dog1_split.png",
         "cats_and_dogs_mask_dog1_split.png",
+        "cats_and_dogs_mask_dog1_then_dog2_split.png",
         "expected_left_down_hand_landmarks.prototxt",
         "expected_left_down_hand_rotated_landmarks.prototxt",
         "expected_left_up_hand_landmarks.prototxt",
