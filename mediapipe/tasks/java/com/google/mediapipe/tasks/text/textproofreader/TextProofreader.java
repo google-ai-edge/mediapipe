@@ -15,9 +15,12 @@
 package com.google.mediapipe.tasks.text.textproofreader;
 
 import android.content.Context;
+import android.os.ParcelFileDescriptor;
+import android.util.Log;
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.tasks.core.BaseOptionsUtils;
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Optional;
 
 /** Performs proofreading on text. */
@@ -34,6 +37,8 @@ public class TextProofreader implements Closeable {
   public abstract static class TextProofreaderOptions {
     public abstract String getModelPath();
 
+    public abstract Optional<ParcelFileDescriptor> getModelAssetFileDescriptor();
+
     public abstract Optional<Integer> getMaxNumTokens();
 
     public static Builder builder() {
@@ -45,6 +50,10 @@ public class TextProofreader implements Closeable {
     public abstract static class Builder {
       /** Sets the local path or identifier for the model files. */
       public abstract Builder setModelPath(String modelPath);
+
+      /** Sets the file descriptor of the model. */
+      public abstract Builder setModelAssetFileDescriptor(
+          ParcelFileDescriptor modelAssetFileDescriptor);
 
       /**
        * Sets the maximum context length (in tokens) to use. If not set, the model's default maximum
@@ -104,8 +113,25 @@ public class TextProofreader implements Closeable {
     String appVersion = BaseOptionsUtils.getAppVersion(context);
     String appId = BaseOptionsUtils.getAppId(context);
 
+    int fd = -1;
+    if (options.getModelAssetFileDescriptor().isPresent()) {
+      try {
+        fd = options.getModelAssetFileDescriptor().get().dup().detachFd();
+      } catch (IOException e) {
+        if (options.getModelPath().isEmpty()) {
+          throw new IllegalArgumentException(
+              "TextProofreader: Failed to read from file descriptor and model path is empty.", e);
+        }
+        Log.w(
+            "TextProofreader",
+            "Failed to read from file descriptor, falling back to model path: ",
+            e);
+      }
+    }
+
     long handle =
         nativeCreateHandle(
+            fd,
             options.getModelPath(),
             options.getMaxNumTokens().orElse(0),
             appId,
@@ -116,6 +142,7 @@ public class TextProofreader implements Closeable {
   }
 
   private static native long nativeCreateHandle(
+      int modelFd,
       String modelPath,
       int maxNumTokens,
       String appId,
