@@ -71,3 +71,17 @@ py_library(
         "//mediapipe/tasks/python/core:serial_dispatcher",
     ],
 )
+
+py_library(
+    name = "text_summarizer",
+    srcs = [
+        "text_summarizer.py",
+    ],
+    deps = [
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:base_options_c",
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:mediapipe_c_utils",
+        "//mediapipe/tasks/python/core:serial_dispatcher",
+    ],
+)
