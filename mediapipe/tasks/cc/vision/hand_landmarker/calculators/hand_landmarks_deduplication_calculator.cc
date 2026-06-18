@@ -231,7 +231,7 @@ absl::StatusOr<absl::optional<VectorType>> VerifyNumAndMaybeInitOutput(
     const mediapipe::api3::Optional<mediapipe::api3::Input<T, VectorType>>&
         port,
     int num_expected_size) {
-  if (!port) return {absl::nullopt};
+  if (!port) return {std::nullopt};
   const auto& input = port.GetOrDie();
   RET_CHECK_EQ(input.size(), num_expected_size);
   return {{VectorType{}}};
