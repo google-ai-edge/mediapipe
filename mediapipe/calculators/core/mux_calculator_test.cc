@@ -333,7 +333,7 @@ class ToOptionalNode : public mediapipe::api2::Node {
 
   absl::Status Process(CalculatorContext* cc) override {
     if (kInValue(cc).IsEmpty()) {
-      kOutValue(cc).Send(absl::nullopt);
+      kOutValue(cc).Send(std::nullopt);
     } else {
       kOutValue(cc).Send({kInValue(cc).Get()});
     }
@@ -388,7 +388,7 @@ TEST(MuxCalculatorTest, HandleTimestampBoundUpdates) {
 
   MP_ASSERT_OK(send_value_fn(1, Timestamp(2)));
   ASSERT_EQ(output_packets.size(), 2);
-  EXPECT_EQ(output_packets[1].Get<std::optional<int>>(), absl::nullopt);
+  EXPECT_EQ(output_packets[1].Get<std::optional<int>>(), std::nullopt);
 
   MP_ASSERT_OK(send_value_fn(0, Timestamp(3)));
   ASSERT_EQ(output_packets.size(), 3);
