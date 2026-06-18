@@ -77,7 +77,7 @@ GetNormalizationOptionsIfAny(const TensorMetadata& tensor_metadata) {
       ModelMetadataExtractor::FindFirstProcessUnit(
           tensor_metadata, tflite::ProcessUnitOptions_NormalizationOptions));
   if (normalization_process_unit == nullptr) {
-    return {absl::nullopt};
+    return {std::nullopt};
   }
   const tflite::NormalizationOptions* tf_normalization_options =
       normalization_process_unit->options_as_NormalizationOptions();
