@@ -31,7 +31,10 @@ cc_library(
         "-framework CoreGraphics",
         "-framework CoreVideo",
     ],
-    visibility = ["//mediapipe/framework:mediapipe_internal"],
+    visibility = [
+        "//googlemac/iPhone/Shared/MediaEngine/Compositor/Tests:__pkg__",
+        "//mediapipe/framework:mediapipe_internal",
+    ],
     deps = [
         ":CFHolder",
         "//mediapipe/framework:packet",
