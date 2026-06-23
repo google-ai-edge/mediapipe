@@ -743,36 +743,6 @@ def external_files():
     )
 
     http_file(
-        name = "com_google_mediapipe_libimagegenerator_gpu_so",
-        sha256 = "6ee232fed2a44b9448a73db2601f845552978cc1dfcaba7623e8abe5474229a5",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/libimagegenerator_gpu.so?generation=1755013698249183"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_libopencv_core_3_4_darwin_a",
-        sha256 = "1e4355f5a3813f7656cf7c2d64b6c5d42d4c20688c2c4a08b51572b714e3795a",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/libopencv_core.3.4.darwin.a?generation=1728509651551637"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_libopencv_core_3_4_darwin_arm64_a",
-        sha256 = "4a836f880d86123cb8bc1d838e53bf44053c683951c4e87921dddca7434d8be3",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/libopencv_core.3.4.darwin_arm64.a?generation=1728509653713172"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_libopencv_imgproc_3_4_darwin_a",
-        sha256 = "6501109ed42eec78f54330ec14b99cae86c5f0db52651636ccf2a44297808eb7",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/libopencv_imgproc.3.4.darwin.a?generation=1728509656218122"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_libopencv_imgproc_3_4_darwin_arm64_a",
-        sha256 = "4e8019ca2732c07c173188dbf156b8321e350873ce2115327642788001ead246",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/libopencv_imgproc.3.4.darwin_arm64.a?generation=1728509658402901"],
-    )
-
-    http_file(
         name = "com_google_mediapipe_living_room_jpg",
         sha256 = "8d74535dfe58e7d62dee99df5ab7741ad373a456797cf4d99048dfd17ccb0d6c",
         urls = ["https://storage.googleapis.com/mediapipe-assets/living_room.jpg?generation=1699635092884512"],
@@ -1058,12 +1028,6 @@ def external_files():
         name = "com_google_mediapipe_ocr_text_jpg",
         sha256 = "88052e93aa910330433741f5cef140f8f9ec463230a332aef7038b5457b06482",
         urls = ["https://storage.googleapis.com/mediapipe-assets/ocr_text.jpg?generation=1681244241009078"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_opencv2_xcframework_zip",
-        sha256 = "6b625f564b72fd7c0946de2ae61507bed5daf84f3dbb5296ef4fef19da491160",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/opencv2.xcframework.zip?generation=1728573757773068"],
     )
 
     http_file(
