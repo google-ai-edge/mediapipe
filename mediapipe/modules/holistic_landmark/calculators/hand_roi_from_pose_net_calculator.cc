@@ -38,12 +38,20 @@ class HandRoiFromPoseNetCalculator : public CalculatorBase {
     cc->Inputs().Tag(kLandmarksTag).Set<NormalizedLandmarkList>();
     cc->Inputs().Tag(kImageSizeTag).Set<std::pair<int, int>>();
     cc->Outputs().Tag(kRoiTag).Set<NormalizedRect>();
+    // Optional: set handedness per instantiation via a side packet (lets a
+    // shared subgraph reuse this calculator for both hands).
+    if (cc->InputSidePackets().HasTag("IS_LEFT")) {
+      cc->InputSidePackets().Tag("IS_LEFT").Set<bool>();
+    }
     return absl::OkStatus();
   }
 
   absl::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
     is_left_ = cc->Options<HandRoiFromPoseNetCalculatorOptions>().is_left();
+    if (cc->InputSidePackets().HasTag("IS_LEFT")) {
+      is_left_ = cc->InputSidePackets().Tag("IS_LEFT").Get<bool>();
+    }
     return absl::OkStatus();
   }
 
