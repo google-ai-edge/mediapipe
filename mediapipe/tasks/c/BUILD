@@ -91,3 +91,13 @@ genrule(
     outs = ["libmediapipe.dylib"],
     cmd = "cp $< $@",
 )
+
+alias(
+    name = "libmediapipe",
+    actual = select({
+        "@platforms//os:windows": ":libmediapipe.dll",
+        "@platforms//os:osx": ":libmediapipe.dylib",
+        "//conditions:default": ":libmediapipe.so",
+    }),
+    visibility = ["//visibility:public"],
+)
