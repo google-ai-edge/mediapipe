@@ -40,9 +40,12 @@ load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 
 def _metal_compiler_args(ctx, src, obj, minimum_os_version, copts, diagnostics, deps_dump):
     """Returns arguments for metal compiler."""
-    apple_fragment = ctx.fragments.apple
+    apple_platform_info = apple_support.platform_info_from_rule_ctx(
+        ctx,
+        fail_on_missing_constraint = False,
+    )
 
-    platform = apple_fragment.single_arch_platform
+    platform = apple_platform_info.platform
 
     if not minimum_os_version:
         minimum_os_version = ctx.attr._xcode_config[apple_common.XcodeVersionConfig].minimum_os_for_platform_type(
@@ -105,7 +108,10 @@ def _metal_library_impl(ctx):
         apple_support.run(
             actions = ctx.actions,
             xcode_config = ctx.attr._xcode_config[apple_common.XcodeVersionConfig],
-            apple_fragment = ctx.fragments.apple,
+            apple_platform_info = apple_support.platform_info_from_rule_ctx(
+                ctx,
+                fail_on_missing_constraint = False,
+            ),
             xcode_path_resolve_level = apple_support.xcode_path_resolve_level.args,
             inputs = _metal_compiler_inputs(ctx.files.srcs, ctx.files.hdrs, ctx.attr.deps),
             outputs = [obj, diagnostics, deps_dump],
@@ -129,7 +135,10 @@ def _metal_library_impl(ctx):
     apple_support.run(
         actions = ctx.actions,
         xcode_config = ctx.attr._xcode_config[apple_common.XcodeVersionConfig],
-        apple_fragment = ctx.fragments.apple,
+        apple_platform_info = apple_support.platform_info_from_rule_ctx(
+            ctx,
+            fail_on_missing_constraint = False,
+        ),
         xcode_path_resolve_level = apple_support.xcode_path_resolve_level.args,
         inputs = output_objs,
         outputs = (output_lib,),
@@ -170,18 +179,22 @@ def _metal_library_impl(ctx):
         ),
     ]
 
-METAL_LIBRARY_ATTRS = dicts.add(apple_support.action_required_attrs(), {
-    "srcs": attr.label_list(allow_files = [".metal"], allow_empty = False),
-    "hdrs": attr.label_list(allow_files = [".h"]),
-    "deps": attr.label_list(providers = [[apple_common.Objc, CcInfo]]),
-    "copts": attr.string_list(),
-    "minimum_os_version": attr.string(),
-})
+METAL_LIBRARY_ATTRS = dicts.add(
+    apple_support.action_required_attrs(),
+    apple_support.platform_constraint_attrs(),
+    {
+        "srcs": attr.label_list(allow_files = [".metal"], allow_empty = False),
+        "hdrs": attr.label_list(allow_files = [".h"]),
+        "deps": attr.label_list(providers = [[apple_common.Objc, CcInfo]]),
+        "copts": attr.string_list(),
+        "minimum_os_version": attr.string(),
+    },
+)
 
 metal_library = rule(
     implementation = _metal_library_impl,
     attrs = METAL_LIBRARY_ATTRS,
-    fragments = ["apple", "objc"],
+    fragments = ["objc"],
 )
 """
 Builds a Metal library.
