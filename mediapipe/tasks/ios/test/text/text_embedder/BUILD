@@ -35,7 +35,7 @@ objc_library(
     testonly = True,
     srcs = ["MPPTextEmbedderTests.m"],
     data = [
-        "//mediapipe/tasks/testdata/text:embedding_gemma_model",
+        "//mediapipe/models/embedding_gemma:embedding_gemma.task",
         "//mediapipe/tasks/testdata/text:gecko_model",
         "//mediapipe/tasks/testdata/text:mobilebert_embedding_model",
         "//mediapipe/tasks/testdata/text:regex_embedding_with_metadata",
@@ -61,7 +61,7 @@ swift_library(
     testonly = True,
     srcs = ["TextEmbedderTests.swift"],
     data = [
-        "//mediapipe/tasks/testdata/text:embedding_gemma_model",
+        "//mediapipe/models/embedding_gemma:embedding_gemma.task",
         "//mediapipe/tasks/testdata/text:gecko_model",
         "//mediapipe/tasks/testdata/text:mobilebert_embedding_model",
         "//mediapipe/tasks/testdata/text:regex_embedding_with_metadata",
