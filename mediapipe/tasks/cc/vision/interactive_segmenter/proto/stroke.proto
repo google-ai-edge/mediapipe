@@ -1,0 +1,55 @@
+/* Copyright 2026 The MediaPipe Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto3";
+
+package mediapipe.tasks.vision.interactive_segmenter.proto;
+
+option java_package = "com.google.mediapipe.tasks.vision.interactivesegmenter.proto";
+option java_outer_classname = "StrokesProto";
+option java_multiple_files = true;
+
+// Represents a single user-drawn stroke.
+message Stroke {
+  // A single keypoint.
+  message Point {
+    float x = 1;
+    float y = 2;
+  }
+
+  // Specifies the polarity of the stroke.
+  // Represents whether the brush stroke is meant to add or subtract
+  // from the selection.
+  enum BrushMode {
+    BRUSH_MODE_UNSPECIFIED = 0;
+    BRUSH_MODE_POSITIVE = 1;
+    BRUSH_MODE_NEGATIVE = 2;
+    BRUSH_MODE_LASSO = 3;
+  }
+
+  // Specifies the brush mode used for this stroke.
+  BrushMode brush_mode = 1;
+
+  // The sequence of points forming the stroke.
+  repeated Point point = 2;
+
+  // Whether the stroke is complete.
+  bool is_completed = 3;
+}
+
+// A collection of strokes.
+message Strokes {
+  repeated Stroke stroke = 1;
+}

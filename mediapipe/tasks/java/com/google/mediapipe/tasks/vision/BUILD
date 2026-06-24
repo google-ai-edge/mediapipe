@@ -253,6 +253,26 @@ android_library(
 )
 
 android_library(
+    name = "interactivesegmenter",
+    srcs = [
+        "interactivesegmenter/InteractiveSegmenter.java",
+        "interactivesegmenter/InteractiveSegmenterOptions.java",
+        "interactivesegmenter/Stroke.java",
+    ],
+    manifest = "interactivesegmenter/AndroidManifest.xml",
+    deps = [
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/java/com/google/mediapipe/framework/image",
+        "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:stroke_java_proto_lite",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalizedkeypoint",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
     name = "imageembedder",
     srcs = [
         "imageembedder/ImageEmbedder.java",

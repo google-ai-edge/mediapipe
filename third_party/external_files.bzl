@@ -112,6 +112,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_models_interactive_segmentation_interactive_segmentation_task",
+        sha256 = "38431bc66b883404e8397f74c3579404315b9b52b04a46c6346fe906a7309b03",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/models/interactive_segmentation/interactive_segmentation.task?generation=1782323915989673"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_models_iris_landmark_tflite",
         sha256 = "d1744d2a09c25f501d39eba4faff47e53ecca8852c5ce19bce8eeac39357521f",
         urls = ["https://storage.googleapis.com/mediapipe-assets/models/iris_landmark.tflite?generation=1782183388820309"],
