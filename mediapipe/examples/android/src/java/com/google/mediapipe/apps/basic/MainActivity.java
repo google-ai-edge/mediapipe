@@ -216,8 +216,7 @@ public class MainActivity extends AppCompatActivity {
         applicationInfo.metaData.getBoolean("cameraFacingFront", false)
             ? CameraHelper.CameraFacing.FRONT
             : CameraHelper.CameraFacing.BACK;
-    cameraHelper.startCamera(
-        this, cameraFacing, previewFrameTexture, cameraTargetResolution());
+    cameraHelper.startCamera(this, cameraFacing, previewFrameTexture, cameraTargetResolution());
   }
 
   protected Size computeViewSize(int width, int height) {
