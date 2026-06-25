@@ -49,7 +49,7 @@ class TextSummarizerOptions:
     mode: The mode of the text summarizer task.
     max_num_tokens: The maximum number of tokens for summarization tasks. If
       set, the summarization will be truncated if the input and output exceed
-      this value. If not set, then the default max_num_tokens is roughly 4000
+      this value. If not set, then the default max_num_tokens is roughly 8k
       tokens due to the model's capacity.
   """
 

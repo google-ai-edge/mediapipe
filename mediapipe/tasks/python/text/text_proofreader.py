@@ -41,7 +41,7 @@ class TextProofreaderOptions:
     base_options: Base options for the text proofreader task.
     max_num_tokens: The maximum number of tokens for proofreader tasks. If set,
       the proofread output text will be truncated if the input and output exceed
-      this value. If not set, then the default max_num_tokens is roughly 4000
+      this value. If not set, then the default max_num_tokens is roughly 8k
       tokens due to the model's capacity.
   """
 
