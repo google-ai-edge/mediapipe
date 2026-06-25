@@ -26,9 +26,10 @@ import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.components.containers.NormalizedKeypoint;
 import com.google.mediapipe.tasks.core.BaseOptionsUtils;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
-import com.google.mediapipe.tasks.vision.interactivesegmenter.proto.Stroke.BrushMode;
-import com.google.mediapipe.tasks.vision.interactivesegmenter.proto.Stroke.Point;
-import com.google.mediapipe.tasks.vision.interactivesegmenter.proto.Strokes;
+import com.google.mediapipe.tasks.vision.interactivesegmenter.proto.StrokeProto;
+import com.google.mediapipe.tasks.vision.interactivesegmenter.proto.StrokeProto.Stroke.BrushMode;
+import com.google.mediapipe.tasks.vision.interactivesegmenter.proto.StrokeProto.Stroke.Point;
+import com.google.mediapipe.tasks.vision.interactivesegmenter.proto.StrokeProto.Strokes;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Objects;
@@ -146,10 +147,9 @@ public final class InteractiveSegmenter implements AutoCloseable {
   private static Strokes convertToProto(List<Stroke> strokes) {
     Strokes.Builder strokesProtoBuilder = Strokes.newBuilder();
     for (Stroke stroke : strokes) {
-      com.google.mediapipe.tasks.vision.interactivesegmenter.proto.Stroke.Builder
-          strokeProtoBuilder =
-              com.google.mediapipe.tasks.vision.interactivesegmenter.proto.Stroke.newBuilder()
-                  .setBrushMode(BrushMode.forNumber(stroke.brushMode().getValue()));
+      StrokeProto.Stroke.Builder strokeProtoBuilder =
+          StrokeProto.Stroke.newBuilder()
+              .setBrushMode(BrushMode.forNumber(stroke.brushMode().getValue()));
       for (NormalizedKeypoint point : stroke.points()) {
         strokeProtoBuilder.addPoint(Point.newBuilder().setX(point.x()).setY(point.y()).build());
       }
