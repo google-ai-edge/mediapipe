@@ -72,11 +72,13 @@ class HandRoiFromPoseNetCalculator : public CalculatorBase {
     }
 
     // Build the 26-dim feature vector: [ar, (x,y,z)*6, 7 engineered].
+    // Coordinates are in the isotropic (height-normalized) frame: x*=W/H. This
+    // matches the trained net and makes the ROI robust to the image aspect ratio.
     float f[hand_roi_net::kNumFeatures];
     int p = 0;
     f[p++] = ar;
-    for (int i = 0; i < kNumKp; ++i) { f[p++] = x[i]; f[p++] = y[i]; f[p++] = z[i]; }
-    // Engineered, aspect-corrected (x*ar) distances + z-range (match data.extra_features).
+    for (int i = 0; i < kNumKp; ++i) { f[p++] = x[i] * ar; f[p++] = y[i]; f[p++] = z[i]; }
+    // Engineered isotropic distances (x*ar) + z-range (match data.extra_features).
     auto dist = [&](int a, int b) {
       const float dx = (x[a] - x[b]) * ar, dy = y[a] - y[b];
       return std::sqrt(dx * dx + dy * dy);
@@ -93,17 +95,20 @@ class HandRoiFromPoseNetCalculator : public CalculatorBase {
     RET_CHECK_EQ(p, hand_roi_net::kNumFeatures);
 
     float out[hand_roi_net::kNumTargets];
-    hand_roi_net::Forward(f, out);  // -> [cx, cy, size, sin, cos], cx/cy absolute
+    hand_roi_net::Forward(f, out);  // -> [cx, cy, size, sin, cos] in the isotropic frame
 
-    float cx = out[0], cy = out[1], size = out[2];
+    // Outputs are isotropic (height-normalized): cx,cy,size are all in units of H.
+    // Convert to a NormalizedRect (x,width as fractions of W; y,height of H):
+    //   x_center = cx/ar, width = size/ar (so the pixel width == size*H), height = size.
+    float cx = out[0] / ar, cy = out[1], size = out[2];
     float rotation = std::atan2(out[3], out[4]);  // radians
     if (is_left_) { cx = 1.f - cx; rotation = -rotation; }  // mirror ROI back
 
     auto roi = absl::make_unique<NormalizedRect>();
     roi->set_x_center(cx);
     roi->set_y_center(cy);
-    roi->set_width(size);
-    roi->set_height(size * ar);   // square in pixels (size is normalized by width)
+    roi->set_width(size / ar);    // pixel side = size*H, so width fraction = size/ar
+    roi->set_height(size);        // square in pixels
     roi->set_rotation(rotation);
     cc->Outputs().Tag(kRoiTag).Add(roi.release(), cc->InputTimestamp());
     return absl::OkStatus();
