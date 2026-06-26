@@ -75,7 +75,6 @@ cc_library(
     copts = [
         "-x objective-c++",
         "-fobjc-arc",  # enable reference-counting
-        "-Wno-shorten-64-to-32",
     ],
     # This build rule is public to allow external customers to build their own iOS apps.
     visibility = ["//visibility:public"],
@@ -151,9 +150,6 @@ objc_library(
     hdrs = [
         "MPPGLViewRenderer.h",
     ],
-    copts = [
-        "-Wno-shorten-64-to-32",
-    ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
         ":mediapipe_framework_ios",
@@ -173,9 +169,6 @@ objc_library(
     hdrs = [
         "MPPLayerRenderer.h",
     ],
-    copts = [
-        "-Wno-shorten-64-to-32",
-    ],
     # This build rule is public to allow external customers to build their own iOS apps.
     visibility = ["//visibility:public"],
     deps = [
@@ -194,9 +187,6 @@ objc_library(
     ],
     hdrs = [
         "CGImageRefUtils.h",
-    ],
-    copts = [
-        "-Wno-shorten-64-to-32",
     ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
@@ -231,9 +221,6 @@ objc_library(
     hdrs = [
         "MPPGraphTestBase.h",
     ],
-    copts = [
-        "-Wno-shorten-64-to-32",
-    ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
         ":CGImageRefUtils",
@@ -260,9 +247,6 @@ objc_library(
         "MPPDisplayLinkWeakTargetTests.mm",
         "MPPGraphTests.mm",
         "MediaPipeAudioUtilTests.mm",
-    ],
-    copts = [
-        "-Wno-shorten-64-to-32",
     ],
     data = [
         "testdata/googlelogo_color_272x92dp.png",
