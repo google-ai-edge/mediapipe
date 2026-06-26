@@ -29,12 +29,18 @@ TextClassifierResult = text_classifier.TextClassifierResult
 TextEmbedder = text_embedder.TextEmbedder
 TextEmbedderOptions = text_embedder.TextEmbedderOptions
 TextEmbedderResult = text_embedder.TextEmbedderResult
+TextEmbeddingType = text_embedder.EmbeddingType
+TextEmbeddingTextRole = text_embedder.TextRole
+TextEmbeddingFormatContext = text_embedder.TextFormatContext
 TextSummarizer = text_summarizer.TextSummarizer
 TextSummarizerOptions = text_summarizer.TextSummarizerOptions
 TextSummarizerResult = text_summarizer.TextSummarizerResult
+TextSummarizerMode = text_summarizer.Mode
 TextProofreader = text_proofreader.TextProofreader
 TextProofreaderOptions = text_proofreader.TextProofreaderOptions
 TextProofreaderResult = text_proofreader.TextProofreaderResult
+TextProofreaderCorrection = text_proofreader.Correction
+TextProofreaderCorrectionType = text_proofreader.CorrectionType
 
 # Remove unnecessary modules to avoid duplication in API docs.
 del mediapipe
