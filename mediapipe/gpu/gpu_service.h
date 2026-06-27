@@ -30,7 +30,7 @@ class GpuResources {
 };
 #endif  // MEDIAPIPE_DISABLE_GPU
 
-ABSL_CONST_INIT extern const GraphService<GpuResources> kGpuService;
+ABSL_CONST_INIT extern constinit const GraphService<GpuResources> kGpuService;
 
 }  // namespace mediapipe
 
