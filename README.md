@@ -105,6 +105,10 @@ concepts](https://developers.google.com/mediapipe/framework/framework_concepts/o
     curated list of awesome MediaPipe related frameworks, libraries and
     software.
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=google-ai-edge/mediapipe&type=Date)](https://star-history.com/#google-ai-edge/mediapipe&Date)
+
 ## Contributing
 
 We welcome contributions. Please follow these
