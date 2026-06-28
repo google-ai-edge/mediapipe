@@ -378,17 +378,14 @@ class SolutionBase:
     if self._output_stream_type_info is None:
       raise ValueError('_output_stream_type_info is None in SolutionBase')
     solution_outputs = collections.namedtuple(
-        'SolutionOutputs', self._output_stream_type_info.keys())
+          'SolutionOutputs', self._output_stream_type_info.keys())
+    results = solution_outputs(*([""] * len(solution_outputs._fields)))
     for stream_name in self._output_stream_type_info.keys():
-      if stream_name in self._graph_outputs:
-        setattr(
-            solution_outputs, stream_name,
-            self._get_packet_content(self._output_stream_type_info[stream_name],
-                                     self._graph_outputs[stream_name]))
-      else:
-        setattr(solution_outputs, stream_name, None)
-
-    return solution_outputs
+        if stream_name in self._graph_outputs:
+            results = results._replace(**{stream_name: self._get_packet_content(
+                self._output_stream_type_info[stream_name], self._graph_outputs[stream_name])})
+                
+    return results
 
   def close(self) -> None:
     """Closes all the input sources and the graph."""
