@@ -300,6 +300,7 @@ export class InteractiveSegmenter extends TaskRunner {
    * TexImageSource, DOM elements) and copies them across Wasm heap memory into the
    * native C++ engine.
    *
+   * @export
    * @param image An image to process.
    */
   setImage(image: TexImageSource): void {
@@ -388,6 +389,7 @@ export class InteractiveSegmenter extends TaskRunner {
    * invokes native inference, and creates a deep copy of the resulting Wasm
    * heap mask data to safeguard against native buffer deallocation.
    *
+   * @export
    * @param strokes The sequence of user strokes.
    * @return The segmentation mask as an `MPMask`.
    */

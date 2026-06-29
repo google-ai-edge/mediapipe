@@ -48,5 +48,6 @@ export const ImageClassifier = ImageClassifierImpl;
 export const ImageEmbedder = ImageEmbedderImpl;
 export const ImageSegmenter = ImageSegementerImpl;
 export const InteractiveSegmenterLegacy = InteractiveSegmenterLegacyImpl;
+export const InteractiveSegmenter = InteractiveSegmenterImpl;
 export const ObjectDetector = ObjectDetectorImpl;
 export const PoseLandmarker = PoseLandmarkerImpl;
