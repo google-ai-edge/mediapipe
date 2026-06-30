@@ -59,7 +59,7 @@ static void EglThreadExitCallback(void* key_value) {
 static void MakeEglReleaseThreadKey() {
   int err = pthread_key_create(&egl_release_thread_key, EglThreadExitCallback);
   if (err) {
-    ABSL_LOG(ERROR) << "cannot create pthread key: " << err;
+    ABSL_LOG(ERROR) << " cannot create pthread key: " << err;
   }
 }
 
@@ -75,14 +75,14 @@ static void EnsureEglThreadRelease() {
 static absl::StatusOr<EGLDisplay> GetInitializedDefaultEglDisplay() {
   EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
   RET_CHECK(display != EGL_NO_DISPLAY)
-      << "eglGetDisplay() returned error " << std::showbase << std::hex
+      << " eglGetDisplay() returned error " << std::showbase << std::hex
       << eglGetError();
 
   EGLint major = 0;
   EGLint minor = 0;
   EGLBoolean egl_initialized = eglInitialize(display, &major, &minor);
-  RET_CHECK(egl_initialized) << "Unable to initialize EGL";
-  ABSL_LOG(INFO) << "Successfully initialized EGL. Major : " << major
+  RET_CHECK(egl_initialized) << " Unable to initialize EGL";
+  ABSL_LOG(INFO) << " Successfully initialized EGL. Major : " << major
                  << " Minor: " << minor;
 
   return display;
@@ -143,12 +143,12 @@ absl::Status GlContext::CreateContextInternal(EGLContext share_context,
       eglChooseConfig(display_, config_attr, &config_, 1, &num_configs);
   if (!success) {
     return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
-           << "eglChooseConfig() returned error " << std::showbase << std::hex
+           << " eglChooseConfig() returned error " << std::showbase << std::hex
            << eglGetError();
   }
   if (!num_configs) {
     return mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
-           << "eglChooseConfig() returned no matching EGL configuration for "
+           << " eglChooseConfig() returned no matching EGL configuration for "
            << "RGBA8888 D16 ES" << gl_version << " request. ";
   }
 
@@ -162,11 +162,11 @@ absl::Status GlContext::CreateContextInternal(EGLContext share_context,
   context_ = eglCreateContext(display_, config_, share_context, context_attr);
   int error = eglGetError();
   RET_CHECK(context_ != EGL_NO_CONTEXT)
-      << "Could not create GLES " << gl_version << " context; "
+      << " Could not create GLES " << gl_version << " context; "
       << "eglCreateContext() returned error " << std::showbase << std::hex
       << error
       << (error == EGL_BAD_CONTEXT
-              ? ": external context uses a different version of OpenGL"
+              ? " : external context uses a different version of OpenGL"
               : "");
 
   // We can't always rely on GL_MAJOR_VERSION and GL_MINOR_VERSION, since
@@ -181,9 +181,9 @@ absl::Status GlContext::CreateContext(EGLContext share_context) {
 
   auto status = CreateContextInternal(share_context, 3);
   if (!status.ok()) {
-    ABSL_LOG(WARNING) << "Creating a context with OpenGL ES 3 failed: "
+    ABSL_LOG(WARNING) << " Creating a context with OpenGL ES 3 failed: "
                       << status;
-    ABSL_LOG(WARNING) << "Fall back on OpenGL ES 2.";
+    ABSL_LOG(WARNING) << " Fall back on OpenGL ES 2.";
     status = CreateContextInternal(share_context, 2);
   }
   MP_RETURN_IF_ERROR(status);
@@ -192,7 +192,7 @@ absl::Status GlContext::CreateContext(EGLContext share_context) {
 
   surface_ = eglCreatePbufferSurface(display_, config_, pbuffer_attr);
   RET_CHECK(surface_ != EGL_NO_SURFACE)
-      << "eglCreatePbufferSurface() returned error " << std::showbase
+      << " eglCreatePbufferSurface() returned error " << std::showbase
       << std::hex << eglGetError();
 
   return absl::OkStatus();
@@ -238,20 +238,20 @@ void GlContext::DestroyContext() {
   if (IsCurrent()) {
     if (!eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE,
                         EGL_NO_CONTEXT)) {
-      ABSL_LOG(ERROR) << "eglMakeCurrent() returned error " << std::showbase
+      ABSL_LOG(ERROR) << " eglMakeCurrent() returned error " << std::showbase
                       << std::hex << eglGetError();
     }
   }
   if (surface_ != EGL_NO_SURFACE) {
     if (!eglDestroySurface(display_, surface_)) {
-      ABSL_LOG(ERROR) << "eglDestroySurface() returned error " << std::showbase
+      ABSL_LOG(ERROR) << " eglDestroySurface() returned error " << std::showbase
                       << std::hex << eglGetError();
     }
     surface_ = EGL_NO_SURFACE;
   }
   if (context_ != EGL_NO_CONTEXT) {
     if (!eglDestroyContext(display_, context_)) {
-      ABSL_LOG(ERROR) << "eglDestroyContext() returned error " << std::showbase
+      ABSL_LOG(ERROR) << " eglDestroyContext() returned error " << std::showbase
                       << std::hex << eglGetError();
     }
     context_ = EGL_NO_CONTEXT;
@@ -300,7 +300,7 @@ absl::Status GlContext::SetCurrentContextBinding(
   EGLBoolean success =
       eglMakeCurrent(display, new_binding.draw_surface,
                      new_binding.read_surface, new_binding.context);
-  RET_CHECK(success) << "eglMakeCurrent() returned error " << std::showbase
+  RET_CHECK(success) << " eglMakeCurrent() returned error " << std::showbase
                      << std::hex << eglGetError();
   return absl::OkStatus();
 }
