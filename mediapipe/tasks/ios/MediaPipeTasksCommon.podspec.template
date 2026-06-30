@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
     'OTHER_LDFLAGS[sdk=iphonesimulator*]' => '$(inherited) -force_load "${PODS_ROOT}/MediaPipeTasksCommon/frameworks/graph_libraries/libMediaPipeTasksCommon_simulator_graph.a"',
     'OTHER_LDFLAGS[sdk=iphoneos*]' => '$(inherited) -force_load "$(PODS_ROOT)/MediaPipeTasksCommon/frameworks/graph_libraries/libMediaPipeTasksCommon_device_graph.a"',
   }
-  s.frameworks = 'Accelerate', 'CoreMedia', 'AssetsLibrary', 'CoreFoundation', 'CoreGraphics', 'CoreImage', 'QuartzCore', 'AVFoundation', 'CoreVideo'
+  s.frameworks = 'AudioToolbox', 'Accelerate', 'CoreMedia', 'AssetsLibrary', 'CoreFoundation', 'CoreGraphics', 'CoreImage', 'QuartzCore', 'AVFoundation', 'CoreVideo'
   s.preserve_paths ='frameworks/graph_libraries/*.a'
   s.library = 'c++'
   s.vendored_frameworks = 'frameworks/MediaPipeTasksCommon.xcframework'
