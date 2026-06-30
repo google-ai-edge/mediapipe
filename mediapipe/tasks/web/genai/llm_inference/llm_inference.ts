@@ -54,6 +54,7 @@ import {TransformerParameters} from '../../../../tasks/web/genai/llm_inference/p
 
 import type {LlmInferenceOptions} from './llm_inference_options';
 import {
+  fastForwardLitertLmStreamToModel,
   getModelFormatAndClose,
   ModelFormat,
   tee,
@@ -75,6 +76,10 @@ export type {
 
 declare interface CancelModule {
   LLM_CANCEL_FLAG: number | undefined;
+}
+
+declare interface LiteRtLmOffsetParserModule {
+  _GetLiteRtModelOffset(headerPtr: number): number;
 }
 
 // The OSS JS API does not support the builder pattern.
@@ -453,6 +458,28 @@ export class LlmInference extends TaskRunner {
       );
       this.isConvertedModel = modelFormat === ModelFormat.CONVERTED;
 
+      // We only support non-converted .litertlm files, so find the
+      // offset for the model itself and then fastforward the stream
+      // accordingly.
+      let litertLmModelStream = null;
+      if (modelFormat === ModelFormat.LITERTLM) {
+        const wasm = this.graphRunner.wasmModule;
+        litertLmModelStream = await fastForwardLitertLmStreamToModel(
+          modelStreamForLoading,
+          (header: Uint8Array) => {
+            // Simple lambda to call GetLiteRtModelOffset on our binary
+            // .litertlm header.
+            const headerSize = header.length;
+            const headerPtr = wasm._malloc(headerSize);
+            wasm.HEAPU8.set(header, headerPtr);
+            const parser = wasm as unknown as LiteRtLmOffsetParserModule;
+            const modelOffset = parser._GetLiteRtModelOffset(headerPtr);
+            wasm._free(headerPtr);
+            return modelOffset;
+          },
+        );
+      }
+
       // LLM Engine must be used for converted models and multi-modality.
       const maxNumImages =
         'maxNumImages' in options && options.maxNumImages
@@ -465,11 +492,13 @@ export class LlmInference extends TaskRunner {
 
       if (this.isConvertedModel || maxNumImages > 0 || supportAudio) {
         this.useLlmEngine = true;
-        modelStream = modelStreamForLoading;
+        modelStream = litertLmModelStream
+          ? litertLmModelStream
+          : modelStreamForLoading;
       } else {
         this.useLlmEngine = false;
         this.streamingReader = StreamingReader.loadFromReader(
-          modelStreamForLoading,
+          litertLmModelStream ? litertLmModelStream : modelStreamForLoading,
           onFinishedLoadingData,
         );
       }
