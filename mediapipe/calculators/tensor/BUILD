@@ -700,6 +700,136 @@ cc_library(
 )
 
 cc_library(
+    name = "inference_calculator_litert",
+    srcs = ["inference_calculator_litert.cc"],
+    copts = select({
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",
+        ],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":inference_calculator_interface",
+        ":inference_interpreter_delegate_runner",
+        ":inference_runner",
+        ":inference_runner_litert",
+        ":shared_inference_service",
+        ":tensor_span",
+        "//mediapipe/app/aimatter:cachable_object",
+        "//mediapipe/app/aimatter:cache_service",
+        "//mediapipe/calculators/tensor/litert:litert_service",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/gpu:gl_calculator_helper",
+        "//mediapipe/util/tflite:tflite_model_loader",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:optional",
+    ] + select({
+        "//mediapipe:apple": [
+            "//mediapipe/gpu:MPPMetalHelper",
+            "@litert//litert/runtime/accelerators/gpu:ml_drift_metal_accelerator",
+        ],
+        "//conditions:default": [],
+    }),
+    alwayslink = 1,
+)
+
+cc_embed_data(
+    name = "tflite_test_data_embed",
+    srcs = [
+        "@litert//litert/test:tflite_test_data",
+        "@litert//litert/test:testdata/simple_model.tflite",
+    ],
+    outs = [
+        "tflite_test_data_embed.cc",
+        "tflite_test_data_embed.h",
+        "tflite_test_data_embed_data.o",
+    ],
+    embedopts = ["--namespace=mediapipe"],
+    flatten = 1,
+)
+
+cc_test(
+    name = "inference_calculator_litert_test",
+    srcs = ["inference_calculator_litert_test.cc"],
+    tags = [
+        "requires-gpu-nvidia",
+    ],
+    deps = [
+        ":inference_calculator_cc_proto",
+        ":inference_calculator_interface",
+        ":inference_calculator_litert",
+        ":tflite_test_data_embed",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:resources",
+        "//mediapipe/framework:resources_service",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:sink",
+        "//mediapipe/util/tflite:tflite_model_loader",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
+        "@litert//litert/c:litert_platform_support",
+        "@litert//litert/c:litert_tensor_buffer",
+        "@litert//litert/test:simple_model",
+        "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate_hdrs_only",
+    ] + select({
+        "//mediapipe:apple": [
+            "@litert//litert/runtime/accelerators/gpu:ml_drift_metal_accelerator",
+        ],
+        "//conditions:default": [
+            "@litert//litert/runtime/accelerators/gpu:ml_drift_gpu_accelerator",  # buildcleaner: keep
+        ],
+    }),
+)
+
+cc_test(
+    name = "inference_calculator_litert_gpu_test",
+    srcs = ["inference_calculator_litert_test.cc"],
+    tags = [
+        "requires-gpu-nvidia",  # Allows test to run with LiteRT GPU accelerator by default.
+    ],
+    deps = [
+        ":inference_calculator_cc_proto",
+        ":inference_calculator_interface",
+        ":inference_calculator_litert",
+        ":tflite_test_data_embed",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:resources",
+        "//mediapipe/framework:resources_service",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:sink",
+        "//mediapipe/util/tflite:tflite_model_loader",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
+        "@litert//litert/c:litert_platform_support",
+        "@litert//litert/c:litert_tensor_buffer",
+        "@litert//litert/runtime/accelerators/gpu:ml_drift_cl_accelerator",
+        "@litert//litert/test:simple_model",
+        "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate_hdrs_only",
+    ],
+)
+
+cc_library(
     name = "inference_calculator_metal",
     srcs = ["inference_calculator_metal.cc"],
     copts = [

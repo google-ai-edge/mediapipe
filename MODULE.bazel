@@ -89,3 +89,11 @@ node.toolchain(node_version = "20.14.0")
 use_repo(node, "nodejs_toolchains")
 
 register_toolchains("@nodejs_toolchains//:all")
+
+bazel_dep(name = "litert", version = "2.1.5")
+archive_override(
+    module_name = "litert",
+    integrity = "sha256-8/1R0eHrM0crpCVGK/U7Ba0CvdypzVjGEgnUqL54KdA=",
+    strip_prefix = "LiteRT-622f1f3c1352f4bc2925061b8cb72e9ce52874fe",
+    urls = ["https://github.com/google-ai-edge/LiteRT/archive/622f1f3c1352f4bc2925061b8cb72e9ce52874fe.tar.gz"],
+)

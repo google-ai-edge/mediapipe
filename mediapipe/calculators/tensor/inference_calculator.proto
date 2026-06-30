@@ -191,11 +191,161 @@ message InferenceCalculatorOptions {
       optional bool slow_consistent_arithmetic = 8;
     }
 
+    // Options for LiteRt integration.
+    // Allow inference with multiple different hardware accelerators
+    //
+    // LiteRt {
+    //   run_async: true
+    //   enable_dynamic_resize: false
+    //   cpu { num_threads: 4 }
+    //   gpu { precision: FP16 }
+    //   ...
+    // }.
+    message LiteRt {
+      // [General options] for LiteRt delegate which applies to all
+      // accelerators.
+
+      reserved 1, 2, 3;
+
+      // Whether to run inference asynchronously.
+      optional bool run_async = 4 [default = false];
+
+      // Enable automatic dynamic tensor resizing for models with dynamic
+      // shapes. When true, the calculator will automatically resize input
+      // tensors when the input shape differs from the model's current shape
+      // (for tensors with dynamic dimensions marked as -1). When false, strict
+      // shape checking is enforced.
+      optional bool enable_dynamic_resize = 5 [default = true];
+
+      reserved 6, 7;
+
+      // [Accelerator options] specific to LiteRt accelerators. Multiple
+      // hardware accelerators can be chosen within delegate.
+
+      // LiteRt::Cpu Accelerator.
+      message Cpu {
+        optional int32 num_threads = 1;
+
+        message Xnnpack {
+          // Flags to pass to XNNPack delegate. Users can specify what XNNPack
+          // flags they want by using bitwise OR, e.g.,
+          // TFLITE_XNNPACK_DELEGATE_FLAG_ENABLE_SUBGRAPH_RESHAPING |
+          // TFLITE_XNNPACK_DELEGATE_FLAG_ENABLE_LATEST_OPERATORS.
+          optional uint32 flags = 1;
+        }
+
+        oneof backend {
+          Xnnpack xnnpack = 2;
+        }
+      }
+      optional Cpu cpu = 8;
+
+      // LiteRt::Gpu Accelerator.
+      message Gpu {
+        enum Precision {
+          DEFAULT = 0;
+          FP16 = 1;
+          FP32 = 2;
+        }
+        optional Precision precision = 1 [default = DEFAULT];
+        // Enables sharing of constant tensors (e.g. weights) between different
+        // subgraphs. This is useful for reducing memory usage when multiple
+        // subgraphs share the same weights.
+        optional bool enable_constant_tensors_sharing = 2 [default = false];
+        // Backend is dependent on which LiteRT GPU accelerator is linked.
+        // If a backend is chosen that is not supported by the linked LiteRT GPU
+        // accelerator, inference will fail (e.g. OpenGL is requested from
+        // LiteRT OPENCL-only accelerator).
+        enum Backend {
+          AUTOMATIC = 0;
+          OPENGL = 1;
+          OPENCL = 2;
+          WEBGPU = 3;
+        }
+        optional Backend backend = 3 [default = AUTOMATIC];
+        optional bool hint_fully_delegated_to_single_delegate = 4
+            [default = false];
+
+        // Helper to control the behavior of the GPU wait.
+        // Usually, the inferred behavior is sufficient. However, for advanced
+        // use cases, this option allows to force a specific behavior.
+        enum WaitType {
+          // Wait type will be automatically determined by the delegate.
+          WAIT_TYPE_UNSPECIFIED = 0;
+          // Blocked waiting for the GPU to finish.
+          // This creates a sync point where the CPU waits for the GPU to
+          // finish. This is useful when the CPU needs to access the output of
+          // the GPU immediately.
+          WAIT_TYPE_PASSIVE = 1;
+          // Active busy-waiting for the GPU to finish.
+          // This is useful when the latency of the GPU inference is very small
+          // and the overhead of the passive wait is too high.
+          WAIT_TYPE_ACTIVE = 2;
+          // Do not wait for the GPU to finish. Relies on other synchronization
+          // methods like barriers or in-order queues.
+          // This is useful when pipelining multiple GPU jobs.
+          WAIT_TYPE_DO_NOT_WAIT = 3;
+        }
+        optional WaitType wait_type = 5 [default = WAIT_TYPE_UNSPECIFIED];
+
+        // Enables serialization of the program cache. This requires
+        // serialization_dir and model_cache_key to be set.
+        optional bool serialize_program_cache = 6 [default = false];
+        // The directory to load and save the serialized model. Ensure this
+        // directory exists and is writable if serialization is enabled.
+        optional string serialization_dir = 7;
+        // A unique key that represents the model in the serialization cache.
+        optional string model_cache_key = 8;
+      }
+      optional Gpu gpu = 9;
+
+      // LiteRt::Npu Accelerator.
+      message Npu {
+        // The path to the compiler plugin shared object library.
+        optional string compiler_plugin_library_path = 1;
+        // The directory to the dispatch shared object library.
+        optional string dispatch_library_path = 2;
+        // Darwinn accelerator options.
+        // For phones with Google Tensor chip only. i.e. Pixel 6 and later.
+        message Darwinn {
+          // Priority for the DarwiNN inference request.
+          // If set to -1, the inference will use the default priority provided
+          // by DarwiNN runtime.
+          optional int32 inference_priority = 1;
+        }
+        message Qualcomm {
+          enum HtpPerformanceMode {
+            DEFAULT = 0;
+            SUSTAINED_HIGH_PERFORMANCE = 1;
+            BURST = 2;
+            HIGH_PERFORMANCE = 3;
+            POWER_SAVER = 4;
+            LOW_POWER_SAVER = 5;
+            HIGH_POWER_SAVER = 6;
+            LOW_BALANCED = 7;
+            BALANCED = 8;
+            EXTREME_POWER_SAVER = 9;
+          }
+          optional HtpPerformanceMode htp_performance_mode = 1;
+        }
+        oneof accelerator {
+          Darwinn darwinn = 3;
+          Qualcomm qualcomm = 4;
+        }
+      }
+      optional Npu npu = 10;
+
+      // LiteRt::Webnn Accelerator.
+      message Webnn {}
+      optional Webnn webnn = 11;
+    }
+
     oneof delegate {
       TfLite tflite = 1;
       Gpu gpu = 2;
       Nnapi nnapi = 3;
       Xnnpack xnnpack = 4;
+      LiteRt litert = 8;
     }
   }
 

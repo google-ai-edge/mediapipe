@@ -770,3 +770,21 @@ http_archive(
     strip_prefix = "curl-8.10.1",
     url = "https://curl.haxx.se/download/curl-8.10.1.tar.gz",
 )
+
+LITERT_REF = "622f1f3c1352f4bc2925061b8cb72e9ce52874fe"
+
+LITERT_SHA256 = "f3fd51d1e1eb33472ba425462bf53b05ad02bddca9cd58c61209d4a8be7829d0"
+
+# LiteRT
+http_archive(
+    name = "litert",
+    patch_cmds = [
+        # Replace @//third_party with @litert//third_party in files under third_party/.
+        "sed -i -e 's|\"@//third_party/|\"@litert//third_party/|g' third_party/*/*",
+        # Replace @stblib with @stblib in support/*/BUILD files.
+        "sed -i -e 's|\"@stblib\"|\"@stblib//:stblib\"|g' support/*/BUILD",
+    ],
+    sha256 = LITERT_SHA256,
+    strip_prefix = "LiteRT-" + LITERT_REF,
+    url = "https://github.com/google-ai-edge/LiteRT/archive/" + LITERT_REF + ".tar.gz",
+)

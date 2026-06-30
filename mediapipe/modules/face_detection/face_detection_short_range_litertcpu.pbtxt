@@ -1,0 +1,35 @@
+# MediaPipe graph to detect faces. (CPU input and inference.)
+#
+# EXAMPLE:
+#   node {
+#     calculator: "FaceDetectionShortRangeLitertCpu"
+#     input_stream: "IMAGE:image"
+#     output_stream: "DETECTIONS:face_detections"
+#   }
+type: "FaceDetectionShortRangeLitertCpu"
+
+# The input image, either ImageFrame, or (multi-backend) Image.
+input_stream: "IMAGE:image"
+
+# Detected faces. (std::vector<Detection>)
+output_stream: "DETECTIONS:detections"
+
+graph_options: {
+  [type.googleapis.com/mediapipe.FaceDetectionOptions] {}
+}
+
+node {
+  calculator: "FaceDetectionShortRange"
+  input_stream: "IMAGE:image"
+  output_stream: "DETECTIONS:detections"
+  node_options: {
+    [type.googleapis.com/mediapipe.FaceDetectionOptions] {
+      delegate: {
+        litert {
+          cpu {}
+        }
+      }
+    }
+  }
+  option_value: "OPTIONS:options"
+}
