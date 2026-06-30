@@ -103,7 +103,7 @@ def get_cache_files_coco(
   Returns:
     An object of CacheFiles class.
   """
-  hasher = hashlib.md5()
+  hasher = hashlib.sha256()
   # Update with dataset folder name
   hasher.update(_get_dir_basename(data_dir).encode('utf-8'))
   # Update with image filenames
@@ -140,7 +140,7 @@ def get_cache_files_pascal_voc(
   Returns:
     An object of CacheFiles class.
   """
-  hasher = hashlib.md5()
+  hasher = hashlib.sha256()
   hasher.update(_get_dir_basename(data_dir).encode('utf-8'))
   annotation_files = tf.io.gfile.glob(
       os.path.join(data_dir, 'Annotations') + r'/*.xml'
