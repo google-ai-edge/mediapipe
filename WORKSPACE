@@ -21,6 +21,12 @@ http_archive(
 
 load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")  # @unused
 
+http_archive(
+    name = "rules_platform",
+    sha256 = "0aadd1bd350091aa1f9b6f2fbcac8cd98201476289454e475b28801ecf85d3fd",
+    url = "https://github.com/bazelbuild/rules_platform/releases/download/0.1.0/rules_platform-0.1.0.tar.gz",
+)
+
 # GoogleTest/GoogleMock framework. Used by most unit-tests.
 # Last updated 2021-07-02.
 http_archive(
@@ -769,4 +775,35 @@ http_archive(
     sha256 = "d15ebab765d793e2e96db090f0e172d127859d78ca6f6391d7eafecfd894bbc0",
     strip_prefix = "curl-8.10.1",
     url = "https://curl.haxx.se/download/curl-8.10.1.tar.gz",
+)
+
+LITERT_REF = "622f1f3c1352f4bc2925061b8cb72e9ce52874fe"
+
+LITERT_SHA256 = "f3fd51d1e1eb33472ba425462bf53b05ad02bddca9cd58c61209d4a8be7829d0"
+
+# LiteRT
+http_archive(
+    name = "litert",
+    patch_cmds = [
+        # Replace @//third_party with @litert//third_party in files under third_party/.
+        "sed -i -e 's|\"@//third_party/|\"@litert//third_party/|g' third_party/*/*",
+        # Replace @stblib with @stblib in support/*/BUILD files.
+        "sed -i -e 's|\"@stblib\"|\"@stblib//:stblib\"|g' support/*/BUILD",
+        # Map rules_python calls to the root @rules_python repo!
+        "find . -type f \\( -name 'BUILD*' -o -name '*.bzl' \\) -exec sed -i -e 's|@xla//third_party/rules_python/python:py_test.bzl|@rules_python//python:defs.bzl|g' {} +",
+        "find . -type f \\( -name 'BUILD*' -o -name '*.bzl' \\) -exec sed -i -e 's|@xla//third_party/rules_python/python:py_binary.bzl|@rules_python//python:defs.bzl|g' {} +",
+        "find . -type f \\( -name 'BUILD*' -o -name '*.bzl' \\) -exec sed -i -e 's|@xla//third_party/rules_python/python:py_library.bzl|@rules_python//python:defs.bzl|g' {} +",
+        # Map flatbuffers to root since TF pin expects it there
+        "find . -type f \\( -name 'BUILD*' -o -name '*.bzl' \\) -exec sed -i -e 's|@xla//third_party/flatbuffers|@flatbuffers|g' {} +",
+        # TF maps tsl inside compiler/xla/tsl, fix @xla//tsl usages!
+        "find . -type f \\( -name 'BUILD*' -o -name '*.bzl' \\) -exec sed -i -e 's|@xla//tsl|@org_tensorflow//tensorflow/compiler/xla/tsl|g' {} +",
+        "find . -type f \\( -name 'BUILD*' -o -name '*.bzl' \\) -exec sed -i -e 's|@org_tensorflow//third_party/xla/xla/tsl|@org_tensorflow//tensorflow/compiler/xla/tsl|g' {} +",
+        # Map remaining @xla uses to tensorflow internal path!
+        "find . -type f \\( -name 'BUILD*' -o -name '*.bzl' \\) -exec sed -i -e 's|@xla//|@org_tensorflow//third_party/xla/|g' {} +",
+        # Remove strict_deps attribute from Python rules which causes build errors in bazel 7
+        "find . -type f \\( -name 'BUILD*' -o -name '*.bzl' \\) -exec sed -i -e '/strict_deps =/d' {} +",
+    ],
+    sha256 = LITERT_SHA256,
+    strip_prefix = "LiteRT-" + LITERT_REF,
+    url = "https://github.com/google-ai-edge/LiteRT/archive/" + LITERT_REF + ".tar.gz",
 )

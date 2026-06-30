@@ -700,6 +700,46 @@ cc_library(
 )
 
 cc_library(
+    name = "inference_calculator_litert",
+    srcs = ["inference_calculator_litert.cc"],
+    copts = select({
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",
+        ],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":inference_calculator_interface",
+        ":inference_interpreter_delegate_runner",
+        ":inference_runner",
+        ":inference_runner_litert",
+        ":tensor_span",
+        "//mediapipe/calculators/tensor/litert:litert_service",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:memory_manager",
+        "//mediapipe/framework:memory_manager_service",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/gpu:gl_calculator_helper",
+        "//mediapipe/util/tflite:tflite_model_loader",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:optional",
+    ] + select({
+        "//mediapipe:apple": [
+            "//mediapipe/gpu:MPPMetalHelper",
+            "@litert//litert/runtime/accelerators/gpu:ml_drift_metal_accelerator",
+        ],
+        "//conditions:default": [],
+    }),
+    alwayslink = 1,
+)
+
+cc_library(
     name = "inference_calculator_metal",
     srcs = ["inference_calculator_metal.cc"],
     copts = [
