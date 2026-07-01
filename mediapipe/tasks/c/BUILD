@@ -62,8 +62,7 @@ cc_binary(
     ] + select({
         "@platforms//os:windows": [],
         "//mediapipe/tasks:build_for_3p": [],
-        "//conditions:default": [
-        ],
+        "//conditions:default": [],
     }),
 )
 
