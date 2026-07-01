@@ -90,6 +90,7 @@ config_setting(
     visibility = ["//visibility:public"],
 )
 
+# Targets here are force loaded to avoid stripping.
 CALCULATORS_AND_GRAPHS = [
     "//mediapipe/calculators/core:flow_limiter_calculator",
     "//mediapipe/tasks/cc/audio/audio_classifier:audio_classifier_graph",
