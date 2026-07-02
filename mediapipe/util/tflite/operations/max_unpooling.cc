@@ -37,6 +37,8 @@ inline void MaxUnpooling(const ::tflite::PoolParams& params,
   const int depth = MatchingDim(input_shape, 3, output_shape, 3);
   const int input_height = input_shape.Dims(1);
   const int input_width = input_shape.Dims(2);
+  const int output_height = output_shape.Dims(1);
+  const int output_width = output_shape.Dims(2);
   const int stride_height = params.stride_height;
   const int stride_width = params.stride_width;
   std::memset(output_data, 0, output_shape.FlatSize() * sizeof(float));
@@ -53,8 +55,16 @@ inline void MaxUnpooling(const ::tflite::PoolParams& params,
               in_x * stride_width - params.padding_values.width + max_x;
           const int out_y =
               in_y * stride_height - params.padding_values.height + max_y;
-          output_data[Offset(output_shape, batch, out_y, out_x, channel)] =
-              input_data[input_offset];
+          // The index comes from the (potentially untrusted) `indices` tensor,
+          // so the destination it decodes to must be validated against the
+          // output bounds before writing. An out-of-range index does not
+          // describe a legitimate unpooling location; skipping it prevents an
+          // out-of-bounds write (CWE-787).
+          if (out_x >= 0 && out_x < output_width && out_y >= 0 &&
+              out_y < output_height) {
+            output_data[Offset(output_shape, batch, out_y, out_x, channel)] =
+                input_data[input_offset];
+          }
         }
       }
     }
