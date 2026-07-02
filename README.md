@@ -27,7 +27,7 @@ iOS), web, desktop, edge devices, and IoT, effortlessly.
 
 ## Get started
 
-You can get started with MediaPipe Solutions by by checking out any of the
+You can get started with MediaPipe Solutions by checking out any of the
 developer guides for
 [vision](https://developers.google.com/mediapipe/solutions/vision/object_detector),
 [text](https://developers.google.com/mediapipe/solutions/text/text_classifier),
@@ -89,11 +89,11 @@ pipelines, similar to the premade MediaPipe Solutions.
 
 Before using MediaPipe Framework, familiarize yourself with the following key
 [Framework
-concepts](https://developers.google.com/mediapipe/framework/framework_concepts/overview.md):
+concepts](https://developers.google.com/mediapipe/framework/framework_concepts/overview):
 
-*   [Packets](https://developers.google.com/mediapipe/framework/framework_concepts/packets.md)
-*   [Graphs](https://developers.google.com/mediapipe/framework/framework_concepts/graphs.md)
-*   [Calculators](https://developers.google.com/mediapipe/framework/framework_concepts/calculators.md)
+*   [Packets](https://developers.google.com/mediapipe/framework/framework_concepts/packets)
+*   [Graphs](https://developers.google.com/mediapipe/framework/framework_concepts/graphs)
+*   [Calculators](https://developers.google.com/mediapipe/framework/framework_concepts/calculators)
 
 ## Community
 
