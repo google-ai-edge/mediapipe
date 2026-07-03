@@ -8,6 +8,7 @@
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "third_party/OpenCV/core/version.hpp"
 
 namespace mediapipe::formats {
 namespace {
@@ -60,13 +61,29 @@ TEST(TensorOpenCVTest, ViewsTensorSlicedToTwoDimensions) {
   Tensor tensor = MakeTensor<float>({2, 3, 4});
   auto view = tensor.GetCpuReadView();
   MP_ASSERT_OK_AND_ASSIGN(cv::Mat mat, MatView(tensor, view, {1, -1, -1}));
-  ASSERT_EQ(mat.dims, 2);
-  ASSERT_EQ(mat.rows, 3);
-  ASSERT_EQ(mat.cols, 1);
+  // The cv::Mat only has one dimension: the second one (here 3), and 4
+  // channels.
+  if (CV_VERSION_MAJOR == 4) {
+    // In OpenCV 4, matrices with only 1 dimension are represented as having
+    // 2 dimensional column matrices.
+    ASSERT_EQ(mat.dims, 2);
+    ASSERT_EQ(mat.rows, 3);
+    ASSERT_EQ(mat.cols, 1);
+  } else {
+    // In OpenCV 5, matrices with only 1 dimension are represented as having
+    // dims = 1 and row vectors with one row.
+    ASSERT_EQ(mat.dims, 1);
+    ASSERT_EQ(mat.rows, 1);
+    ASSERT_EQ(mat.cols, 3);
+  }
   ASSERT_EQ(mat.channels(), 4);
   for (int n = 0; n < mat.rows; ++n) {
     for (int c = 0; c < mat.channels(); ++c) {
-      EXPECT_EQ(mat.ptr<float>(n, 0)[c], 12 + n * 4 + c);
+      if (CV_VERSION_MAJOR == 4) {
+        EXPECT_EQ(mat.ptr<float>(n, 0)[c], 12 + n * 4 + c);
+      } else {
+        EXPECT_EQ(mat.ptr<float>(0, n)[c], 12 + n * 4 + c);
+      }
     }
   }
 }
@@ -76,8 +93,13 @@ TEST(TensorOpenCVTest, ViewsTensorSlicedToOneDimension) {
   auto view = tensor.GetCpuReadView();
   MP_ASSERT_OK_AND_ASSIGN(cv::Mat mat, MatView(tensor, view, {1, 1, -1}));
   ASSERT_EQ(mat.dims, 0);
-  ASSERT_EQ(mat.rows, 0);
-  ASSERT_EQ(mat.cols, 0);
+  if (CV_VERSION_MAJOR == 4) {
+    ASSERT_EQ(mat.rows, 0);
+    ASSERT_EQ(mat.cols, 0);
+  } else {
+    ASSERT_EQ(mat.rows, 1);
+    ASSERT_EQ(mat.cols, 1);
+  }
   ASSERT_EQ(mat.channels(), 4);
   for (int c = 0; c < mat.channels(); ++c) {
     EXPECT_EQ(mat.ptr<float>(0)[c], 16 + c);
