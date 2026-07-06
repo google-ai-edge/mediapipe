@@ -310,20 +310,34 @@ def _mediapipe_tasks_java_proto_src_extractor(target):
 def mediapipe_build_aar(name, android_library):
     """Builds MediaPipe AAR without jni.
 
+    This target is used for building AAR packages from the list of sources, while also adding the
+    NOTICE file to the META-INF directory.
+
     Args:
       name: The bazel target name.
       android_library: the android library to build aar from.
     """
     native.genrule(
         name = name,
-        srcs = [android_library + ".aar"],
+        srcs = [android_library + ".aar", "//mediapipe/tasks/internal/release/android:NOTICE"],
         outs = [name + ".aar"],
         tags = ["manual"],
-        cmd = "cp $< $@",
+        cmd = """
+cp $(location {}.aar) $(location :{}.aar)
+chmod +w $(location :{}.aar)
+origdir=$$PWD
+cd $$(mktemp -d)
+mkdir -p META-INF
+cp $$origdir/$(location //mediapipe/tasks/internal/release/android:NOTICE) META-INF/NOTICE
+zip -r $$origdir/$(location :{}.aar) META-INF/NOTICE
+""".format(android_library, name, name, name),
     )
 
 def mediapipe_build_aar_with_jni(name, android_library):
     """Builds MediaPipe AAR with jni.
+
+    This target is used for building AAR packages from the list of sources, while also adding the
+    NOTICE file to the META-INF directory.
 
     Args:
       name: The bazel target name.
@@ -357,7 +371,7 @@ EOF
 
     native.genrule(
         name = name,
-        srcs = [android_library + ".aar", name + "_dummy_app_unsigned.apk"],
+        srcs = [android_library + ".aar", name + "_dummy_app_unsigned.apk", "//mediapipe/tasks/internal/release/android:NOTICE"],
         outs = [name + ".aar"],
         tags = ["manual"],
         cmd = """
@@ -368,7 +382,9 @@ cd $$(mktemp -d)
 unzip $$origdir/$(location :{}_dummy_app_unsigned.apk) "lib/*"
 find lib -name *_dummy_app.so -delete
 cp -r lib jni
-zip -r $$origdir/$(location :{}.aar) jni/*/*.so
+mkdir -p META-INF
+cp $$origdir/$(location //mediapipe/tasks/internal/release/android:NOTICE) META-INF/NOTICE
+zip -r $$origdir/$(location :{}.aar) jni/*/*.so META-INF/NOTICE
 """.format(android_library, name, name, name, name),
     )
 
