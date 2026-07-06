@@ -422,8 +422,9 @@ GlContext::~GlContext() {
 
   auto clear_attachments = [this] {
     attachments_.clear();
-    if (profiling_helper_) {
-      profiling_helper_->LogAllTimestamps();
+    auto* profiling_helper = profiling_helper_owner_.Get();
+    if (profiling_helper) {
+      profiling_helper->LogAllTimestamps();
     }
   };
 
@@ -460,9 +461,8 @@ GlContext::~GlContext() {
 
 void GlContext::SetProfilingContext(
     std::shared_ptr<mediapipe::ProfilingContext> profiling_context) {
-  // Create the GlProfilingHelper if it is uninitialized.
-  if (!profiling_helper_ && profiling_context) {
-    profiling_helper_ = profiling_context->CreateGlProfilingHelper();
+  if (profiling_context) {
+    profiling_helper_owner_.CreateIfUnset(std::move(profiling_context));
   }
 }
 
@@ -478,13 +478,14 @@ absl::Status GlContext::SwitchContextAndRun(GlStatusFunction gl_func) {
 absl::Status GlContext::Run(GlStatusFunction gl_func, int node_id,
                             Timestamp input_timestamp) {
   absl::Status status;
-  if (profiling_helper_) {
+  auto* profiling_helper = profiling_helper_owner_.Get();
+  if (profiling_helper) {
     gl_func = [=] {
-      profiling_helper_->MarkTimestamp(node_id, input_timestamp,
-                                       /*is_finish=*/false);
+      profiling_helper->MarkTimestamp(node_id, input_timestamp,
+                                      /*is_finish=*/false);
       auto status = gl_func();
-      profiling_helper_->MarkTimestamp(node_id, input_timestamp,
-                                       /*is_finish=*/true);
+      profiling_helper->MarkTimestamp(node_id, input_timestamp,
+                                      /*is_finish=*/true);
       return status;
     };
   }
@@ -1165,6 +1166,21 @@ void GlContext::SetStandardTextureParams(GLenum target, GLint internal_format) {
   glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter);
   glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
+
+void GlContext::ProfilingHelperOwner::CreateIfUnset(
+    std::shared_ptr<mediapipe::ProfilingContext> profiling_context) {
+  if (profiling_context && !is_set_) {
+    absl::MutexLock lock(mutex_);
+    if (!is_set_) {
+      profiling_helper_ = profiling_context->CreateGlProfilingHelper();
+      is_set_ = profiling_helper_ != nullptr;
+    }
+  }
+}
+
+mediapipe::GlProfilingHelper* GlContext::ProfilingHelperOwner::Get() const {
+  return is_set_ ? profiling_helper_.get() : nullptr;
 }
 
 const GlContext::Attachment<GLuint> kUtilityFramebuffer(
