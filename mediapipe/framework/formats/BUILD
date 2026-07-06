@@ -770,6 +770,7 @@ cc_test(
         ":tensor",
         ":tensor_opencv",
         "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:opencv_core",
         "@com_google_absl//absl/status",
     ],
 )
