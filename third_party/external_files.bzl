@@ -178,6 +178,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_models_proofread_200m_proofread_quant_200m_litertlm",
+        sha256 = "2caa317d5a6f951af6e437edce3bb3a9fdedc85a7a8c2a8fcaec96318d7708cc",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/models/proofread_200m/proofread_quant_200m.litertlm?generation=1783360186253760"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_models_ssdlite_object_detection_tflite",
         sha256 = "8e10a2e2f5db85d8f90628f00752a89ff241c5b2ca82f3b92fc496c7bda122ef",
         urls = ["https://storage.googleapis.com/mediapipe-assets/models/ssdlite_object_detection.tflite?generation=1782183469940468"],
