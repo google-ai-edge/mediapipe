@@ -236,6 +236,7 @@ objc_library(
         "//third_party/apple_frameworks:OpenGLES",
         "//third_party/apple_frameworks:QuartzCore",
         "//third_party/apple_frameworks:UIKit",
+        "//third_party/apple_frameworks:XCTest",
     ],
 )
 
