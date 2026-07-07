@@ -1183,7 +1183,7 @@ mediapipe::GlProfilingHelper* GlContext::ProfilingHelperOwner::Get() const {
   return is_set_ ? profiling_helper_.get() : nullptr;
 }
 
-const GlContext::Attachment<GLuint> kUtilityFramebuffer(
+ABSL_CONST_INIT const GlContext::Attachment<GLuint> kUtilityFramebuffer(
     [](GlContext&) -> GlContext::Attachment<GLuint>::Ptr {
       GLuint framebuffer;
       glGenFramebuffers(1, &framebuffer);

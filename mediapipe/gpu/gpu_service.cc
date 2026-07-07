@@ -14,9 +14,11 @@
 
 #include "mediapipe/gpu/gpu_service.h"
 
+#include "absl/base/attributes.h"
+
 namespace mediapipe {
 
-const GraphService<GpuResources> kGpuService(
+ABSL_CONST_INIT const GraphService<GpuResources> kGpuService(
     "kGpuService", GraphServiceBase::kAllowDefaultInitialization);
 
 }  // namespace mediapipe
