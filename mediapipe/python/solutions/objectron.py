@@ -100,30 +100,34 @@ class ObjectronModel(object):
 
 @attr.s(auto_attribs=True, frozen=True)
 class ShoeModel(ObjectronModel):
+  # pyrefly: ignore[bad-override]
   model_path: str = ('mediapipe/modules/objectron/'
                      'object_detection_3d_sneakers.tflite')
-  label_name: str = 'Footwear'
+  label_name: str = 'Footwear'  # pyrefly: ignore[bad-override]
 
 
 @attr.s(auto_attribs=True, frozen=True)
 class ChairModel(ObjectronModel):
+  # pyrefly: ignore[bad-override]
   model_path: str = ('mediapipe/modules/objectron/'
                      'object_detection_3d_chair.tflite')
-  label_name: str = 'Chair'
+  label_name: str = 'Chair'  # pyrefly: ignore[bad-override]
 
 
 @attr.s(auto_attribs=True, frozen=True)
 class CameraModel(ObjectronModel):
+  # pyrefly: ignore[bad-override]
   model_path: str = ('mediapipe/modules/objectron/'
                      'object_detection_3d_camera.tflite')
-  label_name: str = 'Camera'
+  label_name: str = 'Camera'  # pyrefly: ignore[bad-override]
 
 
 @attr.s(auto_attribs=True, frozen=True)
 class CupModel(ObjectronModel):
+  # pyrefly: ignore[bad-override]
   model_path: str = ('mediapipe/modules/objectron/'
                      'object_detection_3d_cup.tflite')
-  label_name: str = 'Coffee cup, Mug'
+  label_name: str = 'Coffee cup, Mug'  # pyrefly: ignore[bad-override]
 
 _MODEL_DICT = {
     'Shoe': ShoeModel(),

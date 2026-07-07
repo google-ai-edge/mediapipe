@@ -55,7 +55,7 @@ create_matrix = _packet_creator.create_matrix
 def create_image_frame(data: Union[image_frame.ImageFrame, np.ndarray],  # pytype: disable=annotation-type-mismatch
                        *,
                        image_format: image_frame.ImageFormat = None,
-                       copy: bool = None) -> packet.Packet:
+                       copy: bool = None) -> packet.Packet:  # pyrefly: ignore[bad-function-definition]
   """Create a MediaPipe ImageFrame packet.
 
   A MediaPipe ImageFrame packet can be created from an existing MediaPipe
@@ -153,7 +153,7 @@ def create_image_frame(data: Union[image_frame.ImageFrame, np.ndarray],  # pytyp
 def create_image(data: Union[image.Image, np.ndarray],  # pytype: disable=annotation-type-mismatch
                  *,
                  image_format: image_frame.ImageFormat = None,
-                 copy: bool = None) -> packet.Packet:
+                 copy: bool = None) -> packet.Packet:  # pyrefly: ignore[bad-function-definition]
   """Create a MediaPipe Image packet.
 
   A MediaPipe Image packet can be created from an existing MediaPipe
