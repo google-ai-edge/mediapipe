@@ -17,7 +17,7 @@ syntax = "proto3";
 package odml.infra.proto;
 
 // The parameters of transformer (https://arxiv.org/pdf/1706.03762.pdf)
-// Next ID: 60
+// Next ID: 61
 message TransformerParameters {
   // Batch size of tensors.
   int32 batch_size = 1;
@@ -309,4 +309,9 @@ message TransformerParameters {
   optional bool scale_lora = 45;
 
   reserved 52, 55, 57, 58, 59;
+
+  // When enabled, uses ringbuffers for local KV cache layers. By default, will
+  // use the minimal amount of memory necessary (fitting both sliding window and
+  // maximum prefill sequence length simultaneously).
+  optional bool use_ringbuffers = 60;
 }

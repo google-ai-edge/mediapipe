@@ -564,8 +564,21 @@ export class LlmInference extends TaskRunner {
         );
       }
     }
+
     if ('forceF32' in options && options.forceF32 !== undefined) {
       this.options.setForceF32(options.forceF32);
+    }
+    if (
+      'disableRewinding' in options &&
+      options.disableRewinding !== undefined
+    ) {
+      if (this.useLlmEngine) {
+        throw new Error(
+          `'disableRewinding' is not supported for converted LLM models yet, and is also not supported with multimodality.`,
+        );
+      } else {
+        this.options.setDisableRewinding(options.disableRewinding);
+      }
     }
 
     // If the model is a converted LLM or we're using multimodality, use
@@ -1348,6 +1361,15 @@ export class LlmInference extends TaskRunner {
     const transformerParams = new TransformerParameters();
     transformerParams.setBatchSize(1);
     transformerParams.setMaxSeqLength(this.options.getMaxTokens());
+    if (
+      this.options.hasDisableRewinding() &&
+      this.options.getDisableRewinding()
+    ) {
+      // To disable rewinding optimizations, we turn off prefix caching and use
+      // ringbuffers for local context.
+      llmGpuOptions.setDisablePrefixCaching(true);
+      transformerParams.setUseRingbuffers(true);
+    }
     llmParams.setTransformerParameters(transformerParams);
     llmGpuOptions.setLlmParameters(llmParams);
 

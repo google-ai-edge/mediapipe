@@ -50,4 +50,8 @@ message LlmInferenceGraphOptions {
 
   // Enables audio modality when set to true for MM LLMs.
   optional bool support_audio = 8;
+
+  // Disables rewinding optimizations (prefix_caching and large local KV caches)
+  // when set to true. Will use a lot less memory for long contexts as a result.
+  optional bool disable_rewinding = 9;
 }
