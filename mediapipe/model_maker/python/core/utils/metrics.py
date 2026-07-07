@@ -246,7 +246,7 @@ class WeightedSumMetric(tf.keras.metrics.Metric):
 
   def result(self):
     weighted_sum = 0.0
-    for metric, weight in zip(self._metrics, self._weights):
+    for metric, weight in zip(self._metrics, self._weights):  # pyrefly: ignore[bad-argument-type]
       weighted_sum += weight * metric.result()
     return weighted_sum
 

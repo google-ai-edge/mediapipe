@@ -132,7 +132,7 @@ class Dataset(classification_dataset.ClassificationDataset):
     label_index_ds = tf.data.Dataset.from_tensor_slices(
         tf.cast(label_indices, tf.int64)
     )
-    text_label_ds = tf.data.Dataset.zip((text_ds, label_index_ds))
+    text_label_ds = tf.data.Dataset.zip((text_ds, label_index_ds))  # pyrefly: ignore[bad-argument-type]
 
     hasher.update(str(num_shards).encode("utf-8"))
     cache_prefix_filename = hasher.hexdigest()

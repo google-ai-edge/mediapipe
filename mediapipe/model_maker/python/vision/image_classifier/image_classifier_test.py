@@ -49,7 +49,7 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
 
   def _gen_cmy_data(self):
     ds = tf.data.Dataset.from_generator(
-        self._gen, (tf.uint8, tf.int64), (tf.TensorShape(
+        self._gen, (tf.uint8, tf.int64), (tf.TensorShape(  # pyrefly: ignore[bad-argument-type]
             [self.IMAGE_SIZE, self.IMAGE_SIZE, 3]), tf.TensorShape([])))
     data = image_classifier.Dataset(
         ds, ['cyan', 'magenta', 'yellow'], self.IMAGES_PER_CLASS * 3
@@ -124,9 +124,9 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
 
     # Test export_model
     model.export_model()
-    output_metadata_file = os.path.join(options.hparams.export_dir,
+    output_metadata_file = os.path.join(options.hparams.export_dir,  # pyrefly: ignore[missing-attribute]
                                         'metadata.json')
-    output_tflite_file = os.path.join(options.hparams.export_dir,
+    output_tflite_file = os.path.join(options.hparams.export_dir,  # pyrefly: ignore[missing-attribute]
                                       'model.tflite')
     expected_metadata_file = test_utils.get_test_data_path(
         'image_classifier_metadata.json'

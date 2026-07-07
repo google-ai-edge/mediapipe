@@ -27,10 +27,10 @@ HandDataPreprocessingParams = dataset.HandDataPreprocessingParams
 GestureRecognizerOptions = gesture_recognizer_options.GestureRecognizerOptions
 
 # Remove duplicated and non-public API
-del constants  # pylint: disable=undefined-variable
+del constants  # pylint: disable=undefined-variable  # pyrefly: ignore[unbound-name]
 del dataset
 del gesture_recognizer
 del gesture_recognizer_options
 del hyperparameters
-del metadata_writer  # pylint: disable=undefined-variable
+del metadata_writer  # pylint: disable=undefined-variable  # pyrefly: ignore[unbound-name]
 del model_options

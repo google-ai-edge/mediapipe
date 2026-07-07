@@ -34,11 +34,11 @@ class ClassificationDataset(ds.Dataset):
 
   @property
   def num_classes(self: ds._DatasetT) -> int:
-    return len(self._label_names)
+    return len(self._label_names)  # pyrefly: ignore[missing-attribute]
 
   @property
   def label_names(self: ds._DatasetT) -> List[str]:
-    return self._label_names
+    return self._label_names  # pyrefly: ignore[missing-attribute]
 
   def split(self: ds._DatasetT,
             fraction: float) -> Tuple[ds._DatasetT, ds._DatasetT]:
@@ -53,4 +53,4 @@ class ClassificationDataset(ds.Dataset):
     Returns:
       The splitted two sub datasets.
     """
-    return self._split(fraction, self._label_names)
+    return self._split(fraction, self._label_names)  # pyrefly: ignore[missing-attribute]

@@ -140,7 +140,7 @@ class Dataset(object):
     if self._size is not None:
       return self._size
     else:
-      return len(self._dataset)
+      return len(self._dataset)  # pyrefly: ignore[bad-argument-type]
 
   def split(self: _DatasetT, fraction: float) -> Tuple[_DatasetT, _DatasetT]:
     """Splits dataset into two sub-datasets with the given fraction.

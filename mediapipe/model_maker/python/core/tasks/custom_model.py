@@ -50,7 +50,7 @@ class CustomModel(abc.ABC):
 
   def summary(self):
     """Prints a summary of the model."""
-    self._model.summary()
+    self._model.summary()  # pyrefly: ignore[missing-attribute]
 
 # TODO: Remove this method when all tasks use Metadata writer
   def export_tflite(
@@ -75,7 +75,7 @@ class CustomModel(abc.ABC):
 
     tflite_filepath = os.path.join(export_dir, tflite_filename)
     tflite_model = model_util.convert_to_tflite(
-        model=self._model,
+        model=self._model,  # pyrefly: ignore[bad-argument-type]
         quantization_config=quantization_config,
         preprocess=preprocess)
     model_util.save_tflite(
