@@ -712,6 +712,33 @@ TEST(GetOptionsTest, AddBothProto23Options) {
   EXPECT_THAT(config, EqualsProto(expected_config));
 }
 
+TEST(GenericGraphTest, CanSetNodeName) {
+  GraphBuilder graph;
+
+  auto& foo = graph.AddNode("Foo");
+  foo.SetName("my_foo_node");
+
+  auto& base = graph.In("IN").At(0).SetName("base");
+  base.ConnectTo(foo.In("BASE").At(0));
+
+  auto& foo_out = foo.Out("OUT").At(0);
+  foo_out.SetName("my_output_stream").ConnectTo(graph.Out("OUT").At(0));
+
+  CalculatorGraphConfig expected_config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "IN:base"
+        output_stream: "OUT:my_output_stream"
+        node {
+          calculator: "Foo"
+          name: "my_foo_node"
+          input_stream: "BASE:base"
+          output_stream: "OUT:my_output_stream"
+        }
+      )pb");
+  MP_ASSERT_OK_AND_ASSIGN(CalculatorGraphConfig config, graph.GetConfig());
+  EXPECT_THAT(config, EqualsProto(expected_config));
+}
+
 TEST(GenericGraphTest, FailsIfSkippingInputSource) {
   GraphBuilder graph;
 
