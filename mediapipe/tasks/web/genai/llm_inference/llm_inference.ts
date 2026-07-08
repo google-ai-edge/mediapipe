@@ -572,7 +572,7 @@ export class LlmInference extends TaskRunner {
       'disableRewinding' in options &&
       options.disableRewinding !== undefined
     ) {
-      if (this.useLlmEngine) {
+      if (this.useLlmEngine && options.disableRewinding) {
         throw new Error(
           `'disableRewinding' is not supported for converted LLM models yet, and is also not supported with multimodality.`,
         );
