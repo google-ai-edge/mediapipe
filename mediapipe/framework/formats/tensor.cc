@@ -369,6 +369,11 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
       ABSL_CHECK(ptr) << "glMapBufferRange failed: " << glGetError();
       std::memcpy(ptr, cpu_buffer_, bytes());
       glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+      if (prefer_ahwb_) {
+        // Next time Tensor is written, AHWB will be used.
+        MarkAhwbUsage();
+      }
     }
     valid_ |= kValidOpenGlBuffer;
   }
@@ -484,6 +489,7 @@ Tensor::Tensor(ElementType element_type, const Shape& shape,
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   if (memory_manager) {
     hardware_buffer_pool_ = memory_manager->GetAndroidHardwareBufferPool();
+    prefer_ahwb_ = memory_manager->PreferAhwb();
   }
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 }
@@ -498,6 +504,7 @@ Tensor::Tensor(ElementType element_type, const Shape& shape,
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   if (memory_manager) {
     hardware_buffer_pool_ = memory_manager->GetAndroidHardwareBufferPool();
+    prefer_ahwb_ = memory_manager->PreferAhwb();
   }
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 }
@@ -621,6 +628,11 @@ absl::Status Tensor::ReadBackGpuToCpu() const {
       std::memcpy(cpu_buffer_, ptr, bytes());
       glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     });
+
+    if (prefer_ahwb_) {
+      // Next time Tensor is written, AHWB will be used.
+      MarkAhwbUsage();
+    }
     return absl::OkStatus();
   }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31

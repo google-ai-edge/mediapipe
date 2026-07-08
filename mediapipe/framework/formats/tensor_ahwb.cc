@@ -311,6 +311,7 @@ void Tensor::MoveAhwbStuff(Tensor* src) {
   write_complete_fence_fd_ = std::move(src->write_complete_fence_fd_);
   ahwb_usages_ = std::move(src->ahwb_usages_);
   use_ahwb_ = std::exchange(src->use_ahwb_, false);
+  prefer_ahwb_ = std::exchange(src->prefer_ahwb_, false);
 }
 
 absl::Status Tensor::ReleaseAhwbStuff() {
@@ -384,9 +385,9 @@ void* Tensor::MapAhwbToCpuWrite() const {
   return nullptr;
 }
 
-void Tensor::TrackAhwbUsage(uint64_t source_location_hash) const {
+void Tensor::TrackAhwbUsage(uint64_t key) const {
   if (ahwb_tracking_key_ == 0) {
-    ahwb_tracking_key_ = source_location_hash;
+    ahwb_tracking_key_ = key;
     for (int dim : shape_.dims) {
       ahwb_tracking_key_ = tensor_internal::FnvHash64(ahwb_tracking_key_, dim);
     }
@@ -397,6 +398,14 @@ void Tensor::TrackAhwbUsage(uint64_t source_location_hash) const {
   use_ahwb_ = use_ahwb_ || AhwbUsageTrack::Contains(ahwb_tracking_key_);
 }
 
+void Tensor::MarkAhwbUsage() const {
+  if (ahwb_tracking_key_ != 0) {
+    AhwbUsageTrack::Insert(ahwb_tracking_key_);
+  }
+}
+
+bool Tensor::ready_as_ahwb() const { return ahwb_ != nullptr; }
+
 #else  // MEDIAPIPE_TENSOR_USE_AHWB
 
 bool Tensor::AllocateAhwbMapToSsbo() const { return false; }
@@ -406,6 +415,8 @@ absl::Status Tensor::ReleaseAhwbStuff() { return absl::OkStatus(); }
 void* Tensor::MapAhwbToCpuRead() const { return nullptr; }
 void* Tensor::MapAhwbToCpuWrite() const { return nullptr; }
 void Tensor::TrackAhwbUsage(uint64_t key) const {}
+void Tensor::MarkAhwbUsage() const {}
+bool Tensor::ready_as_ahwb() const { return false; }
 
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 

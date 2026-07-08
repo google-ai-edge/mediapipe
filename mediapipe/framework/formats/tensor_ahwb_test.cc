@@ -111,6 +111,10 @@ TEST(TensorAhwbTest, GetAhwbReadViewDoesNotTriggerReleaseForUnfinishedReads) {
   release_callbacks_invoked.fill(false);
 
   {
+    // This bool is actually captured in tensor's scope, not in the view's scope
+    // as it might seem, so it has to outlive the tensor.
+    bool is_reading_finished = false;
+
     // Create tensor.
     Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
     {
@@ -120,7 +124,6 @@ TEST(TensorAhwbTest, GetAhwbReadViewDoesNotTriggerReleaseForUnfinishedReads) {
 
     // Get AHWB read view multiple times (e.g. simulating how multiple inference
     // calculators could read from the same tensor)
-    bool is_reading_finished = false;
     for (int i = 0; i < kNumReleaseCallbacks; ++i) {
       auto view = tensor.GetAHardwareBufferReadView();
       ASSERT_NE(view.handle(), nullptr);

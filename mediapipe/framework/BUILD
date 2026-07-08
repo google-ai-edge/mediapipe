@@ -1946,11 +1946,11 @@ cc_library(
     hdrs = ["memory_manager.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework:port",
+        ":port",
+        "//mediapipe/gpu:multi_pool",
     ] + select({
         "//mediapipe:android": [
             "//mediapipe/framework/formats:hardware_buffer_pool",
-            "//mediapipe/gpu:multi_pool",
         ],
         "//conditions:default": [],
     }),

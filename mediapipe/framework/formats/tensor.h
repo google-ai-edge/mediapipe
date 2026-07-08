@@ -500,7 +500,7 @@ class Tensor {
   bool ready_as_opengl_texture_2d() const {
     return valid_ & kValidOpenGlTexture2d;
   }
-  bool ready_as_ahwb() const { return use_ahwb_; }
+  bool ready_as_ahwb() const;
   bool ready_as_webgpu_texture_2d() const {
     return valid_ & kValidWebGpuTexture2d;
   }
@@ -609,6 +609,9 @@ class Tensor {
 
   // Use Ahwb for other views: OpenGL / CPU buffer.
   mutable bool use_ahwb_ = false;
+  // If true, the tensor will use an AHWB if the tensor is written on CPU and
+  // read as GL buffer or vice versa.
+  mutable bool prefer_ahwb_ = false;
   mutable uint64_t ahwb_tracking_key_ = 0;
   // Expects the target SSBO to be already bound.
   bool AllocateAhwbMapToSsbo() const;
@@ -618,8 +621,14 @@ class Tensor {
   void* MapAhwbToCpuRead() const;
   void* MapAhwbToCpuWrite() const;
   void MoveCpuOrSsboToAhwb() const;
-  // Set current tracking key, set "use ahwb" if the key is already marked.
+  // Sets current tracking key to the given source_location_hash, and sets
+  // use_ahwb_ if the key is already marked (see below)
   void TrackAhwbUsage(uint64_t key) const;
+  // Memorizes the tracking key set by TrackAhwbUsage(), so that if
+  // TrackAhwbUsage() is called again with the same key, the tensor will use an
+  // AHWB, even if the tensor instance is different from the one that called
+  // TrackAhwbUsage().
+  void MarkAhwbUsage() const;
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   mutable std::shared_ptr<mediapipe::GlContext> gl_context_;

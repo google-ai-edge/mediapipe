@@ -684,6 +684,7 @@ cc_test(
     ],
     deps = [
         ":tensor",
+        "//mediapipe/framework:memory_manager",
         "//mediapipe/framework:port",
         "//mediapipe/framework/port:gtest_main",
     ] + select({
