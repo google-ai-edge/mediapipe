@@ -16,6 +16,8 @@
 #define MEDIAPIPE_GPU_GPU_BUFFER_FORMAT_H_
 
 #include <cstdint>
+#include <ostream>
+#include <string>
 
 #ifdef __APPLE__
 #include <CoreVideo/CoreVideo.h>
@@ -206,6 +208,12 @@ struct GpuBufferSpec {
   int height;
   GpuBufferFormat format;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const GpuBufferSpec& spec) {
+  std::string format_str(reinterpret_cast<const char*>(&spec.format), 4);
+  return os << "GpuBufferSpec{width: " << spec.width
+            << ", height: " << spec.height << ", format: " << format_str << "}";
+}
 
 // BufferSpec equality operators
 inline bool operator==(const GpuBufferSpec& lhs, const GpuBufferSpec& rhs) {

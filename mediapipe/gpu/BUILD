@@ -861,6 +861,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_cache",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/synchronization",
     ],
