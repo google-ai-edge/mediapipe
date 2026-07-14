@@ -670,6 +670,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_tasks_testdata_vision_cat_exif_rotated_jpg",
+        sha256 = "ef4db9449df5359edb22b48d3cd864280835a9d427dd461ec843b097b6551871",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/tasks/testdata/vision/cat_exif_rotated.jpg?generation=1783975275171154"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_tasks_testdata_vision_cat_large_jpg",
         sha256 = "f5e8996df94e2257cd92838954f57ac5e07bef1238228e518c893f0878511f96",
         urls = ["https://storage.googleapis.com/mediapipe-assets/tasks/testdata/vision/cat_large.jpg?generation=1782184453859664"],
@@ -685,6 +691,12 @@ def external_files():
         name = "com_google_mediapipe_tasks_testdata_vision_cat_mask_jpg",
         sha256 = "bae065a685f2d32f1856151b5181671aa4d09925b55766935a30bbc8dafadcd0",
         urls = ["https://storage.googleapis.com/mediapipe-assets/tasks/testdata/vision/cat_mask.jpg?generation=1782184468570584"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_tasks_testdata_vision_cat_mask_exif_rotated_jpg",
+        sha256 = "efb0ccea6dc73699fb68d2ec506afa9879eccf21265b25c60ab23ad4cc3de54a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/tasks/testdata/vision/cat_mask_exif_rotated.jpg?generation=1783975278798566"],
     )
 
     http_file(

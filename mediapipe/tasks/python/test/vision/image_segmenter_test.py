@@ -524,6 +524,36 @@ class ImageSegmenterTest(parameterized.TestCase):
           raise callback_exception
         callback_event.clear()
 
+  def test_segmentation_with_exif_rotated_image(self):
+    # Load the EXIF rotated cat image.
+    test_image = _Image.create_from_file(
+        test_utils.get_test_data_path(
+            os.path.join(_TEST_DATA_DIR, 'cat_exif_rotated.jpg')
+        )
+    )
+    # Check that dimensions are correctly swapped
+    self.assertEqual(test_image.width, 400)
+    self.assertEqual(test_image.height, 600)
+
+    # Loads EXIF rotated ground truth segmentation file.
+    expected_mask = self._load_segmentation_mask('cat_rotated_mask.jpg')
+
+    options = _ImageSegmenterOptions(
+        base_options=_BaseOptions(model_asset_path=self.model_path),
+        running_mode=_RUNNING_MODE.IMAGE,
+        output_category_mask=False,
+        output_confidence_masks=True,
+    )
+    with _ImageSegmenter.create_from_options(options) as segmenter:
+      result = segmenter.segment(test_image)
+      confidence_masks = result.confidence_masks
+      self.assertLen(confidence_masks, 21)
+      self.assertTrue(
+          _similar_to_float_mask(
+              confidence_masks[8], expected_mask, _MASK_SIMILARITY_THRESHOLD
+          )
+      )
+
 
 if __name__ == '__main__':
   absltest.main()
