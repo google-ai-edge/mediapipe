@@ -76,10 +76,10 @@ absl::Status AudioDecoderCalculator::Open(CalculatorContext* cc) {
   const auto& decoder_options =
       tool::RetrieveOptions(cc->Options<mediapipe::AudioDecoderOptions>(),
                             cc->InputSidePackets(), "OPTIONS");
-  decoder_ = absl::make_unique<AudioDecoder>();
+  decoder_ = std::make_unique<AudioDecoder>();
   MP_RETURN_IF_ERROR(decoder_->Initialize(input_file_path, decoder_options));
   std::unique_ptr<mediapipe::TimeSeriesHeader> header =
-      absl::make_unique<mediapipe::TimeSeriesHeader>();
+      std::make_unique<mediapipe::TimeSeriesHeader>();
   if (decoder_->FillAudioHeader(decoder_options.audio_stream(0), header.get())
           .ok()) {
     // Only pass on a header if the decoder could actually produce one.
