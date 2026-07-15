@@ -1614,16 +1614,35 @@ const Message* GetNestedMessage(const Message& message,
 // Protobuf map-entry order is intentionally not preserved.
 absl::Status KeyProtoMapEntries(Message* source, MessageMap* stowed_messages) {
   // Copy the rules from the source CalculatorGraphTemplate.
-  mediapipe::CalculatorGraphTemplate rules;
-  rules.ParsePartialFromString(source->SerializePartialAsString());
+  const google::protobuf::Reflection* source_reflection =
+      source->GetReflection();
+  const google::protobuf::Descriptor* source_descriptor =
+      source->GetDescriptor();
+  const google::protobuf::FieldDescriptor* rules_descriptor =
+      source_descriptor->FindFieldByName("rule");
+
+  const google::protobuf::FieldDescriptor* rule_path_descriptor =
+      rules_descriptor->message_type()->FindFieldByName("path");
+  const google::protobuf::FieldDescriptor* rule_key_type_descriptor =
+      rules_descriptor->message_type()->FindFieldByName("key_type");
+
+  auto rules_proto = std::unique_ptr<google::protobuf::Message>(source->New());
+  rules_proto->ParsePartialFromString(source->SerializePartialAsString());
   // Only the "source" Message knows all extension types.
-  Message* config_0 = source->GetReflection()->MutableMessage(
-      source, source->GetDescriptor()->FindFieldByName("config"), nullptr);
-  for (int i = 0; i < rules.rule().size(); ++i) {
-    TemplateExpression* rule = rules.mutable_rule()->Mutable(i);
+  Message* config_0 = source_reflection->MutableMessage(
+      source, source_descriptor->FindFieldByName("config"), nullptr);
+  const int num_rules =
+      source_reflection->FieldSize(*rules_proto, rules_descriptor);
+  for (int i = 0; i < num_rules; ++i) {
+    Message& rule = *source_reflection->MutableRepeatedMessage(
+        rules_proto.get(), rules_descriptor, i);
+    const google::protobuf::Reflection* rule_reflection = rule.GetReflection();
+
     const Message* message = config_0;
     ProtoPath path;
-    MP_RETURN_IF_ERROR(ProtoPathSplit(rule->path(), &path));
+    const std::string path_str =
+        rule_reflection->GetString(rule, rule_path_descriptor);
+    MP_RETURN_IF_ERROR(ProtoPathSplit(path_str, &path));
     for (int j = 0; j < path.size(); ++j) {
       int field_id = path[j].field_id;
       const FieldDescriptor* field = FindFieldByNumber(message, field_id);
@@ -1642,19 +1661,23 @@ absl::Status KeyProtoMapEntries(Message* source, MessageMap* stowed_messages) {
         path[j] = {field_id, key_id, key_type, key_value};
       }
     }
-    if (!rule->path().empty()) {
-      *rule->mutable_path() = ProtoPathJoin(path);
+    if (!path_str.empty()) {
+      rule_reflection->SetString(&rule, rule_path_descriptor,
+                                 ProtoPathJoin(path));
       for (FieldType key_type : ProtoPathKeyTypes(path)) {
-        *rule->mutable_key_type()->Add() = key_type;
+        rule_reflection->AddEnumValue(&rule, rule_key_type_descriptor,
+                                      key_type);
       }
     }
   }
   // Copy the rules back into the source CalculatorGraphTemplate.
   auto source_rules =
       source->GetReflection()->GetMutableRepeatedFieldRef<Message>(
-          source, source->GetDescriptor()->FindFieldByName("rule"));
+          source, rules_descriptor);
   source_rules.Clear();
-  for (auto& rule : rules.rule()) {
+  for (int i = 0; i < num_rules; ++i) {
+    const Message& rule = source_reflection->GetRepeatedMessage(
+        *rules_proto, rules_descriptor, i);
     source_rules.Add(rule);
   }
   return absl::OkStatus();
