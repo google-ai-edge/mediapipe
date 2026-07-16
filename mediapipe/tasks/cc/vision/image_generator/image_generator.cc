@@ -328,8 +328,8 @@ absl::StatusOr<std::unique_ptr<ImageGenerator>> ImageGenerator::Create(
                  std::move(options_proto_for_condition_image_graphs_container)),
              .task_name = kTaskName,
              .task_running_mode = mediapipe::tasks::core::RunningMode::kImage,
-             .op_resolver = absl::make_unique<
-                 tasks::core::MediaPipeBuiltinOpResolver>()}));
+             .op_resolver =
+                 std::make_unique<tasks::core::MediaPipeBuiltinOpResolver>()}));
   }
   image_generator->init_timestamp_ = absl::Now();
   return image_generator;
