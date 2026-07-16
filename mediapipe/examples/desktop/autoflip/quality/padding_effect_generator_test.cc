@@ -83,7 +83,7 @@ void TestWithAspectRatio(const double aspect_ratio,
                    << "Unsupported number of channels: "
                    << decoded_mat.channels());
   }
-  std::unique_ptr<ImageFrame> test_frame = absl::make_unique<ImageFrame>(
+  std::unique_ptr<ImageFrame> test_frame = std::make_unique<ImageFrame>(
       image_format, decoded_mat.size().width, decoded_mat.size().height);
   output_mat.copyTo(formats::MatView(test_frame.get()));
 
