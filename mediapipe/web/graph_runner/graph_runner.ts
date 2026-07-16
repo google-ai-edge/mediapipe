@@ -4,8 +4,18 @@ import {runScript} from '../../web/graph_runner/run_script_helper';
 // Placeholder for internal dependency on trusted resource url
 
 import {GraphRunnerApi, ImageSource} from './graph_runner_api';
-import {CreateGraphRunnerApi, CreateMediaPipeLibApi, FileLocator, WasmMediaPipeConstructor} from './graph_runner_factory_api';
-import {EmptyPacketListener, ErrorListener, SimpleListener, VectorListener} from './listener_types';
+import {
+  CreateGraphRunnerApi,
+  CreateMediaPipeLibApi,
+  FileLocator,
+  WasmMediaPipeConstructor,
+} from './graph_runner_factory_api';
+import {
+  EmptyPacketListener,
+  ErrorListener,
+  SimpleListener,
+  VectorListener,
+} from './listener_types';
 import {WasmModule} from './wasm_module';
 
 // This file contains the internal implementations behind the public APIs
@@ -39,7 +49,7 @@ export const CALCULATOR_GRAPH_CONFIG_LISTENER_NAME = '__graph_config__';
 declare global {
   interface Window {
     // Created by us using wasm-runner script
-    Module?: WasmModule|FileLocator;
+    Module?: WasmModule | FileLocator;
     // Created by wasm-runner script
     ModuleFactory?: (fileLocator: FileLocator) => Promise<WasmModule>;
   }
@@ -49,13 +59,14 @@ declare global {
  * Fetches each URL in urls, executes them one-by-one in the order they are
  * passed, and then returns (or throws if something went amiss).
  */
-declare function importScripts(...urls: Array<string|URL>): void;
+declare function importScripts(...urls: Array<string | URL>): void;
 
 /**
  * Detects image source size.
  */
-export function getImageSourceSize(imageSource: TexImageSource):
-    [number, number] {
+export function getImageSourceSize(
+  imageSource: TexImageSource,
+): [number, number] {
   if ((imageSource as HTMLVideoElement).videoWidth !== undefined) {
     const videoElement = imageSource as HTMLVideoElement;
     return [videoElement.videoWidth, videoElement.videoHeight];
@@ -85,7 +96,7 @@ export class GraphRunner implements GraphRunnerApi {
   readonly wasmModule: WasmModule;
   readonly hasMultiStreamSupport: boolean;
   autoResizeCanvas = true;
-  audioPtr: number|null;
+  audioPtr: number | null;
   audioSize: number;
 
   /**
@@ -99,12 +110,14 @@ export class GraphRunner implements GraphRunnerApi {
    *    provided.
    */
   constructor(
-      module: WasmModule, glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    module: WasmModule,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  ) {
     this.wasmModule = module;
     this.audioPtr = null;
     this.audioSize = 0;
     this.hasMultiStreamSupport =
-        (typeof this.wasmModule._addIntToInputStream === 'function');
+      typeof this.wasmModule._addIntToInputStream === 'function';
 
     if (glCanvas !== undefined) {
       this.wasmModule.canvas = glCanvas;
@@ -115,8 +128,9 @@ export class GraphRunner implements GraphRunnerApi {
       this.wasmModule.canvas = new OffscreenCanvas(1, 1);
     } else {
       console.warn(
-          'OffscreenCanvas not supported and GraphRunner constructor ' +
-          'glCanvas parameter is undefined. Creating backup canvas.');
+        'OffscreenCanvas not supported and GraphRunner constructor ' +
+          'glCanvas parameter is undefined. Creating backup canvas.',
+      );
       this.wasmModule.canvas = document.createElement('canvas');
     }
   }
@@ -126,14 +140,15 @@ export class GraphRunner implements GraphRunnerApi {
     // Fetch and set graph
     const response = await fetch(graphFile);
     const graphData = await response.arrayBuffer();
-    const isBinary =
-        !(graphFile.endsWith('.pbtxt') || graphFile.endsWith('.textproto'));
+    const isBinary = !(
+      graphFile.endsWith('.pbtxt') || graphFile.endsWith('.textproto')
+    );
     this.setGraph(new Uint8Array(graphData), isBinary);
   }
 
   /** {@override GraphRunnerApi} */
   setGraphFromString(graphConfig: string): void {
-    this.setGraph((new TextEncoder()).encode(graphConfig), false);
+    this.setGraph(new TextEncoder().encode(graphConfig), false);
   }
 
   /** {@override GraphRunnerApi} */
@@ -150,19 +165,30 @@ export class GraphRunner implements GraphRunnerApi {
   }
 
   /** {@override GraphRunnerApi} */
-  configureAudio(numChannels: number, numSamples: number | null, sampleRate: number,
-      streamName?: string, headerName?: string) {
+  configureAudio(
+    numChannels: number,
+    numSamples: number | null,
+    sampleRate: number,
+    streamName?: string,
+    headerName?: string,
+  ) {
     if (!this.wasmModule._configureAudio) {
       console.warn(
-          'Attempting to use configureAudio without support for input audio. ' +
-          'Is build dep ":gl_graph_runner_audio" missing?');
+        'Attempting to use configureAudio without support for input audio. ' +
+          'Is build dep ":gl_graph_runner_audio" missing?',
+      );
     }
     streamName = streamName || 'input_audio';
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
       headerName = headerName || 'audio_header';
       this.wrapStringPtr(headerName, (headerNamePtr: number) => {
-        this.wasmModule._configureAudio(streamNamePtr, headerNamePtr,
-          numChannels, numSamples ?? 0, sampleRate);
+        this.wasmModule._configureAudio(
+          streamNamePtr,
+          headerNamePtr,
+          numChannels,
+          numSamples ?? 0,
+          sampleRate,
+        );
       });
     });
   }
@@ -186,8 +212,10 @@ export class GraphRunner implements GraphRunnerApi {
    * Bind texture to our internal canvas, and upload image source to GPU.
    * Returns tuple [width, height] of texture.  Intended for internal usage.
    */
-  bindTextureToStream(imageSource: TexImageSource, streamNamePtr?: number):
-      [number, number] {
+  bindTextureToStream(
+    imageSource: TexImageSource,
+    streamNamePtr?: number,
+  ): [number, number] {
     if (!this.wasmModule.canvas) {
       throw new Error('No OpenGL canvas configured.');
     }
@@ -198,29 +226,39 @@ export class GraphRunner implements GraphRunnerApi {
     } else {
       this.wasmModule._bindTextureToStream(streamNamePtr);
     }
-    const gl =
-        (this.wasmModule.canvas.getContext('webgl2') ||
-         this.wasmModule.canvas.getContext('webgl')) as WebGL2RenderingContext |
-        WebGLRenderingContext | null;
+    const gl = (this.wasmModule.canvas.getContext('webgl2') ||
+      this.wasmModule.canvas.getContext('webgl')) as
+      | WebGL2RenderingContext
+      | WebGLRenderingContext
+      | null;
     if (!gl) {
       throw new Error(
-          'Failed to obtain WebGL context from the provided canvas. ' +
-          '`getContext()` should only be invoked with `webgl` or `webgl2`.');
+        'Failed to obtain WebGL context from the provided canvas. ' +
+          '`getContext()` should only be invoked with `webgl` or `webgl2`.',
+      );
     }
     if (this.wasmModule.gpuOriginForWebTexturesIsBottomLeft) {
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     }
     gl.texImage2D(
-        gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imageSource);
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      imageSource,
+    );
     if (this.wasmModule.gpuOriginForWebTexturesIsBottomLeft) {
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     }
 
     const [width, height] = getImageSourceSize(imageSource);
 
-    if (this.autoResizeCanvas &&
-        (width !== this.wasmModule.canvas.width ||
-         height !== this.wasmModule.canvas.height)) {
+    if (
+      this.autoResizeCanvas &&
+      (width !== this.wasmModule.canvas.width ||
+        height !== this.wasmModule.canvas.height)
+    ) {
       this.wasmModule.canvas.width = width;
       this.wasmModule.canvas.height = height;
     }
@@ -238,16 +276,18 @@ export class GraphRunner implements GraphRunnerApi {
    * @param timestamp The timestamp of the current frame, in ms.
    * @return texture? The WebGL texture reference, if one was produced.
    */
-  processGl(imageSource: TexImageSource, timestamp: number): WebGLTexture
-      |undefined {
+  processGl(
+    imageSource: TexImageSource,
+    timestamp: number,
+  ): WebGLTexture | undefined {
     // Bind to default input stream
     const [width, height] = this.bindTextureToStream(imageSource);
 
     // 2 ints and a ll (timestamp)
     const frameDataPtr = this.wasmModule._malloc(16);
     this.wasmModule.HEAPU32[frameDataPtr / 4] = width;
-    this.wasmModule.HEAPU32[(frameDataPtr / 4) + 1] = height;
-    this.wasmModule.HEAPF64[(frameDataPtr / 8) + 1] = timestamp;
+    this.wasmModule.HEAPU32[frameDataPtr / 4 + 1] = height;
+    this.wasmModule.HEAPF64[frameDataPtr / 8 + 1] = timestamp;
     // outputPtr points in HEAPF32-space to running mspf calculations, which we
     // don't use at the moment.
     // tslint:disable-next-line:no-unused-variable
@@ -263,12 +303,15 @@ export class GraphRunner implements GraphRunnerApi {
    * Converts JavaScript string input parameters into C++ c-string pointers.
    * See b/204830158 for more details. Intended for internal usage.
    */
-  wrapStringPtr(stringData: string, stringPtrFunc: (ptr: number) => void):
-      void {
+  wrapStringPtr(
+    stringData: string,
+    stringPtrFunc: (ptr: number) => void,
+  ): void {
     if (!this.hasMultiStreamSupport) {
       console.error(
-          'No wasm multistream support detected: ensure dependency ' +
-          'inclusion of :gl_graph_runner_internal_multi_input target');
+        'No wasm multistream support detected: ensure dependency ' +
+          'inclusion of :gl_graph_runner_internal_multi_input target',
+      );
     }
     const stringDataPtr = this.wasmModule.stringToNewUTF8(stringData);
     stringPtrFunc(stringDataPtr);
@@ -279,13 +322,15 @@ export class GraphRunner implements GraphRunnerApi {
    * Converts JavaScript string input parameters into C++ c-string pointers.
    * See b/204830158 for more details. Intended for internal usage.
    */
-  async wrapStringPtrAsync(stringData: string,
-                           stringPtrFunc: (ptr: number) => Promise<void>):
-      Promise<void> {
+  async wrapStringPtrAsync(
+    stringData: string,
+    stringPtrFunc: (ptr: number) => Promise<void>,
+  ): Promise<void> {
     if (!this.hasMultiStreamSupport) {
       console.error(
-          'No wasm multistream support detected: ensure dependency ' +
-          'inclusion of :gl_graph_runner_internal_multi_input target');
+        'No wasm multistream support detected: ensure dependency ' +
+          'inclusion of :gl_graph_runner_internal_multi_input target',
+      );
     }
     const stringDataPtr = this.wasmModule.stringToNewUTF8(stringData);
     await stringPtrFunc(stringDataPtr);
@@ -299,8 +344,9 @@ export class GraphRunner implements GraphRunnerApi {
   wrapStringPtrPtr(stringData: string[], ptrFunc: (ptr: number) => void): void {
     if (!this.hasMultiStreamSupport) {
       console.error(
-          'No wasm multistream support detected: ensure dependency ' +
-          'inclusion of :gl_graph_runner_internal_multi_input target');
+        'No wasm multistream support detected: ensure dependency ' +
+          'inclusion of :gl_graph_runner_internal_multi_input target',
+      );
     }
     const uint32Array = new Uint32Array(stringData.length);
     for (let i = 0; i < stringData.length; i++) {
@@ -325,7 +371,9 @@ export class GraphRunner implements GraphRunnerApi {
    * library.
    */
   getCalculatorGraphConfig(
-      callback: CalculatorGraphConfigListener, makeDeepCopy?: boolean): void {
+    callback: CalculatorGraphConfigListener,
+    makeDeepCopy?: boolean,
+  ): void {
     const listener = CALCULATOR_GRAPH_CONFIG_LISTENER_NAME;
 
     // Create a short-lived listener to receive the binary encoded proto
@@ -346,7 +394,7 @@ export class GraphRunner implements GraphRunnerApi {
   setListener<T>(outputStreamName: string, callbackFcn: SimpleListener<T>) {
     this.wasmModule.simpleListeners = this.wasmModule.simpleListeners || {};
     this.wasmModule.simpleListeners[outputStreamName] =
-        callbackFcn as SimpleListener<unknown>;
+      callbackFcn as SimpleListener<unknown>;
   }
 
   /**
@@ -354,18 +402,23 @@ export class GraphRunner implements GraphRunnerApi {
    * Intended for internal usage.
    */
   setVectorListener<T>(
-      outputStreamName: string, callbackFcn: SimpleListener<T[]>) {
+    outputStreamName: string,
+    callbackFcn: SimpleListener<T[]>,
+  ) {
     let buffer: T[] = [];
     this.wasmModule.simpleListeners = this.wasmModule.simpleListeners || {};
-    this.wasmModule.simpleListeners[outputStreamName] =
-        (data: unknown, done: boolean, timestamp: number) => {
-          if (done) {
-            callbackFcn(buffer, timestamp);
-            buffer = [];
-          } else {
-            buffer.push(data as T);
-          }
-        };
+    this.wasmModule.simpleListeners[outputStreamName] = (
+      data: unknown,
+      done: boolean,
+      timestamp: number,
+    ) => {
+      if (done) {
+        callbackFcn(buffer, timestamp);
+        buffer = [];
+      } else {
+        buffer.push(data as T);
+      }
+    };
   }
 
   /** {@override GraphRunnerApi} */
@@ -375,15 +428,20 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   attachEmptyPacketListener(
-      outputStreamName: string, callbackFcn: EmptyPacketListener) {
+    outputStreamName: string,
+    callbackFcn: EmptyPacketListener,
+  ) {
     this.wasmModule.emptyPacketListeners =
-        this.wasmModule.emptyPacketListeners || {};
+      this.wasmModule.emptyPacketListeners || {};
     this.wasmModule.emptyPacketListeners[outputStreamName] = callbackFcn;
   }
 
   /** {@override GraphRunnerApi} */
   addAudioToStream(
-      audioData: Float32Array, streamName: string, timestamp: number) {
+    audioData: Float32Array,
+    streamName: string,
+    timestamp: number,
+  ) {
     // numChannels and numSamples being 0 will cause defaults to be used,
     // which will reflect values from last call to configureAudio.
     this.addAudioToStreamWithShape(audioData, 0, 0, streamName, timestamp);
@@ -391,8 +449,12 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   addAudioToStreamWithShape(
-      audioData: Float32Array, numChannels: number, numSamples: number,
-      streamName: string, timestamp: number) {
+    audioData: Float32Array,
+    numChannels: number,
+    numSamples: number,
+    streamName: string,
+    timestamp: number,
+  ) {
     // 4 bytes for each F32
     const size = audioData.length * 4;
     if (this.audioSize !== size) {
@@ -406,19 +468,32 @@ export class GraphRunner implements GraphRunnerApi {
 
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
       this.wasmModule._addAudioToInputStream(
-          this.audioPtr!, numChannels, numSamples, streamNamePtr, timestamp);
+        this.audioPtr!,
+        numChannels,
+        numSamples,
+        streamNamePtr,
+        timestamp,
+      );
     });
   }
 
   /** {@override GraphRunnerApi} */
   addGpuBufferToStream(
-      imageSource: TexImageSource, streamName: string,
-      timestamp: number): void {
+    imageSource: TexImageSource,
+    streamName: string,
+    timestamp: number,
+  ): void {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
-      const [width, height] =
-          this.bindTextureToStream(imageSource, streamNamePtr);
+      const [width, height] = this.bindTextureToStream(
+        imageSource,
+        streamNamePtr,
+      );
       this.wasmModule._addBoundTextureToStream(
-          streamNamePtr, width, height, timestamp);
+        streamNamePtr,
+        width,
+        height,
+        timestamp,
+      );
     });
   }
 
@@ -456,8 +531,7 @@ export class GraphRunner implements GraphRunnerApi {
   /** {@override GraphRunnerApi} */
   addUintToStream(data: number, streamName: string, timestamp: number): void {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
-      this.wasmModule._addUintToInputStream(
-          data, streamNamePtr, timestamp);
+      this.wasmModule._addUintToInputStream(data, streamNamePtr, timestamp);
     });
   }
 
@@ -466,21 +540,30 @@ export class GraphRunner implements GraphRunnerApi {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
       this.wrapStringPtr(data, (dataPtr: number) => {
         this.wasmModule._addStringToInputStream(
-            dataPtr, streamNamePtr, timestamp);
+          dataPtr,
+          streamNamePtr,
+          timestamp,
+        );
       });
     });
   }
 
   /** {@override GraphRunnerApi} */
   addStringRecordToStream(
-      data: Record<string, string>, streamName: string,
-      timestamp: number): void {
+    data: Record<string, string>,
+    streamName: string,
+    timestamp: number,
+  ): void {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
       this.wrapStringPtrPtr(Object.keys(data), (keyList: number) => {
         this.wrapStringPtrPtr(Object.values(data), (valueList: number) => {
           this.wasmModule._addFlatHashMapToInputStream(
-              keyList, valueList, Object.keys(data).length, streamNamePtr,
-              timestamp);
+            keyList,
+            valueList,
+            Object.keys(data).length,
+            streamNamePtr,
+            timestamp,
+          );
         });
       });
     });
@@ -488,8 +571,11 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   addProtoToStream(
-      data: Uint8Array, protoType: string, streamName: string,
-      timestamp: number): void {
+    data: Uint8Array,
+    protoType: string,
+    streamName: string,
+    timestamp: number,
+  ): void {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
       this.wrapStringPtr(protoType, (protoTypePtr: number) => {
         // Deep-copy proto data into Wasm heap
@@ -497,7 +583,12 @@ export class GraphRunner implements GraphRunnerApi {
         // TODO: Ensure this is the fastest way to copy this data.
         this.wasmModule.HEAPU8.set(data, dataPtr);
         this.wasmModule._addProtoToInputStream(
-            dataPtr, data.length, protoTypePtr, streamNamePtr, timestamp);
+          dataPtr,
+          data.length,
+          protoTypePtr,
+          streamNamePtr,
+          timestamp,
+        );
         this.wasmModule._free(dataPtr);
       });
     });
@@ -511,8 +602,11 @@ export class GraphRunner implements GraphRunnerApi {
   }
 
   /** {@override GraphRunnerApi} */
-  addBoolVectorToStream(data: boolean[], streamName: string, timestamp: number):
-      void {
+  addBoolVectorToStream(
+    data: boolean[],
+    streamName: string,
+    timestamp: number,
+  ): void {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
       const vecPtr = this.wasmModule._allocateBoolVector(data.length);
       if (!vecPtr) {
@@ -522,13 +616,19 @@ export class GraphRunner implements GraphRunnerApi {
         this.wasmModule._addBoolVectorEntry(vecPtr, entry);
       }
       this.wasmModule._addBoolVectorToInputStream(
-          vecPtr, streamNamePtr, timestamp);
+        vecPtr,
+        streamNamePtr,
+        timestamp,
+      );
     });
   }
 
   /** {@override GraphRunnerApi} */
   addDoubleVectorToStream(
-      data: number[], streamName: string, timestamp: number): void {
+    data: number[],
+    streamName: string,
+    timestamp: number,
+  ): void {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
       const vecPtr = this.wasmModule._allocateDoubleVector(data.length);
       if (!vecPtr) {
@@ -538,13 +638,19 @@ export class GraphRunner implements GraphRunnerApi {
         this.wasmModule._addDoubleVectorEntry(vecPtr, entry);
       }
       this.wasmModule._addDoubleVectorToInputStream(
-          vecPtr, streamNamePtr, timestamp);
+        vecPtr,
+        streamNamePtr,
+        timestamp,
+      );
     });
   }
 
   /** {@override GraphRunnerApi} */
-  addFloatVectorToStream(data: number[], streamName: string, timestamp: number):
-      void {
+  addFloatVectorToStream(
+    data: number[],
+    streamName: string,
+    timestamp: number,
+  ): void {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
       const vecPtr = this.wasmModule._allocateFloatVector(data.length);
       if (!vecPtr) {
@@ -554,13 +660,19 @@ export class GraphRunner implements GraphRunnerApi {
         this.wasmModule._addFloatVectorEntry(vecPtr, entry);
       }
       this.wasmModule._addFloatVectorToInputStream(
-          vecPtr, streamNamePtr, timestamp);
+        vecPtr,
+        streamNamePtr,
+        timestamp,
+      );
     });
   }
 
   /** {@override GraphRunnerApi} */
-  addIntVectorToStream(data: number[], streamName: string, timestamp: number):
-      void {
+  addIntVectorToStream(
+    data: number[],
+    streamName: string,
+    timestamp: number,
+  ): void {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
       const vecPtr = this.wasmModule._allocateIntVector(data.length);
       if (!vecPtr) {
@@ -570,13 +682,19 @@ export class GraphRunner implements GraphRunnerApi {
         this.wasmModule._addIntVectorEntry(vecPtr, entry);
       }
       this.wasmModule._addIntVectorToInputStream(
-          vecPtr, streamNamePtr, timestamp);
+        vecPtr,
+        streamNamePtr,
+        timestamp,
+      );
     });
   }
 
   /** {@override GraphRunnerApi} */
-  addUintVectorToStream(data: number[], streamName: string, timestamp: number):
-      void {
+  addUintVectorToStream(
+    data: number[],
+    streamName: string,
+    timestamp: number,
+  ): void {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
       const vecPtr = this.wasmModule._allocateUintVector(data.length);
       if (!vecPtr) {
@@ -586,13 +704,19 @@ export class GraphRunner implements GraphRunnerApi {
         this.wasmModule._addUintVectorEntry(vecPtr, entry);
       }
       this.wasmModule._addUintVectorToInputStream(
-          vecPtr, streamNamePtr, timestamp);
+        vecPtr,
+        streamNamePtr,
+        timestamp,
+      );
     });
   }
 
   /** {@override GraphRunnerApi} */
   addStringVectorToStream(
-      data: string[], streamName: string, timestamp: number): void {
+    data: string[],
+    streamName: string,
+    timestamp: number,
+  ): void {
     this.wrapStringPtr(streamName, (streamNamePtr: number) => {
       const vecPtr = this.wasmModule._allocateStringVector(data.length);
       if (!vecPtr) {
@@ -604,7 +728,10 @@ export class GraphRunner implements GraphRunnerApi {
         });
       }
       this.wasmModule._addStringVectorToInputStream(
-          vecPtr, streamNamePtr, timestamp);
+        vecPtr,
+        streamNamePtr,
+        timestamp,
+      );
     });
   }
 
@@ -654,7 +781,10 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   addProtoToInputSidePacket(
-      data: Uint8Array, protoType: string, sidePacketName: string): void {
+    data: Uint8Array,
+    protoType: string,
+    sidePacketName: string,
+  ): void {
     this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
       this.wrapStringPtr(protoType, (protoTypePtr: number) => {
         // Deep-copy proto data into Wasm heap
@@ -662,15 +792,21 @@ export class GraphRunner implements GraphRunnerApi {
         // TODO: Ensure this is the fastest way to copy this data.
         this.wasmModule.HEAPU8.set(data, dataPtr);
         this.wasmModule._addProtoToInputSidePacket(
-            dataPtr, data.length, protoTypePtr, sidePacketNamePtr);
+          dataPtr,
+          data.length,
+          protoTypePtr,
+          sidePacketNamePtr,
+        );
         this.wasmModule._free(dataPtr);
       });
     });
   }
 
   /** {@override GraphRunnerApi} */
-  addBoolVectorToInputSidePacket(data: boolean[], sidePacketName: string):
-      void {
+  addBoolVectorToInputSidePacket(
+    data: boolean[],
+    sidePacketName: string,
+  ): void {
     this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
       const vecPtr = this.wasmModule._allocateBoolVector(data.length);
       if (!vecPtr) {
@@ -680,13 +816,17 @@ export class GraphRunner implements GraphRunnerApi {
         this.wasmModule._addBoolVectorEntry(vecPtr, entry);
       }
       this.wasmModule._addBoolVectorToInputSidePacket(
-          vecPtr, sidePacketNamePtr);
+        vecPtr,
+        sidePacketNamePtr,
+      );
     });
   }
 
   /** {@override GraphRunnerApi} */
-  addDoubleVectorToInputSidePacket(data: number[], sidePacketName: string):
-      void {
+  addDoubleVectorToInputSidePacket(
+    data: number[],
+    sidePacketName: string,
+  ): void {
     this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
       const vecPtr = this.wasmModule._allocateDoubleVector(data.length);
       if (!vecPtr) {
@@ -696,13 +836,17 @@ export class GraphRunner implements GraphRunnerApi {
         this.wasmModule._addDoubleVectorEntry(vecPtr, entry);
       }
       this.wasmModule._addDoubleVectorToInputSidePacket(
-          vecPtr, sidePacketNamePtr);
+        vecPtr,
+        sidePacketNamePtr,
+      );
     });
   }
 
   /** {@override GraphRunnerApi} */
-  addFloatVectorToInputSidePacket(data: number[], sidePacketName: string):
-      void {
+  addFloatVectorToInputSidePacket(
+    data: number[],
+    sidePacketName: string,
+  ): void {
     this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
       const vecPtr = this.wasmModule._allocateFloatVector(data.length);
       if (!vecPtr) {
@@ -712,7 +856,9 @@ export class GraphRunner implements GraphRunnerApi {
         this.wasmModule._addFloatVectorEntry(vecPtr, entry);
       }
       this.wasmModule._addFloatVectorToInputSidePacket(
-          vecPtr, sidePacketNamePtr);
+        vecPtr,
+        sidePacketNamePtr,
+      );
     });
   }
 
@@ -741,13 +887,17 @@ export class GraphRunner implements GraphRunnerApi {
         this.wasmModule._addUintVectorEntry(vecPtr, entry);
       }
       this.wasmModule._addUintVectorToInputSidePacket(
-          vecPtr, sidePacketNamePtr);
+        vecPtr,
+        sidePacketNamePtr,
+      );
     });
   }
 
   /** {@override GraphRunnerApi} */
-  addStringVectorToInputSidePacket(data: string[], sidePacketName: string):
-      void {
+  addStringVectorToInputSidePacket(
+    data: string[],
+    sidePacketName: string,
+  ): void {
     this.wrapStringPtr(sidePacketName, (sidePacketNamePtr: number) => {
       const vecPtr = this.wasmModule._allocateStringVector(data.length);
       if (!vecPtr) {
@@ -759,13 +909,17 @@ export class GraphRunner implements GraphRunnerApi {
         });
       }
       this.wasmModule._addStringVectorToInputSidePacket(
-          vecPtr, sidePacketNamePtr);
+        vecPtr,
+        sidePacketNamePtr,
+      );
     });
   }
 
   /** {@override GraphRunnerApi} */
   attachBoolListener(
-      outputStreamName: string, callbackFcn: SimpleListener<boolean>): void {
+    outputStreamName: string,
+    callbackFcn: SimpleListener<boolean>,
+  ): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -777,7 +931,9 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   attachBoolVectorListener(
-      outputStreamName: string, callbackFcn: SimpleListener<boolean[]>): void {
+    outputStreamName: string,
+    callbackFcn: SimpleListener<boolean[]>,
+  ): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -789,7 +945,9 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   attachIntListener(
-      outputStreamName: string, callbackFcn: SimpleListener<number>): void {
+    outputStreamName: string,
+    callbackFcn: SimpleListener<number>,
+  ): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -801,7 +959,9 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   attachIntVectorListener(
-      outputStreamName: string, callbackFcn: SimpleListener<number[]>): void {
+    outputStreamName: string,
+    callbackFcn: SimpleListener<number[]>,
+  ): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -813,7 +973,9 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   attachUintListener(
-      outputStreamName: string, callbackFcn: SimpleListener<number>): void {
+    outputStreamName: string,
+    callbackFcn: SimpleListener<number>,
+  ): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -825,7 +987,9 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   attachUintVectorListener(
-      outputStreamName: string, callbackFcn: SimpleListener<number[]>): void {
+    outputStreamName: string,
+    callbackFcn: SimpleListener<number[]>,
+  ): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -838,7 +1002,9 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   attachDoubleListener(
-      outputStreamName: string, callbackFcn: SimpleListener<number>): void {
+    outputStreamName: string,
+    callbackFcn: SimpleListener<number>,
+  ): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -850,7 +1016,9 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   attachDoubleVectorListener(
-      outputStreamName: string, callbackFcn: SimpleListener<number[]>): void {
+    outputStreamName: string,
+    callbackFcn: SimpleListener<number[]>,
+  ): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -862,7 +1030,9 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   attachFloatListener(
-      outputStreamName: string, callbackFcn: SimpleListener<number>): void {
+    outputStreamName: string,
+    callbackFcn: SimpleListener<number>,
+  ): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -874,7 +1044,9 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   attachFloatVectorListener(
-      outputStreamName: string, callbackFcn: SimpleListener<number[]>): void {
+    outputStreamName: string,
+    callbackFcn: SimpleListener<number[]>,
+  ): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -886,7 +1058,9 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   attachStringListener(
-      outputStreamName: string, callbackFcn: SimpleListener<string>): void {
+    outputStreamName: string,
+    callbackFcn: SimpleListener<string>,
+  ): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -898,7 +1072,9 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   attachStringVectorListener(
-      outputStreamName: string, callbackFcn: SimpleListener<string[]>): void {
+    outputStreamName: string,
+    callbackFcn: SimpleListener<string[]>,
+  ): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -910,8 +1086,10 @@ export class GraphRunner implements GraphRunnerApi {
 
   /** {@override GraphRunnerApi} */
   attachProtoListener(
-      outputStreamName: string, callbackFcn: SimpleListener<Uint8Array>,
-      makeDeepCopy?: boolean): void {
+    outputStreamName: string,
+    callbackFcn: SimpleListener<Uint8Array>,
+    makeDeepCopy?: boolean,
+  ): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -919,14 +1097,18 @@ export class GraphRunner implements GraphRunnerApi {
     // stream.
     this.wrapStringPtr(outputStreamName, (outputStreamNamePtr: number) => {
       this.wasmModule._attachProtoListener(
-          outputStreamNamePtr, makeDeepCopy || false);
+        outputStreamNamePtr,
+        makeDeepCopy || false,
+      );
     });
   }
 
   /** {@override GraphRunnerApi} */
   attachProtoVectorListener(
-      outputStreamName: string, callbackFcn: SimpleListener<Uint8Array[]>,
-      makeDeepCopy?: boolean): void {
+    outputStreamName: string,
+    callbackFcn: SimpleListener<Uint8Array[]>,
+    makeDeepCopy?: boolean,
+  ): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -934,33 +1116,43 @@ export class GraphRunner implements GraphRunnerApi {
     // on this stream.
     this.wrapStringPtr(outputStreamName, (outputStreamNamePtr: number) => {
       this.wasmModule._attachProtoVectorListener(
-          outputStreamNamePtr, makeDeepCopy || false);
+        outputStreamNamePtr,
+        makeDeepCopy || false,
+      );
     });
   }
 
   /** {@override GraphRunnerApi} */
   attachAudioListener(
-      outputStreamName: string, callbackFcn: SimpleListener<Float32Array>,
-      makeDeepCopy?: boolean): void {
+    outputStreamName: string,
+    callbackFcn: SimpleListener<Float32Array>,
+    makeDeepCopy?: boolean,
+  ): void {
     if (!this.wasmModule._attachAudioListener) {
       console.warn(
-          'Attempting to use attachAudioListener without support for ' +
-          'output audio. Is build dep ":gl_graph_runner_audio_out" missing?');
+        'Attempting to use attachAudioListener without support for ' +
+          'output audio. Is build dep ":gl_graph_runner_audio_out" missing?',
+      );
     }
 
     // Set up our TS listener to receive any packets for this stream, and
     // additionally reformat our Uint8Array into a Float32Array for the user.
     this.setListener<Uint8Array>(outputStreamName, (data, timestamp) => {
       // Should be very fast
-      const floatArray =
-          new Float32Array(data.buffer, data.byteOffset, data.length / 4);
+      const floatArray = new Float32Array(
+        data.buffer,
+        data.byteOffset,
+        data.length / 4,
+      );
       callbackFcn(floatArray, timestamp);
     });
 
     // Tell our graph to listen for string packets on this stream.
     this.wrapStringPtr(outputStreamName, (outputStreamNamePtr: number) => {
       this.wasmModule._attachAudioListener(
-          outputStreamNamePtr, makeDeepCopy || false);
+        outputStreamNamePtr,
+        makeDeepCopy || false,
+      );
     });
   }
 
@@ -978,12 +1170,13 @@ export class GraphRunner implements GraphRunnerApi {
 }
 
 /** {@override CreateMediaPipeLibApi} */
-export const createMediaPipeLib: CreateMediaPipeLibApi = async<LibType>(
-    constructorFcn: WasmMediaPipeConstructor<LibType>,
-    wasmLoaderScript?: string|null,
-    assetLoaderScript?: string|null,
-    glCanvas?: HTMLCanvasElement|OffscreenCanvas|null,
-    fileLocator?: FileLocator): Promise<LibType> => {
+export const createMediaPipeLib: CreateMediaPipeLibApi = async <LibType>(
+  constructorFcn: WasmMediaPipeConstructor<LibType>,
+  wasmLoaderScript?: string | null,
+  assetLoaderScript?: string | null,
+  glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  fileLocator?: FileLocator,
+): Promise<LibType> => {
   // Run wasm-loader script here
   if (wasmLoaderScript) {
     await runScript(wasmLoaderScript);
@@ -1014,8 +1207,9 @@ export const createMediaPipeLib: CreateMediaPipeLibApi = async<LibType>(
   }
   // TODO: Ensure that fileLocator is passed in by all users
   // and make it required
-  const module =
-      await self.ModuleFactory(self.Module as FileLocator || fileLocator);
+  const module = await self.ModuleFactory(
+    (self.Module as FileLocator) || fileLocator,
+  );
   // Don't reuse factory or module seed
   self.ModuleFactory = self.Module = undefined;
   return new constructorFcn(module, glCanvas);
@@ -1025,18 +1219,26 @@ export const createMediaPipeLib: CreateMediaPipeLibApi = async<LibType>(
 // callers of `createGraphRunner` will be given a `GraphRunner` rather than a
 // `GraphRunnerApi`.
 interface CreateGraphRunnerImplType extends CreateGraphRunnerApi {
-  (wasmLoaderScript?: string,
-   assetLoaderScript?: string,
-   glCanvas?: HTMLCanvasElement|OffscreenCanvas|null,
-   fileLocator?: FileLocator): Promise<GraphRunner>;
+  (
+    wasmLoaderScript?: string,
+    assetLoaderScript?: string,
+    glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+    fileLocator?: FileLocator,
+  ): Promise<GraphRunner>;
 }
 
 /** {@override CreateGraphRunnerApi} */
-export const createGraphRunner: CreateGraphRunnerImplType = async(
-    wasmLoaderScript?: string,
-    assetLoaderScript?: string,
-    glCanvas?: HTMLCanvasElement|OffscreenCanvas|null,
-    fileLocator?: FileLocator): Promise<GraphRunner> => {
+export const createGraphRunner: CreateGraphRunnerImplType = async (
+  wasmLoaderScript?: string,
+  assetLoaderScript?: string,
+  glCanvas?: HTMLCanvasElement | OffscreenCanvas | null,
+  fileLocator?: FileLocator,
+): Promise<GraphRunner> => {
   return createMediaPipeLib(
-      GraphRunner, wasmLoaderScript, assetLoaderScript, glCanvas, fileLocator);
+    GraphRunner,
+    wasmLoaderScript,
+    assetLoaderScript,
+    glCanvas,
+    fileLocator,
+  );
 };
