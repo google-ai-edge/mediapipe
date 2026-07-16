@@ -293,7 +293,7 @@ absl::Status TensorsToDetectionsCalculator::Open(CalculatorContext* cc) {
 }
 
 absl::Status TensorsToDetectionsCalculator::Process(CalculatorContext* cc) {
-  auto output_detections = absl::make_unique<std::vector<Detection>>();
+  auto output_detections = std::make_unique<std::vector<Detection>>();
   bool gpu_processing = false;
   if (CanUseGpu() && gpu_has_enough_work_groups_) {
     // Use GPU processing only if at least one input tensor is already on GPU

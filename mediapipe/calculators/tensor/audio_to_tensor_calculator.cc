@@ -457,7 +457,7 @@ absl::Status AudioToTensorCalculator::SetupStreamingResampler(
   }
   source_sample_rate_ = input_sample_rate;
   if (source_sample_rate_ != target_sample_rate_) {
-    resampler_ = absl::make_unique<audio_dsp::QResampler<float>>(
+    resampler_ = std::make_unique<audio_dsp::QResampler<float>>(
         source_sample_rate_, target_sample_rate_, num_channels_, params_);
     if (!resampler_) {
       return absl::InternalError("Failed to initialize resampler.");
