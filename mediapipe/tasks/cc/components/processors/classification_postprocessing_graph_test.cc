@@ -479,9 +479,9 @@ class PostprocessingTest : public tflite::testing::Test {
     MP_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
         kTensorsName, Adopt(tensors_.release()).At(Timestamp(timestamp))));
     // Reset tensors for future calls.
-    tensors_ = absl::make_unique<std::vector<Tensor>>();
+    tensors_ = std::make_unique<std::vector<Tensor>>();
     if (aggregation_timestamps.has_value()) {
-      auto packet = absl::make_unique<std::vector<Timestamp>>();
+      auto packet = std::make_unique<std::vector<Timestamp>>();
       for (const auto& timestamp : *aggregation_timestamps) {
         packet->emplace_back(Timestamp(timestamp));
       }
@@ -508,7 +508,7 @@ class PostprocessingTest : public tflite::testing::Test {
  private:
   CalculatorGraph calculator_graph_;
   std::unique_ptr<std::vector<Tensor>> tensors_ =
-      absl::make_unique<std::vector<Tensor>>();
+      std::make_unique<std::vector<Tensor>>();
 };
 
 TEST_F(PostprocessingTest, SucceedsWithoutMetadata) {
