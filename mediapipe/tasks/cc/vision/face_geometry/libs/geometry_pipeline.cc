@@ -452,11 +452,11 @@ absl::StatusOr<std::unique_ptr<GeometryPipeline>> CreateGeometryPipeline(
   }
 
   std::unique_ptr<GeometryPipeline> result =
-      absl::make_unique<GeometryPipelineImpl>(
+      std::make_unique<GeometryPipelineImpl>(
           environment.perspective_camera(), canonical_mesh,
           canonical_mesh_vertex_size, canonical_mesh_num_vertices,
           canonical_mesh_vertex_position_offset,
-          absl::make_unique<ScreenToMetricSpaceConverter>(
+          std::make_unique<ScreenToMetricSpaceConverter>(
               environment.origin_point_location(),
               metadata.input_source() == proto::InputSource::DEFAULT
                   ? proto::InputSource::FACE_LANDMARK_PIPELINE
