@@ -150,7 +150,7 @@ TEST_F(CreateFromOptionsTest, DISABLED_FailsWithSelectiveOpResolverMissingOps) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kPtmModel);
   options->base_options.op_resolver =
-      absl::make_unique<DeepLabOpResolverMissingOps>();
+      std::make_unique<DeepLabOpResolverMissingOps>();
   auto segmenter = InteractiveSegmenterLegacy::Create(std::move(options));
   // TODO: Make MediaPipe InferenceCalculator report the detailed
   // interpreter errors (e.g., "Encountered unresolved custom op").
