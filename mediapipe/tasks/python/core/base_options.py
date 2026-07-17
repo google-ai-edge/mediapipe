@@ -74,6 +74,9 @@ class BaseOptions:
     model_asset_buffer: The model asset file contents as bytes.
     delegate: Acceleration to use. Supported values are GPU and CPU. GPU support
       is currently limited to Ubuntu platforms.
+    num_threads: Number of CPU threads to use for inference (XNNPACK delegate).
+      If unset or <= 0, MediaPipe's framework default is used. Only applies when
+      `delegate` is CPU.
   """
 
   class Delegate(enum.IntEnum):
@@ -83,6 +86,7 @@ class BaseOptions:
   model_asset_path: Optional[str] = None
   model_asset_buffer: Optional[bytes] = None
   delegate: Optional[Delegate] = None
+  num_threads: Optional[int] = None
 
   @doc_controls.do_not_generate_docs
   def to_ctypes(self) -> base_options_c_lib.MpBaseOptionsC:
@@ -100,6 +104,9 @@ class BaseOptions:
         self.model_asset_path.encode('utf-8') if self.model_asset_path else None
     )
     options.delegate = self.delegate.value if self.delegate else 0
+    options.num_threads = (
+        self.num_threads if self.num_threads is not None else -1
+    )
     options.host_environment = HOST_ENVIRONMENT_PYTHON
     host_version, *_ = sys.version.split(' ')
     options.host_system = host_system
@@ -125,4 +132,5 @@ class BaseOptions:
         self.model_asset_path == other.model_asset_path
         and self.model_asset_buffer == other.model_asset_buffer
         and self.delegate == other.delegate
+        and self.num_threads == other.num_threads
     )

@@ -100,7 +100,15 @@ proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options) {
   }
   switch (base_options->delegate) {
     case BaseOptions::Delegate::CPU:
-      base_options_proto.mutable_acceleration()->mutable_tflite();
+      if (base_options->num_threads > 0) {
+        // Use the XNNPACK delegate so the requested thread count is honored; an
+        // empty TfLite delegate defaults to single-threaded inference.
+        base_options_proto.mutable_acceleration()
+            ->mutable_xnnpack()
+            ->set_num_threads(base_options->num_threads);
+      } else {
+        base_options_proto.mutable_acceleration()->mutable_tflite();
+      }
       SetDelegateOptionsOrDie<BaseOptions::CpuOptions>(base_options,
                                                        base_options_proto);
       break;

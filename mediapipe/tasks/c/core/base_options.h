@@ -63,6 +63,10 @@ struct MpBaseOptions {
   // The delegate to use for the MediaPipe graph.
   enum MpDelegate delegate;
 
+  // Number of CPU threads for inference (XNNPACK). If <= 0, the framework
+  // default is used. Only applies when `delegate` is CPU.
+  int num_threads;
+
   // The environment on which the task is running.
   enum MpHostEnvironment host_environment;
 
