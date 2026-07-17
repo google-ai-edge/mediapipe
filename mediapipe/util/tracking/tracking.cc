@@ -3218,6 +3218,15 @@ void MotionVectorFrameFromTrackingData(const TrackingData& tracking_data,
     for (int r = motion_data.col_starts(c),
              r_end = motion_data.col_starts(c + 1);
          r < r_end; ++r) {
+      // Guard against a malformed TrackingData whose col_starts reference
+      // indices outside the dependent repeated fields (heap OOB read
+      // otherwise). col_starts is attacker-controlled and independent of the
+      // row_indices/vector_data/track_id sizes.
+      if (r < 0 || r >= motion_data.row_indices_size() ||
+          2 * r + 1 >= motion_data.vector_data_size() ||
+          (long_tracks && r >= motion_data.track_id_size())) {
+        break;
+      }
       MotionVector motion_vector;
 
       const float y = motion_data.row_indices(r);
@@ -3278,6 +3287,12 @@ void FeatureAndDescriptorFromTrackingData(
     for (int r = motion_data.col_starts(c),
              r_end = motion_data.col_starts(c + 1);
          r < r_end; ++r) {
+      // Same guard as MotionVectorFrameFromTrackingData: reject col_starts
+      // values that fall outside the dependent repeated fields.
+      if (r < 0 || r >= motion_data.feature_descriptors_size() ||
+          r >= motion_data.row_indices_size()) {
+        break;
+      }
       const std::string& descriptor = motion_data.feature_descriptors(r).data();
 
       if (absl::c_all_of(descriptor, [](char c) { return c == 0; })) {
