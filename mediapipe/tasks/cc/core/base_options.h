@@ -52,6 +52,10 @@ struct BaseOptions {
 
   Delegate delegate = CPU;
 
+  // Number of CPU threads used for inference (XNNPACK). If <= 0, MediaPipe's
+  // framework default is used. Only applies when `delegate` is CPU.
+  int num_threads = -1;
+
   // Options for CPU.
   struct CpuOptions {};
 

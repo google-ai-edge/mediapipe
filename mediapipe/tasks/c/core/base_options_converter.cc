@@ -85,6 +85,7 @@ void CppConvertToBaseOptions(const MpBaseOptions& in,
   out->model_asset_path =
       in.model_asset_path ? std::string(in.model_asset_path) : "";
   out->delegate = CppConvertToDelegate(in.delegate);
+  out->num_threads = in.num_threads;
   out->host_environment = CppConvertToHostEnvironment(in.host_environment);
   out->host_system = CppConvertToHostSystem(in.host_system);
   out->host_version = in.host_version ? std::string(in.host_version) : "";
