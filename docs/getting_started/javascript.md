@@ -62,7 +62,7 @@ All of these solutions are staged in [NPM][npm]. You can install any package
 locally with `npm install`. Example:
 
 ```
-npm install @mediapipe/holistic.
+npm install @mediapipe/holistic
 ```
 
 If you would rather not stage these locally, you can rely on a CDN (e.g.,
