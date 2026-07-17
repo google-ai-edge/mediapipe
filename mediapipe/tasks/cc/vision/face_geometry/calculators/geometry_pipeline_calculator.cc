@@ -190,7 +190,7 @@ class GeometryPipelineCalculator : public CalculatorBase {
               .Tag(kMultiFaceLandmarksTag)
               .Get<std::vector<mediapipe::NormalizedLandmarkList>>();
 
-      auto multi_face_geometry = absl::make_unique<std::vector<FaceGeometry>>();
+      auto multi_face_geometry = std::make_unique<std::vector<FaceGeometry>>();
 
       MP_ASSIGN_OR_RETURN(
           *multi_face_geometry,
