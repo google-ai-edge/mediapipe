@@ -49,7 +49,7 @@ etils[array-types,enp,epath,epy,etqdm,etree]==1.5.2
     #   tensorflow-datasets
 flatbuffers==24.3.25
     # via tensorflow
-fonttools==4.54.1
+fonttools==4.60.2
     # via matplotlib
 fsspec==2024.9.0
     # via etils
@@ -99,7 +99,7 @@ joblib==1.4.2
     # via scikit-learn
 kaggle==1.6.17
     # via tf-models-official
-keras==2.15.0
+keras==3.13.2
     # via tensorflow
 kiwisolver==1.4.7
     # via matplotlib
@@ -156,7 +156,7 @@ packaging==24.1
     #   tensorflow-addons
 pandas==2.2.3
     # via tf-models-official
-pillow==10.4.0
+pillow==12.1.1
     # via
     #   matplotlib
     #   tf-models-official
@@ -166,7 +166,7 @@ promise==2.3
     # via tensorflow-datasets
 proto-plus==1.24.0
     # via google-api-core
-protobuf==4.25.5
+protobuf==5.29.6
     # via
     #   google-api-core
     #   googleapis-common-protos
@@ -182,7 +182,7 @@ psutil==6.0.0
     #   tf-models-official
 py-cpuinfo==9.0.0
     # via tf-models-official
-pyasn1==0.6.1
+pyasn1==0.6.2
     # via
     #   oauth2client
     #   pyasn1-modules
@@ -210,7 +210,7 @@ pyyaml==6.0.2
     # via tf-models-official
 regex==2024.9.11
     # via sacrebleu
-requests==2.32.3
+requests==2.32.4
     # via
     #   google-api-core
     #   kaggle
@@ -231,7 +231,7 @@ scipy==1.13.1
     # via
     #   scikit-learn
     #   tf-models-official
-sentencepiece==0.2.0
+sentencepiece==0.2.1
     # via tf-models-official
 seqeval==1.2.2
     # via tf-models-official
@@ -316,15 +316,15 @@ tzdata==2024.2
     # via pandas
 uritemplate==4.1.1
     # via google-api-python-client
-urllib3==2.2.3
+urllib3==2.6.3
     # via
     #   kaggle
     #   requests
 webencodings==0.5.1
     # via bleach
-werkzeug==3.0.4
+werkzeug==3.1.6
     # via tensorboard
-wheel==0.44.0
+wheel==0.46.2
     # via astunparse
 wrapt==1.14.1
     # via
@@ -334,7 +334,7 @@ zipp==3.20.2
     # via etils
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==70.3.0
+setuptools==78.1.1
     # via
     #   -r mediapipe/opensource_only/model_maker_requirements_bazel.txt
     #   tensorboard
