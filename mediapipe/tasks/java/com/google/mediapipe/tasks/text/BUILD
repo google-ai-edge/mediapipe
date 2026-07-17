@@ -58,7 +58,9 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:libmediapipe_tasks_jni_lib",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/text/core",
         "//third_party:autovalue",
+        "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",
     ],
 )
@@ -110,7 +112,9 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embeddingresult",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/text/core",
         "//third_party:autovalue",
+        "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",
     ],
 )

@@ -16,6 +16,7 @@ package com.google.mediapipe.tasks.text.textembedder;
 
 import android.content.Context;
 import android.os.ParcelFileDescriptor;
+import androidx.annotation.Nullable;
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.proto.CalculatorOptionsProto.CalculatorOptions;
 import com.google.mediapipe.framework.MediaPipeException;

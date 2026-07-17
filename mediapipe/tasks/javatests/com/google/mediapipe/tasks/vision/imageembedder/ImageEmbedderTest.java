@@ -214,7 +214,6 @@ public class ImageEmbedderTest {
               resultCrop.embeddingResult().embeddings().get(0));
       assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.9745944861f);
     }
-  }
 
   @RunWith(AndroidJUnit4.class)
   public static final class RunningModeTest extends ImageEmbedderTest {

@@ -291,7 +291,9 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embedding",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embeddingresult",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
         "//third_party:autovalue",
+        "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",
     ],
 )

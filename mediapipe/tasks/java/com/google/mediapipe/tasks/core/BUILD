@@ -68,6 +68,7 @@ android_library(
         "//third_party:any_java_proto",
         "//third_party:autovalue",
         "@com_google_protobuf//:protobuf_javalite",
+        "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",
     ],
 )
