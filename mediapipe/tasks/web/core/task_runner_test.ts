@@ -54,6 +54,7 @@ class TaskRunnerFake extends TaskRunner {
         'finishProcessing',
         'registerModelResourcesGraphService',
         'attachErrorListener',
+        'getMediapipeApiKey',
       ]),
     );
     const graphRunner = this.graphRunner as jasmine.SpyObj<

@@ -75,6 +75,15 @@ ts_library(
 )
 
 ts_library(
+    name = "graph_runner_logging_lib_ts",
+    srcs = [
+        ":graph_runner_logging_lib.ts",
+    ],
+    allow_unoptimized_namespaces = True,
+    deps = [":graph_runner_ts"],
+)
+
+ts_library(
     name = "register_model_resources_graph_service_ts",
     srcs = [
         ":register_model_resources_graph_service.ts",

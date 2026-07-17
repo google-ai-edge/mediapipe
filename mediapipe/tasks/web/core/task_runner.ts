@@ -30,6 +30,7 @@ import {
   WasmMediaPipeConstructor,
   createMediaPipeLib,
 } from '../../../web/graph_runner/graph_runner';
+import {SupportLogging} from '../../../web/graph_runner/graph_runner_logging_lib';
 import {SupportModelResourcesGraphService} from '../../../web/graph_runner/register_model_resources_graph_service';
 import {TaskLogger} from './task_logger';
 import {createTasksLogger} from './task_logger_factory';
@@ -41,7 +42,9 @@ const FREE_MEMORY_STREAM = 'free_memory';
 const UNUSED_STREAM_SUFFIX = '_unused_out';
 
 // tslint:disable-next-line:enforce-name-casing
-const CachedGraphRunnerType = SupportModelResourcesGraphService(GraphRunner);
+const CachedGraphRunnerType = SupportLogging(
+  SupportModelResourcesGraphService(GraphRunner),
+);
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -124,7 +127,8 @@ export abstract class TaskRunner {
 
   enableLogging(taskName: string, options: TaskRunnerOptions): void {
     const runningMode = (options as {runningMode: string}).runningMode ?? '';
-    this.logger = createTasksLogger(taskName, runningMode);
+    const apiKey = this.graphRunner.getMediapipeApiKey();
+    this.logger = createTasksLogger(taskName, runningMode, apiKey);
   }
 
   /**

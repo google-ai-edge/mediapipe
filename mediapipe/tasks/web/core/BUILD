@@ -27,6 +27,7 @@ genrule(
             echo "export function createTasksLogger(" >> $@
             echo "  taskName: string," >> $@
             echo "  runningMode: string," >> $@
+            echo "  apiKey?: string," >> $@
             echo "): DummyTaskLogger { return new DummyTaskLogger(); }" >> $@
         """,
     }),
@@ -53,6 +54,7 @@ ts_library(
         "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/cc/core/proto:external_file_jspb_proto",
         "//mediapipe/tasks/web/genai/llm_inference:model_loading_utils",
+        "//mediapipe/web/graph_runner:graph_runner_logging_lib_ts",
         "//mediapipe/web/graph_runner:graph_runner_ts",
         "//mediapipe/web/graph_runner:register_model_resources_graph_service_ts",
     ],

@@ -31,6 +31,7 @@ import {
   SupportImage,
   WasmImage,
 } from '../../../../web/graph_runner/graph_runner_image_lib';
+import {SupportLogging} from '../../../../web/graph_runner/graph_runner_logging_lib';
 import {supportsOffscreenCanvas} from '../../../../web/graph_runner/platform_utils';
 import {SupportModelResourcesGraphService} from '../../../../web/graph_runner/register_model_resources_graph_service';
 
@@ -38,7 +39,7 @@ import type {VisionTaskOptions} from './vision_task_options';
 
 // tslint:disable-next-line:enforce-name-casing
 const GraphRunnerVisionType = SupportModelResourcesGraphService(
-  SupportImage(GraphRunner),
+  SupportImage(SupportLogging(GraphRunner)),
 );
 /** An implementation of the GraphRunner that supports image operations */
 export class VisionGraphRunner extends GraphRunnerVisionType {}
