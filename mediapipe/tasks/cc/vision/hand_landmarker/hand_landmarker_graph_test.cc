@@ -139,7 +139,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner() {
       {.config = graph.GetConfig(),
        .task_name = "hand_landmarker_test",
        .task_running_mode = core::RunningMode::kImage,
-       .op_resolver = absl::make_unique<core::MediaPipeBuiltinOpResolver>()});
+       .op_resolver = std::make_unique<core::MediaPipeBuiltinOpResolver>()});
 }
 
 class HandLandmarkerTest : public tflite::testing::Test {};
