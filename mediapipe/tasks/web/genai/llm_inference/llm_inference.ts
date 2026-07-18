@@ -60,6 +60,7 @@ import {
   tee,
   uint8ArrayToStream,
 } from './model_loading_utils';
+import { ModelLoader } from './efficient_model_loader';
 
 export type {
   Audio,
@@ -190,6 +191,7 @@ export class LlmInference extends TaskRunner {
   private streamingReader?: StreamingReader;
   private useLlmEngine = false;
   private isConvertedModel = false;
+  private modelLoader = new ModelLoader();
 
   // The WebGPU device used for LLM inference.
   private wgpuDevice?: GPUDevice;
@@ -400,7 +402,7 @@ export class LlmInference extends TaskRunner {
   override async setOptions(options: LlmInferenceOptions): Promise<void> {
     // TODO: b/324482487 - Support customizing config for Web task of LLM
     // Inference.
-    if (this.isProcessing) {
+    if (this.isProcessing || this.modelLoader.isLoading()) {
       throw new Error('Cannot set options while loading or processing.');
     }
 
@@ -420,20 +422,15 @@ export class LlmInference extends TaskRunner {
 
     let modelStream: ReadableStreamDefaultReader<Uint8Array> | undefined;
     if (options.baseOptions?.modelAssetPath) {
-      const request = await fetch(
-        options.baseOptions.modelAssetPath.toString(),
-      );
-      if (!request.ok) {
+      try {
+        modelStream = await this.modelLoader.loadModel(
+          options.baseOptions.modelAssetPath.toString()
+        );
+      } catch (error) {
         throw new Error(
-          `Failed to fetch model: ${options.baseOptions.modelAssetPath} (${request.status})`,
+          `Failed to load model from path: ${options.baseOptions.modelAssetPath}. ${error}`
         );
       }
-      if (!request.body) {
-        throw new Error(
-          `Failed to fetch model: ${options.baseOptions.modelAssetPath} (no body)`,
-        );
-      }
-      modelStream = request.body.getReader();
     } else if (options.baseOptions?.modelAssetBuffer instanceof Uint8Array) {
       modelStream = uint8ArrayToStream(
         options.baseOptions.modelAssetBuffer,
@@ -1437,6 +1434,8 @@ export class LlmInference extends TaskRunner {
   }
 
   override close() {
+    this.modelLoader.cancel();
+    
     if (this.useLlmEngine) {
       (
         this.graphRunner as unknown as LlmGraphRunner
