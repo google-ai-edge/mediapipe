@@ -26,7 +26,7 @@ as the primary developer documentation site for MediaPipe as of April 3, 2023.*
 2.  To run the [`hello world`] example:
 
     ```bash
-    $ git clone https://github.com/google/mediapipe.git
+    $ git clone https://github.com/google-ai-edge/mediapipe.git
     $ cd mediapipe
 
     $ export GLOG_logtostderr=1
