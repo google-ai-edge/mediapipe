@@ -114,7 +114,7 @@ absl::Status RunMPPGraph() {
     }
 
     // Wrap Mat into an ImageFrame.
-    auto input_frame = absl::make_unique<mediapipe::ImageFrame>(
+    auto input_frame = std::make_unique<mediapipe::ImageFrame>(
         mediapipe::ImageFormat::SRGBA, camera_frame.cols, camera_frame.rows,
         mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
     cv::Mat input_frame_mat = mediapipe::formats::MatView(input_frame.get());
@@ -148,7 +148,7 @@ absl::Status RunMPPGraph() {
         [&packet, &output_frame, &gpu_helper]() -> absl::Status {
           auto& gpu_frame = packet.Get<mediapipe::GpuBuffer>();
           auto texture = gpu_helper.CreateSourceTexture(gpu_frame);
-          output_frame = absl::make_unique<mediapipe::ImageFrame>(
+          output_frame = std::make_unique<mediapipe::ImageFrame>(
               mediapipe::ImageFormatForGpuBufferFormat(gpu_frame.format()),
               gpu_frame.width(), gpu_frame.height(),
               mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
