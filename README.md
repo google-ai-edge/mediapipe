@@ -134,6 +134,8 @@ Google's processing of MediaPipe metrics data as required by applicable law.**
 
 ### Publications
 
+*   [Jump to play: Building with Gemini & MediaPipe](https://developers.googleblog.com/jump-to-play-building-with-gemini-mediapipe/)
+    in Google Developers Blog
 *   [Bringing artworks to life with AR](https://developers.googleblog.com/2021/07/bringing-artworks-to-life-with-ar.html)
     in Google Developers Blog
 *   [Prosthesis control via Mirru App using MediaPipe hand tracking](https://developers.googleblog.com/2021/05/control-your-mirru-prosthesis-with-mediapipe-hand-tracking.html)
