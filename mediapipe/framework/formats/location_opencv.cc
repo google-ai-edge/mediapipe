@@ -46,7 +46,7 @@ Rectangle_i MaskToRectangle(const LocationData& location_data) {
 }
 
 std::unique_ptr<cv::Mat> MaskToMat(const LocationData::BinaryMask& mask) {
-  auto image = absl::make_unique<cv::Mat>();
+  auto image = std::make_unique<cv::Mat>();
   *image = cv::Mat::zeros(cv::Size(mask.width(), mask.height()), CV_32FC1);
   for (const auto& interval : mask.rasterization().interval()) {
     for (int x = interval.left_x(); x <= interval.right_x(); ++x) {
@@ -68,7 +68,7 @@ absl::StatusOr<std::unique_ptr<cv::Mat>> RectangleToMat(
         rect.ymax()));
   }
   // Allocate image and set pixels of foreground mask.
-  auto image = absl::make_unique<cv::Mat>();
+  auto image = std::make_unique<cv::Mat>();
   *image = cv::Mat::zeros(cv::Size(image_width, image_height), CV_32FC1);
   for (int y = rect.ymin(); y < rect.ymax(); ++y) {
     for (int x = rect.xmin(); x < rect.xmax(); ++x) {
