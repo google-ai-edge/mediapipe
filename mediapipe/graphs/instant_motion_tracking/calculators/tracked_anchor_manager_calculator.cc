@@ -105,7 +105,7 @@ absl::Status TrackedAnchorManagerCalculator::Process(CalculatorContext* cc) {
   const int sticker_sentinel = cc->Inputs().Tag(kSentinelTag).Get<int>();
   std::vector<Anchor> current_anchor_data =
       cc->Inputs().Tag(kAnchorsTag).Get<std::vector<Anchor>>();
-  auto pos_boxes = absl::make_unique<mediapipe::TimedBoxProtoList>();
+  auto pos_boxes = std::make_unique<mediapipe::TimedBoxProtoList>();
   std::vector<Anchor> tracked_scaled_anchor_data;
 
   // Delete any boxes being tracked without an associated anchor
