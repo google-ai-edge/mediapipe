@@ -105,7 +105,7 @@ absl::Status LocalizationToRegionCalculator::Process(
     mediapipe::CalculatorContext* cc) {
   const auto& annotations =
       cc->Inputs().Tag(kDetectionsTag).Get<std::vector<mediapipe::Detection>>();
-  auto regions = ::absl::make_unique<DetectionSet>();
+  auto regions = std::make_unique<DetectionSet>();
   for (const auto& detection : annotations) {
     RET_CHECK_EQ(detection.label().size(), 1)
         << "Number of labels not equal to one.";

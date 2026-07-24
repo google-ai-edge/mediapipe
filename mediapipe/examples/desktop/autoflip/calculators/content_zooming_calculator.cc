@@ -700,7 +700,7 @@ absl::Status ContentZoomingCalculator::Process(
     const int path_top = path_offset_y - path_height / 2;
     const int path_bottom = frame_height_ - (path_offset_y + path_height / 2);
     std::unique_ptr<StaticFeatures> features =
-        absl::make_unique<StaticFeatures>();
+        std::make_unique<StaticFeatures>();
     MakeStaticFeatures(path_top, path_bottom, frame_width_, frame_height_,
                        features.get());
     cc->Outputs()
@@ -731,9 +731,9 @@ absl::Status ContentZoomingCalculator::Process(
       auto rect =
           GetAnimationRect(frame_width, frame_height, cc->InputTimestamp());
       MP_RETURN_IF_ERROR(rect.status());
-      gpu_rect = absl::make_unique<mediapipe::Rect>(*rect);
+      gpu_rect = std::make_unique<mediapipe::Rect>(*rect);
     } else {
-      gpu_rect = absl::make_unique<mediapipe::Rect>();
+      gpu_rect = std::make_unique<mediapipe::Rect>();
       gpu_rect->set_x_center(path_offset_x);
       gpu_rect->set_width(path_width);
       gpu_rect->set_y_center(path_offset_y);
@@ -744,7 +744,7 @@ absl::Status ContentZoomingCalculator::Process(
   }
   if (cc->Outputs().HasTag(kNormalizedCropRect)) {
     std::unique_ptr<mediapipe::NormalizedRect> gpu_rect =
-        absl::make_unique<mediapipe::NormalizedRect>();
+        std::make_unique<mediapipe::NormalizedRect>();
     const float float_frame_width = static_cast<float>(frame_width_);
     const float float_frame_height = static_cast<float>(frame_height_);
     if (is_animating) {
@@ -855,7 +855,7 @@ absl::Status ContentZoomingCalculator::GetDetectionsBox(
         // If no detections are available and we never had any,
         // simply return the full-image rectangle as crop-rect.
         if (cc->Outputs().HasTag(kCropRect)) {
-          auto default_rect = absl::make_unique<mediapipe::Rect>();
+          auto default_rect = std::make_unique<mediapipe::Rect>();
           default_rect->set_x_center(frame_width_ / 2);
           default_rect->set_y_center(frame_height_ / 2);
           default_rect->set_width(frame_width_);
@@ -864,7 +864,7 @@ absl::Status ContentZoomingCalculator::GetDetectionsBox(
                                            Timestamp(cc->InputTimestamp()));
         }
         if (cc->Outputs().HasTag(kNormalizedCropRect)) {
-          auto default_rect = absl::make_unique<mediapipe::NormalizedRect>();
+          auto default_rect = std::make_unique<mediapipe::NormalizedRect>();
           default_rect->set_x_center(0.5);
           default_rect->set_y_center(0.5);
           default_rect->set_width(1.0);

@@ -105,7 +105,7 @@ absl::Status FaceToRegionCalculator::Open(mediapipe::CalculatorContext* cc) {
            "is set true.";
   }
 
-  scorer_ = absl::make_unique<VisualScorer>(options_.scorer_options());
+  scorer_ = std::make_unique<VisualScorer>(options_.scorer_options());
   frame_width_ = -1;
   frame_height_ = -1;
   return absl::OkStatus();
@@ -164,7 +164,7 @@ absl::Status FaceToRegionCalculator::Process(mediapipe::CalculatorContext* cc) {
     frame_height_ = frame.rows;
   }
 
-  auto region_set = ::absl::make_unique<DetectionSet>();
+  auto region_set = std::make_unique<DetectionSet>();
   if (!cc->Inputs().Tag(kFacesTag).Value().IsEmpty()) {
     const auto& input_faces =
         cc->Inputs().Tag(kFacesTag).Get<std::vector<mediapipe::Detection>>();

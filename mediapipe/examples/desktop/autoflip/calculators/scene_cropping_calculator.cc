@@ -166,14 +166,14 @@ absl::Status SceneCroppingCalculator::Open(CalculatorContext* cc) {
         ->set_prior_frame_buffer_size(options_.prior_frame_buffer_size());
   }
   if (cc->Outputs().HasTag(kOutputSummary)) {
-    summary_ = absl::make_unique<VideoCroppingSummary>();
+    summary_ = std::make_unique<VideoCroppingSummary>();
   }
   if (cc->Outputs().HasTag(kExternalRenderingFullVid)) {
     external_render_list_ =
-        absl::make_unique<std::vector<ExternalRenderFrame>>();
+        std::make_unique<std::vector<ExternalRenderFrame>>();
   }
   should_perform_frame_cropping_ = cc->Outputs().HasTag(kOutputCroppedFrames);
-  scene_camera_motion_analyzer_ = absl::make_unique<SceneCameraMotionAnalyzer>(
+  scene_camera_motion_analyzer_ = std::make_unique<SceneCameraMotionAnalyzer>(
       options_.scene_camera_motion_analyzer_options());
   return absl::OkStatus();
 }
@@ -346,7 +346,7 @@ absl::Status SceneCroppingCalculator::InitializeSceneCroppingCalculator(
       << "Target height cannot be odd, because encoder expects dimension "
          "values to be even.";
 
-  scene_cropper_ = absl::make_unique<SceneCropper>(
+  scene_cropper_ = std::make_unique<SceneCropper>(
       options_.camera_motion_options(), frame_width_, frame_height_);
 
   return absl::OkStatus();
@@ -514,7 +514,7 @@ absl::Status SceneCroppingCalculator::InitializeFrameCropRegionComputer() {
   VLOG(1) << "Target width " << key_frame_crop_options_.target_width();
   VLOG(1) << "Target height " << key_frame_crop_options_.target_height();
   frame_crop_region_computer_ =
-      absl::make_unique<FrameCropRegionComputer>(key_frame_crop_options_);
+      std::make_unique<FrameCropRegionComputer>(key_frame_crop_options_);
   return absl::OkStatus();
 }
 
@@ -637,7 +637,7 @@ absl::Status SceneCroppingCalculator::ProcessScene(const bool is_end_of_scene,
 
   if (cc->Outputs().HasTag(kExternalRenderingPerFrame)) {
     for (int i = 0; i < scene_frame_timestamps_.size(); i++) {
-      auto external_render_message = absl::make_unique<ExternalRenderFrame>();
+      auto external_render_message = std::make_unique<ExternalRenderFrame>();
       ConstructExternalRenderMessage(
           crop_from_locations[i], render_to_locations[i], padding_colors[i],
           scene_frame_timestamps_[i], external_render_message.get(),
@@ -693,7 +693,7 @@ absl::Status SceneCroppingCalculator::FormatAndOutputCroppedFrames(
       scaled_width != target_width_ || scaled_height != target_height_;
   *vertical_fill_percent = scaled_height / static_cast<float>(target_height_);
   if (*apply_padding) {
-    padder_ = absl::make_unique<PaddingEffectGenerator>(
+    padder_ = std::make_unique<PaddingEffectGenerator>(
         scaled_width, scaled_height, target_aspect_ratio_);
     VLOG(1) << "Scene is padded: scaled width = " << scaled_width
             << " target width = " << target_width_
@@ -749,7 +749,7 @@ absl::Status SceneCroppingCalculator::FormatAndOutputCroppedFrames(
   for (int i = 0; i < num_frames; ++i) {
     const int64_t time_ms = scene_frame_timestamps_[i];
     const Timestamp timestamp(time_ms);
-    auto scaled_frame = absl::make_unique<ImageFrame>(
+    auto scaled_frame = std::make_unique<ImageFrame>(
         frame_format_, scaled_width, scaled_height);
     auto destination = formats::MatView(scaled_frame.get());
     if (scaled_width == crop_width && scaled_height == crop_height) {
@@ -767,7 +767,7 @@ absl::Status SceneCroppingCalculator::FormatAndOutputCroppedFrames(
       if (has_solid_background_) {
         background_color = &padding_colors->at(i);
       }
-      auto padded_frame = absl::make_unique<ImageFrame>();
+      auto padded_frame = std::make_unique<ImageFrame>();
       MP_RETURN_IF_ERROR(padder_->Process(
           *scaled_frame, background_contrast_,
           std::min({blur_cv_size_, scaled_width, scaled_height}),
