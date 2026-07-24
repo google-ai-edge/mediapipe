@@ -103,8 +103,8 @@ absl::Status Lift2DFrameAnnotationTo3DCalculator::Open(CalculatorContext* cc) {
                         0., 0., -1., 0.,
                         0., 0., -1., 0.;
   // clang-format on
-  decoder_ = absl::make_unique<Decoder>(
-      BeliefDecoderConfig(options_.decoder_config()));
+  decoder_ =
+      std::make_unique<Decoder>(BeliefDecoderConfig(options_.decoder_config()));
   return absl::OkStatus();
 }
 
@@ -114,7 +114,7 @@ absl::Status Lift2DFrameAnnotationTo3DCalculator::Process(
     return absl::OkStatus();
   }
 
-  auto output_objects = absl::make_unique<FrameAnnotation>();
+  auto output_objects = std::make_unique<FrameAnnotation>();
 
   MP_RETURN_IF_ERROR(ProcessCPU(cc, output_objects.get()));
 
