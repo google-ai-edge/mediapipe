@@ -75,7 +75,6 @@ android_library(
         "//mediapipe/tasks/cc/vision/image_generator/proto:image_generator_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:core_java",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:facelandmarker",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:imagesegmenter",
         "//third_party:any_java_proto",
