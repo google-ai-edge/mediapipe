@@ -14,6 +14,8 @@
 
 #include "mediapipe/objc/util.h"
 
+#include <iterator>
+
 #if defined(__APPLE__)
 
 #import <Accelerate/Accelerate.h>          // IWYU pragma: keep
@@ -221,7 +223,7 @@ vImage_Error vImageConvertCVPixelBuffers(CVPixelBufferRef src,
   int dst_buffer_count =
       vImageConverter_GetNumberOfDestinationBuffers(converter);
   vImage_Buffer buffers[8];
-  if (src_buffer_count + dst_buffer_count > ABSL_ARRAYSIZE(buffers)) {
+  if (src_buffer_count + dst_buffer_count > std::size(buffers)) {
     vImageConverter_Release(converter);
     return kvImageMemoryAllocationError;
   }
@@ -705,7 +707,7 @@ CFDictionaryRef GetCVPixelBufferAttributesForGlCompatibility() {
         kCFBooleanTrue};
 
     attrs = CFDictionaryCreate(
-        kCFAllocatorDefault, keys, values, ABSL_ARRAYSIZE(values),
+        kCFAllocatorDefault, keys, values, std::size(values),
         &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
     CFRelease(empty_dict);
   }
