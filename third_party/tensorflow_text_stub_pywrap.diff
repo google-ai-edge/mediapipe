@@ -1,0 +1,24 @@
+diff --git a/tensorflow_text/tftext.bzl b/tensorflow_text/tftext.bzl
+--- a/tensorflow_text/tftext.bzl
++++ b/tensorflow_text/tftext.bzl
+@@ -1,12 +1,14 @@
+ """
+ Build rules for open source tf.text libraries.
+ """
+-load(
+-    "@local_xla//third_party/py/rules_pywrap:pywrap.default.bzl", 
+-    _pybind_extension = "pybind_extension",
+-    _pywrap_binaries = "pywrap_binaries",
+-    _pywrap_library = "pywrap_library"
+-)
++def _pybind_extension(*args, **kwargs):
++    fail("pybind_extension is not supported in this WORKSPACE setup")
++
++def _pywrap_binaries(*args, **kwargs):
++    fail("pywrap_binaries is not supported in this WORKSPACE setup")
++
++def _pywrap_library(*args, **kwargs):
++    fail("pywrap_library is not supported in this WORKSPACE setup")
+ 
+ def py_tf_text_library(
+         name,

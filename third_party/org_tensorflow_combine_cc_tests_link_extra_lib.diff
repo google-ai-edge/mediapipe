@@ -1,0 +1,23 @@
+diff --git a/tensorflow/lite/build_def.bzl b/tensorflow/lite/build_def.bzl
+--- a/tensorflow/lite/build_def.bzl
++++ b/tensorflow/lite/build_def.bzl
+@@ -806,7 +806,18 @@
+ 
+     if combined_test_srcs:
+         # Using native.existing_rule to combine cc_test's deps duplicates link_extra_lib. Remove it.
+-        combined_test_deps.pop("@@rules_cc" + "//:link_extra_lib", None)
++        # Using the bare "@@rules_cc" canonical name only works when
++        # bzlmod resolves rules_cc to that exact name with no version
++        # suffix; with a single_version_override (or any graph shape that
++        # gives it a suffixed canonical name like "@@rules_cc~"), the pop
++        # silently misses and link_extra_lib ends up duplicated. Match on
++        # the label suffix instead so this works regardless of the exact
++        # canonical repo name.
++        combined_test_deps = {
++            d: v
++            for d, v in combined_test_deps.items()
++            if not ("rules_cc" in d and d.endswith("link_extra_lib"))
++        }
+         cc_test(
+             name = name,
+             size = "large",
