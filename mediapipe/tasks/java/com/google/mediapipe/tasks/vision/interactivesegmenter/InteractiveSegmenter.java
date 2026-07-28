@@ -25,6 +25,7 @@ import com.google.mediapipe.framework.image.ByteBufferImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.components.containers.NormalizedKeypoint;
 import com.google.mediapipe.tasks.core.BaseOptionsUtils;
+import com.google.mediapipe.tasks.core.JniConfig;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import com.google.mediapipe.tasks.vision.interactivesegmenter.proto.StrokeProto;
 import com.google.mediapipe.tasks.vision.interactivesegmenter.proto.StrokeProto.Stroke.BrushMode;
@@ -49,7 +50,7 @@ public final class InteractiveSegmenter implements AutoCloseable {
   private final AndroidPacketCreator packetCreator;
 
   static {
-    System.loadLibrary("mediapipe_tasks_jni");
+    System.loadLibrary(JniConfig.INSTANCE.getVisionJniLib());
   }
 
   private InteractiveSegmenter(long nativeSegmenterHandle) {
