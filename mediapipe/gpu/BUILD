@@ -591,8 +591,16 @@ cc_library(
     hdrs = ["gpu_buffer_storage_ahwb.h"],
     linkopts = select({
         "//conditions:default": [],
+        # Option for vendor binaries to avoid linking libandroid.so.
+        "//mediapipe/framework:android_no_jni": [],
         "//mediapipe:android": [
             "-landroid",
+        ],
+        # Vendor binaries on Android API >= 26 link libnativewindow for
+        # <android/hardware_buffer.h> (AHardwareBuffer_*) instead of
+        # libandroid.so, which is not available in the vendor linker namespace.
+        "//mediapipe/framework/formats:android_link_native_window": [
+            "-lnativewindow",
         ],
     }),
     deps = [
