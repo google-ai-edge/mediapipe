@@ -38,7 +38,7 @@ absl::Duration DurationFromMillis(int64_t millis) {
 }
 
 TEST(RelativeVelocityFilterTest, ApplyIncorrectTimestamp) {
-  auto filter = absl::make_unique<RelativeVelocityFilter>(1, 1.0);
+  auto filter = std::make_unique<RelativeVelocityFilter>(1, 1.0);
 
   absl::Duration timestamp1 = DurationFromNanos(1);
 
@@ -61,11 +61,11 @@ void TestSameValueScaleDifferentVelocityScales(
   // Changing the distance estimation mode has no effect with constant scales.
 
   // More sensitive filter.
-  auto filter1 = absl::make_unique<RelativeVelocityFilter>(
+  auto filter1 = std::make_unique<RelativeVelocityFilter>(
       /*window_size=*/5, /*velocity_scale=*/45.0f,
       /*distance_mode=*/distance_mode);
   // Less sensitive filter.
-  auto filter2 = absl::make_unique<RelativeVelocityFilter>(
+  auto filter2 = std::make_unique<RelativeVelocityFilter>(
       /*window_size=*/5, /*velocity_scale=*/0.1f,
       /*distance_mode=*/distance_mode);
 
@@ -124,10 +124,10 @@ TEST(RelativeVelocityFilterTest,
 void TestDifferentConstantValueScalesSameVelocityScale(
     DistanceEstimationMode distance_mode) {
   const float same_velocity_scale = 1.0f;
-  auto filter1 = absl::make_unique<RelativeVelocityFilter>(
+  auto filter1 = std::make_unique<RelativeVelocityFilter>(
       /*window_size=*/3, /*velocity_scale=*/same_velocity_scale,
       /*distance_mode=*/distance_mode);
-  auto filter2 = absl::make_unique<RelativeVelocityFilter>(
+  auto filter2 = std::make_unique<RelativeVelocityFilter>(
       /*window_size=*/3, /*velocity_scale=*/same_velocity_scale,
       /*distance_mode=*/distance_mode);
 
@@ -213,10 +213,10 @@ void TestTranslationInvariance(DistanceEstimationMode distance_mode) {
     point.value += kValueOffset;
   }
 
-  auto original_points_filter = absl::make_unique<RelativeVelocityFilter>(
+  auto original_points_filter = std::make_unique<RelativeVelocityFilter>(
       /*window_size=*/kWindowSize, /*velocity_scale=*/kVelocityScale,
       /*distance_mode=*/distance_mode);
-  auto translated_points_filter = absl::make_unique<RelativeVelocityFilter>(
+  auto translated_points_filter = std::make_unique<RelativeVelocityFilter>(
       /*window_size=*/kWindowSize, /*velocity_scale=*/kVelocityScale,
       /*distance_mode=*/distance_mode);
 
