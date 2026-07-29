@@ -292,7 +292,7 @@ absl::Status ScaleImageCalculator::InitializeFrameInfo(CalculatorContext* cc) {
   if (!header_sent_ && cc->Outputs().UsesTags() &&
       cc->Outputs().HasTag("VIDEO_HEADER")) {
     header_sent_ = true;
-    auto header = absl::make_unique<VideoHeader>();
+    auto header = std::make_unique<VideoHeader>();
     *header = input_video_header_;
     header->width = output_width_;
     header->height = output_height_;
@@ -617,7 +617,7 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
                                 output_width_, u, output_width_ / 2, v,
                                 output_width_ / 2, output_width_,
                                 output_height_, libyuv::kFilterBox));
-      auto output_image = absl::make_unique<YUVImage>(
+      auto output_image = std::make_unique<YUVImage>(
           libyuv::FOURCC_I420, std::move(yuv_data), y, output_width_, u,
           output_width_ / 2, v, output_width_ / 2, output_width_,
           output_height_);

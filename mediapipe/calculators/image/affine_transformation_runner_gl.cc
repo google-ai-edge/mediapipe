@@ -426,7 +426,7 @@ absl::StatusOr<std::unique_ptr<
 CreateAffineTransformationGlRunner(
     std::shared_ptr<GlCalculatorHelper> gl_helper, GpuOrigin::Mode gpu_origin,
     AffineTransformation::Interpolation interpolation) {
-  auto runner = absl::make_unique<GlTextureWarpAffineRunner>(
+  auto runner = std::make_unique<GlTextureWarpAffineRunner>(
       gl_helper, gpu_origin, interpolation);
   MP_RETURN_IF_ERROR(runner->Init());
   return runner;

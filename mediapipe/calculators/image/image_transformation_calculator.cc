@@ -528,7 +528,7 @@ absl::Status ImageTransformationCalculator::RenderCpu(CalculatorContext* cc) {
   }
 
   if (cc->Outputs().HasTag("LETTERBOX_PADDING")) {
-    auto padding = absl::make_unique<std::array<float, 4>>();
+    auto padding = std::make_unique<std::array<float, 4>>();
     ComputeOutputLetterboxPadding(input_width, input_height, output_width,
                                   output_height, padding.get());
     cc->Outputs()
@@ -601,7 +601,7 @@ absl::Status ImageTransformationCalculator::RenderGpu(CalculatorContext* cc) {
   }
 
   if (cc->Outputs().HasTag("LETTERBOX_PADDING")) {
-    auto padding = absl::make_unique<std::array<float, 4>>();
+    auto padding = std::make_unique<std::array<float, 4>>();
     ComputeOutputLetterboxPadding(input_width, input_height, output_width,
                                   output_height, padding.get());
     cc->Outputs()
@@ -639,7 +639,7 @@ absl::Status ImageTransformationCalculator::RenderGpu(CalculatorContext* cc) {
 #endif      // TEXTURE_EXTERNAL_OES
     {
       if (!rgb_renderer_) {
-        rgb_renderer_ = absl::make_unique<QuadRenderer>();
+        rgb_renderer_ = std::make_unique<QuadRenderer>();
         MP_RETURN_IF_ERROR(rgb_renderer_->GlSetup());
       }
       renderer = rgb_renderer_.get();

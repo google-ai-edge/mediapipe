@@ -272,7 +272,7 @@ absl::Status SetAlphaCalculator::RenderCpu(CalculatorContext* cc) {
   }
 
   // Setup destination image
-  auto output_frame = absl::make_unique<ImageFrame>(
+  auto output_frame = std::make_unique<ImageFrame>(
       ImageFormat::SRGBA, input_mat.cols, input_mat.rows);
   cv::Mat output_mat = formats::MatView(output_frame.get());
 

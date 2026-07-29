@@ -96,7 +96,7 @@ absl::Status OpenCvEncodedImageToImageFrameCalculator::Process(
            << "Failed to decode image.";
   }
 
-  std::unique_ptr<ImageFrame> output_frame = absl::make_unique<ImageFrame>(
+  std::unique_ptr<ImageFrame> output_frame = std::make_unique<ImageFrame>(
       image_format, decoded_mat.size().width, decoded_mat.size().height,
       ImageFrame::kGlDefaultAlignmentBoundary);
   output_mat.copyTo(formats::MatView(output_frame.get()));

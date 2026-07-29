@@ -246,7 +246,7 @@ absl::Status BilateralFilterCalculator::RenderCpu(CalculatorContext* cc) {
         "CPU filtering supports only 1 or 3 channel input images.");
   }
 
-  auto output_frame = absl::make_unique<ImageFrame>(
+  auto output_frame = std::make_unique<ImageFrame>(
       input_frame.Format(), input_mat.cols, input_mat.rows);
   const bool has_guide_image = cc->Inputs().HasTag(kInputGuideTag) &&
                                !cc->Inputs().Tag(kInputGuideTag).IsEmpty();

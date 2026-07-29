@@ -253,7 +253,7 @@ absl::Status RecolorCalculator::RenderCpu(CalculatorContext* cc) {
   cv::resize(mask_mat, mask_full, input_mat.size());
   const cv::Vec3b recolor = {color_[0], color_[1], color_[2]};
 
-  auto output_img = absl::make_unique<ImageFrame>(
+  auto output_img = std::make_unique<ImageFrame>(
       input_img.Format(), input_mat.cols, input_mat.rows);
   cv::Mat output_mat = mediapipe::formats::MatView(output_img.get());
 
