@@ -182,7 +182,7 @@ TemplateParser::ParseInfoTree*
 TemplateParser::ParseInfoTree::CreateNested(  // NOLINT
     const FieldDescriptor* field) {
   // Owned by us in the map.
-  auto instance = absl::make_unique<TemplateParser::ParseInfoTree>();
+  auto instance = std::make_unique<TemplateParser::ParseInfoTree>();
   std::vector<std::unique_ptr<TemplateParser::ParseInfoTree>>* trees =
       &nested_[field];
   instance->path_ =

@@ -341,7 +341,7 @@ absl::StatusOr<std::unique_ptr<ImageFrame>> DecodeTestImage(
         << "unsupported number of channels: " << output_channels;
   }
 
-  return absl::make_unique<ImageFrame>(
+  return std::make_unique<ImageFrame>(
       format, width, height, width * output_channels, data, stbi_image_free);
 }
 
@@ -413,8 +413,8 @@ std::unique_ptr<ImageFrame> GenerateLuminanceImage(
     return nullptr;
   }
   auto luminance_image =
-      absl::make_unique<ImageFrame>(original_image.Format(), width, height,
-                                    ImageFrame::kGlDefaultAlignmentBoundary);
+      std::make_unique<ImageFrame>(original_image.Format(), width, height,
+                                   ImageFrame::kGlDefaultAlignmentBoundary);
   const uint8_t* pixel1 = original_image.PixelData();
   uint8_t* pixel2 = luminance_image->MutablePixelData();
   const int width_padding1 = original_image.WidthStep() - width * channels;

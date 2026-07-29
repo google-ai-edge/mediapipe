@@ -34,7 +34,7 @@ absl::StatusOr<std::unique_ptr<PacketSet>> FillPacketSet(
   }
   std::vector<absl::Status> errors;
   auto packet_set =
-      absl::make_unique<PacketSet>(input_side_packet_types.TagMap());
+      std::make_unique<PacketSet>(input_side_packet_types.TagMap());
   const auto& names = input_side_packet_types.TagMap()->Names();
   for (CollectionItemId id = input_side_packet_types.BeginId();
        id < input_side_packet_types.EndId(); ++id) {
