@@ -141,7 +141,7 @@ absl::Status TfLiteTensorsToClassificationCalculator::Process(
   }
   const float* raw_scores = raw_score_tensor->data.f;
 
-  auto classification_list = absl::make_unique<ClassificationList>();
+  auto classification_list = std::make_unique<ClassificationList>();
   if (options_.binary_classification()) {
     Classification* class_first = classification_list->add_classification();
     Classification* class_second = classification_list->add_classification();

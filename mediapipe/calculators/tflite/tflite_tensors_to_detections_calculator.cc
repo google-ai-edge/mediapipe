@@ -259,7 +259,7 @@ absl::Status TfLiteTensorsToDetectionsCalculator::Process(
     return absl::OkStatus();
   }
 
-  auto output_detections = absl::make_unique<std::vector<Detection>>();
+  auto output_detections = std::make_unique<std::vector<Detection>>();
 
   if (gpu_input_) {
     MP_RETURN_IF_ERROR(ProcessGPU(cc, output_detections.get()));

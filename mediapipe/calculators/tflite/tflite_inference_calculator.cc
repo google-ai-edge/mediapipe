@@ -439,8 +439,8 @@ absl::Status TfLiteInferenceCalculator::Open(CalculatorContext* cc) {
 absl::Status TfLiteInferenceCalculator::Process(CalculatorContext* cc) {
   return RunInContextIfNeeded([this, cc]() -> absl::Status {
     // 0. Declare outputs
-    auto output_tensors_gpu = absl::make_unique<std::vector<GpuTensor>>();
-    auto output_tensors_cpu = absl::make_unique<std::vector<TfLiteTensor>>();
+    auto output_tensors_gpu = std::make_unique<std::vector<GpuTensor>>();
+    auto output_tensors_cpu = std::make_unique<std::vector<TfLiteTensor>>();
 
     // 1. Receive pre-processed tensor inputs.
     if (gpu_input_) {

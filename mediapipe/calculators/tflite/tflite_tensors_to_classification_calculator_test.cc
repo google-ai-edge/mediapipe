@@ -35,7 +35,7 @@ class TfLiteTensorsToClassificationCalculatorTest : public ::testing::Test {
  protected:
   void BuildGraph(mediapipe::CalculatorRunner* runner,
                   const std::vector<float>& scores) {
-    interpreter_ = absl::make_unique<Interpreter>();
+    interpreter_ = std::make_unique<Interpreter>();
 
     std::vector<int> dims(2);
     dims[0] = 1;
@@ -57,7 +57,7 @@ class TfLiteTensorsToClassificationCalculatorTest : public ::testing::Test {
       tensor_buffer[i] = scores[i];
     }
 
-    auto tensors = absl::make_unique<std::vector<TfLiteTensor>>();
+    auto tensors = std::make_unique<std::vector<TfLiteTensor>>();
     tensors->emplace_back(*tensor);
 
     int64_t stream_timestamp = 0;

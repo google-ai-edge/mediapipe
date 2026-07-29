@@ -95,7 +95,7 @@ absl::Status TfLiteTensorsToFloatsCalculator::Process(CalculatorContext* cc) {
         MakePacket<float>(raw_floats[0]).At(cc->InputTimestamp()));
   }
   if (cc->Outputs().HasTag(kFloatsTag)) {
-    auto output_floats = absl::make_unique<std::vector<float>>(
+    auto output_floats = std::make_unique<std::vector<float>>(
         raw_floats, raw_floats + num_values);
     cc->Outputs()
         .Tag(kFloatsTag)

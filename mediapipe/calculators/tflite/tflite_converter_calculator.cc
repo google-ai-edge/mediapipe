@@ -246,7 +246,7 @@ absl::Status TfLiteConverterCalculator::Open(CalculatorContext* cc) {
     RET_CHECK(gpu_helper_);
 #endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
   } else {
-    interpreter_ = absl::make_unique<tflite::Interpreter>();
+    interpreter_ = std::make_unique<tflite::Interpreter>();
     interpreter_->AddTensors(1);
     interpreter_->SetInputs({0});
   }
@@ -366,7 +366,7 @@ absl::Status TfLiteConverterCalculator::ProcessCPU(CalculatorContext* cc) {
       }
     }
 
-    auto output_tensors = absl::make_unique<std::vector<TfLiteTensor>>();
+    auto output_tensors = std::make_unique<std::vector<TfLiteTensor>>();
     output_tensors->emplace_back(*tensor);
     cc->Outputs()
         .Tag(kTensorsTag)
@@ -398,7 +398,7 @@ absl::Status TfLiteConverterCalculator::ProcessCPU(CalculatorContext* cc) {
 
     MP_RETURN_IF_ERROR(CopyMatrixToTensor(matrix, tensor_ptr));
 
-    auto output_tensors = absl::make_unique<std::vector<TfLiteTensor>>();
+    auto output_tensors = std::make_unique<std::vector<TfLiteTensor>>();
     output_tensors->emplace_back(*tensor);
     cc->Outputs()
         .Tag(kTensorsTag)
