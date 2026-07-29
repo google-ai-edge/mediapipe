@@ -240,7 +240,7 @@ absl::StatusOr<absl::optional<VectorType>> VerifyNumAndMaybeInitOutput(
 
 std::unique_ptr<DuplicatesFinder> CreateHandDuplicatesFinder(
     bool start_from_the_end) {
-  return absl::make_unique<HandDuplicatesFinder>(start_from_the_end);
+  return std::make_unique<HandDuplicatesFinder>(start_from_the_end);
 }
 
 class HandLandmarksDeduplicationNodeImpl
