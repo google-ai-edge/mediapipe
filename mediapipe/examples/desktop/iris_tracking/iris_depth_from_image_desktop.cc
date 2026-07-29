@@ -136,7 +136,7 @@ absl::Status RunMPPGraph() {
 
   ABSL_LOG(INFO) << "Initialize the calculator graph.";
   std::unique_ptr<mediapipe::CalculatorGraph> graph =
-      absl::make_unique<mediapipe::CalculatorGraph>();
+      std::make_unique<mediapipe::CalculatorGraph>();
   MP_RETURN_IF_ERROR(graph->Initialize(config));
 
   const bool load_image = !absl::GetFlag(FLAGS_input_image_path).empty();
