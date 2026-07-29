@@ -138,7 +138,7 @@ absl::Status Tvl1OpticalFlowCalculator::Process(CalculatorContext* cc) {
   const ImageFrame& second_frame =
       cc->Inputs().Tag(kSecondFrameTag).Value().Get<ImageFrame>();
   if (forward_requested_) {
-    auto forward_optical_flow_field = absl::make_unique<OpticalFlowField>();
+    auto forward_optical_flow_field = std::make_unique<OpticalFlowField>();
     MP_RETURN_IF_ERROR(CalculateOpticalFlow(first_frame, second_frame,
                                             forward_optical_flow_field.get()));
     cc->Outputs()
@@ -146,7 +146,7 @@ absl::Status Tvl1OpticalFlowCalculator::Process(CalculatorContext* cc) {
         .Add(forward_optical_flow_field.release(), cc->InputTimestamp());
   }
   if (backward_requested_) {
-    auto backward_optical_flow_field = absl::make_unique<OpticalFlowField>();
+    auto backward_optical_flow_field = std::make_unique<OpticalFlowField>();
     MP_RETURN_IF_ERROR(CalculateOpticalFlow(second_frame, first_frame,
                                             backward_optical_flow_field.get()));
     cc->Outputs()

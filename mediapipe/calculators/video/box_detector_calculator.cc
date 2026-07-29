@@ -382,7 +382,7 @@ absl::Status BoxDetectorCalculator::Process(CalculatorContext* cc) {
     cv::Mat viz_view;
     std::unique_ptr<ImageFrame> viz_frame;
     if (video_stream != nullptr && !video_stream->IsEmpty()) {
-      viz_frame = absl::make_unique<ImageFrame>();
+      viz_frame = std::make_unique<ImageFrame>();
       viz_frame->CopyFrom(video_stream->Get<ImageFrame>(), frame_alignment_);
       viz_view = formats::MatView(viz_frame.get());
     }

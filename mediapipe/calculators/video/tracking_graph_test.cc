@@ -227,7 +227,7 @@ std::unique_ptr<TimedBoxProtoList> TrackingGraphTest::MakeBoxList(
     const Timestamp& timestamp, const std::vector<bool>& is_quad_tracking,
     const std::vector<bool>& is_pnp_tracking,
     const std::vector<bool>& reacquisition) const {
-  auto box_list = absl::make_unique<TimedBoxProtoList>();
+  auto box_list = std::make_unique<TimedBoxProtoList>();
   int box_id = 0;
   for (int j = 0; j < is_quad_tracking.size(); ++j) {
     TimedBoxProto* box = box_list->add_box();
@@ -267,7 +267,7 @@ void TrackingGraphTest::CreateInputFramesFromOriginalImage(
     cv::Rect roi(i * translation_step, i * translation_step, crop_width,
                  crop_height);
     cv::Mat cropped_img = cv::Mat(original_image_, roi);
-    auto cropped_image_frame = absl::make_unique<ImageFrame>(
+    auto cropped_image_frame = std::make_unique<ImageFrame>(
         ImageFormat::SRGB, crop_width, crop_height, cropped_img.step[0],
         cropped_img.data, ImageFrame::PixelDataDeleter::kNone);
     Timestamp curr_timestamp = Timestamp(i * kFrameIntervalUs);
@@ -300,7 +300,7 @@ TrackingGraphTest::CreateRandomAccessTrackingBoxList(
     const std::vector<Timestamp>& start_timestamps,
     const std::vector<Timestamp>& end_timestamps) const {
   ABSL_CHECK_EQ(start_timestamps.size(), end_timestamps.size());
-  auto ra_boxes = absl::make_unique<TimedBoxProtoList>();
+  auto ra_boxes = std::make_unique<TimedBoxProtoList>();
   for (int i = 0; i < start_timestamps.size(); ++i) {
     auto start_box_list =
         MakeBoxList(start_timestamps[i], std::vector<bool>{true},

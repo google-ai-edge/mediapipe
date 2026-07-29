@@ -78,7 +78,7 @@ absl::Status VideoPreStreamCalculator::Open(CalculatorContext* cc) {
   frame_rate_in_prestream_ = cc->Inputs().UsesTags() &&
                              cc->Inputs().HasTag(kFrameTag) &&
                              cc->Inputs().HasTag(kVideoPrestreamTag);
-  header_ = absl::make_unique<VideoHeader>();
+  header_ = std::make_unique<VideoHeader>();
   return absl::OkStatus();
 }
 absl::Status VideoPreStreamCalculator::ProcessWithFrameRateInPreStream(

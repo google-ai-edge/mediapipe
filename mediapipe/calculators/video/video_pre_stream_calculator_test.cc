@@ -83,7 +83,7 @@ TEST(VideoPreStreamCalculatorTest, ProcessesWithFrameRateInPreStream) {
   MP_ASSERT_OK(poller_status.status());
   OutputStreamPoller& poller = poller_status.value();
   MP_ASSERT_OK(graph.StartRun({}));
-  auto input_header = absl::make_unique<VideoHeader>();
+  auto input_header = std::make_unique<VideoHeader>();
   input_header->frame_rate = 3.0;
   MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_header",
@@ -169,7 +169,7 @@ TEST(VideoPreStreamCalculatorTest, FailsWithoutFrameRateInPreStream2) {
     CalculatorGraph graph;
     MP_ASSERT_OK(graph.Initialize(config));
     MP_ASSERT_OK(graph.StartRun({}));
-    auto input_header = absl::make_unique<VideoHeader>();
+    auto input_header = std::make_unique<VideoHeader>();
     input_header->frame_rate = 3.0;
     MP_ASSERT_OK(graph.AddPacketToInputStream(
         "input_header",
