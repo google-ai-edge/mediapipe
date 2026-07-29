@@ -682,7 +682,7 @@ void InternalPacketCreators(pybind11::module* m) {
   m->def(
       "_create_image_frame_from_image_frame",
       [](ImageFrame& image_frame) {
-        auto image_frame_copy = absl::make_unique<ImageFrame>();
+        auto image_frame_copy = std::make_unique<ImageFrame>();
         // Set alignment_boundary to kGlDefaultAlignmentBoundary so that
         // both GPU and CPU can process it.
         image_frame_copy->CopyFrom(image_frame,
@@ -694,7 +694,7 @@ void InternalPacketCreators(pybind11::module* m) {
   m->def(
       "_create_image_from_image",
       [](Image& image) {
-        auto image_frame_copy = absl::make_unique<ImageFrame>();
+        auto image_frame_copy = std::make_unique<ImageFrame>();
         // Set alignment_boundary to kGlDefaultAlignmentBoundary so that
         // both GPU and CPU can process it.
         image_frame_copy->CopyFrom(*image.GetImageFrameSharedPtr(),
