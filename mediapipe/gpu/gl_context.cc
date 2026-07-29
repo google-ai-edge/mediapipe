@@ -318,7 +318,7 @@ absl::Status GlContext::GetGlExtensionsCompat() {
 
 absl::Status GlContext::FinishInitialization(bool create_thread) {
   if (create_thread) {
-    thread_ = absl::make_unique<GlContext::DedicatedThread>();
+    thread_ = std::make_unique<GlContext::DedicatedThread>();
 #ifdef MEDIAPIPE_HAS_GOOGLE_THREAD
     MP_RETURN_IF_ERROR(thread_->Run(util::functional::WithCurrentContext(
         [this] { return EnterContext(nullptr); })));

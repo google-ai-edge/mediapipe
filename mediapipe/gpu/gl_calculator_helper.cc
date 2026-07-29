@@ -242,7 +242,7 @@ std::unique_ptr<ImageFrame> GlTexture::GetFrame<ImageFrame>() const {
   view_->DoneWriting();
   std::shared_ptr<const ImageFrame> view =
       gpu_buffer_.GetReadView<ImageFrame>();
-  auto copy = absl::make_unique<ImageFrame>();
+  auto copy = std::make_unique<ImageFrame>();
   copy->CopyFrom(*view, ImageFrame::kDefaultAlignmentBoundary);
   return copy;
 }
@@ -250,14 +250,14 @@ std::unique_ptr<ImageFrame> GlTexture::GetFrame<ImageFrame>() const {
 template <>
 std::unique_ptr<GpuBuffer> GlTexture::GetFrame<GpuBuffer>() const {
   view_->DoneWriting();
-  return absl::make_unique<GpuBuffer>(gpu_buffer_);
+  return std::make_unique<GpuBuffer>(gpu_buffer_);
 }
 
 template <>
 std::unique_ptr<mediapipe::Image> GlTexture::GetFrame<mediapipe::Image>()
     const {
   std::unique_ptr<GpuBuffer> buf = GetFrame<GpuBuffer>();
-  auto output = absl::make_unique<mediapipe::Image>(*buf);
+  auto output = std::make_unique<mediapipe::Image>(*buf);
   return output;
 }
 

@@ -275,7 +275,7 @@ absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
 #endif        // __ANDROID__
       {
         if (!rgb_renderer_) {
-          rgb_renderer_ = absl::make_unique<QuadRenderer>();
+          rgb_renderer_ = std::make_unique<QuadRenderer>();
           MP_RETURN_IF_ERROR(rgb_renderer_->GlSetup());
         }
         renderer = rgb_renderer_.get();
