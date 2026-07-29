@@ -38,7 +38,7 @@ void CalculatorContextManager::Initialize(
 absl::Status CalculatorContextManager::PrepareForRun(
     std::function<absl::Status(CalculatorContext*)> setup_shards_callback) {
   setup_shards_callback_ = std::move(setup_shards_callback);
-  default_context_ = absl::make_unique<CalculatorContext>(
+  default_context_ = std::make_unique<CalculatorContext>(
       calculator_state_, input_tag_map_, output_tag_map_);
   return setup_shards_callback_(default_context_.get());
 }
@@ -77,7 +77,7 @@ CalculatorContext* CalculatorContextManager::PrepareCalculatorContext(
       << input_timestamp;
   CalculatorContext* calculator_context = nullptr;
   if (idle_contexts_.empty()) {
-    auto new_context = absl::make_unique<CalculatorContext>(
+    auto new_context = std::make_unique<CalculatorContext>(
         calculator_state_, input_tag_map_, output_tag_map_);
     MEDIAPIPE_CHECK_OK(setup_shards_callback_(new_context.get()));
     calculator_context = new_context.get();

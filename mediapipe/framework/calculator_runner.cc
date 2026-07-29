@@ -113,19 +113,19 @@ absl::Status CalculatorRunner::InitializeFromNodeConfig(
 
   MP_ASSIGN_OR_RETURN(auto input_map,
                       tool::TagMap::Create(node_config_.input_stream()));
-  inputs_ = absl::make_unique<StreamContentsSet>(input_map);
+  inputs_ = std::make_unique<StreamContentsSet>(input_map);
 
   MP_ASSIGN_OR_RETURN(auto output_map,
                       tool::TagMap::Create(node_config_.output_stream()));
-  outputs_ = absl::make_unique<StreamContentsSet>(output_map);
+  outputs_ = std::make_unique<StreamContentsSet>(output_map);
 
   MP_ASSIGN_OR_RETURN(auto input_side_map,
                       tool::TagMap::Create(node_config_.input_side_packet()));
-  input_side_packets_ = absl::make_unique<PacketSet>(input_side_map);
+  input_side_packets_ = std::make_unique<PacketSet>(input_side_map);
 
   MP_ASSIGN_OR_RETURN(auto output_side_map,
                       tool::TagMap::Create(node_config_.output_side_packet()));
-  output_side_packets_ = absl::make_unique<PacketSet>(output_side_map);
+  output_side_packets_ = std::make_unique<PacketSet>(output_side_map);
 
   return absl::OkStatus();
 }
@@ -278,7 +278,7 @@ absl::Status CalculatorRunner::BuildGraph() {
 #endif
   }
 
-  graph_ = absl::make_unique<CalculatorGraph>();
+  graph_ = std::make_unique<CalculatorGraph>();
   MP_RETURN_IF_ERROR(graph_->Initialize(config));
   return absl::OkStatus();
 }

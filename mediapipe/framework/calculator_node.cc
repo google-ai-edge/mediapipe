@@ -263,7 +263,7 @@ absl::Status CalculatorNode::InitializeOutputSidePackets(
     const PacketTypeSet& output_side_packet_types,
     OutputSidePacketImpl* output_side_packets) {
   output_side_packets_ =
-      absl::make_unique<OutputSidePacketSet>(output_side_packet_types.TagMap());
+      std::make_unique<OutputSidePacketSet>(output_side_packet_types.TagMap());
   int base_index = node_type_info_->OutputSidePacketBaseIndex();
   RET_CHECK_LE(0, base_index);
   for (CollectionItemId id = output_side_packets_->BeginId();

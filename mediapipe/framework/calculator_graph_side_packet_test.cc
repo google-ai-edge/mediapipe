@@ -371,7 +371,7 @@ TEST(CalculatorGraph, SharePacketGeneratorGraph) {
   // Create a bunch of graphs.
   std::vector<std::unique_ptr<CalculatorGraph>> graphs;
   for (int i = 0; i < 100; ++i) {
-    graphs.emplace_back(absl::make_unique<CalculatorGraph>());
+    graphs.emplace_back(std::make_unique<CalculatorGraph>());
     // Do not pass extra side packets here.
     // Note that validated_calculator_config must outlive the graph.
     MP_ASSERT_OK(graphs.back()->Initialize(calculator_config, {}));

@@ -88,13 +88,13 @@ absl::Status CalculatorContract::Initialize(
   node_config_ = &node;
   options_.Initialize(*node_config_);
   // Create the PacketTypeSets.
-  inputs_ = absl::make_unique<PacketTypeSet>(
-      std::move(input_stream_statusor).value());
-  outputs_ = absl::make_unique<PacketTypeSet>(
+  inputs_ =
+      std::make_unique<PacketTypeSet>(std::move(input_stream_statusor).value());
+  outputs_ = std::make_unique<PacketTypeSet>(
       std::move(output_stream_statusor).value());
-  input_side_packets_ = absl::make_unique<PacketTypeSet>(
+  input_side_packets_ = std::make_unique<PacketTypeSet>(
       std::move(input_side_packet_statusor).value());
-  output_side_packets_ = absl::make_unique<PacketTypeSet>(
+  output_side_packets_ = std::make_unique<PacketTypeSet>(
       std::move(output_side_packet_statusor).value());
   return absl::OkStatus();
 }
@@ -130,11 +130,11 @@ absl::Status CalculatorContract::Initialize(const PacketGeneratorConfig& node,
   wrapper_config_ = std::make_unique<CalculatorGraphConfig::Node>(
       MakePacketGeneratorWrapperConfig(node, package));
   options_.Initialize(*wrapper_config_);
-  inputs_ = absl::make_unique<PacketTypeSet>(0);
-  outputs_ = absl::make_unique<PacketTypeSet>(0);
-  input_side_packets_ = absl::make_unique<PacketTypeSet>(
+  inputs_ = std::make_unique<PacketTypeSet>(0);
+  outputs_ = std::make_unique<PacketTypeSet>(0);
+  input_side_packets_ = std::make_unique<PacketTypeSet>(
       std::move(input_side_packet_statusor).value());
-  output_side_packets_ = absl::make_unique<PacketTypeSet>(
+  output_side_packets_ = std::make_unique<PacketTypeSet>(
       std::move(output_side_packet_statusor).value());
   return absl::OkStatus();
 }
@@ -161,7 +161,7 @@ absl::Status CalculatorContract::Initialize(const StatusHandlerConfig& node) {
     return std::move(builder);
   }
 
-  input_side_packets_ = absl::make_unique<PacketTypeSet>(
+  input_side_packets_ = std::make_unique<PacketTypeSet>(
       std::move(input_side_packet_statusor).value());
   return absl::OkStatus();
 }

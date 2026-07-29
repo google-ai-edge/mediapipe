@@ -1696,7 +1696,7 @@ TEST(CalculatorGraph, LayerOrdering) {
   tool::AddVectorSink("count_layer_1_node_1", &config, &dump_layer_1_node_1);
   tool::AddVectorSink("count_layer_2_node_0", &config, &dump_layer_2_node_0);
 
-  auto graph = absl::make_unique<CalculatorGraph>();
+  auto graph = std::make_unique<CalculatorGraph>();
 
   std::atomic<int> global_counter(0);
   std::map<std::string, Packet> input_side_packets;
@@ -1748,7 +1748,7 @@ TEST(CalculatorGraph, LayerOrdering) {
 // Tests for status handler input verification.
 TEST(CalculatorGraph, StatusHandlerInputVerification) {
   // Status handlers with all inputs present should be OK.
-  auto graph = absl::make_unique<CalculatorGraph>();
+  auto graph = std::make_unique<CalculatorGraph>();
   CalculatorGraphConfig config =
       ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         packet_generator {
