@@ -190,7 +190,7 @@ GeneratorScheduler::GeneratorScheduler(
                             !initial) {
   if (!executor_) {
     // Run on the application thread.
-    delegating_executor_ = absl::make_unique<internal::DelegatingExecutor>(
+    delegating_executor_ = std::make_unique<internal::DelegatingExecutor>(
         std::bind(&GeneratorScheduler::AddApplicationThreadTask, this,
                   std::placeholders::_1));
     executor_ = delegating_executor_.get();
@@ -262,9 +262,9 @@ void GeneratorScheduler::ScheduleAllRunnableGenerators(
     bool is_unrunnable = false;
     // TODO Input side packet set should only be created once.
     auto input_side_packet_set =
-        absl::make_unique<PacketSet>(validated_graph_->GeneratorInfos()[index]
-                                         .InputSidePacketTypes()
-                                         .TagMap());
+        std::make_unique<PacketSet>(validated_graph_->GeneratorInfos()[index]
+                                        .InputSidePacketTypes()
+                                        .TagMap());
 
     absl::Status status =
         CreateInputsForGenerator(*validated_graph_, index, *side_packets,

@@ -295,7 +295,7 @@ class MergeCalculator : public CalculatorBase {
   }
 
   absl::Status Open(CalculatorContext* cc) final {
-    auto header = absl::make_unique<std::string>();
+    auto header = std::make_unique<std::string>();
     for (auto& input : cc->Inputs()) {
       if (!input.Header().IsEmpty()) {
         if (!header->empty()) {
@@ -393,7 +393,7 @@ class RandomMatrixCalculator : public CalculatorBase {
     std::seed_seq seq(seed_str.begin(), seed_str.end());
     std::vector<std::uint32_t> seed(1);
     seq.generate(seed.begin(), seed.end());
-    random_ = absl::make_unique<RandomEngine>(seed[0]);
+    random_ = std::make_unique<RandomEngine>(seed[0]);
     return absl::OkStatus();
   }
 

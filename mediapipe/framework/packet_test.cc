@@ -214,7 +214,7 @@ TEST(PacketTest, GetProtoBase) {
 }
 
 TEST(PacketTest, ValidateAsProtoMessageLite) {
-  auto proto_ptr = absl::make_unique<::mediapipe::PacketTestProto>();
+  auto proto_ptr = std::make_unique<::mediapipe::PacketTestProto>();
   proto_ptr->add_x(123);
   Packet packet = Adopt(proto_ptr.release());
   MP_EXPECT_OK(packet.ValidateAsProtoMessageLite());

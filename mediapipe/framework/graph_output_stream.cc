@@ -50,12 +50,12 @@ absl::Status GraphOutputStream::Initialize(
   input_stream_field.Add()->assign(stream_name);
   std::shared_ptr<tool::TagMap> tag_map =
       tool::TagMap::Create(input_stream_field).value();
-  input_stream_handler_ = absl::make_unique<GraphOutputStreamHandler>(
+  input_stream_handler_ = std::make_unique<GraphOutputStreamHandler>(
       tag_map, /*cc_manager=*/nullptr, MediaPipeOptions(),
       /*calculator_run_in_parallel=*/false);
   input_stream_handler_->SetProcessTimestampBounds(observe_timestamp_bounds);
   const CollectionItemId& id = tag_map->BeginId();
-  input_stream_ = absl::make_unique<InputStreamManager>();
+  input_stream_ = std::make_unique<InputStreamManager>();
   MP_RETURN_IF_ERROR(
       input_stream_->Initialize(stream_name, packet_type, /*back_edge=*/false));
   MP_RETURN_IF_ERROR(input_stream_handler_->InitializeInputStreamManagers(
