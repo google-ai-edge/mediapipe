@@ -722,12 +722,10 @@ absl::StatusOr<std::unique_ptr<EffectRenderer>> CreateEffectRenderer(
                       Texture::CreateFromImageFrame(effect_texture),
                       _ << "Failed to create an effect texture!");
 
-  std::unique_ptr<EffectRenderer> result =
-      absl::make_unique<EffectRendererImpl>(
-          environment, std::move(render_target), std::move(renderer),
-          std::move(renderable_quad_mesh_3d),
-          std::move(renderable_effect_mesh_3d),
-          std::move(empty_color_gl_texture), std::move(effect_gl_texture));
+  std::unique_ptr<EffectRenderer> result = std::make_unique<EffectRendererImpl>(
+      environment, std::move(render_target), std::move(renderer),
+      std::move(renderable_quad_mesh_3d), std::move(renderable_effect_mesh_3d),
+      std::move(empty_color_gl_texture), std::move(effect_gl_texture));
 
   return result;
 }

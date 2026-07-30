@@ -259,7 +259,7 @@ class FloatPrecisionProcrustesSolver : public ProcrustesSolver {
 }  // namespace
 
 std::unique_ptr<ProcrustesSolver> CreateFloatPrecisionProcrustesSolver() {
-  return absl::make_unique<FloatPrecisionProcrustesSolver>();
+  return std::make_unique<FloatPrecisionProcrustesSolver>();
 }
 
 }  // namespace face_geometry
