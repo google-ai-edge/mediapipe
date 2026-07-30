@@ -453,8 +453,6 @@ export class InteractiveSegmenter extends TaskRunner {
         shouldCopyData: false,
       });
     } finally {
-      this.drainGlErrorsIfNeeded();
-
       // Guarantee clean up of all WASM heap allocations in the finally block,
       // completely eliminating the risk of silent memory leak OOMs.
       if (strokesPtr !== 0) {
@@ -508,28 +506,6 @@ export class InteractiveSegmenter extends TaskRunner {
       throw new Error('Failed to create native InteractiveSegmenter engine.');
     }
     this.logger?.logSessionStart();
-  }
-
-  /**
-   * Drains lingering GL errors to prevent crashes on subsequent strokes.
-   * TODO: b/536993046 - remove once the bug is fixed.
-   */
-  private drainGlErrorsIfNeeded(): void {
-    if (this.delegate !== 'GPU') {
-      return;
-    }
-
-    const canvas = this.wasmModule.canvas;
-    if (canvas) {
-      const glCtx = canvas.getContext(
-        'webgl2',
-      ) as WebGL2RenderingContext | null;
-      if (glCtx) {
-        while (glCtx.getError() !== glCtx.NO_ERROR) {
-          // Drain
-        }
-      }
-    }
   }
 
   /**
