@@ -124,6 +124,10 @@ export class TextClassifier extends TaskRunner {
     this.options.setBaseOptions(new BaseOptionsProto());
   }
 
+  protected override getTaskName(): string {
+    return 'TextClassifier';
+  }
+
   /**
    * Sets new options for the text classifier.
    *

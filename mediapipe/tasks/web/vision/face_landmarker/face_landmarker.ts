@@ -246,6 +246,10 @@ export class FaceLandmarker extends VisionTaskRunner {
     this.initDefaults();
   }
 
+  protected override getTaskName(): string {
+    return 'FaceLandmarker';
+  }
+
   protected override get baseOptions(): BaseOptionsProto {
     return this.options.getBaseOptions()!;
   }

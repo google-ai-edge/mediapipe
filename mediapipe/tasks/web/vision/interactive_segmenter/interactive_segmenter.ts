@@ -273,6 +273,10 @@ export class InteractiveSegmenter extends TaskRunner {
     super(new CachedGraphRunner(wasmModule, glCanvas));
   }
 
+  protected override getTaskName(): string {
+    return 'InteractiveSegmenter';
+  }
+
   private get wasmModule(): InteractiveSegmenterWasmModule {
     // Safe cast because this task runner is initialized with InteractiveSegmenterWasmModule.
     return this.graphRunner

@@ -322,6 +322,10 @@ export class HolisticLandmarker extends VisionTaskRunner {
     this.initDefaults();
   }
 
+  protected override getTaskName(): string {
+    return 'HolisticLandmarker';
+  }
+
   protected override get baseOptions(): BaseOptionsProto {
     return this.options.getBaseOptions()!;
   }

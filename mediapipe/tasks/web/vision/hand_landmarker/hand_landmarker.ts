@@ -173,6 +173,10 @@ export class HandLandmarker extends VisionTaskRunner {
     this.initDefaults();
   }
 
+  protected override getTaskName(): string {
+    return 'HandLandmarker';
+  }
+
   protected override get baseOptions(): BaseOptionsProto {
     return this.options.getBaseOptions()!;
   }

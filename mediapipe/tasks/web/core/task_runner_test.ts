@@ -85,6 +85,10 @@ class TaskRunnerFake extends TaskRunner {
     super.finishProcessing(timestamp);
   }
 
+  override getTaskName(): string {
+    return 'TaskRunnerFake';
+  }
+
   override refreshGraph(): void {}
 
   override setGraph(graphData: Uint8Array, isBinary: boolean): void {

@@ -322,6 +322,10 @@ export class LlmInference extends TaskRunner {
     this.initDefaults();
   }
 
+  protected override getTaskName(): string {
+    return 'LlmInference';
+  }
+
   /**
    * Create WebGPU device with high performance configurations.
    * @export

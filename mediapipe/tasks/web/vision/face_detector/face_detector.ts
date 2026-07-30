@@ -133,6 +133,10 @@ export class FaceDetector extends VisionTaskRunner {
     this.options.setMinSuppressionThreshold(0.3);
   }
 
+  protected override getTaskName(): string {
+    return 'FaceDetector';
+  }
+
   protected override get baseOptions(): BaseOptionsProto {
     return this.options.getBaseOptions()!;
   }

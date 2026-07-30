@@ -88,7 +88,7 @@ export async function createTaskRunner<T extends TaskRunner>(
     canvas,
     fileLocator,
   );
-  instance.enableLogging(type.name, options);
+  instance.enableLogging(options);
   await instance.setOptions(options);
   return instance;
 }
@@ -125,10 +125,13 @@ export abstract class TaskRunner {
   /** Configures the task with custom options. */
   abstract setOptions(options: TaskRunnerOptions): Promise<void>;
 
-  enableLogging(taskName: string, options: TaskRunnerOptions): void {
+  /** Returns the public name of the task (e.g. FaceLandmarker). */
+  protected abstract getTaskName(): string;
+
+  enableLogging(options: TaskRunnerOptions): void {
     const runningMode = (options as {runningMode: string}).runningMode ?? '';
     const apiKey = this.graphRunner.getMediapipeApiKey();
-    this.logger = createTasksLogger(taskName, runningMode, apiKey);
+    this.logger = createTasksLogger(this.getTaskName(), runningMode, apiKey);
   }
 
   /**
