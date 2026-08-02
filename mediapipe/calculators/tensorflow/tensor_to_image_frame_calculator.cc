@@ -147,7 +147,7 @@ absl::Status TensorToImageFrameCalculator::Process(CalculatorContext* cc) {
       }
       buffer[i] = d;
     }
-    output = ::absl::make_unique<ImageFrame>(
+    output = std::make_unique<ImageFrame>(
         format, width, height, width * depth, buffer.release(),
         [total_size](uint8_t* ptr) {
           ::operator delete[](ptr, total_size,
@@ -163,7 +163,7 @@ absl::Status TensorToImageFrameCalculator::Process(CalculatorContext* cc) {
     // image. This allows us to create an ImageFrame object without copying
     // buffer. const ImageFrame prevents the buffer from being modified later.
     auto copy = new tf::Tensor(input_tensor);
-    output = ::absl::make_unique<const ImageFrame>(
+    output = std::make_unique<const ImageFrame>(
         format, width, height, width * depth, copy->flat<uint8_t>().data(),
         [copy](uint8_t*) { delete copy; });
   } else {

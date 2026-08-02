@@ -42,7 +42,7 @@ class TensorToVectorIntCalculatorTest : public ::testing::Test {
     options->set_flatten_nd(flatten_nd);
     options->set_tensor_is_token(tensor_is_token);
     options->set_overlap(overlap);
-    runner_ = absl::make_unique<CalculatorRunner>(config);
+    runner_ = std::make_unique<CalculatorRunner>(config);
   }
 
   std::unique_ptr<CalculatorRunner> runner_;
@@ -51,7 +51,7 @@ class TensorToVectorIntCalculatorTest : public ::testing::Test {
 TEST_F(TensorToVectorIntCalculatorTest, ConvertsToVectorInt) {
   SetUpRunner(false, false);
   const tf::TensorShape tensor_shape(std::vector<int64_t>{5});
-  auto tensor = absl::make_unique<tf::Tensor>(tf::DT_INT64, tensor_shape);
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_INT64, tensor_shape);
   auto tensor_vec = tensor->vec<int64_t>();
   for (int i = 0; i < 5; ++i) {
     // 2^i can be represented exactly in floating point numbers if 'i' is small.
@@ -80,7 +80,7 @@ TEST_F(TensorToVectorIntCalculatorTest, ConvertsToVectorInt) {
 TEST_F(TensorToVectorIntCalculatorTest, ConvertsToVectorFromInt32) {
   SetUpRunner(false, false);
   const tf::TensorShape tensor_shape(std::vector<int64_t>{5});
-  auto tensor = absl::make_unique<tf::Tensor>(tf::DT_INT32, tensor_shape);
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_INT32, tensor_shape);
   auto tensor_vec = tensor->vec<int32_t>();
   for (int i = 0; i < 5; ++i) {
     // 2^i can be represented exactly in floating point numbers if 'i' is small.
@@ -109,7 +109,7 @@ TEST_F(TensorToVectorIntCalculatorTest, ConvertsToVectorFromInt32) {
 TEST_F(TensorToVectorIntCalculatorTest, ConvertsToVectorToken) {
   SetUpRunner(false, false, true);
   const tf::TensorShape tensor_shape(std::vector<int64_t>{5});
-  auto tensor = absl::make_unique<tf::Tensor>(tf::DT_INT32, tensor_shape);
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_INT32, tensor_shape);
   auto tensor_vec = tensor->vec<int32_t>();
   tensor_vec(0) = 0;
   tensor_vec(1) = 0;
@@ -137,7 +137,7 @@ TEST_F(TensorToVectorIntCalculatorTest, ConvertsToVectorToken) {
 TEST_F(TensorToVectorIntCalculatorTest, ConvertsBatchedToVectorVectorInt) {
   SetUpRunner(true, false);
   const tf::TensorShape tensor_shape(std::vector<int64_t>{1, 5});
-  auto tensor = absl::make_unique<tf::Tensor>(tf::DT_INT64, tensor_shape);
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_INT64, tensor_shape);
   auto slice = tensor->Slice(0, 1).flat<int64_t>();
   for (int i = 0; i < 5; ++i) {
     // 2^i can be represented exactly in floating point numbers if 'i' is small.
@@ -167,7 +167,7 @@ TEST_F(TensorToVectorIntCalculatorTest, ConvertsBatchedToVectorVectorInt) {
 TEST_F(TensorToVectorIntCalculatorTest, FlattenShouldTakeAllDimensions) {
   SetUpRunner(false, true);
   const tf::TensorShape tensor_shape(std::vector<int64_t>{2, 2, 2});
-  auto tensor = absl::make_unique<tf::Tensor>(tf::DT_INT64, tensor_shape);
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_INT64, tensor_shape);
   auto slice = tensor->flat<int64_t>();
   for (int i = 0; i < 2 * 2 * 2; ++i) {
     // 2^i can be represented exactly in floating point numbers if 'i' is small.
@@ -196,7 +196,7 @@ TEST_F(TensorToVectorIntCalculatorTest, Overlap) {
   SetUpRunner(false, false, false, 2);
   for (int time = 0; time < 3; ++time) {
     const tf::TensorShape tensor_shape(std::vector<int64_t>{5});
-    auto tensor = absl::make_unique<tf::Tensor>(tf::DT_INT64, tensor_shape);
+    auto tensor = std::make_unique<tf::Tensor>(tf::DT_INT64, tensor_shape);
     auto tensor_vec = tensor->vec<int64_t>();
     for (int i = 0; i < 5; ++i) {
       // 2^i can be represented exactly in floating point numbers if 'i' is

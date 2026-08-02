@@ -150,7 +150,7 @@ absl::Status TensorToMatrixCalculator::GetContract(CalculatorContract* cc) {
 }
 
 absl::Status TensorToMatrixCalculator::Open(CalculatorContext* cc) {
-  auto input_header = absl::make_unique<TimeSeriesHeader>();
+  auto input_header = std::make_unique<TimeSeriesHeader>();
   absl::Status header_status;
   if (cc->Inputs().HasTag(kReference)) {
     header_status = FillTimeSeriesHeaderIfValid(
@@ -207,7 +207,7 @@ absl::Status TensorToMatrixCalculator::Process(CalculatorContext* cc) {
     RET_CHECK_EQ(width, header_.num_samples())
         << "The number of samples at runtime does not match the header.";
   }
-  auto output = absl::make_unique<Matrix>(width, length);
+  auto output = std::make_unique<Matrix>(width, length);
   *output =
       Eigen::MatrixXf::Map(input_tensor.flat<float>().data(), length, width);
   cc->Outputs().Tag(kMatrix).Add(output.release(), cc->InputTimestamp());

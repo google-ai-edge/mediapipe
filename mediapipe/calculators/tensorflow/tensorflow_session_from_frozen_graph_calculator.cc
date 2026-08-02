@@ -106,7 +106,7 @@ class TensorFlowSessionFromFrozenGraphCalculator : public CalculatorBase {
     const auto& options =
         cc->Options<TensorFlowSessionFromFrozenGraphCalculatorOptions>();
     // Output bundle packet.
-    auto session = ::absl::make_unique<TensorFlowSession>();
+    auto session = std::make_unique<TensorFlowSession>();
 
     tf::SessionOptions session_options;
     session_options.config.CopyFrom(options.config());

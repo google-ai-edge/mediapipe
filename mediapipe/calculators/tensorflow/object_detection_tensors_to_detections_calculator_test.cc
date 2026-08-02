@@ -106,19 +106,19 @@ class ObjectDetectionTensorsToDetectionsCalculatorTest
   void SetUpCalculatorRunner() {
     CalculatorGraphConfig::Node node_config;
     CreateNodeConfig(&node_config);
-    runner_ = absl::make_unique<CalculatorRunner>(node_config);
+    runner_ = std::make_unique<CalculatorRunner>(node_config);
   }
 
   void SetUpCalculatorRunnerRawTensors() {
     CalculatorGraphConfig::Node node_config;
     CreateNodeConfigRawTensors(&node_config);
-    runner_ = absl::make_unique<CalculatorRunner>(node_config);
+    runner_ = std::make_unique<CalculatorRunner>(node_config);
   }
 
   void SetUpCalculatorRunnerWithKeypoints() {
     CalculatorGraphConfig::Node node_config;
     CreateNodeConfigWithKeypoints(&node_config);
-    runner_ = absl::make_unique<CalculatorRunner>(node_config);
+    runner_ = std::make_unique<CalculatorRunner>(node_config);
   }
 
   void RunCalculator() {
@@ -189,7 +189,7 @@ class ObjectDetectionTensorsToDetectionsCalculatorTest
                  .ext]: { tensor_dim_to_squeeze: 0 }
           }
         )pb");
-    runner_ = absl::make_unique<CalculatorRunner>(node_config);
+    runner_ = std::make_unique<CalculatorRunner>(node_config);
     runner_->MutableInputs()
         ->Tag(kNumDetections)
         .packets.push_back(

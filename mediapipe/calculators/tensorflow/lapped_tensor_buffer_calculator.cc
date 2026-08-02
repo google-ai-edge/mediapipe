@@ -170,9 +170,8 @@ absl::Status LappedTensorBufferCalculator::Open(CalculatorContext* cc) {
       << "output_frame_num_offset has to be less than buffer_size.";
   RET_CHECK_LT(options_.padding(), buffer_size_)
       << "padding option must be smaller than buffer size.";
-  timestamp_buffer_ =
-      absl::make_unique<CircularBuffer<Timestamp>>(buffer_size_);
-  buffer_ = absl::make_unique<CircularBuffer<tf::Tensor>>(buffer_size_);
+  timestamp_buffer_ = std::make_unique<CircularBuffer<Timestamp>>(buffer_size_);
+  buffer_ = std::make_unique<CircularBuffer<tf::Tensor>>(buffer_size_);
   steps_until_output_ = buffer_size_ - options_.padding();
   initialized_ = false;
   return absl::OkStatus();
@@ -235,7 +234,7 @@ absl::Status LappedTensorBufferCalculator::AddBatchDimension(
 // Process buffer
 absl::Status LappedTensorBufferCalculator::ProcessBuffer(
     CalculatorContext* cc) {
-  auto concatenated = ::absl::make_unique<tf::Tensor>();
+  auto concatenated = std::make_unique<tf::Tensor>();
   const absl::Status concat_status = tf::tensor::Concat(
       std::vector<tf::Tensor>(buffer_->begin(), buffer_->end()),
       concatenated.get());
@@ -244,7 +243,7 @@ absl::Status LappedTensorBufferCalculator::ProcessBuffer(
   cc->Outputs().Index(0).Add(concatenated.release(),
                              timestamp_buffer_->Get(timestamp_offset_));
   if (cc->Outputs().NumEntries() > 1) {
-    auto output_timestamp = ::absl::make_unique<std::vector<Timestamp>>();
+    auto output_timestamp = std::make_unique<std::vector<Timestamp>>();
     // Output timestamp vector.
     *output_timestamp = std::vector<Timestamp>(timestamp_buffer_->begin(),
                                                timestamp_buffer_->end());

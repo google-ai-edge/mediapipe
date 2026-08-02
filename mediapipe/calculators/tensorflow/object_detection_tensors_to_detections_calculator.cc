@@ -180,7 +180,7 @@ class ObjectDetectionTensorsToDetectionsCalculator : public CalculatorBase {
     }
     RET_CHECK_EQ(input_classes_tensor.dtype(), tf::DT_FLOAT);
 
-    auto output_detections = absl::make_unique<std::vector<Detection>>();
+    auto output_detections = std::make_unique<std::vector<Detection>>();
 
     const tf::Tensor& input_keypoints_tensor =
         cc->Inputs().HasTag(kKeypoints)

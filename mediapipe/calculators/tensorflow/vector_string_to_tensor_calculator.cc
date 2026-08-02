@@ -107,7 +107,7 @@ absl::Status VectorStringToTensorCalculator::Process(CalculatorContext* cc) {
     } else {
       tensor_shape = tf::TensorShape({rows, cols});
     }
-    auto output = ::absl::make_unique<tf::Tensor>(tf::DT_STRING, tensor_shape);
+    auto output = std::make_unique<tf::Tensor>(tf::DT_STRING, tensor_shape);
     for (int r = 0; r < rows; ++r) {
       for (int c = 0; c < cols; ++c) {
         if (options_.transpose()) {
@@ -124,7 +124,7 @@ absl::Status VectorStringToTensorCalculator::Process(CalculatorContext* cc) {
     RET_CHECK_GE(input.size(), 1);
     const int32_t length = input.size();
     tensor_shape = tf::TensorShape({length});
-    auto output = ::absl::make_unique<tf::Tensor>(tf::DT_STRING, tensor_shape);
+    auto output = std::make_unique<tf::Tensor>(tf::DT_STRING, tensor_shape);
     for (int i = 0; i < length; ++i) {
       output->tensor<tensorflow::tstring, 1>()(i) = input.at(i);
     }

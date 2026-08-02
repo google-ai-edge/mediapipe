@@ -40,12 +40,12 @@ class VectorStringToTensorCalculatorTest : public ::testing::Test {
         VectorStringToTensorCalculatorOptions::ext);
     options->set_input_size(input_size);
     options->set_transpose(transpose);
-    runner_ = ::absl::make_unique<CalculatorRunner>(config);
+    runner_ = std::make_unique<CalculatorRunner>(config);
   }
 
   void TestConvertFromVectoVectorString(const bool transpose) {
     SetUpRunner(VectorStringToTensorCalculatorOptions::INPUT_2D, transpose);
-    auto input = ::absl::make_unique<std::vector<std::vector<std::string>>>(
+    auto input = std::make_unique<std::vector<std::vector<std::string>>>(
         2, std::vector<std::string>(2));
     for (int i = 0; i < 2; ++i) {
       for (int j = 0; j < 2; ++j) {
@@ -85,7 +85,7 @@ class VectorStringToTensorCalculatorTest : public ::testing::Test {
 
 TEST_F(VectorStringToTensorCalculatorTest, ConvertsFromVectorString) {
   SetUpRunner(VectorStringToTensorCalculatorOptions::INPUT_1D, false);
-  auto input = ::absl::make_unique<std::vector<std::string>>(5);
+  auto input = std::make_unique<std::vector<std::string>>(5);
   for (int i = 0; i < 5; ++i) {
     input->at(i) = absl::StrCat(i);
   }

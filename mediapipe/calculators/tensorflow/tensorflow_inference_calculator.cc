@@ -271,7 +271,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
   std::unique_ptr<InferenceState> CreateInferenceState(CalculatorContext* cc)
       ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
     std::unique_ptr<InferenceState> inference_state =
-        absl::make_unique<InferenceState>();
+        std::make_unique<InferenceState>();
     if (cc->InputSidePackets().HasTag(kRecurrentInitTensorsTag) &&
         !cc->InputSidePackets().Tag(kRecurrentInitTensorsTag).IsEmpty()) {
       std::map<std::string, tf::Tensor>* init_tensor_map;

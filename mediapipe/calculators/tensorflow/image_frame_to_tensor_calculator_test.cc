@@ -68,7 +68,7 @@ class ImageFrameToTensorCalculatorTest : public ::testing::Test {
   // Adds a packet with a solid red 8-bit RGB ImageFrame.
   void AddRGBFrame(int width, int height) {
     auto image_frame =
-        ::absl::make_unique<ImageFrame>(ImageFormat::SRGB, width, height);
+        std::make_unique<ImageFrame>(ImageFormat::SRGB, width, height);
     const uint8_t color[] = {kRed, kGreen, kBlue};
     SetToColor<uint8_t>(color, image_frame.get());
     runner_->MutableInputs()->Index(0).packets.push_back(
@@ -78,7 +78,7 @@ class ImageFrameToTensorCalculatorTest : public ::testing::Test {
   // Adds a packet with a solid red 8-bit RGBA ImageFrame.
   void AddRGBAFrame(int width, int height) {
     auto image_frame =
-        ::absl::make_unique<ImageFrame>(ImageFormat::SRGBA, width, height);
+        std::make_unique<ImageFrame>(ImageFormat::SRGBA, width, height);
     const uint8_t color[] = {kRed, kGreen, kBlue, kAlpha};
     SetToColor<uint8_t>(color, image_frame.get());
     runner_->MutableInputs()->Index(0).packets.push_back(
@@ -88,7 +88,7 @@ class ImageFrameToTensorCalculatorTest : public ::testing::Test {
   // Adds a packet with a solid GRAY8 ImageFrame.
   void AddGray8Frame(int width, int height) {
     auto image_frame =
-        ::absl::make_unique<ImageFrame>(ImageFormat::GRAY8, width, height);
+        std::make_unique<ImageFrame>(ImageFormat::GRAY8, width, height);
     const uint8_t gray[] = {kGray8};
     SetToColor<uint8_t>(gray, image_frame.get());
     runner_->MutableInputs()->Index(0).packets.push_back(
@@ -98,7 +98,7 @@ class ImageFrameToTensorCalculatorTest : public ::testing::Test {
   // Adds a packet with a solid GRAY16 ImageFrame.
   void AddGray16Frame(int width, int height) {
     auto image_frame =
-        ::absl::make_unique<ImageFrame>(ImageFormat::GRAY16, width, height, 1);
+        std::make_unique<ImageFrame>(ImageFormat::GRAY16, width, height, 1);
     const uint16_t gray[] = {kGray16};
     SetToColor<uint16_t>(gray, image_frame.get());
     runner_->MutableInputs()->Index(0).packets.push_back(
@@ -108,7 +108,7 @@ class ImageFrameToTensorCalculatorTest : public ::testing::Test {
   // Adds a packet with a solid VEC32F1 ImageFrame.
   void AddFloatFrame(int width, int height) {
     auto image_frame =
-        ::absl::make_unique<ImageFrame>(ImageFormat::VEC32F1, width, height, 1);
+        std::make_unique<ImageFrame>(ImageFormat::VEC32F1, width, height, 1);
     const float gray[] = {kFloat};
     SetToColor<float>(gray, image_frame.get());
     runner_->MutableInputs()->Index(0).packets.push_back(
@@ -117,7 +117,7 @@ class ImageFrameToTensorCalculatorTest : public ::testing::Test {
 
   // Adds a packet with an 8-bit RGB ImageFrame containing pre-determined noise.
   void AddFixedNoiseRGBFrame() {
-    auto image_frame = ::absl::make_unique<ImageFrame>(
+    auto image_frame = std::make_unique<ImageFrame>(
         ImageFormat::SRGB, kFixedNoiseWidth, kFixedNoiseHeight);
 
     // Copy fixed noise data into the ImageFrame.
@@ -139,7 +139,7 @@ class ImageFrameToTensorCalculatorTest : public ::testing::Test {
     std::uniform_int_distribution<int> uniform_dist{
         0, std::numeric_limits<uint8_t>::max()};
     auto image_frame =
-        ::absl::make_unique<ImageFrame>(ImageFormat::SRGB, width, height);
+        std::make_unique<ImageFrame>(ImageFormat::SRGB, width, height);
 
     // Copy "noisy data" into the ImageFrame.
     const int num_components_per_row = width * image_frame->NumberOfChannels();
@@ -168,8 +168,8 @@ TEST_F(ImageFrameToTensorCalculatorTest, SolidRedRGBFrame) {
     const int num_pixels = width * height;
 
     // Run the calculator and verify that one output is generated.
-    runner_ = ::absl::make_unique<CalculatorRunner>(
-        "ImageFrameToTensorCalculator", "", 1, 1, 0);
+    runner_ = std::make_unique<CalculatorRunner>("ImageFrameToTensorCalculator",
+                                                 "", 1, 1, 0);
     AddRGBFrame(width, height);
     MP_ASSERT_OK(runner_->Run());
     const std::vector<Packet>& output_packets =
@@ -427,14 +427,14 @@ TEST_F(ImageFrameToTensorCalculatorTest, RandomRGBFrame) {
 }
 
 TEST_F(ImageFrameToTensorCalculatorTest, FixedRGBFrameWithMeanAndStddev) {
-  runner_ = ::absl::make_unique<CalculatorRunner>(
+  runner_ = std::make_unique<CalculatorRunner>(
       "ImageFrameToTensorCalculator",
       "[mediapipe.ImageFrameToTensorCalculatorOptions.ext]"
       "{data_type:DT_FLOAT mean:128.0 stddev:128.0}",
       1, 1, 0);
 
   // Create a single pixel image of fixed color #0080ff.
-  auto image_frame = ::absl::make_unique<ImageFrame>(ImageFormat::SRGB, 1, 1);
+  auto image_frame = std::make_unique<ImageFrame>(ImageFormat::SRGB, 1, 1);
   const uint8_t color[] = {0, 128, 255};
   SetToColor<uint8_t>(color, image_frame.get());
 
@@ -455,7 +455,7 @@ TEST_F(ImageFrameToTensorCalculatorTest, FixedRGBFrameWithMeanAndStddev) {
 }
 
 TEST_F(ImageFrameToTensorCalculatorTest, FixedRGBFrameWithRepeatMeanAndStddev) {
-  runner_ = ::absl::make_unique<CalculatorRunner>(
+  runner_ = std::make_unique<CalculatorRunner>(
       "ImageFrameToTensorCalculator",
       "[mediapipe.ImageFrameToTensorCalculatorOptions.ext]"
       "{data_type:DT_FLOAT mean:128.0 mean:128.0 mean:128.0 "
@@ -463,7 +463,7 @@ TEST_F(ImageFrameToTensorCalculatorTest, FixedRGBFrameWithRepeatMeanAndStddev) {
       1, 1, 0);
 
   // Create a single pixel image of fixed color #0080ff.
-  auto image_frame = ::absl::make_unique<ImageFrame>(ImageFormat::SRGB, 1, 1);
+  auto image_frame = std::make_unique<ImageFrame>(ImageFormat::SRGB, 1, 1);
   const uint8_t color[] = {0, 128, 255};
   SetToColor<uint8_t>(color, image_frame.get());
 
