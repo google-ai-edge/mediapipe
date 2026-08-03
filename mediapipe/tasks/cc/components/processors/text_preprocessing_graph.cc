@@ -20,8 +20,8 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/calculators/tensor/bert_preprocessor_calculator.pb.h"
-#include "mediapipe/calculators/tensor/gecko_preprocessor_calculator.pb.h"
 #include "mediapipe/calculators/tensor/regex_preprocessor_calculator.pb.h"
+#include "mediapipe/calculators/tensor/sentencepiece_preprocessor_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/formats/tensor.h"
@@ -36,7 +36,7 @@ limitations under the License.
 namespace mediapipe::tasks::components::processors {
 namespace {
 
-using ::mediapipe::GeckoPreprocessorCalculatorOptions;
+using ::mediapipe::SentencePiecePreprocessorCalculatorOptions;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::SideInput;
@@ -68,7 +68,7 @@ absl::StatusOr<std::string> GetCalculatorNameFromModelType(
     case TextModelType::REGEX_MODEL:
       return "RegexPreprocessorCalculator";
     case TextModelType::GECKO_MODEL:
-      return "GeckoPreprocessorCalculator";
+      return "SentencePiecePreprocessorCalculator";
     case TextModelType::STRING_MODEL:
       return "TextToTensorCalculator";
     case TextModelType::USE_MODEL:
@@ -270,9 +270,11 @@ class TextPreprocessingGraph : public mediapipe::Subgraph {
         break;
       }
       case TextModelType::GECKO_MODEL: {
-        text_preprocessor.GetOptions<GeckoPreprocessorCalculatorOptions>()
+        text_preprocessor
+            .GetOptions<SentencePiecePreprocessorCalculatorOptions>()
             .set_max_seq_len(options.max_seq_len());
-        text_preprocessor.GetOptions<GeckoPreprocessorCalculatorOptions>()
+        text_preprocessor
+            .GetOptions<SentencePiecePreprocessorCalculatorOptions>()
             .mutable_sentence_piece_model()
             ->CopyFrom(options.sentence_piece_model());
         metadata_extractor_in >>

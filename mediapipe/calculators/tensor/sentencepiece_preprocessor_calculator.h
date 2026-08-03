@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MEDIAPIPE_CALCULATORS_TENSOR_GECKO_PREPROCESSOR_CALCULATOR_H_
-#define MEDIAPIPE_CALCULATORS_TENSOR_GECKO_PREPROCESSOR_CALCULATOR_H_
+#ifndef MEDIAPIPE_CALCULATORS_TENSOR_SENTENCEPIECE_PREPROCESSOR_CALCULATOR_H_
+#define MEDIAPIPE_CALCULATORS_TENSOR_SENTENCEPIECE_PREPROCESSOR_CALCULATOR_H_
 
 #include <string>
 #include <vector>
 
-#include "mediapipe/calculators/tensor/gecko_preprocessor_calculator.pb.h"
+#include "mediapipe/calculators/tensor/sentencepiece_preprocessor_calculator.pb.h"
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/node.h"
 #include "mediapipe/framework/formats/tensor.h"
@@ -31,18 +31,19 @@ namespace mediapipe {
 //
 // Example:
 // node {
-//   calculator: "GeckoPreprocessorCalculator"
+//   calculator: "SentencePiecePreprocessorCalculator"
 //   input_stream: "TEXT:text"
 //   input_side_packet: "METADATA_EXTRACTOR:metadata_extractor"
 //   output_stream: "TENSORS:tensors"
 //   node_options: {
-//     [type.googleapis.com/mediapipe.GeckoPreprocessorCalculatorOptions] {
+//     [type.googleapis.com/mediapipe.SentencePiecePreprocessorCalculatorOptions]
+//     {
 //       max_seq_len: 256
 //     }
 //   }
 // }
-struct GeckoPreprocessorCalculatorNode
-    : public api3::Node<"GeckoPreprocessorCalculator"> {
+struct SentencePiecePreprocessorCalculatorNode
+    : public api3::Node<"SentencePiecePreprocessorCalculator"> {
   template <typename S>
   struct Contract {
     // The input text to preprocess.
@@ -53,11 +54,11 @@ struct GeckoPreprocessorCalculatorNode
         metadata_extractor{"METADATA_EXTRACTOR"};
     // Vector containing the preprocessed input tensors for the text model.
     api3::Output<S, std::vector<Tensor>> tensors_out{"TENSORS"};
-    // Options for the GeckoPreprocessorCalculator.
-    api3::Options<S, GeckoPreprocessorCalculatorOptions> options{};
+    // Options for the SentencePiecePreprocessorCalculator.
+    api3::Options<S, SentencePiecePreprocessorCalculatorOptions> options{};
   };
 };
 
 }  // namespace mediapipe
 
-#endif  // MEDIAPIPE_CALCULATORS_TENSOR_GECKO_PREPROCESSOR_CALCULATOR_H_
+#endif  // MEDIAPIPE_CALCULATORS_TENSOR_SENTENCEPIECE_PREPROCESSOR_CALCULATOR_H_

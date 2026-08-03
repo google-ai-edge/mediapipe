@@ -329,19 +329,19 @@ cc_test(
 )
 
 mediapipe_proto_library(
-    name = "gecko_preprocessor_calculator_proto",
-    srcs = ["gecko_preprocessor_calculator.proto"],
+    name = "sentencepiece_preprocessor_calculator_proto",
+    srcs = ["sentencepiece_preprocessor_calculator.proto"],
     deps = [
         "//mediapipe/tasks/cc/core/proto:external_file_proto",
     ],
 )
 
 cc_library(
-    name = "gecko_preprocessor_calculator",
-    srcs = ["gecko_preprocessor_calculator.cc"],
-    hdrs = ["gecko_preprocessor_calculator.h"],
+    name = "sentencepiece_preprocessor_calculator",
+    srcs = ["sentencepiece_preprocessor_calculator.cc"],
+    hdrs = ["sentencepiece_preprocessor_calculator.h"],
     deps = [
-        ":gecko_preprocessor_calculator_cc_proto",
+        ":sentencepiece_preprocessor_calculator_cc_proto",
         "//mediapipe/framework:memory_manager",
         "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework/api3:calculator",

@@ -20,9 +20,9 @@ import "mediapipe/tasks/cc/core/proto/external_file.proto";
 
 option java_multiple_files = true;
 option java_package = "com.google.mediapipe.calculators.tensor";
-option java_outer_classname = "GeckoPreprocessorCalculatorOptionsProto";
+option java_outer_classname = "SentencePiecePreprocessorCalculatorOptionsProto";
 
-message GeckoPreprocessorCalculatorOptions {
+message SentencePiecePreprocessorCalculatorOptions {
   // Max sequence length to input to processor.
   optional int32 max_seq_len = 1;
 

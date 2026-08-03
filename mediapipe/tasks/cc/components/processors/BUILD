@@ -144,10 +144,10 @@ cc_library(
     deps = [
         "//mediapipe/calculators/tensor:bert_preprocessor_calculator",
         "//mediapipe/calculators/tensor:bert_preprocessor_calculator_cc_proto",
-        "//mediapipe/calculators/tensor:gecko_preprocessor_calculator",
-        "//mediapipe/calculators/tensor:gecko_preprocessor_calculator_cc_proto",
         "//mediapipe/calculators/tensor:regex_preprocessor_calculator",
         "//mediapipe/calculators/tensor:regex_preprocessor_calculator_cc_proto",
+        "//mediapipe/calculators/tensor:sentencepiece_preprocessor_calculator",
+        "//mediapipe/calculators/tensor:sentencepiece_preprocessor_calculator_cc_proto",
         "//mediapipe/calculators/tensor:text_to_tensor_calculator",
         "//mediapipe/calculators/tensor:universal_sentence_encoder_preprocessor_calculator",
         "//mediapipe/framework:subgraph",
