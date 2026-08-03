@@ -96,6 +96,11 @@ mediapipe_proto_library(
     ],
 )
 
+mediapipe_proto_library(
+    name = "tflite_model_metadata_proto",
+    srcs = ["tflite_model_metadata.proto"],
+)
+
 cc_library(
     name = "ssd_anchors_calculator",
     srcs = ["ssd_anchors_calculator.cc"],
@@ -199,6 +204,7 @@ cc_library(
     }),
     deps = [
         ":tflite_inference_calculator_cc_proto",
+        ":tflite_model_metadata_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
@@ -520,6 +526,21 @@ cc_test(
         "@org_tensorflow//tensorflow/lite:type_to_tflitetype",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
         "@org_tensorflow//tensorflow/lite/kernels/internal:tensor",
+    ],
+)
+
+cc_test(
+    name = "tflite_inference_calculator_metadata_test",
+    srcs = ["tflite_inference_calculator_metadata_test.cc"],
+    linkstatic = 1,
+    deps = [
+        ":tflite_inference_calculator",
+        ":tflite_model_metadata_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
     ],
 )
 
