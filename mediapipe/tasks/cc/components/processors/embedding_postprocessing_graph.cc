@@ -67,12 +67,20 @@ struct EmbeddingPostprocessingOutputStreams {
 absl::StatusOr<bool> HasQuantizedOutputs(
     const ModelResources& model_resources) {
   const tflite::Model& model = *model_resources.GetTfLiteModel();
+
+  if (model.subgraphs()->size() > 1) {
+    // Multi-subgraph models are assumed to be EmbeddingGemma models, which
+    // do not have quantized outputs.
+    return false;
+  }
+
   if (model.subgraphs()->size() != 1) {
     return CreateStatusWithPayload(absl::StatusCode::kInvalidArgument,
                                    "Embedding tflite models are "
                                    "assumed to have a single subgraph.",
                                    MediaPipeTasksStatus::kInvalidArgumentError);
   }
+
   const auto* primary_subgraph = (*model.subgraphs())[0];
   int num_output_tensors = primary_subgraph->outputs()->size();
   // Sanity check tensor types and check if model outputs are quantized or not.

@@ -15,7 +15,9 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder.h"
 
+#include <fstream>
 #include <memory>
+#include <string>
 #include <utility>
 
 #include "absl/flags/flag.h"

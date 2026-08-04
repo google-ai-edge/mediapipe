@@ -31,5 +31,7 @@ message TextModelType {
     USE_MODEL = 4;
     // A Gecko-based model.
     GECKO_MODEL = 5;
+    // A EmbeddingGemma-based model.
+    EMBEDDING_GEMMA_MODEL = 6;
   }
 }
