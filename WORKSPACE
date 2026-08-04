@@ -811,3 +811,32 @@ http_archive(
     strip_prefix = "curl-8.10.1",
     url = "https://curl.haxx.se/download/curl-8.10.1.tar.gz",
 )
+
+# LiteRT v2.1.6
+# Fetch just the source tree and let it use our already-defined workspace
+# dependencies (@org_tensorflow, @xla, etc.) to avoid collisions.
+#
+# IMPORTANT: LiteRT and org_tensorflow's TFLite both use `namespace tflite`.
+# Do not mix @litert and @org_tensorflow//tensorflow/lite/ targets in the
+# same binary to prevent duplicate-symbol/ODR violations.
+http_archive(
+    name = "litert",
+    patch_args = ["-p1"],
+    # LiteRT's BUILD/bzl files load py_test/py_library/py_binary from
+    # "@xla//third_party/rules_python/python:*.bzl", a path that doesn't
+    # exist at mediapipe's pinned org_tensorflow/XLA commit (LiteRT expects a
+    # newer XLA layout). XLA's wrapper also adds a strict_deps attribute
+    # standard rules_python doesn't have. This patch adds an in-repo compat
+    # shim (rules_python_compat.bzl) that drops strict_deps and delegates to
+    # mediapipe's own working @rules_python, redirects all the broken loads
+    # to it, and strips the now-inapplicable strict_deps call-site
+    # arguments (a lint-only attribute org_tensorflow's own
+    # py_test/py_library/py_binary macros don't accept either at mediapipe's
+    # pinned version) - rather than trying to reconcile XLA versions.
+    patches = [
+        "@//third_party:litert_rules_python_and_strict_deps.diff",
+    ],
+    sha256 = "f95fa96332c56b7103db7a02ab4edab845949c196a986db55bddaa70539ee45b",
+    strip_prefix = "LiteRT-2.1.6",
+    urls = ["https://github.com/google-ai-edge/LiteRT/archive/refs/tags/v2.1.6.tar.gz"],
+)

@@ -229,6 +229,10 @@ struct InferenceCalculatorXnnpack : public InferenceCalculator {
   static constexpr char kCalculatorName[] = "InferenceCalculatorXnnpack";
 };
 
+struct InferenceCalculatorLiteRt : public InferenceCalculator {
+  static constexpr char kCalculatorName[] = "InferenceCalculatorLiteRt";
+};
+
 // For Process overriding, we subclass Impl rather than Intf
 // Subclasses must implement InferenceCalculatorNodeImpl's `Process` method.
 template <class Intf, class Impl = void>
