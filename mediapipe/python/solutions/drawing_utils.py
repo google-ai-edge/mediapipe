@@ -94,7 +94,7 @@ def draw_detection(
   location = detection.location_data
   if location.format != location_data_pb2.LocationData.RELATIVE_BOUNDING_BOX:
     raise ValueError(
-        'LocationData must be relative for this drawing funtion to work.')
+        'LocationData must be relative for this drawing function to work.')
   # Draws keypoints.
   for keypoint in location.relative_keypoints:
     keypoint_px = _normalized_to_pixel_coordinates(keypoint.x, keypoint.y,
@@ -150,7 +150,7 @@ def draw_landmarks(
   Raises:
     ValueError: If one of the followings:
       a) If the input image is not three channel BGR.
-      b) If any connetions contain invalid landmark index.
+      b) If any connections contain invalid landmark index.
   """
   if not landmark_list:
     return
