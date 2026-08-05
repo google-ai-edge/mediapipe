@@ -24,6 +24,7 @@ cc_library(
     srcs = ["interactive_segmenter_legacy.cc"],
     hdrs = ["interactive_segmenter_legacy.h"],
     deps = [
+        ":interactive_segmenter_legacy_graph",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:builder",
@@ -45,15 +46,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/types:optional",
-    ] + select({
-        "//mediapipe/gpu:disable_gpu": [
-            ":interactive_segmenter_legacy_graph",
-        ],
-        "//conditions:default": [
-            ":interactive_segmenter_legacy_graph",
-        ],
-    }),
+    ],
 )
 
 cc_library(

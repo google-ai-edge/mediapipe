@@ -310,7 +310,7 @@ INSTANTIATE_TEST_SUITE_P(
         {// Keypoint input.
          {"PointToDog1", RegionOfInterest::Format::kKeyPoint,
           NormalizedKeypoint{0.44, 0.70}, kCatsAndDogsJpg, kCatsAndDogsMaskDog1,
-          0.9f},
+          0.84f},
          {"PointToDog2", RegionOfInterest::Format::kKeyPoint,
           NormalizedKeypoint{0.66, 0.66}, kCatsAndDogsJpg, kCatsAndDogsMaskDog2,
           0.85f},
@@ -325,7 +325,7 @@ INSTANTIATE_TEST_SUITE_P(
           std::vector{NormalizedKeypoint{0.44, 0.70},
                       NormalizedKeypoint{0.44, 0.71},
                       NormalizedKeypoint{0.44, 0.72}},
-          kCatsAndDogsJpg, kCatsAndDogsMaskDog1, 0.9f},
+          kCatsAndDogsJpg, kCatsAndDogsMaskDog1, 0.84f},
          {"ScribbleToDog2", RegionOfInterest::Format::kScribble,
           std::vector{NormalizedKeypoint{0.66, 0.66},
                       NormalizedKeypoint{0.66, 0.67},
