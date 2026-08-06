@@ -520,7 +520,7 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
       buf_size_bytes / bytes_per_sample_ / num_channels_;
   VLOG(3) << "Adding " << num_samples << " audio samples in " << num_channels_
           << " channels to output.";
-  auto current_frame = absl::make_unique<Matrix>(num_channels_, num_samples);
+  auto current_frame = std::make_unique<Matrix>(num_channels_, num_samples);
 
   const char* sample_ptr = nullptr;
   switch (avcodec_ctx_->sample_fmt) {
@@ -678,7 +678,7 @@ absl::Status AudioDecoder::Initialize(
             stream_index_to_audio_options_index, current_audio_index);
         if (options_index_ptr) {
           std::unique_ptr<AudioPacketProcessor> processor =
-              absl::make_unique<AudioPacketProcessor>(
+              std::make_unique<AudioPacketProcessor>(
                   options.audio_stream(*options_index_ptr));
           if (!ContainsKey(audio_processor_, stream_id)) {
             ABSL_LOG(INFO) << "Created audio processor " << processor.get()
