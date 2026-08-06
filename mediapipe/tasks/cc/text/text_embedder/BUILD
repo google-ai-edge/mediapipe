@@ -23,10 +23,22 @@ licenses(["notice"])
 # https://developers.google.com/mediapipe/solutions/text/text_embedder
 
 cc_library(
-    name = "text_embedder",
-    srcs = ["text_embedder.cc"],
-    hdrs = ["text_embedder.h"],
+    name = "text_embedder_executor",
+    hdrs = ["text_embedder_executor.h"],
     deps = [
+        "//mediapipe/tasks/cc/components/containers:embedding_result",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "graph_text_embedder_executor",
+    srcs = ["graph_text_embedder_executor.cc"],
+    hdrs = ["graph_text_embedder_executor.h"],
+    deps = [
+        ":text_embedder_executor",
         ":text_embedder_graph",
         "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
         "//mediapipe/framework:calculator_cc_proto",
@@ -34,6 +46,31 @@ cc_library(
         "//mediapipe/framework/api2:builder",
         "//mediapipe/tasks/cc/components/containers:embedding_result",
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
+        "//mediapipe/tasks/cc/components/processors:embedder_options",
+        "//mediapipe/tasks/cc/components/processors/proto:embedder_options_cc_proto",
+        "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:running_mode",
+        "//mediapipe/tasks/cc/core:task_runner",
+        "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
+        "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "text_embedder",
+    srcs = ["text_embedder.cc"],
+    hdrs = ["text_embedder.h"],
+    deps = [
+        ":graph_text_embedder_executor",
+        ":text_embedder_executor",
+        "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/tasks/cc/components/containers:embedding_result",
         "//mediapipe/tasks/cc/components/processors:embedder_options",
         "//mediapipe/tasks/cc/components/processors/proto:embedder_options_cc_proto",
         "//mediapipe/tasks/cc/components/utils:cosine_similarity",
