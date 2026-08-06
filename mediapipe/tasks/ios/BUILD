@@ -28,6 +28,8 @@ exports_files([
     "MediaPipeTasksVision.podspec.template",
     "MediaPipeTasksText.podspec.template",
     "MediaPipeTasksCommon.podspec.template",
+    "Package.swift.template",
+    "MediaPipeTasksSPMSmokeTest.swift.template",
 ])
 
 TENSORFLOW_LITE_C_DEPS = [

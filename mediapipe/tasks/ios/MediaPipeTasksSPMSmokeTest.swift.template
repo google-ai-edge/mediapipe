@@ -1,0 +1,83 @@
+// Copyright 2026 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import XCTest
+import MediaPipeTasksCommon
+import MediaPipeTasksVision
+import MediaPipeTasksText
+import MediaPipeTasksAudio
+
+final class MediaPipeTasksSPMSmokeTest: XCTestCase {
+
+  func testRuntimeRegistrationAndInitialization() throws {
+    // Verify C++ calculator registration across Vision, Text, and Audio
+    // by asserting task graph initialization throws expected file errors
+    // rather than "No registered calculator found" errors.
+    verifyVisionRegistration()
+    verifyTextRegistration()
+    verifyAudioRegistration()
+  }
+
+  private func verifyVisionRegistration() {
+    let options = ImageClassifierOptions()
+    options.baseOptions.modelAssetPath = "/nonexistent/vision.task"
+    do {
+      _ = try ImageClassifier(options: options)
+      XCTFail("Vision: Expected asset error, but init succeeded.")
+    } catch {
+      assertRegistrationError(error, domain: "Vision")
+    }
+  }
+
+  private func verifyTextRegistration() {
+    let options = TextClassifierOptions()
+    options.baseOptions.modelAssetPath = "/nonexistent/text.task"
+    do {
+      _ = try TextClassifier(options: options)
+      XCTFail("Text: Expected asset error, but init succeeded.")
+    } catch {
+      assertRegistrationError(error, domain: "Text")
+    }
+  }
+
+  private func verifyAudioRegistration() {
+    let options = AudioClassifierOptions()
+    options.baseOptions.modelAssetPath = "/nonexistent/audio.task"
+    do {
+      _ = try AudioClassifier(options: options)
+      XCTFail("Audio: Expected asset error, but init succeeded.")
+    } catch {
+      assertRegistrationError(error, domain: "Audio")
+    }
+  }
+
+  private func assertRegistrationError(_ error: Error, domain: String) {
+    let nsError = error as NSError
+    XCTAssertEqual(
+        nsError.domain,
+        "com.google.mediapipe.tasks",
+        "\(domain): Expected domain com.google.mediapipe.tasks, got"
+            + " \(nsError.domain)"
+    )
+    // Code 3 (InvalidArgumentError) or 5 (NotFoundError) proves C++ calculators
+    // registered and graph init successfully reached model asset loading.
+    // Stripped calculators fail with Code 2 (Unknown) or 9
+    // (FailedPrecondition).
+    let isExpectedAssetCode = nsError.code == 3 || nsError.code == 5
+    XCTAssertTrue(
+        isExpectedAssetCode,
+        "\(domain): Expected asset error code 3/5, got \(nsError.code)"
+    )
+  }
+}

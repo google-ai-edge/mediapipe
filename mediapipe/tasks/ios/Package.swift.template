@@ -1,0 +1,89 @@
+// swift-tools-version: 5.8
+
+import PackageDescription
+
+let package = Package(
+    name: "MediaPipeTasks",
+    platforms: [
+        .iOS(.v15)
+    ],
+    products: [
+        .library(
+            name: "MediaPipeTasksCommon",
+            targets: ["MediaPipeTasksCommon"]
+        ),
+        .library(
+            name: "MediaPipeTasksVision",
+            targets: [
+                "MediaPipeTasksVision",
+                "MediaPipeTasksCommon",
+            ]
+        ),
+        .library(
+            name: "MediaPipeTasksText",
+            targets: [
+                "MediaPipeTasksText",
+                "MediaPipeTasksCommon",
+            ]
+        ),
+        .library(
+            name: "MediaPipeTasksAudio",
+            targets: [
+                "MediaPipeTasksAudio",
+                "MediaPipeTasksCommon",
+            ]
+        ),
+    ],
+    dependencies: [],
+    targets: [
+        .binaryTarget(
+            name: "MediaPipeTasksCommonBinary",
+            ${MPP_COMMON_TARGET_ARG}
+        ),
+        .binaryTarget(
+            name: "MediaPipeTaskGraphsBinary",
+            ${MPP_GRAPHS_TARGET_ARG}
+        ),
+        .binaryTarget(
+            name: "MediaPipeTasksVision",
+            ${MPP_VISION_TARGET_ARG}
+        ),
+        .binaryTarget(
+            name: "MediaPipeTasksText",
+            ${MPP_TEXT_TARGET_ARG}
+        ),
+        .binaryTarget(
+            name: "MediaPipeTasksAudio",
+            ${MPP_AUDIO_TARGET_ARG}
+        ),
+        .target(
+            name: "MediaPipeTasksCommon",
+            dependencies: [
+                "MediaPipeTasksCommonBinary",
+                "MediaPipeTaskGraphsBinary",
+                "MediaPipeTasksVision",
+                "MediaPipeTasksText",
+                "MediaPipeTasksAudio",
+            ],
+            linkerSettings: [
+                // Note: -all_load is required to prevent the Apple linker
+                // from stripping C++ static calculator registration
+                // constructors (REGISTER_CALCULATOR) in
+                // MediaPipeTaskGraphsBinary. Downstream libraries wrapping
+                // MediaPipeTasks in a remote SPM package must reference this
+                // package by branch/revision or local path due to Apple's
+                // .unsafeFlags restriction.
+                .unsafeFlags(["-Xlinker", "-all_load"]),
+                .linkedLibrary("c++"),
+                .linkedFramework("Accelerate"),
+                .linkedFramework("AVFoundation"),
+                .linkedFramework("CoreMedia"),
+                .linkedFramework("AudioToolbox"),
+                .linkedFramework("CoreGraphics"),
+                .linkedFramework("CoreImage"),
+                .linkedFramework("CoreVideo"),
+                .linkedFramework("QuartzCore"),
+            ]
+        ),
+    ]
+)
