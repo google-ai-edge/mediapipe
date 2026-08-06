@@ -461,6 +461,13 @@ absl::Status CalculatorGraph::InitializeDefaultExecutor(
         std::max({validated_graph_->Config().node().size(),
                   validated_graph_->Config().packet_generator().size(), 1}));
   }
+#ifdef MEDIAPIPE_PROFILER_AVAILABLE
+  // Ensure that the thread pool has at least 2 threads when profiling is enabled.
+  // This is necessary because the PROFILING function relies on the thread pool 
+  // for its operations, and having only 1 thread may lead to contention, 
+  // preventing the Calculator's Process function from being scheduled.
+  num_threads = std::max(num_threads, 2);
+#endif
   MP_RETURN_IF_ERROR(
       CreateDefaultThreadPool(default_executor_options, num_threads));
   VLOG(1) << absl::StrCat("Using default executor with num_threads: ",
