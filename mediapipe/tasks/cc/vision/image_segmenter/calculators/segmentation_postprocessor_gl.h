@@ -14,6 +14,7 @@
 
 #ifndef MEDIAPIPE_TASKS_CC_VISION_IMAGE_SEGMENTER_CALCULATORS_SEGMENTATION_POSTPROCESSOR_GL_H_
 #define MEDIAPIPE_TASKS_CC_VISION_IMAGE_SEGMENTER_CALCULATORS_SEGMENTATION_POSTPROCESSOR_GL_H_
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/tensor.h"
@@ -41,7 +42,7 @@ class SegmentationPostprocessorGl {
   absl::Status Initialize(
       CalculatorContext* cc,
       TensorsToSegmentationCalculatorOptions const& options);
-  std::vector<std::unique_ptr<Image>> GetSegmentationResultGpu(
+  absl::StatusOr<std::vector<std::unique_ptr<Image>>> GetSegmentationResultGpu(
       const vision::Shape& input_shape, const vision::Shape& output_shape,
       const Tensor& tensor, const bool produce_confidence_masks,
       const bool produce_category_mask);
