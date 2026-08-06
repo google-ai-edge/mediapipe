@@ -15,8 +15,10 @@
  */
 
 /**
- * Defines a rectangle, used e.g. as part of detection results or as input
- * region-of-interest.
+ * Defines a rectangle using absolute pixel coordinates, used e.g. as part of
+ * detection results or as input region-of-interest.
+ *
+ * The origin is on the top-left corner of the image.
  */
 export declare interface Rect {
   left: number;
