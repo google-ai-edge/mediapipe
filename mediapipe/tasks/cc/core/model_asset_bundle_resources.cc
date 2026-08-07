@@ -15,12 +15,21 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/core/model_asset_bundle_resources.h"
 
+#include <cstddef>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/tasks/cc/core/external_file_handler.h"
 #include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
 #include "mediapipe/util/resource_util.h"
 
@@ -97,6 +106,27 @@ std::vector<std::string> ModelAssetBundleResources::ListFiles() const {
     file_names.push_back(file_name);
   }
   return file_names;
+}
+
+bool ModelAssetBundleResources::HasFile(absl::string_view filename) const {
+  return files_.find(filename) != files_.end();
+}
+
+absl::StatusOr<mediapipe::tasks::BundleManifest>
+ModelAssetBundleResources::GetBundleManifest() const {
+  MP_ASSIGN_OR_RETURN(auto file_content, GetFile("manifest.pb"));
+  mediapipe::tasks::BundleManifest manifest;
+  if (!manifest.ParseFromString(file_content)) {
+    return CreateStatusWithPayload(
+        StatusCode::kInternal, "Failed to parse bundle manifest.pb.",
+        MediaPipeTasksStatus::kMetadataInvalidSchemaVersionError);
+  }
+  return manifest;
+}
+
+absl::StatusOr<std::string> ModelAssetBundleResources::GetBundleId() const {
+  MP_ASSIGN_OR_RETURN(auto manifest, GetBundleManifest());
+  return manifest.bundle_id();
 }
 
 }  // namespace core
