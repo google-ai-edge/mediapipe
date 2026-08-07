@@ -29,7 +29,7 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
-#include "tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h"
+#include "tflite/delegates/xnnpack/xnnpack_delegate.h"
 
 namespace mediapipe {
 namespace api2 {

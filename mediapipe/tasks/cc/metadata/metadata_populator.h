@@ -21,7 +21,7 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "flatbuffers/flatbuffers.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
-#include "tensorflow/lite/schema/schema_generated.h"
+#include "tflite/schema/schema_generated.h"
 
 namespace mediapipe {
 namespace tasks {

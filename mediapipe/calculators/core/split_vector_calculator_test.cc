@@ -29,7 +29,7 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"  // NOLINT
 #include "mediapipe/framework/tool/validate_type.h"
-#include "tensorflow/lite/interpreter.h"
+#include "tflite/interpreter.h"
 
 namespace mediapipe {
 

@@ -31,7 +31,7 @@
 #include "mediapipe/modules/objectron/calculators/decoder.h"
 #include "mediapipe/modules/objectron/calculators/tensor_util.h"
 #include "mediapipe/modules/objectron/calculators/tflite_tensors_to_objects_calculator.pb.h"
-#include "tensorflow/lite/interpreter.h"
+#include "tflite/interpreter.h"
 
 namespace {
 constexpr char kInputStreamTag[] = "TENSORS";

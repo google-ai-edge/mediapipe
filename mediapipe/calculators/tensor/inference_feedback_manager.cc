@@ -18,8 +18,8 @@
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/util/tflite/tflite_signature_reader.h"
 #include "mediapipe/util/tflite/utils.h"
-#include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/interpreter.h"
+#include "tflite/c/common.h"
+#include "tflite/interpreter.h"
 
 namespace mediapipe {
 

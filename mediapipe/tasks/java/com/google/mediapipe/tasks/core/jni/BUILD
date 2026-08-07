@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
+load("@litert//tflite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -37,7 +37,7 @@ cc_library_with_tflite(
     tflite_deps = [
         "//mediapipe/tasks/cc/core:mediapipe_builtin_op_resolver",
         "//mediapipe/tasks/cc/core:model_resources_cache",
-        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@litert//tflite/kernels:builtin_ops",
     ],
     deps = [
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",

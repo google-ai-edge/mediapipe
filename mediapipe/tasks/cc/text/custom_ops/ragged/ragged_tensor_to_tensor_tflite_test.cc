@@ -23,12 +23,12 @@ limitations under the License.
 #include "flatbuffers/flexbuffers.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/kernels/internal/tensor.h"
-#include "tensorflow/lite/kernels/internal/tensor_ctypes.h"
-#include "tensorflow/lite/kernels/test_util.h"
-#include "tensorflow/lite/schema/schema_generated.h"
+#include "tflite/c/common.h"
+#include "tflite/interpreter.h"
+#include "tflite/kernels/internal/tensor.h"
+#include "tflite/kernels/internal/tensor_ctypes.h"
+#include "tflite/kernels/test_util.h"
+#include "tflite/schema/schema_generated.h"
 
 namespace mediapipe::tflite_operations {
 namespace {

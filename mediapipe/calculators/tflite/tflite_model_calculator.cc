@@ -27,8 +27,8 @@
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/resources.h"
-#include "tensorflow/lite/allocation.h"
-#include "tensorflow/lite/model_builder.h"
+#include "tflite/allocation.h"
+#include "tflite/model_builder.h"
 
 namespace mediapipe {
 

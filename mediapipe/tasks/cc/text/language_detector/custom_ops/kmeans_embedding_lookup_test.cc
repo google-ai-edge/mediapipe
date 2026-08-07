@@ -9,9 +9,9 @@
 #include "absl/log/absl_check.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/kernels/test_util.h"
+#include "tflite/c/common.h"
+#include "tflite/interpreter.h"
+#include "tflite/kernels/test_util.h"
 
 namespace mediapipe::tflite_operations {
 namespace {

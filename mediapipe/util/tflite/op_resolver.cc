@@ -14,10 +14,10 @@
 
 #include "mediapipe/util/tflite/op_resolver.h"
 
-#include "tensorflow/lite/builtin_ops.h"
-#include "tensorflow/lite/c/builtin_op_data.h"
-#include "tensorflow/lite/c/c_api.h"
-#include "tensorflow/lite/c/c_api_opaque.h"
+#include "tflite/builtin_ops.h"
+#include "tflite/c/builtin_op_data.h"
+#include "tflite/c/c_api.h"
+#include "tflite/c/c_api_opaque.h"
 
 namespace mediapipe {
 namespace {

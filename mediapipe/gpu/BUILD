@@ -579,9 +579,9 @@ cc_library(
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:yuv_image",
         "//mediapipe/util/frame_buffer:frame_buffer_util",
-        "//third_party/libyuv",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
+        "@libyuv",
     ],
 )
 
@@ -1684,7 +1684,7 @@ mediapipe_cc_test(
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:yuv_image",
         "//mediapipe/framework/port:gtest_main",
-        "//third_party/libyuv",
         "@com_google_absl//absl/log:absl_check",
+        "@libyuv",
     ],
 )

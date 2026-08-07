@@ -23,8 +23,8 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/resource_util.h"
 #include "mediapipe/util/tflite/config.h"
-#include "tensorflow/lite/error_reporter.h"
-#include "tensorflow/lite/interpreter.h"
+#include "tflite/error_reporter.h"
+#include "tflite/interpreter.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gpu_buffer.h"
@@ -32,10 +32,10 @@
 
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
 #include "mediapipe/gpu/gl_calculator_helper.h"
-#include "tensorflow/lite/delegates/gpu/gl/gl_buffer.h"
-#include "tensorflow/lite/delegates/gpu/gl/gl_program.h"
-#include "tensorflow/lite/delegates/gpu/gl/gl_shader.h"
-#include "tensorflow/lite/delegates/gpu/gl_delegate.h"
+#include "tflite/delegates/gpu/gl/gl_buffer.h"
+#include "tflite/delegates/gpu/gl/gl_program.h"
+#include "tflite/delegates/gpu/gl/gl_shader.h"
+#include "tflite/delegates/gpu/gl_delegate.h"
 #endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
 
 #if MEDIAPIPE_TFLITE_METAL_INFERENCE
@@ -46,7 +46,7 @@
 #import "mediapipe/gpu/MPPMetalHelper.h"
 #include "mediapipe/gpu/MPPMetalUtil.h"
 #include "mediapipe/gpu/gpu_buffer.h"
-#include "tensorflow/lite/delegates/gpu/metal_delegate.h"
+#include "tflite/delegates/gpu/metal_delegate.h"
 #endif  // MEDIAPIPE_TFLITE_METAL_INFERENCE
 
 namespace {

@@ -37,8 +37,8 @@
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/framework/tool/subgraph_expansion.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/kernels/register.h"
+#include "tflite/core/api/op_resolver.h"
+#include "tflite/kernels/register.h"
 
 namespace mediapipe {
 namespace api2 {
@@ -55,6 +55,12 @@ class InferenceCalculatorSelectorImpl
     std::vector<absl::string_view> impls;
 
 #if !MEDIAPIPE_FORCE_CPU_INFERENCE
+
+    const bool should_use_litert =
+        options.has_delegate() && options.delegate().has_litert();
+    if (should_use_litert) {
+      impls.emplace_back("LiteRt");
+    }
 
     const bool should_use_gpu =
         !options.has_delegate() ||  // Use GPU delegate if not specified

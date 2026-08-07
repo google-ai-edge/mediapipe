@@ -24,11 +24,11 @@ limitations under the License.
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/kernels/kernel_util.h"
-#include "tensorflow/lite/mutable_op_resolver.h"
-#include "tensorflow/lite/portable_type_to_tflitetype.h"
-#include "tensorflow/lite/string_util.h"
+#include "tflite/c/common.h"
+#include "tflite/kernels/kernel_util.h"
+#include "tflite/mutable_op_resolver.h"
+#include "tflite/portable_type_to_tflitetype.h"
+#include "tflite/string_util.h"
 
 namespace mediapipe {
 namespace tasks {

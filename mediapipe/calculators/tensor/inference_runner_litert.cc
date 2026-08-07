@@ -63,7 +63,7 @@
 
 #if MEDIAPIPE_METAL_ENABLED
 #include "mediapipe/framework/formats/tensor_mtl_buffer_view.h"
-#include "tensorflow/lite/delegates/gpu/metal/metal_device.h"
+#include "tflite/delegates/gpu/metal/metal_device.h"
 #endif  // MEDIAPIPE_METAL_ENABLED
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 #include "mediapipe/gpu/gl_context.h"

@@ -260,8 +260,6 @@ http_archive(
     patches = [
         # Fixes experimental C API headers/exports needed by MediaPipe C++ bindings.
         "@//third_party:org_tensorflow_c_api_experimental.diff",
-        # Diff is generated with a script, don't update it manually.
-        "@//third_party:org_tensorflow_custom_ops.diff",
         # Works around a Bzlmod repository canonical-name issue in tflite_combine_cc_tests
         # (tensorflow/lite/build_def.bzl) where link_extra_lib is duplicated when rules_cc has
         # a version-suffixed canonical name (e.g., under single_version_override or complex dependency graphs).
@@ -835,6 +833,8 @@ http_archive(
     # pinned version) - rather than trying to reconcile XLA versions.
     patches = [
         "@//third_party:litert_rules_python_and_strict_deps.diff",
+        "@//third_party:litert_custom_ops.diff",
+        "@//third_party:litert_internal_fbs_fix.diff",
     ],
     sha256 = "f95fa96332c56b7103db7a02ab4edab845949c196a986db55bddaa70539ee45b",
     strip_prefix = "LiteRT-2.1.6",

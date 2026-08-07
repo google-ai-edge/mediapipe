@@ -35,10 +35,10 @@ limitations under the License.
 #include "mediapipe/util/resource_util.h"
 #include "mediapipe/util/resource_util_custom.h"
 #include "mediapipe/util/tflite/error_reporter.h"
-#include "tensorflow/lite/core/api/error_reporter.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/model_builder.h"
-#include "tensorflow/lite/tools/verifier.h"
+#include "tflite/core/api/error_reporter.h"
+#include "tflite/core/api/op_resolver.h"
+#include "tflite/model_builder.h"
+#include "tflite/tools/verifier.h"
 
 namespace mediapipe {
 namespace tasks {

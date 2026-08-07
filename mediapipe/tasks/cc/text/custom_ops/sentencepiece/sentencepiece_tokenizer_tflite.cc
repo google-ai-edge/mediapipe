@@ -19,12 +19,12 @@ limitations under the License.
 
 #include "flatbuffers/flexbuffers.h"
 #include "mediapipe/tasks/cc/text/custom_ops/sentencepiece/optimized_encoder.h"
-#include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/context.h"
-#include "tensorflow/lite/kernels/internal/tensor.h"
-#include "tensorflow/lite/kernels/kernel_util.h"
-#include "tensorflow/lite/model.h"
-#include "tensorflow/lite/string_util.h"
+#include "tflite/c/common.h"
+#include "tflite/context.h"
+#include "tflite/kernels/internal/tensor.h"
+#include "tflite/kernels/kernel_util.h"
+#include "tflite/model.h"
+#include "tflite/string_util.h"
 
 namespace mediapipe::tflite_operations {
 namespace sentencepiece::tokenizer {

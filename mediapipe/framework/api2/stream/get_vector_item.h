@@ -10,7 +10,7 @@
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
-#include "tensorflow/lite/c/common.h"
+#include "tflite/c/common.h"
 
 namespace mediapipe::api2::builder {
 

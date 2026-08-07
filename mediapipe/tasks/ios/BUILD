@@ -33,14 +33,14 @@ exports_files([
 ])
 
 TENSORFLOW_LITE_C_DEPS = [
-    "@org_tensorflow//tensorflow/lite:builtin_ops",
-    "@org_tensorflow//tensorflow/lite/c:c_api",
-    "@org_tensorflow//tensorflow/lite/c:c_api_experimental",
-    "@org_tensorflow//tensorflow/lite/c:c_api_types",
-    "@org_tensorflow//tensorflow/lite/c:common",
-    "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
-    "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate",
-    "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate_internal",
+    "@litert//tflite:builtin_ops",
+    "@litert//tflite/c:c_api",
+    "@litert//tflite/c:c_api_experimental",
+    "@litert//tflite/c:c_api_types",
+    "@litert//tflite/c:common",
+    "@litert//tflite/delegates/xnnpack:xnnpack_delegate",
+    "@litert//tflite/delegates/gpu:metal_delegate",
+    "@litert//tflite/delegates/gpu:metal_delegate_internal",
 ]
 
 # MediaPipe iOS OpenCV build rules

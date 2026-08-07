@@ -44,8 +44,8 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
-#include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/test_util.h"
+#include "tflite/c/common.h"
+#include "tflite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {

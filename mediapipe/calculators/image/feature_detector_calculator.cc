@@ -31,7 +31,7 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/threadpool.h"
 #include "mediapipe/framework/tool/options_util.h"
-#include "tensorflow/lite/interpreter.h"
+#include "tflite/interpreter.h"
 
 namespace mediapipe {
 

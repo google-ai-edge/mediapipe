@@ -14,7 +14,7 @@ pybind_extension(
     module_name = "_pywrap_metadata_version",
     deps = [
         "//mediapipe/tasks/cc/metadata:metadata_version",
-        "@org_tensorflow//tensorflow/lite/c:common",
+        "@litert//tflite/c:common",
         "@pybind11",
     ],
 )

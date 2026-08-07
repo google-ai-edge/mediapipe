@@ -14,7 +14,7 @@
 
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load(
-    "@org_tensorflow//tensorflow/lite:special_rules.bzl",
+    "@litert//tflite:special_rules.bzl",
     "tflite_ios_lab_runner",
 )
 load("@rules_cc//cc:objc_library.bzl", "objc_library")

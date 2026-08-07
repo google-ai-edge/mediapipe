@@ -18,7 +18,7 @@ limitations under the License.
 
 #include <memory>
 
-#include "tensorflow/lite/mutable_op_resolver.h"
+#include "tflite/mutable_op_resolver.h"
 
 namespace mediapipe {
 namespace tasks {

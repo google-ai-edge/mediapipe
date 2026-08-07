@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_UTIL_TFLITE_OPERATIONS_TRANSFORM_TENSOR_BILINEAR_H_
 #define MEDIAPIPE_UTIL_TFLITE_OPERATIONS_TRANSFORM_TENSOR_BILINEAR_H_
 
-#include "tensorflow/lite/kernels/kernel_util.h"
+#include "tflite/kernels/kernel_util.h"
 
 namespace mediapipe {
 namespace tflite_operations {

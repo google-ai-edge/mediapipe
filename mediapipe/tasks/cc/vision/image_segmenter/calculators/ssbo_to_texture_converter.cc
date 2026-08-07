@@ -1,7 +1,7 @@
 #include "mediapipe/tasks/cc/vision/image_segmenter/calculators/ssbo_to_texture_converter.h"
 
-#include "tensorflow/lite/delegates/gpu/gl/converters/util.h"
-#include "tensorflow/lite/delegates/gpu/gl/gl_shader.h"
+#include "tflite/delegates/gpu/gl/converters/util.h"
+#include "tflite/delegates/gpu/gl/gl_shader.h"
 
 // Quick compile-time warning to ensure usage on the proper platform.
 #if !(MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31)

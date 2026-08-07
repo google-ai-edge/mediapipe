@@ -34,10 +34,10 @@
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
-#include "tensorflow/lite/c/c_api_types.h"
-#include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/interpreter_builder.h"
-#include "tensorflow/lite/util.h"
+#include "tflite/c/c_api_types.h"
+#include "tflite/c/common.h"
+#include "tflite/interpreter_builder.h"
+#include "tflite/util.h"
 
 namespace mediapipe {
 

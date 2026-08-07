@@ -17,7 +17,7 @@
 
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
-#include "tensorflow/lite/interpreter.h"
+#include "tflite/interpreter.h"
 
 namespace mediapipe {
 

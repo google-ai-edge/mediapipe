@@ -25,7 +25,7 @@ load("//mediapipe/framework/tool:build_defs.bzl", "clean_dep")
 # buildifier: disable=out-of-order-load
 # buildifier: disable=same-origin-load
 load("//mediapipe/framework/deps:descriptor_set.bzl", "direct_descriptor_set", "transitive_descriptor_set")
-load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
+load("@litert//tflite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
 
 def mediapipe_binary_graph(name, graph = None, output_name = None, deps = [], testonly = None, compatible_with = None, **kwargs):
     """Converts a graph from text format to binary format.

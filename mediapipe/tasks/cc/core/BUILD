@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite", "cc_test_with_tflite")
+load("@litert//tflite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite", "cc_test_with_tflite")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
@@ -39,8 +39,8 @@ cc_library(
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
-        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
-        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@litert//tflite/core/api:op_resolver",
+        "@litert//tflite/kernels:builtin_ops",
     ],
 )
 
@@ -98,7 +98,7 @@ cc_library_with_tflite(
     srcs = ["mediapipe_builtin_op_resolver.cc"],
     hdrs = ["mediapipe_builtin_op_resolver.h"],
     tflite_deps = [
-        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@litert//tflite/kernels:builtin_ops",
     ],
     deps = [
         "//mediapipe/tasks/cc/text/custom_ops/ragged:ragged_tensor_to_tensor_tflite",
@@ -154,9 +154,9 @@ cc_library_with_tflite(
     srcs = ["model_resources.cc"],
     hdrs = ["model_resources.h"],
     tflite_deps = [
-        "@org_tensorflow//tensorflow/lite:framework_stable",
-        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
-        "@org_tensorflow//tensorflow/lite/tools:verifier",
+        "@litert//tflite:framework_stable",
+        "@litert//tflite/kernels:builtin_ops",
+        "@litert//tflite/tools:verifier",
     ],
     deps = [
         ":external_file_handler",
@@ -172,8 +172,8 @@ cc_library_with_tflite(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/lite/core/api:error_reporter",
-        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
+        "@litert//tflite/core/api:error_reporter",
+        "@litert//tflite/core/api:op_resolver",
     ],
 )
 
@@ -185,9 +185,9 @@ cc_test_with_tflite(
     ],
     tflite_deps = [
         ":model_resources",
-        "@org_tensorflow//tensorflow/lite:framework_stable",
-        "@org_tensorflow//tensorflow/lite:test_util",
-        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@litert//tflite:framework_stable",
+        "@litert//tflite:test_util",
+        "@litert//tflite/kernels:builtin_ops",
     ],
     deps = [
         ":utils",
@@ -200,9 +200,9 @@ cc_test_with_tflite(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:cord",
-        "@org_tensorflow//tensorflow/lite:mutable_op_resolver",
-        "@org_tensorflow//tensorflow/lite/c:common",
-        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
+        "@litert//tflite:mutable_op_resolver",
+        "@litert//tflite/c:common",
+        "@litert//tflite/core/api:op_resolver",
     ],
 )
 
@@ -212,7 +212,7 @@ cc_library_with_tflite(
     hdrs = ["model_resources_cache.h"],
     tflite_deps = [
         ":model_resources",
-        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@litert//tflite/kernels:builtin_ops",
     ],
     deps = [
         ":model_asset_bundle_resources",
@@ -224,7 +224,7 @@ cc_library_with_tflite(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
+        "@litert//tflite/core/api:op_resolver",
     ],
 )
 
@@ -244,7 +244,7 @@ cc_library_with_tflite(
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
+        "@litert//tflite/core/api:op_resolver",
     ],
     alwayslink = 1,
 )
@@ -267,8 +267,8 @@ cc_test(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/lite:test_util",
-        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
+        "@litert//tflite:test_util",
+        "@litert//tflite/core/api:op_resolver",
     ],
 )
 
@@ -303,7 +303,7 @@ cc_library_with_tflite(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
-        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
+        "@litert//tflite/core/api:op_resolver",
     ],
 )
 
@@ -317,7 +317,7 @@ cc_test_with_tflite(
         ":task_runner",
         ":model_resources",
         ":model_resources_cache",
-        "@org_tensorflow//tensorflow/lite:test_util",
+        "@litert//tflite:test_util",
     ],
     deps = [
         ":running_mode",
@@ -367,7 +367,7 @@ cc_library_with_tflite(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
+        "@litert//tflite/core/api:op_resolver",
     ],
 )
 

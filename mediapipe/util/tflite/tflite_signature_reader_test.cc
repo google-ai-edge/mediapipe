@@ -14,10 +14,10 @@
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/interpreter_builder.h"
-#include "tensorflow/lite/kernels/register.h"
-#include "tensorflow/lite/test_util.h"
+#include "tflite/interpreter.h"
+#include "tflite/interpreter_builder.h"
+#include "tflite/kernels/register.h"
+#include "tflite/test_util.h"
 
 namespace mediapipe {
 namespace {

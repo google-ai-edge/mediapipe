@@ -16,7 +16,7 @@
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/framework/tool/tag_map_helper.h"
-#include "tensorflow/lite/test_util.h"
+#include "tflite/test_util.h"
 
 ABSL_DECLARE_FLAG(std::string, resource_root_dir);
 

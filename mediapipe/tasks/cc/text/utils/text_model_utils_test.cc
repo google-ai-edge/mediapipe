@@ -28,7 +28,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/processors/proto/text_model_type.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
-#include "tensorflow/lite/test_util.h"
+#include "tflite/test_util.h"
 
 namespace mediapipe::tasks::text::utils {
 

@@ -1,21 +1,21 @@
-diff --git a/tensorflow/lite/delegates/gpu/common/BUILD b/tensorflow/lite/delegates/gpu/common/BUILD
+diff --git a/tflite/delegates/gpu/common/BUILD b/tflite/delegates/gpu/common/BUILD
 index c49f2ce731d..d72773c0a5b 100644
---- a/tensorflow/lite/delegates/gpu/common/BUILD
-+++ b/tensorflow/lite/delegates/gpu/common/BUILD
+--- a/tflite/delegates/gpu/common/BUILD
++++ b/tflite/delegates/gpu/common/BUILD
 @@ -173,7 +173,7 @@ cc_library(
          "@com_google_absl//absl/container:flat_hash_set",
          "@com_google_absl//absl/status",
          "@com_google_absl//absl/strings",
--    ] + tf_platform_alias("custom_parsers", "//tensorflow/lite/delegates/gpu/common/"),
-+    ] + ["//tensorflow/lite/delegates/gpu/common/mediapipe:custom_parsers"],
+-    ] + tf_platform_alias("custom_parsers", "//tflite/delegates/gpu/common/"),
++    ] + ["//tflite/delegates/gpu/common/mediapipe:custom_parsers"],
  )
  
  cc_test(
-diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/BUILD b/tensorflow/lite/delegates/gpu/common/mediapipe/BUILD
+diff --git a/tflite/delegates/gpu/common/mediapipe/BUILD b/tflite/delegates/gpu/common/mediapipe/BUILD
 new file mode 100644
 index 00000000000..58967ddbb66
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/mediapipe/BUILD
++++ b/tflite/delegates/gpu/common/mediapipe/BUILD
 @@ -0,0 +1,93 @@
 +package(
 +    default_visibility = ["//visibility:public"],
@@ -25,15 +25,15 @@ index 00000000000..58967ddbb66
 +cc_library(
 +    name = "custom_parsers",
 +    srcs = ["custom_parsers.cc"],
-+    hdrs = ["//tensorflow/lite/delegates/gpu/common:custom_parsers.h"],
++    hdrs = ["//tflite/delegates/gpu/common:custom_parsers.h"],
 +    deps = [
 +        ":landmarks_to_transform_matrix",
 +        ":transform_landmarks",
 +        ":transform_tensor_bilinear",
-+        "//tensorflow/lite/delegates/gpu/common:operation_parser",
-+        "//tensorflow/lite/delegates/gpu/common:shape",
-+        "//tensorflow/lite/delegates/gpu/common:status",
-+        "//tensorflow/lite/delegates/gpu/common:unimplemented_operation_parser",
++        "//tflite/delegates/gpu/common:operation_parser",
++        "//tflite/delegates/gpu/common:shape",
++        "//tflite/delegates/gpu/common:status",
++        "//tflite/delegates/gpu/common:unimplemented_operation_parser",
 +        "@com_google_absl//absl/memory",
 +        "@com_google_absl//absl/strings",
 +        "@com_google_absl//absl/types:any",
@@ -43,12 +43,12 @@ index 00000000000..58967ddbb66
 +cc_library(
 +    name = "custom_transformations",
 +    srcs = ["custom_transformations.cc"],
-+    hdrs = ["//tensorflow/lite/delegates/gpu/common:custom_transformations.h"],
++    hdrs = ["//tflite/delegates/gpu/common:custom_transformations.h"],
 +    deps = [
 +        ":landmarks_to_transform_matrix",
 +        ":transform_landmarks",
 +        ":transform_tensor_bilinear",
-+        "//tensorflow/lite/delegates/gpu/common:model_transformer",
++        "//tflite/delegates/gpu/common:model_transformer",
 +        "@com_google_absl//absl/memory",
 +    ],
 +)
@@ -58,16 +58,16 @@ index 00000000000..58967ddbb66
 +    srcs = ["landmarks_to_transform_matrix.cc"],
 +    hdrs = ["landmarks_to_transform_matrix.h"],
 +    deps = [
-+        "//tensorflow/lite/c:common",
-+        "//tensorflow/lite/delegates/gpu/common:model",
-+        "//tensorflow/lite/delegates/gpu/common:model_builder_helper",
-+        "//tensorflow/lite/delegates/gpu/common:model_transformer",
-+        "//tensorflow/lite/delegates/gpu/common:object_reader",
-+        "//tensorflow/lite/delegates/gpu/common:operation_parser",
-+        "//tensorflow/lite/delegates/gpu/common:shape",
-+        "//tensorflow/lite/delegates/gpu/common:status",
-+        "//tensorflow/lite/delegates/gpu/common:tensor",
-+        "//tensorflow/lite/delegates/gpu/common:types",
++        "//tflite/c:common",
++        "//tflite/delegates/gpu/common:model",
++        "//tflite/delegates/gpu/common:model_builder_helper",
++        "//tflite/delegates/gpu/common:model_transformer",
++        "//tflite/delegates/gpu/common:object_reader",
++        "//tflite/delegates/gpu/common:operation_parser",
++        "//tflite/delegates/gpu/common:shape",
++        "//tflite/delegates/gpu/common:status",
++        "//tflite/delegates/gpu/common:tensor",
++        "//tflite/delegates/gpu/common:types",
 +        "@com_google_absl//absl/types:any",
 +        "@flatbuffers",
 +    ],
@@ -78,15 +78,15 @@ index 00000000000..58967ddbb66
 +    srcs = ["transform_landmarks.cc"],
 +    hdrs = ["transform_landmarks.h"],
 +    deps = [
-+        "//tensorflow/lite/c:common",
-+        "//tensorflow/lite/delegates/gpu/common:model",
-+        "//tensorflow/lite/delegates/gpu/common:model_builder_helper",
-+        "//tensorflow/lite/delegates/gpu/common:model_transformer",
-+        "//tensorflow/lite/delegates/gpu/common:object_reader",
-+        "//tensorflow/lite/delegates/gpu/common:operation_parser",
-+        "//tensorflow/lite/delegates/gpu/common:shape",
-+        "//tensorflow/lite/delegates/gpu/common:status",
-+        "//tensorflow/lite/delegates/gpu/common:tensor",
++        "//tflite/c:common",
++        "//tflite/delegates/gpu/common:model",
++        "//tflite/delegates/gpu/common:model_builder_helper",
++        "//tflite/delegates/gpu/common:model_transformer",
++        "//tflite/delegates/gpu/common:object_reader",
++        "//tflite/delegates/gpu/common:operation_parser",
++        "//tflite/delegates/gpu/common:shape",
++        "//tflite/delegates/gpu/common:status",
++        "//tflite/delegates/gpu/common:tensor",
 +        "@com_google_absl//absl/types:any",
 +        "@flatbuffers",
 +    ],
@@ -97,37 +97,37 @@ index 00000000000..58967ddbb66
 +    srcs = ["transform_tensor_bilinear.cc"],
 +    hdrs = ["transform_tensor_bilinear.h"],
 +    deps = [
-+        "//tensorflow/lite/c:common",
-+        "//tensorflow/lite/delegates/gpu/common:model",
-+        "//tensorflow/lite/delegates/gpu/common:model_builder_helper",
-+        "//tensorflow/lite/delegates/gpu/common:model_transformer",
-+        "//tensorflow/lite/delegates/gpu/common:object_reader",
-+        "//tensorflow/lite/delegates/gpu/common:operation_parser",
-+        "//tensorflow/lite/delegates/gpu/common:shape",
-+        "//tensorflow/lite/delegates/gpu/common:status",
-+        "//tensorflow/lite/delegates/gpu/common:tensor",
++        "//tflite/c:common",
++        "//tflite/delegates/gpu/common:model",
++        "//tflite/delegates/gpu/common:model_builder_helper",
++        "//tflite/delegates/gpu/common:model_transformer",
++        "//tflite/delegates/gpu/common:object_reader",
++        "//tflite/delegates/gpu/common:operation_parser",
++        "//tflite/delegates/gpu/common:shape",
++        "//tflite/delegates/gpu/common:status",
++        "//tflite/delegates/gpu/common:tensor",
 +        "@com_google_absl//absl/types:any",
 +        "@flatbuffers",
 +    ],
 +)
-diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/custom_parsers.cc b/tensorflow/lite/delegates/gpu/common/mediapipe/custom_parsers.cc
+diff --git a/tflite/delegates/gpu/common/mediapipe/custom_parsers.cc b/tflite/delegates/gpu/common/mediapipe/custom_parsers.cc
 new file mode 100644
 index 00000000000..52c11b90fc8
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/mediapipe/custom_parsers.cc
++++ b/tflite/delegates/gpu/common/mediapipe/custom_parsers.cc
 @@ -0,0 +1,34 @@
-+#include "tensorflow/lite/delegates/gpu/common/custom_parsers.h"
++#include "tflite/delegates/gpu/common/custom_parsers.h"
 +
 +#include <memory>
 +#include <string>
 +
 +#include "absl/memory/memory.h"
 +#include "absl/strings/string_view.h"
-+#include "tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
-+#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h"
-+#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h"
-+#include "tensorflow/lite/delegates/gpu/common/operation_parser.h"
-+#include "tensorflow/lite/delegates/gpu/common/unimplemented_operation_parser.h"
++#include "tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
++#include "tflite/delegates/gpu/common/mediapipe/transform_landmarks.h"
++#include "tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h"
++#include "tflite/delegates/gpu/common/operation_parser.h"
++#include "tflite/delegates/gpu/common/unimplemented_operation_parser.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -150,19 +150,19 @@ index 00000000000..52c11b90fc8
 +
 +}  // namespace gpu
 +}  // namespace tflite
-diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/custom_transformations.cc b/tensorflow/lite/delegates/gpu/common/mediapipe/custom_transformations.cc
+diff --git a/tflite/delegates/gpu/common/mediapipe/custom_transformations.cc b/tflite/delegates/gpu/common/mediapipe/custom_transformations.cc
 new file mode 100644
 index 00000000000..1509ea3bcf3
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/mediapipe/custom_transformations.cc
++++ b/tflite/delegates/gpu/common/mediapipe/custom_transformations.cc
 @@ -0,0 +1,24 @@
-+#include "tensorflow/lite/delegates/gpu/common/custom_transformations.h"
++#include "tflite/delegates/gpu/common/custom_transformations.h"
 +
 +#include "absl/memory/memory.h"
-+#include "tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
-+#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h"
-+#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h"
-+#include "tensorflow/lite/delegates/gpu/common/model_transformer.h"
++#include "tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
++#include "tflite/delegates/gpu/common/mediapipe/transform_landmarks.h"
++#include "tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h"
++#include "tflite/delegates/gpu/common/model_transformer.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -180,13 +180,13 @@ index 00000000000..1509ea3bcf3
 +}
 +}  // namespace gpu
 +}  // namespace tflite
-diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.cc b/tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.cc
+diff --git a/tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.cc b/tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.cc
 new file mode 100644
 index 00000000000..4e73cf649e6
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.cc
++++ b/tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.cc
 @@ -0,0 +1,182 @@
-+#include "tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
++#include "tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
 +
 +#include <cstdint>
 +#include <string>
@@ -194,14 +194,14 @@ index 00000000000..4e73cf649e6
 +
 +#include "absl/types/any.h"
 +#include "flatbuffers/flexbuffers.h"
-+#include "tensorflow/lite/delegates/gpu/common/model.h"
-+#include "tensorflow/lite/delegates/gpu/common/model_builder_helper.h"
-+#include "tensorflow/lite/delegates/gpu/common/object_reader.h"
-+#include "tensorflow/lite/delegates/gpu/common/operation_parser.h"
-+#include "tensorflow/lite/delegates/gpu/common/shape.h"
-+#include "tensorflow/lite/delegates/gpu/common/status.h"
-+#include "tensorflow/lite/delegates/gpu/common/tensor.h"
-+#include "tensorflow/lite/delegates/gpu/common/types.h"
++#include "tflite/delegates/gpu/common/model.h"
++#include "tflite/delegates/gpu/common/model_builder_helper.h"
++#include "tflite/delegates/gpu/common/object_reader.h"
++#include "tflite/delegates/gpu/common/operation_parser.h"
++#include "tflite/delegates/gpu/common/shape.h"
++#include "tflite/delegates/gpu/common/status.h"
++#include "tflite/delegates/gpu/common/tensor.h"
++#include "tflite/delegates/gpu/common/types.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -368,26 +368,26 @@ index 00000000000..4e73cf649e6
 +
 +}  // namespace gpu
 +}  // namespace tflite
-diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h b/tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h
+diff --git a/tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h b/tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h
 new file mode 100644
 index 00000000000..78c72aea123
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h
++++ b/tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h
 @@ -0,0 +1,96 @@
-+#ifndef TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
-+#define TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
++#ifndef TFLITE_DELEGATES_GPU_COMMON_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
++#define TFLITE_DELEGATES_GPU_COMMON_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
 +
 +#include <cstdint>
 +#include <vector>
 +
 +#include "absl/types/any.h"
-+#include "tensorflow/lite/delegates/gpu/common/model.h"
-+#include "tensorflow/lite/delegates/gpu/common/model_transformer.h"
-+#include "tensorflow/lite/delegates/gpu/common/object_reader.h"
-+#include "tensorflow/lite/delegates/gpu/common/operation_parser.h"
-+#include "tensorflow/lite/delegates/gpu/common/shape.h"
-+#include "tensorflow/lite/delegates/gpu/common/status.h"
-+#include "tensorflow/lite/delegates/gpu/common/types.h"
++#include "tflite/delegates/gpu/common/model.h"
++#include "tflite/delegates/gpu/common/model_transformer.h"
++#include "tflite/delegates/gpu/common/object_reader.h"
++#include "tflite/delegates/gpu/common/operation_parser.h"
++#include "tflite/delegates/gpu/common/shape.h"
++#include "tflite/delegates/gpu/common/status.h"
++#include "tflite/delegates/gpu/common/types.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -469,14 +469,14 @@ index 00000000000..78c72aea123
 +}  // namespace gpu
 +}  // namespace tflite
 +
-+#endif  // TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
-diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.cc b/tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.cc
++#endif  // TFLITE_DELEGATES_GPU_COMMON_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
+diff --git a/tflite/delegates/gpu/common/mediapipe/transform_landmarks.cc b/tflite/delegates/gpu/common/mediapipe/transform_landmarks.cc
 new file mode 100644
 index 00000000000..fba7e742998
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.cc
++++ b/tflite/delegates/gpu/common/mediapipe/transform_landmarks.cc
 @@ -0,0 +1,169 @@
-+#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h"
++#include "tflite/delegates/gpu/common/mediapipe/transform_landmarks.h"
 +
 +#include <cstdint>
 +#include <string>
@@ -484,13 +484,13 @@ index 00000000000..fba7e742998
 +
 +#include "absl/types/any.h"
 +#include "flatbuffers/flexbuffers.h"
-+#include "tensorflow/lite/delegates/gpu/common/model.h"
-+#include "tensorflow/lite/delegates/gpu/common/model_builder_helper.h"
-+#include "tensorflow/lite/delegates/gpu/common/object_reader.h"
-+#include "tensorflow/lite/delegates/gpu/common/operation_parser.h"
-+#include "tensorflow/lite/delegates/gpu/common/shape.h"
-+#include "tensorflow/lite/delegates/gpu/common/status.h"
-+#include "tensorflow/lite/delegates/gpu/common/tensor.h"
++#include "tflite/delegates/gpu/common/model.h"
++#include "tflite/delegates/gpu/common/model_builder_helper.h"
++#include "tflite/delegates/gpu/common/object_reader.h"
++#include "tflite/delegates/gpu/common/operation_parser.h"
++#include "tflite/delegates/gpu/common/shape.h"
++#include "tflite/delegates/gpu/common/status.h"
++#include "tflite/delegates/gpu/common/tensor.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -645,24 +645,24 @@ index 00000000000..fba7e742998
 +
 +}  // namespace gpu
 +}  // namespace tflite
-diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h b/tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h
+diff --git a/tflite/delegates/gpu/common/mediapipe/transform_landmarks.h b/tflite/delegates/gpu/common/mediapipe/transform_landmarks.h
 new file mode 100644
 index 00000000000..f804e14e55d
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h
++++ b/tflite/delegates/gpu/common/mediapipe/transform_landmarks.h
 @@ -0,0 +1,74 @@
-+#ifndef TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
-+#define TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
++#ifndef TFLITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
++#define TFLITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
 +
 +#include <cstdint>
 +
 +#include "absl/types/any.h"
-+#include "tensorflow/lite/delegates/gpu/common/model.h"
-+#include "tensorflow/lite/delegates/gpu/common/model_transformer.h"
-+#include "tensorflow/lite/delegates/gpu/common/object_reader.h"
-+#include "tensorflow/lite/delegates/gpu/common/operation_parser.h"
-+#include "tensorflow/lite/delegates/gpu/common/shape.h"
-+#include "tensorflow/lite/delegates/gpu/common/status.h"
++#include "tflite/delegates/gpu/common/model.h"
++#include "tflite/delegates/gpu/common/model_transformer.h"
++#include "tflite/delegates/gpu/common/object_reader.h"
++#include "tflite/delegates/gpu/common/operation_parser.h"
++#include "tflite/delegates/gpu/common/shape.h"
++#include "tflite/delegates/gpu/common/status.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -724,14 +724,14 @@ index 00000000000..f804e14e55d
 +}  // namespace gpu
 +}  // namespace tflite
 +
-+#endif  // TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
-diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.cc b/tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.cc
++#endif  // TFLITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
+diff --git a/tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.cc b/tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.cc
 new file mode 100644
 index 00000000000..704ce7d4a47
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.cc
++++ b/tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.cc
 @@ -0,0 +1,142 @@
-+#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h"
++#include "tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h"
 +
 +#include <cstdint>
 +#include <string>
@@ -740,13 +740,13 @@ index 00000000000..704ce7d4a47
 +
 +#include "absl/types/any.h"
 +#include "flatbuffers/flexbuffers.h"
-+#include "tensorflow/lite/delegates/gpu/common/model.h"
-+#include "tensorflow/lite/delegates/gpu/common/model_builder_helper.h"
-+#include "tensorflow/lite/delegates/gpu/common/object_reader.h"
-+#include "tensorflow/lite/delegates/gpu/common/operation_parser.h"
-+#include "tensorflow/lite/delegates/gpu/common/shape.h"
-+#include "tensorflow/lite/delegates/gpu/common/status.h"
-+#include "tensorflow/lite/delegates/gpu/common/tensor.h"
++#include "tflite/delegates/gpu/common/model.h"
++#include "tflite/delegates/gpu/common/model_builder_helper.h"
++#include "tflite/delegates/gpu/common/object_reader.h"
++#include "tflite/delegates/gpu/common/operation_parser.h"
++#include "tflite/delegates/gpu/common/shape.h"
++#include "tflite/delegates/gpu/common/status.h"
++#include "tflite/delegates/gpu/common/tensor.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -873,24 +873,24 @@ index 00000000000..704ce7d4a47
 +
 +}  // namespace gpu
 +}  // namespace tflite
-diff --git a/tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h b/tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h
+diff --git a/tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h b/tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h
 new file mode 100644
 index 00000000000..8a1f840c12f
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h
++++ b/tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h
 @@ -0,0 +1,54 @@
-+#ifndef TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
-+#define TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
++#ifndef TFLITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
++#define TFLITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
 +
 +#include <cstdint>
 +
 +#include "absl/types/any.h"
-+#include "tensorflow/lite/delegates/gpu/common/model.h"
-+#include "tensorflow/lite/delegates/gpu/common/model_transformer.h"
-+#include "tensorflow/lite/delegates/gpu/common/object_reader.h"
-+#include "tensorflow/lite/delegates/gpu/common/operation_parser.h"
-+#include "tensorflow/lite/delegates/gpu/common/shape.h"
-+#include "tensorflow/lite/delegates/gpu/common/status.h"
++#include "tflite/delegates/gpu/common/model.h"
++#include "tflite/delegates/gpu/common/model_transformer.h"
++#include "tflite/delegates/gpu/common/object_reader.h"
++#include "tflite/delegates/gpu/common/operation_parser.h"
++#include "tflite/delegates/gpu/common/shape.h"
++#include "tflite/delegates/gpu/common/status.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -932,27 +932,27 @@ index 00000000000..8a1f840c12f
 +}  // namespace gpu
 +}  // namespace tflite
 +
-+#endif  // TENSORFLOW_LITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
-diff --git a/tensorflow/lite/delegates/gpu/common/selectors/BUILD b/tensorflow/lite/delegates/gpu/common/selectors/BUILD
++#endif  // TFLITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
+diff --git a/tflite/delegates/gpu/common/selectors/BUILD b/tflite/delegates/gpu/common/selectors/BUILD
 index ec6c2281b9e..26cf9aab1a9 100644
---- a/tensorflow/lite/delegates/gpu/common/selectors/BUILD
-+++ b/tensorflow/lite/delegates/gpu/common/selectors/BUILD
+--- a/tflite/delegates/gpu/common/selectors/BUILD
++++ b/tflite/delegates/gpu/common/selectors/BUILD
 @@ -45,9 +45,9 @@ cc_library(
-         "//tensorflow/lite/delegates/gpu/common:model",
-         "//tensorflow/lite/delegates/gpu/common:model_hints",
-         "//tensorflow/lite/delegates/gpu/common:status",
-+        "//tensorflow/lite/delegates/gpu/common/selectors/mediapipe:default_selector",
-         "//tensorflow/lite/delegates/gpu/common/task:gpu_operation",
-         "//tensorflow/lite/delegates/gpu/common/task:tensor_desc",
+         "//tflite/delegates/gpu/common:model",
+         "//tflite/delegates/gpu/common:model_hints",
+         "//tflite/delegates/gpu/common:status",
++        "//tflite/delegates/gpu/common/selectors/mediapipe:default_selector",
+         "//tflite/delegates/gpu/common/task:gpu_operation",
+         "//tflite/delegates/gpu/common/task:tensor_desc",
 -        _selectors_package + ":default_selector",
      ],
  )
  
-diff --git a/tensorflow/lite/delegates/gpu/common/selectors/mediapipe/BUILD b/tensorflow/lite/delegates/gpu/common/selectors/mediapipe/BUILD
+diff --git a/tflite/delegates/gpu/common/selectors/mediapipe/BUILD b/tflite/delegates/gpu/common/selectors/mediapipe/BUILD
 new file mode 100644
 index 00000000000..d5a28d6f72e
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/selectors/mediapipe/BUILD
++++ b/tflite/delegates/gpu/common/selectors/mediapipe/BUILD
 @@ -0,0 +1,21 @@
 +package(
 +    default_visibility = ["//visibility:public"],
@@ -963,36 +963,36 @@ index 00000000000..d5a28d6f72e
 +    name = "default_selector",
 +    srcs = ["default_selector.cc"],
 +    deps = [
-+        "//tensorflow/lite/delegates/gpu/common:model",
-+        "//tensorflow/lite/delegates/gpu/common:model_hints",
-+        "//tensorflow/lite/delegates/gpu/common:operations",
-+        "//tensorflow/lite/delegates/gpu/common:status",
-+        "//tensorflow/lite/delegates/gpu/common/selectors:subgraph",
-+        "//tensorflow/lite/delegates/gpu/common/task:gpu_operation",
-+        "//tensorflow/lite/delegates/gpu/common/tasks/mediapipe:landmarks_to_transform_matrix",
-+        "//tensorflow/lite/delegates/gpu/common/tasks/mediapipe:transform_landmarks",
-+        "//tensorflow/lite/delegates/gpu/common/tasks/mediapipe:transform_tensor_bilinear",
++        "//tflite/delegates/gpu/common:model",
++        "//tflite/delegates/gpu/common:model_hints",
++        "//tflite/delegates/gpu/common:operations",
++        "//tflite/delegates/gpu/common:status",
++        "//tflite/delegates/gpu/common/selectors:subgraph",
++        "//tflite/delegates/gpu/common/task:gpu_operation",
++        "//tflite/delegates/gpu/common/tasks/mediapipe:landmarks_to_transform_matrix",
++        "//tflite/delegates/gpu/common/tasks/mediapipe:transform_landmarks",
++        "//tflite/delegates/gpu/common/tasks/mediapipe:transform_tensor_bilinear",
 +        "@com_google_absl//absl/strings",
 +    ],
 +)
-diff --git a/tensorflow/lite/delegates/gpu/common/selectors/mediapipe/default_selector.cc b/tensorflow/lite/delegates/gpu/common/selectors/mediapipe/default_selector.cc
+diff --git a/tflite/delegates/gpu/common/selectors/mediapipe/default_selector.cc b/tflite/delegates/gpu/common/selectors/mediapipe/default_selector.cc
 new file mode 100644
 index 00000000000..9c93149f95b
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/selectors/mediapipe/default_selector.cc
++++ b/tflite/delegates/gpu/common/selectors/mediapipe/default_selector.cc
 @@ -0,0 +1,48 @@
 +#include <memory>
 +
 +#include "absl/strings/str_cat.h"
-+#include "tensorflow/lite/delegates/gpu/common/model.h"
-+#include "tensorflow/lite/delegates/gpu/common/model_hints.h"
-+#include "tensorflow/lite/delegates/gpu/common/operations.h"
-+#include "tensorflow/lite/delegates/gpu/common/selectors/subgraph.h"
-+#include "tensorflow/lite/delegates/gpu/common/status.h"
-+#include "tensorflow/lite/delegates/gpu/common/task/gpu_operation.h"
-+#include "tensorflow/lite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h"
-+#include "tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h"
-+#include "tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h"
++#include "tflite/delegates/gpu/common/model.h"
++#include "tflite/delegates/gpu/common/model_hints.h"
++#include "tflite/delegates/gpu/common/operations.h"
++#include "tflite/delegates/gpu/common/selectors/subgraph.h"
++#include "tflite/delegates/gpu/common/status.h"
++#include "tflite/delegates/gpu/common/task/gpu_operation.h"
++#include "tflite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h"
++#include "tflite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h"
++#include "tflite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -1029,11 +1029,11 @@ index 00000000000..9c93149f95b
 +
 +}  // namespace gpu
 +}  // namespace tflite
-diff --git a/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/BUILD b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/BUILD
+diff --git a/tflite/delegates/gpu/common/tasks/mediapipe/BUILD b/tflite/delegates/gpu/common/tasks/mediapipe/BUILD
 new file mode 100644
 index 00000000000..9df0735f0eb
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/BUILD
++++ b/tflite/delegates/gpu/common/tasks/mediapipe/BUILD
 @@ -0,0 +1,39 @@
 +package(
 +    default_visibility = ["//visibility:public"],
@@ -1045,9 +1045,9 @@ index 00000000000..9df0735f0eb
 +    srcs = ["landmarks_to_transform_matrix.cc"],
 +    hdrs = ["landmarks_to_transform_matrix.h"],
 +    deps = [
-+        "//tensorflow/lite/delegates/gpu/common:status",
-+        "//tensorflow/lite/delegates/gpu/common/mediapipe:landmarks_to_transform_matrix",
-+        "//tensorflow/lite/delegates/gpu/common/task:gpu_operation",
++        "//tflite/delegates/gpu/common:status",
++        "//tflite/delegates/gpu/common/mediapipe:landmarks_to_transform_matrix",
++        "//tflite/delegates/gpu/common/task:gpu_operation",
 +    ],
 +)
 +
@@ -1056,10 +1056,10 @@ index 00000000000..9df0735f0eb
 +    srcs = ["transform_landmarks.cc"],
 +    hdrs = ["transform_landmarks.h"],
 +    deps = [
-+        "//tensorflow/lite/delegates/gpu/common:status",
-+        "//tensorflow/lite/delegates/gpu/common/mediapipe:transform_landmarks",
-+        "//tensorflow/lite/delegates/gpu/common/task:gpu_operation",
-+        "//tensorflow/lite/delegates/gpu/common/task:work_group_picking",
++        "//tflite/delegates/gpu/common:status",
++        "//tflite/delegates/gpu/common/mediapipe:transform_landmarks",
++        "//tflite/delegates/gpu/common/task:gpu_operation",
++        "//tflite/delegates/gpu/common/task:work_group_picking",
 +    ],
 +)
 +
@@ -1068,24 +1068,24 @@ index 00000000000..9df0735f0eb
 +    srcs = ["transform_tensor_bilinear.cc"],
 +    hdrs = ["transform_tensor_bilinear.h"],
 +    deps = [
-+        "//tensorflow/lite/delegates/gpu/common:status",
-+        "//tensorflow/lite/delegates/gpu/common/mediapipe:transform_tensor_bilinear",
-+        "//tensorflow/lite/delegates/gpu/common/task:gpu_operation",
-+        "//tensorflow/lite/delegates/gpu/common/task:work_group_picking",
++        "//tflite/delegates/gpu/common:status",
++        "//tflite/delegates/gpu/common/mediapipe:transform_tensor_bilinear",
++        "//tflite/delegates/gpu/common/task:gpu_operation",
++        "//tflite/delegates/gpu/common/task:work_group_picking",
 +    ],
 +)
-diff --git a/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.cc b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.cc
+diff --git a/tflite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.cc b/tflite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.cc
 new file mode 100644
 index 00000000000..18f28b19361
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.cc
++++ b/tflite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.cc
 @@ -0,0 +1,368 @@
-+#include "tensorflow/lite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h"
++#include "tflite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h"
 +
 +#include <string>
 +#include <utility>
 +
-+#include "tensorflow/lite/delegates/gpu/common/status.h"
++#include "tflite/delegates/gpu/common/status.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -1448,18 +1448,18 @@ index 00000000000..18f28b19361
 +
 +}  // namespace gpu
 +}  // namespace tflite
-diff --git a/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h
+diff --git a/tflite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h b/tflite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h
 new file mode 100644
 index 00000000000..2fd523df7c7
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h
++++ b/tflite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h
 @@ -0,0 +1,26 @@
-+#ifndef TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPELANDMARKS_TO_TRANSFORM_MATRIX_H_
-+#define TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPELANDMARKS_TO_TRANSFORM_MATRIX_H_
++#ifndef TFLITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPELANDMARKS_TO_TRANSFORM_MATRIX_H_
++#define TFLITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPELANDMARKS_TO_TRANSFORM_MATRIX_H_
 +
-+#include "tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
-+#include "tensorflow/lite/delegates/gpu/common/status.h"
-+#include "tensorflow/lite/delegates/gpu/common/task/gpu_operation.h"
++#include "tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
++#include "tflite/delegates/gpu/common/status.h"
++#include "tflite/delegates/gpu/common/task/gpu_operation.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -1479,19 +1479,19 @@ index 00000000000..2fd523df7c7
 +}  // namespace gpu
 +}  // namespace tflite
 +
-+#endif  // TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPELANDMARKS_TO_TRANSFORM_MATRIX_H_
-diff --git a/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.cc b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.cc
++#endif  // TFLITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPELANDMARKS_TO_TRANSFORM_MATRIX_H_
+diff --git a/tflite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.cc b/tflite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.cc
 new file mode 100644
 index 00000000000..999917a9251
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.cc
++++ b/tflite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.cc
 @@ -0,0 +1,116 @@
-+#include "tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h"
++#include "tflite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h"
 +
 +#include <string>
 +
-+#include "tensorflow/lite/delegates/gpu/common/status.h"
-+#include "tensorflow/lite/delegates/gpu/common/task/work_group_picking.h"
++#include "tflite/delegates/gpu/common/status.h"
++#include "tflite/delegates/gpu/common/task/work_group_picking.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -1602,18 +1602,18 @@ index 00000000000..999917a9251
 +
 +}  // namespace gpu
 +}  // namespace tflite
-diff --git a/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h
+diff --git a/tflite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h b/tflite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h
 new file mode 100644
 index 00000000000..5c0be19033a
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h
++++ b/tflite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h
 @@ -0,0 +1,21 @@
-+#ifndef TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_LANDMARKS_H_
-+#define TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_LANDMARKS_H_
++#ifndef TFLITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_LANDMARKS_H_
++#define TFLITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_LANDMARKS_H_
 +
-+#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h"
-+#include "tensorflow/lite/delegates/gpu/common/status.h"
-+#include "tensorflow/lite/delegates/gpu/common/task/gpu_operation.h"
++#include "tflite/delegates/gpu/common/mediapipe/transform_landmarks.h"
++#include "tflite/delegates/gpu/common/status.h"
++#include "tflite/delegates/gpu/common/task/gpu_operation.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -1628,19 +1628,19 @@ index 00000000000..5c0be19033a
 +}  // namespace gpu
 +}  // namespace tflite
 +
-+#endif  // TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_LANDMARKS_H_
-diff --git a/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.cc b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.cc
++#endif  // TFLITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_LANDMARKS_H_
+diff --git a/tflite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.cc b/tflite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.cc
 new file mode 100644
 index 00000000000..2723216f324
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.cc
++++ b/tflite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.cc
 @@ -0,0 +1,123 @@
-+#include "tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h"
++#include "tflite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h"
 +
 +#include <string>
 +
-+#include "tensorflow/lite/delegates/gpu/common/status.h"
-+#include "tensorflow/lite/delegates/gpu/common/task/work_group_picking.h"
++#include "tflite/delegates/gpu/common/status.h"
++#include "tflite/delegates/gpu/common/task/work_group_picking.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -1758,18 +1758,18 @@ index 00000000000..2723216f324
 +
 +}  // namespace gpu
 +}  // namespace tflite
-diff --git a/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h
+diff --git a/tflite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h b/tflite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h
 new file mode 100644
 index 00000000000..0251265cdf4
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h
++++ b/tflite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h
 @@ -0,0 +1,22 @@
-+#ifndef TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_TENSOR_BILINEAR_H_
-+#define TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_TENSOR_BILINEAR_H_
++#ifndef TFLITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_TENSOR_BILINEAR_H_
++#define TFLITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_TENSOR_BILINEAR_H_
 +
-+#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h"
-+#include "tensorflow/lite/delegates/gpu/common/status.h"
-+#include "tensorflow/lite/delegates/gpu/common/task/gpu_operation.h"
++#include "tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h"
++#include "tflite/delegates/gpu/common/status.h"
++#include "tflite/delegates/gpu/common/task/gpu_operation.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -1785,44 +1785,44 @@ index 00000000000..0251265cdf4
 +}  // namespace gpu
 +}  // namespace tflite
 +
-+#endif  // TENSORFLOW_LITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_TENSOR_BILINEAR_H_
-diff --git a/tensorflow/lite/delegates/gpu/common/transformations/BUILD b/tensorflow/lite/delegates/gpu/common/transformations/BUILD
++#endif  // TFLITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_TENSOR_BILINEAR_H_
+diff --git a/tflite/delegates/gpu/common/transformations/BUILD b/tflite/delegates/gpu/common/transformations/BUILD
 index d26b4f807de..9596dbab7e6 100644
---- a/tensorflow/lite/delegates/gpu/common/transformations/BUILD
-+++ b/tensorflow/lite/delegates/gpu/common/transformations/BUILD
+--- a/tflite/delegates/gpu/common/transformations/BUILD
++++ b/tflite/delegates/gpu/common/transformations/BUILD
 @@ -287,7 +287,7 @@ cc_library(
          ":merge_padding_with",
          ":remove_noop",
-         "//tensorflow/lite/delegates/gpu/common:model_transformer",
--    ] + tf_platform_alias("custom_transformations", "//tensorflow/lite/delegates/gpu/common/"),
-+    ] + ["//tensorflow/lite/delegates/gpu/common/mediapipe:custom_transformations"],
+         "//tflite/delegates/gpu/common:model_transformer",
+-    ] + tf_platform_alias("custom_transformations", "//tflite/delegates/gpu/common/"),
++    ] + ["//tflite/delegates/gpu/common/mediapipe:custom_transformations"],
  )
  
  cc_library(
-diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/BUILD b/tensorflow/lite/delegates/gpu/gl/kernels/BUILD
+diff --git a/tflite/delegates/gpu/gl/kernels/BUILD b/tflite/delegates/gpu/gl/kernels/BUILD
 index b7860b44ede..30cc160d32c 100644
---- a/tensorflow/lite/delegates/gpu/gl/kernels/BUILD
-+++ b/tensorflow/lite/delegates/gpu/gl/kernels/BUILD
+--- a/tflite/delegates/gpu/gl/kernels/BUILD
++++ b/tflite/delegates/gpu/gl/kernels/BUILD
 @@ -153,10 +153,11 @@ cc_test(
  
  cc_library(
      name = "custom_registry",
 -    srcs = ["custom_registry.cc"],
-+    srcs = ["//tensorflow/lite/delegates/gpu/gl/kernels/mediapipe:registry.cc"],
++    srcs = ["//tflite/delegates/gpu/gl/kernels/mediapipe:registry.cc"],
      hdrs = ["custom_registry.h"],
      deps = [
-         "//tensorflow/lite/delegates/gpu/gl:node_shader",
-+        "//tensorflow/lite/delegates/gpu/gl/kernels/mediapipe:all_custom_ops",
+         "//tflite/delegates/gpu/gl:node_shader",
++        "//tflite/delegates/gpu/gl/kernels/mediapipe:all_custom_ops",
          "@com_google_absl//absl/container:flat_hash_map",
      ],
  )
-diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/BUILD b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/BUILD
+diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/BUILD b/tflite/delegates/gpu/gl/kernels/mediapipe/BUILD
 new file mode 100644
 index 00000000000..f5e696d0859
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/BUILD
++++ b/tflite/delegates/gpu/gl/kernels/mediapipe/BUILD
 @@ -0,0 +1,85 @@
-+load("//tensorflow/lite:special_rules.bzl", "tflite_portable_test_suite")
++load("//tflite:special_rules.bzl", "tflite_portable_test_suite")
 +
 +package(
 +    default_visibility = ["//visibility:public"],
@@ -1847,8 +1847,8 @@ index 00000000000..f5e696d0859
 +        ":landmarks_to_transform_matrix",
 +        ":transform_landmarks",
 +        ":transform_tensor_bilinear",
-+        "//tensorflow/lite/delegates/gpu/common:operations",
-+        "//tensorflow/lite/delegates/gpu/gl:node_shader",
++        "//tflite/delegates/gpu/common:operations",
++        "//tflite/delegates/gpu/gl:node_shader",
 +    ],
 +)
 +
@@ -1857,13 +1857,13 @@ index 00000000000..f5e696d0859
 +    srcs = ["landmarks_to_transform_matrix.cc"],
 +    hdrs = ["landmarks_to_transform_matrix.h"],
 +    deps = [
-+        "//tensorflow/lite/delegates/gpu/common:operations",
-+        "//tensorflow/lite/delegates/gpu/common:shape",
-+        "//tensorflow/lite/delegates/gpu/common:status",
-+        "//tensorflow/lite/delegates/gpu/common:types",
-+        "//tensorflow/lite/delegates/gpu/common:util",
-+        "//tensorflow/lite/delegates/gpu/common/mediapipe:landmarks_to_transform_matrix",
-+        "//tensorflow/lite/delegates/gpu/gl:node_shader",
++        "//tflite/delegates/gpu/common:operations",
++        "//tflite/delegates/gpu/common:shape",
++        "//tflite/delegates/gpu/common:status",
++        "//tflite/delegates/gpu/common:types",
++        "//tflite/delegates/gpu/common:util",
++        "//tflite/delegates/gpu/common/mediapipe:landmarks_to_transform_matrix",
++        "//tflite/delegates/gpu/gl:node_shader",
 +        "@com_google_absl//absl/memory",
 +        "@com_google_absl//absl/strings",
 +        "@com_google_absl//absl/types:any",
@@ -1875,13 +1875,13 @@ index 00000000000..f5e696d0859
 +    srcs = ["transform_tensor_bilinear.cc"],
 +    hdrs = ["transform_tensor_bilinear.h"],
 +    deps = [
-+        "//tensorflow/lite/delegates/gpu/common:operations",
-+        "//tensorflow/lite/delegates/gpu/common:shape",
-+        "//tensorflow/lite/delegates/gpu/common:status",
-+        "//tensorflow/lite/delegates/gpu/common:types",
-+        "//tensorflow/lite/delegates/gpu/common:util",
-+        "//tensorflow/lite/delegates/gpu/common/mediapipe:transform_tensor_bilinear",
-+        "//tensorflow/lite/delegates/gpu/gl:node_shader",
++        "//tflite/delegates/gpu/common:operations",
++        "//tflite/delegates/gpu/common:shape",
++        "//tflite/delegates/gpu/common:status",
++        "//tflite/delegates/gpu/common:types",
++        "//tflite/delegates/gpu/common:util",
++        "//tflite/delegates/gpu/common/mediapipe:transform_tensor_bilinear",
++        "//tflite/delegates/gpu/gl:node_shader",
 +        "@com_google_absl//absl/memory",
 +        "@com_google_absl//absl/strings",
 +        "@com_google_absl//absl/types:any",
@@ -1893,13 +1893,13 @@ index 00000000000..f5e696d0859
 +    srcs = ["transform_landmarks.cc"],
 +    hdrs = ["transform_landmarks.h"],
 +    deps = [
-+        "//tensorflow/lite/delegates/gpu/common:operations",
-+        "//tensorflow/lite/delegates/gpu/common:shape",
-+        "//tensorflow/lite/delegates/gpu/common:status",
-+        "//tensorflow/lite/delegates/gpu/common:types",
-+        "//tensorflow/lite/delegates/gpu/common:util",
-+        "//tensorflow/lite/delegates/gpu/common/mediapipe:transform_landmarks",
-+        "//tensorflow/lite/delegates/gpu/gl:node_shader",
++        "//tflite/delegates/gpu/common:operations",
++        "//tflite/delegates/gpu/common:shape",
++        "//tflite/delegates/gpu/common:status",
++        "//tflite/delegates/gpu/common:types",
++        "//tflite/delegates/gpu/common:util",
++        "//tflite/delegates/gpu/common/mediapipe:transform_landmarks",
++        "//tflite/delegates/gpu/gl:node_shader",
 +        "@com_google_absl//absl/memory",
 +        "@com_google_absl//absl/strings",
 +        "@com_google_absl//absl/types:any",
@@ -1907,13 +1907,13 @@ index 00000000000..f5e696d0859
 +)
 +
 +tflite_portable_test_suite()
-diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc
+diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc b/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc
 new file mode 100644
 index 00000000000..de75dd7df2e
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc
++++ b/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc
 @@ -0,0 +1,356 @@
-+#include "tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h"
++#include "tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h"
 +
 +#include <algorithm>
 +#include <cstdint>
@@ -1924,11 +1924,11 @@ index 00000000000..de75dd7df2e
 +#include "absl/memory/memory.h"
 +#include "absl/strings/substitute.h"
 +#include "absl/types/any.h"
-+#include "tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
-+#include "tensorflow/lite/delegates/gpu/common/shape.h"
-+#include "tensorflow/lite/delegates/gpu/common/status.h"
-+#include "tensorflow/lite/delegates/gpu/common/types.h"
-+#include "tensorflow/lite/delegates/gpu/common/util.h"
++#include "tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
++#include "tflite/delegates/gpu/common/shape.h"
++#include "tflite/delegates/gpu/common/status.h"
++#include "tflite/delegates/gpu/common/types.h"
++#include "tflite/delegates/gpu/common/util.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -2269,11 +2269,11 @@ index 00000000000..de75dd7df2e
 +}  // namespace gl
 +}  // namespace gpu
 +}  // namespace tflite
-diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc.orig b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc.orig
+diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc.orig b/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc.orig
 new file mode 100644
 index 00000000000..3e884b643a5
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc.orig
++++ b/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc.orig
 @@ -0,0 +1,356 @@
 +#include "mediapipe/util/tflite/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h"
 +
@@ -2287,10 +2287,10 @@ index 00000000000..3e884b643a5
 +#include "third_party/absl/strings/substitute.h"
 +#include "third_party/absl/types/any.h"
 +#include "mediapipe/util/tflite/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
-+#include "third_party/tensorflow/lite/delegates/gpu/common/shape.h"
-+#include "third_party/tensorflow/lite/delegates/gpu/common/status.h"
-+#include "third_party/tensorflow/lite/delegates/gpu/common/types.h"
-+#include "third_party/tensorflow/lite/delegates/gpu/common/util.h"
++#include "third_party/tflite/delegates/gpu/common/shape.h"
++#include "third_party/tflite/delegates/gpu/common/status.h"
++#include "third_party/tflite/delegates/gpu/common/types.h"
++#include "third_party/tflite/delegates/gpu/common/util.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -2631,19 +2631,19 @@ index 00000000000..3e884b643a5
 +}  // namespace gl
 +}  // namespace gpu
 +}  // namespace tflite
-diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h
+diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h b/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h
 new file mode 100644
 index 00000000000..d3949050578
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h
++++ b/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h
 @@ -0,0 +1,19 @@
-+#ifndef TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
-+#define TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
++#ifndef TFLITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
++#define TFLITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
 +
 +#include <memory>
 +
-+#include "tensorflow/lite/delegates/gpu/common/operations.h"
-+#include "tensorflow/lite/delegates/gpu/gl/node_shader.h"
++#include "tflite/delegates/gpu/common/operations.h"
++#include "tflite/delegates/gpu/gl/node_shader.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -2655,22 +2655,22 @@ index 00000000000..d3949050578
 +}  // namespace gpu
 +}  // namespace tflite
 +
-+#endif  // TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
-diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/registry.cc b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/registry.cc
++#endif  // TFLITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
+diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/registry.cc b/tflite/delegates/gpu/gl/kernels/mediapipe/registry.cc
 new file mode 100644
 index 00000000000..3ef02a248c3
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/registry.cc
++++ b/tflite/delegates/gpu/gl/kernels/mediapipe/registry.cc
 @@ -0,0 +1,28 @@
 +#include <memory>
 +#include <string>
 +#include <vector>
 +
 +#include "absl/container/flat_hash_map.h"
-+#include "tensorflow/lite/delegates/gpu/gl/kernels/custom_registry.h"
-+#include "tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h"
-+#include "tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h"
-+#include "tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h"
++#include "tflite/delegates/gpu/gl/kernels/custom_registry.h"
++#include "tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h"
++#include "tflite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h"
++#include "tflite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -2690,13 +2690,13 @@ index 00000000000..3ef02a248c3
 +}  // namespace gl
 +}  // namespace gpu
 +}  // namespace tflite
-diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.cc b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.cc
+diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.cc b/tflite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.cc
 new file mode 100644
 index 00000000000..980e2aa99e6
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.cc
++++ b/tflite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.cc
 @@ -0,0 +1,123 @@
-+#include "tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h"
++#include "tflite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h"
 +
 +#include <algorithm>
 +#include <cstdint>
@@ -2707,11 +2707,11 @@ index 00000000000..980e2aa99e6
 +#include "absl/memory/memory.h"
 +#include "absl/strings/substitute.h"
 +#include "absl/types/any.h"
-+#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h"
-+#include "tensorflow/lite/delegates/gpu/common/shape.h"
-+#include "tensorflow/lite/delegates/gpu/common/status.h"
-+#include "tensorflow/lite/delegates/gpu/common/types.h"
-+#include "tensorflow/lite/delegates/gpu/common/util.h"
++#include "tflite/delegates/gpu/common/mediapipe/transform_landmarks.h"
++#include "tflite/delegates/gpu/common/shape.h"
++#include "tflite/delegates/gpu/common/status.h"
++#include "tflite/delegates/gpu/common/types.h"
++#include "tflite/delegates/gpu/common/util.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -2819,19 +2819,19 @@ index 00000000000..980e2aa99e6
 +}  // namespace gl
 +}  // namespace gpu
 +}  // namespace tflite
-diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h
+diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h b/tflite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h
 new file mode 100644
 index 00000000000..cfb656675e4
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h
++++ b/tflite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h
 @@ -0,0 +1,19 @@
-+#ifndef TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
-+#define TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
++#ifndef TFLITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
++#define TFLITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
 +
 +#include <memory>
 +
-+#include "tensorflow/lite/delegates/gpu/common/operations.h"
-+#include "tensorflow/lite/delegates/gpu/gl/node_shader.h"
++#include "tflite/delegates/gpu/common/operations.h"
++#include "tflite/delegates/gpu/gl/node_shader.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -2843,14 +2843,14 @@ index 00000000000..cfb656675e4
 +}  // namespace gpu
 +}  // namespace tflite
 +
-+#endif  // TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
-diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.cc b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.cc
++#endif  // TFLITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
+diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.cc b/tflite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.cc
 new file mode 100644
 index 00000000000..8013b9b3505
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.cc
++++ b/tflite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.cc
 @@ -0,0 +1,169 @@
-+#include "tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h"
++#include "tflite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h"
 +
 +#include <algorithm>
 +#include <cstdint>
@@ -2861,11 +2861,11 @@ index 00000000000..8013b9b3505
 +#include "absl/memory/memory.h"
 +#include "absl/strings/substitute.h"
 +#include "absl/types/any.h"
-+#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h"
-+#include "tensorflow/lite/delegates/gpu/common/shape.h"
-+#include "tensorflow/lite/delegates/gpu/common/status.h"
-+#include "tensorflow/lite/delegates/gpu/common/types.h"
-+#include "tensorflow/lite/delegates/gpu/common/util.h"
++#include "tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h"
++#include "tflite/delegates/gpu/common/shape.h"
++#include "tflite/delegates/gpu/common/status.h"
++#include "tflite/delegates/gpu/common/types.h"
++#include "tflite/delegates/gpu/common/util.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -3019,19 +3019,19 @@ index 00000000000..8013b9b3505
 +}  // namespace gl
 +}  // namespace gpu
 +}  // namespace tflite
-diff --git a/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h
+diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h b/tflite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h
 new file mode 100644
 index 00000000000..c62387a4b96
 --- /dev/null
-+++ b/tensorflow/lite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h
++++ b/tflite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h
 @@ -0,0 +1,19 @@
-+#ifndef TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
-+#define TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
++#ifndef TFLITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
++#define TFLITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
 +
 +#include <memory>
 +
-+#include "tensorflow/lite/delegates/gpu/common/operations.h"
-+#include "tensorflow/lite/delegates/gpu/gl/node_shader.h"
++#include "tflite/delegates/gpu/common/operations.h"
++#include "tflite/delegates/gpu/gl/node_shader.h"
 +
 +namespace tflite {
 +namespace gpu {
@@ -3043,4 +3043,4 @@ index 00000000000..c62387a4b96
 +}  // namespace gpu
 +}  // namespace tflite
 +
-+#endif  // TENSORFLOW_LITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
++#endif  // TFLITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_

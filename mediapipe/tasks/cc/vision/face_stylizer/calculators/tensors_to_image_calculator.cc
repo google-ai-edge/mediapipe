@@ -53,12 +53,12 @@
 #include "mediapipe/gpu/gl_quad_renderer.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-#include "tensorflow/lite/delegates/gpu/common/util.h"
-#include "tensorflow/lite/delegates/gpu/gl/converters/util.h"
-#include "tensorflow/lite/delegates/gpu/gl/gl_program.h"
-#include "tensorflow/lite/delegates/gpu/gl/gl_shader.h"
-#include "tensorflow/lite/delegates/gpu/gl/gl_texture.h"
-#include "tensorflow/lite/delegates/gpu/gl_delegate.h"
+#include "tflite/delegates/gpu/common/util.h"
+#include "tflite/delegates/gpu/gl/converters/util.h"
+#include "tflite/delegates/gpu/gl/gl_program.h"
+#include "tflite/delegates/gpu/gl/gl_shader.h"
+#include "tflite/delegates/gpu/gl/gl_texture.h"
+#include "tflite/delegates/gpu/gl_delegate.h"
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // !MEDIAPIPE_DISABLE_GPU

@@ -33,8 +33,8 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/gpu/MPPMetalHelper.h"
-#include "tensorflow/lite/delegates/gpu/common/shape.h"
-#include "tensorflow/lite/delegates/gpu/common/types.h"
+#include "tflite/delegates/gpu/common/shape.h"
+#include "tflite/delegates/gpu/common/types.h"
 
 #if MEDIAPIPE_METAL_ENABLED
 #include "mediapipe/framework/formats/tensor_mtl_buffer_view.h"

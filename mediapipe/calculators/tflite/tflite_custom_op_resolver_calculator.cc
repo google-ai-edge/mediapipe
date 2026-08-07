@@ -20,7 +20,7 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/tflite/cpu_op_resolver.h"
 #include "mediapipe/util/tflite/op_resolver.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
+#include "tflite/core/api/op_resolver.h"
 
 namespace mediapipe {
 

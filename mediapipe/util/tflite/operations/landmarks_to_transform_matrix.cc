@@ -16,13 +16,13 @@
 
 #include <vector>
 
-#include "tensorflow/lite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"
-#include "tensorflow/lite/delegates/gpu/common/types.h"
-#include "tensorflow/lite/kernels/internal/common.h"
-#include "tensorflow/lite/kernels/internal/compatibility.h"
-#include "tensorflow/lite/kernels/internal/tensor.h"
-#include "tensorflow/lite/kernels/padding.h"
-#include "tensorflow/lite/schema/schema_generated.h"
+#include "tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h"  // from @litert
+#include "tflite/delegates/gpu/common/types.h"
+#include "tflite/kernels/internal/common.h"
+#include "tflite/kernels/internal/compatibility.h"
+#include "tflite/kernels/internal/tensor.h"
+#include "tflite/kernels/padding.h"
+#include "tflite/schema/schema_generated.h"
 
 using ::tflite::gpu::BHWC;
 using ::tflite::gpu::float2;

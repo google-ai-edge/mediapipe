@@ -24,16 +24,16 @@
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/gpu/gl_base.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/delegates/gpu/api.h"
-#include "tensorflow/lite/delegates/gpu/common/model.h"
-#include "tensorflow/lite/delegates/gpu/common/shape.h"
-#include "tensorflow/lite/delegates/gpu/gl/api2.h"
-#include "tensorflow/lite/model.h"
-#include "tensorflow/lite/model_builder.h"
+#include "tflite/core/api/op_resolver.h"
+#include "tflite/delegates/gpu/api.h"
+#include "tflite/delegates/gpu/common/model.h"
+#include "tflite/delegates/gpu/common/shape.h"
+#include "tflite/delegates/gpu/gl/api2.h"
+#include "tflite/model.h"
+#include "tflite/model_builder.h"
 
 #if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
-#include "tensorflow/lite/delegates/gpu/cl/api.h"
+#include "tflite/delegates/gpu/cl/api.h"
 #endif  // defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
 
 namespace tflite {

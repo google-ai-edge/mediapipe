@@ -13,8 +13,8 @@
 #include "mediapipe/gpu/gpu_test_base.h"
 #include "mediapipe/gpu/multi_pool.h"
 #include "mediapipe/gpu/shader_util.h"
-#include "tensorflow/lite/delegates/gpu/gl/gl_call.h"
 #include "testing/base/public/gunit.h"
+#include "tflite/delegates/gpu/gl/gl_call.h"
 
 // The test creates OpenGL ES buffer, fills the buffer with incrementing values
 // 0.0, 0.1, 0.2 etc. with the compute shader on GPU.

@@ -33,7 +33,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/category.h"
 #include "mediapipe/tasks/cc/components/containers/classification_result.h"
 #include "mediapipe/tasks/cc/text/text_classifier/text_classifier_test_utils.h"
-#include "tensorflow/lite/test_util.h"
+#include "tflite/test_util.h"
 
 namespace mediapipe::tasks::text::text_classifier {
 namespace {

@@ -33,7 +33,7 @@ limitations under the License.
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/tasks/cc/components/calculators/classification_aggregation_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
-#include "tensorflow/lite/test_util.h"
+#include "tflite/test_util.h"
 
 namespace mediapipe {
 namespace {

@@ -210,7 +210,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
         "@com_google_absl//absl/log:absl_check",
-        "@org_tensorflow//tensorflow/lite:framework",
+        "@litert//tflite:framework",
     ],
 )
 
@@ -291,7 +291,7 @@ cc_library(
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
         "@eigen//:eigen3",
-        "@org_tensorflow//tensorflow/lite:framework",
+        "@litert//tflite:framework",
     ],
     alwayslink = 1,
 )
@@ -338,7 +338,7 @@ cc_library(
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
         "@eigen//:eigen3",
-        "@org_tensorflow//tensorflow/lite:framework",
+        "@litert//tflite:framework",
     ],
     alwayslink = 1,
 )

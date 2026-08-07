@@ -26,7 +26,7 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/resources.h"
-#include "tensorflow/lite/model_builder.h"
+#include "tflite/model_builder.h"
 
 namespace mediapipe {
 

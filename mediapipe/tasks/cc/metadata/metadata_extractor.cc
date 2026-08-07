@@ -31,7 +31,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/metadata/metadata_version_utils.h"
 #include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
-#include "tensorflow/lite/schema/schema_generated.h"
+#include "tflite/schema/schema_generated.h"
 
 namespace mediapipe {
 namespace tasks {

@@ -25,10 +25,10 @@ cc_library(
     deps =
         [
             "@eigen//:eigen3",
-            "@org_tensorflow//tensorflow/lite:framework",
-            "@org_tensorflow//tensorflow/lite/c:common",
-            "@org_tensorflow//tensorflow/lite/core/c:private_common",
-            "@org_tensorflow//tensorflow/lite/kernels:kernel_util",
-            "@org_tensorflow//tensorflow/lite/kernels/internal:tensor",
+            "@litert//tflite:framework",
+            "@litert//tflite/c:common",
+            "@litert//tflite/core/c:private_common",
+            "@litert//tflite/kernels:kernel_util",
+            "@litert//tflite/kernels/internal:tensor",
         ],
 )

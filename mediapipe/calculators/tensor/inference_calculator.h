@@ -38,8 +38,8 @@
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/kernels/register.h"
+#include "tflite/core/api/op_resolver.h"
+#include "tflite/kernels/register.h"
 
 namespace mediapipe {
 

@@ -1,6 +1,6 @@
 #include "mediapipe/util/tflite/utils.h"
 
-#include "tensorflow/lite/c/common.h"
+#include "tflite/c/common.h"
 
 namespace mediapipe::util::tflite {
 

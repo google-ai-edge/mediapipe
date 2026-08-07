@@ -39,7 +39,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/host_environment.h"
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "mediapipe/tasks/cc/core/running_mode.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
+#include "tflite/core/api/op_resolver.h"
 
 namespace mediapipe {
 

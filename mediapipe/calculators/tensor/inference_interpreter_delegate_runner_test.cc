@@ -23,10 +23,10 @@
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h"
-#include "tensorflow/lite/kernels/register.h"
-#include "tensorflow/lite/util.h"
+#include "tflite/core/api/op_resolver.h"
+#include "tflite/delegates/xnnpack/xnnpack_delegate.h"
+#include "tflite/kernels/register.h"
+#include "tflite/util.h"
 
 namespace mediapipe {
 namespace api2 {

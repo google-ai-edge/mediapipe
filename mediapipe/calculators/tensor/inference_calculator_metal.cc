@@ -33,10 +33,10 @@
 #include "mediapipe/gpu/MPPMetalUtil.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/util/tflite/config.h"
-#include "tensorflow/lite/delegates/gpu/common/shape.h"
-#include "tensorflow/lite/delegates/gpu/metal/buffer_convert.h"
-#include "tensorflow/lite/delegates/gpu/metal_delegate.h"
-#include "tensorflow/lite/delegates/gpu/metal_delegate_internal.h"
+#include "tflite/delegates/gpu/common/shape.h"
+#include "tflite/delegates/gpu/metal/buffer_convert.h"
+#include "tflite/delegates/gpu/metal_delegate.h"
+#include "tflite/delegates/gpu/metal_delegate_internal.h"
 
 namespace {
 

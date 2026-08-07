@@ -31,7 +31,7 @@ limitations under the License.
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
-#include "tensorflow/lite/test_util.h"
+#include "tflite/test_util.h"
 
 namespace mediapipe {
 namespace {

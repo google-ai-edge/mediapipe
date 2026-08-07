@@ -27,21 +27,21 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/gl_base.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/core/interpreter_builder.h"
-#include "tensorflow/lite/delegates/gpu/api.h"
-#include "tensorflow/lite/delegates/gpu/common/data_type.h"
-#include "tensorflow/lite/delegates/gpu/common/model.h"
-#include "tensorflow/lite/delegates/gpu/common/model_builder.h"
-#include "tensorflow/lite/delegates/gpu/gl/api2.h"
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/model.h"
-#include "tensorflow/lite/model_builder.h"
+#include "tflite/core/api/op_resolver.h"
+#include "tflite/core/interpreter_builder.h"
+#include "tflite/delegates/gpu/api.h"
+#include "tflite/delegates/gpu/common/data_type.h"
+#include "tflite/delegates/gpu/common/model.h"
+#include "tflite/delegates/gpu/common/model_builder.h"
+#include "tflite/delegates/gpu/gl/api2.h"
+#include "tflite/interpreter.h"
+#include "tflite/model.h"
+#include "tflite/model_builder.h"
 
 // This code should be enabled as soon as TensorFlow version, which mediapipe
 // uses, will include this module.
 #if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
-#include "tensorflow/lite/delegates/gpu/cl/api.h"
+#include "tflite/delegates/gpu/cl/api.h"
 #endif
 
 namespace tflite {
