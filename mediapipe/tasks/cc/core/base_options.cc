@@ -54,6 +54,15 @@ proto::Acceleration ConvertDelegateOptionsToAccelerationProto(
   return acceleration_proto;
 }
 
+proto::Acceleration ConvertDelegateOptionsToAccelerationProto(
+    const BaseOptions::NpuOptions& options) {
+  proto::Acceleration acceleration_proto = proto::Acceleration();
+  auto& litert = *acceleration_proto.mutable_litert();
+  litert.mutable_npu()->set_dispatch_library_path(
+      options.dispatch_library_directory);
+  return acceleration_proto;
+}
+
 template <typename T>
 void SetDelegateOptionsOrDie(const BaseOptions* base_options,
                              proto::BaseOptions& base_options_proto) {
@@ -116,6 +125,13 @@ proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options) {
           ->mutable_nnapi()
           ->set_accelerator_name("google-edgetpu");
       break;
+    case BaseOptions::Delegate::NPU:
+      base_options_proto.mutable_acceleration()
+          ->mutable_litert()
+          ->mutable_npu();
+      SetDelegateOptionsOrDie<BaseOptions::NpuOptions>(base_options,
+                                                       base_options_proto);
+      break;
   }
   return base_options_proto;
 }
@@ -161,6 +177,17 @@ BaseOptions ConvertProtoToBaseOptions(proto::BaseOptions&& base_options_proto) {
       base_options.delegate = BaseOptions::Delegate::CPU;
     } else if (acceleration.has_nnapi()) {
       base_options.delegate = BaseOptions::Delegate::EDGETPU_NNAPI;
+    } else if (acceleration.has_litert() && acceleration.litert().has_npu()) {
+      base_options.delegate = BaseOptions::Delegate::NPU;
+      if (acceleration.litert().has_npu()) {
+        BaseOptions::NpuOptions npu_options;
+        if (acceleration.litert().has_npu() &&
+            acceleration.litert().npu().has_dispatch_library_path()) {
+          npu_options.dispatch_library_directory =
+              acceleration.litert().npu().dispatch_library_path();
+        }
+        base_options.delegate_options = std::move(npu_options);
+      }
     }
   }
   return base_options;

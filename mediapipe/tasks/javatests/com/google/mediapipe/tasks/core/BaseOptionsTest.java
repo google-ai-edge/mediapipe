@@ -98,6 +98,33 @@ public class BaseOptionsTest {
     }
 
     @Test
+    public void succeedsWithLiteRtOptions() throws Exception {
+      BaseOptions options =
+          BaseOptions.builder()
+              .setModelAssetPath(MODEL_ASSET_PATH)
+              .setDelegate(Delegate.LITERT)
+              .setDelegateOptions(
+                  BaseOptions.DelegateOptions.LiteRtOptions.builder()
+                      .setNpuOptions(
+                          BaseOptions.DelegateOptions.NpuOptions.builder()
+                              .setDispatchLibraryDirectory(DISPATCH_LIBRARY_PATH)
+                              .setCompilerPluginLibraryDirectory(COMPILER_PLUGIN_LIBRARY_PATH)
+                              .build())
+                      .build())
+              .build();
+      assertThat(options.delegateOptions()).isPresent();
+      assertThat(options.delegateOptions().get())
+          .isInstanceOf(BaseOptions.DelegateOptions.LiteRtOptions.class);
+      BaseOptions.DelegateOptions.LiteRtOptions liteRtOptions =
+          (BaseOptions.DelegateOptions.LiteRtOptions) options.delegateOptions().get();
+      assertThat(options.delegateOptions()).isPresent();
+      assertThat(liteRtOptions.npuOptions().get().dispatchLibraryDirectory())
+          .isEqualTo(DISPATCH_LIBRARY_PATH);
+      assertThat(liteRtOptions.npuOptions().get().compilerPluginLibraryDirectory())
+          .isEqualTo(COMPILER_PLUGIN_LIBRARY_PATH);
+    }
+
+    @Test
     public void failsWithInvalidDelegateOptions() throws Exception {
       IllegalArgumentException exception =
           assertThrows(

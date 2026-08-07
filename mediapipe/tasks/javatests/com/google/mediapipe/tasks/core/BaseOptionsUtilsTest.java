@@ -93,4 +93,38 @@ public class BaseOptionsUtilsTest {
     assertThat(acceleration.getLitert().getNpu().getCompilerPluginLibraryPath())
         .isEqualTo(COMPILER_PLUGIN_LIBRARY_PATH);
   }
+
+  @Test
+  public void succeedsWithLiteRtOptions() throws Exception {
+    BaseOptions options =
+        BaseOptions.builder()
+            .setModelAssetPath(MODEL_ASSET_PATH)
+            .setDelegate(Delegate.LITERT)
+            .setDelegateOptions(
+                BaseOptions.DelegateOptions.LiteRtOptions.builder()
+                    .setCpuOptions(
+                        BaseOptions.DelegateOptions.CpuOptions.builder().setNumThreads(3).build())
+                    .setGpuOptions(
+                        BaseOptions.DelegateOptions.GpuOptions.builder()
+                            .setModelToken(MODEL_TOKEN)
+                            .setCachedKernelPath(CACHED_KERNEL_PATH)
+                            .build())
+                    .build())
+            .build();
+    BaseOptionsProto.BaseOptions baseOptionsProto =
+        BaseOptionsUtils.convertBaseOptionsToProto(options);
+    AccelerationProto.Acceleration acceleration = baseOptionsProto.getAcceleration();
+    assertThat(acceleration.hasTflite()).isFalse();
+    assertThat(acceleration.hasLitert()).isTrue();
+    assertThat(acceleration.getLitert().hasCpu()).isTrue();
+    assertThat(acceleration.getLitert().getCpu().getNumThreads()).isEqualTo(3);
+    assertThat(acceleration.getLitert().hasGpu()).isTrue();
+    assertThat(acceleration.getLitert().getGpu().hasCacheOptions()).isTrue();
+    assertThat(acceleration.getLitert().getGpu().getCacheOptions().getModelCacheKey())
+        .isEqualTo(MODEL_TOKEN);
+    assertThat(acceleration.getLitert().getGpu().getCacheOptions().getSerializeProgramCache())
+        .isTrue();
+    assertThat(acceleration.getLitert().getGpu().getCacheOptions().getSerializationDir())
+        .isEqualTo(CACHED_KERNEL_PATH);
+  }
 }
