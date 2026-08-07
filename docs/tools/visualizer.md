@@ -90,9 +90,9 @@ the subgraph's definition.
 
 For instance, there are two graphs involved in
 [MediaPipe Hands](../solutions/hands.md): the main graph
-([source pbtxt file](https://github.com/google/mediapipe/blob/master/mediapipe/graphs/hand_tracking/hand_detection_mobile.pbtxt))
+([source pbtxt file](https://github.com/google-ai-edge/mediapipe/blob/master/mediapipe/graphs/hand_tracking/hand_detection_mobile.pbtxt))
 and its associated subgraph
-([source pbtxt file](https://github.com/google/mediapipe/blob/master/mediapipe/graphs/hand_tracking/subgraphs/hand_detection_gpu.pbtxt)).
+([source pbtxt file](https://github.com/google-ai-edge/mediapipe/blob/master/mediapipe/graphs/hand_tracking/subgraphs/hand_detection_gpu.pbtxt)).
 To visualize them:
 
 *   In the MediaPipe visualizer, click on the upload graph button and select the
