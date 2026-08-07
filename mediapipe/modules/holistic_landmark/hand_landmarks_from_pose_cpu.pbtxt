@@ -53,7 +53,7 @@ node {
 
 # Predicts hand re-crop rectangle on the current frame.
 node {
-  calculator: "HandRecropByRoiCpu",
+  calculator: "HandRecropByRoiCpu"
   input_stream: "IMAGE:input_video"
   input_stream: "ROI:hand_roi_from_pose"
   output_stream: "HAND_ROI_FROM_RECROP:hand_roi_from_recrop"
