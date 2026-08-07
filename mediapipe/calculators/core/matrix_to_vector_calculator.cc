@@ -62,7 +62,7 @@ absl::Status MatrixToVectorCalculator::Open(CalculatorContext* cc) {
 
 absl::Status MatrixToVectorCalculator::Process(CalculatorContext* cc) {
   const Matrix& input = *kIn(cc);
-  auto output = absl::make_unique<std::vector<float>>();
+  auto output = std::make_unique<std::vector<float>>();
 
   // The following lines work to convert the Matrix to a vector because Matrix
   // is an Eigen::MatrixXf and Eigen uses column-major layout by default.

@@ -57,7 +57,7 @@ class SimpleRunner : public CalculatorRunner {
   }
 
   void SetFrameRate(const double frame_rate) {
-    auto video_header = absl::make_unique<VideoHeader>();
+    auto video_header = std::make_unique<VideoHeader>();
     video_header->frame_rate = frame_rate;
     MutableInputs()->Index(0).header = Adopt(video_header.release());
   }

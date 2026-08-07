@@ -168,8 +168,8 @@ class ReproducibleResamplerCalculatorForTesting
  protected:
   std::unique_ptr<class PacketResamplerStrategy> GetSamplingStrategy(
       const mediapipe::PacketResamplerCalculatorOptions& Options) {
-    return absl::make_unique<
-        ReproducibleJitterWithReflectionStrategyForTesting>(this);
+    return std::make_unique<ReproducibleJitterWithReflectionStrategyForTesting>(
+        this);
   }
 };
 

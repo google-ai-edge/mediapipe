@@ -433,19 +433,19 @@ TEST(TestConcatenateUniqueIntVectorCalculatorTest, ConsumeOneTimestamp) {
 
   // input1 : {0, 1, 2}
   std::unique_ptr<std::vector<std::unique_ptr<int>>> input_1 =
-      absl::make_unique<std::vector<std::unique_ptr<int>>>(3);
+      std::make_unique<std::vector<std::unique_ptr<int>>>(3);
   for (int i = 0; i < 3; ++i) {
-    input_1->at(i) = absl::make_unique<int>(i);
+    input_1->at(i) = std::make_unique<int>(i);
   }
   // input2: {3}
   std::unique_ptr<std::vector<std::unique_ptr<int>>> input_2 =
-      absl::make_unique<std::vector<std::unique_ptr<int>>>(1);
-  input_2->at(0) = absl::make_unique<int>(3);
+      std::make_unique<std::vector<std::unique_ptr<int>>>(1);
+  input_2->at(0) = std::make_unique<int>(3);
   // input3: {4, 5}
   std::unique_ptr<std::vector<std::unique_ptr<int>>> input_3 =
-      absl::make_unique<std::vector<std::unique_ptr<int>>>(2);
-  input_3->at(0) = absl::make_unique<int>(4);
-  input_3->at(1) = absl::make_unique<int>(5);
+      std::make_unique<std::vector<std::unique_ptr<int>>>(2);
+  input_3->at(0) = std::make_unique<int>(4);
+  input_3->at(1) = std::make_unique<int>(5);
 
   MP_EXPECT_OK(graph.AddPacketToInputStream(
       "in_1", Adopt(input_1.release()).At(Timestamp(1))));
@@ -495,9 +495,9 @@ TEST(TestConcatenateUniqueIntVectorCalculatorTest, OneEmptyStreamStillOutput) {
 
   // input1 : {0, 1, 2}
   std::unique_ptr<std::vector<std::unique_ptr<int>>> input_1 =
-      absl::make_unique<std::vector<std::unique_ptr<int>>>(3);
+      std::make_unique<std::vector<std::unique_ptr<int>>>(3);
   for (int i = 0; i < 3; ++i) {
-    input_1->at(i) = absl::make_unique<int>(i);
+    input_1->at(i) = std::make_unique<int>(i);
   }
 
   MP_EXPECT_OK(graph.AddPacketToInputStream(
@@ -549,9 +549,9 @@ TEST(TestConcatenateUniqueIntVectorCalculatorTest, OneEmptyStreamNoOutput) {
 
   // input1 : {0, 1, 2}
   std::unique_ptr<std::vector<std::unique_ptr<int>>> input_1 =
-      absl::make_unique<std::vector<std::unique_ptr<int>>>(3);
+      std::make_unique<std::vector<std::unique_ptr<int>>>(3);
   for (int i = 0; i < 3; ++i) {
-    input_1->at(i) = absl::make_unique<int>(i);
+    input_1->at(i) = std::make_unique<int>(i);
   }
 
   MP_EXPECT_OK(graph.AddPacketToInputStream(

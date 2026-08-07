@@ -36,7 +36,7 @@ class StreamToSidePacketCalculatorTest : public Test {
       input_stream: "stream"
       output_side_packet: "side_packet"
     )";
-    runner_ = absl::make_unique<CalculatorRunner>(kConfig);
+    runner_ = std::make_unique<CalculatorRunner>(kConfig);
   }
 
   std::unique_ptr<CalculatorRunner> runner_;
