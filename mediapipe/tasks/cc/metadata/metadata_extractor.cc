@@ -66,7 +66,8 @@ ModelMetadataExtractor::CreateFromModelBuffer(const char* buffer_data,
   // https://abseil.io/tips/126.
   std::unique_ptr<ModelMetadataExtractor> extractor =
       absl::WrapUnique(new ModelMetadataExtractor());
-  MP_RETURN_IF_ERROR(extractor->InitFromModelBuffer(buffer_data, buffer_size));
+  ABSL_RETURN_IF_ERROR(
+      extractor->InitFromModelBuffer(buffer_data, buffer_size));
   return extractor;
 }
 

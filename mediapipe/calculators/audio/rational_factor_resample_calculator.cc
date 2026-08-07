@@ -66,7 +66,7 @@ absl::Status RationalFactorResampleCalculator::Open(CalculatorContext* cc) {
   target_sample_rate_ = resample_options.target_sample_rate();
 
   TimeSeriesHeader input_header;
-  MP_RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
+  ABSL_RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
       cc->Inputs().Index(0).Header(), &input_header));
 
   source_sample_rate_ = input_header.sample_rate();

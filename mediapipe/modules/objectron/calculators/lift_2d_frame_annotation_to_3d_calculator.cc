@@ -91,7 +91,7 @@ absl::Status Lift2DFrameAnnotationTo3DCalculator::GetContract(
 
 absl::Status Lift2DFrameAnnotationTo3DCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
-  MP_RETURN_IF_ERROR(LoadOptions(cc));
+  ABSL_RETURN_IF_ERROR(LoadOptions(cc));
   // Load camera intrinsic matrix.
   const float fx = options_.normalized_focal_x();
   const float fy = options_.normalized_focal_y();
@@ -116,7 +116,7 @@ absl::Status Lift2DFrameAnnotationTo3DCalculator::Process(
 
   auto output_objects = std::make_unique<FrameAnnotation>();
 
-  MP_RETURN_IF_ERROR(ProcessCPU(cc, output_objects.get()));
+  ABSL_RETURN_IF_ERROR(ProcessCPU(cc, output_objects.get()));
 
   // Output
   if (cc->Outputs().HasTag(kOutputStreamTag)) {

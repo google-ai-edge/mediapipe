@@ -214,9 +214,9 @@ absl::StatusOr<std::unique_ptr<TensorConverterGpu>> CreateTensorConverterGl30(
     bool single_channel, bool flip_vertically, int num_output_channels) {
   auto converter =
       std::make_unique<TensorConverterGlImpl>(gpu_helper, memory_manager);
-  MP_RETURN_IF_ERROR(converter->Init(input_width, input_height, output_range,
-                                     include_alpha, single_channel,
-                                     flip_vertically, num_output_channels));
+  ABSL_RETURN_IF_ERROR(converter->Init(input_width, input_height, output_range,
+                                       include_alpha, single_channel,
+                                       flip_vertically, num_output_channels));
   return converter;
 }
 

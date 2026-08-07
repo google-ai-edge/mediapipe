@@ -161,7 +161,7 @@ absl::Status TensorsToImageCalculator::UpdateContract(CalculatorContract* cc) {
       << "Either TENSORS or TENSOR must be specified";
 #if !MEDIAPIPE_DISABLE_GPU
 #if MEDIAPIPE_METAL_ENABLED
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       [MPPMetalHelper updateContract:cc requestGpuAsOptional:true]);
 #else
   return GlCalculatorHelper::UpdateContract(cc,
@@ -239,7 +239,7 @@ TensorsToImageCalculator::GetInputTensor(CalculatorContext* cc) {
 
 absl::Status TensorsToImageCalculator::CpuProcess(CalculatorContext* cc) {
   if (IsInputTensorEmpty(cc)) return absl::OkStatus();
-  MP_ASSIGN_OR_RETURN(const Tensor& input_tensor, GetInputTensor(cc));
+  ABSL_ASSIGN_OR_RETURN(const Tensor& input_tensor, GetInputTensor(cc));
 
   const int tensor_in_height = input_tensor.shape().dims[1];
   const int tensor_in_width = input_tensor.shape().dims[2];
@@ -263,10 +263,10 @@ absl::Status TensorsToImageCalculator::CpuProcess(CalculatorContext* cc) {
         CV_MAKETYPE(CV_32F, tensor_in_channels),
         const_cast<float*>(input_tensor.GetCpuReadView().buffer<float>()));
     auto input_range = options_.input_tensor_float_range();
-    MP_ASSIGN_OR_RETURN(auto transform,
-                        GetValueRangeTransformation(
-                            input_range.min(), input_range.max(),
-                            kOutputImageRangeMin, kOutputImageRangeMax));
+    ABSL_ASSIGN_OR_RETURN(auto transform,
+                          GetValueRangeTransformation(
+                              input_range.min(), input_range.max(),
+                              kOutputImageRangeMin, kOutputImageRangeMax));
     tensor_matview.convertTo(output_matview,
                              CV_MAKETYPE(CV_8U, tensor_in_channels),
                              transform.scale, transform.offset);
@@ -276,10 +276,10 @@ absl::Status TensorsToImageCalculator::CpuProcess(CalculatorContext* cc) {
         CV_MAKETYPE(CV_8U, tensor_in_channels),
         const_cast<uint8_t*>(input_tensor.GetCpuReadView().buffer<uint8_t>()));
     auto input_range = options_.input_tensor_uint_range();
-    MP_ASSIGN_OR_RETURN(auto transform,
-                        GetValueRangeTransformation(
-                            input_range.min(), input_range.max(),
-                            kOutputImageRangeMin, kOutputImageRangeMax));
+    ABSL_ASSIGN_OR_RETURN(auto transform,
+                          GetValueRangeTransformation(
+                              input_range.min(), input_range.max(),
+                              kOutputImageRangeMin, kOutputImageRangeMax));
     tensor_matview.convertTo(output_matview,
                              CV_MAKETYPE(CV_8U, tensor_in_channels),
                              transform.scale, transform.offset);
@@ -298,12 +298,12 @@ absl::Status TensorsToImageCalculator::CpuProcess(CalculatorContext* cc) {
 
 absl::Status TensorsToImageCalculator::MetalProcess(CalculatorContext* cc) {
   if (!metal_initialized_) {
-    MP_RETURN_IF_ERROR(MetalSetup(cc));
+    ABSL_RETURN_IF_ERROR(MetalSetup(cc));
     metal_initialized_ = true;
   }
 
   if (IsInputTensorEmpty(cc)) return absl::OkStatus();
-  MP_ASSIGN_OR_RETURN(const Tensor& input_tensor, GetInputTensor(cc));
+  ABSL_ASSIGN_OR_RETURN(const Tensor& input_tensor, GetInputTensor(cc));
 
   const int tensor_width = input_tensor.shape().dims[2];
   const int tensor_height = input_tensor.shape().dims[1];
@@ -438,10 +438,10 @@ absl::Status TensorsToImageCalculator::GlSetup(CalculatorContext* cc) {
       absl::StrCat(shader_header, maybe_flip_y_define, shader_body);
 
   GlShader shader;
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       GlShader::CompileShader(GL_COMPUTE_SHADER, shader_full, &shader));
   gl_compute_program_ = std::make_unique<GlProgram>();
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       GlProgram::CreateWithShader(shader, gl_compute_program_.get()));
 
 #else
@@ -472,7 +472,7 @@ absl::Status TensorsToImageCalculator::GlSetup(CalculatorContext* cc) {
       absl::StrCat(mediapipe::kMediaPipeFragmentShaderPreamble,
                    kFragColorOutputDeclaration, maybe_flip_y_define, kBody);
   gl_renderer_ = std::make_unique<mediapipe::QuadRenderer>();
-  MP_RETURN_IF_ERROR(gl_renderer_->GlSetup(src.c_str(), {"tensor"}));
+  ABSL_RETURN_IF_ERROR(gl_renderer_->GlSetup(src.c_str(), {"tensor"}));
 
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
@@ -481,17 +481,17 @@ absl::Status TensorsToImageCalculator::GlSetup(CalculatorContext* cc) {
 
 absl::Status TensorsToImageCalculator::GlProcess(CalculatorContext* cc) {
   if (!gl_initialized_) {
-    MP_RETURN_IF_ERROR(gl_helper_.Open(cc));
+    ABSL_RETURN_IF_ERROR(gl_helper_.Open(cc));
   }
 
   return gl_helper_.RunInGlContext([this, cc]() -> absl::Status {
     if (!gl_initialized_) {
-      MP_RETURN_IF_ERROR(GlSetup(cc));
+      ABSL_RETURN_IF_ERROR(GlSetup(cc));
       gl_initialized_ = true;
     }
 
     if (IsInputTensorEmpty(cc)) return absl::OkStatus();
-    MP_ASSIGN_OR_RETURN(const Tensor& input_tensor, GetInputTensor(cc));
+    ABSL_ASSIGN_OR_RETURN(const Tensor& input_tensor, GetInputTensor(cc));
 
     const int tensor_width = input_tensor.shape().dims[2];
     const int tensor_height = input_tensor.shape().dims[1];
@@ -501,7 +501,7 @@ absl::Status TensorsToImageCalculator::GlProcess(CalculatorContext* cc) {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
     auto out_texture = std::make_unique<tflite::gpu::gl::GlTexture>();
-    MP_RETURN_IF_ERROR(CreateReadWriteRgbaImageTexture(
+    ABSL_RETURN_IF_ERROR(CreateReadWriteRgbaImageTexture(
         tflite::gpu::DataType::UINT8,  // GL_RGBA8
         {tensor_width, tensor_height}, out_texture.get()));
 
@@ -520,7 +520,7 @@ absl::Status TensorsToImageCalculator::GlProcess(CalculatorContext* cc) {
     glUniform3i(glGetUniformLocation(gl_compute_program_->id(), "out_size"),
                 tensor_width, tensor_height, tensor_in_channels);
 
-    MP_RETURN_IF_ERROR(gl_compute_program_->Dispatch(workgroups));
+    ABSL_RETURN_IF_ERROR(gl_compute_program_->Dispatch(workgroups));
 
     auto texture_buffer = mediapipe::GlTextureBuffer::Wrap(
         out_texture->target(), out_texture->id(), tensor_width, tensor_height,
@@ -547,7 +547,7 @@ absl::Status TensorsToImageCalculator::GlProcess(CalculatorContext* cc) {
     glBindTexture(GL_TEXTURE_2D,
                   input_tensor.GetOpenGlTexture2dReadView().name());
 
-    MP_RETURN_IF_ERROR(gl_renderer_->GlRender(
+    ABSL_RETURN_IF_ERROR(gl_renderer_->GlRender(
         tensor_width, tensor_height, output_texture.width(),
         output_texture.height(), mediapipe::FrameScaleMode::kStretch,
         mediapipe::FrameRotation::kNone,

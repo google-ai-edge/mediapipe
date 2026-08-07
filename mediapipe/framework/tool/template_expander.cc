@@ -126,7 +126,7 @@ absl::Status SetMapKeyTypes(const std::vector<FieldType>& key_types,
     if (entry.map_id >= 0) {
       FieldType key_type = key_types[i++];
       std::vector<FieldValue> key_value;
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           ProtoUtilLite::Serialize({entry.key_value}, key_type, &key_value));
       entry.key_type = key_type;
       entry.key_value = key_value.front();
@@ -145,7 +145,7 @@ absl::Status ProtoPathSplit(const std::string& path, ProtoPath* result) {
     rest = rest.substr(1);
   }
   while (!rest.empty()) {
-    MP_RETURN_IF_ERROR(ParseEntry(rest, result));
+    ABSL_RETURN_IF_ERROR(ParseEntry(rest, result));
   }
   return absl::OkStatus();
 }
@@ -154,13 +154,13 @@ absl::Status ProtoPathSplit(const std::string& path, ProtoPath* result) {
 absl::Status ParseProtoPath(const TemplateExpression& rule,
                             std::string base_path, ProtoPath* result) {
   ProtoPath base_entries;
-  MP_RETURN_IF_ERROR(ProtoPathSplit(base_path, &base_entries));
-  MP_RETURN_IF_ERROR(ProtoPathSplit(rule.path(), result));
+  ABSL_RETURN_IF_ERROR(ProtoPathSplit(base_path, &base_entries));
+  ABSL_RETURN_IF_ERROR(ProtoPathSplit(rule.path(), result));
   std::vector<FieldType> key_types;
   for (int type : rule.key_type()) {
     key_types.push_back(static_cast<FieldType>(type));
   }
-  MP_RETURN_IF_ERROR(SetMapKeyTypes(key_types, result));
+  ABSL_RETURN_IF_ERROR(SetMapKeyTypes(key_types, result));
   result->erase(result->begin(), result->begin() + base_entries.size());
   return absl::OkStatus();
 }
@@ -272,7 +272,7 @@ class TemplateExpanderImpl {
       return absl::OkStatus();
     }
     ProtoPath field_path;
-    MP_RETURN_IF_ERROR(ParseProtoPath(rule, base_path, &field_path));
+    ABSL_RETURN_IF_ERROR(ParseProtoPath(rule, base_path, &field_path));
     return ProtoUtilLite::GetFieldRange(output, field_path, 1,
                                         GetFieldType(rule), base);
   }
@@ -289,7 +289,7 @@ class TemplateExpanderImpl {
       return absl::OkStatus();
     }
     ProtoPath field_path;
-    MP_RETURN_IF_ERROR(ParseProtoPath(rule, base_path, &field_path));
+    ABSL_RETURN_IF_ERROR(ParseProtoPath(rule, base_path, &field_path));
     int field_count = 1;
     if (rule.has_field_value()) {
       // For a non-repeated field, only one value can be specified.
@@ -650,7 +650,7 @@ class TemplateExpanderImpl {
                                      ? mediapipe::SimpleDtoa(args[i].num())
                                      : args[i].str();
         std::vector<FieldValue> r;
-        MP_RETURN_IF_ERROR(
+        ABSL_RETURN_IF_ERROR(
             ProtoUtilLite::Serialize({text_value}, field_type, &r));
         result->push_back(r[0]);
       }

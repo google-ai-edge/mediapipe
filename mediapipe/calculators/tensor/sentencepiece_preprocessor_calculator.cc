@@ -81,7 +81,7 @@ absl::Status SentencePiecePreprocessorCalculatorImpl::Open(
   }
 
   if (options.has_sentence_piece_model()) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         sentence_piece_model_handler_,
         tasks::core::ExternalFileHandler::CreateFromExternalFile(
             &options.sentence_piece_model()));
@@ -117,9 +117,9 @@ absl::Status SentencePiecePreprocessorCalculatorImpl::Open(
         "No SentencePiece tokenizer process unit found in metadata.");
   }
 
-  MP_ASSIGN_OR_RETURN(std::unique_ptr<Tokenizer> tokenizer,
-                      tasks::text::tokenizers::CreateTokenizerFromProcessUnit(
-                          tokenizer_process_unit, metadata_extractor));
+  ABSL_ASSIGN_OR_RETURN(std::unique_ptr<Tokenizer> tokenizer,
+                        tasks::text::tokenizers::CreateTokenizerFromProcessUnit(
+                            tokenizer_process_unit, metadata_extractor));
   auto* raw_tokenizer = dynamic_cast<SentencePieceTokenizer*>(tokenizer.get());
   if (raw_tokenizer == nullptr) {
     return absl::InternalError(

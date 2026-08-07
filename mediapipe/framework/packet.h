@@ -174,16 +174,16 @@ class Packet {
   // general recommendation is to avoid calling this function.
   //
   // Example usage:
-  //   MP_ASSIGN_OR_RETURN(std::unique_ptr<Detection> detection,
+  //   ABSL_ASSIGN_OR_RETURN(std::unique_ptr<Detection> detection,
   //                    p.ConsumeOrCopy<Detection>());
   //   // The unique_ptr type can be omitted with auto.
-  //   MP_ASSIGN_OR_RETURN(auto detection, p.ConsumeOrCopy<Detection>());
-  //   If you would like to crash on failure (prefer MP_ASSIGN_OR_RETURN):
+  //   ABSL_ASSIGN_OR_RETURN(auto detection, p.ConsumeOrCopy<Detection>());
+  //   If you would like to crash on failure (prefer ABSL_ASSIGN_OR_RETURN):
   //   auto detection = p.ConsumeOrCopy<Detection>().value();
   //   // In functions which do not return absl::Status use an adaptor
-  //   // function as the third argument to MP_ASSIGN_OR_RETURN.  In tests,
+  //   // function as the third argument to ABSL_ASSIGN_OR_RETURN.  In tests,
   //   // use an adaptor which returns void.
-  //   MP_ASSIGN_OR_RETURN(auto detection, p.ConsumeOrCopy<Detection>(),
+  //   ABSL_ASSIGN_OR_RETURN(auto detection, p.ConsumeOrCopy<Detection>(),
   //                    _.With([](const absl::Status& status) {
   //                      MP_EXPECT_OK(status);
   //                      // Use CHECK_OK to crash and report a usable line
@@ -692,7 +692,7 @@ inline Packet& Packet::operator=(const Packet& packet) {
 template <typename T>
 inline absl::StatusOr<std::unique_ptr<T>> Packet::Consume() {
   // If type validation fails, returns error.
-  MP_RETURN_IF_ERROR(ValidateAsType<T>());
+  ABSL_RETURN_IF_ERROR(ValidateAsType<T>());
   // Clients who use this function are responsible for ensuring that no
   // other thread is doing anything with this Packet.
   if (!holder_->HasForeignOwner() && holder_.use_count() == 1) {
@@ -715,7 +715,7 @@ template <typename T>
 inline absl::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
     bool* was_copied,
     typename std::enable_if<!std::is_array<T>::value>::type*) {
-  MP_RETURN_IF_ERROR(ValidateAsType<T>());
+  ABSL_RETURN_IF_ERROR(ValidateAsType<T>());
   // If holder is the sole owner of the underlying data, consumes this packet.
   if (!holder_->HasForeignOwner() && holder_.use_count() == 1) {
     VLOG(2) << "Consuming the data of " << DebugString();
@@ -745,7 +745,7 @@ inline absl::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
     bool* was_copied,
     typename std::enable_if<std::is_array<T>::value &&
                             std::extent<T>::value != 0>::type*) {
-  MP_RETURN_IF_ERROR(ValidateAsType<T>());
+  ABSL_RETURN_IF_ERROR(ValidateAsType<T>());
   // If holder is the sole owner of the underlying data, consumes this packet.
   if (!holder_->HasForeignOwner() && holder_.use_count() == 1) {
     VLOG(2) << "Consuming the data of " << DebugString();
@@ -825,7 +825,7 @@ inline const T& Packet::Get() const {
 // safe to concurrently call Share() on the same packet from multiple threads.
 template <typename T>
 inline absl::StatusOr<std::shared_ptr<const T>> Packet::Share() const {
-  MP_RETURN_IF_ERROR(ValidateAsType<T>());
+  ABSL_RETURN_IF_ERROR(ValidateAsType<T>());
   const T* ptr = &Get<T>();
   return std::shared_ptr<const T>(
       ptr, [packet = *this](const T* ptr) mutable { packet = {}; });

@@ -41,7 +41,7 @@ absl::Status SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
     SceneCameraMotion* scene_camera_motion) {
   has_solid_color_background_ = has_solid_color_background;
   total_scene_frames_ = scene_frame_timestamps.size();
-  MP_RETURN_IF_ERROR(AggregateKeyFrameResults(
+  ABSL_RETURN_IF_ERROR(AggregateKeyFrameResults(
       key_frame_crop_options, key_frame_crop_results, scene_frame_width,
       scene_frame_height, scene_summary));
 
@@ -51,7 +51,7 @@ absl::Status SceneCameraMotionAnalyzer::AnalyzeSceneAndPopulateFocusPointFrames(
           : scene_frame_timestamps.back() - scene_frame_timestamps.front();
   const double scene_span_sec = TimestampDiff(scene_span_ms).Seconds();
   SceneCameraMotion camera_motion;
-  MP_RETURN_IF_ERROR(DecideCameraMotionType(
+  ABSL_RETURN_IF_ERROR(DecideCameraMotionType(
       key_frame_crop_options, scene_span_sec, scene_frame_timestamps.back(),
       scene_summary, &camera_motion));
   if (scene_summary->has_salient_region()) {
@@ -126,7 +126,7 @@ absl::Status SceneCameraMotionAnalyzer::DecideCameraMotionType(
       no_salient_position_y = last_scene_with_salient_region_.steady_motion()
                                   .steady_look_at_center_y();
     }
-    MP_RETURN_IF_ERROR(ToUseSteadyMotion(
+    ABSL_RETURN_IF_ERROR(ToUseSteadyMotion(
         no_salient_position_x, no_salient_position_y,
         scene_summary->crop_window_width(), scene_summary->crop_window_height(),
         scene_summary, scene_camera_motion));
@@ -159,7 +159,7 @@ absl::Status SceneCameraMotionAnalyzer::DecideCameraMotionType(
       end_x = scene_summary->key_frame_center_max_x();
       end_y = scene_summary->key_frame_center_max_y();
     }
-    MP_RETURN_IF_ERROR(ToUseSweepingMotion(
+    ABSL_RETURN_IF_ERROR(ToUseSweepingMotion(
         start_x, start_y, end_x, end_y, key_frame_crop_options.target_width(),
         key_frame_crop_options.target_height(), scene_span_sec, scene_summary,
         scene_camera_motion));
@@ -248,9 +248,9 @@ absl::Status SceneCameraMotionAnalyzer::DecideSteadyLookAtRegion(
 
   VLOG(1) << "Motion is small - camera is set to be steady at " << center_x
           << ", " << center_y;
-  MP_RETURN_IF_ERROR(ToUseSteadyMotion(center_x, center_y, crop_width,
-                                       crop_height, scene_summary,
-                                       scene_camera_motion));
+  ABSL_RETURN_IF_ERROR(ToUseSteadyMotion(center_x, center_y, crop_width,
+                                         crop_height, scene_summary,
+                                         scene_camera_motion));
   return absl::OkStatus();
 }
 
@@ -332,7 +332,7 @@ absl::Status SceneCameraMotionAnalyzer::PopulateFocusPointFrames(
         scene_camera_motion.steady_motion().steady_look_at_center_y();
     for (int i = 0; i < num_scene_frames; ++i) {
       FocusPointFrame focus_point_frame;
-      MP_RETURN_IF_ERROR(AddFocusPointsFromCenterTypeAndWeight(
+      ABSL_RETURN_IF_ERROR(AddFocusPointsFromCenterTypeAndWeight(
           center_x, center_y, scene_frame_width, scene_frame_height,
           focus_point_frame_type, options_.maximum_salient_point_weight(),
           options_.salient_point_bound(), &focus_point_frame));
@@ -353,7 +353,7 @@ absl::Status SceneCameraMotionAnalyzer::PopulateFocusPointFrames(
       const float position_x = start_x * (1.0f - fraction) + end_x * fraction;
       const float position_y = start_y * (1.0f - fraction) + end_y * fraction;
       FocusPointFrame focus_point_frame;
-      MP_RETURN_IF_ERROR(AddFocusPointsFromCenterTypeAndWeight(
+      ABSL_RETURN_IF_ERROR(AddFocusPointsFromCenterTypeAndWeight(
           position_x, position_y, scene_frame_width, scene_frame_height,
           focus_point_frame_type, options_.maximum_salient_point_weight(),
           options_.salient_point_bound(), &focus_point_frame));
@@ -419,7 +419,7 @@ absl::Status SceneCameraMotionAnalyzer::PopulateFocusPointFramesForTracking(
         std::max(min_score, score_function.Evaluate(relative_timestamp));
     max_score = std::max(max_score, score);
     FocusPointFrame focus_point_frame;
-    MP_RETURN_IF_ERROR(AddFocusPointsFromCenterTypeAndWeight(
+    ABSL_RETURN_IF_ERROR(AddFocusPointsFromCenterTypeAndWeight(
         center_x, center_y, scene_frame_width, scene_frame_height,
         focus_point_frame_type, score, options_.salient_point_bound(),
         &focus_point_frame));

@@ -38,7 +38,7 @@ namespace processors {
 //   core::proto::Acceleration acceleration;
 //   acceleration.mutable_xnnpack();
 //   bool use_gpu = DetermineImagePreprocessingGpuBackend(acceleration);
-//   MP_RETURN_IF_ERROR(ConfigureImagePreprocessingGraph(
+//   ABSL_RETURN_IF_ERROR(ConfigureImagePreprocessingGraph(
 //       model_resources,
 //       use_gpu,
 //       &preprocessing.GetOptions<ImagePreprocessingGraphOptions>()));

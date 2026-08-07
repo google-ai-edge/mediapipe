@@ -20,10 +20,12 @@
 #include <type_traits>
 
 #include "absl/status/status.h"
+#include "absl/status/status_builder.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "mediapipe/framework/deps/status_builder.h"
 #include "mediapipe/framework/port/status_macros.h"
 
 namespace mediapipe {
@@ -280,7 +282,14 @@ inline void MpInternalAssertAddFatalFailure(
                              absl::StatusToStringMode::kWithEverything));
 }
 
+inline void MpInternalAssertAddFatalFailure(
+    absl::string_view expression, const absl::StatusBuilder& builder) {
+  FAIL() << absl::StrCat(expression, " returned error: ",
+                         absl::Status(builder).ToString(
+                             absl::StatusToStringMode::kWithEverything));
+}
+
 #define MP_ASSERT_OK_AND_ASSIGN_IMPL_(statusor, lhs, rexpr) \
-  MP_ASSIGN_OR_RETURN(lhs, rexpr, MpInternalAssertAddFatalFailure(#rexpr, _));
+  ABSL_ASSIGN_OR_RETURN(lhs, rexpr, MpInternalAssertAddFatalFailure(#rexpr, _));
 
 #endif  // MEDIAPIPE_DEPS_STATUS_MATCHERS_H_

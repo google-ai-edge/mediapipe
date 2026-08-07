@@ -58,7 +58,7 @@ absl::Status ImageFrameToGpuBufferCalculator::UpdateContract(
 absl::Status ImageFrameToGpuBufferCalculator::Open(
     CalculatorContext<ImageFrameToGpuBufferNode>& cc) {
 #if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  MP_RETURN_IF_ERROR(helper_.Open(&cc.GetGenericContext()));
+  ABSL_RETURN_IF_ERROR(helper_.Open(&cc.GetGenericContext()));
 #endif  // !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   return absl::OkStatus();
 }
@@ -69,7 +69,7 @@ absl::Status ImageFrameToGpuBufferCalculator::Process(
 
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   CFHolder<CVPixelBufferRef> buffer;
-  MP_RETURN_IF_ERROR(CreateCVPixelBufferForImageFramePacket(
+  ABSL_RETURN_IF_ERROR(CreateCVPixelBufferForImageFramePacket(
       cc.image_frame.Packet().AsLegacyPacket(), &buffer));
   cc.gpu_buffer.Send(GpuBuffer(buffer));
 #else

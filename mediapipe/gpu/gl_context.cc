@@ -320,10 +320,11 @@ absl::Status GlContext::FinishInitialization(bool create_thread) {
   if (create_thread) {
     thread_ = std::make_unique<GlContext::DedicatedThread>();
 #ifdef MEDIAPIPE_HAS_GOOGLE_THREAD
-    MP_RETURN_IF_ERROR(thread_->Run(util::functional::WithCurrentContext(
+    ABSL_RETURN_IF_ERROR(thread_->Run(util::functional::WithCurrentContext(
         [this] { return EnterContext(nullptr); })));
 #else
-    MP_RETURN_IF_ERROR(thread_->Run([this] { return EnterContext(nullptr); }));
+    ABSL_RETURN_IF_ERROR(
+        thread_->Run([this] { return EnterContext(nullptr); }));
 #endif
   }
 
@@ -391,7 +392,7 @@ absl::Status GlContext::FinishInitialization(bool create_thread) {
       if (!status.ok()) {
         status = GetGlExtensionsCompat();
       }
-      MP_RETURN_IF_ERROR(status);
+      ABSL_RETURN_IF_ERROR(status);
     }
 
 #if GL_ES_VERSION_2_0  // This actually means "is GLES available".
@@ -468,10 +469,11 @@ void GlContext::SetProfilingContext(
 
 absl::Status GlContext::SwitchContextAndRun(GlStatusFunction gl_func) {
   ContextBinding saved_context;
-  MP_RETURN_IF_ERROR(EnterContext(&saved_context)) << " (entering GL context)";
+  ABSL_RETURN_IF_ERROR(EnterContext(&saved_context))
+      << " (entering GL context)";
   auto status = gl_func();
   LogUncheckedGlErrors(CheckForGlErrors());
-  MP_RETURN_IF_ERROR(ExitContext(&saved_context)) << " (exiting GL context)";
+  ABSL_RETURN_IF_ERROR(ExitContext(&saved_context)) << " (exiting GL context)";
   return status;
 }
 
@@ -576,7 +578,7 @@ absl::Status GlContext::SwitchContext(ContextBinding* saved_context,
     // old one (we may be deliberately trying to exit it).
     // 2. We need to unset the old context before we unlock the old mutex,
     // Therefore, we first unset the old one before setting the new one.
-    MP_RETURN_IF_ERROR(SetCurrentContextBinding({}));
+    ABSL_RETURN_IF_ERROR(SetCurrentContextBinding({}));
     old_context_obj->context_use_mutex_.unlock();
     CurrentContext().reset();
   }

@@ -162,7 +162,7 @@ InteractiveSegmenterLegacy::Create(
   }
   std::unique_ptr<ImageSegmenterGraphOptionsProto> options_proto =
       ConvertImageSegmenterOptionsToProto(options.get());
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       std::unique_ptr<InteractiveSegmenterLegacy> segmenter,
       (core::VisionTaskApiFactory::Create<InteractiveSegmenterLegacy,
                                           ImageSegmenterGraphOptionsProto>(
@@ -192,12 +192,12 @@ absl::StatusOr<ImageSegmenterResult> InteractiveSegmenterLegacy::Segment(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                      ConvertToNormalizedRect(image_processing_options, image,
-                                              /*roi_allowed=*/false));
-  MP_ASSIGN_OR_RETURN(proto::RegionOfInterest roi_data,
-                      ConvertRoiToRegionOfInterestProto(roi));
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                        ConvertToNormalizedRect(image_processing_options, image,
+                                                /*roi_allowed=*/false));
+  ABSL_ASSIGN_OR_RETURN(proto::RegionOfInterest roi_data,
+                        ConvertRoiToRegionOfInterestProto(roi));
+  ABSL_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
           {{kImageInStreamName, mediapipe::MakePacket<Image>(std::move(image))},

@@ -112,7 +112,7 @@ template <typename T>
 absl::StatusOr<Packet<T>> WrapLegacyPacket(mediapipe::Packet packet) {
   if constexpr (!std::is_same_v<T, Any>) {
     if (!packet.IsEmpty()) {
-      MP_RETURN_IF_ERROR(packet.ValidateAsType<T>());
+      ABSL_RETURN_IF_ERROR(packet.ValidateAsType<T>());
     }
   }
   return Packet<T>(std::move(packet));

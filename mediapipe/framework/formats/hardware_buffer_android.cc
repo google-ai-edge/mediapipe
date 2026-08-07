@@ -45,14 +45,14 @@ HardwareBuffer::~HardwareBuffer() { Reset(); }
 
 absl::StatusOr<HardwareBuffer> HardwareBuffer::Create(
     const HardwareBufferSpec& spec) {
-  MP_ASSIGN_OR_RETURN(AHardwareBuffer * ahwb, AllocateAHardwareBuffer(spec));
+  ABSL_ASSIGN_OR_RETURN(AHardwareBuffer * ahwb, AllocateAHardwareBuffer(spec));
   return HardwareBuffer(spec, ahwb);
 }
 
 absl::StatusOr<HardwareBuffer> HardwareBuffer::WrapAndAcquireAHardwareBuffer(
     AHardwareBuffer* ahw_buffer) {
-  MP_ASSIGN_OR_RETURN(HardwareBufferSpec spec,
-                      AcquireAHardwareBuffer(ahw_buffer));
+  ABSL_ASSIGN_OR_RETURN(HardwareBufferSpec spec,
+                        AcquireAHardwareBuffer(ahw_buffer));
   return HardwareBuffer(spec, ahw_buffer);
 }
 
@@ -113,7 +113,7 @@ absl::Status HardwareBuffer::ReleaseAHardwareBuffer() {
     return absl::OkStatus();
   }
   if (is_locked_) {
-    MP_RETURN_IF_ERROR(Unlock());
+    ABSL_RETURN_IF_ERROR(Unlock());
   }
   if (__builtin_available(android 26, *)) {
     AHardwareBuffer_release(ahw_buffer_);
@@ -151,7 +151,7 @@ absl::Status HardwareBuffer::Unlock() {
 
 absl::StatusOr<int> HardwareBuffer::UnlockAsync() {
   int fence_file_descriptor = -1;
-  MP_RETURN_IF_ERROR(UnlockInternal(&fence_file_descriptor));
+  ABSL_RETURN_IF_ERROR(UnlockInternal(&fence_file_descriptor));
   return fence_file_descriptor;
 }
 

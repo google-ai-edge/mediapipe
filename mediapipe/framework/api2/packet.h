@@ -160,7 +160,7 @@ absl::Status PacketBase::ValidateAsType() const {
 
 template <class T>
 absl::StatusOr<std::shared_ptr<const T>> PacketBase::Share() const {
-  MP_RETURN_IF_ERROR(ValidateAsType<T>());
+  ABSL_RETURN_IF_ERROR(ValidateAsType<T>());
   const T* ptr = &Get<T>();
   return std::shared_ptr<const T>(
       ptr, [packet = *this](const T* ptr) mutable { packet = {}; });

@@ -92,11 +92,11 @@ absl::StatusOr<ImageFileProperties> GetImageFileProperties(
   properties.set_focal_length_mm(result.FocalLength);
   properties.set_focal_length_35mm(result.FocalLengthIn35mm);
 
-  MP_ASSIGN_OR_RETURN(auto focal_length_pixels,
-                      ComputeFocalLengthInPixels(properties.image_width(),
-                                                 properties.image_height(),
-                                                 properties.focal_length_35mm(),
-                                                 properties.focal_length_mm()));
+  ABSL_ASSIGN_OR_RETURN(
+      auto focal_length_pixels,
+      ComputeFocalLengthInPixels(
+          properties.image_width(), properties.image_height(),
+          properties.focal_length_35mm(), properties.focal_length_mm()));
   properties.set_focal_length_pixels(focal_length_pixels);
 
   return properties;
@@ -151,7 +151,7 @@ class ImageFilePropertiesCalculator : public CalculatorBase {
     if (cc->InputSidePackets().NumEntries() == 1) {
       const std::string& image_bytes =
           cc->InputSidePackets().Index(0).Get<std::string>();
-      MP_ASSIGN_OR_RETURN(properties_, GetImageFileProperties(image_bytes));
+      ABSL_ASSIGN_OR_RETURN(properties_, GetImageFileProperties(image_bytes));
       read_properties_ = true;
     }
 
@@ -169,7 +169,7 @@ class ImageFilePropertiesCalculator : public CalculatorBase {
         return absl::OkStatus();
       }
       const std::string& image_bytes = cc->Inputs().Index(0).Get<std::string>();
-      MP_ASSIGN_OR_RETURN(properties_, GetImageFileProperties(image_bytes));
+      ABSL_ASSIGN_OR_RETURN(properties_, GetImageFileProperties(image_bytes));
       read_properties_ = true;
     }
     if (read_properties_) {

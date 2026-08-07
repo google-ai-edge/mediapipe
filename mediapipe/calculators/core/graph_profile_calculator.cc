@@ -60,7 +60,7 @@ class GraphProfileCalculator : public Node {
         cc->InputTimestamp() - prev_profile_ts_ >= options.profile_interval()) {
       prev_profile_ts_ = cc->InputTimestamp();
       GraphProfile result;
-      MP_RETURN_IF_ERROR(cc->GetProfilingContext()->CaptureProfile(
+      ABSL_RETURN_IF_ERROR(cc->GetProfilingContext()->CaptureProfile(
           &result, first_profile ? PopulateGraphConfig::kFull
                                  : PopulateGraphConfig::kNo));
       kProfileOut(cc).Send(result);

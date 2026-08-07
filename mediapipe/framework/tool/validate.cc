@@ -28,7 +28,8 @@ namespace tool {
 
 absl::Status ValidateInput(const InputCollection& input_collection) {
   if (!input_collection.name().empty()) {
-    MP_RETURN_IF_ERROR(tool::ValidateName(input_collection.name())).SetPrepend()
+    ABSL_RETURN_IF_ERROR(tool::ValidateName(input_collection.name()))
+            .SetPrepend()
         << "InputCollection " << input_collection.name()
         << " has improperly specified name: ";
   }

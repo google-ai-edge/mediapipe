@@ -73,7 +73,7 @@ bool UseGpu(const mediapipe::InferenceCalculatorOptions& options) {
 
 absl::Status InferenceCalculatorLiteRtImpl::UpdateContract(
     CalculatorContract* cc) {
-  MP_RETURN_IF_ERROR(TensorContractCheck(cc));
+  ABSL_RETURN_IF_ERROR(TensorContractCheck(cc));
 
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   RET_CHECK(!options.model_path().empty() ^ kSideInModel(cc).IsConnected())
@@ -82,7 +82,7 @@ absl::Status InferenceCalculatorLiteRtImpl::UpdateContract(
   cc->UseService(kMemoryManagerService).Optional();
   cc->UseService(kLiteRtService).Optional();
   if (UseGpu(options)) {
-    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+    ABSL_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
   }
   return absl::OkStatus();
 }
@@ -93,10 +93,10 @@ absl::Status InferenceCalculatorLiteRtImpl::Open(CalculatorContext* cc) {
   }
 
   if (UseGpu(cc->Options<mediapipe::InferenceCalculatorOptions>())) {
-    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
+    ABSL_RETURN_IF_ERROR(gpu_helper_.Open(cc));
   }
 
-  MP_ASSIGN_OR_RETURN(inference_runner_, CreateInferenceRunner(cc));
+  ABSL_ASSIGN_OR_RETURN(inference_runner_, CreateInferenceRunner(cc));
   return InferenceCalculatorNodeImpl::UpdateIoMapping(
       cc, inference_runner_->GetInputOutputTensorNames());
 }
@@ -105,14 +105,14 @@ absl::StatusOr<std::vector<Tensor>> InferenceCalculatorLiteRtImpl::Process(
     CalculatorContext* cc, const TensorSpan& tensor_span) {
   std::vector<Tensor> output_tensors;
   if (UseGpu(cc->Options<mediapipe::InferenceCalculatorOptions>())) {
-    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([&]() -> absl::Status {
-      MP_ASSIGN_OR_RETURN(output_tensors,
-                          inference_runner_->Run(cc, tensor_span));
+    ABSL_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([&]() -> absl::Status {
+      ABSL_ASSIGN_OR_RETURN(output_tensors,
+                            inference_runner_->Run(cc, tensor_span));
       return absl::OkStatus();
     }));
   } else {
-    MP_ASSIGN_OR_RETURN(output_tensors,
-                        inference_runner_->Run(cc, tensor_span));
+    ABSL_ASSIGN_OR_RETURN(output_tensors,
+                          inference_runner_->Run(cc, tensor_span));
   }
 
   return output_tensors;
@@ -126,7 +126,7 @@ absl::Status InferenceCalculatorLiteRtImpl::Close(CalculatorContext* cc) {
 absl::StatusOr<std::unique_ptr<InferenceRunner>>
 InferenceCalculatorLiteRtImpl::CreateInferenceRunner(CalculatorContext* cc) {
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
-  MP_ASSIGN_OR_RETURN(auto model_packet, GetModelAsPacket(cc));
+  ABSL_ASSIGN_OR_RETURN(auto model_packet, GetModelAsPacket(cc));
   auto litert = options.delegate().litert();
 
   // If dispatch library path is not specified, try to get it from the service.

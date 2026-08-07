@@ -202,7 +202,7 @@ absl::Status FaceToRegionCalculator::Process(mediapipe::CalculatorContext* cc) {
         // Score the face based on image cues.
         float visual_score = 1.0f;
         if (options_.use_visual_scorer()) {
-          MP_RETURN_IF_ERROR(
+          ABSL_RETURN_IF_ERROR(
               scorer_->CalculateScore(frame, *region, &visual_score));
         }
         region->set_score(visual_score);
@@ -258,7 +258,7 @@ absl::Status FaceToRegionCalculator::Process(mediapipe::CalculatorContext* cc) {
           core_landmark_region.has_location_normalized()) {  // Not empty.
         float visual_score = 1.0f;
         if (options_.use_visual_scorer()) {
-          MP_RETURN_IF_ERROR(scorer_->CalculateScore(
+          ABSL_RETURN_IF_ERROR(scorer_->CalculateScore(
               frame, core_landmark_region, &visual_score));
         }
         core_landmark_region.set_score(visual_score);
@@ -270,8 +270,8 @@ absl::Status FaceToRegionCalculator::Process(mediapipe::CalculatorContext* cc) {
           all_landmark_region.has_location_normalized()) {  // Not empty.
         float visual_score = 1.0f;
         if (options_.use_visual_scorer()) {
-          MP_RETURN_IF_ERROR(scorer_->CalculateScore(frame, all_landmark_region,
-                                                     &visual_score));
+          ABSL_RETURN_IF_ERROR(scorer_->CalculateScore(
+              frame, all_landmark_region, &visual_score));
         }
         all_landmark_region.set_score(visual_score);
         all_landmark_region.mutable_signal_type()->set_standard(

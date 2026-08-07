@@ -62,8 +62,8 @@ absl::Status FindIgnoredStreams(
     const proto_ns::RepeatedPtrField<ProtoString>& src_streams,
     const proto_ns::RepeatedPtrField<ProtoString>& dst_streams,
     std::set<std::string>* result) {
-  MP_ASSIGN_OR_RETURN(auto src_map, tool::TagMap::Create(src_streams));
-  MP_ASSIGN_OR_RETURN(auto dst_map, tool::TagMap::Create(dst_streams));
+  ABSL_ASSIGN_OR_RETURN(auto src_map, tool::TagMap::Create(src_streams));
+  ABSL_ASSIGN_OR_RETURN(auto dst_map, tool::TagMap::Create(dst_streams));
   for (auto id = src_map->BeginId(); id < src_map->EndId(); ++id) {
     std::pair<std::string, int> tag_index = src_map->TagAndIndexFromId(id);
     if (!dst_map->GetId(tag_index.first, tag_index.second).IsValid()) {
@@ -80,7 +80,8 @@ absl::Status RemoveIgnoredStreams(
   for (int i = streams->size() - 1; i >= 0; --i) {
     std::string tag, name;
     int index;
-    MP_RETURN_IF_ERROR(ParseTagIndexName(streams->Get(i), &tag, &index, &name));
+    ABSL_RETURN_IF_ERROR(
+        ParseTagIndexName(streams->Get(i), &tag, &index, &name));
     if (missing_streams.count(name) > 0) {
       streams->DeleteSubrange(i, 1);
     }
@@ -96,7 +97,7 @@ absl::Status TransformNames(
        {config->mutable_input_stream(), config->mutable_output_stream(),
         config->mutable_input_side_packet(),
         config->mutable_output_side_packet()}) {
-    MP_RETURN_IF_ERROR(TransformStreamNames(streams, transform));
+    ABSL_RETURN_IF_ERROR(TransformStreamNames(streams, transform));
   }
   std::vector<std::string> node_names(config->node_size());
   for (int node_id = 0; node_id < config->node_size(); ++node_id) {
@@ -110,17 +111,17 @@ absl::Status TransformNames(
          {node.mutable_input_stream(), node.mutable_output_stream(),
           node.mutable_input_side_packet(),
           node.mutable_output_side_packet()}) {
-      MP_RETURN_IF_ERROR(TransformStreamNames(streams, transform));
+      ABSL_RETURN_IF_ERROR(TransformStreamNames(streams, transform));
     }
   }
   for (auto& generator : *config->mutable_packet_generator()) {
     for (auto* streams : {generator.mutable_input_side_packet(),
                           generator.mutable_output_side_packet()}) {
-      MP_RETURN_IF_ERROR(TransformStreamNames(streams, transform));
+      ABSL_RETURN_IF_ERROR(TransformStreamNames(streams, transform));
     }
   }
   for (auto& status_handler : *config->mutable_status_handler()) {
-    MP_RETURN_IF_ERROR(TransformStreamNames(
+    ABSL_RETURN_IF_ERROR(TransformStreamNames(
         status_handler.mutable_input_side_packet(), transform));
   }
   return absl::OkStatus();
@@ -149,8 +150,8 @@ absl::Status FindCorrespondingStreams(
     std::map<std::string, std::string>* stream_map,
     const proto_ns::RepeatedPtrField<ProtoString>& src_streams,
     const proto_ns::RepeatedPtrField<ProtoString>& dst_streams) {
-  MP_ASSIGN_OR_RETURN(auto src_map, tool::TagMap::Create(src_streams));
-  MP_ASSIGN_OR_RETURN(auto dst_map, tool::TagMap::Create(dst_streams));
+  ABSL_ASSIGN_OR_RETURN(auto src_map, tool::TagMap::Create(src_streams));
+  ABSL_ASSIGN_OR_RETURN(auto dst_map, tool::TagMap::Create(dst_streams));
   for (const auto& it : dst_map->Mapping()) {
     const std::string& tag = it.first;
     const TagMap::TagData* src_tag_data =
@@ -201,26 +202,27 @@ absl::Status ConnectSubgraphStreams(
     const CalculatorGraphConfig::Node& subgraph_node,
     CalculatorGraphConfig* subgraph_config) {
   std::map<std::string, std::string> stream_map;
-  MP_RETURN_IF_ERROR(FindCorrespondingStreams(&stream_map,
-                                              subgraph_config->input_stream(),
-                                              subgraph_node.input_stream()))
+  ABSL_RETURN_IF_ERROR(FindCorrespondingStreams(&stream_map,
+                                                subgraph_config->input_stream(),
+                                                subgraph_node.input_stream()))
           .SetPrepend()
       << "while processing the input streams of subgraph node "
       << subgraph_node.calculator() << ": ";
-  MP_RETURN_IF_ERROR(FindCorrespondingStreams(&stream_map,
-                                              subgraph_config->output_stream(),
-                                              subgraph_node.output_stream()))
+  ABSL_RETURN_IF_ERROR(
+      FindCorrespondingStreams(&stream_map, subgraph_config->output_stream(),
+                               subgraph_node.output_stream()))
           .SetPrepend()
       << "while processing the output streams of subgraph node "
       << subgraph_node.calculator() << ": ";
   std::map<std::string, std::string> side_packet_map;
-  MP_RETURN_IF_ERROR(FindCorrespondingStreams(
-                         &side_packet_map, subgraph_config->input_side_packet(),
-                         subgraph_node.input_side_packet()))
+  ABSL_RETURN_IF_ERROR(
+      FindCorrespondingStreams(&side_packet_map,
+                               subgraph_config->input_side_packet(),
+                               subgraph_node.input_side_packet()))
           .SetPrepend()
       << "while processing the input side packets of subgraph node "
       << subgraph_node.calculator() << ": ";
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       FindCorrespondingStreams(&side_packet_map,
                                subgraph_config->output_side_packet(),
                                subgraph_node.output_side_packet()))
@@ -228,13 +230,13 @@ absl::Status ConnectSubgraphStreams(
       << "while processing the output side packets of subgraph node "
       << subgraph_node.calculator() << ": ";
   std::set<std::string> ignored_input_streams;
-  MP_RETURN_IF_ERROR(FindIgnoredStreams(subgraph_config->input_stream(),
-                                        subgraph_node.input_stream(),
-                                        &ignored_input_streams));
+  ABSL_RETURN_IF_ERROR(FindIgnoredStreams(subgraph_config->input_stream(),
+                                          subgraph_node.input_stream(),
+                                          &ignored_input_streams));
   std::set<std::string> ignored_input_side_packets;
-  MP_RETURN_IF_ERROR(FindIgnoredStreams(subgraph_config->input_side_packet(),
-                                        subgraph_node.input_side_packet(),
-                                        &ignored_input_side_packets));
+  ABSL_RETURN_IF_ERROR(FindIgnoredStreams(subgraph_config->input_side_packet(),
+                                          subgraph_node.input_side_packet(),
+                                          &ignored_input_side_packets));
   std::map<std::string, std::string>* name_map;
   auto replace_names = [&name_map](absl::string_view s) {
     std::string original(s);
@@ -243,31 +245,31 @@ absl::Status ConnectSubgraphStreams(
   };
   for (auto& node : *subgraph_config->mutable_node()) {
     name_map = &stream_map;
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         TransformStreamNames(node.mutable_input_stream(), replace_names));
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         TransformStreamNames(node.mutable_output_stream(), replace_names));
     name_map = &side_packet_map;
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         TransformStreamNames(node.mutable_input_side_packet(), replace_names));
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         TransformStreamNames(node.mutable_output_side_packet(), replace_names));
 
     // Remove input streams and side packets ignored by the subgraph-node.
-    MP_RETURN_IF_ERROR(RemoveIgnoredStreams(node.mutable_input_stream(),
-                                            ignored_input_streams));
-    MP_RETURN_IF_ERROR(RemoveIgnoredStreams(node.mutable_input_side_packet(),
-                                            ignored_input_side_packets));
+    ABSL_RETURN_IF_ERROR(RemoveIgnoredStreams(node.mutable_input_stream(),
+                                              ignored_input_streams));
+    ABSL_RETURN_IF_ERROR(RemoveIgnoredStreams(node.mutable_input_side_packet(),
+                                              ignored_input_side_packets));
   }
   name_map = &side_packet_map;
   for (auto& generator : *subgraph_config->mutable_packet_generator()) {
-    MP_RETURN_IF_ERROR(TransformStreamNames(
+    ABSL_RETURN_IF_ERROR(TransformStreamNames(
         generator.mutable_input_side_packet(), replace_names));
-    MP_RETURN_IF_ERROR(TransformStreamNames(
+    ABSL_RETURN_IF_ERROR(TransformStreamNames(
         generator.mutable_output_side_packet(), replace_names));
 
     // Remove input side packets ignored by the subgraph-node.
-    MP_RETURN_IF_ERROR(RemoveIgnoredStreams(
+    ABSL_RETURN_IF_ERROR(RemoveIgnoredStreams(
         generator.mutable_input_side_packet(), ignored_input_side_packets));
   }
   return absl::OkStatus();
@@ -281,7 +283,7 @@ absl::Status ExpandSubgraphs(CalculatorGraphConfig* config,
       graph_registry ? graph_registry : &GraphRegistry::global_graph_registry;
   RET_CHECK(config);
 
-  MP_RETURN_IF_ERROR(mediapipe::tool::DefineGraphOptions(
+  ABSL_RETURN_IF_ERROR(mediapipe::tool::DefineGraphOptions(
       graph_options ? *graph_options : CalculatorGraphConfig::Node(), config));
   auto* nodes = config->mutable_node();
   while (1) {
@@ -297,15 +299,16 @@ absl::Status ExpandSubgraphs(CalculatorGraphConfig* config,
       auto& node = *it;
       int node_id = it - nodes->begin();
       std::string node_name = CanonicalNodeName(*config, node_id);
-      MP_RETURN_IF_ERROR(ValidateSubgraphFields(node));
+      ABSL_RETURN_IF_ERROR(ValidateSubgraphFields(node));
       SubgraphContext subgraph_context(&node, service_manager);
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           auto subgraph,
           graph_registry->CreateByName(config->package(), node.calculator(),
                                        &subgraph_context));
-      MP_RETURN_IF_ERROR(mediapipe::tool::DefineGraphOptions(node, &subgraph));
-      MP_RETURN_IF_ERROR(PrefixNames(node_name, &subgraph));
-      MP_RETURN_IF_ERROR(ConnectSubgraphStreams(node, &subgraph));
+      ABSL_RETURN_IF_ERROR(
+          mediapipe::tool::DefineGraphOptions(node, &subgraph));
+      ABSL_RETURN_IF_ERROR(PrefixNames(node_name, &subgraph));
+      ABSL_RETURN_IF_ERROR(ConnectSubgraphStreams(node, &subgraph));
       subgraphs.push_back(subgraph);
     }
     nodes->erase(subgraph_nodes_start, nodes->end());

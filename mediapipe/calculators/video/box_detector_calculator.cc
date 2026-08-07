@@ -208,9 +208,9 @@ absl::Status BoxDetectorCalculator::Open(CalculatorContext* cc) {
 
   for (const auto& filename : options_.index_proto_filename()) {
     std::string string_path;
-    MP_ASSIGN_OR_RETURN(string_path, PathToResourceAsFile(filename));
+    ABSL_ASSIGN_OR_RETURN(string_path, PathToResourceAsFile(filename));
     std::string index_string;
-    MP_RETURN_IF_ERROR(file::GetContents(string_path, &index_string));
+    ABSL_RETURN_IF_ERROR(file::GetContents(string_path, &index_string));
     BoxDetectorIndex predefined_index;
     if (!predefined_index.ParseFromString(index_string)) {
       ABSL_LOG(FATAL)

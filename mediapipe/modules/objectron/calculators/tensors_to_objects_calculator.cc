@@ -105,7 +105,7 @@ absl::Status TensorsToObjectsCalculator::GetContract(CalculatorContract* cc) {
 }
 
 absl::Status TensorsToObjectsCalculator::Open(CalculatorContext* cc) {
-  MP_RETURN_IF_ERROR(LoadOptions(cc));
+  ABSL_RETURN_IF_ERROR(LoadOptions(cc));
   // clang-format off
   projection_matrix_ <<
       1.5731,   0,       0, 0,
@@ -126,7 +126,7 @@ absl::Status TensorsToObjectsCalculator::Process(CalculatorContext* cc) {
 
   auto output_objects = std::make_unique<FrameAnnotation>();
 
-  MP_RETURN_IF_ERROR(ProcessCPU(cc, output_objects.get()));
+  ABSL_RETURN_IF_ERROR(ProcessCPU(cc, output_objects.get()));
 
   // Output
   if (cc->Outputs().HasTag(kOutputStreamTag)) {

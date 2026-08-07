@@ -130,7 +130,8 @@ class VelocityFilter : public LandmarksFilter {
     }
 
     // Initialize filters once.
-    MP_RETURN_IF_ERROR(InitializeFiltersIfEmpty(in_landmarks.landmark_size()));
+    ABSL_RETURN_IF_ERROR(
+        InitializeFiltersIfEmpty(in_landmarks.landmark_size()));
 
     // Filter landmarks. Every axis of every landmark is filtered separately.
     for (int i = 0; i < in_landmarks.landmark_size(); ++i) {
@@ -222,7 +223,8 @@ class OneEuroFilterImpl : public LandmarksFilter {
     }
 
     // Initialize filters once.
-    MP_RETURN_IF_ERROR(InitializeFiltersIfEmpty(in_landmarks.landmark_size()));
+    ABSL_RETURN_IF_ERROR(
+        InitializeFiltersIfEmpty(in_landmarks.landmark_size()));
 
     // Get value scale as inverse value of the object scale.
     // If value is too small smoothing will be disabled and landmarks will be
@@ -270,17 +272,17 @@ class OneEuroFilterImpl : public LandmarksFilter {
     }
 
     for (int i = 0; i < n_landmarks; ++i) {
-      MP_ASSIGN_OR_RETURN(auto filter,
-                          OneEuroFilter::Create(frequency_, min_cutoff_, beta_,
-                                                derivate_cutoff_));
+      ABSL_ASSIGN_OR_RETURN(
+          auto filter, OneEuroFilter::Create(frequency_, min_cutoff_, beta_,
+                                             derivate_cutoff_));
       x_filters_.push_back(std::move(filter));
-      MP_ASSIGN_OR_RETURN(filter,
-                          OneEuroFilter::Create(frequency_, min_cutoff_, beta_,
-                                                derivate_cutoff_));
+      ABSL_ASSIGN_OR_RETURN(
+          filter, OneEuroFilter::Create(frequency_, min_cutoff_, beta_,
+                                        derivate_cutoff_));
       y_filters_.push_back(std::move(filter));
-      MP_ASSIGN_OR_RETURN(filter,
-                          OneEuroFilter::Create(frequency_, min_cutoff_, beta_,
-                                                derivate_cutoff_));
+      ABSL_ASSIGN_OR_RETURN(
+          filter, OneEuroFilter::Create(frequency_, min_cutoff_, beta_,
+                                        derivate_cutoff_));
       z_filters_.push_back(std::move(filter));
     }
 
@@ -408,8 +410,8 @@ absl::StatusOr<LandmarksFilter*> MultiLandmarkFilters::GetOrCreate(
     return it->second.get();
   }
 
-  MP_ASSIGN_OR_RETURN(auto landmarks_filter,
-                      InitializeLandmarksFilter(options));
+  ABSL_ASSIGN_OR_RETURN(auto landmarks_filter,
+                        InitializeLandmarksFilter(options));
   filters_[tracking_id] = std::move(landmarks_filter);
   return filters_[tracking_id].get();
 }

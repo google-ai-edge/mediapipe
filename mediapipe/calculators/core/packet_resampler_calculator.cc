@@ -190,7 +190,7 @@ absl::Status PacketResamplerCalculator::Process(CalculatorContext* cc) {
     header_sent_ = true;
   }
 
-  MP_RETURN_IF_ERROR(strategy_->Process(cc));
+  ABSL_RETURN_IF_ERROR(strategy_->Process(cc));
 
   last_packet_ = cc->Inputs().Get(input_data_id_).Value();
 

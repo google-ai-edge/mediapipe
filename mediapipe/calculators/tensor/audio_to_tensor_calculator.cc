@@ -301,11 +301,12 @@ absl::Status AudioToTensorCalculator::Open(CalculatorContext* cc) {
            "or have the \"SAMPLE_RATE\" stream connected.";
     if (!kAudioIn(cc).Header().IsEmpty()) {
       mediapipe::TimeSeriesHeader input_header;
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           mediapipe::time_series_util::FillTimeSeriesHeaderIfValid(
               kAudioIn(cc).Header(), &input_header));
       if (stream_mode_) {
-        MP_RETURN_IF_ERROR(SetupStreamingResampler(input_header.sample_rate()));
+        ABSL_RETURN_IF_ERROR(
+            SetupStreamingResampler(input_header.sample_rate()));
       } else {
         source_sample_rate_ = input_header.sample_rate();
       }
@@ -380,7 +381,8 @@ absl::Status AudioToTensorCalculator::Close(CalculatorContext* cc) {
     AppendToSampleBuffer(std::move(resampled_buffer));
   }
   AppendZerosToSampleBuffer(padding_samples_after_);
-  MP_RETURN_IF_ERROR(ProcessBuffer(sample_buffer_, /*should_flush=*/true, cc));
+  ABSL_RETURN_IF_ERROR(
+      ProcessBuffer(sample_buffer_, /*should_flush=*/true, cc));
   if (fft_state_) {
     pffft_destroy_setup(fft_state_);
   }
@@ -405,7 +407,7 @@ absl::Status AudioToTensorCalculator::ProcessStreamingData(
     if (resampler_) {
       RET_CHECK_EQ(current_source_sample_rate, source_sample_rate_);
     } else {
-      MP_RETURN_IF_ERROR(SetupStreamingResampler(current_source_sample_rate));
+      ABSL_RETURN_IF_ERROR(SetupStreamingResampler(current_source_sample_rate));
     }
   }
 
@@ -425,7 +427,8 @@ absl::Status AudioToTensorCalculator::ProcessStreamingData(
     }
   }
 
-  MP_RETURN_IF_ERROR(ProcessBuffer(sample_buffer_, /*should_flush=*/false, cc));
+  ABSL_RETURN_IF_ERROR(
+      ProcessBuffer(sample_buffer_, /*should_flush=*/false, cc));
   // Removes the processed samples from the global sample buffer.
   sample_buffer_ = Matrix(sample_buffer_.rightCols(sample_buffer_.cols() -
                                                    processed_buffer_cols_ - 1));
@@ -527,8 +530,9 @@ absl::Status AudioToTensorCalculator::OutputTensor(const Matrix& block,
         // The last two elements are Nyquist component.
         fft_output_matrix(fft_size_ - 2) = fft_output_[1];  // Nyquist real part
         fft_output_matrix(fft_size_ - 1) = 0.0f;  // Nyquist imagery part
-        MP_ASSIGN_OR_RETURN(output_tensor, ConvertToTensor(fft_output_matrix,
-                                                           {2, fft_size_ / 2}));
+        ABSL_ASSIGN_OR_RETURN(
+            output_tensor,
+            ConvertToTensor(fft_output_matrix, {2, fft_size_ / 2}));
         break;
       }
       case Options::WITH_DC_AND_NYQUIST: {
@@ -539,7 +543,7 @@ absl::Status AudioToTensorCalculator::OutputTensor(const Matrix& block,
         // The last two elements are  Nyquist component.
         fft_output_matrix(fft_size_) = fft_output_[1];  // Nyquist real part
         fft_output_matrix(fft_size_ + 1) = 0.0f;        // Nyquist imagery part
-        MP_ASSIGN_OR_RETURN(
+        ABSL_ASSIGN_OR_RETURN(
             output_tensor,
             ConvertToTensor(fft_output_matrix, {2, (fft_size_ + 2) / 2}));
         break;
@@ -547,7 +551,7 @@ absl::Status AudioToTensorCalculator::OutputTensor(const Matrix& block,
       case Options::WITHOUT_DC_AND_NYQUIST: {
         Matrix fft_output_matrix =
             Eigen::Map<const Matrix>(fft_output_.data() + 2, 1, fft_size_ - 2);
-        MP_ASSIGN_OR_RETURN(
+        ABSL_ASSIGN_OR_RETURN(
             output_tensor,
             ConvertToTensor(fft_output_matrix, {2, (fft_size_ - 2) / 2}));
         break;
@@ -557,8 +561,8 @@ absl::Status AudioToTensorCalculator::OutputTensor(const Matrix& block,
     }
 
   } else {
-    MP_ASSIGN_OR_RETURN(output_tensor,
-                        ConvertToTensor(block, {num_channels_, num_samples_}));
+    ABSL_ASSIGN_OR_RETURN(
+        output_tensor, ConvertToTensor(block, {num_channels_, num_samples_}));
   }
   kTensorsOut(cc).Send(std::move(output_tensor), timestamp);
   return absl::OkStatus();
@@ -574,7 +578,7 @@ absl::Status AudioToTensorCalculator::ProcessBuffer(const Matrix& buffer,
   std::vector<Timestamp> timestamps;
   if (!should_flush_at_timestamp_max) {
     while (next_frame_first_col + num_samples_ <= buffer.cols()) {
-      MP_RETURN_IF_ERROR(OutputTensor(
+      ABSL_RETURN_IF_ERROR(OutputTensor(
           buffer.block(0, next_frame_first_col, num_channels_, num_samples_),
           next_output_timestamp_, cc));
       timestamps.push_back(next_output_timestamp_);
@@ -590,7 +594,7 @@ absl::Status AudioToTensorCalculator::ProcessBuffer(const Matrix& buffer,
     Timestamp timestamp = should_flush_at_timestamp_max
                               ? Timestamp::Max()
                               : next_output_timestamp_;
-    MP_RETURN_IF_ERROR(OutputTensor(
+    ABSL_RETURN_IF_ERROR(OutputTensor(
         buffer.block(
             0, next_frame_first_col, num_channels_,
             std::min(num_samples_, (int)buffer.cols() - next_frame_first_col)),

@@ -48,7 +48,7 @@ ABSL_FLAG(std::string, output_video_path, "",
 
 absl::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
-  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
+  ABSL_RETURN_IF_ERROR(mediapipe::file::GetContents(
       absl::GetFlag(FLAGS_calculator_graph_config_file),
       &calculator_graph_config_contents));
   ABSL_LOG(INFO) << "Get calculator graph config contents: "
@@ -59,11 +59,11 @@ absl::Status RunMPPGraph() {
 
   ABSL_LOG(INFO) << "Initialize the calculator graph.";
   mediapipe::CalculatorGraph graph;
-  MP_RETURN_IF_ERROR(graph.Initialize(config));
+  ABSL_RETURN_IF_ERROR(graph.Initialize(config));
 
   ABSL_LOG(INFO) << "Initialize the GPU.";
-  MP_ASSIGN_OR_RETURN(auto gpu_resources, mediapipe::GpuResources::Create());
-  MP_RETURN_IF_ERROR(graph.SetGpuResources(std::move(gpu_resources)));
+  ABSL_ASSIGN_OR_RETURN(auto gpu_resources, mediapipe::GpuResources::Create());
+  ABSL_RETURN_IF_ERROR(graph.SetGpuResources(std::move(gpu_resources)));
   mediapipe::GlCalculatorHelper gpu_helper;
   gpu_helper.InitializeForTest(graph.GetGpuResources().get());
 
@@ -89,9 +89,9 @@ absl::Status RunMPPGraph() {
   }
 
   ABSL_LOG(INFO) << "Start running the calculator graph.";
-  MP_ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller poller,
-                      graph.AddOutputStreamPoller(kOutputStream));
-  MP_RETURN_IF_ERROR(graph.StartRun({}));
+  ABSL_ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller poller,
+                        graph.AddOutputStreamPoller(kOutputStream));
+  ABSL_RETURN_IF_ERROR(graph.StartRun({}));
 
   ABSL_LOG(INFO) << "Start grabbing and processing frames.";
   bool grab_frames = true;
@@ -123,7 +123,7 @@ absl::Status RunMPPGraph() {
     // Prepare and add graph input packet.
     size_t frame_timestamp_us =
         (double)cv::getTickCount() / (double)cv::getTickFrequency() * 1e6;
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         gpu_helper.RunInGlContext([&input_frame, &frame_timestamp_us, &graph,
                                    &gpu_helper]() -> absl::Status {
           // Convert ImageFrame to GpuBuffer.
@@ -132,7 +132,7 @@ absl::Status RunMPPGraph() {
           glFlush();
           texture.Release();
           // Send GPU image packet into the graph.
-          MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(
+          ABSL_RETURN_IF_ERROR(graph.AddPacketToInputStream(
               kInputStream, mediapipe::Adopt(gpu_frame.release())
                                 .At(mediapipe::Timestamp(frame_timestamp_us))));
           return absl::OkStatus();
@@ -144,7 +144,7 @@ absl::Status RunMPPGraph() {
     std::unique_ptr<mediapipe::ImageFrame> output_frame;
 
     // Convert GpuBuffer to ImageFrame.
-    MP_RETURN_IF_ERROR(gpu_helper.RunInGlContext(
+    ABSL_RETURN_IF_ERROR(gpu_helper.RunInGlContext(
         [&packet, &output_frame, &gpu_helper]() -> absl::Status {
           auto& gpu_frame = packet.Get<mediapipe::GpuBuffer>();
           auto texture = gpu_helper.CreateSourceTexture(gpu_frame);
@@ -187,7 +187,7 @@ absl::Status RunMPPGraph() {
 
   ABSL_LOG(INFO) << "Shutting down.";
   if (writer.isOpened()) writer.release();
-  MP_RETURN_IF_ERROR(graph.CloseInputStream(kInputStream));
+  ABSL_RETURN_IF_ERROR(graph.CloseInputStream(kInputStream));
   return graph.WaitUntilDone();
 }
 

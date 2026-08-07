@@ -59,7 +59,7 @@ ModelAssetBundleResources::Create(
   }
   auto model_bundle_resources = absl::WrapUnique(
       new ModelAssetBundleResources(tag, std::move(model_asset_bundle_file)));
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       model_bundle_resources->ExtractFilesFromExternalFileProto());
   return model_bundle_resources;
 }
@@ -68,14 +68,14 @@ absl::Status ModelAssetBundleResources::ExtractFilesFromExternalFileProto() {
   if (model_asset_bundle_file_->has_file_name()) {
     // If the model asset bundle file name is a relative path, searches the file
     // in a platform-specific location and returns the absolute path on success.
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         std::string path_to_resource,
         mediapipe::PathToResourceAsFile(model_asset_bundle_file_->file_name()));
     model_asset_bundle_file_->set_file_name(path_to_resource);
   }
-  MP_ASSIGN_OR_RETURN(model_asset_bundle_file_handler_,
-                      ExternalFileHandler::CreateFromExternalFile(
-                          model_asset_bundle_file_.get()));
+  ABSL_ASSIGN_OR_RETURN(model_asset_bundle_file_handler_,
+                        ExternalFileHandler::CreateFromExternalFile(
+                            model_asset_bundle_file_.get()));
   const char* buffer_data =
       model_asset_bundle_file_handler_->GetFileContent().data();
   size_t buffer_size =
@@ -114,7 +114,7 @@ bool ModelAssetBundleResources::HasFile(absl::string_view filename) const {
 
 absl::StatusOr<mediapipe::tasks::BundleManifest>
 ModelAssetBundleResources::GetBundleManifest() const {
-  MP_ASSIGN_OR_RETURN(auto file_content, GetFile("manifest.pb"));
+  ABSL_ASSIGN_OR_RETURN(auto file_content, GetFile("manifest.pb"));
   mediapipe::tasks::BundleManifest manifest;
   if (!manifest.ParseFromString(file_content)) {
     return CreateStatusWithPayload(
@@ -125,7 +125,7 @@ ModelAssetBundleResources::GetBundleManifest() const {
 }
 
 absl::StatusOr<std::string> ModelAssetBundleResources::GetBundleId() const {
-  MP_ASSIGN_OR_RETURN(auto manifest, GetBundleManifest());
+  ABSL_ASSIGN_OR_RETURN(auto manifest, GetBundleManifest());
   return manifest.bundle_id();
 }
 

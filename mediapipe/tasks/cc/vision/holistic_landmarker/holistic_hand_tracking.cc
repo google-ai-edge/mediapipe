@@ -220,9 +220,10 @@ absl::StatusOr<HolisticHandTrackingOutput> TrackHolisticHand(
       GetHandRoiFromPosePalmLandmarks(pose_palm_landmarks, image_size, graph);
 
   // Refine hand ROI with re-crop model.
-  MP_ASSIGN_OR_RETURN(Stream<NormalizedRect> roi_from_recrop,
-                      RefineHandRoi(image, roi_from_pose,
-                                    hand_roi_refinement_graph_options, graph));
+  ABSL_ASSIGN_OR_RETURN(
+      Stream<NormalizedRect> roi_from_recrop,
+      RefineHandRoi(image, roi_from_pose, hand_roi_refinement_graph_options,
+                    graph));
 
   // Loop for previous frame landmarks.
   auto [prev_landmarks, set_prev_landmarks_fn] =

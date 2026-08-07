@@ -561,7 +561,7 @@ absl::Status Tensor::Invalidate() {
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   {
     absl::MutexLock lock(view_mutex_);
-    MP_RETURN_IF_ERROR(ReleaseAhwbStuff());
+    ABSL_RETURN_IF_ERROR(ReleaseAhwbStuff());
 
     // Don't need to wait for the resource to be deleted because if will be
     // released on last reference deletion inside the OpenGL driver.
@@ -674,7 +674,7 @@ absl::Status Tensor::ReadBackGpuToCpu() const {
     const int height = BhwcHeightFromShape(shape_);
     const int depth = BhwcDepthFromShape(shape_);
     // CPU data layout may not match texture data layout.
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         const int padded_depth,
         WebGpuTextureFormatDepth(webgpu_texture2d_.GetFormat()));
 

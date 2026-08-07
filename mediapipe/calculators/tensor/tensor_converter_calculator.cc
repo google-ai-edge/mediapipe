@@ -190,9 +190,9 @@ absl::Status TensorConverterCalculator::GetContract(CalculatorContract* cc) {
   if (cc->Inputs().HasTag(kGpuBufferTag)) {
     cc->Inputs().Tag(kGpuBufferTag).Set<mediapipe::GpuBuffer>();
 #if MEDIAPIPE_METAL_ENABLED
-    MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
+    ABSL_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
 #elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
-    MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
+    ABSL_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
 #endif  // MEDIAPIPE_METAL_ENABLED
   }
 #endif  // !MEDIAPIPE_DISABLE_GPU
@@ -223,30 +223,30 @@ absl::Status TensorConverterCalculator::Open(CalculatorContext* cc) {
     gpu_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
     RET_CHECK(gpu_helper_);
 #elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
-    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
+    ABSL_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #endif  // MEDIAPIPE_METAL_ENABLED
   }
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
-  MP_RETURN_IF_ERROR(LoadOptions(cc, use_gpu_));
+  ABSL_RETURN_IF_ERROR(LoadOptions(cc, use_gpu_));
 
   return absl::OkStatus();
 }
 
 absl::Status TensorConverterCalculator::Process(CalculatorContext* cc) {
-  MP_ASSIGN_OR_RETURN(auto maybe_tensor,
-                      [&]() -> absl::StatusOr<std::optional<Tensor>> {
-                        if (use_gpu_) {
-                          if (cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
-                            return std::nullopt;
+  ABSL_ASSIGN_OR_RETURN(auto maybe_tensor,
+                        [&]() -> absl::StatusOr<std::optional<Tensor>> {
+                          if (use_gpu_) {
+                            if (cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
+                              return std::nullopt;
+                            }
+                            // Convert to GPU tensors type.
+                            return ProcessGPU(cc);
+                          } else {
+                            // Convert to CPU tensors or Matrix type.
+                            return ProcessCPU(cc);
                           }
-                          // Convert to GPU tensors type.
-                          return ProcessGPU(cc);
-                        } else {
-                          // Convert to CPU tensors or Matrix type.
-                          return ProcessCPU(cc);
-                        }
-                      }());
+                        }());
 
   if (maybe_tensor) {
     if (cc->Outputs().HasTag(kTensorsTag)) {
@@ -284,7 +284,7 @@ absl::StatusOr<std::optional<Tensor>> TensorConverterCalculator::ProcessCPU(
     }
     const auto& image_frame =
         cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         Tensor output,
         ConvertImageFrameToTensorOnCpu(
             image_frame,
@@ -297,7 +297,7 @@ absl::StatusOr<std::optional<Tensor>> TensorConverterCalculator::ProcessCPU(
       return std::nullopt;
     }
     const auto& matrix = cc->Inputs().Tag(kMatrixTag).Get<Matrix>();
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         Tensor output,
         ConvertMatrixToTensorOnCpu(matrix, row_major_matrix_, memory_manager_));
     return std::move(output);
@@ -310,7 +310,7 @@ absl::StatusOr<std::optional<Tensor>> TensorConverterCalculator::ProcessGPU(
     CalculatorContext* cc) {
 #if !MEDIAPIPE_DISABLE_GPU
   if (!initialized_) {
-    MP_RETURN_IF_ERROR(InitGpu(cc));
+    ABSL_RETURN_IF_ERROR(InitGpu(cc));
     initialized_ = true;
   }
   const auto& input =
@@ -320,7 +320,7 @@ absl::StatusOr<std::optional<Tensor>> TensorConverterCalculator::ProcessGPU(
   return std::move(output);
 #elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   std::optional<Tensor> output;
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       gpu_helper_.RunInGlContext([this, &output, &input]() -> absl::Status {
         output = tensor_converter_gpu_->Convert(input);
         return absl::OkStatus();
@@ -362,23 +362,23 @@ absl::Status TensorConverterCalculator::InitGpu(CalculatorContext* cc) {
   }
 
 #if MEDIAPIPE_METAL_ENABLED
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       tensor_converter_gpu_,
       CreateTensorConverterMetal(gpu_helper_, memory_manager_, output_range_,
                                  include_alpha, single_channel,
                                  flip_vertically_, max_num_channels_));
 #elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
-  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
+  ABSL_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
       [this, &input, &include_alpha, &single_channel]() -> absl::Status {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-        MP_ASSIGN_OR_RETURN(
+        ABSL_ASSIGN_OR_RETURN(
             tensor_converter_gpu_,
             CreateTensorConverterGl31(
                 gpu_helper_, memory_manager_, input.width(), input.height(),
                 output_range_, include_alpha, single_channel, flip_vertically_,
                 max_num_channels_));
 #else
-        MP_ASSIGN_OR_RETURN(
+        ABSL_ASSIGN_OR_RETURN(
             tensor_converter_gpu_,
             CreateTensorConverterGl30(
                 gpu_helper_, memory_manager_, input.width(), input.height(),
@@ -421,7 +421,8 @@ absl::Status TensorConverterCalculator::LoadOptions(CalculatorContext* cc,
   }
 
   // Get y-flip mode.
-  MP_ASSIGN_OR_RETURN(flip_vertically_, ShouldFlipVertically(options, use_gpu));
+  ABSL_ASSIGN_OR_RETURN(flip_vertically_,
+                        ShouldFlipVertically(options, use_gpu));
 
   // Get row_major_matrix mode.
   row_major_matrix_ = options.row_major_matrix();

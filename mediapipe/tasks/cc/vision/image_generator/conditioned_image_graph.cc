@@ -423,7 +423,7 @@ class ConditionedImageGraph : public core::ModelTaskGraph {
             "Conditioned type options is not set.");
         break;
       case proto::ConditionedImageGraphOptions::kFaceConditionTypeOptions: {
-        MP_ASSIGN_OR_RETURN(
+        ABSL_ASSIGN_OR_RETURN(
             auto face_landmarks_image,
             GetFaceLandmarksImage(conditioned_image,
                                   graph_options.face_condition_type_options(),
@@ -431,14 +431,14 @@ class ConditionedImageGraph : public core::ModelTaskGraph {
         face_landmarks_image >> graph.Out(kImageTag);
       } break;
       case proto::ConditionedImageGraphOptions::kDepthConditionTypeOptions: {
-        MP_ASSIGN_OR_RETURN(
+        ABSL_ASSIGN_OR_RETURN(
             auto depth_image,
             GetDepthImage(conditioned_image,
                           graph_options.depth_condition_type_options(), graph));
         depth_image >> graph.Out(kImageTag);
       } break;
       case proto::ConditionedImageGraphOptions::kEdgeConditionTypeOptions: {
-        MP_ASSIGN_OR_RETURN(
+        ABSL_ASSIGN_OR_RETURN(
             auto edges_image,
             GetEdgeImage(conditioned_image,
                          graph_options.edge_condition_type_options(), graph));

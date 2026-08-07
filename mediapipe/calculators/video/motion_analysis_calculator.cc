@@ -433,7 +433,7 @@ absl::Status MotionAnalysisCalculator::Process(CalculatorContext* cc) {
 
   // Lazy init.
   if (frame_width_ < 0 || frame_height_ < 0) {
-    MP_RETURN_IF_ERROR(InitOnProcess(video_stream, selection_stream));
+    ABSL_RETURN_IF_ERROR(InitOnProcess(video_stream, selection_stream));
   }
 
   const Timestamp timestamp = cc->InputTimestamp();
@@ -477,7 +477,7 @@ absl::Status MotionAnalysisCalculator::Process(CalculatorContext* cc) {
 
     // Fill in timestamps we process.
     if (!selection_stream->Value().IsEmpty()) {
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           frame_selection_result,
           selection_stream->Value().ConsumeOrCopy<FrameSelectionResult>());
       use_frame = true;

@@ -1642,7 +1642,7 @@ absl::Status KeyProtoMapEntries(Message* source, MessageMap* stowed_messages) {
     ProtoPath path;
     const std::string path_str =
         rule_reflection->GetString(rule, rule_path_descriptor);
-    MP_RETURN_IF_ERROR(ProtoPathSplit(path_str, &path));
+    ABSL_RETURN_IF_ERROR(ProtoPathSplit(path_str, &path));
     for (int j = 0; j < path.size(); ++j) {
       int field_id = path[j].field_id;
       const FieldDescriptor* field = FindFieldByNumber(message, field_id);

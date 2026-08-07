@@ -53,7 +53,7 @@ class EnvGeneratorCalculator : public CalculatorBase {
     const Environment& environment =
         cc->Options<FaceGeometryEnvGeneratorCalculatorOptions>().environment();
 
-    MP_RETURN_IF_ERROR(ValidateEnvironment(environment))
+    ABSL_RETURN_IF_ERROR(ValidateEnvironment(environment))
         << "Invalid environment!";
 
     cc->OutputSidePackets()

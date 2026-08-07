@@ -255,8 +255,8 @@ absl::Status WebGpuTexture2dUploadData(const wgpu::Device& device,
                                        const wgpu::Queue& queue,
                                        uint32_t bytes_per_pixel, void* data,
                                        const wgpu::Texture& texture) {
-  MP_ASSIGN_OR_RETURN(const uint32_t texture_bytes_per_pixel,
-                      WebGpuTextureFormatBytesPerPixel(format));
+  ABSL_ASSIGN_OR_RETURN(const uint32_t texture_bytes_per_pixel,
+                        WebGpuTextureFormatBytesPerPixel(format));
   const uint32_t buffer_size = width * height * texture_bytes_per_pixel;
   std::unique_ptr<uint8_t[]> temp_buffer;
   void* buffer;
@@ -292,7 +292,7 @@ absl::StatusOr<wgpu::Texture> CreateWebGpuTexture2dAndUploadData(
   // wgpu::TextureUsage::CopyDst is required for the WriteTexture call.
   wgpu::Texture texture = CreateTextureWebGpuTexture2d(
       device, width, height, format, usage | wgpu::TextureUsage::CopyDst);
-  MP_RETURN_IF_ERROR(WebGpuTexture2dUploadData(
+  ABSL_RETURN_IF_ERROR(WebGpuTexture2dUploadData(
       device, width, height, format, queue, bytes_per_pixel, data, texture));
   return texture;
 }

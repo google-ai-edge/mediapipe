@@ -105,7 +105,7 @@ absl::Status ConfigureScoreCalibration(
       absl::StrSplit(score_calibration_file, '\n');
   for (const auto& line : lines) {
     auto* sigmoid = calculator_options->add_sigmoids();
-    MP_RETURN_IF_ERROR(FillSigmoidFromLine(line, sigmoid));
+    ABSL_RETURN_IF_ERROR(FillSigmoidFromLine(line, sigmoid));
   }
 
   return absl::OkStatus();

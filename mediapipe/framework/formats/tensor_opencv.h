@@ -39,7 +39,7 @@ namespace mediapipe::formats {
 //
 // Usage:
 //   Tensor tensor = ... tensor of shape [10, 20, 3] ...;
-//   MP_ASSIGN_OR_RETURN(TensorMatView view, TensorMatView::Create(tensor));
+//   ABSL_ASSIGN_OR_RETURN(TensorMatView view, TensorMatView::Create(tensor));
 //   // view.mat is a view into the data in tensor with 2 dims and 3 channels.
 //   // view.mat.data points into tensor.GetCpuReadView().buffer<T>().
 absl::StatusOr<cv::Mat> MatView(const Tensor& tensor,

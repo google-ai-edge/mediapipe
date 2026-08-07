@@ -72,23 +72,25 @@ class EmbeddingAggregationCalculatorTest : public tflite::testing::Test {
           graph[Output<EmbeddingResult>(kEmbeddingsTag)];
     }
 
-    MP_RETURN_IF_ERROR(calculator_graph_.Initialize(graph.GetConfig()));
+    ABSL_RETURN_IF_ERROR(calculator_graph_.Initialize(graph.GetConfig()));
     if (connect_timestamps) {
-      MP_ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
-                                           kTimestampedEmbeddingsName));
-      MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
+      ABSL_ASSIGN_OR_RETURN(
+          auto poller,
+          calculator_graph_.AddOutputStreamPoller(kTimestampedEmbeddingsName));
+      ABSL_RETURN_IF_ERROR(
+          calculator_graph_.StartRun(/*extra_side_packets=*/{}));
       return poller;
     }
-    MP_ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
-                                         kEmbeddingsOutName));
-    MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
+    ABSL_ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
+                                           kEmbeddingsOutName));
+    ABSL_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
     return poller;
   }
 
   absl::Status Send(
       const EmbeddingResult& embeddings, int timestamp = 0,
       std::optional<std::vector<int>> aggregation_timestamps = std::nullopt) {
-    MP_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
+    ABSL_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
         kEmbeddingsInName, MakePacket<EmbeddingResult>(std::move(embeddings))
                                .At(Timestamp(timestamp))));
     if (aggregation_timestamps.has_value()) {
@@ -96,7 +98,7 @@ class EmbeddingAggregationCalculatorTest : public tflite::testing::Test {
       for (const auto& timestamp : *aggregation_timestamps) {
         packet->emplace_back(Timestamp(timestamp));
       }
-      MP_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
+      ABSL_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
           kTimestampsName, Adopt(packet.release()).At(Timestamp(timestamp))));
     }
     return absl::OkStatus();
@@ -104,15 +106,15 @@ class EmbeddingAggregationCalculatorTest : public tflite::testing::Test {
 
   template <typename T>
   absl::StatusOr<T> GetResult(OutputStreamPoller& poller) {
-    MP_RETURN_IF_ERROR(calculator_graph_.WaitUntilIdle());
-    MP_RETURN_IF_ERROR(calculator_graph_.CloseAllInputStreams());
+    ABSL_RETURN_IF_ERROR(calculator_graph_.WaitUntilIdle());
+    ABSL_RETURN_IF_ERROR(calculator_graph_.CloseAllInputStreams());
 
     Packet packet;
     if (!poller.Next(&packet)) {
       return absl::InternalError("Unable to get output packet");
     }
     auto result = packet.Get<T>();
-    MP_RETURN_IF_ERROR(calculator_graph_.WaitUntilDone());
+    ABSL_RETURN_IF_ERROR(calculator_graph_.WaitUntilDone());
     return result;
   }
 

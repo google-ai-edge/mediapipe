@@ -107,8 +107,8 @@ absl::StatusOr<AudioTensorSpecs> BuildInputAudioTensorSpecs(
         MediaPipeTasksStatus::kMetadataNotFoundError);
   }
 
-  MP_ASSIGN_OR_RETURN(const AudioProperties* props,
-                      GetAudioPropertiesIfAny(*audio_tensor_metadata));
+  ABSL_ASSIGN_OR_RETURN(const AudioProperties* props,
+                        GetAudioPropertiesIfAny(*audio_tensor_metadata));
   // Input-related specifications.
   int tensor_shape_size = audio_tensor.shape()->size();
   if (tensor_shape_size > 2) {

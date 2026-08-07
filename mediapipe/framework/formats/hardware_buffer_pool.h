@@ -35,7 +35,7 @@ class HardwareBufferSpecPool : public ReusablePool<HardwareBuffer> {
   }
   static absl::StatusOr<std::unique_ptr<HardwareBuffer>>
   CreateBufferWithoutPool(const HardwareBufferSpec& spec) {
-    MP_ASSIGN_OR_RETURN(auto hardware_buffer, HardwareBuffer::Create(spec));
+    ABSL_ASSIGN_OR_RETURN(auto hardware_buffer, HardwareBuffer::Create(spec));
     return std::make_unique<HardwareBuffer>(std::move(hardware_buffer));
   }
   const HardwareBufferSpec& spec() const { return spec_; }

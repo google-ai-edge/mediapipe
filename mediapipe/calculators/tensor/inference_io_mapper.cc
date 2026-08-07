@@ -90,8 +90,8 @@ static absl::StatusOr<std::vector<int>> MapTensorNamesToIndices(
         config_tensor_names) {
   std::vector<int> result;
   result.reserve(signature_tensor_names.size());
-  MP_ASSIGN_OR_RETURN(const auto input_name_to_index_map,
-                      CreateNameToIndexMap(signature_tensor_names));
+  ABSL_ASSIGN_OR_RETURN(const auto input_name_to_index_map,
+                        CreateNameToIndexMap(signature_tensor_names));
   for (const auto& tensor_name : config_tensor_names.tensor_names()) {
     const auto it = input_name_to_index_map.find(tensor_name);
     RET_CHECK(it != input_name_to_index_map.end())
@@ -203,7 +203,7 @@ absl::Status InferenceIoMapper::UpdateIoMap(
   if (io_config.has_input_tensor_indices_map()) {
     input_tensor_indices_.reserve(
         io_config.input_tensor_indices_map().model_tensor_indices().size());
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         input_tensor_indices_,
         GenerateAndValidateTensorList(io_config.input_tensor_indices_map()));
   }
@@ -211,7 +211,7 @@ absl::Status InferenceIoMapper::UpdateIoMap(
   if (io_config.has_output_tensor_indices_map()) {
     output_tensor_indices_.reserve(
         io_config.output_tensor_indices_map().model_tensor_indices().size());
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         output_tensor_indices_,
         GenerateAndValidateTensorList(io_config.output_tensor_indices_map()));
   }
@@ -243,13 +243,13 @@ absl::Status InferenceIoMapper::UpdateIoMap(
         input_output_tensor_names_default_signature.input_tensor_names.size();
     input_tensor_indices_.reserve(
         io_config.input_tensor_names_map().tensor_names().size());
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         input_tensor_indices_,
         MapTensorNamesToIndices(
             input_output_tensor_names_default_signature.input_tensor_names,
             io_config.input_tensor_names_map()));
     if (num_feedback_tensors_ > 0) {
-      MP_RETURN_IF_ERROR(ExcludeFeedbackTensorsFromRemappingIndicesVector(
+      ABSL_RETURN_IF_ERROR(ExcludeFeedbackTensorsFromRemappingIndicesVector(
           io_config,
           input_output_tensor_names_default_signature.input_tensor_names,
           input_tensor_indices_));
@@ -267,13 +267,13 @@ absl::Status InferenceIoMapper::UpdateIoMap(
     const int num_model_output_tensors =
         input_output_tensor_names_default_signature.output_tensor_names.size();
     output_tensor_indices_.reserve(num_model_output_tensors);
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         output_tensor_indices_,
         MapTensorNamesToIndices(
             input_output_tensor_names_default_signature.output_tensor_names,
             io_config.output_tensor_names_map()));
     if (num_feedback_tensors_ > 0) {
-      MP_RETURN_IF_ERROR(ExcludeFeedbackTensorsFromRemappingIndicesVector(
+      ABSL_RETURN_IF_ERROR(ExcludeFeedbackTensorsFromRemappingIndicesVector(
           io_config,
           input_output_tensor_names_default_signature.output_tensor_names,
           output_tensor_indices_));

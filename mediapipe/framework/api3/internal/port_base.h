@@ -516,11 +516,11 @@ absl::Status AddToContract(P& port, CC& contract, bool optional = false) {
     }
   } else if constexpr (std::is_same_v<Field, RepeatedField>) {
     for (int i = 0; i < port.Count(); ++i) {
-      MP_RETURN_IF_ERROR(AddToContract(port.At(i), contract, optional));
+      ABSL_RETURN_IF_ERROR(AddToContract(port.At(i), contract, optional));
     }
   } else if constexpr (std::is_same_v<Field, OptionalField>) {
     const typename P::Contained& value = port;
-    MP_RETURN_IF_ERROR(AddToContract(value, contract, /*optional*/ true));
+    ABSL_RETURN_IF_ERROR(AddToContract(value, contract, /*optional*/ true));
   } else if constexpr (std::is_same_v<Field, OptionsField>) {
     // Nothing to update in the contract for options.
   } else {

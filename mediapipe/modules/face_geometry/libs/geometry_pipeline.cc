@@ -142,9 +142,9 @@ class ScreenToMetricSpaceConverter {
     Eigen::Matrix3Xf intermediate_landmarks(screen_landmarks);
     ChangeHandedness(intermediate_landmarks);
 
-    MP_ASSIGN_OR_RETURN(const float first_iteration_scale,
-                        EstimateScale(intermediate_landmarks),
-                        _ << "Failed to estimate first iteration scale!");
+    ABSL_ASSIGN_OR_RETURN(const float first_iteration_scale,
+                          EstimateScale(intermediate_landmarks),
+                          _ << "Failed to estimate first iteration scale!");
 
     // 2nd iteration: unproject XY using the scale from the 1st iteration.
     intermediate_landmarks = screen_landmarks;
@@ -157,7 +157,7 @@ class ScreenToMetricSpaceConverter {
     // landmarks.
     if (input_source_ == InputSource::FACE_DETECTION_PIPELINE) {
       Eigen::Matrix4f intermediate_pose_transform_mat;
-      MP_RETURN_IF_ERROR(procrustes_solver_->SolveWeightedOrthogonalProblem(
+      ABSL_RETURN_IF_ERROR(procrustes_solver_->SolveWeightedOrthogonalProblem(
           canonical_metric_landmarks_, intermediate_landmarks,
           landmark_weights_, intermediate_pose_transform_mat))
           << "Failed to estimate pose transform matrix!";
@@ -167,9 +167,9 @@ class ScreenToMetricSpaceConverter {
            canonical_metric_landmarks_.colwise().homogeneous())
               .row(2);
     }
-    MP_ASSIGN_OR_RETURN(const float second_iteration_scale,
-                        EstimateScale(intermediate_landmarks),
-                        _ << "Failed to estimate second iteration scale!");
+    ABSL_ASSIGN_OR_RETURN(const float second_iteration_scale,
+                          EstimateScale(intermediate_landmarks),
+                          _ << "Failed to estimate second iteration scale!");
 
     // Use the total scale to unproject the screen landmarks.
     const float total_scale = first_iteration_scale * second_iteration_scale;
@@ -180,7 +180,7 @@ class ScreenToMetricSpaceConverter {
     // At this point, screen landmarks are converted into metric landmarks.
     Eigen::Matrix3Xf& metric_landmarks = screen_landmarks;
 
-    MP_RETURN_IF_ERROR(procrustes_solver_->SolveWeightedOrthogonalProblem(
+    ABSL_RETURN_IF_ERROR(procrustes_solver_->SolveWeightedOrthogonalProblem(
         canonical_metric_landmarks_, metric_landmarks, landmark_weights_,
         pose_transform_mat))
         << "Failed to estimate pose transform matrix!";
@@ -193,7 +193,7 @@ class ScreenToMetricSpaceConverter {
            canonical_metric_landmarks_.colwise().homogeneous())
               .row(2);
 
-      MP_RETURN_IF_ERROR(procrustes_solver_->SolveWeightedOrthogonalProblem(
+      ABSL_RETURN_IF_ERROR(procrustes_solver_->SolveWeightedOrthogonalProblem(
           canonical_metric_landmarks_, metric_landmarks, landmark_weights_,
           pose_transform_mat))
           << "Failed to estimate pose transform matrix!";
@@ -230,7 +230,7 @@ class ScreenToMetricSpaceConverter {
 
   absl::StatusOr<float> EstimateScale(Eigen::Matrix3Xf& landmarks) const {
     Eigen::Matrix4f transform_mat;
-    MP_RETURN_IF_ERROR(procrustes_solver_->SolveWeightedOrthogonalProblem(
+    ABSL_RETURN_IF_ERROR(procrustes_solver_->SolveWeightedOrthogonalProblem(
         canonical_metric_landmarks_, landmarks, landmark_weights_,
         transform_mat))
         << "Failed to estimate canonical-to-runtime landmark set transform!";
@@ -309,7 +309,7 @@ class GeometryPipelineImpl : public GeometryPipeline {
   absl::StatusOr<std::vector<FaceGeometry>> EstimateFaceGeometry(
       const std::vector<NormalizedLandmarkList>& multi_face_landmarks,
       int frame_width, int frame_height) const override {
-    MP_RETURN_IF_ERROR(ValidateFrameDimensions(frame_width, frame_height))
+    ABSL_RETURN_IF_ERROR(ValidateFrameDimensions(frame_width, frame_height))
         << "Invalid frame dimensions!";
 
     // Create a perspective camera frustum to be shared for geometry estimation
@@ -334,9 +334,9 @@ class GeometryPipelineImpl : public GeometryPipeline {
       // transformation matrix.
       LandmarkList metric_face_landmarks;
       Eigen::Matrix4f pose_transform_mat;
-      MP_RETURN_IF_ERROR(space_converter_->Convert(screen_face_landmarks, pcf,
-                                                   metric_face_landmarks,
-                                                   pose_transform_mat))
+      ABSL_RETURN_IF_ERROR(space_converter_->Convert(screen_face_landmarks, pcf,
+                                                     metric_face_landmarks,
+                                                     pose_transform_mat))
           << "Failed to convert landmarks from the screen to the metric space!";
 
       // Pack geometry data for this face.
@@ -401,9 +401,9 @@ class GeometryPipelineImpl : public GeometryPipeline {
 
 absl::StatusOr<std::unique_ptr<GeometryPipeline>> CreateGeometryPipeline(
     const Environment& environment, const GeometryPipelineMetadata& metadata) {
-  MP_RETURN_IF_ERROR(ValidateEnvironment(environment))
+  ABSL_RETURN_IF_ERROR(ValidateEnvironment(environment))
       << "Invalid environment!";
-  MP_RETURN_IF_ERROR(ValidateGeometryPipelineMetadata(metadata))
+  ABSL_RETURN_IF_ERROR(ValidateGeometryPipelineMetadata(metadata))
       << "Invalid geometry pipeline metadata!";
 
   const auto& canonical_mesh = metadata.canonical_mesh();

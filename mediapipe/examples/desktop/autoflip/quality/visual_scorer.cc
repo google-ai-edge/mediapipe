@@ -100,7 +100,7 @@ absl::Status VisualScorer::CalculateScore(const cv::Mat& image,
   // Compute a colorfulness score.
   float colorfulness_score = 0;
   if (options_.colorfulness_weight() > kEpsilon) {
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         CalculateColorfulness(image_region_mat, &colorfulness_score));
     colorfulness_score *= options_.colorfulness_weight();
   }

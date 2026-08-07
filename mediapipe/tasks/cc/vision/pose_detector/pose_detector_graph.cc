@@ -207,14 +207,14 @@ class PoseDetectorGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    MP_ASSIGN_OR_RETURN(const auto* model_resources,
-                        CreateModelResources<PoseDetectorGraphOptions>(sc));
+    ABSL_ASSIGN_OR_RETURN(const auto* model_resources,
+                          CreateModelResources<PoseDetectorGraphOptions>(sc));
     Graph graph;
-    MP_ASSIGN_OR_RETURN(auto outs,
-                        BuildPoseDetectionSubgraph(
-                            sc->Options<PoseDetectorGraphOptions>(),
-                            *model_resources, graph[Input<Image>(kImageTag)],
-                            graph[Input<NormalizedRect>(kNormRectTag)], graph));
+    ABSL_ASSIGN_OR_RETURN(
+        auto outs, BuildPoseDetectionSubgraph(
+                       sc->Options<PoseDetectorGraphOptions>(),
+                       *model_resources, graph[Input<Image>(kImageTag)],
+                       graph[Input<NormalizedRect>(kNormRectTag)], graph));
 
     outs.pose_detections >>
         graph.Out(kDetectionsTag).Cast<std::vector<Detection>>();
@@ -239,10 +239,12 @@ class PoseDetectorGraph : public core::ModelTaskGraph {
     bool use_gpu =
         components::processors::DetermineImagePreprocessingGpuBackend(
             subgraph_options.base_options().acceleration());
-    MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
-        model_resources, use_gpu, subgraph_options.base_options().gpu_origin(),
-        &preprocessing.GetOptions<
-            components::processors::proto::ImagePreprocessingGraphOptions>()));
+    ABSL_RETURN_IF_ERROR(
+        components::processors::ConfigureImagePreprocessingGraph(
+            model_resources, use_gpu,
+            subgraph_options.base_options().gpu_origin(),
+            &preprocessing.GetOptions<components::processors::proto::
+                                          ImagePreprocessingGraphOptions>()));
     auto& image_to_tensor_options =
         *preprocessing
              .GetOptions<components::processors::proto::

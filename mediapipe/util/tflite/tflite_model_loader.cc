@@ -42,8 +42,8 @@ absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
 absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
     const Resources& resources, const std::string& path,
     std::optional<MMapMode> mmap_mode) {
-  MP_ASSIGN_OR_RETURN(auto tflite_model_with_resource,
-                      LoadFromPathAndGetResource(resources, path, mmap_mode));
+  ABSL_ASSIGN_OR_RETURN(auto tflite_model_with_resource,
+                        LoadFromPathAndGetResource(resources, path, mmap_mode));
   return std::move(tflite_model_with_resource.model_packet);
 }
 
@@ -54,7 +54,7 @@ TfLiteModelLoader::LoadFromPathAndGetResource(
   std::string model_path = path;
 
   // Load model resource.
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       std::shared_ptr<Resource> model_resource,
       resources.Get(model_path,
                     Resources::Options{/* read_as_binary= */ true, mmap_mode}));

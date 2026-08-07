@@ -214,9 +214,9 @@ absl::Status TfLiteConverterCalculator::GetContract(CalculatorContract* cc) {
 
   if (ShouldUseGpu(cc)) {
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
-    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+    ABSL_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
 #elif MEDIAPIPE_TFLITE_METAL_INFERENCE
-    MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
+    ABSL_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
 #endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
   }
 
@@ -229,7 +229,7 @@ absl::Status TfLiteConverterCalculator::GetContract(CalculatorContract* cc) {
 absl::Status TfLiteConverterCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
-  MP_RETURN_IF_ERROR(LoadOptions(cc));
+  ABSL_RETURN_IF_ERROR(LoadOptions(cc));
 
   use_gpu_ = ShouldUseGpu(cc);
 
@@ -240,7 +240,7 @@ absl::Status TfLiteConverterCalculator::Open(CalculatorContext* cc) {
     // Cannot use quantization.
     use_quantized_tensors_ = false;
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
-    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
+    ABSL_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #elif MEDIAPIPE_TFLITE_METAL_INFERENCE
     gpu_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
     RET_CHECK(gpu_helper_);
@@ -260,14 +260,14 @@ absl::Status TfLiteConverterCalculator::Process(CalculatorContext* cc) {
       return absl::OkStatus();
     }
     if (!initialized_) {
-      MP_RETURN_IF_ERROR(InitGpu(cc));
+      ABSL_RETURN_IF_ERROR(InitGpu(cc));
       initialized_ = true;
     }
     // Convert to GPU tensors type.
-    MP_RETURN_IF_ERROR(ProcessGPU(cc));
+    ABSL_RETURN_IF_ERROR(ProcessGPU(cc));
   } else {
     // Convert to CPU tensors or Matrix type.
-    MP_RETURN_IF_ERROR(ProcessCPU(cc));
+    ABSL_RETURN_IF_ERROR(ProcessCPU(cc));
   }
   return absl::OkStatus();
 }
@@ -355,11 +355,11 @@ absl::Status TfLiteConverterCalculator::ProcessCPU(CalculatorContext* cc) {
       float* tensor_buffer = tensor->data.f;
       RET_CHECK(tensor_buffer);
       if (image_frame.ByteDepth() == 1) {
-        MP_RETURN_IF_ERROR(NormalizeImage<uint8_t>(
+        ABSL_RETURN_IF_ERROR(NormalizeImage<uint8_t>(
             image_frame, flip_vertically_, tensor_buffer));
       } else if (image_frame.ByteDepth() == 4) {
-        MP_RETURN_IF_ERROR(NormalizeImage<float>(image_frame, flip_vertically_,
-                                                 tensor_buffer));
+        ABSL_RETURN_IF_ERROR(NormalizeImage<float>(
+            image_frame, flip_vertically_, tensor_buffer));
       } else {
         return absl::InternalError(
             "Only byte-based (8 bit) and float (32 bit) images supported.");
@@ -396,7 +396,7 @@ absl::Status TfLiteConverterCalculator::ProcessCPU(CalculatorContext* cc) {
     float* tensor_ptr = tensor->data.f;
     RET_CHECK(tensor_ptr);
 
-    MP_RETURN_IF_ERROR(CopyMatrixToTensor(matrix, tensor_ptr));
+    ABSL_RETURN_IF_ERROR(CopyMatrixToTensor(matrix, tensor_ptr));
 
     auto output_tensors = std::make_unique<std::vector<TfLiteTensor>>();
     output_tensors->emplace_back(*tensor);
@@ -413,17 +413,17 @@ absl::Status TfLiteConverterCalculator::ProcessGPU(CalculatorContext* cc) {
   // GpuBuffer to tflite::gpu::GlBuffer conversion.
   const auto& input =
       cc->Inputs().Tag(kGpuBufferTag).Get<mediapipe::GpuBuffer>();
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       gpu_helper_.RunInGlContext([this, &input]() -> absl::Status {
         // Convert GL texture into TfLite GlBuffer (SSBO).
         auto src = gpu_helper_.CreateSourceTexture(input);
         glActiveTexture(GL_TEXTURE0 + 0);
         glBindTexture(GL_TEXTURE_2D, src.name());
-        MP_RETURN_IF_ERROR(gpu_data_out_->buffer.BindToIndex(1));
+        ABSL_RETURN_IF_ERROR(gpu_data_out_->buffer.BindToIndex(1));
         const tflite::gpu::uint3 workgroups = {
             NumGroups(input.width(), kWorkgroupSize),
             NumGroups(input.height(), kWorkgroupSize), 1};
-        MP_RETURN_IF_ERROR(gpu_data_out_->program.Dispatch(workgroups));
+        ABSL_RETURN_IF_ERROR(gpu_data_out_->program.Dispatch(workgroups));
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
         src.Release();
@@ -432,14 +432,14 @@ absl::Status TfLiteConverterCalculator::ProcessGPU(CalculatorContext* cc) {
 
   // Copy into outputs.
   auto output_tensors = absl::make_unique<std::vector<GpuTensor>>();
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       gpu_helper_.RunInGlContext([this, &output_tensors]() -> absl::Status {
         output_tensors->resize(1);
         {
           GpuTensor& tensor = output_tensors->at(0);
-          MP_RETURN_IF_ERROR(CreateReadWriteShaderStorageBuffer<float>(
+          ABSL_RETURN_IF_ERROR(CreateReadWriteShaderStorageBuffer<float>(
               gpu_data_out_->elements, &tensor));
-          MP_RETURN_IF_ERROR(CopyBuffer(gpu_data_out_->buffer, tensor));
+          ABSL_RETURN_IF_ERROR(CopyBuffer(gpu_data_out_->buffer, tensor));
         }
         return absl::OkStatus();
       }));
@@ -510,10 +510,10 @@ absl::Status TfLiteConverterCalculator::InitGpu(CalculatorContext* cc) {
 
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
   const bool single_channel = (max_num_channels_ == 1);
-  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
+  ABSL_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
       [this, &include_alpha, &input, &single_channel]() -> absl::Status {
         // Device memory.
-        MP_RETURN_IF_ERROR(
+        ABSL_RETURN_IF_ERROR(
             ::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer<float>(
                 gpu_data_out_->elements, &gpu_data_out_->buffer));
 
@@ -553,9 +553,9 @@ absl::Status TfLiteConverterCalculator::InitGpu(CalculatorContext* cc) {
             include_alpha ? "output_data.elements[linear_index + 3] = pixel.w;"
                           : "",
             /*$7=*/max_num_channels_);
-        MP_RETURN_IF_ERROR(GlShader::CompileShader(
+        ABSL_RETURN_IF_ERROR(GlShader::CompileShader(
             GL_COMPUTE_SHADER, shader_source, &gpu_data_out_->shader));
-        MP_RETURN_IF_ERROR(GlProgram::CreateWithShader(
+        ABSL_RETURN_IF_ERROR(GlProgram::CreateWithShader(
             gpu_data_out_->shader, &gpu_data_out_->program));
         return absl::OkStatus();
       }));

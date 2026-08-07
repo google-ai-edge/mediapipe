@@ -180,15 +180,15 @@ absl::StatusOr<LabelItems> GetLabelItemsIfAny(
     LabelItems empty_label_items;
     return empty_label_items;
   }
-  MP_ASSIGN_OR_RETURN(absl::string_view labels_file,
-                      metadata_extractor.GetAssociatedFile(labels_filename));
+  ABSL_ASSIGN_OR_RETURN(absl::string_view labels_file,
+                        metadata_extractor.GetAssociatedFile(labels_filename));
   const std::string display_names_filename =
       ModelMetadataExtractor::FindFirstAssociatedFileName(
           tensor_metadata, tflite::AssociatedFileType_TENSOR_AXIS_LABELS,
           locale);
   absl::string_view display_names_file;
   if (!display_names_filename.empty()) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         display_names_file,
         metadata_extractor.GetAssociatedFile(display_names_filename));
   }
@@ -200,10 +200,11 @@ absl::StatusOr<LabelItems> GetLabelItemsIfAny(
 absl::StatusOr<float> GetScoreThreshold(
     const ModelMetadataExtractor& metadata_extractor,
     const TensorMetadata& tensor_metadata) {
-  MP_ASSIGN_OR_RETURN(const ProcessUnit* score_thresholding_process_unit,
-                      metadata_extractor.FindFirstProcessUnit(
-                          tensor_metadata,
-                          tflite::ProcessUnitOptions_ScoreThresholdingOptions));
+  ABSL_ASSIGN_OR_RETURN(
+      const ProcessUnit* score_thresholding_process_unit,
+      metadata_extractor.FindFirstProcessUnit(
+          tensor_metadata,
+          tflite::ProcessUnitOptions_ScoreThresholdingOptions));
   if (score_thresholding_process_unit == nullptr) {
     return kDefaultScoreThreshold;
   }
@@ -256,10 +257,11 @@ absl::Status ConfigureScoreCalibrationIfAny(
     return absl::OkStatus();
   }
   // Get ScoreCalibrationOptions, if any.
-  MP_ASSIGN_OR_RETURN(const ProcessUnit* score_calibration_process_unit,
-                      metadata_extractor.FindFirstProcessUnit(
-                          *tensor_metadata,
-                          tflite::ProcessUnitOptions_ScoreCalibrationOptions));
+  ABSL_ASSIGN_OR_RETURN(
+      const ProcessUnit* score_calibration_process_unit,
+      metadata_extractor.FindFirstProcessUnit(
+          *tensor_metadata,
+          tflite::ProcessUnitOptions_ScoreCalibrationOptions));
   if (score_calibration_process_unit == nullptr) {
     return absl::OkStatus();
   }
@@ -277,11 +279,11 @@ absl::Status ConfigureScoreCalibrationIfAny(
         "parameters file with type TENSOR_AXIS_SCORE_CALIBRATION.",
         MediaPipeTasksStatus::kMetadataAssociatedFileNotFoundError);
   }
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       absl::string_view score_calibration_file,
       metadata_extractor.GetAssociatedFile(score_calibration_filename));
   ScoreCalibrationCalculatorOptions calculator_options;
-  MP_RETURN_IF_ERROR(ConfigureScoreCalibration(
+  ABSL_RETURN_IF_ERROR(ConfigureScoreCalibration(
       score_calibration_options->score_transformation(),
       score_calibration_options->default_score(), score_calibration_file,
       &calculator_options));
@@ -318,15 +320,16 @@ absl::Status ConfigureTensorsToClassificationCalculator(
   LabelItems label_items;
   float score_threshold = kDefaultScoreThreshold;
   if (tensor_metadata != nullptr) {
-    MP_ASSIGN_OR_RETURN(label_items,
-                        GetLabelItemsIfAny(metadata_extractor, *tensor_metadata,
-                                           options.display_names_locale()));
-    MP_ASSIGN_OR_RETURN(score_threshold, GetScoreThreshold(metadata_extractor,
-                                                           *tensor_metadata));
+    ABSL_ASSIGN_OR_RETURN(
+        label_items, GetLabelItemsIfAny(metadata_extractor, *tensor_metadata,
+                                        options.display_names_locale()));
+    ABSL_ASSIGN_OR_RETURN(score_threshold, GetScoreThreshold(metadata_extractor,
+                                                             *tensor_metadata));
   }
   // Allowlist / denylist.
-  MP_ASSIGN_OR_RETURN(auto allow_or_deny_categories,
-                      GetAllowOrDenyCategoryIndicesIfAny(options, label_items));
+  ABSL_ASSIGN_OR_RETURN(
+      auto allow_or_deny_categories,
+      GetAllowOrDenyCategoryIndicesIfAny(options, label_items));
   if (!allow_or_deny_categories.empty()) {
     if (options.category_allowlist_size()) {
       calculator_options->mutable_allow_classes()->Assign(
@@ -359,13 +362,13 @@ absl::Status ConfigureClassificationPostprocessingGraph(
     const ModelResources& model_resources,
     const proto::ClassifierOptions& classifier_options,
     proto::ClassificationPostprocessingGraphOptions* options) {
-  MP_RETURN_IF_ERROR(SanityCheckClassifierOptions(classifier_options));
-  MP_ASSIGN_OR_RETURN(const auto heads_properties,
-                      GetClassificationHeadsProperties(model_resources));
+  ABSL_RETURN_IF_ERROR(SanityCheckClassifierOptions(classifier_options));
+  ABSL_ASSIGN_OR_RETURN(const auto heads_properties,
+                        GetClassificationHeadsProperties(model_resources));
   for (int i = 0; i < heads_properties.num_heads; ++i) {
-    MP_RETURN_IF_ERROR(ConfigureScoreCalibrationIfAny(
+    ABSL_RETURN_IF_ERROR(ConfigureScoreCalibrationIfAny(
         *model_resources.GetMetadataExtractor(), i, options));
-    MP_RETURN_IF_ERROR(ConfigureTensorsToClassificationCalculator(
+    ABSL_RETURN_IF_ERROR(ConfigureTensorsToClassificationCalculator(
         classifier_options, *model_resources.GetMetadataExtractor(), i,
         options->add_tensors_to_classifications_options()));
   }
@@ -407,7 +410,7 @@ class ClassificationPostprocessingGraph : public mediapipe::Subgraph {
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
     Graph graph;
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         auto output_streams,
         BuildClassificationPostprocessing(
             sc->Options<proto::ClassificationPostprocessingGraphOptions>(),

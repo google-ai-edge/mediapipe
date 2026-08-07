@@ -134,9 +134,9 @@ absl::Status ConfigureImagePreprocessingGraph(
     const ModelResources& model_resources, bool use_gpu,
     GpuOrigin::Mode gpu_origin,
     proto::ImagePreprocessingGraphOptions* options) {
-  MP_ASSIGN_OR_RETURN(auto image_tensor_specs,
-                      vision::BuildInputImageTensorSpecs(model_resources));
-  MP_RETURN_IF_ERROR(ConfigureImageToTensorCalculator(
+  ABSL_ASSIGN_OR_RETURN(auto image_tensor_specs,
+                        vision::BuildInputImageTensorSpecs(model_resources));
+  ABSL_RETURN_IF_ERROR(ConfigureImageToTensorCalculator(
       image_tensor_specs, gpu_origin,
       options->mutable_image_to_tensor_options()));
   // The GPU backend isn't able to process int data. If the input tensor is

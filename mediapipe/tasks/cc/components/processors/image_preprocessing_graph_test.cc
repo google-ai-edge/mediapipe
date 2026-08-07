@@ -112,7 +112,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
       preprocessing.GetOptions<proto::ImagePreprocessingGraphOptions>();
   options.mutable_image_to_tensor_options()->set_keep_aspect_ratio(
       keep_aspect_ratio);
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       ConfigureImagePreprocessingGraph(model_resources, false, &options));
   graph[Input<Image>(kImageTag)].SetName(kImageName) >>
       preprocessing.In(kImageTag);

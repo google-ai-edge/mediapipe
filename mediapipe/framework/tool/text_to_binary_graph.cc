@@ -73,7 +73,7 @@ absl::Status ReadFile(const std::string& proto_source, bool read_text,
                       proto_ns::Message* result) {
   std::ifstream ifs(proto_source);
   proto_ns::io::IstreamInputStream in(&ifs);
-  MP_RETURN_IF_ERROR(ReadProto(&in, read_text, proto_source, result));
+  ABSL_RETURN_IF_ERROR(ReadProto(&in, read_text, proto_source, result));
   return absl::OkStatus();
 }
 
@@ -86,7 +86,7 @@ absl::Status WriteFile(const std::string& proto_output, bool write_text,
   }
   std::ofstream ofs(proto_output, mode);
   proto_ns::io::OstreamOutputStream out(&ofs);
-  MP_RETURN_IF_ERROR(WriteProto(message, write_text, proto_output, &out));
+  ABSL_RETURN_IF_ERROR(WriteProto(message, write_text, proto_output, &out));
   return absl::OkStatus();
 }
 

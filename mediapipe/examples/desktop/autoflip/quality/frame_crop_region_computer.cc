@@ -103,12 +103,12 @@ absl::Status FrameCropRegionComputer::ExpandRectUnderConstraints(
       std::make_pair(rect_to_add_left, rect_to_add_right),
       std::make_pair(base_rect_left, base_rect_right), max_width,
       &horizontal_combined_segment, &horizontal_cover_type);
-  MP_RETURN_IF_ERROR(horizontal_status);
+  ABSL_RETURN_IF_ERROR(horizontal_status);
   const auto vertical_status = ExpandSegmentUnderConstraint(
       std::make_pair(rect_to_add_top, rect_to_add_bottom),
       std::make_pair(base_rect_top, base_rect_bottom), max_height,
       &vertical_combined_segment, &vertical_cover_type);
-  MP_RETURN_IF_ERROR(vertical_status);
+  ABSL_RETURN_IF_ERROR(vertical_status);
 
   if (horizontal_cover_type == NOT_COVERED ||
       vertical_cover_type == NOT_COVERED) {
@@ -180,7 +180,7 @@ absl::Status FrameCropRegionComputer::ComputeFrameCropRegion(
   std::vector<SalientRegion> required_regions, non_required_regions;
   const auto sort_status = SortDetections(
       frame_info.detections(), &required_regions, &non_required_regions);
-  MP_RETURN_IF_ERROR(sort_status);
+  ABSL_RETURN_IF_ERROR(sort_status);
 
   int target_width = options_.target_width();
   int target_height = options_.target_height();
@@ -225,18 +225,18 @@ absl::Status FrameCropRegionComputer::ComputeFrameCropRegion(
       region->set_y(non_required_region.y() + non_required_region.height() / 2);
       region->set_width(0);
       region->set_height(0);
-      MP_RETURN_IF_ERROR(ExpandRectUnderConstraints(non_required_region,
-                                                    target_width, target_height,
-                                                    region, &cover_type));
+      ABSL_RETURN_IF_ERROR(
+          ExpandRectUnderConstraints(non_required_region, target_width,
+                                     target_height, region, &cover_type));
       if (cover_type != NOT_COVERED) {
         crop_region_is_empty = false;
       }
     } else {
       // Otherwise tries to expand the crop region to cover the non-required
       // region under target size constraint.
-      MP_RETURN_IF_ERROR(ExpandRectUnderConstraints(non_required_region,
-                                                    target_width, target_height,
-                                                    region, &cover_type));
+      ABSL_RETURN_IF_ERROR(
+          ExpandRectUnderConstraints(non_required_region, target_width,
+                                     target_height, region, &cover_type));
     }
 
     // Updates number of covered non-required regions and score.

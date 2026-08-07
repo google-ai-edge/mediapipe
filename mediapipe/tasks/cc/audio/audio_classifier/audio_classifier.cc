@@ -159,7 +159,8 @@ absl::StatusOr<std::vector<AudioClassifierResult>> AudioClassifier::Classify(
 absl::Status AudioClassifier::ClassifyAsync(Matrix audio_block,
                                             double audio_sample_rate,
                                             int64_t timestamp_ms) {
-  MP_RETURN_IF_ERROR(CheckOrSetSampleRate(kSampleRateName, audio_sample_rate));
+  ABSL_RETURN_IF_ERROR(
+      CheckOrSetSampleRate(kSampleRateName, audio_sample_rate));
   return SendAudioStreamData(
       {{kAudioStreamName,
         MakePacket<Matrix>(std::move(audio_block))

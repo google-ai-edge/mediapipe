@@ -113,7 +113,7 @@ TfLiteSignatureReader::GetInputOutputTensorNamesFromAllTfliteSignatures(
   std::vector<const std::string*> model_signature_keys =
       interpreter.signature_keys();
   for (const std::string* signature_key : model_signature_keys) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         SignatureInputOutputTensorNames input_output_tensor_names,
         GetInputOutputTensorNamesFromTfliteSignature(interpreter,
                                                      signature_key));

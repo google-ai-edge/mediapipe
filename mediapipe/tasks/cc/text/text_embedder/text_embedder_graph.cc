@@ -105,16 +105,16 @@ class TextEmbedderGraph : public core::ModelTaskGraph {
     ABSL_CHECK(sc != nullptr);
 
     const ModelResources* model_resources = nullptr;
-    MP_RETURN_IF_ERROR(MaybeHandleModelBundle(sc, &model_resources));
+    ABSL_RETURN_IF_ERROR(MaybeHandleModelBundle(sc, &model_resources));
 
     if (model_resources == nullptr) {
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           model_resources,
           CreateModelResources<proto::TextEmbedderGraphOptions>(sc));
     }
 
     Graph graph;
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         Source<EmbeddingResult> embedding_result_out,
         BuildTextEmbedderTask(sc->Options<proto::TextEmbedderGraphOptions>(),
                               *model_resources,
@@ -163,12 +163,12 @@ class TextEmbedderGraph : public core::ModelTaskGraph {
     }
 
     if (is_model_bundle) {
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           const auto* bundle_resources,
           CreateModelAssetBundleResources<proto::TextEmbedderGraphOptions>(sc));
       // Extract tflite model
-      MP_ASSIGN_OR_RETURN(auto tflite_model_file,
-                          bundle_resources->GetFile(tflite_model_name));
+      ABSL_ASSIGN_OR_RETURN(auto tflite_model_file,
+                            bundle_resources->GetFile(tflite_model_name));
       // Create ModelResources for the tflite model
       auto tflite_external_file =
           std::make_unique<tasks::core::proto::ExternalFile>();
@@ -179,7 +179,7 @@ class TextEmbedderGraph : public core::ModelTaskGraph {
       std::string model_id = tflite_model_name == kGeckoTFLiteName
                                  ? "gecko_tflite"
                                  : "gemma_tflite";
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           *model_resources,
           CreateModelResources(sc, std::move(tflite_external_file), model_id));
 
@@ -221,8 +221,9 @@ class TextEmbedderGraph : public core::ModelTaskGraph {
       preproc_options->mutable_sentence_piece_model()->CopyFrom(
           task_options.sentence_piece_model());
     }
-    MP_RETURN_IF_ERROR(components::processors::ConfigureTextPreprocessingGraph(
-        model_resources, *preproc_options));
+    ABSL_RETURN_IF_ERROR(
+        components::processors::ConfigureTextPreprocessingGraph(
+            model_resources, *preproc_options));
     text_in >> preprocessing.In(kTextTag);
 
     // Adds both InferenceCalculator and ModelResourcesCalculator.
@@ -243,14 +244,14 @@ class TextEmbedderGraph : public core::ModelTaskGraph {
 
     // The UniversalSentenceEncoder model has an extraneous output head.
     std::vector<absl::string_view> filtered_head_names;
-    MP_ASSIGN_OR_RETURN(TextModelType::ModelType model_type,
-                        GetModelType(model_resources));
+    ABSL_ASSIGN_OR_RETURN(TextModelType::ModelType model_type,
+                          GetModelType(model_resources));
     if (model_type == TextModelType::USE_MODEL) {
       postprocessing_options->mutable_tensors_to_embeddings_options()
           ->add_ignored_head_names(kUSEQueryTensorName);
     }
 
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         components::processors::ConfigureEmbeddingPostprocessingGraph(
             model_resources, task_options.embedder_options(),
             postprocessing_options));

@@ -169,7 +169,7 @@ absl::StatusOr<std::string> AssetManager::CachedFileFromAsset(
       << "could not read asset: " << asset_path;
 
   std::string dir_path = File::StripBasename(file_path);
-  MP_RETURN_IF_ERROR(file::RecursivelyCreateDir(dir_path, file::Defaults()));
+  ABSL_RETURN_IF_ERROR(file::RecursivelyCreateDir(dir_path, file::Defaults()));
 
   std::ofstream output_file(file_path);
   RET_CHECK(output_file.good()) << "could not open cache file: " << file_path;

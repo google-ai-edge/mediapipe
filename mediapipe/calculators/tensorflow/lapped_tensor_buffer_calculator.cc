@@ -196,7 +196,7 @@ absl::Status LappedTensorBufferCalculator::Process(CalculatorContext* cc) {
   timestamp_buffer_->push_back(cc->InputTimestamp());
   --steps_until_output_;
   if (steps_until_output_ <= 0) {
-    MP_RETURN_IF_ERROR(ProcessBuffer(cc));
+    ABSL_RETURN_IF_ERROR(ProcessBuffer(cc));
   }
 
   return absl::OkStatus();
@@ -212,7 +212,7 @@ absl::Status LappedTensorBufferCalculator::Close(CalculatorContext* cc) {
     buffer_->push_back(pad_frame);
     timestamp_buffer_->push_back(cc->InputTimestamp());
   }
-  MP_RETURN_IF_ERROR(ProcessBuffer(cc));
+  ABSL_RETURN_IF_ERROR(ProcessBuffer(cc));
 
   return absl::OkStatus();
 }

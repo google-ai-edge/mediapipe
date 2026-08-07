@@ -337,8 +337,8 @@ absl::StatusOr<std::vector<int>> GetBindingLocations(
 // return std::nullopt.
 absl::StatusOr<std::optional<int>> GetBindingLocation(
     const std::string& search_term, const std::string& source) {
-  MP_ASSIGN_OR_RETURN(const auto& locations,
-                      GetBindingLocations(search_term, source));
+  ABSL_ASSIGN_OR_RETURN(const auto& locations,
+                        GetBindingLocations(search_term, source));
   if (locations.size() > 1) {
     return absl::InternalError(absl::StrFormat(
         "Expected a unique binding location for %s, but found %d.", search_term,
@@ -499,8 +499,8 @@ absl::Status WebGpuShaderCalculator::Open(
 
   if (options.has_shader_path()) {
     std::unique_ptr<Resource> resource_shader_source;
-    MP_ASSIGN_OR_RETURN(resource_shader_source,
-                        cc.GetResources().Get(options.shader_path()));
+    ABSL_ASSIGN_OR_RETURN(resource_shader_source,
+                          cc.GetResources().Get(options.shader_path()));
     shader_source_ = resource_shader_source->ToStringView();
   } else if (options.has_shader_source()) {
     shader_source_ = options.shader_source();
@@ -533,7 +533,7 @@ absl::Status WebGpuShaderCalculator::Open(
 
   // Request WebGpu resources
   service_ = &cc.Service(kWebGpuService).GetObject();
-  MP_RETURN_IF_ERROR(InitWebGpuShader());
+  ABSL_RETURN_IF_ERROR(InitWebGpuShader());
   if (profile_) InitProfiling();
 
   return absl::OkStatus();
@@ -585,11 +585,11 @@ absl::Status WebGpuShaderCalculator::InitWebGpuShader() {
 
   // Parse shader to grab binding locations. Try 2d first, then 3d.
   // TODO: Allow for multiple outputs.
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       output_texture_binding_,
       GetBindingLocation("texture_storage_2d", comment_free_shader_src));
   if (!output_texture_binding_) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         output_texture_binding_,
         GetBindingLocation("texture_storage_3d", comment_free_shader_src));
     if (!output_texture_binding_) {
@@ -625,19 +625,20 @@ absl::Status WebGpuShaderCalculator::InitWebGpuShader() {
     }
   }
 
-  MP_ASSIGN_OR_RETURN(sampler_binding_,
-                      GetBindingLocation("sampler", comment_free_shader_src));
-  MP_ASSIGN_OR_RETURN(uniform_binding_,
-                      GetBindingLocation("Params", comment_free_shader_src));
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(sampler_binding_,
+                        GetBindingLocation("sampler", comment_free_shader_src));
+  ABSL_ASSIGN_OR_RETURN(uniform_binding_,
+                        GetBindingLocation("Params", comment_free_shader_src));
+  ABSL_ASSIGN_OR_RETURN(
       input_texture_bindings_,
       GetBindingLocations("texture_2d", comment_free_shader_src));
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       input_texture_3d_bindings_,
       GetBindingLocations("texture_3d", comment_free_shader_src));
 
   // Parse shader to grab Params uniform struct offsets
-  MP_ASSIGN_OR_RETURN(param_offsets_, GetParamOffsets(comment_free_shader_src));
+  ABSL_ASSIGN_OR_RETURN(param_offsets_,
+                        GetParamOffsets(comment_free_shader_src));
   params_data_ = std::make_unique<float[]>(param_offsets_.num_params);
   params_size_ = param_offsets_.num_params * sizeof(float);
 
@@ -707,9 +708,10 @@ absl::Status WebGpuShaderCalculator::Process(
   ScopedWebGpuErrorHandler scoped_error_handler(
       service_, "WebGpuShaderCalculator::Process", cc.InputTimestamp());
 
-  MP_ASSIGN_OR_RETURN(wgpu::ComputePipeline * pipeline, pipeline_future_.Get(),
-                      _.SetCode(absl::StatusCode::kInternal).SetPrepend()
-                          << "Failed to create pipeline: ");
+  ABSL_ASSIGN_OR_RETURN(wgpu::ComputePipeline * pipeline,
+                        pipeline_future_.Get(),
+                        _.SetCode(absl::StatusCode::kInternal).SetPrepend()
+                            << "Failed to create pipeline: ");
 
   if (cc.width) {
     output_width_ = cc.width.GetOrDie();
@@ -800,9 +802,9 @@ absl::Status WebGpuShaderCalculator::Process(
         << "are rendering to a 2D texture, not a 3D texture.";
   }
 
-  MP_RETURN_IF_ERROR(WebGpuBindAndRender(cc, *pipeline, width, height, depth,
-                                         src_textures, src_textures_3d,
-                                         src_floats, src_float_vecs));
+  ABSL_RETURN_IF_ERROR(WebGpuBindAndRender(cc, *pipeline, width, height, depth,
+                                           src_textures, src_textures_3d,
+                                           src_floats, src_float_vecs));
   return absl::OkStatus();
 }
 
@@ -822,7 +824,7 @@ absl::Status WebGpuShaderCalculator::WebGpuBindAndRender(
     // Standard 2d texture rendering
     GpuBuffer out_buffer(width, height, output_format_);
     WebGpuTextureView out_view = out_buffer.GetWriteView<WebGpuTextureView>();
-    MP_RETURN_IF_ERROR(WebGpuBindAndRenderToView(
+    ABSL_RETURN_IF_ERROR(WebGpuBindAndRenderToView(
         cc, pipeline, width, height, depth, src_textures, src_textures_3d,
         src_floats, src_float_vecs, out_view));
     cc.output.Send(std::move(out_buffer));
@@ -831,7 +833,7 @@ absl::Status WebGpuShaderCalculator::WebGpuBindAndRender(
     auto out_buffer = WebGpuTextureBuffer3d::Create(
         width, height, depth, WebGpuTextureFormat3d::kRG32Uint);
     WebGpuTextureView out_view = out_buffer->GetWriteView();
-    MP_RETURN_IF_ERROR(WebGpuBindAndRenderToView(
+    ABSL_RETURN_IF_ERROR(WebGpuBindAndRenderToView(
         cc, pipeline, width, height, depth, src_textures, src_textures_3d,
         src_floats, src_float_vecs, out_view));
     cc.output_3d.Send(std::move(out_buffer));

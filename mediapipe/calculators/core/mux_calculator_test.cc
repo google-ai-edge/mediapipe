@@ -377,7 +377,7 @@ TEST(MuxCalculatorTest, HandleTimestampBoundUpdates) {
   MP_ASSERT_OK(graph.StartRun({}));
 
   auto send_value_fn = [&](int value, Timestamp ts) -> absl::Status {
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         graph.AddPacketToInputStream("select", MakePacket<int>(value).At(ts)));
     return graph.WaitUntilIdle();
   };

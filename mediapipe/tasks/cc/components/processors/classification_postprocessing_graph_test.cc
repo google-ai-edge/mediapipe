@@ -422,14 +422,14 @@ class PostprocessingTest : public tflite::testing::Test {
   absl::StatusOr<OutputStreamPoller> BuildGraph(
       absl::string_view model_name, const proto::ClassifierOptions& options,
       bool connect_timestamps = false) {
-    MP_ASSIGN_OR_RETURN(auto model_resources,
-                        CreateModelResourcesForModel(model_name));
+    ABSL_ASSIGN_OR_RETURN(auto model_resources,
+                          CreateModelResourcesForModel(model_name));
 
     Graph graph;
     auto& postprocessing = graph.AddNode(
         "mediapipe.tasks.components.processors."
         "ClassificationPostprocessingGraph");
-    MP_RETURN_IF_ERROR(ConfigureClassificationPostprocessingGraph(
+    ABSL_RETURN_IF_ERROR(ConfigureClassificationPostprocessingGraph(
         *model_resources, options,
         &postprocessing
              .GetOptions<proto::ClassificationPostprocessingGraphOptions>()));
@@ -448,16 +448,18 @@ class PostprocessingTest : public tflite::testing::Test {
           graph[Output<ClassificationResult>(kClassificationsTag)];
     }
 
-    MP_RETURN_IF_ERROR(calculator_graph_.Initialize(graph.GetConfig()));
+    ABSL_RETURN_IF_ERROR(calculator_graph_.Initialize(graph.GetConfig()));
     if (connect_timestamps) {
-      MP_ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
-                                           kTimestampedClassificationsName));
-      MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
+      ABSL_ASSIGN_OR_RETURN(auto poller,
+                            calculator_graph_.AddOutputStreamPoller(
+                                kTimestampedClassificationsName));
+      ABSL_RETURN_IF_ERROR(
+          calculator_graph_.StartRun(/*extra_side_packets=*/{}));
       return poller;
     }
-    MP_ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
-                                         kClassificationsName));
-    MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
+    ABSL_ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
+                                           kClassificationsName));
+    ABSL_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
     return poller;
   }
 
@@ -476,7 +478,7 @@ class PostprocessingTest : public tflite::testing::Test {
   absl::Status Run(
       std::optional<std::vector<int>> aggregation_timestamps = std::nullopt,
       int timestamp = 0) {
-    MP_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
+    ABSL_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
         kTensorsName, Adopt(tensors_.release()).At(Timestamp(timestamp))));
     // Reset tensors for future calls.
     tensors_ = std::make_unique<std::vector<Tensor>>();
@@ -485,7 +487,7 @@ class PostprocessingTest : public tflite::testing::Test {
       for (const auto& timestamp : *aggregation_timestamps) {
         packet->emplace_back(Timestamp(timestamp));
       }
-      MP_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
+      ABSL_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
           kTimestampsName, Adopt(packet.release()).At(Timestamp(timestamp))));
     }
     return absl::OkStatus();
@@ -493,15 +495,15 @@ class PostprocessingTest : public tflite::testing::Test {
 
   template <typename T>
   absl::StatusOr<T> GetResult(OutputStreamPoller& poller) {
-    MP_RETURN_IF_ERROR(calculator_graph_.WaitUntilIdle());
-    MP_RETURN_IF_ERROR(calculator_graph_.CloseAllInputStreams());
+    ABSL_RETURN_IF_ERROR(calculator_graph_.WaitUntilIdle());
+    ABSL_RETURN_IF_ERROR(calculator_graph_.CloseAllInputStreams());
 
     Packet packet;
     if (!poller.Next(&packet)) {
       return absl::InternalError("Unable to get output packet");
     }
     auto result = packet.Get<T>();
-    MP_RETURN_IF_ERROR(calculator_graph_.WaitUntilDone());
+    ABSL_RETURN_IF_ERROR(calculator_graph_.WaitUntilDone());
     return result;
   }
 

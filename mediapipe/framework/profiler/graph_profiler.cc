@@ -247,7 +247,7 @@ absl::Status GraphProfiler::Start(mediapipe::Executor* executor) {
   if (is_tracing_ && IsTraceIntervalEnabled(profiler_config_, tracer()) &&
       executor != nullptr) {
     // Inform the user via logging the path to the trace logs.
-    MP_ASSIGN_OR_RETURN(std::string trace_log_path, GetTraceLogPath());
+    ABSL_ASSIGN_OR_RETURN(std::string trace_log_path, GetTraceLogPath());
     // Check that we can actually write to it.
     auto status =
         file::SetContents(absl::StrCat(trace_log_path, "trace_writing_check"),
@@ -288,7 +288,7 @@ absl::Status GraphProfiler::Stop() {
   Pause();
   // If specified, write a final profile.
   if (IsTraceLogEnabled(profiler_config_)) {
-    MP_RETURN_IF_ERROR(WriteProfile());
+    ABSL_RETURN_IF_ERROR(WriteProfile());
   }
   return absl::OkStatus();
 }
@@ -677,8 +677,8 @@ absl::StatusOr<std::string> GraphProfiler::GetTraceLogPath() {
         "Trace log writing is disabled, unable to get trace_log_path.");
   }
   if (profiler_config_.trace_log_path().empty()) {
-    MP_ASSIGN_OR_RETURN(std::string directory_path,
-                        GetDefaultTraceLogDirectory());
+    ABSL_ASSIGN_OR_RETURN(std::string directory_path,
+                          GetDefaultTraceLogDirectory());
     std::string trace_log_path =
         absl::StrCat(directory_path, "/", kDefaultLogFilePrefix);
     return trace_log_path;
@@ -728,11 +728,11 @@ absl::Status GraphProfiler::WriteProfile() {
     // Logging is disabled, so we can exit writing without error.
     return absl::OkStatus();
   }
-  MP_ASSIGN_OR_RETURN(std::string trace_log_path, GetTraceLogPath());
+  ABSL_ASSIGN_OR_RETURN(std::string trace_log_path, GetTraceLogPath());
   int log_interval_count = GetLogIntervalCount(profiler_config_);
   int log_file_count = GetLogFileCount(profiler_config_);
   GraphProfile profile;
-  MP_RETURN_IF_ERROR(CaptureProfile(&profile, PopulateGraphConfig::kNo));
+  ABSL_RETURN_IF_ERROR(CaptureProfile(&profile, PopulateGraphConfig::kNo));
 
   // If there are no trace events, skip log writing.
   const GraphTrace& trace = *profile.graph_trace().rbegin();

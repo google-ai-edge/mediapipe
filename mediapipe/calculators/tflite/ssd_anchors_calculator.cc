@@ -179,7 +179,7 @@ class SsdAnchorsCalculator : public CalculatorBase {
       cc->OutputSidePackets().Index(0).Set(Adopt(anchors.release()));
       return absl::OkStatus();
     }
-    MP_RETURN_IF_ERROR(GenerateAnchors(anchors.get(), options));
+    ABSL_RETURN_IF_ERROR(GenerateAnchors(anchors.get(), options));
     cc->OutputSidePackets().Index(0).Set(Adopt(anchors.release()));
     return absl::OkStatus();
   }

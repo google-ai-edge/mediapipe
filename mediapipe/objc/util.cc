@@ -340,8 +340,8 @@ absl::Status CreateCVPixelBufferForImageFramePacket(
   auto image_frame = std::const_pointer_cast<mediapipe::ImageFrame>(
       mediapipe::SharedPtrWithPacket<mediapipe::ImageFrame>(
           image_frame_packet));
-  MP_ASSIGN_OR_RETURN(*out_buffer, CreateCVPixelBufferForImageFrame(
-                                       image_frame, can_overwrite));
+  ABSL_ASSIGN_OR_RETURN(*out_buffer, CreateCVPixelBufferForImageFrame(
+                                         image_frame, can_overwrite));
   return absl::OkStatus();
 }
 
@@ -364,9 +364,9 @@ absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferForImageFrame(
       if (can_overwrite) {
         v_dest = v_image;
       } else {
-        MP_ASSIGN_OR_RETURN(pixel_buffer,
-                            CreateCVPixelBufferWithoutPool(
-                                frame.Width(), frame.Height(), pixel_format));
+        ABSL_ASSIGN_OR_RETURN(pixel_buffer,
+                              CreateCVPixelBufferWithoutPool(
+                                  frame.Width(), frame.Height(), pixel_format));
         status = CVPixelBufferLockBaseAddress(*pixel_buffer,
                                               kCVPixelBufferLock_ReadOnly);
         RET_CHECK(status == kCVReturnSuccess)
@@ -481,9 +481,9 @@ absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferCopyingImageFrame(
   }
 
   CVReturn cv_err;
-  MP_ASSIGN_OR_RETURN(pixel_buffer, CreateCVPixelBufferWithoutPool(
-                                        image_frame.Width(),
-                                        image_frame.Height(), pixel_format));
+  ABSL_ASSIGN_OR_RETURN(pixel_buffer, CreateCVPixelBufferWithoutPool(
+                                          image_frame.Width(),
+                                          image_frame.Height(), pixel_format));
   cv_err =
       CVPixelBufferLockBaseAddress(*pixel_buffer, kCVPixelBufferLock_ReadOnly);
   RET_CHECK(cv_err == kCVReturnSuccess)
@@ -498,7 +498,7 @@ absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferCopyingImageFrame(
   RET_CHECK(cv_err == kCVReturnSuccess)
       << "CVPixelBufferUnlockBaseAddress failed: " << cv_err;
 
-  MP_RETURN_IF_ERROR(status);
+  ABSL_RETURN_IF_ERROR(status);
 
   return pixel_buffer;
 }

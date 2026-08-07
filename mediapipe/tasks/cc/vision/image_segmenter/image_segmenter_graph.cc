@@ -127,8 +127,8 @@ absl::StatusOr<const tflite::Tensor*> GetInputTensor(
 
 absl::StatusOr<bool> ContainsQuantizedOutputTensor(
     const core::ModelResources& model_resources) {
-  MP_ASSIGN_OR_RETURN(const tflite::Tensor* output_tensor,
-                      GetOutputTensor(model_resources));
+  ABSL_ASSIGN_OR_RETURN(const tflite::Tensor* output_tensor,
+                        GetOutputTensor(model_resources));
   return output_tensor->type() == tflite::TensorType_UINT8 ||
          output_tensor->type() == tflite::TensorType_INT8 ||
          output_tensor->type() == tflite::TensorType_BOOL;
@@ -170,7 +170,7 @@ absl::StatusOr<LabelItems> GetLabelItemsIfAny(
           locale);
   absl::string_view display_names_file;
   if (!display_names_filename.empty()) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         display_names_file,
         metadata_extractor.GetAssociatedFile(display_names_filename));
   }
@@ -231,7 +231,7 @@ absl::Status ConfigureTensorsToSegmentationCalculator(
         MediaPipeTasksStatus::kInvalidArgumentError);
   }
   if (metadata_extractor->GetOutputTensorMetadata()) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         *options->mutable_label_items(),
         GetLabelItemsIfAny(
             *metadata_extractor,
@@ -266,8 +266,8 @@ absl::StatusOr<ImageAndTensorsOnDevice> ConvertImageToTensors(
     Source<Image> image_in, Source<NormalizedRect> norm_rect_in, bool use_gpu,
     const core::proto::BaseOptions& base_options, bool is_hair_segmentation,
     const core::ModelResources& model_resources, Graph& graph) {
-  MP_ASSIGN_OR_RETURN(const tflite::Tensor* tflite_input_tensor,
-                      GetInputTensor(model_resources));
+  ABSL_ASSIGN_OR_RETURN(const tflite::Tensor* tflite_input_tensor,
+                        GetInputTensor(model_resources));
   if (tflite_input_tensor->shape()->size() != 4) {
     return absl::InvalidArgumentError(
         absl::StrFormat("Expect segmentation model has input image tensor to "
@@ -287,10 +287,11 @@ absl::StatusOr<ImageAndTensorsOnDevice> ConvertImageToTensors(
     // supports Tensor with channel = 3.
     auto& preprocessing = graph.AddNode(
         "mediapipe.tasks.components.processors.ImagePreprocessingGraph");
-    MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
-        model_resources, use_gpu, base_options.gpu_origin(),
-        &preprocessing.GetOptions<tasks::components::processors::proto::
-                                      ImagePreprocessingGraphOptions>()));
+    ABSL_RETURN_IF_ERROR(
+        components::processors::ConfigureImagePreprocessingGraph(
+            model_resources, use_gpu, base_options.gpu_origin(),
+            &preprocessing.GetOptions<tasks::components::processors::proto::
+                                          ImagePreprocessingGraphOptions>()));
     image_in >> preprocessing.In(kImageTag);
     norm_rect_in >> preprocessing.In(kNormRectTag);
     return {{preprocessing.Out(kImageTag).Cast<Image>(),
@@ -334,8 +335,8 @@ absl::StatusOr<ImageAndTensorsOnDevice> ConvertImageToTensors(
 
     // Convert image to mediapipe tensor.
     auto& tensor_converter = graph.AddNode("TensorConverterCalculator");
-    MP_ASSIGN_OR_RETURN(auto image_tensor_specs,
-                        vision::BuildInputImageTensorSpecs(model_resources));
+    ABSL_ASSIGN_OR_RETURN(auto image_tensor_specs,
+                          vision::BuildInputImageTensorSpecs(model_resources));
     ConfigureTensorConverterCalculator(
         image_tensor_specs,
         tensor_converter
@@ -407,20 +408,20 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         const auto* model_resources,
         GetOrCreateModelResources<ImageSegmenterGraphOptions>(sc));
     Graph graph;
     const auto& options = sc->Options<ImageSegmenterGraphOptions>();
     // TODO: remove deprecated output type support.
     if (!options.segmenter_options().has_output_type()) {
-      MP_RETURN_IF_ERROR(SanityCheck(sc));
+      ABSL_RETURN_IF_ERROR(SanityCheck(sc));
     }
     std::optional<Source<std::pair<int, int>>> output_size;
     if (HasInput(sc->OriginalNode(), kOutputSizeTag)) {
       output_size = graph.In(kOutputSizeTag).Cast<std::pair<int, int>>();
     }
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         auto output_streams,
         BuildSegmentationTask(
             options, *model_resources, graph[Input<Image>(kImageTag)],
@@ -492,7 +493,7 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
       const core::ModelResources& model_resources, Source<Image> image_in,
       Source<NormalizedRect> norm_rect_in,
       std::optional<Source<std::pair<int, int>>> output_size, Graph& graph) {
-    MP_RETURN_IF_ERROR(SanityCheckOptions(task_options));
+    ABSL_RETURN_IF_ERROR(SanityCheckOptions(task_options));
 
     // Adds preprocessing calculators and connects them to the graph input image
     // stream.
@@ -527,7 +528,7 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
       is_hair_segmentation = true;
     }
 
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         auto image_and_tensors,
         ConvertImageToTensors(image_in, norm_rect_in, use_gpu,
                               task_options.base_options(), is_hair_segmentation,
@@ -537,8 +538,8 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
     auto& inference = AddInference(
         model_resources, task_options.base_options().acceleration(), graph);
     image_and_tensors.tensors >> inference.In(kTensorsTag);
-    MP_ASSIGN_OR_RETURN(bool contains_quantized_output_tensor,
-                        ContainsQuantizedOutputTensor(model_resources));
+    ABSL_ASSIGN_OR_RETURN(bool contains_quantized_output_tensor,
+                          ContainsQuantizedOutputTensor(model_resources));
     auto output_tensors = inference.Out(kTensorsTag);
     if (contains_quantized_output_tensor) {
       auto& tensors_dequantization_node =
@@ -569,8 +570,8 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
         segmented_masks.push_back(
             Source<Image>(tensor_to_images[Output<Image>(kSegmentationTag)]));
       } else {
-        MP_ASSIGN_OR_RETURN(const tflite::Tensor* output_tensor,
-                            GetOutputTensor(model_resources));
+        ABSL_ASSIGN_OR_RETURN(const tflite::Tensor* output_tensor,
+                              GetOutputTensor(model_resources));
         int segmentation_streams_num = *output_tensor->shape()->rbegin();
         for (int i = 0; i < segmentation_streams_num; ++i) {
           segmented_masks.push_back(Source<Image>(
@@ -587,8 +588,8 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
     } else {
       std::optional<std::vector<Source<Image>>> confidence_masks;
       if (output_confidence_masks_) {
-        MP_ASSIGN_OR_RETURN(const tflite::Tensor* output_tensor,
-                            GetOutputTensor(model_resources));
+        ABSL_ASSIGN_OR_RETURN(const tflite::Tensor* output_tensor,
+                              GetOutputTensor(model_resources));
         int segmentation_streams_num = *output_tensor->shape()->rbegin();
         confidence_masks = std::vector<Source<Image>>();
         confidence_masks->reserve(segmentation_streams_num);

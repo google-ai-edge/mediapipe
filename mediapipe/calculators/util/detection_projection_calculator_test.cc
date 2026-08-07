@@ -87,7 +87,7 @@ absl::StatusOr<Detection> RunProjectionCalculator(
           MakePacket<std::array<float, 16>>(std::move(project_mat))
               .At(Timestamp::PostStream()));
 
-  MP_RETURN_IF_ERROR(runner.Run());
+  ABSL_RETURN_IF_ERROR(runner.Run());
   const std::vector<Packet>& output =
       runner.Outputs().Tag(kDetectionsTag).packets;
   RET_CHECK_EQ(output.size(), 1);

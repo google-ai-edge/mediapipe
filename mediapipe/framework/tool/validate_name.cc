@@ -51,7 +51,7 @@ absl::Status GetTagAndNameInfo(
   for (const auto& tag_and_name : tags_and_names) {
     std::string tag;
     std::string name;
-    MP_RETURN_IF_ERROR(ParseTagAndName(tag_and_name, &tag, &name));
+    ABSL_RETURN_IF_ERROR(ParseTagAndName(tag_and_name, &tag, &name));
     if (!tag.empty()) {
       info->tags.push_back(tag);
     }
@@ -74,7 +74,7 @@ absl::Status SetFromTagAndNameInfo(
   tags_and_names->Clear();
   if (info.tags.empty()) {
     for (const auto& name : info.names) {
-      MP_RETURN_IF_ERROR(ValidateName(name));
+      ABSL_RETURN_IF_ERROR(ValidateName(name));
       *tags_and_names->Add() = name;
     }
   } else {
@@ -84,8 +84,8 @@ absl::Status SetFromTagAndNameInfo(
              << " does not match the number of tags " << info.tags.size();
     }
     for (int i = 0; i < info.tags.size(); ++i) {
-      MP_RETURN_IF_ERROR(ValidateTag(info.tags[i]));
-      MP_RETURN_IF_ERROR(ValidateName(info.names[i]));
+      ABSL_RETURN_IF_ERROR(ValidateTag(info.tags[i]));
+      ABSL_RETURN_IF_ERROR(ValidateName(info.names[i]));
       *tags_and_names->Add() = absl::StrCat(info.tags[i], ":", info.names[i]);
     }
   }

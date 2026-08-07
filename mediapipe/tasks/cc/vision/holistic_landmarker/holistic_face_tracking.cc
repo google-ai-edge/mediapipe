@@ -210,9 +210,9 @@ absl::StatusOr<HolisticFaceTrackingOutput> TrackHolisticFace(
     const face_landmarker::proto::FaceLandmarksDetectorGraphOptions&
         face_landmarks_detector_graph_options,
     const HolisticFaceTrackingRequest& request, Graph& graph) {
-  MP_RETURN_IF_ERROR(ValidateGraphOptions(face_detector_graph_options,
-                                          face_landmarks_detector_graph_options,
-                                          request));
+  ABSL_RETURN_IF_ERROR(
+      ValidateGraphOptions(face_detector_graph_options,
+                           face_landmarks_detector_graph_options, request));
 
   // Extracts image size from the input images.
   Stream<std::pair<int, int>> image_size = GetImageSize(image, graph);

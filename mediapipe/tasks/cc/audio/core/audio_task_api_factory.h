@@ -63,13 +63,13 @@ class AudioTaskApiFactory {
             "Task graph config should only contain one task subgraph node.",
             MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
       } else {
-        MP_RETURN_IF_ERROR(
+        ABSL_RETURN_IF_ERROR(
             tasks::core::TaskApiFactory::CheckHasValidOptions<Options>(node));
         found_task_subgraph = true;
       }
     }
-    MP_ASSIGN_OR_RETURN(RunningMode running_mode,
-                        GetAudioRunningMode(options.task_running_mode));
+    ABSL_ASSIGN_OR_RETURN(RunningMode running_mode,
+                          GetAudioRunningMode(options.task_running_mode));
     if (running_mode == RunningMode::AUDIO_STREAM) {
       if (options.packets_callback == nullptr) {
         return CreateStatusWithPayload(
@@ -85,8 +85,8 @@ class AudioTaskApiFactory {
           "callback shouldn't be provided.",
           MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
     }
-    MP_ASSIGN_OR_RETURN(auto runner,
-                        tasks::core::TaskRunner::Create(std::move(options)));
+    ABSL_ASSIGN_OR_RETURN(auto runner,
+                          tasks::core::TaskRunner::Create(std::move(options)));
     return std::make_unique<T>(std::move(runner), running_mode);
   }
 };

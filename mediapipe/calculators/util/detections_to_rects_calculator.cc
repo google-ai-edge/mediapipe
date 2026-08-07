@@ -96,7 +96,7 @@ absl::Status DetectionsToRectsCalculator::DetectionToRect(
       const int width = detection_spec.image_size->first;
       const int height = detection_spec.image_size->second;
       NormalizedRect norm_rect;
-      MP_RETURN_IF_ERROR(NormRectFromKeyPoints(location_data, &norm_rect));
+      ABSL_RETURN_IF_ERROR(NormRectFromKeyPoints(location_data, &norm_rect));
       rect->set_x_center(std::round(norm_rect.x_center() * width));
       rect->set_y_center(std::round(norm_rect.y_center() * height));
       rect->set_width(std::round(norm_rect.width() * width));
@@ -123,7 +123,7 @@ absl::Status DetectionsToRectsCalculator::DetectionToNormalizedRect(
     }
     case mediapipe::
         DetectionsToRectsCalculatorOptions_ConversionMode_USE_KEYPOINTS: {
-      MP_RETURN_IF_ERROR(NormRectFromKeyPoints(location_data, rect));
+      ABSL_RETURN_IF_ERROR(NormRectFromKeyPoints(location_data, rect));
       break;
     }
   }
@@ -244,11 +244,11 @@ absl::Status DetectionsToRectsCalculator::Process(CalculatorContext* cc) {
 
   if (cc->Outputs().HasTag(kRectTag)) {
     auto output_rect = absl::make_unique<Rect>();
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         DetectionToRect(detections[0], detection_spec, output_rect.get()));
     if (rotate_) {
       float rotation;
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           ComputeRotation(detections[0], detection_spec, &rotation));
       output_rect->set_rotation(rotation);
     }
@@ -257,11 +257,11 @@ absl::Status DetectionsToRectsCalculator::Process(CalculatorContext* cc) {
   }
   if (cc->Outputs().HasTag(kNormRectTag)) {
     auto output_rect = absl::make_unique<NormalizedRect>();
-    MP_RETURN_IF_ERROR(DetectionToNormalizedRect(detections[0], detection_spec,
-                                                 output_rect.get()));
+    ABSL_RETURN_IF_ERROR(DetectionToNormalizedRect(
+        detections[0], detection_spec, output_rect.get()));
     if (rotate_) {
       float rotation;
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           ComputeRotation(detections[0], detection_spec, &rotation));
       output_rect->set_rotation(rotation);
     }
@@ -272,11 +272,11 @@ absl::Status DetectionsToRectsCalculator::Process(CalculatorContext* cc) {
   if (cc->Outputs().HasTag(kRectsTag)) {
     auto output_rects = absl::make_unique<std::vector<Rect>>(detections.size());
     for (int i = 0; i < detections.size(); ++i) {
-      MP_RETURN_IF_ERROR(DetectionToRect(detections[i], detection_spec,
-                                         &(output_rects->at(i))));
+      ABSL_RETURN_IF_ERROR(DetectionToRect(detections[i], detection_spec,
+                                           &(output_rects->at(i))));
       if (rotate_) {
         float rotation;
-        MP_RETURN_IF_ERROR(
+        ABSL_RETURN_IF_ERROR(
             ComputeRotation(detections[i], detection_spec, &rotation));
         output_rects->at(i).set_rotation(rotation);
       }
@@ -288,11 +288,11 @@ absl::Status DetectionsToRectsCalculator::Process(CalculatorContext* cc) {
     auto output_rects =
         absl::make_unique<std::vector<NormalizedRect>>(detections.size());
     for (int i = 0; i < detections.size(); ++i) {
-      MP_RETURN_IF_ERROR(DetectionToNormalizedRect(
+      ABSL_RETURN_IF_ERROR(DetectionToNormalizedRect(
           detections[i], detection_spec, &(output_rects->at(i))));
       if (rotate_) {
         float rotation;
-        MP_RETURN_IF_ERROR(
+        ABSL_RETURN_IF_ERROR(
             ComputeRotation(detections[i], detection_spec, &rotation));
         output_rects->at(i).set_rotation(rotation);
       }

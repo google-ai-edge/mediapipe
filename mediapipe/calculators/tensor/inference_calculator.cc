@@ -136,7 +136,7 @@ absl::StatusOr<Packet<TfLiteModelPtr>> InferenceCalculator::GetModelAsPacket(
     CalculatorContext* cc) {
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   if (!options.model_path().empty()) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         auto model, TfLiteModelLoader::LoadFromPath(cc->GetResources(),
                                                     options.model_path(),
                                                     options.try_mmap_model()));
@@ -157,7 +157,7 @@ InferenceCalculator::GetModelPacketWithResource(
     CalculatorContext* cc, std::optional<MMapMode> mmap_mode) {
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   if (!options.model_path().empty()) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         auto model, TfLiteModelLoader::LoadFromPathAndGetResource(
                         cc->GetResources(), options.model_path(), mmap_mode));
     ABSL_CHECK(!model.model_packet.IsEmpty());

@@ -48,19 +48,19 @@ struct RenderableMesh3d {
 
     RenderableMesh3d renderable_mesh_3d;
     renderable_mesh_3d.vertex_size = GetVertexSize(vertex_type);
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         renderable_mesh_3d.vertex_position_size,
         GetVertexComponentSize(vertex_type, VertexComponent::POSITION),
         _ << "Failed to get the position vertex size!");
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         renderable_mesh_3d.tex_coord_position_size,
         GetVertexComponentSize(vertex_type, VertexComponent::TEX_COORD),
         _ << "Failed to get the tex coord vertex size!");
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         renderable_mesh_3d.vertex_position_offset,
         GetVertexComponentOffset(vertex_type, VertexComponent::POSITION),
         _ << "Failed to get the position vertex offset!");
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         renderable_mesh_3d.tex_coord_position_offset,
         GetVertexComponentOffset(vertex_type, VertexComponent::TEX_COORD),
         _ << "Failed to get the tex coord vertex offset!");
@@ -459,7 +459,7 @@ class EffectRendererImpl : public EffectRenderer {
       GLenum dst_texture_target,  //
       GLuint dst_texture_name) {
     // Validate input arguments.
-    MP_RETURN_IF_ERROR(ValidateFrameDimensions(frame_width, frame_height))
+    ABSL_RETURN_IF_ERROR(ValidateFrameDimensions(frame_width, frame_height))
         << "Invalid frame dimensions!";
     RET_CHECK(src_texture_name > 0 && dst_texture_name > 0)
         << "Both source and destination texture names must be non-null!";
@@ -468,17 +468,17 @@ class EffectRendererImpl : public EffectRenderer {
 
     // Validate all input face geometries.
     for (const FaceGeometry& face_geometry : multi_face_geometry) {
-      MP_RETURN_IF_ERROR(ValidateFaceGeometry(face_geometry))
+      ABSL_RETURN_IF_ERROR(ValidateFaceGeometry(face_geometry))
           << "Invalid face geometry!";
     }
 
     // Wrap both source and destination textures.
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         std::unique_ptr<Texture> src_texture,
         Texture::WrapExternalTexture(src_texture_name, src_texture_target,
                                      frame_width, frame_height),
         _ << "Failed to wrap the external source texture");
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         std::unique_ptr<Texture> dst_texture,
         Texture::WrapExternalTexture(dst_texture_name, dst_texture_target,
                                      frame_width, frame_height),
@@ -486,13 +486,13 @@ class EffectRendererImpl : public EffectRenderer {
 
     // Set the destination texture as the color buffer. Then, clear both the
     // color and the depth buffers for the render target.
-    MP_RETURN_IF_ERROR(render_target_->SetColorbuffer(*dst_texture))
+    ABSL_RETURN_IF_ERROR(render_target_->SetColorbuffer(*dst_texture))
         << "Failed to set the destination texture as the colorbuffer!";
     render_target_->Clear();
 
     // Render the source texture on top of the quad mesh (i.e. make a copy)
     // into the render target.
-    MP_RETURN_IF_ERROR(renderer_->Render(
+    ABSL_RETURN_IF_ERROR(renderer_->Render(
         *render_target_, *src_texture, renderable_quad_mesh_3d_,
         identity_matrix_, identity_matrix_, Renderer::RenderMode::OVERDRAW))
         << "Failed to render the source texture on top of the quad mesh!";
@@ -506,14 +506,14 @@ class EffectRendererImpl : public EffectRenderer {
       const FaceGeometry& face_geometry = multi_face_geometry[i];
 
       // Extract the face pose transformation matrix.
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           face_pose_transform_matrices[i],
           Convert4x4MatrixDataToArrayFormat(
               face_geometry.pose_transform_matrix()),
           _ << "Failed to extract the face pose transformation matrix!");
 
       // Extract the face mesh as a renderable.
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           renderable_face_meshes[i],
           RenderableMesh3d::CreateFromProtoMesh3d(face_geometry.mesh()),
           _ << "Failed to extract a renderable face mesh!");
@@ -538,7 +538,7 @@ class EffectRendererImpl : public EffectRenderer {
       std::array<float, 16> occlusion_face_pose_transform_matrix =
           face_pose_transform_matrix;
       occlusion_face_pose_transform_matrix[14] -= 0.1f;  // ~ 1mm
-      MP_RETURN_IF_ERROR(renderer_->Render(
+      ABSL_RETURN_IF_ERROR(renderer_->Render(
           *render_target_, *empty_color_texture_, renderable_face_mesh,
           perspective_matrix, occlusion_face_pose_transform_matrix,
           Renderer::RenderMode::OCCLUSION))
@@ -557,7 +557,7 @@ class EffectRendererImpl : public EffectRenderer {
           renderable_effect_mesh_3d_ ? *renderable_effect_mesh_3d_
                                      : renderable_face_meshes[i];
 
-      MP_RETURN_IF_ERROR(renderer_->Render(
+      ABSL_RETURN_IF_ERROR(renderer_->Render(
           *render_target_, *effect_texture_, main_effect_mesh_3d,
           perspective_matrix, face_pose_transform_matrix,
           Renderer::RenderMode::OPAQUE))
@@ -692,35 +692,36 @@ absl::StatusOr<std::unique_ptr<EffectRenderer>> CreateEffectRenderer(
     const Environment& environment,               //
     const std::optional<Mesh3d>& effect_mesh_3d,  //
     ImageFrame&& effect_texture) {
-  MP_RETURN_IF_ERROR(ValidateEnvironment(environment))
+  ABSL_RETURN_IF_ERROR(ValidateEnvironment(environment))
       << "Invalid environment!";
   if (effect_mesh_3d) {
-    MP_RETURN_IF_ERROR(ValidateMesh3d(*effect_mesh_3d))
+    ABSL_RETURN_IF_ERROR(ValidateMesh3d(*effect_mesh_3d))
         << "Invalid effect 3D mesh!";
   }
 
-  MP_ASSIGN_OR_RETURN(std::unique_ptr<RenderTarget> render_target,
-                      RenderTarget::Create(),
-                      _ << "Failed to create a render target!");
-  MP_ASSIGN_OR_RETURN(std::unique_ptr<Renderer> renderer, Renderer::Create(),
-                      _ << "Failed to create a renderer!");
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(std::unique_ptr<RenderTarget> render_target,
+                        RenderTarget::Create(),
+                        _ << "Failed to create a render target!");
+  ABSL_ASSIGN_OR_RETURN(std::unique_ptr<Renderer> renderer, Renderer::Create(),
+                        _ << "Failed to create a renderer!");
+  ABSL_ASSIGN_OR_RETURN(
       RenderableMesh3d renderable_quad_mesh_3d,
       RenderableMesh3d::CreateFromProtoMesh3d(CreateQuadMesh3d()),
       _ << "Failed to create a renderable quad mesh!");
   absl::optional<RenderableMesh3d> renderable_effect_mesh_3d;
   if (effect_mesh_3d) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         renderable_effect_mesh_3d,
         RenderableMesh3d::CreateFromProtoMesh3d(*effect_mesh_3d),
         _ << "Failed to create a renderable effect mesh!");
   }
-  MP_ASSIGN_OR_RETURN(std::unique_ptr<Texture> empty_color_gl_texture,
-                      Texture::CreateFromImageFrame(CreateEmptyColorTexture()),
-                      _ << "Failed to create an empty color texture!");
-  MP_ASSIGN_OR_RETURN(std::unique_ptr<Texture> effect_gl_texture,
-                      Texture::CreateFromImageFrame(effect_texture),
-                      _ << "Failed to create an effect texture!");
+  ABSL_ASSIGN_OR_RETURN(
+      std::unique_ptr<Texture> empty_color_gl_texture,
+      Texture::CreateFromImageFrame(CreateEmptyColorTexture()),
+      _ << "Failed to create an empty color texture!");
+  ABSL_ASSIGN_OR_RETURN(std::unique_ptr<Texture> effect_gl_texture,
+                        Texture::CreateFromImageFrame(effect_texture),
+                        _ << "Failed to create an effect texture!");
 
   std::unique_ptr<EffectRenderer> result = std::make_unique<EffectRendererImpl>(
       environment, std::move(render_target), std::move(renderer),

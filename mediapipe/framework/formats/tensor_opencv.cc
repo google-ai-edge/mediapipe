@@ -106,8 +106,8 @@ absl::StatusOr<cv::Mat> MatView(const Tensor& tensor,
   mat_dims.pop_back();
   mat_steps.pop_back();
 
-  MP_ASSIGN_OR_RETURN(int mat_type,
-                      GetMatType(tensor.element_type(), mat_channels));
+  ABSL_ASSIGN_OR_RETURN(int mat_type,
+                        GetMatType(tensor.element_type(), mat_channels));
   uint8_t* mat_buffer = const_cast<uint8_t*>(view.buffer<uint8_t>() + offset);
   return cv::Mat(mat_dims.size(), mat_dims.data(), mat_type, mat_buffer,
                  mat_steps.data());

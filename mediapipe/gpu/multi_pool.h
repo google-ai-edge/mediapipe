@@ -118,11 +118,11 @@ absl::StatusOr<Item> MultiPool<SimplePool, Spec, Item>::Get(const Spec& spec) {
   if (pool) {
     // Note: we release our multipool lock before accessing the simple pool.
     VLOG(2) << "Getting buffer from pool for spec " << spec;
-    MP_ASSIGN_OR_RETURN(auto item, pool->GetBuffer());
+    ABSL_ASSIGN_OR_RETURN(auto item, pool->GetBuffer());
     return Item(std::move(item));
   }
   VLOG(2) << "Creating buffer without pool for spec " << spec;
-  MP_ASSIGN_OR_RETURN(auto item, SimplePool::CreateBufferWithoutPool(spec));
+  ABSL_ASSIGN_OR_RETURN(auto item, SimplePool::CreateBufferWithoutPool(spec));
   return Item(std::move(item));
 }
 

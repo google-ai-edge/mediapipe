@@ -33,7 +33,7 @@ class TfLiteSignatureReaderTest : public Test {
   absl::StatusOr<std::unique_ptr<tflite::Interpreter>>
   ReadModelAndBuildInterpreter(const std::string& model_path) {
     std::unique_ptr<Resources> resources = CreateDefaultResources();
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         Packet model_packet,
         TfLiteModelLoader::LoadFromPath(
             *resources, file::JoinPath(kModelPath, model_path)));

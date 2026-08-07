@@ -126,7 +126,7 @@ absl::StatusOr<std::unique_ptr<tasks::core::TaskRunner>> CreateTaskRunner() {
   HolisticPoseTrackingRequest request;
   request.landmarks = true;
   request.world_landmarks = true;
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       HolisticPoseTrackingOutput result,
       TrackHolisticPose(image, pose_detector_graph_options,
                         pose_landmarks_detector_graph_options, request, graph));

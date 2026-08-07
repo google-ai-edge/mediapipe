@@ -139,8 +139,8 @@ absl::StatusOr<mediapipe::GpuBuffer> CreateGpuBuffer(
         absl::StrCat("Unsupported OpenGL texture format: ", format));
   }
 
-  MP_ASSIGN_OR_RETURN(WrapExternalGlTextureSyncMode wrap_sync_mode,
-                      ParseSyncMode(sync_mode));
+  ABSL_ASSIGN_OR_RETURN(WrapExternalGlTextureSyncMode wrap_sync_mode,
+                        ParseSyncMode(sync_mode));
 
   return WrapExternalGlTexture(*gpu_resources, GL_TEXTURE_2D, name, width,
                                height, gpu_buffer_format,

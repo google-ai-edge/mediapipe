@@ -122,7 +122,7 @@ class FaceGeometryFromLandmarksGraph : public Subgraph {
       environment = std::make_optional<>(
           graph.SideIn(kEnvironmentTag).Cast<Environment>());
     }
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         auto outs, BuildFaceGeometryFromLandmarksGraph(
                        *sc->MutableOptions<proto::FaceGeometryGraphOptions>(),
                        graph.In(kFaceLandmarksTag)

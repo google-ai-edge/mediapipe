@@ -84,7 +84,7 @@ class FaceToRectCalculator : public DetectionsToRectsCalculator {
     const int width = detection_spec.image_size->first;
     const int height = detection_spec.image_size->second;
     Rect rect_pix;
-    MP_RETURN_IF_ERROR(ComputeFaceRect(detection, width, height, &rect_pix));
+    ABSL_RETURN_IF_ERROR(ComputeFaceRect(detection, width, height, &rect_pix));
 
     const float width_recip = 1.f / width;
     const float height_recip = 1.f / height;

@@ -257,7 +257,7 @@ absl::StatusOr<CalculatorGraphConfig> SwitchContainer::GetConfig(
 
   // Parse all input and output tags from the container node.
   auto container_node = Subgraph::GetNode(options);
-  MP_RETURN_IF_ERROR(ValidateContract(container_node, options));
+  ABSL_RETURN_IF_ERROR(ValidateContract(container_node, options));
   CalculatorGraphConfig::Node container_streams;
   GetContainerNodeStreams(container_node, &container_streams);
   std::map<TagIndex, std::string> input_tags, output_tags;

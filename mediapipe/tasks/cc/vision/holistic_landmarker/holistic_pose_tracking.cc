@@ -162,8 +162,8 @@ TrackHolisticPoseUsingCustomPoseDetection(
   auto is_previous_roi_available = IsPresent(previous_roi, graph);
   auto image_for_detection =
       DisallowIf(image, is_previous_roi_available, graph);
-  MP_ASSIGN_OR_RETURN(auto pose_detections,
-                      pose_detection_fn(image_for_detection, graph));
+  ABSL_ASSIGN_OR_RETURN(auto pose_detections,
+                        pose_detection_fn(image_for_detection, graph));
   auto roi_from_detections = CalculateRoiFromDetections(
       pose_detections, GetImageSize(image_for_detection, graph), graph);
   // Take first non-empty.

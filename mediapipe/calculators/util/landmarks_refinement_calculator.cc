@@ -136,8 +136,8 @@ class LandmarksRefinementNodeImpl
     }
 
     // Validate indexes mapping and get total number of refined landmarks.
-    MP_ASSIGN_OR_RETURN(n_refined_landmarks_,
-                        GetNumberOfRefinedLandmarks(options_.refinement()));
+    ABSL_ASSIGN_OR_RETURN(n_refined_landmarks_,
+                          GetNumberOfRefinedLandmarks(options_.refinement()));
 
     // Validate that number of refinements and landmark streams is the same.
     RET_CHECK_EQ(cc.landmarks.Count(), options_.refinement_size())

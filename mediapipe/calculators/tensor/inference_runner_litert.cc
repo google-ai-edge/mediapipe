@@ -340,17 +340,17 @@ InferenceRunnerLiteRt::Create(
     void* metal_helper,
 #endif  // MEDIAPIPE_METAL_ENABLED
     std::optional<litert::Options> litert_options) {
-  MP_ASSIGN_OR_RETURN(auto environment,
-                      InitializeLiteRtEnvironment(options, gl_context.get()
+  ABSL_ASSIGN_OR_RETURN(auto environment,
+                        InitializeLiteRtEnvironment(options, gl_context.get()
 #if MEDIAPIPE_METAL_ENABLED
-                                                               ,
-                                                  metal_helper
+                                                                 ,
+                                                    metal_helper
 #endif  // MEDIAPIPE_METAL_ENABLED
 #if defined(__EMSCRIPTEN__)
-                                                  ,
-                                                  webgpu_service
+                                                    ,
+                                                    webgpu_service
 #endif  // __EMSCRIPTEN__
-                                                  ));
+                                                    ));
 
   // Repackage the model into a litert::Model.
   const auto* model_allocation = (*model_packet)->allocation();
@@ -358,8 +358,8 @@ InferenceRunnerLiteRt::Create(
       auto litert_model,
       litert::ExtendedModel::CreateFromBuffer(litert::BufferRef<uint8_t>(
           model_allocation->base(), model_allocation->bytes())));
-  MP_ASSIGN_OR_RETURN(litert::HwAcceleratorSet accelerator,
-                      GetLiteRtHwAccelerators(options));
+  ABSL_ASSIGN_OR_RETURN(litert::HwAcceleratorSet accelerator,
+                        GetLiteRtHwAccelerators(options));
 
   litert::Options jit_compilation_options;
   if (litert_options) {
@@ -542,7 +542,7 @@ InferenceRunnerLiteRt::Create(
     // compiled_model) during initialization, so it's safe to move them after
     // the feedback manager is created.
     feedback_manager = std::make_unique<InferenceFeedbackManagerLiteRt>();
-    MP_RETURN_IF_ERROR(feedback_manager->Init(
+    ABSL_RETURN_IF_ERROR(feedback_manager->Init(
         *input_output_config, input_output_tensor_names, &subgraph,
         &litert_model, &compiled_model, signature_index));
   }
@@ -659,7 +659,7 @@ InferenceRunnerLiteRt::~InferenceRunnerLiteRt() {
 
 absl::Status InferenceRunnerLiteRt::Close() {
 #if MEDIAPIPE_TENSOR_USE_AHWB
-  MP_RETURN_IF_ERROR(CleanAsyncRunStates(/*wait_for_all=*/true));
+  ABSL_RETURN_IF_ERROR(CleanAsyncRunStates(/*wait_for_all=*/true));
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
   return absl::OkStatus();
 }
@@ -679,7 +679,8 @@ InferenceRunnerLiteRt::CreateInputRankedTensorType(
   if (enable_dynamic_resize_ && absl::c_linear_search(litert_shape, -1)) {
     has_dynamic_dimension_ = true;
     // Check if shapes are compatible first (allowing for dynamic dimensions)
-    MP_RETURN_IF_ERROR(AreTensorSpecsCompatible(tensor_type, mp_input_tensor));
+    ABSL_RETURN_IF_ERROR(
+        AreTensorSpecsCompatible(tensor_type, mp_input_tensor));
 
     // Shapes are compatible, try resize
     const auto& mp_dims = mp_input_tensor.shape().dims;
@@ -694,7 +695,7 @@ InferenceRunnerLiteRt::CreateInputRankedTensorType(
         tensor_type.ElementType(),
         litert::Layout(litert::BuildLayout(mp_dims)));
   } else {
-    MP_RETURN_IF_ERROR(AreTensorSpecsEqual(tensor_type, mp_input_tensor));
+    ABSL_RETURN_IF_ERROR(AreTensorSpecsEqual(tensor_type, mp_input_tensor));
   }
   return tensor_type;
 }
@@ -963,7 +964,7 @@ InferenceRunnerLiteRt::CreateAhwbInputTensorBufferFromMpTensor(
   if (write_complete_fence_fd != -1) {
     // If the write complete fence fd is valid, then we need to set it on the
     // LiteRt buffer.
-    MP_ASSIGN_OR_RETURN(int dup_fd, DupFd(write_complete_fence_fd));
+    ABSL_ASSIGN_OR_RETURN(int dup_fd, DupFd(write_complete_fence_fd));
     LITERT_ASSIGN_OR_RETURN(
         auto event, litert::Event::CreateFromSyncFenceFd(*environment_, dup_fd,
                                                          /*owns_fd=*/true));
@@ -1012,13 +1013,13 @@ InferenceRunnerLiteRt::CreateCpuInputTensorBufferFromMpTensor(
       << "Input tensor memory is not aligned according to LiteRt's "
          "memory "
          "alignment requirements. Reallocating memory and copying data.";
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       Tensor aligned_mp_input_tensor,
       CreateTensorFromLiteRtRankedTensorType(
           tensor_type, memory_manager_, LITERT_HOST_MEMORY_BUFFER_ALIGNMENT));
   auto aligned_mp_input_tensor_ptr =
       std::make_unique<Tensor>(std::move(aligned_mp_input_tensor));
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       CopyMpTensorToMpTensor(tensor, *aligned_mp_input_tensor_ptr));
   auto input_tensor_view = aligned_mp_input_tensor_ptr->GetCpuReadView();
   const void* input_tensor_data = input_tensor_view.buffer<void>();
@@ -1140,7 +1141,7 @@ absl::Status InferenceRunnerLiteRt::PrepareInputBuffers(
   // which model input.
   int mp_tensor_index = 0;
   for (int i = 0; i < model_input_tensors.size(); ++i) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         bool is_feedback_tensor,
         TryAppendFeedbackBuffer(true, i, model_input_tensor_names[i],
                                 ctx.litert_inputs));
@@ -1151,20 +1152,20 @@ absl::Status InferenceRunnerLiteRt::PrepareInputBuffers(
 
     const auto& input_buffer_requirements =
         cached_input_buffer_requirements_[i];
-    MP_ASSIGN_OR_RETURN(litert::TensorBufferType buffer_type,
-                        ChooseBestBufferType(input_buffer_requirements));
+    ABSL_ASSIGN_OR_RETURN(litert::TensorBufferType buffer_type,
+                          ChooseBestBufferType(input_buffer_requirements));
 
 #if MEDIAPIPE_METAL_ENABLED
     if (buffer_type == litert::TensorBufferType::kMetalBufferPacked) {
       LITERT_ASSIGN_OR_RETURN(litert::RankedTensorType model_tensor_type,
                               model_input_tensors[i].RankedTensorType());
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           tensor_to_use, ConvertTensorChannelsIfNeeded(*tensor_to_use,
                                                        model_tensor_type, ctx));
     }
 #endif  // MEDIAPIPE_METAL_ENABLED
 
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         const litert::RankedTensorType tensor_type,
         CreateInputRankedTensorType(model_input_tensors[i], *tensor_to_use, i));
 
@@ -1196,9 +1197,9 @@ absl::Status InferenceRunnerLiteRt::PrepareInputBuffers(
         size_mismatch ||
         absl::c_linear_search(kLiteRtManagedBufferTypes, buffer_type);
     if (use_managed) {
-      MP_ASSIGN_OR_RETURN(bool needs_realloc,
-                          NeedsReallocation(managed_input_buffers_[i],
-                                            buffer_size, tensor_type));
+      ABSL_ASSIGN_OR_RETURN(bool needs_realloc,
+                            NeedsReallocation(managed_input_buffers_[i],
+                                              buffer_size, tensor_type));
 
       if (needs_realloc) {
         LITERT_ASSIGN_OR_RETURN(
@@ -1207,15 +1208,15 @@ absl::Status InferenceRunnerLiteRt::PrepareInputBuffers(
                                                 tensor_type, buffer_size));
         managed_input_buffers_[i] = std::move(litert_buffer);
       }
-      MP_RETURN_IF_ERROR(CopyMpTensorToLiteRtBuffer(
+      ABSL_RETURN_IF_ERROR(CopyMpTensorToLiteRtBuffer(
           *tensor_to_use, *managed_input_buffers_[i]));
       LITERT_ASSIGN_OR_RETURN(litert::TensorBuffer duplicated_buffer,
                               managed_input_buffers_[i]->Duplicate());
       ctx.litert_inputs.push_back(std::move(duplicated_buffer));
     } else {
-      MP_ASSIGN_OR_RETURN(litert::TensorBuffer litert_input_tensor,
-                          CreateInputTensorBufferFromMpTensor(
-                              buffer_type, *tensor_to_use, tensor_type, ctx));
+      ABSL_ASSIGN_OR_RETURN(litert::TensorBuffer litert_input_tensor,
+                            CreateInputTensorBufferFromMpTensor(
+                                buffer_type, *tensor_to_use, tensor_type, ctx));
       ctx.litert_inputs.push_back(std::move(litert_input_tensor));
     }
   }
@@ -1243,11 +1244,12 @@ InferenceRunnerLiteRt::CreateMpOutputTensors(
         feedback_manager_->IsFeedbackOutputTensorAtIndex(i)) {
       continue;
     }
-    MP_ASSIGN_OR_RETURN(const litert::RankedTensorType tensor_type,
-                        CreateOutputRankedTensorType(model_output_tensors[i],
-                                                     output_tensor_layouts[i]));
+    ABSL_ASSIGN_OR_RETURN(
+        const litert::RankedTensorType tensor_type,
+        CreateOutputRankedTensorType(model_output_tensors[i],
+                                     output_tensor_layouts[i]));
 
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         Tensor mp_output_tensor,
         CreateTensorFromLiteRtRankedTensorType(
             tensor_type, memory_manager_, LITERT_HOST_MEMORY_BUFFER_ALIGNMENT));
@@ -1307,14 +1309,15 @@ absl::Status InferenceRunnerLiteRt::PrepareOutputBuffers(
 
   int mp_output_tensor_index = 0;
   for (int i = 0; i < model_output_tensors.size(); ++i) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         bool is_feedback_tensor,
         TryAppendFeedbackBuffer(false, i, model_output_tensor_names[i],
                                 ctx.litert_outputs));
     if (is_feedback_tensor) continue;
-    MP_ASSIGN_OR_RETURN(const litert::RankedTensorType tensor_type,
-                        CreateOutputRankedTensorType(model_output_tensors[i],
-                                                     output_tensor_layouts[i]));
+    ABSL_ASSIGN_OR_RETURN(
+        const litert::RankedTensorType tensor_type,
+        CreateOutputRankedTensorType(model_output_tensors[i],
+                                     output_tensor_layouts[i]));
 
     LITERT_ASSIGN_OR_RETURN(
         const auto output_buffer_requirements,
@@ -1343,16 +1346,16 @@ absl::Status InferenceRunnerLiteRt::PrepareOutputBuffers(
           "); forcing managed copy fallback.");
     }
 
-    MP_ASSIGN_OR_RETURN(litert::TensorBufferType buffer_type,
-                        ChooseBestBufferType(output_buffer_requirements));
+    ABSL_ASSIGN_OR_RETURN(litert::TensorBufferType buffer_type,
+                          ChooseBestBufferType(output_buffer_requirements));
 
     const bool use_managed =
         size_mismatch ||
         absl::c_linear_search(kLiteRtManagedBufferTypes, buffer_type);
     if (use_managed) {
-      MP_ASSIGN_OR_RETURN(bool needs_realloc,
-                          NeedsReallocation(managed_output_buffers_[i],
-                                            buffer_size, tensor_type));
+      ABSL_ASSIGN_OR_RETURN(bool needs_realloc,
+                            NeedsReallocation(managed_output_buffers_[i],
+                                              buffer_size, tensor_type));
 
       if (needs_realloc) {
         LITERT_ASSIGN_OR_RETURN(
@@ -1366,7 +1369,7 @@ absl::Status InferenceRunnerLiteRt::PrepareOutputBuffers(
       ctx.litert_outputs.push_back(std::move(duplicated_buffer));
       mp_output_tensor_index++;
     } else {
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           litert::TensorBuffer output_tensor,
           CreateOutputTensorBufferFromMpTensor(
               buffer_type, mp_output_tensors[mp_output_tensor_index++],
@@ -1387,9 +1390,9 @@ absl::Status InferenceRunnerLiteRt::CleanAsyncRunStates(bool wait_for_all) {
     for (const auto& fence : it->async_run_fences) {
       if (fence.Get() >= 0) {
         if (wait_for_all) {
-          MP_RETURN_IF_ERROR(SyncWait(fence, absl::InfiniteDuration()));
+          ABSL_RETURN_IF_ERROR(SyncWait(fence, absl::InfiniteDuration()));
         } else {
-          MP_ASSIGN_OR_RETURN(bool fence_signaled, IsSignaled(fence));
+          ABSL_ASSIGN_OR_RETURN(bool fence_signaled, IsSignaled(fence));
           if (!fence_signaled) {
             is_signaled = false;
             break;
@@ -1424,7 +1427,7 @@ absl::StatusOr<std::vector<Tensor>> InferenceRunnerLiteRt::Run(
   }
 #endif  // MEDIAPIPE_METAL_ENABLED
 
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       PrepareInputBuffers(tensor_span, model_input_tensors, ctx));
 
 #if MEDIAPIPE_METAL_ENABLED
@@ -1443,11 +1446,11 @@ absl::StatusOr<std::vector<Tensor>> InferenceRunnerLiteRt::Run(
           signature_index_, /*update_allocation=*/has_dynamic_dimension_));
 
   auto model_output_tensors = subgraph_->Outputs();
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       std::vector<Tensor> mp_output_tensors,
       CreateMpOutputTensors(model_output_tensors, output_tensor_layouts));
 
-  MP_RETURN_IF_ERROR(PrepareOutputBuffers(
+  ABSL_RETURN_IF_ERROR(PrepareOutputBuffers(
       model_output_tensors, output_tensor_layouts, mp_output_tensors, ctx));
 
 #if MEDIAPIPE_METAL_ENABLED
@@ -1468,7 +1471,7 @@ absl::StatusOr<std::vector<Tensor>> InferenceRunnerLiteRt::Run(
   if (run_async_) {
 #if MEDIAPIPE_TENSOR_USE_AHWB
     // First, free any previously registered buffer handles from finished runs.
-    MP_RETURN_IF_ERROR(CleanAsyncRunStates(/*wait_for_all=*/false));
+    ABSL_RETURN_IF_ERROR(CleanAsyncRunStates(/*wait_for_all=*/false));
 
     if (GetNumberOfFeedbackTensors() > 0) {
       return absl::InternalError(
@@ -1542,7 +1545,7 @@ absl::StatusOr<std::vector<Tensor>> InferenceRunnerLiteRt::Run(
     ctx.active_output_views.clear();
     ctx.active_input_views.clear();
 
-    MP_RETURN_IF_ERROR(CopyLiteRtManagedOutputBuffersToMpTensors(
+    ABSL_RETURN_IF_ERROR(CopyLiteRtManagedOutputBuffersToMpTensors(
         ctx.litert_outputs, mp_output_tensors));
   }
   return std::move(mp_output_tensors);
@@ -1572,7 +1575,7 @@ absl::Status InferenceRunnerLiteRt::CopyLiteRtManagedOutputBuffersToMpTensors(
         (litert_size != mp_output_tensors[mp_output_tensor_index].bytes());
     if (size_mismatch ||
         absl::c_linear_search(kLiteRtManagedBufferTypes, buffer_type)) {
-      MP_RETURN_IF_ERROR(CopyLiteRtBufferToMpTensor(
+      ABSL_RETURN_IF_ERROR(CopyLiteRtBufferToMpTensor(
           output_buffers[i], mp_output_tensors[mp_output_tensor_index]));
     }
     mp_output_tensor_index++;

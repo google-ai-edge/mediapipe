@@ -100,7 +100,7 @@ GpuResources::StatusOrGpuResources GpuResources::Create() {
 GpuResources::StatusOrGpuResources GpuResources::Create(
     PlatformGlContext external_context,
     const MultiPoolOptions* gpu_buffer_pool_options) {
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       std::shared_ptr<GlContext> context,
       GlContext::Create(external_context, kGlContextUseDedicatedThread));
   std::shared_ptr<GpuResources> gpu_resources(
@@ -227,8 +227,8 @@ absl::Status GpuResources::PrepareGpuNode(CalculatorNode* node) {
 #endif  // !__EMSCRIPTEN__
   node_key_[node_id] = context_key;
 
-  MP_ASSIGN_OR_RETURN(std::shared_ptr<GlContext> context,
-                      GetOrCreateGlContext(context_key));
+  ABSL_ASSIGN_OR_RETURN(std::shared_ptr<GlContext> context,
+                        GetOrCreateGlContext(context_key));
 
   if (kGlContextUseDedicatedThread) {
     const std::string executor_name =
@@ -264,7 +264,7 @@ GlContext::StatusOrGlContext GpuResources::GetOrCreateGlContext(
     const std::string& key) {
   auto it = gl_key_context_->find(key);
   if (it == gl_key_context_->end()) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         std::shared_ptr<GlContext> new_context,
         GlContext::Create(*gl_key_context_->at(SharedContextKey()),
                           kGlContextUseDedicatedThread));

@@ -48,7 +48,7 @@ absl::StatusOr<CalculatorGraphConfig> TemplateSubgraph::GetConfig(
       Subgraph::GetOptions<mediapipe::TemplateSubgraphOptions>(options).dict();
   tool::TemplateExpander expander;
   CalculatorGraphConfig config;
-  MP_RETURN_IF_ERROR(expander.ExpandTemplates(arguments, templ_, &config));
+  ABSL_RETURN_IF_ERROR(expander.ExpandTemplates(arguments, templ_, &config));
   return config;
 }
 
@@ -98,7 +98,7 @@ absl::StatusOr<CalculatorGraphConfig> GraphRegistry::CreateByName(
       local_factories_.IsRegistered(ns, type_name)
           ? local_factories_.Invoke(ns, type_name)
           : global_factories_->Invoke(ns, type_name);
-  MP_RETURN_IF_ERROR(maker.status());
+  ABSL_RETURN_IF_ERROR(maker.status());
   if (context != nullptr) {
     return maker.value()->GetConfig(context);
   }

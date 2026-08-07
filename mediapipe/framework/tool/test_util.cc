@@ -171,16 +171,16 @@ std::string GetBinaryDirectory() {
 absl::Status CompareAndSaveOutputInternal(
     const ImageFrame& expected, const ImageFrame& actual,
     const ImageFrameComparisonOptions& options) {
-  MP_ASSIGN_OR_RETURN(auto output_img_path,
-                      SavePngTestOutput(actual, "output"));
-  MP_ASSIGN_OR_RETURN(auto expected_img_path,
-                      SavePngTestOutput(expected, "expected"));
+  ABSL_ASSIGN_OR_RETURN(auto output_img_path,
+                        SavePngTestOutput(actual, "output"));
+  ABSL_ASSIGN_OR_RETURN(auto expected_img_path,
+                        SavePngTestOutput(expected, "expected"));
 
   std::unique_ptr<ImageFrame> diff_img;
   auto status = CompareImageFrames(expected, actual, options, diff_img);
   if (diff_img) {
-    MP_ASSIGN_OR_RETURN(auto diff_img_path,
-                        SavePngTestOutput(*diff_img, "diff"));
+    ABSL_ASSIGN_OR_RETURN(auto diff_img_path,
+                          SavePngTestOutput(*diff_img, "diff"));
   }
 
   return status;
@@ -348,7 +348,7 @@ absl::StatusOr<std::unique_ptr<ImageFrame>> DecodeTestImage(
 absl::StatusOr<std::unique_ptr<ImageFrame>> LoadTestImage(
     absl::string_view path, ImageFormat::Format format) {
   std::string encoded;
-  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(path, &encoded));
+  ABSL_RETURN_IF_ERROR(mediapipe::file::GetContents(path, &encoded));
   return DecodeTestImage(encoded, format);
 }
 
@@ -383,7 +383,7 @@ absl::StatusOr<std::string> SavePngTestOutput(
       absl::StrCat(prefix, "_", now_string, ".png");
   std::string output_full_path =
       file::JoinPath(GetTestOutputsDir(), output_relative_path);
-  MP_RETURN_IF_ERROR(SavePngOutput(image, output_full_path));
+  ABSL_RETURN_IF_ERROR(SavePngOutput(image, output_full_path));
   return output_relative_path;
 }
 

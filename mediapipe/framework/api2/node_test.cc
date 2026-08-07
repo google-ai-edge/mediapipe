@@ -537,9 +537,9 @@ struct ConsumerNode : public Node {
   MEDIAPIPE_NODE_CONTRACT(kInt, kGeneric, kOneOf);
 
   absl::Status Process(CalculatorContext* cc) override {
-    MP_ASSIGN_OR_RETURN(auto maybe_int, kInt(cc).Consume());
-    MP_ASSIGN_OR_RETURN(auto maybe_float, kGeneric(cc).Consume<float>());
-    MP_ASSIGN_OR_RETURN(auto maybe_int2, kOneOf(cc).Consume<int>());
+    ABSL_ASSIGN_OR_RETURN(auto maybe_int, kInt(cc).Consume());
+    ABSL_ASSIGN_OR_RETURN(auto maybe_float, kGeneric(cc).Consume<float>());
+    ABSL_ASSIGN_OR_RETURN(auto maybe_int2, kOneOf(cc).Consume<int>());
     return {};
   }
 };

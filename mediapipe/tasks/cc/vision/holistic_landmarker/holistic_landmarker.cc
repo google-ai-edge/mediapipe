@@ -280,7 +280,7 @@ absl::StatusOr<std::unique_ptr<HolisticLandmarker>> HolisticLandmarker::Create(
               kMicroSecondsPerMilliSecond);
     };
   }
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       auto landmarker,
       (core::VisionTaskApiFactory::Create<HolisticLandmarker,
                                           HolisticLandmarkerGraphOptionsProto>(
@@ -313,7 +313,7 @@ absl::StatusOr<HolisticLandmarkerResult> HolisticLandmarker::Detect(
         "This task doesn't support region-of-interest.",
         MediaPipeTasksStatus::kImageProcessingInvalidArgumentError);
   }
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
           {{kImageInStreamName, MakePacket<Image>(std::move(image))}}));
@@ -333,7 +333,7 @@ absl::StatusOr<HolisticLandmarkerResult> HolisticLandmarker::DetectForVideo(
         "This task doesn't support region-of-interest.",
         MediaPipeTasksStatus::kImageProcessingInvalidArgumentError);
   }
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
           {{kImageInStreamName,

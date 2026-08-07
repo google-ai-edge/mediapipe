@@ -111,7 +111,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
            .ca_bundle_path = options.ca_bundle_path});
   auto task_runner = absl::WrapUnique(
       new TaskRunner(options.packets_callback, std::move(tasks_logger)));
-  MP_RETURN_IF_ERROR(task_runner->Initialize(
+  ABSL_RETURN_IF_ERROR(task_runner->Initialize(
       std::move(options.config), std::move(options.op_resolver),
       std::move(options.default_executor),
       std::move(options.input_side_packets), std::move(options.error_fn),
@@ -119,12 +119,12 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
 
 #if !MEDIAPIPE_DISABLE_GPU
   if (options.resources) {
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         task_runner->graph_.SetGpuResources(std::move(options.resources)));
   }
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
-  MP_RETURN_IF_ERROR(task_runner->Start());
+  ABSL_RETURN_IF_ERROR(task_runner->Start());
   return task_runner;
 }
 
@@ -185,22 +185,22 @@ absl::Status TaskRunner::Initialize(
   }
 
   if (default_executor) {
-    MP_RETURN_IF_ERROR(graph_.SetExecutor("", std::move(default_executor)));
+    ABSL_RETURN_IF_ERROR(graph_.SetExecutor("", std::move(default_executor)));
   }
 
-  if (error_fn) MP_RETURN_IF_ERROR(graph_.SetErrorCallback(*error_fn));
+  if (error_fn) ABSL_RETURN_IF_ERROR(graph_.SetErrorCallback(*error_fn));
 
   if (disable_default_service) {
-    MP_RETURN_IF_ERROR(graph_.DisallowServiceDefaultInitialization());
+    ABSL_RETURN_IF_ERROR(graph_.DisallowServiceDefaultInitialization());
   }
   auto model_resources_cache =
       std::make_shared<ModelResourcesCache>(std::move(op_resolver));
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       AddPayload(graph_.SetServiceObject(kModelResourcesCacheService,
                                          model_resources_cache),
                  "ModelResourcesCacheService is not set up successfully.",
                  MediaPipeTasksStatus::kRunnerModelResourcesCacheServiceError));
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       AddPayload(graph_.Initialize(std::move(config), *input_side_packets),
                  "MediaPipe CalculatorGraph is not successfully initialized.",
                  MediaPipeTasksStatus::kRunnerInitializationError));
@@ -223,13 +223,13 @@ absl::Status TaskRunner::Start() {
     absl::MutexLock lock(mutex_);
     last_seen_ = Timestamp::Unset();
   }
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       AddPayload(graph_.StartRun({}),
                  "MediaPipe CalculatorGraph is not successfully started.",
                  MediaPipeTasksStatus::kRunnerFailsToStartError));
   // Waits until the graph becomes idle to ensure that all calculators are
   // successfully opened.
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       AddPayload(graph_.WaitUntilIdle(),
                  "MediaPipe CalculatorGraph is not successfully started.",
                  MediaPipeTasksStatus::kRunnerFailsToStartError));
@@ -252,8 +252,8 @@ absl::StatusOr<PacketMap> TaskRunner::Process(PacketMap inputs) {
         "callback is provided.",
         MediaPipeTasksStatus::kRunnerApiCalledInWrongModeError);
   }
-  MP_ASSIGN_OR_RETURN(auto input_timestamp,
-                      ValidateAndGetPacketTimestamp(inputs));
+  ABSL_ASSIGN_OR_RETURN(auto input_timestamp,
+                        ValidateAndGetPacketTimestamp(inputs));
   // MediaPipe reports runtime errors through CalculatorGraph::WaitUntilIdle or
   // WaitUntilDone without indicating the exact packet timestamp.
   // To ensure that the TaskRunner::Process reports errors per invocation,
@@ -280,7 +280,7 @@ absl::StatusOr<PacketMap> TaskRunner::Process(PacketMap inputs) {
   // TODO: b/483040083 - Support recording GPU input arrival.
   tasks_logger_->RecordCpuInputArrival(input_timestamp);
   for (auto& [stream_name, packet] : inputs) {
-    MP_RETURN_IF_ERROR(AddPayload(
+    ABSL_RETURN_IF_ERROR(AddPayload(
         graph_.AddPacketToInputStream(stream_name,
                                       std::move(packet).At(input_timestamp)),
         absl::StrCat("Failed to add packet to the graph input stream: ",
@@ -317,8 +317,8 @@ absl::Status TaskRunner::Send(PacketMap inputs) {
         "callback is not provided.",
         MediaPipeTasksStatus::kRunnerApiCalledInWrongModeError);
   }
-  MP_ASSIGN_OR_RETURN(auto input_timestamp,
-                      ValidateAndGetPacketTimestamp(inputs));
+  ABSL_ASSIGN_OR_RETURN(auto input_timestamp,
+                        ValidateAndGetPacketTimestamp(inputs));
   if (!input_timestamp.IsAllowedInStream()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
@@ -335,7 +335,7 @@ absl::Status TaskRunner::Send(PacketMap inputs) {
   }
   tasks_logger_->RecordCpuInputArrival(input_timestamp);
   for (auto& [stream_name, packet] : inputs) {
-    MP_RETURN_IF_ERROR(AddPayload(
+    ABSL_RETURN_IF_ERROR(AddPayload(
         graph_.AddPacketToInputStream(stream_name,
                                       std::move(packet).At(input_timestamp)),
         absl::Substitute("Failed to add packet to the graph input stream: $0 "
@@ -356,17 +356,17 @@ absl::Status TaskRunner::Close() {
   }
   tasks_logger_->LogSessionEnd();
   is_running_ = false;
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       AddPayload(graph_.CloseAllInputStreams(), "Fail to close input streams",
                  MediaPipeTasksStatus::kRunnerFailsToCloseError));
-  MP_RETURN_IF_ERROR(AddPayload(
+  ABSL_RETURN_IF_ERROR(AddPayload(
       graph_.WaitUntilDone(), "Fail to shutdown the MediaPipe graph.",
       MediaPipeTasksStatus::kRunnerFailsToCloseError));
   return absl::OkStatus();
 }
 
 absl::Status TaskRunner::Restart() {
-  MP_RETURN_IF_ERROR(Close());
+  ABSL_RETURN_IF_ERROR(Close());
   return Start();
 }
 

@@ -63,9 +63,9 @@ absl::Status ResourceProviderCalculator::Open(CalculatorContext* cc) {
   };
 
   for (int i = 0; i < kResources(cc).Count(); ++i) {
-    MP_ASSIGN_OR_RETURN(absl::string_view res_id, get_resource_id_fn(i));
-    MP_ASSIGN_OR_RETURN(std::unique_ptr<Resource> res,
-                        cc->GetResources().Get(res_id, res_opts));
+    ABSL_ASSIGN_OR_RETURN(absl::string_view res_id, get_resource_id_fn(i));
+    ABSL_ASSIGN_OR_RETURN(std::unique_ptr<Resource> res,
+                          cc->GetResources().Get(res_id, res_opts));
     Packet<Resource> res_packet = api2::PacketAdopting(std::move(res));
     kResources(cc)[i].Set(std::move(res_packet));
   }

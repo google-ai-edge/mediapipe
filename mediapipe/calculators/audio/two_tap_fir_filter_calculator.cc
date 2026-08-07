@@ -70,8 +70,9 @@ class TwoTapFirFilterCalculator : public Node {
 
   absl::Status Open(CalculatorContext* cc) override {
     auto audio_header = std::make_unique<mediapipe::TimeSeriesHeader>();
-    MP_RETURN_IF_ERROR(mediapipe::time_series_util::FillTimeSeriesHeaderIfValid(
-        cc->Inputs().Tag(kInputTag).Header(), audio_header.get()));
+    ABSL_RETURN_IF_ERROR(
+        mediapipe::time_series_util::FillTimeSeriesHeaderIfValid(
+            cc->Inputs().Tag(kInputTag).Header(), audio_header.get()));
     const auto& options = cc->Options<TwoTapFirFilterCalculatorOptions>();
     two_tap_fir_filter_ = std::make_unique<TwoTapFirFilter>(
         std::make_pair(options.gain_prev(), options.gain_now()));

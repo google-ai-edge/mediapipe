@@ -574,7 +574,7 @@ absl::Status InitBeginEndTensorLoopTestGraph(
         }
       )pb");
   tool::AddVectorSink("output_tensors", &graph_config, &output_packets);
-  MP_RETURN_IF_ERROR(graph.Initialize(graph_config));
+  ABSL_RETURN_IF_ERROR(graph.Initialize(graph_config));
   return graph.StartRun({});
 }
 

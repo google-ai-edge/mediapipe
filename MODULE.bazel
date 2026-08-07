@@ -48,12 +48,12 @@ single_version_override(
     version = "0.34.0",
 )
 
-# ABSL on 2025-01-14
+# Abseil 20260526.0
 bazel_dep(name = "abseil-cpp", repo_name = "com_google_absl")
 archive_override(
     module_name = "abseil-cpp",
-    strip_prefix = "abseil-cpp-255c84dadd029fd8ad25c5efb5933e47beaa00c7",
-    urls = ["https://github.com/abseil/abseil-cpp/archive/255c84dadd029fd8ad25c5efb5933e47beaa00c7.tar.gz"],
+    strip_prefix = "abseil-cpp-20260526.0",
+    urls = ["https://github.com/abseil/abseil-cpp/releases/download/20260526.0/abseil-cpp-20260526.0.tar.gz"],
 )
 
 # RE2 version 2025-11-05 (and later) explicitly adds the missing <cstring> include to prog.h and

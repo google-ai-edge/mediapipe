@@ -59,7 +59,7 @@ GraphTextEmbedderExecutor::GraphTextEmbedderExecutor(
 
 absl::StatusOr<TextEmbedderResult> GraphTextEmbedderExecutor::Embed(
     absl::string_view text) {
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       auto output_packets,
       runner_->Process(
           {{kTextInStreamName, MakePacket<std::string>(std::string(text))}}));
@@ -72,8 +72,8 @@ absl::Status GraphTextEmbedderExecutor::Close() { return runner_->Close(); }
 absl::StatusOr<std::unique_ptr<GraphTextEmbedderExecutor>>
 GraphTextEmbedderExecutor::Create(
     tasks::core::TaskRunnerOptions task_runner_options) {
-  MP_ASSIGN_OR_RETURN(auto runner,
-                      core::TaskRunner::Create(std::move(task_runner_options)));
+  ABSL_ASSIGN_OR_RETURN(
+      auto runner, core::TaskRunner::Create(std::move(task_runner_options)));
   return std::make_unique<GraphTextEmbedderExecutor>(std::move(runner));
 }
 

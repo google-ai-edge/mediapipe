@@ -148,7 +148,7 @@ class EmitFileStringTestSubgraph : public Subgraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         std::unique_ptr<mediapipe::Resource> data,
         sc->GetResources().Get(
             "mediapipe/framework/testdata/resource_subgraph.data"));

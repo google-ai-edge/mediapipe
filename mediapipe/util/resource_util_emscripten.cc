@@ -50,7 +50,7 @@ absl::Status DefaultGetResourceContents(const std::string& path,
     ABSL_LOG(WARNING)
         << "Setting \"read_as_binary\" to false is a no-op on Emscripten.";
   }
-  MP_ASSIGN_OR_RETURN(std::string full_path, PathToResourceAsFile(path));
+  ABSL_ASSIGN_OR_RETURN(std::string full_path, PathToResourceAsFile(path));
   std::ifstream input(full_path);
   output->assign((std::istreambuf_iterator<char>(input)),
                  std::istreambuf_iterator<char>());

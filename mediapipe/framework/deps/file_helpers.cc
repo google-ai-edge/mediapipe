@@ -479,7 +479,7 @@ absl::Status RecursivelyCreateDir(absl::string_view path) {
     return absl::OkStatus();
   }
   auto split_path = file::SplitPath(path);
-  MP_RETURN_IF_ERROR(RecursivelyCreateDir(split_path.first));
+  ABSL_RETURN_IF_ERROR(RecursivelyCreateDir(split_path.first));
   if (mkdir(std::string(path)) != 0) {
     switch (errno) {
       case EACCES:

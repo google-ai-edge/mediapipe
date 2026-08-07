@@ -456,7 +456,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
     }
 
     if (inference_state_to_process) {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           OutputBatch(cc, std::move(inference_state_to_process)));
     }
 
@@ -474,7 +474,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
       }
     }
     if (inference_state_to_process) {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           OutputBatch(cc, std::move(inference_state_to_process)));
     }
     return absl::OkStatus();

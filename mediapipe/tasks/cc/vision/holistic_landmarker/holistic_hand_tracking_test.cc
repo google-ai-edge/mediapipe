@@ -146,7 +146,7 @@ absl::StatusOr<std::unique_ptr<tasks::core::TaskRunner>> CreateTaskRunner() {
                                   hand_roi_refinement_options);
   HolisticHandTrackingRequest request;
   request.landmarks = true;
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       HolisticHandTrackingOutput left_hand_result,
       TrackHolisticHand(
           image, pose_landmarks, pose_world_landmarks,
@@ -159,7 +159,7 @@ absl::StatusOr<std::unique_ptr<tasks::core::TaskRunner>> CreateTaskRunner() {
               /*index_idx=*/
               static_cast<int>(pose_landmarker::PoseLandmarkName::kLeftIndex1)},
           request, graph));
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       HolisticHandTrackingOutput right_hand_result,
       TrackHolisticHand(
           image, pose_landmarks, pose_world_landmarks,

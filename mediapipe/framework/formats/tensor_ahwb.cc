@@ -212,10 +212,10 @@ absl::Status Tensor::AllocateAHardwareBuffer() const {
                  HardwareBufferSpec::AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN |
                  HardwareBufferSpec::AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
     if (hardware_buffer_pool_ == nullptr) {
-      MP_ASSIGN_OR_RETURN(auto new_ahwb, HardwareBuffer::Create(spec));
+      ABSL_ASSIGN_OR_RETURN(auto new_ahwb, HardwareBuffer::Create(spec));
       ahwb_ = std::make_shared<HardwareBuffer>(std::move(new_ahwb));
     } else {
-      MP_ASSIGN_OR_RETURN(ahwb_, hardware_buffer_pool_->GetBuffer(spec));
+      ABSL_ASSIGN_OR_RETURN(ahwb_, hardware_buffer_pool_->GetBuffer(spec));
     }
   }
   return absl::OkStatus();
@@ -328,7 +328,7 @@ absl::Status Tensor::ReleaseAhwbStuff() {
           gl_context_ != nullptr) {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
         // Delay release until the GPU usage is finished.
-        MP_RETURN_IF_ERROR(gl_context_->Run([this]() -> absl::Status {
+        ABSL_RETURN_IF_ERROR(gl_context_->Run([this]() -> absl::Status {
           auto& releaser = gl_context_->GetCachedAttachment(kAhwbGpuReleaser);
           return releaser.AddAndFreeUnusedResources(ahwb_, opengl_buffer_,
                                                     fence_sync_, ssbo_read_,

@@ -50,11 +50,11 @@ absl::StatusOr<std::string> RunTextToTensorCalculator(absl::string_view text) {
 
   // Run the graph.
   CalculatorGraph graph;
-  MP_RETURN_IF_ERROR(graph.Initialize(graph_config));
-  MP_RETURN_IF_ERROR(graph.StartRun({}));
-  MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(
+  ABSL_RETURN_IF_ERROR(graph.Initialize(graph_config));
+  ABSL_RETURN_IF_ERROR(graph.StartRun({}));
+  ABSL_RETURN_IF_ERROR(graph.AddPacketToInputStream(
       "text", MakePacket<std::string>(text).At(Timestamp(0))));
-  MP_RETURN_IF_ERROR(graph.WaitUntilIdle());
+  ABSL_RETURN_IF_ERROR(graph.WaitUntilIdle());
 
   if (output_packets.size() != 1) {
     return absl::InvalidArgumentError(absl::Substitute(

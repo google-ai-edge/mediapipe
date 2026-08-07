@@ -43,7 +43,7 @@ class LandmarksSmoothingCalculatorImpl
     : public NodeImpl<LandmarksSmoothingCalculator> {
  public:
   absl::Status Open(CalculatorContext* cc) override {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         landmarks_filter_,
         InitializeLandmarksFilter(
             cc->Options<LandmarksSmoothingCalculatorOptions>()));
@@ -56,7 +56,7 @@ class LandmarksSmoothingCalculatorImpl
     if ((kInNormLandmarks(cc).IsConnected() &&
          kInNormLandmarks(cc).IsEmpty()) ||
         (kInLandmarks(cc).IsConnected() && kInLandmarks(cc).IsEmpty())) {
-      MP_RETURN_IF_ERROR(landmarks_filter_->Reset());
+      ABSL_RETURN_IF_ERROR(landmarks_filter_->Reset());
       return absl::OkStatus();
     }
 
@@ -81,7 +81,7 @@ class LandmarksSmoothingCalculatorImpl
                                      image_height, *in_landmarks.get());
 
       auto out_landmarks = absl::make_unique<LandmarkList>();
-      MP_RETURN_IF_ERROR(landmarks_filter_->Apply(
+      ABSL_RETURN_IF_ERROR(landmarks_filter_->Apply(
           *in_landmarks, timestamp, object_scale, *out_landmarks));
 
       auto out_norm_landmarks = absl::make_unique<NormalizedLandmarkList>();
@@ -99,7 +99,7 @@ class LandmarksSmoothingCalculatorImpl
       }
 
       auto out_landmarks = absl::make_unique<LandmarkList>();
-      MP_RETURN_IF_ERROR(landmarks_filter_->Apply(
+      ABSL_RETURN_IF_ERROR(landmarks_filter_->Apply(
           in_landmarks, timestamp, object_scale, *out_landmarks));
 
       kOutLandmarks(cc).Send(std::move(out_landmarks));

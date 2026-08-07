@@ -86,7 +86,7 @@ absl::StatusOr<std::unique_ptr<ModelResources>> ModelResources::Create(
   }
   auto model_resources = absl::WrapUnique(
       new ModelResources(tag, std::move(model_file), op_resolver_packet));
-  MP_RETURN_IF_ERROR(model_resources->BuildModelFromExternalFileProto());
+  ABSL_RETURN_IF_ERROR(model_resources->BuildModelFromExternalFileProto());
   return model_resources;
 }
 
@@ -104,18 +104,18 @@ absl::Status ModelResources::BuildModelFromExternalFileProto() {
       // If the model contents are provided via a custom ResourceProviderFn, the
       // open() method may not work. Thus, loads the model content from the
       // model file path in advance with the help of GetResourceContents.
-      MP_RETURN_IF_ERROR(GetResourceContents(
+      ABSL_RETURN_IF_ERROR(GetResourceContents(
           model_file_->file_name(), model_file_->mutable_file_content()));
       model_file_->clear_file_name();
     } else {
       // If the model file name is a relative path, searches the file in a
       // platform-specific location and returns the absolute path on success.
-      MP_ASSIGN_OR_RETURN(std::string path_to_resource,
-                          PathToResourceAsFile(model_file_->file_name()));
+      ABSL_ASSIGN_OR_RETURN(std::string path_to_resource,
+                            PathToResourceAsFile(model_file_->file_name()));
       model_file_->set_file_name(path_to_resource);
     }
   }
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       model_file_handler_,
       ExternalFileHandler::CreateFromExternalFile(model_file_.get()));
   const char* buffer_data = model_file_handler_->GetFileContent().data();
@@ -152,9 +152,9 @@ absl::Status ModelResources::BuildModelFromExternalFileProto() {
 
   model_packet_ = MakePacket<ModelPtr>(
       model.release(), [](tflite::FlatBufferModel* model) { delete model; });
-  MP_ASSIGN_OR_RETURN(auto model_metadata_extractor,
-                      metadata::ModelMetadataExtractor::CreateFromModelBuffer(
-                          buffer_data, buffer_size));
+  ABSL_ASSIGN_OR_RETURN(auto model_metadata_extractor,
+                        metadata::ModelMetadataExtractor::CreateFromModelBuffer(
+                            buffer_data, buffer_size));
   metadata_extractor_packet_ = PacketAdopting<metadata::ModelMetadataExtractor>(
       std::move(model_metadata_extractor));
   return absl::OkStatus();

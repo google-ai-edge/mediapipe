@@ -61,8 +61,8 @@ absl::Status CheckEglAndroidNativeSyncSupported(EGLDisplay display) {
 
 absl::Status CheckEglSyncSupported(EGLDisplay egl_display) {
   static NoDestructor<absl::Status> support_status([&]() -> absl::Status {
-    MP_RETURN_IF_ERROR(CheckEglFenceSyncSupported(egl_display));
-    MP_RETURN_IF_ERROR(CheckEglWaitSyncSupported(egl_display));
+    ABSL_RETURN_IF_ERROR(CheckEglFenceSyncSupported(egl_display));
+    ABSL_RETURN_IF_ERROR(CheckEglWaitSyncSupported(egl_display));
 
     RET_CHECK(eglCreateSyncKHR = reinterpret_cast<PFNEGLCREATESYNCKHRPROC>(
                   eglGetProcAddress("eglCreateSyncKHR")));
@@ -83,7 +83,7 @@ absl::Status CheckEglSyncSupported(EGLDisplay egl_display) {
 
 absl::Status CheckEglNativeSyncSupported(EGLDisplay egl_display) {
   static NoDestructor<absl::Status> support_status([&]() -> absl::Status {
-    MP_RETURN_IF_ERROR(CheckEglAndroidNativeSyncSupported(egl_display));
+    ABSL_RETURN_IF_ERROR(CheckEglAndroidNativeSyncSupported(egl_display));
     RET_CHECK(eglDupNativeFenceFDANDROID =
                   reinterpret_cast<PFNEGLDUPNATIVEFENCEFDANDROIDPROC>(
                       eglGetProcAddress("eglDupNativeFenceFDANDROID")));
@@ -95,7 +95,7 @@ absl::Status CheckEglNativeSyncSupported(EGLDisplay egl_display) {
 }  // namespace
 
 absl::StatusOr<EglSync> EglSync::Create(EGLDisplay display) {
-  MP_RETURN_IF_ERROR(CheckEglSyncSupported(display));
+  ABSL_RETURN_IF_ERROR(CheckEglSyncSupported(display));
 
   const EGLSyncKHR egl_sync =
       eglCreateSyncKHR(display, EGL_SYNC_FENCE_KHR, nullptr);
@@ -105,8 +105,8 @@ absl::StatusOr<EglSync> EglSync::Create(EGLDisplay display) {
 }
 
 absl::StatusOr<EglSync> EglSync::CreateNative(EGLDisplay display) {
-  MP_RETURN_IF_ERROR(CheckEglSyncSupported(display));
-  MP_RETURN_IF_ERROR(CheckEglNativeSyncSupported(display));
+  ABSL_RETURN_IF_ERROR(CheckEglSyncSupported(display));
+  ABSL_RETURN_IF_ERROR(CheckEglNativeSyncSupported(display));
 
   const EGLSyncKHR egl_sync =
       eglCreateSyncKHR(display, EGL_SYNC_NATIVE_FENCE_ANDROID, nullptr);
@@ -117,8 +117,8 @@ absl::StatusOr<EglSync> EglSync::CreateNative(EGLDisplay display) {
 
 absl::StatusOr<EglSync> EglSync::CreateNative(EGLDisplay display,
                                               int native_fence_fd) {
-  MP_RETURN_IF_ERROR(CheckEglSyncSupported(display));
-  MP_RETURN_IF_ERROR(CheckEglNativeSyncSupported(display));
+  ABSL_RETURN_IF_ERROR(CheckEglSyncSupported(display));
+  ABSL_RETURN_IF_ERROR(CheckEglNativeSyncSupported(display));
 
   // NOTE: cannot use `UniqueFd`, as there's clashing on ownership of the FD
   // when passing it to eglCreateSyncKHR (which takes the ownership of the FD)
@@ -195,7 +195,7 @@ void EglSync::Invalidate() {
 }
 
 absl::Status EglSync::WaitOnGpu() {
-  MP_RETURN_IF_ERROR(CheckEglSyncSupported(display_));
+  ABSL_RETURN_IF_ERROR(CheckEglSyncSupported(display_));
 
   const EGLint result = eglWaitSyncKHR(display_, sync_, 0);
   RET_CHECK_EQ(result, EGL_TRUE) << "eglWaitSyncKHR failed: " << GetEglError();
@@ -203,7 +203,7 @@ absl::Status EglSync::WaitOnGpu() {
 }
 
 absl::Status EglSync::Wait() {
-  MP_RETURN_IF_ERROR(CheckEglSyncSupported(display_));
+  ABSL_RETURN_IF_ERROR(CheckEglSyncSupported(display_));
 
   const EGLint result = eglClientWaitSyncKHR(
       display_, sync_, EGL_SYNC_FLUSH_COMMANDS_BIT_KHR, EGL_FOREVER_KHR);
@@ -213,7 +213,7 @@ absl::Status EglSync::Wait() {
 }
 
 absl::StatusOr<UniqueFd> EglSync::DupNativeFd() {
-  MP_RETURN_IF_ERROR(CheckEglNativeSyncSupported(display_));
+  ABSL_RETURN_IF_ERROR(CheckEglNativeSyncSupported(display_));
 
   const int fd = eglDupNativeFenceFDANDROID(display_, sync_);
   RET_CHECK_NE(fd, EGL_NO_NATIVE_FENCE_FD_ANDROID)

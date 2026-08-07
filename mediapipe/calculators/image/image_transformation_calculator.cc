@@ -292,7 +292,7 @@ absl::Status ImageTransformationCalculator::GetContract(
 
   if (use_gpu) {
 #if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
+    ABSL_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
 #endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
@@ -355,7 +355,7 @@ absl::Status ImageTransformationCalculator::Open(CalculatorContext* cc) {
   if (use_gpu_) {
 #if !MEDIAPIPE_DISABLE_GPU
     // Let the helper access the GL context information.
-    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
+    ABSL_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #else
     RET_CHECK_FAIL() << "GPU processing not enabled.";
 #endif  // !MEDIAPIPE_DISABLE_GPU
@@ -617,7 +617,7 @@ absl::Status ImageTransformationCalculator::RenderGpu(CalculatorContext* cc) {
       input.format() == GpuBufferFormat::kBiPlanar420YpCbCr8FullRange) {
     if (!yuv_renderer_) {
       yuv_renderer_ = absl::make_unique<QuadRenderer>();
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           yuv_renderer_->GlSetup(::mediapipe::kYUV2TexToRGBFragmentShader,
                                  {"video_frame_y", "video_frame_uv"}));
     }
@@ -631,7 +631,7 @@ absl::Status ImageTransformationCalculator::RenderGpu(CalculatorContext* cc) {
     if (src1.target() == GL_TEXTURE_EXTERNAL_OES) {
       if (!ext_rgb_renderer_) {
         ext_rgb_renderer_ = absl::make_unique<QuadRenderer>();
-        MP_RETURN_IF_ERROR(ext_rgb_renderer_->GlSetup(
+        ABSL_RETURN_IF_ERROR(ext_rgb_renderer_->GlSetup(
             ::mediapipe::kBasicTexturedFragmentShaderOES, {"video_frame"}));
       }
       renderer = ext_rgb_renderer_.get();
@@ -640,7 +640,7 @@ absl::Status ImageTransformationCalculator::RenderGpu(CalculatorContext* cc) {
     {
       if (!rgb_renderer_) {
         rgb_renderer_ = std::make_unique<QuadRenderer>();
-        MP_RETURN_IF_ERROR(rgb_renderer_->GlSetup());
+        ABSL_RETURN_IF_ERROR(rgb_renderer_->GlSetup());
       }
       renderer = rgb_renderer_.get();
     }
@@ -674,7 +674,7 @@ absl::Status ImageTransformationCalculator::RenderGpu(CalculatorContext* cc) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   }
 
-  MP_RETURN_IF_ERROR(renderer->GlRender(
+  ABSL_RETURN_IF_ERROR(renderer->GlRender(
       src1.width(), src1.height(), dst.width(), dst.height(), scale_mode,
       rotation, flip_horizontally_, flip_vertically_,
       /*flip_texture=*/false));

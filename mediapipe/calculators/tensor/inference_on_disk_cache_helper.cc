@@ -76,20 +76,20 @@ absl::Status InferenceOnDiskCacheHelper::SaveGpuCaches(
     tflite::gpu::TFLiteGPURunner& gpu_runner) const {
   if (use_kernel_caching_ && gpu_runner.CanGenerateSerializedBinaryCache()) {
     // Save kernel file.
-    MP_ASSIGN_OR_RETURN(std::vector<uint8_t> kernel_cache,
-                        gpu_runner.GetSerializedBinaryCache());
+    ABSL_ASSIGN_OR_RETURN(std::vector<uint8_t> kernel_cache,
+                          gpu_runner.GetSerializedBinaryCache());
     std::string cache_str(kernel_cache.begin(), kernel_cache.end());
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         mediapipe::file::SetContents(cached_kernel_filename_, cache_str));
   }
   if (use_serialized_model_ && gpu_runner.CanGenerateSerializedModel()) {
     // Save serialized model file.
-    MP_ASSIGN_OR_RETURN(std::vector<uint8_t> serialized_model_vec,
-                        gpu_runner.GetSerializedModel());
+    ABSL_ASSIGN_OR_RETURN(std::vector<uint8_t> serialized_model_vec,
+                          gpu_runner.GetSerializedModel());
     absl::string_view serialized_model(
         reinterpret_cast<char*>(serialized_model_vec.data()),
         serialized_model_vec.size());
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         mediapipe::file::SetContents(serialized_model_path_, serialized_model));
   }
   return absl::OkStatus();
@@ -101,7 +101,7 @@ absl::Status InferenceOnDiskCacheHelper::ReadGpuCaches(
       mediapipe::file::Exists(cached_kernel_filename_).ok()) {
     // Load pre-compiled kernel file.
     std::string cache_str;
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         mediapipe::file::GetContents(cached_kernel_filename_, &cache_str));
     std::vector<uint8_t> cache_vec(cache_str.begin(), cache_str.end());
     gpu_runner.SetSerializedBinaryCache(std::move(cache_vec));
@@ -110,7 +110,7 @@ absl::Status InferenceOnDiskCacheHelper::ReadGpuCaches(
       mediapipe::file::Exists(serialized_model_path_).ok()) {
     // Load serialized model file.
     std::string serialized_model_str;
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         file::GetContents(serialized_model_path_, &serialized_model_str));
     std::vector<uint8_t> serialized_model_vec(serialized_model_str.begin(),
                                               serialized_model_str.end());

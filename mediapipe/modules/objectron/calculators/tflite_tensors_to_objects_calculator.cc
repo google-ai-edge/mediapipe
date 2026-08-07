@@ -106,7 +106,7 @@ absl::Status TfLiteTensorsToObjectsCalculator::GetContract(
 }
 
 absl::Status TfLiteTensorsToObjectsCalculator::Open(CalculatorContext* cc) {
-  MP_RETURN_IF_ERROR(LoadOptions(cc));
+  ABSL_RETURN_IF_ERROR(LoadOptions(cc));
   // Load camera intrinsic matrix.
   const float fx = options_.normalized_focal_x();
   const float fy = options_.normalized_focal_y();
@@ -131,7 +131,7 @@ absl::Status TfLiteTensorsToObjectsCalculator::Process(CalculatorContext* cc) {
 
   auto output_objects = std::make_unique<FrameAnnotation>();
 
-  MP_RETURN_IF_ERROR(ProcessCPU(cc, output_objects.get()));
+  ABSL_RETURN_IF_ERROR(ProcessCPU(cc, output_objects.get()));
 
   // Output
   if (cc->Outputs().HasTag(kOutputStreamTag)) {

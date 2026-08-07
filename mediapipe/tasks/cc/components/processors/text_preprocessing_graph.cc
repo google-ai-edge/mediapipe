@@ -179,8 +179,8 @@ absl::StatusOr<bool> HasDynamicInputTensors(
 absl::Status ConfigureTextPreprocessingGraph(
     const ModelResources& model_resources,
     TextPreprocessingGraphOptions& options) {
-  MP_ASSIGN_OR_RETURN(TextModelType::ModelType model_type,
-                      GetModelType(model_resources));
+  ABSL_ASSIGN_OR_RETURN(TextModelType::ModelType model_type,
+                        GetModelType(model_resources));
 
   if (model_resources.GetTfLiteModel()->subgraphs()->size() != 1 &&
       model_type != TextModelType::EMBEDDING_GEMMA_MODEL) {
@@ -216,7 +216,7 @@ absl::Status ConfigureTextPreprocessingGraph(
     case TextModelType::GECKO_MODEL:
     case TextModelType::BERT_MODEL:
     case TextModelType::REGEX_MODEL: {
-      MP_ASSIGN_OR_RETURN(int max_seq_len, GetMaxSeqLen(model_graph));
+      ABSL_ASSIGN_OR_RETURN(int max_seq_len, GetMaxSeqLen(model_graph));
       options.set_max_seq_len(max_seq_len);
     }
   }
@@ -224,8 +224,8 @@ absl::Status ConfigureTextPreprocessingGraph(
   if (model_type == TextModelType::EMBEDDING_GEMMA_MODEL) {
     options.set_has_dynamic_input_tensors(options.max_seq_len() > 1);
   } else if (model_type == TextModelType::BERT_MODEL) {
-    MP_ASSIGN_OR_RETURN(bool has_dynamic_input_tensors,
-                        HasDynamicInputTensors(model_graph));
+    ABSL_ASSIGN_OR_RETURN(bool has_dynamic_input_tensors,
+                          HasDynamicInputTensors(model_graph));
     options.set_has_dynamic_input_tensors(has_dynamic_input_tensors);
   }
   return absl::OkStatus();
@@ -253,7 +253,7 @@ class TextPreprocessingGraph : public mediapipe::Subgraph {
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
     Graph graph;
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         Source<std::vector<Tensor>> tensors_in,
         BuildTextPreprocessing(
             sc->Options<TextPreprocessingGraphOptions>(),
@@ -268,8 +268,8 @@ class TextPreprocessingGraph : public mediapipe::Subgraph {
   absl::StatusOr<Source<std::vector<Tensor>>> BuildTextPreprocessing(
       const TextPreprocessingGraphOptions& options, Source<std::string> text_in,
       SideSource<ModelMetadataExtractor> metadata_extractor_in, Graph& graph) {
-    MP_ASSIGN_OR_RETURN(std::string preprocessor_name,
-                        GetCalculatorNameFromModelType(options.model_type()));
+    ABSL_ASSIGN_OR_RETURN(std::string preprocessor_name,
+                          GetCalculatorNameFromModelType(options.model_type()));
     auto& text_preprocessor = graph.AddNode(preprocessor_name);
     switch (options.model_type()) {
       case TextModelType::UNSPECIFIED_MODEL:
