@@ -28,6 +28,7 @@ exports_files([
     "MediaPipeTasksVision.podspec.template",
     "MediaPipeTasksText.podspec.template",
     "MediaPipeTasksCommon.podspec.template",
+    "MediaPipeTasksCommon.swift.template",
     "Package.swift.template",
     "MediaPipeTasksSPMSmokeTest.swift.template",
 ])
