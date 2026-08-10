@@ -244,6 +244,12 @@ class FunctionRunnerBuilder {
     return *this;
   }
 
+  // Disallows/disables default initialization of MediaPipe graph services.
+  FunctionRunnerBuilder& DisallowServiceDefaultInitialization() {
+    disallow_service_default_initialization_ = true;
+    return *this;
+  }
+
   // Creates the graph runner according to the provided graph builder function
   // and initializes using all provided parameters.
   //
@@ -336,6 +342,10 @@ class FunctionRunnerBuilder {
     for (const auto& [key, value] : services_) {
       ABSL_RETURN_IF_ERROR(calculator_graph->SetServicePacket(*key, value));
     }
+    if (disallow_service_default_initialization_) {
+      ABSL_RETURN_IF_ERROR(
+          calculator_graph->DisallowServiceDefaultInitialization());
+    }
     ABSL_RETURN_IF_ERROR(calculator_graph->Initialize(std::move(config)));
 
     // Setup output pollers for the requested output streams.
@@ -391,6 +401,7 @@ class FunctionRunnerBuilder {
   BuildGraphFnT build_graph_fn_;
   absl::flat_hash_map<const GraphServiceBase*, mediapipe::Packet> services_;
   std::shared_ptr<Executor> default_executor_;
+  bool disallow_service_default_initialization_ = false;
 
   friend class Runner;
 };

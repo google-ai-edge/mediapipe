@@ -26,6 +26,14 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
+selects.config_setting_group(
+    name = "build_for_3p_on_linux-google",
+    match_all = [
+        "//mediapipe/tasks:build_for_3p",
+        "//tools/cc_target_os:linux-google",
+    ],
+)
+
 # Disabling GPU support is sometimes useful on desktop Linux because SwiftShader can
 # interfere with desktop GL. b/73494271
 # Also disable GPU on Windows since it's not supported (use pthread).

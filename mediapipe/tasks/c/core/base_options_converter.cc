@@ -93,6 +93,8 @@ void CppConvertToBaseOptions(const MpBaseOptions& in,
   out->app_version = in.app_version ? std::string(in.app_version) : "";
   out->model_asset_descriptor_meta.fd =
       in.file_descriptor != 0 ? in.file_descriptor : -1;
+  // Don't load GPU service unless delegate is GPU.
+  out->disable_default_service = (in.delegate != MP_DELEGATE_GPU);
 }
 
 MpHostEnvironment ToMpHostEnvironment(int host_environment) {
