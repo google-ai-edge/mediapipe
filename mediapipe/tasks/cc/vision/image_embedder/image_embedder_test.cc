@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/vision/image_embedder/image_embedder.h"
 
+#include <fstream>
 #include <memory>
 #include <utility>
 
