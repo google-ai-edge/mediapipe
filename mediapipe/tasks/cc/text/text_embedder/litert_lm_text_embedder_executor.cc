@@ -69,6 +69,7 @@ absl::StatusOr<TextEmbedderResult> LiteRtLmTextEmbedderExecutor::Embed(
 
   EmbeddingOptions options;
   options.normalize = l2_normalize_;
+  options.insert_special_tokens = true;
 
   ABSL_ASSIGN_OR_RETURN(auto response,
                         engine_->ComputeEmbedding(contents, options),

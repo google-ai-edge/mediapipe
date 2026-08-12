@@ -43,8 +43,7 @@ limitations under the License.
 #include "odml/litert_lm/runtime/engine/io_types.h"  // from @odml
 #include "odml/litert_lm/runtime/executor/executor_settings_base.h"  // from @odml
 #include "odml/litert_lm/runtime/util/memory_mapped_file.h"  // from @odml
-#include "odml/litert_lm/support/preprocessor/image_preprocessor.h"  // from @odml
-#include "odml/litert_lm/support/util/io_types.h"  // from @odml
+#include "odml/litert_lm/support/util/io_types.h"            // from @odml
 
 namespace mediapipe::tasks::vision::image_embedder {
 namespace {
@@ -103,36 +102,7 @@ LiteRtLmImageEmbedderExecutor::PreprocessImage(const Image& image) {
         row_bytes);
   }
 
-  ::litert::support::InputImage input_image(std::move(ppm_data));
-
-  ::litert::support::ImagePreprocessParameter param;
-  ::litert::support::ImagePreprocessParameter::PatchifyConfig config;
-  config.patch_width = 16;
-  config.patch_height = 16;
-  config.max_num_patches = 630;
-  config.pooling_kernel_size = 1;
-  config.emit_positions = true;
-  param.SetPatchifyConfig(config);
-
-  ::litert::support::ImagePreprocessParameter::NormalizationConfig norm_config;
-  norm_config.mean = {0.0f, 0.0f, 0.0f};
-  norm_config.std = {1.0f, 1.0f, 1.0f};
-  norm_config.rescale_factor = 1.0f / 255.0f;
-  param.SetNormalizationConfig(norm_config);
-
-  auto preprocessor = ::litert::support::ImagePreprocessor::Create();
-  if (!preprocessor) {
-    return absl::InternalError("Failed to create image preprocessor.");
-  }
-
-  auto expected_processed = preprocessor->Preprocess(input_image, param);
-  if (!expected_processed.ok()) {
-    return absl::InternalError(
-        absl::StrCat("Failed during preprocessing: ",
-                     expected_processed.status().message()));
-  }
-
-  return std::move(*expected_processed);
+  return ::litert::support::InputImage(std::move(ppm_data));
 }
 
 absl::StatusOr<ImageEmbedderResult> LiteRtLmImageEmbedderExecutor::Embed(
@@ -140,12 +110,11 @@ absl::StatusOr<ImageEmbedderResult> LiteRtLmImageEmbedderExecutor::Embed(
   ABSL_ASSIGN_OR_RETURN(auto preprocessed_image, PreprocessImage(image));
 
   std::vector<InputData> contents;
-  // Construct InputImage directly from the preprocessed InputImage (which holds
-  // the TensorBufferMap)
   contents.push_back(std::move(preprocessed_image));
 
   EmbeddingOptions options;
   options.normalize = l2_normalize_;
+  options.insert_special_tokens = true;
 
   ABSL_ASSIGN_OR_RETURN(auto response,
                         engine_->ComputeEmbedding(contents, options),
