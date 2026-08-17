@@ -4385,7 +4385,7 @@ TEST(CalculatorGraph, RunWithNumThreadsInExecutorConfig) {
   ThreadPoolExecutorOptions* default_executor_options =
       config.mutable_executor(0)->mutable_options()->MutableExtension(
           ThreadPoolExecutorOptions::ext);
-  for (int i = 0; i < ABSL_ARRAYSIZE(cases); ++i) {
+  for (int i = 0; i < std::size(cases); ++i) {
     default_executor_options->set_num_threads(cases[i].num_threads);
     config.mutable_executor(0)->clear_type();
     if (cases[i].executor_type != "<None>") {
