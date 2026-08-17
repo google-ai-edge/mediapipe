@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: ["master", "main"]
 
+permissions:
+  contents: read
+
 jobs:
   zizmor:
     name: Zizmor Static Analysis
