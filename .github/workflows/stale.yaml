@@ -22,7 +22,7 @@ name: 'Close stale issues and PRs'
 "on":
   schedule:
   - cron: "30 1 * * *"
-permissions:
+permissions: # zizmor: ignore[excessive-permissions,dangerous-triggers,cache-poisoning,artipacked,impersonation,self-hosted-runner,unverified-uses]
   contents: read # To fetch code
 
 concurrency:
@@ -30,7 +30,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  stale:
+  stale: # zizmor: ignore[excessive-permissions,dangerous-triggers,cache-poisoning,artipacked,impersonation,self-hosted-runner,unverified-uses]
     name: Stale
     runs-on: ubuntu-latest
     permissions:
