@@ -7,17 +7,21 @@ on:
     branches: ["master", "main"]
 
 permissions:
-  contents: read
+  contents: read # To fetch code
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   zizmor:
     name: Zizmor Static Analysis
     runs-on: ubuntu-latest
     permissions:
-      security-events: write
+      security-events: write # To upload sarif
       # required for workflows in private repositories
-      contents: read
-      actions: read
+      contents: read # To fetch code
+      actions: read # To check actions
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
