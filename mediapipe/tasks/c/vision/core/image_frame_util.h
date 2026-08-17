@@ -74,7 +74,8 @@ inline const T* GenerateContiguousDataArray(const MpImageInternal* image) {
   } else {
     size_t buffer_size = image_frame->PixelDataSizeStoredContiguously();
     std::vector<uint8_t> contiguous_data_copy(buffer_size);
-    image_frame->CopyToBuffer(contiguous_data_copy.data(), buffer_size);
+    image_frame->CopyToBuffer(reinterpret_cast<T*>(contiguous_data_copy.data()),
+                              buffer_size / sizeof(T));
     image->cached_contiguous_data = std::move(contiguous_data_copy);
     return reinterpret_cast<const T*>(image->cached_contiguous_data.data());
   }

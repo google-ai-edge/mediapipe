@@ -108,6 +108,18 @@ class ImageTest(parameterized.TestCase):
     with self.assertRaisesRegex(ValueError, 'Pixel data size is too small'):
       image.Image(image.ImageFormat.SRGB, np_array)
 
+  def test_numpy_view_non_contiguous_float32(self):
+    pixel_data = np.array([[[1.0], [2.0]], [[3.0], [4.0]]], dtype=np.float32)
+    img = image.Image(image.ImageFormat.VEC32F1, pixel_data)
+    self.assertFalse(img.is_contiguous())
+    np.testing.assert_array_equal(img.numpy_view(), pixel_data)
+
+  def test_numpy_view_non_contiguous_uint16(self):
+    pixel_data = np.array([[[100, 200, 300], [400, 500, 600]]], dtype=np.uint16)
+    img = image.Image(image.ImageFormat.SRGB48, pixel_data)
+    self.assertFalse(img.is_contiguous())
+    np.testing.assert_array_equal(img.numpy_view(), pixel_data)
+
 
 if __name__ == '__main__':
   absltest.main()
