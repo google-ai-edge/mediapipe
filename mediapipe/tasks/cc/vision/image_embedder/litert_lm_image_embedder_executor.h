@@ -28,6 +28,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/components/processors/embedder_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
+#include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "mediapipe/tasks/cc/vision/image_embedder/image_embedder_executor.h"
 #include "odml/litert_lm/runtime/engine/embedding_engine.h"  // from @odml
 #include "odml/litert_lm/runtime/util/memory_mapped_file.h"  // from @odml
@@ -56,7 +57,8 @@ class LiteRtLmImageEmbedderExecutor : public ImageEmbedderExecutor {
       bool quantize,
       std::function<void(absl::StatusOr<EmbeddingResult>, const Image&,
                          int64_t)>
-          result_callback = nullptr);
+          result_callback,
+      std::unique_ptr<tasks::core::logging::TasksLogger> tasks_logger);
 
   ~LiteRtLmImageEmbedderExecutor() override;
 
@@ -82,6 +84,9 @@ class LiteRtLmImageEmbedderExecutor : public ImageEmbedderExecutor {
   bool quantize_;
   std::function<void(absl::StatusOr<EmbeddingResult>, const Image&, int64_t)>
       result_callback_;
+
+  std::unique_ptr<tasks::core::logging::TasksLogger> tasks_logger_;
+  uint64_t tasks_logger_timestamp_ = 0;
 };
 
 }  // namespace mediapipe::tasks::vision::image_embedder

@@ -23,13 +23,18 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "absl/cleanup/cleanup.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/timestamp.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/components/processors/embedder_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
+#include "mediapipe/tasks/cc/core/logging/factory/logging_factory.h"
+#include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder_executor.h"
 #include "odml/litert_lm/runtime/core/embedding_engine_impl.h"  // from @odml
 #include "odml/litert_lm/runtime/engine/embedding_engine.h"     // from @odml
@@ -56,14 +61,26 @@ using ::mediapipe::tasks::core::BaseOptions;
 LiteRtLmTextEmbedderExecutor::LiteRtLmTextEmbedderExecutor(
     std::shared_ptr<MemoryMappedFile> shared_mmap,
     std::unique_ptr<::litert::lm::EmbeddingEngine> engine, bool l2_normalize,
-    bool quantize)
+    bool quantize,
+    std::unique_ptr<tasks::core::logging::TasksLogger> tasks_logger)
     : shared_mmap_(std::move(shared_mmap)),
       engine_(std::move(engine)),
       l2_normalize_(l2_normalize),
-      quantize_(quantize) {}
+      quantize_(quantize),
+      tasks_logger_(std::move(tasks_logger)) {}
+
+LiteRtLmTextEmbedderExecutor::~LiteRtLmTextEmbedderExecutor() {
+  Close().IgnoreError();
+}
 
 absl::StatusOr<TextEmbedderResult> LiteRtLmTextEmbedderExecutor::Embed(
     absl::string_view text) {
+  mediapipe::Timestamp task_logger_ts(tasks_logger_timestamp_++);
+  tasks_logger_->RecordCpuInputArrival(task_logger_ts);
+  absl::Cleanup log_invocation_end = [this, task_logger_ts] {
+    tasks_logger_->RecordInvocationEnd(task_logger_ts);
+  };
+
   std::vector<InputData> contents;
   contents.push_back(InputText(std::string(text)));
 
@@ -96,7 +113,13 @@ absl::StatusOr<TextEmbedderResult> LiteRtLmTextEmbedderExecutor::Embed(
   return result;
 }
 
-absl::Status LiteRtLmTextEmbedderExecutor::Close() { return absl::OkStatus(); }
+absl::Status LiteRtLmTextEmbedderExecutor::Close() {
+  if (tasks_logger_) {
+    tasks_logger_->LogSessionEnd();
+    tasks_logger_.reset();
+  }
+  return absl::OkStatus();
+}
 
 absl::StatusOr<std::unique_ptr<LiteRtLmTextEmbedderExecutor>>
 LiteRtLmTextEmbedderExecutor::Create(const BaseOptions& base_options,
@@ -125,9 +148,20 @@ LiteRtLmTextEmbedderExecutor::Create(const BaseOptions& base_options,
   ABSL_ASSIGN_OR_RETURN(auto engine,
                         EmbeddingEngineImpl::Create(std::move(settings)));
 
+  auto tasks_logger = tasks::core::logging::CreateTasksLogger(
+      {.task_name = "TextEmbedder",
+       .task_running_mode = tasks::core::RunningMode::kUnspecified,
+       .host_environment = base_options.host_environment,
+       .host_system = base_options.host_system,
+       .host_version = base_options.host_version,
+       .app_id = base_options.app_id,
+       .app_version = base_options.app_version,
+       .ca_bundle_path = base_options.ca_bundle_path});
+  tasks_logger->LogSessionStart();
+
   return std::make_unique<LiteRtLmTextEmbedderExecutor>(
       std::move(shared_mmap), std::move(engine), embedder_options.l2_normalize,
-      embedder_options.quantize);
+      embedder_options.quantize, std::move(tasks_logger));
 }
 
 }  // namespace mediapipe::tasks::text::text_embedder

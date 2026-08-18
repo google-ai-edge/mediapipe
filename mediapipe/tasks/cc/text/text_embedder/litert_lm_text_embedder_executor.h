@@ -23,6 +23,7 @@ limitations under the License.
 #include "absl/strings/string_view.h"
 #include "mediapipe/tasks/cc/components/processors/embedder_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
+#include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder_executor.h"
 #include "odml/litert_lm/runtime/engine/embedding_engine.h"  // from @odml
 #include "odml/litert_lm/runtime/util/memory_mapped_file.h"  // from @odml
@@ -40,7 +41,10 @@ class LiteRtLmTextEmbedderExecutor : public TextEmbedderExecutor {
   LiteRtLmTextEmbedderExecutor(
       std::shared_ptr<::litert::lm::MemoryMappedFile> shared_mmap,
       std::unique_ptr<::litert::lm::EmbeddingEngine> engine, bool l2_normalize,
-      bool quantize);
+      bool quantize,
+      std::unique_ptr<tasks::core::logging::TasksLogger> tasks_logger);
+
+  ~LiteRtLmTextEmbedderExecutor() override;
 
   absl::StatusOr<TextEmbedderResult> Embed(absl::string_view text) override;
   absl::Status Close() override;
@@ -50,6 +54,9 @@ class LiteRtLmTextEmbedderExecutor : public TextEmbedderExecutor {
   std::unique_ptr<::litert::lm::EmbeddingEngine> engine_;
   bool l2_normalize_;
   bool quantize_;
+
+  std::unique_ptr<tasks::core::logging::TasksLogger> tasks_logger_;
+  uint64_t tasks_logger_timestamp_ = 0;
 };
 
 }  // namespace mediapipe::tasks::text::text_embedder
