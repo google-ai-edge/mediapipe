@@ -125,7 +125,7 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:imagesegmenter_java",
         "//third_party:any_java_proto",
         "//third_party:autovalue",
-        "@com_google_protobuf//:protobuf_javalite",
+        "@com_google_protobuf//java/lite",
         "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",
     ],
