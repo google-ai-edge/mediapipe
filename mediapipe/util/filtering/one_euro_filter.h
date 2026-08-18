@@ -44,13 +44,17 @@ class OneEuroFilter {
   // point, but can be tuned to further smooth the speed (i.e. derivative) on
   // the object.
   // NOTE: must be > 0
-  // See https://gery.casiez.net/1euro/ for more details.
-  static absl::StatusOr<OneEuroFilter> Create(double frequency,
-                                              double min_cutoff, double beta,
-                                              double derivate_cutoff);
+  //
+  // @use_filtered_derivative - When true, derivative computation uses the
+  // previous filtered estimate (x_->LastValue()) instead of the raw input
+  // (x_->LastRawValue()), matching Casiez et al., CHI 2012.
+  static absl::StatusOr<OneEuroFilter> Create(
+      double frequency, double min_cutoff, double beta, double derivate_cutoff,
+      bool use_filtered_derivative = false);
 
   static absl::StatusOr<OneEuroFilter> CreateLegacyFilter(
-      double frequency, double min_cutoff, double beta, double derivate_cutoff);
+      double frequency, double min_cutoff, double beta, double derivate_cutoff,
+      bool use_filtered_derivative = false);
 
   double Apply(absl::Duration timestamp, double value, double value_scale,
                double beta_scale);
@@ -60,11 +64,12 @@ class OneEuroFilter {
 
  private:
   OneEuroFilter(double frequency, double min_cutoff, double beta,
-                double derivate_cutoff, int64_t initial_last_time);
+                double derivate_cutoff, int64_t initial_last_time,
+                bool use_filtered_derivative);
 
   static absl::StatusOr<OneEuroFilter> InternalCreate(
       double frequency, double min_cutoff, double beta, double derivate_cutoff,
-      int64_t initial_last_time);
+      int64_t initial_last_time, bool use_filtered_derivative);
 
   double GetAlpha(double cutoff);
 
@@ -72,6 +77,7 @@ class OneEuroFilter {
   double min_cutoff_;
   double beta_;
   double derivate_cutoff_;
+  bool use_filtered_derivative_ = false;
   std::unique_ptr<LowPassFilter> x_;
   std::unique_ptr<LowPassFilter> dx_;
   int64_t last_time_;

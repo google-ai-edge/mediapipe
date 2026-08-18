@@ -32,7 +32,7 @@ static constexpr int kUninitializedTimestamp = -1;
 
 absl::StatusOr<OneEuroFilter> OneEuroFilter::InternalCreate(
     double frequency, double min_cutoff, double beta, double derivate_cutoff,
-    int64_t initial_last_time) {
+    int64_t initial_last_time, bool use_filtered_derivative) {
   if (frequency <= kEpsilon) {
     return absl::InvalidArgumentError(
         absl::StrCat("frequency should be > 0, but equals: ", frequency));
@@ -49,31 +49,34 @@ absl::StatusOr<OneEuroFilter> OneEuroFilter::InternalCreate(
   }
 
   return OneEuroFilter(frequency, min_cutoff, beta, derivate_cutoff,
-                       initial_last_time);
+                       initial_last_time, use_filtered_derivative);
 }
 
-absl::StatusOr<OneEuroFilter> OneEuroFilter::Create(double frequency,
-                                                    double min_cutoff,
-                                                    double beta,
-                                                    double derivate_cutoff) {
-  return OneEuroFilter::InternalCreate(
-      frequency, min_cutoff, beta, derivate_cutoff, kUninitializedTimestamp);
+absl::StatusOr<OneEuroFilter> OneEuroFilter::Create(
+    double frequency, double min_cutoff, double beta, double derivate_cutoff,
+    bool use_filtered_derivative) {
+  return OneEuroFilter::InternalCreate(frequency, min_cutoff, beta,
+                                       derivate_cutoff, kUninitializedTimestamp,
+                                       use_filtered_derivative);
 }
 
 absl::StatusOr<OneEuroFilter> OneEuroFilter::CreateLegacyFilter(
-    double frequency, double min_cutoff, double beta, double derivate_cutoff) {
-  return OneEuroFilter::InternalCreate(
-      frequency, min_cutoff, beta, derivate_cutoff, /*initial_last_time=*/0);
+    double frequency, double min_cutoff, double beta, double derivate_cutoff,
+    bool use_filtered_derivative) {
+  return OneEuroFilter::InternalCreate(frequency, min_cutoff, beta,
+                                       derivate_cutoff, /*initial_last_time=*/0,
+                                       use_filtered_derivative);
 }
 
 // Input values frequency, min_cutoff, and derivate_cutoff must be non zero.
 OneEuroFilter::OneEuroFilter(double frequency, double min_cutoff, double beta,
-                             double derivate_cutoff,
-                             int64_t initial_last_time) {
+                             double derivate_cutoff, int64_t initial_last_time,
+                             bool use_filtered_derivative) {
   frequency_ = frequency;
   min_cutoff_ = min_cutoff;
   beta_ = beta;
   derivate_cutoff_ = derivate_cutoff;
+  use_filtered_derivative_ = use_filtered_derivative;
 
   x_ = std::make_unique<LowPassFilter>(GetAlpha(min_cutoff));
   dx_ = std::make_unique<LowPassFilter>(GetAlpha(derivate_cutoff));
@@ -98,9 +101,12 @@ double OneEuroFilter::Apply(absl::Duration timestamp, double value,
   last_time_ = new_timestamp;
 
   // estimate the current variation per second
-  double dvalue = x_->HasLastRawValue()
-                      ? (value - x_->LastRawValue()) * value_scale * frequency_
-                      : 0.0;  // FIXME: 0.0 or value?
+  double dvalue = 0.0;
+  if (x_->HasLastRawValue()) {
+    double prev_value =
+        use_filtered_derivative_ ? x_->LastValue() : x_->LastRawValue();
+    dvalue = (value - prev_value) * value_scale * frequency_;
+  }
   double edvalue = dx_->ApplyWithAlpha(dvalue, GetAlpha(derivate_cutoff_));
   // use it to update the cutoff frequency
   double scaled_beta = beta_scale * beta_;
