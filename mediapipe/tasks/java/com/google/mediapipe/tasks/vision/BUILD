@@ -286,6 +286,8 @@ android_library(
     name = "imageembedder",
     srcs = [
         "imageembedder/ImageEmbedder.java",
+        "imageembedder/ImageEmbedderExecutor.java",
+        "imageembedder/ImageEmbedderGraphExecutorImpl.java",
         "imageembedder/ImageEmbedderResult.java",
     ],
     manifest = "imageembedder/AndroidManifest.xml",
