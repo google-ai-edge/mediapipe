@@ -413,6 +413,49 @@ Image CppImageWithMPImage(MPPImage *image) {
   XCTAssertEqual(consistentPixels, cppImageFrame->Height() * cppImageFrame->WidthStep());
 }
 
+- (void)testToUIImageWithUIImageSourceSucceeds {
+  NSString *burgerPath = kBurgerImageFileInfo.path;
+  UIImage *uiImage = [UIImage imageWithContentsOfFile:burgerPath];
+  XCTAssertNotNil(uiImage);
+
+  MPPImage *mppImage = [[MPPImage alloc] initWithUIImage:uiImage error:nil];
+  XCTAssertNotNil(mppImage);
+
+  NSError *error = nil;
+  UIImage *resultImage = [mppImage toUIImageWithError:&error];
+  XCTAssertNotNil(resultImage);
+  XCTAssertNil(error);
+  XCTAssertEqual(resultImage, uiImage);
+}
+
+- (void)testToUIImageWithCVPixelBufferSourceSucceeds {
+  MPPImage *mppImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo
+                                        sourceType:MPPImageSourceTypePixelBuffer];
+  XCTAssertNotNil(mppImage);
+  XCTAssertEqual(mppImage.imageSourceType, MPPImageSourceTypePixelBuffer);
+
+  NSError *error = nil;
+  UIImage *resultImage = [mppImage toUIImageWithError:&error];
+  XCTAssertNotNil(resultImage);
+  XCTAssertNil(error);
+  XCTAssertEqualWithAccuracy(resultImage.size.width, mppImage.width, FLT_EPSILON);
+  XCTAssertEqualWithAccuracy(resultImage.size.height, mppImage.height, FLT_EPSILON);
+}
+
+- (void)testToUIImageWithCMSampleBufferSourceSucceeds {
+  MPPImage *mppImage = [MPPImage imageWithFileInfo:kBurgerImageFileInfo
+                                        sourceType:MPPImageSourceTypeSampleBuffer];
+  XCTAssertNotNil(mppImage);
+  XCTAssertEqual(mppImage.imageSourceType, MPPImageSourceTypeSampleBuffer);
+
+  NSError *error = nil;
+  UIImage *resultImage = [mppImage toUIImageWithError:&error];
+  XCTAssertNotNil(resultImage);
+  XCTAssertNil(error);
+  XCTAssertEqualWithAccuracy(resultImage.size.width, mppImage.width, FLT_EPSILON);
+  XCTAssertEqualWithAccuracy(resultImage.size.height, mppImage.height, FLT_EPSILON);
+}
+
 @end
 
 NS_ASSUME_NONNULL_END
