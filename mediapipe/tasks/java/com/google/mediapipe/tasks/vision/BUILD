@@ -367,6 +367,30 @@ filegroup(
     visibility = ["//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:__subpackages__"],
 )
 
+# Compose / XML overlay for drawing Tasks vision results. Ships in tasks-vision;
+# does not depend on Jetpack Compose so XML apps are unaffected. Compose apps wrap
+# VisionOverlayView in AndroidView or call VisionOverlayRenderer from drawIntoCanvas.
+android_library(
+    name = "overlay",
+    srcs = glob(["overlay/*.java"]),
+    manifest = "AndroidManifest.xml",
+    deps = [
+        ":core_java",
+        ":facedetector",
+        ":facelandmarker",
+        ":gesturerecognizer",
+        ":handlandmarker",
+        ":holisticlandmarker",
+        ":objectdetector",
+        ":poselandmarker",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:connection",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:detection",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalizedkeypoint",
+    ],
+)
+
 android_library(
     name = "holisticlandmarker",
     srcs = [
