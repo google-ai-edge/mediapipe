@@ -284,6 +284,9 @@ def plot_landmarks(landmark_list: landmark_pb2.NormalizedLandmarkList,
   plt.figure(figsize=(10, 10))
   ax = plt.axes(projection='3d')
   ax.view_init(elev=elevation, azim=azimuth)
+  ax.set_xlim((-1,1))
+  ax.set_ylim((-1,1))
+  ax.set_zlim((-1,1))
   plotted_landmarks = {}
   for idx, landmark in enumerate(landmark_list.landmark):
     if ((landmark.HasField('visibility') and
