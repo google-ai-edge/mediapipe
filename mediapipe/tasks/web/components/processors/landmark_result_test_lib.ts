@@ -19,26 +19,32 @@ import {Landmark as LandmarkProto, LandmarkList as LandmarkListProto, Normalized
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
 
-/** Creates a normalized landmark list with one entrry. */
+/** Creates a normalized landmark list with one entry. */
 export function createLandmarks(
-    x?: number, y?: number, z?: number): NormalizedLandmarkListProto {
+    x?: number, y?: number, z?: number, visibility?: number,
+    presence?: number): NormalizedLandmarkListProto {
   const landmarksProto = new NormalizedLandmarkListProto();
   const landmark = new NormalizedLandmarkProto();
   if (x !== undefined) landmark.setX(x);
   if (y !== undefined) landmark.setY(y);
   if (z !== undefined) landmark.setZ(z);
+  if (visibility !== undefined) landmark.setVisibility(visibility);
+  if (presence !== undefined) landmark.setPresence(presence);
   landmarksProto.addLandmark(landmark);
   return landmarksProto;
 }
 
 /** Creates a world landmark list with one entry. */
 export function createWorldLandmarks(
-    x?: number, y?: number, z?: number): LandmarkListProto {
+    x?: number, y?: number, z?: number, visibility?: number,
+    presence?: number): LandmarkListProto {
   const worldLandmarksProto = new LandmarkListProto();
   const landmark = new LandmarkProto();
   if (x !== undefined) landmark.setX(x);
   if (y !== undefined) landmark.setY(y);
   if (z !== undefined) landmark.setZ(z);
+  if (visibility !== undefined) landmark.setVisibility(visibility);
+  if (presence !== undefined) landmark.setPresence(presence);
   worldLandmarksProto.addLandmark(landmark);
   return worldLandmarksProto;
 }

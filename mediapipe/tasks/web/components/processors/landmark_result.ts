@@ -17,6 +17,15 @@
 import {LandmarkList as LandmarkListProto, NormalizedLandmarkList as NormalizedLandmarkListProto} from '../../../../framework/formats/landmark_pb';
 import {Landmark, NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
 
+function copyPresence(from: {
+  hasPresence: () => boolean;
+  getPresence: () => number | undefined;
+}): {presence?: number} {
+  // Presence is proto2-optional. Keep it unset when the model does not emit
+  // a score so callers can distinguish "unsupported" from "present = 0".
+  return from.hasPresence() ? {presence: from.getPresence() ?? 0} : {};
+}
+
 /** Converts raw data into a landmark. */
 export function convertToLandmarks(proto: NormalizedLandmarkListProto):
     NormalizedLandmark[] {
@@ -27,6 +36,7 @@ export function convertToLandmarks(proto: NormalizedLandmarkListProto):
       y: landmark.getY() ?? 0,
       z: landmark.getZ() ?? 0,
       visibility: landmark.getVisibility() ?? 0,
+      ...copyPresence(landmark),
     });
   }
   return landmarks;
@@ -41,6 +51,7 @@ export function convertToWorldLandmarks(proto: LandmarkListProto): Landmark[] {
       y: worldLandmark.getY() ?? 0,
       z: worldLandmark.getZ() ?? 0,
       visibility: worldLandmark.getVisibility() ?? 0,
+      ...copyPresence(worldLandmark),
     });
   }
   return worldLandmarks;
