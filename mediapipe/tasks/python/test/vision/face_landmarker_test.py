@@ -247,6 +247,27 @@ class FaceLandmarkerTest(parameterized.TestCase):
     # in a context.
     landmarker.close()
 
+  def test_set_options_updates_thresholds_and_keeps_detecting(self):
+    options = _FaceLandmarkerOptions(
+        base_options=_BaseOptions(model_asset_path=self.model_path),
+        running_mode=_RUNNING_MODE.IMAGE,
+    )
+    with _FaceLandmarker.create_from_options(options) as landmarker:
+      before = landmarker.detect(self.test_image)
+      self.assertGreater(len(before.face_landmarks), 0)
+
+      landmarker.set_options(
+          num_faces=1,
+          min_face_detection_confidence=0.1,
+          min_face_presence_confidence=0.1,
+          min_tracking_confidence=0.1,
+      )
+      after = landmarker.detect(self.test_image)
+      self.assertGreater(len(after.face_landmarks), 0)
+
+      with self.assertRaisesRegex(ValueError, r'num_faces'):
+        landmarker.set_options(num_faces=0)
+
   @parameterized.parameters(
       (
           ModelFileType.FILE_NAME,
