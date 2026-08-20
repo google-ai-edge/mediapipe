@@ -260,6 +260,36 @@ describe('PoseLandmarker', () => {
     });
   });
 
+  it('mirrors landmarks when selfieMode is enabled', (done) => {
+    const landmarksProto = [createLandmarks(0.25, 0.4, 0.1).serializeBinary()];
+    const worldLandmarksProto = [
+      createWorldLandmarks(0.3, 0.1, 0.2).serializeBinary(),
+    ];
+
+    poseLandmarker.setOptions({selfieMode: true}).then(() => {
+      poseLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+        poseLandmarker.listeners.get('normalized_landmarks')!(
+          landmarksProto,
+          1337,
+        );
+        poseLandmarker.listeners.get('world_landmarks')!(
+          worldLandmarksProto,
+          1337,
+        );
+      });
+
+      poseLandmarker.detect({} as HTMLImageElement, (result) => {
+        expect(result.landmarks).toEqual([
+          [{'x': 0.75, 'y': 0.4, 'z': 0.1, 'visibility': 0}],
+        ]);
+        expect(result.worldLandmarks).toEqual([
+          [{'x': -0.3, 'y': 0.1, 'z': 0.2, 'visibility': 0}],
+        ]);
+        done();
+      });
+    });
+  });
+
   it('clears results between invoations', async () => {
     const landmarksProto = [createLandmarks().serializeBinary()];
     const worldLandmarksProto = [createWorldLandmarks().serializeBinary()];
