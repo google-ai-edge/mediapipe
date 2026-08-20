@@ -187,7 +187,7 @@ class InteractiveSegmenter:
     ctypes_options = options.to_ctypes()
 
     segmenter_handle = ctypes.c_void_p()
-    lib.MpInteractiveSegmenterCreate(
+    lib.MpInteractiveSegmenterCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(ctypes_options), ctypes.byref(segmenter_handle)
     )
     return cls(lib, segmenter_handle)
@@ -195,7 +195,7 @@ class InteractiveSegmenter:
   def set_image(self, image: image_module.Image) -> None:
     """Sets the image to be segmented."""
     c_image = image._image_ptr  # pylint: disable=protected-access
-    self._lib.MpInteractiveSegmenterSetImage(self._handle, c_image)
+    self._lib.MpInteractiveSegmenterSetImage(self._handle, c_image)  # pyrefly: ignore[missing-attribute]
 
   def segment(self, strokes: List[Stroke]) -> image_module.Image:
     """Performs segmentation on the previously set image."""
@@ -225,7 +225,7 @@ class InteractiveSegmenter:
     )
 
     c_mask_ptr = ctypes.c_void_p()
-    self._lib.MpInteractiveSegmenterSegment(
+    self._lib.MpInteractiveSegmenterSegment(  # pyrefly: ignore[missing-attribute]
         self._handle,
         ctypes.byref(c_strokes),
         ctypes.byref(c_mask_ptr),
@@ -242,8 +242,8 @@ class InteractiveSegmenter:
     """Closes the InteractiveSegmenter."""
     if not self._handle:
       return
-    self._lib.MpInteractiveSegmenterClose(self._handle)
-    self._handle = None
+    self._lib.MpInteractiveSegmenterClose(self._handle)  # pyrefly: ignore[missing-attribute]
+    self._handle = None  # pyrefly: ignore[bad-assignment]
     self._lib.close()
 
   def __enter__(self):

@@ -231,13 +231,13 @@ class FaceDetector:
       RuntimeError: If other types of error occurred.
     """
     running_mode_module.validate_running_mode(
-        options.running_mode, options.result_callback
+        options.running_mode, options.result_callback  # pyrefly: ignore[bad-argument-type]
     )
 
     lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
     def convert_result(
-        c_result_ptr: ctypes.POINTER(detections_c_module.MpDetectionResultC),
+        c_result_ptr: ctypes.POINTER(detections_c_module.MpDetectionResultC),  # pyrefly: ignore[invalid-annotation]
         image_ptr: ctypes.c_void_p,
         timestamp_ms: int,
     ) -> Tuple[FaceDetectorResult, image_module.Image, int]:
@@ -261,7 +261,7 @@ class FaceDetector:
     )
 
     detector_handle = ctypes.c_void_p()
-    lib.MpFaceDetectorCreate(
+    lib.MpFaceDetectorCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(ctypes_options),
         ctypes.byref(detector_handle),
     )
@@ -305,7 +305,7 @@ class FaceDetector:
         if image_processing_options
         else None
     )
-    self._lib.MpFaceDetectorDetectImage(
+    self._lib.MpFaceDetectorDetectImage(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -313,7 +313,7 @@ class FaceDetector:
     )
 
     py_result = FaceDetectorResult.from_ctypes(c_result)
-    self._lib.MpFaceDetectorCloseResult(ctypes.byref(c_result))
+    self._lib.MpFaceDetectorCloseResult(ctypes.byref(c_result))  # pyrefly: ignore[missing-attribute]
     return py_result
 
   def detect_for_video(
@@ -352,7 +352,7 @@ class FaceDetector:
         if image_processing_options
         else None
     )
-    self._lib.MpFaceDetectorDetectForVideo(
+    self._lib.MpFaceDetectorDetectForVideo(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -361,7 +361,7 @@ class FaceDetector:
     )
 
     py_result = FaceDetectorResult.from_ctypes(c_result)
-    self._lib.MpFaceDetectorCloseResult(ctypes.byref(c_result))
+    self._lib.MpFaceDetectorCloseResult(ctypes.byref(c_result))  # pyrefly: ignore[missing-attribute]
     return py_result
 
   def detect_async(
@@ -408,7 +408,7 @@ class FaceDetector:
         if image_processing_options
         else None
     )
-    self._lib.MpFaceDetectorDetectAsync(
+    self._lib.MpFaceDetectorDetectAsync(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -419,8 +419,8 @@ class FaceDetector:
     """Shuts down the MediaPipe task instance."""
     if not self._handle:
       return
-    self._lib.MpFaceDetectorClose(self._handle)
-    self._handle = None
+    self._lib.MpFaceDetectorClose(self._handle)  # pyrefly: ignore[missing-attribute]
+    self._handle = None  # pyrefly: ignore[bad-assignment]
     self._dispatcher.close()
     self._lib.close()
 

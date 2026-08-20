@@ -69,11 +69,11 @@ def _calculate_soft_iou(m1, m2):
 def _similar_to_float_mask(
     actual_mask: _Image, expected_mask: _Image, similarity_threshold: float
 ):
-  actual_mask = actual_mask.numpy_view()
-  expected_mask = expected_mask.numpy_view() / 255.0
+  actual_mask = actual_mask.numpy_view()  # pyrefly: ignore[bad-assignment]
+  expected_mask = expected_mask.numpy_view() / 255.0  # pyrefly: ignore[bad-assignment]
 
   return (
-      actual_mask.shape == expected_mask.shape
+      actual_mask.shape == expected_mask.shape  # pyrefly: ignore[missing-attribute]
       and _calculate_soft_iou(actual_mask, expected_mask) > similarity_threshold
   )
 

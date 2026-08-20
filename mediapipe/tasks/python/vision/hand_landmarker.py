@@ -398,13 +398,13 @@ class HandLandmarker:
       RuntimeError: If other types of error occurred.
     """
     vision_task_running_mode.validate_running_mode(
-        options.running_mode, options.result_callback
+        options.running_mode, options.result_callback  # pyrefly: ignore[bad-argument-type]
     )
 
     lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
     def convert_result(
-        c_result_ptr: ctypes.POINTER(MpHandLandmarkerResultC),
+        c_result_ptr: ctypes.POINTER(MpHandLandmarkerResultC),  # pyrefly: ignore[invalid-annotation]
         image_ptr: ctypes.c_void_p,
         timestamp_ms: int,
     ) -> Tuple[HandLandmarkerResult, image_lib.Image, int]:
@@ -428,7 +428,7 @@ class HandLandmarker:
     )
 
     landmarker_handle = ctypes.c_void_p()
-    lib.MpHandLandmarkerCreate(
+    lib.MpHandLandmarkerCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(ctypes_options),
         ctypes.byref(landmarker_handle),
     )
@@ -472,7 +472,7 @@ class HandLandmarker:
         if image_processing_options
         else None
     )
-    self._lib.MpHandLandmarkerDetectImage(
+    self._lib.MpHandLandmarkerDetectImage(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -480,7 +480,7 @@ class HandLandmarker:
     )
 
     py_result = HandLandmarkerResult.from_ctypes(c_result)
-    self._lib.MpHandLandmarkerCloseResult(ctypes.byref(c_result))
+    self._lib.MpHandLandmarkerCloseResult(ctypes.byref(c_result))  # pyrefly: ignore[missing-attribute]
     return py_result
 
   def detect_for_video(
@@ -519,7 +519,7 @@ class HandLandmarker:
         if image_processing_options
         else None
     )
-    self._lib.MpHandLandmarkerDetectForVideo(
+    self._lib.MpHandLandmarkerDetectForVideo(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -528,7 +528,7 @@ class HandLandmarker:
     )
 
     py_result = HandLandmarkerResult.from_ctypes(c_result)
-    self._lib.MpHandLandmarkerCloseResult(ctypes.byref(c_result))
+    self._lib.MpHandLandmarkerCloseResult(ctypes.byref(c_result))  # pyrefly: ignore[missing-attribute]
     return py_result
 
   def detect_async(
@@ -575,7 +575,7 @@ class HandLandmarker:
         if image_processing_options
         else None
     )
-    self._lib.MpHandLandmarkerDetectAsync(
+    self._lib.MpHandLandmarkerDetectAsync(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -585,8 +585,8 @@ class HandLandmarker:
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._handle:
-      self._lib.MpHandLandmarkerClose(self._handle)
-      self._handle = None
+      self._lib.MpHandLandmarkerClose(self._handle)  # pyrefly: ignore[missing-attribute]
+      self._handle = None  # pyrefly: ignore[bad-assignment]
       self._dispatcher.close()
       self._lib.close()
 

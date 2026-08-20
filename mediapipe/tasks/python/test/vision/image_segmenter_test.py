@@ -499,7 +499,7 @@ class ImageSegmenterTest(parameterized.TestCase):
         self.assertEqual(output_image.height, test_image.height)
         self.assertTrue(
             _similar_to_float_mask(
-                confidence_masks[8], expected_mask, _MASK_SIMILARITY_THRESHOLD
+                confidence_masks[8], expected_mask, _MASK_SIMILARITY_THRESHOLD  # pyrefly: ignore[unsupported-operation]
             )
         )
         self.assertLess(observed_timestamp_ms, timestamp_ms)

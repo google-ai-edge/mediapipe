@@ -322,13 +322,13 @@ class ObjectDetector:
     """
 
     running_mode_module.validate_running_mode(
-        options.running_mode, options.result_callback
+        options.running_mode, options.result_callback  # pyrefly: ignore[bad-argument-type]
     )
 
     lib = mediapipe_c_bindings_c_module.load_shared_library(_CTYPES_SIGNATURES)
 
     def convert_result(
-        c_result_ptr: ctypes.POINTER(detections_c_module.MpDetectionResultC),
+        c_result_ptr: ctypes.POINTER(detections_c_module.MpDetectionResultC),  # pyrefly: ignore[invalid-annotation]
         image_ptr: ctypes.c_void_p,
         timestamp_ms: int,
     ) -> Tuple[ObjectDetectorResult, image_module.Image, int]:
@@ -353,7 +353,7 @@ class ObjectDetector:
     )
 
     detector_handle = ctypes.c_void_p()
-    lib.MpObjectDetectorCreate(
+    lib.MpObjectDetectorCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(ctypes_options),
         ctypes.byref(detector_handle),
     )
@@ -399,7 +399,7 @@ class ObjectDetector:
         if image_processing_options
         else None
     )
-    self._lib.MpObjectDetectorDetectImage(
+    self._lib.MpObjectDetectorDetectImage(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -407,7 +407,7 @@ class ObjectDetector:
     )
 
     py_result = ObjectDetectorResult.from_ctypes(c_result)
-    self._lib.MpObjectDetectorCloseResult(ctypes.byref(c_result))
+    self._lib.MpObjectDetectorCloseResult(ctypes.byref(c_result))  # pyrefly: ignore[missing-attribute]
     return py_result
 
   def detect_for_video(
@@ -446,7 +446,7 @@ class ObjectDetector:
         if image_processing_options
         else None
     )
-    self._lib.MpObjectDetectorDetectForVideo(
+    self._lib.MpObjectDetectorDetectForVideo(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -455,7 +455,7 @@ class ObjectDetector:
     )
 
     py_result = ObjectDetectorResult.from_ctypes(c_result)
-    self._lib.MpObjectDetectorCloseResult(ctypes.byref(c_result))
+    self._lib.MpObjectDetectorCloseResult(ctypes.byref(c_result))  # pyrefly: ignore[missing-attribute]
     return py_result
 
   def detect_async(
@@ -501,7 +501,7 @@ class ObjectDetector:
         if image_processing_options
         else None
     )
-    self._lib.MpObjectDetectorDetectAsync(
+    self._lib.MpObjectDetectorDetectAsync(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -511,8 +511,8 @@ class ObjectDetector:
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._handle:
-      self._lib.MpObjectDetectorClose(self._handle)
-      self._handle = None
+      self._lib.MpObjectDetectorClose(self._handle)  # pyrefly: ignore[missing-attribute]
+      self._handle = None  # pyrefly: ignore[bad-assignment]
       self._dispatcher.close()
       self._lib.close()
 

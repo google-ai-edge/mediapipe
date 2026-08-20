@@ -281,13 +281,13 @@ class ImageClassifier:
       RuntimeError: If other types of error occurred.
     """
     running_mode_module.validate_running_mode(
-        options.running_mode, options.result_callback
+        options.running_mode, options.result_callback  # pyrefly: ignore[bad-argument-type]
     )
 
     lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
     def convert_result(
-        c_result_ptr: ctypes.POINTER(
+        c_result_ptr: ctypes.POINTER(  # pyrefly: ignore[invalid-annotation]
             classification_result_c.MpClassificationResultC
         ),
         image_ptr: ctypes.c_void_p,
@@ -317,7 +317,7 @@ class ImageClassifier:
         result_callback=c_callback,
     )
     classifier_handle = ctypes.c_void_p()
-    lib.MpImageClassifierCreate(
+    lib.MpImageClassifierCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(options_c), ctypes.byref(classifier_handle)
     )
     return cls(
@@ -355,7 +355,7 @@ class ImageClassifier:
         if image_processing_options
         else None
     )
-    self._lib.MpImageClassifierClassifyImage(
+    self._lib.MpImageClassifierClassifyImage(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         options_c,
@@ -363,7 +363,7 @@ class ImageClassifier:
     )
 
     result = ImageClassifierResult.from_ctypes(c_result)
-    self._lib.MpImageClassifierCloseResult(ctypes.byref(c_result))
+    self._lib.MpImageClassifierCloseResult(ctypes.byref(c_result))  # pyrefly: ignore[missing-attribute]
     return result
 
   def classify_for_video(
@@ -398,7 +398,7 @@ class ImageClassifier:
         if image_processing_options
         else None
     )
-    self._lib.MpImageClassifierClassifyForVideo(
+    self._lib.MpImageClassifierClassifyForVideo(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         options_c,
@@ -407,7 +407,7 @@ class ImageClassifier:
     )
 
     result = ImageClassifierResult.from_ctypes(c_result)
-    self._lib.MpImageClassifierCloseResult(ctypes.byref(c_result))
+    self._lib.MpImageClassifierCloseResult(ctypes.byref(c_result))  # pyrefly: ignore[missing-attribute]
     return result
 
   def classify_async(
@@ -448,7 +448,7 @@ class ImageClassifier:
         if image_processing_options
         else None
     )
-    self._lib.MpImageClassifierClassifyAsync(
+    self._lib.MpImageClassifierClassifyAsync(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         options_c,
@@ -459,8 +459,8 @@ class ImageClassifier:
     """Closes ImageClassifier."""
     if not self._handle:
       return
-    self._lib.MpImageClassifierClose(self._handle)
-    self._handle = None
+    self._lib.MpImageClassifierClose(self._handle)  # pyrefly: ignore[missing-attribute]
+    self._handle = None  # pyrefly: ignore[bad-assignment]
     self._dispatcher.close()
     self._lib.close()
 

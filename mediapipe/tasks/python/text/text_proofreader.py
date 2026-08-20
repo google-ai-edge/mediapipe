@@ -229,7 +229,7 @@ class TextProofreader:
 
     def callback_wrapper(
         unused_user_data: int,
-        result_ptr: ctypes.POINTER(_MpTextProofreaderStreamResultC),
+        result_ptr: ctypes.POINTER(_MpTextProofreaderStreamResultC),  # pyrefly: ignore[invalid-annotation]
         error_msg_ptr: bytes,
     ) -> None:
       if not self._async_result_callback:
@@ -298,7 +298,7 @@ class TextProofreader:
     ctypes_options = options.to_ctypes()
 
     proofreader_handle = ctypes.c_void_p()
-    lib.MpTextProofreaderCreate(
+    lib.MpTextProofreaderCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(ctypes_options),
         ctypes.byref(proofreader_handle),
     )
@@ -319,7 +319,7 @@ class TextProofreader:
     """
     result_ptr = ctypes.POINTER(_MpTextProofreaderResultC)()
 
-    self._lib.MpTextProofreaderProofread(
+    self._lib.MpTextProofreaderProofread(  # pyrefly: ignore[missing-attribute]
         self._proofreader_handle,
         text.encode("utf-8"),
         ctypes.byref(result_ptr),
@@ -327,7 +327,7 @@ class TextProofreader:
 
     ctypes_result = cast(_MpTextProofreaderResultC, result_ptr.contents)
     python_result = TextProofreaderResult.create_from_ctypes(ctypes_result)
-    self._lib.MpTextProofreaderCloseResult(result_ptr)
+    self._lib.MpTextProofreaderCloseResult(result_ptr)  # pyrefly: ignore[missing-attribute]
     return python_result
 
   def proofread_async(
@@ -355,7 +355,7 @@ class TextProofreader:
           " supported."
       )
     self._async_result_callback = result_callback
-    self._lib.MpTextProofreaderProofreadStreaming(
+    self._lib.MpTextProofreaderProofreadStreaming(  # pyrefly: ignore[missing-attribute]
         self._proofreader_handle,
         text.encode("utf-8"),
         self._c_callback,
@@ -365,8 +365,8 @@ class TextProofreader:
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._proofreader_handle:
-      self._lib.MpTextProofreaderClose(self._proofreader_handle)
-      self._proofreader_handle = None
+      self._lib.MpTextProofreaderClose(self._proofreader_handle)  # pyrefly: ignore[missing-attribute]
+      self._proofreader_handle = None  # pyrefly: ignore[bad-assignment]
       self._async_result_callback = None
       self._lib.close()
 

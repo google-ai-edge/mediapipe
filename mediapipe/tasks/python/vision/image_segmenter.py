@@ -324,13 +324,13 @@ class ImageSegmenter:
     """
 
     running_mode_module.validate_running_mode(
-        options.running_mode, options.result_callback
+        options.running_mode, options.result_callback  # pyrefly: ignore[bad-argument-type]
     )
 
     lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
     def convert_result(
-        c_result_ptr: ctypes.POINTER(MpImageSegmenterResultC),
+        c_result_ptr: ctypes.POINTER(MpImageSegmenterResultC),  # pyrefly: ignore[invalid-annotation]
         image_ptr: ctypes.c_void_p,
         timestamp_ms: int,
     ) -> tuple[ImageSegmenterResult, image_module.Image, int]:
@@ -352,7 +352,7 @@ class ImageSegmenter:
         result_callback=c_callback,
     )
     segmenter_handle = ctypes.c_void_p()
-    lib.MpImageSegmenterCreate(
+    lib.MpImageSegmenterCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(c_options), ctypes.byref(segmenter_handle)
     )
     return cls(
@@ -391,14 +391,14 @@ class ImageSegmenter:
         if image_processing_options
         else None
     )
-    self._lib.MpImageSegmenterSegmentImage(
+    self._lib.MpImageSegmenterSegmentImage(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         options_c,
         ctypes.byref(c_result),
     )
     result = ImageSegmenterResult.from_ctypes(c_result)
-    self._lib.MpImageSegmenterCloseResult(ctypes.byref(c_result))
+    self._lib.MpImageSegmenterCloseResult(ctypes.byref(c_result))  # pyrefly: ignore[missing-attribute]
     return result
 
   def segment_for_video(
@@ -437,7 +437,7 @@ class ImageSegmenter:
         if image_processing_options
         else None
     )
-    self._lib.MpImageSegmenterSegmentForVideo(
+    self._lib.MpImageSegmenterSegmentForVideo(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         options_c,
@@ -445,7 +445,7 @@ class ImageSegmenter:
         ctypes.byref(c_result),
     )
     result = ImageSegmenterResult.from_ctypes(c_result)
-    self._lib.MpImageSegmenterCloseResult(ctypes.byref(c_result))
+    self._lib.MpImageSegmenterCloseResult(ctypes.byref(c_result))  # pyrefly: ignore[missing-attribute]
     return result
 
   def segment_async(
@@ -487,7 +487,7 @@ class ImageSegmenter:
         if image_processing_options
         else None
     )
-    self._lib.MpImageSegmenterSegmentAsync(
+    self._lib.MpImageSegmenterSegmentAsync(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         options_c,
@@ -508,7 +508,7 @@ class ImageSegmenter:
     """
     if not self._labels:
       c_labels = MpStringListC()
-      self._lib.MpImageSegmenterGetLabels(
+      self._lib.MpImageSegmenterGetLabels(  # pyrefly: ignore[missing-attribute]
           self._handle,
           ctypes.byref(c_labels),
       )
@@ -517,15 +517,15 @@ class ImageSegmenter:
         c_label = c_labels.strings[i]
         label = ctypes.string_at(c_label).decode('utf-8')
         self._labels.append(label)
-      self._lib.MpStringListFree(ctypes.byref(c_labels))
+      self._lib.MpStringListFree(ctypes.byref(c_labels))  # pyrefly: ignore[missing-attribute]
     return self._labels
 
   def close(self):
     """Closes ImageSegmenter."""
     if not self._handle:
       return
-    self._lib.MpImageSegmenterClose(self._handle)
-    self._handle = None
+    self._lib.MpImageSegmenterClose(self._handle)  # pyrefly: ignore[missing-attribute]
+    self._handle = None  # pyrefly: ignore[bad-assignment]
     self._dispatcher.close()
     self._lib.close()
 

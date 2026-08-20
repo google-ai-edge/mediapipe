@@ -161,7 +161,7 @@ class TextSummarizer:
 
     def callback_wrapper(
         unused_user_data: int,
-        result_ptr: ctypes.POINTER(_MpTextSummarizerStreamResultC),
+        result_ptr: ctypes.POINTER(_MpTextSummarizerStreamResultC),  # pyrefly: ignore[invalid-annotation]
         error_msg_ptr: bytes,
     ) -> None:
       if not self._async_result_callback:
@@ -232,7 +232,7 @@ class TextSummarizer:
     ctypes_options = options.to_ctypes()
 
     summarizer_handle = ctypes.c_void_p()
-    lib.MpTextSummarizerCreate(
+    lib.MpTextSummarizerCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(ctypes_options),
         ctypes.byref(summarizer_handle),
     )
@@ -253,7 +253,7 @@ class TextSummarizer:
     """
     ctypes_result = _MpTextSummarizerResultC()
 
-    self._lib.MpTextSummarizerSummarize(
+    self._lib.MpTextSummarizerSummarize(  # pyrefly: ignore[missing-attribute]
         self._summarizer_handle,
         text.encode("utf-8"),
         ctypes.byref(ctypes_result),
@@ -264,7 +264,7 @@ class TextSummarizer:
         else None,
         done=True,
     )
-    self._lib.MpTextSummarizerCloseResult(ctypes.byref(ctypes_result))
+    self._lib.MpTextSummarizerCloseResult(ctypes.byref(ctypes_result))  # pyrefly: ignore[missing-attribute]
     return python_result
 
   def summarize_async(
@@ -294,7 +294,7 @@ class TextSummarizer:
           " supported."
       )
     self._async_result_callback = result_callback
-    self._lib.MpTextSummarizerSummarizeStreaming(
+    self._lib.MpTextSummarizerSummarizeStreaming(  # pyrefly: ignore[missing-attribute]
         self._summarizer_handle,
         text.encode("utf-8"),
         self._c_callback,
@@ -304,8 +304,8 @@ class TextSummarizer:
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._summarizer_handle:
-      self._lib.MpTextSummarizerClose(self._summarizer_handle)
-      self._summarizer_handle = None
+      self._lib.MpTextSummarizerClose(self._summarizer_handle)  # pyrefly: ignore[missing-attribute]
+      self._summarizer_handle = None  # pyrefly: ignore[bad-assignment]
       self._async_result_callback = None
       self._lib.close()
 

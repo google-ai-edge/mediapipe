@@ -283,13 +283,13 @@ class GestureRecognizer:
       RuntimeError: If other types of error occurred.
     """
     running_mode_module.validate_running_mode(
-        options.running_mode, options.result_callback
+        options.running_mode, options.result_callback  # pyrefly: ignore[bad-argument-type]
     )
 
     lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
     def convert_result(
-        c_result_ptr: ctypes.POINTER(
+        c_result_ptr: ctypes.POINTER(  # pyrefly: ignore[invalid-annotation]
             gesture_recognizer_result_c.MpGestureRecognizerResultC
         ),
         image_ptr: ctypes.c_void_p,
@@ -322,7 +322,7 @@ class GestureRecognizer:
         result_callback=c_callback,
     )
     recognizer_handle = ctypes.c_void_p()
-    lib.MpGestureRecognizerCreate(
+    lib.MpGestureRecognizerCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(options_c),
         ctypes.byref(recognizer_handle)
     )
@@ -365,7 +365,7 @@ class GestureRecognizer:
         if image_processing_options
         else None
     )
-    self._lib.MpGestureRecognizerRecognizeImage(
+    self._lib.MpGestureRecognizerRecognizeImage(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         options_c,
@@ -373,7 +373,7 @@ class GestureRecognizer:
     )
 
     result = GestureRecognizerResult.from_ctypes(c_result)
-    self._lib.MpGestureRecognizerCloseResult(ctypes.byref(c_result))
+    self._lib.MpGestureRecognizerCloseResult(ctypes.byref(c_result))  # pyrefly: ignore[missing-attribute]
     return result
 
   def recognize_for_video(
@@ -411,7 +411,7 @@ class GestureRecognizer:
         if image_processing_options
         else None
     )
-    self._lib.MpGestureRecognizerRecognizeForVideo(
+    self._lib.MpGestureRecognizerRecognizeForVideo(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         options_c,
@@ -420,7 +420,7 @@ class GestureRecognizer:
     )
 
     result = GestureRecognizerResult.from_ctypes(c_result)
-    self._lib.MpGestureRecognizerCloseResult(ctypes.byref(c_result))
+    self._lib.MpGestureRecognizerCloseResult(ctypes.byref(c_result))  # pyrefly: ignore[missing-attribute]
     return result
 
   def recognize_async(
@@ -465,7 +465,7 @@ class GestureRecognizer:
         if image_processing_options
         else None
     )
-    self._lib.MpGestureRecognizerRecognizeAsync(
+    self._lib.MpGestureRecognizerRecognizeAsync(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         options_c,
@@ -476,8 +476,8 @@ class GestureRecognizer:
     """Closes GestureRecognizer."""
     if not self._handle:
       return
-    self._lib.MpGestureRecognizerClose(self._handle)
-    self._handle = None
+    self._lib.MpGestureRecognizerClose(self._handle)  # pyrefly: ignore[missing-attribute]
+    self._handle = None  # pyrefly: ignore[bad-assignment]
     self._dispatcher.close()
     self._lib.close()
 

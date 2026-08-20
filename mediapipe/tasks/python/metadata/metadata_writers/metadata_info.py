@@ -445,7 +445,7 @@ class TensorMd:
     # Create associated files
     if self.associated_files:
       tensor_metadata.associatedFiles = [
-          file.create_metadata() for file in self.associated_files
+          file.create_metadata() for file in self.associated_files  # pyrefly: ignore[missing-argument]
       ]
     return tensor_metadata
 
@@ -517,7 +517,7 @@ class InputImageTensorMd(TensorMd):
       min_values = None
       max_values = None
 
-    super().__init__(name, description, min_values, max_values,
+    super().__init__(name, description, min_values, max_values,  # pyrefly: ignore[bad-argument-type]
                      _metadata_fb.ContentProperties.ImageProperties)
     self.norm_mean = norm_mean
     self.norm_std = norm_std
@@ -530,7 +530,7 @@ class InputImageTensorMd(TensorMd):
       A Flatbuffers Python object of the input image metadata.
     """
     tensor_metadata = super().create_metadata()
-    tensor_metadata.content.contentProperties.colorSpace = self.color_space_type
+    tensor_metadata.content.contentProperties.colorSpace = self.color_space_type  # pyrefly: ignore[missing-attribute]
     # Create normalization parameters
     if self.norm_mean and self.norm_std:
       normalization = _metadata_fb.ProcessUnitT()
@@ -597,7 +597,7 @@ def _get_file_paths(files: List[_metadata_fb.AssociatedFileT]) -> List[str]:
   """Gets file paths from a list of associated files."""
   if not files:
     return []
-  return [file.name for file in files]
+  return [file.name for file in files]  # pyrefly: ignore[bad-return]
 
 
 def _get_tokenizer_associated_files(
@@ -623,11 +623,11 @@ def _get_tokenizer_associated_files(
     return []
 
   if isinstance(tokenizer_options, _metadata_fb.BertTokenizerOptionsT):
-    return _get_file_paths(tokenizer_options.vocabFile)
+    return _get_file_paths(tokenizer_options.vocabFile)  # pyrefly: ignore[bad-argument-type]
   elif isinstance(tokenizer_options,
                   _metadata_fb.SentencePieceTokenizerOptionsT):
-    return _get_file_paths(tokenizer_options.vocabFile) + _get_file_paths(
-        tokenizer_options.sentencePieceModel)
+    return _get_file_paths(tokenizer_options.vocabFile) + _get_file_paths(  # pyrefly: ignore[bad-argument-type]
+        tokenizer_options.sentencePieceModel)  # pyrefly: ignore[bad-argument-type]
   else:
     return []
 
@@ -812,15 +812,15 @@ class ClassificationTensorMd(TensorMd):
     associated_files = label_files or []
     if self.score_calibration_md:
       associated_files.append(
-          score_calibration_md.create_score_calibration_file_md())
+          score_calibration_md.create_score_calibration_file_md())  # pyrefly: ignore[missing-attribute]
 
     super().__init__(
         name,
         description,
-        min_values,
-        max_values,
+        min_values,  # pyrefly: ignore[bad-argument-type]
+        max_values,  # pyrefly: ignore[bad-argument-type]
         _metadata_fb.ContentProperties.FeatureProperties,
-        associated_files,
+        associated_files,  # pyrefly: ignore[bad-argument-type]
         tensor_name,
         content_range_md,
     )
@@ -908,7 +908,7 @@ class CategoryTensorMd(TensorMd):
     super().__init__(
         name=name,
         description=description,
-        associated_files=label_files,
+        associated_files=label_files,  # pyrefly: ignore[bad-argument-type]
         content_range_md=content_range_md,
     )
 
@@ -1080,7 +1080,7 @@ class RawDetectionOutputTensorsMd:
 
   @property
   def output_mds(self) -> List[TensorMd]:
-    return self._output_mds
+    return self._output_mds  # pyrefly: ignore[bad-return]
 
 
 class TensorGroupMd:
@@ -1130,7 +1130,7 @@ class SegmentationMaskMd(TensorMd):
     self.description = description
     associated_files = label_files or []
     super().__init__(
-        name=name, description=description, associated_files=associated_files
+        name=name, description=description, associated_files=associated_files  # pyrefly: ignore[bad-argument-type]
     )
 
   def create_metadata(self) -> _metadata_fb.TensorMetadataT:

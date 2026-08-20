@@ -402,13 +402,13 @@ class PoseLandmarker:
       RuntimeError: If other types of error occurred.
     """
     running_mode_lib.validate_running_mode(
-        options.running_mode, options.result_callback
+        options.running_mode, options.result_callback  # pyrefly: ignore[bad-argument-type]
     )
 
     lib = mediapipe_c_bindings_lib.load_shared_library(_CTYPES_SIGNATURES)
 
     def convert_result(
-        c_result_ptr: ctypes.POINTER(MpPoseLandmarkerResultC),
+        c_result_ptr: ctypes.POINTER(MpPoseLandmarkerResultC),  # pyrefly: ignore[invalid-annotation]
         image_ptr: ctypes.c_void_p,
         timestamp_ms: int,
     ) -> Tuple[PoseLandmarkerResult, image_lib.Image, int]:
@@ -433,7 +433,7 @@ class PoseLandmarker:
         result_callback=c_callback,
     )
     landmarker = ctypes.c_void_p()
-    lib.MpPoseLandmarkerCreate(
+    lib.MpPoseLandmarkerCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(ctypes_options), ctypes.byref(landmarker)
     )
 
@@ -470,7 +470,7 @@ class PoseLandmarker:
         if image_processing_options
         else None
     )
-    self._lib.MpPoseLandmarkerDetectImage(
+    self._lib.MpPoseLandmarkerDetectImage(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -478,7 +478,7 @@ class PoseLandmarker:
     )
 
     result = PoseLandmarkerResult.from_ctypes(result_c)
-    self._lib.MpPoseLandmarkerCloseResult(ctypes.byref(result_c))
+    self._lib.MpPoseLandmarkerCloseResult(ctypes.byref(result_c))  # pyrefly: ignore[missing-attribute]
     return result
 
   def detect_for_video(
@@ -517,7 +517,7 @@ class PoseLandmarker:
         if image_processing_options
         else None
     )
-    self._lib.MpPoseLandmarkerDetectForVideo(
+    self._lib.MpPoseLandmarkerDetectForVideo(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -526,7 +526,7 @@ class PoseLandmarker:
     )
 
     result = PoseLandmarkerResult.from_ctypes(result_c)
-    self._lib.MpPoseLandmarkerCloseResult(ctypes.byref(result_c))
+    self._lib.MpPoseLandmarkerCloseResult(ctypes.byref(result_c))  # pyrefly: ignore[missing-attribute]
     return result
 
   def detect_async(
@@ -572,7 +572,7 @@ class PoseLandmarker:
         if image_processing_options
         else None
     )
-    self._lib.MpPoseLandmarkerDetectAsync(
+    self._lib.MpPoseLandmarkerDetectAsync(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -583,8 +583,8 @@ class PoseLandmarker:
     """Closes the PoseLandmarker."""
     if not self._handle:
       return
-    self._lib.MpPoseLandmarkerClose(self._handle)
-    self._handle = None
+    self._lib.MpPoseLandmarkerClose(self._handle)  # pyrefly: ignore[missing-attribute]
+    self._handle = None  # pyrefly: ignore[bad-assignment]
     self._dispatcher.close()
     self._lib.close()
 

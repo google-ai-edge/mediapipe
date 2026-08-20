@@ -96,7 +96,7 @@ def draw_detection(
   if detection.keypoints:
     for keypoint in detection.keypoints:
       keypoint_px = _normalized_to_pixel_coordinates(
-          keypoint.x, keypoint.y, image_cols, image_rows
+          keypoint.x, keypoint.y, image_cols, image_rows  # pyrefly: ignore[bad-argument-type]
       )
       cv2.circle(
           image,
@@ -169,7 +169,7 @@ def draw_landmarks(
         and landmark.presence < _PRESENCE_THRESHOLD
     ):
       continue
-    landmark_px = _normalized_to_pixel_coordinates(landmark.x, landmark.y,
+    landmark_px = _normalized_to_pixel_coordinates(landmark.x, landmark.y,  # pyrefly: ignore[bad-argument-type]
                                                    image_cols, image_rows)
     if landmark_px:
       idx_to_coordinates[idx] = landmark_px
@@ -236,7 +236,7 @@ def draw_axis(
     raise ValueError('Input image must contain three channel bgr data.')
   image_rows, image_cols, _ = image.shape
   # Create axis points in camera coordinate frame.
-  axis_world = np.float32([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]])
+  axis_world = np.float32([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]])  # pyrefly: ignore[bad-argument-type]
   axis_cam = np.matmul(rotation, axis_length * axis_world.T).T + translation
   x = axis_cam[..., 0]
   y = axis_cam[..., 1]
@@ -250,10 +250,10 @@ def draw_axis(
   x_im = np.int32((1 + x_ndc) * 0.5 * image_cols)
   y_im = np.int32((1 - y_ndc) * 0.5 * image_rows)
   # Draw xyz axis on the image.
-  origin = (x_im[0], y_im[0])
-  x_axis = (x_im[1], y_im[1])
-  y_axis = (x_im[2], y_im[2])
-  z_axis = (x_im[3], y_im[3])
+  origin = (x_im[0], y_im[0])  # pyrefly: ignore[bad-index]
+  x_axis = (x_im[1], y_im[1])  # pyrefly: ignore[bad-index]
+  y_axis = (x_im[2], y_im[2])  # pyrefly: ignore[bad-index]
+  z_axis = (x_im[3], y_im[3])  # pyrefly: ignore[bad-index]
   cv2.arrowedLine(image, origin, x_axis, RED_COLOR, axis_drawing_spec.thickness)
   cv2.arrowedLine(image, origin, y_axis, GREEN_COLOR,
                   axis_drawing_spec.thickness)
@@ -309,13 +309,13 @@ def plot_landmarks(
     ):
       continue
     ax.scatter3D(
-        xs=[-landmark.z or 0],
+        xs=[-landmark.z or 0],  # pyrefly: ignore[unsupported-operation]
         ys=[landmark.x or 0],
-        zs=[-landmark.y or 0],
+        zs=[-landmark.y or 0],  # pyrefly: ignore[unsupported-operation]
         color=_normalize_color(landmark_drawing_spec.color[::-1]),
         linewidth=landmark_drawing_spec.thickness,
     )
-    plotted_landmarks[idx] = (-landmark.z, landmark.x, -landmark.y)
+    plotted_landmarks[idx] = (-landmark.z, landmark.x, -landmark.y)  # pyrefly: ignore[unsupported-operation]
   if connections:
     num_landmarks = len(landmark_list)
     # Draws the connections if the start and end landmarks are both visible.

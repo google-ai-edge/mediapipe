@@ -398,12 +398,12 @@ class HolisticLandmarker:
       RuntimeError: If other types of error occurred.
     """
     running_mode_lib.validate_running_mode(
-        options.running_mode, options.result_callback
+        options.running_mode, options.result_callback  # pyrefly: ignore[bad-argument-type]
     )
     lib = mediapipe_c_bindings_lib.load_shared_library(_CTYPES_SIGNATURES)
 
     def convert_result(
-        c_result_ptr: ctypes.POINTER(MpHolisticLandmarkerResultC),
+        c_result_ptr: ctypes.POINTER(MpHolisticLandmarkerResultC),  # pyrefly: ignore[invalid-annotation]
         image_ptr: ctypes.c_void_p,
         timestamp_ms: int,
     ) -> Tuple[HolisticLandmarkerResult, image_lib.Image, int]:
@@ -431,7 +431,7 @@ class HolisticLandmarker:
         result_callback=c_callback,
     )
     landmarker = ctypes.c_void_p()
-    lib.MpHolisticLandmarkerCreate(
+    lib.MpHolisticLandmarkerCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(options_c), ctypes.byref(landmarker)
     )
     return HolisticLandmarker(
@@ -468,7 +468,7 @@ class HolisticLandmarker:
         if image_processing_options
         else None
     )
-    self._lib.MpHolisticLandmarkerDetectImage(
+    self._lib.MpHolisticLandmarkerDetectImage(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -477,7 +477,7 @@ class HolisticLandmarker:
     try:
       result = HolisticLandmarkerResult.from_ctypes(result_c)
     finally:
-      self._lib.MpHolisticLandmarkerCloseResult(ctypes.byref(result_c))
+      self._lib.MpHolisticLandmarkerCloseResult(ctypes.byref(result_c))  # pyrefly: ignore[missing-attribute]
     return result
 
   def detect_for_video(
@@ -515,7 +515,7 @@ class HolisticLandmarker:
         if image_processing_options
         else None
     )
-    self._lib.MpHolisticLandmarkerDetectForVideo(
+    self._lib.MpHolisticLandmarkerDetectForVideo(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -525,7 +525,7 @@ class HolisticLandmarker:
     try:
       result = HolisticLandmarkerResult.from_ctypes(result_c)
     finally:
-      self._lib.MpHolisticLandmarkerCloseResult(ctypes.byref(result_c))
+      self._lib.MpHolisticLandmarkerCloseResult(ctypes.byref(result_c))  # pyrefly: ignore[missing-attribute]
     return result
 
   def detect_async(
@@ -571,7 +571,7 @@ class HolisticLandmarker:
         if image_processing_options
         else None
     )
-    self._lib.MpHolisticLandmarkerDetectAsync(
+    self._lib.MpHolisticLandmarkerDetectAsync(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -582,8 +582,8 @@ class HolisticLandmarker:
     """Closes the HolisticLandmarker."""
     if not self._handle:
       return
-    self._lib.MpHolisticLandmarkerClose(self._handle)
-    self._handle = None
+    self._lib.MpHolisticLandmarkerClose(self._handle)  # pyrefly: ignore[missing-attribute]
+    self._handle = None  # pyrefly: ignore[bad-assignment]
     self._dispatcher.close()
     self._lib.close()
 
