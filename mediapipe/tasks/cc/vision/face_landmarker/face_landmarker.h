@@ -20,6 +20,7 @@ limitations under the License.
 #include <optional>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
@@ -185,6 +186,12 @@ class FaceLandmarker : tasks::vision::core::BaseVisionTaskApi {
   absl::Status DetectAsync(Image image, int64_t timestamp_ms,
                            std::optional<core::ImageProcessingOptions>
                                image_processing_options = std::nullopt);
+
+  // Resets the FaceLandmarker so it can process a new video or live stream
+  // starting at any timestamp. Restarts the underlying graph (clearing tracker
+  // state and the monotonic timestamp clock) without reloading the model.
+  // Only needed in VIDEO or LIVE_STREAM running mode.
+  absl::Status Reset() { return runner_->Restart(); }
 
   // Shuts down the FaceLandmarker when all works are done.
   absl::Status Close() { return runner_->Close(); }
