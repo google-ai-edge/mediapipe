@@ -42,10 +42,16 @@ ts_library(
 )
 
 ts_library(
+    name = "loading_progress",
+    srcs = ["loading_progress.ts"],
+)
+
+ts_library(
     name = "task_runner",
     srcs = ["task_runner.ts"],
     deps = [
         ":core",
+        ":loading_progress",
         ":task_logger",
         ":task_logger_factory",
         "//mediapipe/calculators/tensor:inference_calculator_jspb_proto",
