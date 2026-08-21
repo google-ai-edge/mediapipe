@@ -1,0 +1,18 @@
+name: mediapipe
+description: Flutter plugin for Google's MediaPipe.
+version: 1.0.0
+# repository: https://github.com/my_org/my_repo
+environment:
+  sdk: ^3.1.0-149.0.dev
+
+# Add regular dependencies here.
+dependencies:
+  ffi: ^2.0.2
+  fixnum: ^1.1.0
+  path: ^1.8.3
+  protobuf: ^3.0.0
+
+dev_dependencies:
+  ffigen: ^9.0.1
+  lints: ^2.0.0
+  test: ^1.21.0
