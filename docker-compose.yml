@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  mediapipe:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mediapipe-dev
+    volumes:
+      - .:/mediapipe
+      - /mediapipe/bazel-cache
+    working_dir: /mediapipe
+    stdin_open: true
+    tty: true
+    # Uncomment the following lines if you need GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+
