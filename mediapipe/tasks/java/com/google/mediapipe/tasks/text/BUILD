@@ -43,6 +43,8 @@ android_library(
     name = "textembedder",
     srcs = [
         "textembedder/TextEmbedder.java",
+        "textembedder/TextEmbedderExecutor.java",
+        "textembedder/TextEmbedderGraphExecutorImpl.java",
         "textembedder/TextEmbedderResult.java",
     ],
     manifest = "textembedder/AndroidManifest.xml",
