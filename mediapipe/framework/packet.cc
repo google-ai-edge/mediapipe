@@ -28,15 +28,12 @@
 #include "google/protobuf/message_lite.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
-#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/framework/tool/type_util.h"
 #include "mediapipe/framework/type_map.h"
 
 namespace mediapipe {
 namespace packet_internal {
-
-HolderBase::~HolderBase() {}
 
 Packet Create(HolderBase* holder) {
   Packet result;
@@ -116,6 +113,12 @@ std::string Packet::DebugString() const {
   return result;
 }
 
+void Packet::swap(Packet& other) noexcept {
+  using std::swap;
+  swap(holder_, other.holder_);
+  swap(timestamp_, other.timestamp_);
+}
+
 absl::Status Packet::ValidateAsType(TypeId type_id) const {
   if (ABSL_PREDICT_FALSE(IsEmpty())) {
     return absl::InternalError(absl::StrCat(
@@ -153,7 +156,7 @@ const proto_ns::MessageLite& Packet::GetProtoMessageLite() const {
   return *proto;
 }
 
-StatusOr<std::vector<const proto_ns::MessageLite*>>
+absl::StatusOr<std::vector<const proto_ns::MessageLite*>>
 Packet::GetVectorOfProtoMessageLitePtrs() const {
   if (holder_ == nullptr) {
     return absl::InternalError("Packet is empty.");

@@ -98,8 +98,8 @@ class Packet {
 
   // Move constructor and assignment operator that take non-const rvalue
   // reference.
-  Packet(Packet&&);
-  Packet& operator=(Packet&&);
+  Packet(Packet&&) noexcept;
+  Packet& operator=(Packet&&) noexcept;
 
   // Returns a Packet that contains the same data as *this, and has the
   // given timestamp. Does not modify *this.
@@ -271,6 +271,8 @@ class Packet {
   // Returns a string with the best guess at the type name.
   std::string DebugTypeName() const;
 
+  void swap(Packet& other) noexcept;
+
  private:
   friend Packet packet_internal::Create(packet_internal::HolderBase* holder);
   friend Packet packet_internal::Create(packet_internal::HolderBase* holder,
@@ -427,10 +429,10 @@ class ForeignHolder;
 
 class HolderBase {
  public:
-  HolderBase() {}
+  HolderBase() = default;
   HolderBase(const HolderBase&) = delete;
   HolderBase& operator=(const HolderBase&) = delete;
-  virtual ~HolderBase();
+  virtual ~HolderBase() = default;
   template <typename T>
   bool PayloadIsOfType() const {
     return GetTypeId() == kTypeId<T>;
@@ -784,19 +786,17 @@ inline absl::StatusOr<std::unique_ptr<T>> Packet::ConsumeOrCopy(
   return absl::InternalError("Unbounded array isn't supported.");
 }
 
-inline Packet::Packet(Packet&& packet) {
+inline Packet::Packet(Packet&& packet) noexcept
+    : holder_(std::move(packet.holder_)),
+      timestamp_(std::exchange(packet.timestamp_, Timestamp::Unset())) {
   VLOG(4) << "Using move constructor of " << packet.DebugString();
-  holder_ = std::move(packet.holder_);
-  timestamp_ = packet.timestamp_;
-  packet.timestamp_ = Timestamp::Unset();
 }
 
-inline Packet& Packet::operator=(Packet&& packet) {
+inline Packet& Packet::operator=(Packet&& packet) noexcept {
   VLOG(4) << "Using move assignment operator of " << packet.DebugString();
   if (this != &packet) {
     holder_ = std::move(packet.holder_);
-    timestamp_ = packet.timestamp_;
-    packet.timestamp_ = Timestamp::Unset();
+    timestamp_ = std::exchange(packet.timestamp_, Timestamp::Unset());
   }
   return *this;
 }
