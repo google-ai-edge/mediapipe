@@ -204,6 +204,10 @@ absl::Status CppFaceLandmarkerClose(MpFaceLandmarkerPtr landmarker) {
   return absl::OkStatus();
 }
 
+absl::Status CppFaceLandmarkerReset(MpFaceLandmarkerPtr landmarker) {
+  return GetCppLandmarker(landmarker)->Reset();
+}
+
 }  // namespace mediapipe::tasks::c::vision::face_landmarker
 
 extern "C" {
@@ -256,6 +260,14 @@ MpStatus MpFaceLandmarkerClose(MpFaceLandmarkerPtr landmarker,
                                char** error_msg) {
   absl::Status status =
       mediapipe::tasks::c::vision::face_landmarker::CppFaceLandmarkerClose(
+          landmarker);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
+}
+
+MpStatus MpFaceLandmarkerReset(MpFaceLandmarkerPtr landmarker,
+                               char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::face_landmarker::CppFaceLandmarkerReset(
           landmarker);
   return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
