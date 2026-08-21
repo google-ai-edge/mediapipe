@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import {TensorsToClassificationCalculatorOptions} from '../../../../calculators/tensor/tensors_to_classification_calculator_pb';
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {ClassificationResult} from '../../../../tasks/cc/components/containers/proto/classifications_pb';
@@ -21,6 +22,10 @@ import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/b
 import {TextClassifierGraphOptions} from '../../../../tasks/cc/text/text_classifier/proto/text_classifier_graph_options_pb';
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
 import {convertFromClassificationResultProto} from '../../../../tasks/web/components/processors/classifier_result';
+import {
+  categoryLabelMapFromItems,
+  findUniqueCalculatorNode,
+} from '../../../../tasks/web/components/processors/label_map';
 import {
   CachedGraphRunner,
   TaskRunner,
@@ -43,6 +48,8 @@ const INPUT_STREAM = 'text_in';
 const CLASSIFICATIONS_STREAM = 'classifications_out';
 const TEXT_CLASSIFIER_GRAPH =
   'mediapipe.tasks.text.text_classifier.TextClassifierGraph';
+const TENSORS_TO_CLASSIFICATION_CALCULATOR_NAME =
+  'TensorsToClassificationCalculator';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -50,6 +57,8 @@ const TEXT_CLASSIFIER_GRAPH =
 /** Performs Natural Language classification. */
 export class TextClassifier extends TaskRunner {
   private classificationResult: TextClassifierResult = {classifications: []};
+  private labels: string[] = [];
+  private displayNames: string[] = [];
   private readonly options = new TextClassifierGraphOptions();
 
   /**
@@ -146,6 +155,62 @@ export class TextClassifier extends TaskRunner {
       ),
     );
     return this.applyOptions(options);
+  }
+
+  protected override onGraphRefreshed(): void {
+    this.populateLabels();
+  }
+
+  /**
+   * Populate labels from TensorsToClassificationCalculator in the expanded
+   * graph. The calculator is configured from TFLite Model Metadata when the
+   * TextClassifier graph is built.
+   */
+  private populateLabels(): void {
+    this.labels = [];
+    this.displayNames = [];
+    const node = findUniqueCalculatorNode(
+      this.getCalculatorGraphConfig(),
+      TENSORS_TO_CLASSIFICATION_CALCULATOR_NAME,
+    );
+    if (!node) {
+      return;
+    }
+    const labelItems =
+      node
+        .getOptions()
+        ?.getExtension(TensorsToClassificationCalculatorOptions.ext)
+        ?.getLabelItemsMap() ?? new Map();
+    const labelMap = categoryLabelMapFromItems(labelItems);
+    this.labels = labelMap.labels;
+    this.displayNames = labelMap.displayNames;
+  }
+
+  /**
+   * Get the category label list the TextClassifier can recognize. The index
+   * in the returned array corresponds to the category index in the model
+   * label map.
+   *
+   * If there is no labelmap provided in the model file, an empty array is
+   * returned.
+   *
+   * @export
+   * @return The labels used by the current model.
+   */
+  getLabels(): string[] {
+    return this.labels;
+  }
+
+  /**
+   * Get the locale display-name list for the current model. Index-aligned
+   * with {@link getLabels}. Entries are empty strings when the model has no
+   * display name for that class.
+   *
+   * @export
+   * @return The display names used by the current model.
+   */
+  getDisplayNames(): string[] {
+    return this.displayNames;
   }
 
   protected override get baseOptions(): BaseOptionsProto {

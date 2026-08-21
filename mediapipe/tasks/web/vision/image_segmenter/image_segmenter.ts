@@ -28,6 +28,7 @@ import {
   VisionTaskRunner,
 } from '../../../../tasks/web/vision/core/vision_task_runner';
 import {LabelMapItem} from '../../../../util/label_map_pb';
+import {categoryLabelMapFromItems} from '../../../../tasks/web/components/processors/label_map';
 import {
   ImageSource,
   WasmModule,
@@ -70,6 +71,7 @@ export class ImageSegmenter extends VisionTaskRunner {
   private confidenceMasks?: MPMask[];
   private qualityScores?: number[];
   private labels: string[] = [];
+  private displayNames: string[] = [];
   private userCallback?: ImageSegmenterCallback;
   private outputCategoryMask = DEFAULT_OUTPUT_CATEGORY_MASK;
   private outputConfidenceMasks = DEFAULT_OUTPUT_CONFIDENCE_MASKS;
@@ -213,6 +215,7 @@ export class ImageSegmenter extends VisionTaskRunner {
       );
 
     this.labels = [];
+    this.displayNames = [];
     if (tensorsToSegmentationCalculators.length > 1) {
       throw new Error(
         `The graph has more than one ${TENSORS_TO_SEGMENTATION_CALCULATOR_NAME}.`,
@@ -223,10 +226,9 @@ export class ImageSegmenter extends VisionTaskRunner {
           .getOptions()
           ?.getExtension(TensorsToSegmentationCalculatorOptions.ext)
           ?.getLabelItemsMap() ?? new Map<string, LabelMapItem>();
-      labelItems.forEach((value, index) => {
-        // tslint:disable-next-line:no-unnecessary-type-assertion
-        this.labels[Number(index)] = value.getName()!;
-      });
+      const labelMap = categoryLabelMapFromItems(labelItems);
+      this.labels = labelMap.labels;
+      this.displayNames = labelMap.displayNames;
     }
   }
 
@@ -416,6 +418,18 @@ export class ImageSegmenter extends VisionTaskRunner {
    */
   getLabels(): string[] {
     return this.labels;
+  }
+
+  /**
+   * Get the locale display-name list for the current model. Index-aligned
+   * with {@link getLabels}. Entries are empty strings when the model has no
+   * display name for that class.
+   *
+   * @export
+   * @return The display names used by the current model.
+   */
+  getDisplayNames(): string[] {
+    return this.displayNames;
   }
 
   private reset(): void {
