@@ -1204,6 +1204,14 @@ export const createMediaPipeLib: CreateMediaPipeLibApi = async <LibType>(
     if (fileLocator.mainScriptUrlOrBlob) {
       moduleFileLocator.mainScriptUrlOrBlob = fileLocator.mainScriptUrlOrBlob;
     }
+    // Copy preloaded binaries so progress-aware fetches are not repeated by
+    // Emscripten.
+    if (fileLocator.wasmBinary) {
+      moduleFileLocator.wasmBinary = fileLocator.wasmBinary;
+    }
+    if (fileLocator.getPreloadedPackage) {
+      moduleFileLocator.getPreloadedPackage = fileLocator.getPreloadedPackage;
+    }
   }
   // TODO: Ensure that fileLocator is passed in by all users
   // and make it required

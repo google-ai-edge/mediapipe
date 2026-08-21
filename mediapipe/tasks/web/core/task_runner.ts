@@ -21,6 +21,7 @@ import {BaseOptions as BaseOptionsProto} from '../../../tasks/cc/core/proto/base
 import {ExternalFile} from '../../../tasks/cc/core/proto/external_file_pb';
 import {
   BaseOptions,
+  LoadingProgressEvent,
   TaskRunnerOptions,
 } from '../../../tasks/web/core/task_runner_options';
 import {streamToUint8Array} from '../../../tasks/web/genai/llm_inference/model_loading_utils';
@@ -32,6 +33,7 @@ import {
 } from '../../../web/graph_runner/graph_runner';
 import {SupportLogging} from '../../../web/graph_runner/graph_runner_logging_lib';
 import {SupportModelResourcesGraphService} from '../../../web/graph_runner/register_model_resources_graph_service';
+import {fetchArrayBufferWithProgress} from './loading_progress';
 import {TaskLogger} from './task_logger';
 import {createTasksLogger} from './task_logger_factory';
 
@@ -81,6 +83,30 @@ export async function createTaskRunner<T extends TaskRunner>(
     },
   };
 
+  // When a progress callback is provided, prefetch Wasm (and optional .data
+  // assets) so the app can show a loading bar. Passing the bytes into
+  // Emscripten avoids a second download.
+  const onLoadingProgress = options.onLoadingProgress;
+  if (onLoadingProgress) {
+    fileLocator.wasmBinary = await fetchArrayBufferWithProgress(
+      fileset.wasmBinaryPath.toString(),
+      (loaded, total) => {
+        onLoadingProgress({type: 'wasm', loaded, total});
+      },
+      fileset.wasmBinaryPath.toString(),
+    );
+    if (fileset.assetBinaryPath) {
+      const assetBinary = await fetchArrayBufferWithProgress(
+        fileset.assetBinaryPath.toString(),
+        (loaded, total) => {
+          onLoadingProgress({type: 'asset', loaded, total});
+        },
+        fileset.assetBinaryPath.toString(),
+      );
+      fileLocator.getPreloadedPackage = () => assetBinary;
+    }
+  }
+
   const instance = await createMediaPipeLib(
     type,
     fileset.wasmLoaderPath,
@@ -100,6 +126,7 @@ export abstract class TaskRunner {
   private processingErrors: Error[] = [];
   private latestOutputTimestamp = 0;
   private keepaliveNode?: CalculatorGraphConfig.Node;
+  private onLoadingProgress?: (event: LoadingProgressEvent) => void;
 
   /**
    * Creates a new instance of a Mediapipe Task. Determines if SIMD is
@@ -149,6 +176,10 @@ export abstract class TaskRunner {
     options: TaskRunnerOptions,
     loadTfliteModel = true,
   ): Promise<void> {
+    if ('onLoadingProgress' in options) {
+      this.onLoadingProgress = options.onLoadingProgress;
+    }
+
     if (loadTfliteModel) {
       const baseOptions: BaseOptions = options.baseOptions || {};
 
@@ -175,38 +206,38 @@ export abstract class TaskRunner {
 
       this.setAcceleration(baseOptions);
       if (baseOptions.modelAssetPath) {
+        const modelUrl = baseOptions.modelAssetPath.toString();
+        const onProgress = this.onLoadingProgress;
         // We don't use `await` here since we want to apply most settings
         // synchronously.
-        return fetch(baseOptions.modelAssetPath.toString())
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error(
-                `Failed to fetch model: ${baseOptions.modelAssetPath} (${response.status})`,
-              );
-            } else {
-              return response.arrayBuffer();
-            }
-          })
-          .then((buffer) => {
-            try {
-              // Try to delete file as we cannot overwrite an existing file
-              // using our current API.
-              this.graphRunner.wasmModule.FS_unlink('/model.dat');
-            } catch {}
-            // TODO: Consider passing the model to the graph as an
-            // input side packet as this might reduce copies.
-            this.graphRunner.wasmModule.FS_createDataFile(
-              '/',
-              'model.dat',
-              new Uint8Array(buffer),
-              /* canRead= */ true,
-              /* canWrite= */ false,
-              /* canOwn= */ false,
-            );
-            this.setExternalFile('/model.dat');
-            this.refreshGraph();
-            this.onGraphRefreshed();
-          });
+        return fetchArrayBufferWithProgress(
+          modelUrl,
+          onProgress
+            ? (loaded, total) => {
+                onProgress({type: 'model', loaded, total});
+              }
+            : undefined,
+          `model: ${modelUrl}`,
+        ).then((buffer) => {
+          try {
+            // Try to delete file as we cannot overwrite an existing file
+            // using our current API.
+            this.graphRunner.wasmModule.FS_unlink('/model.dat');
+          } catch {}
+          // TODO: Consider passing the model to the graph as an
+          // input side packet as this might reduce copies.
+          this.graphRunner.wasmModule.FS_createDataFile(
+            '/',
+            'model.dat',
+            new Uint8Array(buffer),
+            /* canRead= */ true,
+            /* canWrite= */ false,
+            /* canOwn= */ false,
+          );
+          this.setExternalFile('/model.dat');
+          this.refreshGraph();
+          this.onGraphRefreshed();
+        });
       } else if (baseOptions.modelAssetBuffer instanceof Uint8Array) {
         this.setExternalFile(baseOptions.modelAssetBuffer);
       } else if (baseOptions.modelAssetBuffer) {
