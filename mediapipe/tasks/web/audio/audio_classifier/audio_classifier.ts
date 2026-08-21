@@ -202,12 +202,14 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
   }
 
   /**
-   * Get the locale display-name list for the current model. Index-aligned
-   * with {@link getLabels}. Entries are empty strings when the model has no
-   * display name for that class.
+   * Get the locale display-name list for the current model.
+   *
+   * When the model includes a display-name associated file, the returned list
+   * is the same length as {@link getLabels} and index-aligned with it. When
+   * the model has no display names, an empty array is returned.
    *
    * @export
-   * @return The display names used by the current model.
+   * @return The display names used by the current model, or `[]` if none.
    */
   getDisplayNames(): string[] {
     return this.displayNames;

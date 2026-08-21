@@ -214,11 +214,11 @@ describe('ImageClassifier', () => {
       expect(imageClassifier.getDisplayNames()).toEqual(['manzana', 'plátano']);
     });
 
-    it('returns empty display names when the labelmap has none', async () => {
+    it('returns an empty list when the labelmap has no display names', async () => {
       await loadLabelMap([{name: 'cat'}, {name: 'dog'}]);
 
       expect(imageClassifier.getLabels()).toEqual(['cat', 'dog']);
-      expect(imageClassifier.getDisplayNames()).toEqual(['', '']);
+      expect(imageClassifier.getDisplayNames()).toEqual([]);
     });
   });
 });

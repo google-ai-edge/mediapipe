@@ -33,11 +33,27 @@ describe('categoryLabelMapFromItems', () => {
     items.set(0, apple);
     const banana = new LabelMapItem();
     banana.setName('banana');
+    banana.setDisplayName('plátano');
     items.set(1, banana);
 
     expect(categoryLabelMapFromItems(items)).toEqual({
       labels: ['apple', 'banana'],
-      displayNames: ['manzana', ''],
+      displayNames: ['manzana', 'plátano'],
+    });
+  });
+
+  it('returns no display names when the labelmap has none', () => {
+    const items = new Map<number, LabelMapItem>();
+    const cat = new LabelMapItem();
+    cat.setName('cat');
+    items.set(0, cat);
+    const dog = new LabelMapItem();
+    dog.setName('dog');
+    items.set(1, dog);
+
+    expect(categoryLabelMapFromItems(items)).toEqual({
+      labels: ['cat', 'dog'],
+      displayNames: [],
     });
   });
 

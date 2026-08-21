@@ -26,8 +26,9 @@ export interface CategoryLabelMap {
 /**
  * Converts a TFLite / MediaPipe label_items map into parallel arrays.
  *
- * Index `i` is `categoryName` / `displayName` for class id `i`. Missing
- * display names become an empty string so callers can zip the arrays.
+ * Index `i` is `categoryName` / `displayName` for class id `i`. TFLite
+ * metadata either ships a full display-name file (same length as labels) or
+ * none at all; if no item has a display name, `displayNames` is `[]`.
  */
 export function categoryLabelMapFromItems(
   labelItems: {
@@ -38,12 +39,17 @@ export function categoryLabelMapFromItems(
 ): CategoryLabelMap {
   const labels: string[] = [];
   const displayNames: string[] = [];
+  let hasDisplayName = false;
   labelItems.forEach((value, index) => {
     const i = Number(index);
     labels[i] = value.getName() ?? '';
-    displayNames[i] = value.getDisplayName() ?? '';
+    const displayName = value.getDisplayName() ?? '';
+    displayNames[i] = displayName;
+    if (displayName) {
+      hasDisplayName = true;
+    }
   });
-  return {labels, displayNames};
+  return {labels, displayNames: hasDisplayName ? displayNames : []};
 }
 
 /**
