@@ -3073,6 +3073,16 @@ _CTYPES_SIGNATURES = (
         'MpFaceLandmarkerClose',
         (ctypes.c_void_p,),
     ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpFaceLandmarkerSetOptions',
+        (
+            ctypes.c_void_p,
+            ctypes.c_int,
+            ctypes.c_float,
+            ctypes.c_float,
+            ctypes.c_float,
+        ),
+    ),
 )
 
 
@@ -3083,6 +3093,7 @@ class FaceLandmarker:
   _handle: ctypes.c_void_p
   _dispatcher: _AsyncResultDispatcher
   _async_callback: _C_TYPES_RESULT_CALLBACK
+  _options: FaceLandmarkerOptions
 
   def __init__(
       self,
@@ -3090,6 +3101,7 @@ class FaceLandmarker:
       handle: ctypes.c_void_p,
       dispatcher: _AsyncResultDispatcher,
       async_callback: _C_TYPES_RESULT_CALLBACK,
+      options: FaceLandmarkerOptions,
   ):
     """Initializes the face landmarker.
 
@@ -3098,11 +3110,13 @@ class FaceLandmarker:
       handle: The C pointer to the face landmarker.
       dispatcher: The async result handler for the face landmarker.
       async_callback: The c callback for the face landmarker.
+      options: The options used to create this landmarker.
     """
     self._lib = lib
     self._handle = handle
     self._dispatcher = dispatcher
     self._async_callback = async_callback
+    self._options = options
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'FaceLandmarker':
@@ -3183,7 +3197,11 @@ class FaceLandmarker:
         ctypes.byref(options_c), ctypes.byref(landmarker)
     )
     return FaceLandmarker(
-        lib, landmarker, dispatcher=dispatcher, async_callback=c_callback
+        lib,
+        landmarker,
+        dispatcher=dispatcher,
+        async_callback=c_callback,
+        options=options,
     )
 
   def detect(
@@ -3323,6 +3341,50 @@ class FaceLandmarker:
         c_image,
         c_image_processing_options,
         timestamp_ms,
+    )
+
+  def set_options(
+      self,
+      *,
+      num_faces: Optional[int] = None,
+      min_face_detection_confidence: Optional[float] = None,
+      min_face_presence_confidence: Optional[float] = None,
+      min_tracking_confidence: Optional[float] = None,
+  ) -> None:
+    """Updates live detector / tracker thresholds without recreating the task.
+
+    Only the provided keyword arguments are changed. The model stays loaded;
+    the graph is rebuilt so the next detect call uses the new values. Useful
+    for a settings UI on a live camera pipeline.
+
+    Args:
+      num_faces: Maximum number of faces to detect. Must be >= 1.
+      min_face_detection_confidence: Minimum face detection score in [0, 1].
+      min_face_presence_confidence: Minimum face presence score in [0, 1].
+      min_tracking_confidence: Minimum tracking score in [0, 1].
+
+    Raises:
+      RuntimeError: If the FaceLandmarker has already been closed.
+      ValueError: If a provided value is out of range.
+    """
+    if not self._handle:
+      raise RuntimeError('FaceLandmarker has been closed.')
+    if num_faces is not None:
+      self._options.num_faces = num_faces
+    if min_face_detection_confidence is not None:
+      self._options.min_face_detection_confidence = (
+          min_face_detection_confidence
+      )
+    if min_face_presence_confidence is not None:
+      self._options.min_face_presence_confidence = min_face_presence_confidence
+    if min_tracking_confidence is not None:
+      self._options.min_tracking_confidence = min_tracking_confidence
+    self._lib.MpFaceLandmarkerSetOptions(  # pyrefly: ignore[missing-attribute]
+        self._handle,
+        self._options.num_faces,
+        self._options.min_face_detection_confidence,
+        self._options.min_face_presence_confidence,
+        self._options.min_tracking_confidence,
     )
 
   def close(self):
