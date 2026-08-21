@@ -33,6 +33,12 @@ export declare interface NormalizedLandmark {
 
   /** The likelihood of the landmark being visible within the image. */
   visibility: number;
+
+  /**
+   * The likelihood of the landmark being present in the scene (within image
+   * bounds). Unset when the model does not output a presence score.
+   */
+  presence?: number;
 }
 
 /**
@@ -52,4 +58,10 @@ export declare interface Landmark {
 
   /** The likelihood of the landmark being visible within the image. */
   visibility: number;
+
+  /**
+   * The likelihood of the landmark being present in the scene (within image
+   * bounds). Unset when the model does not output a presence score.
+   */
+  presence?: number;
 }

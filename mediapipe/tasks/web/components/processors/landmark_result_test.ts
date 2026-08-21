@@ -35,6 +35,20 @@ describe('convertToLandmarks()', () => {
     const result = convertToLandmarks(landmarkListProto);
     expect(result).toEqual([{x: 0, y: 0, z: 0, visibility: 0}]);
   });
+
+  it('copies presence when the proto field is set', () => {
+    const landmarkListProto = createLandmarks(
+        0.1, 0.2, 0.3, /* visibility= */ 0.8, /* presence= */ 0.9);
+    const result = convertToLandmarks(landmarkListProto);
+    expect(result).toEqual(
+        [{x: 0.1, y: 0.2, z: 0.3, visibility: 0.8, presence: 0.9}]);
+  });
+
+  it('omits presence when the proto field is unset', () => {
+    const landmarkListProto = createLandmarks(0.1, 0.2, 0.3);
+    const result = convertToLandmarks(landmarkListProto);
+    expect(result[0].presence).toBeUndefined();
+  });
 });
 
 describe('convertToWorldLandmarks()', () => {
@@ -48,5 +62,13 @@ describe('convertToWorldLandmarks()', () => {
     const worldLandmarkListProto = createWorldLandmarks();
     const result = convertToWorldLandmarks(worldLandmarkListProto);
     expect(result).toEqual([{x: 0, y: 0, z: 0, visibility: 0}]);
+  });
+
+  it('copies presence when the proto field is set', () => {
+    const worldLandmarkListProto = createWorldLandmarks(
+        10, 20, 30, /* visibility= */ 0.4, /* presence= */ 0.6);
+    const result = convertToWorldLandmarks(worldLandmarkListProto);
+    expect(result).toEqual(
+        [{x: 10, y: 20, z: 30, visibility: 0.4, presence: 0.6}]);
   });
 });
