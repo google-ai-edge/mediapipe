@@ -43,5 +43,4 @@
     "./_bazel_buildbot",
     "./_bazel_out",
     "./_bazel_testlogs"
-  ]
-}
+  ]}
