@@ -640,7 +640,9 @@ export class HolisticLandmarker extends VisionTaskRunner {
     outputList: NormalizedLandmark[][],
   ): void {
     const landmarksProto = NormalizedLandmarkList.deserializeBinary(data);
-    outputList.push(convertToLandmarks(landmarksProto));
+    outputList.push(
+      this.mirrorNormalizedLandmarksIfNeeded(convertToLandmarks(landmarksProto)),
+    );
   }
 
   /**
@@ -652,7 +654,11 @@ export class HolisticLandmarker extends VisionTaskRunner {
     outputList: Landmark[][],
   ): void {
     const worldLandmarksProto = LandmarkList.deserializeBinary(data);
-    outputList.push(convertToWorldLandmarks(worldLandmarksProto));
+    outputList.push(
+      this.mirrorWorldLandmarksIfNeeded(
+        convertToWorldLandmarks(worldLandmarksProto),
+      ),
+    );
   }
 
   /** Adds new blendshapes from the given proto. */

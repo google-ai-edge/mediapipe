@@ -372,7 +372,11 @@ export class FaceLandmarker extends VisionTaskRunner {
     for (const binaryProto of data) {
       const faceLandmarksProto =
         NormalizedLandmarkListProto.deserializeBinary(binaryProto);
-      this.result.faceLandmarks.push(convertToLandmarks(faceLandmarksProto));
+      this.result.faceLandmarks.push(
+        this.mirrorNormalizedLandmarksIfNeeded(
+          convertToLandmarks(faceLandmarksProto),
+        ),
+      );
     }
   }
 

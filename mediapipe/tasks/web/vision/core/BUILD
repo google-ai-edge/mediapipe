@@ -122,6 +122,7 @@ ts_library(
         ":mask",
         ":vision_task_options",
         "//mediapipe/framework/formats:rect_jspb_proto",
+        "//mediapipe/tasks/web/components/containers:landmark",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner",
         "//mediapipe/web/graph_runner:graph_runner_image_lib_ts",

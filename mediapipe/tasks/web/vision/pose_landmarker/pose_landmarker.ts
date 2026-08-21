@@ -458,7 +458,11 @@ export class PoseLandmarker extends VisionTaskRunner {
     for (const binaryProto of data) {
       const poseLandmarksProto =
         NormalizedLandmarkList.deserializeBinary(binaryProto);
-      this.landmarks.push(convertToLandmarks(poseLandmarksProto));
+      this.landmarks.push(
+        this.mirrorNormalizedLandmarksIfNeeded(
+          convertToLandmarks(poseLandmarksProto),
+        ),
+      );
     }
   }
 
@@ -472,7 +476,9 @@ export class PoseLandmarker extends VisionTaskRunner {
       const poseWorldLandmarksProto =
         LandmarkList.deserializeBinary(binaryProto);
       this.worldLandmarks.push(
-        convertToWorldLandmarks(poseWorldLandmarksProto),
+        this.mirrorWorldLandmarksIfNeeded(
+          convertToWorldLandmarks(poseWorldLandmarksProto),
+        ),
       );
     }
   }

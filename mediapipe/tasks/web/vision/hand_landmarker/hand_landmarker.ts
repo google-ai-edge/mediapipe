@@ -316,7 +316,11 @@ export class HandLandmarker extends VisionTaskRunner {
     for (const binaryProto of data) {
       const handLandmarksProto =
         NormalizedLandmarkList.deserializeBinary(binaryProto);
-      this.landmarks.push(convertToLandmarks(handLandmarksProto));
+      this.landmarks.push(
+        this.mirrorNormalizedLandmarksIfNeeded(
+          convertToLandmarks(handLandmarksProto),
+        ),
+      );
     }
   }
 
@@ -329,7 +333,9 @@ export class HandLandmarker extends VisionTaskRunner {
       const handWorldLandmarksProto =
         LandmarkList.deserializeBinary(binaryProto);
       this.worldLandmarks.push(
-        convertToWorldLandmarks(handWorldLandmarksProto),
+        this.mirrorWorldLandmarksIfNeeded(
+          convertToWorldLandmarks(handWorldLandmarksProto),
+        ),
       );
     }
   }
