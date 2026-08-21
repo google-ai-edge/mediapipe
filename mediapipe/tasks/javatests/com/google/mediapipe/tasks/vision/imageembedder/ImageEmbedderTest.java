@@ -17,21 +17,33 @@ package com.google.mediapipe.tasks.vision.imageembedder;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
+import android.content.Context;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.RectF;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import com.google.common.io.ByteStreams;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.core.BaseOptions;
+import com.google.mediapipe.tasks.core.EmbeddingProvider;
 import com.google.mediapipe.tasks.core.TestUtils;
 import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
 import com.google.mediapipe.tasks.vision.imageembedder.ImageEmbedder.ImageEmbedderOptions;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -188,7 +200,7 @@ public class ImageEmbedderTest {
           ImageEmbedder.cosineSimilarity(
               result.embeddingResult().embeddings().get(0),
               resultRotated.embeddingResult().embeddings().get(0));
-      assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.982316669f);
+      assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.982316669);
     }
 
     @Test
@@ -212,7 +224,7 @@ public class ImageEmbedderTest {
           ImageEmbedder.cosineSimilarity(
               resultRoiRotated.embeddingResult().embeddings().get(0),
               resultCrop.embeddingResult().embeddings().get(0));
-      assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.9745944861f);
+      assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.9745944861);
     }
 
   @RunWith(AndroidJUnit4.class)
@@ -424,7 +436,7 @@ public class ImageEmbedderTest {
       ImageEmbedderResult result, boolean quantized) {
     assertThat(result.embeddingResult().embeddings()).hasSize(1);
     assertThat(result.embeddingResult().embeddings().get(0).headIndex()).isEqualTo(0);
-    assertThat(result.embeddingResult().embeddings().get(0).headName().get()).isEqualTo("feature");
+    assertThat(result.embeddingResult().embeddings().get(0).headName()).hasValue("feature");
     if (quantized) {
       assertThat(result.embeddingResult().embeddings().get(0).quantizedEmbedding()).hasLength(1024);
     } else {

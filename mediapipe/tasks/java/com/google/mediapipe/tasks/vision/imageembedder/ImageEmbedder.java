@@ -27,6 +27,7 @@ import com.google.mediapipe.tasks.components.containers.proto.EmbeddingsProto;
 import com.google.mediapipe.tasks.components.processors.proto.EmbedderOptionsProto;
 import com.google.mediapipe.tasks.components.utils.CosineSimilarity;
 import com.google.mediapipe.tasks.core.BaseOptions;
+import com.google.mediapipe.tasks.core.BaseOptionsUtils;
 import com.google.mediapipe.tasks.core.EmbeddingProvider;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.OutputHandler.ResultListener;
@@ -130,7 +131,12 @@ public final class ImageEmbedder implements AutoCloseable {
    * @throws MediaPipeException if there is an error during {@link ImageEmbedder} creation.
    */
   public static ImageEmbedder createFromOptions(Context context, ImageEmbedderOptions options) {
-    return new ImageEmbedder(ImageEmbedderGraphExecutorImpl.create(context, options));
+    return new ImageEmbedder(createGraphExecutor(context, options));
+  }
+
+  private static ImageEmbedderExecutor createGraphExecutor(
+      Context context, ImageEmbedderOptions options) {
+    return ImageEmbedderGraphExecutorImpl.create(context, options);
   }
 
   private ImageEmbedder(ImageEmbedderExecutor executor) {

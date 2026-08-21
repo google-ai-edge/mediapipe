@@ -15,16 +15,25 @@ limitations under the License.
 
 package com.google.mediapipe.tasks.core;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.ParcelFileDescriptor;
+import com.google.common.io.ByteStreams;
 import com.google.mediapipe.calculator.proto.InferenceCalculatorProto;
 import com.google.mediapipe.tasks.core.proto.AccelerationProto;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import com.google.mediapipe.tasks.core.proto.ExternalFileProto;
 import com.google.mediapipe.tasks.core.proto.ExternalFileProto.ExternalFile;
 import com.google.protobuf.ByteString;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /** Utility for {@link BaseOptions}. */
 public final class BaseOptionsUtils {
@@ -44,6 +53,8 @@ public final class BaseOptionsUtils {
   public static final int HOST_SYSTEM_IOS = 4;
   public static final int HOST_SYSTEM_ANDROID = 5;
 
+
+  private static final byte[] litertlmMagicBytes = "LITERTLM".getBytes(UTF_8);
 
   private BaseOptionsUtils() {}
 
@@ -240,6 +251,48 @@ public final class BaseOptionsUtils {
       externalFileBuilder.setFileContent(ByteString.copyFrom(duplicateBuffer));
     }
     return externalFileBuilder.build();
+  }
+
+  public static boolean isLiteRtLmModel(Context context, BaseOptions baseOptions) {
+    if (baseOptions.modelAssetPath().isPresent()) {
+      String path = baseOptions.modelAssetPath().get();
+      try (InputStream is = context.getAssets().open(path)) {
+        return checkLiteRtLmMagicBytes(is);
+      } catch (IOException e) {
+        try (InputStream is = new FileInputStream(new File(path))) {
+          return checkLiteRtLmMagicBytes(is);
+        } catch (IOException ex) {
+          // Safe to ignore: Treat as non-LiteRT-LM model.
+        }
+      }
+    } else if (baseOptions.modelAssetFileDescriptor().isPresent()) {
+      int fd = baseOptions.modelAssetFileDescriptor().get();
+      try {
+        // Duplicate the file descriptor, so we can reopen it later when the model is loaded.
+        ParcelFileDescriptor pfd = ParcelFileDescriptor.fromFd(fd).dup();
+        if (pfd != null) {
+          try (InputStream is = new ParcelFileDescriptor.AutoCloseInputStream(pfd)) {
+            return checkLiteRtLmMagicBytes(is);
+          }
+        }
+      } catch (IOException e) {
+        // Ignore
+      }
+    } else if (baseOptions.modelAssetBuffer().isPresent()) {
+      ByteBuffer buffer = baseOptions.modelAssetBuffer().get().duplicate();
+      if (buffer.remaining() >= litertlmMagicBytes.length) {
+        byte[] bytes = new byte[litertlmMagicBytes.length];
+        buffer.get(bytes);
+        return Arrays.equals(bytes, litertlmMagicBytes);
+      }
+    }
+    return false;
+  }
+
+  private static boolean checkLiteRtLmMagicBytes(InputStream is) throws IOException {
+    byte[] bytes = new byte[litertlmMagicBytes.length];
+    int read = ByteStreams.read(is, bytes, 0, bytes.length);
+    return read == bytes.length && Arrays.equals(bytes, litertlmMagicBytes);
   }
 
   private static native long nativeGetDirectBufferAddress(ByteBuffer buffer);

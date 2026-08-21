@@ -293,6 +293,7 @@ android_library(
     manifest = "imageembedder/AndroidManifest.xml",
     deps = [
         ":core",
+        "//mediapipe/calculators/tensor:inference_calculator_java_proto_lite",
         "//mediapipe/framework:calculator_options_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/framework/image",
@@ -304,6 +305,7 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embeddingresult",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:logging",
         "//third_party:autovalue",
         "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",
@@ -413,6 +415,7 @@ android_library(
     ),
     manifest = "AndroidManifest.xml",
     deps = [
+        "//mediapipe/calculators/tensor:inference_calculator_java_proto_lite",
         "//mediapipe/framework:calculator_java_proto_lite",
         "//mediapipe/framework:calculator_options_java_proto_lite",
         "//mediapipe/framework/formats:classification_java_proto_lite",
@@ -462,6 +465,7 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:jni_config_stub",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:logging",
         "//mediapipe/util:color_java_proto_lite",
         "//third_party:any_java_proto",
         "//third_party:autovalue",
