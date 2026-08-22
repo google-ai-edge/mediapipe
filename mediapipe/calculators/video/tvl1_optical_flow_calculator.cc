@@ -119,7 +119,7 @@ absl::Status Tvl1OpticalFlowCalculator::GetContract(CalculatorContract* cc) {
 
 absl::Status Tvl1OpticalFlowCalculator::Open(CalculatorContext* cc) {
   {
-    absl::MutexLock lock(mutex_);
+    absl::MutexLock lock(&mutex_);//Using pointer based to match Abseil's modren API
     tvl1_computers_.emplace_back(cv::createOptFlow_DualTVL1());
   }
   if (cc->Outputs().HasTag(kForwardFlowTag)) {
@@ -170,7 +170,7 @@ absl::Status Tvl1OpticalFlowCalculator::CalculateOpticalFlow(
   // creates a new DenseOpticalFlow.
   cv::Ptr<cv::DenseOpticalFlow> tvl1_computer;
   {
-    absl::MutexLock lock(mutex_);
+    absl::MutexLock lock(&mutex_);//Using pointer based to match Abseil's modren API
     if (!tvl1_computers_.empty()) {
       std::swap(tvl1_computer, tvl1_computers_.front());
       tvl1_computers_.pop_front();
@@ -186,7 +186,7 @@ absl::Status Tvl1OpticalFlowCalculator::CalculateOpticalFlow(
   ABSL_CHECK_EQ(flow->mutable_flow_data().data, cv_flow.data);
   // Inserts the idle DenseOpticalFlow object back to the cache for reuse.
   {
-    absl::MutexLock lock(mutex_);
+    absl::MutexLock lock(&mutex_);//Using pointer based to match Abseil's modren API
     tvl1_computers_.push_back(tvl1_computer);
   }
   return absl::OkStatus();
