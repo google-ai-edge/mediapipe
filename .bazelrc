@@ -1,6 +1,8 @@
 # The bazelrc file for MediaPipe OSS.
 
-common  --enable_bzlmod
+# Python version set to 12
+common --repo_env=HERMETIC_PYTHON_VERSION=3.12
+common --enable_bzlmod
 
 # Tensorflow needs remote repo
 common --experimental_repo_remote_exec
@@ -79,6 +81,7 @@ build:android_arm64 --platforms=@//third_party/android:arm64-v8a
 # iOS configs.
 build:ios --apple_platform_type=ios
 build:ios --copt=-fno-aligned-allocation
+build:ios --incompatible_enable_cc_toolchain_resolution
 
 build:ios_i386 --config=ios
 build:ios_i386 --cpu=ios_i386
