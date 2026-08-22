@@ -33,7 +33,7 @@ namespace processors {
 //
 //   auto& preprocessing =
 //       graph.AddNode("mediapipe.tasks.components.processors.TextPreprocessingSubgraph");
-//   MP_RETURN_IF_ERROR(ConfigureTextPreprocessingSubgraph(
+//   ABSL_RETURN_IF_ERROR(ConfigureTextPreprocessingSubgraph(
 //       model_resources,
 //       &preprocessing.GetOptions<TextPreprocessingGraphOptions>()));
 //

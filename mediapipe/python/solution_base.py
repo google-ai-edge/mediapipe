@@ -285,7 +285,7 @@ class SolutionBase:
     def callback(stream_name: str, output_packet: packet.Packet) -> None:
       self._graph_outputs[stream_name] = output_packet
 
-    for stream_name in self._output_stream_type_info.keys():
+    for stream_name in self._output_stream_type_info.keys():  # pyrefly: ignore[missing-attribute]
       self._graph.observe_output_stream(stream_name, callback, True)
 
     self._input_side_packets = {
@@ -347,9 +347,10 @@ class SolutionBase:
     if self._graph is None:
       raise ValueError('_graph is None in SolutionBase')
     for stream_name, data in input_dict.items():
-      input_stream_type = self._input_stream_type_info[stream_name]
+      input_stream_type = self._input_stream_type_info[stream_name]  # pyrefly: ignore[unsupported-operation]
       if input_stream_type == PacketDataType.PROTO_LIST:
         raise NotImplementedError(
+            # pyrefly: ignore[unsupported-operation]
             f'SolutionBase can only process non-proto-list data. '
             f'{self._input_stream_type_info[stream_name].name} '
             f'type is not supported yet.')
@@ -360,7 +361,7 @@ class SolutionBase:
                                      data).at(self._simulated_timestamp))
       elif (input_stream_type == PacketDataType.IMAGE_FRAME or
             input_stream_type == PacketDataType.IMAGE):
-        if data.shape[2] != RGB_CHANNELS:
+        if data.shape[2] != RGB_CHANNELS:  # pyrefly: ignore[missing-attribute]
           raise ValueError('Input image must contain three channel rgb data.')
         self._graph.add_packet_to_input_stream(
             stream=stream_name,
@@ -377,7 +378,7 @@ class SolutionBase:
     # output stream names.
     if self._output_stream_type_info is None:
       raise ValueError('_output_stream_type_info is None in SolutionBase')
-    solution_outputs = collections.namedtuple(
+    solution_outputs = collections.namedtuple(  # pyrefly: ignore[bad-class-definition]
         'SolutionOutputs', self._output_stream_type_info.keys())
     for stream_name in self._output_stream_type_info.keys():
       if stream_name in self._graph_outputs:
@@ -388,7 +389,7 @@ class SolutionBase:
       else:
         setattr(solution_outputs, stream_name, None)
 
-    return solution_outputs
+    return solution_outputs  # pyrefly: ignore[bad-return]
 
   def close(self) -> None:
     """Closes all the input sources and the graph."""
@@ -569,7 +570,7 @@ class SolutionBase:
     """
 
     if hasattr(values, 'items'):
-      values = values.items()
+      values = values.items()  # pyrefly: ignore[bad-assignment]
     for pair in values:
       (field, value) = pair
       fields = field.split('.')

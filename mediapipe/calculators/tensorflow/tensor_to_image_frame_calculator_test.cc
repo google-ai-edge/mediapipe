@@ -42,7 +42,7 @@ class TensorToImageFrameCalculatorTest : public ::testing::Test {
     config.mutable_options()
         ->MutableExtension(mediapipe::TensorToImageFrameCalculatorOptions::ext)
         ->set_scale_per_frame_min_max(scale_per_frame_min_max);
-    runner_ = absl::make_unique<CalculatorRunner>(config);
+    runner_ = std::make_unique<CalculatorRunner>(config);
   }
 
   std::unique_ptr<CalculatorRunner> runner_;

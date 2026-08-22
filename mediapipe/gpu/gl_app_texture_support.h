@@ -40,7 +40,7 @@ class GpuResources;
 //
 // Usage example:
 //   (assuming the desired GL context is current on this thread)
-//   MP_RETURN_IF_ERROR(mediapipe::SetExternalGlContextForGraph(
+//   ABSL_RETURN_IF_ERROR(mediapipe::SetExternalGlContextForGraph(
 //       &graph, mediapipe::GlContext::GetCurrentNativeContext()));
 absl::Status SetExternalGlContextForGraph(CalculatorGraph* graph,
                                           PlatformGlContext external_context);
@@ -84,7 +84,7 @@ absl::StatusOr<std::shared_ptr<Executor>> GetDefaultGpuExecutor(
 // (e.g. if you have called glFinish).
 //
 // Usage example:
-//   MP_ASSIGN_OR_RETURN(
+//   ABSL_ASSIGN_OR_RETURN(
 //       mediapipe::Packet packet,
 //       mediapipe::WrapExternalGlTextureForGraph(
 //           graph, GL_TEXTURE_2D, tex_id, tex_width, tex_height,

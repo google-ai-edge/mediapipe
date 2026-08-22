@@ -93,5 +93,41 @@ TEST(OneEuroFilterTest, OneEuroFilterValidValueFilter) {
               3.0f, 0.1f);
 }
 
+TEST(OneEuroFilterTest,
+     UseFilteredDerivativeCalculatesDerivativeFromLastFilteredValue) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto legacy_filter,
+      OneEuroFilter::Create(/*frequency=*/30.0, /*min_cutoff=*/0.01,
+                            /*beta=*/0.001, /*derivate_cutoff=*/0.1,
+                            /*use_filtered_derivative=*/false));
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto corrected_filter,
+      OneEuroFilter::Create(/*frequency=*/30.0, /*min_cutoff=*/0.01,
+                            /*beta=*/0.001, /*derivate_cutoff=*/0.1,
+                            /*use_filtered_derivative=*/true));
+
+  // First sample
+  EXPECT_FLOAT_EQ(legacy_filter.Apply(absl::Milliseconds(100), 10.0, 1.0, 1.0),
+                  10.0f);
+  EXPECT_FLOAT_EQ(
+      corrected_filter.Apply(absl::Milliseconds(100), 10.0, 1.0, 1.0), 10.0f);
+
+  // Second sample
+  double legacy_val2 =
+      legacy_filter.Apply(absl::Milliseconds(133), 20.0, 1.0, 1.0);
+  double corrected_val2 =
+      corrected_filter.Apply(absl::Milliseconds(133), 20.0, 1.0, 1.0);
+  EXPECT_NEAR(legacy_val2, corrected_val2, 1e-4);
+
+  // Third sample
+  double legacy_val3 =
+      legacy_filter.Apply(absl::Milliseconds(166), 30.0, 1.0, 1.0);
+  double corrected_val3 =
+      corrected_filter.Apply(absl::Milliseconds(166), 30.0, 1.0, 1.0);
+
+  EXPECT_GT(corrected_filter.GetLastDx(), legacy_filter.GetLastDx());
+  EXPECT_GT(corrected_val3, legacy_val3);
+}
+
 }  // namespace
 }  // namespace mediapipe

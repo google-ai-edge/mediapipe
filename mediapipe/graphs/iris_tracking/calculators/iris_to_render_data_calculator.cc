@@ -172,9 +172,9 @@ absl::Status IrisToRenderDataCalculator::Process(CalculatorContext* cc) {
   RET_CHECK(!cc->Inputs().Tag(kImageSizeTag).IsEmpty());
   image_size = cc->Inputs().Tag(kImageSizeTag).Get<std::pair<int, int>>();
 
-  auto render_data = absl::make_unique<RenderData>();
-  auto left_iris = absl::make_unique<NormalizedLandmarkList>();
-  auto right_iris = absl::make_unique<NormalizedLandmarkList>();
+  auto render_data = std::make_unique<RenderData>();
+  auto left_iris = std::make_unique<NormalizedLandmarkList>();
+  auto right_iris = std::make_unique<NormalizedLandmarkList>();
   GetLeftIris(iris_landmarks, left_iris.get());
   GetRightIris(iris_landmarks, right_iris.get());
 

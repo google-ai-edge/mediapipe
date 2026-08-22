@@ -106,7 +106,7 @@ class GraphRunner {
   }
 
   absl::Status Close() {
-    MP_RETURN_IF_ERROR(graph_.CloseAllPacketSources());
+    ABSL_RETURN_IF_ERROR(graph_.CloseAllPacketSources());
     return graph_.WaitUntilDone();
   }
 
@@ -115,10 +115,10 @@ class GraphRunner {
     for (int n = 0; n < ints.size(); ++n) {
       const std::string name = absl::StrCat("int", n);
       if (ints[n]) {
-        MP_RETURN_IF_ERROR(graph_.AddPacketToInputStream(
+        ABSL_RETURN_IF_ERROR(graph_.AddPacketToInputStream(
             name, MakePacket<int>(*ints[n]).At(timestamp)));
       } else {
-        MP_RETURN_IF_ERROR(graph_.SetInputStreamTimestampBound(
+        ABSL_RETURN_IF_ERROR(graph_.SetInputStreamTimestampBound(
             name, timestamp.NextAllowedInStream()));
       }
     }
@@ -303,7 +303,7 @@ class CloneGraphRunner {
   }
 
   absl::Status Close() {
-    MP_RETURN_IF_ERROR(graph_.CloseAllPacketSources());
+    ABSL_RETURN_IF_ERROR(graph_.CloseAllPacketSources());
     return graph_.WaitUntilDone();
   }
 
@@ -314,10 +314,10 @@ class CloneGraphRunner {
         {"int0", int0}, {"int1", int1}, {"clone", clone}};
     for (const auto& [name, value] : inputs) {
       if (value) {
-        MP_RETURN_IF_ERROR(graph_.AddPacketToInputStream(
+        ABSL_RETURN_IF_ERROR(graph_.AddPacketToInputStream(
             name, MakePacket<int>(*value).At(timestamp)));
       } else {
-        MP_RETURN_IF_ERROR(graph_.SetInputStreamTimestampBound(
+        ABSL_RETURN_IF_ERROR(graph_.SetInputStreamTimestampBound(
             name, timestamp.NextAllowedInStream()));
       }
     }

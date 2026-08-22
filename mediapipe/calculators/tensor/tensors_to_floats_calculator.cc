@@ -81,8 +81,8 @@ absl::Status TensorsToFloatsCalculator::Process(CalculatorContext* cc) {
   auto view = input_tensors[0].GetCpuReadView();
   auto raw_floats = view.buffer<float>();
   int num_values = input_tensors[0].shape().num_elements();
-  auto output_floats = absl::make_unique<std::vector<float>>(
-      raw_floats, raw_floats + num_values);
+  auto output_floats =
+      std::make_unique<std::vector<float>>(raw_floats, raw_floats + num_values);
 
   switch (options_.activation()) {
     case TensorsToFloatsCalculatorOptions::SIGMOID:

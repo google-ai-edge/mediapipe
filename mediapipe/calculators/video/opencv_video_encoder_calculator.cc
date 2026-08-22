@@ -219,7 +219,7 @@ absl::Status OpenCvVideoEncoderCalculator::SetUpVideoWriter(float frame_rate,
   RET_CHECK(frame_rate > 0 && width > 0 && height > 0)
       << "Invalid video metadata: frame_rate=" << frame_rate
       << ", width=" << width << ", height=" << height;
-  writer_ = absl::make_unique<cv::VideoWriter>(
+  writer_ = std::make_unique<cv::VideoWriter>(
       output_file_path_, four_cc_, frame_rate, cv::Size(width, height));
   if (!writer_->isOpened()) {
     return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)

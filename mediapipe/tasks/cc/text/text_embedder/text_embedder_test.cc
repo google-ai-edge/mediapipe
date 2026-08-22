@@ -15,7 +15,9 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder.h"
 
+#include <fstream>
 #include <memory>
+#include <string>
 #include <utility>
 
 #include "absl/flags/flag.h"
@@ -29,12 +31,13 @@ limitations under the License.
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
-#include "tensorflow/lite/test_util.h"
+#include "tflite/test_util.h"
 
 namespace mediapipe::tasks::text::text_embedder {
 namespace {
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/text/";
+constexpr char kModelDirectory[] = "/mediapipe/models/";
 
 // Note that these models use dynamic-sized tensors.
 // Embedding model with BERT preprocessing.
@@ -45,7 +48,7 @@ constexpr char kRegexOneEmbeddingModel[] =
 constexpr char kUniversalSentenceEncoderModel[] =
     "universal_sentence_encoder_qa_with_metadata.tflite";
 constexpr char kGeckoModel[] = "gecko.task";
-constexpr char kEmbeddingGemmaModel[] = "embedding_gemma.task";
+constexpr char kEmbeddingGemmaModel[] = "embedding_gemma/embedding_gemma.task";
 
 // Tolerance for cosine similarity evaluation.
 constexpr double kSimilarityTolerancy = 2e-2;
@@ -263,7 +266,7 @@ TEST_F(EmbedderTest, SucceedsWithGecko) {
 TEST_F(EmbedderTest, SucceedsWithEmbeddingGemma) {
   auto options = std::make_unique<TextEmbedderOptions>();
   options->base_options.model_asset_path =
-      JoinPath("./", kTestDataDirectory, kEmbeddingGemmaModel);
+      JoinPath("./", kModelDirectory, kEmbeddingGemmaModel);
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<TextEmbedder> text_embedder,
                           TextEmbedder::Create(std::move(options)));

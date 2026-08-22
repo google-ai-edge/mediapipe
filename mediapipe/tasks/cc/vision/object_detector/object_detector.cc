@@ -39,7 +39,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
 #include "mediapipe/tasks/cc/vision/object_detector/proto/object_detector_options.pb.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
+#include "tflite/core/api/op_resolver.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -177,10 +177,10 @@ absl::StatusOr<ObjectDetectorResult> ObjectDetector::Detect(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                      ConvertToNormalizedRect(image_processing_options, image,
-                                              /*roi_allowed=*/false));
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                        ConvertToNormalizedRect(image_processing_options, image,
+                                                /*roi_allowed=*/false));
+  ABSL_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
           {{kImageInStreamName, MakePacket<Image>(std::move(image))},
@@ -201,10 +201,10 @@ absl::StatusOr<ObjectDetectorResult> ObjectDetector::DetectForVideo(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                      ConvertToNormalizedRect(image_processing_options, image,
-                                              /*roi_allowed=*/false));
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                        ConvertToNormalizedRect(image_processing_options, image,
+                                                /*roi_allowed=*/false));
+  ABSL_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
           {{kImageInStreamName,
@@ -229,9 +229,9 @@ absl::Status ObjectDetector::DetectAsync(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                      ConvertToNormalizedRect(image_processing_options, image,
-                                              /*roi_allowed=*/false));
+  ABSL_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                        ConvertToNormalizedRect(image_processing_options, image,
+                                                /*roi_allowed=*/false));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

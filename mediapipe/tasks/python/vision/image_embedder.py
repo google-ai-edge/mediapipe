@@ -279,12 +279,12 @@ class ImageEmbedder:
       RuntimeError: If other types of error occurred.
     """
     running_mode_module.validate_running_mode(
-        options.running_mode, options.result_callback
+        options.running_mode, options.result_callback  # pyrefly: ignore[bad-argument-type]
     )
     lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
     def convert_result(
-        c_result_ptr: ctypes.POINTER(
+        c_result_ptr: ctypes.POINTER(  # pyrefly: ignore[invalid-annotation]
             embedding_result_c_module.MpEmbeddingResultC
         ),
         image_ptr: ctypes.c_void_p,
@@ -309,7 +309,7 @@ class ImageEmbedder:
     ctypes_options = options.to_ctypes(dispatcher)
 
     embedder_handle = ctypes.c_void_p()
-    lib.MpImageEmbedderCreate(
+    lib.MpImageEmbedderCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(ctypes_options), ctypes.byref(embedder_handle)
     )
     return cls(lib, embedder_handle, dispatcher=dispatcher)
@@ -342,14 +342,14 @@ class ImageEmbedder:
         if image_processing_options
         else None
     )
-    self._lib.MpImageEmbedderEmbedImage(
+    self._lib.MpImageEmbedderEmbedImage(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         options_c,
         ctypes.byref(c_result),
     )
     py_result = embedding_result_module.EmbeddingResult.from_ctypes(c_result)
-    self._lib.MpImageEmbedderCloseResult(ctypes.byref(c_result))
+    self._lib.MpImageEmbedderCloseResult(ctypes.byref(c_result))  # pyrefly: ignore[missing-attribute]
     return py_result
 
   def embed_for_video(
@@ -387,7 +387,7 @@ class ImageEmbedder:
         if image_processing_options
         else None
     )
-    self._lib.MpImageEmbedderEmbedForVideo(
+    self._lib.MpImageEmbedderEmbedForVideo(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         options_c,
@@ -396,7 +396,7 @@ class ImageEmbedder:
     )
 
     py_result = embedding_result_module.EmbeddingResult.from_ctypes(c_result)
-    self._lib.MpImageEmbedderCloseResult(ctypes.byref(c_result))
+    self._lib.MpImageEmbedderCloseResult(ctypes.byref(c_result))  # pyrefly: ignore[missing-attribute]
     return py_result
 
   def embed_async(
@@ -442,7 +442,7 @@ class ImageEmbedder:
         if image_processing_options
         else None
     )
-    self._lib.MpImageEmbedderEmbedAsync(
+    self._lib.MpImageEmbedderEmbedAsync(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         options_c,
@@ -453,8 +453,8 @@ class ImageEmbedder:
     """Closes the ImageEmbedder."""
     if not self._handle:
       return
-    self._lib.MpImageEmbedderClose(self._handle)
-    self._handle = None
+    self._lib.MpImageEmbedderClose(self._handle)  # pyrefly: ignore[missing-attribute]
+    self._handle = None  # pyrefly: ignore[bad-assignment]
     self._dispatcher.close()
     self._lib.close()
 

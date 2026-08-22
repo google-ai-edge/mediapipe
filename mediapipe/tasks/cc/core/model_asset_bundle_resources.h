@@ -16,10 +16,17 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_CORE_MODEL_ASSET_BUNDLE_RESOURCES_H_
 #define MEDIAPIPE_TASKS_CC_CORE_MODEL_ASSET_BUNDLE_RESOURCES_H_
 
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "absl/container/flat_hash_map.h"
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/tasks/cc/core/external_file_handler.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
+#include "mediapipe/tasks/metadata/bundle_manifest.pb.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -57,6 +64,15 @@ class ModelAssetBundleResources {
 
   // Lists all the file names in the model asset model.
   std::vector<std::string> ListFiles() const;
+
+  // Checks if the model asset bundle contains a file with the given name.
+  bool HasFile(absl::string_view filename) const;
+
+  // Gets the generic bundle manifest if it exists inside the bundle.
+  absl::StatusOr<mediapipe::tasks::BundleManifest> GetBundleManifest() const;
+
+  // Gets the unique bundle ID if a manifest exists.
+  absl::StatusOr<std::string> GetBundleId() const;
 
  private:
   // Constructor.

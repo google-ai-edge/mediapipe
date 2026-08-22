@@ -230,7 +230,7 @@ cc_library(
         "//mediapipe/gpu:gpu_buffer",
         "//mediapipe/util:render_data_cc_proto",
         "@com_google_absl//absl/status",
-        "@org_tensorflow//tensorflow/lite:framework",
+        "@litert//tflite:framework",
     ],
     alwayslink = 1,
 )
@@ -354,11 +354,11 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:render_data_cc_proto",
-        "@org_tensorflow//tensorflow/lite:framework",
+        "@litert//tflite:framework",
     ] + select({
         ":apple_or_disable_gpu": [],
         "//conditions:default": [
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_buffer",
+            "@litert//tflite/delegates/gpu/gl:gl_buffer",
         ],
     }),
     alwayslink = 1,
@@ -434,7 +434,7 @@ cc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "@org_tensorflow//tensorflow/lite:framework",
+        "@litert//tflite:framework",
     ],
     alwayslink = 1,
 )
@@ -1022,12 +1022,12 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_util",
-        "@org_tensorflow//tensorflow/lite:framework",
-        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@litert//tflite:framework",
+        "@litert//tflite/kernels:builtin_ops",
     ] + select({
         ":apple_or_disable_gpu": [],
         "//conditions:default": [
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_buffer",
+            "@litert//tflite/delegates/gpu/gl:gl_buffer",
         ],
     }),
     alwayslink = 1,
@@ -1046,8 +1046,8 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:validate_type",
         "@com_google_absl//absl/memory",
-        "@org_tensorflow//tensorflow/lite:framework",
-        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@litert//tflite:framework",
+        "@litert//tflite/kernels:builtin_ops",
     ],
 )
 

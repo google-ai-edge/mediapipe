@@ -83,15 +83,15 @@ class MultiLandmarksSmoothingCalculatorImpl
                                       image_width, image_height);
       }
 
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           auto* landmarks_filter,
           multi_filters_.GetOrCreate(
               tracking_ids[i],
               cc->Options<LandmarksSmoothingCalculatorOptions>()));
 
       LandmarkList out_landmarks;
-      MP_RETURN_IF_ERROR(landmarks_filter->Apply(in_landmarks, timestamp,
-                                                 object_scale, out_landmarks));
+      ABSL_RETURN_IF_ERROR(landmarks_filter->Apply(
+          in_landmarks, timestamp, object_scale, out_landmarks));
 
       NormalizedLandmarkList out_norm_landmarks;
       LandmarksToNormalizedLandmarks(out_landmarks, image_width, image_height,

@@ -89,9 +89,11 @@ inline absl::StatusOr<std::shared_ptr<Item>> ReusablePool<Item>::GetBuffer() {
   {
     absl::MutexLock lock(&mutex_);
     if (available_.empty()) {
-      MP_ASSIGN_OR_RETURN(buffer, item_factory_());
+      VLOG(2) << "Creating NEW buffer";
+      ABSL_ASSIGN_OR_RETURN(buffer, item_factory_());
       RET_CHECK_NE(buffer, nullptr) << "Failed to create buffer";
     } else {
+      VLOG(2) << "Reusing AVAILABLE buffer";
       buffer = std::move(available_.back());
       available_.pop_back();
       reuse = true;

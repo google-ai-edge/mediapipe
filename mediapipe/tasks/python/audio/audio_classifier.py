@@ -257,7 +257,7 @@ class AudioClassifier:
     """
     lib = mediapipe_c_bindings.load_shared_library(_CTYPES_SIGNATURES)
 
-    def convert_result(c_result_ptr: ctypes.POINTER(MpAudioClassifierResultC)):
+    def convert_result(c_result_ptr: ctypes.POINTER(MpAudioClassifierResultC)):  # pyrefly: ignore[invalid-annotation]
       c_result = c_result_ptr[0]
       if c_result.results_count == 0:
         raise RuntimeError('No results returned from audio classifier.')
@@ -285,7 +285,7 @@ class AudioClassifier:
     )
 
     classifier_handle_ptr = ctypes.c_void_p()
-    lib.MpAudioClassifierCreate(
+    lib.MpAudioClassifierCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(ctypes_options), ctypes.byref(classifier_handle_ptr)
     )
     return AudioClassifier(
@@ -346,7 +346,7 @@ class AudioClassifier:
       raise ValueError('Must provide the audio sample rate in audio data.')
 
     c_result = MpAudioClassifierResultC()
-    self._lib.MpAudioClassifierClassify(
+    self._lib.MpAudioClassifierClassify(  # pyrefly: ignore[missing-attribute]
         self._handle,
         audio_clip.to_ctypes(),
         ctypes.byref(c_result),
@@ -355,7 +355,7 @@ class AudioClassifier:
         AudioClassifierResult.from_ctypes(c_result.results[i])
         for i in range(c_result.results_count)
     ]
-    self._lib.MpAudioClassifierCloseResult(ctypes.byref(c_result))
+    self._lib.MpAudioClassifierCloseResult(ctypes.byref(c_result))  # pyrefly: ignore[missing-attribute]
     return py_result
 
   def classify_async(self, audio_block: _AudioData, timestamp_ms: int) -> None:
@@ -393,7 +393,7 @@ class AudioClassifier:
     if not audio_block.audio_format.sample_rate:
       raise ValueError('Must provide the audio sample rate in audio data.')
 
-    self._lib.MpAudioClassifierClassifyAsync(
+    self._lib.MpAudioClassifierClassifyAsync(  # pyrefly: ignore[missing-attribute]
         self._handle,
         audio_block.to_ctypes(),
         timestamp_ms,
@@ -430,8 +430,8 @@ class AudioClassifier:
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._handle:
-      self._lib.MpAudioClassifierClose(self._handle)
-      self._handle = None
+      self._lib.MpAudioClassifierClose(self._handle)  # pyrefly: ignore[missing-attribute]
+      self._handle = None  # pyrefly: ignore[bad-assignment]
       self._dispatcher.close()
       self._lib.close()
 

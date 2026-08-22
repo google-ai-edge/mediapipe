@@ -111,7 +111,7 @@ class TensorsToLandmarksCalculator : public Node {
 MEDIAPIPE_REGISTER_NODE(TensorsToLandmarksCalculator);
 
 absl::Status TensorsToLandmarksCalculator::Open(CalculatorContext* cc) {
-  MP_RETURN_IF_ERROR(LoadOptions(cc));
+  ABSL_RETURN_IF_ERROR(LoadOptions(cc));
 
   if (kOutNormalizedLandmarkList(cc).IsConnected()) {
     RET_CHECK(options_.has_input_image_height() &&

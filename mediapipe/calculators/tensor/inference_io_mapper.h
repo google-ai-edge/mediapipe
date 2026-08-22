@@ -26,8 +26,8 @@
 #include "mediapipe/calculators/tensor/tensor_span.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/util/tflite/tflite_signature_reader.h"
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/model_builder.h"
+#include "tflite/interpreter.h"
+#include "tflite/model_builder.h"
 
 namespace mediapipe {
 // Maps signature names to a list of input and output tensor names in the

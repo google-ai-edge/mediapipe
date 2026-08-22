@@ -28,7 +28,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/model_asset_bundle_resources.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
+#include "tflite/core/api/op_resolver.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -77,7 +77,7 @@ absl::Status ModelResourcesCache::AddModelResources(
 absl::Status ModelResourcesCache::AddModelResourcesCollection(
     std::vector<std::unique_ptr<ModelResources>>& model_resources_collection) {
   for (auto& model_resources : model_resources_collection) {
-    MP_RETURN_IF_ERROR(AddModelResources(std::move(model_resources)));
+    ABSL_RETURN_IF_ERROR(AddModelResources(std::move(model_resources)));
   }
   return absl::OkStatus();
 }
@@ -130,7 +130,7 @@ absl::Status ModelResourcesCache::AddModelAssetBundleResourcesCollection(
     std::vector<std::unique_ptr<ModelAssetBundleResources>>&
         model_asset_bundle_resources_collection) {
   for (auto& model_bundle_resources : model_asset_bundle_resources_collection) {
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         AddModelAssetBundleResources(std::move(model_bundle_resources)));
   }
   return absl::OkStatus();

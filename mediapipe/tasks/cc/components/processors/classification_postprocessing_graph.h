@@ -35,7 +35,7 @@ namespace processors {
 //
 //   auto& postprocessing =
 //       graph.AddNode("mediapipe.tasks.components.processors.ClassificationPostprocessingGraph");
-//   MP_RETURN_IF_ERROR(ConfigureClassificationPostprocessingGraph(
+//   ABSL_RETURN_IF_ERROR(ConfigureClassificationPostprocessingGraph(
 //       model_resources,
 //       classifier_options,
 //       &preprocessing.GetOptions<ClassificationPostprocessingGraphOptions>()));

@@ -33,9 +33,9 @@ absl::StatusOr<std::string> GetLogDirectory() {
 }
 
 absl::StatusOr<std::string> PathToLogFile(const std::string& path) {
-  MP_ASSIGN_OR_RETURN(std::string log_dir, GetLogDirectory());
+  ABSL_ASSIGN_OR_RETURN(std::string log_dir, GetLogDirectory());
   std::string result = file::JoinPath(log_dir, path);
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       mediapipe::file::RecursivelyCreateDir(file::Dirname(result)));
   return result;
 }

@@ -277,7 +277,7 @@ class InteractiveSegmenterLegacy:
     ctypes_options = options.to_ctypes()
 
     segmenter_handle = ctypes.c_void_p()
-    lib.MpInteractiveSegmenterLegacyCreate(
+    lib.MpInteractiveSegmenterLegacyCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(ctypes_options), ctypes.byref(segmenter_handle)
     )
     return cls(lib, segmenter_handle, dispatcher)
@@ -316,7 +316,7 @@ class InteractiveSegmenterLegacy:
         if image_processing_options
         else None
     )
-    self._lib.MpInteractiveSegmenterLegacySegmentImage(
+    self._lib.MpInteractiveSegmenterLegacySegmentImage(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         ctypes.byref(c_roi),
@@ -325,15 +325,15 @@ class InteractiveSegmenterLegacy:
     )
 
     py_result = InteractiveSegmenterLegacyResult.from_ctypes(c_result)
-    self._lib.MpInteractiveSegmenterLegacyCloseResult(ctypes.byref(c_result))
+    self._lib.MpInteractiveSegmenterLegacyCloseResult(ctypes.byref(c_result))  # pyrefly: ignore[missing-attribute]
     return py_result
 
   def close(self):
     """Closes the InteractiveSegmenterLegacy."""
     if not self._handle:
       return
-    self._lib.MpInteractiveSegmenterLegacyClose(self._handle)
-    self._handle = None
+    self._lib.MpInteractiveSegmenterLegacyClose(self._handle)  # pyrefly: ignore[missing-attribute]
+    self._handle = None  # pyrefly: ignore[bad-assignment]
     self._dispatcher.close()
     self._lib.close()
 

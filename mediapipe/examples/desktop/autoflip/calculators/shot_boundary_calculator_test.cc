@@ -61,7 +61,7 @@ void AddFrames(const int number_of_frames,
                                 "autoflip/calculators/testdata/dino.jpg"));
 
   for (int i = 0; i < number_of_frames; i++) {
-    auto input_frame = ::absl::make_unique<ImageFrame>(
+    auto input_frame = std::make_unique<ImageFrame>(
         ImageFormat::SRGB, kTestFrameWidth, kTestFrameHeight);
     cv::Mat input_mat = mediapipe::formats::MatView(input_frame.get());
     input_mat.setTo(cv::Scalar(0, 0, 0));
@@ -96,7 +96,7 @@ TEST(ShotBoundaryCalculatorTest, NoShotChange) {
   node.mutable_options()
       ->MutableExtension(ShotBoundaryCalculatorOptions::ext)
       ->set_output_only_on_change(false);
-  auto runner = ::absl::make_unique<CalculatorRunner>(node);
+  auto runner = std::make_unique<CalculatorRunner>(node);
 
   AddFrames(10, {}, runner.get());
   MP_ASSERT_OK(runner->Run());
@@ -109,7 +109,7 @@ TEST(ShotBoundaryCalculatorTest, ShotChangeSingle) {
   node.mutable_options()
       ->MutableExtension(ShotBoundaryCalculatorOptions::ext)
       ->set_output_only_on_change(false);
-  auto runner = ::absl::make_unique<CalculatorRunner>(node);
+  auto runner = std::make_unique<CalculatorRunner>(node);
 
   AddFrames(20, {10}, runner.get());
   MP_ASSERT_OK(runner->Run());
@@ -122,7 +122,7 @@ TEST(ShotBoundaryCalculatorTest, ShotChangeDouble) {
   node.mutable_options()
       ->MutableExtension(ShotBoundaryCalculatorOptions::ext)
       ->set_output_only_on_change(false);
-  auto runner = ::absl::make_unique<CalculatorRunner>(node);
+  auto runner = std::make_unique<CalculatorRunner>(node);
 
   AddFrames(20, {14, 17}, runner.get());
   MP_ASSERT_OK(runner->Run());
@@ -139,7 +139,7 @@ TEST(ShotBoundaryCalculatorTest, ShotChangeFiltered) {
       ->MutableExtension(ShotBoundaryCalculatorOptions::ext)
       ->set_output_only_on_change(false);
 
-  auto runner = ::absl::make_unique<CalculatorRunner>(node);
+  auto runner = std::make_unique<CalculatorRunner>(node);
 
   AddFrames(24, {16, 19}, runner.get());
   MP_ASSERT_OK(runner->Run());
@@ -152,7 +152,7 @@ TEST(ShotBoundaryCalculatorTest, ShotChangeSingleOnOnChange) {
   node.mutable_options()
       ->MutableExtension(ShotBoundaryCalculatorOptions::ext)
       ->set_output_only_on_change(true);
-  auto runner = ::absl::make_unique<CalculatorRunner>(node);
+  auto runner = std::make_unique<CalculatorRunner>(node);
 
   AddFrames(20, {15}, runner.get());
   MP_ASSERT_OK(runner->Run());

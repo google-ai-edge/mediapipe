@@ -34,10 +34,10 @@
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
-#include "tensorflow/lite/c/c_api_types.h"
-#include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/interpreter_builder.h"
-#include "tensorflow/lite/util.h"
+#include "tflite/c/c_api_types.h"
+#include "tflite/c/common.h"
+#include "tflite/interpreter_builder.h"
+#include "tflite/util.h"
 
 namespace mediapipe {
 
@@ -77,10 +77,10 @@ absl::StatusOr<std::vector<Tensor>> AllocateOutputTensors(
   for (int i = 0; i < model_output_indexes.size(); ++i) {
     const TfLiteTensor* reference_tensor =
         interpreter.tensor(interpreter.outputs()[model_output_indexes[i]]);
-    MP_ASSIGN_OR_RETURN(Tensor output_tensor,
-                        CreateTensorWithTfLiteTensorSpecs(
-                            *reference_tensor, /*memory_manager=*/nullptr,
-                            tflite::kDefaultTensorAlignment));
+    ABSL_ASSIGN_OR_RETURN(Tensor output_tensor,
+                          CreateTensorWithTfLiteTensorSpecs(
+                              *reference_tensor, /*memory_manager=*/nullptr,
+                              tflite::kDefaultTensorAlignment));
     output_tensors.push_back(std::move(output_tensor));
   }
   return output_tensors;
@@ -91,7 +91,8 @@ absl::Status CopyCpuInputIntoInterpreterTensor(const Tensor& input_tensor,
                                                int input_tensor_index) {
   TfLiteTensor* tflite_tensor = interpreter.input_tensor(input_tensor_index);
   RET_CHECK(tflite_tensor);
-  MP_RETURN_IF_ERROR(CopyCpuInputIntoTfLiteTensor(input_tensor, *tflite_tensor))
+  ABSL_RETURN_IF_ERROR(
+      CopyCpuInputIntoTfLiteTensor(input_tensor, *tflite_tensor))
       << " at index " << input_tensor_index;
   return absl::OkStatus();
 }
@@ -101,7 +102,7 @@ absl::Status CopyInterpreterTensorIntoCpuOutput(
     Tensor& output_tensor) {
   const TfLiteTensor* tflite_tensor = interpreter.tensor(output_tensor_index);
   RET_CHECK(tflite_tensor);
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       CopyTfLiteTensorIntoCpuOutput(*tflite_tensor, output_tensor))
       << " at index " << output_tensor_index;
   return absl::OkStatus();
@@ -211,18 +212,18 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
           input_tensor_view.buffer<const void>()))
           << "TfLite custom tensor allocation of input tensors is enabled but "
              "tensor memory is not aligned to tflite::kDefaultTensorAlignment.";
-      MP_RETURN_IF_ERROR(SetTfLiteCustomAllocation(
+      ABSL_RETURN_IF_ERROR(SetTfLiteCustomAllocation(
           *interpreter_, input_tensor_view.buffer<const void>(),
           input_tensor.bytes(), interpreter_->inputs()[input_tensor_index]));
       input_tensor_views.emplace_back(std::move(input_tensor_view));
       continue;
     }
 
-    MP_RETURN_IF_ERROR(CopyCpuInputIntoInterpreterTensor(
+    ABSL_RETURN_IF_ERROR(CopyCpuInputIntoInterpreterTensor(
         input_tensor, *interpreter_, input_tensor_index));
   }
 
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       std::vector<Tensor> output_tensors,
       AllocateOutputTensors(output_indices_excluding_feedback_tensors,
                             *interpreter_));
@@ -234,7 +235,7 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
           output_indices_excluding_feedback_tensors[i];
       Tensor& tensor = output_tensors[i];
       auto write_view = output_tensors[i].GetCpuWriteView();
-      MP_RETURN_IF_ERROR(SetTfLiteCustomAllocation(
+      ABSL_RETURN_IF_ERROR(SetTfLiteCustomAllocation(
           *interpreter_, write_view.buffer<void>(), tensor.bytes(),
           interpreter_->outputs()[output_tensor_index]));
       output_tensor_views.push_back(std::move(write_view));
@@ -265,7 +266,7 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
     for (int i = 0; i < output_indices_excluding_feedback_tensors.size(); ++i) {
       const int output_tensor_index =
           interpreter_->outputs()[output_indices_excluding_feedback_tensors[i]];
-      MP_RETURN_IF_ERROR(CopyInterpreterTensorIntoCpuOutput(
+      ABSL_RETURN_IF_ERROR(CopyInterpreterTensorIntoCpuOutput(
           *interpreter_, output_tensor_index, output_tensors[i]));
     }
   }
@@ -296,7 +297,7 @@ CreateInferenceInterpreterDelegateRunner(
   RET_CHECK_EQ(interpreter_builder(&interpreter), kTfLiteOk);
   RET_CHECK(interpreter);
   RET_CHECK_EQ(interpreter->AllocateTensors(), kTfLiteOk);
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       auto input_output_tensor_names,
       InferenceIoMapper::GetInputOutputTensorNamesFromInterpreter(
           *interpreter));
@@ -304,11 +305,11 @@ CreateInferenceInterpreterDelegateRunner(
   if (input_output_config) {
     // Create inference_feedback_manager if input_output_config is available.
     inference_feedback_manager = std::make_unique<InferenceFeedbackManager>();
-    MP_RETURN_IF_ERROR(inference_feedback_manager->Init(
+    ABSL_RETURN_IF_ERROR(inference_feedback_manager->Init(
         *input_output_config, input_output_tensor_names, interpreter.get()));
   }
   if (enable_zero_copy_tensor_io) {
-    MP_RETURN_IF_ERROR(VerifyModelTensorsForCustomAllocation(*interpreter));
+    ABSL_RETURN_IF_ERROR(VerifyModelTensorsForCustomAllocation(*interpreter));
   }
   return std::make_unique<InferenceInterpreterDelegateRunner>(
       std::move(model), std::move(interpreter), std::move(delegate),

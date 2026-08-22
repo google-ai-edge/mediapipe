@@ -92,7 +92,7 @@ cc_test(
     name = "text_embedder_test",
     srcs = ["text_embedder_test.cc"],
     data = [
-        "//mediapipe/tasks/testdata/text:embedding_gemma_model",
+        "//mediapipe/models/embedding_gemma:embedding_gemma.task",
         "//mediapipe/tasks/testdata/text:gecko_model",
         "//mediapipe/tasks/testdata/text:mobilebert_embedding_model",
     ],

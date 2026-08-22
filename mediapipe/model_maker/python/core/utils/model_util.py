@@ -117,7 +117,7 @@ def get_steps_per_epoch(
     if train_data is None:
       raise ValueError('Input train_data cannot be None.')
     # Gets the steps by the length of the training data.
-    return len(train_data) // batch_size
+    return len(train_data) // batch_size  # pyrefly: ignore[unsupported-operation]
 
 
 def convert_to_tflite_from_file(
@@ -239,7 +239,7 @@ class WarmUp(tf.keras.optimizers.schedules.LearningRateSchedule):
     self.name = name
 
   def __call__(self, step: Union[int, tf.Tensor]) -> tf.Tensor:
-    with tf.name_scope(self.name or 'WarmUp') as name:
+    with tf.name_scope(self.name or 'WarmUp') as name:  # pyrefly: ignore[bad-instantiation]
       # Implements linear warmup. i.e., if global_step < warmup_steps, the
       # learning rate will be `global_step/num_warmup_steps * init_lr`.
       global_step_float = tf.cast(step, tf.float32)

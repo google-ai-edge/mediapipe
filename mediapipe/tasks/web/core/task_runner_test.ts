@@ -54,6 +54,7 @@ class TaskRunnerFake extends TaskRunner {
         'finishProcessing',
         'registerModelResourcesGraphService',
         'attachErrorListener',
+        'getMediapipeApiKey',
       ]),
     );
     const graphRunner = this.graphRunner as jasmine.SpyObj<
@@ -82,6 +83,10 @@ class TaskRunnerFake extends TaskRunner {
 
   override finishProcessing(timestamp: number): void {
     super.finishProcessing(timestamp);
+  }
+
+  override getTaskName(): string {
+    return 'TaskRunnerFake';
   }
 
   override refreshGraph(): void {}
@@ -119,6 +124,7 @@ describe('TaskRunner', () => {
     acceleration: {
       xnnpack: undefined,
       gpu: undefined,
+      litert: undefined,
       tflite: {},
       nnapi: undefined,
     },
@@ -143,6 +149,7 @@ describe('TaskRunner', () => {
             .SUSTAINED_SPEED,
         webnn: undefined,
       },
+      litert: undefined,
       tflite: undefined,
       nnapi: undefined,
     },
@@ -158,6 +165,7 @@ describe('TaskRunner', () => {
     acceleration: {
       xnnpack: undefined,
       gpu: undefined,
+      litert: undefined,
       tflite: {},
       nnapi: undefined,
     },

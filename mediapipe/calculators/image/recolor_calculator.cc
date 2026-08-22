@@ -173,7 +173,7 @@ absl::Status RecolorCalculator::GetContract(CalculatorContract* cc) {
 
   if (use_gpu) {
 #if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+    ABSL_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
 #endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
@@ -186,11 +186,11 @@ absl::Status RecolorCalculator::Open(CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kGpuBufferTag)) {
     use_gpu_ = true;
 #if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
+    ABSL_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
-  MP_RETURN_IF_ERROR(LoadOptions(cc));
+  ABSL_RETURN_IF_ERROR(LoadOptions(cc));
 
   return absl::OkStatus();
 }
@@ -198,18 +198,18 @@ absl::Status RecolorCalculator::Open(CalculatorContext* cc) {
 absl::Status RecolorCalculator::Process(CalculatorContext* cc) {
   if (use_gpu_) {
 #if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         gpu_helper_.RunInGlContext([this, &cc]() -> absl::Status {
           if (!initialized_) {
-            MP_RETURN_IF_ERROR(InitGpu(cc));
+            ABSL_RETURN_IF_ERROR(InitGpu(cc));
             initialized_ = true;
           }
-          MP_RETURN_IF_ERROR(RenderGpu(cc));
+          ABSL_RETURN_IF_ERROR(RenderGpu(cc));
           return absl::OkStatus();
         }));
 #endif  // !MEDIAPIPE_DISABLE_GPU
   } else {
-    MP_RETURN_IF_ERROR(RenderCpu(cc));
+    ABSL_RETURN_IF_ERROR(RenderCpu(cc));
   }
   return absl::OkStatus();
 }
@@ -253,7 +253,7 @@ absl::Status RecolorCalculator::RenderCpu(CalculatorContext* cc) {
   cv::resize(mask_mat, mask_full, input_mat.size());
   const cv::Vec3b recolor = {color_[0], color_[1], color_[2]};
 
-  auto output_img = absl::make_unique<ImageFrame>(
+  auto output_img = std::make_unique<ImageFrame>(
       input_img.Format(), input_mat.cols, input_mat.rows);
   cv::Mat output_mat = mediapipe::formats::MatView(output_img.get());
 

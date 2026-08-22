@@ -60,4 +60,8 @@ message UnpackMediaSequenceCalculatorOptions {
   // Often if a post-stream packet is stored in a SequenceExample, it should be
   // used as a pre-stream packet in a subsequent graph.
   optional bool output_poststream_as_prestream = 12;
+
+  // If true, the graph will not fail if the SequenceExample is missing bytes
+  // [PREFIX]/clip/encoded_media_bytes.
+  optional bool allow_missing_bytes = 13 [default = false];
 }

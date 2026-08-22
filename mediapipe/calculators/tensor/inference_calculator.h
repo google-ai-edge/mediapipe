@@ -38,8 +38,8 @@
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/kernels/register.h"
+#include "tflite/core/api/op_resolver.h"
+#include "tflite/kernels/register.h"
 
 namespace mediapipe {
 
@@ -229,6 +229,10 @@ struct InferenceCalculatorXnnpack : public InferenceCalculator {
   static constexpr char kCalculatorName[] = "InferenceCalculatorXnnpack";
 };
 
+struct InferenceCalculatorLiteRt : public InferenceCalculator {
+  static constexpr char kCalculatorName[] = "InferenceCalculatorLiteRt";
+};
+
 // For Process overriding, we subclass Impl rather than Intf
 // Subclasses must implement InferenceCalculatorNodeImpl's `Process` method.
 template <class Intf, class Impl = void>
@@ -246,7 +250,7 @@ class InferenceCalculatorNodeImpl : public NodeImpl<Intf, Impl> {
       }
       const auto& input_tensors = *InferenceCalculator::kInTensors(cc);
       RET_CHECK(!input_tensors.empty());
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           auto output_tensors,
           RemapAndProcessTensors(cc, MakeTensorSpan(input_tensors)));
       return SendOutputTensors(cc, std::move(output_tensors));
@@ -258,7 +262,7 @@ class InferenceCalculatorNodeImpl : public NodeImpl<Intf, Impl> {
       }
     }
 
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         auto output_tensors,
         RemapAndProcessTensors(
             cc, MakeTensorSpan(InferenceCalculator::kInTensor(cc))));
@@ -287,10 +291,10 @@ class InferenceCalculatorNodeImpl : public NodeImpl<Intf, Impl> {
     RET_CHECK(io_mapper_ != nullptr)
         << "IO mapper is not initialized. MaybeUpdateIoMapping must be called "
            "prior to Process.";
-    MP_ASSIGN_OR_RETURN(const TensorSpan input_tensors_remapped,
-                        io_mapper_->RemapInputTensors(input_tensors));
-    MP_ASSIGN_OR_RETURN(std::vector<Tensor> output_tensors,
-                        Process(cc, input_tensors_remapped));
+    ABSL_ASSIGN_OR_RETURN(const TensorSpan input_tensors_remapped,
+                          io_mapper_->RemapInputTensors(input_tensors));
+    ABSL_ASSIGN_OR_RETURN(std::vector<Tensor> output_tensors,
+                          Process(cc, input_tensors_remapped));
     return io_mapper_->RemapOutputTensors(std::move(output_tensors));
   }
 

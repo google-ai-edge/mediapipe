@@ -92,8 +92,8 @@ struct GestureRecognizerOutputs {
 absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
                                    GestureRecognizerGraphOptions* options,
                                    bool is_copy) {
-  MP_ASSIGN_OR_RETURN(const auto hand_landmarker_file,
-                      resources.GetFile(kHandLandmarkerBundleAssetName));
+  ABSL_ASSIGN_OR_RETURN(const auto hand_landmarker_file,
+                        resources.GetFile(kHandLandmarkerBundleAssetName));
   auto* hand_landmarker_graph_options =
       options->mutable_hand_landmarker_graph_options();
   SetExternalFile(hand_landmarker_file,
@@ -106,8 +106,9 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   hand_landmarker_graph_options->mutable_base_options()->set_use_stream_mode(
       options->base_options().use_stream_mode());
 
-  MP_ASSIGN_OR_RETURN(const auto hand_gesture_recognizer_file,
-                      resources.GetFile(kHandGestureRecognizerBundleAssetName));
+  ABSL_ASSIGN_OR_RETURN(
+      const auto hand_gesture_recognizer_file,
+      resources.GetFile(kHandGestureRecognizerBundleAssetName));
   auto* hand_gesture_recognizer_graph_options =
       options->mutable_hand_gesture_recognizer_graph_options();
   SetExternalFile(hand_gesture_recognizer_file,
@@ -209,19 +210,19 @@ class GestureRecognizerGraph : public core::ModelTaskGraph {
     if (sc->Options<GestureRecognizerGraphOptions>()
             .base_options()
             .has_model_asset()) {
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           const auto* model_asset_bundle_resources,
           CreateModelAssetBundleResources<GestureRecognizerGraphOptions>(sc));
       // When the model resources cache service is available, filling in
       // the file pointer meta in the subtasks' base options. Otherwise,
       // providing the file contents instead.
-      MP_RETURN_IF_ERROR(SetSubTaskBaseOptions(
+      ABSL_RETURN_IF_ERROR(SetSubTaskBaseOptions(
           *model_asset_bundle_resources,
           sc->MutableOptions<GestureRecognizerGraphOptions>(),
           !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
                .IsAvailable()));
     }
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         auto hand_gesture_recognition_output,
         BuildGestureRecognizerGraph(
             *sc->MutableOptions<GestureRecognizerGraphOptions>(),

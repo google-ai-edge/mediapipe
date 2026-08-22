@@ -29,6 +29,7 @@ class BaseOptionsTest(absltest.TestCase):
     self.assertEqual(
         options_c.delegate, base_options_lib.BaseOptions.Delegate.CPU
     )
+    self.assertEqual(options_c.file_descriptor, -1)
 
   def test_convert_to_ctypes_with_model_asset_buffer(self):
     options = base_options_lib.BaseOptions(model_asset_buffer=b'buffer')
@@ -39,6 +40,7 @@ class BaseOptionsTest(absltest.TestCase):
     self.assertEqual(
         options_c.delegate, base_options_lib.BaseOptions.Delegate.CPU
     )
+    self.assertEqual(options_c.file_descriptor, -1)
 
   def test_convert_to_ctypes_with_gpu_delegate(self):
     options = base_options_lib.BaseOptions(
@@ -50,6 +52,7 @@ class BaseOptionsTest(absltest.TestCase):
     self.assertEqual(
         options_c.delegate, base_options_lib.BaseOptions.Delegate.GPU
     )
+    self.assertEqual(options_c.file_descriptor, -1)
 
   def test_convert_to_ctypes_without_delegate(self):
     options = base_options_lib.BaseOptions(
@@ -60,6 +63,7 @@ class BaseOptionsTest(absltest.TestCase):
     self.assertEqual(
         options_c.delegate, base_options_lib.BaseOptions.Delegate.CPU
     )
+    self.assertEqual(options_c.file_descriptor, -1)
 
 
 if __name__ == '__main__':

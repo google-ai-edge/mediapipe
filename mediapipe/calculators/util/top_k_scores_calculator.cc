@@ -120,7 +120,7 @@ absl::Status TopKScoresCalculator::Open(CalculatorContext* cc) {
     threshold_ = options.threshold();
   }
   if (options.has_label_map_path()) {
-    MP_RETURN_IF_ERROR(LoadLabelmap(options.label_map_path()));
+    ABSL_RETURN_IF_ERROR(LoadLabelmap(options.label_map_path()));
   }
   if (cc->Outputs().HasTag(kTopKLabelsTag)) {
     RET_CHECK(!label_map_.empty());
@@ -227,9 +227,9 @@ absl::Status TopKScoresCalculator::Process(CalculatorContext* cc) {
 
 absl::Status TopKScoresCalculator::LoadLabelmap(std::string label_map_path) {
   std::string string_path;
-  MP_ASSIGN_OR_RETURN(string_path, PathToResourceAsFile(label_map_path));
+  ABSL_ASSIGN_OR_RETURN(string_path, PathToResourceAsFile(label_map_path));
   std::string label_map_string;
-  MP_RETURN_IF_ERROR(file::GetContents(string_path, &label_map_string));
+  ABSL_RETURN_IF_ERROR(file::GetContents(string_path, &label_map_string));
 
   std::istringstream stream(label_map_string);
   std::string line;

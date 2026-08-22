@@ -153,20 +153,20 @@ absl::Status ProcessLandmarks(LandmarkListT landmarks,
   if (IsNormalized<LandmarkListT>()) {
     RET_CHECK(cc.image_size.IsConnected() && cc.image_size);
     const auto& [width, height] = cc.image_size.GetOrDie();
-    MP_ASSIGN_OR_RETURN(landmarks,
-                        NormalizeLandmarkAspectRatio(landmarks, width, height));
+    ABSL_ASSIGN_OR_RETURN(
+        landmarks, NormalizeLandmarkAspectRatio(landmarks, width, height));
   }
 
   if (cc.norm_rect.IsConnected()) {
     RET_CHECK(cc.norm_rect);
     const NormalizedRect& norm_rect = cc.norm_rect.GetOrDie();
     const float rotation = norm_rect.rotation();
-    MP_ASSIGN_OR_RETURN(landmarks, RotateLandmarks(landmarks, rotation));
+    ABSL_ASSIGN_OR_RETURN(landmarks, RotateLandmarks(landmarks, rotation));
   }
 
   const LandmarksToMatrixCalculatorOptions& options = cc.options.Get();
   if (options.object_normalization()) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         landmarks,
         NormalizeObject(landmarks,
                         options.object_normalization_origin_offset()));

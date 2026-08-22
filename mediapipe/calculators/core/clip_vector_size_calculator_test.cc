@@ -153,9 +153,9 @@ TEST(TestClipUniqueIntPtrVectorSizeCalculatorTest, ConsumeOneTimestamp) {
   MP_EXPECT_OK(graph.StartRun({}));
 
   // input1 : {0, 1, 2, 3, 4, 5}
-  auto input_vector = absl::make_unique<std::vector<std::unique_ptr<int>>>(6);
+  auto input_vector = std::make_unique<std::vector<std::unique_ptr<int>>>(6);
   for (int i = 0; i < 6; ++i) {
-    input_vector->at(i) = absl::make_unique<int>(i);
+    input_vector->at(i) = std::make_unique<int>(i);
   }
 
   MP_EXPECT_OK(graph.AddPacketToInputStream(

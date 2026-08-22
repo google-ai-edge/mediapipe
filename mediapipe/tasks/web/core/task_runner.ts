@@ -30,6 +30,7 @@ import {
   WasmMediaPipeConstructor,
   createMediaPipeLib,
 } from '../../../web/graph_runner/graph_runner';
+import {SupportLogging} from '../../../web/graph_runner/graph_runner_logging_lib';
 import {SupportModelResourcesGraphService} from '../../../web/graph_runner/register_model_resources_graph_service';
 import {TaskLogger} from './task_logger';
 import {createTasksLogger} from './task_logger_factory';
@@ -41,7 +42,9 @@ const FREE_MEMORY_STREAM = 'free_memory';
 const UNUSED_STREAM_SUFFIX = '_unused_out';
 
 // tslint:disable-next-line:enforce-name-casing
-const CachedGraphRunnerType = SupportModelResourcesGraphService(GraphRunner);
+const CachedGraphRunnerType = SupportLogging(
+  SupportModelResourcesGraphService(GraphRunner),
+);
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -85,7 +88,7 @@ export async function createTaskRunner<T extends TaskRunner>(
     canvas,
     fileLocator,
   );
-  instance.enableLogging(type.name, options);
+  instance.enableLogging(options);
   await instance.setOptions(options);
   return instance;
 }
@@ -93,7 +96,7 @@ export async function createTaskRunner<T extends TaskRunner>(
 /** Base class for all MediaPipe Tasks. */
 export abstract class TaskRunner {
   protected abstract baseOptions: BaseOptionsProto;
-  private logger?: TaskLogger;
+  protected logger?: TaskLogger;
   private processingErrors: Error[] = [];
   private latestOutputTimestamp = 0;
   private keepaliveNode?: CalculatorGraphConfig.Node;
@@ -122,9 +125,13 @@ export abstract class TaskRunner {
   /** Configures the task with custom options. */
   abstract setOptions(options: TaskRunnerOptions): Promise<void>;
 
-  enableLogging(taskName: string, options: TaskRunnerOptions): void {
+  /** Returns the public name of the task (e.g. FaceLandmarker). */
+  protected abstract getTaskName(): string;
+
+  enableLogging(options: TaskRunnerOptions): void {
     const runningMode = (options as {runningMode: string}).runningMode ?? '';
-    this.logger = createTasksLogger(taskName, runningMode);
+    const apiKey = this.graphRunner.getMediapipeApiKey();
+    this.logger = createTasksLogger(this.getTaskName(), runningMode, apiKey);
   }
 
   /**

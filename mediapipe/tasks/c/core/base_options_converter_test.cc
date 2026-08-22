@@ -33,6 +33,7 @@ TEST(BaseOptionsConverterTest, ConvertsBaseOptionsAssetBuffer) {
       /* model_asset_buffer_count= */
       static_cast<unsigned int>(strlen(kAssetBuffer)),
       /* model_asset_path= */ nullptr,
+      /* file_descriptor= */ -1,
       /* delegate= */ MP_DELEGATE_CPU};
 
   mediapipe::tasks::core::BaseOptions cpp_base_options = {};
@@ -46,6 +47,7 @@ TEST(BaseOptionsConverterTest, ConvertsBaseOptionsAssetPath) {
   MpBaseOptions c_base_options = {/* model_asset_buffer= */ nullptr,
                                   /* model_asset_buffer_count= */ 0,
                                   /* model_asset_path= */ kModelAssetPath,
+                                  /* file_descriptor= */ -1,
                                   /* delegate= */ MP_DELEGATE_CPU};
 
   mediapipe::tasks::core::BaseOptions cpp_base_options = {};
@@ -59,6 +61,7 @@ TEST(BaseOptionsConverterTest, ConvertsBaseOptionsDelegate) {
   MpBaseOptions c_base_options = {/* model_asset_buffer= */ nullptr,
                                   /* model_asset_buffer_count= */ 0,
                                   /* model_asset_path= */ kModelAssetPath,
+                                  /* file_descriptor= */ -1,
                                   /* delegate= */ MP_DELEGATE_GPU};
 
   mediapipe::tasks::core::BaseOptions cpp_base_options = {};
@@ -103,6 +106,26 @@ TEST(BaseOptionsConverterTest, ToMpHostSystemConvertsValues) {
   EXPECT_EQ(ToMpHostSystem(3), MP_HOST_SYSTEM_WINDOWS);
   EXPECT_EQ(ToMpHostSystem(4), MP_HOST_SYSTEM_IOS);
   EXPECT_EQ(ToMpHostSystem(5), MP_HOST_SYSTEM_ANDROID);
+}
+
+TEST(BaseOptionsConverterTest, ConvertsBaseOptionsFileDescriptor) {
+  MpBaseOptions c_base_options = {};
+  c_base_options.file_descriptor = 123;
+
+  mediapipe::tasks::core::BaseOptions cpp_base_options = {};
+
+  CppConvertToBaseOptions(c_base_options, &cpp_base_options);
+  EXPECT_EQ(cpp_base_options.model_asset_descriptor_meta.fd, 123);
+}
+
+TEST(BaseOptionsConverterTest, ConvertsBaseOptionsFileDescriptorZero) {
+  MpBaseOptions c_base_options = {};
+  c_base_options.file_descriptor = 0;
+
+  mediapipe::tasks::core::BaseOptions cpp_base_options = {};
+
+  CppConvertToBaseOptions(c_base_options, &cpp_base_options);
+  EXPECT_EQ(cpp_base_options.model_asset_descriptor_meta.fd, -1);
 }
 
 }  // namespace mediapipe::tasks::c::core

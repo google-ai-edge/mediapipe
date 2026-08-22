@@ -57,7 +57,7 @@ class GestureRecognizer(classifier.Classifier):
     self._metric_functions = ['categorical_accuracy']
     self._optimizer = 'adam'
     self._callbacks = self._get_callbacks()
-    self._history = None
+    self._history = None  # pyrefly: ignore[bad-assignment]
     self.embedding_size = _EMBEDDING_SIZE
 
   @classmethod
@@ -116,7 +116,7 @@ class GestureRecognizer(classifier.Classifier):
     """Gets the list of callbacks to use in model training."""
     hparams = self._hparams
 
-    scheduler = lambda epoch: hparams.learning_rate * (hparams.lr_decay**epoch)
+    scheduler = lambda epoch: hparams.learning_rate * (hparams.lr_decay**epoch)  # pyrefly: ignore[missing-attribute]
     scheduler_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
 
     job_dir = hparams.export_dir
@@ -160,13 +160,13 @@ class GestureRecognizer(classifier.Classifier):
     dropout_rate = self._model_options.dropout_rate
     for i, width in enumerate(self._model_options.layer_widths):
       x = tf.keras.layers.BatchNormalization()(x)
-      x = tf.keras.layers.ReLU()(x)
-      x = tf.keras.layers.Dropout(rate=dropout_rate)(x)
-      x = tf.keras.layers.Dense(width, name=f'custom_gesture_recognizer_{i}')(x)
+      x = tf.keras.layers.ReLU()(x)  # pyrefly: ignore[not-callable]
+      x = tf.keras.layers.Dropout(rate=dropout_rate)(x)  # pyrefly: ignore[not-callable]
+      x = tf.keras.layers.Dense(width, name=f'custom_gesture_recognizer_{i}')(x)  # pyrefly: ignore[not-callable]
     x = tf.keras.layers.BatchNormalization()(x)
-    x = tf.keras.layers.ReLU()(x)
-    x = tf.keras.layers.Dropout(rate=dropout_rate)(x)
-    outputs = tf.keras.layers.Dense(
+    x = tf.keras.layers.ReLU()(x)  # pyrefly: ignore[not-callable]
+    x = tf.keras.layers.Dropout(rate=dropout_rate)(x)  # pyrefly: ignore[not-callable]
+    outputs = tf.keras.layers.Dense(  # pyrefly: ignore[not-callable]
         self._num_classes,
         activation='softmax',
         name='custom_gesture_recognizer_out')(

@@ -102,7 +102,7 @@ def _distorted_bounding_box_crop(image,
   Returns:
     A cropped image `Tensor`
   """
-  with tf.name_scope('distorted_bounding_box_crop'):
+  with tf.name_scope('distorted_bounding_box_crop'):  # pyrefly: ignore[bad-instantiation]
     shape = tf.shape(image)
     sample_distorted_bounding_box = tf.image.sample_distorted_bounding_box(
         shape,

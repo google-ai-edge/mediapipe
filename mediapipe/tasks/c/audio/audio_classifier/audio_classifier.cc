@@ -104,8 +104,8 @@ absl::StatusOr<std::unique_ptr<AudioClassifier>> CppCreateAudioClassifier(
   CppConvertToBaseOptions(options.base_options, &cpp_options->base_options);
   CppConvertToClassifierOptions(options.classifier_options,
                                 &cpp_options->classifier_options);
-  MP_ASSIGN_OR_RETURN(cpp_options->running_mode,
-                      CppConvertToRunningMode(options.running_mode));
+  ABSL_ASSIGN_OR_RETURN(cpp_options->running_mode,
+                        CppConvertToRunningMode(options.running_mode));
 
   if (options.result_callback) {
     cpp_options->result_callback =

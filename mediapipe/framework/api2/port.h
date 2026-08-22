@@ -452,8 +452,8 @@ class SideFallbackT : public Base {
 
  protected:
   absl::Status AddToContract(CalculatorContract* cc) const {
-    MP_RETURN_IF_ERROR(stream_port.AddToContract(cc));
-    MP_RETURN_IF_ERROR(side_port.AddToContract(cc));
+    ABSL_RETURN_IF_ERROR(stream_port.AddToContract(cc));
+    ABSL_RETURN_IF_ERROR(side_port.AddToContract(cc));
     int connected_count =
         stream_port(cc).IsConnected() + side_port(cc).IsConnected();
     if (connected_count > 1)

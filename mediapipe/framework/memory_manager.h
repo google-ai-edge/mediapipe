@@ -18,10 +18,10 @@
 
 // Defines MEDIAPIPE_TENSOR_USE_AHWB
 #include "mediapipe/framework/port.h"
+#include "mediapipe/gpu/multi_pool.h"
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
 #include "mediapipe/framework/formats/hardware_buffer_pool.h"
-#include "mediapipe/gpu/multi_pool.h"
 #endif
 
 namespace mediapipe {
@@ -52,30 +52,43 @@ namespace mediapipe {
 // 3) Pass Calculator::memory_manager_ to the Tensor class constructor:
 //       Tensor tensor(Tensor::ElementType::kFloat32,
 //                     Tensor::Shape{kTensorSize}, &memory_manager_);
-class MemoryManager {
- public:
-  MemoryManager() {
-#ifdef MEDIAPIPE_TENSOR_USE_AHWB
-    hardware_buffer_pool_ = std::make_shared<HardwareBufferPool>();
-#endif
-  }
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
+class MemoryManager {
+ public:
+  // If prefer_ahwb is true, Tensors written on CPU and read as OpenGL buffers
+  // or vice versa will use Android Hardware Buffers as storage. This prevents
+  // unnecessary copies, but extra AHWB allocations may outweigh the benefits of
+  // avoiding copies. Therefore, make sure to pick MultiPoolOptions carefully
+  // to avoid unnecessary AHWB allocations.
+  explicit MemoryManager(MultiPoolOptions options = kDefaultMultiPoolOptions,
+                         bool prefer_ahwb = false) {
+    hardware_buffer_pool_ =
+        std::make_shared<HardwareBufferPool>(std::move(options));
+    prefer_ahwb_ = prefer_ahwb;
+  }
+
   std::shared_ptr<HardwareBufferPool> GetAndroidHardwareBufferPool() const {
     return hardware_buffer_pool_;
   }
-#endif
 
-#ifdef MEDIAPIPE_TENSOR_USE_AHWB
-  explicit MemoryManager(const MultiPoolOptions& options)
-      : hardware_buffer_pool_(std::make_shared<HardwareBufferPool>(options)) {}
-#endif
+  bool PreferAhwb() const { return prefer_ahwb_; }
 
  private:
-#ifdef MEDIAPIPE_TENSOR_USE_AHWB
   std::shared_ptr<HardwareBufferPool> hardware_buffer_pool_;
-#endif
+  bool prefer_ahwb_ = false;
 };
+#else
+
+// Dummy MemoryManager class for platforms that don't use AHWB.
+class MemoryManager {
+ public:
+  explicit MemoryManager(MultiPoolOptions options = kDefaultMultiPoolOptions,
+                         bool prefer_ahwb = false) {}
+  bool PreferAhwb() const { return false; }
+};
+
+#endif  // MEDIAPIPE_TENSOR_USE_AHWB
 
 }  //  namespace mediapipe
 

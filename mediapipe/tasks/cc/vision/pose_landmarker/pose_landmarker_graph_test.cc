@@ -144,7 +144,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreatePoseLandmarkerGraphTaskRunner(
        .task_name = kTaskName,
        .task_running_mode = kRunningMode,
        .op_resolver =
-           absl::make_unique<tasks::core::MediaPipeBuiltinOpResolver>()});
+           std::make_unique<tasks::core::MediaPipeBuiltinOpResolver>()});
 }
 
 // Helper function to construct NormalizeRect proto.

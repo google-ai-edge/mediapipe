@@ -37,8 +37,8 @@
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/framework/tool/subgraph_expansion.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/kernels/register.h"
+#include "tflite/core/api/op_resolver.h"
+#include "tflite/kernels/register.h"
 
 namespace mediapipe {
 namespace api2 {
@@ -55,6 +55,12 @@ class InferenceCalculatorSelectorImpl
     std::vector<absl::string_view> impls;
 
 #if !MEDIAPIPE_FORCE_CPU_INFERENCE
+
+    const bool should_use_litert =
+        options.has_delegate() && options.delegate().has_litert();
+    if (should_use_litert) {
+      impls.emplace_back("LiteRt");
+    }
 
     const bool should_use_gpu =
         !options.has_delegate() ||  // Use GPU delegate if not specified
@@ -130,7 +136,7 @@ absl::StatusOr<Packet<TfLiteModelPtr>> InferenceCalculator::GetModelAsPacket(
     CalculatorContext* cc) {
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   if (!options.model_path().empty()) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         auto model, TfLiteModelLoader::LoadFromPath(cc->GetResources(),
                                                     options.model_path(),
                                                     options.try_mmap_model()));
@@ -151,7 +157,7 @@ InferenceCalculator::GetModelPacketWithResource(
     CalculatorContext* cc, std::optional<MMapMode> mmap_mode) {
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   if (!options.model_path().empty()) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         auto model, TfLiteModelLoader::LoadFromPathAndGetResource(
                         cc->GetResources(), options.model_path(), mmap_mode));
     ABSL_CHECK(!model.model_packet.IsEmpty());

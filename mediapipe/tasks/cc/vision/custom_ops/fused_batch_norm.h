@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_VISION_CUSTOM_OPS_FUSED_BATCH_NORM_H_
 #define MEDIAPIPE_TASKS_CC_VISION_CUSTOM_OPS_FUSED_BATCH_NORM_H_
 
-#include "tensorflow/lite/core/c/common.h"
+#include "tflite/core/c/common.h"
 
 namespace mediapipe::tflite_operations {
 

@@ -78,7 +78,7 @@ class EmbeddingResult:
         embedding = np.array(embedding_array, dtype=np.uint8)
 
       python_embedding = Embedding(
-          embedding=embedding,
+          embedding=embedding,  # pyrefly: ignore[bad-argument-type]
           head_index=c_embedding.head_index,
           head_name=(
               c_embedding.head_name.decode('utf-8')

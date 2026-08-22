@@ -29,7 +29,7 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"  // NOLINT
 #include "mediapipe/framework/tool/validate_type.h"
-#include "tensorflow/lite/interpreter.h"
+#include "tflite/interpreter.h"
 
 namespace mediapipe {
 namespace {
@@ -54,7 +54,7 @@ class TfLiteConverterCalculatorTest : public ::testing::Test {
                        bool row_major_matrix = false) {
     RandomEngine random(kSeed);
     std::uniform_real_distribution<> uniform_dist(0, 1.0);
-    auto matrix = ::absl::make_unique<Matrix>();
+    auto matrix = std::make_unique<Matrix>();
     matrix->resize(num_rows, num_columns);
     if (row_major_matrix) {
       for (int y = 0; y < num_rows; ++y) {
@@ -102,7 +102,7 @@ TEST_F(TfLiteConverterCalculatorTest, RandomMatrixColMajor) {
     tool::AddVectorSink("tensor", &graph_config, &output_packets);
 
     // Run the graph.
-    graph_ = absl::make_unique<CalculatorGraph>();
+    graph_ = std::make_unique<CalculatorGraph>();
     MP_ASSERT_OK(graph_->Initialize(graph_config));
     MP_ASSERT_OK(graph_->StartRun({}));
 
@@ -163,7 +163,7 @@ TEST_F(TfLiteConverterCalculatorTest, RandomMatrixRowMajor) {
     tool::AddVectorSink("tensor", &graph_config, &output_packets);
 
     // Run the graph.
-    graph_ = absl::make_unique<CalculatorGraph>();
+    graph_ = std::make_unique<CalculatorGraph>();
     MP_ASSERT_OK(graph_->Initialize(graph_config));
     MP_ASSERT_OK(graph_->StartRun({}));
 
@@ -226,7 +226,7 @@ TEST_F(TfLiteConverterCalculatorTest, CustomDivAndSub) {
   // Run the graph.
   MP_ASSERT_OK(graph.Initialize(graph_config));
   MP_ASSERT_OK(graph.StartRun({}));
-  auto input_image = absl::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
+  auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
   cv::Mat mat = mediapipe::formats::MatView(input_image.get());
   mat.at<uint8_t>(0, 0) = 200;
   MP_ASSERT_OK(graph.AddPacketToInputStream(
@@ -282,7 +282,7 @@ TEST_F(TfLiteConverterCalculatorTest, SetOutputRange) {
     // Run the graph.
     MP_ASSERT_OK(graph.Initialize(graph_config));
     MP_ASSERT_OK(graph.StartRun({}));
-    auto input_image = absl::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
+    auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
     cv::Mat mat = mediapipe::formats::MatView(input_image.get());
     mat.at<uint8_t>(0, 0) = 200;
     MP_ASSERT_OK(graph.AddPacketToInputStream(

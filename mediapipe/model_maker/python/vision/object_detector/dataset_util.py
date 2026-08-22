@@ -419,19 +419,19 @@ class PascalVocCacheFilesWriter(CacheFilesWriter):
       tree = ET.parse(ann_file)
       root = tree.getroot()
       img_filename = _xml_get(root, 'filename').text
-      img_file = os.path.join(images_dir, img_filename)
+      img_file = os.path.join(images_dir, img_filename)  # pyrefly: ignore[no-matching-overload]
       with tf.io.gfile.GFile(img_file, 'rb') as fid:
         encoded_jpg = fid.read()
       image = tf.io.decode_jpeg(encoded_jpg, channels=3)
       height, width, _ = image.shape
       for child in root.iter('object'):
         category_name = _xml_get(child, 'name').text
-        category_id = label_name_to_id[category_name]
+        category_id = label_name_to_id[category_name]  # pyrefly: ignore[bad-index]
         bndbox = _xml_get(child, 'bndbox')
-        xmin = float(_xml_get(bndbox, 'xmin').text)
-        xmax = float(_xml_get(bndbox, 'xmax').text)
-        ymin = float(_xml_get(bndbox, 'ymin').text)
-        ymax = float(_xml_get(bndbox, 'ymax').text)
+        xmin = float(_xml_get(bndbox, 'xmin').text)  # pyrefly: ignore[bad-argument-type]
+        xmax = float(_xml_get(bndbox, 'xmax').text)  # pyrefly: ignore[bad-argument-type]
+        ymin = float(_xml_get(bndbox, 'ymin').text)  # pyrefly: ignore[bad-argument-type]
+        ymax = float(_xml_get(bndbox, 'ymax').text)  # pyrefly: ignore[bad-argument-type]
         if xmax <= xmin or ymax <= ymin or xmax > width or ymax > height:
           # Skip annotations that have no area or are larger than the image
           continue

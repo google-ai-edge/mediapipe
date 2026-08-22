@@ -39,7 +39,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/processors/proto/embedding_postprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
-#include "tensorflow/lite/test_util.h"
+#include "tflite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -159,8 +159,8 @@ class PostprocessingTest : public tflite::testing::Test {
       absl::string_view model_name, const proto::EmbedderOptions& options,
       bool connect_timestamps = false,
       const std::vector<absl::string_view>& ignored_head_names = {}) {
-    MP_ASSIGN_OR_RETURN(auto model_resources,
-                        CreateModelResourcesForModel(model_name));
+    ABSL_ASSIGN_OR_RETURN(auto model_resources,
+                          CreateModelResourcesForModel(model_name));
 
     Graph graph;
     auto& postprocessing = graph.AddNode(
@@ -173,7 +173,7 @@ class PostprocessingTest : public tflite::testing::Test {
       postprocessing_options->mutable_tensors_to_embeddings_options()
           ->add_ignored_head_names(std::string(head_name));
     }
-    MP_RETURN_IF_ERROR(ConfigureEmbeddingPostprocessingGraph(
+    ABSL_RETURN_IF_ERROR(ConfigureEmbeddingPostprocessingGraph(
         *model_resources, options, postprocessing_options));
     graph[Input<std::vector<Tensor>>(kTensorsTag)].SetName(kTensorsName) >>
         postprocessing.In(kTensorsTag);
@@ -190,16 +190,18 @@ class PostprocessingTest : public tflite::testing::Test {
           graph[Output<EmbeddingResult>(kEmbeddingsTag)];
     }
 
-    MP_RETURN_IF_ERROR(calculator_graph_.Initialize(graph.GetConfig()));
+    ABSL_RETURN_IF_ERROR(calculator_graph_.Initialize(graph.GetConfig()));
     if (connect_timestamps) {
-      MP_ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
-                                           kTimestampedEmbeddingsName));
-      MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
+      ABSL_ASSIGN_OR_RETURN(
+          auto poller,
+          calculator_graph_.AddOutputStreamPoller(kTimestampedEmbeddingsName));
+      ABSL_RETURN_IF_ERROR(
+          calculator_graph_.StartRun(/*extra_side_packets=*/{}));
       return poller;
     }
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         auto poller, calculator_graph_.AddOutputStreamPoller(kEmbeddingsName));
-    MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
+    ABSL_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
     return poller;
   }
 
@@ -218,16 +220,16 @@ class PostprocessingTest : public tflite::testing::Test {
   absl::Status Run(
       std::optional<std::vector<int>> aggregation_timestamps = std::nullopt,
       int timestamp = 0) {
-    MP_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
+    ABSL_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
         kTensorsName, Adopt(tensors_.release()).At(Timestamp(timestamp))));
     // Reset tensors for future calls.
-    tensors_ = absl::make_unique<std::vector<Tensor>>();
+    tensors_ = std::make_unique<std::vector<Tensor>>();
     if (aggregation_timestamps.has_value()) {
-      auto packet = absl::make_unique<std::vector<Timestamp>>();
+      auto packet = std::make_unique<std::vector<Timestamp>>();
       for (const auto& timestamp : *aggregation_timestamps) {
         packet->emplace_back(Timestamp(timestamp));
       }
-      MP_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
+      ABSL_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
           kTimestampsName, Adopt(packet.release()).At(Timestamp(timestamp))));
     }
     return absl::OkStatus();
@@ -235,22 +237,22 @@ class PostprocessingTest : public tflite::testing::Test {
 
   template <typename T>
   absl::StatusOr<T> GetResult(OutputStreamPoller& poller) {
-    MP_RETURN_IF_ERROR(calculator_graph_.WaitUntilIdle());
-    MP_RETURN_IF_ERROR(calculator_graph_.CloseAllInputStreams());
+    ABSL_RETURN_IF_ERROR(calculator_graph_.WaitUntilIdle());
+    ABSL_RETURN_IF_ERROR(calculator_graph_.CloseAllInputStreams());
 
     Packet packet;
     if (!poller.Next(&packet)) {
       return absl::InternalError("Unable to get output packet");
     }
     auto result = packet.Get<T>();
-    MP_RETURN_IF_ERROR(calculator_graph_.WaitUntilDone());
+    ABSL_RETURN_IF_ERROR(calculator_graph_.WaitUntilDone());
     return result;
   }
 
  private:
   CalculatorGraph calculator_graph_;
   std::unique_ptr<std::vector<Tensor>> tensors_ =
-      absl::make_unique<std::vector<Tensor>>();
+      std::make_unique<std::vector<Tensor>>();
 };
 
 TEST_F(PostprocessingTest, SucceedsWithoutAggregation) {

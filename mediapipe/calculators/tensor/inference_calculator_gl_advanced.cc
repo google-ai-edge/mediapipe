@@ -133,7 +133,7 @@ absl::Status InferenceCalculatorGlAdvancedImpl::GpuInferenceRunner::Init(
     delegate.MergeFrom(input_side_packet_delegate);
   }
 
-  MP_RETURN_IF_ERROR(on_disk_cache_helper_.Init(options, delegate.gpu()));
+  ABSL_RETURN_IF_ERROR(on_disk_cache_helper_.Init(options, delegate.gpu()));
 
   return initialization_gl_context_->Run(
       [this, &cc, &delegate]() -> absl::Status {
@@ -146,20 +146,20 @@ InferenceCalculatorGlAdvancedImpl::GpuInferenceRunner::Run(
     CalculatorContext* cc, const TensorSpan& input_tensors) {
   std::vector<Tensor> output_tensors;
   for (int i = 0; i < input_tensors.size(); ++i) {
-    MP_RETURN_IF_ERROR(tflite_gpu_runner_->BindSSBOToInputTensor(
+    ABSL_RETURN_IF_ERROR(tflite_gpu_runner_->BindSSBOToInputTensor(
         input_tensors[i].GetOpenGlBufferReadView().name(), i));
   }
   output_tensors.reserve(output_shapes_.size());
   for (int i = 0; i < output_shapes_.size(); ++i) {
     output_tensors.emplace_back(Tensor::ElementType::kFloat32,
                                 output_shapes_[i]);
-    MP_RETURN_IF_ERROR(tflite_gpu_runner_->BindSSBOToOutputTensor(
+    ABSL_RETURN_IF_ERROR(tflite_gpu_runner_->BindSSBOToOutputTensor(
         output_tensors.back().GetOpenGlBufferWriteView().name(), i));
   }
   // Run inference.
   {
     MEDIAPIPE_PROFILING(GPU_TASK_INVOKE_ADVANCED, cc);
-    MP_RETURN_IF_ERROR(tflite_gpu_runner_->Invoke());
+    ABSL_RETURN_IF_ERROR(tflite_gpu_runner_->Invoke());
   }
   return output_tensors;
 }
@@ -173,7 +173,7 @@ absl::Status
 InferenceCalculatorGlAdvancedImpl::GpuInferenceRunner::InitTFLiteGPURunner(
     CalculatorContext* cc,
     const mediapipe::InferenceCalculatorOptions::Delegate& delegate) {
-  MP_ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(cc));
+  ABSL_ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(cc));
   const auto& model = *model_packet_.Get();
 
   bool allow_precision_loss = delegate.gpu().allow_precision_loss();
@@ -217,20 +217,20 @@ InferenceCalculatorGlAdvancedImpl::GpuInferenceRunner::InitTFLiteGPURunner(
   }
   if (kSideInOpResolver(cc).IsConnected()) {
     const tflite::OpResolver& op_resolver = kSideInOpResolver(cc).Get();
-    MP_RETURN_IF_ERROR(tflite_gpu_runner_->InitializeWithModel(
+    ABSL_RETURN_IF_ERROR(tflite_gpu_runner_->InitializeWithModel(
         model, op_resolver, /*allow_quant_ops=*/true));
-    MP_ASSIGN_OR_RETURN(input_output_tensor_names_,
-                        InferenceIoMapper::GetInputOutputTensorNamesFromModel(
-                            model, op_resolver));
+    ABSL_ASSIGN_OR_RETURN(input_output_tensor_names_,
+                          InferenceIoMapper::GetInputOutputTensorNamesFromModel(
+                              model, op_resolver));
   } else {
     tflite::ops::builtin::BuiltinOpResolver op_resolver =
         kSideInCustomOpResolver(cc).GetOr(
             tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates());
-    MP_RETURN_IF_ERROR(tflite_gpu_runner_->InitializeWithModel(
+    ABSL_RETURN_IF_ERROR(tflite_gpu_runner_->InitializeWithModel(
         model, op_resolver, /*allow_quant_ops=*/true));
-    MP_ASSIGN_OR_RETURN(input_output_tensor_names_,
-                        InferenceIoMapper::GetInputOutputTensorNamesFromModel(
-                            model, op_resolver));
+    ABSL_ASSIGN_OR_RETURN(input_output_tensor_names_,
+                          InferenceIoMapper::GetInputOutputTensorNamesFromModel(
+                              model, op_resolver));
   }
 
   // Create and bind OpenGL buffers for outputs.
@@ -247,29 +247,30 @@ InferenceCalculatorGlAdvancedImpl::GpuInferenceRunner::InitTFLiteGPURunner(
     tflite_gpu_runner_->ForceOpenCLInitFromSerializedModel();
   }
 
-  MP_RETURN_IF_ERROR(on_disk_cache_helper_.ReadGpuCaches(*tflite_gpu_runner_));
-  MP_RETURN_IF_ERROR(tflite_gpu_runner_->Build());
+  ABSL_RETURN_IF_ERROR(
+      on_disk_cache_helper_.ReadGpuCaches(*tflite_gpu_runner_));
+  ABSL_RETURN_IF_ERROR(tflite_gpu_runner_->Build());
   return on_disk_cache_helper_.SaveGpuCachesBasedOnBehavior(
       *tflite_gpu_runner_);
 }
 
 absl::Status InferenceCalculatorGlAdvancedImpl::UpdateContract(
     CalculatorContract* cc) {
-  MP_RETURN_IF_ERROR(TensorContractCheck(cc));
+  ABSL_RETURN_IF_ERROR(TensorContractCheck(cc));
 
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   RET_CHECK(!options.model_path().empty() ^ kSideInModel(cc).IsConnected())
       << "Either model as side packet or model path in options is required.";
 
   WarnFeedbackTensorsUnsupported(cc);
-  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+  ABSL_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
   return absl::OkStatus();
 }
 
 absl::Status InferenceCalculatorGlAdvancedImpl::Open(CalculatorContext* cc) {
-  MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
+  ABSL_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 
-  MP_ASSIGN_OR_RETURN(inference_runner_, CreateInferenceRunner(cc));
+  ABSL_ASSIGN_OR_RETURN(inference_runner_, CreateInferenceRunner(cc));
   return InferenceCalculatorNodeImpl::UpdateIoMapping(
       cc, inference_runner_->GetInputOutputTensorNames());
 }
@@ -277,9 +278,9 @@ absl::Status InferenceCalculatorGlAdvancedImpl::Open(CalculatorContext* cc) {
 absl::StatusOr<std::vector<Tensor>> InferenceCalculatorGlAdvancedImpl::Process(
     CalculatorContext* cc, const TensorSpan& tensor_span) {
   std::vector<Tensor> output_tensors;
-  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([&]() -> absl::Status {
-    MP_ASSIGN_OR_RETURN(output_tensors,
-                        inference_runner_->Run(cc, tensor_span));
+  ABSL_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([&]() -> absl::Status {
+    ABSL_ASSIGN_OR_RETURN(output_tensors,
+                          inference_runner_->Run(cc, tensor_span));
     return absl::OkStatus();
   }));
   return output_tensors;
@@ -296,7 +297,7 @@ absl::StatusOr<
 InferenceCalculatorGlAdvancedImpl::CreateInferenceRunner(
     CalculatorContext* cc) {
   auto gpu_inference_runner = std::make_unique<GpuInferenceRunner>();
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       gpu_inference_runner->Init(cc, gpu_helper_.GetSharedGlContext()));
   return gpu_inference_runner;
 }

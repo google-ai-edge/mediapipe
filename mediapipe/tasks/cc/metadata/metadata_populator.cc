@@ -27,7 +27,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/metadata/utils/zip_writable_mem_file.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
-#include "tensorflow/lite/schema/schema_generated.h"
+#include "tflite/schema/schema_generated.h"
 
 namespace mediapipe {
 namespace tasks {

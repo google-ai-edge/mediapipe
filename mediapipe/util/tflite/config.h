@@ -40,7 +40,7 @@
   ((MEDIAPIPE_TFLITE_GL_INFERENCE) || (MEDIAPIPE_TFLITE_METAL_INFERENCE))
 
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
-#include "tensorflow/lite/delegates/gpu/gl/gl_buffer.h"
+#include "tflite/delegates/gpu/gl/gl_buffer.h"
 #endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
 
 #if MEDIAPIPE_TFLITE_METAL_INFERENCE

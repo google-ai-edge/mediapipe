@@ -168,8 +168,8 @@ class ReproducibleResamplerCalculatorForTesting
  protected:
   std::unique_ptr<class PacketResamplerStrategy> GetSamplingStrategy(
       const mediapipe::PacketResamplerCalculatorOptions& Options) {
-    return absl::make_unique<
-        ReproducibleJitterWithReflectionStrategyForTesting>(this);
+    return std::make_unique<ReproducibleJitterWithReflectionStrategyForTesting>(
+        this);
   }
 };
 
@@ -747,6 +747,18 @@ TEST(PacketResamplerCalculatorTest, DoNotFlushLastPacketWithRound) {
   // 1666667 is not emitted due to flush_last_packet: false.
   runner.CheckOutputTimestamps({0, 1000000}, {0, 1000000});
 }
+
+const std::vector<Packet> expected_first_ten_packets = {
+    Adopt(new int64_t(100640000)).At(Timestamp(100648042)),
+    Adopt(new int64_t(101720000)).At(Timestamp(101706228)),
+    Adopt(new int64_t(102840000)).At(Timestamp(102835201)),
+    Adopt(new int64_t(103640000)).At(Timestamp(103648147)),
+    Adopt(new int64_t(104480000)).At(Timestamp(104469445)),
+    Adopt(new int64_t(105320000)).At(Timestamp(105303997)),
+    Adopt(new int64_t(106480000)).At(Timestamp(106482662)),
+    Adopt(new int64_t(107360000)).At(Timestamp(107373855)),
+    Adopt(new int64_t(108400000)).At(Timestamp(108416244)),
+    Adopt(new int64_t(109280000)).At(Timestamp(109295893))};
 
 // When base_timestamp is specified, output timestamps are aligned with it.
 TEST(PacketResamplerCalculatorTest, InputAtExactFrequencyMiddlepointsAligned) {

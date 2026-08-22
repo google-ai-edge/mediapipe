@@ -13,8 +13,10 @@
 // limitations under the License.
 
 #include <string>
+#include <utility>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/strip.h"
@@ -292,7 +294,7 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
       }
     }
     if (cc->OutputSidePackets().HasTag(kAudioDecoderOptions)) {
-      auto audio_decoder_options = absl::make_unique<AudioDecoderOptions>(
+      auto audio_decoder_options = std::make_unique<AudioDecoderOptions>(
           options.base_audio_decoder_options());
       if (mpms::HasClipStartTimestamp(sequence)) {
         if (options.force_decoding_from_start_of_media()) {
@@ -313,7 +315,7 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
           .Set(Adopt(audio_decoder_options.release()));
     }
     if (cc->OutputSidePackets().HasTag(kPacketResamplerOptions)) {
-      auto resampler_options = absl::make_unique<CalculatorOptions>();
+      auto resampler_options = std::make_unique<CalculatorOptions>();
       *(resampler_options->MutableExtension(
           PacketResamplerCalculatorOptions::ext)) =
           options.base_packet_resampler_options();

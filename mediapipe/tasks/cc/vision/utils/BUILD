@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite", "cc_test_with_tflite")
+load("@litert//tflite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite", "cc_test_with_tflite")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
@@ -40,8 +40,8 @@ cc_library_with_tflite(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:optional",
         "@flatbuffers//:runtime_cc",
-        "@org_tensorflow//tensorflow/lite/c:common",
-        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
+        "@litert//tflite/c:common",
+        "@litert//tflite/schema:schema_fbs",
     ],
 )
 
@@ -52,7 +52,7 @@ cc_test_with_tflite(
     tflite_deps = [
         ":image_tensor_specs",
         "//mediapipe/tasks/cc/core:model_resources",
-        "@org_tensorflow//tensorflow/lite:test_util",
+        "@litert//tflite:test_util",
     ],
     deps = [
         "//mediapipe/framework/deps:file_path",
@@ -68,7 +68,7 @@ cc_test_with_tflite(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:cord",
         "@com_google_absl//absl/types:optional",
-        "@org_tensorflow//tensorflow/lite/c:common",
+        "@litert//tflite/c:common",
     ],
 )
 

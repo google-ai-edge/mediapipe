@@ -42,7 +42,8 @@ GLint GlhValidateProgram(GLuint program);
 GLint GlhCreateProgram(const GLchar* vert_src, const GLchar* frag_src,
                        GLsizei attr_count, const GLchar* const* attr_names,
                        const GLint* attr_locations, GLuint* program,
-                       bool force_log_errors = false);
+                       bool force_log_errors = false,
+                       bool keep_shader_attached = false);
 
 // Compiles a shader specified by shader_source. Returns true on success.
 bool CompileShader(GLenum shader_type, const std::string& shader_source,

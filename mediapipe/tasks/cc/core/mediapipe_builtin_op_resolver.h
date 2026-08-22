@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_CORE_MEDIAPIPE_BUILTIN_OP_RESOLVER_H_
 #define MEDIAPIPE_TASKS_CC_CORE_MEDIAPIPE_BUILTIN_OP_RESOLVER_H_
 
-#include "tensorflow/lite/kernels/register.h"
+#include "tflite/kernels/register.h"
 
 namespace mediapipe {
 namespace tasks {

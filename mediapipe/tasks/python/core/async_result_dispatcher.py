@@ -152,7 +152,7 @@ class AsyncResultDispatcher:
       """
       if status_code != 0:
         exception = mediapipe_c_utils.convert_to_exception(status_code)
-        self._put_packet(_ExceptionPacket(exception=exception))
+        self._put_packet(_ExceptionPacket(exception=exception))  # pyrefly: ignore[bad-argument-type]
         return
 
       try:

@@ -35,8 +35,8 @@ namespace mediapipe {
 
 absl::Status SetExternalGlContextForGraph(CalculatorGraph* graph,
                                           PlatformGlContext external_context) {
-  MP_ASSIGN_OR_RETURN(auto gpu_resources,
-                      GpuResources::Create(external_context));
+  ABSL_ASSIGN_OR_RETURN(auto gpu_resources,
+                        GpuResources::Create(external_context));
   return graph->SetGpuResources(std::move(gpu_resources));
 }
 
@@ -81,7 +81,7 @@ absl::StatusOr<Packet> WrapExternalGlTextureForGraph(
   RET_CHECK(gpu_resources)
       << "Cannot wrap external GlTexture for the the graph which is not "
          "configured with GpuResources.";
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       GpuBuffer gpu_buffer,
       WrapExternalGlTexture(
           *gpu_resources, target, name, width, height, format,

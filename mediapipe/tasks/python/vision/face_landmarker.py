@@ -3147,13 +3147,13 @@ class FaceLandmarker:
       RuntimeError: If other types of error occurred.
     """
     running_mode_lib.validate_running_mode(
-        options.running_mode, options.result_callback
+        options.running_mode, options.result_callback  # pyrefly: ignore[bad-argument-type]
     )
 
     lib = mediapipe_c_bindings_lib.load_shared_library(_CTYPES_SIGNATURES)
 
     def convert_result(
-        c_result_ptr: ctypes.POINTER(MpFaceLandmarkerResultC),
+        c_result_ptr: ctypes.POINTER(MpFaceLandmarkerResultC),  # pyrefly: ignore[invalid-annotation]
         image_ptr: ctypes.c_void_p,
         timestamp_ms: int,
     ) -> Tuple[FaceLandmarkerResult, image_lib.Image, int]:
@@ -3179,7 +3179,7 @@ class FaceLandmarker:
     )
 
     landmarker = ctypes.c_void_p()
-    lib.MpFaceLandmarkerCreate(
+    lib.MpFaceLandmarkerCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(options_c), ctypes.byref(landmarker)
     )
     return FaceLandmarker(
@@ -3215,7 +3215,7 @@ class FaceLandmarker:
         if image_processing_options
         else None
     )
-    self._lib.MpFaceLandmarkerDetectImage(
+    self._lib.MpFaceLandmarkerDetectImage(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -3224,7 +3224,7 @@ class FaceLandmarker:
     try:
       result = FaceLandmarkerResult.from_ctypes(result_c)
     finally:
-      self._lib.MpFaceLandmarkerCloseResult(ctypes.byref(result_c))
+      self._lib.MpFaceLandmarkerCloseResult(ctypes.byref(result_c))  # pyrefly: ignore[missing-attribute]
     return result
 
   def detect_for_video(
@@ -3262,7 +3262,7 @@ class FaceLandmarker:
         if image_processing_options
         else None
     )
-    self._lib.MpFaceLandmarkerDetectForVideo(
+    self._lib.MpFaceLandmarkerDetectForVideo(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -3272,7 +3272,7 @@ class FaceLandmarker:
     try:
       py_result = FaceLandmarkerResult.from_ctypes(result_c)
     finally:
-      self._lib.MpFaceLandmarkerCloseResult(ctypes.byref(result_c))
+      self._lib.MpFaceLandmarkerCloseResult(ctypes.byref(result_c))  # pyrefly: ignore[missing-attribute]
     return py_result
 
   def detect_async(
@@ -3318,7 +3318,7 @@ class FaceLandmarker:
         if image_processing_options
         else None
     )
-    self._lib.MpFaceLandmarkerDetectAsync(
+    self._lib.MpFaceLandmarkerDetectAsync(  # pyrefly: ignore[missing-attribute]
         self._handle,
         c_image,
         c_image_processing_options,
@@ -3329,8 +3329,8 @@ class FaceLandmarker:
     """Closes the FaceLandmarker."""
     if not self._handle:
       return
-    self._lib.MpFaceLandmarkerClose(self._handle)
-    self._handle = None
+    self._lib.MpFaceLandmarkerClose(self._handle)  # pyrefly: ignore[missing-attribute]
+    self._handle = None  # pyrefly: ignore[bad-assignment]
     self._dispatcher.close()
     self._lib.close()
 

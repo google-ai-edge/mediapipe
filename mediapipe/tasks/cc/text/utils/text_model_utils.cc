@@ -18,13 +18,15 @@ limitations under the License.
 #include "absl/algorithm/container.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/ascii.h"
+#include "absl/strings/match.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/processors/proto/text_model_type.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
-#include "tensorflow/lite/schema/schema_generated.h"
+#include "tflite/schema/schema_generated.h"
 
 namespace mediapipe::tasks::text::utils {
 namespace {
@@ -46,24 +48,15 @@ absl::StatusOr<TextModelType::ModelType> GetIntTensorModelType(
     const ModelResources& model_resources, int num_input_tensors) {
   const ModelMetadataExtractor* metadata_extractor =
       model_resources.GetMetadataExtractor();
-  if (metadata_extractor->GetModelMetadata() == nullptr ||
-      metadata_extractor->GetModelMetadata()->subgraph_metadata() == nullptr) {
-    if (num_input_tensors == kNumInputTensorsForGecko) {
-      return TextModelType::GECKO_MODEL;
-    }
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "Text models with int32 input tensors require TFLite Model "
-        "Metadata but none was found",
-        MediaPipeTasksStatus::kMetadataNotFoundError);
-  }
 
   if (num_input_tensors == kNumInputTensorsForBert) {
     return TextModelType::BERT_MODEL;
   }
 
   if (num_input_tensors == kNumInputTensorsForGecko) {
-    if (metadata_extractor->GetInputTensorMetadata() != nullptr) {
+    // First, check if it's a REGEX model via the tokenizer process units.
+    if (metadata_extractor != nullptr &&
+        metadata_extractor->GetInputTensorMetadata() != nullptr) {
       for (const auto* input_metadata :
            *metadata_extractor->GetInputTensorMetadata()) {
         if (input_metadata->process_units() != nullptr) {
@@ -76,8 +69,19 @@ absl::StatusOr<TextModelType::ModelType> GetIntTensorModelType(
         }
       }
     }
-    // If it has 1 INT32 tensor and no RegexTokenizerOptions, it is a Gecko
-    // model.
+
+    // Next, check metadata-based classification for Gemma 1.
+    if (metadata_extractor != nullptr &&
+        metadata_extractor->GetModelMetadata() != nullptr) {
+      const auto* model_metadata = metadata_extractor->GetModelMetadata();
+      if (model_metadata->name() != nullptr &&
+          absl::StrContains(
+              absl::AsciiStrToLower(model_metadata->name()->str()), "gemma")) {
+        return TextModelType::EMBEDDING_GEMMA_MODEL;
+      }
+    }
+
+    // Default to GECKO_MODEL if no other indicators match.
     return TextModelType::GECKO_MODEL;
   }
 
@@ -115,6 +119,9 @@ absl::StatusOr<TextModelType::ModelType> GetStringTensorModelType(
 
 absl::StatusOr<TextModelType::ModelType> GetModelType(
     const ModelResources& model_resources) {
+  if (model_resources.GetTfLiteModel()->subgraphs()->size() > 1) {
+    return TextModelType::EMBEDDING_GEMMA_MODEL;
+  }
   const tflite::SubGraph& model_graph =
       *(*model_resources.GetTfLiteModel()->subgraphs())[0];
   bool all_int32_tensors =

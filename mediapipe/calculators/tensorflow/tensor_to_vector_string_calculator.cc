@@ -85,7 +85,7 @@ absl::Status TensorToVectorStringCalculator::Process(CalculatorContext* cc) {
     RET_CHECK(2 == input_tensor.dims())
         << "Expected 2-dimensional Tensor, but the tensor shape is: "
         << input_tensor.shape().DebugString();
-    auto output = absl::make_unique<std::vector<std::vector<std::string>>>(
+    auto output = std::make_unique<std::vector<std::vector<std::string>>>(
         input_tensor.dim_size(0),
         std::vector<std::string>(input_tensor.dim_size(1)));
     for (int i = 0; i < input_tensor.dim_size(0); ++i) {
@@ -104,7 +104,7 @@ absl::Status TensorToVectorStringCalculator::Process(CalculatorContext* cc) {
           << "tensor shape is: " << input_tensor.shape().DebugString();
     }
     auto output =
-        absl::make_unique<std::vector<std::string>>(input_tensor.NumElements());
+        std::make_unique<std::vector<std::string>>(input_tensor.NumElements());
     const auto& tensor_values = input_tensor.flat<tensorflow::tstring>();
     for (int i = 0; i < input_tensor.NumElements(); ++i) {
       output->at(i) = tensor_values(i);

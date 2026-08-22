@@ -164,7 +164,7 @@ absl::Status DetectionProjectionCalculator::Process(CalculatorContext* cc) {
     std::vector<Detection> output_detections;
     for (const auto& detection : input_packet.Get<std::vector<Detection>>()) {
       Detection output_detection = detection;
-      MP_RETURN_IF_ERROR(ProjectDetection(project_fn, &output_detection));
+      ABSL_RETURN_IF_ERROR(ProjectDetection(project_fn, &output_detection));
       output_detections.push_back(std::move(output_detection));
     }
 

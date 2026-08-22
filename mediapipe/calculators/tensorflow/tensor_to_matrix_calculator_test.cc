@@ -42,7 +42,7 @@ class TensorToMatrixCalculatorTest : public ::testing::Test {
     config.set_calculator("TensorToMatrixCalculator");
     config.add_input_stream("TENSOR:input_tensor");
     config.add_output_stream("MATRIX:output_matrix");
-    runner_ = absl::make_unique<CalculatorRunner>(config);
+    runner_ = std::make_unique<CalculatorRunner>(config);
   }
 
   // Creates a reference stream and sets num_channels and num_samples if > 0.
@@ -59,9 +59,9 @@ class TensorToMatrixCalculatorTest : public ::testing::Test {
           ->mutable_time_series_header_overrides()
           ->set_num_channels(override_channels);
     }
-    runner_ = absl::make_unique<CalculatorRunner>(config);
+    runner_ = std::make_unique<CalculatorRunner>(config);
 
-    auto header = absl::make_unique<TimeSeriesHeader>();
+    auto header = std::make_unique<TimeSeriesHeader>();
     header->set_sample_rate(1.0);
     if (channels > 0) {
       header->set_num_channels(channels);
@@ -83,7 +83,7 @@ TEST_F(TensorToMatrixCalculatorTest, Converts1DTensorToMatrix) {
   // This test converts a 1 Dimensional Tensor of length M to a Matrix of Mx1.
   SetUpRunner();
   const tf::TensorShape tensor_shape(std::vector<int64_t>{5});
-  auto tensor = absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
   auto tensor_vec = tensor->vec<float>();
   for (int i = 0; i < 5; ++i) {
     // 2^i can be represented exactly in floating point numbers if 'i' is small.
@@ -111,7 +111,7 @@ TEST_F(TensorToMatrixCalculatorTest, Converts2DTensorofWidthOneToMatrix) {
   // This test converts a 2 Dimensional Tensor of shape 1xM to a Matrix of Mx1.
   SetUpRunner();
   const tf::TensorShape tensor_shape(std::vector<int64_t>({1, 4}));
-  auto tensor = absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
   auto slice = tensor->Slice(0, 1).flat<float>();
   for (int i = 0; i < 4; ++i) {
     slice(i) = static_cast<float>(1 << i);
@@ -138,7 +138,7 @@ TEST_F(TensorToMatrixCalculatorTest, Converts2DTensorToMatrix) {
   // This test converts a 2 Dimensional Tensor of shape NxM to a Matrix of MxN.
   SetUpRunner();
   const tf::TensorShape tensor_shape(std::vector<int64_t>({3, 4}));
-  auto tensor = absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
   auto slice = tensor->Slice(0, 1).flat<float>();
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 4; ++j) {
@@ -169,7 +169,7 @@ TEST_F(TensorToMatrixCalculatorTest, ConvertsWithReferenceTimeSeriesHeader) {
   // This test converts a 1 Dimensional Tensor of length M to a Matrix of Mx1.
   SetUpRunnerWithReference(5, 1, -1, true);
   const tf::TensorShape tensor_shape(std::vector<int64_t>{5});
-  auto tensor = absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
   auto tensor_vec = tensor->vec<float>();
   for (int i = 0; i < 5; ++i) {
     // 2^i can be represented exactly in floating point numbers if 'i' is small.
@@ -201,7 +201,7 @@ TEST_F(TensorToMatrixCalculatorTest, TimeSeriesOverridesWork) {
   // This test converts a 1 Dimensional Tensor of length M to a Matrix of Mx1.
   SetUpRunnerWithReference(7, 1, 5, true);
   const tf::TensorShape tensor_shape(std::vector<int64_t>{5});
-  auto tensor = absl::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_FLOAT, tensor_shape);
   auto tensor_vec = tensor->vec<float>();
   for (int i = 0; i < 5; ++i) {
     // 2^i can be represented exactly in floating point numbers if 'i' is small.

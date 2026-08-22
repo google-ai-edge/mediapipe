@@ -24,11 +24,11 @@ limitations under the License.
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/kernels/kernel_util.h"
-#include "tensorflow/lite/mutable_op_resolver.h"
-#include "tensorflow/lite/portable_type_to_tflitetype.h"
-#include "tensorflow/lite/string_util.h"
+#include "tflite/c/common.h"
+#include "tflite/kernels/kernel_util.h"
+#include "tflite/mutable_op_resolver.h"
+#include "tflite/portable_type_to_tflitetype.h"
+#include "tflite/string_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -73,7 +73,7 @@ template <typename T, typename = std::enable_if_t<
                           std::negation_v<std::is_same<T, std::string>>>>
 absl::Status PopulateTensor(const T* data, int num_elements,
                             TfLiteTensor* tensor) {
-  MP_ASSIGN_OR_RETURN(T * v, AssertAndReturnTypedTensor<T>(tensor));
+  ABSL_ASSIGN_OR_RETURN(T * v, AssertAndReturnTypedTensor<T>(tensor));
   size_t bytes = num_elements * sizeof(T);
   if (tensor->bytes != bytes) {
     return CreateStatusWithPayload(

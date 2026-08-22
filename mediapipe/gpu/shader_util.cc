@@ -145,7 +145,7 @@ GLint GlhValidateProgram(GLuint program) {
 GLint GlhCreateProgram(const GLchar* vert_src, const GLchar* frag_src,
                        GLsizei attr_count, const GLchar* const* attr_names,
                        const GLint* attr_locations, GLuint* program,
-                       bool force_log_errors) {
+                       bool force_log_errors, bool keep_shader_attached) {
   GLuint vert_shader = 0;
   GLuint frag_shader = 0;
   GLint ok = GL_TRUE;
@@ -171,8 +171,14 @@ GLint GlhCreateProgram(const GLchar* vert_src, const GLchar* frag_src,
 
     ok = GlhLinkProgram(*program, force_log_errors);
 
-    glDetachShader(*program, frag_shader);
-    glDetachShader(*program, vert_shader);
+    if (!keep_shader_attached) {
+      // Note that we have seen this line cause "GL_INVALID_VALUE:
+      // glGetProgramiv: Program object expected." errors in the WebGL console
+      // and hence we allow users to opt-out if needed. This can increase memory
+      // consumption.
+      glDetachShader(*program, frag_shader);
+      glDetachShader(*program, vert_shader);
+    }
   }
 
   if (vert_shader) glDeleteShader(vert_shader);

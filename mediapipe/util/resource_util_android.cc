@@ -51,7 +51,7 @@ absl::Status DefaultGetResourceContents(const std::string& path,
   }
 
   if (absl::StartsWith(path, "content://")) {
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         Singleton<AssetManager>::get()->ReadContentUri(path, output));
     return absl::OkStatus();
   }

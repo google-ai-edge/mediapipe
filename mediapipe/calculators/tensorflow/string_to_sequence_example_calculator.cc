@@ -68,7 +68,7 @@ absl::Status StringToSequenceExampleCalculator::GetContract(
 absl::Status StringToSequenceExampleCalculator::Open(CalculatorContext* cc) {
   if (cc->InputSidePackets().HasTag(kString)) {
     auto string_value = cc->InputSidePackets().Tag(kString).Get<std::string>();
-    auto example = absl::make_unique<tf::SequenceExample>();
+    auto example = std::make_unique<tf::SequenceExample>();
     example->ParseFromString(string_value);
     cc->OutputSidePackets()
         .Tag(kSequenceExample)
@@ -85,7 +85,7 @@ absl::Status StringToSequenceExampleCalculator::Close(CalculatorContext* cc) {
   if (cc->InputSidePackets().HasTag(kSequenceExample)) {
     const auto& example =
         cc->InputSidePackets().Tag(kSequenceExample).Get<tf::SequenceExample>();
-    auto string_value = absl::make_unique<std::string>();
+    auto string_value = std::make_unique<std::string>();
     example.SerializeToString(string_value.get());
     cc->OutputSidePackets().Tag(kString).Set(
         mediapipe::Adopt(string_value.release()));

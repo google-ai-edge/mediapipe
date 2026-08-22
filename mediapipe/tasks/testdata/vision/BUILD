@@ -27,9 +27,11 @@ mediapipe_files(srcs = [
     "burger_crop.jpg",
     "burger_rotated.jpg",
     "cat.jpg",
+    "cat_exif_rotated.jpg",
     "cat_large.jpg",
     "cat_large_mask.png",
     "cat_mask.jpg",
+    "cat_mask_exif_rotated.jpg",
     "cat_rotated.jpg",
     "cat_rotated_mask.jpg",
     "cats_and_dogs.jpg",
@@ -117,7 +119,9 @@ mediapipe_files(srcs = [
 
 exports_files(
     srcs = [
+        "cats_and_dogs_mask_dog1_dog2_minus_dog1_split.png",
         "cats_and_dogs_mask_dog1_split.png",
+        "cats_and_dogs_mask_dog1_then_dog2_split.png",
         "expected_left_down_hand_landmarks.prototxt",
         "expected_left_down_hand_rotated_landmarks.prototxt",
         "expected_left_up_hand_landmarks.prototxt",
@@ -136,9 +140,11 @@ filegroup(
         "burger_crop.jpg",
         "burger_rotated.jpg",
         "cat.jpg",
+        "cat_exif_rotated.jpg",
         "cat_large.jpg",
         "cat_large_mask.png",
         "cat_mask.jpg",
+        "cat_mask_exif_rotated.jpg",
         "cat_rotated.jpg",
         "cat_rotated_mask.jpg",
         "cats_and_dogs.jpg",

@@ -84,7 +84,7 @@ class Dataset(classification_dataset.ClassificationDataset):
         the 'background' class.
     """
     tfrecord_cache_files = dataset_util.get_cache_files_coco(
-        data_dir, cache_dir
+        data_dir, cache_dir  # pyrefly: ignore[bad-argument-type]
     )
     if not tfrecord_cache_files.is_cached():
       label_map = dataset_util.get_label_map_coco(data_dir)
@@ -151,7 +151,7 @@ class Dataset(classification_dataset.ClassificationDataset):
       ValueError: if the input data directory is empty.
     """
     tfrecord_cache_files = dataset_util.get_cache_files_pascal_voc(
-        data_dir, cache_dir
+        data_dir, cache_dir  # pyrefly: ignore[bad-argument-type]
     )
     if not tfrecord_cache_files.is_cached():
       label_map = dataset_util.get_label_map_pascal_voc(data_dir)
@@ -185,7 +185,7 @@ class Dataset(classification_dataset.ClassificationDataset):
 
     metadata = tfrecord_cache_files.load_metadata()
 
-    dataset = tf.data.TFRecordDataset(tfrecord_cache_files.tfrecord_files)
+    dataset = tf.data.TFRecordDataset(tfrecord_cache_files.tfrecord_files)  # pyrefly: ignore[bad-instantiation]
     decoder = tf_example_decoder.TfExampleDecoder(regenerate_source_id=False)
     dataset = dataset.map(decoder.decode, num_parallel_calls=tf.data.AUTOTUNE)
 

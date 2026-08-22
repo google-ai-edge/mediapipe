@@ -41,13 +41,13 @@ using ::sentencepiece::normalizer::Builder;
 absl::StatusOr<std::pair<json, json>> LoadHFTokenizerConfigs(
     absl::string_view path) {
   std::string contents;
-  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
+  ABSL_RETURN_IF_ERROR(mediapipe::file::GetContents(
       absl::StrCat(path, "/tokenizer_config.json"), &contents));
   auto config_json = json::parse(contents, nullptr, false);
   if (config_json.is_discarded()) {
     return absl::InternalError("Failed to parse tokenizer_config.json");
   }
-  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
+  ABSL_RETURN_IF_ERROR(mediapipe::file::GetContents(
       absl::StrCat(path, "/tokenizer.json"), &contents));
   auto tokenizer_json = json::parse(contents);
   if (tokenizer_json.is_discarded()) {
@@ -72,13 +72,13 @@ absl::Status ConfigureDenormalizerSpecs(NormalizerSpec* spec) {
 }  // namespace
 absl::Status ConvertHfTokenizer(const std::string& hf_tokenizer,
                                 const std::string& output_vocab_path) {
-  MP_ASSIGN_OR_RETURN(auto configs, LoadHFTokenizerConfigs(hf_tokenizer));
+  ABSL_ASSIGN_OR_RETURN(auto configs, LoadHFTokenizerConfigs(hf_tokenizer));
 
   ModelProto model_proto;
 
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       ConfigureNormalizerSpecs(model_proto.mutable_normalizer_spec()));
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       ConfigureDenormalizerSpecs(model_proto.mutable_denormalizer_spec()));
 
   // The scores assigned here are heuristic based and only captures the ordering
@@ -114,10 +114,10 @@ absl::Status ConvertHfTokenizer(const std::string& hf_tokenizer,
 
   absl::string_view output_dir = ::mediapipe::file::Dirname(output_vocab_path);
   if (!::mediapipe::file::IsDirectory(output_dir).ok()) {
-    MP_RETURN_IF_ERROR(::mediapipe::file::RecursivelyCreateDir(output_dir));
+    ABSL_RETURN_IF_ERROR(::mediapipe::file::RecursivelyCreateDir(output_dir));
   }
 
-  MP_RETURN_IF_ERROR(mediapipe::file::SetContents(
+  ABSL_RETURN_IF_ERROR(mediapipe::file::SetContents(
       output_vocab_path, model_proto.SerializeAsString()));
 
   return absl::OkStatus();

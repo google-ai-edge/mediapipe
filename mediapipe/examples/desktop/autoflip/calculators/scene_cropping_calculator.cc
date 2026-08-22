@@ -166,14 +166,14 @@ absl::Status SceneCroppingCalculator::Open(CalculatorContext* cc) {
         ->set_prior_frame_buffer_size(options_.prior_frame_buffer_size());
   }
   if (cc->Outputs().HasTag(kOutputSummary)) {
-    summary_ = absl::make_unique<VideoCroppingSummary>();
+    summary_ = std::make_unique<VideoCroppingSummary>();
   }
   if (cc->Outputs().HasTag(kExternalRenderingFullVid)) {
     external_render_list_ =
-        absl::make_unique<std::vector<ExternalRenderFrame>>();
+        std::make_unique<std::vector<ExternalRenderFrame>>();
   }
   should_perform_frame_cropping_ = cc->Outputs().HasTag(kOutputCroppedFrames);
-  scene_camera_motion_analyzer_ = absl::make_unique<SceneCameraMotionAnalyzer>(
+  scene_camera_motion_analyzer_ = std::make_unique<SceneCameraMotionAnalyzer>(
       options_.scene_camera_motion_analyzer_options());
   return absl::OkStatus();
 }
@@ -290,7 +290,7 @@ absl::Status SceneCroppingCalculator::InitializeSceneCroppingCalculator(
           << "MAXIMIZE_TARGET_DIMENSION is set without an "
              "external_aspect_ratio";
       double requested_aspect_ratio;
-      MP_RETURN_IF_ERROR(ParseAspectRatioString(
+      ABSL_RETURN_IF_ERROR(ParseAspectRatioString(
           cc->InputSidePackets().Tag(kAspectRatio).Get<std::string>(),
           &requested_aspect_ratio));
       const double original_aspect_ratio =
@@ -346,7 +346,7 @@ absl::Status SceneCroppingCalculator::InitializeSceneCroppingCalculator(
       << "Target height cannot be odd, because encoder expects dimension "
          "values to be even.";
 
-  scene_cropper_ = absl::make_unique<SceneCropper>(
+  scene_cropper_ = std::make_unique<SceneCropper>(
       options_.camera_motion_options(), frame_width_, frame_height_);
 
   return absl::OkStatus();
@@ -364,7 +364,7 @@ absl::Status SceneCroppingCalculator::Process(
   // Sets frame dimension and initializes scenecroppingcalculator on first video
   // frame.
   if (frame_width_ < 0) {
-    MP_RETURN_IF_ERROR(InitializeSceneCroppingCalculator(cc));
+    ABSL_RETURN_IF_ERROR(InitializeSceneCroppingCalculator(cc));
   }
 
   // Sets key frame dimension on first keyframe.
@@ -385,7 +385,7 @@ absl::Status SceneCroppingCalculator::Process(
 
   if (!scene_frame_timestamps_.empty() && (is_end_of_scene)) {
     continue_last_scene_ = false;
-    MP_RETURN_IF_ERROR(ProcessScene(is_end_of_scene, cc));
+    ABSL_RETURN_IF_ERROR(ProcessScene(is_end_of_scene, cc));
   }
 
   // Saves frame and timestamp and whether it is a key frame.
@@ -408,7 +408,7 @@ absl::Status SceneCroppingCalculator::Process(
     const auto& detections =
         cc->Inputs().Tag(kInputDetections).Get<DetectionSet>();
     KeyFrameInfo key_frame_info;
-    MP_RETURN_IF_ERROR(PackKeyFrameInfo(
+    ABSL_RETURN_IF_ERROR(PackKeyFrameInfo(
         cc->InputTimestamp().Value(), detections, frame_width_, frame_height_,
         key_frame_width_, key_frame_height_, &key_frame_info));
     key_frame_infos_.push_back(key_frame_info);
@@ -425,7 +425,7 @@ absl::Status SceneCroppingCalculator::Process(
   const bool force_buffer_flush =
       scene_frame_timestamps_.size() >= options_.max_scene_size();
   if (!scene_frame_timestamps_.empty() && force_buffer_flush) {
-    MP_RETURN_IF_ERROR(ProcessScene(is_end_of_scene, cc));
+    ABSL_RETURN_IF_ERROR(ProcessScene(is_end_of_scene, cc));
     continue_last_scene_ = true;
   }
 
@@ -434,7 +434,7 @@ absl::Status SceneCroppingCalculator::Process(
 
 absl::Status SceneCroppingCalculator::Close(mediapipe::CalculatorContext* cc) {
   if (!scene_frame_timestamps_.empty()) {
-    MP_RETURN_IF_ERROR(ProcessScene(/* is_end_of_scene = */ true, cc));
+    ABSL_RETURN_IF_ERROR(ProcessScene(/* is_end_of_scene = */ true, cc));
   }
   if (cc->Outputs().HasTag(kOutputSummary)) {
     cc->Outputs()
@@ -455,7 +455,7 @@ absl::Status SceneCroppingCalculator::RemoveStaticBorders(
     CalculatorContext* cc, int* top_border_size, int* bottom_border_size) {
   *top_border_size = 0;
   *bottom_border_size = 0;
-  MP_RETURN_IF_ERROR(ComputeSceneStaticBordersSize(
+  ABSL_RETURN_IF_ERROR(ComputeSceneStaticBordersSize(
       static_features_, top_border_size, bottom_border_size));
   const double scale = static_cast<double>(frame_height_) / key_frame_height_;
   top_border_distance_ = std::round(scale * *top_border_size);
@@ -508,13 +508,13 @@ absl::Status SceneCroppingCalculator::RemoveStaticBorders(
 
 absl::Status SceneCroppingCalculator::InitializeFrameCropRegionComputer() {
   key_frame_crop_options_ = options_.key_frame_crop_options();
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       SetKeyFrameCropTarget(frame_width_, effective_frame_height_,
                             target_aspect_ratio_, &key_frame_crop_options_));
   VLOG(1) << "Target width " << key_frame_crop_options_.target_width();
   VLOG(1) << "Target height " << key_frame_crop_options_.target_height();
   frame_crop_region_computer_ =
-      absl::make_unique<FrameCropRegionComputer>(key_frame_crop_options_);
+      std::make_unique<FrameCropRegionComputer>(key_frame_crop_options_);
   return absl::OkStatus();
 }
 
@@ -548,12 +548,12 @@ absl::Status SceneCroppingCalculator::ProcessScene(const bool is_end_of_scene,
 
   // Removes any static borders.
   int top_static_border_size, bottom_static_border_size;
-  MP_RETURN_IF_ERROR(RemoveStaticBorders(cc, &top_static_border_size,
-                                         &bottom_static_border_size));
+  ABSL_RETURN_IF_ERROR(RemoveStaticBorders(cc, &top_static_border_size,
+                                           &bottom_static_border_size));
 
   // Decides if solid background color padding is possible and sets up color
   // interpolation functions in CIELAB. Uses linear interpolation by default.
-  MP_RETURN_IF_ERROR(FindSolidBackgroundColor(
+  ABSL_RETURN_IF_ERROR(FindSolidBackgroundColor(
       static_features_, static_features_timestamps_,
       options_.solid_background_frames_padding_fraction(),
       &has_solid_background_, &background_color_l_function_,
@@ -561,18 +561,18 @@ absl::Status SceneCroppingCalculator::ProcessScene(const bool is_end_of_scene,
 
   // Computes key frame crop regions and moves information from raw
   // key_frame_infos_ to key_frame_crop_results.
-  MP_RETURN_IF_ERROR(InitializeFrameCropRegionComputer());
+  ABSL_RETURN_IF_ERROR(InitializeFrameCropRegionComputer());
   const int num_key_frames = key_frame_infos_.size();
   std::vector<KeyFrameCropResult> key_frame_crop_results(num_key_frames);
   for (int i = 0; i < num_key_frames; ++i) {
-    MP_RETURN_IF_ERROR(frame_crop_region_computer_->ComputeFrameCropRegion(
+    ABSL_RETURN_IF_ERROR(frame_crop_region_computer_->ComputeFrameCropRegion(
         key_frame_infos_[i], &key_frame_crop_results[i]));
   }
 
   SceneKeyFrameCropSummary scene_summary;
   std::vector<FocusPointFrame> focus_point_frames;
   SceneCameraMotion scene_camera_motion;
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       scene_camera_motion_analyzer_->AnalyzeSceneAndPopulateFocusPointFrames(
           key_frame_crop_options_, key_frame_crop_results, frame_width_,
           effective_frame_height_, scene_frame_timestamps_,
@@ -586,7 +586,7 @@ absl::Status SceneCroppingCalculator::ProcessScene(const bool is_end_of_scene,
   auto* cropped_frames_ptr =
       should_perform_frame_cropping_ ? &cropped_frames : nullptr;
 
-  MP_RETURN_IF_ERROR(scene_cropper_->CropFrames(
+  ABSL_RETURN_IF_ERROR(scene_cropper_->CropFrames(
       scene_summary, scene_frame_timestamps_, is_key_frames_,
       scene_frames_or_empty_, focus_point_frames, prior_focus_point_frames_,
       top_static_border_size, bottom_static_border_size, continue_last_scene_,
@@ -597,7 +597,7 @@ absl::Status SceneCroppingCalculator::ProcessScene(const bool is_end_of_scene,
   float vertical_fill_percent;
   std::vector<cv::Rect> render_to_locations;
   std::vector<cv::Scalar> padding_colors;
-  MP_RETURN_IF_ERROR(FormatAndOutputCroppedFrames(
+  ABSL_RETURN_IF_ERROR(FormatAndOutputCroppedFrames(
       scene_summary.crop_window_width(), scene_summary.crop_window_height(),
       scene_frame_timestamps_.size(), &render_to_locations, &apply_padding,
       &padding_colors, &vertical_fill_percent, cropped_frames_ptr, cc));
@@ -615,10 +615,10 @@ absl::Status SceneCroppingCalculator::ProcessScene(const bool is_end_of_scene,
   }
 
   // Optionally outputs visualization frames.
-  MP_RETURN_IF_ERROR(OutputVizFrames(key_frame_crop_results, focus_point_frames,
-                                     crop_from_locations,
-                                     scene_summary.crop_window_width(),
-                                     scene_summary.crop_window_height(), cc));
+  ABSL_RETURN_IF_ERROR(OutputVizFrames(key_frame_crop_results,
+                                       focus_point_frames, crop_from_locations,
+                                       scene_summary.crop_window_width(),
+                                       scene_summary.crop_window_height(), cc));
 
   const double start_sec = Timestamp(scene_frame_timestamps_.front()).Seconds();
   const double end_sec = Timestamp(scene_frame_timestamps_.back()).Seconds();
@@ -637,7 +637,7 @@ absl::Status SceneCroppingCalculator::ProcessScene(const bool is_end_of_scene,
 
   if (cc->Outputs().HasTag(kExternalRenderingPerFrame)) {
     for (int i = 0; i < scene_frame_timestamps_.size(); i++) {
-      auto external_render_message = absl::make_unique<ExternalRenderFrame>();
+      auto external_render_message = std::make_unique<ExternalRenderFrame>();
       ConstructExternalRenderMessage(
           crop_from_locations[i], render_to_locations[i], padding_colors[i],
           scene_frame_timestamps_[i], external_render_message.get(),
@@ -693,7 +693,7 @@ absl::Status SceneCroppingCalculator::FormatAndOutputCroppedFrames(
       scaled_width != target_width_ || scaled_height != target_height_;
   *vertical_fill_percent = scaled_height / static_cast<float>(target_height_);
   if (*apply_padding) {
-    padder_ = absl::make_unique<PaddingEffectGenerator>(
+    padder_ = std::make_unique<PaddingEffectGenerator>(
         scaled_width, scaled_height, target_aspect_ratio_);
     VLOG(1) << "Scene is padded: scaled width = " << scaled_width
             << " target width = " << target_width_
@@ -749,7 +749,7 @@ absl::Status SceneCroppingCalculator::FormatAndOutputCroppedFrames(
   for (int i = 0; i < num_frames; ++i) {
     const int64_t time_ms = scene_frame_timestamps_[i];
     const Timestamp timestamp(time_ms);
-    auto scaled_frame = absl::make_unique<ImageFrame>(
+    auto scaled_frame = std::make_unique<ImageFrame>(
         frame_format_, scaled_width, scaled_height);
     auto destination = formats::MatView(scaled_frame.get());
     if (scaled_width == crop_width && scaled_height == crop_height) {
@@ -767,8 +767,8 @@ absl::Status SceneCroppingCalculator::FormatAndOutputCroppedFrames(
       if (has_solid_background_) {
         background_color = &padding_colors->at(i);
       }
-      auto padded_frame = absl::make_unique<ImageFrame>();
-      MP_RETURN_IF_ERROR(padder_->Process(
+      auto padded_frame = std::make_unique<ImageFrame>();
+      ABSL_RETURN_IF_ERROR(padder_->Process(
           *scaled_frame, background_contrast_,
           std::min({blur_cv_size_, scaled_width, scaled_height}),
           overlay_opacity_, padded_frame.get(), background_color));
@@ -796,7 +796,7 @@ absl::Status SceneCroppingCalculator::OutputVizFrames(
     CalculatorContext* cc) const {
   if (cc->Outputs().HasTag(kOutputKeyFrameCropViz)) {
     std::vector<std::unique_ptr<ImageFrame>> viz_frames;
-    MP_RETURN_IF_ERROR(DrawDetectionsAndCropRegions(
+    ABSL_RETURN_IF_ERROR(DrawDetectionsAndCropRegions(
         scene_frames_or_empty_, is_key_frames_, key_frame_infos_,
         key_frame_crop_results, frame_format_, &viz_frames));
     for (int i = 0; i < scene_frames_or_empty_.size(); ++i) {
@@ -807,7 +807,7 @@ absl::Status SceneCroppingCalculator::OutputVizFrames(
   }
   if (cc->Outputs().HasTag(kOutputFocusPointFrameViz)) {
     std::vector<std::unique_ptr<ImageFrame>> viz_frames;
-    MP_RETURN_IF_ERROR(DrawFocusPointAndCropWindow(
+    ABSL_RETURN_IF_ERROR(DrawFocusPointAndCropWindow(
         scene_frames_or_empty_, focus_point_frames,
         options_.viz_overlay_opacity(), crop_window_width, crop_window_height,
         frame_format_, &viz_frames));
@@ -819,7 +819,7 @@ absl::Status SceneCroppingCalculator::OutputVizFrames(
   }
   if (cc->Outputs().HasTag(kOutputFramingAndDetections)) {
     std::vector<std::unique_ptr<ImageFrame>> viz_frames;
-    MP_RETURN_IF_ERROR(DrawDetectionAndFramingWindow(
+    ABSL_RETURN_IF_ERROR(DrawDetectionAndFramingWindow(
         raw_scene_frames_or_empty_, crop_from_locations, frame_format_,
         options_.viz_overlay_opacity(), &viz_frames));
     for (int i = 0; i < raw_scene_frames_or_empty_.size(); ++i) {

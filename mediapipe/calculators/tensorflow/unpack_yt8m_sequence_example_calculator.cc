@@ -133,7 +133,7 @@ class UnpackYt8mSequenceExampleCalculator : public CalculatorBase {
       }
       if (cc->OutputSidePackets().HasTag(
               kLappedTensorBufferCalculatorOptions)) {
-        auto lapped_tensor_buffer_calculator_options = absl::make_unique<
+        auto lapped_tensor_buffer_calculator_options = std::make_unique<
             ::mediapipe::LappedTensorBufferCalculatorOptions>();
         lapped_tensor_buffer_calculator_options->set_add_batch_dim_to_tensors(
             true);

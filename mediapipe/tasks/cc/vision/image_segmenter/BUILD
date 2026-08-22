@@ -52,7 +52,7 @@ cc_library(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
-        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@litert//tflite/kernels:builtin_ops",
     ],
 )
 
@@ -100,7 +100,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
-        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
+        "@litert//tflite/schema:schema_fbs",
     ],
     alwayslink = 1,
 )

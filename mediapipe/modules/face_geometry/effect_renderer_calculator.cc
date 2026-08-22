@@ -92,7 +92,7 @@ static constexpr char kMultiFaceGeometryTag[] = "MULTI_FACE_GEOMETRY";
 class EffectRendererCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
-    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc))
+    ABSL_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc))
         << "Failed to update contract for the GPU helper!";
 
     cc->InputSidePackets()
@@ -110,7 +110,7 @@ class EffectRendererCalculator : public CalculatorBase {
   absl::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(mediapipe::TimestampDiff(0));
 
-    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc))
+    ABSL_RETURN_IF_ERROR(gpu_helper_.Open(cc))
         << "Failed to open the GPU helper!";
     return gpu_helper_.RunInGlContext([&]() -> absl::Status {
       const auto& options =
@@ -120,29 +120,29 @@ class EffectRendererCalculator : public CalculatorBase {
                                     .Tag(kEnvironmentTag)
                                     .Get<face_geometry::Environment>();
 
-      MP_RETURN_IF_ERROR(face_geometry::ValidateEnvironment(environment))
+      ABSL_RETURN_IF_ERROR(face_geometry::ValidateEnvironment(environment))
           << "Invalid environment!";
 
       std::optional<face_geometry::Mesh3d> effect_mesh_3d;
       if (options.has_effect_mesh_3d_path()) {
-        MP_ASSIGN_OR_RETURN(
+        ABSL_ASSIGN_OR_RETURN(
             effect_mesh_3d,
             ReadMesh3dFromFile(cc, options.effect_mesh_3d_path()),
             _ << "Failed to read the effect 3D mesh from file!");
 
-        MP_RETURN_IF_ERROR(face_geometry::ValidateMesh3d(*effect_mesh_3d))
+        ABSL_RETURN_IF_ERROR(face_geometry::ValidateMesh3d(*effect_mesh_3d))
             << "Invalid effect 3D mesh!";
       }
 
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           ImageFrame effect_texture,
           ReadTextureFromFile(cc, options.effect_texture_path()),
           _ << "Failed to read the effect texture from file!");
 
-      MP_ASSIGN_OR_RETURN(effect_renderer_,
-                          CreateEffectRenderer(environment, effect_mesh_3d,
-                                               std::move(effect_texture)),
-                          _ << "Failed to create the effect renderer!");
+      ABSL_ASSIGN_OR_RETURN(effect_renderer_,
+                            CreateEffectRenderer(environment, effect_mesh_3d,
+                                                 std::move(effect_texture)),
+                            _ << "Failed to create the effect renderer!");
 
       return absl::OkStatus();
     });
@@ -177,11 +177,11 @@ class EffectRendererCalculator : public CalculatorBase {
       // Validate input multi face geometry data.
       for (const face_geometry::FaceGeometry& face_geometry :
            multi_face_geometry) {
-        MP_RETURN_IF_ERROR(face_geometry::ValidateFaceGeometry(face_geometry))
+        ABSL_RETURN_IF_ERROR(face_geometry::ValidateFaceGeometry(face_geometry))
             << "Invalid face geometry!";
       }
 
-      MP_RETURN_IF_ERROR(effect_renderer_->RenderEffect(
+      ABSL_RETURN_IF_ERROR(effect_renderer_->RenderEffect(
           multi_face_geometry, input_gl_texture.width(),
           input_gl_texture.height(), input_gl_texture.target(),
           input_gl_texture.name(), output_gl_texture.target(),
@@ -210,9 +210,9 @@ class EffectRendererCalculator : public CalculatorBase {
  private:
   static absl::StatusOr<ImageFrame> ReadTextureFromFile(
       CalculatorContext* cc, const std::string& texture_path) {
-    MP_ASSIGN_OR_RETURN(std::unique_ptr<mediapipe::Resource> texture_blob,
-                        ReadContentBlobFromFile(cc, texture_path),
-                        _ << "Failed to read texture blob from file!");
+    ABSL_ASSIGN_OR_RETURN(std::unique_ptr<mediapipe::Resource> texture_blob,
+                          ReadContentBlobFromFile(cc, texture_path),
+                          _ << "Failed to read texture blob from file!");
 
     // Use OpenCV image decoding functionality to finish reading the texture.
     std::vector<char> texture_blob_vector(texture_blob->ToStringView().begin(),
@@ -254,9 +254,9 @@ class EffectRendererCalculator : public CalculatorBase {
 
   static absl::StatusOr<face_geometry::Mesh3d> ReadMesh3dFromFile(
       CalculatorContext* cc, const std::string& mesh_3d_path) {
-    MP_ASSIGN_OR_RETURN(std::unique_ptr<mediapipe::Resource> mesh_3d_blob,
-                        ReadContentBlobFromFile(cc, mesh_3d_path),
-                        _ << "Failed to read mesh 3D blob from file!");
+    ABSL_ASSIGN_OR_RETURN(std::unique_ptr<mediapipe::Resource> mesh_3d_blob,
+                          ReadContentBlobFromFile(cc, mesh_3d_path),
+                          _ << "Failed to read mesh 3D blob from file!");
     absl::string_view mesh_str = mesh_3d_blob->ToStringView();
 
     face_geometry::Mesh3d mesh_3d;
@@ -269,7 +269,7 @@ class EffectRendererCalculator : public CalculatorBase {
   static absl::StatusOr<std::unique_ptr<mediapipe::Resource>>
   ReadContentBlobFromFile(CalculatorContext* cc,
                           const std::string& unresolved_path) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         std::string resolved_path,
         mediapipe::PathToResourceAsFile(unresolved_path),
         _ << "Failed to resolve path! Path = " << unresolved_path);

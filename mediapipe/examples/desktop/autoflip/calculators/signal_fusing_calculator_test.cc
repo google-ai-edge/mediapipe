@@ -105,15 +105,15 @@ const char kConfigC[] = R"(
     })";
 
 TEST(SignalFusingCalculatorTest, TwoInputNoTracking) {
-  auto runner = absl::make_unique<CalculatorRunner>(
+  auto runner = std::make_unique<CalculatorRunner>(
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigA));
 
-  auto input_border = absl::make_unique<bool>(false);
+  auto input_border = std::make_unique<bool>(false);
   runner->MutableInputs()->Index(0).packets.push_back(
       Adopt(input_border.release()).At(Timestamp(0)));
 
   auto input_face =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.5
@@ -129,7 +129,7 @@ TEST(SignalFusingCalculatorTest, TwoInputNoTracking) {
       Adopt(input_face.release()).At(Timestamp(0)));
 
   auto input_ocr =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.3
@@ -158,16 +158,16 @@ TEST(SignalFusingCalculatorTest, TwoInputNoTracking) {
 }
 
 TEST(SignalFusingCalculatorTest, TwoInputShotLabeledTags) {
-  auto runner = absl::make_unique<CalculatorRunner>(
+  auto runner = std::make_unique<CalculatorRunner>(
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigC));
 
-  auto input_shot = absl::make_unique<bool>(false);
+  auto input_shot = std::make_unique<bool>(false);
   runner->MutableInputs()
       ->Tag(kIsShotBoundaryTag)
       .packets.push_back(Adopt(input_shot.release()).At(Timestamp(0)));
 
   auto input_face =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.5
@@ -184,7 +184,7 @@ TEST(SignalFusingCalculatorTest, TwoInputShotLabeledTags) {
       .packets.push_back(Adopt(input_face.release()).At(Timestamp(0)));
 
   auto input_ocr =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.3
@@ -214,11 +214,11 @@ TEST(SignalFusingCalculatorTest, TwoInputShotLabeledTags) {
 }
 
 TEST(SignalFusingCalculatorTest, TwoInputNoShotLabeledTags) {
-  auto runner = absl::make_unique<CalculatorRunner>(
+  auto runner = std::make_unique<CalculatorRunner>(
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigC));
 
   auto input_face =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.5
@@ -235,7 +235,7 @@ TEST(SignalFusingCalculatorTest, TwoInputNoShotLabeledTags) {
       .packets.push_back(Adopt(input_face.release()).At(Timestamp(0)));
 
   auto input_ocr =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.3
@@ -265,16 +265,16 @@ TEST(SignalFusingCalculatorTest, TwoInputNoShotLabeledTags) {
 }
 
 TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
-  auto runner = absl::make_unique<CalculatorRunner>(
+  auto runner = std::make_unique<CalculatorRunner>(
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kConfigB));
 
-  auto input_border_0 = absl::make_unique<bool>(false);
+  auto input_border_0 = std::make_unique<bool>(false);
   runner->MutableInputs()->Index(0).packets.push_back(
       Adopt(input_border_0.release()).At(Timestamp(0)));
 
   // Time zero.
   auto input_face_0 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.2
@@ -296,7 +296,7 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
       Adopt(input_face_0.release()).At(Timestamp(0)));
 
   auto input_ocr_0 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.2
@@ -308,7 +308,7 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
       Adopt(input_ocr_0.release()).At(Timestamp(0)));
 
   auto input_agn_0 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.3
@@ -321,12 +321,12 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
       Adopt(input_agn_0.release()).At(Timestamp(0)));
 
   // Time one
-  auto input_border_1 = absl::make_unique<bool>(false);
+  auto input_border_1 = std::make_unique<bool>(false);
   runner->MutableInputs()->Index(0).packets.push_back(
       Adopt(input_border_1.release()).At(Timestamp(1)));
 
   auto input_face_1 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.7
@@ -348,7 +348,7 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
       Adopt(input_face_1.release()).At(Timestamp(1)));
 
   auto input_ocr_1 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.3
@@ -360,7 +360,7 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
       Adopt(input_ocr_1.release()).At(Timestamp(1)));
 
   auto input_agn_1 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.3
@@ -373,12 +373,12 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
       Adopt(input_agn_1.release()).At(Timestamp(1)));
 
   // Time two
-  auto input_border_2 = absl::make_unique<bool>(false);
+  auto input_border_2 = std::make_unique<bool>(false);
   runner->MutableInputs()->Index(0).packets.push_back(
       Adopt(input_border_2.release()).At(Timestamp(2)));
 
   auto input_face_2 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.8
@@ -400,7 +400,7 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
       Adopt(input_face_2.release()).At(Timestamp(2)));
 
   auto input_ocr_2 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.3
@@ -412,7 +412,7 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
       Adopt(input_ocr_2.release()).At(Timestamp(2)));
 
   auto input_agn_2 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.9
@@ -425,12 +425,12 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
       Adopt(input_agn_2.release()).At(Timestamp(2)));
 
   // Time three (new scene)
-  auto input_border_3 = absl::make_unique<bool>(true);
+  auto input_border_3 = std::make_unique<bool>(true);
   runner->MutableInputs()->Index(0).packets.push_back(
       Adopt(input_border_3.release()).At(Timestamp(3)));
 
   auto input_face_3 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.2
@@ -452,7 +452,7 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
       Adopt(input_face_3.release()).At(Timestamp(3)));
 
   auto input_ocr_3 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.5
@@ -464,7 +464,7 @@ TEST(SignalFusingCalculatorTest, ThreeInputTracking) {
       Adopt(input_ocr_3.release()).At(Timestamp(3)));
 
   auto input_agn_3 =
-      absl::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
+      std::make_unique<DetectionSet>(ParseTextProtoOrDie<DetectionSet>(
           R"pb(
             detections {
               score: 0.6

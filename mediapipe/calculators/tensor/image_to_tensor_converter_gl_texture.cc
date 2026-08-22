@@ -50,7 +50,7 @@ class ImageToTensorGlTextureConverter : public ImageToTensorConverter {
  public:
   absl::Status Init(CalculatorContext* cc, bool input_starts_at_bottom,
                     BorderMode border_mode) {
-    MP_RETURN_IF_ERROR(gl_helper_.Open(cc));
+    ABSL_RETURN_IF_ERROR(gl_helper_.Open(cc));
     return gl_helper_.RunInGlContext([this, input_starts_at_bottom,
                                       border_mode]() -> absl::Status {
       use_custom_zero_border_ =
@@ -184,24 +184,24 @@ class ImageToTensorGlTextureConverter : public ImageToTensorConverter {
     RET_CHECK_EQ(tensor_buffer_offset, 0)
         << "The non-zero tensor_buffer_offset input is not supported yet.";
     const auto& output_shape = output_tensor.shape();
-    MP_RETURN_IF_ERROR(ValidateTensorShape(output_shape));
+    ABSL_RETURN_IF_ERROR(ValidateTensorShape(output_shape));
 
-    MP_RETURN_IF_ERROR(gl_helper_.RunInGlContext(
+    ABSL_RETURN_IF_ERROR(gl_helper_.RunInGlContext(
         [this, &output_tensor, &input, &roi, &output_shape, range_min,
          range_max]() -> absl::Status {
           auto input_texture = gl_helper_.CreateSourceTexture(input);
 
           constexpr float kInputImageRangeMin = 0.0f;
           constexpr float kInputImageRangeMax = 1.0f;
-          MP_ASSIGN_OR_RETURN(auto transform,
-                              GetValueRangeTransformation(
-                                  kInputImageRangeMin, kInputImageRangeMax,
-                                  range_min, range_max));
+          ABSL_ASSIGN_OR_RETURN(auto transform,
+                                GetValueRangeTransformation(
+                                    kInputImageRangeMin, kInputImageRangeMax,
+                                    range_min, range_max));
           auto tensor_view = output_tensor.GetOpenGlTexture2dWriteView();
-          MP_RETURN_IF_ERROR(ExtractSubRect(input_texture, roi,
-                                            /*flip_horizontally=*/false,
-                                            transform.scale, transform.offset,
-                                            output_shape, &tensor_view));
+          ABSL_RETURN_IF_ERROR(ExtractSubRect(input_texture, roi,
+                                              /*flip_horizontally=*/false,
+                                              transform.scale, transform.offset,
+                                              output_shape, &tensor_view));
           return absl::OkStatus();
         }));
 
@@ -350,7 +350,7 @@ CreateImageToGlTextureTensorConverter(CalculatorContext* cc,
                                       bool input_starts_at_bottom,
                                       BorderMode border_mode) {
   auto result = std::make_unique<ImageToTensorGlTextureConverter>();
-  MP_RETURN_IF_ERROR(result->Init(cc, input_starts_at_bottom, border_mode));
+  ABSL_RETURN_IF_ERROR(result->Init(cc, input_starts_at_bottom, border_mode));
   return result;
 }
 

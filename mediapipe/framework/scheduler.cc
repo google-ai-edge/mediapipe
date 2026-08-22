@@ -96,7 +96,7 @@ absl::Status Scheduler::SetNonDefaultExecutor(const std::string& name,
                                              "be called after the scheduler "
                                              "has started";
   auto inserted = non_default_queues_.emplace(
-      name, absl::make_unique<SchedulerQueue>(name, &shared_));
+      name, std::make_unique<SchedulerQueue>(name, &shared_));
   RET_CHECK(inserted.second)
       << "SetNonDefaultExecutor must be called only once for the executor \""
       << name << "\"";

@@ -5,9 +5,11 @@
 #include <utility>
 #include <vector>
 
+#include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port.h"  // IWYU pragma: keep
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/gpu/multi_pool.h"
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_context.h"  // IWYU pragma: keep
@@ -96,6 +98,23 @@ TEST(Cpu, TestViewMove) {
   auto p2 = v2.buffer<float>();
   EXPECT_EQ(p1, p2);
   EXPECT_EQ(v1.buffer<float>(), nullptr);  // NOLINT
+}
+
+TEST(General, PreferAhwbHasNoEffectIfAhwbsAreNotSupported) {
+  MemoryManager memory_manager(kDefaultMultiPoolOptions, /*prefer_ahwb=*/true);
+  for (int n = 0; n < 2; ++n) {
+    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1, 2, 3, 4},
+                  &memory_manager);
+    {
+      auto view = tensor.GetCpuWriteView();
+      EXPECT_NE(view.buffer<float>(), nullptr);
+    }
+    {
+      auto view = tensor.GetCpuReadView();
+      EXPECT_NE(view.buffer<float>(), nullptr);
+    }
+    EXPECT_FALSE(tensor.ready_as_ahwb());
+  }
 }
 
 }  // namespace mediapipe

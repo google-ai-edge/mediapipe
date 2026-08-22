@@ -31,6 +31,7 @@ import {
   SupportImage,
   WasmImage,
 } from '../../../../web/graph_runner/graph_runner_image_lib';
+import {SupportLogging} from '../../../../web/graph_runner/graph_runner_logging_lib';
 import {supportsOffscreenCanvas} from '../../../../web/graph_runner/platform_utils';
 import {SupportModelResourcesGraphService} from '../../../../web/graph_runner/register_model_resources_graph_service';
 
@@ -38,7 +39,7 @@ import type {VisionTaskOptions} from './vision_task_options';
 
 // tslint:disable-next-line:enforce-name-casing
 const GraphRunnerVisionType = SupportModelResourcesGraphService(
-  SupportImage(GraphRunner),
+  SupportImage(SupportLogging(GraphRunner)),
 );
 /** An implementation of the GraphRunner that supports image operations */
 export class VisionGraphRunner extends GraphRunnerVisionType {}
@@ -61,6 +62,7 @@ function createCanvas(): HTMLCanvasElement | OffscreenCanvas | undefined {
 /** Base class for all MediaPipe Vision Tasks. */
 export abstract class VisionTaskRunner extends TaskRunner {
   private readonly shaderContext = new MPImageShaderContext();
+  private isStreamMode = false;
 
   protected static async createVisionInstance<T extends VisionTaskRunner>(
     type: WasmMediaPipeConstructor<T>,
@@ -106,9 +108,9 @@ export abstract class VisionTaskRunner extends TaskRunner {
     loadTfliteModel = true,
   ): Promise<void> {
     if ('runningMode' in options) {
-      const useStreamMode =
+      this.isStreamMode =
         !!options.runningMode && options.runningMode !== 'IMAGE';
-      this.baseOptions.setUseStreamMode(useStreamMode);
+      this.baseOptions.setUseStreamMode(this.isStreamMode);
     }
 
     if (options.canvas !== undefined) {
@@ -125,7 +127,7 @@ export abstract class VisionTaskRunner extends TaskRunner {
     image: ImageSource,
     imageProcessingOptions: ImageProcessingOptions | undefined,
   ): void {
-    if (!!this.baseOptions?.getUseStreamMode()) {
+    if (this.isStreamMode) {
       throw new Error(
         'Task is not initialized with image mode. ' +
           "'runningMode' must be set to 'IMAGE'.",
@@ -140,7 +142,7 @@ export abstract class VisionTaskRunner extends TaskRunner {
     imageProcessingOptions: ImageProcessingOptions | undefined,
     timestamp: number,
   ): void {
-    if (!this.baseOptions?.getUseStreamMode()) {
+    if (!this.isStreamMode) {
       throw new Error(
         'Task is not initialized with video mode. ' +
           "'runningMode' must be set to 'VIDEO'.",

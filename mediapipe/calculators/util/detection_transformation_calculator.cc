@@ -96,10 +96,10 @@ absl::StatusOr<LocationData::Format> GetLocationDataFormat(
     std::vector<Detection>& detections) {
   RET_CHECK(!detections.empty());
   LocationData::Format output_format;
-  MP_ASSIGN_OR_RETURN(output_format, GetLocationDataFormat(detections[0]));
+  ABSL_ASSIGN_OR_RETURN(output_format, GetLocationDataFormat(detections[0]));
   for (int i = 1; i < detections.size(); ++i) {
-    MP_ASSIGN_OR_RETURN(LocationData::Format format,
-                        GetLocationDataFormat(detections[i]));
+    ABSL_ASSIGN_OR_RETURN(LocationData::Format format,
+                          GetLocationDataFormat(detections[i]));
     if (output_format != format) {
       return absl::InvalidArgumentError(
           "Input detections have different location data formats.");
@@ -243,10 +243,10 @@ class DetectionTransformationCalculator : public Node {
         OutputEmptyDetections(cc);
         return absl::OkStatus();
       }
-      MP_ASSIGN_OR_RETURN(input_location_data_format,
-                          GetLocationDataFormat(transformed_detections));
+      ABSL_ASSIGN_OR_RETURN(input_location_data_format,
+                            GetLocationDataFormat(transformed_detections));
       for (Detection& detection : transformed_detections) {
-        MP_RETURN_IF_ERROR(ConvertBoundingBox(image_size, &detection));
+        ABSL_RETURN_IF_ERROR(ConvertBoundingBox(image_size, &detection));
       }
     } else {
       Detection transformed_detection(kInDetection(cc).Get());
@@ -254,9 +254,9 @@ class DetectionTransformationCalculator : public Node {
         OutputEmptyDetections(cc);
         return absl::OkStatus();
       }
-      MP_ASSIGN_OR_RETURN(input_location_data_format,
-                          GetLocationDataFormat(kInDetection(cc).Get()));
-      MP_RETURN_IF_ERROR(
+      ABSL_ASSIGN_OR_RETURN(input_location_data_format,
+                            GetLocationDataFormat(kInDetection(cc).Get()));
+      ABSL_RETURN_IF_ERROR(
           ConvertBoundingBox(image_size, &transformed_detection));
       transformed_detections.push_back(transformed_detection);
     }

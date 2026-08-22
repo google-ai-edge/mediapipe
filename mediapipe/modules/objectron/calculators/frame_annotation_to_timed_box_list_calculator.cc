@@ -81,7 +81,7 @@ absl::Status FrameAnnotationToTimedBoxListCalculator::Process(
       !cc->Inputs().Tag(kInputStreamTag).IsEmpty()) {
     const auto& frame_annotation =
         cc->Inputs().Tag(kInputStreamTag).Get<FrameAnnotation>();
-    auto output_objects = absl::make_unique<TimedBoxProtoList>();
+    auto output_objects = std::make_unique<TimedBoxProtoList>();
     for (const auto& annotation : frame_annotation.annotations()) {
       std::vector<cv::Point2f> key_points;
       for (const auto& keypoint : annotation.keypoints()) {

@@ -233,7 +233,7 @@ class LanguageDetector:
     ctypes_options = options.to_ctypes()
 
     detector_handle = ctypes.c_void_p()
-    lib.MpLanguageDetectorCreate(
+    lib.MpLanguageDetectorCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(ctypes_options),
         ctypes.byref(detector_handle),
     )
@@ -255,21 +255,21 @@ class LanguageDetector:
     """
     ctypes_result = MpLanguageDetectorResultC()
 
-    self._lib.MpLanguageDetectorDetect(
+    self._lib.MpLanguageDetectorDetect(  # pyrefly: ignore[missing-attribute]
         self._detector_handle,
         text.encode("utf-8"),
         ctypes.byref(ctypes_result),
     )
     python_result = _convert_to_python_language_detector_result(ctypes_result)
-    self._lib.MpLanguageDetectorCloseResult(ctypes.byref(ctypes_result))
+    self._lib.MpLanguageDetectorCloseResult(ctypes.byref(ctypes_result))  # pyrefly: ignore[missing-attribute]
     return python_result
 
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if not self._detector_handle:
       return
-    self._lib.MpLanguageDetectorClose(self._detector_handle)
-    self._detector_handle = None
+    self._lib.MpLanguageDetectorClose(self._detector_handle)  # pyrefly: ignore[missing-attribute]
+    self._detector_handle = None  # pyrefly: ignore[bad-assignment]
     self._lib.close()
 
   def __enter__(self):

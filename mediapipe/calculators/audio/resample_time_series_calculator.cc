@@ -101,7 +101,7 @@ absl::Status ResampleTimeSeriesCalculatorImpl::Open(CalculatorContext* cc) {
   }
 
   TimeSeriesHeader input_header;
-  MP_RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
+  ABSL_RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
       kInput(cc).Header(), &input_header));
 
   source_sample_rate_ = input_header.sample_rate();

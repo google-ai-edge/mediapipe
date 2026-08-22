@@ -150,7 +150,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateSingleHandTaskRunner(
        .task_name = "hand_landmarks_detector_test",
        .task_running_mode = core::RunningMode::kImage,
        .op_resolver =
-           absl::make_unique<tflite::ops::builtin::BuiltinOpResolver>()});
+           std::make_unique<tflite::ops::builtin::BuiltinOpResolver>()});
 }
 
 // Helper function to create a Multi Hand Landmark TaskRunner.
@@ -195,7 +195,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateMultiHandTaskRunner(
        .task_name = "hand_landmarks_detector_test",
        .task_running_mode = core::RunningMode::kImage,
        .op_resolver =
-           absl::make_unique<tflite::ops::builtin::BuiltinOpResolver>()});
+           std::make_unique<tflite::ops::builtin::BuiltinOpResolver>()});
 }
 
 NormalizedLandmarkList GetExpectedLandmarkList(absl::string_view filename) {

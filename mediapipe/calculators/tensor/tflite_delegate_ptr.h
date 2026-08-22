@@ -18,7 +18,7 @@
 #include <functional>
 #include <memory>
 
-#include "tensorflow/lite/c/c_api_types.h"
+#include "tflite/c/c_api_types.h"
 
 namespace mediapipe {
 

@@ -36,7 +36,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
-#include "tensorflow/lite/test_util.h"
+#include "tflite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -169,7 +169,7 @@ TEST_F(ImageTensorSpecsTest,
   EXPECT_EQ(input_specs.color_space, ColorSpaceType_RGB);
   EXPECT_STREQ(EnumNameTensorType(input_specs.tensor_type),
                EnumNameTensorType(tflite::TensorType_UINT8));
-  EXPECT_EQ(input_specs.normalization_options, absl::nullopt);
+  EXPECT_EQ(input_specs.normalization_options, std::nullopt);
 }
 
 TEST_F(ImageTensorSpecsTest, BuildInputImageTensorSpecsFromModelResources) {
@@ -191,7 +191,7 @@ TEST_F(ImageTensorSpecsTest, BuildInputImageTensorSpecsFromModelResources) {
   EXPECT_EQ(input_specs.color_space, ColorSpaceType_RGB);
   EXPECT_STREQ(EnumNameTensorType(input_specs.tensor_type),
                EnumNameTensorType(tflite::TensorType_UINT8));
-  EXPECT_EQ(input_specs.normalization_options, absl::nullopt);
+  EXPECT_EQ(input_specs.normalization_options, std::nullopt);
 }
 
 }  // namespace

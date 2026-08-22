@@ -24,6 +24,7 @@ class MpBaseOptionsC(ctypes.Structure):
     model_asset_buffer: `bytes`, the model asset buffer.
     model_asset_buffer_count: `int`, the size of the model asset buffer.
     model_asset_path: `bytes`, the path to the model asset.
+    file_descriptor: `int`, the file descriptor of the model asset.
     delegate: `int`, the delegate to use.
     host_environment: `int`, the environment in which the task is running.
     host_system: `int`, the system on which the task is running.
@@ -37,6 +38,7 @@ class MpBaseOptionsC(ctypes.Structure):
       ("model_asset_buffer", ctypes.c_char_p),
       ("model_asset_buffer_count", ctypes.c_uint),
       ("model_asset_path", ctypes.c_char_p),
+      ("file_descriptor", ctypes.c_int),
       ("delegate", ctypes.c_int),
       ("host_environment", ctypes.c_int),
       ("host_system", ctypes.c_int),

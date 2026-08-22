@@ -149,6 +149,7 @@ export async function streamToUint8Array(
 export enum ModelFormat {
   HANDWRITTEN = 0,
   CONVERTED = 1,
+  LITERTLM = 2,
 }
 
 type FormatTester = (
@@ -178,7 +179,128 @@ const FORMAT_TESTERS: Array<[ModelFormat, FormatTester]> = [
       return bytes[4] === 0x50 && bytes[5] === 0x4b;
     },
   ],
+  [
+    ModelFormat.LITERTLM,
+    async (model: ReadableStreamDefaultReader<Uint8Array>) => {
+      // Check for .litertlm header
+      const bytes = await readBytesAndClose(model, 8);
+      const bytesString = new TextDecoder('utf-8').decode(bytes);
+      return bytesString === 'LITERTLM';
+    },
+  ],
 ];
+
+/**
+ * Wraps a ReadableStreamDefaultReader with some extra logic to allow for both
+ * normal `read()` behavior as well as reading a specified number of bytes,
+ * precisely "fast-forwarding" into the stream via `readBytes(numBytes)`.
+ */
+class FastForwardStreamReader implements ReadableStreamDefaultReader {
+  private extraBytes: Uint8Array | undefined = undefined;
+  readonly closed;
+  constructor(private readonly stream: ReadableStreamDefaultReader) {
+    this.closed = this.stream.closed;
+  }
+  async read() {
+    if (this.extraBytes) {
+      // We need to copy extraBytes when returning it, or else it gets freed.
+      const toReturn = this.extraBytes.slice();
+      this.extraBytes = undefined;
+      return {value: toReturn, done: false};
+    }
+    return this.stream.read();
+  }
+  async readBytes(bytes: number) {
+    const result = new Uint8Array(bytes);
+    let bytesRead = 0;
+
+    // First copy bytes from extraBytes if we have any.
+    if (this.extraBytes) {
+      const bytesToCopy = Math.min(bytes, this.extraBytes.length);
+      result.set(this.extraBytes.subarray(0, bytesToCopy), 0);
+      bytesRead += bytesToCopy;
+
+      if (bytesRead < this.extraBytes.length) {
+        // Truncate extraBytes if we have any left over.
+        this.extraBytes = this.extraBytes.subarray(bytesRead);
+      } else {
+        // Remove entirely otherwise.
+        this.extraBytes = undefined;
+      }
+    }
+
+    // Read until we've reached (and likely passed) the target byte count.
+    while (bytesRead < bytes) {
+      const {value, done} = await this.stream.read();
+      if (value) {
+        const shortenedToMaxLength = value.subarray(0, bytes - bytesRead);
+        result.set(shortenedToMaxLength, bytesRead);
+
+        // If our final read went over, then keep only the extra bytes.
+        if (value.length > shortenedToMaxLength.length) {
+          this.extraBytes = value.subarray(bytes - bytesRead);
+        }
+
+        bytesRead += shortenedToMaxLength.length;
+      }
+      if (done) {
+        throw new Error(
+          `Expected ${bytes} bytes, but stream ended after reading ${bytesRead} bytes.`,
+        );
+      }
+    }
+    return result;
+  }
+
+  // We want to match the ReadableStreamDefaultReader contract, which uses `any`
+  // tslint:disable-next-line:no-any
+  cancel(reason?: any) {
+    return this.stream.cancel(reason);
+  }
+
+  releaseLock() {
+    return this.stream.releaseLock();
+  }
+}
+
+/**
+ * Takes a .litertlm file stream and produces a web-formatted .bin file stream.
+ *
+ * Takes a stream containing the contents of a .litertlm file and fast-forwards
+ * it to a web-formatted .bin file. Throws an error if the .litertlm file does
+ * not contain a web-formatted .bin model (denoted by model_type =
+ * tf_lite_artisan_text_decoder in the .litertlm section metadata).
+ * The resulting stream should be usable as if a .bin file had been streamed
+ * instead.
+ */
+export async function fastForwardLitertLmStreamToModel(
+  modelStream: ReadableStreamDefaultReader<Uint8Array>,
+  getModelOffsetFromHeader: (header: Uint8Array) => number,
+): Promise<ReadableStreamDefaultReader<Uint8Array>> {
+  const ffStream = new FastForwardStreamReader(modelStream);
+
+  // Read litertlm header chunk.
+  const bytes = await ffStream.readBytes(32);
+  // Parse last 8 bytes (24-31) as uint64 to find offset for end of header.
+  const view = new DataView(bytes.buffer);
+  const headerEndOffset = Number(view.getBigUint64(24, true));
+  // Read entire header as bytes.
+  const header = await ffStream.readBytes(headerEndOffset - 32);
+  // Make wasm call to take flatbuffer header and parse out the gpu_artisan .bin
+  // offset, erroring out if that does not exist.
+  const modelOffset = getModelOffsetFromHeader(header);
+  if (modelOffset < 0) {
+    throw new Error(
+      '.litertlm file could not be read or did not contain a web-formatted LLM',
+    );
+  }
+  // Now we skip ahead in our stream until the start of our model.
+  await ffStream.readBytes(modelOffset - headerEndOffset);
+  // The stream should now behave as a normal .bin file stream. There may be
+  // additional unused information in the stream following the .bin file, but
+  // that will not affect loading.
+  return ffStream;
+}
 
 /**
  * Determines the format of the model stream.

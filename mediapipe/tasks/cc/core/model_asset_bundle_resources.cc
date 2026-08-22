@@ -15,12 +15,21 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/core/model_asset_bundle_resources.h"
 
+#include <cstddef>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/tasks/cc/core/external_file_handler.h"
 #include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
 #include "mediapipe/util/resource_util.h"
 
@@ -50,7 +59,7 @@ ModelAssetBundleResources::Create(
   }
   auto model_bundle_resources = absl::WrapUnique(
       new ModelAssetBundleResources(tag, std::move(model_asset_bundle_file)));
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       model_bundle_resources->ExtractFilesFromExternalFileProto());
   return model_bundle_resources;
 }
@@ -59,14 +68,14 @@ absl::Status ModelAssetBundleResources::ExtractFilesFromExternalFileProto() {
   if (model_asset_bundle_file_->has_file_name()) {
     // If the model asset bundle file name is a relative path, searches the file
     // in a platform-specific location and returns the absolute path on success.
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         std::string path_to_resource,
         mediapipe::PathToResourceAsFile(model_asset_bundle_file_->file_name()));
     model_asset_bundle_file_->set_file_name(path_to_resource);
   }
-  MP_ASSIGN_OR_RETURN(model_asset_bundle_file_handler_,
-                      ExternalFileHandler::CreateFromExternalFile(
-                          model_asset_bundle_file_.get()));
+  ABSL_ASSIGN_OR_RETURN(model_asset_bundle_file_handler_,
+                        ExternalFileHandler::CreateFromExternalFile(
+                            model_asset_bundle_file_.get()));
   const char* buffer_data =
       model_asset_bundle_file_handler_->GetFileContent().data();
   size_t buffer_size =
@@ -97,6 +106,27 @@ std::vector<std::string> ModelAssetBundleResources::ListFiles() const {
     file_names.push_back(file_name);
   }
   return file_names;
+}
+
+bool ModelAssetBundleResources::HasFile(absl::string_view filename) const {
+  return files_.find(filename) != files_.end();
+}
+
+absl::StatusOr<mediapipe::tasks::BundleManifest>
+ModelAssetBundleResources::GetBundleManifest() const {
+  ABSL_ASSIGN_OR_RETURN(auto file_content, GetFile("manifest.pb"));
+  mediapipe::tasks::BundleManifest manifest;
+  if (!manifest.ParseFromString(file_content)) {
+    return CreateStatusWithPayload(
+        StatusCode::kInternal, "Failed to parse bundle manifest.pb.",
+        MediaPipeTasksStatus::kMetadataInvalidSchemaVersionError);
+  }
+  return manifest;
+}
+
+absl::StatusOr<std::string> ModelAssetBundleResources::GetBundleId() const {
+  ABSL_ASSIGN_OR_RETURN(auto manifest, GetBundleManifest());
+  return manifest.bundle_id();
 }
 
 }  // namespace core

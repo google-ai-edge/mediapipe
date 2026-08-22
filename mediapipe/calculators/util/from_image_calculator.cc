@@ -68,7 +68,7 @@ absl::Status FromImageNodeImpl::Open(CalculatorContext<FromImageNode>& cc) {
   check_image_source_ = cc.out_source_on_gpu.IsConnected();
   if (gpu_output_) {
 #if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(gpu_helper_.Open(&cc.GetGenericContext()));
+    ABSL_RETURN_IF_ERROR(gpu_helper_.Open(&cc.GetGenericContext()));
 #endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
@@ -83,7 +83,7 @@ absl::Status FromImageNodeImpl::Process(CalculatorContext<FromImageNode>& cc) {
 
   if (gpu_output_) {
 #if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([&cc]() -> absl::Status {
+    ABSL_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([&cc]() -> absl::Status {
       const Image& input = cc.in_image.GetOrDie();
       // Unwrap texture pointer; shallow copy.
       cc.out_image_gpu.Send(input.GetGpuBuffer());

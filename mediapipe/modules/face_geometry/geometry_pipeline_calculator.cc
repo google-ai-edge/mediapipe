@@ -95,12 +95,12 @@ class GeometryPipelineCalculator : public CalculatorBase {
 
     const auto& options = cc->Options<FaceGeometryPipelineCalculatorOptions>();
 
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         face_geometry::GeometryPipelineMetadata metadata,
         ReadMetadataFromFile(cc, options.metadata_path()),
         _ << "Failed to read the geometry pipeline metadata from file!");
 
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         face_geometry::ValidateGeometryPipelineMetadata(metadata))
         << "Invalid geometry pipeline metadata!";
 
@@ -109,10 +109,10 @@ class GeometryPipelineCalculator : public CalculatorBase {
             .Tag(kEnvironmentTag)
             .Get<face_geometry::Environment>();
 
-    MP_RETURN_IF_ERROR(face_geometry::ValidateEnvironment(environment))
+    ABSL_RETURN_IF_ERROR(face_geometry::ValidateEnvironment(environment))
         << "Invalid environment!";
 
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         geometry_pipeline_,
         face_geometry::CreateGeometryPipeline(environment, metadata),
         _ << "Failed to create a geometry pipeline!");
@@ -139,7 +139,7 @@ class GeometryPipelineCalculator : public CalculatorBase {
     auto multi_face_geometry =
         std::make_unique<std::vector<face_geometry::FaceGeometry>>();
 
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         *multi_face_geometry,
         geometry_pipeline_->EstimateFaceGeometry(
             multi_face_landmarks,  //
@@ -164,9 +164,9 @@ class GeometryPipelineCalculator : public CalculatorBase {
   static absl::StatusOr<face_geometry::GeometryPipelineMetadata>
   ReadMetadataFromFile(CalculatorContext* cc,
                        const std::string& metadata_path) {
-    MP_ASSIGN_OR_RETURN(std::unique_ptr<mediapipe::Resource> metadata_blob,
-                        ReadContentBlobFromFile(cc, metadata_path),
-                        _ << "Failed to read a metadata blob from file!");
+    ABSL_ASSIGN_OR_RETURN(std::unique_ptr<mediapipe::Resource> metadata_blob,
+                          ReadContentBlobFromFile(cc, metadata_path),
+                          _ << "Failed to read a metadata blob from file!");
 
     face_geometry::GeometryPipelineMetadata metadata;
     absl::string_view metadata_str = metadata_blob->ToStringView();
@@ -179,7 +179,7 @@ class GeometryPipelineCalculator : public CalculatorBase {
   static absl::StatusOr<std::unique_ptr<mediapipe::Resource>>
   ReadContentBlobFromFile(CalculatorContext* cc,
                           const std::string& unresolved_path) {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         std::string resolved_path,
         mediapipe::PathToResourceAsFile(unresolved_path),
         _ << "Failed to resolve path! Path = " << unresolved_path);

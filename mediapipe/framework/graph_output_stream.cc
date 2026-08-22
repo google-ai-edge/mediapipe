@@ -50,15 +50,15 @@ absl::Status GraphOutputStream::Initialize(
   input_stream_field.Add()->assign(stream_name);
   std::shared_ptr<tool::TagMap> tag_map =
       tool::TagMap::Create(input_stream_field).value();
-  input_stream_handler_ = absl::make_unique<GraphOutputStreamHandler>(
+  input_stream_handler_ = std::make_unique<GraphOutputStreamHandler>(
       tag_map, /*cc_manager=*/nullptr, MediaPipeOptions(),
       /*calculator_run_in_parallel=*/false);
   input_stream_handler_->SetProcessTimestampBounds(observe_timestamp_bounds);
   const CollectionItemId& id = tag_map->BeginId();
-  input_stream_ = absl::make_unique<InputStreamManager>();
-  MP_RETURN_IF_ERROR(
+  input_stream_ = std::make_unique<InputStreamManager>();
+  ABSL_RETURN_IF_ERROR(
       input_stream_->Initialize(stream_name, packet_type, /*back_edge=*/false));
-  MP_RETURN_IF_ERROR(input_stream_handler_->InitializeInputStreamManagers(
+  ABSL_RETURN_IF_ERROR(input_stream_handler_->InitializeInputStreamManagers(
       input_stream_.get()));
   output_stream_manager->AddMirror(input_stream_handler_.get(), id);
   return absl::OkStatus();
@@ -107,7 +107,7 @@ absl::Status OutputStreamObserver::Notify() {
                                  ? Timestamp::PostStream()
                                  : min_timestamp.PreviousAllowedInStream());
         if (last_processed_ts_ < settled) {
-          MP_RETURN_IF_ERROR(packet_callback_(Packet().At(settled)));
+          ABSL_RETURN_IF_ERROR(packet_callback_(Packet().At(settled)));
           last_processed_ts_ = settled;
         }
       }
@@ -135,7 +135,7 @@ absl::Status OutputStreamObserver::Notify() {
     RET_CHECK_EQ(num_packets_dropped, 0).SetNoLogging()
         << absl::Substitute("Dropped $0 packet(s) on input stream \"$1\".",
                             num_packets_dropped, input_stream_->Name());
-    MP_RETURN_IF_ERROR(packet_callback_(packet));
+    ABSL_RETURN_IF_ERROR(packet_callback_(packet));
     last_processed_ts_ = min_timestamp;
   }
   return absl::OkStatus();
@@ -145,9 +145,9 @@ absl::Status OutputStreamPollerImpl::Initialize(
     const std::string& stream_name, const PacketType* packet_type,
     std::function<void(InputStreamManager*, bool*)> queue_size_callback,
     OutputStreamManager* output_stream_manager, bool observe_timestamp_bounds) {
-  MP_RETURN_IF_ERROR(GraphOutputStream::Initialize(stream_name, packet_type,
-                                                   output_stream_manager,
-                                                   observe_timestamp_bounds));
+  ABSL_RETURN_IF_ERROR(GraphOutputStream::Initialize(stream_name, packet_type,
+                                                     output_stream_manager,
+                                                     observe_timestamp_bounds));
   input_stream_handler_->SetQueueSizeCallbacks(queue_size_callback,
                                                queue_size_callback);
   return absl::OkStatus();

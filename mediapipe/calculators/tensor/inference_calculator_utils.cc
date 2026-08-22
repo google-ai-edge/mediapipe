@@ -32,10 +32,10 @@
 #include "mediapipe/framework/port.h"  // NOLINT: provides MEDIAPIPE_ANDROID/IOS
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
-#include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/portable_type_to_tflitetype.h"
-#include "tensorflow/lite/string_util.h"
+#include "tflite/c/common.h"
+#include "tflite/interpreter.h"
+#include "tflite/portable_type_to_tflitetype.h"
+#include "tflite/string_util.h"
 
 ABSL_FLAG(int, xnnpack_default_num_threads, 0,
           "Default number of xnnpack threads to use. If unset, determines a "
@@ -178,7 +178,7 @@ absl::Status CopyTensorToTfLiteTensor<char>(const Tensor& input_tensor,
 template <typename T>
 absl::Status CopyTfLiteTensorToTensor(const TfLiteTensor& tflite_tensor,
                                       Tensor& output_tensor) {
-  MP_RETURN_IF_ERROR(TensorDimsAndTypeEqual(output_tensor, tflite_tensor));
+  ABSL_RETURN_IF_ERROR(TensorDimsAndTypeEqual(output_tensor, tflite_tensor));
   auto output_tensor_view = output_tensor.GetCpuWriteView();
   T* output_tensor_buffer = output_tensor_view.buffer<T>();
   RET_CHECK(output_tensor_buffer) << "Output tensor buffer is null.";
@@ -265,37 +265,37 @@ absl::Status CopyCpuInputIntoTfLiteTensor(const Tensor& input_tensor,
              TfLiteTypeGetName(interpreter_tensor_type));
   switch (interpreter_tensor_type) {
     case TfLiteType::kTfLiteFloat32: {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTensorToTfLiteTensor<float>(input_tensor, tflite_tensor));
       break;
     }
     case TfLiteType::kTfLiteUInt8: {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTensorToTfLiteTensor<uint8_t>(input_tensor, tflite_tensor));
       break;
     }
     case TfLiteType::kTfLiteInt8: {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTensorToTfLiteTensor<int8_t>(input_tensor, tflite_tensor));
       break;
     }
     case TfLiteType::kTfLiteInt32: {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTensorToTfLiteTensor<int32_t>(input_tensor, tflite_tensor));
       break;
     }
     case TfLiteType::kTfLiteInt64: {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTensorToTfLiteTensor<int64_t>(input_tensor, tflite_tensor));
       break;
     }
     case TfLiteType::kTfLiteString: {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTensorToTfLiteTensor<char>(input_tensor, tflite_tensor));
       break;
     }
     case TfLiteType::kTfLiteBool: {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTensorToTfLiteTensor<bool>(input_tensor, tflite_tensor));
       break;
     }
@@ -312,37 +312,37 @@ absl::Status CopyTfLiteTensorIntoCpuOutput(const TfLiteTensor& tflite_tensor,
   switch (tflite_tensor_type) {
     case TfLiteType::kTfLiteFloat16:
     case TfLiteType::kTfLiteFloat32: {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTfLiteTensorToTensor<float>(tflite_tensor, output_tensor));
       break;
     }
     case TfLiteType::kTfLiteUInt8: {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTfLiteTensorToTensor<uint8_t>(tflite_tensor, output_tensor));
       break;
     }
     case TfLiteType::kTfLiteInt8: {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTfLiteTensorToTensor<int8_t>(tflite_tensor, output_tensor));
       break;
     }
     case TfLiteType::kTfLiteInt32: {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTfLiteTensorToTensor<int>(tflite_tensor, output_tensor));
       break;
     }
     case TfLiteType::kTfLiteInt64: {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTfLiteTensorToTensor<int64_t>(tflite_tensor, output_tensor));
       break;
     }
     case TfLiteType::kTfLiteString: {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTfLiteTensorToTensor<char>(tflite_tensor, output_tensor));
       break;
     }
     case TfLiteType::kTfLiteBool: {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTfLiteTensorToTensor<bool>(tflite_tensor, output_tensor));
       break;
     }
@@ -370,31 +370,31 @@ absl::StatusOr<Tensor> ConvertTfLiteTensorToTensor(
     case TfLiteType::kTfLiteFloat16:
     case TfLiteType::kTfLiteFloat32: {
       Tensor output_tensor(Tensor::ElementType::kFloat32, shape);
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTfLiteTensorToTensor<float>(tflite_tensor, output_tensor));
       return output_tensor;
     }
     case TfLiteType::kTfLiteInt32: {
       Tensor output_tensor(Tensor::ElementType::kInt32, shape);
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTfLiteTensorToTensor<int32_t>(tflite_tensor, output_tensor));
       return output_tensor;
     }
     case TfLiteType::kTfLiteBool: {
       Tensor output_tensor(Tensor::ElementType::kBool, shape);
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTfLiteTensorToTensor<bool>(tflite_tensor, output_tensor));
       return output_tensor;
     }
     case TfLiteType::kTfLiteUInt8: {
       Tensor output_tensor(Tensor::ElementType::kUInt8, shape);
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTfLiteTensorToTensor<uint8_t>(tflite_tensor, output_tensor));
       return output_tensor;
     }
     case TfLiteType::kTfLiteInt8: {
       Tensor output_tensor(Tensor::ElementType::kInt8, shape);
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CopyTfLiteTensorToTensor<int8_t>(tflite_tensor, output_tensor));
       return output_tensor;
     }

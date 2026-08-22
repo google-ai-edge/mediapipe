@@ -221,12 +221,12 @@ class PackMediaSequenceCalculator : public CalculatorBase {
 
   absl::Status Open(CalculatorContext* cc) override {
     if (cc->InputSidePackets().HasTag(kSequenceExampleTag)) {
-      sequence_ = ::absl::make_unique<tf::SequenceExample>(
+      sequence_ = std::make_unique<tf::SequenceExample>(
           cc->InputSidePackets()
               .Tag(kSequenceExampleTag)
               .Get<tf::SequenceExample>());
     } else {
-      sequence_ = ::absl::make_unique<tf::SequenceExample>();
+      sequence_ = std::make_unique<tf::SequenceExample>();
     }
     if (cc->InputSidePackets().HasTag(kClipMediaIdTag) &&
         !cc->InputSidePackets().Tag(kClipMediaIdTag).IsEmpty()) {

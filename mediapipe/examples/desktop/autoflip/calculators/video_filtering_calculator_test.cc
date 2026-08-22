@@ -61,10 +61,10 @@ TEST(VideoFilterCalculatorTest, UpperBoundNoPass) {
     }
   )");
 
-  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   const int kFixedWidth = 1000;
   const double kAspectRatio = 5.0 / 1.0;
-  auto input_frame = ::absl::make_unique<ImageFrame>(
+  auto input_frame = std::make_unique<ImageFrame>(
       ImageFormat::SRGB, kFixedWidth,
       static_cast<int>(kFixedWidth / kAspectRatio), 16);
   runner->MutableInputs()
@@ -84,12 +84,12 @@ TEST(VerticalFrameRemovalCalculatorTest, UpperBoundPass) {
     }
   )");
 
-  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   const int kWidth = 1000;
   const double kAspectRatio = 1.0 / 5.0;
   const double kHeight = static_cast<int>(kWidth / kAspectRatio);
   auto input_frame =
-      ::absl::make_unique<ImageFrame>(ImageFormat::SRGB, kWidth, kHeight, 16);
+      std::make_unique<ImageFrame>(ImageFormat::SRGB, kWidth, kHeight, 16);
   runner->MutableInputs()
       ->Tag(kInputFramesTag)
       .packets.push_back(Adopt(input_frame.release()).At(Timestamp(1000)));
@@ -110,10 +110,10 @@ TEST(VideoFilterCalculatorTest, LowerBoundNoPass) {
     }
   )");
 
-  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   const int kFixedWidth = 1000;
   const double kAspectRatio = 1.0 / 1.0;
-  auto input_frame = ::absl::make_unique<ImageFrame>(
+  auto input_frame = std::make_unique<ImageFrame>(
       ImageFormat::SRGB, kFixedWidth,
       static_cast<int>(kFixedWidth / kAspectRatio), 16);
   runner->MutableInputs()
@@ -133,12 +133,12 @@ TEST(VerticalFrameRemovalCalculatorTest, LowerBoundPass) {
     }
   )");
 
-  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   const int kWidth = 1000;
   const double kAspectRatio = 5.0 / 1.0;
   const double kHeight = static_cast<int>(kWidth / kAspectRatio);
   auto input_frame =
-      ::absl::make_unique<ImageFrame>(ImageFormat::SRGB, kWidth, kHeight, 16);
+      std::make_unique<ImageFrame>(ImageFormat::SRGB, kWidth, kHeight, 16);
   runner->MutableInputs()
       ->Tag(kInputFramesTag)
       .packets.push_back(Adopt(input_frame.release()).At(Timestamp(1000)));
@@ -160,10 +160,10 @@ TEST(VerticalFrameRemovalCalculatorTest, OutputError) {
     }
   )");
 
-  auto runner = ::absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   const int kFixedWidth = 1000;
   const double kAspectRatio = 1.0 / 1.0;
-  auto input_frame = ::absl::make_unique<ImageFrame>(
+  auto input_frame = std::make_unique<ImageFrame>(
       ImageFormat::SRGB, kFixedWidth,
       static_cast<int>(kFixedWidth / kAspectRatio), 16);
   runner->MutableInputs()

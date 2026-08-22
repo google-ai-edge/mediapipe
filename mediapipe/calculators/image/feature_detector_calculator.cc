@@ -31,7 +31,7 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/threadpool.h"
 #include "mediapipe/framework/tool/options_util.h"
-#include "tensorflow/lite/interpreter.h"
+#include "tflite/interpreter.h"
 
 namespace mediapipe {
 
@@ -93,7 +93,7 @@ absl::Status FeatureDetectorCalculator::Open(CalculatorContext* cc) {
   feature_detector_ = cv::ORB::create(
       options_.max_features(), options_.scale_factor(),
       options_.pyramid_level(), kPatchSize - 1, 0, 2, cv::ORB::FAST_SCORE);
-  pool_ = absl::make_unique<mediapipe::ThreadPool>("ThreadPool", kNumThreads);
+  pool_ = std::make_unique<mediapipe::ThreadPool>("ThreadPool", kNumThreads);
   pool_->StartWorkers();
   return absl::OkStatus();
 }
@@ -116,12 +116,12 @@ absl::Status FeatureDetectorCalculator::Process(CalculatorContext* cc) {
   }
 
   if (cc->Outputs().HasTag("FEATURES")) {
-    auto features_ptr = absl::make_unique<std::vector<cv::KeyPoint>>(keypoints);
+    auto features_ptr = std::make_unique<std::vector<cv::KeyPoint>>(keypoints);
     cc->Outputs().Tag("FEATURES").Add(features_ptr.release(), timestamp);
   }
 
   if (cc->Outputs().HasTag("LANDMARKS")) {
-    auto landmarks_ptr = absl::make_unique<NormalizedLandmarkList>();
+    auto landmarks_ptr = std::make_unique<NormalizedLandmarkList>();
     for (int j = 0; j < keypoints.size(); ++j) {
       auto feature_landmark = landmarks_ptr->add_landmark();
       feature_landmark->set_x(keypoints[j].pt.x / grayscale_view.cols);
@@ -145,7 +145,7 @@ absl::Status FeatureDetectorCalculator::Process(CalculatorContext* cc) {
     }
     counter.Wait();
     const int batch_size = options_.max_features();
-    auto patches = absl::make_unique<std::vector<TfLiteTensor>>();
+    auto patches = std::make_unique<std::vector<TfLiteTensor>>();
     TfLiteTensor tensor;
     tensor.type = kTfLiteFloat32;
     tensor.dims = TfLiteIntArrayCreate(4);

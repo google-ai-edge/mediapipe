@@ -38,7 +38,7 @@ class TensorToVectorStringCalculatorTest : public ::testing::Test {
         TensorToVectorStringCalculatorOptions::ext);
     options->set_tensor_is_2d(tensor_is_2d);
     options->set_flatten_nd(flatten_nd);
-    runner_ = absl::make_unique<CalculatorRunner>(config);
+    runner_ = std::make_unique<CalculatorRunner>(config);
   }
 
   std::unique_ptr<CalculatorRunner> runner_;
@@ -47,7 +47,7 @@ class TensorToVectorStringCalculatorTest : public ::testing::Test {
 TEST_F(TensorToVectorStringCalculatorTest, ConvertsToVectorFloat) {
   SetUpRunner(false, false);
   const tf::TensorShape tensor_shape(std::vector<int64_t>{5});
-  auto tensor = absl::make_unique<tf::Tensor>(tf::DT_STRING, tensor_shape);
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_STRING, tensor_shape);
   auto tensor_vec = tensor->vec<tensorflow::tstring>();
   for (int i = 0; i < 5; ++i) {
     tensor_vec(i) = absl::StrCat("foo", i);
@@ -75,7 +75,7 @@ TEST_F(TensorToVectorStringCalculatorTest, ConvertsToVectorFloat) {
 TEST_F(TensorToVectorStringCalculatorTest, ConvertsBatchedToVectorVectorFloat) {
   SetUpRunner(true, false);
   const tf::TensorShape tensor_shape(std::vector<int64_t>{1, 5});
-  auto tensor = absl::make_unique<tf::Tensor>(tf::DT_STRING, tensor_shape);
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_STRING, tensor_shape);
   auto slice = tensor->Slice(0, 1).flat<tensorflow::tstring>();
   for (int i = 0; i < 5; ++i) {
     slice(i) = absl::StrCat("foo", i);
@@ -104,7 +104,7 @@ TEST_F(TensorToVectorStringCalculatorTest, ConvertsBatchedToVectorVectorFloat) {
 TEST_F(TensorToVectorStringCalculatorTest, FlattenShouldTakeAllDimensions) {
   SetUpRunner(false, true);
   const tf::TensorShape tensor_shape(std::vector<int64_t>{2, 2, 2});
-  auto tensor = absl::make_unique<tf::Tensor>(tf::DT_STRING, tensor_shape);
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_STRING, tensor_shape);
   auto slice = tensor->flat<tensorflow::tstring>();
   for (int i = 0; i < 2 * 2 * 2; ++i) {
     slice(i) = absl::StrCat("foo", i);

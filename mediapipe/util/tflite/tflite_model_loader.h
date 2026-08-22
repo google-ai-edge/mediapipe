@@ -24,7 +24,7 @@
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/resources.h"
-#include "tensorflow/lite/model_builder.h"
+#include "tflite/model_builder.h"
 
 namespace mediapipe {
 

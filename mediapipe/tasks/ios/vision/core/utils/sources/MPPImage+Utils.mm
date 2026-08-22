@@ -713,4 +713,52 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
   return nullptr;
 }
 
+- (nullable UIImage *)toUIImageWithError:(NSError **)error {
+  if (self.imageSourceType == MPPImageSourceTypeImage) {
+    return self.image;
+  }
+
+  CVPixelBufferRef pixelBuffer = nullptr;
+  if (self.imageSourceType == MPPImageSourceTypePixelBuffer) {
+    pixelBuffer = self.pixelBuffer;
+  } else if (self.imageSourceType == MPPImageSourceTypeSampleBuffer) {
+    pixelBuffer = CMSampleBufferGetImageBuffer(self.sampleBuffer);
+  }
+
+  if (pixelBuffer == nullptr) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:@"CVPixelBuffer is null."];
+    return nil;
+  }
+
+  CVPixelBufferLockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
+  void *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
+  size_t width = CVPixelBufferGetWidth(pixelBuffer);
+  size_t height = CVPixelBufferGetHeight(pixelBuffer);
+  size_t bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer);
+
+  CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+  CGContextRef context =
+      CGBitmapContextCreate(baseAddress, width, height, 8, bytesPerRow, colorSpace,
+                            kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+  CGImageRef cgImage = CGBitmapContextCreateImage(context);
+  UIImage *uiImage = nil;
+  if (cgImage != nullptr) {
+    uiImage = [UIImage imageWithCGImage:cgImage];
+    CGImageRelease(cgImage);
+  }
+  CGContextRelease(context);
+  CGColorSpaceRelease(colorSpace);
+  CVPixelBufferUnlockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
+
+  if (uiImage == nil) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:@"Failed to convert CVPixelBuffer to UIImage."];
+  }
+
+  return uiImage;
+}
+
 @end

@@ -48,7 +48,7 @@ class LocalFilePatternContentsCalculator : public CalculatorBase {
   }
 
   absl::Status Open(CalculatorContext* cc) override {
-    MP_RETURN_IF_ERROR(mediapipe::file::MatchFileTypeInDirectory(
+    ABSL_RETURN_IF_ERROR(mediapipe::file::MatchFileTypeInDirectory(
         cc->InputSidePackets().Tag(kFileDirectoryTag).Get<std::string>(),
         cc->InputSidePackets().Tag(kFileSuffixTag).Get<std::string>(),
         &filenames_));
@@ -60,7 +60,7 @@ class LocalFilePatternContentsCalculator : public CalculatorBase {
     if (current_output_ < filenames_.size()) {
       auto contents = absl::make_unique<std::string>();
       ABSL_LOG(INFO) << filenames_[current_output_];
-      MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
+      ABSL_RETURN_IF_ERROR(mediapipe::file::GetContents(
           filenames_[current_output_], contents.get()));
       ++current_output_;
       cc->Outputs()

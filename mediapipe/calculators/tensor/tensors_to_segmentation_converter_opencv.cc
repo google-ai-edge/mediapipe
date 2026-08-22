@@ -61,7 +61,7 @@ absl::StatusOr<std::unique_ptr<Image>>
 TensorsToSegmentationOpenCvConverter::Convert(const Tensor& input_tensor,
                                               int output_width,
                                               int output_height) {
-  MP_ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensor.shape().dims));
+  ABSL_ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensor.shape().dims));
   auto [tensor_height, tensor_width, tensor_channels] = hwc;
   // Create initial working mask.
   cv::Mat small_mask_mat(cv::Size(tensor_width, tensor_height), CV_32FC1);
@@ -76,7 +76,8 @@ TensorsToSegmentationOpenCvConverter::Convert(const Tensor& input_tensor,
 
   // Process mask tensor and apply activation function.
   if (tensor_channels == 2) {
-    MP_RETURN_IF_ERROR(ApplyActivation<cv::Vec2f>(tensor_mat, &small_mask_mat));
+    ABSL_RETURN_IF_ERROR(
+        ApplyActivation<cv::Vec2f>(tensor_mat, &small_mask_mat));
   } else if (tensor_channels == 1) {
     RET_CHECK(mediapipe::TensorsToSegmentationCalculatorOptions::SOFTMAX !=
               options_.activation());  // Requires 2 channels.
@@ -84,7 +85,7 @@ TensorsToSegmentationOpenCvConverter::Convert(const Tensor& input_tensor,
         options_.activation())  // Pass-through optimization.
       tensor_mat.copyTo(small_mask_mat);
     else
-      MP_RETURN_IF_ERROR(ApplyActivation<float>(tensor_mat, &small_mask_mat));
+      ABSL_RETURN_IF_ERROR(ApplyActivation<float>(tensor_mat, &small_mask_mat));
   } else {
     RET_CHECK_FAIL() << "Unsupported number of tensor channels "
                      << tensor_channels;
@@ -154,7 +155,7 @@ absl::Status TensorsToSegmentationOpenCvConverter::ApplyActivation(
 absl::StatusOr<std::unique_ptr<TensorsToSegmentationConverter>>
 CreateOpenCvConverter(const TensorsToSegmentationCalculatorOptions& options) {
   auto converter = std::make_unique<TensorsToSegmentationOpenCvConverter>();
-  MP_RETURN_IF_ERROR(converter->Init(options));
+  ABSL_RETURN_IF_ERROR(converter->Init(options));
   return converter;
 }
 

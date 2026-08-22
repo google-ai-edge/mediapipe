@@ -31,7 +31,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/task_api_factory.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/text/text_classifier/proto/text_classifier_graph_options.pb.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
+#include "tflite/core/api/op_resolver.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -101,7 +101,7 @@ absl::StatusOr<std::unique_ptr<TextClassifier>> TextClassifier::Create(
 
 absl::StatusOr<TextClassifierResult> TextClassifier::Classify(
     absl::string_view text) {
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       auto output_packets,
       runner_->Process(
           {{kTextStreamName, MakePacket<std::string>(std::string(text))}}));

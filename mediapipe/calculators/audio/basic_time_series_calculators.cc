@@ -52,11 +52,11 @@ absl::Status BasicTimeSeriesCalculatorBase::GetContract(
 
 absl::Status BasicTimeSeriesCalculatorBase::Open(CalculatorContext* cc) {
   TimeSeriesHeader input_header;
-  MP_RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
+  ABSL_RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
       cc->Inputs().Index(0).Header(), &input_header));
 
   auto output_header = new TimeSeriesHeader(input_header);
-  MP_RETURN_IF_ERROR(MutateHeader(output_header));
+  ABSL_RETURN_IF_ERROR(MutateHeader(output_header));
   cc->Outputs().Index(0).SetHeader(Adopt(output_header));
 
   cc->SetOffset(0);
@@ -66,11 +66,11 @@ absl::Status BasicTimeSeriesCalculatorBase::Open(CalculatorContext* cc) {
 
 absl::Status BasicTimeSeriesCalculatorBase::Process(CalculatorContext* cc) {
   const Matrix& input = cc->Inputs().Index(0).Get<Matrix>();
-  MP_RETURN_IF_ERROR(time_series_util::IsMatrixShapeConsistentWithHeader(
+  ABSL_RETURN_IF_ERROR(time_series_util::IsMatrixShapeConsistentWithHeader(
       input, cc->Inputs().Index(0).Header().Get<TimeSeriesHeader>()));
 
   std::unique_ptr<Matrix> output(new Matrix(ProcessMatrix(input)));
-  MP_RETURN_IF_ERROR(time_series_util::IsMatrixShapeConsistentWithHeader(
+  ABSL_RETURN_IF_ERROR(time_series_util::IsMatrixShapeConsistentWithHeader(
       *output, cc->Outputs().Index(0).Header().Get<TimeSeriesHeader>()));
 
   cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());

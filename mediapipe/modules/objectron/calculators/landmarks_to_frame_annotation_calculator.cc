@@ -67,7 +67,7 @@ absl::Status LandmarksToFrameAnnotationCalculator::Open(CalculatorContext* cc) {
 
 absl::Status LandmarksToFrameAnnotationCalculator::Process(
     CalculatorContext* cc) {
-  auto frame_annotation = absl::make_unique<FrameAnnotation>();
+  auto frame_annotation = std::make_unique<FrameAnnotation>();
 
   // Handle the case when input has only one NormalizedLandmarkList.
   if (cc->Inputs().HasTag(kInputLandmarksTag) &&

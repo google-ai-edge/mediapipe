@@ -31,7 +31,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/metadata/metadata_version_utils.h"
 #include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
-#include "tensorflow/lite/schema/schema_generated.h"
+#include "tflite/schema/schema_generated.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -66,7 +66,8 @@ ModelMetadataExtractor::CreateFromModelBuffer(const char* buffer_data,
   // https://abseil.io/tips/126.
   std::unique_ptr<ModelMetadataExtractor> extractor =
       absl::WrapUnique(new ModelMetadataExtractor());
-  MP_RETURN_IF_ERROR(extractor->InitFromModelBuffer(buffer_data, buffer_size));
+  ABSL_RETURN_IF_ERROR(
+      extractor->InitFromModelBuffer(buffer_data, buffer_size));
   return extractor;
 }
 

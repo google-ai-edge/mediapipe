@@ -49,7 +49,7 @@ class LappedTensorBufferCalculatorTest : public ::testing::Test {
     }
     options->set_timestamp_offset(timestamp_offset);
     options->set_padding(padding);
-    runner_ = ::absl::make_unique<CalculatorRunner>(config);
+    runner_ = std::make_unique<CalculatorRunner>(config);
   }
   std::unique_ptr<CalculatorRunner> runner_;
 };
@@ -58,7 +58,7 @@ TEST_F(LappedTensorBufferCalculatorTest, OneToOne) {
   SetUpCalculator(1, 0, false, 0, 0, false);
   int num_timesteps = 3;
   for (int i = 0; i < num_timesteps; ++i) {
-    auto input = ::absl::make_unique<tensorflow::Tensor>(
+    auto input = std::make_unique<tensorflow::Tensor>(
         tensorflow::DT_FLOAT, tensorflow::TensorShape({1}));
     input->tensor<float, 1>()(0) = i;
     runner_->MutableInputs()->Index(0).packets.push_back(
@@ -82,7 +82,7 @@ TEST_F(LappedTensorBufferCalculatorTest, OneToTwo) {
   SetUpCalculator(buffer_size, overlap, add_dim, 0, 0, false);
   int num_timesteps = 3;
   for (int i = 0; i < num_timesteps; ++i) {
-    auto input = ::absl::make_unique<tensorflow::Tensor>(
+    auto input = std::make_unique<tensorflow::Tensor>(
         tensorflow::DT_FLOAT, tensorflow::TensorShape({1}));
     input->tensor<float, 1>()(0) = i;
     runner_->MutableInputs()->Index(0).packets.push_back(
@@ -108,7 +108,7 @@ TEST_F(LappedTensorBufferCalculatorTest, OneToThree) {
   SetUpCalculator(buffer_size, overlap, add_dim, 0, 0, false);
   int num_timesteps = 3;
   for (int i = 0; i < num_timesteps; ++i) {
-    auto input = ::absl::make_unique<tensorflow::Tensor>(
+    auto input = std::make_unique<tensorflow::Tensor>(
         tensorflow::DT_FLOAT, tensorflow::TensorShape({1}));
     input->tensor<float, 1>()(0) = i;
     runner_->MutableInputs()->Index(0).packets.push_back(
@@ -134,7 +134,7 @@ TEST_F(LappedTensorBufferCalculatorTest, OneToThreeSkip) {
   SetUpCalculator(buffer_size, overlap, add_dim, 0, 0, false);
   int num_timesteps = 3;
   for (int i = 0; i < num_timesteps; ++i) {
-    auto input = ::absl::make_unique<tensorflow::Tensor>(
+    auto input = std::make_unique<tensorflow::Tensor>(
         tensorflow::DT_FLOAT, tensorflow::TensorShape({1}));
     input->tensor<float, 1>()(0) = i;
     runner_->MutableInputs()->Index(0).packets.push_back(
@@ -160,7 +160,7 @@ TEST_F(LappedTensorBufferCalculatorTest, OneToThreeNegativeOverlap) {
   SetUpCalculator(buffer_size, overlap, add_dim, 0, 0, false);
   int num_timesteps = 7;
   for (int i = 0; i < num_timesteps; ++i) {
-    auto input = ::absl::make_unique<tensorflow::Tensor>(
+    auto input = std::make_unique<tensorflow::Tensor>(
         tensorflow::DT_FLOAT, tensorflow::TensorShape({1}));
     input->tensor<float, 1>()(0) = i;
     runner_->MutableInputs()->Index(0).packets.push_back(
@@ -189,7 +189,7 @@ TEST_F(LappedTensorBufferCalculatorTest, OneToThreeBatch) {
   SetUpCalculator(buffer_size, overlap, add_dim, 0, 0, false);
   int num_timesteps = 3;
   for (int i = 0; i < num_timesteps; ++i) {
-    auto input = ::absl::make_unique<tensorflow::Tensor>(
+    auto input = std::make_unique<tensorflow::Tensor>(
         tensorflow::DT_FLOAT, tensorflow::TensorShape({1}));
     input->tensor<float, 1>()(0) = i;
     runner_->MutableInputs()->Index(0).packets.push_back(
@@ -217,7 +217,7 @@ TEST_F(LappedTensorBufferCalculatorTest, NegativeTimestampOffsetFails) {
   SetUpCalculator(buffer_size, overlap, add_dim, timestamp_offset, 0, false);
   int num_timesteps = 20;
   for (int i = 0; i < num_timesteps; ++i) {
-    auto input = ::absl::make_unique<tensorflow::Tensor>(
+    auto input = std::make_unique<tensorflow::Tensor>(
         tensorflow::DT_FLOAT, tensorflow::TensorShape({1}));
     input->tensor<float, 1>()(0) = i;
     runner_->MutableInputs()->Index(0).packets.push_back(
@@ -234,7 +234,7 @@ TEST_F(LappedTensorBufferCalculatorTest, OutOfRangeTimestampOffsetFails) {
   SetUpCalculator(buffer_size, overlap, add_dim, timestamp_offset, 0, false);
   int num_timesteps = 20;
   for (int i = 0; i < num_timesteps; ++i) {
-    auto input = ::absl::make_unique<tensorflow::Tensor>(
+    auto input = std::make_unique<tensorflow::Tensor>(
         tensorflow::DT_FLOAT, tensorflow::TensorShape({1}));
     input->tensor<float, 1>()(0) = i;
     runner_->MutableInputs()->Index(0).packets.push_back(
@@ -251,7 +251,7 @@ TEST_F(LappedTensorBufferCalculatorTest, OneToThreeBatchTimestampOffset) {
   SetUpCalculator(buffer_size, overlap, add_dim, timestamp_offset, 0, false);
   int num_timesteps = 20;
   for (int i = 0; i < num_timesteps; ++i) {
-    auto input = ::absl::make_unique<tensorflow::Tensor>(
+    auto input = std::make_unique<tensorflow::Tensor>(
         tensorflow::DT_FLOAT, tensorflow::TensorShape({1}));
     input->tensor<float, 1>()(0) = i;
     runner_->MutableInputs()->Index(0).packets.push_back(
@@ -281,7 +281,7 @@ TEST_F(LappedTensorBufferCalculatorTest,
                   true);
   int num_timesteps = 20;
   for (int i = 0; i < num_timesteps; ++i) {
-    auto input = ::absl::make_unique<tensorflow::Tensor>(
+    auto input = std::make_unique<tensorflow::Tensor>(
         tensorflow::DT_FLOAT, tensorflow::TensorShape({1}));
     input->tensor<float, 1>()(0) = i;
     runner_->MutableInputs()->Index(0).packets.push_back(

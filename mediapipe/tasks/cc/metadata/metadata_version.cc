@@ -26,9 +26,9 @@ limitations under the License.
 #include "absl/strings/str_split.h"
 #include "flatbuffers/flatbuffers.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
-#include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/kernels/internal/compatibility.h"
-#include "tensorflow/lite/tools/logging.h"
+#include "tflite/c/common.h"
+#include "tflite/kernels/internal/compatibility.h"
+#include "tflite/tools/logging.h"
 
 namespace mediapipe {
 namespace tasks {

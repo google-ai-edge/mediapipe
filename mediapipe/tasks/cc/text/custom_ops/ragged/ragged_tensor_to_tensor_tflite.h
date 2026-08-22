@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_TEXT_CUSTOM_OPS_RAGGED_RAGGED_TENSOR_TO_TENSOR_TFLITE_H_
 #define MEDIAPIPE_TASKS_CC_TEXT_CUSTOM_OPS_RAGGED_RAGGED_TENSOR_TO_TENSOR_TFLITE_H_
 
-#include "tensorflow/lite/kernels/register.h"
+#include "tflite/kernels/register.h"
 
 namespace mediapipe::tflite_operations {
 

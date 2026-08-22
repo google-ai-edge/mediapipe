@@ -184,7 +184,7 @@ TEST(CalculatorTest, CreateByNameWhitelisted) {
   // Register a whitelisted calculator.
   CalculatorBaseRegistry::Register(
       "::mediapipe::test_ns::whitelisted_ns::DeadCalculator",
-      absl::make_unique<internal::CalculatorBaseFactoryFor<
+      std::make_unique<internal::CalculatorBaseFactoryFor<
           mediapipe::test_ns::whitelisted_ns::DeadCalculator>>);
 
   // A whitelisted calculator can be found in its own namespace.

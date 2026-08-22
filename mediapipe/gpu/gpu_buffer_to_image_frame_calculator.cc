@@ -64,7 +64,7 @@ absl::Status GpuBufferToImageFrameCalculator::UpdateContract(
 absl::Status GpuBufferToImageFrameCalculator::Open(
     CalculatorContext<GpuBufferToImageFrameNode>& cc) {
 #if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  MP_RETURN_IF_ERROR(helper_.Open(&cc.GetGenericContext()));
+  ABSL_RETURN_IF_ERROR(helper_.Open(&cc.GetGenericContext()));
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   return absl::OkStatus();
 }

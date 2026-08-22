@@ -19,7 +19,7 @@
 #include <cstring>
 #include <string>
 
-#include "tensorflow/lite/minimal_logging.h"
+#include "tflite/minimal_logging.h"
 
 namespace mediapipe {
 namespace util {

@@ -128,7 +128,7 @@ absl::StatusOr<Tensor> VectorToTensorCalculator::ConvertVectorToTensor(
 absl::Status VectorToTensorCalculator::Process(CalculatorContext* cc) {
   const VectorToTensorCalculatorOptions& options =
       cc->Options<VectorToTensorCalculatorOptions>();
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       Tensor tensor, ConvertVectorToTensor(
                          kVectorIn(cc), options.output_dynamic_tensor_shape()));
   kOutTensor(cc).Send(std::move(tensor));

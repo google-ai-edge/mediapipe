@@ -131,6 +131,22 @@ py_library(
 )
 
 py_library(
+    name = "interactive_segmenter",
+    srcs = [
+        "interactive_segmenter.py",
+    ],
+    deps = [
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:base_options_c",
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:mediapipe_c_utils",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:serial_dispatcher",
+        "//mediapipe/tasks/python/vision/core:image",
+    ],
+)
+
+py_library(
     name = "interactive_segmenter_legacy",
     srcs = [
         "interactive_segmenter_legacy.py",

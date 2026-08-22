@@ -16,9 +16,12 @@ limitations under the License.
 package com.google.mediapipe.tasks.text.textsummarizer;
 
 import android.content.Context;
+import android.os.ParcelFileDescriptor;
+import android.util.Log;
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.tasks.core.BaseOptionsUtils;
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Optional;
 
 /** Performs summarization on text. */
@@ -34,6 +37,8 @@ public class TextSummarizer implements Closeable {
   @AutoValue
   public abstract static class TextSummarizerOptions {
     public abstract String getModelPath();
+
+    public abstract Optional<ParcelFileDescriptor> getModelAssetFileDescriptor();
 
     public abstract Optional<Integer> getMaxNumTokens();
 
@@ -66,6 +71,10 @@ public class TextSummarizer implements Closeable {
     public abstract static class Builder {
       /** Sets the local path or identifier for the model files. */
       public abstract Builder setModelPath(String modelPath);
+
+      /** Sets the file descriptor of the model. */
+      public abstract Builder setModelAssetFileDescriptor(
+          ParcelFileDescriptor modelAssetFileDescriptor);
 
       /**
        * Sets the maximum context length (in tokens) to use. If not set, the model's default maximum
@@ -128,8 +137,25 @@ public class TextSummarizer implements Closeable {
     String appVersion = BaseOptionsUtils.getAppVersion(context);
     String appId = BaseOptionsUtils.getAppId(context);
 
+    int fd = -1;
+    if (options.getModelAssetFileDescriptor().isPresent()) {
+      try {
+        fd = options.getModelAssetFileDescriptor().get().dup().detachFd();
+      } catch (IOException e) {
+        if (options.getModelPath().isEmpty()) {
+          throw new IllegalArgumentException(
+              "TextSummarizer: Failed to read from file descriptor and model path is empty.", e);
+        }
+        Log.w(
+            "TextSummarizer",
+            "Failed to read from file descriptor, falling back to model path: ",
+            e);
+      }
+    }
+
     long handle =
         nativeCreateHandle(
+            fd,
             options.getModelPath(),
             options.getMaxNumTokens().orElse(0),
             options.getMode().getValue(),
@@ -141,6 +167,7 @@ public class TextSummarizer implements Closeable {
   }
 
   private static native long nativeCreateHandle(
+      int modelFd,
       String modelPath,
       int maxNumTokens,
       int mode,

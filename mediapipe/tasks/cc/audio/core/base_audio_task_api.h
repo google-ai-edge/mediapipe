@@ -96,7 +96,7 @@ class BaseAudioTaskApi : public tasks::core::BaseTaskApi {
       }
     } else {
       default_sample_rate_ = sample_rate;
-      MP_RETURN_IF_ERROR(runner_->Send(
+      ABSL_RETURN_IF_ERROR(runner_->Send(
           {{sample_rate_stream_name, MakePacket<double>(default_sample_rate_)
                                          .At(Timestamp::PreStream())}}));
     }

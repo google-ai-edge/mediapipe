@@ -35,12 +35,12 @@
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
-#include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/kernels/cast_test_common.h"
-#include "tensorflow/lite/schema/schema_generated.h"
-#include "tensorflow/lite/string_util.h"
-#include "tensorflow/lite/util.h"
+#include "tflite/c/common.h"
+#include "tflite/interpreter.h"
+#include "tflite/kernels/cast_test_common.h"
+#include "tflite/schema/schema_generated.h"
+#include "tflite/string_util.h"
+#include "tflite/util.h"
 
 namespace mediapipe {
 namespace {

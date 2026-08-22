@@ -195,6 +195,10 @@ export class GestureRecognizer extends VisionTaskRunner {
     );
   }
 
+  protected override getTaskName(): string {
+    return 'GestureRecognizer';
+  }
+
   protected override get baseOptions(): BaseOptionsProto {
     return this.options.getBaseOptions()!;
   }

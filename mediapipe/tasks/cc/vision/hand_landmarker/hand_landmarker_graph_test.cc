@@ -44,8 +44,8 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
-#include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/test_util.h"
+#include "tflite/c/common.h"
+#include "tflite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -139,7 +139,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner() {
       {.config = graph.GetConfig(),
        .task_name = "hand_landmarker_test",
        .task_running_mode = core::RunningMode::kImage,
-       .op_resolver = absl::make_unique<core::MediaPipeBuiltinOpResolver>()});
+       .op_resolver = std::make_unique<core::MediaPipeBuiltinOpResolver>()});
 }
 
 class HandLandmarkerTest : public tflite::testing::Test {};

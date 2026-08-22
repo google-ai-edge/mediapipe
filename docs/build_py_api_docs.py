@@ -58,7 +58,7 @@ _SITE_PATH = flags.DEFINE_string('site_path', '/mediapipe/api/solutions/python',
 def gen_api_docs():
   """Generates API docs for the mediapipe package."""
   if hasattr(mp, 'solutions'):
-    del mp.solutions
+    del mp.solutions  # pyrefly: ignore[missing-attribute]
 
   doc_generator = generate_lib.DocGenerator(
       root_title=PROJECT_FULL_NAME,

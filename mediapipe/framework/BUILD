@@ -1853,6 +1853,7 @@ cc_test(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 
@@ -1945,11 +1946,11 @@ cc_library(
     hdrs = ["memory_manager.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework:port",
+        ":port",
+        "//mediapipe/gpu:multi_pool",
     ] + select({
         "//mediapipe:android": [
             "//mediapipe/framework/formats:hardware_buffer_pool",
-            "//mediapipe/gpu:multi_pool",
         ],
         "//conditions:default": [],
     }),

@@ -240,7 +240,7 @@ class ObjectDetector(classifier.Classifier):
       self, dataset: ds.Dataset, batch_size: int = 1
   ) -> Tuple[List[float], Dict[str, float]]:
     """Overrides Classifier.evaluate to calculate COCO metrics."""
-    dataset = dataset.gen_tf_dataset(
+    dataset = dataset.gen_tf_dataset(  # pyrefly: ignore[bad-assignment]
         batch_size, is_training=False, preprocess=self._preprocessor
     )
     losses = self._model.evaluate(dataset)
@@ -250,9 +250,9 @@ class ObjectDetector(classifier.Classifier):
         per_category_metrics=True,
         max_num_eval_detections=100,
     )
-    for batch in dataset:
+    for batch in dataset:  # pyrefly: ignore[not-iterable]
       x, y = batch
-      y_pred = self._model(
+      y_pred = self._model(  # pyrefly: ignore[not-callable]
           x,
           anchor_boxes=y['anchor_boxes'],
           image_shape=y['image_info'][:, 1, :],
@@ -409,17 +409,17 @@ class ObjectDetector(classifier.Classifier):
     init_lr = self._hparams.learning_rate * self._hparams.batch_size / 256
     decay_epochs = (
         self._hparams.cosine_decay_epochs
-        if self._hparams.cosine_decay_epochs
+        if self._hparams.cosine_decay_epochs  # pyrefly: ignore[missing-attribute]
         else self._hparams.epochs
     )
     learning_rate = tf.keras.optimizers.schedules.CosineDecay(
         init_lr,
-        steps_per_epoch * decay_epochs,
-        self._hparams.cosine_decay_alpha,
+        steps_per_epoch * decay_epochs,  # pyrefly: ignore[unsupported-operation]
+        self._hparams.cosine_decay_alpha,  # pyrefly: ignore[missing-attribute]
     )
     learning_rate = model_util.WarmUp(
         initial_learning_rate=init_lr,
-        decay_schedule_fn=learning_rate,
+        decay_schedule_fn=learning_rate,  # pyrefly: ignore[bad-argument-type]
         warmup_steps=warmup_steps,
     )
     return tf.keras.optimizers.experimental.SGD(

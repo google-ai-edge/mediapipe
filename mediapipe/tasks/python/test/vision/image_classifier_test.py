@@ -139,7 +139,7 @@ class ImageClassifierTest(parameterized.TestCase):
       self, actual: _Category, expected: _Category, delta: float = 1e-6
   ):
     self.assertEqual(actual.index, expected.index)
-    self.assertAlmostEqual(actual.score, expected.score, delta=delta)
+    self.assertAlmostEqual(actual.score, expected.score, delta=delta)  # pyrefly: ignore[no-matching-overload]
     self.assertEqual(actual.display_name or '', expected.display_name)
     self.assertEqual(actual.category_name, expected.category_name)
 

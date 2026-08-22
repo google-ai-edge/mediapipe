@@ -72,4 +72,7 @@ message LlmGpuCalculatorOptions {
 
   // Whether speculative decoding is enabled.
   bool enable_speculative_decoding = 34;
+
+  // Can be used to disable prefix caching upon demand (enabled by default).
+  bool disable_prefix_caching = 35;
 }

@@ -183,6 +183,10 @@ export class InteractiveSegmenterLegacy extends VisionTaskRunner {
     this.options.setBaseOptions(new BaseOptionsProto());
   }
 
+  protected override getTaskName(): string {
+    return 'InteractiveSegmenterLegacy';
+  }
+
   protected override get baseOptions(): BaseOptionsProto {
     return this.options.getBaseOptions()!;
   }

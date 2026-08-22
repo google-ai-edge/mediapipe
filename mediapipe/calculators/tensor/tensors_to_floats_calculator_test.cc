@@ -35,7 +35,7 @@ class TensorsToFloatsCalculatorTest : public ::testing::Test {
  protected:
   void BuildGraph(mediapipe::CalculatorRunner* runner,
                   const std::vector<float>& values) {
-    auto tensors = absl::make_unique<std::vector<Tensor>>();
+    auto tensors = std::make_unique<std::vector<Tensor>>();
     tensors->emplace_back(
         Tensor::ElementType::kFloat32,
         Tensor::Shape{1, 1, static_cast<int>(values.size()), 1});

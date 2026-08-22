@@ -19,6 +19,35 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
+cc_library(
+    name = "image_embedder_executor",
+    hdrs = ["image_embedder_executor.h"],
+    deps = [
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/tasks/cc/components/containers:embedding_result",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
+cc_library(
+    name = "graph_image_embedder_executor",
+    srcs = ["graph_image_embedder_executor.cc"],
+    hdrs = ["graph_image_embedder_executor.h"],
+    deps = [
+        ":image_embedder_executor",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/tasks/cc/components/containers:embedding_result",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
+        "//mediapipe/tasks/cc/core:task_runner",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
 # Docs for Mediapipe Tasks Image Embedder
 # https://developers.google.com/mediapipe/solutions/vision/image_embedder
 cc_library(
@@ -26,18 +55,20 @@ cc_library(
     srcs = ["image_embedder.cc"],
     hdrs = ["image_embedder.h"],
     deps = [
-        ":image_embedder_graph",
+        ":graph_image_embedder_executor",
+        ":image_embedder_executor",
+        ":image_embedder_graph",  # buildcleaner: keep
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/tool:options_map",
+        "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/components/containers:embedding_result",
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
         "//mediapipe/tasks/cc/components/processors:embedder_options",
         "//mediapipe/tasks/cc/components/processors/proto:embedder_options_cc_proto",
         "//mediapipe/tasks/cc/components/utils:cosine_similarity",
         "//mediapipe/tasks/cc/core:base_options",
-        "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/cc/core:utils",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
         "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
@@ -45,7 +76,10 @@ cc_library(
         "//mediapipe/tasks/cc/vision/core:running_mode",
         "//mediapipe/tasks/cc/vision/core:vision_task_api_factory",
         "//mediapipe/tasks/cc/vision/image_embedder/proto:image_embedder_graph_options_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ],
 )
 

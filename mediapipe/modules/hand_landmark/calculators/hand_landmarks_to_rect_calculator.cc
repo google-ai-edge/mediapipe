@@ -161,8 +161,8 @@ class HandLandmarksToRectCalculator : public CalculatorBase {
     std::pair<int, int> image_size =
         cc->Inputs().Tag(kImageSizeTag).Get<std::pair<int, int>>();
     const auto landmarks = GetPartialLandmarks(cc);
-    auto output_rect = absl::make_unique<NormalizedRect>();
-    MP_RETURN_IF_ERROR(
+    auto output_rect = std::make_unique<NormalizedRect>();
+    ABSL_RETURN_IF_ERROR(
         NormalizedLandmarkListToRect(landmarks, image_size, output_rect.get()));
     cc->Outputs()
         .Tag(kNormRectTag)

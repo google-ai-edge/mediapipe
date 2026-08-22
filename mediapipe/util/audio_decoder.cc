@@ -272,7 +272,7 @@ absl::Status BasePacketProcessor::Flush() {
     // ProcessPacket increments num_frames_processed_ if it is able to
     // decode a frame.  Not being able to decode a frame while being
     // flushed signals that the codec is completely done.
-    MP_RETURN_IF_ERROR(ProcessPacket(av_packet.get()));
+    ABSL_RETURN_IF_ERROR(ProcessPacket(av_packet.get()));
   } while (last_num_frames_processed != num_frames_processed_);
 
   flushed_ = true;
@@ -301,17 +301,18 @@ void BasePacketProcessor::Close() {
 
 absl::Status BasePacketProcessor::Decode(const AVPacket& packet,
                                          bool ignore_decode_failures) {
-  MP_RETURN_IF_ERROR(LogStatus(SendPacket(packet, avcodec_ctx_), *avcodec_ctx_,
-                               packet, ignore_decode_failures));
+  ABSL_RETURN_IF_ERROR(LogStatus(SendPacket(packet, avcodec_ctx_),
+                                 *avcodec_ctx_, packet,
+                                 ignore_decode_failures));
   while (true) {
     bool received;
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         LogStatus(ReceiveFrame(avcodec_ctx_, decoded_frame_, &received),
                   *avcodec_ctx_, packet, ignore_decode_failures));
     if (received) {
       // Successfully decoded a frame (i.e., received it from the decoder). Now
       // further process it.
-      MP_RETURN_IF_ERROR(ProcessDecodedFrame(packet));
+      ABSL_RETURN_IF_ERROR(ProcessDecodedFrame(packet));
     } else {
       break;
     }
@@ -385,7 +386,7 @@ absl::Status AudioPacketProcessor::Open(int id, AVStream* stream) {
   source_frame_rate_ = stream->r_frame_rate;
   last_frame_time_regression_detected_ = false;
 
-  MP_RETURN_IF_ERROR(ValidateSampleFormat());
+  ABSL_RETURN_IF_ERROR(ValidateSampleFormat());
   bytes_per_sample_ = av_get_bytes_per_sample(avcodec_ctx_->sample_fmt);
   num_channels_ = AvStructChannels(*avcodec_ctx_);
   sample_rate_ = avcodec_ctx_->sample_rate;
@@ -496,7 +497,7 @@ absl::Status AudioPacketProcessor::ProcessDecodedFrame(const AVPacket& packet) {
     }
   }
 
-  MP_RETURN_IF_ERROR(AddAudioDataToBuffer(
+  ABSL_RETURN_IF_ERROR(AddAudioDataToBuffer(
       Timestamp(av_rescale_q(expected_sample_number_, sample_time_base_,
                              output_time_base_)),
       data_ptr, buf_size_bytes));
@@ -520,7 +521,7 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
       buf_size_bytes / bytes_per_sample_ / num_channels_;
   VLOG(3) << "Adding " << num_samples << " audio samples in " << num_channels_
           << " channels to output.";
-  auto current_frame = absl::make_unique<Matrix>(num_channels_, num_samples);
+  auto current_frame = std::make_unique<Matrix>(num_channels_, num_samples);
 
   const char* sample_ptr = nullptr;
   switch (avcodec_ctx_->sample_fmt) {
@@ -678,7 +679,7 @@ absl::Status AudioDecoder::Initialize(
             stream_index_to_audio_options_index, current_audio_index);
         if (options_index_ptr) {
           std::unique_ptr<AudioPacketProcessor> processor =
-              absl::make_unique<AudioPacketProcessor>(
+              std::make_unique<AudioPacketProcessor>(
                   options.audio_stream(*options_index_ptr));
           if (!ContainsKey(audio_processor_, stream_id)) {
             ABSL_LOG(INFO) << "Created audio processor " << processor.get()
@@ -689,7 +690,7 @@ absl::Status AudioDecoder::Initialize(
                             << audio_processor_[stream_id].get();
           }
 
-          MP_RETURN_IF_ERROR(processor->Open(stream_id, stream));
+          ABSL_RETURN_IF_ERROR(processor->Open(stream_id, stream));
           audio_processor_.emplace(stream_id, std::move(processor));
           ABSL_CHECK(InsertIfNotPresent(
               &stream_index_to_stream_id_,
@@ -768,10 +769,10 @@ absl::Status AudioDecoder::GetData(int* options_index, Packet* data) {
       }
     }
     if (flushed_) {
-      MP_RETURN_IF_ERROR(Close());
+      ABSL_RETURN_IF_ERROR(Close());
       return tool::StatusStop();
     }
-    MP_RETURN_IF_ERROR(ProcessPacket());
+    ABSL_RETURN_IF_ERROR(ProcessPacket());
   }
   return absl::OkStatus();
 }
@@ -797,7 +798,7 @@ absl::Status AudioDecoder::FillAudioHeader(
       FindOrDie(stream_index_to_stream_id_, stream_option.stream_index()));
 
   RET_CHECK(processor_ptr_ && *processor_ptr_) << "audio stream is not open.";
-  MP_RETURN_IF_ERROR((*processor_ptr_)->FillHeader(header));
+  ABSL_RETURN_IF_ERROR((*processor_ptr_)->FillHeader(header));
   return absl::OkStatus();
 }
 
@@ -815,7 +816,7 @@ absl::Status AudioDecoder::ProcessPacket() {
     if (audio_iterator != audio_processor_.end()) {
       // This stream_id is belongs to an audio stream we care about.
       if (audio_iterator->second) {
-        MP_RETURN_IF_ERROR(
+        ABSL_RETURN_IF_ERROR(
             audio_iterator->second->ProcessPacket(av_packet.get()));
       } else {
         VLOG(3) << "processor for stream " << stream_id << " is nullptr.";

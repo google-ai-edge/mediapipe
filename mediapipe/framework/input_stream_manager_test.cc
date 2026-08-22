@@ -41,7 +41,7 @@ class InputStreamManagerTest : public ::testing::Test {
     stream_is_done_ = false;
 
     packet_type_.Set<std::string>();
-    input_stream_manager_ = absl::make_unique<InputStreamManager>();
+    input_stream_manager_ = std::make_unique<InputStreamManager>();
     MP_ASSERT_OK(input_stream_manager_->Initialize("a_test", &packet_type_,
                                                    /*back_edge=*/false));
 
@@ -785,7 +785,7 @@ TEST_F(InputStreamManagerTest, QueueSizeTest) {
 
 TEST_F(InputStreamManagerTest, InputReleaseTest) {
   packet_type_.Set<LifetimeTracker::Object>();
-  input_stream_manager_ = absl::make_unique<InputStreamManager>();
+  input_stream_manager_ = std::make_unique<InputStreamManager>();
   MP_ASSERT_OK(input_stream_manager_->Initialize("a_test", &packet_type_,
                                                  /*back_edge=*/false));
   input_stream_manager_->PrepareForRun();

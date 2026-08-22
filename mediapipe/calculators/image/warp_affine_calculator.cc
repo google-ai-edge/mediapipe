@@ -89,7 +89,7 @@ class WarpAffineRunnerHolder<ImageFrame> {
 
   absl::StatusOr<RunnerType*> GetRunner() {
     if (!runner_) {
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           runner_, CreateAffineTransformationOpenCvRunner(interpolation_));
     }
     return runner_.get();
@@ -121,7 +121,7 @@ class WarpAffineRunnerHolder<mediapipe::GpuBuffer> {
 
   absl::StatusOr<RunnerType*> GetRunner() {
     if (!runner_) {
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           runner_, CreateAffineTransformationGlRunner(gl_helper_, gpu_origin_,
                                                       interpolation_));
     }
@@ -157,12 +157,12 @@ class WarpAffineRunnerHolder<mediapipe::Image> {
     absl::Status Open(mediapipe::CalculatorContext& cc,
                       const mediapipe::WarpAffineCalculatorOptions& options) {
 #if !MEDIAPIPE_DISABLE_OPENCV
-      MP_RETURN_IF_ERROR(cpu_holder_.Open(cc, options));
+      ABSL_RETURN_IF_ERROR(cpu_holder_.Open(cc, options));
 #endif  // !MEDIAPIPE_DISABLE_OPENCV
 
 #if !MEDIAPIPE_DISABLE_GPU
       if (cc.Service(kGpuService).IsAvailable()) {
-        MP_RETURN_IF_ERROR(gpu_holder_.Open(cc, options));
+        ABSL_RETURN_IF_ERROR(gpu_holder_.Open(cc, options));
         gpu_holder_initialized_ = true;
       }
 #endif  // !MEDIAPIPE_DISABLE_GPU
@@ -179,8 +179,8 @@ class WarpAffineRunnerHolder<mediapipe::Image> {
         if (!gpu_holder_initialized_) {
           return absl::UnavailableError("GPU support is not available");
         }
-        MP_ASSIGN_OR_RETURN(auto* runner, gpu_holder_.GetRunner());
-        MP_ASSIGN_OR_RETURN(
+        ABSL_ASSIGN_OR_RETURN(auto* runner, gpu_holder_.GetRunner());
+        ABSL_ASSIGN_OR_RETURN(
             auto result,
             runner->Run(input.GetGpuBuffer(), matrix, size, border_mode));
         return mediapipe::Image(*result);
@@ -189,15 +189,15 @@ class WarpAffineRunnerHolder<mediapipe::Image> {
 #endif  // !MEDIAPIPE_DISABLE_GPU
       }
 #if !MEDIAPIPE_DISABLE_OPENCV
-      MP_ASSIGN_OR_RETURN(auto* runner, cpu_holder_.GetRunner());
+      ABSL_ASSIGN_OR_RETURN(auto* runner, cpu_holder_.GetRunner());
       const auto& frame_ptr = input.GetImageFrameSharedPtr();
       // Wrap image into image frame.
       const ImageFrame image_frame(frame_ptr->Format(), frame_ptr->Width(),
                                    frame_ptr->Height(), frame_ptr->WidthStep(),
                                    const_cast<uint8_t*>(frame_ptr->PixelData()),
                                    [](uint8_t* data){});
-      MP_ASSIGN_OR_RETURN(auto result,
-                          runner->Run(image_frame, matrix, size, border_mode));
+      ABSL_ASSIGN_OR_RETURN(
+          auto result, runner->Run(image_frame, matrix, size, border_mode));
       return mediapipe::Image(std::make_shared<ImageFrame>(std::move(result)));
 #else
       return absl::UnavailableError("OpenCV support is disabled");
@@ -226,7 +226,7 @@ class WarpAffineNodeImpl
       CalculatorContract<WarpAffineNode<ImageT>>& cc) {
     if constexpr (std::is_same_v<ImageT, GpuBuffer> ||
                   std::is_same_v<ImageT, Image>) {
-      MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(
+      ABSL_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(
           &cc.GetGenericContract(), /*request_gpu_as_optional=*/true));
     }
     return absl::OkStatus();
@@ -239,7 +239,7 @@ class WarpAffineNodeImpl
     }
 
     if (!holder_initialized_) {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           holder_.Open(cc.GetGenericContext(), cc.options.Get()));
       holder_initialized_ = true;
     }
@@ -249,8 +249,8 @@ class WarpAffineNodeImpl
     AffineTransformation::Size output_size;
     output_size.width = out_width;
     output_size.height = out_height;
-    MP_ASSIGN_OR_RETURN(auto* runner, holder_.GetRunner());
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(auto* runner, holder_.GetRunner());
+    ABSL_ASSIGN_OR_RETURN(
         auto result,
         runner->Run(cc.in_image.GetOrDie(), transform, output_size,
                     GetBorderMode(cc.options.Get().border_mode())));

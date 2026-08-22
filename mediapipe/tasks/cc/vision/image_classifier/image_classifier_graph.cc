@@ -103,11 +103,11 @@ class ImageClassifierGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         const auto* model_resources,
         CreateModelResources<proto::ImageClassifierGraphOptions>(sc));
     Graph graph;
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         auto output_streams,
         BuildImageClassificationTask(
             sc->Options<proto::ImageClassifierGraphOptions>(), *model_resources,
@@ -141,10 +141,11 @@ class ImageClassifierGraph : public core::ModelTaskGraph {
     bool use_gpu =
         components::processors::DetermineImagePreprocessingGpuBackend(
             task_options.base_options().acceleration());
-    MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
-        model_resources, use_gpu, task_options.base_options().gpu_origin(),
-        &preprocessing.GetOptions<tasks::components::processors::proto::
-                                      ImagePreprocessingGraphOptions>()));
+    ABSL_RETURN_IF_ERROR(
+        components::processors::ConfigureImagePreprocessingGraph(
+            model_resources, use_gpu, task_options.base_options().gpu_origin(),
+            &preprocessing.GetOptions<tasks::components::processors::proto::
+                                          ImagePreprocessingGraphOptions>()));
     image_in >> preprocessing.In(kImageTag);
     norm_rect_in >> preprocessing.In(kNormRectTag);
 
@@ -158,7 +159,7 @@ class ImageClassifierGraph : public core::ModelTaskGraph {
     auto& postprocessing = graph.AddNode(
         "mediapipe.tasks.components.processors."
         "ClassificationPostprocessingGraph");
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         components::processors::ConfigureClassificationPostprocessingGraph(
             model_resources, task_options.classifier_options(),
             &postprocessing

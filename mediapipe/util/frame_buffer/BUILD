@@ -97,6 +97,7 @@ cc_test(
 cc_test(
     name = "yuv_buffer_test",
     srcs = ["yuv_buffer_test.cc"],
+    tags = ["nohwasan"],
     deps = [
         ":buffer",
         "//mediapipe/framework/port:gtest_main",

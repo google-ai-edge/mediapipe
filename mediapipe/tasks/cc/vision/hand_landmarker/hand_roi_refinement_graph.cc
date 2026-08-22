@@ -71,7 +71,7 @@ class HandRoiRefinementGraph : public core::ModelTaskGraph {
     auto& graph_options =
         *context->MutableOptions<proto::HandRoiRefinementGraphOptions>();
 
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         const auto* model_resources,
         GetOrCreateModelResources<proto::HandRoiRefinementGraphOptions>(
             context));
@@ -89,10 +89,12 @@ class HandRoiRefinementGraph : public core::ModelTaskGraph {
     image_to_tensor_options.set_keep_aspect_ratio(true);
     image_to_tensor_options.set_border_mode(
         mediapipe::ImageToTensorCalculatorOptions::BORDER_REPLICATE);
-    MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
-        *model_resources, use_gpu, graph_options.base_options().gpu_origin(),
-        &preprocessing.GetOptions<tasks::components::processors::proto::
-                                      ImagePreprocessingGraphOptions>()));
+    ABSL_RETURN_IF_ERROR(
+        components::processors::ConfigureImagePreprocessingGraph(
+            *model_resources, use_gpu,
+            graph_options.base_options().gpu_origin(),
+            &preprocessing.GetOptions<tasks::components::processors::proto::
+                                          ImagePreprocessingGraphOptions>()));
     image_in >> preprocessing.In("IMAGE");
     roi_in >> preprocessing.In("NORM_RECT");
     auto tensors_in = preprocessing.Out("TENSORS");
@@ -105,8 +107,8 @@ class HandRoiRefinementGraph : public core::ModelTaskGraph {
     tensors_in >> inference.In("TENSORS");
     auto tensors_out = inference.Out("TENSORS").Cast<std::vector<Tensor>>();
 
-    MP_ASSIGN_OR_RETURN(auto image_tensor_specs,
-                        BuildInputImageTensorSpecs(*model_resources));
+    ABSL_ASSIGN_OR_RETURN(auto image_tensor_specs,
+                          BuildInputImageTensorSpecs(*model_resources));
 
     // Convert tensors to landmarks. Recrop model outputs two points,
     // center point and guide point.

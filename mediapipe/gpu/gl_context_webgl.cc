@@ -43,8 +43,8 @@ GlContext::StatusOrGlContext GlContext::Create(const GlContext& share_context,
 GlContext::StatusOrGlContext GlContext::Create(
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE share_context, bool create_thread) {
   std::shared_ptr<GlContext> context(new GlContext());
-  MP_RETURN_IF_ERROR(context->CreateContext(share_context));
-  MP_RETURN_IF_ERROR(context->FinishInitialization(create_thread));
+  ABSL_RETURN_IF_ERROR(context->CreateContext(share_context));
+  ABSL_RETURN_IF_ERROR(context->FinishInitialization(create_thread));
   return std::move(context);
 }
 
@@ -117,7 +117,7 @@ absl::Status GlContext::CreateContext(
     ABSL_LOG(WARNING) << "Fall back on WebGL 1.";
     status = CreateContextInternal(external_context, 1);
   }
-  MP_RETURN_IF_ERROR(status);
+  ABSL_RETURN_IF_ERROR(status);
 
   VLOG(1) << "Successfully created a WebGL context with major version "
           << gl_major_version_ << " and handle " << context_;

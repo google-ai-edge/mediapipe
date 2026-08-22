@@ -77,9 +77,9 @@ def _get_expected_hand_landmarker_result(
         )
     )
   return _HandLandmarkerResult(
-      handedness=[landmarks_detection_result.categories],
-      hand_landmarks=[landmarks_detection_result.landmarks],
-      hand_world_landmarks=[landmarks_detection_result.world_landmarks])
+      handedness=[landmarks_detection_result.categories],  # pyrefly: ignore[bad-argument-type]
+      hand_landmarks=[landmarks_detection_result.landmarks],  # pyrefly: ignore[bad-argument-type]
+      hand_world_landmarks=[landmarks_detection_result.world_landmarks])  # pyrefly: ignore[bad-argument-type]
 
 
 class ModelFileType(enum.Enum):

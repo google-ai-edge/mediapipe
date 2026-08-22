@@ -103,12 +103,12 @@ void SetInputs(const std::vector<std::string>& faces, const bool include_video,
   // Setup an input video frame.
   if (include_video) {
     auto input_frame =
-        ::absl::make_unique<ImageFrame>(ImageFormat::SRGB, 800, 600);
+        std::make_unique<ImageFrame>(ImageFormat::SRGB, 800, 600);
     runner->MutableInputs()->Tag(kVideoTag).packets.push_back(
         Adopt(input_frame.release()).At(Timestamp::PostStream()));
   }
   // Setup two faces as input.
-  auto input_faces = ::absl::make_unique<std::vector<Detection>>();
+  auto input_faces = std::make_unique<std::vector<Detection>>();
   // A face with landmarks.
   for (const auto& face : faces) {
     input_faces->push_back(ParseTextProtoOrDie<Detection>(face));
@@ -139,7 +139,7 @@ CalculatorGraphConfig::Node MakeConfig(std::string base_config, bool whole_face,
 
 TEST(FaceToRegionCalculatorTest, FaceFullTypeSize) {
   // Setup test
-  auto runner = ::absl::make_unique<CalculatorRunner>(
+  auto runner = std::make_unique<CalculatorRunner>(
       MakeConfig(kConfig, true, false, false, true));
   SetInputs({kFace1, kFace2}, true, runner.get());
 
@@ -172,7 +172,7 @@ TEST(FaceToRegionCalculatorTest, FaceFullTypeSize) {
 
 TEST(FaceToRegionCalculatorTest, FaceLandmarksTypeSize) {
   // Setup test
-  auto runner = ::absl::make_unique<CalculatorRunner>(
+  auto runner = std::make_unique<CalculatorRunner>(
       MakeConfig(kConfig, false, true, false, true));
   SetInputs({kFace1}, true, runner.get());
 
@@ -203,7 +203,7 @@ TEST(FaceToRegionCalculatorTest, FaceLandmarksTypeSize) {
 
 TEST(FaceToRegionCalculatorTest, FaceLandmarksBox) {
   // Setup test
-  auto runner = ::absl::make_unique<CalculatorRunner>(
+  auto runner = std::make_unique<CalculatorRunner>(
       MakeConfig(kConfig, false, false, true, true));
   SetInputs({kFace1}, true, runner.get());
 
@@ -238,7 +238,7 @@ TEST(FaceToRegionCalculatorTest, FaceLandmarksBox) {
 
 TEST(FaceToRegionCalculatorTest, FaceScore) {
   // Setup test
-  auto runner = ::absl::make_unique<CalculatorRunner>(
+  auto runner = std::make_unique<CalculatorRunner>(
       MakeConfig(kConfig, true, false, false, true));
   SetInputs({kFace3}, true, runner.get());
 
@@ -257,7 +257,7 @@ TEST(FaceToRegionCalculatorTest, FaceScore) {
 
 TEST(FaceToRegionCalculatorTest, FaceNoVideoVisualScoreFail) {
   // Setup test
-  auto runner = ::absl::make_unique<CalculatorRunner>(
+  auto runner = std::make_unique<CalculatorRunner>(
       MakeConfig(kConfigNoVideo, true, false, false, true));
   SetInputs({kFace3}, false, runner.get());
 
@@ -267,7 +267,7 @@ TEST(FaceToRegionCalculatorTest, FaceNoVideoVisualScoreFail) {
 
 TEST(FaceToRegionCalculatorTest, FaceNoVideoLandmarksFail) {
   // Setup test
-  auto runner = ::absl::make_unique<CalculatorRunner>(
+  auto runner = std::make_unique<CalculatorRunner>(
       MakeConfig(kConfigNoVideo, false, true, false, false));
   SetInputs({kFace3}, false, runner.get());
 
@@ -277,7 +277,7 @@ TEST(FaceToRegionCalculatorTest, FaceNoVideoLandmarksFail) {
 
 TEST(FaceToRegionCalculatorTest, FaceNoVideoBBLandmarksFail) {
   // Setup test
-  auto runner = ::absl::make_unique<CalculatorRunner>(
+  auto runner = std::make_unique<CalculatorRunner>(
       MakeConfig(kConfigNoVideo, false, false, true, false));
   SetInputs({kFace3}, false, runner.get());
 
@@ -287,7 +287,7 @@ TEST(FaceToRegionCalculatorTest, FaceNoVideoBBLandmarksFail) {
 
 TEST(FaceToRegionCalculatorTest, FaceNoVideoPass) {
   // Setup test
-  auto runner = ::absl::make_unique<CalculatorRunner>(
+  auto runner = std::make_unique<CalculatorRunner>(
       MakeConfig(kConfigNoVideo, true, false, false, false));
   SetInputs({kFace1, kFace2}, false, runner.get());
 

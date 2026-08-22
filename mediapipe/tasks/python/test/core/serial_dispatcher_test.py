@@ -155,7 +155,7 @@ class SerialDispatcherTest(parameterized.TestCase):
 
     # The dispatcher returns a default value of None for all calls after its
     # closed.
-    self.assertIsNone(dispatcher.returns_42())
+    self.assertIsNone(dispatcher.returns_42())  # pyrefly: ignore[missing-attribute]
 
   def test_calls_status_functions_with_error_argument(self):
     mock_lib = mock.MagicMock(spec_set=["status_method"])
@@ -203,7 +203,7 @@ class SerialDispatcherTest(parameterized.TestCase):
     dispatcher = serial_dispatcher.SerialDispatcher(mock_lib, func_signatures)
 
     with self.assertRaisesRegex(RuntimeError, error_message):
-      dispatcher.invalid_op()
+      dispatcher.invalid_op()  # pyrefly: ignore[missing-attribute]
 
     dispatcher.close()
 

@@ -106,7 +106,7 @@ class TensorFlowSessionFromFrozenGraphGenerator : public PacketGenerator {
         packet_generator_options.GetExtension(
             TensorFlowSessionFromFrozenGraphGeneratorOptions::ext);
     // Output bundle packet.
-    auto session = ::absl::make_unique<TensorFlowSession>();
+    auto session = std::make_unique<TensorFlowSession>();
 
     tf::SessionOptions session_options;
     session_options.config.CopyFrom(options.config());

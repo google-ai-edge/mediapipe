@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <ostream>
 #include <utility>
 
 #include "absl/base/attributes.h"
@@ -68,6 +69,14 @@ struct HardwareBufferSpec {
   uint64_t usage = 0;
   uint32_t stride = 0;
 };
+
+inline std::ostream& operator<<(std::ostream& os,
+                                const HardwareBufferSpec& spec) {
+  return os << "HardwareBufferSpec{width: " << spec.width
+            << ", height: " << spec.height << ", layers: " << spec.layers
+            << ", format: " << spec.format << ", usage: " << spec.usage
+            << ", stride: " << spec.stride << "}";
+}
 
 // Equality operators
 inline bool operator==(const HardwareBufferSpec& lhs,

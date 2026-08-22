@@ -77,7 +77,7 @@ cc_library(
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:rect_cc_proto",
-        "@org_tensorflow//tensorflow/lite/c:common",
+        "@litert//tflite/c:common",
     ],
 )
 
@@ -414,7 +414,7 @@ cc_library(
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/formats:tensor",
-        "@org_tensorflow//tensorflow/lite/c:common",
+        "@litert//tflite/c:common",
     ],
 )
 

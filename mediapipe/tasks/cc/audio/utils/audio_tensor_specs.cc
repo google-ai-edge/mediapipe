@@ -30,7 +30,7 @@ limitations under the License.
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
-#include "tensorflow/lite/schema/schema_generated.h"
+#include "tflite/schema/schema_generated.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -107,8 +107,8 @@ absl::StatusOr<AudioTensorSpecs> BuildInputAudioTensorSpecs(
         MediaPipeTasksStatus::kMetadataNotFoundError);
   }
 
-  MP_ASSIGN_OR_RETURN(const AudioProperties* props,
-                      GetAudioPropertiesIfAny(*audio_tensor_metadata));
+  ABSL_ASSIGN_OR_RETURN(const AudioProperties* props,
+                        GetAudioPropertiesIfAny(*audio_tensor_metadata));
   // Input-related specifications.
   int tensor_shape_size = audio_tensor.shape()->size();
   if (tensor_shape_size > 2) {

@@ -32,7 +32,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
+#include "tflite/core/api/op_resolver.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -63,13 +63,13 @@ class VisionTaskApiFactory {
             "Task graph config should only contain one task subgraph node.",
             MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
       } else {
-        MP_RETURN_IF_ERROR(
+        ABSL_RETURN_IF_ERROR(
             tasks::core::TaskApiFactory::CheckHasValidOptions<Options>(node));
         found_task_subgraph = true;
       }
     }
-    MP_ASSIGN_OR_RETURN(RunningMode running_mode,
-                        GetVisionRunningMode(options.task_running_mode));
+    ABSL_ASSIGN_OR_RETURN(RunningMode running_mode,
+                          GetVisionRunningMode(options.task_running_mode));
     if (running_mode == RunningMode::LIVE_STREAM) {
       if (options.packets_callback == nullptr) {
         return CreateStatusWithPayload(
@@ -85,8 +85,8 @@ class VisionTaskApiFactory {
           "callback shouldn't be provided.",
           MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
     }
-    MP_ASSIGN_OR_RETURN(auto runner,
-                        tasks::core::TaskRunner::Create(std::move(options)));
+    ABSL_ASSIGN_OR_RETURN(auto runner,
+                          tasks::core::TaskRunner::Create(std::move(options)));
     return std::make_unique<T>(std::move(runner), running_mode);
   }
 };

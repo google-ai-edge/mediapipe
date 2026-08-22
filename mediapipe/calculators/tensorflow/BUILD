@@ -804,6 +804,7 @@ cc_library(
         "//mediapipe/framework/formats:location",
         "//mediapipe/util:audio_decoder_cc_proto",
         "//mediapipe/util/sequence:media_sequence",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
@@ -1210,7 +1211,6 @@ cc_test(
         "//mediapipe/util/sequence:media_sequence",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
 )

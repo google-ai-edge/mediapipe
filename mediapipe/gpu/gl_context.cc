@@ -34,6 +34,7 @@
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
@@ -318,12 +319,13 @@ absl::Status GlContext::GetGlExtensionsCompat() {
 
 absl::Status GlContext::FinishInitialization(bool create_thread) {
   if (create_thread) {
-    thread_ = absl::make_unique<GlContext::DedicatedThread>();
+    thread_ = std::make_unique<GlContext::DedicatedThread>();
 #ifdef MEDIAPIPE_HAS_GOOGLE_THREAD
-    MP_RETURN_IF_ERROR(thread_->Run(util::functional::WithCurrentContext(
+    ABSL_RETURN_IF_ERROR(thread_->Run(util::functional::WithCurrentContext(
         [this] { return EnterContext(nullptr); })));
 #else
-    MP_RETURN_IF_ERROR(thread_->Run([this] { return EnterContext(nullptr); }));
+    ABSL_RETURN_IF_ERROR(
+        thread_->Run([this] { return EnterContext(nullptr); }));
 #endif
   }
 
@@ -391,7 +393,7 @@ absl::Status GlContext::FinishInitialization(bool create_thread) {
       if (!status.ok()) {
         status = GetGlExtensionsCompat();
       }
-      MP_RETURN_IF_ERROR(status);
+      ABSL_RETURN_IF_ERROR(status);
     }
 
 #if GL_ES_VERSION_2_0  // This actually means "is GLES available".
@@ -422,8 +424,9 @@ GlContext::~GlContext() {
 
   auto clear_attachments = [this] {
     attachments_.clear();
-    if (profiling_helper_) {
-      profiling_helper_->LogAllTimestamps();
+    auto* profiling_helper = profiling_helper_owner_.Get();
+    if (profiling_helper) {
+      profiling_helper->LogAllTimestamps();
     }
   };
 
@@ -460,31 +463,32 @@ GlContext::~GlContext() {
 
 void GlContext::SetProfilingContext(
     std::shared_ptr<mediapipe::ProfilingContext> profiling_context) {
-  // Create the GlProfilingHelper if it is uninitialized.
-  if (!profiling_helper_ && profiling_context) {
-    profiling_helper_ = profiling_context->CreateGlProfilingHelper();
+  if (profiling_context) {
+    profiling_helper_owner_.CreateIfUnset(std::move(profiling_context));
   }
 }
 
 absl::Status GlContext::SwitchContextAndRun(GlStatusFunction gl_func) {
   ContextBinding saved_context;
-  MP_RETURN_IF_ERROR(EnterContext(&saved_context)) << " (entering GL context)";
+  ABSL_RETURN_IF_ERROR(EnterContext(&saved_context))
+      << " (entering GL context)";
   auto status = gl_func();
   LogUncheckedGlErrors(CheckForGlErrors());
-  MP_RETURN_IF_ERROR(ExitContext(&saved_context)) << " (exiting GL context)";
+  ABSL_RETURN_IF_ERROR(ExitContext(&saved_context)) << " (exiting GL context)";
   return status;
 }
 
 absl::Status GlContext::Run(GlStatusFunction gl_func, int node_id,
                             Timestamp input_timestamp) {
   absl::Status status;
-  if (profiling_helper_) {
+  auto* profiling_helper = profiling_helper_owner_.Get();
+  if (profiling_helper) {
     gl_func = [=] {
-      profiling_helper_->MarkTimestamp(node_id, input_timestamp,
-                                       /*is_finish=*/false);
+      profiling_helper->MarkTimestamp(node_id, input_timestamp,
+                                      /*is_finish=*/false);
       auto status = gl_func();
-      profiling_helper_->MarkTimestamp(node_id, input_timestamp,
-                                       /*is_finish=*/true);
+      profiling_helper->MarkTimestamp(node_id, input_timestamp,
+                                      /*is_finish=*/true);
       return status;
     };
   }
@@ -575,7 +579,7 @@ absl::Status GlContext::SwitchContext(ContextBinding* saved_context,
     // old one (we may be deliberately trying to exit it).
     // 2. We need to unset the old context before we unlock the old mutex,
     // Therefore, we first unset the old one before setting the new one.
-    MP_RETURN_IF_ERROR(SetCurrentContextBinding({}));
+    ABSL_RETURN_IF_ERROR(SetCurrentContextBinding({}));
     old_context_obj->context_use_mutex_.unlock();
     CurrentContext().reset();
   }
@@ -1167,7 +1171,22 @@ void GlContext::SetStandardTextureParams(GLenum target, GLint internal_format) {
   glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
-const GlContext::Attachment<GLuint> kUtilityFramebuffer(
+void GlContext::ProfilingHelperOwner::CreateIfUnset(
+    std::shared_ptr<mediapipe::ProfilingContext> profiling_context) {
+  if (profiling_context && !is_set_) {
+    absl::MutexLock lock(mutex_);
+    if (!is_set_) {
+      profiling_helper_ = profiling_context->CreateGlProfilingHelper();
+      is_set_ = profiling_helper_ != nullptr;
+    }
+  }
+}
+
+mediapipe::GlProfilingHelper* GlContext::ProfilingHelperOwner::Get() const {
+  return is_set_ ? profiling_helper_.get() : nullptr;
+}
+
+ABSL_CONST_INIT const GlContext::Attachment<GLuint> kUtilityFramebuffer(
     [](GlContext&) -> GlContext::Attachment<GLuint>::Ptr {
       GLuint framebuffer;
       glGenFramebuffers(1, &framebuffer);

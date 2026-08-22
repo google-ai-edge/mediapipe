@@ -96,7 +96,7 @@ absl::Status ImageToTensorFrameBufferConverter::Convert(
   auto input_frame =
       input.GetGpuBuffer(/*upload_to_gpu=*/false).GetReadView<FrameBuffer>();
   const auto& output_shape = output_tensor.shape();
-  MP_RETURN_IF_ERROR(ValidateTensorShape(output_shape));
+  ABSL_RETURN_IF_ERROR(ValidateTensorShape(output_shape));
   FrameBuffer::Dimension output_dimension{/*width=*/output_shape.dims[2],
                                           /*height=*/output_shape.dims[1]};
 
@@ -117,7 +117,7 @@ absl::Status ImageToTensorFrameBufferConverter::Convert(
       }
       auto output_frame = frame_buffer::CreateFromRgbRawBuffer(
           output_buffer_.get(), output_dimension);
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           CropRotateResize90Degrees(input_frame, roi, output_frame));
       return ConvertToFloatTensor(output_frame, range_min, range_max,
                                   output_tensor);
@@ -173,11 +173,11 @@ absl::Status ImageToTensorFrameBufferConverter::CropRotateResize90Degrees(
       cropped_buffer_ = std::make_unique<uint8_t[]>(cropped_buffer_size);
       cropped_buffer_size_ = cropped_buffer_size;
     }
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         cropped, frame_buffer::CreateFromRawBuffer(
                      cropped_buffer_.get(), cropped_dims, input->format()));
   }
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       frame_buffer::Crop(*input, left, top, right, bottom, cropped.get()));
 
   // Then rotate if needed.
@@ -192,11 +192,11 @@ absl::Status ImageToTensorFrameBufferConverter::CropRotateResize90Degrees(
         rotated_buffer_ = std::make_unique<uint8_t[]>(rotated_buffer_size);
         rotated_buffer_size_ = rotated_buffer_size;
       }
-      MP_ASSIGN_OR_RETURN(auto rotated, frame_buffer::CreateFromRawBuffer(
-                                            rotated_buffer_.get(), rotated_dims,
-                                            cropped->format()));
+      ABSL_ASSIGN_OR_RETURN(auto rotated, frame_buffer::CreateFromRawBuffer(
+                                              rotated_buffer_.get(),
+                                              rotated_dims, cropped->format()));
     }
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         frame_buffer::Rotate(*cropped, rotation_degrees, rotated.get()));
   } else {
     rotated = cropped;
@@ -215,7 +215,7 @@ absl::Status ImageToTensorFrameBufferConverter::ConvertToFloatTensor(
   RET_CHECK(output_tensor.element_type() == Tensor::ElementType::kFloat32);
   constexpr float kInputImageRangeMin = 0.0f;
   constexpr float kInputImageRangeMax = 255.0f;
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       auto transform,
       GetValueRangeTransformation(kInputImageRangeMin, kInputImageRangeMax,
                                   range_min, range_max));

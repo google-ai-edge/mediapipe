@@ -26,8 +26,8 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"  // NOLINT
 #include "mediapipe/framework/resources.h"
-#include "tensorflow/lite/model_builder.h"
-#include "tensorflow/lite/schema/schema_generated.h"
+#include "tflite/model_builder.h"
+#include "tflite/schema/schema_generated.h"
 
 namespace mediapipe {
 

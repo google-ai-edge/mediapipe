@@ -192,8 +192,8 @@ absl::Status SwitchDemuxCalculator::Open(CalculatorContext* cc) {
 }
 
 absl::Status SwitchDemuxCalculator::Process(CalculatorContext* cc) {
-  MP_RETURN_IF_ERROR(RecordPackets(cc));
-  MP_RETURN_IF_ERROR(SendActivePackets(cc));
+  ABSL_RETURN_IF_ERROR(RecordPackets(cc));
+  ABSL_RETURN_IF_ERROR(SendActivePackets(cc));
   return absl::OkStatus();
 }
 

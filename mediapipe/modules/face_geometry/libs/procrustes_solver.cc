@@ -38,9 +38,9 @@ class FloatPrecisionProcrustesSolver : public ProcrustesSolver {
       const Eigen::VectorXf& point_weights,
       Eigen::Matrix4f& transform_mat) const override {
     // Validate inputs.
-    MP_RETURN_IF_ERROR(ValidateInputPoints(source_points, target_points))
+    ABSL_RETURN_IF_ERROR(ValidateInputPoints(source_points, target_points))
         << "Failed to validate weighted orthogonal problem input points!";
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         ValidatePointWeights(source_points.cols(), point_weights))
         << "Failed to validate weighted orthogonal problem point weights!";
 
@@ -48,7 +48,7 @@ class FloatPrecisionProcrustesSolver : public ProcrustesSolver {
     Eigen::VectorXf sqrt_weights = ExtractSquareRoot(point_weights);
 
     // Try to solve the WEOP problem.
-    MP_RETURN_IF_ERROR(InternalSolveWeightedOrthogonalProblem(
+    ABSL_RETURN_IF_ERROR(InternalSolveWeightedOrthogonalProblem(
         source_points, target_points, sqrt_weights, transform_mat))
         << "Failed to solve the WEOP problem!";
 
@@ -169,10 +169,10 @@ class FloatPrecisionProcrustesSolver : public ProcrustesSolver {
         weighted_sources - source_center_of_mass * sqrt_weights.transpose();
 
     Eigen::Matrix3f rotation;
-    MP_RETURN_IF_ERROR(ComputeOptimalRotation(
+    ABSL_RETURN_IF_ERROR(ComputeOptimalRotation(
         weighted_targets * centered_weighted_sources.transpose(), rotation))
         << "Failed to compute the optimal rotation!";
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         float scale,
         ComputeOptimalScale(centered_weighted_sources, weighted_sources,
                             weighted_targets, rotation),
@@ -259,7 +259,7 @@ class FloatPrecisionProcrustesSolver : public ProcrustesSolver {
 }  // namespace
 
 std::unique_ptr<ProcrustesSolver> CreateFloatPrecisionProcrustesSolver() {
-  return absl::make_unique<FloatPrecisionProcrustesSolver>();
+  return std::make_unique<FloatPrecisionProcrustesSolver>();
 }
 
 }  // namespace face_geometry

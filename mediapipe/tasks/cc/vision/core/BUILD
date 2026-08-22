@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
+load("@litert//tflite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 licenses(["notice"])
@@ -77,6 +77,6 @@ cc_library_with_tflite(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
+        "@litert//tflite/core/api:op_resolver",
     ],
 )

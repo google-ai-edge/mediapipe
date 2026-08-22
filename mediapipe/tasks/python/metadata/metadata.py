@@ -69,7 +69,7 @@ def _open_as_zipfile(filename, mode="r"):
     A ZipFile object.
   """
   file_like = _maybe_open_as_binary(filename, mode)
-  return zipfile.ZipFile(file_like, mode)
+  return zipfile.ZipFile(file_like, mode)  # pyrefly: ignore[no-matching-overload]
 
 
 def _is_zipfile(filename):
@@ -145,7 +145,7 @@ class _FlatbuffersParser:
     self._lib.__enter__()  # Enter the mediapipe_c_bindings context
     self._parser = ctypes.c_void_p()
     try:
-      self._lib.MpFlatbufferParserCreate(True, ctypes.byref(self._parser))
+      self._lib.MpFlatbufferParserCreate(True, ctypes.byref(self._parser))  # pyrefly: ignore[missing-attribute]
     except Exception:
       self._lib.__exit__(None, None, None)
       raise
@@ -153,15 +153,15 @@ class _FlatbuffersParser:
 
   def __exit__(self, exc_type, exc_val, exc_tb):
     if self._parser:
-      self._lib.MpFlatbufferParserDelete(self._parser)
+      self._lib.MpFlatbufferParserDelete(self._parser)  # pyrefly: ignore[missing-attribute]
     self._lib.__exit__(exc_type, exc_val, exc_tb)
 
   def parse(self, source: bytes) -> None:
     """Parses the Flatbuffers schema source."""
     try:
-      self._lib.MpFlatbufferParserParse(self._parser, source)
+      self._lib.MpFlatbufferParserParse(self._parser, source)  # pyrefly: ignore[missing-attribute]
     except Exception as e:
-      error_message = self._lib.MpFlatbufferParserGetError(self._parser).decode(
+      error_message = self._lib.MpFlatbufferParserGetError(self._parser).decode(  # pyrefly: ignore[missing-attribute]
           "utf-8"
       )
       raise ValueError(f"Cannot parse schema. Reason: {error_message}") from e
@@ -169,7 +169,7 @@ class _FlatbuffersParser:
   def generate_text(self, buffer: bytes) -> str:
     """Generates JSON text from a Flatbuffer buffer."""
     json_out = ctypes.c_char_p()
-    self._lib.MpFlatbufferGenerateText(
+    self._lib.MpFlatbufferGenerateText(  # pyrefly: ignore[missing-attribute]
         self._parser,
         ctypes.cast(ctypes.c_char_p(buffer), ctypes.POINTER(ctypes.c_uint8)),
         len(buffer),
@@ -181,7 +181,7 @@ class _FlatbuffersParser:
       raw_json_content = json_out.value.decode("utf-8")
       return raw_json_content
     finally:
-      self._lib.MpFlatbufferFreeString(json_out)
+      self._lib.MpFlatbufferFreeString(json_out)  # pyrefly: ignore[missing-attribute]
 
 
 # TODO: add delete method for associated files.

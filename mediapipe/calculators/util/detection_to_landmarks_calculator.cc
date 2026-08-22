@@ -85,7 +85,8 @@ class DetectionToLandmarksCalculator : public CalculatorBase {
     const auto& detection = cc->Inputs().Tag(kDetectionTag).Get<Detection>();
 
     auto landmarks = absl::make_unique<NormalizedLandmarkList>();
-    MP_RETURN_IF_ERROR(ConvertDetectionToLandmarks(detection, landmarks.get()));
+    ABSL_RETURN_IF_ERROR(
+        ConvertDetectionToLandmarks(detection, landmarks.get()));
 
     cc->Outputs()
         .Tag(kLandmarksTag)

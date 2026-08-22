@@ -67,20 +67,20 @@ absl::StatusOr<std::vector<int>> RunRegexPreprocessorCalculator(
   tool::AddVectorSink("tensors", &graph_config, &output_packets);
 
   std::string model_buffer = tasks::core::LoadBinaryContent(kTestModelPath);
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       std::unique_ptr<ModelMetadataExtractor> metadata_extractor,
       ModelMetadataExtractor::CreateFromModelBuffer(model_buffer.data(),
                                                     model_buffer.size()));
   // Run the graph.
   CalculatorGraph graph;
-  MP_RETURN_IF_ERROR(graph.Initialize(
+  ABSL_RETURN_IF_ERROR(graph.Initialize(
       graph_config,
       {{"metadata_extractor",
         MakePacket<ModelMetadataExtractor>(std::move(*metadata_extractor))}}));
-  MP_RETURN_IF_ERROR(graph.StartRun({}));
-  MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(
+  ABSL_RETURN_IF_ERROR(graph.StartRun({}));
+  ABSL_RETURN_IF_ERROR(graph.AddPacketToInputStream(
       "text", MakePacket<std::string>(text).At(Timestamp(0))));
-  MP_RETURN_IF_ERROR(graph.WaitUntilIdle());
+  ABSL_RETURN_IF_ERROR(graph.WaitUntilIdle());
 
   if (output_packets.size() != 1) {
     return absl::InvalidArgumentError(absl::Substitute(
@@ -97,8 +97,8 @@ absl::StatusOr<std::vector<int>> RunRegexPreprocessorCalculator(
   }
   auto* buffer = tensor_vec[0].GetCpuReadView().buffer<int>();
   std::vector<int> result(buffer, buffer + kMaxSeqLen);
-  MP_RETURN_IF_ERROR(graph.CloseAllPacketSources());
-  MP_RETURN_IF_ERROR(graph.WaitUntilDone());
+  ABSL_RETURN_IF_ERROR(graph.CloseAllPacketSources());
+  ABSL_RETURN_IF_ERROR(graph.WaitUntilDone());
   return result;
 }
 

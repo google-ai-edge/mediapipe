@@ -193,7 +193,7 @@ class CalculatorNodeTest : public ::testing::Test {
          ++index) {
       const EdgeInfo& edge_info =
           validated_graph_.OutputSidePacketInfos()[index];
-      MP_RETURN_IF_ERROR(output_side_packets_[index].Initialize(
+      ABSL_RETURN_IF_ERROR(output_side_packets_[index].Initialize(
           edge_info.name, edge_info.packet_type));
     }
     // END OF: code is copied from
@@ -206,7 +206,7 @@ class CalculatorNodeTest : public ::testing::Test {
     for (int index = 0; index < validated_graph_.InputStreamInfos().size();
          ++index) {
       const EdgeInfo& edge_info = validated_graph_.InputStreamInfos()[index];
-      MP_RETURN_IF_ERROR(input_stream_managers_[index].Initialize(
+      ABSL_RETURN_IF_ERROR(input_stream_managers_[index].Initialize(
           edge_info.name, edge_info.packet_type, edge_info.back_edge));
     }
 
@@ -216,7 +216,7 @@ class CalculatorNodeTest : public ::testing::Test {
     for (int index = 0; index < validated_graph_.OutputStreamInfos().size();
          ++index) {
       const EdgeInfo& edge_info = validated_graph_.OutputStreamInfos()[index];
-      MP_RETURN_IF_ERROR(output_stream_managers_[index].Initialize(
+      ABSL_RETURN_IF_ERROR(output_stream_managers_[index].Initialize(
           edge_info.name, edge_info.packet_type));
     }
     // END OF: code is copied from CalculatorGraph::InitializeStreams.

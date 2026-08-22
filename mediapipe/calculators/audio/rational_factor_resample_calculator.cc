@@ -66,7 +66,7 @@ absl::Status RationalFactorResampleCalculator::Open(CalculatorContext* cc) {
   target_sample_rate_ = resample_options.target_sample_rate();
 
   TimeSeriesHeader input_header;
-  MP_RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
+  ABSL_RETURN_IF_ERROR(time_series_util::FillTimeSeriesHeaderIfValid(
       cc->Inputs().Index(0).Header(), &input_header));
 
   source_sample_rate_ = input_header.sample_rate();
@@ -179,7 +179,7 @@ RationalFactorResampleCalculator::ResamplerFromOptions(
 
   // NOTE: QResampler supports multichannel resampling, so the code might be
   // simplified using a single instance rather than one per channel.
-  resampler = absl::make_unique<audio_dsp::QResampler<float>>(
+  resampler = std::make_unique<audio_dsp::QResampler<float>>(
       source_sample_rate, target_sample_rate, /*num_channels=*/1, params);
   if (resampler != nullptr && !resampler->Valid()) {
     resampler = std::unique_ptr<Resampler<float>>();

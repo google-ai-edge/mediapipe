@@ -203,7 +203,7 @@ std::unique_ptr<DetectionSet> MakeDetections(const int num_detections,
   std::uniform_int_distribution<int> height_distribution(0, height);
   std::uniform_real_distribution<float> score_distribution(0.0, 1.0);
   std::bernoulli_distribution is_required_distribution(0.5);
-  auto detections = absl::make_unique<DetectionSet>();
+  auto detections = std::make_unique<DetectionSet>();
   for (int i = 0; i < num_detections; ++i) {
     auto* region = detections->add_detections();
     const int x1 = width_distribution(GetGen());
@@ -228,7 +228,7 @@ std::unique_ptr<DetectionSet> MakeDetections(const int num_detections,
 // and is randomly set to be required or non-required.
 std::unique_ptr<DetectionSet> MakeCenterDetection(const int width,
                                                   const int height) {
-  auto detections = absl::make_unique<DetectionSet>();
+  auto detections = std::make_unique<DetectionSet>();
   auto* region = detections->add_detections();
   auto* location = region->mutable_location();
   location->set_x(width / 2 - 5);
@@ -244,7 +244,7 @@ std::unique_ptr<ImageFrame> MakeImageFrameFromColor(const cv::Scalar& color,
                                                     const int width,
                                                     const int height) {
   auto image_frame =
-      absl::make_unique<ImageFrame>(ImageFormat::SRGB, width, height);
+      std::make_unique<ImageFrame>(ImageFormat::SRGB, width, height);
   auto mat = formats::MatView(image_frame.get());
   mat = color;
   return image_frame;
@@ -296,11 +296,11 @@ void AddScene(const int start_frame_index, const int num_scene_frames,
           .packets.push_back(Adopt(frame.release()).At(timestamp));
     } else {
       auto input_size =
-          ::absl::make_unique<std::pair<int, int>>(frame_width, frame_height);
+          std::make_unique<std::pair<int, int>>(frame_width, frame_height);
       inputs->Tag(kVideoSizeTag)
           .packets.push_back(Adopt(input_size.release()).At(timestamp));
     }
-    auto static_features = absl::make_unique<StaticFeatures>();
+    auto static_features = std::make_unique<StaticFeatures>();
     inputs->Tag(kStaticFeaturesTag)
         .packets.push_back(Adopt(static_features.release()).At(timestamp));
     if (DownSampleRate == 1) {
@@ -339,7 +339,7 @@ TEST(SceneCroppingCalculatorTest, ChecksMaxSceneSize) {
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(
           absl::Substitute(kConfig, kTargetWidth, kTargetHeight,
                            kTargetSizeType, 0, kPriorFrameBufferSize));
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   const auto status = runner->Run();
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.ToString(),
@@ -352,7 +352,7 @@ TEST(SceneCroppingCalculatorTest, ChecksPriorFrameBufferSize) {
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(
           absl::Substitute(kConfig, kTargetWidth, kTargetHeight,
                            kTargetSizeType, kMaxSceneSize, -1));
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   const auto status = runner->Run();
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.ToString(),
@@ -363,7 +363,7 @@ TEST(SceneCroppingCalculatorTest, ChecksDebugConfigWithoutCroppedFrame) {
   const CalculatorGraphConfig::Node config =
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(absl::Substitute(
           kDebugConfigNoCroppedFrame, kTargetWidth, kTargetHeight));
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   const auto status = runner->Run();
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.ToString(), HasSubstr("can only be used when"));
@@ -375,7 +375,7 @@ TEST(SceneCroppingCalculatorTest, HandlesNoKeyFrames) {
   const CalculatorGraphConfig::Node config =
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(
           absl::Substitute(kNoKeyFrameConfig, kTargetWidth, kTargetHeight));
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   AddScene(0, kSceneSize, kInputFrameWidth, kInputFrameHeight, kKeyFrameWidth,
            kKeyFrameHeight, kDownSampleRate, runner->MutableInputs());
   MP_EXPECT_OK(runner->Run());
@@ -389,7 +389,7 @@ TEST(SceneCroppingCalculatorTest, HandlesLongScene) {
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(absl::Substitute(
           kConfig, kTargetWidth, kTargetHeight, kTargetSizeType, kMaxSceneSize,
           kPriorFrameBufferSize));
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   AddScene(0, 2 * kMaxSceneSize, kInputFrameWidth, kInputFrameHeight,
            kKeyFrameWidth, kKeyFrameHeight, kDownSampleRate,
            runner->MutableInputs());
@@ -402,7 +402,7 @@ TEST(SceneCroppingCalculatorTest, OutputsDebugStreams) {
   const CalculatorGraphConfig::Node config =
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(
           absl::Substitute(kDebugConfig, kTargetWidth, kTargetHeight));
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   const int num_frames = kSceneSize;
   AddScene(0, num_frames, kInputFrameWidth, kInputFrameHeight, kKeyFrameWidth,
            kKeyFrameHeight, kDownSampleRate, runner->MutableInputs());
@@ -472,7 +472,7 @@ TEST(SceneCroppingCalculatorTest, HandlesLandscapeTarget) {
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(absl::Substitute(
           kConfig, target_width, target_height, kTargetSizeType, kMaxSceneSize,
           kPriorFrameBufferSize));
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   for (int i = 0; i < kNumScenes; ++i) {
     AddScene(i * kSceneSize, kSceneSize, input_width, input_height,
              kKeyFrameWidth, kKeyFrameHeight, kDownSampleRate,
@@ -490,7 +490,7 @@ TEST(SceneCroppingCalculatorTest, CropsToTargetSize) {
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(absl::Substitute(
           kConfig, kTargetWidth, kTargetHeight, kTargetSizeType, kMaxSceneSize,
           kPriorFrameBufferSize));
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   for (int i = 0; i < kNumScenes; ++i) {
     AddScene(i * kSceneSize, kSceneSize, kInputFrameWidth, kInputFrameHeight,
              kKeyFrameWidth, kKeyFrameHeight, kDownSampleRate,
@@ -510,7 +510,7 @@ TEST(SceneCroppingCalculatorTest, CropsToOriginalDimension) {
           kConfig, /*target_width*/ 2, /*target_height*/ 2,
           SceneCroppingCalculatorOptions::KEEP_ORIGINAL_DIMENSION,
           kMaxSceneSize, kPriorFrameBufferSize));
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   for (int i = 0; i < kNumScenes; ++i) {
     AddScene(i * kSceneSize, kSceneSize, kInputFrameWidth, kInputFrameHeight,
              kKeyFrameWidth, kKeyFrameHeight, kDownSampleRate,
@@ -535,7 +535,7 @@ TEST(SceneCroppingCalculatorTest, KeepsOriginalHeight) {
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(absl::Substitute(
           kConfig, kTargetWidth, kTargetHeight, target_size_type, kMaxSceneSize,
           kPriorFrameBufferSize));
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   AddScene(0, kMaxSceneSize, kInputFrameWidth, kInputFrameHeight,
            kKeyFrameWidth, kKeyFrameHeight, kDownSampleRate,
            runner->MutableInputs());
@@ -557,7 +557,7 @@ TEST(SceneCroppingCalculatorTest, KeepsOriginalWidth) {
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(absl::Substitute(
           kConfig, kTargetWidth, kTargetHeight, target_size_type, kMaxSceneSize,
           kPriorFrameBufferSize));
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   AddScene(0, kMaxSceneSize, kInputFrameWidth, kInputFrameHeight,
            kKeyFrameWidth, kKeyFrameHeight, kDownSampleRate,
            runner->MutableInputs());
@@ -571,7 +571,7 @@ TEST(SceneCroppingCalculatorTest, RejectsOddTargetSize) {
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(absl::Substitute(
           kConfig, kTargetWidth - 1, kTargetHeight, kTargetSizeType,
           kMaxSceneSize, kPriorFrameBufferSize));
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   AddScene(0, kMaxSceneSize, kInputFrameWidth, kInputFrameHeight,
            kKeyFrameWidth, kKeyFrameHeight, kDownSampleRate,
            runner->MutableInputs());
@@ -609,7 +609,7 @@ TEST(SceneCroppingCalculatorTest, ProducesEvenFrameSize) {
             ParseTextProtoOrDie<CalculatorGraphConfig::Node>(absl::Substitute(
                 kConfig, target_width, target_height, target_size_types[k],
                 kMaxSceneSize, kPriorFrameBufferSize));
-        auto runner = absl::make_unique<CalculatorRunner>(config);
+        auto runner = std::make_unique<CalculatorRunner>(config);
         AddScene(0, 1, frame_width, frame_height, kKeyFrameWidth,
                  kKeyFrameHeight, kDownSampleRate, runner->MutableInputs());
         MP_EXPECT_OK(runner->Run());
@@ -646,7 +646,7 @@ TEST(SceneCroppingCalculatorTest, PadsWithSolidColorFromStaticFeatures) {
   auto* options = config.mutable_options()->MutableExtension(
       SceneCroppingCalculatorOptions::ext);
   options->set_solid_background_frames_padding_fraction(0.6);
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
 
   const int static_features_downsample_rate = 2;
   const float fraction_with_solid_background = 0.7;
@@ -666,7 +666,7 @@ TEST(SceneCroppingCalculatorTest, PadsWithSolidColorFromStaticFeatures) {
     inputs->Tag(kVideoFramesTag)
         .packets.push_back(Adopt(frame.release()).At(timestamp));
     if (i % static_features_downsample_rate == 0) {
-      auto static_features = absl::make_unique<StaticFeatures>();
+      auto static_features = std::make_unique<StaticFeatures>();
       if (num_static_features < num_frames_with_solid_background) {
         auto* color = static_features->mutable_solid_background();
         // Uses BGR to mimic input from static features solid background color.
@@ -681,7 +681,7 @@ TEST(SceneCroppingCalculatorTest, PadsWithSolidColorFromStaticFeatures) {
     if (i % kDownSampleRate == 0) {  // is a key frame
       // Target crop size is (50, 100). Adds one required detection with size
       // (80, 100) larger than the target crop size to force padding.
-      auto detections = absl::make_unique<DetectionSet>();
+      auto detections = std::make_unique<DetectionSet>();
       auto* salient_region = detections->add_detections();
       salient_region->set_is_required(true);
       auto* location = salient_region->mutable_location();
@@ -734,7 +734,7 @@ TEST(SceneCroppingCalculatorTest, RemovesStaticBorders) {
 
   const auto config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(
       absl::Substitute(kNoKeyFrameConfig, target_width, target_height));
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
 
   // Add inputs.
   auto* inputs = runner->MutableInputs();
@@ -747,7 +747,7 @@ TEST(SceneCroppingCalculatorTest, RemovesStaticBorders) {
   inputs->Tag(kVideoFramesTag)
       .packets.push_back(Adopt(frame.release()).At(timestamp));
   // Set borders in static features.
-  auto static_features = absl::make_unique<StaticFeatures>();
+  auto static_features = std::make_unique<StaticFeatures>();
   auto* top_part = static_features->add_border();
   top_part->set_relative_position(Border::TOP);
   top_part->mutable_border_position()->set_height(top_border_size);
@@ -757,7 +757,7 @@ TEST(SceneCroppingCalculatorTest, RemovesStaticBorders) {
   inputs->Tag(kStaticFeaturesTag)
       .packets.push_back(Adopt(static_features.release()).At(timestamp));
   // Add empty detections to ensure no padding is used.
-  auto detections = absl::make_unique<DetectionSet>();
+  auto detections = std::make_unique<DetectionSet>();
   inputs->Tag(kDetectionFeaturesTag)
       .packets.push_back(Adopt(detections.release()).At(timestamp));
 
@@ -784,7 +784,7 @@ TEST(SceneCroppingCalculatorTest, OutputsCropMessagePolyPath) {
   const CalculatorGraphConfig::Node config =
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(
           absl::Substitute(kExternalRenderConfig, kTargetWidth, kTargetHeight));
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   const int num_frames = kSceneSize;
   AddScene(0, num_frames, kInputFrameWidth, kInputFrameHeight, kKeyFrameWidth,
            kKeyFrameHeight, 1, runner->MutableInputs());
@@ -822,7 +822,7 @@ TEST(SceneCroppingCalculatorTest, OutputsCropMessageKinematicPath) {
   kinematic_options->set_min_motion_to_reframe(1.2);
   kinematic_options->set_max_velocity(200);
 
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   const int num_frames = kSceneSize;
   AddScene(0, num_frames, kInputFrameWidth, kInputFrameHeight, kKeyFrameWidth,
            kKeyFrameHeight, 1, runner->MutableInputs());
@@ -855,7 +855,7 @@ TEST(SceneCroppingCalculatorTest, OutputsCropMessagePolyPathNoVideo) {
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(
           absl::Substitute(kExternalRenderConfigNoVideo, kTargetWidth,
                            kTargetHeight, kKeyFrameWidth, kKeyFrameHeight));
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   const int num_frames = kSceneSize;
   AddScene(0, num_frames, kInputFrameWidth, kInputFrameHeight, kKeyFrameWidth,
            kKeyFrameHeight, 1, runner->MutableInputs());
@@ -895,7 +895,7 @@ TEST(SceneCroppingCalculatorTest, OutputsCropMessageKinematicPathNoVideo) {
   kinematic_options->set_min_motion_to_reframe(1.2);
   kinematic_options->set_max_velocity(2.0);
 
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   const int num_frames = kSceneSize;
   AddScene(0, num_frames, kInputFrameWidth, kInputFrameHeight, kKeyFrameWidth,
            kKeyFrameHeight, 1, runner->MutableInputs());
@@ -927,7 +927,7 @@ TEST(SceneCroppingCalculatorTest, OutputsCropMessagePolyPathNormalized) {
   const CalculatorGraphConfig::Node config =
       ParseTextProtoOrDie<CalculatorGraphConfig::Node>(
           absl::Substitute(kExternalRenderConfig, kTargetWidth, kTargetHeight));
-  auto runner = absl::make_unique<CalculatorRunner>(config);
+  auto runner = std::make_unique<CalculatorRunner>(config);
   const int num_frames = kSceneSize;
   AddScene(0, num_frames, kInputFrameWidth, kInputFrameHeight, kKeyFrameWidth,
            kKeyFrameHeight, 1, runner->MutableInputs());

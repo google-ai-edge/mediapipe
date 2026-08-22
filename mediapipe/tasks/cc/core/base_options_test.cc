@@ -44,6 +44,11 @@ TEST(BaseOptionsTest, ConvertBaseOptionsToProtoWithAcceleration) {
   base_options.delegate = BaseOptions::Delegate::EDGETPU_NNAPI;
   proto = ConvertBaseOptionsToProto(&base_options);
   EXPECT_EQ(proto.acceleration().nnapi().accelerator_name(), "google-edgetpu");
+
+  base_options.delegate = BaseOptions::Delegate::NPU;
+  proto = ConvertBaseOptionsToProto(&base_options);
+  EXPECT_TRUE(proto.acceleration().has_litert());
+  EXPECT_TRUE(proto.acceleration().litert().has_npu());
 }
 
 TEST(DelegateOptionsTest, SucceedCpuOptions) {
@@ -116,6 +121,22 @@ TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithGpuDelegate) {
       std::get<BaseOptions::GpuOptions>(*base_options.delegate_options);
   EXPECT_EQ(gpu_opts.serialized_model_dir, kCachedModelDir);
   EXPECT_EQ(gpu_opts.model_token, kModelToken);
+}
+
+TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithNpuDelegate) {
+  proto::BaseOptions proto;
+  proto.mutable_acceleration()
+      ->mutable_litert()
+      ->mutable_npu()
+      ->set_dispatch_library_path("/tmp/dispatch");
+  BaseOptions base_options = ConvertProtoToBaseOptions(std::move(proto));
+  EXPECT_EQ(base_options.delegate, BaseOptions::Delegate::NPU);
+  ASSERT_TRUE(base_options.delegate_options.has_value());
+  ASSERT_TRUE(std::holds_alternative<BaseOptions::NpuOptions>(
+      *base_options.delegate_options));
+  EXPECT_EQ(std::get<BaseOptions::NpuOptions>(*base_options.delegate_options)
+                .dispatch_library_directory,
+            "/tmp/dispatch");
 }
 
 }  // namespace

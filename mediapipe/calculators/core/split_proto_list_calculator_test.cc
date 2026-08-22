@@ -37,8 +37,8 @@ class SplitNormalizedLandmarkListCalculatorTest : public ::testing::Test {
 
   void PrepareNormalizedLandmarkList(int list_size) {
     // Prepare input landmark list.
-    input_landmarks_ = absl::make_unique<NormalizedLandmarkList>();
-    expected_landmarks_ = absl::make_unique<NormalizedLandmarkList>();
+    input_landmarks_ = std::make_unique<NormalizedLandmarkList>();
+    expected_landmarks_ = std::make_unique<NormalizedLandmarkList>();
     for (int i = 0; i < list_size; ++i) {
       NormalizedLandmark* landmark = input_landmarks_->add_landmark();
       landmark->set_x(i * kLocationVal);

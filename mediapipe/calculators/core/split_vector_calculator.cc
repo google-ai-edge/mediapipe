@@ -26,10 +26,10 @@
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
-#include "tensorflow/lite/interpreter.h"
+#include "tflite/interpreter.h"
 
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
-#include "tensorflow/lite/delegates/gpu/gl/gl_buffer.h"
+#include "tflite/delegates/gpu/gl/gl_buffer.h"
 #endif  // !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
 
 namespace mediapipe {

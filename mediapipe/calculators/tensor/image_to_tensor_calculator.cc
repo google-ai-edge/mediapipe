@@ -95,8 +95,8 @@ class ImageToTensorNodeImpl
     }
 #else  // !MEDIAPIPE_DISABLE_GPU
 #if MEDIAPIPE_METAL_ENABLED
-    MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:&cc.GetGenericContract()
-                                 requestGpuAsOptional:true]);
+    ABSL_RETURN_IF_ERROR([MPPMetalHelper updateContract:&cc.GetGenericContract()
+                                   requestGpuAsOptional:true]);
 #else
 
     cc.UseService(kGpuService).Optional();
@@ -167,10 +167,10 @@ class ImageToTensorNodeImpl
     RotatedRect roi = GetRoi(image->width(), image->height(), norm_rect);
     const int tensor_width = params_.output_width.value_or(image->width());
     const int tensor_height = params_.output_height.value_or(image->height());
-    MP_ASSIGN_OR_RETURN(auto padding,
-                        PadRoi(tensor_width, tensor_height,
-                               options_.keep_aspect_ratio(), &roi));
-    MP_RETURN_IF_ERROR(ValidateRoi(roi));
+    ABSL_ASSIGN_OR_RETURN(auto padding,
+                          PadRoi(tensor_width, tensor_height,
+                                 options_.keep_aspect_ratio(), &roi));
+    ABSL_RETURN_IF_ERROR(ValidateRoi(roi));
     if (cc.out_letterbox_padding.IsConnected()) {
       cc.out_letterbox_padding.Send(padding);
     }
@@ -183,7 +183,7 @@ class ImageToTensorNodeImpl
     }
 
     // Lazy initialization of the GPU or CPU converter.
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         InitConverterIfNecessary(&cc.GetGenericContext(), *image));
 
     Tensor::ElementType output_tensor_type =
@@ -192,10 +192,10 @@ class ImageToTensorNodeImpl
         output_tensor_type,
         {1, tensor_height, tensor_width, GetNumOutputChannels(*image)},
         memory_manager_);
-    MP_RETURN_IF_ERROR((image->UsesGpu() ? gpu_converter_ : cpu_converter_)
-                           ->Convert(*image, roi, params_.range_min,
-                                     params_.range_max,
-                                     /*tensor_buffer_offset=*/0, tensor));
+    ABSL_RETURN_IF_ERROR((image->UsesGpu() ? gpu_converter_ : cpu_converter_)
+                             ->Convert(*image, roi, params_.range_min,
+                                       params_.range_max,
+                                       /*tensor_buffer_offset=*/0, tensor));
 
     if (cc.out_tensors.IsConnected()) {
       auto result = std::make_unique<std::vector<Tensor>>();
@@ -220,31 +220,31 @@ class ImageToTensorNodeImpl
       if (!gpu_converter_) {
 #if !MEDIAPIPE_DISABLE_GPU
 #if MEDIAPIPE_METAL_ENABLED
-        MP_ASSIGN_OR_RETURN(
+        ABSL_ASSIGN_OR_RETURN(
             gpu_converter_,
             CreateMetalConverter(cc, GetBorderMode(options_.border_mode())));
 #elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-        MP_ASSIGN_OR_RETURN(bool input_starts_at_bottom,
-                            IsGpuOriginAtBottom(options_.gpu_origin()));
-        MP_ASSIGN_OR_RETURN(gpu_converter_,
-                            CreateImageToGlBufferTensorConverter(
-                                cc, input_starts_at_bottom,
-                                GetBorderMode(options_.border_mode())));
+        ABSL_ASSIGN_OR_RETURN(bool input_starts_at_bottom,
+                              IsGpuOriginAtBottom(options_.gpu_origin()));
+        ABSL_ASSIGN_OR_RETURN(gpu_converter_,
+                              CreateImageToGlBufferTensorConverter(
+                                  cc, input_starts_at_bottom,
+                                  GetBorderMode(options_.border_mode())));
 #else
         if (IsWebGpuAvailable()) {
 #if MEDIAPIPE_USE_WEBGPU
-          MP_ASSIGN_OR_RETURN(gpu_converter_,
-                              CreateImageToWebGpuTextureTensorConverter(cc));
+          ABSL_ASSIGN_OR_RETURN(gpu_converter_,
+                                CreateImageToWebGpuTextureTensorConverter(cc));
 #endif  // MEDIAPIPE_USE_WEBGPU
         }
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
         if (!gpu_converter_) {
-          MP_ASSIGN_OR_RETURN(bool input_starts_at_bottom,
-                              IsGpuOriginAtBottom(options_.gpu_origin()));
-          MP_ASSIGN_OR_RETURN(gpu_converter_,
-                              CreateImageToGlTextureTensorConverter(
-                                  cc, input_starts_at_bottom,
-                                  GetBorderMode(options_.border_mode())));
+          ABSL_ASSIGN_OR_RETURN(bool input_starts_at_bottom,
+                                IsGpuOriginAtBottom(options_.gpu_origin()));
+          ABSL_ASSIGN_OR_RETURN(gpu_converter_,
+                                CreateImageToGlTextureTensorConverter(
+                                    cc, input_starts_at_bottom,
+                                    GetBorderMode(options_.border_mode())));
         }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
         if (!gpu_converter_) {
@@ -257,7 +257,7 @@ class ImageToTensorNodeImpl
     } else {
       if (!cpu_converter_) {
 #if !MEDIAPIPE_DISABLE_OPENCV
-        MP_ASSIGN_OR_RETURN(
+        ABSL_ASSIGN_OR_RETURN(
             cpu_converter_,
             CreateOpenCvConverter(
                 cc, GetBorderMode(options_.border_mode()),
@@ -266,7 +266,7 @@ class ImageToTensorNodeImpl
 // to get access to a FrameBuffer view. Investigate if GetGpuBuffer() can be
 // made available even with MEDIAPIPE_DISABLE_GPU set.
 #elif MEDIAPIPE_ENABLE_HALIDE
-        MP_ASSIGN_OR_RETURN(
+        ABSL_ASSIGN_OR_RETURN(
             cpu_converter_,
             CreateFrameBufferConverter(
                 cc, GetBorderMode(options_.border_mode()),

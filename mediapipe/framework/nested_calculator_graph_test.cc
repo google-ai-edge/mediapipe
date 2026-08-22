@@ -201,16 +201,16 @@ class NestedGraphServiceTestCalculator : public Node {
           }
         )pb");
 
-    MP_RETURN_IF_ERROR(graph.Initialize(graph_config));
+    ABSL_RETURN_IF_ERROR(graph.Initialize(graph_config));
     const auto status = graph.StartRun({});
     kStartupError(cc).Send(status);
     if (!status.ok()) {
       // Exit early if the graph failed to start.
       return absl::OkStatus();
     }
-    MP_RETURN_IF_ERROR(graph.AddPacketToInputStream("tick", kTestValue(cc)));
-    MP_RETURN_IF_ERROR(graph.CloseAllInputStreams());
-    MP_RETURN_IF_ERROR(graph.WaitUntilDone());
+    ABSL_RETURN_IF_ERROR(graph.AddPacketToInputStream("tick", kTestValue(cc)));
+    ABSL_RETURN_IF_ERROR(graph.CloseAllInputStreams());
+    ABSL_RETURN_IF_ERROR(graph.WaitUntilDone());
     return absl::OkStatus();
   }
 };
@@ -319,7 +319,7 @@ class NestedGraphWithGpuServiceRequestingCalculator : public Node {
           }
         )pb");
 
-    MP_RETURN_IF_ERROR(graph.Initialize(graph_config));
+    ABSL_RETURN_IF_ERROR(graph.Initialize(graph_config));
     EXPECT_THAT(
         graph.StartRun({}),
         StatusIs(absl::StatusCode::kInternal,

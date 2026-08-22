@@ -26,8 +26,8 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/util.h"
+#include "tflite/interpreter.h"
+#include "tflite/util.h"
 
 ABSL_DECLARE_FLAG(int, xnnpack_default_num_threads);
 

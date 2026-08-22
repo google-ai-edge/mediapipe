@@ -226,7 +226,7 @@ def draw_axis(image: np.ndarray,
     raise ValueError('Input image must contain three channel bgr data.')
   image_rows, image_cols, _ = image.shape
   # Create axis points in camera coordinate frame.
-  axis_world = np.float32([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]])
+  axis_world = np.float32([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]])  # pyrefly: ignore[bad-argument-type]
   axis_cam = np.matmul(rotation, axis_length * axis_world.T).T + translation
   x = axis_cam[..., 0]
   y = axis_cam[..., 1]
@@ -240,10 +240,10 @@ def draw_axis(image: np.ndarray,
   x_im = np.int32((1 + x_ndc) * 0.5 * image_cols)
   y_im = np.int32((1 - y_ndc) * 0.5 * image_rows)
   # Draw xyz axis on the image.
-  origin = (x_im[0], y_im[0])
-  x_axis = (x_im[1], y_im[1])
-  y_axis = (x_im[2], y_im[2])
-  z_axis = (x_im[3], y_im[3])
+  origin = (x_im[0], y_im[0])  # pyrefly: ignore[bad-index]
+  x_axis = (x_im[1], y_im[1])  # pyrefly: ignore[bad-index]
+  y_axis = (x_im[2], y_im[2])  # pyrefly: ignore[bad-index]
+  z_axis = (x_im[3], y_im[3])  # pyrefly: ignore[bad-index]
   cv2.arrowedLine(image, origin, x_axis, RED_COLOR, axis_drawing_spec.thickness)
   cv2.arrowedLine(image, origin, y_axis, GREEN_COLOR,
                   axis_drawing_spec.thickness)

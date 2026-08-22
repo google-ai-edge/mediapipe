@@ -27,21 +27,21 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/gl_base.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/core/interpreter_builder.h"
-#include "tensorflow/lite/delegates/gpu/api.h"
-#include "tensorflow/lite/delegates/gpu/common/data_type.h"
-#include "tensorflow/lite/delegates/gpu/common/model.h"
-#include "tensorflow/lite/delegates/gpu/common/model_builder.h"
-#include "tensorflow/lite/delegates/gpu/gl/api2.h"
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/model.h"
-#include "tensorflow/lite/model_builder.h"
+#include "tflite/core/api/op_resolver.h"
+#include "tflite/core/interpreter_builder.h"
+#include "tflite/delegates/gpu/api.h"
+#include "tflite/delegates/gpu/common/data_type.h"
+#include "tflite/delegates/gpu/common/model.h"
+#include "tflite/delegates/gpu/common/model_builder.h"
+#include "tflite/delegates/gpu/gl/api2.h"
+#include "tflite/interpreter.h"
+#include "tflite/model.h"
+#include "tflite/model_builder.h"
 
 // This code should be enabled as soon as TensorFlow version, which mediapipe
 // uses, will include this module.
 #if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
-#include "tensorflow/lite/delegates/gpu/cl/api.h"
+#include "tflite/delegates/gpu/cl/api.h"
 #endif
 
 namespace tflite {
@@ -127,10 +127,10 @@ absl::Status TFLiteGPURunner::InitializeWithModel(
   // in the end of the initialization stage.
   graph_gl_ = std::make_unique<GraphFloat32>();
   graph_cl_ = std::make_unique<GraphFloat32>();
-  MP_RETURN_IF_ERROR(BuildFromFlatBuffer(flatbuffer, op_resolver,
-                                         graph_gl_.get(), allow_quant_ops));
-  MP_RETURN_IF_ERROR(BuildFromFlatBuffer(flatbuffer, op_resolver,
-                                         graph_cl_.get(), allow_quant_ops));
+  ABSL_RETURN_IF_ERROR(BuildFromFlatBuffer(flatbuffer, op_resolver,
+                                           graph_gl_.get(), allow_quant_ops));
+  ABSL_RETURN_IF_ERROR(BuildFromFlatBuffer(flatbuffer, op_resolver,
+                                           graph_cl_.get(), allow_quant_ops));
 
   for (const auto& input : graph_gl_->inputs()) {
     input_shapes_.push_back(input->tensor.shape);
@@ -138,9 +138,9 @@ absl::Status TFLiteGPURunner::InitializeWithModel(
   for (const auto& output : graph_gl_->outputs()) {
     output_shapes_.push_back(output->tensor.shape);
   }
-  MP_RETURN_IF_ERROR(InitializeShapes(flatbuffer, op_resolver,
-                                      &input_shape_from_model_,
-                                      &output_shape_from_model_));
+  ABSL_RETURN_IF_ERROR(InitializeShapes(flatbuffer, op_resolver,
+                                        &input_shape_from_model_,
+                                        &output_shape_from_model_));
   return absl::OkStatus();
 }
 
@@ -165,11 +165,11 @@ absl::Status TFLiteGPURunner::Build() {
   std::unique_ptr<InferenceBuilder> builder;
   // By default, we try CL first & fall back to GL if that fails.
   if (opencl_is_forced_) {
-    MP_RETURN_IF_ERROR(InitializeOpenCL(&builder));
+    ABSL_RETURN_IF_ERROR(InitializeOpenCL(&builder));
     // Only OpenCL delegate supports serializations currently.
     is_cl_used_ = true;
   } else if (opengl_is_forced_) {
-    MP_RETURN_IF_ERROR(InitializeOpenGL(&builder));
+    ABSL_RETURN_IF_ERROR(InitializeOpenGL(&builder));
   } else {
     // try to build OpenCL first. If something goes wrong, fall back to OpenGL.
     absl::Status status = InitializeOpenCL(&builder);
@@ -178,7 +178,7 @@ absl::Status TFLiteGPURunner::Build() {
       is_cl_used_ = true;
     } else {
       VLOG(2) << "Falling back to OpenGL: " << status.message();
-      MP_RETURN_IF_ERROR(InitializeOpenGL(&builder));
+      ABSL_RETURN_IF_ERROR(InitializeOpenGL(&builder));
     }
   }
 
@@ -188,11 +188,11 @@ absl::Status TFLiteGPURunner::Build() {
 
   // 2. Describe output/input objects for created builder.
   for (int flow_index = 0; flow_index < input_shapes_.size(); ++flow_index) {
-    MP_RETURN_IF_ERROR(builder->SetInputObjectDef(
+    ABSL_RETURN_IF_ERROR(builder->SetInputObjectDef(
         flow_index, GetSSBOObjectDef(input_shapes_[flow_index].c)));
   }
   for (int flow_index = 0; flow_index < output_shapes_.size(); ++flow_index) {
-    MP_RETURN_IF_ERROR(builder->SetOutputObjectDef(
+    ABSL_RETURN_IF_ERROR(builder->SetOutputObjectDef(
         flow_index, GetSSBOObjectDef(output_shapes_[flow_index].c)));
   }
 
@@ -225,10 +225,10 @@ absl::Status TFLiteGPURunner::InitializeOpenGL(
   gl_options.priority2 = options_.priority2;
   gl_options.priority3 = options_.priority3;
   gl_options.usage = options_.usage;
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       NewInferenceEnvironment(env_options, &gl_environment_, &properties));
-  MP_RETURN_IF_ERROR(gl_environment_->NewInferenceBuilder(std::move(*graph_gl_),
-                                                          gl_options, builder));
+  ABSL_RETURN_IF_ERROR(gl_environment_->NewInferenceBuilder(
+      std::move(*graph_gl_), gl_options, builder));
   return absl::OkStatus();
 }
 
@@ -240,12 +240,12 @@ absl::Status TFLiteGPURunner::InitializeOpenCL(
     env_options.serialized_binary_cache = serialized_binary_cache_;
   }
   cl::InferenceEnvironmentProperties properties;
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       cl::NewInferenceEnvironment(env_options, &cl_environment_, &properties));
 
   if (serialized_model_.empty() &&
       opencl_init_from_serialized_model_is_forced_) {
-    MP_ASSIGN_OR_RETURN(serialized_model_, GetSerializedModel());
+    ABSL_ASSIGN_OR_RETURN(serialized_model_, GetSerializedModel());
   }
 
   // Try to initialize from serialized model first.
@@ -262,8 +262,8 @@ absl::Status TFLiteGPURunner::InitializeOpenCL(
   // Initialize from scratch.
   cl::InferenceOptions cl_options = GetClInferenceOptions(options_);
   GraphFloat32 graph_cl;
-  MP_RETURN_IF_ERROR(graph_cl_->MakeExactCopy(&graph_cl));
-  MP_RETURN_IF_ERROR(cl_environment_->NewInferenceBuilder(
+  ABSL_RETURN_IF_ERROR(graph_cl_->MakeExactCopy(&graph_cl));
+  ABSL_RETURN_IF_ERROR(cl_environment_->NewInferenceBuilder(
       cl_options, std::move(graph_cl), builder));
 
   return absl::OkStatus();
@@ -276,9 +276,9 @@ absl::Status TFLiteGPURunner::InitializeOpenCLFromSerializedModel(
     std::unique_ptr<InferenceBuilder>* builder) {
 #if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
   RET_CHECK(cl_environment_) << "CL environment is not initialized.";
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       cl_environment_->NewInferenceBuilder(serialized_model_, builder));
-  MP_RETURN_IF_ERROR(VerifyShapes(builder->get()->inputs(), input_shapes_));
+  ABSL_RETURN_IF_ERROR(VerifyShapes(builder->get()->inputs(), input_shapes_));
   return VerifyShapes(builder->get()->outputs(), output_shapes_);
 #else
   return absl::UnimplementedError(
@@ -313,10 +313,10 @@ absl::StatusOr<std::vector<uint8_t>> TFLiteGPURunner::GetSerializedModel() {
   RET_CHECK(cl_environment_) << "CL environment is not initialized.";
 
   GraphFloat32 graph_cl;
-  MP_RETURN_IF_ERROR(graph_cl_->MakeExactCopy(&graph_cl));
+  ABSL_RETURN_IF_ERROR(graph_cl_->MakeExactCopy(&graph_cl));
   cl::InferenceOptions cl_options = GetClInferenceOptions(options_);
   std::vector<uint8_t> serialized_model;
-  MP_RETURN_IF_ERROR(cl_environment_->BuildSerializedModel(
+  ABSL_RETURN_IF_ERROR(cl_environment_->BuildSerializedModel(
       cl_options, std::move(graph_cl), &serialized_model));
   return serialized_model;
 #else

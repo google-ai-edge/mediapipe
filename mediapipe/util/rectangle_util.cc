@@ -45,11 +45,11 @@ absl::StatusOr<bool> DoesRectOverlap(
     const mediapipe::NormalizedRect& new_rect,
     absl::Span<const mediapipe::NormalizedRect> existing_rects,
     float min_similarity_threshold) {
-  MP_ASSIGN_OR_RETURN(Rectangle_f new_rectangle, ToRectangle(new_rect));
+  ABSL_ASSIGN_OR_RETURN(Rectangle_f new_rectangle, ToRectangle(new_rect));
 
   for (const mediapipe::NormalizedRect& existing_rect : existing_rects) {
-    MP_ASSIGN_OR_RETURN(Rectangle_f existing_rectangle,
-                        ToRectangle(existing_rect));
+    ABSL_ASSIGN_OR_RETURN(Rectangle_f existing_rectangle,
+                          ToRectangle(existing_rect));
     if (CalculateIou(existing_rectangle, new_rectangle) >
         min_similarity_threshold) {
       return true;

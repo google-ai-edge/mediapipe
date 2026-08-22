@@ -138,7 +138,7 @@ absl::Status GlScalerCalculator::GetContract(CalculatorContract* cc) {
   if (cc->Inputs().HasTag(kOutputDimensionsTag)) {
     cc->Inputs().Tag(kOutputDimensionsTag).Set<DimensionsPacketType>();
   }
-  MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
+  ABSL_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
 
   if (cc->InputSidePackets().HasTag(kOptionsTag)) {
     cc->InputSidePackets().Tag(kOptionsTag).Set<GlScalerCalculatorOptions>();
@@ -166,7 +166,7 @@ absl::Status GlScalerCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(mediapipe::TimestampDiff(0));
 
   // Let the helper access the GL context information.
-  MP_RETURN_IF_ERROR(helper_.Open(cc));
+  ABSL_RETURN_IF_ERROR(helper_.Open(cc));
 
   int rotation_ccw = 0;
   const auto& options =
@@ -212,7 +212,7 @@ absl::Status GlScalerCalculator::Open(CalculatorContext* cc) {
     rotation_ccw = cc->InputSidePackets().Tag(kRotationTag).Get<int>();
   }
 
-  MP_RETURN_IF_ERROR(FrameRotationFromInt(&rotation_, rotation_ccw));
+  ABSL_RETURN_IF_ERROR(FrameRotationFromInt(&rotation_, rotation_ccw));
 
   return absl::OkStatus();
 }
@@ -243,7 +243,7 @@ absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
   }
 
   return helper_.RunInGlContext([this, cc]() -> absl::Status {
-    MP_ASSIGN_OR_RETURN(GpuBuffer input, GetInputGpuBuffer(cc));
+    ABSL_ASSIGN_OR_RETURN(GpuBuffer input, GetInputGpuBuffer(cc));
     QuadRenderer* renderer = nullptr;
     GlTexture src1;
     GlTexture src2;
@@ -253,7 +253,7 @@ absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
         input.format() == GpuBufferFormat::kBiPlanar420YpCbCr8FullRange) {
       if (!yuv_renderer_) {
         yuv_renderer_ = absl::make_unique<QuadRenderer>();
-        MP_RETURN_IF_ERROR(yuv_renderer_->GlSetup(
+        ABSL_RETURN_IF_ERROR(yuv_renderer_->GlSetup(
             kYUV2TexToRGBFragmentShader, {"video_frame_y", "video_frame_uv"}));
       }
       renderer = yuv_renderer_.get();
@@ -267,7 +267,7 @@ absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
       if (src1.target() == GL_TEXTURE_EXTERNAL_OES) {
         if (!ext_rgb_renderer_) {
           ext_rgb_renderer_ = absl::make_unique<QuadRenderer>();
-          MP_RETURN_IF_ERROR(ext_rgb_renderer_->GlSetup(
+          ABSL_RETURN_IF_ERROR(ext_rgb_renderer_->GlSetup(
               kBasicTexturedFragmentShaderOES, {"video_frame"}));
         }
         renderer = ext_rgb_renderer_.get();
@@ -275,8 +275,8 @@ absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
 #endif        // __ANDROID__
       {
         if (!rgb_renderer_) {
-          rgb_renderer_ = absl::make_unique<QuadRenderer>();
-          MP_RETURN_IF_ERROR(rgb_renderer_->GlSetup());
+          rgb_renderer_ = std::make_unique<QuadRenderer>();
+          ABSL_RETURN_IF_ERROR(rgb_renderer_->GlSetup());
         }
         renderer = rgb_renderer_.get();
       }
@@ -286,7 +286,7 @@ absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
     // Override input side packet if ROTATION input packet is provided.
     if (cc->Inputs().HasTag(kRotationTag)) {
       int rotation_ccw = cc->Inputs().Tag(kRotationTag).Get<int>();
-      MP_RETURN_IF_ERROR(FrameRotationFromInt(&rotation_, rotation_ccw));
+      ABSL_RETURN_IF_ERROR(FrameRotationFromInt(&rotation_, rotation_ccw));
     }
 
     int dst_width;
@@ -333,7 +333,7 @@ absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     }
 
-    MP_RETURN_IF_ERROR(renderer->GlRender(
+    ABSL_RETURN_IF_ERROR(renderer->GlRender(
         src1.width(), src1.height(), dst.width(), dst.height(), scale_mode_,
         rotation_, horizontal_flip_output_, vertical_flip_output_,
         /*flip_texture*/ false));

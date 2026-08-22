@@ -117,13 +117,13 @@ absl::StatusOr<Tensor> ConvertImageFrameToTensorOnCpu(
 
   // Copy image data into tensor.
   if (image_frame.ByteDepth() == 1) {
-    MP_RETURN_IF_ERROR(NormalizeUInt8Image(image_frame, flip_vertically,
-                                           output_range, max_num_channels,
-                                           cpu_view.buffer<float>()));
+    ABSL_RETURN_IF_ERROR(NormalizeUInt8Image(image_frame, flip_vertically,
+                                             output_range, max_num_channels,
+                                             cpu_view.buffer<float>()));
   } else if (image_frame.ByteDepth() == 4) {
-    MP_RETURN_IF_ERROR(NormalizeFloatImage(image_frame, flip_vertically,
-                                           output_range, max_num_channels,
-                                           cpu_view.buffer<float>()));
+    ABSL_RETURN_IF_ERROR(NormalizeFloatImage(image_frame, flip_vertically,
+                                             output_range, max_num_channels,
+                                             cpu_view.buffer<float>()));
   } else {
     return absl::InternalError(
         "Only byte-based (8 bit) and float (32 bit) images supported.");
@@ -140,7 +140,7 @@ absl::StatusOr<Tensor> ConvertMatrixToTensorOnCpu(
   Tensor output_tensor(Tensor::ElementType::kFloat32,
                        Tensor::Shape{1, height, width, channels},
                        memory_manager);
-  MP_RETURN_IF_ERROR(
+  ABSL_RETURN_IF_ERROR(
       CopyMatrixToTensor(matrix, row_major_matrix,
                          output_tensor.GetCpuWriteView().buffer<float>()));
   return output_tensor;

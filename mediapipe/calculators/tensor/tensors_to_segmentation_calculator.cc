@@ -76,13 +76,14 @@ class TensorsToSegmentationCalculator
 #if !MEDIAPIPE_DISABLE_GPU
       if (!gpu_converter_) {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-        MP_ASSIGN_OR_RETURN(gpu_converter_,
-                            CreateGlBufferConverter(cc, options_));
+        ABSL_ASSIGN_OR_RETURN(gpu_converter_,
+                              CreateGlBufferConverter(cc, options_));
 #elif MEDIAPIPE_METAL_ENABLED
-        MP_ASSIGN_OR_RETURN(gpu_converter_, CreateMetalConverter(cc, options_));
+        ABSL_ASSIGN_OR_RETURN(gpu_converter_,
+                              CreateMetalConverter(cc, options_));
 #else
-        MP_ASSIGN_OR_RETURN(gpu_converter_,
-                            CreateGlTextureConverter(cc, options_));
+        ABSL_ASSIGN_OR_RETURN(gpu_converter_,
+                              CreateGlTextureConverter(cc, options_));
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
       }
 #else
@@ -92,7 +93,7 @@ class TensorsToSegmentationCalculator
     } else {
 #if !MEDIAPIPE_DISABLE_OPENCV
       if (!cpu_converter_) {
-        MP_ASSIGN_OR_RETURN(cpu_converter_, CreateOpenCvConverter(options_));
+        ABSL_ASSIGN_OR_RETURN(cpu_converter_, CreateOpenCvConverter(options_));
       }
 #else
       RET_CHECK_FAIL() << "Cannot initialize OpenCV converter because OpenCV "
@@ -114,11 +115,11 @@ absl::Status TensorsToSegmentationCalculator::UpdateContract(
       << "Either TENSOR or TENSORS must be connected";
   if (CanUseGpu()) {
 #if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(
+    ABSL_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(
         &cc.GetGenericContract(), /*request_gpu_as_optional=*/true));
 #if MEDIAPIPE_METAL_ENABLED
-    MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:&cc.GetGenericContract()
-                                 requestGpuAsOptional:true]);
+    ABSL_RETURN_IF_ERROR([MPPMetalHelper updateContract:&cc.GetGenericContract()
+                                   requestGpuAsOptional:true]);
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // !MEDIAPIPE_DISABLE_GPU
   }
@@ -155,7 +156,7 @@ absl::Status TensorsToSegmentationCalculator::Process(
   // Validate tensor channels and activation type.
   {
     RET_CHECK(input_tensor->element_type() == Tensor::ElementType::kFloat32);
-    MP_ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensor->shape().dims));
+    ABSL_ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensor->shape().dims));
     int tensor_channels = std::get<2>(hwc);
     using Options = ::mediapipe::TensorsToSegmentationCalculatorOptions;
     switch (options_.activation()) {
@@ -172,7 +173,7 @@ absl::Status TensorsToSegmentationCalculator::Process(
   }
 
   // Get dimensions.
-  MP_ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensor->shape().dims));
+  ABSL_ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensor->shape().dims));
   auto [tensor_height, tensor_width, tensor_channels] = hwc;
   int output_width = tensor_width, output_height = tensor_height;
   if (cc.output_size_in.IsConnected()) {
@@ -185,9 +186,9 @@ absl::Status TensorsToSegmentationCalculator::Process(
   if (use_gpu) {
 #if !MEDIAPIPE_DISABLE_GPU
     // Lazily initialize converter
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         InitConverterIfNecessary(use_gpu, &cc.GetGenericContext()));
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         std::unique_ptr<Image> output_mask,
         gpu_converter_->Convert(*input_tensor, output_width, output_height));
     cc.mask_out.Send(std::move(output_mask));
@@ -197,9 +198,9 @@ absl::Status TensorsToSegmentationCalculator::Process(
   } else {
 #if !MEDIAPIPE_DISABLE_OPENCV
     // Lazily initialize converter.
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         InitConverterIfNecessary(use_gpu, &cc.GetGenericContext()));
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         std::unique_ptr<Image> output_mask,
         cpu_converter_->Convert(*input_tensor, output_width, output_height));
     cc.mask_out.Send(std::move(output_mask));

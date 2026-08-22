@@ -57,6 +57,9 @@ struct MpBaseOptions {
   // The path to the model asset to open and mmap in memory.
   const char* model_asset_path;
 
+  // The file descriptor to a file opened with open(2).
+  int file_descriptor;
+
   // The delegate to use for the MediaPipe graph.
   enum MpDelegate delegate;
 

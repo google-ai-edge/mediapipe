@@ -161,7 +161,7 @@ absl::Status BilateralFilterCalculator::GetContract(CalculatorContract* cc) {
 
   if (use_gpu) {
 #if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+    ABSL_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
 #endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
@@ -190,7 +190,7 @@ absl::Status BilateralFilterCalculator::Open(CalculatorContext* cc) {
 
   if (use_gpu_) {
 #if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
+    ABSL_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
@@ -200,17 +200,18 @@ absl::Status BilateralFilterCalculator::Open(CalculatorContext* cc) {
 absl::Status BilateralFilterCalculator::Process(CalculatorContext* cc) {
   if (use_gpu_) {
 #if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this, cc]() -> absl::Status {
-      if (!gpu_initialized_) {
-        MP_RETURN_IF_ERROR(GlSetup(cc));
-        gpu_initialized_ = true;
-      }
-      MP_RETURN_IF_ERROR(RenderGpu(cc));
-      return absl::OkStatus();
-    }));
+    ABSL_RETURN_IF_ERROR(
+        gpu_helper_.RunInGlContext([this, cc]() -> absl::Status {
+          if (!gpu_initialized_) {
+            ABSL_RETURN_IF_ERROR(GlSetup(cc));
+            gpu_initialized_ = true;
+          }
+          ABSL_RETURN_IF_ERROR(RenderGpu(cc));
+          return absl::OkStatus();
+        }));
 #endif  // !MEDIAPIPE_DISABLE_GPU
   } else {
-    MP_RETURN_IF_ERROR(RenderCpu(cc));
+    ABSL_RETURN_IF_ERROR(RenderCpu(cc));
   }
 
   return absl::OkStatus();
@@ -246,7 +247,7 @@ absl::Status BilateralFilterCalculator::RenderCpu(CalculatorContext* cc) {
         "CPU filtering supports only 1 or 3 channel input images.");
   }
 
-  auto output_frame = absl::make_unique<ImageFrame>(
+  auto output_frame = std::make_unique<ImageFrame>(
       input_frame.Format(), input_mat.cols, input_mat.rows);
   const bool has_guide_image = cc->Inputs().HasTag(kInputGuideTag) &&
                                !cc->Inputs().Tag(kInputGuideTag).IsEmpty();

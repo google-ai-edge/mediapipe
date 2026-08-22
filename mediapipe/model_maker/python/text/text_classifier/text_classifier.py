@@ -66,7 +66,7 @@ def _validate(options: text_classifier_options.TextClassifierOptions):
         f" got {options.supported_model}"
     )
   if isinstance(options.model_options, mo.BertModelOptions) and (
-      not isinstance(options.supported_model.value(), ms.BertClassifierSpec)
+      not isinstance(options.supported_model.value(), ms.BertClassifierSpec)  # pyrefly: ignore[not-callable]
   ):
     raise ValueError(
         f"Expected a Bert Classifier, got {options.supported_model}"
@@ -83,7 +83,7 @@ class TextClassifier(classifier.Classifier):
         model_spec=model_spec, label_names=label_names, shuffle=shuffle
     )
     self._model_spec = model_spec
-    self._text_preprocessor: preprocessor.TextClassifierPreprocessor = None
+    self._text_preprocessor: preprocessor.TextClassifierPreprocessor = None  # pyrefly: ignore[bad-assignment]
 
   @classmethod
   def create(
@@ -117,17 +117,17 @@ class TextClassifier(classifier.Classifier):
 
     _validate(options)
     if options.model_options is None:
-      options.model_options = options.supported_model.value().model_options
+      options.model_options = options.supported_model.value().model_options  # pyrefly: ignore[not-callable]
 
     if options.hparams is None:
-      options.hparams = options.supported_model.value().hparams
+      options.hparams = options.supported_model.value().hparams  # pyrefly: ignore[not-callable]
 
-    if isinstance(options.supported_model.value(), ms.BertClassifierSpec):
+    if isinstance(options.supported_model.value(), ms.BertClassifierSpec):  # pyrefly: ignore[not-callable]
       text_classifier = _BertClassifier.create_bert_classifier(
           train_data, validation_data, options
       )
     elif isinstance(
-        options.supported_model.value(), ms.AverageWordEmbeddingClassifierSpec
+        options.supported_model.value(), ms.AverageWordEmbeddingClassifierSpec  # pyrefly: ignore[not-callable]
     ):
       text_classifier = _AverageWordEmbeddingClassifier.create_average_word_embedding_classifier(
           train_data, validation_data, options
@@ -144,7 +144,7 @@ class TextClassifier(classifier.Classifier):
       saved_model_path: str,
       label_names: Sequence[str],
   ) -> "TextClassifier":
-    if not isinstance(options.supported_model.value(), ms.BertClassifierSpec):
+    if not isinstance(options.supported_model.value(), ms.BertClassifierSpec):  # pyrefly: ignore[not-callable]
       raise ValueError(
           "Only loading BertClassifier is supported, got:"
           f" {options.supported_model}"
@@ -268,7 +268,7 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
     ]
     self._text_preprocessor: (
         preprocessor.AverageWordEmbeddingClassifierPreprocessor
-    ) = None
+    ) = None  # pyrefly: ignore[bad-assignment]
 
   @classmethod
   def create_average_word_embedding_classifier(
@@ -288,9 +288,9 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
       An Average Word Embedding classifier.
     """
     average_word_embedding_classifier = _AverageWordEmbeddingClassifier(
-        model_spec=options.supported_model.value(),
-        model_options=options.model_options,
-        hparams=options.hparams,
+        model_spec=options.supported_model.value(),  # pyrefly: ignore[not-callable]
+        model_options=options.model_options,  # pyrefly: ignore[bad-argument-type]
+        hparams=options.hparams,  # pyrefly: ignore[bad-argument-type]
         label_names=train_data.label_names,
     )
     average_word_embedding_classifier._create_and_train_model(
@@ -413,7 +413,7 @@ class _BertClassifier(TextClassifier):
         )
     ]
     self._model_options = model_options
-    self._text_preprocessor: preprocessor.BertClassifierPreprocessor = None
+    self._text_preprocessor: preprocessor.BertClassifierPreprocessor = None  # pyrefly: ignore[bad-assignment]
     with self._hparams.get_strategy().scope():
       class_weights = (
           self._hparams.multiclass_loss_weights
@@ -448,9 +448,9 @@ class _BertClassifier(TextClassifier):
       A BERT-based classifier.
     """
     bert_classifier = _BertClassifier(
-        model_spec=options.supported_model.value(),
-        model_options=options.model_options,
-        hparams=options.hparams,
+        model_spec=options.supported_model.value(),  # pyrefly: ignore[not-callable]
+        model_options=options.model_options,  # pyrefly: ignore[bad-argument-type]
+        hparams=options.hparams,  # pyrefly: ignore[bad-argument-type]
         label_names=train_data.label_names,
     )
     tf.io.gfile.makedirs(bert_classifier._hparams.export_dir)
@@ -471,9 +471,9 @@ class _BertClassifier(TextClassifier):
       label_names: Sequence[str],
   ) -> "_BertClassifier":
     bert_classifier = _BertClassifier(
-        model_spec=options.supported_model.value(),
-        model_options=options.model_options,
-        hparams=options.hparams,
+        model_spec=options.supported_model.value(),  # pyrefly: ignore[not-callable]
+        model_options=options.model_options,  # pyrefly: ignore[bad-argument-type]
+        hparams=options.hparams,  # pyrefly: ignore[bad-argument-type]
         label_names=label_names,
     )
     with bert_classifier._hparams.get_strategy().scope():
@@ -481,7 +481,7 @@ class _BertClassifier(TextClassifier):
       # create dummy optimizer so model compiles
       bert_classifier._optimizer = tfa_optimizers.LAMB(
           3e-4,
-          weight_decay_rate=bert_classifier._hparams.weight_decay,
+          weight_decay_rate=bert_classifier._hparams.weight_decay,  # pyrefly: ignore[missing-attribute]
           epsilon=1e-6,
           exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"],
           global_clipnorm=1.0,
@@ -526,7 +526,7 @@ class _BertClassifier(TextClassifier):
         do_lower_case=self._model_spec.do_lower_case,
         uri=self._model_spec.get_path(),
         model_name=self._model_spec.name,
-        tokenizer=self._hparams.tokenizer,
+        tokenizer=self._hparams.tokenizer,  # pyrefly: ignore[missing-attribute]
     )
 
   def _run_preprocessor(
@@ -550,8 +550,8 @@ class _BertClassifier(TextClassifier):
       self,
   ) -> Tuple[Optional[str], Optional[Sequence[float]]]:
     """Returns the monitor metric name and class weights if eligible."""
-    class_weights = self._hparams.best_checkpoint_monitor_weights
-    monitor_name = self._hparams.monitor
+    class_weights = self._hparams.best_checkpoint_monitor_weights  # pyrefly: ignore[missing-attribute]
+    monitor_name = self._hparams.monitor  # pyrefly: ignore[missing-attribute]
 
     if (
         class_weights
@@ -591,7 +591,7 @@ class _BertClassifier(TextClassifier):
       A list of tf.keras.Metric subclasses which can be used with model.compile
     """
     metric_functions = []
-    if self._hparams.is_multilabel:
+    if self._hparams.is_multilabel:  # pyrefly: ignore[missing-attribute]
       metric_functions.append(tf.keras.metrics.BinaryAccuracy())
       metric_functions.append(
           tf.keras.metrics.AUC(
@@ -602,8 +602,8 @@ class _BertClassifier(TextClassifier):
         metric_functions.append(
             metrics.BinaryAUC(name=f"auc_{i}", num_thresholds=1000, class_id=i)
         )
-        if self._hparams.desired_precisions:
-          for desired_precision in self._hparams.desired_precisions:
+        if self._hparams.desired_precisions:  # pyrefly: ignore[missing-attribute]
+          for desired_precision in self._hparams.desired_precisions:  # pyrefly: ignore[not-iterable]
             metric_functions.append(
                 metrics.MaskedBinaryRecallAtPrecision(
                     desired_precision,
@@ -612,8 +612,8 @@ class _BertClassifier(TextClassifier):
                     class_id=i,
                 )
             )
-        if self._hparams.desired_recalls:
-          for desired_recall in self._hparams.desired_recalls:
+        if self._hparams.desired_recalls:  # pyrefly: ignore[missing-attribute]
+          for desired_recall in self._hparams.desired_recalls:  # pyrefly: ignore[not-iterable]
             metric_functions.append(
                 metrics.MaskedBinaryPrecisionAtRecall(
                     desired_recall,
@@ -622,8 +622,8 @@ class _BertClassifier(TextClassifier):
                     class_id=i,
                 )
             )
-        if self._hparams.desired_thresholds:
-          for desired_threshold in self._hparams.desired_thresholds:
+        if self._hparams.desired_thresholds:  # pyrefly: ignore[missing-attribute]
+          for desired_threshold in self._hparams.desired_thresholds:  # pyrefly: ignore[not-iterable]
             metric_functions.append(
                 metrics.MaskedBinaryPrecision(
                     desired_threshold,
@@ -648,8 +648,8 @@ class _BertClassifier(TextClassifier):
         metric_functions.extend([
             metrics.BinarySparseAUC(name="auc", num_thresholds=1000),
         ])
-        if self._hparams.desired_thresholds:
-          for desired_threshold in self._hparams.desired_thresholds:
+        if self._hparams.desired_thresholds:  # pyrefly: ignore[missing-attribute]
+          for desired_threshold in self._hparams.desired_thresholds:  # pyrefly: ignore[not-iterable]
             metric_functions.append(
                 metrics.BinarySparsePrecision(
                     name=f"precision_{desired_threshold}",
@@ -662,8 +662,8 @@ class _BertClassifier(TextClassifier):
                     thresholds=desired_threshold,
                 )
             )
-        if self._hparams.desired_precisions:
-          for desired_precision in self._hparams.desired_precisions:
+        if self._hparams.desired_precisions:  # pyrefly: ignore[missing-attribute]
+          for desired_precision in self._hparams.desired_precisions:  # pyrefly: ignore[not-iterable]
             metric_functions.append(
                 metrics.BinarySparseRecallAtPrecision(
                     desired_precision,
@@ -671,8 +671,8 @@ class _BertClassifier(TextClassifier):
                     num_thresholds=1000,
                 )
             )
-        if self._hparams.desired_recalls:
-          for desired_recall in self._hparams.desired_recalls:
+        if self._hparams.desired_recalls:  # pyrefly: ignore[missing-attribute]
+          for desired_recall in self._hparams.desired_recalls:  # pyrefly: ignore[not-iterable]
             metric_functions.append(
                 metrics.BinarySparseRecallAtPrecision(
                     desired_recall,
@@ -716,7 +716,7 @@ class _BertClassifier(TextClassifier):
                   name=monitor_name,
               )
           )
-        if self._hparams.desired_precisions or self._hparams.desired_recalls:
+        if self._hparams.desired_precisions or self._hparams.desired_recalls:  # pyrefly: ignore[missing-attribute]
           raise ValueError(
               "desired_recalls and desired_precisions parameters are binary"
               " metrics and not supported for num_classes > 2. Found"
@@ -771,17 +771,17 @@ class _BertClassifier(TextClassifier):
       )
       pooled_output = encoder(renamed_inputs)
 
-    output = tf.keras.layers.Dropout(rate=self._model_options.dropout_rate)(
+    output = tf.keras.layers.Dropout(rate=self._model_options.dropout_rate)(  # pyrefly: ignore[not-callable]
         pooled_output
     )
     initializer = tf.keras.initializers.TruncatedNormal(
         stddev=self._INITIALIZER_RANGE
     )
-    output = tf.keras.layers.Dense(
+    output = tf.keras.layers.Dense(  # pyrefly: ignore[not-callable]
         self._num_classes,
         kernel_initializer=initializer,
         name="output",
-        activation="sigmoid" if self._hparams.is_multilabel else "softmax",
+        activation="sigmoid" if self._hparams.is_multilabel else "softmax",  # pyrefly: ignore[missing-attribute]
         dtype=tf.float32,
     )(output)
     self._model = tf.keras.Model(inputs=encoder_inputs, outputs=output)
@@ -807,19 +807,19 @@ class _BertClassifier(TextClassifier):
     lr_schedule = tf.keras.optimizers.schedules.PolynomialDecay(
         initial_learning_rate=initial_lr,
         decay_steps=total_steps,
-        end_learning_rate=self._hparams.end_learning_rate,
+        end_learning_rate=self._hparams.end_learning_rate,  # pyrefly: ignore[missing-attribute]
         power=1.0,
     )
     if warmup_steps:
       lr_schedule = model_util.WarmUp(
           initial_learning_rate=initial_lr,
-          decay_schedule_fn=lr_schedule,
+          decay_schedule_fn=lr_schedule,  # pyrefly: ignore[bad-argument-type]
           warmup_steps=warmup_steps,
       )
-    if self._hparams.optimizer == hp.BertOptimizer.ADAMW:
+    if self._hparams.optimizer == hp.BertOptimizer.ADAMW:  # pyrefly: ignore[missing-attribute]
       self._optimizer = tf.keras.optimizers.experimental.AdamW(
           lr_schedule,
-          weight_decay=self._hparams.weight_decay,
+          weight_decay=self._hparams.weight_decay,  # pyrefly: ignore[missing-attribute]
           epsilon=1e-6,
           global_clipnorm=1.0,
       )
@@ -829,7 +829,7 @@ class _BertClassifier(TextClassifier):
     elif self._hparams.optimizer == hp.BertOptimizer.LAMB:
       self._optimizer = tfa_optimizers.LAMB(
           lr_schedule,
-          weight_decay_rate=self._hparams.weight_decay,
+          weight_decay_rate=self._hparams.weight_decay,  # pyrefly: ignore[missing-attribute]
           epsilon=1e-6,
           exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"],
           global_clipnorm=1.0,
@@ -901,7 +901,7 @@ class _BertClassifier(TextClassifier):
             batch_size=batch_size,
         ),
     )
-    output = self._model(constant_len_inputs)
+    output = self._model(constant_len_inputs)  # pyrefly: ignore[not-callable]
     constant_len_model = tf.keras.Model(
         inputs=constant_len_inputs, outputs=output
     )
@@ -949,7 +949,7 @@ class _BertClassifier(TextClassifier):
     tf.io.gfile.makedirs(self._hparams.export_dir)
     tflite_file = os.path.join(self._hparams.export_dir, model_name)
     if (
-        self._hparams.tokenizer
+        self._hparams.tokenizer  # pyrefly: ignore[missing-attribute]
         != bert_tokenizer.SupportedBertTokenizers.FAST_BERT_TOKENIZER
     ):
       print(
@@ -967,7 +967,7 @@ class _BertClassifier(TextClassifier):
       tokenizer = self._text_preprocessor.tokenizer
 
     model = model_with_tokenizer.ModelWithTokenizer(tokenizer, self._model)
-    model(tf.constant(["Example input data".encode("utf-8")]))  # build model
+    model(tf.constant(["Example input data".encode("utf-8")]))  # build model  # pyrefly: ignore[not-callable]
     saved_model_file = os.path.join(
         self._hparams.export_dir, "saved_model_with_tokenizer"
     )

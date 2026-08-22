@@ -205,7 +205,7 @@ absl::Status StableDiffusionIterateCalculator::Open(CalculatorContext* cc) {
   show_every_n_iteration_ = options.show_every_n_iteration();
   emit_empty_packet_ = options.emit_empty_packet();
 
-  MP_RETURN_IF_ERROR(LoadDiffuser());
+  ABSL_RETURN_IF_ERROR(LoadDiffuser());
 
   DiffuserConfig config;
   config.model_type = ToDiffuserModelType(options.model_type());
@@ -223,7 +223,7 @@ absl::Status StableDiffusionIterateCalculator::Open(CalculatorContext* cc) {
     }
     std::strcpy(config.model_dir, file_folder.c_str());  // NOLINT
   }
-  MP_RETURN_IF_ERROR(mediapipe::file::Exists(config.model_dir))
+  ABSL_RETURN_IF_ERROR(mediapipe::file::Exists(config.model_dir))
       << config.model_dir;
   RET_CHECK(options.lora_file_folder().empty() ||
             options.lora_weights_layer_mapping().empty())

@@ -214,7 +214,7 @@ class TextClassifier:
     ctypes_options = options.to_ctypes()
 
     classifier_handle = ctypes.c_void_p()
-    lib.MpTextClassifierCreate(
+    lib.MpTextClassifierCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(ctypes_options),
         ctypes.byref(classifier_handle),
     )
@@ -236,20 +236,20 @@ class TextClassifier:
     """
     ctypes_result = classification_result_c_module.MpClassificationResultC()
 
-    self._lib.MpTextClassifierClassify(
+    self._lib.MpTextClassifierClassify(  # pyrefly: ignore[missing-attribute]
         self._classifier_handle,
         text.encode("utf-8"),
         ctypes.byref(ctypes_result),
     )
     python_result = TextClassifierResult.from_ctypes(ctypes_result)
-    self._lib.MpTextClassifierCloseResult(ctypes.byref(ctypes_result))
+    self._lib.MpTextClassifierCloseResult(ctypes.byref(ctypes_result))  # pyrefly: ignore[missing-attribute]
     return python_result
 
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._classifier_handle:
-      self._lib.MpTextClassifierClose(self._classifier_handle)
-      self._classifier_handle = None
+      self._lib.MpTextClassifierClose(self._classifier_handle)  # pyrefly: ignore[missing-attribute]
+      self._classifier_handle = None  # pyrefly: ignore[bad-assignment]
       self._lib.close()
 
   def __enter__(self):

@@ -95,11 +95,11 @@ class ImageEmbedderGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         const auto* model_resources,
         CreateModelResources<proto::ImageEmbedderGraphOptions>(sc));
     Graph graph;
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         auto output_streams,
         BuildImageEmbedderTask(
             sc->Options<proto::ImageEmbedderGraphOptions>(), *model_resources,
@@ -136,10 +136,11 @@ class ImageEmbedderGraph : public core::ModelTaskGraph {
     bool use_gpu =
         components::processors::DetermineImagePreprocessingGpuBackend(
             task_options.base_options().acceleration());
-    MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
-        model_resources, use_gpu, task_options.base_options().gpu_origin(),
-        &preprocessing.GetOptions<tasks::components::processors::proto::
-                                      ImagePreprocessingGraphOptions>()));
+    ABSL_RETURN_IF_ERROR(
+        components::processors::ConfigureImagePreprocessingGraph(
+            model_resources, use_gpu, task_options.base_options().gpu_origin(),
+            &preprocessing.GetOptions<tasks::components::processors::proto::
+                                          ImagePreprocessingGraphOptions>()));
     image_in >> preprocessing.In(kImageTag);
     norm_rect_in >> preprocessing.In(kNormRectTag);
 
@@ -153,7 +154,7 @@ class ImageEmbedderGraph : public core::ModelTaskGraph {
     // inference results.
     auto& postprocessing = graph.AddNode(
         "mediapipe.tasks.components.processors.EmbeddingPostprocessingGraph");
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         components::processors::ConfigureEmbeddingPostprocessingGraph(
             model_resources, task_options.embedder_options(),
             &postprocessing

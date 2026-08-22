@@ -17,8 +17,8 @@
 
 #include <string>
 
-#include "tensorflow/lite/core/api/error_reporter.h"
-#include "tensorflow/lite/stateful_error_reporter.h"
+#include "tflite/core/api/error_reporter.h"
+#include "tflite/stateful_error_reporter.h"
 
 namespace mediapipe::util::tflite {
 

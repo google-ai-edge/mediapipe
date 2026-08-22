@@ -64,6 +64,15 @@ NS_ASSUME_NONNULL_BEGIN
                       shouldCopyPixelData:(BOOL)shouldCopyPixelData
                                     error:(NSError **)error;
 
+/**
+ * Returns a `UIImage` representation of the `MPPImage`, converting the underlying
+ * buffer if it is a pixel buffer or sample buffer.
+ *
+ * @param error Pointer to the memory location where errors if any should be saved.
+ * @return A `UIImage` or `nil` in case of errors.
+ */
+- (nullable UIImage *)toUIImageWithError:(NSError **)error;
+
 @end
 
 NS_ASSUME_NONNULL_END

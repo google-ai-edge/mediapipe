@@ -30,10 +30,12 @@ namespace {
 using ::mediapipe::file::JoinPath;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/text/";
+constexpr char kModelDirectory[] = "/mediapipe/models/";
 constexpr char kTestBertModelPath[] =
     "mobilebert_embedding_with_metadata.tflite";
 constexpr char kTestGeckoModelPath[] = "gecko.task";
-constexpr char kTestEmbeddingGemmaModelPath[] = "embedding_gemma.task";
+constexpr char kTestEmbeddingGemmaModelPath[] =
+    "embedding_gemma/embedding_gemma.task";
 constexpr char kTestString0[] =
     "When you go to this restaurant, they hold the pancake upside-down "
     "before they hand it to you. It's a great gimmick.";
@@ -41,8 +43,9 @@ constexpr char kTestString1[] =
     "Let's make a plan to steal the declaration of independence.";
 constexpr float kCosineSimilarityThreshold = 0.95;
 
-std::string GetFullPath(absl::string_view file_name) {
-  return JoinPath("./", kTestDataDirectory, file_name);
+std::string GetFullPath(absl::string_view file_name,
+                        absl::string_view directory = kTestDataDirectory) {
+  return JoinPath("./", directory, file_name);
 }
 
 TEST(TextEmbedderTest, SmokeTest) {
@@ -159,7 +162,8 @@ TEST(TextEmbedderTest, SucceedsWithGecko) {
 }
 
 TEST(TextEmbedderTest, SucceedsWithEmbeddingGemma) {
-  std::string model_path = GetFullPath(kTestEmbeddingGemmaModelPath);
+  std::string model_path =
+      GetFullPath(kTestEmbeddingGemmaModelPath, kModelDirectory);
   MpTextEmbedderOptions options = {
       .base_options = {.model_asset_path = model_path.c_str()},
       .embedder_options = {},

@@ -88,10 +88,10 @@ absl::Status CopyLiteralOptions(CalculatorGraphConfig::Node parent_node,
       FieldData parent_options;
       ASSIGN_IF_OK(parent_options,
                    GetNodeOptions(parent_data, graph_extension_type));
-      MP_ASSIGN_OR_RETURN(graph_options,
-                          MergeMessages(graph_options, parent_options));
+      ABSL_ASSIGN_OR_RETURN(graph_options,
+                            MergeMessages(graph_options, parent_options));
       FieldData node_options;
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           node_options, GetNodeOptions(node_data, node_extension_type),
           _ << " for node (name='" << node.name() << "', calculator='"
             << node.calculator()
@@ -104,9 +104,9 @@ absl::Status CopyLiteralOptions(CalculatorGraphConfig::Node parent_node,
       FieldPath graph_path = GetPath(graph_tag, MessageType(graph_options));
       FieldPath node_path = GetPath(node_tag, MessageType(node_options));
       std::vector<FieldData> packet_data;
-      MP_ASSIGN_OR_RETURN(packet_data,
-                          GetFieldValues(graph_options, graph_path));
-      MP_RETURN_IF_ERROR(
+      ABSL_ASSIGN_OR_RETURN(packet_data,
+                            GetFieldValues(graph_options, graph_path));
+      ABSL_RETURN_IF_ERROR(
           MergeFieldValues(node_options, node_path, packet_data));
       options_field_util::SetOptionsMessage(node_options, &node);
     }
@@ -118,7 +118,7 @@ absl::Status CopyLiteralOptions(CalculatorGraphConfig::Node parent_node,
 // Makes all configuration modifications needed for graph options.
 absl::Status DefineGraphOptions(const CalculatorGraphConfig::Node& parent_node,
                                 CalculatorGraphConfig* config) {
-  MP_RETURN_IF_ERROR(CopyLiteralOptions(parent_node, config));
+  ABSL_RETURN_IF_ERROR(CopyLiteralOptions(parent_node, config));
   return absl::OkStatus();
 }
 

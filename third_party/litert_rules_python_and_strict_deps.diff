@@ -1,0 +1,1197 @@
+diff --git a/ci/tools/python/wheel/utils/py_manylinux_compliance_test.bzl b/ci/tools/python/wheel/utils/py_manylinux_compliance_test.bzl
+index 0994e10..a2d5cf6 100644
+--- a/ci/tools/python/wheel/utils/py_manylinux_compliance_test.bzl
++++ b/ci/tools/python/wheel/utils/py_manylinux_compliance_test.bzl
+@@ -1,6 +1,6 @@
+ """ Macros for manylinux compliance verification test. """
+ 
+-load("@xla//third_party/rules_python/python:py_test.bzl", "py_test")
++load("//:rules_python_compat.bzl", "py_test")
+ 
+ def verify_manylinux_compliance_test(
+         name,
+diff --git a/litert/python/BUILD b/litert/python/BUILD
+index 7f40369..adbf348 100644
+--- a/litert/python/BUILD
++++ b/litert/python/BUILD
+@@ -14,8 +14,8 @@
+ 
+ load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "pybind_extension", "pywrap_binaries", "pywrap_library")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
+-load("@xla//third_party/rules_python/python:py_test.bzl", "py_test")
++load("//:rules_python_compat.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_test")
+ 
+ WINDOWS_PYBIND_UNDEFS = select({
+     "//litert:windows": [
+diff --git a/litert/python/litert_wrapper/BUILD b/litert/python/litert_wrapper/BUILD
+index 89b8d2b..c5cbdb8 100644
+--- a/litert/python/litert_wrapper/BUILD
++++ b/litert/python/litert_wrapper/BUILD
+@@ -12,7 +12,7 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-# copybara:uncomment load("@xla//third_party/rules_python/python:py_test.bzl", "py_test")
++# copybara:uncomment load("//:rules_python_compat.bzl", "py_test")
+ 
+ package(
+     # copybara:uncomment default_applicable_licenses = ["@org_tensorflow//tensorflow:license"],
+diff --git a/litert/python/litert_wrapper/common/BUILD b/litert/python/litert_wrapper/common/BUILD
+index cd0f2b7..5799dcd 100644
+--- a/litert/python/litert_wrapper/common/BUILD
++++ b/litert/python/litert_wrapper/common/BUILD
+@@ -13,7 +13,7 @@
+ # limitations under the License.
+ 
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+-# copybara:uncomment load("@xla//third_party/rules_python/python:py_test.bzl", "py_test")
++# copybara:uncomment load("//:rules_python_compat.bzl", "py_test")
+ # copybara:uncomment load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "pybind_extension")
+ 
+ package(
+diff --git a/litert/python/litert_wrapper/compiled_model_wrapper/BUILD b/litert/python/litert_wrapper/compiled_model_wrapper/BUILD
+index 0a8c902..625d925 100644
+--- a/litert/python/litert_wrapper/compiled_model_wrapper/BUILD
++++ b/litert/python/litert_wrapper/compiled_model_wrapper/BUILD
+@@ -12,10 +12,10 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-# copybara:uncomment load("@xla//third_party/rules_python/python:py_test.bzl", "py_test")
++# copybara:uncomment load("//:rules_python_compat.bzl", "py_test")
+ load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "pybind_extension")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_library")
+ 
+ # PROTOBUF_USE_DLLS and ABSL_CONSUME_DLL tell protobuf/absl headers to assume DLL linkage and decorate symbols with __declspec(dllimport).
+ # In our build, the pybind module is not consuming prebuilt protobuf/absl DLLs; it’s linking against the static libs
+diff --git a/litert/python/litert_wrapper/environment_wrapper/BUILD b/litert/python/litert_wrapper/environment_wrapper/BUILD
+index 0ee5979..535ca94 100644
+--- a/litert/python/litert_wrapper/environment_wrapper/BUILD
++++ b/litert/python/litert_wrapper/environment_wrapper/BUILD
+@@ -14,7 +14,7 @@
+ 
+ load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "pybind_extension")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_library")
+ 
+ WINDOWS_PYBIND_UNDEFS = select({
+     "//litert:windows": [
+diff --git a/litert/python/litert_wrapper/tensor_buffer_wrapper/BUILD b/litert/python/litert_wrapper/tensor_buffer_wrapper/BUILD
+index be8dc57..e581c78 100644
+--- a/litert/python/litert_wrapper/tensor_buffer_wrapper/BUILD
++++ b/litert/python/litert_wrapper/tensor_buffer_wrapper/BUILD
+@@ -12,10 +12,10 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-# copybara:uncomment load("@xla//third_party/rules_python/python:py_test.bzl", "py_test")
++# copybara:uncomment load("//:rules_python_compat.bzl", "py_test")
+ load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "pybind_extension")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_library")
+ 
+ WINDOWS_PYBIND_UNDEFS = select({
+     "//litert:windows": [
+diff --git a/litert/python/mlir/BUILD b/litert/python/mlir/BUILD
+index 5a5b048..bc709db 100644
+--- a/litert/python/mlir/BUILD
++++ b/litert/python/mlir/BUILD
+@@ -12,7 +12,7 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_library")
+ load("//litert/build_common:symlink_files.bzl", "symlink_inputs")
+ 
+ package(
+@@ -25,7 +25,6 @@ py_library(
+     srcs = [
+         "__init__.py",
+     ],
+-    strict_deps = False,
+     deps = [
+         ":arithmetic_dialect",
+         ":builtin_dialect",
+diff --git a/litert/python/mlir/_mlir_libs/BUILD b/litert/python/mlir/_mlir_libs/BUILD
+index 22ffc8e..fed3e72 100644
+--- a/litert/python/mlir/_mlir_libs/BUILD
++++ b/litert/python/mlir/_mlir_libs/BUILD
+@@ -15,7 +15,7 @@
+ load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "pybind_extension")
+ load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_library")
+ load("//litert/build_common:litert_build_defs.bzl", "if_google")
+ load("//litert/build_common:symlink_files.bzl", "symlink_inputs")
+ load("//litert/python:pytype.bzl", "pytype_strict_contrib_test")
+diff --git a/litert/python/tools/BUILD b/litert/python/tools/BUILD
+index 5afaafd..7161091 100644
+--- a/litert/python/tools/BUILD
++++ b/litert/python/tools/BUILD
+@@ -1,4 +1,4 @@
+-load("@xla//third_party/rules_python/python:py_test.bzl", "py_test")
++load("//:rules_python_compat.bzl", "py_test")
+ 
+ # Copyright 2025 Google LLC.
+ #
+diff --git a/litert/python/tools/model_utils/BUILD b/litert/python/tools/model_utils/BUILD
+index f746ae1..2e4c82a 100644
+--- a/litert/python/tools/model_utils/BUILD
++++ b/litert/python/tools/model_utils/BUILD
+@@ -1,4 +1,4 @@
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_library")
+ load("//litert/build_common:litert_build_defs.bzl", "if_google")
+ 
+ # Copyright 2025 Google LLC.
+diff --git a/litert/tools/BUILD b/litert/tools/BUILD
+index 7714f03..839fee8 100644
+--- a/litert/tools/BUILD
++++ b/litert/tools/BUILD
+@@ -16,7 +16,7 @@ load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+ load("@rules_cc//cc:cc_test.bzl", "cc_test")
+ 
+-# copybara:uncomment load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
++# copybara:uncomment load("//:rules_python_compat.bzl", "py_binary")
+ load("//litert/build_common:litert_build_defs.bzl", "gtest_main_no_heapcheck_deps", "litert_bin")
+ load("//litert/build_common:special_rule.bzl", "litert_gpu_accelerator_deps", "litert_gpu_accelerator_prebuilts")
+ load("//litert/integration_test:litert_device.bzl", "litert_device_exec", "litert_device_test")
+diff --git a/litert/vendors/qualcomm/debugger/optrace_profiling/BUILD b/litert/vendors/qualcomm/debugger/optrace_profiling/BUILD
+index 9c27e54..3b97c53 100644
+--- a/litert/vendors/qualcomm/debugger/optrace_profiling/BUILD
++++ b/litert/vendors/qualcomm/debugger/optrace_profiling/BUILD
+@@ -1,4 +1,4 @@
+-load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
++load("//:rules_python_compat.bzl", "py_binary")
+ 
+ package(
+     # copybara:uncomment default_applicable_licenses = ["//third_party/odml:license"],
+diff --git b/rules_python_compat.bzl b/rules_python_compat.bzl
+new file mode 100644
+index 0000000..390e1e4
+--- /dev/null
++++ b/rules_python_compat.bzl
+@@ -0,0 +1,10 @@
++load("@rules_python//python:defs.bzl", _py_binary = "py_binary", _py_library = "py_library", _py_test = "py_test")
++
++def py_binary(strict_deps = None, **kwargs):
++    _py_binary(**kwargs)
++
++def py_library(strict_deps = None, **kwargs):
++    _py_library(**kwargs)
++
++def py_test(strict_deps = None, **kwargs):
++    _py_test(**kwargs)
+diff --git a/tflite/build_def.bzl b/tflite/build_def.bzl
+index 7d46b14..da1810f 100644
+--- a/tflite/build_def.bzl
++++ b/tflite/build_def.bzl
+@@ -1,6 +1,6 @@
+ """Build macros for TF Lite."""
+ 
+-load("@xla//third_party/rules_python/python:py_test.bzl", "py_test")
++load("//:rules_python_compat.bzl", "py_test")
+ load("@org_tensorflow//tensorflow:tensorflow.bzl", "if_oss", "tf_binary_additional_srcs", "tf_cc_shared_object")
+ load("//tflite:special_rules.bzl", "tflite_copts_extra")
+ load("//tflite/java:aar_with_jni.bzl", "aar_with_jni")
+diff --git a/tflite/converter/experimental/tac/BUILD b/tflite/converter/experimental/tac/BUILD
+index 4096757..9b3b11f 100644
+--- a/tflite/converter/experimental/tac/BUILD
++++ b/tflite/converter/experimental/tac/BUILD
+@@ -10,7 +10,7 @@ load(
+     "tf_proto_library",
+ )
+ load("@org_tensorflow//tensorflow/core/platform:rules_cc.bzl", "cc_library")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_library")
+ 
+ package(
+     # copybara:uncomment default_applicable_licenses = ["@org_tensorflow//tensorflow:license"],
+@@ -384,7 +384,6 @@ py_library(
+     srcs = [
+         "tac.py",
+     ],
+-    strict_deps = True,
+     visibility = ["//visibility:public"],
+     deps = [
+         "//tflite/converter/experimental/tac/py_wrapper:_pywrap_tac_wrapper",
+diff --git a/tflite/converter/glob_lit_test.bzl b/tflite/converter/glob_lit_test.bzl
+index fd56def..455363f 100644
+--- a/tflite/converter/glob_lit_test.bzl
++++ b/tflite/converter/glob_lit_test.bzl
+@@ -7,7 +7,7 @@
+ """
+ 
+ load("@bazel_skylib//lib:paths.bzl", "paths")
+-load("@xla//third_party/rules_python/python:py_test.bzl", "py_test")
++load("//:rules_python_compat.bzl", "py_test")
+ load(
+     "@xla//xla:lit.bzl",
+     "lit_script_with_xla_gpu_cuda_data_dir",
+diff --git a/tflite/converter/python/BUILD b/tflite/converter/python/BUILD
+index 19a85d9..a42f160 100644
+--- a/tflite/converter/python/BUILD
++++ b/tflite/converter/python/BUILD
+@@ -1,6 +1,6 @@
+ load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "tf_python_pybind_extension")
+ load("@org_tensorflow//tensorflow/core/platform:rules_cc.bzl", "cc_library")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_library")
+ load("@xla//xla/tsl/platform:build_config_root.bzl", "if_pywrap")
+ 
+ licenses(["notice"])
+@@ -157,7 +157,6 @@ py_library(
+     srcs = [
+         "wrap_converter.py",
+     ],
+-    strict_deps = True,
+     deps = [
+         ":_pywrap_converter_api",
+         "@org_tensorflow//tensorflow/compiler/mlir/quantization/tensorflow/python:py_function_lib_py",
+diff --git a/tflite/converter/tests/debuginfo/BUILD b/tflite/converter/tests/debuginfo/BUILD
+index 9b05b8e..606051a 100644
+--- a/tflite/converter/tests/debuginfo/BUILD
++++ b/tflite/converter/tests/debuginfo/BUILD
+@@ -1,6 +1,6 @@
+ load("@org_tensorflow//tensorflow:tensorflow.bzl", "if_oss")
+ load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "filegroup")
+-load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
++load("//:rules_python_compat.bzl", "py_binary")
+ load("//tflite/converter:glob_lit_test.bzl", "glob_lit_tests")
+ 
+ # copybara:uncomment package(default_applicable_licenses = ["@org_tensorflow//tensorflow:license"])
+@@ -55,7 +55,6 @@ py_binary(
+         }),
+     ),
+     main = "saved_model_error.py",
+-    strict_deps = True,
+     deps = [
+         "@absl_py//absl:app",
+         "@org_tensorflow//tensorflow:tensorflow_py",
+@@ -73,7 +72,6 @@ py_binary(
+         }),
+     ),
+     main = "concrete_function_error.py",
+-    strict_deps = True,
+     deps = [
+         "@absl_py//absl:app",
+         "@org_tensorflow//tensorflow:tensorflow_py",
+diff --git a/tflite/examples/experimental_new_converter/BUILD b/tflite/examples/experimental_new_converter/BUILD
+index b3bb0f9..2cd81c9 100644
+--- a/tflite/examples/experimental_new_converter/BUILD
++++ b/tflite/examples/experimental_new_converter/BUILD
+@@ -1,4 +1,4 @@
+-load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
++load("//:rules_python_compat.bzl", "py_binary")
+ 
+ package(
+     # copybara:uncomment default_applicable_licenses = ["@org_tensorflow//tensorflow:license"],
+@@ -9,7 +9,6 @@ package(
+ py_binary(
+     name = "stack_trace_example",
+     srcs = ["stack_trace_example.py"],
+-    strict_deps = True,
+     deps = [
+         "//tflite/python:lite",
+         "@absl_py//absl:app",
+diff --git a/tflite/examples/python/BUILD b/tflite/examples/python/BUILD
+index e41d6d6..74ca4e2 100644
+--- a/tflite/examples/python/BUILD
++++ b/tflite/examples/python/BUILD
+@@ -1,4 +1,4 @@
+-load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
++load("//:rules_python_compat.bzl", "py_binary")
+ 
+ package(
+     # copybara:uncomment default_applicable_licenses = ["@org_tensorflow//tensorflow:license"],
+diff --git a/tflite/experimental/acceleration/compatibility/BUILD b/tflite/experimental/acceleration/compatibility/BUILD
+index ff915de..59a6e42 100644
+--- a/tflite/experimental/acceleration/compatibility/BUILD
++++ b/tflite/experimental/acceleration/compatibility/BUILD
+@@ -18,7 +18,7 @@ load("@org_tensorflow//tensorflow/core/platform:build_config_root.bzl", "tf_gpu_
+ load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+ load("@rules_cc//cc:cc_test.bzl", "cc_test")
+-load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
++load("//:rules_python_compat.bzl", "py_binary")
+ load("//tflite:special_rules.bzl", "gpu_compatibility_without_gl_deps_internal_visibility_allowlist", "tflite_extra_gles_deps", "tflite_portable_test_suite")
+ 
+ package(
+@@ -112,7 +112,6 @@ genrule(
+ py_binary(
+     name = "convert_binary_to_cc_source",
+     srcs = ["convert_binary_to_cc_source.py"],
+-    strict_deps = True,
+     visibility = ["//visibility:public"],
+ )
+ 
+diff --git a/tflite/experimental/acceleration/mini_benchmark/BUILD b/tflite/experimental/acceleration/mini_benchmark/BUILD
+index a62ea88..a024ae4 100644
+--- a/tflite/experimental/acceleration/mini_benchmark/BUILD
++++ b/tflite/experimental/acceleration/mini_benchmark/BUILD
+@@ -17,7 +17,7 @@ load("@org_tensorflow//tensorflow:tensorflow.bzl", "clean_dep")
+ load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+ load("@rules_cc//cc:cc_test.bzl", "cc_test")
+-load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
++load("//:rules_python_compat.bzl", "py_binary")
+ 
+ # Mini benchmarking helps in validating HW acceleration across Android and iOS.
+ load("//tflite:build_def.bzl", "tflite_copts")
+@@ -73,7 +73,6 @@ cc_test(
+ py_binary(
+     name = "copy_associated_files",
+     srcs = ["copy_associated_files.py"],
+-    strict_deps = True,
+ )
+ 
+ cc_library(
+diff --git a/tflite/experimental/acceleration/mini_benchmark/metrics/BUILD b/tflite/experimental/acceleration/mini_benchmark/metrics/BUILD
+index d9c125a..2112c8c 100644
+--- a/tflite/experimental/acceleration/mini_benchmark/metrics/BUILD
++++ b/tflite/experimental/acceleration/mini_benchmark/metrics/BUILD
+@@ -14,8 +14,8 @@
+ # ==============================================================================
+ 
+ load("@org_tensorflow//tensorflow/core/platform:build_config_root.bzl", "if_pywrap")
+-load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_binary")
++load("//:rules_python_compat.bzl", "py_library")
+ 
+ # Building blocks for generating accuracy validation metric graphs.
+ load("//tflite/experimental/acceleration/mini_benchmark:build_defs.bzl", "validation_model", "validation_test")
+@@ -37,7 +37,6 @@ py_library(
+     srcs = [
+         "kl_divergence.py",
+     ],
+-    strict_deps = True,
+     visibility = ["//visibility:public"],
+     deps = [
+         "@org_tensorflow//tensorflow:tensorflow_py",
+@@ -47,7 +46,6 @@ py_library(
+ py_binary(
+     name = "mobilenet",
+     srcs = ["mobilenet.py"],
+-    strict_deps = True,
+     deps = [
+         ":kl_divergence",
+         "//tflite/python:lite",
+@@ -94,7 +92,6 @@ validation_test(
+ py_binary(
+     name = "blazeface_metrics",
+     srcs = ["blazeface_metrics.py"],
+-    strict_deps = True,
+     deps = [
+         ":kl_divergence",
+         "//tflite/python:lite",
+diff --git a/tflite/experimental/microfrontend/BUILD b/tflite/experimental/microfrontend/BUILD
+index cc70f6e..a32b8ac 100644
+--- a/tflite/experimental/microfrontend/BUILD
++++ b/tflite/experimental/microfrontend/BUILD
+@@ -11,7 +11,7 @@ load(
+ load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "tf_custom_op_py_strict_library", "tf_py_strict_test")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+ load("@rules_cc//cc:cc_test.bzl", "cc_test")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_library")
+ 
+ package(
+     # copybara:uncomment default_applicable_licenses = ["@org_tensorflow//tensorflow:license"],
+diff --git a/tflite/g3doc/tools/BUILD b/tflite/g3doc/tools/BUILD
+index f26d072..2e18ecf 100644
+--- a/tflite/g3doc/tools/BUILD
++++ b/tflite/g3doc/tools/BUILD
+@@ -1,5 +1,5 @@
+ load("@org_tensorflow//tensorflow:pytype.default.bzl", "pytype_strict_binary")
+-load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
++load("//:rules_python_compat.bzl", "py_binary")
+ 
+ package(
+     # copybara:uncomment default_applicable_licenses = ["@org_tensorflow//tensorflow:license"],
+@@ -9,7 +9,6 @@ package(
+ py_binary(
+     name = "build_py_api_docs",
+     srcs = ["build_py_api_docs.py"],
+-    strict_deps = True,
+     deps = [
+         "@absl_py//absl:app",
+         "@absl_py//absl/flags",
+diff --git a/tflite/kernels/variants/py/BUILD b/tflite/kernels/variants/py/BUILD
+index 432913e..4855830 100644
+--- a/tflite/kernels/variants/py/BUILD
++++ b/tflite/kernels/variants/py/BUILD
+@@ -21,7 +21,6 @@ pybind_extension(
+ py_test(
+     name = "end_to_end_test",
+     srcs = ["end_to_end_test.py"],
+-    strict_deps = True,
+     tags = ["nochromiumos_arm"],
+     deps = [
+         ":register_list_ops_py",
+diff --git a/tflite/python/BUILD b/tflite/python/BUILD
+index 3ace37f..246bf78 100644
+--- a/tflite/python/BUILD
++++ b/tflite/python/BUILD
+@@ -4,8 +4,8 @@ load("@org_tensorflow//tensorflow:tensorflow.bzl", "if_oss", "py_test")
+ load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "get_compatible_with_portable", "pywrap_binaries", "pywrap_library")
+ load("@org_tensorflow//tensorflow/core/platform:build_config_root.bzl", "if_pywrap")
+ load("@rules_shell//shell:sh_test.bzl", "sh_test")
+-load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_binary")
++load("//:rules_python_compat.bzl", "py_library")
+ load("//tflite:special_rules.bzl", "internal_visibility_allowlist")
+ 
+ package(
+@@ -48,7 +48,6 @@ py_library(
+         "interpreter.py",
+     ],
+     compatible_with = get_compatible_with_portable(),
+-    strict_deps = True,
+     visibility = ["//visibility:public"],
+     deps = [
+         "//tflite/python/interpreter_wrapper:_pywrap_litert_interpreter_wrapper",
+@@ -69,7 +68,6 @@ py_test(
+     # Static linking is required because this loads a cc_binary as a shared
+     # library, which would otherwise create ODR violations.
+     # copybara:uncomment linking_mode = "static",
+-    strict_deps = True,
+     tags = [
+         "no_oss",  # TODO(b/190842754): Enable test in OSS.
+     ],
+@@ -90,7 +88,6 @@ py_test(
+ py_binary(
+     name = "tflite_convert",
+     srcs = ["tflite_convert.py"],
+-    strict_deps = True,
+     visibility = ["//visibility:public"],
+     deps = [
+         ":tflite_convert_main_lib",
+@@ -103,7 +100,6 @@ py_binary(
+ py_library(
+     name = "tflite_convert_main_lib",
+     srcs = ["tflite_convert.py"],
+-    strict_deps = True,
+     visibility = ["//visibility:public"],
+     deps = [
+         ":convert",
+@@ -121,7 +117,6 @@ py_library(
+ py_library(
+     name = "test_util",
+     srcs = ["test_util.py"],
+-    strict_deps = True,
+     visibility = ["//visibility:public"],
+     deps = [
+         ":lite",
+@@ -138,7 +133,6 @@ py_test(
+         "//tflite:testdata/add.bin",
+         "//tflite:testdata/softplus_flex.bin",
+     ],
+-    strict_deps = True,
+     deps = [
+         ":test_util",
+         #internal proto upb dep
+@@ -158,7 +152,6 @@ py_test(
+     ],
+     # Increased thread count for reducing timeout failures.
+     shard_count = 10,
+-    strict_deps = True,
+     tags = [
+         "no_oss",
+         "no_windows",
+@@ -195,7 +188,6 @@ py_test(
+ py_library(
+     name = "lite",
+     srcs = ["lite.py"],
+-    strict_deps = True,
+     tags = [
+         "ignore_for_dep=third_party.py.keras",
+     ],
+@@ -254,7 +246,6 @@ py_test(
+         "@tflite_mobilenet_ssd_quant_protobuf//:tflite_graph.pb",
+     ],
+     shard_count = 4,
+-    strict_deps = True,
+     tags = [
+         "no_windows",
+     ],
+@@ -309,7 +300,6 @@ py_test(
+         }),
+     ),
+     shard_count = 18,
+-    strict_deps = True,
+     tags = [
+         "no_windows",
+     ],
+@@ -352,7 +342,6 @@ py_library(
+     name = "lite_v2_test_util",
+     testonly = 1,
+     srcs = ["lite_v2_test_util.py"],
+-    strict_deps = True,
+     tags = [
+         "no_windows",
+     ],
+@@ -378,7 +367,6 @@ py_library(
+ py_test(
+     name = "lite_flex_test",
+     srcs = ["lite_flex_test.py"],
+-    strict_deps = True,
+     deps = [
+         ":convert",
+         ":interpreter",
+@@ -410,7 +398,6 @@ py_test(
+ py_library(
+     name = "util",
+     srcs = ["util.py"],
+-    strict_deps = True,
+     visibility = internal_visibility_allowlist(),
+     deps = [
+         ":conversion_metadata_schema_py",
+@@ -435,7 +422,6 @@ py_library(
+ py_test(
+     name = "util_test",
+     srcs = ["util_test.py"],
+-    strict_deps = True,
+     tags = [
+         "no_windows",
+     ],
+@@ -464,7 +450,6 @@ py_library(
+     srcs = [
+         "tflite_keras_util.py",
+     ],
+-    strict_deps = True,
+     deps = [
+         "@org_tensorflow//tensorflow/python/eager:def_function",
+         "@org_tensorflow//tensorflow/python/framework:tensor_spec",
+@@ -477,7 +462,6 @@ py_library(
+ py_library(
+     name = "lite_constants",
+     srcs = ["lite_constants.py"],
+-    strict_deps = True,
+     deps = [
+         "//tflite/converter:converter_flags_proto_py",
+         "@org_tensorflow//tensorflow/python/framework:dtypes",
+@@ -515,7 +499,6 @@ pytype_strict_library(
+ py_library(
+     name = "op_hint",
+     srcs = ["op_hint.py"],
+-    strict_deps = True,
+     visibility = ["//visibility:public"],
+     deps = [
+         "@org_tensorflow//tensorflow/core:protos_all_py",
+@@ -559,7 +542,6 @@ pytype_strict_contrib_test(
+ py_library(
+     name = "convert_saved_model",
+     srcs = ["convert_saved_model.py"],
+-    strict_deps = True,
+     visibility = [
+         "//tflite:__subpackages__",
+     ],
+@@ -579,7 +561,6 @@ py_library(
+ py_test(
+     name = "convert_saved_model_test",
+     srcs = ["convert_saved_model_test.py"],
+-    strict_deps = True,
+     tags = [
+         "no_windows",
+     ],
+@@ -606,7 +587,6 @@ py_test(
+ py_binary(
+     name = "convert_file_to_c_source",
+     srcs = ["convert_file_to_c_source.py"],
+-    strict_deps = True,
+     visibility = ["//visibility:public"],
+     deps = [
+         ":util",
+@@ -624,7 +604,6 @@ sh_test(
+ py_library(
+     name = "schema_util",
+     srcs = ["schema_util.py"],
+-    strict_deps = True,
+     visibility = ["//tflite/schema:utils_friends"],
+     deps = [
+         "@org_tensorflow//tensorflow/python/util:all_util",
+@@ -636,7 +615,6 @@ py_library(
+ py_library(
+     name = "convert_phase",
+     srcs = ["convert_phase.py"],
+-    strict_deps = True,
+     visibility = ["//tflite:__subpackages__"],
+     deps = [
+         "//tflite/converter/metrics:converter_error_data_proto_py",
+@@ -649,7 +627,6 @@ py_library(
+     srcs = [
+         "analyzer.py",
+     ],
+-    strict_deps = True,
+     visibility = ["//visibility:public"],
+     deps = [
+         "//tflite/converter/python:wrap_converter",
+@@ -672,7 +649,6 @@ py_test(
+         "//tflite:testdata/conv_huge_im2col.bin",
+         "//tflite:testdata/multi_add_flex.bin",
+     ],
+-    strict_deps = True,
+     deps = [
+         ":analyzer",
+         #internal proto upb dep
+@@ -694,7 +670,6 @@ py_test(
+ # and refer pywrap_tflite to any target that needsd to selected shared objects.
+ py_library(
+     name = "tflite_pywrap_deps",
+-    strict_deps = True,
+     visibility = ["//visibility:public"],
+     deps = [
+         "//tflite/experimental/genai:pywrap_genai_ops",
+diff --git a/tflite/python/authoring/BUILD b/tflite/python/authoring/BUILD
+index 9577f6e..b6773b9 100644
+--- a/tflite/python/authoring/BUILD
++++ b/tflite/python/authoring/BUILD
+@@ -1,5 +1,5 @@
+ load("@org_tensorflow//tensorflow:tensorflow.bzl", "py_test")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_library")
+ 
+ package(
+     # copybara:uncomment default_applicable_licenses = ["@org_tensorflow//tensorflow:license"],
+@@ -11,7 +11,6 @@ py_library(
+     srcs = [
+         "authoring.py",
+     ],
+-    strict_deps = True,
+     visibility = ["//visibility:public"],
+     deps = [
+         "//tflite/converter/metrics:converter_error_data_proto_py",
+@@ -24,7 +23,6 @@ py_library(
+ py_test(
+     name = "authoring_test",
+     srcs = ["authoring_test.py"],
+-    strict_deps = True,
+     deps = [
+         ":authoring",
+         #internal proto upb dep
+diff --git a/tflite/python/kernel_tests/signal/BUILD b/tflite/python/kernel_tests/signal/BUILD
+index b98b0b4..f5f9da7 100644
+--- a/tflite/python/kernel_tests/signal/BUILD
++++ b/tflite/python/kernel_tests/signal/BUILD
+@@ -1,5 +1,5 @@
+ load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "cuda_py_strict_test")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_library")
+ 
+ package(
+     # copybara:uncomment default_applicable_licenses = ["@org_tensorflow//tensorflow:license"],
+@@ -9,7 +9,6 @@ package(
+ py_library(
+     name = "test_util",
+     srcs = ["test_util.py"],
+-    strict_deps = True,
+     deps = [
+         "//tflite/python:interpreter",
+         "//tflite/python:lite",
+diff --git a/tflite/python/metrics/BUILD b/tflite/python/metrics/BUILD
+index b412d61..3a4eaca 100644
+--- a/tflite/python/metrics/BUILD
++++ b/tflite/python/metrics/BUILD
+@@ -65,7 +65,6 @@ pytype_strict_library(
+ py_test(
+     name = "metrics_wrapper_test",
+     srcs = ["wrapper/metrics_wrapper_test.py"],
+-    strict_deps = True,
+     deps = [
+         ":metrics_wrapper",
+         #internal proto upb dep
+@@ -125,7 +124,6 @@ py_test(
+         if_false = "metrics_nonportable_test.py",
+         if_true = "metrics_portable_test.py",
+     ),
+-    strict_deps = True,
+     tags = ["notap"],  # TODO(b/373657707): Remove once we debug the failure.
+     deps = [
+         ":metrics",
+diff --git a/tflite/python/optimize/BUILD b/tflite/python/optimize/BUILD
+index 47e6abd..6bc5f75 100644
+--- a/tflite/python/optimize/BUILD
++++ b/tflite/python/optimize/BUILD
+@@ -1,7 +1,7 @@
+ load("@org_tensorflow//tensorflow:tensorflow.bzl", "py_test")
+ load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "pybind_extension")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_library")
+ 
+ package(
+     # copybara:uncomment default_applicable_licenses = ["@org_tensorflow//tensorflow:license"],
+@@ -71,7 +71,6 @@ py_library(
+     srcs = [
+         "calibrator.py",
+     ],
+-    strict_deps = True,
+     visibility = ["//visibility:public"],
+     deps = [
+         ":_pywrap_tensorflow_lite_calibration_wrapper",  # buildcleaner: keep
+@@ -90,7 +89,6 @@ py_test(
+         ":test_data",
+         "//tflite:testdata/multi_add.bin",
+     ],
+-    strict_deps = True,
+     tags = ["no_oss"],
+     deps = [
+         ":calibrator",
+diff --git a/tflite/python/testdata/BUILD b/tflite/python/testdata/BUILD
+index a72a27f..f01f789 100644
+--- a/tflite/python/testdata/BUILD
++++ b/tflite/python/testdata/BUILD
+@@ -7,7 +7,7 @@ load(
+ load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "pybind_extension", "tf_custom_op_py_strict_library")
+ load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_library")
+ load("//tflite:build_def.bzl", "tf_to_tflite", "tflite_copts")
+ 
+ package(
+diff --git a/tflite/schema/BUILD b/tflite/schema/BUILD
+index 64661cf..a0172d6 100644
+--- a/tflite/schema/BUILD
++++ b/tflite/schema/BUILD
+@@ -2,8 +2,8 @@ load("@flatbuffers//:build_defs.bzl", "flatbuffer_cc_library")
+ load("@org_tensorflow//tensorflow:tensorflow.bzl", "py_test")
+ load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "get_compatible_with_portable")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+-load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_binary")
++load("//:rules_python_compat.bzl", "py_library")
+ load("//tflite:special_rules.bzl", "tflite_portable_test_suite", "tflite_schema_utils_friends")
+ 
+ package(
+@@ -38,7 +38,6 @@ package_group(
+ py_binary(
+     name = "upgrade_schema",
+     srcs = ["upgrade_schema.py"],
+-    strict_deps = True,
+     deps = [":upgrade_schema_main_lib"],
+ )
+ 
+@@ -54,7 +53,6 @@ py_library(
+         "//tflite/converter/schema:schema_v3.fbs",
+         "@flatbuffers//:flatc",
+     ],
+-    strict_deps = True,
+     deps = [
+         "@org_tensorflow//tensorflow:tensorflow_py",
+         "@org_tensorflow//tensorflow/python/platform:resource_loader",
+@@ -65,7 +63,6 @@ py_test(
+     name = "upgrade_schema_test",
+     size = "small",
+     srcs = ["upgrade_schema_test.py"],
+-    strict_deps = True,
+     tags = [
+         "manual",
+         "no_oss",
+diff --git a/tflite/testdata/src/BUILD b/tflite/testdata/src/BUILD
+index bf75d63..e23615f 100644
+--- a/tflite/testdata/src/BUILD
++++ b/tflite/testdata/src/BUILD
+@@ -1,4 +1,4 @@
+-load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
++load("//:rules_python_compat.bzl", "py_binary")
+ 
+ package(
+     # copybara:uncomment default_applicable_licenses = ["@org_tensorflow//tensorflow:license"],
+@@ -10,7 +10,6 @@ py_binary(
+     name = "intermediate_tensor_output",
+     srcs = ["intermediate_tensor_output.py"],
+     python_version = "PY3",
+-    strict_deps = True,
+     deps = [
+         "//tflite/python:lite",
+         "@org_tensorflow//tensorflow:tensorflow_py",
+diff --git a/tflite/testing/BUILD b/tflite/testing/BUILD
+index 738c632..625bd10 100644
+--- a/tflite/testing/BUILD
++++ b/tflite/testing/BUILD
+@@ -7,8 +7,8 @@ load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "pybind_extension")
+ load("@org_tensorflow//tensorflow/core/platform:build_config_root.bzl", "if_pywrap")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+ load("@rules_cc//cc:cc_test.bzl", "cc_test")
+-load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_binary")
++load("//:rules_python_compat.bzl", "py_library")
+ load(
+     "//tflite:build_def.bzl",
+     "tflite_custom_android_library",
+@@ -131,7 +131,6 @@ py_library(
+     data = [
+         "//tflite/converter:tf_tfl_translate",
+     ],
+-    strict_deps = True,
+     deps = [
+         ":zip_test_utils",
+         "//tflite/python:lite",
+@@ -145,7 +144,6 @@ py_library(
+ py_library(
+     name = "op_tests",
+     srcs = glob(["op_tests/*.py"]),
+-    strict_deps = True,
+     deps = [
+         ":zip_test_utils",
+         "@org_tensorflow//third_party/py/numpy",
+@@ -164,7 +162,6 @@ py_library(
+ py_library(
+     name = "generate_examples_lib",
+     srcs = ["generate_examples_lib.py"],
+-    strict_deps = True,
+     deps = [
+         ":op_tests",
+         ":zip_test_utils",
+@@ -175,7 +172,6 @@ py_library(
+ py_library(
+     name = "zip_test_utils",
+     srcs = ["zip_test_utils.py"],
+-    strict_deps = True,
+     deps = [
+         ":generate_examples_report",
+         "//tflite/python:lite",
+@@ -198,7 +194,6 @@ py_library(
+ py_binary(
+     name = "generate_examples",
+     srcs = ["generate_examples.py"],
+-    strict_deps = True,
+     deps = [
+         ":generate_examples_lib",
+         ":mlir_convert",
+@@ -211,7 +206,6 @@ py_binary(
+ py_library(
+     name = "generate_examples_report",
+     srcs = ["generate_examples_report.py"],
+-    strict_deps = True,
+ )
+ 
+ cc_library(
+diff --git a/tflite/toco/logging/BUILD b/tflite/toco/logging/BUILD
+index 8089d29..bc2e07d 100644
+--- a/tflite/toco/logging/BUILD
++++ b/tflite/toco/logging/BUILD
+@@ -11,7 +11,7 @@ load(
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+ 
+ # Placeholder: load py_proto_library
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_library")
+ 
+ package(
+     # copybara:uncomment default_applicable_licenses = ["@org_tensorflow//tensorflow:license"],
+@@ -73,7 +73,6 @@ py_library(
+     data = [
+         "html_template",
+     ],
+-    strict_deps = True,
+     visibility = ["//visibility:public"],
+     deps = [
+         ":toco_conversion_log_proto_py",
+@@ -93,7 +92,6 @@ py_test(
+         "//tflite/toco/logging/testdata:toco_tf_graph.dot",
+         "//tflite/toco/logging/testdata:toco_tflite_graph.dot",
+     ],
+-    strict_deps = True,
+     deps = [
+         ":gen_html",
+         ":toco_conversion_log_proto_py",
+diff --git a/tflite/toco/python/BUILD b/tflite/toco/python/BUILD
+index fc715ca..4532840 100644
+--- a/tflite/toco/python/BUILD
++++ b/tflite/toco/python/BUILD
+@@ -1,5 +1,5 @@
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_library")
+ 
+ package(
+     # copybara:uncomment default_applicable_licenses = ["@org_tensorflow//tensorflow:license"],
+@@ -76,7 +76,6 @@ cc_library(
+ py_library(
+     name = "tensorflow_wrap_toco",
+     srcs = ["tensorflow_wrap_toco.py"],
+-    strict_deps = True,
+     visibility = ["//learning/expander/pod/deep_pod/utils:__subpackages__"],
+     deps = [
+         "@org_tensorflow//tensorflow/python:_pywrap_toco_api",
+diff --git a/tflite/tools/BUILD b/tflite/tools/BUILD
+index bfc638d..9a1bbc2 100644
+--- a/tflite/tools/BUILD
++++ b/tflite/tools/BUILD
+@@ -9,8 +9,8 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+ load("@rules_cc//cc:cc_test.bzl", "cc_test")
+ 
+ # Placeholder: load py_proto_library
+-load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_binary")
++load("//:rules_python_compat.bzl", "py_library")
+ load("//tflite:build_def.bzl", "tflite_copts", "tflite_copts_warnings")
+ load("//tflite:special_rules.bzl", "tflite_portable_test_suite")
+ load("//tflite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
+@@ -30,7 +30,6 @@ exports_files([
+ py_binary(
+     name = "visualize",
+     srcs = ["visualize.py"],
+-    strict_deps = True,
+     deps = [
+         "//tflite/python:schema_py",
+         "@org_tensorflow//third_party/py/numpy",
+@@ -40,7 +39,6 @@ py_binary(
+ py_library(
+     name = "visualize_lib",
+     srcs = ["visualize.py"],
+-    strict_deps = True,
+     deps = [
+         "//tflite/python:schema_py",
+         "@org_tensorflow//third_party/py/numpy",
+@@ -50,7 +48,6 @@ py_library(
+ py_test(
+     name = "visualize_test",
+     srcs = ["visualize_test.py"],
+-    strict_deps = True,
+     deps = [
+         ":test_utils",
+         ":visualize_lib",
+@@ -63,7 +60,6 @@ py_test(
+ py_binary(
+     name = "convert_image_to_csv",
+     srcs = ["convert_image_to_csv.py"],
+-    strict_deps = True,
+     deps = [
+         "@absl_py//absl:app",
+         "@absl_py//absl/flags",
+@@ -78,7 +74,6 @@ py_binary(
+ py_library(
+     name = "convert_image_to_csv_lib",
+     srcs = ["convert_image_to_csv.py"],
+-    strict_deps = True,
+     deps = [
+         "@absl_py//absl:app",
+         "@absl_py//absl/flags",
+@@ -94,7 +89,6 @@ py_test(
+     name = "convert_image_to_csv_test",
+     srcs = ["convert_image_to_csv_test.py"],
+     data = ["@org_tensorflow//tensorflow/core:image_testdata"],
+-    strict_deps = True,
+     deps = [
+         ":convert_image_to_csv_lib",
+         #internal proto upb dep
+@@ -109,7 +103,6 @@ py_test(
+ py_binary(
+     name = "strip_strings",
+     srcs = ["strip_strings.py"],
+-    strict_deps = True,
+     deps = [
+         ":flatbuffer_utils",
+         "@absl_py//absl:app",
+@@ -120,7 +113,6 @@ py_binary(
+ py_binary(
+     name = "reverse_xxd_dump_from_cc",
+     srcs = ["reverse_xxd_dump_from_cc.py"],
+-    strict_deps = True,
+     deps = [
+         ":flatbuffer_utils",
+         "@absl_py//absl:app",
+@@ -131,7 +123,6 @@ py_binary(
+ py_binary(
+     name = "randomize_weights",
+     srcs = ["randomize_weights.py"],
+-    strict_deps = True,
+     deps = [
+         ":flatbuffer_utils",
+         "@absl_py//absl:app",
+@@ -142,7 +133,6 @@ py_binary(
+ py_library(
+     name = "flatbuffer_utils",
+     srcs = ["flatbuffer_utils.py"],
+-    strict_deps = True,
+     deps = [
+         "//tflite/python:schema_py",
+         "//tflite/python:schema_util",
+@@ -154,7 +144,6 @@ py_library(
+ py_test(
+     name = "flatbuffer_utils_test",
+     srcs = ["flatbuffer_utils_test.py"],
+-    strict_deps = True,
+     deps = [
+         ":flatbuffer_utils",
+         ":test_utils",
+@@ -168,7 +157,6 @@ py_test(
+ py_library(
+     name = "test_utils",
+     srcs = ["test_utils.py"],
+-    strict_deps = True,
+     deps = [
+         "//tflite/python:schema_py",
+         "@flatbuffers//:runtime_py",
+@@ -395,7 +383,6 @@ tf_cc_test(
+ py_binary(
+     name = "zip_files",
+     srcs = ["zip_files.py"],
+-    strict_deps = True,
+     visibility = ["//visibility:public"],
+     deps = [
+         "@absl_py//absl:app",
+diff --git a/tflite/tools/evaluation/tasks/coco_object_detection/BUILD b/tflite/tools/evaluation/tasks/coco_object_detection/BUILD
+index 3fc6727..bce9d37 100644
+--- a/tflite/tools/evaluation/tasks/coco_object_detection/BUILD
++++ b/tflite/tools/evaluation/tasks/coco_object_detection/BUILD
+@@ -1,6 +1,6 @@
+ load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+-load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
++load("//:rules_python_compat.bzl", "py_binary")
+ load("//tflite:build_def.bzl", "tflite_copts")
+ load("//tflite/tools/evaluation/tasks:build_def.bzl", "task_linkopts")
+ 
+@@ -15,7 +15,6 @@ package(
+ py_binary(
+     name = "preprocess_coco_minival",
+     srcs = ["preprocess_coco_minival.py"],
+-    strict_deps = True,
+     visibility = ["//visibility:public"],
+     deps = [
+         "//tflite/tools/evaluation/proto:evaluation_stages_py",
+diff --git a/tflite/tools/optimize/debugging/python/BUILD b/tflite/tools/optimize/debugging/python/BUILD
+index a057e5c..ec4f968 100644
+--- a/tflite/tools/optimize/debugging/python/BUILD
++++ b/tflite/tools/optimize/debugging/python/BUILD
+@@ -25,7 +25,6 @@ py_test(
+     srcs = [
+         "debugger_test.py",
+     ],
+-    strict_deps = True,
+     deps = [
+         ":debugger",
+         "@absl_py//absl/testing:parameterized",
+diff --git a/tflite/tools/optimize/python/BUILD b/tflite/tools/optimize/python/BUILD
+index d11968a..bb1c467 100644
+--- a/tflite/tools/optimize/python/BUILD
++++ b/tflite/tools/optimize/python/BUILD
+@@ -1,7 +1,7 @@
+ load("@org_tensorflow//tensorflow:tensorflow.bzl", "py_test")
+ load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "pybind_extension")
+-load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_binary")
++load("//:rules_python_compat.bzl", "py_library")
+ 
+ package(
+     # copybara:uncomment default_applicable_licenses = ["@org_tensorflow//tensorflow:license"],
+@@ -14,7 +14,6 @@ package(
+ py_binary(
+     name = "modify_model_interface",
+     srcs = ["modify_model_interface.py"],
+-    strict_deps = True,
+     deps = [
+         ":modify_model_interface_constants",
+         ":modify_model_interface_lib",
+@@ -26,7 +25,6 @@ py_binary(
+ py_library(
+     name = "modify_model_interface_lib",
+     srcs = ["modify_model_interface_lib.py"],
+-    strict_deps = True,
+     deps = [
+         ":_pywrap_modify_model_interface",
+         ":modify_model_interface_constants",
+@@ -38,7 +36,6 @@ py_library(
+ py_test(
+     name = "modify_model_interface_lib_test",
+     srcs = ["modify_model_interface_lib_test.py"],
+-    strict_deps = True,
+     deps = [
+         ":modify_model_interface_lib",
+         #internal proto upb dep
+@@ -53,7 +50,6 @@ py_test(
+ py_library(
+     name = "modify_model_interface_constants",
+     srcs = ["modify_model_interface_constants.py"],
+-    strict_deps = True,
+     deps = ["@org_tensorflow//tensorflow/python/framework:dtypes"],
+ )
+ 
+diff --git a/tflite/tools/optimize/sparsity/BUILD b/tflite/tools/optimize/sparsity/BUILD
+index 8d37cdf..4e5b3c4 100644
+--- a/tflite/tools/optimize/sparsity/BUILD
++++ b/tflite/tools/optimize/sparsity/BUILD
+@@ -38,7 +38,6 @@ pybind_extension(
+ py_test(
+     name = "format_converter_wrapper_pybind11_test",
+     srcs = ["format_converter_wrapper_pybind11_test.py"],
+-    strict_deps = True,
+     deps = [
+         ":format_converter_wrapper_pybind11",
+         "@absl_py//absl/testing:absltest",
+diff --git a/tflite/tools/signature/BUILD b/tflite/tools/signature/BUILD
+index f13560e..12a22f9 100644
+--- a/tflite/tools/signature/BUILD
++++ b/tflite/tools/signature/BUILD
+@@ -2,7 +2,7 @@ load("@org_tensorflow//tensorflow:tensorflow.bzl", "py_test")
+ load("@org_tensorflow//tensorflow:tensorflow.default.bzl", "get_compatible_with_portable", "pybind_extension", "replace_with_portable_tf_lib_when_required")
+ load("@rules_cc//cc:cc_library.bzl", "cc_library")
+ load("@rules_cc//cc:cc_test.bzl", "cc_test")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_library")
+ 
+ # Utilities for signature_defs in TFLite
+ load("//tflite:build_def.bzl", "tflite_copts")
+@@ -97,7 +97,6 @@ pybind_extension(
+ py_library(
+     name = "signature_def_utils",
+     srcs = ["signature_def_utils.py"],
+-    strict_deps = True,
+     deps = [
+         ":_pywrap_signature_def_util_wrapper",
+         "@org_tensorflow//tensorflow/core:protos_all_py",
+@@ -108,7 +107,6 @@ py_test(
+     name = "signature_def_utils_test",
+     srcs = ["signature_def_utils_test.py"],
+     data = ["//tflite:testdata/add.bin"],
+-    strict_deps = True,
+     tags = [
+         "no_mac",
+         "no_oss",
+diff --git a/tflite/tutorials/BUILD b/tflite/tutorials/BUILD
+index a9fdbcb..6c61e63 100644
+--- a/tflite/tutorials/BUILD
++++ b/tflite/tutorials/BUILD
+@@ -1,5 +1,5 @@
+-load("@xla//third_party/rules_python/python:py_binary.bzl", "py_binary")
+-load("@xla//third_party/rules_python/python:py_library.bzl", "py_library")
++load("//:rules_python_compat.bzl", "py_binary")
++load("//:rules_python_compat.bzl", "py_library")
+ 
+ package(
+     # copybara:uncomment default_applicable_licenses = ["@org_tensorflow//tensorflow:license"],
+@@ -10,7 +10,6 @@ package(
+ py_binary(
+     name = "mnist_tflite",
+     srcs = ["mnist_tflite.py"],
+-    strict_deps = True,
+     deps = [
+         ":dataset",
+         "//tflite/python:lite",
+@@ -22,7 +21,6 @@ py_binary(
+ py_library(
+     name = "dataset",
+     srcs = ["dataset.py"],
+-    strict_deps = True,
+     deps = [
+         "@org_tensorflow//tensorflow:tensorflow_py",
+         "@org_tensorflow//third_party/py/numpy",

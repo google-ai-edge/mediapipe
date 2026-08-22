@@ -88,24 +88,24 @@ typedef absl::StatusOr<OutputStreamPoller> StatusOrPoller;
 //   #include "mediapipe/framework/calculator_framework.h"
 //
 //   mediapipe::CalculatorGraphConfig config;
-//   MP_RETURN_IF_ERROR(mediapipe::tool::ParseGraphFromString(kGraphStr,
+//   ABSL_RETURN_IF_ERROR(mediapipe::tool::ParseGraphFromString(kGraphStr,
 //   &config)); mediapipe::CalculatorGraph graph;
-//   MP_RETURN_IF_ERROR(graph.Initialize(config));
+//   ABSL_RETURN_IF_ERROR(graph.Initialize(config));
 //
 //   std::map<std::string, mediapipe::Packet> extra_side_packets;
 //   extra_side_packets["video_id"] = mediapipe::MakePacket<std::string>(
 //       "3edb9503834e9b42");
-//   MP_RETURN_IF_ERROR(graph.Run(extra_side_packets));
+//   ABSL_RETURN_IF_ERROR(graph.Run(extra_side_packets));
 //
 //   // Run again (demonstrating the asynchronous StartRun call with more
 //   // concise initializer list syntax).
-//   MP_RETURN_IF_ERROR(graph.StartRun(
+//   ABSL_RETURN_IF_ERROR(graph.StartRun(
 //       {{"video_id", mediapipe::MakePacket<std::string>("Ex-uGhDzue4")}}));
 //   // See mediapipe/framework/graph_runner.h for an interface
 //   // to insert and extract packets from a graph as it runs.
 //   // Once it is done using the graph, close its streams and wait till done.
-//   MP_RETURN_IF_ERROR(graph->CloseAllInputStreams());
-//   MP_RETURN_IF_ERROR(graph->WaitUntilDone());
+//   ABSL_RETURN_IF_ERROR(graph->CloseAllInputStreams());
+//   ABSL_RETURN_IF_ERROR(graph->WaitUntilDone());
 class CalculatorGraph {
  public:
   // Defines possible modes for adding a packet to a graph input stream.
@@ -216,15 +216,15 @@ class CalculatorGraph {
   // a subsequent call to StartRun can be attempted.
   //
   // Example:
-  //   MP_RETURN_IF_ERROR(graph.StartRun(...));
+  //   ABSL_RETURN_IF_ERROR(graph.StartRun(...));
   //   while (true) {
   //     if (graph.HasError() || want_to_stop) break;
-  //     MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(...));
+  //     ABSL_RETURN_IF_ERROR(graph.AddPacketToInputStream(...));
   //   }
   //   for (const std::string& stream : streams) {
-  //     MP_RETURN_IF_ERROR(graph.CloseInputStream(stream));
+  //     ABSL_RETURN_IF_ERROR(graph.CloseInputStream(stream));
   //   }
-  //   MP_RETURN_IF_ERROR(graph.WaitUntilDone());
+  //   ABSL_RETURN_IF_ERROR(graph.WaitUntilDone());
   absl::Status StartRun(
       const std::map<std::string, Packet>& extra_side_packets) {
     return StartRun(extra_side_packets, {});

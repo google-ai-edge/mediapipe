@@ -363,7 +363,7 @@ absl::Status TensorsToSegmentationNodeImpl::Open(
   }
 #ifdef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
   if (options_.use_gpu_postprocessing()) {
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         postprocessor_.Initialize(&cc.GetGenericContext(), options_));
   }
 #endif  // TASK_SEGMENTATION_USE_GL_POSTPROCESSING
@@ -381,8 +381,8 @@ absl::Status TensorsToSegmentationNodeImpl::Process(
   }
   const auto& input_tensor =
       input_tensors.size() == 1 ? input_tensors[0] : input_tensors[1];
-  MP_ASSIGN_OR_RETURN(const Shape input_shape,
-                      GetImageLikeTensorShape(input_tensor));
+  ABSL_ASSIGN_OR_RETURN(const Shape input_shape,
+                        GetImageLikeTensorShape(input_tensor));
 
   // Validate confidence mask output channels.
   for (int n = 0; n < options_.confidence_mask_options().output_channels_size();

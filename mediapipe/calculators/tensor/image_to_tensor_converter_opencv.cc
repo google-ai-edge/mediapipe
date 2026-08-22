@@ -84,7 +84,7 @@ class ImageToTensorOpenCvConverter : public ImageToTensorConverter {
     RET_CHECK_GE(tensor_buffer_offset, 0)
         << "The input tensor_buffer_offset needs to be non-negative.";
     const auto& output_shape = output_tensor.shape();
-    MP_RETURN_IF_ERROR(ValidateTensorShape(output_shape));
+    ABSL_RETURN_IF_ERROR(ValidateTensorShape(output_shape));
 
     const int output_height = output_shape.dims[1];
     const int output_width = output_shape.dims[2];
@@ -130,7 +130,7 @@ class ImageToTensorOpenCvConverter : public ImageToTensorConverter {
             absl::StrCat("Unsupported tensor type: ", tensor_type_));
     }
 
-    MP_RETURN_IF_ERROR(ValidateRoi(roi));
+    ABSL_RETURN_IF_ERROR(ValidateRoi(roi));
 
     const cv::RotatedRect rotated_rect(cv::Point2f(roi.center_x, roi.center_y),
                                        cv::Size2f(roi.width, roi.height),
@@ -165,7 +165,7 @@ class ImageToTensorOpenCvConverter : public ImageToTensorConverter {
 
     constexpr float kInputImageRangeMin = 0.0f;
     constexpr float kInputImageRangeMax = 255.0f;
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         auto transform,
         GetValueRangeTransformation(kInputImageRangeMin, kInputImageRangeMax,
                                     range_min, range_max));

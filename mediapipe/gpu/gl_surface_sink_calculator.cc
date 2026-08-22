@@ -143,7 +143,7 @@ absl::Status GlSurfaceSinkCalculator::Process(CalculatorContext* cc) {
 
     if (!initialized_) {
       renderer_ = std::make_unique<mediapipe::QuadRenderer>();
-      MP_RETURN_IF_ERROR(renderer_->GlSetup());
+      ABSL_RETURN_IF_ERROR(renderer_->GlSetup());
       initialized_ = true;
     }
 
@@ -173,7 +173,7 @@ absl::Status GlSurfaceSinkCalculator::Process(CalculatorContext* cc) {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(src.target(), src.name());
 
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         renderer_->GlRender(src.width(), src.height(), dst_width, dst_height,
                             scale_mode_, mediapipe::FrameRotation::kNone,
                             /*flip_horizontal=*/false, /*flip_vertical=*/false,

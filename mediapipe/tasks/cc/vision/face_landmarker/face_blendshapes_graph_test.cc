@@ -32,7 +32,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_blendshapes_graph_options.pb.h"
-#include "tensorflow/lite/test_util.h"
+#include "tflite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -69,7 +69,7 @@ absl::StatusOr<CalculatorGraphConfig> ExpandConfig(
   auto config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(config_str);
   CalculatorGraph graph;
-  MP_RETURN_IF_ERROR(graph.Initialize(config));
+  ABSL_RETURN_IF_ERROR(graph.Initialize(config));
   return graph.Config();
 }
 

@@ -99,10 +99,10 @@ absl::StatusOr<TextRole> CppConvertToTextRole(MpTextEmbedderRole text_role) {
 absl::StatusOr<TextFormatContext> CppConvertToTextFormatContext(
     const struct MpTextEmbedderFormatContext* c_format_context) {
   TextFormatContext cpp_format_context;
-  MP_ASSIGN_OR_RETURN(cpp_format_context.task_type,
-                      CppConvertToEmbeddingType(c_format_context->task_type));
-  MP_ASSIGN_OR_RETURN(cpp_format_context.role,
-                      CppConvertToTextRole(c_format_context->role));
+  ABSL_ASSIGN_OR_RETURN(cpp_format_context.task_type,
+                        CppConvertToEmbeddingType(c_format_context->task_type));
+  ABSL_ASSIGN_OR_RETURN(cpp_format_context.role,
+                        CppConvertToTextRole(c_format_context->role));
   if (c_format_context->title) {
     cpp_format_context.title = c_format_context->title;
   }
@@ -135,12 +135,12 @@ absl::Status CppTextEmbedderEmbed(
   auto cpp_embedder = GetCppEmbedder(embedder);
   EmbeddingResult cpp_result;
   if (format_context) {
-    MP_ASSIGN_OR_RETURN(auto cpp_format_context,
-                        CppConvertToTextFormatContext(format_context));
-    MP_ASSIGN_OR_RETURN(cpp_result,
-                        cpp_embedder->Embed(utf8_str, cpp_format_context));
+    ABSL_ASSIGN_OR_RETURN(auto cpp_format_context,
+                          CppConvertToTextFormatContext(format_context));
+    ABSL_ASSIGN_OR_RETURN(cpp_result,
+                          cpp_embedder->Embed(utf8_str, cpp_format_context));
   } else {
-    MP_ASSIGN_OR_RETURN(cpp_result, cpp_embedder->Embed(utf8_str));
+    ABSL_ASSIGN_OR_RETURN(cpp_result, cpp_embedder->Embed(utf8_str));
   }
 
   CppConvertToEmbeddingResult(cpp_result, result);
@@ -168,7 +168,7 @@ absl::Status CppTextEmbedderCosSimilarity(const MpEmbedding* u,
   CppConvertToCppEmbedding(*u, &cpp_u);
   CppEmbedding cpp_v;
   CppConvertToCppEmbedding(*v, &cpp_v);
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       *similarity,
       mediapipe::tasks::text::text_embedder::TextEmbedder::CosineSimilarity(
           cpp_u, cpp_v));

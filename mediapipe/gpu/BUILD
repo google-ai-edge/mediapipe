@@ -16,7 +16,7 @@ load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@bazel_skylib//lib:selects.bzl", "selects")  # buildifier: disable=out-of-order-load
-load("//mediapipe/gpu:metal.bzl", "metal_library")
+load("@build_bazel_rules_apple//apple:resources.bzl", metal_library = "apple_metal_library")
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")  # buildifier: disable=out-of-order-load
 load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")  # buildifier: disable=out-of-order-load
@@ -25,6 +25,14 @@ load("//mediapipe/framework:more_selects.bzl", "more_selects")
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
+
+selects.config_setting_group(
+    name = "build_for_3p_on_linux-google",
+    match_all = [
+        "//mediapipe/tasks:build_for_3p",
+        "//tools/cc_target_os:linux-google",
+    ],
+)
 
 # Disabling GPU support is sometimes useful on desktop Linux because SwiftShader can
 # interfere with desktop GL. b/73494271
@@ -579,9 +587,9 @@ cc_library(
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:yuv_image",
         "//mediapipe/util/frame_buffer:frame_buffer_util",
-        "//third_party/libyuv",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
+        "@libyuv",
     ],
 )
 
@@ -591,8 +599,16 @@ cc_library(
     hdrs = ["gpu_buffer_storage_ahwb.h"],
     linkopts = select({
         "//conditions:default": [],
+        # Option for vendor binaries to avoid linking libandroid.so.
+        "//mediapipe/framework:android_no_jni": [],
         "//mediapipe:android": [
             "-landroid",
+        ],
+        # Vendor binaries on Android API >= 26 link libnativewindow for
+        # <android/hardware_buffer.h> (AHardwareBuffer_*) instead of
+        # libandroid.so, which is not available in the vendor linker namespace.
+        "//mediapipe/framework/formats:android_link_native_window": [
+            "-lnativewindow",
         ],
     }),
     deps = [
@@ -861,6 +877,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_cache",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/synchronization",
     ],
@@ -1572,7 +1589,7 @@ objc_library(
     alwayslink = 1,
 )
 
-MIN_IOS_VERSION = "12.0"
+MIN_IOS_VERSION = "15.0"
 
 test_suite(
     name = "ios",
@@ -1675,7 +1692,7 @@ mediapipe_cc_test(
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:yuv_image",
         "//mediapipe/framework/port:gtest_main",
-        "//third_party/libyuv",
         "@com_google_absl//absl/log:absl_check",
+        "@libyuv",
     ],
 )

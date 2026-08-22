@@ -178,7 +178,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateFaceLandmarkerGraphTaskRunner(
        .task_name = "face_landmarker_test",
        .task_running_mode = core::RunningMode::kImage,
        .op_resolver =
-           absl::make_unique<tasks::core::MediaPipeBuiltinOpResolver>()});
+           std::make_unique<tasks::core::MediaPipeBuiltinOpResolver>()});
 }
 
 absl::StatusOr<CalculatorGraphConfig> ExpandConfig(
@@ -186,7 +186,7 @@ absl::StatusOr<CalculatorGraphConfig> ExpandConfig(
   auto config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(config_str);
   CalculatorGraph graph;
-  MP_RETURN_IF_ERROR(graph.Initialize(config));
+  ABSL_RETURN_IF_ERROR(graph.Initialize(config));
   return graph.Config();
 }
 

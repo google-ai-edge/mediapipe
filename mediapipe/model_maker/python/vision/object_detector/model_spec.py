@@ -126,4 +126,4 @@ class SupportedModels(enum.Enum):
     """Get model spec from the input enum and initializes it."""
     if spec not in cls:
       raise TypeError(f'Unsupported object detector spec: {spec}')
-    return spec.value()
+    return spec.value()  # pyrefly: ignore[not-callable]

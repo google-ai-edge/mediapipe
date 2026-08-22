@@ -68,21 +68,21 @@ class FunctionRunnerImpl<BuildGraphFnT, OutputT, std::tuple<InputPacketTs...>>
   // - Polls and returns the output packet(s)
   absl::StatusOr<OutputT> Run(InputPacketTs... inputs) {
     mediapipe::Timestamp timestamp = this->NextTimestamp();
-    MP_RETURN_IF_ERROR(AddInputPackets(*this->calculator_graph_,
-                                       this->input_names_map_, timestamp,
-                                       inputs...));
-    MP_RETURN_IF_ERROR(this->calculator_graph_->WaitUntilIdle());
+    ABSL_RETURN_IF_ERROR(AddInputPackets(*this->calculator_graph_,
+                                         this->input_names_map_, timestamp,
+                                         inputs...));
+    ABSL_RETURN_IF_ERROR(this->calculator_graph_->WaitUntilIdle());
 
     if constexpr (kIsTupleV<OutputT>) {
       OutputT output;
-      MP_RETURN_IF_ERROR(GetOutputPackets(
+      ABSL_RETURN_IF_ERROR(GetOutputPackets(
           std::make_index_sequence<std::tuple_size_v<OutputT>>(), output));
       return output;
     } else {
-      MP_ASSIGN_OR_RETURN(OutputStreamPoller * poller,
-                          this->GetOutputPoller(0));
-      MP_ASSIGN_OR_RETURN(mediapipe::Packet packet,
-                          GetOutputPacket(*poller, *this->calculator_graph_));
+      ABSL_ASSIGN_OR_RETURN(OutputStreamPoller * poller,
+                            this->GetOutputPoller(0));
+      ABSL_ASSIGN_OR_RETURN(mediapipe::Packet packet,
+                            GetOutputPacket(*poller, *this->calculator_graph_));
       return WrapLegacyPacket<typename OutputT::PayloadT>(std::move(packet));
     }
   }
@@ -95,13 +95,13 @@ class FunctionRunnerImpl<BuildGraphFnT, OutputT, std::tuple<InputPacketTs...>>
     absl::Status status = absl::OkStatus();
     ((
          status = [&]() -> absl::Status {
-           MP_ASSIGN_OR_RETURN(OutputStreamPoller * poller,
-                               this->GetOutputPoller(Is));
-           MP_ASSIGN_OR_RETURN(
+           ABSL_ASSIGN_OR_RETURN(OutputStreamPoller * poller,
+                                 this->GetOutputPoller(Is));
+           ABSL_ASSIGN_OR_RETURN(
                mediapipe::Packet packet,
                GetOutputPacket(*poller, *this->calculator_graph_));
            using CurrentOutputPacketT = std::tuple_element_t<Is, OutputT>;
-           MP_ASSIGN_OR_RETURN(
+           ABSL_ASSIGN_OR_RETURN(
                std::get<Is>(output),
                WrapLegacyPacket<typename CurrentOutputPacketT::PayloadT>(
                    std::move(packet)));
@@ -122,7 +122,7 @@ class FunctionRunnerImpl<BuildGraphFnT, OutputT, std::tuple<InputPacketTs...>>
 // The intended usage is:
 // ```
 //   /* Creating the runner from graph builder lambda. */
-//   MP_ASSIGN_OR_RETURN(
+//   ABSL_ASSIGN_OR_RETURN(
 //      auto runner,
 //      Runner::For([](GenericGraph& graph,
 //                     Stream<ImageFrame> input_image) -> Stream<ImageFrame> {
@@ -142,17 +142,17 @@ class FunctionRunnerImpl<BuildGraphFnT, OutputT, std::tuple<InputPacketTs...>>
 //      }).Create());
 //
 //  /* Running the graph. */
-//  MP_ASSIGN_OR_RETURN(Packet<ImageFrame> output,
+//  ABSL_ASSIGN_OR_RETURN(Packet<ImageFrame> output,
 //                   runner.Run(MakePacket<ImageFrame>(...)));
 // ```
 //
 // If you need to keep runner across invocations.
 // ```
-//   MP_ASSIGN_OR_RETURN(FunctionRunner<decltype(lambda)> runner,
+//   ABSL_ASSIGN_OR_RETURN(FunctionRunner<decltype(lambda)> runner,
 //                    Runner::For(std::move(lambda)));
-//   MP_ASSIGN_OR_RETURN(FunctionRunner<decltype(&FreeFunction)> runner,
+//   ABSL_ASSIGN_OR_RETURN(FunctionRunner<decltype(&FreeFunction)> runner,
 //                    Runner::For(FreeFunction));
-//   MP_ASSIGN_OR_RETURN(FunctionRunner<GraphBuilderObject> runner,
+//   ABSL_ASSIGN_OR_RETURN(FunctionRunner<GraphBuilderObject> runner,
 //                    Runner::For(GraphBuilderObject()));
 //
 //   // Where GraphBuilderObject can be
@@ -244,16 +244,22 @@ class FunctionRunnerBuilder {
     return *this;
   }
 
+  // Disallows/disables default initialization of MediaPipe graph services.
+  FunctionRunnerBuilder& DisallowServiceDefaultInitialization() {
+    disallow_service_default_initialization_ = true;
+    return *this;
+  }
+
   // Creates the graph runner according to the provided graph builder function
   // and initializes using all provided parameters.
   //
   // The runner is ready to be used as following for single output:
   // ```
-  //   MP_ASSIGN_OR_RETURN(Packet<...> p, runner.Run(...input packets...));
+  //   ABSL_ASSIGN_OR_RETURN(Packet<...> p, runner.Run(...input packets...));
   // ```
   // and multiple outputs:
   // ```
-  //   MP_ASSIGN_OR_RETURN((auto [p1, p2]), runner.Run(...input packets...));
+  //   ABSL_ASSIGN_OR_RETURN((auto [p1, p2]), runner.Run(...input packets...));
   // ```
   //
   // Refer `Runner::For` for more details on builder graph function and
@@ -264,8 +270,8 @@ class FunctionRunnerBuilder {
     GenericGraph graph;
     std::vector<mediapipe::Packet> side_packets;
     FunctionGraphBuilder builder(graph, side_packets);
-    MP_ASSIGN_OR_RETURN(auto raw_output,
-                        AsStatusOr(InvokeBuildGraphFn(builder)));
+    ABSL_ASSIGN_OR_RETURN(auto raw_output,
+                          AsStatusOr(InvokeBuildGraphFn(builder)));
     auto output = AsTuple(std::move(raw_output));
 
     // Connect output stream(s) to graph outputs, generate/collect output stream
@@ -310,7 +316,7 @@ class FunctionRunnerBuilder {
     }
 
     // Create graph config and ensure sync execution.
-    MP_ASSIGN_OR_RETURN(CalculatorGraphConfig config, graph.GetConfig());
+    ABSL_ASSIGN_OR_RETURN(CalculatorGraphConfig config, graph.GetConfig());
     VLOG(1) << "Graph config:\n" << config.DebugString();
 
     auto calculator_graph = std::make_unique<CalculatorGraph>();
@@ -329,27 +335,31 @@ class FunctionRunnerBuilder {
     }
 
     if (default_executor) {
-      MP_RETURN_IF_ERROR(calculator_graph->SetExecutor(
+      ABSL_RETURN_IF_ERROR(calculator_graph->SetExecutor(
           /*default executor name*/ "", std::move(default_executor)));
     }
 
     for (const auto& [key, value] : services_) {
-      MP_RETURN_IF_ERROR(calculator_graph->SetServicePacket(*key, value));
+      ABSL_RETURN_IF_ERROR(calculator_graph->SetServicePacket(*key, value));
     }
-    MP_RETURN_IF_ERROR(calculator_graph->Initialize(std::move(config)));
+    if (disallow_service_default_initialization_) {
+      ABSL_RETURN_IF_ERROR(
+          calculator_graph->DisallowServiceDefaultInitialization());
+    }
+    ABSL_RETURN_IF_ERROR(calculator_graph->Initialize(std::move(config)));
 
     // Setup output pollers for the requested output streams.
     absl::flat_hash_map<int, OutputStreamPoller> output_pollers;
     for (const auto& [index, name] : output_names_map) {
-      MP_ASSIGN_OR_RETURN(OutputStreamPoller poller,
-                          calculator_graph->AddOutputStreamPoller(
-                              name, /*observe_timestamp_bounds=*/true));
+      ABSL_ASSIGN_OR_RETURN(OutputStreamPoller poller,
+                            calculator_graph->AddOutputStreamPoller(
+                                name, /*observe_timestamp_bounds=*/true));
       const bool inserted =
           output_pollers.try_emplace(index, std::move(poller)).second;
       RET_CHECK(inserted);
     }
 
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         calculator_graph->StartRun(std::move(side_packets_mapping)));
 
     return FunctionRunner<BuildGraphFnT>(
@@ -391,6 +401,7 @@ class FunctionRunnerBuilder {
   BuildGraphFnT build_graph_fn_;
   absl::flat_hash_map<const GraphServiceBase*, mediapipe::Packet> services_;
   std::shared_ptr<Executor> default_executor_;
+  bool disallow_service_default_initialization_ = false;
 
   friend class Runner;
 };

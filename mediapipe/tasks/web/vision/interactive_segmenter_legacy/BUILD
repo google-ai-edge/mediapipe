@@ -29,7 +29,6 @@ ts_library(
         "//mediapipe/tasks/web/vision/core:mask",
         "//mediapipe/tasks/web/vision/core:types",
         "//mediapipe/tasks/web/vision/core:vision_task_runner",
-        "//mediapipe/util:color_jspb_proto",
         "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )
@@ -56,7 +55,6 @@ ts_library(
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner_test_utils",
         "//mediapipe/tasks/web/vision/core:mask",
-        "//mediapipe/util:render_data_jspb_proto",
         "//mediapipe/web/graph_runner:graph_runner_image_lib_ts",
     ],
 )

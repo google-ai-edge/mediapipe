@@ -1696,7 +1696,7 @@ TEST(CalculatorGraph, LayerOrdering) {
   tool::AddVectorSink("count_layer_1_node_1", &config, &dump_layer_1_node_1);
   tool::AddVectorSink("count_layer_2_node_0", &config, &dump_layer_2_node_0);
 
-  auto graph = absl::make_unique<CalculatorGraph>();
+  auto graph = std::make_unique<CalculatorGraph>();
 
   std::atomic<int> global_counter(0);
   std::map<std::string, Packet> input_side_packets;
@@ -1748,7 +1748,7 @@ TEST(CalculatorGraph, LayerOrdering) {
 // Tests for status handler input verification.
 TEST(CalculatorGraph, StatusHandlerInputVerification) {
   // Status handlers with all inputs present should be OK.
-  auto graph = absl::make_unique<CalculatorGraph>();
+  auto graph = std::make_unique<CalculatorGraph>();
   CalculatorGraphConfig config =
       ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         packet_generator {
@@ -4385,7 +4385,7 @@ TEST(CalculatorGraph, RunWithNumThreadsInExecutorConfig) {
   ThreadPoolExecutorOptions* default_executor_options =
       config.mutable_executor(0)->mutable_options()->MutableExtension(
           ThreadPoolExecutorOptions::ext);
-  for (int i = 0; i < ABSL_ARRAYSIZE(cases); ++i) {
+  for (int i = 0; i < std::size(cases); ++i) {
     default_executor_options->set_num_threads(cases[i].num_threads);
     config.mutable_executor(0)->clear_type();
     if (cases[i].executor_type != "<None>") {

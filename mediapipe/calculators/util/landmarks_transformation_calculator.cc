@@ -119,10 +119,10 @@ class LandmarksTransformationCalculatorImpl
 
     for (auto& transformation : options.transformation()) {
       if (transformation.has_normalize_translation()) {
-        MP_ASSIGN_OR_RETURN(landmarks, NormalizeTranslation(landmarks));
+        ABSL_ASSIGN_OR_RETURN(landmarks, NormalizeTranslation(landmarks));
       } else if (transformation.has_flip_axis()) {
-        MP_ASSIGN_OR_RETURN(landmarks,
-                            FlipAxis(landmarks, transformation.flip_axis()));
+        ABSL_ASSIGN_OR_RETURN(landmarks,
+                              FlipAxis(landmarks, transformation.flip_axis()));
       } else {
         RET_CHECK_FAIL() << "Unknown landmarks transformation";
       }

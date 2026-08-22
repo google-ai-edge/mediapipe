@@ -142,7 +142,7 @@ class TensorFlowSessionFromSavedModelCalculator : public CalculatorBase {
     tensorflow::RunOptions run_options;
     tensorflow::SessionOptions session_options;
     session_options.config = options.session_config();
-    auto saved_model = absl::make_unique<tensorflow::SavedModelBundle>();
+    auto saved_model = std::make_unique<tensorflow::SavedModelBundle>();
     absl::Status status = tensorflow::LoadSavedModel(
         session_options, run_options, path, tags_set, saved_model.get());
     if (!status.ok()) {
@@ -150,7 +150,7 @@ class TensorFlowSessionFromSavedModelCalculator : public CalculatorBase {
                           status.ToString());
     }
 
-    auto session = absl::make_unique<TensorFlowSession>();
+    auto session = std::make_unique<TensorFlowSession>();
     session->session = std::move(saved_model->session);
 
     RET_CHECK(!options.signature_name().empty());

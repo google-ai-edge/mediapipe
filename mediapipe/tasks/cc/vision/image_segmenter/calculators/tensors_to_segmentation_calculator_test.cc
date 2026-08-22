@@ -49,7 +49,7 @@ void PushTensorsToRunner(int tensor_height, int tensor_width,
                          absl::Span<const float> test_values,
                          CalculatorRunner* runner) {
   // Creates input tensor.
-  auto tensors = absl::make_unique<std::vector<Tensor>>();
+  auto tensors = std::make_unique<std::vector<Tensor>>();
   tensors->emplace_back(Tensor::ElementType::kFloat32,
                         Tensor::Shape{tensor_height, tensor_width,
                                       static_cast<int>(test_values.size())});
@@ -160,7 +160,7 @@ TEST(TensorsToSegmentationCalculatorTest, FailsInvalidTensorDimensionOne) {
               }
             }
           )pb"));
-  auto tensors = absl::make_unique<std::vector<Tensor>>();
+  auto tensors = std::make_unique<std::vector<Tensor>>();
   tensors->emplace_back(Tensor::ElementType::kFloat32, Tensor::Shape{2});
   auto& input_stream_packets = runner.MutableInputs()->Tag("TENSORS").packets;
   input_stream_packets.push_back(
@@ -184,7 +184,7 @@ TEST(TensorsToSegmentationCalculatorTest, FailsInvalidTensorDimensionFive) {
               }
             }
           )pb"));
-  auto tensors = absl::make_unique<std::vector<Tensor>>();
+  auto tensors = std::make_unique<std::vector<Tensor>>();
   tensors->emplace_back(Tensor::ElementType::kFloat32,
                         Tensor::Shape{2, 2, 1, 3, 5});
   auto& input_stream_packets = runner.MutableInputs()->Tag("TENSORS").packets;

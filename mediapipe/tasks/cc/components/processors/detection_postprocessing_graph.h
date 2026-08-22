@@ -32,7 +32,7 @@ namespace processors {
 //
 //   auto& postprocessing =
 //       graph.AddNode("mediapipe.tasks.components.processors.DetectionPostprocessingGraph");
-//   MP_RETURN_IF_ERROR(ConfigureDetectionPostprocessingGraph(
+//   ABSL_RETURN_IF_ERROR(ConfigureDetectionPostprocessingGraph(
 //       model_resources,
 //       detector_options,
 //       &preprocessing.GetOptions<DetectionPostprocessingGraphOptions>()));

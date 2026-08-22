@@ -153,7 +153,7 @@ absl::Status AnnotationsToRenderDataCalculator::Open(CalculatorContext* cc) {
 }
 
 absl::Status AnnotationsToRenderDataCalculator::Process(CalculatorContext* cc) {
-  auto render_data = absl::make_unique<RenderData>();
+  auto render_data = std::make_unique<RenderData>();
   bool visualize_depth = options_.visualize_landmark_depth();
   float z_min = 0.f;
   float z_max = 0.f;

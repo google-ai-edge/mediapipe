@@ -77,7 +77,7 @@ def run(data_dir,
 
   # Fine-tunes the model.
   options = text_classifier.TextClassifierOptions(
-      supported_model=supported_model, hparams=hparams)
+      supported_model=supported_model, hparams=hparams)  # pyrefly: ignore[unbound-name]
   model = text_classifier.TextClassifier.create(train_data, validation_data,
                                                 options)
 
@@ -86,7 +86,7 @@ def run(data_dir,
   print('Eval accuracy: %f' % metrics[1])
 
   model.export_model(quantization_config=quantization_config)
-  model.export_labels(export_dir=options.hparams.export_dir)
+  model.export_labels(export_dir=options.hparams.export_dir)  # pyrefly: ignore[missing-attribute]
 
 
 def main(_):
@@ -100,7 +100,7 @@ def main(_):
   elif FLAGS.supported_model == 'bert':
     supported_model = text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER
 
-  run(data_dir, export_dir, supported_model)
+  run(data_dir, export_dir, supported_model)  # pyrefly: ignore[unbound-name]
 
 
 if __name__ == '__main__':

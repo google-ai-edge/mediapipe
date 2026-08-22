@@ -87,10 +87,10 @@ class Subgraph : public mediapipe::Subgraph,
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) final {
     mediapipe::CalculatorContract contract;
-    MP_RETURN_IF_ERROR(contract.Initialize(sc->OriginalNode()));
+    ABSL_RETURN_IF_ERROR(contract.Initialize(sc->OriginalNode()));
     GenericGraph graph;
     SubgraphContext<NodeT> context(*sc, contract, graph);
-    MP_RETURN_IF_ERROR(Expand(graph, context));
+    ABSL_RETURN_IF_ERROR(Expand(graph, context));
     return graph.GetConfig();
   }
 

@@ -7,7 +7,19 @@ single_version_override(
     version = "0.0.11",
 )
 
+# apple_support must be declared before rules_cc: Bazel 7+ registers cc
+# toolchains in bazel_dep declaration order, and objc_library compilation
+# requires apple_support's Apple CC toolchain to take precedence over
+# rules_cc's generic one. See https://github.com/bazelbuild/apple_support.
+bazel_dep(name = "apple_support", version = "2.6.1", repo_name = "build_bazel_apple_support")
+bazel_dep(name = "rules_apple", version = "3.16.1", repo_name = "build_bazel_rules_apple")
+bazel_dep(name = "rules_swift", version = "2.3.0", repo_name = "build_bazel_rules_swift")
 bazel_dep(name = "rules_cc", version = "0.2.14")
+single_version_override(
+    module_name = "rules_cc",
+    version = "0.2.9",
+)
+
 bazel_dep(name = "rules_java", version = "7.10.0")
 single_version_override(
     module_name = "rules_java",
@@ -17,6 +29,7 @@ single_version_override(
 bazel_dep(name = "rules_kotlin", version = "1.9.6")
 bazel_dep(name = "rules_shell", version = "0.4.1")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
+bazel_dep(name = "rules_platform", version = "0.1.0")
 bazel_dep(name = "aspect_rules_jasmine", version = "2.0.4")
 bazel_dep(name = "aspect_rules_js", version = "2.7.0")
 bazel_dep(name = "aspect_bazel_lib", version = "2.21.2")
@@ -35,12 +48,12 @@ single_version_override(
     version = "0.34.0",
 )
 
-# ABSL on 2025-01-14
+# Abseil 20260526.0
 bazel_dep(name = "abseil-cpp", repo_name = "com_google_absl")
 archive_override(
     module_name = "abseil-cpp",
-    strip_prefix = "abseil-cpp-255c84dadd029fd8ad25c5efb5933e47beaa00c7",
-    urls = ["https://github.com/abseil/abseil-cpp/archive/255c84dadd029fd8ad25c5efb5933e47beaa00c7.tar.gz"],
+    strip_prefix = "abseil-cpp-20260526.0",
+    urls = ["https://github.com/abseil/abseil-cpp/releases/download/20260526.0/abseil-cpp-20260526.0.tar.gz"],
 )
 
 # RE2 version 2025-11-05 (and later) explicitly adds the missing <cstring> include to prog.h and

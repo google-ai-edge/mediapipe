@@ -14,7 +14,7 @@
 #ifndef MEDIAPIPE_UTIL_TFLITE_UTILS_H_
 #define MEDIAPIPE_UTIL_TFLITE_UTILS_H_
 
-#include "tensorflow/lite/c/common.h"
+#include "tflite/c/common.h"
 
 namespace mediapipe::util::tflite {
 

@@ -49,7 +49,7 @@ class HandAssociationNodeImpl
   }
 
   absl::Status Process(CalculatorContext<HandAssociationNode>& cc) override {
-    MP_ASSIGN_OR_RETURN(auto result, GetNonOverlappingElements(cc));
+    ABSL_ASSIGN_OR_RETURN(auto result, GetNonOverlappingElements(cc));
 
     auto output =
         std::make_unique<std::vector<NormalizedRect>>(std::move(result));
@@ -98,7 +98,7 @@ class HandAssociationNodeImpl
       }
 
       for (auto rect : rects_input_stream.GetOrDie()) {
-        MP_ASSIGN_OR_RETURN(
+        ABSL_ASSIGN_OR_RETURN(
             bool is_overlapping,
             mediapipe::DoesRectOverlap(rect, result,
                                        options_.min_similarity_threshold()));

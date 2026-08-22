@@ -67,7 +67,7 @@ class ClassificationResultTest(absltest.TestCase):
       expected: category.Category,
   ):
     self.assertEqual(expected.index, actual.index)
-    self.assertAlmostEqual(expected.score, actual.score)
+    self.assertAlmostEqual(expected.score, actual.score)  # pyrefly: ignore[no-matching-overload]
     self.assertEqual(expected.category_name, actual.category_name)
     self.assertEqual(expected.display_name, actual.display_name)
 

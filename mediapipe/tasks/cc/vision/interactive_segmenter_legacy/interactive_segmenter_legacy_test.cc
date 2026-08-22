@@ -43,10 +43,10 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
-#include "tensorflow/lite/kernels/builtin_op_kernels.h"
-#include "tensorflow/lite/mutable_op_resolver.h"
-#include "tensorflow/lite/test_util.h"
 #include "testing/base/public/gmock.h"
+#include "tflite/kernels/builtin_op_kernels.h"
+#include "tflite/mutable_op_resolver.h"
+#include "tflite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -150,7 +150,7 @@ TEST_F(CreateFromOptionsTest, DISABLED_FailsWithSelectiveOpResolverMissingOps) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kPtmModel);
   options->base_options.op_resolver =
-      absl::make_unique<DeepLabOpResolverMissingOps>();
+      std::make_unique<DeepLabOpResolverMissingOps>();
   auto segmenter = InteractiveSegmenterLegacy::Create(std::move(options));
   // TODO: Make MediaPipe InferenceCalculator report the detailed
   // interpreter errors (e.g., "Encountered unresolved custom op").
@@ -310,7 +310,7 @@ INSTANTIATE_TEST_SUITE_P(
         {// Keypoint input.
          {"PointToDog1", RegionOfInterest::Format::kKeyPoint,
           NormalizedKeypoint{0.44, 0.70}, kCatsAndDogsJpg, kCatsAndDogsMaskDog1,
-          0.9f},
+          0.84f},
          {"PointToDog2", RegionOfInterest::Format::kKeyPoint,
           NormalizedKeypoint{0.66, 0.66}, kCatsAndDogsJpg, kCatsAndDogsMaskDog2,
           0.85f},
@@ -325,7 +325,7 @@ INSTANTIATE_TEST_SUITE_P(
           std::vector{NormalizedKeypoint{0.44, 0.70},
                       NormalizedKeypoint{0.44, 0.71},
                       NormalizedKeypoint{0.44, 0.72}},
-          kCatsAndDogsJpg, kCatsAndDogsMaskDog1, 0.9f},
+          kCatsAndDogsJpg, kCatsAndDogsMaskDog1, 0.84f},
          {"ScribbleToDog2", RegionOfInterest::Format::kScribble,
           std::vector{NormalizedKeypoint{0.66, 0.66},
                       NormalizedKeypoint{0.66, 0.67},

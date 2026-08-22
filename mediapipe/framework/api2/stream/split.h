@@ -17,7 +17,7 @@
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
-#include "tensorflow/lite/c/common.h"
+#include "tflite/c/common.h"
 
 namespace mediapipe::api2::builder {
 

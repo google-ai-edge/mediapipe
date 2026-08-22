@@ -163,7 +163,7 @@ class SsdAnchorsCalculator : public CalculatorBase {
     const SsdAnchorsCalculatorOptions& options =
         cc->Options<SsdAnchorsCalculatorOptions>();
 
-    auto anchors = absl::make_unique<std::vector<Anchor>>();
+    auto anchors = std::make_unique<std::vector<Anchor>>();
     if (!options.fixed_anchors().empty()) {
       // Check fields for generating anchors are not set.
       if (options.has_input_size_height() || options.has_input_size_width() ||
@@ -179,7 +179,7 @@ class SsdAnchorsCalculator : public CalculatorBase {
       cc->OutputSidePackets().Index(0).Set(Adopt(anchors.release()));
       return absl::OkStatus();
     }
-    MP_RETURN_IF_ERROR(GenerateAnchors(anchors.get(), options));
+    ABSL_RETURN_IF_ERROR(GenerateAnchors(anchors.get(), options));
     cc->OutputSidePackets().Index(0).Set(Adopt(anchors.release()));
     return absl::OkStatus();
   }

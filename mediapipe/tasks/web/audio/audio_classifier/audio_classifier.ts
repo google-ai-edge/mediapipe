@@ -116,6 +116,10 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
     this.options.setBaseOptions(new BaseOptionsProto());
   }
 
+  protected override getTaskName(): string {
+    return 'AudioClassifier';
+  }
+
   protected override get baseOptions(): BaseOptionsProto {
     return this.options.getBaseOptions()!;
   }

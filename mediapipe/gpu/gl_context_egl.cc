@@ -108,8 +108,8 @@ GlContext::StatusOrGlContext GlContext::Create(const GlContext& share_context,
 GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
                                                bool create_thread) {
   std::shared_ptr<GlContext> context(new GlContext());
-  MP_RETURN_IF_ERROR(context->CreateContext(share_context));
-  MP_RETURN_IF_ERROR(context->FinishInitialization(create_thread));
+  ABSL_RETURN_IF_ERROR(context->CreateContext(share_context));
+  ABSL_RETURN_IF_ERROR(context->FinishInitialization(create_thread));
   return std::move(context);
 }
 
@@ -177,7 +177,7 @@ absl::Status GlContext::CreateContextInternal(EGLContext share_context,
 }
 
 absl::Status GlContext::CreateContext(EGLContext share_context) {
-  MP_ASSIGN_OR_RETURN(display_, GetInitializedEglDisplay());
+  ABSL_ASSIGN_OR_RETURN(display_, GetInitializedEglDisplay());
 
   auto status = CreateContextInternal(share_context, 3);
   if (!status.ok()) {
@@ -186,7 +186,7 @@ absl::Status GlContext::CreateContext(EGLContext share_context) {
     ABSL_LOG(WARNING) << "Fall back on OpenGL ES 2.";
     status = CreateContextInternal(share_context, 2);
   }
-  MP_RETURN_IF_ERROR(status);
+  ABSL_RETURN_IF_ERROR(status);
 
   EGLint pbuffer_attr[] = {EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE};
 

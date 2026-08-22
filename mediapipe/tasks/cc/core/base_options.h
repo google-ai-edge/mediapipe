@@ -26,7 +26,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/host_environment.h"
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
+#include "tflite/core/api/op_resolver.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -48,6 +48,8 @@ struct BaseOptions {
     GPU = 1,
     // Edge TPU acceleration using NNAPI delegate.
     EDGETPU_NNAPI = 2,
+    // NPU acceleration using LiteRT.
+    NPU = 4,
   };
 
   Delegate delegate = CPU;
@@ -76,6 +78,12 @@ struct BaseOptions {
     std::string model_token;
   };
 
+  // Options for NPU.
+  struct NpuOptions {
+    // The directory containing the NPU dispatch library.
+    std::string dispatch_library_directory;
+  };
+
   // The file descriptor to a file opened with open(2), with optional additional
   // offset and length information.
   struct FileDescriptorMeta {
@@ -98,7 +106,8 @@ struct BaseOptions {
 
   // Options for the chosen delegate. If not set, the default delegate options
   // is used.
-  std::optional<std::variant<CpuOptions, GpuOptions>> delegate_options;
+  std::optional<std::variant<CpuOptions, GpuOptions, NpuOptions>>
+      delegate_options;
 
   // Disallows/disables default initialization of MediaPipe graph services. This
   // can be used to disable default OpenCL context creation so that the whole

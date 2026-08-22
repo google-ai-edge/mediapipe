@@ -428,7 +428,7 @@ class ClockFrenzy {
   void Start(int nthreads) {
     absl::MutexLock l(lock_);
     running_ = true;
-    threads_ = absl::make_unique<mediapipe::ThreadPool>("Frenzy", nthreads);
+    threads_ = std::make_unique<mediapipe::ThreadPool>("Frenzy", nthreads);
     threads_->StartWorkers();
     for (int i = 0; i < nthreads; ++i) {
       threads_->Schedule([&]() { Feed(); });

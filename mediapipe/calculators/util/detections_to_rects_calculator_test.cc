@@ -138,7 +138,7 @@ absl::StatusOr<Rect> RunDetectionKeyPointsToRectCalculation(
       .packets.push_back(MakePacket<std::pair<int, int>>(image_size)
                              .At(Timestamp::PostStream()));
 
-  MP_RETURN_IF_ERROR(runner.Run());
+  ABSL_RETURN_IF_ERROR(runner.Run());
   const std::vector<Packet>& output = runner.Outputs().Tag(kRectTag).packets;
   RET_CHECK_EQ(output.size(), 1);
   return output[0].Get<Rect>();
@@ -216,7 +216,7 @@ absl::StatusOr<NormalizedRect> RunDetectionKeyPointsToNormRectCalculation(
       .packets.push_back(MakePacket<Detection>(std::move(detection))
                              .At(Timestamp::PostStream()));
 
-  MP_RETURN_IF_ERROR(runner.Run());
+  ABSL_RETURN_IF_ERROR(runner.Run());
   const std::vector<Packet>& output =
       runner.Outputs().Tag(kNormRectTag).packets;
   RET_CHECK_EQ(output.size(), 1);

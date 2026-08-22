@@ -33,7 +33,7 @@ limitations under the License.
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/tasks/cc/components/calculators/classification_aggregation_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
-#include "tensorflow/lite/test_util.h"
+#include "tflite/test_util.h"
 
 namespace mediapipe {
 namespace {
@@ -96,27 +96,29 @@ class ClassificationAggregationCalculatorTest : public tflite::testing::Test {
           graph[Output<ClassificationResult>(kClassificationsTag)];
     }
 
-    MP_RETURN_IF_ERROR(calculator_graph_.Initialize(graph.GetConfig()));
+    ABSL_RETURN_IF_ERROR(calculator_graph_.Initialize(graph.GetConfig()));
     if (connect_timestamps) {
-      MP_ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
-                                           kTimestampedClassificationsName));
-      MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
+      ABSL_ASSIGN_OR_RETURN(auto poller,
+                            calculator_graph_.AddOutputStreamPoller(
+                                kTimestampedClassificationsName));
+      ABSL_RETURN_IF_ERROR(
+          calculator_graph_.StartRun(/*extra_side_packets=*/{}));
       return poller;
     }
-    MP_ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
-                                         kClassificationsName));
-    MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
+    ABSL_ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
+                                           kClassificationsName));
+    ABSL_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
     return poller;
   }
 
   absl::Status Send(
       std::vector<ClassificationList> classifications, int timestamp = 0,
       std::optional<std::vector<int>> aggregation_timestamps = std::nullopt) {
-    MP_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
+    ABSL_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
         kClassificationInput0Name,
         MakePacket<ClassificationList>(classifications[0])
             .At(Timestamp(timestamp))));
-    MP_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
+    ABSL_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
         kClassificationInput1Name,
         MakePacket<ClassificationList>(classifications[1])
             .At(Timestamp(timestamp))));
@@ -125,7 +127,7 @@ class ClassificationAggregationCalculatorTest : public tflite::testing::Test {
       for (const auto& timestamp : *aggregation_timestamps) {
         packet->emplace_back(Timestamp(timestamp));
       }
-      MP_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
+      ABSL_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
           kTimestampsName, Adopt(packet.release()).At(Timestamp(timestamp))));
     }
     return absl::OkStatus();
@@ -133,15 +135,15 @@ class ClassificationAggregationCalculatorTest : public tflite::testing::Test {
 
   template <typename T>
   absl::StatusOr<T> GetResult(OutputStreamPoller& poller) {
-    MP_RETURN_IF_ERROR(calculator_graph_.WaitUntilIdle());
-    MP_RETURN_IF_ERROR(calculator_graph_.CloseAllInputStreams());
+    ABSL_RETURN_IF_ERROR(calculator_graph_.WaitUntilIdle());
+    ABSL_RETURN_IF_ERROR(calculator_graph_.CloseAllInputStreams());
 
     Packet packet;
     if (!poller.Next(&packet)) {
       return absl::InternalError("Unable to get output packet");
     }
     auto result = packet.Get<T>();
-    MP_RETURN_IF_ERROR(calculator_graph_.WaitUntilDone());
+    ABSL_RETURN_IF_ERROR(calculator_graph_.WaitUntilDone());
     return result;
   }
 

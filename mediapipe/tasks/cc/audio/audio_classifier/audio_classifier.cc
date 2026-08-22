@@ -32,7 +32,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
+#include "tflite/core/api/op_resolver.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -159,7 +159,8 @@ absl::StatusOr<std::vector<AudioClassifierResult>> AudioClassifier::Classify(
 absl::Status AudioClassifier::ClassifyAsync(Matrix audio_block,
                                             double audio_sample_rate,
                                             int64_t timestamp_ms) {
-  MP_RETURN_IF_ERROR(CheckOrSetSampleRate(kSampleRateName, audio_sample_rate));
+  ABSL_RETURN_IF_ERROR(
+      CheckOrSetSampleRate(kSampleRateName, audio_sample_rate));
   return SendAudioStreamData(
       {{kAudioStreamName,
         MakePacket<Matrix>(std::move(audio_block))

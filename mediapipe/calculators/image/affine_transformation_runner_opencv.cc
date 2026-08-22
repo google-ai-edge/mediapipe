@@ -173,7 +173,7 @@ absl::StatusOr<
     std::unique_ptr<AffineTransformation::Runner<ImageFrame, ImageFrame>>>
 CreateAffineTransformationOpenCvRunner(
     AffineTransformation::Interpolation interpolation) {
-  return absl::make_unique<OpenCvRunner>(interpolation);
+  return std::make_unique<OpenCvRunner>(interpolation);
 }
 
 }  // namespace mediapipe

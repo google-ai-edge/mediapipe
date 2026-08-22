@@ -133,7 +133,7 @@ class DetectionsTest(absltest.TestCase):
     self._assert_categories_equal(actual.categories, expected_categories)
 
     if expected_keypoints:
-      self._assert_keypoints_equal(actual.keypoints, expected_keypoints)
+      self._assert_keypoints_equal(actual.keypoints, expected_keypoints)  # pyrefly: ignore[bad-argument-type]
     else:
       self.assertIsNone(actual.keypoints)
 

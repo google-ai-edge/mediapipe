@@ -25,7 +25,7 @@ load(
 
 licenses(["notice"])
 
-MIN_IOS_VERSION = "12.0"
+MIN_IOS_VERSION = "15.0"
 
 alias(
     name = "handdetectiongpu",

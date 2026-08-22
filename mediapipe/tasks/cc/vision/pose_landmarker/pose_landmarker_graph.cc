@@ -96,8 +96,8 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   auto* pose_detector_graph_options =
       options->mutable_pose_detector_graph_options();
   if (!pose_detector_graph_options->base_options().has_model_asset()) {
-    MP_ASSIGN_OR_RETURN(const auto pose_detector_file,
-                        resources.GetFile(kPoseDetectorTFLiteName));
+    ABSL_ASSIGN_OR_RETURN(const auto pose_detector_file,
+                          resources.GetFile(kPoseDetectorTFLiteName));
     SetExternalFile(pose_detector_file,
                     pose_detector_graph_options->mutable_base_options()
                         ->mutable_model_asset(),
@@ -121,8 +121,8 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
       options->mutable_pose_landmarks_detector_graph_options();
   if (!pose_landmarks_detector_graph_options->base_options()
            .has_model_asset()) {
-    MP_ASSIGN_OR_RETURN(const auto pose_landmarks_detector_file,
-                        resources.GetFile(kPoseLandmarksDetectorTFLiteName));
+    ABSL_ASSIGN_OR_RETURN(const auto pose_landmarks_detector_file,
+                          resources.GetFile(kPoseLandmarksDetectorTFLiteName));
     SetExternalFile(
         pose_landmarks_detector_file,
         pose_landmarks_detector_graph_options->mutable_base_options()
@@ -226,18 +226,18 @@ class PoseLandmarkerGraph : public core::ModelTaskGraph {
     if (sc->Options<PoseLandmarkerGraphOptions>()
             .base_options()
             .has_model_asset()) {
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           const auto* model_asset_bundle_resources,
           CreateModelAssetBundleResources<PoseLandmarkerGraphOptions>(sc));
       // Copies the file content instead of passing the pointer of file in
       // memory if the subgraph model resource service is not available.
-      MP_RETURN_IF_ERROR(SetSubTaskBaseOptions(
+      ABSL_RETURN_IF_ERROR(SetSubTaskBaseOptions(
           *model_asset_bundle_resources,
           sc->MutableOptions<PoseLandmarkerGraphOptions>(),
           !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
                .IsAvailable()));
     }
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         auto outs, BuildPoseLandmarkerGraph(
                        *sc->MutableOptions<PoseLandmarkerGraphOptions>(),
                        graph[Input<Image>(kImageTag)],

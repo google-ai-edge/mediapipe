@@ -113,7 +113,7 @@ absl::Status ImageCroppingCalculator::GetContract(CalculatorContract* cc) {
 
   if (use_gpu) {
 #if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+    ABSL_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
 #endif  // !MEDIAPIPE_DISABLE_GPU
   }
 
@@ -135,7 +135,7 @@ absl::Status ImageCroppingCalculator::Open(CalculatorContext* cc) {
 
   if (use_gpu_) {
 #if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
+    ABSL_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #else
     RET_CHECK_FAIL() << "GPU processing is for Android and iOS only.";
 #endif  // !MEDIAPIPE_DISABLE_GPU
@@ -143,9 +143,9 @@ absl::Status ImageCroppingCalculator::Open(CalculatorContext* cc) {
 
   // Validate border mode.
   if (use_gpu_) {
-    MP_RETURN_IF_ERROR(ValidateBorderModeForGPU(cc));
+    ABSL_RETURN_IF_ERROR(ValidateBorderModeForGPU(cc));
   } else {
-    MP_RETURN_IF_ERROR(ValidateBorderModeForCPU(cc));
+    ABSL_RETURN_IF_ERROR(ValidateBorderModeForCPU(cc));
   }
 
   return absl::OkStatus();
@@ -163,17 +163,18 @@ absl::Status ImageCroppingCalculator::Process(CalculatorContext* cc) {
   }
   if (use_gpu_) {
 #if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this, cc]() -> absl::Status {
-      if (!gpu_initialized_) {
-        MP_RETURN_IF_ERROR(InitGpu(cc));
-        gpu_initialized_ = true;
-      }
-      MP_RETURN_IF_ERROR(RenderGpu(cc));
-      return absl::OkStatus();
-    }));
+    ABSL_RETURN_IF_ERROR(
+        gpu_helper_.RunInGlContext([this, cc]() -> absl::Status {
+          if (!gpu_initialized_) {
+            ABSL_RETURN_IF_ERROR(InitGpu(cc));
+            gpu_initialized_ = true;
+          }
+          ABSL_RETURN_IF_ERROR(RenderGpu(cc));
+          return absl::OkStatus();
+        }));
 #endif  // !MEDIAPIPE_DISABLE_GPU
   } else {
-    MP_RETURN_IF_ERROR(RenderCpu(cc));
+    ABSL_RETURN_IF_ERROR(RenderCpu(cc));
   }
   return absl::OkStatus();
 }
@@ -231,7 +232,7 @@ absl::Status ImageCroppingCalculator::RenderCpu(CalculatorContext* cc) {
 
   // Get border mode and value for OpenCV.
   int border_mode;
-  MP_RETURN_IF_ERROR(GetBorderModeForOpenCV(cc, &border_mode));
+  ABSL_RETURN_IF_ERROR(GetBorderModeForOpenCV(cc, &border_mode));
 
   const cv::RotatedRect min_rect(cv::Point2f(rect_center_x, rect_center_y),
                                  cv::Size2f(target_width, target_height),

@@ -34,7 +34,7 @@ namespace processors {
 //
 // auto& postprocessing =
 //     graph.AddNode("mediapipe.tasks.components.EmbeddingPostprocessingGraph");
-// MP_RETURN_IF_ERROR(ConfigureEmbeddingPostprocessing(
+// ABSL_RETURN_IF_ERROR(ConfigureEmbeddingPostprocessing(
 //     model_resources,
 //     embedder_options,
 //     &postprocessing.GetOptions<EmbeddingPostprocessingGraphOptions>()));

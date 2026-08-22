@@ -54,6 +54,7 @@ import {TransformerParameters} from '../../../../tasks/web/genai/llm_inference/p
 
 import type {LlmInferenceOptions} from './llm_inference_options';
 import {
+  fastForwardLitertLmStreamToModel,
   getModelFormatAndClose,
   ModelFormat,
   tee,
@@ -75,6 +76,10 @@ export type {
 
 declare interface CancelModule {
   LLM_CANCEL_FLAG: number | undefined;
+}
+
+declare interface LiteRtLmOffsetParserModule {
+  _GetLiteRtModelOffset(headerPtr: number): number;
 }
 
 // The OSS JS API does not support the builder pattern.
@@ -317,6 +322,10 @@ export class LlmInference extends TaskRunner {
     this.initDefaults();
   }
 
+  protected override getTaskName(): string {
+    return 'LlmInference';
+  }
+
   /**
    * Create WebGPU device with high performance configurations.
    * @export
@@ -453,6 +462,28 @@ export class LlmInference extends TaskRunner {
       );
       this.isConvertedModel = modelFormat === ModelFormat.CONVERTED;
 
+      // We only support non-converted .litertlm files, so find the
+      // offset for the model itself and then fastforward the stream
+      // accordingly.
+      let litertLmModelStream = null;
+      if (modelFormat === ModelFormat.LITERTLM) {
+        const wasm = this.graphRunner.wasmModule;
+        litertLmModelStream = await fastForwardLitertLmStreamToModel(
+          modelStreamForLoading,
+          (header: Uint8Array) => {
+            // Simple lambda to call GetLiteRtModelOffset on our binary
+            // .litertlm header.
+            const headerSize = header.length;
+            const headerPtr = wasm._malloc(headerSize);
+            wasm.HEAPU8.set(header, headerPtr);
+            const parser = wasm as unknown as LiteRtLmOffsetParserModule;
+            const modelOffset = parser._GetLiteRtModelOffset(headerPtr);
+            wasm._free(headerPtr);
+            return modelOffset;
+          },
+        );
+      }
+
       // LLM Engine must be used for converted models and multi-modality.
       const maxNumImages =
         'maxNumImages' in options && options.maxNumImages
@@ -465,11 +496,13 @@ export class LlmInference extends TaskRunner {
 
       if (this.isConvertedModel || maxNumImages > 0 || supportAudio) {
         this.useLlmEngine = true;
-        modelStream = modelStreamForLoading;
+        modelStream = litertLmModelStream
+          ? litertLmModelStream
+          : modelStreamForLoading;
       } else {
         this.useLlmEngine = false;
         this.streamingReader = StreamingReader.loadFromReader(
-          modelStreamForLoading,
+          litertLmModelStream ? litertLmModelStream : modelStreamForLoading,
           onFinishedLoadingData,
         );
       }
@@ -535,8 +568,21 @@ export class LlmInference extends TaskRunner {
         );
       }
     }
+
     if ('forceF32' in options && options.forceF32 !== undefined) {
       this.options.setForceF32(options.forceF32);
+    }
+    if (
+      'disableRewinding' in options &&
+      options.disableRewinding !== undefined
+    ) {
+      if (this.useLlmEngine && options.disableRewinding) {
+        throw new Error(
+          `'disableRewinding' is not supported for converted LLM models yet, and is also not supported with multimodality.`,
+        );
+      } else {
+        this.options.setDisableRewinding(options.disableRewinding);
+      }
     }
 
     // If the model is a converted LLM or we're using multimodality, use
@@ -1319,6 +1365,15 @@ export class LlmInference extends TaskRunner {
     const transformerParams = new TransformerParameters();
     transformerParams.setBatchSize(1);
     transformerParams.setMaxSeqLength(this.options.getMaxTokens());
+    if (
+      this.options.hasDisableRewinding() &&
+      this.options.getDisableRewinding()
+    ) {
+      // To disable rewinding optimizations, we turn off prefix caching and use
+      // ringbuffers for local context.
+      llmGpuOptions.setDisablePrefixCaching(true);
+      transformerParams.setUseRingbuffers(true);
+    }
     llmParams.setTransformerParameters(transformerParams);
     llmGpuOptions.setLlmParameters(llmParams);
 

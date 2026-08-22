@@ -14,10 +14,10 @@
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/interpreter_builder.h"
-#include "tensorflow/lite/kernels/register.h"
-#include "tensorflow/lite/test_util.h"
+#include "tflite/interpreter.h"
+#include "tflite/interpreter_builder.h"
+#include "tflite/kernels/register.h"
+#include "tflite/test_util.h"
 
 namespace mediapipe {
 namespace {
@@ -33,7 +33,7 @@ class TfLiteSignatureReaderTest : public Test {
   absl::StatusOr<std::unique_ptr<tflite::Interpreter>>
   ReadModelAndBuildInterpreter(const std::string& model_path) {
     std::unique_ptr<Resources> resources = CreateDefaultResources();
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         Packet model_packet,
         TfLiteModelLoader::LoadFromPath(
             *resources, file::JoinPath(kModelPath, model_path)));

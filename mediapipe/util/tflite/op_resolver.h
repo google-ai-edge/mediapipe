@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_UTIL_TFLITE_OP_RESOLVER_H_
 #define MEDIAPIPE_UTIL_TFLITE_OP_RESOLVER_H_
 
-#include "tensorflow/lite/kernels/register.h"
+#include "tflite/kernels/register.h"
 
 namespace mediapipe {
 

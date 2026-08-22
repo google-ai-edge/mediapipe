@@ -231,7 +231,7 @@ absl::Status ContentZoomingCalculator::Open(mediapipe::CalculatorContext* cc) {
 
 absl::Status ContentZoomingCalculator::Close(mediapipe::CalculatorContext* cc) {
   if (initialized_) {
-    MP_RETURN_IF_ERROR(SaveState(cc));
+    ABSL_RETURN_IF_ERROR(SaveState(cc));
   }
   return absl::OkStatus();
 }
@@ -405,7 +405,7 @@ absl::Status ContentZoomingCalculator::MaybeLoadState(
   last_measured_height_ = state.last_measured_height;
   last_measured_x_offset_ = state.last_measured_x_offset;
   last_measured_y_offset_ = state.last_measured_y_offset;
-  MP_RETURN_IF_ERROR(UpdateAspectAndMax());
+  ABSL_RETURN_IF_ERROR(UpdateAspectAndMax());
 
   return UpdateForResolutionChange(cc, frame_width, frame_height);
 }
@@ -471,7 +471,7 @@ absl::Status ContentZoomingCalculator::InitializeState(
   path_solver_tilt_ = std::make_unique<KinematicPathSolver>(
       options_.kinematic_options_tilt(), 0, frame_height_,
       static_cast<float>(frame_height_) / kFieldOfView);
-  MP_RETURN_IF_ERROR(UpdateAspectAndMax());
+  ABSL_RETURN_IF_ERROR(UpdateAspectAndMax());
   int min_zoom_size = frame_height_ * GetMaxZoomFactor(cc);
   path_solver_zoom_ = std::make_unique<KinematicPathSolver>(
       options_.kinematic_options_zoom(), min_zoom_size,
@@ -496,14 +496,15 @@ absl::Status ContentZoomingCalculator::UpdateForResolutionChange(
     last_measured_x_offset_ = last_measured_x_offset_ * width_scale;
     frame_width_ = frame_width;
     frame_height_ = frame_height;
-    MP_RETURN_IF_ERROR(UpdateAspectAndMax());
-    MP_RETURN_IF_ERROR(path_solver_pan_->UpdateMinMaxLocation(0, frame_width_));
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(UpdateAspectAndMax());
+    ABSL_RETURN_IF_ERROR(
+        path_solver_pan_->UpdateMinMaxLocation(0, frame_width_));
+    ABSL_RETURN_IF_ERROR(
         path_solver_tilt_->UpdateMinMaxLocation(0, frame_height_));
     int min_zoom_size = frame_height_ * GetMaxZoomFactor(cc);
-    MP_RETURN_IF_ERROR(path_solver_zoom_->UpdateMinMaxLocation(
+    ABSL_RETURN_IF_ERROR(path_solver_zoom_->UpdateMinMaxLocation(
         min_zoom_size, max_frame_value_ * frame_height_));
-    MP_RETURN_IF_ERROR(path_solver_zoom_->UpdatePixelsPerDegree(
+    ABSL_RETURN_IF_ERROR(path_solver_zoom_->UpdatePixelsPerDegree(
         static_cast<float>(frame_height_) / kFieldOfView));
   }
   return absl::OkStatus();
@@ -566,14 +567,14 @@ absl::Status ContentZoomingCalculator::Process(
     return absl::OkStatus();
   }
   int frame_width, frame_height;
-  MP_RETURN_IF_ERROR(GetVideoResolution(cc, &frame_width, &frame_height));
+  ABSL_RETURN_IF_ERROR(GetVideoResolution(cc, &frame_width, &frame_height));
 
   // Init on first call or re-init always if configured to be stateless.
   if (!initialized_) {
-    MP_RETURN_IF_ERROR(MaybeLoadState(cc, frame_width, frame_height));
+    ABSL_RETURN_IF_ERROR(MaybeLoadState(cc, frame_width, frame_height));
     initialized_ = !options_.is_stateless();
   } else {
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         UpdateForResolutionChange(cc, frame_width, frame_height));
   }
 
@@ -581,8 +582,8 @@ absl::Status ContentZoomingCalculator::Process(
   float xmin = 1, ymin = 1, xmax = 0, ymax = 0;
   bool only_required_found = false;
   bool has_detections = true;
-  MP_RETURN_IF_ERROR(GetDetectionsBox(cc, &xmin, &xmax, &ymin, &ymax,
-                                      &only_required_found, &has_detections));
+  ABSL_RETURN_IF_ERROR(GetDetectionsBox(cc, &xmin, &xmax, &ymin, &ymax,
+                                        &only_required_found, &has_detections));
   if (!has_detections) return absl::OkStatus();
 
   const bool may_start_animation = (options_.us_to_first_rect() != 0) &&
@@ -602,7 +603,7 @@ absl::Status ContentZoomingCalculator::Process(
     // Convert bounds to tilt/zoom and in pixel coordinates.
     const double scale_factor = GetScaleFactor(cc);
     RET_CHECK(scale_factor > 0.0) << "Scale factor must be positive.";
-    MP_RETURN_IF_ERROR(ConvertToPanTiltZoom(
+    ABSL_RETURN_IF_ERROR(ConvertToPanTiltZoom(
         xmin, xmax, ymin, ymax, scale_factor, &offset_y, &offset_x, &height));
     // A only required detection was found.
     last_only_required_detection_ = cc->InputTimestamp().Microseconds();
@@ -631,11 +632,11 @@ absl::Status ContentZoomingCalculator::Process(
   // Check if the camera is changing in pan, tilt or zoom.  If the camera is in
   // motion disable temporal filtering.
   bool pan_state, tilt_state, zoom_state;
-  MP_RETURN_IF_ERROR(path_solver_pan_->PredictMotionState(
+  ABSL_RETURN_IF_ERROR(path_solver_pan_->PredictMotionState(
       offset_x, cc->InputTimestamp().Microseconds(), &pan_state));
-  MP_RETURN_IF_ERROR(path_solver_tilt_->PredictMotionState(
+  ABSL_RETURN_IF_ERROR(path_solver_tilt_->PredictMotionState(
       offset_y, cc->InputTimestamp().Microseconds(), &tilt_state));
-  MP_RETURN_IF_ERROR(path_solver_zoom_->PredictMotionState(
+  ABSL_RETURN_IF_ERROR(path_solver_zoom_->PredictMotionState(
       height, cc->InputTimestamp().Microseconds(), &zoom_state));
   if (pan_state || tilt_state || zoom_state) {
     path_solver_pan_->ClearHistory();
@@ -658,41 +659,41 @@ absl::Status ContentZoomingCalculator::Process(
   const bool disable_animations =
       options_.disable_animations() && path_solver_zoom_->IsInitialized();
   if (disable_animations) {
-    MP_RETURN_IF_ERROR(path_solver_zoom_->SetState(height));
-    MP_RETURN_IF_ERROR(path_solver_tilt_->SetState(offset_y));
-    MP_RETURN_IF_ERROR(path_solver_pan_->SetState(offset_x));
+    ABSL_RETURN_IF_ERROR(path_solver_zoom_->SetState(height));
+    ABSL_RETURN_IF_ERROR(path_solver_tilt_->SetState(offset_y));
+    ABSL_RETURN_IF_ERROR(path_solver_pan_->SetState(offset_x));
   }
 
   // Compute smoothed zoom camera path.
-  MP_RETURN_IF_ERROR(path_solver_zoom_->AddObservation(
+  ABSL_RETURN_IF_ERROR(path_solver_zoom_->AddObservation(
       height, cc->InputTimestamp().Microseconds()));
   float path_height;
-  MP_RETURN_IF_ERROR(path_solver_zoom_->GetState(&path_height));
+  ABSL_RETURN_IF_ERROR(path_solver_zoom_->GetState(&path_height));
   const float path_width = path_height * target_aspect_;
 
   // Update pixel-per-degree value for pan/tilt.
   int target_height;
-  MP_RETURN_IF_ERROR(path_solver_zoom_->GetTargetPosition(&target_height));
+  ABSL_RETURN_IF_ERROR(path_solver_zoom_->GetTargetPosition(&target_height));
   const int target_width = target_height * target_aspect_;
-  MP_RETURN_IF_ERROR(path_solver_pan_->UpdatePixelsPerDegree(
+  ABSL_RETURN_IF_ERROR(path_solver_pan_->UpdatePixelsPerDegree(
       static_cast<float>(target_width) / kFieldOfView));
-  MP_RETURN_IF_ERROR(path_solver_tilt_->UpdatePixelsPerDegree(
+  ABSL_RETURN_IF_ERROR(path_solver_tilt_->UpdatePixelsPerDegree(
       static_cast<float>(target_height) / kFieldOfView));
 
   // Compute smoothed pan/tilt paths.
-  MP_RETURN_IF_ERROR(path_solver_pan_->AddObservation(
+  ABSL_RETURN_IF_ERROR(path_solver_pan_->AddObservation(
       offset_x, cc->InputTimestamp().Microseconds()));
-  MP_RETURN_IF_ERROR(path_solver_tilt_->AddObservation(
+  ABSL_RETURN_IF_ERROR(path_solver_tilt_->AddObservation(
       offset_y, cc->InputTimestamp().Microseconds()));
   float path_offset_x;
-  MP_RETURN_IF_ERROR(path_solver_pan_->GetState(&path_offset_x));
+  ABSL_RETURN_IF_ERROR(path_solver_pan_->GetState(&path_offset_x));
   float path_offset_y;
-  MP_RETURN_IF_ERROR(path_solver_tilt_->GetState(&path_offset_y));
+  ABSL_RETURN_IF_ERROR(path_solver_tilt_->GetState(&path_offset_y));
 
   // Update path.
-  MP_RETURN_IF_ERROR(SmoothAndClampPath(target_width, target_height, path_width,
-                                        path_height, &path_offset_x,
-                                        &path_offset_y));
+  ABSL_RETURN_IF_ERROR(SmoothAndClampPath(target_width, target_height,
+                                          path_width, path_height,
+                                          &path_offset_x, &path_offset_y));
 
   // Transmit result downstream to scenecroppingcalculator.
   if (cc->Outputs().HasTag(kDetectedBorders)) {
@@ -700,7 +701,7 @@ absl::Status ContentZoomingCalculator::Process(
     const int path_top = path_offset_y - path_height / 2;
     const int path_bottom = frame_height_ - (path_offset_y + path_height / 2);
     std::unique_ptr<StaticFeatures> features =
-        absl::make_unique<StaticFeatures>();
+        std::make_unique<StaticFeatures>();
     MakeStaticFeatures(path_top, path_bottom, frame_width_, frame_height_,
                        features.get());
     cc->Outputs()
@@ -730,10 +731,10 @@ absl::Status ContentZoomingCalculator::Process(
     if (is_animating) {
       auto rect =
           GetAnimationRect(frame_width, frame_height, cc->InputTimestamp());
-      MP_RETURN_IF_ERROR(rect.status());
-      gpu_rect = absl::make_unique<mediapipe::Rect>(*rect);
+      ABSL_RETURN_IF_ERROR(rect.status());
+      gpu_rect = std::make_unique<mediapipe::Rect>(*rect);
     } else {
-      gpu_rect = absl::make_unique<mediapipe::Rect>();
+      gpu_rect = std::make_unique<mediapipe::Rect>();
       gpu_rect->set_x_center(path_offset_x);
       gpu_rect->set_width(path_width);
       gpu_rect->set_y_center(path_offset_y);
@@ -744,13 +745,13 @@ absl::Status ContentZoomingCalculator::Process(
   }
   if (cc->Outputs().HasTag(kNormalizedCropRect)) {
     std::unique_ptr<mediapipe::NormalizedRect> gpu_rect =
-        absl::make_unique<mediapipe::NormalizedRect>();
+        std::make_unique<mediapipe::NormalizedRect>();
     const float float_frame_width = static_cast<float>(frame_width_);
     const float float_frame_height = static_cast<float>(frame_height_);
     if (is_animating) {
       auto rect =
           GetAnimationRect(frame_width, frame_height, cc->InputTimestamp());
-      MP_RETURN_IF_ERROR(rect.status());
+      ABSL_RETURN_IF_ERROR(rect.status());
       gpu_rect->set_x_center(rect->x_center() / float_frame_width);
       gpu_rect->set_width(rect->width() / float_frame_width);
       gpu_rect->set_y_center(rect->y_center() / float_frame_height);
@@ -784,7 +785,7 @@ absl::Status ContentZoomingCalculator::SmoothAndClampPath(
   }
 
   float delta_height;
-  MP_RETURN_IF_ERROR(path_solver_zoom_->GetDeltaState(&delta_height));
+  ABSL_RETURN_IF_ERROR(path_solver_zoom_->GetDeltaState(&delta_height));
   const int delta_width = delta_height * target_aspect_;
 
   // Smooth centering when zooming out.
@@ -825,8 +826,8 @@ absl::Status ContentZoomingCalculator::SmoothAndClampPath(
   *path_offset_x = std::clamp(*path_offset_x, half_path_width,
                               frame_width_ - half_path_width);
 
-  MP_RETURN_IF_ERROR(path_solver_pan_->SetState(*path_offset_x));
-  MP_RETURN_IF_ERROR(path_solver_tilt_->SetState(*path_offset_y));
+  ABSL_RETURN_IF_ERROR(path_solver_pan_->SetState(*path_offset_x));
+  ABSL_RETURN_IF_ERROR(path_solver_tilt_->SetState(*path_offset_y));
 
   return absl::OkStatus();
 }
@@ -841,7 +842,7 @@ absl::Status ContentZoomingCalculator::GetDetectionsBox(
         continue;
       }
       *only_required_found = true;
-      MP_RETURN_IF_ERROR(UpdateRanges(
+      ABSL_RETURN_IF_ERROR(UpdateRanges(
           region, options_.detection_shift_vertical(),
           options_.detection_shift_horizontal(),
           options_.extra_vertical_padding(),
@@ -855,7 +856,7 @@ absl::Status ContentZoomingCalculator::GetDetectionsBox(
         // If no detections are available and we never had any,
         // simply return the full-image rectangle as crop-rect.
         if (cc->Outputs().HasTag(kCropRect)) {
-          auto default_rect = absl::make_unique<mediapipe::Rect>();
+          auto default_rect = std::make_unique<mediapipe::Rect>();
           default_rect->set_x_center(frame_width_ / 2);
           default_rect->set_y_center(frame_height_ / 2);
           default_rect->set_width(frame_width_);
@@ -864,7 +865,7 @@ absl::Status ContentZoomingCalculator::GetDetectionsBox(
                                            Timestamp(cc->InputTimestamp()));
         }
         if (cc->Outputs().HasTag(kNormalizedCropRect)) {
-          auto default_rect = absl::make_unique<mediapipe::NormalizedRect>();
+          auto default_rect = std::make_unique<mediapipe::NormalizedRect>();
           default_rect->set_x_center(0.5);
           default_rect->set_y_center(0.5);
           default_rect->set_width(1.0);
@@ -889,7 +890,7 @@ absl::Status ContentZoomingCalculator::GetDetectionsBox(
                                 .Get<std::vector<mediapipe::Detection>>();
       for (const auto& detection : raw_detections) {
         *only_required_found = true;
-        MP_RETURN_IF_ERROR(UpdateRanges(
+        ABSL_RETURN_IF_ERROR(UpdateRanges(
             detection, options_.detection_shift_vertical(),
             options_.detection_shift_horizontal(),
             options_.extra_vertical_padding(),

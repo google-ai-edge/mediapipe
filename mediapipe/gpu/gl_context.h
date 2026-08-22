@@ -481,7 +481,26 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   absl::Mutex mutex_;
   absl::CondVar wait_for_gl_finish_cv_ ABSL_GUARDED_BY(mutex_);
 
-  std::unique_ptr<mediapipe::GlProfilingHelper> profiling_helper_ = nullptr;
+  // Wrapper around GlProfilingHelper to avoid data races setting and accessing
+  // the profiling_helper concurrently from different threads.
+  class ProfilingHelperOwner {
+   public:
+    // Creates a profiling helper from the given context if it hasn't been set
+    // yet. No-op otherwise.
+    void CreateIfUnset(
+        std::shared_ptr<mediapipe::ProfilingContext> profiling_context);
+
+    // Returns the profiling helper or nullptr if it hasn't been set yet.
+    mediapipe::GlProfilingHelper* Get() const;
+
+   private:
+    // Mutex to protect setting the profiling helper only.
+    absl::Mutex mutex_;
+    std::atomic<bool> is_set_ = false;
+    std::unique_ptr<mediapipe::GlProfilingHelper> profiling_helper_ = nullptr;
+  };
+
+  ProfilingHelperOwner profiling_helper_owner_;
 
   bool destructing_ = false;
 };

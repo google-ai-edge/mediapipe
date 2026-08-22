@@ -139,8 +139,8 @@ absl::StatusOr<mediapipe::GpuBuffer> CreateGpuBuffer(
         absl::StrCat("Unsupported OpenGL texture format: ", format));
   }
 
-  MP_ASSIGN_OR_RETURN(WrapExternalGlTextureSyncMode wrap_sync_mode,
-                      ParseSyncMode(sync_mode));
+  ABSL_ASSIGN_OR_RETURN(WrapExternalGlTextureSyncMode wrap_sync_mode,
+                        ParseSyncMode(sync_mode));
 
   return WrapExternalGlTexture(*gpu_resources, GL_TEXTURE_2D, name, width,
                                height, gpu_buffer_format,
@@ -526,7 +526,7 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateFloat32Vector)(
   // floats), but on all architectures we care about this is a float.
   static_assert(std::is_same<float, jfloat>::value, "jfloat must be float");
   std::unique_ptr<std::vector<float>> floats =
-      absl::make_unique<std::vector<float>>(data_ref, data_ref + count);
+      std::make_unique<std::vector<float>>(data_ref, data_ref + count);
 
   env->ReleaseFloatArrayElements(data, data_ref, JNI_ABORT);
   mediapipe::Packet packet = mediapipe::Adopt(floats.release());

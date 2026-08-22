@@ -23,8 +23,8 @@
 #include "mediapipe/util/tflite/operations/transform_landmarks.h"
 #include "mediapipe/util/tflite/operations/transform_tensor_bilinear.h"
 #include "mediapipe/util/tflite/operations/transpose_conv_bias.h"
-#include "tensorflow/lite/builtin_op_data.h"
-#include "tensorflow/lite/mutable_op_resolver.h"
+#include "tflite/builtin_op_data.h"
+#include "tflite/mutable_op_resolver.h"
 
 namespace mediapipe {
 

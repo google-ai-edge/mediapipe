@@ -112,9 +112,32 @@ class TensorConverterGlImpl : public TensorConverterGpu {
     };
 
     // shader program and params
+
+#ifdef __EMSCRIPTEN__
+    // Prevent "GL_INVALID_VALUE: glGetProgramiv: Program object expected."
+    // errors in the Web console.
+    //
+    // According to the documentation of glLinkProgram():
+    // "After the link operation, applications are free to modify attached
+    // shader objects, compile attached shader objects, detach shader objects,
+    // delete shader objects, and attach additional shader objects. None of
+    // these operations affects the information log or the program that is part
+    // of the program object."
+    //
+    // But in practice, detaching shaders from the program seems to break on
+    // Chrome. Deleting the shaders is fine however - it will delete them when
+    // they are no longer attached to a program.
+    //
+    // TODO: Figure out the actual root cause of this bug and
+    // remove the workaround.
+    bool keep_shader_attached = true;
+#else
+    bool keep_shader_attached = false;
+#endif  // __EMSCRIPTEN__
     mediapipe::GlhCreateProgram(
         mediapipe::kBasicVertexShader, shader_source.c_str(), NUM_ATTRIBUTES,
-        &attr_name[0], attr_location, &to_tex2d_program_);
+        &attr_name[0], attr_location, &to_tex2d_program_,
+        /*force_log_errors=*/false, keep_shader_attached);
     RET_CHECK(to_tex2d_program_) << "Problem initializing the program.";
     glUseProgram(to_tex2d_program_);
     glUniform1i(glGetUniformLocation(to_tex2d_program_, "frame"), 1);
@@ -191,9 +214,9 @@ absl::StatusOr<std::unique_ptr<TensorConverterGpu>> CreateTensorConverterGl30(
     bool single_channel, bool flip_vertically, int num_output_channels) {
   auto converter =
       std::make_unique<TensorConverterGlImpl>(gpu_helper, memory_manager);
-  MP_RETURN_IF_ERROR(converter->Init(input_width, input_height, output_range,
-                                     include_alpha, single_channel,
-                                     flip_vertically, num_output_channels));
+  ABSL_RETURN_IF_ERROR(converter->Init(input_width, input_height, output_range,
+                                       include_alpha, single_channel,
+                                       flip_vertically, num_output_channels));
   return converter;
 }
 

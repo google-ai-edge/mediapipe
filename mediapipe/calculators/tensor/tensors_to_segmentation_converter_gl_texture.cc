@@ -82,9 +82,9 @@ TensorsToSegmentationGlTextureConverter::
 absl::Status TensorsToSegmentationGlTextureConverter::Init(
     CalculatorContext* cc,
     const TensorsToSegmentationCalculatorOptions& options) {
-  MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
-  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this,
-                                                 &options]() -> absl::Status {
+  ABSL_RETURN_IF_ERROR(gpu_helper_.Open(cc));
+  ABSL_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this,
+                                                   &options]() -> absl::Status {
     // A shader to process a segmentation tensor into an output mask.
     // Currently uses 4 channels for output, and sets R+A channels as mask
     // value.
@@ -143,8 +143,8 @@ void main() {
     const std::string output_layer_index =
         "\n#define OUTPUT_LAYER_INDEX int(" +
         std::to_string(options.output_layer_index()) + ")";
-    MP_ASSIGN_OR_RETURN(bool gpu_texture_starts_at_bottom,
-                        IsGpuOriginAtBottom(options.gpu_origin()));
+    ABSL_ASSIGN_OR_RETURN(bool gpu_texture_starts_at_bottom,
+                          IsGpuOriginAtBottom(options.gpu_origin()));
     const std::string flip_y_coord =
         gpu_texture_starts_at_bottom ? "\n#define FLIP_Y_COORD" : "";
     const std::string fn_none =
@@ -207,11 +207,11 @@ TensorsToSegmentationGlTextureConverter::Convert(const Tensor& input_tensor,
                                                  int output_width,
                                                  int output_height) {
   std::unique_ptr<Image> output_image_mask;
-  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
+  ABSL_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
       [this, &input_tensor, output_width, output_height,
        &output_image_mask]() -> absl::Status {
-        MP_ASSIGN_OR_RETURN(auto hwc,
-                            GetHwcFromDims(input_tensor.shape().dims));
+        ABSL_ASSIGN_OR_RETURN(auto hwc,
+                              GetHwcFromDims(input_tensor.shape().dims));
         auto [tensor_height, tensor_width, tensor_channels] = hwc;
 
         // Create initial working mask texture.
@@ -276,7 +276,7 @@ CreateGlTextureConverter(
     CalculatorContext* cc,
     const mediapipe::TensorsToSegmentationCalculatorOptions& options) {
   auto converter = std::make_unique<TensorsToSegmentationGlTextureConverter>();
-  MP_RETURN_IF_ERROR(converter->Init(cc, options));
+  ABSL_RETURN_IF_ERROR(converter->Init(cc, options));
   return converter;
 }
 

@@ -451,6 +451,8 @@ class NodeBase {
     node_builder_.SetSourceLayer(source_layer);
   }
 
+  void SetName(absl::string_view name) { node_builder_.SetName(name); }
+
  protected:
   api3::builder::NodeBuilder& node_builder_;
 

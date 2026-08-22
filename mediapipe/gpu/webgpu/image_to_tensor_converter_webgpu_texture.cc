@@ -181,7 +181,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     RET_CHECK_EQ(tensor_buffer_offset, 0)
         << "The non-zero tensor_buffer_offset input is not supported yet.";
     const auto& output_shape = output_tensor.shape();
-    MP_RETURN_IF_ERROR(ValidateTensorShape(output_shape));
+    ABSL_RETURN_IF_ERROR(ValidateTensorShape(output_shape));
 
     const int output_height = output_shape.dims[1];
     const int output_width = output_shape.dims[2];
@@ -209,8 +209,8 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
         params.transform_matrix);
     params.output_width = output_width;
     params.output_height = output_height;
-    MP_ASSIGN_OR_RETURN(auto transform, GetValueRangeTransformation(
-                                            0.f, 1.f, range_min, range_max));
+    ABSL_ASSIGN_OR_RETURN(auto transform, GetValueRangeTransformation(
+                                              0.f, 1.f, range_min, range_max));
     params.value_transform_scale = transform.scale;
     params.value_transform_offset = transform.offset;
 
@@ -244,7 +244,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
             .size = sizeof(Parameters),
         },
     };
-    MP_ASSIGN_OR_RETURN(wgpu::ComputePipeline * pipeline, pipeline_.Get());
+    ABSL_ASSIGN_OR_RETURN(wgpu::ComputePipeline * pipeline, pipeline_.Get());
     wgpu::BindGroupDescriptor bind_group_desc = {
         .layout = pipeline->GetBindGroupLayout(0),
         .entryCount = sizeof(entries) / sizeof(entries[0]),

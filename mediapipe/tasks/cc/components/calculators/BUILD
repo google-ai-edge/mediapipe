@@ -65,7 +65,7 @@ cc_test(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
-        "@org_tensorflow//tensorflow/lite:test_util",
+        "@litert//tflite:test_util",
     ],
 )
 
@@ -234,6 +234,6 @@ cc_test(
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@org_tensorflow//tensorflow/lite:test_util",
+        "@litert//tflite:test_util",
     ],
 )

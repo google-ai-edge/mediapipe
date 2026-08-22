@@ -14,13 +14,13 @@
 
 #include "mediapipe/util/tflite/operations/transform_landmarks.h"
 
-#include "tensorflow/lite/delegates/gpu/common/mediapipe/transform_landmarks.h"
-#include "tensorflow/lite/delegates/gpu/common/types.h"
-#include "tensorflow/lite/kernels/internal/common.h"
-#include "tensorflow/lite/kernels/internal/compatibility.h"
-#include "tensorflow/lite/kernels/internal/tensor.h"
-#include "tensorflow/lite/kernels/padding.h"
-#include "tensorflow/lite/schema/schema_generated.h"
+#include "tflite/delegates/gpu/common/mediapipe/transform_landmarks.h"  // from @litert
+#include "tflite/delegates/gpu/common/types.h"
+#include "tflite/kernels/internal/common.h"
+#include "tflite/kernels/internal/compatibility.h"
+#include "tflite/kernels/internal/tensor.h"
+#include "tflite/kernels/padding.h"
+#include "tflite/schema/schema_generated.h"
 
 namespace mediapipe {
 namespace tflite_operations {

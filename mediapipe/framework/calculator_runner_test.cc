@@ -105,7 +105,7 @@ class CalculatorRunnerMultiTagTestCalculator : public CalculatorBase {
 
   absl::Status Process(CalculatorContext* cc) override {
     for (const std::string& tag : cc->Inputs().GetTags()) {
-      auto sum = absl::make_unique<int>(0);
+      auto sum = std::make_unique<int>(0);
       for (CollectionItemId item_id = cc->Inputs().BeginId(tag);
            item_id < cc->Inputs().EndId(tag); ++item_id) {
         if (!cc->Inputs().Get(item_id).IsEmpty()) {

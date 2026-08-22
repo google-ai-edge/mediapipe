@@ -31,7 +31,7 @@ limitations under the License.
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
-#include "tensorflow/lite/schema/schema_generated.h"
+#include "tflite/schema/schema_generated.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -72,12 +72,12 @@ absl::StatusOr<const ImageProperties*> GetImagePropertiesIfAny(
 
 absl::StatusOr<std::optional<NormalizationOptions>>
 GetNormalizationOptionsIfAny(const TensorMetadata& tensor_metadata) {
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       const tflite::ProcessUnit* normalization_process_unit,
       ModelMetadataExtractor::FindFirstProcessUnit(
           tensor_metadata, tflite::ProcessUnitOptions_NormalizationOptions));
   if (normalization_process_unit == nullptr) {
-    return {absl::nullopt};
+    return {std::nullopt};
   }
   const tflite::NormalizationOptions* tf_normalization_options =
       normalization_process_unit->options_as_NormalizationOptions();
@@ -145,9 +145,10 @@ absl::StatusOr<ImageTensorSpecs> BuildInputImageTensorSpecs(
   const ImageProperties* props = nullptr;
   std::optional<NormalizationOptions> normalization_options;
   if (image_tensor_metadata != nullptr) {
-    MP_ASSIGN_OR_RETURN(props, GetImagePropertiesIfAny(*image_tensor_metadata));
-    MP_ASSIGN_OR_RETURN(normalization_options,
-                        GetNormalizationOptionsIfAny(*image_tensor_metadata));
+    ABSL_ASSIGN_OR_RETURN(props,
+                          GetImagePropertiesIfAny(*image_tensor_metadata));
+    ABSL_ASSIGN_OR_RETURN(normalization_options,
+                          GetNormalizationOptionsIfAny(*image_tensor_metadata));
   }
 
   // Input-related specifications.
@@ -258,9 +259,9 @@ absl::StatusOr<ImageTensorSpecs> BuildInputImageTensorSpecs(
   }
   const auto* input_tensor =
       (*primary_subgraph->tensors())[(*primary_subgraph->inputs())[0]];
-  MP_ASSIGN_OR_RETURN(const auto* image_tensor_metadata,
-                      vision::GetImageTensorMetadataIfAny(
-                          *model_resources.GetMetadataExtractor(), 0));
+  ABSL_ASSIGN_OR_RETURN(const auto* image_tensor_metadata,
+                        vision::GetImageTensorMetadataIfAny(
+                            *model_resources.GetMetadataExtractor(), 0));
   return vision::BuildInputImageTensorSpecs(*input_tensor,
                                             image_tensor_metadata);
 }

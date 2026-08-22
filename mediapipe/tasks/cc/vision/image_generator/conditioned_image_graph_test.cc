@@ -76,7 +76,7 @@ CreateConditionedImageGraphTaskRunner(
        .task_name = "conditioned_image_graph_test",
        .task_running_mode = core::RunningMode::kImage,
        .op_resolver =
-           absl::make_unique<tasks::core::MediaPipeBuiltinOpResolver>()});
+           std::make_unique<tasks::core::MediaPipeBuiltinOpResolver>()});
 }
 
 TEST(ConditionedImageGraphTest, SucceedsFaceLandmarkerConditionType) {

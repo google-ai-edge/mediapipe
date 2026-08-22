@@ -88,6 +88,10 @@ class VisionTaskRunnerFake extends VisionTaskRunner {
 
   protected override refreshGraph(): void {}
 
+  protected override getTaskName(): string {
+    return 'VisionTaskRunnerFake';
+  }
+
   override setOptions(options: VisionTaskOptions): Promise<void> {
     return this.applyOptions(options);
   }

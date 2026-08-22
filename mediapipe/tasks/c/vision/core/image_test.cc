@@ -74,6 +74,56 @@ TEST(ImageTest, CreateFromFile) {
   EXPECT_EQ(MpImageGetFormat(image.get()), kMpImageFormatSrgb);
 }
 
+TEST(ImageTest, CreateFromFileWithExifOrientation) {
+  // cat.jpg is 600x400 with normal EXIF orientation (1).
+  // cat_exif_rotated.jpg is physically unrotated on disk (600x400) but carries
+  // EXIF orientation 6 (Rotate 90 CW). MpImageCreateFromFile should parse the
+  // EXIF metadata and rotate it to 400x600.
+  const std::string exif_image_path = GetFullPath("cat_exif_rotated.jpg");
+  MpImagePtr test_image_ptr = nullptr;
+  MpStatus status = MpImageCreateFromFile(
+      exif_image_path.c_str(), &test_image_ptr, /* error_msg= */ nullptr);
+  ASSERT_EQ(status, kMpOk);
+  auto test_image = ScopedMpImage{test_image_ptr};
+
+  EXPECT_EQ(MpImageGetWidth(test_image.get()), 400);
+  EXPECT_EQ(MpImageGetHeight(test_image.get()), 600);
+  EXPECT_EQ(MpImageGetChannels(test_image.get()), 3);
+
+  // We compare the output exactly with cat_rotated.jpg, which is physically
+  // pre-rotated on disk (400x600).
+  const std::string expected_image_path = GetFullPath("cat_rotated.jpg");
+  MpImagePtr expected_image_ptr = nullptr;
+  status = MpImageCreateFromFile(expected_image_path.c_str(),
+                                 &expected_image_ptr, /* error_msg= */ nullptr);
+  ASSERT_EQ(status, kMpOk);
+  auto expected_image = ScopedMpImage{expected_image_ptr};
+
+  EXPECT_EQ(MpImageGetWidth(expected_image.get()), 400);
+  EXPECT_EQ(MpImageGetHeight(expected_image.get()), 600);
+
+  const uint8_t* test_data = nullptr;
+  status = MpImageDataUint8(test_image.get(), &test_data,
+                            /* error_msg= */ nullptr);
+  ASSERT_EQ(status, kMpOk);
+  ASSERT_NE(test_data, nullptr);
+
+  const uint8_t* expected_data = nullptr;
+  status = MpImageDataUint8(expected_image.get(), &expected_data,
+                            /* error_msg= */ nullptr);
+  ASSERT_EQ(status, kMpOk);
+  ASSERT_NE(expected_data, nullptr);
+
+  // Check that all pixel bytes match within a small tolerance to account for
+  // lossy JPEG compression differences.
+  const int num_pixels = 400 * 600 * 3;
+  for (int i = 0; i < num_pixels; ++i) {
+    ASSERT_NEAR(static_cast<int>(test_data[i]),
+                static_cast<int>(expected_data[i]), 5)
+        << "Pixel byte mismatch at index " << i;
+  }
+}
+
 TEST(ImageTest, CreateFromImageFrame) {
   const std::string image_path = GetFullPath(kImageFile);
   MpImagePtr original_image_ptr = nullptr;

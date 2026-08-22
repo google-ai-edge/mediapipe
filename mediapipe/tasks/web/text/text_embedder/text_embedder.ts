@@ -132,6 +132,10 @@ export class TextEmbedder extends TaskRunner {
     this.options.setBaseOptions(new BaseOptionsProto());
   }
 
+  protected override getTaskName(): string {
+    return 'TextEmbedder';
+  }
+
   /**
    * Sets new options for the text embedder.
    *

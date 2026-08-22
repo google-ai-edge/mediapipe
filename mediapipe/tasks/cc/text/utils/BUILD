@@ -63,7 +63,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
+        "@litert//tflite/schema:schema_fbs",
     ],
 )
 
@@ -87,7 +87,7 @@ cc_test(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/lite:test_util",
+        "@litert//tflite:test_util",
     ],
 )
 

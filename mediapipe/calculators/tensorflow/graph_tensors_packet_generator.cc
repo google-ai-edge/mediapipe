@@ -55,7 +55,7 @@ class GraphTensorsPacketGenerator : public PacketGenerator {
         packet_generator_options.GetExtension(
             GraphTensorsPacketGeneratorOptions::ext);
     // Output bundle packet.
-    auto tensor_map = absl::make_unique<std::map<std::string, tf::Tensor>>();
+    auto tensor_map = std::make_unique<std::map<std::string, tf::Tensor>>();
 
     for (int i = 0; i < options.tensor_tag_size(); ++i) {
       const std::string& tensor_tag = options.tensor_tag(i);

@@ -22,8 +22,8 @@ limitations under the License.
 #include "flatbuffers/flexbuffers.h"
 #include "mediapipe/tasks/cc/text/language_detector/custom_ops/utils/hash/murmur.h"
 #include "mediapipe/tasks/cc/text/language_detector/custom_ops/utils/ngram_hash_ops_utils.h"
-#include "tensorflow/lite/kernels/kernel_util.h"
-#include "tensorflow/lite/string_util.h"
+#include "tflite/kernels/kernel_util.h"
+#include "tflite/string_util.h"
 
 namespace mediapipe::tflite_operations {
 

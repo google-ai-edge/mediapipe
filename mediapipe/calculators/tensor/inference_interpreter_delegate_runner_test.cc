@@ -23,10 +23,10 @@
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h"
-#include "tensorflow/lite/kernels/register.h"
-#include "tensorflow/lite/util.h"
+#include "tflite/core/api/op_resolver.h"
+#include "tflite/delegates/xnnpack/xnnpack_delegate.h"
+#include "tflite/kernels/register.h"
+#include "tflite/util.h"
 
 namespace mediapipe {
 namespace api2 {
@@ -80,13 +80,13 @@ class InferenceCalculatorDelegateRunnnerTest : public ::testing::Test {
     input >> inference_calculator.In("INPUT")[0];
     auto config = graph_builder.GetConfig();
     CalculatorGraph graph;
-    MP_RETURN_IF_ERROR(graph.Initialize(config));
-    MP_RETURN_IF_ERROR(graph.StartRun({}));
-    MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(
+    ABSL_RETURN_IF_ERROR(graph.Initialize(config));
+    ABSL_RETURN_IF_ERROR(graph.StartRun({}));
+    ABSL_RETURN_IF_ERROR(graph.AddPacketToInputStream(
         "input", mediapipe::MakePacket<absl::AnyInvocable<absl::Status(
                      CalculatorContext*) const>>(std::move(invokable))
                      .At(mediapipe::Timestamp(0))));
-    MP_RETURN_IF_ERROR(graph.CloseAllInputStreams());
+    ABSL_RETURN_IF_ERROR(graph.CloseAllInputStreams());
     return graph.WaitUntilDone();
   }
 
@@ -99,7 +99,7 @@ class InferenceCalculatorDelegateRunnnerTest : public ::testing::Test {
       const std::vector<std::vector<VectorT>>& expected_outputs) {
     return ExecuteAnyInvocableInGraphCalculator(
         [&](CalculatorContext* cc) -> absl::Status {
-          MP_ASSIGN_OR_RETURN(
+          ABSL_ASSIGN_OR_RETURN(
               auto inference_runner,
               CreateInferenceInterpreterDelegateRunner(
                   std::move(model), std::move(op_resolver), std::move(delegate),
@@ -125,7 +125,7 @@ class InferenceCalculatorDelegateRunnnerTest : public ::testing::Test {
             }
           }
           // Execute inference.
-          MP_ASSIGN_OR_RETURN(
+          ABSL_ASSIGN_OR_RETURN(
               std::vector<Tensor> output_tensors,
               inference_runner->Run(cc, MakeTensorSpan(input_tensors)));
           // Check output tensors.

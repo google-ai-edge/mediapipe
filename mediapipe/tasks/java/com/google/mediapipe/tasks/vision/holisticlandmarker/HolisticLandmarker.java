@@ -45,6 +45,7 @@ import com.google.mediapipe.tasks.vision.holisticlandmarker.proto.HolisticLandma
 import com.google.mediapipe.tasks.vision.posedetector.proto.PoseDetectorGraphOptionsProto.PoseDetectorGraphOptions;
 import com.google.mediapipe.tasks.vision.poselandmarker.proto.PoseLandmarksDetectorGraphOptionsProto.PoseLandmarksDetectorGraphOptions;
 import com.google.protobuf.Any;
+import com.google.protobuf.MessageLite;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -200,6 +201,7 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
                 getNormalizedLandmarkList(packets.get(FACE_LANDMARKS_OUT_STREAM_INDEX));
             Optional<ClassificationList> faceBlendshapeProtos =
                 landmarkerOptions.outputFaceBlendshapes()
+                        && !packets.get(faceBlendshapesOutStreamIndex[0]).isEmpty()
                     ? Optional.of(
                         PacketGetter.getProto(
                             packets.get(faceBlendshapesOutStreamIndex[0]),
@@ -211,6 +213,7 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
                 getLandmarkList(packets.get(POSE_WORLD_LANDMARKS_OUT_STREAM_INDEX));
             Optional<MPImage> segmentationMask =
                 landmarkerOptions.outputPoseSegmentationMasks()
+                        && !packets.get(poseSegmentationMasksOutStreamIndex[0]).isEmpty()
                     ? Optional.of(
                         getSegmentationMask(packets, poseSegmentationMasksOutStreamIndex[0]))
                     : Optional.empty();
@@ -613,11 +616,13 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
           .setPoseDetectorGraphOptions(poseDetectorGraphOptions.build())
           .setPoseLandmarksDetectorGraphOptions(poseLandmarkerGraphOptions.build());
 
-      return Any.newBuilder()
-          .setTypeUrl(
-              "type.googleapis.com/mediapipe.tasks.vision.holistic_landmarker.proto.HolisticLandmarkerGraphOptions")
-          .setValue(holisticLandmarkerGraphOptions.build().toByteString())
-          .build();
+      Any.Builder anyBuilder =
+          Any.newBuilder()
+              .setTypeUrl(
+                  "type.googleapis.com/mediapipe.tasks.vision.holistic_landmarker.proto.HolisticLandmarkerGraphOptions")
+              .setValue(holisticLandmarkerGraphOptions.build().toByteString());
+      // Cast to MessageLite.Builder to avoid the NoSuchMethodError
+      return (Any) ((MessageLite.Builder) anyBuilder).build();
     }
   }
 

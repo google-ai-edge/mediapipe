@@ -95,7 +95,7 @@ class AssociationCalculator : public CalculatorBase {
               .Get(prev_input_stream_id_)
               .template Get<std::vector<T>>();
 
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           PropagateIdsFromPreviousToCurrent(prev_input_vec, &result));
     }
 
@@ -142,7 +142,7 @@ class AssociationCalculator : public CalculatorBase {
         non_empty_id = id;
         result.push_back(input_vec[0]);
         for (int j = 1; j < input_vec.size(); ++j) {
-          MP_RETURN_IF_ERROR(AddElementToList(input_vec[j], &result));
+          ABSL_RETURN_IF_ERROR(AddElementToList(input_vec[j], &result));
         }
         break;
       }
@@ -160,7 +160,7 @@ class AssociationCalculator : public CalculatorBase {
           cc->Inputs().Get(id).Get<std::vector<T>>();
 
       for (int vi = 0; vi < input_vec.size(); ++vi) {
-        MP_RETURN_IF_ERROR(AddElementToList(input_vec[vi], &result));
+        ABSL_RETURN_IF_ERROR(AddElementToList(input_vec[vi], &result));
       }
     }
 
@@ -171,13 +171,13 @@ class AssociationCalculator : public CalculatorBase {
     // Compare this element with elements of the input collection. If this
     // element has high overlap with elements of the collection, remove
     // those elements from the collection and add this element.
-    MP_ASSIGN_OR_RETURN(auto cur_rect, GetRectangle(element));
+    ABSL_ASSIGN_OR_RETURN(auto cur_rect, GetRectangle(element));
 
     bool change_id = false;
     int new_elem_id = -1;
 
     for (auto uit = current->begin(); uit != current->end();) {
-      MP_ASSIGN_OR_RETURN(auto prev_rect, GetRectangle(*uit));
+      ABSL_ASSIGN_OR_RETURN(auto prev_rect, GetRectangle(*uit));
       if (CalculateIou(cur_rect, prev_rect) >
           options_.min_similarity_threshold()) {
         std::pair<bool, int> prev_id = GetId(*uit);

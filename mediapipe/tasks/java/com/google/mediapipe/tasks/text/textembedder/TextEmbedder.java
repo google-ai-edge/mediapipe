@@ -16,31 +16,23 @@ package com.google.mediapipe.tasks.text.textembedder;
 
 import android.content.Context;
 import android.os.ParcelFileDescriptor;
+import androidx.annotation.Nullable;
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.proto.CalculatorOptionsProto.CalculatorOptions;
 import com.google.mediapipe.framework.MediaPipeException;
-import com.google.mediapipe.framework.Packet;
-import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.ProtoUtil;
 import com.google.mediapipe.tasks.components.containers.Embedding;
-import com.google.mediapipe.tasks.components.containers.EmbeddingResult;
 import com.google.mediapipe.tasks.components.containers.proto.EmbeddingsProto;
 import com.google.mediapipe.tasks.components.processors.proto.EmbedderOptionsProto;
 import com.google.mediapipe.tasks.components.utils.CosineSimilarity;
 import com.google.mediapipe.tasks.core.BaseOptions;
-import com.google.mediapipe.tasks.core.OutputHandler;
-import com.google.mediapipe.tasks.core.TaskInfo;
+import com.google.mediapipe.tasks.core.EmbeddingProvider;
 import com.google.mediapipe.tasks.core.TaskOptions;
-import com.google.mediapipe.tasks.core.TaskRunner;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import com.google.mediapipe.tasks.text.textembedder.proto.TextEmbedderGraphOptionsProto;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -70,20 +62,7 @@ import java.util.Optional;
  */
 public final class TextEmbedder implements AutoCloseable {
   private static final String TAG = TextEmbedder.class.getSimpleName();
-  private static final String TEXT_IN_STREAM_NAME = "text_in";
-
-  @SuppressWarnings("ConstantCaseForConstants")
-  private static final List<String> INPUT_STREAMS =
-      Collections.unmodifiableList(Arrays.asList("TEXT:" + TEXT_IN_STREAM_NAME));
-
-  @SuppressWarnings("ConstantCaseForConstants")
-  private static final List<String> OUTPUT_STREAMS =
-      Collections.unmodifiableList(Arrays.asList("EMBEDDINGS:embeddings_out"));
-
-  private static final int EMBEDDINGS_OUT_STREAM_INDEX = 0;
-  private static final String TASK_GRAPH_NAME =
-      "mediapipe.tasks.text.text_embedder.TextEmbedderGraph";
-  private final TaskRunner runner;
+  private final TextEmbedderExecutor executor;
 
   static {
     System.loadLibrary("mediapipe_tasks_jni");
@@ -133,51 +112,17 @@ public final class TextEmbedder implements AutoCloseable {
    * @throws MediaPipeException if there is an error during {@link TextEmbedder} creation.
    */
   public static TextEmbedder createFromOptions(Context context, TextEmbedderOptions options) {
-    OutputHandler<TextEmbedderResult, Void> handler = new OutputHandler<>();
-    handler.setOutputPacketConverter(
-        new OutputHandler.OutputPacketConverter<TextEmbedderResult, Void>() {
-          @Override
-          public TextEmbedderResult convertToTaskResult(List<Packet> packets) {
-            try {
-              return TextEmbedderResult.create(
-                  EmbeddingResult.createFromProto(
-                      PacketGetter.getProto(
-                          packets.get(EMBEDDINGS_OUT_STREAM_INDEX),
-                          EmbeddingsProto.EmbeddingResult.getDefaultInstance())),
-                  packets.get(EMBEDDINGS_OUT_STREAM_INDEX).getTimestamp());
-            } catch (IOException e) {
-              throw new MediaPipeException(
-                  MediaPipeException.StatusCode.INTERNAL.ordinal(), e.getMessage());
-            }
-          }
-
-          @Override
-          public Void convertToTaskInput(List<Packet> packets) {
-            return null;
-          }
-        });
-    TaskRunner runner =
-        TaskRunner.create(
-            context,
-            TaskInfo.<TextEmbedderOptions>builder()
-                .setTaskName(TextEmbedder.class.getSimpleName())
-                .setTaskGraphName(TASK_GRAPH_NAME)
-                .setInputStreams(INPUT_STREAMS)
-                .setOutputStreams(OUTPUT_STREAMS)
-                .setTaskOptions(options)
-                .setEnableFlowLimiting(false)
-                .build(),
-            handler);
-    return new TextEmbedder(runner);
+    return new TextEmbedder(createGraphExecutor(context, options));
   }
 
-  /**
-   * Constructor to initialize a {@link TextEmbedder} from a {@link TaskRunner}.
-   *
-   * @param runner a {@link TaskRunner}.
-   */
-  private TextEmbedder(TaskRunner runner) {
-    this.runner = runner;
+  private static TextEmbedderExecutor createGraphExecutor(
+      Context context, TextEmbedderOptions options) {
+    return TextEmbedderGraphExecutorImpl.create(context, options);
+  }
+
+  private TextEmbedder(TextEmbedderExecutor executor) {
+    this.executor = executor;
+
   }
 
   /**
@@ -186,9 +131,7 @@ public final class TextEmbedder implements AutoCloseable {
    * @param inputText a {@link String} for processing.
    */
   public TextEmbedderResult embed(String inputText) {
-    Map<String, Packet> inputPackets = new HashMap<>();
-    inputPackets.put(TEXT_IN_STREAM_NAME, runner.getPacketCreator().createString(inputText));
-    return (TextEmbedderResult) runner.process(inputPackets);
+    return executor.embed(inputText);
   }
 
   /**
@@ -199,16 +142,13 @@ public final class TextEmbedder implements AutoCloseable {
    * @param formatContext a {@link TextFormatContext} for Gecko model formatting.
    */
   public TextEmbedderResult embed(String inputText, TextFormatContext formatContext) {
-    Map<String, Packet> inputPackets = new HashMap<>();
-    String processedText = getGeckoEmbeddingText(inputText, formatContext);
-    inputPackets.put(TEXT_IN_STREAM_NAME, runner.getPacketCreator().createString(processedText));
-    return (TextEmbedderResult) runner.process(inputPackets);
+    return executor.embed(inputText, formatContext);
   }
 
   /** Closes and cleans up the {@link TextEmbedder}. */
   @Override
   public void close() {
-    runner.close();
+    executor.close();
   }
 
   /**
@@ -295,7 +235,7 @@ public final class TextEmbedder implements AutoCloseable {
     return "search result";
   }
 
-  private static String getGeckoEmbeddingText(String text, TextFormatContext formatContext) {
+  static String getGeckoEmbeddingText(String text, TextFormatContext formatContext) {
     EmbeddingType taskType = formatContext.taskType();
     boolean isQuery = formatContext.role() != TextRole.DOCUMENT;
     String title = formatContext.title().orElse("none");
@@ -352,15 +292,28 @@ public final class TextEmbedder implements AutoCloseable {
        */
       public abstract Builder setQuantize(boolean quantize);
 
+      /** Builds a {@link TextEmbedderOptions} instance. */
       public abstract TextEmbedderOptions build();
     }
 
-    abstract BaseOptions baseOptions();
+    /** The {@link BaseOptions} for the text embedder task. */
+    public abstract BaseOptions baseOptions();
 
-    abstract boolean l2Normalize();
+    /**
+     * Whether L2 normalization should be performed on the returned embeddings. Use this option only
+     * if the model does not already contain a native <code>L2_NORMALIZATION</code> TF Lite Op. In
+     * most cases, this is already the case and L2 norm is thus achieved through TF Lite inference.
+     */
+    public abstract boolean l2Normalize();
 
-    abstract boolean quantize();
+    /**
+     * Whether the returned embedding should be quantized to bytes via scalar quantization.
+     * Embeddings are implicitly assumed to be unit-norm and therefore any dimension is guaranteed
+     * to have a value in {@code [-1.0, 1.0]}. Use the l2_normalize option if this is not the case.
+     */
+    public abstract boolean quantize();
 
+    /** Instantiates a builder for {@link TextEmbedderOptions}. */
     public static Builder builder() {
       return new AutoValue_TextEmbedder_TextEmbedderOptions.Builder()
           .setL2Normalize(false)

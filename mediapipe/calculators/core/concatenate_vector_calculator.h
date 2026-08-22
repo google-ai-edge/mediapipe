@@ -93,7 +93,7 @@ class ConcatenateVectorCalculator : public api2::Node {
     auto output = std::vector<U>();
     for (auto input : kIn(cc)) {
       if (input.IsEmpty()) continue;
-      MP_RETURN_IF_ERROR(input.ConsumeAndVisit(
+      ABSL_RETURN_IF_ERROR(input.ConsumeAndVisit(
           [&output](std::unique_ptr<U> value) {
             output.push_back(std::move(*value));
           },

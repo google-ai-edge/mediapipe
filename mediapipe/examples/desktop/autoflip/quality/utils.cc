@@ -265,7 +265,7 @@ absl::Status AggregateKeyFrameResults(
     if (!result.required_region_is_empty()) {
       if (required_crop_region_union == nullptr) {
         required_crop_region_union =
-            absl::make_unique<Rect>(result.required_region());
+            std::make_unique<Rect>(result.required_region());
       } else {
         RectUnion(result.required_region(), required_crop_region_union.get());
       }

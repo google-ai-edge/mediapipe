@@ -117,7 +117,7 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
                              "\'validated_graph_config\' to initialize the "
                              "graph with a ValidatedGraphConfig object.");
         }
-        auto calculator_graph = absl::make_unique<CalculatorGraph>();
+        auto calculator_graph = std::make_unique<CalculatorGraph>();
         RaisePyErrorIfNotOk(calculator_graph->Initialize(graph_config_proto));
         return calculator_graph.release();
       }),

@@ -58,7 +58,7 @@ public class HolisticLandmarkerTest {
   private static final float FACE_BLENDSHAPES_ERROR_TOLERANCE = 0.13f;
   private static final MPImage PLACEHOLDER_MASK =
       new ByteBufferImageBuilder(
-              ByteBuffer.allocate(0), /* widht= */ 0, /* height= */ 0, MPImage.IMAGE_FORMAT_VEC32F1)
+              ByteBuffer.allocate(0), /* width= */ 0, /* height= */ 0, MPImage.IMAGE_FORMAT_VEC32F1)
           .build();
   private static final int IMAGE_WIDTH = 638;
   private static final int IMAGE_HEIGHT = 1000;
@@ -164,6 +164,26 @@ public class HolisticLandmarkerTest {
       HolisticLandmarkerResult actualResult =
           holisticLandmarker.detect(getImageFromAsset(CAT_IMAGE));
       assertThat(actualResult.faceLandmarks()).isEmpty();
+    }
+
+    @Test
+    public void detect_successWithEmptyResultAndBlendshapesAndSegmentation() throws Exception {
+      HolisticLandmarkerOptions options =
+          HolisticLandmarkerOptions.builder()
+              .setBaseOptions(
+                  BaseOptions.builder()
+                      .setModelAssetPath(HOLISTIC_LANDMARKER_BUNDLE_ASSET_FILE)
+                      .build())
+              .setOutputFaceBlendshapes(true)
+              .setOutputPoseSegmentationMasks(true)
+              .build();
+      HolisticLandmarker holisticLandmarker =
+          HolisticLandmarker.createFromOptions(
+              ApplicationProvider.getApplicationContext(), options);
+      HolisticLandmarkerResult actualResult =
+          holisticLandmarker.detect(getImageFromAsset(CAT_IMAGE));
+      assertThat(actualResult.faceLandmarks()).isEmpty();
+      assertThat(actualResult.faceBlendshapes()).isEmpty();
     }
 
     @Test
@@ -276,14 +296,14 @@ public class HolisticLandmarkerTest {
               MediaPipeException.class,
               () ->
                   holisticLandmarker.detectForVideo(
-                      getImageFromAsset(POSE_IMAGE), /* timestampsMs= */ 0));
+                      getImageFromAsset(POSE_IMAGE), /* timestampMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
       exception =
           assertThrows(
               MediaPipeException.class,
               () ->
                   holisticLandmarker.detectAsync(
-                      getImageFromAsset(POSE_IMAGE), /* timestampsMs= */ 0));
+                      getImageFromAsset(POSE_IMAGE), /* timestampMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
     }
 
@@ -311,7 +331,7 @@ public class HolisticLandmarkerTest {
               MediaPipeException.class,
               () ->
                   holisticLandmarker.detectAsync(
-                      getImageFromAsset(POSE_IMAGE), /* timestampsMs= */ 0));
+                      getImageFromAsset(POSE_IMAGE), /* timestampMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
     }
 
@@ -340,7 +360,7 @@ public class HolisticLandmarkerTest {
               MediaPipeException.class,
               () ->
                   holisticLandmarker.detectForVideo(
-                      getImageFromAsset(POSE_IMAGE), /* timestampsMs= */ 0));
+                      getImageFromAsset(POSE_IMAGE), /* timestampMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
     }
 
@@ -384,7 +404,7 @@ public class HolisticLandmarkerTest {
               HOLISTIC_RESULT, /* hasFaceBlendshapes= */ false, /* hasSegmentationMask= */ false);
       for (int i = 0; i < 3; i++) {
         HolisticLandmarkerResult actualResult =
-            holisticLandmarker.detectForVideo(getImageFromAsset(POSE_IMAGE), /* timestampsMs= */ i);
+            holisticLandmarker.detectForVideo(getImageFromAsset(POSE_IMAGE), /* timestampMs= */ i);
         assertActualResultApproximatelyEqualsToExpectedResult(actualResult, expectedResult);
       }
     }
@@ -404,11 +424,11 @@ public class HolisticLandmarkerTest {
       try (HolisticLandmarker holisticLandmarker =
           HolisticLandmarker.createFromOptions(
               ApplicationProvider.getApplicationContext(), options)) {
-        holisticLandmarker.detectAsync(image, /* timestampsMs= */ 1);
+        holisticLandmarker.detectAsync(image, /* timestampMs= */ 1);
         MediaPipeException exception =
             assertThrows(
                 MediaPipeException.class,
-                () -> holisticLandmarker.detectAsync(image, /* timestampsMs= */ 0));
+                () -> holisticLandmarker.detectAsync(image, /* timestampMs= */ 0));
         assertThat(exception)
             .hasMessageThat()
             .contains("having a smaller timestamp than the processed timestamp");
@@ -439,7 +459,7 @@ public class HolisticLandmarkerTest {
           HolisticLandmarker.createFromOptions(
               ApplicationProvider.getApplicationContext(), options)) {
         for (int i = 0; i < 3; i++) {
-          holisticLandmarker.detectAsync(image, /* timestampsMs= */ i);
+          holisticLandmarker.detectAsync(image, /* timestampMs= */ i);
         }
       }
     }

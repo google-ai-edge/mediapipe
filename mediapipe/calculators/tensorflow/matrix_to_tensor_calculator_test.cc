@@ -50,7 +50,7 @@ class MatrixToTensorCalculatorTest : public ::testing::Test {
   void AddRandomMatrix(int num_rows, int num_columns, uint32_t seed) {
     RandomEngine random(kSeed);
     std::uniform_real_distribution<> uniform_dist(0, 1.0);
-    auto matrix = ::absl::make_unique<Matrix>();
+    auto matrix = std::make_unique<Matrix>();
     matrix->resize(num_rows, num_columns);
     for (int y = 0; y < num_rows; ++y) {
       for (int x = 0; x < num_columns; ++x) {
@@ -70,8 +70,8 @@ TEST_F(MatrixToTensorCalculatorTest, RandomMatrix) {
     const int num_columns = sizes[size_index][1];
 
     // Run the calculator and verify that one output is generated.
-    runner_ = ::absl::make_unique<CalculatorRunner>("MatrixToTensorCalculator",
-                                                    "", 1, 1, 0);
+    runner_ = std::make_unique<CalculatorRunner>("MatrixToTensorCalculator", "",
+                                                 1, 1, 0);
     AddRandomMatrix(num_rows, num_columns, kSeed);
     MP_ASSERT_OK(runner_->Run());
     const std::vector<Packet>& output_packets =
@@ -102,7 +102,7 @@ TEST_F(MatrixToTensorCalculatorTest, RandomMatrixTranspose) {
     const int num_columns = sizes[size_index][1];
 
     // Run the calculator and verify that one output is generated.
-    runner_ = ::absl::make_unique<CalculatorRunner>(
+    runner_ = std::make_unique<CalculatorRunner>(
         "MatrixToTensorCalculator", kTransposeOptionsString, 1, 1, 0);
     AddRandomMatrix(num_rows, num_columns, kSeed);
     MP_ASSERT_OK(runner_->Run());
@@ -134,7 +134,7 @@ TEST_F(MatrixToTensorCalculatorTest, RandomMatrixAddDimension) {
     const int num_columns = sizes[size_index][1];
 
     // Run the calculator and verify that one output is generated.
-    runner_ = ::absl::make_unique<CalculatorRunner>(
+    runner_ = std::make_unique<CalculatorRunner>(
         "MatrixToTensorCalculator", kAddDimensionOptionsString, 1, 1, 0);
     AddRandomMatrix(num_rows, num_columns, kSeed);
     MP_ASSERT_OK(runner_->Run());

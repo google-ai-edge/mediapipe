@@ -38,7 +38,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
+#include "tflite/core/api/op_resolver.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -71,12 +71,12 @@ class TaskApiFactory {
             "Task graph config should only contain one task subgraph node.",
             MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
       } else {
-        MP_RETURN_IF_ERROR(CheckHasValidOptions<Options>(node));
+        ABSL_RETURN_IF_ERROR(CheckHasValidOptions<Options>(node));
         found_task_subgraph = true;
       }
     }
-    MP_ASSIGN_OR_RETURN(auto runner,
-                        core::TaskRunner::Create(std::move(options)));
+    ABSL_ASSIGN_OR_RETURN(auto runner,
+                          core::TaskRunner::Create(std::move(options)));
     return std::make_unique<T>(std::move(runner));
   }
 

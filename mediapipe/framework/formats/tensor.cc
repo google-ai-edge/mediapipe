@@ -369,6 +369,11 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
       ABSL_CHECK(ptr) << "glMapBufferRange failed: " << glGetError();
       std::memcpy(ptr, cpu_buffer_, bytes());
       glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+      if (prefer_ahwb_) {
+        // Next time Tensor is written, AHWB will be used.
+        MarkAhwbUsage();
+      }
     }
     valid_ |= kValidOpenGlBuffer;
   }
@@ -484,6 +489,7 @@ Tensor::Tensor(ElementType element_type, const Shape& shape,
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   if (memory_manager) {
     hardware_buffer_pool_ = memory_manager->GetAndroidHardwareBufferPool();
+    prefer_ahwb_ = memory_manager->PreferAhwb();
   }
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 }
@@ -498,6 +504,7 @@ Tensor::Tensor(ElementType element_type, const Shape& shape,
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   if (memory_manager) {
     hardware_buffer_pool_ = memory_manager->GetAndroidHardwareBufferPool();
+    prefer_ahwb_ = memory_manager->PreferAhwb();
   }
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 }
@@ -554,7 +561,7 @@ absl::Status Tensor::Invalidate() {
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   {
     absl::MutexLock lock(view_mutex_);
-    MP_RETURN_IF_ERROR(ReleaseAhwbStuff());
+    ABSL_RETURN_IF_ERROR(ReleaseAhwbStuff());
 
     // Don't need to wait for the resource to be deleted because if will be
     // released on last reference deletion inside the OpenGL driver.
@@ -621,6 +628,11 @@ absl::Status Tensor::ReadBackGpuToCpu() const {
       std::memcpy(cpu_buffer_, ptr, bytes());
       glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     });
+
+    if (prefer_ahwb_) {
+      // Next time Tensor is written, AHWB will be used.
+      MarkAhwbUsage();
+    }
     return absl::OkStatus();
   }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
@@ -662,7 +674,7 @@ absl::Status Tensor::ReadBackGpuToCpu() const {
     const int height = BhwcHeightFromShape(shape_);
     const int depth = BhwcDepthFromShape(shape_);
     // CPU data layout may not match texture data layout.
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         const int padded_depth,
         WebGpuTextureFormatDepth(webgpu_texture2d_.GetFormat()));
 

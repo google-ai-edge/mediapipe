@@ -210,7 +210,7 @@ class Dataset(classification_dataset.ClassificationDataset):
         i for i in range(len(hand_data)) if hand_data[i] is not None
     ]
     # Remove 'None' element from the hand data and label list.
-    valid_hand_data = [dataclasses.asdict(hand_data[i]) for i in valid_indices]
+    valid_hand_data = [dataclasses.asdict(hand_data[i]) for i in valid_indices]  # pyrefly: ignore[bad-argument-type]
     if not valid_hand_data:
       raise ValueError('No valid hand is detected.')
 
@@ -220,7 +220,7 @@ class Dataset(classification_dataset.ClassificationDataset):
     hand_data_dict = {
         k: [lm[k] for lm in valid_hand_data] for k in valid_hand_data[0]
     }
-    hand_ds = tf.data.Dataset.from_tensor_slices(hand_data_dict)
+    hand_ds = tf.data.Dataset.from_tensor_slices(hand_data_dict)  # pyrefly: ignore[bad-argument-type]
 
     embedder_model = model_util.load_keras_model(
         constants.GESTURE_EMBEDDER_KERAS_MODEL_FILES.get_path()
@@ -228,7 +228,7 @@ class Dataset(classification_dataset.ClassificationDataset):
 
     hand_ds = hand_ds.batch(batch_size=1)
     hand_embedding_ds = hand_ds.map(
-        map_func=lambda feature: embedder_model(dict(feature)),
+        map_func=lambda feature: embedder_model(dict(feature)),  # pyrefly: ignore[not-callable]
         num_parallel_calls=tf.data.experimental.AUTOTUNE)
     hand_embedding_ds = hand_embedding_ds.unbatch()
 
@@ -242,7 +242,7 @@ class Dataset(classification_dataset.ClassificationDataset):
 
     # Create a dataset with (hand_embedding, one_hot_label) pairs
     hand_embedding_label_ds = tf.data.Dataset.zip(
-        (hand_embedding_ds, label_one_hot_ds))
+        (hand_embedding_ds, label_one_hot_ds))  # pyrefly: ignore[bad-argument-type]
 
     tf.compat.v1.logging.info(
         'Load valid hands with size: {}, num_label: {}, labels: {}.'.format(

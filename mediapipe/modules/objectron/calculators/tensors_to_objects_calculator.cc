@@ -105,7 +105,7 @@ absl::Status TensorsToObjectsCalculator::GetContract(CalculatorContract* cc) {
 }
 
 absl::Status TensorsToObjectsCalculator::Open(CalculatorContext* cc) {
-  MP_RETURN_IF_ERROR(LoadOptions(cc));
+  ABSL_RETURN_IF_ERROR(LoadOptions(cc));
   // clang-format off
   projection_matrix_ <<
       1.5731,   0,       0, 0,
@@ -113,8 +113,8 @@ absl::Status TensorsToObjectsCalculator::Open(CalculatorContext* cc) {
       0,        0, -1.0002, -0.2,
       0,        0,      -1, 0;
   // clang-format on
-  decoder_ = absl::make_unique<Decoder>(
-      BeliefDecoderConfig(options_.decoder_config()));
+  decoder_ =
+      std::make_unique<Decoder>(BeliefDecoderConfig(options_.decoder_config()));
 
   return absl::OkStatus();
 }
@@ -124,9 +124,9 @@ absl::Status TensorsToObjectsCalculator::Process(CalculatorContext* cc) {
     return absl::OkStatus();
   }
 
-  auto output_objects = absl::make_unique<FrameAnnotation>();
+  auto output_objects = std::make_unique<FrameAnnotation>();
 
-  MP_RETURN_IF_ERROR(ProcessCPU(cc, output_objects.get()));
+  ABSL_RETURN_IF_ERROR(ProcessCPU(cc, output_objects.get()));
 
   // Output
   if (cc->Outputs().HasTag(kOutputStreamTag)) {

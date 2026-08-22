@@ -296,7 +296,7 @@ absl::StatusOr<std::shared_ptr<const mediapipe::Image>> GetInputImage(
       },
       [&image_packet](const mediapipe::ImageFrame&)
           -> absl::StatusOr<std::shared_ptr<const mediapipe::Image>> {
-        MP_ASSIGN_OR_RETURN(
+        ABSL_ASSIGN_OR_RETURN(
             std::shared_ptr<const mediapipe::ImageFrame> image_frame,
             image_packet.Share<mediapipe::ImageFrame>());
         return std::make_shared<const mediapipe::Image>(

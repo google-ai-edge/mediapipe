@@ -76,7 +76,7 @@ def _get_expected_pose_landmarker_result(
         )
     )
   return PoseLandmarkerResult(
-      pose_landmarks=[landmarks_detection_result.landmarks],
+      pose_landmarks=[landmarks_detection_result.landmarks],  # pyrefly: ignore[bad-argument-type]
       pose_world_landmarks=[],
   )
 

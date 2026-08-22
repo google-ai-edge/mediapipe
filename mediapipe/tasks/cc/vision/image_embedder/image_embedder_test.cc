@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/vision/image_embedder/image_embedder.h"
 
+#include <fstream>
 #include <memory>
 #include <utility>
 
@@ -29,10 +30,10 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/kernels/builtin_op_kernels.h"
-#include "tensorflow/lite/mutable_op_resolver.h"
-#include "tensorflow/lite/test_util.h"
+#include "tflite/core/api/op_resolver.h"
+#include "tflite/kernels/builtin_op_kernels.h"
+#include "tflite/mutable_op_resolver.h"
+#include "tflite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {

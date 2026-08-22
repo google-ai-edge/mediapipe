@@ -20,8 +20,8 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/calculators/tensor/bert_preprocessor_calculator.pb.h"
-#include "mediapipe/calculators/tensor/gecko_preprocessor_calculator.pb.h"
 #include "mediapipe/calculators/tensor/regex_preprocessor_calculator.pb.h"
+#include "mediapipe/calculators/tensor/sentencepiece_preprocessor_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/formats/tensor.h"
@@ -36,7 +36,7 @@ limitations under the License.
 namespace mediapipe::tasks::components::processors {
 namespace {
 
-using ::mediapipe::GeckoPreprocessorCalculatorOptions;
+using ::mediapipe::SentencePiecePreprocessorCalculatorOptions;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::SideInput;
@@ -53,6 +53,7 @@ using ::mediapipe::tasks::text::utils::GetModelType;
 constexpr char kTextTag[] = "TEXT";
 constexpr char kMetadataExtractorTag[] = "METADATA_EXTRACTOR";
 constexpr char kTensorsTag[] = "TENSORS";
+constexpr int kEmbeddingGemmaDefaultSeqLen = 512;
 
 // Gets the name of the MediaPipe preprocessor calculator associated with
 // `model_type`.
@@ -68,7 +69,8 @@ absl::StatusOr<std::string> GetCalculatorNameFromModelType(
     case TextModelType::REGEX_MODEL:
       return "RegexPreprocessorCalculator";
     case TextModelType::GECKO_MODEL:
-      return "GeckoPreprocessorCalculator";
+    case TextModelType::EMBEDDING_GEMMA_MODEL:
+      return "SentencePiecePreprocessorCalculator";
     case TextModelType::STRING_MODEL:
       return "TextToTensorCalculator";
     case TextModelType::USE_MODEL:
@@ -177,15 +179,17 @@ absl::StatusOr<bool> HasDynamicInputTensors(
 absl::Status ConfigureTextPreprocessingGraph(
     const ModelResources& model_resources,
     TextPreprocessingGraphOptions& options) {
-  if (model_resources.GetTfLiteModel()->subgraphs()->size() != 1) {
+  ABSL_ASSIGN_OR_RETURN(TextModelType::ModelType model_type,
+                        GetModelType(model_resources));
+
+  if (model_resources.GetTfLiteModel()->subgraphs()->size() != 1 &&
+      model_type != TextModelType::EMBEDDING_GEMMA_MODEL) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         "Text tflite models are assumed to have a single subgraph.",
         MediaPipeTasksStatus::kInvalidArgumentError);
   }
 
-  MP_ASSIGN_OR_RETURN(TextModelType::ModelType model_type,
-                      GetModelType(model_resources));
   const tflite::SubGraph& model_graph =
       *(*model_resources.GetTfLiteModel()->subgraphs())[0];
   options.set_model_type(model_type);
@@ -195,16 +199,33 @@ absl::Status ConfigureTextPreprocessingGraph(
     case TextModelType::USE_MODEL: {
       break;
     }
+    case TextModelType::EMBEDDING_GEMMA_MODEL: {
+      if (!model_graph.inputs()->empty()) {
+        const tflite::Tensor* tensor =
+            (*model_graph.tensors())[(*model_graph.inputs())[0]];
+        if (tensor->shape()->size() == 2) {
+          options.set_max_seq_len((*tensor->shape())[1]);
+        } else {
+          options.set_max_seq_len(kEmbeddingGemmaDefaultSeqLen);
+        }
+      } else {
+        options.set_max_seq_len(kEmbeddingGemmaDefaultSeqLen);
+      }
+      break;
+    }
     case TextModelType::GECKO_MODEL:
     case TextModelType::BERT_MODEL:
     case TextModelType::REGEX_MODEL: {
-      MP_ASSIGN_OR_RETURN(int max_seq_len, GetMaxSeqLen(model_graph));
+      ABSL_ASSIGN_OR_RETURN(int max_seq_len, GetMaxSeqLen(model_graph));
       options.set_max_seq_len(max_seq_len);
     }
   }
-  if (model_type == TextModelType::BERT_MODEL) {
-    MP_ASSIGN_OR_RETURN(bool has_dynamic_input_tensors,
-                        HasDynamicInputTensors(model_graph));
+
+  if (model_type == TextModelType::EMBEDDING_GEMMA_MODEL) {
+    options.set_has_dynamic_input_tensors(options.max_seq_len() > 1);
+  } else if (model_type == TextModelType::BERT_MODEL) {
+    ABSL_ASSIGN_OR_RETURN(bool has_dynamic_input_tensors,
+                          HasDynamicInputTensors(model_graph));
     options.set_has_dynamic_input_tensors(has_dynamic_input_tensors);
   }
   return absl::OkStatus();
@@ -232,7 +253,7 @@ class TextPreprocessingGraph : public mediapipe::Subgraph {
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
     Graph graph;
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         Source<std::vector<Tensor>> tensors_in,
         BuildTextPreprocessing(
             sc->Options<TextPreprocessingGraphOptions>(),
@@ -247,8 +268,8 @@ class TextPreprocessingGraph : public mediapipe::Subgraph {
   absl::StatusOr<Source<std::vector<Tensor>>> BuildTextPreprocessing(
       const TextPreprocessingGraphOptions& options, Source<std::string> text_in,
       SideSource<ModelMetadataExtractor> metadata_extractor_in, Graph& graph) {
-    MP_ASSIGN_OR_RETURN(std::string preprocessor_name,
-                        GetCalculatorNameFromModelType(options.model_type()));
+    ABSL_ASSIGN_OR_RETURN(std::string preprocessor_name,
+                          GetCalculatorNameFromModelType(options.model_type()));
     auto& text_preprocessor = graph.AddNode(preprocessor_name);
     switch (options.model_type()) {
       case TextModelType::UNSPECIFIED_MODEL:
@@ -269,10 +290,13 @@ class TextPreprocessingGraph : public mediapipe::Subgraph {
             text_preprocessor.SideIn(kMetadataExtractorTag);
         break;
       }
-      case TextModelType::GECKO_MODEL: {
-        text_preprocessor.GetOptions<GeckoPreprocessorCalculatorOptions>()
+      case TextModelType::GECKO_MODEL:
+      case TextModelType::EMBEDDING_GEMMA_MODEL: {
+        text_preprocessor
+            .GetOptions<SentencePiecePreprocessorCalculatorOptions>()
             .set_max_seq_len(options.max_seq_len());
-        text_preprocessor.GetOptions<GeckoPreprocessorCalculatorOptions>()
+        text_preprocessor
+            .GetOptions<SentencePiecePreprocessorCalculatorOptions>()
             .mutable_sentence_piece_model()
             ->CopyFrom(options.sentence_piece_model());
         metadata_extractor_in >>

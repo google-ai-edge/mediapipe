@@ -18,15 +18,18 @@ limitations under the License.
 #include <fcntl.h>
 
 #include <algorithm>
-#include <fstream>
-#include <iosfwd>
+#include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
+#include "absl/status/status.h"
+#include "absl/strings/cord.h"
+#include "absl/strings/str_cat.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
@@ -220,6 +223,30 @@ TEST(ModelAssetBundleResourcesTest, ListModelFiles) {
       "dummy_gesture_recognizer.tflite", "dummy_hand_landmarker.task"};
   std::sort(model_files.begin(), model_files.end());
   EXPECT_THAT(expected_model_files, testing::ElementsAreArray(model_files));
+}
+
+TEST(ModelAssetBundleResourcesTest, HasFileTest) {
+  auto model_file = std::make_unique<proto::ExternalFile>();
+  model_file->set_file_name(kTestModelBundlePath);
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto model_bundle_resources,
+      ModelAssetBundleResources::Create(kTestModelBundleResourcesTag,
+                                        std::move(model_file)));
+  EXPECT_TRUE(
+      model_bundle_resources->HasFile("dummy_gesture_recognizer.tflite"));
+  EXPECT_TRUE(model_bundle_resources->HasFile("dummy_hand_landmarker.task"));
+  EXPECT_FALSE(model_bundle_resources->HasFile("manifest.pb"));
+}
+
+TEST(ModelAssetBundleResourcesTest, GetBundleManifestFailsIfNoManifest) {
+  auto model_file = std::make_unique<proto::ExternalFile>();
+  model_file->set_file_name(kTestModelBundlePath);
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto model_bundle_resources,
+      ModelAssetBundleResources::Create(kTestModelBundleResourcesTag,
+                                        std::move(model_file)));
+  auto manifest_or = model_bundle_resources->GetBundleManifest();
+  EXPECT_EQ(manifest_or.status().code(), absl::StatusCode::kNotFound);
 }
 
 }  // namespace core

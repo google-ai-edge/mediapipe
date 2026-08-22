@@ -54,7 +54,7 @@ class OutputStreamManagerTest : public ::testing::Test {
         std::bind(&OutputStreamManagerTest::ReportQueueNoOp, this,
                   std::placeholders::_1, std::placeholders::_2);
 
-    output_stream_manager_ = absl::make_unique<OutputStreamManager>();
+    output_stream_manager_ = std::make_unique<OutputStreamManager>();
     MP_ASSERT_OK(output_stream_manager_->Initialize("a_test", &packet_type_));
     output_stream_manager_->PrepareForRun(error_callback_);
     output_stream_shard_.SetSpec(output_stream_manager_->Spec());

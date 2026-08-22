@@ -35,8 +35,8 @@
 //
 // For example:
 //   absl::Status MultiStepFunction() {
-//     MP_RETURN_IF_ERROR(Function(args...));
-//     MP_RETURN_IF_ERROR(foo.Method(args...));
+//     ABSL_RETURN_IF_ERROR(Function(args...));
+//     ABSL_RETURN_IF_ERROR(foo.Method(args...));
 //     return absl::OkStatus();
 //   }
 //
@@ -46,8 +46,8 @@
 //
 // For example:
 //   absl::Status MultiStepFunction() {
-//     MP_RETURN_IF_ERROR(Function(args...)) << "in MultiStepFunction";
-//     MP_RETURN_IF_ERROR(foo.Method(args...)).Log(base_logging::ERROR)
+//     ABSL_RETURN_IF_ERROR(Function(args...)) << "in MultiStepFunction";
+//     ABSL_RETURN_IF_ERROR(foo.Method(args...)).Log(base_logging::ERROR)
 //         << "while processing query: " << query.DebugString();
 //     return absl::OkStatus();
 //   }
@@ -62,8 +62,8 @@
 //     return std::move(builder.Log(base_logging::WARNING).Attach(...));
 //   }
 //
-//   MP_RETURN_IF_ERROR(foo()).With(TeamPolicy);
-//   MP_RETURN_IF_ERROR(bar()).With(TeamPolicy);
+//   ABSL_RETURN_IF_ERROR(foo()).With(TeamPolicy);
+//   ABSL_RETURN_IF_ERROR(bar()).With(TeamPolicy);
 //
 // Changing the return type allows the macro to be used with Task and Rpc
 // interfaces.  See `mediapipe::TaskReturn` and `rpc::RpcSetStatus` for
@@ -71,8 +71,8 @@
 //
 //   void Read(StringPiece name, mediapipe::Task* task) {
 //     int64 id;
-//     MP_RETURN_IF_ERROR(GetIdForName(name, &id)).With(TaskReturn(task));
-//     MP_RETURN_IF_ERROR(ReadForId(id)).With(TaskReturn(task));
+//     ABSL_RETURN_IF_ERROR(GetIdForName(name, &id)).With(TaskReturn(task));
+//     ABSL_RETURN_IF_ERROR(ReadForId(id)).With(TaskReturn(task));
 //     task->Return();
 //   }
 //
@@ -81,11 +81,11 @@
 // `absl::Status` type. E.g.
 //
 //   []() -> absl::Status {
-//     MP_RETURN_IF_ERROR(Function(args...));
-//     MP_RETURN_IF_ERROR(foo.Method(args...));
+//     ABSL_RETURN_IF_ERROR(Function(args...));
+//     ABSL_RETURN_IF_ERROR(foo.Method(args...));
 //     return absl::OkStatus();
 //   }
-#define MP_RETURN_IF_ERROR(expr)                                     \
+#define ABSL_RETURN_IF_ERROR(expr)                                   \
   MP_STATUS_MACROS_IMPL_ELSE_BLOCKER_                                \
   if (mediapipe::status_macro_internal::StatusAdaptorForMacros       \
           status_macro_internal_adaptor = {(expr), MEDIAPIPE_LOC}) { \
@@ -101,47 +101,47 @@
 //
 // Interface:
 //
-//   MP_ASSIGN_OR_RETURN(lhs, rexpr)
-//   MP_ASSIGN_OR_RETURN(lhs, rexpr, error_expression);
+//   ABSL_ASSIGN_OR_RETURN(lhs, rexpr)
+//   ABSL_ASSIGN_OR_RETURN(lhs, rexpr, error_expression);
 //
 // WARNING: expands into multiple statements; it cannot be used in a single
 // statement (e.g. as the body of an if statement without {})!
 //
 // Example: Declaring and initializing a new variable (ValueType can be anything
 //          that can be initialized with assignment, including references):
-//   MP_ASSIGN_OR_RETURN(ValueType value, MaybeGetValue(arg));
+//   ABSL_ASSIGN_OR_RETURN(ValueType value, MaybeGetValue(arg));
 //
 // Example: Assigning to an existing variable:
 //   ValueType value;
-//   MP_ASSIGN_OR_RETURN(value, MaybeGetValue(arg));
+//   ABSL_ASSIGN_OR_RETURN(value, MaybeGetValue(arg));
 //
 // Example: Assigning to an expression with side effects:
 //   MyProto data;
-//   MP_ASSIGN_OR_RETURN(*data.mutable_str(), MaybeGetValue(arg));
+//   ABSL_ASSIGN_OR_RETURN(*data.mutable_str(), MaybeGetValue(arg));
 //   // No field "str" is added on error.
 //
 // Example: Assigning to a std::unique_ptr.
-//   MP_ASSIGN_OR_RETURN(std::unique_ptr<T> ptr, MaybeGetPtr(arg));
+//   ABSL_ASSIGN_OR_RETURN(std::unique_ptr<T> ptr, MaybeGetPtr(arg));
 //
 // If passed, the `error_expression` is evaluated to produce the return
 // value. The expression may reference any variable visible in scope, as
 // well as a `mediapipe::StatusBuilder` object populated with the error and
 // named by a single underscore `_`. The expression typically uses the
 // builder to modify the status and is returned directly in manner similar
-// to MP_RETURN_IF_ERROR. The expression may, however, evaluate to any type
+// to ABSL_RETURN_IF_ERROR. The expression may, however, evaluate to any type
 // returnable by the function, including (void). For example:
 //
 // Example: Adjusting the error message.
-//   MP_ASSIGN_OR_RETURN(ValueType value, MaybeGetValue(query),
+//   ABSL_ASSIGN_OR_RETURN(ValueType value, MaybeGetValue(query),
 //                    _ << "while processing query " << query.DebugString());
 //
 // Example: Logging the error on failure.
-//   MP_ASSIGN_OR_RETURN(ValueType value, MaybeGetValue(query), _.LogError());
+//   ABSL_ASSIGN_OR_RETURN(ValueType value, MaybeGetValue(query), _.LogError());
 //
-#define MP_ASSIGN_OR_RETURN(...)                                  \
-  MP_STATUS_MACROS_IMPL_GET_VARIADIC_(                            \
-      (__VA_ARGS__, MP_STATUS_MACROS_IMPL_MP_ASSIGN_OR_RETURN_3_, \
-       MP_STATUS_MACROS_IMPL_MP_ASSIGN_OR_RETURN_2_))             \
+#define ABSL_ASSIGN_OR_RETURN(...)                             \
+  MP_STATUS_MACROS_IMPL_GET_VARIADIC_(                         \
+      (__VA_ARGS__, MP_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_3_, \
+       MP_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_2_))             \
   (__VA_ARGS__)
 
 // =================================================================
@@ -154,17 +154,17 @@
 #define MP_STATUS_MACROS_IMPL_GET_VARIADIC_(args) \
   MP_STATUS_MACROS_IMPL_GET_VARIADIC_HELPER_ args
 
-#define MP_STATUS_MACROS_IMPL_MP_ASSIGN_OR_RETURN_2_(lhs, rexpr)               \
-  MP_STATUS_MACROS_IMPL_MP_ASSIGN_OR_RETURN_(                                  \
+#define MP_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_2_(lhs, rexpr)                  \
+  MP_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(                                     \
       MP_STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__), lhs, rexpr,   \
       return mediapipe::StatusBuilder(                                         \
           std::move(MP_STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__)) \
               .status(),                                                       \
           MEDIAPIPE_LOC))
 
-#define MP_STATUS_MACROS_IMPL_MP_ASSIGN_OR_RETURN_3_(lhs, rexpr,               \
-                                                     error_expression)         \
-  MP_STATUS_MACROS_IMPL_MP_ASSIGN_OR_RETURN_(                                  \
+#define MP_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_3_(lhs, rexpr,                  \
+                                                  error_expression)            \
+  MP_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(                                     \
       MP_STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__), lhs, rexpr,   \
       mediapipe::StatusBuilder _(                                              \
           std::move(MP_STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__)) \
@@ -172,13 +172,13 @@
           MEDIAPIPE_LOC);                                                      \
       (void)_; /* error_expression is allowed to not use this variable */      \
       return (error_expression))
-#define MP_STATUS_MACROS_IMPL_MP_ASSIGN_OR_RETURN_(statusor, lhs, rexpr, \
-                                                   error_expression)     \
-  auto statusor = (rexpr);                                               \
-  if (ABSL_PREDICT_FALSE(!statusor.ok())) {                              \
-    error_expression;                                                    \
-  }                                                                      \
-  MP_STATUS_MACROS_IMPL_UNPARENTHESIZE_IF_PARENTHESIZED(lhs) =           \
+#define MP_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(statusor, lhs, rexpr, \
+                                                error_expression)     \
+  auto statusor = (rexpr);                                            \
+  if (ABSL_PREDICT_FALSE(!statusor.ok())) {                           \
+    error_expression;                                                 \
+  }                                                                   \
+  MP_STATUS_MACROS_IMPL_UNPARENTHESIZE_IF_PARENTHESIZED(lhs) =        \
       std::move(statusor).value()
 
 // Internal helpers for macro expansion.
@@ -231,7 +231,7 @@
 // because it thinks you might want the else to bind to the first if.  This
 // leads to problems with code like:
 //
-//   if (do_expr) MP_RETURN_IF_ERROR(expr) << "Some message";
+//   if (do_expr) ABSL_RETURN_IF_ERROR(expr) << "Some message";
 //
 // The "switch (0) case 0:" idiom is used to suppress this.
 #define MP_STATUS_MACROS_IMPL_ELSE_BLOCKER_ \

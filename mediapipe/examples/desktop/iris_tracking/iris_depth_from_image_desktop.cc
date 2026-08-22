@@ -52,29 +52,30 @@ namespace {
 
 absl::StatusOr<std::string> ReadFileToString(const std::string& file_path) {
   std::string contents;
-  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(file_path, &contents));
+  ABSL_RETURN_IF_ERROR(mediapipe::file::GetContents(file_path, &contents));
   return contents;
 }
 
 absl::Status ProcessImage(std::unique_ptr<mediapipe::CalculatorGraph> graph) {
   ABSL_LOG(INFO) << "Load the image.";
-  MP_ASSIGN_OR_RETURN(const std::string raw_image,
-                      ReadFileToString(absl::GetFlag(FLAGS_input_image_path)));
+  ABSL_ASSIGN_OR_RETURN(
+      const std::string raw_image,
+      ReadFileToString(absl::GetFlag(FLAGS_input_image_path)));
 
   ABSL_LOG(INFO) << "Start running the calculator graph.";
-  MP_ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller output_image_poller,
-                      graph->AddOutputStreamPoller(kOutputImageStream));
-  MP_ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller left_iris_depth_poller,
-                      graph->AddOutputStreamPoller(kLeftIrisDepthMmStream));
-  MP_ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller right_iris_depth_poller,
-                      graph->AddOutputStreamPoller(kRightIrisDepthMmStream));
-  MP_RETURN_IF_ERROR(graph->StartRun({}));
+  ABSL_ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller output_image_poller,
+                        graph->AddOutputStreamPoller(kOutputImageStream));
+  ABSL_ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller left_iris_depth_poller,
+                        graph->AddOutputStreamPoller(kLeftIrisDepthMmStream));
+  ABSL_ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller right_iris_depth_poller,
+                        graph->AddOutputStreamPoller(kRightIrisDepthMmStream));
+  ABSL_RETURN_IF_ERROR(graph->StartRun({}));
 
   // Send image packet into the graph.
   const size_t fake_timestamp_us = (double)cv::getTickCount() /
                                    (double)cv::getTickFrequency() *
                                    kMicrosPerSecond;
-  MP_RETURN_IF_ERROR(graph->AddPacketToInputStream(
+  ABSL_RETURN_IF_ERROR(graph->AddPacketToInputStream(
       kInputStream, mediapipe::MakePacket<std::string>(raw_image).At(
                         mediapipe::Timestamp(fake_timestamp_us))));
 
@@ -120,13 +121,13 @@ absl::Status ProcessImage(std::unique_ptr<mediapipe::CalculatorGraph> graph) {
   }
 
   ABSL_LOG(INFO) << "Shutting down.";
-  MP_RETURN_IF_ERROR(graph->CloseInputStream(kInputStream));
+  ABSL_RETURN_IF_ERROR(graph->CloseInputStream(kInputStream));
   return graph->WaitUntilDone();
 }
 
 absl::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
-  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
+  ABSL_RETURN_IF_ERROR(mediapipe::file::GetContents(
       kCalculatorGraphConfigFile, &calculator_graph_config_contents));
   ABSL_LOG(INFO) << "Get calculator graph config contents: "
                  << calculator_graph_config_contents;
@@ -136,8 +137,8 @@ absl::Status RunMPPGraph() {
 
   ABSL_LOG(INFO) << "Initialize the calculator graph.";
   std::unique_ptr<mediapipe::CalculatorGraph> graph =
-      absl::make_unique<mediapipe::CalculatorGraph>();
-  MP_RETURN_IF_ERROR(graph->Initialize(config));
+      std::make_unique<mediapipe::CalculatorGraph>();
+  ABSL_RETURN_IF_ERROR(graph->Initialize(config));
 
   const bool load_image = !absl::GetFlag(FLAGS_input_image_path).empty();
   if (load_image) {

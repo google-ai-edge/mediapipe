@@ -127,11 +127,10 @@ absl::Status BorderDetectionCalculator::Process(
   }
   cv::Mat frame = mediapipe::formats::MatView(
       &cc->Inputs().Tag(kVideoInputTag).Get<ImageFrame>());
-  MP_RETURN_IF_ERROR(SetAndCheckInputs(frame));
+  ABSL_RETURN_IF_ERROR(SetAndCheckInputs(frame));
 
   // Initialize output and set default values.
-  std::unique_ptr<StaticFeatures> features =
-      absl::make_unique<StaticFeatures>();
+  std::unique_ptr<StaticFeatures> features = std::make_unique<StaticFeatures>();
   features->mutable_non_static_area()->set_x(0);
   features->mutable_non_static_area()->set_width(frame_width_);
   features->mutable_non_static_area()->set_y(options_.default_padding_px());

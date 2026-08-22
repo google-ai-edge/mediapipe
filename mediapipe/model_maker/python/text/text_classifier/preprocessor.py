@@ -89,7 +89,7 @@ def _tfrecord_dataset(
   Returns:
     Dataset containing BERT model input features and labels.
   """
-  d = tf.data.TFRecordDataset(tfrecord_files)
+  d = tf.data.TFRecordDataset(tfrecord_files)  # pyrefly: ignore[bad-instantiation]
   d = d.map(
       lambda record: _decode_record(record, name_to_features),
       num_parallel_calls=tf.data.AUTOTUNE)
@@ -206,9 +206,9 @@ class AverageWordEmbeddingClassifierPreprocessor:
       token_ids_list.append(token_ids)
       labels_list.append(label.numpy()[0])
 
-    token_ids_ds = tf.data.Dataset.from_tensor_slices(token_ids_list)
-    labels_ds = tf.data.Dataset.from_tensor_slices(labels_list)
-    preprocessed_ds = tf.data.Dataset.zip((token_ids_ds, labels_ds))
+    token_ids_ds = tf.data.Dataset.from_tensor_slices(token_ids_list)  # pyrefly: ignore[bad-argument-type]
+    labels_ds = tf.data.Dataset.from_tensor_slices(labels_list)  # pyrefly: ignore[bad-argument-type]
+    preprocessed_ds = tf.data.Dataset.zip((token_ids_ds, labels_ds))  # pyrefly: ignore[bad-argument-type]
     return text_classifier_ds.Dataset(
         dataset=preprocessed_ds,
         size=dataset.size,
@@ -242,7 +242,7 @@ class BertClassifierPreprocessor:
         tensorflow_hub.resolve(uri), "assets", "vocab.txt"
     )
     self._do_lower_case = do_lower_case
-    self._tokenizer: bert_tokenizer.BertTokenizer = None
+    self._tokenizer: bert_tokenizer.BertTokenizer = None  # pyrefly: ignore[bad-assignment]
     if tokenizer == bert_tokenizer.SupportedBertTokenizers.FULL_TOKENIZER:
       self._tokenizer = bert_tokenizer.BertFullTokenizer(
           self._vocab_file, self._do_lower_case, self._seq_len
@@ -378,8 +378,8 @@ class BertClassifierPreprocessor:
     )
     return text_classifier_ds.Dataset(
         dataset=preprocessed_ds,
-        size=size,
-        label_names=label_names,
+        size=size,  # pyrefly: ignore[bad-argument-type]
+        label_names=label_names,  # pyrefly: ignore[bad-argument-type]
         tfrecord_cache_files=tfrecord_cache_files,
         has_label_mask=dataset.has_label_mask,
         label_shape=dataset.label_shape,

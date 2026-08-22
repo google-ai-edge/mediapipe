@@ -112,8 +112,8 @@ absl::Status SetSubTaskBaseOptions(
     proto::HolisticLandmarkerGraphOptions* options, T* sub_task_options,
     absl::string_view model_name, bool is_copy) {
   if (!sub_task_options->base_options().has_model_asset()) {
-    MP_ASSIGN_OR_RETURN(const auto model_file_content,
-                        resources->GetFile(std::string(model_name)));
+    ABSL_ASSIGN_OR_RETURN(const auto model_file_content,
+                          resources->GetFile(std::string(model_name)));
     SetExternalFile(
         model_file_content,
         sub_task_options->mutable_base_options()->mutable_model_asset(),
@@ -328,9 +328,9 @@ class HolisticLandmarkerGraph : public core::ModelTaskGraph {
         sc->MutableOptions<proto::HolisticLandmarkerGraphOptions>();
     const core::ModelAssetBundleResources* model_asset_bundle_resources;
     if (holistic_options->base_options().has_model_asset()) {
-      MP_ASSIGN_OR_RETURN(model_asset_bundle_resources,
-                          CreateModelAssetBundleResources<
-                              proto::HolisticLandmarkerGraphOptions>(sc));
+      ABSL_ASSIGN_OR_RETURN(model_asset_bundle_resources,
+                            CreateModelAssetBundleResources<
+                                proto::HolisticLandmarkerGraphOptions>(sc));
     }
     // Copies the file content instead of passing the pointer of file in
     // memory if the subgraph model resource service is not available.
@@ -353,11 +353,11 @@ class HolisticLandmarkerGraph : public core::ModelTaskGraph {
         is_left_hand_requested || is_right_hand_requested ||
         is_left_hand_world_requested || is_right_hand_world_requested;
     if (hands_requested) {
-      MP_RETURN_IF_ERROR(SetSubTaskBaseOptions(
+      ABSL_RETURN_IF_ERROR(SetSubTaskBaseOptions(
           model_asset_bundle_resources, holistic_options,
           holistic_options->mutable_hand_landmarks_detector_graph_options(),
           kHandLandmarksDetectorModelName, create_copy));
-      MP_RETURN_IF_ERROR(SetSubTaskBaseOptions(
+      ABSL_RETURN_IF_ERROR(SetSubTaskBaseOptions(
           model_asset_bundle_resources, holistic_options,
           holistic_options->mutable_hand_roi_refinement_graph_options(),
           kHandRoiRefinementModelName, create_copy));
@@ -370,19 +370,19 @@ class HolisticLandmarkerGraph : public core::ModelTaskGraph {
     const bool face_requested =
         is_face_requested || is_face_blendshapes_requested;
     if (face_requested) {
-      MP_RETURN_IF_ERROR(SetSubTaskBaseOptions(
+      ABSL_RETURN_IF_ERROR(SetSubTaskBaseOptions(
           model_asset_bundle_resources, holistic_options,
           holistic_options->mutable_face_detector_graph_options(),
           kFaceDetectorModelName, create_copy));
       // Forcely set num_faces to 1, because holistic landmarker only supports a
       // single subject for now.
       holistic_options->mutable_face_detector_graph_options()->set_num_faces(1);
-      MP_RETURN_IF_ERROR(SetSubTaskBaseOptions(
+      ABSL_RETURN_IF_ERROR(SetSubTaskBaseOptions(
           model_asset_bundle_resources, holistic_options,
           holistic_options->mutable_face_landmarks_detector_graph_options(),
           kFaceLandmarksDetectorModelName, create_copy));
       if (is_face_blendshapes_requested) {
-        MP_RETURN_IF_ERROR(SetSubTaskBaseOptions(
+        ABSL_RETURN_IF_ERROR(SetSubTaskBaseOptions(
             model_asset_bundle_resources, holistic_options,
             holistic_options->mutable_face_landmarks_detector_graph_options()
                 ->mutable_face_blendshapes_graph_options(),
@@ -390,14 +390,14 @@ class HolisticLandmarkerGraph : public core::ModelTaskGraph {
       }
     }
 
-    MP_RETURN_IF_ERROR(SetSubTaskBaseOptions(
+    ABSL_RETURN_IF_ERROR(SetSubTaskBaseOptions(
         model_asset_bundle_resources, holistic_options,
         holistic_options->mutable_pose_detector_graph_options(),
         kPoseDetectorModelName, create_copy));
     // Forcely set num_poses to 1, because holistic landmarker sonly supports a
     // single subject for now.
     holistic_options->mutable_pose_detector_graph_options()->set_num_poses(1);
-    MP_RETURN_IF_ERROR(SetSubTaskBaseOptions(
+    ABSL_RETURN_IF_ERROR(SetSubTaskBaseOptions(
         model_asset_bundle_resources, holistic_options,
         holistic_options->mutable_pose_landmarks_detector_graph_options(),
         kPoseLandmarksDetectorModelName, create_copy));
@@ -411,13 +411,13 @@ class HolisticLandmarkerGraph : public core::ModelTaskGraph {
         HasOutput(holistic_node, "POSE_SEGMENTATION_MASK")};
 
     // Detect and track pose.
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         HolisticPoseTrackingOutput pose_output,
         TrackHolisticPose(
             image, holistic_options->pose_detector_graph_options(),
             holistic_options->pose_landmarks_detector_graph_options(),
             pose_request, graph));
-    MP_RETURN_IF_ERROR(
+    ABSL_RETURN_IF_ERROR(
         SetGraphPoseOutputs(pose_request, holistic_node, pose_output, graph));
 
     // Detect and track hand.
@@ -438,7 +438,7 @@ class HolisticLandmarkerGraph : public core::ModelTaskGraph {
             /*.landmarks = */ is_left_hand_requested,
             /*.world_landmarks = */ is_left_hand_world_requested,
         };
-        MP_ASSIGN_OR_RETURN(
+        ABSL_ASSIGN_OR_RETURN(
             HolisticHandTrackingOutput hand_output,
             TrackHolisticHand(
                 image, *pose_output.landmarks, *pose_output.world_landmarks,
@@ -467,7 +467,7 @@ class HolisticLandmarkerGraph : public core::ModelTaskGraph {
             /*.landmarks = */ is_right_hand_requested,
             /*.world_landmarks = */ is_right_hand_world_requested,
         };
-        MP_ASSIGN_OR_RETURN(
+        ABSL_ASSIGN_OR_RETURN(
             HolisticHandTrackingOutput hand_output,
             TrackHolisticHand(
                 image, *pose_output.landmarks, *pose_output.world_landmarks,
@@ -492,7 +492,7 @@ class HolisticLandmarkerGraph : public core::ModelTaskGraph {
       HolisticFaceTrackingRequest face_request = {
           /*.classifications = */ is_face_blendshapes_requested,
       };
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           HolisticFaceTrackingOutput face_output,
           TrackHolisticFace(
               image, face_landmarks_from_pose,

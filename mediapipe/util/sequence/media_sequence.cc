@@ -539,7 +539,7 @@ std::unique_ptr<mediapipe::Matrix> GetAudioFromFeatureAt(
       << "The data size is not a multiple of the number of channels: "
       << flat_data.size() << " % " << num_channels << " = "
       << flat_data.size() % num_channels << " for sequence index " << index;
-  auto output = absl::make_unique<mediapipe::Matrix>(
+  auto output = std::make_unique<mediapipe::Matrix>(
       num_channels, flat_data.size() / num_channels);
   std::copy(flat_data.begin(), flat_data.end(), output->data());
   return output;

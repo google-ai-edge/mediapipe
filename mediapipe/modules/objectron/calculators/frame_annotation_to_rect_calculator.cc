@@ -95,7 +95,7 @@ absl::Status FrameAnnotationToRectCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kInputFrameAnnotationTag).IsEmpty()) {
     return absl::OkStatus();
   }
-  auto output_rects = absl::make_unique<std::vector<NormalizedRect>>();
+  auto output_rects = std::make_unique<std::vector<NormalizedRect>>();
   const auto& frame_annotation =
       cc->Inputs().Tag(kInputFrameAnnotationTag).Get<FrameAnnotation>();
   for (const auto& object_annotation : frame_annotation.annotations()) {

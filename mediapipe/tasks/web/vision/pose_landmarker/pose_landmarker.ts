@@ -176,6 +176,10 @@ export class PoseLandmarker extends VisionTaskRunner {
     this.initDefaults();
   }
 
+  protected override getTaskName(): string {
+    return 'PoseLandmarker';
+  }
+
   protected override get baseOptions(): BaseOptionsProto {
     return this.options.getBaseOptions()!;
   }

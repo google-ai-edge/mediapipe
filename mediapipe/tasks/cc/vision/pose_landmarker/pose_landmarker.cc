@@ -177,7 +177,7 @@ absl::StatusOr<std::unique_ptr<PoseLandmarker>> PoseLandmarker::Create(
               kMicroSecondsPerMilliSecond);
     };
   }
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       std::unique_ptr<PoseLandmarker> pose_landmarker,
       (core::VisionTaskApiFactory::Create<PoseLandmarker,
                                           PoseLandmarkerGraphOptionsProto>(
@@ -211,10 +211,10 @@ absl::StatusOr<PoseLandmarkerResult> PoseLandmarker::Detect(
         "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                      ConvertToNormalizedRect(image_processing_options, image,
-                                              /*roi_allowed=*/false));
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                        ConvertToNormalizedRect(image_processing_options, image,
+                                                /*roi_allowed=*/false));
+  ABSL_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
           {{kImageInStreamName, MakePacket<Image>(std::move(image))},
@@ -248,10 +248,10 @@ absl::StatusOr<PoseLandmarkerResult> PoseLandmarker::DetectForVideo(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                      ConvertToNormalizedRect(image_processing_options, image,
-                                              /*roi_allowed=*/false));
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                        ConvertToNormalizedRect(image_processing_options, image,
+                                                /*roi_allowed=*/false));
+  ABSL_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
           {{kImageInStreamName,
@@ -288,9 +288,9 @@ absl::Status PoseLandmarker::DetectAsync(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                      ConvertToNormalizedRect(image_processing_options, image,
-                                              /*roi_allowed=*/false));
+  ABSL_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                        ConvertToNormalizedRect(image_processing_options, image,
+                                                /*roi_allowed=*/false));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

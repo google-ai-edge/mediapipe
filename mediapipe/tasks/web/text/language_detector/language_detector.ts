@@ -123,6 +123,10 @@ export class LanguageDetector extends TaskRunner {
     this.options.setBaseOptions(new BaseOptionsProto());
   }
 
+  protected override getTaskName(): string {
+    return 'LanguageDetector';
+  }
+
   /**
    * Sets new options for the language detector.
    *

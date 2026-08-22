@@ -119,7 +119,7 @@ class ImageClassifier(classifier.Classifier):
                   f'_class{i}',
               )
           )
-    self._history = None  # Training history returned from `keras_model.fit`.
+    self._history = None  # Training history returned from `keras_model.fit`.  # pyrefly: ignore[bad-assignment]
 
   def _create_desired_metrics(
       self,
@@ -300,24 +300,24 @@ class ImageClassifier(classifier.Classifier):
             activation='relu6',
             name=f'FC_{fc_id}',
         )(outputs)
-      outputs = tf.keras.layers.Flatten()(outputs)
-      outputs = tf.keras.layers.Dropout(rate=self._model_options.dropout_rate)(
+      outputs = tf.keras.layers.Flatten()(outputs)  # pyrefly: ignore[not-callable]
+      outputs = tf.keras.layers.Dropout(rate=self._model_options.dropout_rate)(  # pyrefly: ignore[not-callable]
           outputs
       )
-      outputs = tf.keras.layers.Dense(
+      outputs = tf.keras.layers.Dense(  # pyrefly: ignore[not-callable]
           self._num_classes,
           activation='sigmoid',
           name='logits',
           kernel_regularizer=tf.keras.regularizers.l1_l2(
-              l1=self._hparams.l1_regularizer,
-              l2=self._hparams.l2_regularizer,
+              l1=self._hparams.l1_regularizer,  # pyrefly: ignore[missing-attribute]
+              l2=self._hparams.l2_regularizer,  # pyrefly: ignore[missing-attribute]
           ),
       )(outputs)
       self._model = tf.keras.Model(inputs=inputs, outputs=outputs)
     else:
       module_layer = hub.KerasLayer(
           handle=self._model_spec.uri,
-          trainable=self._hparams.do_fine_tuning,
+          trainable=self._hparams.do_fine_tuning,  # pyrefly: ignore[missing-attribute]
           load_options=tf.saved_model.LoadOptions(
               experimental_io_device='/job:localhost'
           ),
@@ -330,8 +330,8 @@ class ImageClassifier(classifier.Classifier):
               units=self._num_classes,
               activation='softmax',
               kernel_regularizer=tf.keras.regularizers.l1_l2(
-                  l1=self._hparams.l1_regularizer,
-                  l2=self._hparams.l2_regularizer,
+                  l1=self._hparams.l1_regularizer,  # pyrefly: ignore[missing-attribute]
+                  l2=self._hparams.l2_regularizer,  # pyrefly: ignore[missing-attribute]
               ),
           ),
       ])
@@ -403,18 +403,18 @@ class ImageClassifier(classifier.Classifier):
     init_lr = self._hparams.learning_rate * self._hparams.batch_size / 256
 
     # Get decay steps.
-    total_training_steps = self._hparams.steps_per_epoch * self._hparams.epochs
+    total_training_steps = self._hparams.steps_per_epoch * self._hparams.epochs  # pyrefly: ignore[unsupported-operation]
     default_decay_steps = (
-        self._hparams.decay_samples // self._hparams.batch_size)
+        self._hparams.decay_samples // self._hparams.batch_size)  # pyrefly: ignore[missing-attribute]
     decay_steps = max(total_training_steps, default_decay_steps)
 
     learning_rate_fn = tf.keras.experimental.CosineDecay(
         initial_learning_rate=init_lr, decay_steps=decay_steps, alpha=0.0)
-    warmup_steps = self._hparams.warmup_epochs * self._hparams.steps_per_epoch
+    warmup_steps = self._hparams.warmup_epochs * self._hparams.steps_per_epoch  # pyrefly: ignore[missing-attribute]
     if warmup_steps:
       learning_rate_fn = model_util.WarmUp(
           initial_learning_rate=init_lr,
-          decay_schedule_fn=learning_rate_fn,
+          decay_schedule_fn=learning_rate_fn,  # pyrefly: ignore[bad-argument-type]
           warmup_steps=warmup_steps)
     optimizer = tf.keras.optimizers.RMSprop(
         learning_rate=learning_rate_fn, rho=0.9, momentum=0.9, epsilon=0.001)

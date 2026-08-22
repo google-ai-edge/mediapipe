@@ -27,7 +27,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/core/proto/model_resources_calculator.pb.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
+#include "tflite/core/api/op_resolver.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -109,7 +109,7 @@ class ModelResourcesCalculator : public api2::Node {
             "ModelResourcesCacheService, and the CalculatorOptions has no "
             "'model_file' field to create a local ModelResources.");
       }
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           model_resources_,
           ModelResources::Create(
               "", std::make_unique<proto::ExternalFile>(options.model_file())));

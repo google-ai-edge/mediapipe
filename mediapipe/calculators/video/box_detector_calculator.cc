@@ -208,9 +208,9 @@ absl::Status BoxDetectorCalculator::Open(CalculatorContext* cc) {
 
   for (const auto& filename : options_.index_proto_filename()) {
     std::string string_path;
-    MP_ASSIGN_OR_RETURN(string_path, PathToResourceAsFile(filename));
+    ABSL_ASSIGN_OR_RETURN(string_path, PathToResourceAsFile(filename));
     std::string index_string;
-    MP_RETURN_IF_ERROR(file::GetContents(string_path, &index_string));
+    ABSL_RETURN_IF_ERROR(file::GetContents(string_path, &index_string));
     BoxDetectorIndex predefined_index;
     if (!predefined_index.ParseFromString(index_string)) {
       ABSL_LOG(FATAL)
@@ -382,7 +382,7 @@ absl::Status BoxDetectorCalculator::Process(CalculatorContext* cc) {
     cv::Mat viz_view;
     std::unique_ptr<ImageFrame> viz_frame;
     if (video_stream != nullptr && !video_stream->IsEmpty()) {
-      viz_frame = absl::make_unique<ImageFrame>();
+      viz_frame = std::make_unique<ImageFrame>();
       viz_frame->CopyFrom(video_stream->Get<ImageFrame>(), frame_alignment_);
       viz_view = formats::MatView(viz_frame.get());
     }

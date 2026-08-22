@@ -25,9 +25,14 @@ public class MediaPipeException extends RuntimeException {
     this.statusMessage = statusMessage;
   }
 
+  public MediaPipeException(StatusCode statusCode, String statusMessage, Throwable cause) {
+    super(statusCode.description() + ": " + statusMessage, cause);
+    this.statusCode = statusCode;
+    this.statusMessage = statusMessage;
+  }
+
   // Package base.Charsets is deprecated by package java.nio.charset is not
   // yet available in all Android apps.
-  @SuppressWarnings("deprecation")
   MediaPipeException(int code, byte[] message) {
     this(code, new String(message, UTF_8));
   }
@@ -70,7 +75,7 @@ public class MediaPipeException extends RuntimeException {
     }
 
     private final String description;
-  };
+  }
 
   private final StatusCode statusCode;
   private final String statusMessage;

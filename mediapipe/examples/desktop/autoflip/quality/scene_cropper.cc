@@ -63,15 +63,15 @@ absl::Status SceneCropper::ProcessKinematicPathSolver(
       int observed_x = std::round(
           focus_point_frames[keyframe_counter].point(0).norm_point_x() *
           scene_summary.scene_frame_width());
-      MP_RETURN_IF_ERROR(kinematic_path_solver_->AddObservation(
+      ABSL_RETURN_IF_ERROR(kinematic_path_solver_->AddObservation(
           observed_x, scene_timestamps[i]));
       keyframe_counter++;
     } else {
-      MP_RETURN_IF_ERROR(
+      ABSL_RETURN_IF_ERROR(
           kinematic_path_solver_->UpdatePrediction(scene_timestamps[i]));
     }
     int x_path;
-    MP_RETURN_IF_ERROR(kinematic_path_solver_->GetState(&x_path));
+    ABSL_RETURN_IF_ERROR(kinematic_path_solver_->GetState(&x_path));
     cv::Mat transform = cv::Mat::eye(2, 3, CV_32FC1);
     transform.at<float>(0, 2) =
         -(x_path - scene_summary.crop_window_width() / 2);
@@ -135,7 +135,7 @@ absl::Status SceneCropper::CropFrames(
     }
   } else if (camera_motion_options_.has_kinematic_options()) {
     num_prior = 0;
-    MP_RETURN_IF_ERROR(ProcessKinematicPathSolver(
+    ABSL_RETURN_IF_ERROR(ProcessKinematicPathSolver(
         scene_summary, scene_timestamps, is_key_frames, focus_point_frames,
         continue_last_scene, &scene_frame_xforms));
   }

@@ -26,12 +26,12 @@ limitations under the License.
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/cc/text/language_detector/custom_ops/utils/hash/murmur.h"
-#include "tensorflow/lite/c/common.h"
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/kernels/register.h"
-#include "tensorflow/lite/kernels/test_util.h"
-#include "tensorflow/lite/model.h"
-#include "tensorflow/lite/string_util.h"
+#include "tflite/c/common.h"
+#include "tflite/interpreter.h"
+#include "tflite/kernels/register.h"
+#include "tflite/kernels/test_util.h"
+#include "tflite/model.h"
+#include "tflite/string_util.h"
 
 namespace mediapipe::tflite_operations {
 namespace {

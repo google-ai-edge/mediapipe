@@ -42,7 +42,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
+        "@litert//tflite/core/api:op_resolver",
     ],
 )
 
@@ -92,7 +92,7 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:cord",
         "@com_google_sentencepiece//:sentencepiece_processor",  # fixdeps: keep
-        "@org_tensorflow//tensorflow/lite:test_util",
+        "@litert//tflite:test_util",
     ],
 )
 
@@ -108,10 +108,10 @@ cc_library(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
-        "@org_tensorflow//tensorflow/lite:mutable_op_resolver",
-        "@org_tensorflow//tensorflow/lite:string_util",
-        "@org_tensorflow//tensorflow/lite:type_to_tflitetype",
-        "@org_tensorflow//tensorflow/lite/c:common",
-        "@org_tensorflow//tensorflow/lite/kernels:kernel_util",
+        "@litert//tflite:mutable_op_resolver",
+        "@litert//tflite:string_util",
+        "@litert//tflite:type_to_tflitetype",
+        "@litert//tflite/c:common",
+        "@litert//tflite/kernels:kernel_util",
     ],
 )

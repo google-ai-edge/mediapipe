@@ -21,6 +21,7 @@ android_library(
     manifest = "AndroidManifest.xml",
     exports = [
         ":core_java",
+        ":jni_config_default",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:base_options_utils_jni",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
@@ -52,8 +53,46 @@ mediapipe_jni_binary(
 )
 
 android_library(
+    name = "jni_config_contract",
+    srcs = ["JniConfigContract.java"],
+    deps = ["@maven//:com_google_guava_guava"],
+)
+
+# 1. Compile-only stub of JniConfig, stripped from APK/AAR because neverlink = True.
+android_library(
+    name = "jni_config_stub",
+    srcs = ["JniConfig.java"],
+    neverlink = 1,
+    deps = [
+        ":jni_config_contract",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+# 2. Real runtime default implementation of JniConfig for standard MediaPipe tasks.
+android_library(
+    name = "jni_config_default",
+    srcs = ["JniConfig.java"],
+    deps = [
+        ":jni_config_contract",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+alias(
+    name = "jni_config",
+    actual = ":jni_config_default",
+)
+
+android_library(
     name = "core_java",
-    srcs = glob(["*.java"]),
+    srcs = glob(
+        ["*.java"],
+        exclude = [
+            "JniConfig.java",
+            "JniConfigContract.java",
+        ],
+    ),
     manifest = "AndroidManifest.xml",
     deps = [
         ":logging",
@@ -68,6 +107,7 @@ android_library(
         "//third_party:any_java_proto",
         "//third_party:autovalue",
         "@com_google_protobuf//:protobuf_javalite",
+        "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",
     ],
 )

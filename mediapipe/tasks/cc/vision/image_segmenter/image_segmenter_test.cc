@@ -40,9 +40,9 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_result.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
-#include "tensorflow/lite/kernels/builtin_op_kernels.h"
-#include "tensorflow/lite/mutable_op_resolver.h"
-#include "tensorflow/lite/test_util.h"
+#include "tflite/kernels/builtin_op_kernels.h"
+#include "tflite/mutable_op_resolver.h"
+#include "tflite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -197,7 +197,7 @@ TEST_F(CreateFromOptionsTest, SucceedsWithSelectiveOpResolver) {
   auto options = std::make_unique<ImageSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata);
-  options->base_options.op_resolver = absl::make_unique<DeepLabOpResolver>();
+  options->base_options.op_resolver = std::make_unique<DeepLabOpResolver>();
   MP_ASSERT_OK(ImageSegmenter::Create(std::move(options)));
 }
 
@@ -206,7 +206,7 @@ TEST_F(CreateFromOptionsTest, FailsWithSelectiveOpResolverMissingOps) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata);
   options->base_options.op_resolver =
-      absl::make_unique<DeepLabOpResolverMissingOps>();
+      std::make_unique<DeepLabOpResolverMissingOps>();
   auto segmenter_or = ImageSegmenter::Create(std::move(options));
   // TODO: Make MediaPipe InferenceCalculator report the detailed
   // interpreter errors (e.g., "Encountered unresolved custom op").

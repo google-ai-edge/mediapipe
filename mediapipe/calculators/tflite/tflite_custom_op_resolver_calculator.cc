@@ -20,7 +20,7 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/tflite/cpu_op_resolver.h"
 #include "mediapipe/util/tflite/op_resolver.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
+#include "tflite/core/api/op_resolver.h"
 
 namespace mediapipe {
 
@@ -79,9 +79,9 @@ class TfLiteCustomOpResolverCalculator : public CalculatorBase {
 
     std::unique_ptr<tflite::ops::builtin::BuiltinOpResolver> op_resolver;
     if (options.use_gpu()) {
-      op_resolver = absl::make_unique<mediapipe::OpResolver>();
+      op_resolver = std::make_unique<mediapipe::OpResolver>();
     } else {
-      op_resolver = absl::make_unique<mediapipe::CpuOpResolver>();
+      op_resolver = std::make_unique<mediapipe::CpuOpResolver>();
     }
 
     if (cc->OutputSidePackets().HasTag(kOpResolverTag)) {

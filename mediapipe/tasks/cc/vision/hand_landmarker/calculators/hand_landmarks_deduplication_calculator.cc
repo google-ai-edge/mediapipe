@@ -176,7 +176,7 @@ class HandDuplicatesFinder : public DuplicatesFinder {
     std::vector<RectF> bounds;
     bounds.reserve(num);
     for (const NormalizedLandmarkList& list : multi_landmarks) {
-      MP_ASSIGN_OR_RETURN(
+      ABSL_ASSIGN_OR_RETURN(
           const float baseline_distance,
           HandBaselineDistance(list, input_width, input_height));
       baseline_distances.push_back(baseline_distance);
@@ -195,9 +195,9 @@ class HandDuplicatesFinder : public DuplicatesFinder {
             std::max(stable_distance_i, stable_distance_j) *
             kAllowedBaselineDistanceRatio;
 
-        MP_ASSIGN_OR_RETURN(const std::vector<float> distances,
-                            Distances(multi_landmarks[i], multi_landmarks[j],
-                                      input_width, input_height));
+        ABSL_ASSIGN_OR_RETURN(const std::vector<float> distances,
+                              Distances(multi_landmarks[i], multi_landmarks[j],
+                                        input_width, input_height));
         const int num_matched_landmarks = absl::c_count_if(
             distances,
             [&](float distance) { return distance < distance_threshold; });
@@ -231,7 +231,7 @@ absl::StatusOr<absl::optional<VectorType>> VerifyNumAndMaybeInitOutput(
     const mediapipe::api3::Optional<mediapipe::api3::Input<T, VectorType>>&
         port,
     int num_expected_size) {
-  if (!port) return {absl::nullopt};
+  if (!port) return {std::nullopt};
   const auto& input = port.GetOrDie();
   RET_CHECK_EQ(input.size(), num_expected_size);
   return {{VectorType{}}};
@@ -240,7 +240,7 @@ absl::StatusOr<absl::optional<VectorType>> VerifyNumAndMaybeInitOutput(
 
 std::unique_ptr<DuplicatesFinder> CreateHandDuplicatesFinder(
     bool start_from_the_end) {
-  return absl::make_unique<HandDuplicatesFinder>(start_from_the_end);
+  return std::make_unique<HandDuplicatesFinder>(start_from_the_end);
 }
 
 class HandLandmarksDeduplicationNodeImpl
@@ -262,9 +262,9 @@ absl::Status HandLandmarksDeduplicationNodeImpl::Process(
 
   std::unique_ptr<DuplicatesFinder> duplicates_finder =
       CreateHandDuplicatesFinder(/*start_from_the_end=*/false);
-  MP_ASSIGN_OR_RETURN(absl::flat_hash_set<int> indices_to_remove,
-                      duplicates_finder->FindDuplicates(
-                          in_landmarks, image_size.first, image_size.second));
+  ABSL_ASSIGN_OR_RETURN(absl::flat_hash_set<int> indices_to_remove,
+                        duplicates_finder->FindDuplicates(
+                            in_landmarks, image_size.first, image_size.second));
 
   if (indices_to_remove.empty()) {
     cc.landmarks_out.Send(cc.landmarks_in.Packet());
@@ -284,12 +284,12 @@ absl::Status HandLandmarksDeduplicationNodeImpl::Process(
     std::vector<NormalizedLandmarkList> out_landmarks;
     const int num = in_landmarks.size();
 
-    MP_ASSIGN_OR_RETURN(absl::optional<std::vector<NormalizedRect>> out_rois,
-                        VerifyNumAndMaybeInitOutput(cc.rois_in, num));
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(absl::optional<std::vector<NormalizedRect>> out_rois,
+                          VerifyNumAndMaybeInitOutput(cc.rois_in, num));
+    ABSL_ASSIGN_OR_RETURN(
         absl::optional<std::vector<LandmarkList>> out_world_landmarks,
         VerifyNumAndMaybeInitOutput(cc.world_landmarks_in, num));
-    MP_ASSIGN_OR_RETURN(
+    ABSL_ASSIGN_OR_RETURN(
         absl::optional<std::vector<ClassificationList>> out_classifications,
         VerifyNumAndMaybeInitOutput(cc.classifications_in, num));
 

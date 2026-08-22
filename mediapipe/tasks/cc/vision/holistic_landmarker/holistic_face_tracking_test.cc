@@ -154,7 +154,7 @@ absl::StatusOr<std::unique_ptr<tasks::core::TaskRunner>> CreateTaskRunner() {
 
   // Track holistic face.
   HolisticFaceTrackingRequest request;
-  MP_ASSIGN_OR_RETURN(
+  ABSL_ASSIGN_OR_RETURN(
       HolisticFaceTrackingOutput result,
       TrackHolisticFace(image, face_landmarks_from_pose, detector_options,
                         landmarks_detector_options, request, graph));

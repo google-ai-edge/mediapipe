@@ -24,7 +24,7 @@ def mediapipe_cc_test(
         platforms = ["linux", "android", "ios", "wasm"],
         exclude_platforms = None,
         # ios_unit_test arguments
-        ios_minimum_os_version = "12.0",
+        ios_minimum_os_version = "15.0",
         test_host = "//tools/build_defs/apple/testing:ios_default_host",
         # android_cc_test arguments
         open_gl_driver = None,

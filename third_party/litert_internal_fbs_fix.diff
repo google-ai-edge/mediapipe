@@ -1,0 +1,82 @@
+diff --git a/tflite/delegates/gpu/cl/BUILD b/tflite/delegates/gpu/cl/BUILD
+index 4ecfc17..2ebc8da 100644
+--- a/tflite/delegates/gpu/cl/BUILD
++++ b/tflite/delegates/gpu/cl/BUILD
+@@ -593,7 +593,7 @@ flatbuffer_cc_library(
+     srcs = ["serialization.fbs"],
+     flatc_args = [
+         "--scoped-enums",
+-        "-I " + workspace_root,
++        "-I external/litert",
+     ],
+     includes = [
+         "//tflite/delegates/gpu/common:gpu_model_cc_fbs_includes",
+diff --git a/tflite/delegates/gpu/cl/serialization.fbs b/tflite/delegates/gpu/cl/serialization.fbs
+index 21f1813..29707fe 100644
+--- a/tflite/delegates/gpu/cl/serialization.fbs
++++ b/tflite/delegates/gpu/cl/serialization.fbs
+@@ -12,8 +12,8 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
+-include "tensorflow/lite/delegates/gpu/common/gpu_model.fbs";
+-include "tensorflow/lite/delegates/gpu/common/task/tflite_serialization_base.fbs";
++include "tflite/delegates/gpu/common/gpu_model.fbs";
++include "tflite/delegates/gpu/common/task/tflite_serialization_base.fbs";
+ 
+ namespace tflite.gpu.cl.data;
+ 
+diff --git a/tflite/delegates/gpu/common/BUILD b/tflite/delegates/gpu/common/BUILD
+index 46adca1..79ae42e 100644
+--- a/tflite/delegates/gpu/common/BUILD
++++ b/tflite/delegates/gpu/common/BUILD
+@@ -79,7 +79,7 @@ flatbuffer_cc_library(
+     srcs = ["gpu_model.fbs"],
+     flatc_args = [
+         "--scoped-enums",
+-        "-I " + workspace_root,
++        "-I external/litert",
+     ],
+     includes = [
+         "//tflite/delegates/gpu/common/task:serialization_base_cc_fbs_includes",
+diff --git a/tflite/delegates/gpu/common/gpu_model.fbs b/tflite/delegates/gpu/common/gpu_model.fbs
+index 0a452d4..18bfea1 100644
+--- a/tflite/delegates/gpu/common/gpu_model.fbs
++++ b/tflite/delegates/gpu/common/gpu_model.fbs
+@@ -12,7 +12,7 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
+-include "tensorflow/lite/delegates/gpu/common/task/tflite_serialization_base.fbs";
++include "tflite/delegates/gpu/common/task/tflite_serialization_base.fbs";
+ 
+ namespace tflite.gpu.data;
+ 
+diff --git a/tflite/delegates/gpu/metal/BUILD b/tflite/delegates/gpu/metal/BUILD
+index dd6f490..962d2cf 100644
+--- a/tflite/delegates/gpu/metal/BUILD
++++ b/tflite/delegates/gpu/metal/BUILD
+@@ -172,7 +172,7 @@ flatbuffer_cc_library(
+     srcs = ["inference_context.fbs"],
+     flatc_args = [
+         "--scoped-enums",
+-        "-I " + workspace_root,
++        "-I external/litert",
+     ],
+     includes = [
+         "//tflite/delegates/gpu/common:gpu_model_cc_fbs_includes",
+diff --git a/tflite/delegates/gpu/metal/inference_context.fbs b/tflite/delegates/gpu/metal/inference_context.fbs
+index 5c7b68b..267459f 100644
+--- a/tflite/delegates/gpu/metal/inference_context.fbs
++++ b/tflite/delegates/gpu/metal/inference_context.fbs
+@@ -12,8 +12,8 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
+-include "tensorflow/lite/delegates/gpu/common/gpu_model.fbs";
+-include "tensorflow/lite/delegates/gpu/common/task/tflite_serialization_base.fbs";
++include "tflite/delegates/gpu/common/gpu_model.fbs";
++include "tflite/delegates/gpu/common/task/tflite_serialization_base.fbs";
+ 
+ namespace tflite.gpu.metal.data;
+ 

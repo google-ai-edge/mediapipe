@@ -286,7 +286,7 @@ absl::Status PacketLatencyCalculator::Process(CalculatorContext* cc) {
 
       // Push the latency packet to output.
       auto packet_latency =
-          absl::make_unique<PacketLatency>(packet_latencies_[i]);
+          std::make_unique<PacketLatency>(packet_latencies_[i]);
       cc->Outputs().Index(i).Add(packet_latency.release(),
                                  cc->InputTimestamp());
     }

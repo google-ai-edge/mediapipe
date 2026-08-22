@@ -117,7 +117,7 @@ absl::Status SegmentationSmoothingCalculator::GetContract(
   cc->Outputs().Tag(kOutputMaskTag).Set<Image>();
 
 #if !MEDIAPIPE_DISABLE_GPU
-  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(
+  ABSL_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(
       cc, /*request_gpu_as_optional=*/true));
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
@@ -152,22 +152,23 @@ absl::Status SegmentationSmoothingCalculator::Process(CalculatorContext* cc) {
   if (use_gpu) {
 #if !MEDIAPIPE_DISABLE_GPU
     if (!gpu_initialized_) {
-      MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
+      ABSL_RETURN_IF_ERROR(gpu_helper_.Open(cc));
     }
-    MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([this, cc]() -> absl::Status {
-      if (!gpu_initialized_) {
-        MP_RETURN_IF_ERROR(GlSetup(cc));
-        gpu_initialized_ = true;
-      }
-      MP_RETURN_IF_ERROR(RenderGpu(cc));
-      return absl::OkStatus();
-    }));
+    ABSL_RETURN_IF_ERROR(
+        gpu_helper_.RunInGlContext([this, cc]() -> absl::Status {
+          if (!gpu_initialized_) {
+            ABSL_RETURN_IF_ERROR(GlSetup(cc));
+            gpu_initialized_ = true;
+          }
+          ABSL_RETURN_IF_ERROR(RenderGpu(cc));
+          return absl::OkStatus();
+        }));
 #else
     return absl::InternalError("GPU processing is disabled.");
 #endif  // !MEDIAPIPE_DISABLE_GPU
   } else {
 #if !MEDIAPIPE_DISABLE_OPENCV
-    MP_RETURN_IF_ERROR(RenderCpu(cc));
+    ABSL_RETURN_IF_ERROR(RenderCpu(cc));
 #else
     return absl::InternalError("OpenCV processing is disabled.");
 #endif  // !MEDIAPIPE_DISABLE_OPENCV

@@ -65,7 +65,7 @@ absl::Status OpenCvImageEncoderCalculator::Process(CalculatorContext* cc) {
   ABSL_CHECK_EQ(1, image_frame.ByteDepth());
 
   std::unique_ptr<OpenCvImageEncoderCalculatorResults> encoded_result =
-      absl::make_unique<OpenCvImageEncoderCalculatorResults>();
+      std::make_unique<OpenCvImageEncoderCalculatorResults>();
   encoded_result->set_width(image_frame.Width());
   encoded_result->set_height(image_frame.Height());
 
