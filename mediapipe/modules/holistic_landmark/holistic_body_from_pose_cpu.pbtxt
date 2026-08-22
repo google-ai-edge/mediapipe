@@ -1,0 +1,176 @@
+# Predicts left/right hand + face landmarks for a SINGLE person, given that
+# person's pose landmarks. This is the per-person "body" portion of holistic,
+# factored out of HolisticLandmarkCpu so it can be looped over several people.
+#
+# Unlike the single-person HandLandmarksFromPoseCpu / FaceLandmarksFromPoseCpu
+# subgraphs, this graph is STATELESS: it does not use HandTracking / FaceTracking
+# (which carry a previous-frame landmark back-edge). Per-frame, per-person ROIs
+# are taken directly from the re-crop / detection stage. Statelessness is
+# required because this graph is run inside a BeginLoop/EndLoop over people, and
+# a per-frame back-edge inside the loop would leak state between people.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "HolisticBodyFromPoseCpu"
+#     input_stream: "IMAGE:image"
+#     input_stream: "POSE_LANDMARKS:pose_landmarks"
+#     input_side_packet: "REFINE_FACE_LANDMARKS:refine_face_landmarks"
+#     output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
+#     output_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
+#     output_stream: "FACE_LANDMARKS:face_landmarks"
+#   }
+
+type: "HolisticBodyFromPoseCpu"
+
+# CPU image. (ImageFrame)
+input_stream: "IMAGE:image"
+# A single person's 33 pose landmarks. (NormalizedLandmarkList)
+input_stream: "POSE_LANDMARKS:pose_landmarks"
+
+# Whether to refine face landmarks (attention mesh + irises). (bool)
+input_side_packet: "REFINE_FACE_LANDMARKS:refine_face_landmarks"
+
+# 21 left hand landmarks. (NormalizedLandmarkList)
+output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
+# 21 right hand landmarks. (NormalizedLandmarkList)
+output_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
+# 468 face landmarks. (NormalizedLandmarkList)
+output_stream: "FACE_LANDMARKS:face_landmarks"
+
+# Image size, shared by the hand and face ROI stages.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:image"
+  output_stream: "SIZE:image_size"
+}
+
+# ---------------------------------------------------------------------------
+# Left hand.
+# ---------------------------------------------------------------------------
+node {
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "pose_landmarks"
+  output_stream: "left_hand_landmarks_from_pose"
+  options: {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges: { begin: 15 end: 16 }
+      ranges: { begin: 17 end: 18 }
+      ranges: { begin: 19 end: 20 }
+      combine_outputs: true
+    }
+  }
+}
+node {
+  calculator: "HandVisibilityFromHandLandmarksFromPose"
+  input_stream: "HAND_LANDMARKS_FROM_POSE:left_hand_landmarks_from_pose"
+  output_stream: "VISIBILITY:left_hand_visibility"
+}
+node {
+  calculator: "GateCalculator"
+  input_stream: "left_hand_landmarks_from_pose"
+  input_stream: "ALLOW:left_hand_visibility"
+  output_stream: "ensured_left_hand_landmarks_from_pose"
+}
+node {
+  calculator: "HandLandmarksFromPoseToRecropRoi"
+  input_stream: "HAND_LANDMARKS_FROM_POSE:ensured_left_hand_landmarks_from_pose"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "ROI:left_hand_roi_from_pose"
+}
+node {
+  calculator: "HandRecropByRoiCpu"
+  input_stream: "IMAGE:image"
+  input_stream: "ROI:left_hand_roi_from_pose"
+  output_stream: "HAND_ROI_FROM_RECROP:left_hand_roi_from_recrop"
+}
+node {
+  calculator: "HandLandmarkCpu"
+  input_stream: "IMAGE:image"
+  input_stream: "ROI:left_hand_roi_from_recrop"
+  output_stream: "LANDMARKS:left_hand_landmarks"
+}
+
+# ---------------------------------------------------------------------------
+# Right hand.
+# ---------------------------------------------------------------------------
+node {
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "pose_landmarks"
+  output_stream: "right_hand_landmarks_from_pose"
+  options: {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges: { begin: 16 end: 17 }
+      ranges: { begin: 18 end: 19 }
+      ranges: { begin: 20 end: 21 }
+      combine_outputs: true
+    }
+  }
+}
+node {
+  calculator: "HandVisibilityFromHandLandmarksFromPose"
+  input_stream: "HAND_LANDMARKS_FROM_POSE:right_hand_landmarks_from_pose"
+  output_stream: "VISIBILITY:right_hand_visibility"
+}
+node {
+  calculator: "GateCalculator"
+  input_stream: "right_hand_landmarks_from_pose"
+  input_stream: "ALLOW:right_hand_visibility"
+  output_stream: "ensured_right_hand_landmarks_from_pose"
+}
+node {
+  calculator: "HandLandmarksFromPoseToRecropRoi"
+  input_stream: "HAND_LANDMARKS_FROM_POSE:ensured_right_hand_landmarks_from_pose"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "ROI:right_hand_roi_from_pose"
+}
+node {
+  calculator: "HandRecropByRoiCpu"
+  input_stream: "IMAGE:image"
+  input_stream: "ROI:right_hand_roi_from_pose"
+  output_stream: "HAND_ROI_FROM_RECROP:right_hand_roi_from_recrop"
+}
+node {
+  calculator: "HandLandmarkCpu"
+  input_stream: "IMAGE:image"
+  input_stream: "ROI:right_hand_roi_from_recrop"
+  output_stream: "LANDMARKS:right_hand_landmarks"
+}
+
+# ---------------------------------------------------------------------------
+# Face.
+# ---------------------------------------------------------------------------
+node {
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "pose_landmarks"
+  output_stream: "face_landmarks_from_pose"
+  options: {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges: { begin: 0 end: 11 }
+    }
+  }
+}
+node {
+  calculator: "FaceLandmarksFromPoseToRecropRoi"
+  input_stream: "FACE_LANDMARKS_FROM_POSE:face_landmarks_from_pose"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "ROI:face_roi_from_pose"
+}
+node {
+  calculator: "FaceDetectionShortRangeByRoiCpu"
+  input_stream: "IMAGE:image"
+  input_stream: "ROI:face_roi_from_pose"
+  output_stream: "DETECTIONS:face_detections"
+}
+node {
+  calculator: "FaceDetectionFrontDetectionsToRoi"
+  input_stream: "DETECTIONS:face_detections"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "ROI:face_roi_from_detection"
+}
+node {
+  calculator: "FaceLandmarkCpu"
+  input_stream: "IMAGE:image"
+  input_stream: "ROI:face_roi_from_detection"
+  input_side_packet: "WITH_ATTENTION:refine_face_landmarks"
+  output_stream: "LANDMARKS:face_landmarks"
+}
