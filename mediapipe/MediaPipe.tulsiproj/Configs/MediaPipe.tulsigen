@@ -23,21 +23,21 @@
     "mediapipe/objc/testing/app/BUILD"
   ],
   "buildTargets" : [
-    "//mediapipe/examples/ios/facedetectioncpu:FaceDetectionCpuApp",
-    "//mediapipe/examples/ios/facedetectiongpu:FaceDetectionGpuApp",
-    "//mediapipe/examples/ios/faceeffect:FaceEffectApp",
-    "//mediapipe/examples/ios/facemeshgpu:FaceMeshGpuApp",
-    "//mediapipe/examples/ios/handdetectiongpu:HandDetectionGpuApp",
-    "//mediapipe/examples/ios/handtrackinggpu:HandTrackingGpuApp",
-    "//mediapipe/examples/ios/helloworld:HelloWorldApp",
-    "//mediapipe/examples/ios/holistictrackinggpu:HolisticTrackingGpuApp",
-    "//mediapipe/examples/ios/iristrackinggpu:IrisTrackingGpuApp",
-    "//mediapipe/examples/ios/objectdetectioncpu:ObjectDetectionCpuApp",
-    "//mediapipe/examples/ios/objectdetectiongpu:ObjectDetectionGpuApp",
-    "//mediapipe/examples/ios/objectdetectiontrackinggpu:ObjectDetectionTrackingGpuApp",
-    "//mediapipe/examples/ios/posetrackinggpu:PoseTrackingGpuApp",
-    "//mediapipe/examples/ios/selfiesegmentationgpu:SelfieSegmentationGpuApp",
-    "//mediapipe/objc:mediapipe_framework_ios"
+    "@//mediapipe/examples/ios/facedetectioncpu:FaceDetectionCpuApp",
+    "@//mediapipe/examples/ios/facedetectiongpu:FaceDetectionGpuApp",
+    "@//mediapipe/examples/ios/faceeffect:FaceEffectApp",
+    "@//mediapipe/examples/ios/facemeshgpu:FaceMeshGpuApp",
+    "@//mediapipe/examples/ios/handdetectiongpu:HandDetectionGpuApp",
+    "@//mediapipe/examples/ios/handtrackinggpu:HandTrackingGpuApp",
+    "@//mediapipe/examples/ios/helloworld:HelloWorldApp",
+    "@//mediapipe/examples/ios/holistictrackinggpu:HolisticTrackingGpuApp",
+    "@//mediapipe/examples/ios/iristrackinggpu:IrisTrackingGpuApp",
+    "@//mediapipe/examples/ios/objectdetectioncpu:ObjectDetectionCpuApp",
+    "@//mediapipe/examples/ios/objectdetectiongpu:ObjectDetectionGpuApp",
+    "@//mediapipe/examples/ios/objectdetectiontrackinggpu:ObjectDetectionTrackingGpuApp",
+    "@//mediapipe/examples/ios/posetrackinggpu:PoseTrackingGpuApp",
+    "@//mediapipe/examples/ios/selfiesegmentationgpu:SelfieSegmentationGpuApp",
+    "@//mediapipe/objc:mediapipe_framework_ios"
   ],
   "optionSet" : {
     "BazelBuildOptionsDebug" : {
