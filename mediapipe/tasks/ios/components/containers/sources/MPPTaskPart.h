@@ -64,8 +64,10 @@ NS_SWIFT_NAME(ImagePart)
 @interface MPPImagePart : MPPTaskPart
 
 @property(nonatomic, readonly, copy) NSData *imageBytes;
+@property(nonatomic, readonly, copy, nullable) NSString *filePath;
 
 - (instancetype)initWithImageBytes:(NSData *)imageBytes;
+- (instancetype)initWithImageBytes:(NSData *)imageBytes filePath:(nullable NSString *)filePath;
 
 - (instancetype)init NS_UNAVAILABLE;
 + (instancetype)new NS_UNAVAILABLE;
@@ -79,8 +81,11 @@ NS_SWIFT_NAME(AudioPart)
 @interface MPPAudioPart : MPPTaskPart
 
 @property(nonatomic, readonly) MPPFloatBuffer *audioData;
+@property(nonatomic, readonly, copy, nullable) NSString *filePath;
 
 - (instancetype)initWithAudioData:(MPPFloatBuffer *)audioData;
+- (instancetype)initWithAudioData:(MPPFloatBuffer *)audioData
+                         filePath:(nullable NSString *)filePath;
 
 - (instancetype)init NS_UNAVAILABLE;
 + (instancetype)new NS_UNAVAILABLE;
