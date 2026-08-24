@@ -26,6 +26,9 @@
 #if CV_VERSION_MAJOR == 4
 #include <opencv2/imgproc/types_c.h>
 #endif
+#if CV_VERSION_MAJOR == 5
+#include <opencv2/geometry.hpp>
+#endif
 #endif
 
 #endif  // MEDIAPIPE_PORT_OPENCV_IMGPROC_INC_H_
