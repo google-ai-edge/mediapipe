@@ -28,7 +28,6 @@ import com.google.mediapipe.tasks.components.processors.proto.EmbedderOptionsPro
 import com.google.mediapipe.tasks.components.utils.CosineSimilarity;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.BaseOptionsUtils;
-import com.google.mediapipe.tasks.core.EmbeddingProvider;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.OutputHandler.ResultListener;
 import com.google.mediapipe.tasks.core.TaskOptions;
