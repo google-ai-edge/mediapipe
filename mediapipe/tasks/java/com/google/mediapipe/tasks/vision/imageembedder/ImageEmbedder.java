@@ -285,6 +285,11 @@ public final class ImageEmbedder implements AutoCloseable {
     return CosineSimilarity.compute(u, v);
   }
 
+  @Override
+  public void close() {
+    executor.close();
+  }
+
   /** Options for setting up and {@link ImageEmbedder}. */
   @AutoValue
   public abstract static class ImageEmbedderOptions extends TaskOptions {
