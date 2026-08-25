@@ -143,6 +143,9 @@ proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options);
 // Converts a proto::BaseOptions to a BaseOptions.
 BaseOptions ConvertProtoToBaseOptions(proto::BaseOptions&& base_options_proto);
 
+// Checks if the given base options correspond to a LiteRT LM model.
+bool IsLiteRtLmModel(const BaseOptions& base_options);
+
 }  // namespace core
 }  // namespace tasks
 }  // namespace mediapipe

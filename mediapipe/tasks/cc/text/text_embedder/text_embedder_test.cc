@@ -15,7 +15,13 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder.h"
 
+#include <fcntl.h>
+#include <unistd.h>
+
+#include <cstdint>
 #include <fstream>
+#include <ios>
+#include <iterator>
 #include <memory>
 #include <string>
 #include <utility>

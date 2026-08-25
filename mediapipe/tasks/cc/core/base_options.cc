@@ -15,8 +15,13 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/core/base_options.h"
 
+#include <unistd.h>
+
+#include <fstream>
+#include <ios>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 
@@ -192,6 +197,39 @@ BaseOptions ConvertProtoToBaseOptions(proto::BaseOptions&& base_options_proto) {
   }
   return base_options;
 }
+
+bool IsLiteRtLmModel(const BaseOptions& base_options) {
+  if (!base_options.model_asset_path.empty()) {
+    std::ifstream file(base_options.model_asset_path, std::ios::binary);
+    if (file) {
+      char header[8];
+      file.read(header, 8);
+      if (file.gcount() == 8 && std::string_view(header, 8) == "LITERTLM") {
+        return true;
+      }
+    }
+  }
+  if (base_options.model_asset_buffer != nullptr) {
+    if (base_options.model_asset_buffer->size() >= 8 &&
+        base_options.model_asset_buffer->substr(0, 8) == "LITERTLM") {
+      return true;
+    }
+  }
+  if (base_options.model_asset_descriptor_meta.fd != -1) {
+    int fd = base_options.model_asset_descriptor_meta.fd;
+    int offset = base_options.model_asset_descriptor_meta.offset;
+    if (offset < 0) {
+      offset = 0;
+    }
+    char header[8];
+    ssize_t bytes_read = pread(fd, header, 8, offset);
+    if (bytes_read == 8 && std::string_view(header, 8) == "LITERTLM") {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace core
 }  // namespace tasks
 }  // namespace mediapipe

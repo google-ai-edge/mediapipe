@@ -1,5 +1,8 @@
 #include "mediapipe/tasks/cc/core/base_options.h"
 
+#include <cstdio>
+#include <fstream>
+#include <ios>
 #include <memory>
 #include <optional>
 #include <string>
@@ -137,6 +140,53 @@ TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithNpuDelegate) {
   EXPECT_EQ(std::get<BaseOptions::NpuOptions>(*base_options.delegate_options)
                 .dispatch_library_directory,
             "/tmp/dispatch");
+}
+
+TEST(BaseOptionsTest, IsLiteRtLmModelReturnsFalseForDefaultOptions) {
+  BaseOptions base_options;
+  EXPECT_FALSE(IsLiteRtLmModel(base_options));
+}
+
+TEST(BaseOptionsTest, IsLiteRtLmModelReturnsTrueForValidModelBuffer) {
+  BaseOptions base_options;
+  base_options.model_asset_buffer =
+      std::make_unique<std::string>("LITERTLM_model_data");
+  EXPECT_TRUE(IsLiteRtLmModel(base_options));
+}
+
+TEST(BaseOptionsTest, IsLiteRtLmModelReturnsFalseForInvalidModelBuffer) {
+  BaseOptions base_options;
+  base_options.model_asset_buffer =
+      std::make_unique<std::string>("NOTLITERTLM_model_data");
+  EXPECT_FALSE(IsLiteRtLmModel(base_options));
+}
+
+TEST(BaseOptionsTest, IsLiteRtLmModelReturnsTrueForValidModelPath) {
+  std::string temp_path = testing::TempDir() + "test_litert_lm_model";
+  std::ofstream out(temp_path, std::ios::binary);
+  ASSERT_TRUE(out.is_open());
+  out.write("LITERTLM_model_data", 19);
+  out.close();
+
+  BaseOptions base_options;
+  base_options.model_asset_path = temp_path;
+  EXPECT_TRUE(IsLiteRtLmModel(base_options));
+
+  std::remove(temp_path.c_str());
+}
+
+TEST(BaseOptionsTest, IsLiteRtLmModelReturnsFalseForInvalidModelPath) {
+  std::string temp_path = testing::TempDir() + "test_invalid_model";
+  std::ofstream out(temp_path, std::ios::binary);
+  ASSERT_TRUE(out.is_open());
+  out.write("NOTLITERTLM_model_data", 22);
+  out.close();
+
+  BaseOptions base_options;
+  base_options.model_asset_path = temp_path;
+  EXPECT_FALSE(IsLiteRtLmModel(base_options));
+
+  std::remove(temp_path.c_str());
 }
 
 }  // namespace
