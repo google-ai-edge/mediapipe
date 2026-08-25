@@ -41,8 +41,8 @@ constexpr char kRegex[] = "[^\\w\\']+";
 std::unique_ptr<RegexTokenizer> CreateRegexTokenizer(
     const std::string& regexp_pattern, const std::string& vocab_path) {
   std::string buffer = LoadBinaryContent(vocab_path.c_str());
-  return absl::make_unique<RegexTokenizer>(regexp_pattern, buffer.data(),
-                                           buffer.size());
+  return std::make_unique<RegexTokenizer>(regexp_pattern, buffer.data(),
+                                          buffer.size());
 }
 
 TEST(RegexTokenizerTest, TestTokenize) {
@@ -109,7 +109,7 @@ TEST(RegexTokenizerTest, TestGetSpecialTokens) {
 
 TEST(RegexTokenizerTest, TestGetSpecialTokensFailure) {
   auto tokenizer =
-      absl::make_unique<RegexTokenizer>(kRegex, kTestRegexEmptyVocabPath);
+      std::make_unique<RegexTokenizer>(kRegex, kTestRegexEmptyVocabPath);
 
   int start_token;
   ASSERT_FALSE(tokenizer->GetStartToken(&start_token));
