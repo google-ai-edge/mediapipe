@@ -15,8 +15,6 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/core/base_options.h"
 
-#include <unistd.h>
-
 #include <fstream>
 #include <ios>
 #include <memory>
