@@ -15,9 +15,17 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/core/base_options.h"
 
+#include <cstdint>
 #include <fstream>
 #include <ios>
 #include <memory>
+
+#ifdef _WIN32
+#include <io.h>
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 #include <string>
 #include <string_view>
 #include <utility>
@@ -196,6 +204,29 @@ BaseOptions ConvertProtoToBaseOptions(proto::BaseOptions&& base_options_proto) {
   return base_options;
 }
 
+// Portable helper to read from a file descriptor at a given offset without
+// changing the file descriptor's current position.
+int ReadFdAtOffset(int fd, char* buffer, int length, int64_t offset) {
+#ifdef _WIN32
+  HANDLE handle = reinterpret_cast<HANDLE>(_get_osfhandle(fd));
+  if (handle == INVALID_HANDLE_VALUE) {
+    return -1;
+  }
+  OVERLAPPED overlapped;
+  std::memset(&overlapped, 0, sizeof(overlapped));
+  overlapped.Offset = static_cast<DWORD>(offset);
+  overlapped.OffsetHigh = static_cast<DWORD>(offset >> 32);
+  DWORD bytes_read = 0;
+  if (!::ReadFile(handle, buffer, static_cast<DWORD>(length), &bytes_read,
+                  &overlapped)) {
+    return -1;
+  }
+  return static_cast<int>(bytes_read);
+#else
+  return static_cast<int>(pread(fd, buffer, length, offset));
+#endif
+}
+
 bool IsLiteRtLmModel(const BaseOptions& base_options) {
   if (!base_options.model_asset_path.empty()) {
     std::ifstream file(base_options.model_asset_path, std::ios::binary);
@@ -220,7 +251,7 @@ bool IsLiteRtLmModel(const BaseOptions& base_options) {
       offset = 0;
     }
     char header[8];
-    ssize_t bytes_read = pread(fd, header, 8, offset);
+    int bytes_read = ReadFdAtOffset(fd, header, 8, offset);
     if (bytes_read == 8 && std::string_view(header, 8) == "LITERTLM") {
       return true;
     }

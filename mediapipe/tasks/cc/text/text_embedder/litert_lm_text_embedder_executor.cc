@@ -17,6 +17,11 @@ limitations under the License.
 
 #include <algorithm>
 #include <cmath>
+
+#ifdef _WIN32
+#include <io.h>
+#include <windows.h>
+#endif
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -143,10 +148,14 @@ LiteRtLmTextEmbedderExecutor::Create(const BaseOptions& base_options,
     uint64_t length = base_options.model_asset_descriptor_meta.length >= 0
                           ? base_options.model_asset_descriptor_meta.length
                           : 0u;
-    ABSL_ASSIGN_OR_RETURN(
-        auto mmap_file,
-        MemoryMappedFile::Create(base_options.model_asset_descriptor_meta.fd,
-                                 offset, length));
+#ifdef _WIN32
+    HANDLE platform_file = reinterpret_cast<HANDLE>(
+        _get_osfhandle(base_options.model_asset_descriptor_meta.fd));
+#else
+    int platform_file = base_options.model_asset_descriptor_meta.fd;
+#endif
+    ABSL_ASSIGN_OR_RETURN(auto mmap_file, MemoryMappedFile::Create(
+                                              platform_file, offset, length));
     shared_mmap = std::shared_ptr<MemoryMappedFile>(std::move(mmap_file));
   } else {
     return absl::FailedPreconditionError("No model asset specified.");
