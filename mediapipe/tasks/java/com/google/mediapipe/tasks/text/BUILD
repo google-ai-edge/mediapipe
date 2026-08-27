@@ -120,7 +120,6 @@ android_library(
         "//third_party:autovalue",
         "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",
-        "@odml//odml/litert_lm/kotlin/java/com/google/ai/edge/litertlm:litertlm-android",
     ],
 )
 
