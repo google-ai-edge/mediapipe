@@ -886,6 +886,7 @@ cc_library(
         "@litert//litert/cc:litert_tensor_buffer_types",
         "@litert//litert/cc/internal:litert_extended_model",
         "@litert//litert/cc/options:litert_cpu_options",
+        "@litert//litert/cc/options:litert_google_tensor_options",
         "@litert//litert/cc/options:litert_gpu_options",
         "@litert//litert/cc/options:litert_qualcomm_options",
     ] + select({
