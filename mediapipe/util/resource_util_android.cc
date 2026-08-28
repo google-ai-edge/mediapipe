@@ -102,7 +102,9 @@ absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path,
 
   // Try the test environment.
   absl::string_view workspace = "mediapipe";
-  auto test_path = file::JoinPath(std::getenv("TEST_SRCDIR"), workspace, path);
+  const char* test_srcdir = std::getenv("TEST_SRCDIR");
+  auto test_path =
+      file::JoinPath(test_srcdir ? test_srcdir : "", workspace, path);
   if (file::Exists(test_path).ok()) {
     return test_path;
   }
