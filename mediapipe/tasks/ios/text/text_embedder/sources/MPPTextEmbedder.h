@@ -15,10 +15,13 @@
 #import <Foundation/Foundation.h>
 
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskPart.h"
 #import "mediapipe/tasks/ios/text/text_embedder/sources/MPPTextEmbedderOptions.h"
 #import "mediapipe/tasks/ios/text/text_embedder/sources/MPPTextEmbedderResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
+
+@class MPPEmbeddingResult;
 
 /**
  * The embedding task type, used to format input text for Gecko models.
@@ -89,7 +92,7 @@ NS_SWIFT_NAME(TextFormatContext)
  * the number of dimensions in the produced embeddings.
  */
 NS_SWIFT_NAME(TextEmbedder)
-@interface MPPTextEmbedder : NSObject
+@interface MPPTextEmbedder : NSObject <MPPEmbeddingProvider>
 
 /**
  * Creates a new instance of `MPPTextEmbedder` from an absolute path to a TensorFlow Lite

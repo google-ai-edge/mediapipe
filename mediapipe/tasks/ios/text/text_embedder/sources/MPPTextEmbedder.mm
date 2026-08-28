@@ -14,6 +14,7 @@
 
 #import "mediapipe/tasks/ios/text/text_embedder/sources/MPPTextEmbedder.h"
 
+#import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/components/utils/sources/MPPCosineSimilarity.h"
@@ -174,6 +175,29 @@ static NSString *const kDocumentTemplate = @"title: %@ | text: %@";
   return [MPPCosineSimilarity computeBetweenEmbedding1:embedding1
                                          andEmbedding2:embedding2
                                                  error:error];
+}
+
+- (nullable MPPEmbeddingResult *)embedContent:(NSArray<id> *)content error:(NSError **)error {
+  for (id part in content) {
+    if ([part isKindOfClass:[NSString class]]) {
+      MPPTextEmbedderResult *result = [self embedText:(NSString *)part error:error];
+      if (result == nil) {
+        return nil;
+      }
+      return result.embeddingResult;
+    } else if ([part isKindOfClass:[MPPTextPart class]]) {
+      MPPTextEmbedderResult *result = [self embedText:((MPPTextPart *)part).text error:error];
+      if (result == nil) {
+        return nil;
+      }
+      return result.embeddingResult;
+    }
+  }
+  [MPPCommonUtils
+      createCustomError:error
+               withCode:MPPTasksErrorCodeInvalidArgumentError
+            description:@"Content is empty or does not contain any supported text elements."];
+  return nil;
 }
 
 @end

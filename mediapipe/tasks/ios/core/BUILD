@@ -45,6 +45,13 @@ objc_library(
 )
 
 objc_library(
+    name = "MPPTaskPart",
+    srcs = ["sources/MPPTaskPart.m"],
+    hdrs = ["sources/MPPTaskPart.h"],
+    deps = ["//third_party/apple_frameworks:Foundation"],
+)
+
+objc_library(
     name = "MPPTaskOptionsProtocol",
     hdrs = ["sources/MPPTaskOptionsProtocol.h"],
     deps = [

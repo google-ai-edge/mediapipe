@@ -54,6 +54,7 @@ objc_library(
     ],
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/core:MPPTaskPart",
         "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
         "//mediapipe/tasks/ios/vision/image_embedder:MPPImageEmbedder",
         "//mediapipe/tasks/ios/vision/image_embedder:MPPImageEmbedderResult",

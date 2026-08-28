@@ -292,4 +292,40 @@ static const float kSimilarityDiffTolerance = 1e-4;
   XCTAssertEqualWithAccuracy(cosineSimilarity.doubleValue, 0.52f, 0.05f);
 }
 
+- (void)testEmbedContentSucceedsWithNSString {
+  MPPTextEmbedder *textEmbedder =
+      [self textEmbedderFromModelFileWithName:kRegexTextEmbedderModelName extension:@"tflite"];
+
+  NSError *error = nil;
+  MPPEmbeddingResult *result = [textEmbedder embedContent:@[ kText1 ] error:&error];
+  XCTAssertNotNil(result);
+  XCTAssertNil(error);
+  XCTAssertEqual(result.embeddings.count, 1);
+  XCTAssertEqual(result.embeddings[0].floatEmbedding.count, 16);
+}
+
+- (void)testEmbedContentSucceedsWithMPPTextPart {
+  MPPTextEmbedder *textEmbedder =
+      [self textEmbedderFromModelFileWithName:kRegexTextEmbedderModelName extension:@"tflite"];
+
+  NSError *error = nil;
+  MPPTextPart *textPart = [[MPPTextPart alloc] initWithText:kText1];
+  MPPEmbeddingResult *result = [textEmbedder embedContent:@[ textPart ] error:&error];
+  XCTAssertNotNil(result);
+  XCTAssertNil(error);
+  XCTAssertEqual(result.embeddings.count, 1);
+  XCTAssertEqual(result.embeddings[0].floatEmbedding.count, 16);
+}
+
+- (void)testEmbedContentFailsWithEmptyContent {
+  MPPTextEmbedder *textEmbedder =
+      [self textEmbedderFromModelFileWithName:kRegexTextEmbedderModelName extension:@"tflite"];
+
+  NSError *error = nil;
+  MPPEmbeddingResult *result = [textEmbedder embedContent:@[] error:&error];
+  XCTAssertNil(result);
+  XCTAssertNotNil(error);
+  XCTAssertEqual(error.code, MPPTasksErrorCodeInvalidArgumentError);
+}
+
 @end
