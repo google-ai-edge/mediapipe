@@ -91,13 +91,3 @@ objc_library(
         "//third_party/apple_frameworks:Foundation",
     ],
 )
-
-objc_library(
-    name = "MPPTaskPart",
-    srcs = ["sources/MPPTaskPart.m"],
-    hdrs = ["sources/MPPTaskPart.h"],
-    deps = [
-        "//mediapipe/tasks/ios/audio/core:MPPFloatBuffer",
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
