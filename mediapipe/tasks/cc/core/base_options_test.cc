@@ -52,6 +52,11 @@ TEST(BaseOptionsTest, ConvertBaseOptionsToProtoWithAcceleration) {
   proto = ConvertBaseOptionsToProto(&base_options);
   EXPECT_TRUE(proto.acceleration().has_litert());
   EXPECT_TRUE(proto.acceleration().litert().has_npu());
+
+  base_options.delegate = BaseOptions::Delegate::LITERT;
+  proto = ConvertBaseOptionsToProto(&base_options);
+  EXPECT_TRUE(proto.acceleration().has_litert());
+  EXPECT_TRUE(proto.acceleration().litert().has_cpu());
 }
 
 TEST(DelegateOptionsTest, SucceedCpuOptions) {
@@ -126,20 +131,28 @@ TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithGpuDelegate) {
   EXPECT_EQ(gpu_opts.model_token, kModelToken);
 }
 
-TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithNpuDelegate) {
+TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithLiteRtDelegate) {
   proto::BaseOptions proto;
   proto.mutable_acceleration()
       ->mutable_litert()
       ->mutable_npu()
       ->set_dispatch_library_path("/tmp/dispatch");
   BaseOptions base_options = ConvertProtoToBaseOptions(std::move(proto));
-  EXPECT_EQ(base_options.delegate, BaseOptions::Delegate::NPU);
+  EXPECT_EQ(base_options.delegate, BaseOptions::Delegate::LITERT);
   ASSERT_TRUE(base_options.delegate_options.has_value());
-  ASSERT_TRUE(std::holds_alternative<BaseOptions::NpuOptions>(
+  ASSERT_TRUE(std::holds_alternative<BaseOptions::LiteRtOptions>(
       *base_options.delegate_options));
-  EXPECT_EQ(std::get<BaseOptions::NpuOptions>(*base_options.delegate_options)
-                .dispatch_library_directory,
-            "/tmp/dispatch");
+  const auto& litert_opts =
+      std::get<BaseOptions::LiteRtOptions>(*base_options.delegate_options);
+  EXPECT_EQ(litert_opts.hardware_accelerator,
+            BaseOptions::LiteRtOptions::HardwareAccelerator::NPU);
+  ASSERT_TRUE(std::holds_alternative<
+              mediapipe::tasks::core::BaseOptions::LiteRtOptions::NpuOptions>(
+      litert_opts.accelerator_options));
+  const auto& npu_opts =
+      std::get<mediapipe::tasks::core::BaseOptions::LiteRtOptions::NpuOptions>(
+          litert_opts.accelerator_options);
+  EXPECT_EQ(npu_opts.dispatch_library_directory, "/tmp/dispatch");
 }
 
 TEST(BaseOptionsTest, IsLiteRtLmModelReturnsFalseForDefaultOptions) {

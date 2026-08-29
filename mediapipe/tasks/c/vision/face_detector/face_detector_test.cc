@@ -31,6 +31,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/detection_result.h"
 #include "mediapipe/tasks/c/components/containers/keypoint.h"
 #include "mediapipe/tasks/c/components/containers/rect.h"
+#include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
@@ -204,6 +205,41 @@ TEST(FaceDetectorTest, ImageModeWithRotationTest) {
 
   MpDetection expected_detection = CreateExpectedDetection(
       kExpectedRotatedBoundingBox, kExpectedRotatedKeypoints, kKeypointCount);
+  AssertFaceDetectorResult(&result, expected_detection, kPixelDiffTolerance,
+                           kKeypointErrorThreshold);
+
+  MpFaceDetectorCloseResult(&result);
+  EXPECT_EQ(MpFaceDetectorClose(detector, /* error_msg= */ nullptr), kMpOk);
+}
+
+TEST(FaceDetectorTest, ImageModeWithLiteRtCpuDelegateTest) {
+  const auto image = GetImage(GetFullPath(kImageFile));
+
+  const std::string model_path = GetFullPath(kModelName);
+  MpFaceDetectorOptions options = {
+      .base_options =
+          {
+              .model_asset_path = model_path.c_str(),
+              .delegate = MP_DELEGATE_LITERT,
+          },
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
+      .min_detection_confidence = 0.5,
+      .min_suppression_threshold = 0.5,
+  };
+
+  MpFaceDetectorPtr detector;
+  ASSERT_EQ(MpFaceDetectorCreate(&options, &detector, /* error_msg= */ nullptr),
+            kMpOk);
+  ASSERT_NE(detector, nullptr);
+
+  MpFaceDetectorResult result;
+  ASSERT_EQ(MpFaceDetectorDetectImage(detector, image.get(),
+                                      /* image_processing_options= */ nullptr,
+                                      &result, /* error_msg= */ nullptr),
+            kMpOk);
+
+  MpDetection expected_detection = CreateExpectedDetection(
+      kExpectedBoundingBox, kExpectedKeypoints, kKeypointCount);
   AssertFaceDetectorResult(&result, expected_detection, kPixelDiffTolerance,
                            kKeypointErrorThreshold);
 

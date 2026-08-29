@@ -17,6 +17,18 @@
 import ctypes
 
 
+class MpLiteRtOptionsC(ctypes.Structure):
+  """C types for MpLiteRtOptions.
+
+  Attributes:
+    hardware_accelerator: `int`, the hardware accelerator to use.
+  """
+
+  _fields_ = [
+      ("hardware_accelerator", ctypes.c_int),
+  ]
+
+
 class MpBaseOptionsC(ctypes.Structure):
   """C types for MpBaseOptions.
 
@@ -32,6 +44,7 @@ class MpBaseOptionsC(ctypes.Structure):
     ca_bundle_path: `bytes`, the path to the CA bundle file as a UTF-8 string.
     app_id: `bytes`, optional application id as a UTF-8 string.
     app_version: `bytes`, optional application version as a UTF-8 string.
+    litert_options: `MpLiteRtOptionsC`, optional LiteRT options.
   """
 
   _fields_ = [
@@ -46,4 +59,5 @@ class MpBaseOptionsC(ctypes.Structure):
       ("ca_bundle_path", ctypes.c_char_p),
       ("app_id", ctypes.c_char_p),
       ("app_version", ctypes.c_char_p),
+      ("litert_options", ctypes.POINTER(MpLiteRtOptionsC)),
   ]

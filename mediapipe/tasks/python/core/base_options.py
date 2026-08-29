@@ -26,7 +26,6 @@ from mediapipe.tasks.python.core import base_options_c as base_options_c_lib
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 
-
 # C enum value for host environment.
 HOST_ENVIRONMENT_PYTHON: int = 3
 
@@ -79,6 +78,8 @@ class BaseOptions:
   class Delegate(enum.IntEnum):
     CPU = 0
     GPU = 1
+    LITERT = 4
+
 
   model_asset_path: Optional[str] = None
   model_asset_buffer: Optional[bytes] = None
@@ -108,6 +109,7 @@ class BaseOptions:
     options.app_id = None
     options.app_version = None
     options.file_descriptor = -1
+    options.litert_options = None
     return options
 
   def __eq__(self, other: Any) -> bool:

@@ -21,6 +21,18 @@ limitations under the License.
 
 namespace mediapipe::tasks::c::core {
 
+mediapipe::tasks::core::BaseOptions::LiteRtOptions::CpuOptions
+CppConvertToLiteRtCpuOptions(const MpLiteRtCpuOptions& in);
+
+mediapipe::tasks::core::BaseOptions::LiteRtOptions::GpuOptions
+CppConvertToLiteRtGpuOptions(const MpLiteRtGpuOptions& in);
+
+mediapipe::tasks::core::BaseOptions::LiteRtOptions::NpuOptions
+CppConvertToLiteRtNpuOptions(const MpLiteRtNpuOptions& in);
+
+mediapipe::tasks::core::BaseOptions::LiteRtOptions CppConvertToLiteRtOptions(
+    const MpLiteRtOptions& in);
+
 void CppConvertToBaseOptions(const MpBaseOptions& in,
                              mediapipe::tasks::core::BaseOptions* out);
 

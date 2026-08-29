@@ -74,6 +74,33 @@ proto::Acceleration ConvertDelegateOptionsToAccelerationProto(
   return acceleration_proto;
 }
 
+proto::Acceleration ConvertDelegateOptionsToAccelerationProto(
+    const BaseOptions::LiteRtOptions& options) {
+  proto::Acceleration acceleration_proto = proto::Acceleration();
+  auto& litert = *acceleration_proto.mutable_litert();
+  switch (options.hardware_accelerator) {
+    case BaseOptions::LiteRtOptions::HardwareAccelerator::CPU:
+      litert.mutable_cpu();
+      break;
+    case BaseOptions::LiteRtOptions::HardwareAccelerator::NPU: {
+      auto* npu = litert.mutable_npu();
+      if (std::holds_alternative<BaseOptions::LiteRtOptions::NpuOptions>(
+              options.accelerator_options)) {
+        const auto& npu_opts = std::get<BaseOptions::LiteRtOptions::NpuOptions>(
+            options.accelerator_options);
+        if (!npu_opts.dispatch_library_directory.empty()) {
+          npu->set_dispatch_library_path(npu_opts.dispatch_library_directory);
+        }
+      }
+      break;
+    }
+    case BaseOptions::LiteRtOptions::HardwareAccelerator::GPU:
+      litert.mutable_gpu();
+      break;
+  }
+  return acceleration_proto;
+}
+
 template <typename T>
 void SetDelegateOptionsOrDie(const BaseOptions* base_options,
                              proto::BaseOptions& base_options_proto) {
@@ -143,6 +170,14 @@ proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options) {
       SetDelegateOptionsOrDie<BaseOptions::NpuOptions>(base_options,
                                                        base_options_proto);
       break;
+
+    case BaseOptions::Delegate::LITERT:
+      base_options_proto.mutable_acceleration()
+          ->mutable_litert()
+          ->mutable_cpu();
+      SetDelegateOptionsOrDie<BaseOptions::LiteRtOptions>(base_options,
+                                                          base_options_proto);
+      break;
   }
   return base_options_proto;
 }
@@ -188,17 +223,26 @@ BaseOptions ConvertProtoToBaseOptions(proto::BaseOptions&& base_options_proto) {
       base_options.delegate = BaseOptions::Delegate::CPU;
     } else if (acceleration.has_nnapi()) {
       base_options.delegate = BaseOptions::Delegate::EDGETPU_NNAPI;
-    } else if (acceleration.has_litert() && acceleration.litert().has_npu()) {
-      base_options.delegate = BaseOptions::Delegate::NPU;
+    } else if (acceleration.has_litert()) {
+      base_options.delegate = BaseOptions::Delegate::LITERT;
+      BaseOptions::LiteRtOptions litert_options;
       if (acceleration.litert().has_npu()) {
-        BaseOptions::NpuOptions npu_options;
-        if (acceleration.litert().has_npu() &&
-            acceleration.litert().npu().has_dispatch_library_path()) {
+        litert_options.hardware_accelerator =
+            BaseOptions::LiteRtOptions::HardwareAccelerator::NPU;
+        if (acceleration.litert().npu().has_dispatch_library_path()) {
+          BaseOptions::LiteRtOptions::NpuOptions npu_options;
           npu_options.dispatch_library_directory =
               acceleration.litert().npu().dispatch_library_path();
+          litert_options.accelerator_options = std::move(npu_options);
         }
-        base_options.delegate_options = std::move(npu_options);
+      } else if (acceleration.litert().has_gpu()) {
+        litert_options.hardware_accelerator =
+            BaseOptions::LiteRtOptions::HardwareAccelerator::GPU;
+      } else {
+        litert_options.hardware_accelerator =
+            BaseOptions::LiteRtOptions::HardwareAccelerator::CPU;
       }
+      base_options.delegate_options = std::move(litert_options);
     }
   }
   return base_options;
