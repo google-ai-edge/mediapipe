@@ -391,7 +391,9 @@ cc_library(
     name = "yuv_image",
     hdrs = ["yuv_image.h"],
     deps = [
-        "//mediapipe/framework/port:integral_types",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/types:span",
         "@libyuv",
     ],
 )
@@ -795,6 +797,8 @@ cc_test(
     deps = [
         ":yuv_image",
         "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/types:span",
         "@libyuv",
     ],
 )
