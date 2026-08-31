@@ -27,6 +27,7 @@ from mediapipe.tasks.python.core import serial_dispatcher
 
 class Mode(enum.IntEnum):
   """The mode of the text summarizer."""
+
   TLDR = 0
   KEYPOINTS = 1
 
@@ -51,11 +52,14 @@ class TextSummarizerOptions:
       set, the summarization will be truncated if the input and output exceed
       this value. If not set, then the default max_num_tokens is roughly 8k
       tokens due to the model's capacity.
+    cache_dir: The directory to cache the model. Defaults to ":nocache" to
+      disable caching.
   """
 
   base_options: base_options_module.BaseOptions
   mode: Mode = Mode.KEYPOINTS
   max_num_tokens: Optional[int] = None
+  cache_dir: Optional[str] = ":nocache"
 
   def to_ctypes(self) -> _MpTextSummarizerOptionsC:
     """Generates a ctypes TextSummarizerOptionsC."""
@@ -67,7 +71,11 @@ class TextSummarizerOptions:
         max_num_tokens=(
             self.max_num_tokens if self.max_num_tokens is not None else 0
         ),
-        cache_dir=None,
+        cache_dir=(
+            self.cache_dir.encode("utf-8")
+            if self.cache_dir is not None
+            else None
+        ),
     )
 
 
