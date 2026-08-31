@@ -16,6 +16,8 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/image_embedder/image_embedder.h"
 
 #include <fstream>
+#include <ios>
+#include <iterator>
 #include <memory>
 #include <utility>
 
@@ -28,6 +30,7 @@ limitations under the License.
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
+#include "mediapipe/tasks/cc/core/embedding_provider.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tflite/core/api/op_resolver.h"
@@ -608,6 +611,33 @@ TEST_F(LiveStreamModeTest, Succeeds) {
       EXPECT_LE(abs(similarity - expected_similarity), kSimilarityTolerancy);
     }
   }
+}
+
+TEST_F(ImageModeTest, TestGetProviderSucceeds) {
+  auto options = std::make_unique<ImageEmbedderOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kMobileNetV3Embedder);
+  options->base_options.op_resolver = std::make_unique<MobileNetV3OpResolver>();
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageEmbedder> image_embedder,
+                          ImageEmbedder::Create(std::move(options)));
+
+  auto provider = image_embedder->GetProvider();
+  ASSERT_NE(provider, nullptr);
+
+  std::string path = JoinPath("./", kTestDataDirectory, "burger.jpg");
+  std::ifstream file(path, std::ios::binary);
+  ASSERT_TRUE(file.is_open());
+  std::string image_bytes((std::istreambuf_iterator<char>(file)),
+                          std::istreambuf_iterator<char>());
+
+  std::vector<::mediapipe::tasks::core::TaskPart> content;
+  content.push_back(::mediapipe::tasks::core::ImagePart{image_bytes});
+
+  MP_ASSERT_OK_AND_ASSIGN(auto embedding_opt, provider->EmbedContent(content));
+  ASSERT_TRUE(embedding_opt.has_value());
+  EXPECT_FALSE(embedding_opt->empty());
+
+  MP_ASSERT_OK(image_embedder->Close());
 }
 
 }  // namespace

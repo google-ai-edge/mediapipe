@@ -60,6 +60,7 @@ cc_library(
         ":image_embedder_graph",  # buildcleaner: keep
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/tool:options_map",
         "//mediapipe/tasks/cc:common",
@@ -69,6 +70,7 @@ cc_library(
         "//mediapipe/tasks/cc/components/processors/proto:embedder_options_cc_proto",
         "//mediapipe/tasks/cc/components/utils:cosine_similarity",
         "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:embedding_provider",
         "//mediapipe/tasks/cc/core:utils",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
         "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
@@ -80,6 +82,7 @@ cc_library(
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@stblib//:stb_image",
     ],
 )
 
