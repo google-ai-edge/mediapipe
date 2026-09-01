@@ -61,9 +61,33 @@ NS_SWIFT_NAME(TextPart)
 NS_SWIFT_NAME(ImagePart)
 @interface MPPImagePart : MPPTaskPart
 
-@property(nonatomic, readonly, copy) NSString *filePath;
+/**
+ * The filesystem path to the image file, if initialized from a file.
+ * Nil if initialized from in-memory data.
+ */
+@property(nonatomic, readonly, copy, nullable) NSString *filePath;
 
-- (instancetype)initWithFilePath:(NSString *)filePath;
+/**
+ * The raw in-memory image buffer, if initialized from data.
+ * Nil if initialized from a file path or deserialized from persistent storage.
+ */
+@property(nonatomic, readonly, copy, nullable) NSData *data;
+
+/**
+ * Initializes a new `MPPImagePart` using a path to an image file on the filesystem.
+ *
+ * @param filePath The path to the image file.
+ * @return An instance of `MPPImagePart` configured with the file path.
+ */
+- (instancetype)initWithFilePath:(NSString *)filePath NS_DESIGNATED_INITIALIZER;
+
+/**
+ * Initializes a new `MPPImagePart` using in-memory image buffer data.
+ *
+ * @param data The raw image data bytes.
+ * @return An instance of `MPPImagePart` configured with in-memory data.
+ */
+- (instancetype)initWithData:(NSData *)data NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 + (instancetype)new NS_UNAVAILABLE;

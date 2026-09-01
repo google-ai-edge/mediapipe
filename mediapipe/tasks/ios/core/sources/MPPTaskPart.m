@@ -36,6 +36,16 @@
   self = [super init];
   if (self) {
     _filePath = [filePath copy];
+    _data = nil;
+  }
+  return self;
+}
+
+- (instancetype)initWithData:(NSData *)data {
+  self = [super init];
+  if (self) {
+    _filePath = nil;
+    _data = [data copy];
   }
   return self;
 }
