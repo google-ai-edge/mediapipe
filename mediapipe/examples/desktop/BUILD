@@ -31,7 +31,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
-        "//third_party/gloop/base:init_google",
+        "//third_party/gloop/base:init_google",  # copybara:strip
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/log:absl_log",
@@ -53,7 +53,7 @@ cc_library(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_util",
-        "//third_party/gloop/base:init_google",
+        "//third_party/gloop/base:init_google",  # copybara:strip
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/log:absl_log",
@@ -81,7 +81,7 @@ cc_library(
         "//mediapipe/gpu:gpu_buffer",
         "//mediapipe/gpu:gpu_shared_data_internal",
         "//mediapipe/util:resource_util",
-        "//third_party/gloop/base:init_google",
+        "//third_party/gloop/base:init_google",  # copybara:strip
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/log:absl_log",
