@@ -26,7 +26,7 @@
 }
 
 - (id)copyWithZone:(NSZone *)zone {
-  MPPTaskOptions *taskOptions = [[MPPTaskOptions alloc] init];
+  MPPTaskOptions *taskOptions = [[[self class] allocWithZone:zone] init];
 
   taskOptions.baseOptions = self.baseOptions;
 
