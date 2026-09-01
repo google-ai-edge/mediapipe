@@ -111,6 +111,20 @@ class VisionTaskRunnerFake extends VisionTaskRunner {
     super.processVideoData(imageFrame, imageProcessingOptions, timestamp);
   }
 
+  override mirrorNormalizedLandmarksIfNeeded(
+    landmarks: Parameters<
+      VisionTaskRunner['mirrorNormalizedLandmarksIfNeeded']
+    >[0],
+  ) {
+    return super.mirrorNormalizedLandmarksIfNeeded(landmarks);
+  }
+
+  override mirrorWorldLandmarksIfNeeded(
+    landmarks: Parameters<VisionTaskRunner['mirrorWorldLandmarksIfNeeded']>[0],
+  ) {
+    return super.mirrorWorldLandmarksIfNeeded(landmarks);
+  }
+
   expectNormalizedRect(
     xCenter: number,
     yCenter: number,
@@ -228,7 +242,29 @@ describe('VisionTaskRunner', () => {
     await visionTaskRunner.setOptions({canvas});
     await visionTaskRunner.setOptions({canvas: undefined});
 
-    expect(visionTaskRunner.graphRunner.wasmModule.canvas).toBe(canvas);
+    expect(
+      visionTaskRunner.graphRunner.wasmModule.canvas,
+    ).toBe(canvas);
+  });
+
+  it('can enable selfieMode', async () => {
+    const visionTaskRunner = new VisionTaskRunnerFake();
+    const landmarks = visionTaskRunner.mirrorNormalizedLandmarksIfNeeded([
+      {x: 0.25, y: 0.4, z: 0.1, visibility: 1},
+    ]);
+    expect(landmarks).toEqual([{x: 0.25, y: 0.4, z: 0.1, visibility: 1}]);
+
+    await visionTaskRunner.setOptions({selfieMode: true});
+    expect(
+      visionTaskRunner.mirrorNormalizedLandmarksIfNeeded([
+        {x: 0.25, y: 0.4, z: 0.1, visibility: 1},
+      ]),
+    ).toEqual([{x: 0.75, y: 0.4, z: 0.1, visibility: 1}]);
+    expect(
+      visionTaskRunner.mirrorWorldLandmarksIfNeeded([
+        {x: 0.3, y: 0.1, z: 0.2, visibility: 1},
+      ]),
+    ).toEqual([{x: -0.3, y: 0.1, z: 0.2, visibility: 1}]);
   });
 
   it('sends packets to graph', async () => {

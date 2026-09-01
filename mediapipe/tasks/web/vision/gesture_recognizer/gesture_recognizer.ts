@@ -392,7 +392,7 @@ export class GestureRecognizer extends VisionTaskRunner {
           visibility: handLandmarkProto.getVisibility() ?? 0,
         });
       }
-      this.landmarks.push(landmarks);
+      this.landmarks.push(this.mirrorNormalizedLandmarksIfNeeded(landmarks));
     }
   }
 
@@ -413,7 +413,9 @@ export class GestureRecognizer extends VisionTaskRunner {
           visibility: handWorldLandmarkProto.getVisibility() ?? 0,
         });
       }
-      this.worldLandmarks.push(worldLandmarks);
+      this.worldLandmarks.push(
+        this.mirrorWorldLandmarksIfNeeded(worldLandmarks),
+      );
     }
   }
 

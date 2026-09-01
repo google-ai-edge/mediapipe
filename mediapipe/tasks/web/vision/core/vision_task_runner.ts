@@ -15,6 +15,10 @@
  */
 
 import {NormalizedRect} from '../../../../framework/formats/rect_pb';
+import {
+  Landmark,
+  NormalizedLandmark,
+} from '../../../../tasks/web/components/containers/landmark';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {MPImage} from '../../../../tasks/web/vision/core/image';
@@ -63,6 +67,7 @@ function createCanvas(): HTMLCanvasElement | OffscreenCanvas | undefined {
 export abstract class VisionTaskRunner extends TaskRunner {
   private readonly shaderContext = new MPImageShaderContext();
   private isStreamMode = false;
+  private selfieModeEnabled = false;
 
   protected static async createVisionInstance<T extends VisionTaskRunner>(
     type: WasmMediaPipeConstructor<T>,
@@ -113,6 +118,10 @@ export abstract class VisionTaskRunner extends TaskRunner {
       this.baseOptions.setUseStreamMode(this.isStreamMode);
     }
 
+    if ('selfieMode' in options) {
+      this.selfieModeEnabled = !!options.selfieMode;
+    }
+
     if (options.canvas !== undefined) {
       if (this.graphRunner.wasmModule.canvas !== options.canvas) {
         throw new Error('You must create a new task to reset the canvas.');
@@ -149,6 +158,30 @@ export abstract class VisionTaskRunner extends TaskRunner {
       );
     }
     this.process(imageFrame, imageProcessingOptions, timestamp);
+  }
+
+  /**
+   * Mirrors normalized landmarks horizontally when `selfieMode` is enabled so
+   * overlays match a front-facing camera canvas (`x' = 1 - x`).
+   */
+  protected mirrorNormalizedLandmarksIfNeeded(
+    landmarks: NormalizedLandmark[],
+  ): NormalizedLandmark[] {
+    if (!this.selfieModeEnabled) {
+      return landmarks;
+    }
+    return landmarks.map((landmark) => ({...landmark, x: 1 - landmark.x}));
+  }
+
+  /**
+   * Mirrors world landmarks horizontally when `selfieMode` is enabled
+   * (`x' = -x`).
+   */
+  protected mirrorWorldLandmarksIfNeeded(landmarks: Landmark[]): Landmark[] {
+    if (!this.selfieModeEnabled) {
+      return landmarks;
+    }
+    return landmarks.map((landmark) => ({...landmark, x: -landmark.x}));
   }
 
   private convertToNormalizedRect(

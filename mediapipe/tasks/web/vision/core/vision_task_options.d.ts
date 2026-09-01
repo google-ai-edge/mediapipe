@@ -40,4 +40,15 @@ export declare interface VisionTaskOptions extends TaskRunnerOptions {
    * 2) The video mode for processing decoded frames of a video.
    */
   runningMode?: RunningMode;
+
+  /**
+   * Whether to treat input frames as a front-facing / selfie camera.
+   *
+   * When true, normalized landmark `x` values are mirrored (`x' = 1 - x`) and
+   * world landmark `x` values are negated so overlays line up with a
+   * horizontally flipped canvas, matching the `selfieMode` option from the
+   * legacy `@mediapipe/pose` / `@mediapipe/hands` solutions. Defaults to
+   * `false`.
+   */
+  selfieMode?: boolean;
 }
