@@ -27,6 +27,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/processors/embedder_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/base_task_api.h"
+#include "mediapipe/tasks/cc/core/embedding_provider.h"
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder_executor.h"
 
 namespace mediapipe::tasks::text::text_embedder {
@@ -144,6 +145,10 @@ class TextEmbedder : core::BaseTaskApi {
     }
     return absl::OkStatus();
   }
+
+  // Returns an implementation of the package-neutral EmbeddingProvider
+  // interface.
+  std::unique_ptr<::mediapipe::tasks::core::EmbeddingProvider> GetProvider();
 
   // Utility function to compute cosine similarity [1] between two embeddings.
   // May return an InvalidArgumentError if e.g. the embeddings are of different
