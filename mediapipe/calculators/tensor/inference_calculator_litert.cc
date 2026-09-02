@@ -62,9 +62,6 @@ class InferenceCalculatorLiteRtImpl
   std::unique_ptr<InferenceRunner> inference_runner_;
   // Enable pooling of AHWBs in Tensor instances.
   MemoryManager* memory_manager_ = nullptr;
-#if MEDIAPIPE_METAL_ENABLED
-  MPPMetalHelper* metal_helper_ = nil;
-#endif  // MEDIAPIPE_METAL_ENABLED
 };
 
 bool UseGpu(const mediapipe::InferenceCalculatorOptions& options) {
@@ -138,9 +135,10 @@ InferenceCalculatorLiteRtImpl::CreateInferenceRunner(CalculatorContext* cc) {
   }
 #if MEDIAPIPE_METAL_ENABLED
   void* metal_helper = nullptr;
+  MPPMetalHelper* helper = nil;
   if (UseGpu(options)) {
-    metal_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
-    metal_helper = (__bridge void*)metal_helper_;
+    helper = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
+    metal_helper = (__bridge void*)helper;
   }
 #endif  // MEDIAPIPE_METAL_ENABLED
 

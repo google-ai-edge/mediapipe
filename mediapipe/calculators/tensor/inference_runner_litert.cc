@@ -639,7 +639,9 @@ InferenceRunnerLiteRt::InferenceRunnerLiteRt(
       managed_input_buffers_(subgraph_->Inputs().size()),
       managed_output_buffers_(subgraph_->Outputs().size()) {
 #if MEDIAPIPE_METAL_ENABLED
-  metal_helper_ = metal_helper;
+  if (metal_helper) {
+    metal_helper_ = (void*)CFRetain(metal_helper);
+  }
 #endif  // MEDIAPIPE_METAL_ENABLED
 }
 
@@ -667,6 +669,12 @@ InferenceRunnerLiteRt::~InferenceRunnerLiteRt() {
     });
   }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+#if MEDIAPIPE_METAL_ENABLED
+  if (metal_helper_) {
+    CFRelease(metal_helper_);
+    metal_helper_ = nullptr;
+  }
+#endif  // MEDIAPIPE_METAL_ENABLED
 }
 
 absl::Status InferenceRunnerLiteRt::Close() {
