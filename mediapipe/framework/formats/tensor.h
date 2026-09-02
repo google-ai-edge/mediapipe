@@ -389,6 +389,11 @@ class Tensor {
         }
       } else {
         if (gl_write_read_sync_ != nullptr && gl_context_ != nullptr) {
+          // Ensure that all GPU memory modifications made by compute shaders or
+          // rendering commands to this buffer are visible across all GL
+          // pipeline resources and contexts before generating the
+          // synchronization token.
+          gl_context_->Run([] { glMemoryBarrier(GL_ALL_BARRIER_BITS); });
           *gl_write_read_sync_ = gl_context_->CreateSyncToken();
         }
       }

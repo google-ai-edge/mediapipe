@@ -282,13 +282,6 @@ TEST_F(TensorAhwbGpuTest, TestGetOpenGlBufferReadViewAhwbFromGpu) {
   });
 
   RunInGlContext([&] {
-    // TODO: This test is currently broken. It can be fixed by
-    // requesting AHWB read view here, but that doesn't seem right.
-    // {
-    //   // Request AHWB read view from GPU buffer and make sure view is
-    //   destroyed. auto view = tensor.GetAHardwareBufferReadView();
-    //   ASSERT_NE(view.handle(), nullptr);
-    // }
     // Triggers conversion to GL buffer.
     auto ssbo_view = tensor.GetOpenGlBufferReadView();
     ASSERT_NE(ssbo_view.name(), 0);
