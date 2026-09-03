@@ -1,0 +1,62 @@
+diff --git a/BUILD b/BUILD
+--- a/BUILD
++++ b/BUILD
+@@ -9,6 +9,11 @@
+ config_setting(
+     name = "x64_windows",
+     values = {"cpu": "x64_windows"},
+ )
+ 
++config_setting(
++    name = "arm64_windows",
++    values = {"cpu": "arm64_windows"},
++)
++
+ load(":bazel/gflags.bzl", "gflags_sources", "gflags_library")
+ 
+ (hdrs, srcs) = gflags_sources(namespace=["gflags", "google"])
+diff --git a/bazel/gflags.bzl b/bazel/gflags.bzl
+--- a/bazel/gflags.bzl
++++ b/bazel/gflags.bzl
+@@ -51,8 +51,12 @@
+     ] + select({
+         "//:x64_windows": [
+             "src/windows_port.cc",
+             "src/windows_port.h",
+         ],
++        "//:arm64_windows": [
++            "src/windows_port.cc",
++            "src/windows_port.h",
++        ],
+         "//conditions:default": [],
+     })
+     return [hdrs, srcs]
+@@ -76,7 +80,10 @@
+     ] + select({
+         "//:x64_windows": [
+             "-DOS_WINDOWS",
+         ],
++        "//:arm64_windows": [
++            "-DOS_WINDOWS",
++        ],
+         "//conditions:default": [
+             "-DHAVE_UNISTD_H",
+             "-DHAVE_FNMATCH_H",
+@@ -88,4 +95,5 @@
+         linkopts += select({
+             "//:x64_windows": [],
++            "//:arm64_windows": [],
+             "//conditions:default": ["-lpthread"],
+         })
+diff --git a/src/util.h b/src/util.h
+--- a/src/util.h
++++ b/src/util.h
+@@ -245,7 +245,8 @@
+   mkdir(path->c_str());
+ }
+ #elif defined(_MSC_VER)
+ #include <direct.h>
++#include <windows.h>
+ inline void MakeTmpdir(std::string* path) {
+   if (!path->empty()) {
+ 	int err = _mkdir(path->c_str());

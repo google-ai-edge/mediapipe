@@ -146,6 +146,7 @@ cc_library(
         "@com_google_absl//absl/strings",
     ] + select({
         "//mediapipe:windows": [],
+        "//mediapipe:windows_arm64": [],
         "//conditions:default": ["//mediapipe/framework/formats:unique_fd"],
     }),
 )
@@ -409,6 +410,7 @@ cc_library(
     name = "threadpool",
     srcs = select({
         "//mediapipe:windows": ["threadpool_std_thread_impl.cc"],
+        "//mediapipe:windows_arm64": ["threadpool_std_thread_impl.cc"],
         "//conditions:default": ["threadpool_pthread_impl.cc"],
     }),
     hdrs = ["threadpool.h"],
