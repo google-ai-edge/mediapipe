@@ -397,6 +397,7 @@ int GetMaxClassesPerDetection(const tflite::Model& model) {
       model.operator_codes()->begin(), model.operator_codes()->end(),
       [](const auto& op_code) {
         return op_code->builtin_code() == tflite::BuiltinOperator_CUSTOM &&
+               op_code->custom_code() != nullptr &&
                op_code->custom_code()->str() == kDetectionPostProcessOpName;
       });
   if (op_code_it == model.operator_codes()->end()) {
@@ -410,12 +411,20 @@ int GetMaxClassesPerDetection(const tflite::Model& model) {
                    [detection_opcode_index](const auto& op) {
                      return op->opcode_index() == detection_opcode_index;
                    });
-  if (detection_op_it != operators.end()) {
-    auto op_config =
-        flexbuffers::GetRoot(detection_op_it->custom_options()->Data(),
-                             detection_op_it->custom_options()->size())
-            .AsMap();
-    return op_config["max_classes_per_detection"].AsInt32();
+  if (detection_op_it != operators.end() &&
+      detection_op_it->custom_options() != nullptr) {
+    const uint8_t* custom_options_data =
+        detection_op_it->custom_options()->Data();
+    const size_t custom_options_size =
+        detection_op_it->custom_options()->size();
+    // Verify the (untrusted) flexbuffer before parsing it; GetRoot() reads the
+    // trailing bytes with no bounds check and would otherwise underflow on a
+    // truncated/empty custom_options blob.
+    if (flexbuffers::VerifyBuffer(custom_options_data, custom_options_size)) {
+      auto op_config =
+          flexbuffers::GetRoot(custom_options_data, custom_options_size).AsMap();
+      return op_config["max_classes_per_detection"].AsInt32();
+    }
   }
   return max_classes_per_detection;
 }
@@ -590,6 +599,16 @@ absl::Status ConfigureOutModelNmsTensorsToDetectionsCalculator(
          *metadata_extractor->GetCustomMetadataList()) {
       if (custom_metadata->name()->str() == kDetectorMetadataName) {
         found_detector_metadata = true;
+        // The DETECTOR_METADATA blob is an untrusted, separately-encoded
+        // flatbuffer embedded in the model metadata; verify it before parsing.
+        flatbuffers::Verifier options_verifier(
+            custom_metadata->data()->data(), custom_metadata->data()->size());
+        if (!VerifyObjectDetectorOptionsBuffer(options_verifier)) {
+          return CreateStatusWithPayload(
+              absl::StatusCode::kInvalidArgument,
+              "Invalid ObjectDetectorOptions in DETECTOR_METADATA.",
+              MediaPipeTasksStatus::kMetadataInvalidSchemaVersionError);
+        }
         const auto* tensors_decoding_options =
             GetObjectDetectorOptions(custom_metadata->data()->data())
                 ->tensors_decoding_options();
@@ -656,6 +675,16 @@ absl::Status ConfigureSsdAnchorsCalculator(
          *metadata_extractor->GetCustomMetadataList()) {
       if (custom_metadata->name()->str() == kDetectorMetadataName) {
         found_detector_metadata = true;
+        // The DETECTOR_METADATA blob is an untrusted, separately-encoded
+        // flatbuffer embedded in the model metadata; verify it before parsing.
+        flatbuffers::Verifier options_verifier(
+            custom_metadata->data()->data(), custom_metadata->data()->size());
+        if (!VerifyObjectDetectorOptionsBuffer(options_verifier)) {
+          return CreateStatusWithPayload(
+              absl::StatusCode::kInvalidArgument,
+              "Invalid ObjectDetectorOptions in DETECTOR_METADATA.",
+              MediaPipeTasksStatus::kMetadataInvalidSchemaVersionError);
+        }
         const auto* ssd_anchors_options =
             GetObjectDetectorOptions(custom_metadata->data()->data())
                 ->ssd_anchors_options();
