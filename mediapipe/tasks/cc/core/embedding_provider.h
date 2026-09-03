@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <optional>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -30,12 +31,49 @@ struct TextPart {
   std::string text;
 };
 
+// Represents an image part of a multi-modal content block.
 struct ImagePart {
+  // Path or URI to the image file. If image_bytes is empty, the file is loaded
+  // from this path on-demand during database insertion.
+  std::string file_path;
+
+  // Raw encoded image bytes (e.g., JPEG, PNG file content). If empty, the image
+  // is loaded from the file_path instead.
   std::string image_bytes;
+
+  ImagePart() = default;
+
+  // Constructor for raw in-memory image bytes.
+  explicit ImagePart(std::string bytes)
+      : file_path(""), image_bytes(std::move(bytes)) {}
+
+  // Constructor for specifying both a file path and optional in-memory image
+  // bytes.
+  ImagePart(std::string path, std::string bytes)
+      : file_path(std::move(path)), image_bytes(std::move(bytes)) {}
 };
 
+// Represents an audio part of a multi-modal content block.
 struct AudioPart {
+  // Path or URI to the 16-bit PCM mono WAV audio file. If audio_data is empty,
+  // the file is loaded and decoded from this path on-demand during database
+  // insertion.
+  std::string file_path;
+
+  // Raw pre-decoded mono PCM float audio samples. If empty, the audio is loaded
+  // and decoded from the file_path instead.
   std::vector<float> audio_data;
+
+  AudioPart() = default;
+
+  // Constructor for raw pre-decoded mono PCM float audio samples.
+  explicit AudioPart(std::vector<float> data)
+      : file_path(""), audio_data(std::move(data)) {}
+
+  // Constructor for specifying both a file path and optional in-memory PCM
+  // audio samples.
+  AudioPart(std::string path, std::vector<float> data)
+      : file_path(std::move(path)), audio_data(std::move(data)) {}
 };
 
 using TaskPart = std::variant<TextPart, ImagePart, AudioPart>;
