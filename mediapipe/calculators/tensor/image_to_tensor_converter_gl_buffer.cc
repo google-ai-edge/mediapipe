@@ -269,6 +269,7 @@ class ImageToTensorGlBufferConverter : public ImageToTensorConverter {
                        int tensor_buffer_offset,
                        Tensor& output_tensor) override {
     if (input.format() != mediapipe::GpuBufferFormat::kBGRA32 &&
+        input.format() != mediapipe::GpuBufferFormat::kRGBA32 &&
         input.format() != mediapipe::GpuBufferFormat::kRGBAHalf64 &&
         input.format() != mediapipe::GpuBufferFormat::kRGBAFloat128 &&
         input.format() != mediapipe::GpuBufferFormat::kRGB24) {
