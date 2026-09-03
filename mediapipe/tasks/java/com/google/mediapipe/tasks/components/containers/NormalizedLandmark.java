@@ -90,8 +90,8 @@ public abstract class NormalizedLandmark {
     }
     NormalizedLandmark other = (NormalizedLandmark) o;
     return Math.abs(other.x() - this.x()) < TOLERANCE
-        && Math.abs(other.x() - this.y()) < TOLERANCE
-        && Math.abs(other.x() - this.z()) < TOLERANCE;
+        && Math.abs(other.y() - this.y()) < TOLERANCE
+        && Math.abs(other.z() - this.z()) < TOLERANCE;
   }
 
   @Override
