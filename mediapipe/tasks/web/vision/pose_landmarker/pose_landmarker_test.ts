@@ -390,4 +390,33 @@ describe('PoseLandmarker', () => {
     ]);
     result.close();
   });
+
+  it('returns presence and visibility scores when the proto sets them', () => {
+    const landmarksProto = [
+      createLandmarks(0.1, 0.2, 0.3, 0.7, 0.9).serializeBinary(),
+    ];
+    const worldLandmarksProto = [
+      createWorldLandmarks(1, 2, 3, 0.6, 0.8).serializeBinary(),
+    ];
+
+    poseLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      poseLandmarker.listeners.get('normalized_landmarks')!(
+        landmarksProto,
+        1337,
+      );
+      poseLandmarker.listeners.get('world_landmarks')!(
+        worldLandmarksProto,
+        1337,
+      );
+    });
+
+    const result = poseLandmarker.detect({} as HTMLImageElement);
+    expect(result.landmarks).toEqual([
+      [{'x': 0.1, 'y': 0.2, 'z': 0.3, 'visibility': 0.7, 'presence': 0.9}],
+    ]);
+    expect(result.worldLandmarks).toEqual([
+      [{'x': 1, 'y': 2, 'z': 3, 'visibility': 0.6, 'presence': 0.8}],
+    ]);
+    result.close();
+  });
 });
