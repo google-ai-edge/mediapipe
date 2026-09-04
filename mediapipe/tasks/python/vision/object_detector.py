@@ -181,6 +181,8 @@ class ObjectDetectorOptions:
       return.
     score_threshold: Overrides the ones provided in the model metadata. Results
       below this value are rejected.
+    multiclass_nms: Whether to use multiclass NMS. That is, each category processes
+      non-maximum-suppression separately.
     category_allowlist: Allowlist of category names. If non-empty, detection
       results whose category name is not in this set will be filtered out.
       Duplicate or unknown category names are ignored. Mutually exclusive with
@@ -199,6 +201,7 @@ class ObjectDetectorOptions:
   display_names_locale: Optional[str] = None
   max_results: Optional[int] = -1
   score_threshold: Optional[float] = 0.0
+  multiclass_nms: Optional[bool] = None
   category_allowlist: Optional[List[str]] = None
   category_denylist: Optional[List[str]] = None
   result_callback: Optional[
@@ -206,6 +209,23 @@ class ObjectDetectorOptions:
           [detections_module.DetectionResult, image_module.Image, int], None
       ]
   ] = None
+
+  @doc_controls.do_not_generate_docs
+  def to_pb2(self) -> _ObjectDetectorOptionsProto:
+    """Generates an ObjectDetectorOptions protobuf object."""
+    base_options_proto = self.base_options.to_pb2()
+    base_options_proto.use_stream_mode = (
+        False if self.running_mode == _RunningMode.IMAGE else True
+    )
+    return _ObjectDetectorOptionsProto(
+        base_options=base_options_proto,
+        display_names_locale=self.display_names_locale,
+        max_results=self.max_results,
+        score_threshold=self.score_threshold,
+        multiclass_nms=self.multiclass_nms,
+        category_allowlist=self.category_allowlist,
+        category_denylist=self.category_denylist,
+    )
 
 
 class ObjectDetector:
