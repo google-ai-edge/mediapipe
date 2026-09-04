@@ -77,7 +77,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:facelandmarker",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:imagesegmenter",
-        "//third_party:any_java_proto",  # copybara:strip
         "//third_party:autovalue",
         "@com_google_protobuf//:protobuf_javalite",
         "@maven//:androidx_annotation_annotation",
@@ -123,7 +122,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:core_java",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:facelandmarker",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:imagesegmenter_java",
-        "//third_party:any_java_proto",  # copybara:strip
         "//third_party:autovalue",
         "@com_google_protobuf//java/lite",
         "@maven//:androidx_annotation_annotation",

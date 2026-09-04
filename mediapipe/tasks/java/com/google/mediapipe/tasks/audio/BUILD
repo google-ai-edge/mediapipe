@@ -60,7 +60,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:audiodata",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
-        "//third_party:any_java_proto",  # copybara:strip
         "//third_party:autovalue",
         "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",

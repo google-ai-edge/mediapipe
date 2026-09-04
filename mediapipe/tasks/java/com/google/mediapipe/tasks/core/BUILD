@@ -104,7 +104,6 @@ android_library(
         "//mediapipe/tasks/cc/core/proto:acceleration_java_proto_lite",
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/core/proto:external_file_java_proto_lite",
-        "//third_party:any_java_proto",  # copybara:strip
         "//third_party:autovalue",
         "@com_google_protobuf//:protobuf_javalite",
         "@maven//:androidx_annotation_annotation",
