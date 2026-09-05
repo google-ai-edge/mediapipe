@@ -13,6 +13,7 @@ VERS_1.0 {
     MpLanguageDetector*;
     MpObjectDetector*;
     MpPoseLandmarker*;
+    MpSemanticRetriever*;
     MpStringList*;
     MpTextClassifier*;
     MpTextEmbedder*;

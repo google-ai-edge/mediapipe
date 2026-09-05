@@ -36,15 +36,11 @@ limitations under the License.
 #include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options_converter.h"
+#include "mediapipe/tasks/c/vision/image_embedder/image_embedder_internal.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/image_embedder/image_embedder.h"
-
-struct MpImageEmbedderInternal {
-  std::unique_ptr<::mediapipe::tasks::vision::image_embedder::ImageEmbedder>
-      instance;
-};
 
 namespace mediapipe::tasks::c::vision::image_embedder {
 
