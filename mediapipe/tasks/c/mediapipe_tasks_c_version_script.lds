@@ -16,6 +16,7 @@ VERS_1.0 {
     MpStringList*;
     MpTextClassifier*;
     MpTextEmbedder*;
+    MpUniversalEmbedder*;
   local:
     *;
 };
