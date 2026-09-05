@@ -37,6 +37,30 @@ cc_library(
 )
 
 mediapipe_proto_library(
+    name = "hand_roi_from_pose_net_calculator_proto",
+    srcs = ["hand_roi_from_pose_net_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "hand_roi_from_pose_net_calculator",
+    srcs = ["hand_roi_from_pose_net_calculator.cc"],
+    hdrs = ["hand_roi_net_weights.h"],
+    deps = [
+        ":hand_roi_from_pose_net_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+mediapipe_proto_library(
     name = "roi_tracking_calculator_proto",
     srcs = ["roi_tracking_calculator.proto"],
     deps = [
