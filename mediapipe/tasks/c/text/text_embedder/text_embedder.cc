@@ -29,13 +29,9 @@ limitations under the License.
 #include "mediapipe/tasks/c/core/base_options_converter.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/core/mp_status_converter.h"
+#include "mediapipe/tasks/c/text/text_embedder/text_embedder_internal.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder.h"
-
-struct MpTextEmbedderInternal {
-  std::unique_ptr<::mediapipe::tasks::text::text_embedder::TextEmbedder>
-      instance;
-};
 
 namespace mediapipe::tasks::c::text::text_embedder {
 

@@ -45,7 +45,6 @@ import com.google.mediapipe.tasks.vision.holisticlandmarker.proto.HolisticLandma
 import com.google.mediapipe.tasks.vision.posedetector.proto.PoseDetectorGraphOptionsProto.PoseDetectorGraphOptions;
 import com.google.mediapipe.tasks.vision.poselandmarker.proto.PoseLandmarksDetectorGraphOptionsProto.PoseLandmarksDetectorGraphOptions;
 import com.google.protobuf.Any;
-import com.google.protobuf.MessageLite;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -616,13 +615,12 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
           .setPoseDetectorGraphOptions(poseDetectorGraphOptions.build())
           .setPoseLandmarksDetectorGraphOptions(poseLandmarkerGraphOptions.build());
 
-      Any.Builder anyBuilder =
-          Any.newBuilder()
+      
+          return Any.newBuilder()
               .setTypeUrl(
                   "type.googleapis.com/mediapipe.tasks.vision.holistic_landmarker.proto.HolisticLandmarkerGraphOptions")
-              .setValue(holisticLandmarkerGraphOptions.build().toByteString());
-      // Cast to MessageLite.Builder to avoid the NoSuchMethodError
-      return (Any) ((MessageLite.Builder) anyBuilder).build();
+              .setValue(holisticLandmarkerGraphOptions.build().toByteString())
+              .build();
     }
   }
 

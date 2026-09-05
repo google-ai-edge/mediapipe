@@ -17,9 +17,23 @@ package com.google.mediapipe.tasks.text.textembedder;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
+import android.content.Context;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import com.google.common.io.ByteStreams;
 import com.google.mediapipe.framework.MediaPipeException;
+import com.google.mediapipe.tasks.core.BaseOptions;
+import com.google.mediapipe.tasks.core.EmbeddingProvider;
+import com.google.mediapipe.tasks.text.textembedder.TextEmbedder.TextEmbedderOptions;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -34,6 +48,25 @@ public class TextEmbedderTest {
 
   private static final double DOUBLE_DIFF_TOLERANCE = 0.05;
   private static final float FLOAT_DIFF_TOLERANCE = 0.05f;
+
+  private static File getModelFile(Context context, String filename) throws IOException {
+    File sourceFile = new File("/tmp/" + filename);
+    if (!sourceFile.exists()) {
+      sourceFile = new File("/data/local/tmp/" + filename);
+    }
+    if (!sourceFile.exists()) {
+      return null;
+    }
+
+    File cacheFile = new File(context.getCacheDir(), filename);
+    if (!cacheFile.exists() || cacheFile.length() != sourceFile.length()) {
+      try (InputStream is = new FileInputStream(sourceFile);
+          OutputStream os = new FileOutputStream(cacheFile)) {
+        ByteStreams.copy(is, os);
+      }
+    }
+    return cacheFile;
+  }
 
   @Test
   public void create_failsWithMissingModel() throws Exception {

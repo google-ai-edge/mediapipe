@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/port.h"  // IWYU pragma: keep (MEDIAPIPE_GPU_BUFFER_USE_AHWB)
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -25,6 +27,7 @@
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
+#include "mediapipe/gpu/gpu_buffer_storage_ahwb.h"  // IWYU pragma: keep (GpuBufferStorageAhwb)
 #include "mediapipe/gpu/shader_util.h"
 
 #ifdef __ANDROID__
@@ -116,6 +119,9 @@ class GlScalerCalculator : public CalculatorBase {
   FrameScaleMode scale_mode_ = FrameScaleMode::kStretch;
   bool use_nearest_neighbor_interpolation_ = false;
   bool use_input_format_for_output_ = false;
+  GlScalerCalculatorOptions::OutputTarget output_target_ =
+      GlScalerCalculatorOptions::UNSPECIFIED;
+  bool use_ahwb_ = false;
 };
 REGISTER_CALCULATOR(GlScalerCalculator);
 
@@ -201,6 +207,35 @@ absl::Status GlScalerCalculator::Open(CalculatorContext* cc) {
   use_nearest_neighbor_interpolation_ =
       options.use_nearest_neighbor_interpolation();
   use_input_format_for_output_ = options.use_input_format_for_output();
+  output_target_ = options.output_target();
+  if (output_target_ == GlScalerCalculatorOptions::UNSPECIFIED) {
+    output_target_ = GlScalerCalculatorOptions::TEXTURE;
+  }
+  if (output_target_ == GlScalerCalculatorOptions::AHWB_TEXTURE_VIEW) {
+    ABSL_RETURN_IF_ERROR(helper_.RunInGlContext([this]() -> absl::Status {
+#if defined(MEDIAPIPE_GPU_BUFFER_USE_AHWB)
+      if (!mediapipe::AhwbSupportsGlViews()) {
+        return absl::UnavailableError(
+            "AHWB_TEXTURE_VIEW requested, but AHWB GL views are not supported "
+            "on this platform.");
+      }
+      use_ahwb_ = true;
+      return absl::OkStatus();
+#else
+      return absl::UnavailableError(
+          "AHWB_TEXTURE_VIEW requested, but MEDIAPIPE_GPU_BUFFER_USE_AHWB is "
+          "not defined.");
+#endif
+    }));
+  } else if (output_target_ ==
+             GlScalerCalculatorOptions::AHWB_TEXTURE_VIEW_IF_AVAILABLE) {
+#if defined(MEDIAPIPE_GPU_BUFFER_USE_AHWB)
+    ABSL_RETURN_IF_ERROR(helper_.RunInGlContext([this]() -> absl::Status {
+      use_ahwb_ = mediapipe::AhwbSupportsGlViews();
+      return absl::OkStatus();
+    }));
+#endif
+  }
   if (HasTagOrIndex(cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)) {
     const auto& dimensions =
         TagOrIndex(cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)
@@ -309,8 +344,22 @@ absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
               MakePacket<float>(left_right_padding).At(cc->InputTimestamp()));
     }
 
-    auto dst = helper_.CreateDestinationTexture(
-        dst_width, dst_height, GetOutputFormat(input.format()));
+    const GpuBufferFormat output_format = GetOutputFormat(input.format());
+    GlTexture dst;
+
+    if (use_ahwb_) {
+#if defined(MEDIAPIPE_GPU_BUFFER_USE_AHWB)
+      // Zero-copy AHWB output (b/531915132): render straight into an
+      // AHardwareBuffer-backed GpuBuffer so downstream consumers (e.g. the
+      // effects pipeline's AHWB observer) receive it without an extra copy.
+      GpuBuffer ahwb_buffer(std::make_shared<mediapipe::GpuBufferStorageAhwb>(
+          dst_width, dst_height, output_format));
+      dst = helper_.CreateDestinationTexture(ahwb_buffer);
+#endif
+    } else {
+      dst = helper_.CreateDestinationTexture(dst_width, dst_height,
+                                             output_format);
+    }
 
     helper_.BindFramebuffer(dst);
 

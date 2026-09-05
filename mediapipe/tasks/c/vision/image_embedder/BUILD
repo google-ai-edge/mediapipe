@@ -46,7 +46,10 @@ IMAGE_EMBEDDER_DEPS = [
 cc_library(
     name = "image_embedder_lib",
     srcs = ["image_embedder.cc"],
-    hdrs = ["image_embedder.h"],
+    hdrs = [
+        "image_embedder.h",
+        "image_embedder_internal.h",
+    ],
     visibility = ["//visibility:public"],
     deps = IMAGE_EMBEDDER_DEPS,
 )
@@ -54,7 +57,10 @@ cc_library(
 cc_library(
     name = "image_embedder_c_lib",
     srcs = ["image_embedder.cc"],
-    hdrs = ["image_embedder.h"],
+    hdrs = [
+        "image_embedder.h",
+        "image_embedder_internal.h",
+    ],
     visibility = ["//mediapipe/tasks/c:__subpackages__"],
     deps = IMAGE_EMBEDDER_DEPS,
     alwayslink = 1,

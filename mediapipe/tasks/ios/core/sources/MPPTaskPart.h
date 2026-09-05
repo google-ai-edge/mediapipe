@@ -14,10 +14,9 @@
 
 #import <Foundation/Foundation.h>
 
-#import "mediapipe/tasks/ios/audio/core/sources/MPPFloatBuffer.h"
-
 NS_ASSUME_NONNULL_BEGIN
 
+@class MPPEmbeddingResult;
 @class MPPTaskPart;
 
 /**
@@ -27,10 +26,9 @@ NS_SWIFT_NAME(EmbeddingProvider)
 @protocol MPPEmbeddingProvider <NSObject>
 
 /**
- * Generates a high-dimensional vector embedding for the given list of task parts.
+ * Generates a high-dimensional vector embedding for the given list of task parts or objects.
  */
-- (nullable NSArray<NSNumber *> *)embedContent:(NSArray<MPPTaskPart *> *)content
-                                         error:(NSError **)error;
+- (nullable MPPEmbeddingResult *)embedContent:(NSArray<id> *)content error:(NSError **)error;
 
 @end
 
@@ -63,9 +61,33 @@ NS_SWIFT_NAME(TextPart)
 NS_SWIFT_NAME(ImagePart)
 @interface MPPImagePart : MPPTaskPart
 
-@property(nonatomic, readonly, copy) NSData *imageBytes;
+/**
+ * The filesystem path to the image file, if initialized from a file.
+ * Nil if initialized from in-memory data.
+ */
+@property(nonatomic, readonly, copy, nullable) NSString *filePath;
 
-- (instancetype)initWithImageBytes:(NSData *)imageBytes;
+/**
+ * The raw in-memory image buffer, if initialized from data.
+ * Nil if initialized from a file path or deserialized from persistent storage.
+ */
+@property(nonatomic, readonly, copy, nullable) NSData *data;
+
+/**
+ * Initializes a new `MPPImagePart` using a path to an image file on the filesystem.
+ *
+ * @param filePath The path to the image file.
+ * @return An instance of `MPPImagePart` configured with the file path.
+ */
+- (instancetype)initWithFilePath:(NSString *)filePath NS_DESIGNATED_INITIALIZER;
+
+/**
+ * Initializes a new `MPPImagePart` using in-memory image buffer data.
+ *
+ * @param data The raw image data bytes.
+ * @return An instance of `MPPImagePart` configured with in-memory data.
+ */
+- (instancetype)initWithData:(NSData *)data NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 + (instancetype)new NS_UNAVAILABLE;
@@ -78,9 +100,9 @@ NS_SWIFT_NAME(ImagePart)
 NS_SWIFT_NAME(AudioPart)
 @interface MPPAudioPart : MPPTaskPart
 
-@property(nonatomic, readonly) MPPFloatBuffer *audioData;
+@property(nonatomic, readonly, copy) NSString *filePath;
 
-- (instancetype)initWithAudioData:(MPPFloatBuffer *)audioData;
+- (instancetype)initWithFilePath:(NSString *)filePath;
 
 - (instancetype)init NS_UNAVAILABLE;
 + (instancetype)new NS_UNAVAILABLE;

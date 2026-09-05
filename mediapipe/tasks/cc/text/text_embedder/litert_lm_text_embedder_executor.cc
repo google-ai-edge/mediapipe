@@ -17,7 +17,13 @@ limitations under the License.
 
 #include <algorithm>
 #include <cmath>
+
+#ifdef _WIN32
+#include <io.h>
+#include <windows.h>
+#endif
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -49,6 +55,7 @@ namespace {
 using ::litert::lm::EmbeddingEngineImpl;
 using ::litert::lm::EmbeddingEngineSettings;
 using ::litert::lm::EmbeddingOptions;
+using ::litert::lm::InMemoryFile;
 using ::litert::lm::InputData;
 using ::litert::lm::InputText;
 using ::litert::lm::MemoryMappedFile;
@@ -124,19 +131,40 @@ absl::Status LiteRtLmTextEmbedderExecutor::Close() {
 absl::StatusOr<std::unique_ptr<LiteRtLmTextEmbedderExecutor>>
 LiteRtLmTextEmbedderExecutor::Create(const BaseOptions& base_options,
                                      const EmbedderOptions& embedder_options) {
-  if (base_options.model_asset_path.empty()) {
-    return absl::FailedPreconditionError("No model asset path specified.");
+  std::shared_ptr<MemoryMappedFile> shared_mmap;
+  if (!base_options.model_asset_path.empty()) {
+    ABSL_ASSIGN_OR_RETURN(auto mmap_file, MemoryMappedFile::Create(
+                                              base_options.model_asset_path));
+    shared_mmap = std::shared_ptr<MemoryMappedFile>(std::move(mmap_file));
+  } else if (base_options.model_asset_buffer != nullptr) {
+    ABSL_ASSIGN_OR_RETURN(
+        auto in_mem_file,
+        InMemoryFile::Create(*base_options.model_asset_buffer));
+    shared_mmap = std::shared_ptr<MemoryMappedFile>(std::move(in_mem_file));
+  } else if (base_options.model_asset_descriptor_meta.fd != -1) {
+    uint64_t offset = base_options.model_asset_descriptor_meta.offset >= 0
+                          ? base_options.model_asset_descriptor_meta.offset
+                          : 0u;
+    uint64_t length = base_options.model_asset_descriptor_meta.length >= 0
+                          ? base_options.model_asset_descriptor_meta.length
+                          : 0u;
+#ifdef _WIN32
+    HANDLE platform_file = reinterpret_cast<HANDLE>(
+        _get_osfhandle(base_options.model_asset_descriptor_meta.fd));
+#else
+    int platform_file = base_options.model_asset_descriptor_meta.fd;
+#endif
+    ABSL_ASSIGN_OR_RETURN(auto mmap_file, MemoryMappedFile::Create(
+                                              platform_file, offset, length));
+    shared_mmap = std::shared_ptr<MemoryMappedFile>(std::move(mmap_file));
+  } else {
+    return absl::FailedPreconditionError("No model asset specified.");
   }
 
   ::litert::lm::Backend backend = ::litert::lm::Backend::CPU;
   if (base_options.delegate == BaseOptions::GPU) {
     backend = ::litert::lm::Backend::GPU;
   }
-
-  // Load directly as a raw `.litertlm` model file.
-  ABSL_ASSIGN_OR_RETURN(
-      auto mmap_file, MemoryMappedFile::Create(base_options.model_asset_path));
-  auto shared_mmap = std::shared_ptr<MemoryMappedFile>(std::move(mmap_file));
 
   ABSL_ASSIGN_OR_RETURN(
       auto model_assets,

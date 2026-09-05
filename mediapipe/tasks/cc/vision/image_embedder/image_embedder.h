@@ -25,6 +25,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/components/processors/embedder_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
+#include "mediapipe/tasks/cc/core/embedding_provider.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
@@ -99,6 +100,10 @@ class ImageEmbedder : core::BaseVisionTaskApi {
 
   // Shuts down the ImageEmbedder when all works are done.
   absl::Status Close();
+
+  // Returns an implementation of the package-neutral EmbeddingProvider
+  // interface.
+  std::unique_ptr<::mediapipe::tasks::core::EmbeddingProvider> GetProvider();
 
   // Utility function to compute cosine similarity [1] between two embeddings.
   static absl::StatusOr<double> CosineSimilarity(

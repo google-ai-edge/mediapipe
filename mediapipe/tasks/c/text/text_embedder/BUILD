@@ -40,7 +40,10 @@ TEXT_EMBEDDER_DEPS = [
 cc_library(
     name = "text_embedder_lib",
     srcs = ["text_embedder.cc"],
-    hdrs = ["text_embedder.h"],
+    hdrs = [
+        "text_embedder.h",
+        "text_embedder_internal.h",
+    ],
     visibility = ["//visibility:public"],
     deps = TEXT_EMBEDDER_DEPS,
 )
@@ -48,7 +51,10 @@ cc_library(
 cc_library(
     name = "text_embedder_c_lib",
     srcs = ["text_embedder.cc"],
-    hdrs = ["text_embedder.h"],
+    hdrs = [
+        "text_embedder.h",
+        "text_embedder_internal.h",
+    ],
     visibility = ["//mediapipe/tasks/c:__subpackages__"],
     deps = TEXT_EMBEDDER_DEPS,
     alwayslink = 1,

@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <cstring>
 #include <string>
+#include <variant>
 
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/core/base_options.h"
@@ -69,6 +70,174 @@ TEST(BaseOptionsConverterTest, ConvertsBaseOptionsDelegate) {
   CppConvertToBaseOptions(c_base_options, &cpp_base_options);
   EXPECT_EQ(cpp_base_options.delegate,
             mediapipe::tasks::core::BaseOptions::GPU);
+  EXPECT_FALSE(cpp_base_options.disable_default_service);
+}
+
+TEST(BaseOptionsConverterTest, ConvertsLiteRtOptionsDefault) {
+  MpLiteRtOptions c_litert_options = {};
+
+  auto cpp_litert_options = CppConvertToLiteRtOptions(c_litert_options);
+  EXPECT_EQ(cpp_litert_options.hardware_accelerator,
+            mediapipe::tasks::core::BaseOptions::LiteRtOptions::
+                HardwareAccelerator::CPU);
+  EXPECT_TRUE(std::holds_alternative<
+              mediapipe::tasks::core::BaseOptions::LiteRtOptions::CpuOptions>(
+      cpp_litert_options.accelerator_options));
+}
+
+TEST(BaseOptionsConverterTest, ConvertsLiteRtOptionsCpu) {
+  MpLiteRtOptions c_litert_options = {.hardware_accelerator =
+                                          MP_LITERT_HARDWARE_ACCELERATOR_CPU};
+
+  auto cpp_litert_options = CppConvertToLiteRtOptions(c_litert_options);
+  EXPECT_EQ(cpp_litert_options.hardware_accelerator,
+            mediapipe::tasks::core::BaseOptions::LiteRtOptions::
+                HardwareAccelerator::CPU);
+  EXPECT_TRUE(std::holds_alternative<
+              mediapipe::tasks::core::BaseOptions::LiteRtOptions::CpuOptions>(
+      cpp_litert_options.accelerator_options));
+}
+
+TEST(BaseOptionsConverterTest, ConvertsLiteRtOptionsGpu) {
+  MpLiteRtOptions c_litert_options = {.hardware_accelerator =
+                                          MP_LITERT_HARDWARE_ACCELERATOR_GPU};
+
+  auto cpp_litert_options = CppConvertToLiteRtOptions(c_litert_options);
+  EXPECT_EQ(cpp_litert_options.hardware_accelerator,
+            mediapipe::tasks::core::BaseOptions::LiteRtOptions::
+                HardwareAccelerator::GPU);
+  EXPECT_TRUE(std::holds_alternative<
+              mediapipe::tasks::core::BaseOptions::LiteRtOptions::GpuOptions>(
+      cpp_litert_options.accelerator_options));
+}
+
+TEST(BaseOptionsConverterTest, ConvertsLiteRtOptionsNpu) {
+  MpLiteRtOptions c_litert_options = {
+      .hardware_accelerator = MP_LITERT_HARDWARE_ACCELERATOR_NPU,
+      .accelerator_options = {
+          .npu_options = {.dispatch_library_directory = "/tmp/dispatch"}}};
+
+  auto cpp_litert_options = CppConvertToLiteRtOptions(c_litert_options);
+  EXPECT_EQ(cpp_litert_options.hardware_accelerator,
+            mediapipe::tasks::core::BaseOptions::LiteRtOptions::
+                HardwareAccelerator::NPU);
+  ASSERT_TRUE(std::holds_alternative<
+              mediapipe::tasks::core::BaseOptions::LiteRtOptions::NpuOptions>(
+      cpp_litert_options.accelerator_options));
+  const auto& npu_opts =
+      std::get<mediapipe::tasks::core::BaseOptions::LiteRtOptions::NpuOptions>(
+          cpp_litert_options.accelerator_options);
+  EXPECT_EQ(npu_opts.dispatch_library_directory, "/tmp/dispatch");
+}
+
+TEST(BaseOptionsConverterTest, ConvertsLiteRtCpuOptionsDirectly) {
+  MpLiteRtCpuOptions c_opts = {};
+  auto cpp_opts = CppConvertToLiteRtCpuOptions(c_opts);
+  (void)cpp_opts;
+}
+
+TEST(BaseOptionsConverterTest, ConvertsLiteRtGpuOptionsDirectly) {
+  MpLiteRtGpuOptions c_opts = {};
+  auto cpp_opts = CppConvertToLiteRtGpuOptions(c_opts);
+  (void)cpp_opts;
+}
+
+TEST(BaseOptionsConverterTest, ConvertsLiteRtNpuOptionsDirectly) {
+  MpLiteRtNpuOptions c_opts = {.dispatch_library_directory = "/tmp/dispatch"};
+  auto cpp_opts = CppConvertToLiteRtNpuOptions(c_opts);
+  EXPECT_EQ(cpp_opts.dispatch_library_directory, "/tmp/dispatch");
+}
+
+TEST(BaseOptionsConverterTest, ConvertsBaseOptionsLiteRtCpuDelegate) {
+  MpLiteRtOptions litert_options = {.hardware_accelerator =
+                                        MP_LITERT_HARDWARE_ACCELERATOR_CPU};
+  MpBaseOptions c_base_options = {
+      .model_asset_path = kModelAssetPath,
+      .file_descriptor = -1,
+      .delegate = MP_DELEGATE_LITERT,
+      .litert_options = &litert_options,
+  };
+
+  mediapipe::tasks::core::BaseOptions cpp_base_options = {};
+
+  CppConvertToBaseOptions(c_base_options, &cpp_base_options);
+  EXPECT_EQ(cpp_base_options.delegate,
+            mediapipe::tasks::core::BaseOptions::LITERT);
+  ASSERT_TRUE(cpp_base_options.delegate_options.has_value());
+  ASSERT_TRUE(std::holds_alternative<
+              mediapipe::tasks::core::BaseOptions::LiteRtOptions>(
+      *cpp_base_options.delegate_options));
+  const auto& litert_opts =
+      std::get<mediapipe::tasks::core::BaseOptions::LiteRtOptions>(
+          *cpp_base_options.delegate_options);
+  EXPECT_EQ(litert_opts.hardware_accelerator,
+            mediapipe::tasks::core::BaseOptions::LiteRtOptions::
+                HardwareAccelerator::CPU);
+  EXPECT_TRUE(cpp_base_options.disable_default_service);
+}
+
+TEST(BaseOptionsConverterTest, ConvertsBaseOptionsLiteRtGpuDelegate) {
+  MpLiteRtOptions litert_options = {.hardware_accelerator =
+                                        MP_LITERT_HARDWARE_ACCELERATOR_GPU};
+  MpBaseOptions c_base_options = {
+      .model_asset_path = kModelAssetPath,
+      .file_descriptor = -1,
+      .delegate = MP_DELEGATE_LITERT,
+      .litert_options = &litert_options,
+  };
+
+  mediapipe::tasks::core::BaseOptions cpp_base_options = {};
+
+  CppConvertToBaseOptions(c_base_options, &cpp_base_options);
+  EXPECT_EQ(cpp_base_options.delegate,
+            mediapipe::tasks::core::BaseOptions::LITERT);
+  ASSERT_TRUE(cpp_base_options.delegate_options.has_value());
+  ASSERT_TRUE(std::holds_alternative<
+              mediapipe::tasks::core::BaseOptions::LiteRtOptions>(
+      *cpp_base_options.delegate_options));
+  const auto& litert_opts =
+      std::get<mediapipe::tasks::core::BaseOptions::LiteRtOptions>(
+          *cpp_base_options.delegate_options);
+  EXPECT_EQ(litert_opts.hardware_accelerator,
+            mediapipe::tasks::core::BaseOptions::LiteRtOptions::
+                HardwareAccelerator::GPU);
+  EXPECT_FALSE(cpp_base_options.disable_default_service);
+}
+
+TEST(BaseOptionsConverterTest, ConvertsBaseOptionsLiteRtNpuDelegate) {
+  MpLiteRtOptions litert_options = {
+      .hardware_accelerator = MP_LITERT_HARDWARE_ACCELERATOR_NPU,
+      .accelerator_options = {
+          .npu_options = {.dispatch_library_directory = "/tmp/dispatch"}}};
+  MpBaseOptions c_base_options = {
+      .model_asset_path = kModelAssetPath,
+      .file_descriptor = -1,
+      .delegate = MP_DELEGATE_LITERT,
+      .litert_options = &litert_options,
+  };
+
+  mediapipe::tasks::core::BaseOptions cpp_base_options = {};
+
+  CppConvertToBaseOptions(c_base_options, &cpp_base_options);
+  EXPECT_EQ(cpp_base_options.delegate,
+            mediapipe::tasks::core::BaseOptions::LITERT);
+  ASSERT_TRUE(cpp_base_options.delegate_options.has_value());
+  ASSERT_TRUE(std::holds_alternative<
+              mediapipe::tasks::core::BaseOptions::LiteRtOptions>(
+      *cpp_base_options.delegate_options));
+  const auto& litert_opts =
+      std::get<mediapipe::tasks::core::BaseOptions::LiteRtOptions>(
+          *cpp_base_options.delegate_options);
+  EXPECT_EQ(litert_opts.hardware_accelerator,
+            mediapipe::tasks::core::BaseOptions::LiteRtOptions::
+                HardwareAccelerator::NPU);
+  ASSERT_TRUE(std::holds_alternative<
+              mediapipe::tasks::core::BaseOptions::LiteRtOptions::NpuOptions>(
+      litert_opts.accelerator_options));
+  const auto& npu_opts =
+      std::get<mediapipe::tasks::core::BaseOptions::LiteRtOptions::NpuOptions>(
+          litert_opts.accelerator_options);
+  EXPECT_EQ(npu_opts.dispatch_library_directory, "/tmp/dispatch");
 }
 
 TEST(BaseOptionsConverterTest, ConvertsBaseOptionsAppId) {

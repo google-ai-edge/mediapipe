@@ -15,9 +15,12 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/vision/image_embedder/image_embedder.h"
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <utility>
+#include <variant>
+#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/status_macros.h"
@@ -25,6 +28,8 @@ limitations under the License.
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/api2/builder.h"
+#include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/tool/options_map.h"
 #include "mediapipe/tasks/cc/common.h"
@@ -34,6 +39,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/processors/proto/embedder_options.pb.h"
 #include "mediapipe/tasks/cc/components/utils/cosine_similarity.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
+#include "mediapipe/tasks/cc/core/embedding_provider.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
@@ -41,6 +47,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
 #include "mediapipe/tasks/cc/vision/image_embedder/graph_image_embedder_executor.h"
 #include "mediapipe/tasks/cc/vision/image_embedder/proto/image_embedder_graph_options.pb.h"
+#include "stb_image.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -128,6 +135,7 @@ absl::StatusOr<std::unique_ptr<ImageEmbedder>> ImageEmbedder::Create(
             Image image;
             result_callback(status_or_packets.status(), image,
                             Timestamp::Unset().Value());
+            return;
           }
           if (status_or_packets.value()[kImageOutStreamName].IsEmpty()) {
             return;
@@ -243,6 +251,69 @@ absl::Status ImageEmbedder::EmbedAsync(
 }
 
 absl::Status ImageEmbedder::Close() { return executor_->Close(); }
+
+std::unique_ptr<::mediapipe::tasks::core::EmbeddingProvider>
+ImageEmbedder::GetProvider() {
+  class ImageEmbedderProvider
+      : public ::mediapipe::tasks::core::EmbeddingProvider {
+   public:
+    explicit ImageEmbedderProvider(ImageEmbedder* embedder)
+        : embedder_(embedder) {}
+    absl::StatusOr<std::optional<std::vector<float>>> EmbedContent(
+        const std::vector<::mediapipe::tasks::core::TaskPart>& content)
+        override {
+      for (const auto& part : content) {
+        if (std::holds_alternative<::mediapipe::tasks::core::ImagePart>(part)) {
+          const auto& image_part =
+              std::get<::mediapipe::tasks::core::ImagePart>(part);
+          int width, height, channels;
+          auto* image_data = stbi_load_from_memory(
+              reinterpret_cast<const unsigned char*>(
+                  image_part.image_bytes.data()),
+              image_part.image_bytes.size(), &width, &height, &channels,
+              /*desired_channels=*/0);
+          if (image_data == nullptr) {
+            return absl::InternalError("Failed to decode image from memory.");
+          }
+          ImageFrameSharedPtr image_frame;
+          switch (channels) {
+            case 1:
+              image_frame = std::make_shared<ImageFrame>(
+                  ImageFormat::GRAY8, width, height, width, image_data,
+                  stbi_image_free);
+              break;
+            case 3:
+              image_frame = std::make_shared<ImageFrame>(
+                  ImageFormat::SRGB, width, height, 3 * width, image_data,
+                  stbi_image_free);
+              break;
+            case 4:
+              image_frame = std::make_shared<ImageFrame>(
+                  ImageFormat::SRGBA, width, height, 4 * width, image_data,
+                  stbi_image_free);
+              break;
+            default:
+              stbi_image_free(image_data);
+              return absl::InvalidArgumentError("Unsupported channel count.");
+          }
+          auto result_or = embedder_->Embed(Image(std::move(image_frame)));
+          if (!result_or.ok()) {
+            return result_or.status();
+          }
+          if (result_or->embeddings.empty()) {
+            return std::nullopt;
+          }
+          return result_or->embeddings[0].float_embedding;
+        }
+      }
+      return std::nullopt;
+    }
+
+   private:
+    ImageEmbedder* embedder_;
+  };
+  return std::make_unique<ImageEmbedderProvider>(this);
+}
 
 absl::StatusOr<double> ImageEmbedder::CosineSimilarity(
     const components::containers::Embedding& u,

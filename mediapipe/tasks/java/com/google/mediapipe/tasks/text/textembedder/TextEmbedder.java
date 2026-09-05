@@ -26,7 +26,7 @@ import com.google.mediapipe.tasks.components.containers.proto.EmbeddingsProto;
 import com.google.mediapipe.tasks.components.processors.proto.EmbedderOptionsProto;
 import com.google.mediapipe.tasks.components.utils.CosineSimilarity;
 import com.google.mediapipe.tasks.core.BaseOptions;
-import com.google.mediapipe.tasks.core.EmbeddingProvider;
+import com.google.mediapipe.tasks.core.BaseOptionsUtils;
 import com.google.mediapipe.tasks.core.TaskOptions;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import com.google.mediapipe.tasks.text.textembedder.proto.TextEmbedderGraphOptionsProto;

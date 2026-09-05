@@ -35,6 +35,8 @@ mediapipe::tasks::core::BaseOptions::Delegate CppConvertToDelegate(
       return mediapipe::tasks::core::BaseOptions::Delegate::GPU;
     case MP_DELEGATE_EDGETPU_NNAPI:
       return mediapipe::tasks::core::BaseOptions::Delegate::EDGETPU_NNAPI;
+    case MP_DELEGATE_LITERT:
+      return mediapipe::tasks::core::BaseOptions::Delegate::LITERT;
   }
 }
 
@@ -74,6 +76,54 @@ mediapipe::tasks::core::HostSystem CppConvertToHostSystem(
 
 }  // namespace
 
+mediapipe::tasks::core::BaseOptions::LiteRtOptions::CpuOptions
+CppConvertToLiteRtCpuOptions(const MpLiteRtCpuOptions& in) {
+  mediapipe::tasks::core::BaseOptions::LiteRtOptions::CpuOptions out;
+  return out;
+}
+
+mediapipe::tasks::core::BaseOptions::LiteRtOptions::GpuOptions
+CppConvertToLiteRtGpuOptions(const MpLiteRtGpuOptions& in) {
+  mediapipe::tasks::core::BaseOptions::LiteRtOptions::GpuOptions out;
+  return out;
+}
+
+mediapipe::tasks::core::BaseOptions::LiteRtOptions::NpuOptions
+CppConvertToLiteRtNpuOptions(const MpLiteRtNpuOptions& in) {
+  mediapipe::tasks::core::BaseOptions::LiteRtOptions::NpuOptions out;
+  if (in.dispatch_library_directory) {
+    out.dispatch_library_directory = in.dispatch_library_directory;
+  }
+  return out;
+}
+
+mediapipe::tasks::core::BaseOptions::LiteRtOptions CppConvertToLiteRtOptions(
+    const MpLiteRtOptions& in) {
+  mediapipe::tasks::core::BaseOptions::LiteRtOptions out;
+  switch (in.hardware_accelerator) {
+    case MP_LITERT_HARDWARE_ACCELERATOR_NPU:
+      out.hardware_accelerator = mediapipe::tasks::core::BaseOptions::
+          LiteRtOptions::HardwareAccelerator::NPU;
+      out.accelerator_options =
+          CppConvertToLiteRtNpuOptions(in.accelerator_options.npu_options);
+      break;
+    case MP_LITERT_HARDWARE_ACCELERATOR_GPU:
+      out.hardware_accelerator = mediapipe::tasks::core::BaseOptions::
+          LiteRtOptions::HardwareAccelerator::GPU;
+      out.accelerator_options =
+          CppConvertToLiteRtGpuOptions(in.accelerator_options.gpu_options);
+      break;
+    case MP_LITERT_HARDWARE_ACCELERATOR_CPU:
+    default:
+      out.hardware_accelerator = mediapipe::tasks::core::BaseOptions::
+          LiteRtOptions::HardwareAccelerator::CPU;
+      out.accelerator_options =
+          CppConvertToLiteRtCpuOptions(in.accelerator_options.cpu_options);
+      break;
+  }
+  return out;
+}
+
 void CppConvertToBaseOptions(const MpBaseOptions& in,
                              mediapipe::tasks::core::BaseOptions* out) {
   out->model_asset_buffer =
@@ -93,8 +143,17 @@ void CppConvertToBaseOptions(const MpBaseOptions& in,
   out->app_version = in.app_version ? std::string(in.app_version) : "";
   out->model_asset_descriptor_meta.fd =
       in.file_descriptor != 0 ? in.file_descriptor : -1;
-  // Don't load GPU service unless delegate is GPU.
-  out->disable_default_service = (in.delegate != MP_DELEGATE_GPU);
+
+  if (in.delegate == MP_DELEGATE_LITERT && in.litert_options != nullptr) {
+    out->delegate_options = CppConvertToLiteRtOptions(*in.litert_options);
+  }
+  // Don't load GPU service unless delegate is GPU or LiteRT GPU.
+  const bool is_gpu =
+      (in.delegate == MP_DELEGATE_GPU) ||
+      (in.delegate == MP_DELEGATE_LITERT && in.litert_options != nullptr &&
+       in.litert_options->hardware_accelerator ==
+           MP_LITERT_HARDWARE_ACCELERATOR_GPU);
+  out->disable_default_service = !is_gpu;
 }
 
 MpHostEnvironment ToMpHostEnvironment(int host_environment) {

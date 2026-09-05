@@ -29,7 +29,6 @@ import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.core.BaseOptions;
-import com.google.mediapipe.tasks.core.EmbeddingProvider;
 import com.google.mediapipe.tasks.core.TestUtils;
 import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions;
 import com.google.mediapipe.tasks.vision.core.RunningMode;

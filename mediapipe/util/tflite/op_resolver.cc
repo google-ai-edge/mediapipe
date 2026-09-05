@@ -14,6 +14,8 @@
 
 #include "mediapipe/util/tflite/op_resolver.h"
 
+#include <cstddef>
+
 #include "tflite/builtin_ops.h"
 #include "tflite/c/builtin_op_data.h"
 #include "tflite/c/c_api.h"
@@ -57,8 +59,7 @@ TfLiteRegistration* RegisterMaxPoolingWithArgmax2D() {
         });
     return r;
   }();
-  static TfLiteRegistration reg{};
-  reg.registration_external = reg_external;
+  static TfLiteRegistration reg{.registration_external = reg_external};
   return &reg;
 }
 
@@ -68,8 +69,7 @@ TfLiteRegistration* RegisterMaxUnpooling2D() {
       TfLiteOperatorCreate(kTfLiteBuiltinCustom, kMaxUnpooling2DOpName,
                            kMaxUnpooling2DOpVersion,
                            /*user_data=*/nullptr);
-  static TfLiteRegistration reg{};
-  reg.registration_external = reg_external;
+  static TfLiteRegistration reg{.registration_external = reg_external};
   return &reg;
 }
 
@@ -79,8 +79,7 @@ TfLiteRegistration* RegisterConvolution2DTransposeBias() {
       TfLiteOperatorCreate(
           kTfLiteBuiltinCustom, kConvolution2DTransposeBiasOpName,
           kConvolution2DTransposeBiasOpVersion, /*user_data=*/nullptr);
-  static TfLiteRegistration reg{};
-  reg.registration_external = reg_external;
+  static TfLiteRegistration reg{.registration_external = reg_external};
   return &reg;
 }
 

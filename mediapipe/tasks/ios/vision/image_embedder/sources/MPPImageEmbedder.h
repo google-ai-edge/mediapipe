@@ -14,11 +14,14 @@
 
 #import <Foundation/Foundation.h>
 
+#import "mediapipe/tasks/ios/core/sources/MPPTaskPart.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
 #import "mediapipe/tasks/ios/vision/image_embedder/sources/MPPImageEmbedderOptions.h"
 #import "mediapipe/tasks/ios/vision/image_embedder/sources/MPPImageEmbedderResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
+
+@class MPPEmbeddingResult;
 
 /**
  * @brief Performs embedding extraction on images.
@@ -41,7 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
  * is the number of dimensions in the produced embeddings.
  */
 NS_SWIFT_NAME(ImageEmbedder)
-@interface MPPImageEmbedder : NSObject
+@interface MPPImageEmbedder : NSObject <MPPEmbeddingProvider>
 
 /**
  * Creates a new instance of `ImageEmbedder` from an absolute path to a TensorFlow Lite model file

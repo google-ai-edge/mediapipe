@@ -41,6 +41,7 @@
 #include <string>
 
 #include "absl/base/attributes.h"
+#include "absl/types/span.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/tool/type_util.h"
@@ -175,6 +176,16 @@ class ImageFrame {
   uint8_t* MutablePixelData() { return pixel_data_.get(); }
   // Get a const pointer to the underlying image data.
   const uint8_t* PixelData() const { return pixel_data_.get(); }
+
+  // Get a mutable span of the underlying image data.  The ImageFrame
+  // retains ownership.
+  absl::Span<uint8_t> MutablePixelDataSpan() {
+    return absl::MakeSpan(pixel_data_.get(), PixelDataSize());
+  }
+  // Get a const span of the underlying image data.
+  absl::Span<const uint8_t> PixelDataSpan() const {
+    return absl::MakeConstSpan(pixel_data_.get(), PixelDataSize());
+  }
 
   // Returns the total size of the pixel data.
   int PixelDataSize() const { return Height() * WidthStep(); }

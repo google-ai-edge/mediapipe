@@ -37,8 +37,7 @@ std::unique_ptr<SentencePieceTokenizer> CreateSentencePieceTokenizer(
   // We are using `LoadBinaryContent()` instead of loading the model directly
   // via `SentencePieceTokenizer` so that the file can be located on Windows
   std::string buffer = LoadBinaryContent(kTestSPModelPath);
-  return absl::make_unique<SentencePieceTokenizer>(buffer.data(),
-                                                   buffer.size());
+  return std::make_unique<SentencePieceTokenizer>(buffer.data(), buffer.size());
 }
 
 TEST(SentencePieceTokenizerTest, TestTokenize) {

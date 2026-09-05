@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/components/containers/sources/MPPTaskPart.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskPart.h"
 
 @implementation MPPTaskPart
 
@@ -32,10 +32,20 @@
 
 @implementation MPPImagePart
 
-- (instancetype)initWithImageBytes:(NSData *)imageBytes {
+- (instancetype)initWithFilePath:(NSString *)filePath {
   self = [super init];
   if (self) {
-    _imageBytes = [imageBytes copy];
+    _filePath = [filePath copy];
+    _data = nil;
+  }
+  return self;
+}
+
+- (instancetype)initWithData:(NSData *)data {
+  self = [super init];
+  if (self) {
+    _filePath = nil;
+    _data = [data copy];
   }
   return self;
 }
@@ -44,10 +54,10 @@
 
 @implementation MPPAudioPart
 
-- (instancetype)initWithAudioData:(MPPFloatBuffer *)audioData {
+- (instancetype)initWithFilePath:(NSString *)filePath {
   self = [super init];
   if (self) {
-    _audioData = audioData;
+    _filePath = [filePath copy];
   }
   return self;
 }

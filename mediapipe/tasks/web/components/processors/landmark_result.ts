@@ -14,20 +14,31 @@
  * limitations under the License.
  */
 
-import {LandmarkList as LandmarkListProto, NormalizedLandmarkList as NormalizedLandmarkListProto} from '../../../../framework/formats/landmark_pb';
-import {Landmark, NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
+import {
+  LandmarkList as LandmarkListProto,
+  NormalizedLandmarkList as NormalizedLandmarkListProto,
+} from '../../../../framework/formats/landmark_pb';
+import {
+  Landmark,
+  NormalizedLandmark,
+} from '../../../../tasks/web/components/containers/landmark';
 
 /** Converts raw data into a landmark. */
-export function convertToLandmarks(proto: NormalizedLandmarkListProto):
-    NormalizedLandmark[] {
+export function convertToLandmarks(
+  proto: NormalizedLandmarkListProto,
+): NormalizedLandmark[] {
   const landmarks: NormalizedLandmark[] = [];
   for (const landmark of proto.getLandmarkList()) {
-    landmarks.push({
+    const result: NormalizedLandmark = {
       x: landmark.getX() ?? 0,
       y: landmark.getY() ?? 0,
       z: landmark.getZ() ?? 0,
       visibility: landmark.getVisibility() ?? 0,
-    });
+    };
+    if (landmark.hasPresence()) {
+      result.presence = landmark.getPresence() ?? 0;
+    }
+    landmarks.push(result);
   }
   return landmarks;
 }
@@ -36,12 +47,16 @@ export function convertToLandmarks(proto: NormalizedLandmarkListProto):
 export function convertToWorldLandmarks(proto: LandmarkListProto): Landmark[] {
   const worldLandmarks: Landmark[] = [];
   for (const worldLandmark of proto.getLandmarkList()) {
-    worldLandmarks.push({
+    const result: Landmark = {
       x: worldLandmark.getX() ?? 0,
       y: worldLandmark.getY() ?? 0,
       z: worldLandmark.getZ() ?? 0,
       visibility: worldLandmark.getVisibility() ?? 0,
-    });
+    };
+    if (worldLandmark.hasPresence()) {
+      result.presence = worldLandmark.getPresence() ?? 0;
+    }
+    worldLandmarks.push(result);
   }
   return worldLandmarks;
 }

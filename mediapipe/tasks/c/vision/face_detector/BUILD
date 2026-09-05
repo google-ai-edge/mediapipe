@@ -75,6 +75,7 @@ cc_test(
         "//mediapipe/tasks/c/components/containers:detection_result",
         "//mediapipe/tasks/c/components/containers:keypoint",
         "//mediapipe/tasks/c/components/containers:rect",
+        "//mediapipe/tasks/c/core:base_options",
         "//mediapipe/tasks/c/core:common",
         "//mediapipe/tasks/c/core:mp_status",
         "//mediapipe/tasks/c/vision/core:image",

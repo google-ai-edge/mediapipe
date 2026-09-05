@@ -49,7 +49,10 @@ struct BaseOptions {
     // Edge TPU acceleration using NNAPI delegate.
     EDGETPU_NNAPI = 2,
     // NPU acceleration using LiteRT.
+    // Deprecated: Use LITERT delegate with LiteRt::NPU instead.
     NPU = 4,
+    // Acceleration using LiteRT.
+    LITERT = 5,
   };
 
   Delegate delegate = CPU;
@@ -78,10 +81,30 @@ struct BaseOptions {
     std::string model_token;
   };
 
-  // Options for NPU.
+  // Options for NPU. Deprecated: Use LiteRtOptions instead.
   struct NpuOptions {
     // The directory containing the NPU dispatch library.
     std::string dispatch_library_directory;
+  };
+
+  // Options for LiteRT.
+  struct LiteRtOptions {
+    enum class HardwareAccelerator {
+      CPU = 0,
+      GPU = 1,
+      NPU = 2,
+    };
+
+    HardwareAccelerator hardware_accelerator = HardwareAccelerator::CPU;
+
+    struct CpuOptions {};
+    struct GpuOptions {};
+    struct NpuOptions {
+      std::string dispatch_library_directory;
+    };
+
+    std::variant<CpuOptions, GpuOptions, NpuOptions> accelerator_options =
+        CpuOptions{};
   };
 
   // The file descriptor to a file opened with open(2), with optional additional
@@ -106,7 +129,7 @@ struct BaseOptions {
 
   // Options for the chosen delegate. If not set, the default delegate options
   // is used.
-  std::optional<std::variant<CpuOptions, GpuOptions, NpuOptions>>
+  std::optional<std::variant<CpuOptions, GpuOptions, NpuOptions, LiteRtOptions>>
       delegate_options;
 
   // Disallows/disables default initialization of MediaPipe graph services. This
@@ -142,6 +165,9 @@ proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options);
 
 // Converts a proto::BaseOptions to a BaseOptions.
 BaseOptions ConvertProtoToBaseOptions(proto::BaseOptions&& base_options_proto);
+
+// Checks if the given base options correspond to a LiteRT LM model.
+bool IsLiteRtLmModel(const BaseOptions& base_options);
 
 }  // namespace core
 }  // namespace tasks

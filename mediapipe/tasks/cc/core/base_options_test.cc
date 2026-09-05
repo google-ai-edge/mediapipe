@@ -1,5 +1,8 @@
 #include "mediapipe/tasks/cc/core/base_options.h"
 
+#include <cstdio>
+#include <fstream>
+#include <ios>
 #include <memory>
 #include <optional>
 #include <string>
@@ -49,6 +52,11 @@ TEST(BaseOptionsTest, ConvertBaseOptionsToProtoWithAcceleration) {
   proto = ConvertBaseOptionsToProto(&base_options);
   EXPECT_TRUE(proto.acceleration().has_litert());
   EXPECT_TRUE(proto.acceleration().litert().has_npu());
+
+  base_options.delegate = BaseOptions::Delegate::LITERT;
+  proto = ConvertBaseOptionsToProto(&base_options);
+  EXPECT_TRUE(proto.acceleration().has_litert());
+  EXPECT_TRUE(proto.acceleration().litert().has_cpu());
 }
 
 TEST(DelegateOptionsTest, SucceedCpuOptions) {
@@ -123,20 +131,75 @@ TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithGpuDelegate) {
   EXPECT_EQ(gpu_opts.model_token, kModelToken);
 }
 
-TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithNpuDelegate) {
+TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithLiteRtDelegate) {
   proto::BaseOptions proto;
   proto.mutable_acceleration()
       ->mutable_litert()
       ->mutable_npu()
       ->set_dispatch_library_path("/tmp/dispatch");
   BaseOptions base_options = ConvertProtoToBaseOptions(std::move(proto));
-  EXPECT_EQ(base_options.delegate, BaseOptions::Delegate::NPU);
+  EXPECT_EQ(base_options.delegate, BaseOptions::Delegate::LITERT);
   ASSERT_TRUE(base_options.delegate_options.has_value());
-  ASSERT_TRUE(std::holds_alternative<BaseOptions::NpuOptions>(
+  ASSERT_TRUE(std::holds_alternative<BaseOptions::LiteRtOptions>(
       *base_options.delegate_options));
-  EXPECT_EQ(std::get<BaseOptions::NpuOptions>(*base_options.delegate_options)
-                .dispatch_library_directory,
-            "/tmp/dispatch");
+  const auto& litert_opts =
+      std::get<BaseOptions::LiteRtOptions>(*base_options.delegate_options);
+  EXPECT_EQ(litert_opts.hardware_accelerator,
+            BaseOptions::LiteRtOptions::HardwareAccelerator::NPU);
+  ASSERT_TRUE(std::holds_alternative<
+              mediapipe::tasks::core::BaseOptions::LiteRtOptions::NpuOptions>(
+      litert_opts.accelerator_options));
+  const auto& npu_opts =
+      std::get<mediapipe::tasks::core::BaseOptions::LiteRtOptions::NpuOptions>(
+          litert_opts.accelerator_options);
+  EXPECT_EQ(npu_opts.dispatch_library_directory, "/tmp/dispatch");
+}
+
+TEST(BaseOptionsTest, IsLiteRtLmModelReturnsFalseForDefaultOptions) {
+  BaseOptions base_options;
+  EXPECT_FALSE(IsLiteRtLmModel(base_options));
+}
+
+TEST(BaseOptionsTest, IsLiteRtLmModelReturnsTrueForValidModelBuffer) {
+  BaseOptions base_options;
+  base_options.model_asset_buffer =
+      std::make_unique<std::string>("LITERTLM_model_data");
+  EXPECT_TRUE(IsLiteRtLmModel(base_options));
+}
+
+TEST(BaseOptionsTest, IsLiteRtLmModelReturnsFalseForInvalidModelBuffer) {
+  BaseOptions base_options;
+  base_options.model_asset_buffer =
+      std::make_unique<std::string>("NOTLITERTLM_model_data");
+  EXPECT_FALSE(IsLiteRtLmModel(base_options));
+}
+
+TEST(BaseOptionsTest, IsLiteRtLmModelReturnsTrueForValidModelPath) {
+  std::string temp_path = testing::TempDir() + "test_litert_lm_model";
+  std::ofstream out(temp_path, std::ios::binary);
+  ASSERT_TRUE(out.is_open());
+  out.write("LITERTLM_model_data", 19);
+  out.close();
+
+  BaseOptions base_options;
+  base_options.model_asset_path = temp_path;
+  EXPECT_TRUE(IsLiteRtLmModel(base_options));
+
+  std::remove(temp_path.c_str());
+}
+
+TEST(BaseOptionsTest, IsLiteRtLmModelReturnsFalseForInvalidModelPath) {
+  std::string temp_path = testing::TempDir() + "test_invalid_model";
+  std::ofstream out(temp_path, std::ios::binary);
+  ASSERT_TRUE(out.is_open());
+  out.write("NOTLITERTLM_model_data", 22);
+  out.close();
+
+  BaseOptions base_options;
+  base_options.model_asset_path = temp_path;
+  EXPECT_FALSE(IsLiteRtLmModel(base_options));
+
+  std::remove(temp_path.c_str());
 }
 
 }  // namespace

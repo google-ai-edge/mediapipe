@@ -20,6 +20,12 @@
 #ifdef CV_VERSION_EPOCH  // for OpenCV 2.x
 #include <opencv2/calib3d/calib3d.hpp>
 #else
+#if CV_VERSION_MAJOR < 5
+#include <opencv2/calib3d.hpp>
+#else
+#include <opencv2/calib.hpp>
+#include <opencv2/geometry.hpp>
+#endif
 #include <opencv2/calib3d.hpp>
 #endif
 

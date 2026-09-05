@@ -533,4 +533,44 @@ constexpr NSInteger kExpectedEmbeddingLength = 1024;
                              kDoubleDifferenceTolerance);
 }
 
+- (void)testEmbedContentSucceedsWithMPPImage {
+  MPPImageEmbedder *imageEmbedder =
+      [[MPPImageEmbedder alloc] initWithModelPath:kMobileNetEmbedderModelFileInfo.path error:nil];
+  XCTAssertNotNil(imageEmbedder);
+
+  MPPImage *image = [self assertCreateImageWithFileInfo:kBurgerImageFileInfo];
+  NSError *error = nil;
+  MPPEmbeddingResult *result = [imageEmbedder embedContent:@[ image ] error:&error];
+  XCTAssertNotNil(result);
+  XCTAssertNil(error);
+  XCTAssertEqual(result.embeddings.count, 1);
+  XCTAssertEqual(result.embeddings[0].floatEmbedding.count, kExpectedEmbeddingLength);
+}
+
+- (void)testEmbedContentSucceedsWithMPPImagePart {
+  MPPImageEmbedder *imageEmbedder =
+      [[MPPImageEmbedder alloc] initWithModelPath:kMobileNetEmbedderModelFileInfo.path error:nil];
+  XCTAssertNotNil(imageEmbedder);
+
+  NSError *error = nil;
+  MPPImagePart *imagePart = [[MPPImagePart alloc] initWithFilePath:kBurgerImageFileInfo.path];
+  MPPEmbeddingResult *result = [imageEmbedder embedContent:@[ imagePart ] error:&error];
+  XCTAssertNotNil(result);
+  XCTAssertNil(error);
+  XCTAssertEqual(result.embeddings.count, 1);
+  XCTAssertEqual(result.embeddings[0].floatEmbedding.count, kExpectedEmbeddingLength);
+}
+
+- (void)testEmbedContentFailsWithEmptyContent {
+  MPPImageEmbedder *imageEmbedder =
+      [[MPPImageEmbedder alloc] initWithModelPath:kMobileNetEmbedderModelFileInfo.path error:nil];
+  XCTAssertNotNil(imageEmbedder);
+
+  NSError *error = nil;
+  MPPEmbeddingResult *result = [imageEmbedder embedContent:@[] error:&error];
+  XCTAssertNil(result);
+  XCTAssertNotNil(error);
+  XCTAssertEqual(error.code, MPPTasksErrorCodeInvalidArgumentError);
+}
+
 @end

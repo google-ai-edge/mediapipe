@@ -28,22 +28,23 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "litert/cc/internal/litert_extended_model.h"     // from @litert
-#include "litert/cc/litert_buffer_ref.h"                  // from @litert
-#include "litert/cc/litert_common.h"                      // from @litert
-#include "litert/cc/litert_compiled_model.h"              // from @litert
-#include "litert/cc/litert_environment.h"                 // from @litert
-#include "litert/cc/litert_layout.h"                      // from @litert
-#include "litert/cc/litert_macros.h"                      // from @litert
-#include "litert/cc/litert_opaque_options.h"              // from @litert
-#include "litert/cc/litert_options.h"                     // from @litert
-#include "litert/cc/litert_ranked_tensor_type.h"          // from @litert
-#include "litert/cc/litert_tensor_buffer.h"               // from @litert
-#include "litert/cc/litert_tensor_buffer_requirements.h"  // from @litert
-#include "litert/cc/litert_tensor_buffer_types.h"         // from @litert
-#include "litert/cc/options/litert_cpu_options.h"         // from @litert
-#include "litert/cc/options/litert_gpu_options.h"         // from @litert
-#include "litert/cc/options/litert_qualcomm_options.h"    // from @litert
+#include "litert/cc/internal/litert_extended_model.h"        // from @litert
+#include "litert/cc/litert_buffer_ref.h"                     // from @litert
+#include "litert/cc/litert_common.h"                         // from @litert
+#include "litert/cc/litert_compiled_model.h"                 // from @litert
+#include "litert/cc/litert_environment.h"                    // from @litert
+#include "litert/cc/litert_layout.h"                         // from @litert
+#include "litert/cc/litert_macros.h"                         // from @litert
+#include "litert/cc/litert_opaque_options.h"                 // from @litert
+#include "litert/cc/litert_options.h"                        // from @litert
+#include "litert/cc/litert_ranked_tensor_type.h"             // from @litert
+#include "litert/cc/litert_tensor_buffer.h"                  // from @litert
+#include "litert/cc/litert_tensor_buffer_requirements.h"     // from @litert
+#include "litert/cc/litert_tensor_buffer_types.h"            // from @litert
+#include "litert/cc/options/litert_cpu_options.h"            // from @litert
+#include "litert/cc/options/litert_google_tensor_options.h"  // from @litert
+#include "litert/cc/options/litert_gpu_options.h"            // from @litert
+#include "litert/cc/options/litert_qualcomm_options.h"       // from @litert
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/calculators/tensor/inference_calculator_utils.h"
 #include "mediapipe/calculators/tensor/inference_feedback_manager_litert.h"
@@ -481,6 +482,17 @@ InferenceRunnerLiteRt::Create(
   }
   if (accelerator & litert::HwAccelerators::kNpu) {
     if (options.npu().has_darwinn()) {
+      if (options.npu().darwinn().has_inference_priority()) {
+      } else {
+        LITERT_ASSIGN_OR_RETURN(
+            auto& google_tensor_options,
+            jit_compilation_options.GetGoogleTensorOptions());
+        // Default performance mode is kBalanced; this can be updated if
+        // required.
+        google_tensor_options.SetPerformanceMode(
+            litert::google_tensor::GoogleTensorOptions::PerformanceMode::
+                kBalanced);
+      }
     } else if (options.npu().has_qualcomm()) {
       LITERT_ASSIGN_OR_RETURN(auto& qualcomm_options,
                               jit_compilation_options.GetQualcommOptions());
@@ -627,7 +639,9 @@ InferenceRunnerLiteRt::InferenceRunnerLiteRt(
       managed_input_buffers_(subgraph_->Inputs().size()),
       managed_output_buffers_(subgraph_->Outputs().size()) {
 #if MEDIAPIPE_METAL_ENABLED
-  metal_helper_ = metal_helper;
+  if (metal_helper) {
+    metal_helper_ = (void*)CFRetain(metal_helper);
+  }
 #endif  // MEDIAPIPE_METAL_ENABLED
 }
 
@@ -655,6 +669,12 @@ InferenceRunnerLiteRt::~InferenceRunnerLiteRt() {
     });
   }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+#if MEDIAPIPE_METAL_ENABLED
+  if (metal_helper_) {
+    CFRelease(metal_helper_);
+    metal_helper_ = nullptr;
+  }
+#endif  // MEDIAPIPE_METAL_ENABLED
 }
 
 absl::Status InferenceRunnerLiteRt::Close() {

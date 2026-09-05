@@ -31,6 +31,7 @@ ts_library(
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/components/containers:landmark",
         "//mediapipe/tasks/web/components/processors:classifier_options",
+        "//mediapipe/tasks/web/components/processors:landmark_result",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:classifier_options",
         "//mediapipe/tasks/web/vision/core:image_processing_options",

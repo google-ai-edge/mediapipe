@@ -14,6 +14,7 @@
 
 #import "mediapipe/tasks/ios/vision/image_embedder/sources/MPPImageEmbedder.h"
 
+#import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/components/utils/sources/MPPCosineSimilarity.h"
@@ -239,6 +240,52 @@ static const int kMicrosecondsPerMillisecond = 1000;
   }
 
   return ImageEmbedderResultWithOutputPacketMap(outputPacketMap.value());
+}
+
+- (nullable MPPEmbeddingResult *)embedContent:(NSArray<id> *)content error:(NSError **)error {
+  for (id part in content) {
+    if ([part isKindOfClass:[MPPImage class]]) {
+      MPPImageEmbedderResult *result = [self embedImage:(MPPImage *)part error:error];
+      if (result == nil) {
+        return nil;
+      }
+      return result.embeddingResult;
+    } else if ([part isKindOfClass:[MPPImagePart class]]) {
+      NSString *filePath = ((MPPImagePart *)part).filePath;
+      NSData *imageBytes = [NSData dataWithContentsOfFile:filePath];
+      if (!imageBytes) {
+        [MPPCommonUtils
+            createCustomError:error
+                     withCode:MPPTasksErrorCodeInvalidArgumentError
+                  description:[NSString stringWithFormat:@"Failed to load image from path: %@",
+                                                         filePath]];
+        return nil;
+      }
+      UIImage *uiImage = [UIImage imageWithData:imageBytes];
+      if (!uiImage) {
+        [MPPCommonUtils
+            createCustomError:error
+                     withCode:MPPTasksErrorCodeInvalidArgumentError
+                  description:[NSString stringWithFormat:@"Failed to decode image from path: %@",
+                                                         filePath]];
+        return nil;
+      }
+      MPPImage *mppImage = [[MPPImage alloc] initWithUIImage:uiImage error:error];
+      if (!mppImage) {
+        return nil;
+      }
+      MPPImageEmbedderResult *result = [self embedImage:mppImage error:error];
+      if (result == nil) {
+        return nil;
+      }
+      return result.embeddingResult;
+    }
+  }
+  [MPPCommonUtils
+      createCustomError:error
+               withCode:MPPTasksErrorCodeInvalidArgumentError
+            description:@"Content is empty or does not contain any supported image elements."];
+  return nil;
 }
 
 @end

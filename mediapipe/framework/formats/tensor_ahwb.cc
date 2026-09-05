@@ -143,14 +143,20 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferReadView() const {
 void Tensor::CreateEglSyncAndFd() const {
   gl_context_->Run([this]() {
     if (IsGlSupported()) {
+      // Issue a memory barrier before creating the EGL fence to ensure all
+      // prior OpenGL compute and rendering updates are flushed from shader
+      // storage/caches and synchronized before the native EGL sync fence is
+      // created.
+      glMemoryBarrier(GL_ALL_BARRIER_BITS);
       auto egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
       if (egl_display != EGL_NO_DISPLAY) {
+        if (fence_sync_ != EGL_NO_SYNC_KHR) {
+          eglDestroySyncKHR(egl_display, fence_sync_);
+          fence_sync_ = EGL_NO_SYNC_KHR;
+        }
         fence_sync_ = eglCreateSyncKHR(egl_display,
                                        EGL_SYNC_NATIVE_FENCE_ANDROID, nullptr);
         if (fence_sync_ != EGL_NO_SYNC_KHR) {
-          // TODO: Ensure we don't leak GL sync objects and fd
-          // fences. This can happen if write_complete_fence_fd_ is already
-          // valid here.
           write_complete_fence_fd_ =
               UniqueFd(eglDupNativeFenceFDANDROID(egl_display, fence_sync_));
           if (!write_complete_fence_fd_.IsValid()) {

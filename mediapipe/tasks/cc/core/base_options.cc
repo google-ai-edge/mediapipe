@@ -15,8 +15,19 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/core/base_options.h"
 
+#include <cstdint>
+#include <fstream>
+#include <ios>
 #include <memory>
+
+#ifdef _WIN32
+#include <io.h>
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 #include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 
@@ -60,6 +71,33 @@ proto::Acceleration ConvertDelegateOptionsToAccelerationProto(
   auto& litert = *acceleration_proto.mutable_litert();
   litert.mutable_npu()->set_dispatch_library_path(
       options.dispatch_library_directory);
+  return acceleration_proto;
+}
+
+proto::Acceleration ConvertDelegateOptionsToAccelerationProto(
+    const BaseOptions::LiteRtOptions& options) {
+  proto::Acceleration acceleration_proto = proto::Acceleration();
+  auto& litert = *acceleration_proto.mutable_litert();
+  switch (options.hardware_accelerator) {
+    case BaseOptions::LiteRtOptions::HardwareAccelerator::CPU:
+      litert.mutable_cpu();
+      break;
+    case BaseOptions::LiteRtOptions::HardwareAccelerator::NPU: {
+      auto* npu = litert.mutable_npu();
+      if (std::holds_alternative<BaseOptions::LiteRtOptions::NpuOptions>(
+              options.accelerator_options)) {
+        const auto& npu_opts = std::get<BaseOptions::LiteRtOptions::NpuOptions>(
+            options.accelerator_options);
+        if (!npu_opts.dispatch_library_directory.empty()) {
+          npu->set_dispatch_library_path(npu_opts.dispatch_library_directory);
+        }
+      }
+      break;
+    }
+    case BaseOptions::LiteRtOptions::HardwareAccelerator::GPU:
+      litert.mutable_gpu();
+      break;
+  }
   return acceleration_proto;
 }
 
@@ -132,6 +170,14 @@ proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options) {
       SetDelegateOptionsOrDie<BaseOptions::NpuOptions>(base_options,
                                                        base_options_proto);
       break;
+
+    case BaseOptions::Delegate::LITERT:
+      base_options_proto.mutable_acceleration()
+          ->mutable_litert()
+          ->mutable_cpu();
+      SetDelegateOptionsOrDie<BaseOptions::LiteRtOptions>(base_options,
+                                                          base_options_proto);
+      break;
   }
   return base_options_proto;
 }
@@ -177,21 +223,86 @@ BaseOptions ConvertProtoToBaseOptions(proto::BaseOptions&& base_options_proto) {
       base_options.delegate = BaseOptions::Delegate::CPU;
     } else if (acceleration.has_nnapi()) {
       base_options.delegate = BaseOptions::Delegate::EDGETPU_NNAPI;
-    } else if (acceleration.has_litert() && acceleration.litert().has_npu()) {
-      base_options.delegate = BaseOptions::Delegate::NPU;
+    } else if (acceleration.has_litert()) {
+      base_options.delegate = BaseOptions::Delegate::LITERT;
+      BaseOptions::LiteRtOptions litert_options;
       if (acceleration.litert().has_npu()) {
-        BaseOptions::NpuOptions npu_options;
-        if (acceleration.litert().has_npu() &&
-            acceleration.litert().npu().has_dispatch_library_path()) {
+        litert_options.hardware_accelerator =
+            BaseOptions::LiteRtOptions::HardwareAccelerator::NPU;
+        if (acceleration.litert().npu().has_dispatch_library_path()) {
+          BaseOptions::LiteRtOptions::NpuOptions npu_options;
           npu_options.dispatch_library_directory =
               acceleration.litert().npu().dispatch_library_path();
+          litert_options.accelerator_options = std::move(npu_options);
         }
-        base_options.delegate_options = std::move(npu_options);
+      } else if (acceleration.litert().has_gpu()) {
+        litert_options.hardware_accelerator =
+            BaseOptions::LiteRtOptions::HardwareAccelerator::GPU;
+      } else {
+        litert_options.hardware_accelerator =
+            BaseOptions::LiteRtOptions::HardwareAccelerator::CPU;
       }
+      base_options.delegate_options = std::move(litert_options);
     }
   }
   return base_options;
 }
+
+// Portable helper to read from a file descriptor at a given offset without
+// changing the file descriptor's current position.
+int ReadFdAtOffset(int fd, char* buffer, int length, int64_t offset) {
+#ifdef _WIN32
+  HANDLE handle = reinterpret_cast<HANDLE>(_get_osfhandle(fd));
+  if (handle == INVALID_HANDLE_VALUE) {
+    return -1;
+  }
+  OVERLAPPED overlapped;
+  std::memset(&overlapped, 0, sizeof(overlapped));
+  overlapped.Offset = static_cast<DWORD>(offset);
+  overlapped.OffsetHigh = static_cast<DWORD>(offset >> 32);
+  DWORD bytes_read = 0;
+  if (!::ReadFile(handle, buffer, static_cast<DWORD>(length), &bytes_read,
+                  &overlapped)) {
+    return -1;
+  }
+  return static_cast<int>(bytes_read);
+#else
+  return static_cast<int>(pread(fd, buffer, length, offset));
+#endif
+}
+
+bool IsLiteRtLmModel(const BaseOptions& base_options) {
+  if (!base_options.model_asset_path.empty()) {
+    std::ifstream file(base_options.model_asset_path, std::ios::binary);
+    if (file) {
+      char header[8];
+      file.read(header, 8);
+      if (file.gcount() == 8 && std::string_view(header, 8) == "LITERTLM") {
+        return true;
+      }
+    }
+  }
+  if (base_options.model_asset_buffer != nullptr) {
+    if (base_options.model_asset_buffer->size() >= 8 &&
+        base_options.model_asset_buffer->substr(0, 8) == "LITERTLM") {
+      return true;
+    }
+  }
+  if (base_options.model_asset_descriptor_meta.fd != -1) {
+    int fd = base_options.model_asset_descriptor_meta.fd;
+    int offset = base_options.model_asset_descriptor_meta.offset;
+    if (offset < 0) {
+      offset = 0;
+    }
+    char header[8];
+    int bytes_read = ReadFdAtOffset(fd, header, 8, offset);
+    if (bytes_read == 8 && std::string_view(header, 8) == "LITERTLM") {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace core
 }  // namespace tasks
 }  // namespace mediapipe

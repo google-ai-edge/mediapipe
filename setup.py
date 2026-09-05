@@ -259,6 +259,7 @@ class BuildExtension(build_ext.build_ext):
         'build',
         '--compilation_mode=opt',
         '--copt=-DNDEBUG',
+        '--copt=-DLITERT_DISABLE_NPU',
         '--keep_going',
         str(ext.bazel_target),
     ] + GPU_OPTIONS

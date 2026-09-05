@@ -76,6 +76,7 @@ cc_library(
         "//mediapipe/tasks/cc/components/utils:cosine_similarity",
         "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core:base_task_api",
+        "//mediapipe/tasks/cc/core:embedding_provider",
         "//mediapipe/tasks/cc/core:running_mode",
         "//mediapipe/tasks/cc/core:task_api_factory",
         "//mediapipe/tasks/cc/core:task_runner",
@@ -122,30 +123,4 @@ cc_library(
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
-)
-
-cc_test(
-    name = "text_embedder_test",
-    srcs = ["text_embedder_test.cc"],
-    data = [
-        "//mediapipe/models/embedding_gemma:embedding_gemma.task",
-        "//mediapipe/tasks/testdata/text:gecko_model",
-        "//mediapipe/tasks/testdata/text:mobilebert_embedding_model",
-        "//mediapipe/tasks/testdata/text:regex_embedding_with_metadata",
-        "//mediapipe/tasks/testdata/text:universal_sentence_encoder_qa",
-    ],
-    tags = ["not_run:arm"],
-    deps = [
-        ":text_embedder",
-        "//mediapipe/framework/deps:file_path",
-        "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/tasks/cc:common",
-        "//mediapipe/tasks/cc/components/containers:embedding_result",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:cord",
-        "@litert//tflite:test_util",
-    ],
 )

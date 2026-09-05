@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <utility>
 
@@ -376,6 +377,19 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
       }
     }
     valid_ |= kValidOpenGlBuffer;
+  } else {
+#ifdef MEDIAPIPE_TENSOR_USE_AHWB
+    // When the OpenGL buffer (`opengl_buffer_`) is backed by an external
+    // Android AHardwareBuffer (`ready_as_ahwb()` == true) mapped via
+    // glBufferStorageExternalEXT, compute shader writes on native mobile GPU
+    // drivers (e.g., Qualcomm Adreno) reside in GPU caches (GMEM/L2). We must
+    // create a native EGL fence (`EGL_SYNC_NATIVE_FENCE_ANDROID`) to ensure
+    // these writes are flushed to external system memory before subsequent CPU
+    // or GPU reads.
+    if (ready_as_ahwb()) {
+      CreateEglSyncAndFd();
+    }
+#endif  // MEDIAPIPE_TENSOR_USE_AHWB
   }
 
   return {/*is_write_view=*/false, opengl_buffer_, std::move(lock),
@@ -386,7 +400,7 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
           //
           // Not passing for the case when AHWB is not in use to avoid creation
           // of unnecessary sync object and memory leak.
-          use_ahwb_ ? &ssbo_read_ : nullptr,
+          ready_as_ahwb() ? &ssbo_read_ : nullptr,
 #else
           nullptr,
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB

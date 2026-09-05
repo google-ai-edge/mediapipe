@@ -25,6 +25,37 @@ enum MpDelegate {
   MP_DELEGATE_CPU = 0,
   MP_DELEGATE_GPU = 1,
   MP_DELEGATE_EDGETPU_NNAPI = 2,
+  MP_DELEGATE_LITERT = 4,
+};
+
+// LiteRT hardware accelerator options.
+enum MpLiteRtHardwareAccelerator {
+  MP_LITERT_HARDWARE_ACCELERATOR_CPU = 0,
+  MP_LITERT_HARDWARE_ACCELERATOR_GPU = 1,
+  MP_LITERT_HARDWARE_ACCELERATOR_NPU = 2,
+};
+
+// LiteRT CPU-specific options.
+struct MpLiteRtCpuOptions {};
+
+// LiteRT GPU-specific options.
+struct MpLiteRtGpuOptions {};
+
+// LiteRT NPU-specific options.
+struct MpLiteRtNpuOptions {
+  // The directory containing the NPU dispatch library.
+  const char* dispatch_library_directory;
+};
+
+// Options for LiteRT delegate.
+struct MpLiteRtOptions {
+  enum MpLiteRtHardwareAccelerator hardware_accelerator =
+      MP_LITERT_HARDWARE_ACCELERATOR_CPU;
+  union {
+    struct MpLiteRtCpuOptions cpu_options;
+    struct MpLiteRtGpuOptions gpu_options;
+    struct MpLiteRtNpuOptions npu_options;
+  } accelerator_options = {.cpu_options = {}};
 };
 
 // The environment that MediaPipe runs in.
@@ -80,6 +111,10 @@ struct MpBaseOptions {
 
   // The app version of the host environment, e.g., Android version code.
   const char* app_version;
+
+  // Options for LiteRT delegate when delegate is MP_DELEGATE_LITERT.
+  // Can be NULL if default LiteRT options are used.
+  const struct MpLiteRtOptions* litert_options;
 };
 
 #ifdef __cplusplus

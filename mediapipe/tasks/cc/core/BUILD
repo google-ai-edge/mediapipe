@@ -432,3 +432,22 @@ cc_test(
         "@com_google_absl//absl/strings:cord",
     ],
 )
+
+cc_library(
+    name = "embedding_provider",
+    hdrs = ["embedding_provider.h"],
+    deps = [
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
+cc_test(
+    name = "embedding_provider_test",
+    srcs = ["embedding_provider_test.cc"],
+    deps = [
+        ":embedding_provider",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status_matchers",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)

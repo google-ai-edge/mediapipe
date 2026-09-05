@@ -16,9 +16,14 @@
 
 import 'jasmine';
 
-import {convertToLandmarks, convertToWorldLandmarks} from '../../../../tasks/web/components/processors/landmark_result';
-import {createLandmarks, createWorldLandmarks} from '../../../../tasks/web/components/processors/landmark_result_test_lib';
-
+import {
+  convertToLandmarks,
+  convertToWorldLandmarks,
+} from '../../../../tasks/web/components/processors/landmark_result';
+import {
+  createLandmarks,
+  createWorldLandmarks,
+} from '../../../../tasks/web/components/processors/landmark_result_test_lib';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -35,6 +40,26 @@ describe('convertToLandmarks()', () => {
     const result = convertToLandmarks(landmarkListProto);
     expect(result).toEqual([{x: 0, y: 0, z: 0, visibility: 0}]);
   });
+
+  it('copies presence and visibility when the proto field is set', () => {
+    const landmarkListProto = createLandmarks(
+      0.1,
+      0.2,
+      0.3,
+      /* visibility= */ 0.8,
+      /* presence= */ 0.9,
+    );
+    const result = convertToLandmarks(landmarkListProto);
+    expect(result).toEqual([
+      {x: 0.1, y: 0.2, z: 0.3, visibility: 0.8, presence: 0.9},
+    ]);
+  });
+
+  it('omits presence and visibility when the proto field is unset', () => {
+    const landmarkListProto = createLandmarks(0.1, 0.2, 0.3);
+    const result = convertToLandmarks(landmarkListProto);
+    expect(result[0].presence).toBeUndefined();
+  });
 });
 
 describe('convertToWorldLandmarks()', () => {
@@ -48,5 +73,25 @@ describe('convertToWorldLandmarks()', () => {
     const worldLandmarkListProto = createWorldLandmarks();
     const result = convertToWorldLandmarks(worldLandmarkListProto);
     expect(result).toEqual([{x: 0, y: 0, z: 0, visibility: 0}]);
+  });
+
+  it('copies presence and visibility when the proto field is set', () => {
+    const worldLandmarkListProto = createWorldLandmarks(
+      10,
+      20,
+      30,
+      /* visibility= */ 0.4,
+      /* presence= */ 0.6,
+    );
+    const result = convertToWorldLandmarks(worldLandmarkListProto);
+    expect(result).toEqual([
+      {x: 10, y: 20, z: 30, visibility: 0.4, presence: 0.6},
+    ]);
+  });
+
+  it('omits presence and visibility when the proto field is unset', () => {
+    const worldLandmarkListProto = createWorldLandmarks(10, 20, 30);
+    const result = convertToWorldLandmarks(worldLandmarkListProto);
+    expect(result[0].presence).toBeUndefined();
   });
 });

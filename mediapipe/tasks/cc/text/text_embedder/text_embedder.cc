@@ -16,8 +16,11 @@ limitations under the License.
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder.h"
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
+#include <variant>
+#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/status_macros.h"
@@ -34,6 +37,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/processors/proto/embedder_options.pb.h"
 #include "mediapipe/tasks/cc/components/utils/cosine_similarity.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
+#include "mediapipe/tasks/cc/core/embedding_provider.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
@@ -42,6 +46,11 @@ limitations under the License.
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder_executor.h"
 
 namespace mediapipe::tasks::text::text_embedder {
+
+using ::mediapipe::tasks::core::EmbeddingProvider;
+using ::mediapipe::tasks::core::TaskPart;
+using ::mediapipe::tasks::core::TextPart;
+
 namespace {
 
 constexpr absl::string_view kQueryTemplate = "task: $0 | query: $1";
@@ -166,6 +175,36 @@ absl::StatusOr<TextEmbedderResult> TextEmbedder::Embed(
     absl::string_view text, const TextFormatContext& format_context) {
   std::string processed_text = GetFormattedEmbeddingText(text, format_context);
   return executor_->Embed(processed_text);
+}
+
+std::unique_ptr<::mediapipe::tasks::core::EmbeddingProvider>
+TextEmbedder::GetProvider() {
+  class TextEmbedderProvider : public EmbeddingProvider {
+   public:
+    explicit TextEmbedderProvider(TextEmbedder* embedder)
+        : embedder_(embedder) {}
+    absl::StatusOr<std::optional<std::vector<float>>> EmbedContent(
+        const std::vector<TaskPart>& content) override {
+      for (const auto& part : content) {
+        if (std::holds_alternative<TextPart>(part)) {
+          const auto& text_part = std::get<TextPart>(part);
+          auto result_or = embedder_->Embed(text_part.text);
+          if (!result_or.ok()) {
+            return result_or.status();
+          }
+          if (result_or->embeddings.empty()) {
+            return std::nullopt;
+          }
+          return result_or->embeddings[0].float_embedding;
+        }
+      }
+      return std::nullopt;
+    }
+
+   private:
+    TextEmbedder* embedder_;
+  };
+  return std::make_unique<TextEmbedderProvider>(this);
 }
 
 absl::StatusOr<double> TextEmbedder::CosineSimilarity(
