@@ -11,6 +11,17 @@ import {WasmModule} from './wasm_module';
 export declare interface FileLocator {
   locateFile: (filename: string) => string;
   mainScriptUrlOrBlob?: string;
+  /**
+   * Optional preloaded Wasm binary. When set, Emscripten skips fetching the
+   * `.wasm` file itself.
+   */
+  wasmBinary?: ArrayBuffer;
+  /**
+   * Optional hook to supply a preloaded `.data` asset package. When set,
+   * Emscripten skips fetching the package.
+   */
+  getPreloadedPackage?:
+      (remotePackageName: string, remotePackageSize: number) => ArrayBuffer;
 }
 
 /**
