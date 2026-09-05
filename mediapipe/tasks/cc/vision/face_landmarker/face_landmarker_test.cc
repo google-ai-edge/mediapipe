@@ -55,6 +55,7 @@ namespace {
 
 using ::file::Defaults;
 using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
+using ::testing::HasSubstr;
 using ::testing::TestParamInfo;
 using ::testing::TestWithParam;
 using ::testing::Values;
@@ -414,6 +415,35 @@ INSTANTIATE_TEST_SUITE_P(
     [](const TestParamInfo<LiveStreamModeTest::ParamType>& info) {
       return info.param.test_name;
     });
+
+TEST(FaceLandmarkerSetOptionsTest, UpdatesThresholdsAndKeepsDetecting) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      Image image, DecodeImageFromFile(file::JoinPath(
+                       "./", kTestDataDirectory, kPortraitImageName)));
+  auto options = std::make_unique<FaceLandmarkerOptions>();
+  options->base_options.model_asset_path = file::JoinPath(
+      "./", kTestDataDirectory, kFaceLandmarkerWithBlendshapesModelBundleName);
+  options->running_mode = core::RunningMode::IMAGE;
+
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<FaceLandmarker> face_landmarker,
+                          FaceLandmarker::Create(std::move(options)));
+  MP_ASSERT_OK_AND_ASSIGN(FaceLandmarkerResult before,
+                          face_landmarker->Detect(image));
+  ASSERT_FALSE(before.face_landmarks.empty());
+
+  MP_ASSERT_OK(face_landmarker->SetOptions(
+      /*num_faces=*/1, /*min_face_detection_confidence=*/0.1,
+      /*min_face_presence_confidence=*/0.1, /*min_tracking_confidence=*/0.1));
+  MP_ASSERT_OK_AND_ASSIGN(FaceLandmarkerResult after,
+                          face_landmarker->Detect(image));
+  ASSERT_FALSE(after.face_landmarks.empty());
+
+  EXPECT_THAT(face_landmarker->SetOptions(0, 0.5, 0.5, 0.5).message(),
+              HasSubstr("num_faces"));
+  EXPECT_THAT(face_landmarker->SetOptions(1, 1.5, 0.5, 0.5).message(),
+              HasSubstr("Confidence thresholds"));
+  MP_ASSERT_OK(face_landmarker->Close());
+}
 
 }  // namespace
 }  // namespace face_landmarker
