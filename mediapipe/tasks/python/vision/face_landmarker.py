@@ -3073,6 +3073,10 @@ _CTYPES_SIGNATURES = (
         'MpFaceLandmarkerClose',
         (ctypes.c_void_p,),
     ),
+    mediapipe_c_utils.CStatusFunction(
+        'MpFaceLandmarkerReset',
+        (ctypes.c_void_p,),
+    ),
 )
 
 
@@ -3324,6 +3328,19 @@ class FaceLandmarker:
         c_image_processing_options,
         timestamp_ms,
     )
+
+  def reset(self) -> None:
+    """Resets internal state so a new video can start at any timestamp.
+
+    Call this between videos in VIDEO or LIVE_STREAM mode. The model stays
+    loaded; only tracker state and the monotonic timestamp clock are cleared.
+
+    Raises:
+      RuntimeError: If the FaceLandmarker has already been closed.
+    """
+    if not self._handle:
+      raise RuntimeError('FaceLandmarker has been closed.')
+    self._lib.MpFaceLandmarkerReset(self._handle)  # pyrefly: ignore[missing-attribute]
 
   def close(self):
     """Closes the FaceLandmarker."""
