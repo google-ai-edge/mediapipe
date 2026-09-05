@@ -35,7 +35,7 @@ exports_files(["LICENSE"])
 # "include/opencv4/opencv2/**/*.h*" and the include prefix needs to be set to
 # "include/opencv4".
 
-PREFIX = "opt/opencv@3"
+PREFIX = "opencv/4.12.0_15"
 
 cc_library(
     name = "opencv",
@@ -51,8 +51,8 @@ cc_library(
             paths.join(PREFIX, "lib/libopencv_videoio.dylib"),
         ],
     ),
-    hdrs = glob([paths.join(PREFIX, "include/opencv2/**/*.h*")]),
-    includes = [paths.join(PREFIX, "include/")],
+    hdrs = glob([paths.join(PREFIX, "include/opencv4/opencv2/**/*.h*")]),
+    includes = [paths.join(PREFIX, "include/opencv4")],
     linkstatic = 1,
     visibility = ["//visibility:public"],
 )
