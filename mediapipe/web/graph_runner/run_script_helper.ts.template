@@ -33,12 +33,21 @@ export async function runScript(scriptUrl: string) {
     const script = document.createElement('script');
     (script as {src:string}).src = scriptUrl.toString();
     script.crossOrigin = 'anonymous';
-    return new Promise<void>((resolve, revoke) => {
+    return new Promise<void>((resolve, reject) => {
       script.addEventListener('load', () => {
         resolve();
       }, false);
       script.addEventListener('error', e => {
-        revoke(e);
+        const error =
+            new Error('Failed to load script: ' + scriptUrl.toString());
+        // ErrorOptions.cause is not in the ES2021 type library used here, so
+        // define it explicitly while preserving the standard property shape.
+        Object.defineProperty(error, 'cause', {
+          configurable: true,
+          value: e,
+          writable: true,
+        });
+        reject(error);
       }, false);
       document.body.appendChild(script);
     });
