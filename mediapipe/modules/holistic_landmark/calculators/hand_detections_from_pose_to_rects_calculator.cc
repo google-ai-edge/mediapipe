@@ -106,11 +106,27 @@ HandDetectionsFromPoseToRectsCalculator::DetectionToNormalizedRect(
   const float center_x = x_middle;
   const float center_y = y_middle;
 
-  // Bounding box size as double distance from middle finger to wrist.
-  const float box_size =
+  // Bounding box size from a data-driven formula fit on the Panoptic Hand DB
+  // (Simon et al., 2017). The original heuristic used 2*dist(middle, wrist),
+  // which systematically under-scales the ROI when the hand is not parallel to
+  // the camera. A two-term linear fit over the available keypoints - the wrist->
+  // middle distance and the index->pinky knuckle span - cuts the ROI scale error
+  // (30.4% -> 17.4% relative), raises ROI IoU 58.8% -> 65.9% and drops badly
+  // cropped hands (IoU < 50%) from 30% to 10% on the held-out set.
+  //
+  // All coordinates here are in PIXELS (x*width, y*height), so the distances are
+  // already isotropic - no aspect-ratio correction is applied or needed. The
+  // downstream RectTransformationCalculator still applies the unchanged 2.7x
+  // expansion (the coefficients below are post-divided by 2.7).
+  // See https://github.com/sign-language-processing/mediapipe-hand-crop-fix
+  const float d_wrist_middle =
       std::sqrt((x_middle - x_wrist) * (x_middle - x_wrist) +
-                (y_middle - y_wrist) * (y_middle - y_wrist)) *
-      2.0;
+                (y_middle - y_wrist) * (y_middle - y_wrist));
+  const float d_index_pinky =
+      std::sqrt((x_index - x_pinky) * (x_index - x_pinky) +
+                (y_index - y_pinky) * (y_index - y_pinky));
+  const float box_size =
+      1.36807f * d_wrist_middle + 0.57733f * d_index_pinky;
 
   // Set resulting bounding box.
   rect->set_x_center(center_x / image_size->first);
