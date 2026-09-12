@@ -59,7 +59,7 @@ class LegacyCalculatorSupport {
     //
     // ABSL_CONST_INIT triggers b/155992786 with some versions of Clang on Apple
     // platforms.
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(_MSC_VER)
     ABSL_CONST_INIT
 #endif                                // !__APPLE__
     static thread_local C* current_;  // NOLINT

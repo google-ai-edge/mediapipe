@@ -14,7 +14,10 @@
 
 #include "mediapipe/framework/calculator_graph.h"
 
+// pthread.h is not available on Windows
+#ifndef _WIN32
 #include <pthread.h>
+#endif
 
 #include <atomic>
 #include <cstdint>
@@ -975,6 +978,8 @@ class OneShot20MsCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(OneShot20MsCalculator);
 
+// Excluded on Windows: pthread_self() and pthread_t are not available.
+#ifndef _WIN32
 // A source calculator that outputs a packet containing the return value of
 // pthread_self() (the pthread id of the current thread).
 class PthreadSelfSourceCalculator : public CalculatorBase {
@@ -991,6 +996,7 @@ class PthreadSelfSourceCalculator : public CalculatorBase {
   }
 };
 REGISTER_CALCULATOR(PthreadSelfSourceCalculator);
+#endif
 
 // A source calculator for testing the Calculator::InputTimestamp() method.
 // It outputs five int packets with timestamps 0, 1, 2, 3, 4.
@@ -4364,6 +4370,8 @@ TEST(CalculatorGraph, NumThreadsAndNonDefaultExecutorConfig) {
 // "ApplicationThreadExecutor" is specified.  In this test
 // "ApplicationThreadExecutor" is specified in the ExecutorConfig for the
 // default executor.
+// Excluded on Windows: this test uses PthreadSelfSourceCalculator which is unavailable on Windows.
+#ifndef _WIN32
 TEST(CalculatorGraph, RunWithNumThreadsInExecutorConfig) {
   const struct {
     std::string executor_type;
@@ -4405,6 +4413,7 @@ TEST(CalculatorGraph, RunWithNumThreadsInExecutorConfig) {
         << "for case " << i;
   }
 }
+#endif
 
 TEST(CalculatorGraph, CalculatorGraphNotInitialized) {
   CalculatorGraph graph;

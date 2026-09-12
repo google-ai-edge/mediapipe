@@ -14,7 +14,12 @@
 
 #include "mediapipe/framework/calculator_node.h"
 
+//POSIX unistd.h is not available on Windows.
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <unistd.h>
+#endif
 
 #include <memory>
 
@@ -50,8 +55,13 @@ class CountCalculator : public CalculatorBase {
     ++num_open_;
     // Simulate doing nontrivial work to ensure that the time spent in the
     // method will register on streamz each time it is called.
-    usleep(100);
-    return absl::OkStatus();
+    // Windows has no usleep(); use Sleep(1ms) as equivalent delay.
+    #ifdef _WIN32
+      Sleep(1);
+    #else
+      usleep(100);
+    #endif
+      return absl::OkStatus();
   }
 
   absl::Status Process(CalculatorContext* cc) override {
@@ -65,16 +75,26 @@ class CountCalculator : public CalculatorBase {
                        .At(cc->InputTimestamp()));
     // Simulate doing nontrivial work to ensure that the time spent in the
     // method will register on streamz each time it is called.
-    usleep(100);
-    return absl::OkStatus();
+    // Windows has no usleep(); use Sleep(1ms) as equivalent delay.
+    #ifdef _WIN32
+      Sleep(1);
+    #else
+      usleep(100);
+    #endif
+      return absl::OkStatus();
   }
 
   absl::Status Close(CalculatorContext* cc) override {
     ++num_close_;
     // Simulate doing nontrivial work to ensure that the time spent in the
     // method will register on streamz each time it is called.
-    usleep(100);
-    return absl::OkStatus();
+    // Windows has no usleep(); use Sleep(1ms) as equivalent delay.
+    #ifdef _WIN32
+      Sleep(1);
+    #else
+      usleep(100);
+    #endif
+      return absl::OkStatus();
   }
 
   static int num_constructed_;

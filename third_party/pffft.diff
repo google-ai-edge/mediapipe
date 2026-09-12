@@ -1,0 +1,15 @@
+--- a/pffft.c
++++ b/pffft.c
+@@ -174,7 +174,11 @@
+ #  define VALIGNED(ptr) ((((long long)(ptr)) & 0x3) == 0)
+ #else
+ #  if !defined(PFFFT_SIMD_DISABLE)
+-#    warning "building with simd disabled !\n";
++#    ifdef _MSC_VER
++#      pragma message("building with simd disabled !")
++#    else
++#      warning "building with simd disabled !\n";
++#    endif
+ #    define PFFFT_SIMD_DISABLE // fallback to scalar code
+ #  endif
+ #endif
