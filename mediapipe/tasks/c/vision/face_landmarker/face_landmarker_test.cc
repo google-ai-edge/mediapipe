@@ -348,4 +348,55 @@ TEST(FaceLandmarkerTest, InvalidArgumentHandling) {
   MpErrorFree(error_msg);
 }
 
+TEST(FaceLandmarkerTest, SetOptionsUpdatesThresholdsAndKeepsDetecting) {
+  const auto image = GetImage(GetFullPath(kImageFile));
+  const std::string model_path = GetFullPath(kModelName);
+  MpFaceLandmarkerOptions options = {
+      /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
+                           /* model_asset_path= */ model_path.c_str()},
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_IMAGE,
+      /* num_faces= */ 1,
+      /* min_face_detection_confidence= */ 0.5,
+      /* min_face_presence_confidence= */ 0.5,
+      /* min_tracking_confidence= */ 0.5,
+      /* output_face_blendshapes = */ false,
+      /* output_facial_transformation_matrixes = */ false,
+  };
+
+  MpFaceLandmarkerPtr landmarker;
+  ASSERT_EQ(
+      MpFaceLandmarkerCreate(&options, &landmarker, /* error_msg= */ nullptr),
+      kMpOk);
+
+  MpFaceLandmarkerResult result;
+  ASSERT_EQ(MpFaceLandmarkerDetectImage(landmarker, image.get(),
+                                        /* image_processing_options= */ nullptr,
+                                        &result, /* error_msg= */ nullptr),
+            kMpOk);
+  EXPECT_GE(result.face_landmarks_count, 1);
+  MpFaceLandmarkerCloseResult(&result);
+
+  ASSERT_EQ(MpFaceLandmarkerSetOptions(landmarker, /* num_faces= */ 1,
+                                       /* min_face_detection_confidence= */ 0.1,
+                                       /* min_face_presence_confidence= */ 0.1,
+                                       /* min_tracking_confidence= */ 0.1,
+                                       /* error_msg= */ nullptr),
+            kMpOk);
+  ASSERT_EQ(MpFaceLandmarkerDetectImage(landmarker, image.get(),
+                                        /* image_processing_options= */ nullptr,
+                                        &result, /* error_msg= */ nullptr),
+            kMpOk);
+  EXPECT_GE(result.face_landmarks_count, 1);
+  MpFaceLandmarkerCloseResult(&result);
+
+  char* error_msg = nullptr;
+  EXPECT_EQ(MpFaceLandmarkerSetOptions(landmarker, /* num_faces= */ 0, 0.5, 0.5,
+                                       0.5, &error_msg),
+            kMpInvalidArgument);
+  EXPECT_THAT(error_msg, HasSubstr("num_faces"));
+  MpErrorFree(error_msg);
+  EXPECT_EQ(MpFaceLandmarkerClose(landmarker, /* error_msg= */ nullptr), kMpOk);
+}
+
 }  // namespace
