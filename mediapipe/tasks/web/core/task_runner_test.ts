@@ -418,6 +418,122 @@ describe('TaskRunner', () => {
     ).toBeRejectedWithError('Failed to fetch model: notfound.tflite (404)');
   });
 
+  it('reports model download progress from a streamed body', async () => {
+    if (typeof ReadableStream === 'undefined') return; // No Node support
+
+    fetchSpy.and.callFake(async () => {
+      const body = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new Uint8Array([0, 1]));
+          controller.enqueue(new Uint8Array([2, 3]));
+          controller.close();
+        },
+      });
+      return {
+        ok: true,
+        status: 200,
+        headers: {get: (name: string) => name.toLowerCase() === 'content-length' ? '4' : null},
+        body,
+        arrayBuffer: () => mockBytes.buffer,
+      } as unknown as Response;
+    });
+
+    const events: Array<{type: string; loaded: number; total: number}> = [];
+    await taskRunner.setOptions({
+      baseOptions: {modelAssetPath: `foo.tflite`},
+      onLoadingProgress: (event) => {
+        events.push({...event});
+      },
+    });
+
+    expect(events).toEqual([
+      {type: 'model', loaded: 2, total: 4},
+      {type: 'model', loaded: 4, total: 4},
+    ]);
+    expect(taskRunner.baseOptions.toObject()).toEqual(mockFileResult);
+  });
+
+  it('reports a completed model progress event when the body is not a stream', async () => {
+    const events: Array<{type: string; loaded: number; total: number}> = [];
+    await taskRunner.setOptions({
+      baseOptions: {modelAssetPath: `foo.tflite`},
+      onLoadingProgress: (event) => {
+        events.push({...event});
+      },
+    });
+
+    expect(events).toEqual([{type: 'model', loaded: 4, total: 4}]);
+  });
+
+  it('does not prefetch Wasm when onLoadingProgress is omitted', () => {
+    const fileset: WasmFileset = {
+      wasmLoaderPath: `wasm.js`,
+      wasmBinaryPath: `a/b/c/wasm.wasm`,
+    };
+    createTaskRunner(TaskRunnerFake, null, fileset, {
+      baseOptions: {modelAssetPath: `modelAssetPath`},
+    });
+    expect(locator?.wasmBinary).toBeUndefined();
+    expect(locator?.getPreloadedPackage).toBeUndefined();
+  });
+
+  it('prefetches Wasm and reports progress when onLoadingProgress is set', async () => {
+    const fileset: WasmFileset = {
+      wasmLoaderPath: `wasm.js`,
+      wasmBinaryPath: `a/b/c/wasm.wasm`,
+    };
+    const events: Array<{type: string; loaded: number; total: number}> = [];
+
+    await createTaskRunner(TaskRunnerFake, null, fileset, {
+      baseOptions: {modelAssetPath: `modelAssetPath`},
+      onLoadingProgress: (event) => {
+        events.push({...event});
+      },
+    });
+
+    expect(locator?.wasmBinary).toBeDefined();
+    expect(fetchSpy).toHaveBeenCalledWith('a/b/c/wasm.wasm');
+    expect(fetchSpy).toHaveBeenCalledWith('modelAssetPath');
+    expect(events.map((e) => e.type)).toEqual(['wasm', 'model']);
+  });
+
+  it('prefetches .data assets and reports progress', async () => {
+    const fileset: WasmFileset = {
+      wasmLoaderPath: `wasm.js`,
+      wasmBinaryPath: `a/b/c/wasm.wasm`,
+      assetLoaderPath: `asset.js`,
+      assetBinaryPath: `a/b/c/asset.data`,
+    };
+    const events: Array<{type: string}> = [];
+
+    await createTaskRunner(TaskRunnerFake, null, fileset, {
+      baseOptions: {modelAssetPath: `modelAssetPath`},
+      onLoadingProgress: (event) => {
+        events.push({type: event.type});
+      },
+    });
+
+    expect(locator?.getPreloadedPackage).toBeDefined();
+    expect(fetchSpy).toHaveBeenCalledWith('a/b/c/asset.data');
+    expect(events.map((e) => e.type)).toEqual(['wasm', 'asset', 'model']);
+  });
+
+  it('keeps onLoadingProgress across later setOptions calls', async () => {
+    const events: string[] = [];
+    await taskRunner.setOptions({
+      baseOptions: {modelAssetPath: `foo.tflite`},
+      onLoadingProgress: (event) => {
+        events.push(event.type);
+      },
+    });
+    events.length = 0;
+
+    await taskRunner.setOptions({
+      baseOptions: {modelAssetPath: `bar.tflite`},
+    });
+    expect(events).toEqual(['model']);
+  });
+
   it('can enable CPU delegate', async () => {
     await taskRunner.setOptions({
       baseOptions: {
