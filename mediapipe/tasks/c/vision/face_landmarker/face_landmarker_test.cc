@@ -242,6 +242,54 @@ TEST(FaceLandmarkerTest, VideoModeTest) {
   EXPECT_EQ(MpFaceLandmarkerClose(landmarker, /* error_msg= */ nullptr), kMpOk);
 }
 
+TEST(FaceLandmarkerTest, ResetAllowsNewVideoAfterReset) {
+  const auto image = GetImage(GetFullPath(kImageFile));
+  const std::string model_path = GetFullPath(kModelName);
+  MpFaceLandmarkerOptions options = {
+      /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
+                           /* model_asset_path= */ model_path.c_str()},
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_VIDEO,
+      /* num_faces= */ 1,
+      /* min_face_detection_confidence= */ 0.5,
+      /* min_face_presence_confidence= */ 0.5,
+      /* min_tracking_confidence= */ 0.5,
+      /* output_face_blendshapes = */ false,
+      /* output_facial_transformation_matrixes = */ false,
+  };
+
+  MpFaceLandmarkerPtr landmarker;
+  ASSERT_EQ(
+      MpFaceLandmarkerCreate(&options, &landmarker, /* error_msg= */ nullptr),
+      kMpOk);
+
+  MpFaceLandmarkerResult result;
+  ASSERT_EQ(
+      MpFaceLandmarkerDetectForVideo(landmarker, image.get(),
+                                     /* image_processing_options= */ nullptr, 1,
+                                     &result, /* error_msg= */ nullptr),
+      kMpOk);
+  MpFaceLandmarkerCloseResult(&result);
+
+  char* error_msg = nullptr;
+  EXPECT_EQ(
+      MpFaceLandmarkerDetectForVideo(landmarker, image.get(),
+                                     /* image_processing_options= */ nullptr, 0,
+                                     &result, &error_msg),
+      kMpInvalidArgument);
+  EXPECT_THAT(error_msg, HasSubstr("monotonically increasing"));
+  MpErrorFree(error_msg);
+
+  ASSERT_EQ(MpFaceLandmarkerReset(landmarker, /* error_msg= */ nullptr), kMpOk);
+  ASSERT_EQ(
+      MpFaceLandmarkerDetectForVideo(landmarker, image.get(),
+                                     /* image_processing_options= */ nullptr, 0,
+                                     &result, /* error_msg= */ nullptr),
+      kMpOk);
+  MpFaceLandmarkerCloseResult(&result);
+  EXPECT_EQ(MpFaceLandmarkerClose(landmarker, /* error_msg= */ nullptr), kMpOk);
+}
+
 // A structure to support LiveStreamModeTest below. This structure holds a
 // static method `Fn` for a callback function of C API. A `static` qualifier
 // allows to take an address of the method to follow API style. Another static
