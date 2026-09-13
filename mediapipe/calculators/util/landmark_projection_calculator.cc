@@ -90,8 +90,12 @@ class LandmarkProjectionNodeImpl
         float new_x = std::cos(angle) * x - std::sin(angle) * y;
         float new_y = std::sin(angle) * x + std::cos(angle) * y;
 
-        new_x = new_x * input_rect.width() + input_rect.x_center();
-        new_y = new_y * input_rect.height() + input_rect.y_center();
+        // input_rect's x_min and y_min may be smaller than 0, so limit the lower bound with 0
+        const float rect_x_min = std::max(0.f, input_rect.x_center() - input_rect.width() * 0.5f);
+        const float rect_y_min = std::max(0.f, input_rect.y_center() - input_rect.height() * 0.5f);
+
+        new_x = (new_x + 0.5f) * input_rect.width() + rect_x_min;
+        new_y = (new_y + 0.5f) * input_rect.height() + rect_y_min;
         const float new_z =
             landmark.z() * input_rect.width();  // Scale Z coordinate as X.
 
