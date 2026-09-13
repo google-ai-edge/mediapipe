@@ -36,6 +36,19 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "pose_tracking_out_cpu",
+    data = [
+        "//mediapipe/modules/pose_detection:pose_detection.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+    ],
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_out_pose",
+        "//mediapipe/graphs/pose_tracking:pose_tracking_cpu_deps",
+    ],
+)
+
+
 # Linux only
 cc_binary(
     name = "pose_tracking_gpu",
