@@ -171,7 +171,7 @@ class Dataset(classification_dataset.ClassificationDataset):
 
     # Assumes the image data of the same label are in the same subdirectory,
     # gets image path and label names.
-    all_image_paths = list(tf.io.gfile.glob(data_root + r'/*/*'))
+    all_image_paths = sorted(tf.io.gfile.glob(data_root + r'/*/*'))
     if not all_image_paths:
       raise ValueError('Image dataset directory is empty.')
 
