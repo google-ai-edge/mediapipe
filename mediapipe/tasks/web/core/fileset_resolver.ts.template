@@ -32,7 +32,7 @@ const WASM_SIMD_CHECK = new Uint8Array([
 ]);
 
 /** The categories of tasks supported by MediaPipe. */
-type MediaPipeTaskCategory = 'audio'|'genai'|'text'|'vision';
+type MediaPipeTaskCategory = 'audio'|'genai'|'text'|'litertlm_text'|'vision';
 
 async function isSimdSupported(useModule: boolean): Promise<boolean> {
   if (useModule) {
@@ -141,6 +141,24 @@ export class FilesetResolver {
       basePath?: string,
       useModule = false): Promise<WasmFileset> {
     return createFileset('text', basePath ?? ``, useModule);
+  }
+
+  /**
+   * Creates a fileset for the MediaPipe LiteRT LM Text tasks.
+   *
+   * @export
+   * @param basePath An optional base path to specify the directory the Wasm
+   *    files should be loaded from. If not specified, the Wasm files are
+   *    loaded from the host's root directory.
+   * @param useModule Whether to use ES6 Modules for the Wasm files.
+   * @return A `WasmFileset` that can be used to initialize MediaPipe LiteRT LM
+   *    Text tasks.
+   */
+  static forLiteRtLmTextTasks(
+      basePath?: string,
+      useModule = false): Promise<WasmFileset> {
+    return createFileset(
+        'litertlm_text', basePath ?? ``, useModule);
   }
 
   /**

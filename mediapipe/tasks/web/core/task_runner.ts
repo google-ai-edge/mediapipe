@@ -144,10 +144,13 @@ export abstract class TaskRunner {
    * @param options The options for the task.
    * @param loadTfliteModel Whether to load the model specified in
    *     `options.baseOptions`.
+   * @param isLiteRtLmModel Whether the model is a LiteRT LM model that should be
+   *     written as a `.litertlm` file.
    */
   protected applyOptions(
     options: TaskRunnerOptions,
     loadTfliteModel = true,
+    isLiteRtLmModel = false,
   ): Promise<void> {
     if (loadTfliteModel) {
       const baseOptions: BaseOptions = options.baseOptions || {};
@@ -174,6 +177,8 @@ export abstract class TaskRunner {
       }
 
       this.setAcceleration(baseOptions);
+      const modelPath = isLiteRtLmModel ? 'model.litertlm' : 'model.dat';
+
       if (baseOptions.modelAssetPath) {
         // We don't use `await` here since we want to apply most settings
         // synchronously.
@@ -188,31 +193,25 @@ export abstract class TaskRunner {
             }
           })
           .then((buffer) => {
-            try {
-              // Try to delete file as we cannot overwrite an existing file
-              // using our current API.
-              this.graphRunner.wasmModule.FS_unlink('/model.dat');
-            } catch {}
-            // TODO: Consider passing the model to the graph as an
-            // input side packet as this might reduce copies.
-            this.graphRunner.wasmModule.FS_createDataFile(
-              '/',
-              'model.dat',
-              new Uint8Array(buffer),
-              /* canRead= */ true,
-              /* canWrite= */ false,
-              /* canOwn= */ false,
-            );
-            this.setExternalFile('/model.dat');
+            this.writeModelBufferToFs(new Uint8Array(buffer), modelPath);
             this.refreshGraph();
             this.onGraphRefreshed();
           });
       } else if (baseOptions.modelAssetBuffer instanceof Uint8Array) {
-        this.setExternalFile(baseOptions.modelAssetBuffer);
+        if (isLiteRtLmModel) {
+          // LiteRT LM only supports reading from file.
+          this.writeModelBufferToFs(baseOptions.modelAssetBuffer, modelPath);
+        } else {
+          this.setExternalFile(baseOptions.modelAssetBuffer);
+        }
       } else if (baseOptions.modelAssetBuffer) {
         return streamToUint8Array(baseOptions.modelAssetBuffer).then(
           (buffer) => {
-            this.setExternalFile(buffer);
+            if (isLiteRtLmModel) {
+              this.writeModelBufferToFs(buffer, modelPath);
+            } else {
+              this.setExternalFile(buffer);
+            }
             this.refreshGraph();
             this.onGraphRefreshed();
           },
@@ -224,6 +223,27 @@ export abstract class TaskRunner {
     this.refreshGraph();
     this.onGraphRefreshed();
     return Promise.resolve();
+  }
+
+  private writeModelBufferToFs(buffer: Uint8Array, modelPath: string): void {
+    try {
+      // Try to delete file as we cannot overwrite an existing file
+      // using our current API.
+      this.graphRunner.wasmModule.FS_unlink(`/${modelPath}`);
+    } catch {
+      // Ignore errors if file doesn't exist.
+    }
+    // TODO: Consider passing the model to the graph as an
+    // input side packet as this might reduce copies.
+    this.graphRunner.wasmModule.FS_createDataFile(
+      '/',
+      modelPath,
+      buffer,
+      /* canRead= */ true,
+      /* canWrite= */ false,
+      /* canOwn= */ false,
+    );
+    this.setExternalFile(`/${modelPath}`);
   }
 
   /** Appliest the current options to the MediaPipe graph. */
