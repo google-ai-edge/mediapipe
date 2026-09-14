@@ -36,18 +36,23 @@ namespace mediapipe {
 
 namespace {
 
-// Helper function to get the tensor shape without leading ones.
+// Helper function to get the tensor shape without leading and trailing ones.
 template <typename T>
-std::vector<int> GetTensorDimensionsWithoutLeadingOnes(const T& tensor_shape) {
+std::vector<int> GetTensorDimensionsWithoutLeadingAndTrailingOnes(
+    const T& tensor_shape) {
   if (tensor_shape.size() <= 1) {
     // Skip if the tensor has no dimensions or only one dimension.
     return std::vector<int>(tensor_shape.begin(), tensor_shape.end());
   }
-  auto itr = tensor_shape.begin();
-  while (itr != tensor_shape.end() - 1 && *itr == 1) {
-    ++itr;
+  auto start = tensor_shape.begin();
+  auto end = tensor_shape.end();
+  while (start != end - 1 && *start == 1) {
+    ++start;
   }
-  return std::vector<int>(itr, tensor_shape.end());
+  while (end - 1 != start && *(end - 1) == 1) {
+    --end;
+  }
+  return std::vector<int>(start, end);
 }
 
 bool operator==(Tensor::ElementType tensor_type,
@@ -105,10 +110,10 @@ absl::Status AreTensorSpecsEqual(
     const litert::RankedTensorType& litert_tensor_type,
     const mediapipe::Tensor& mp_tensor) {
   const std::vector<int> litert_tensor_dims =
-      GetTensorDimensionsWithoutLeadingOnes(
+      GetTensorDimensionsWithoutLeadingAndTrailingOnes(
           litert_tensor_type.Layout().Dimensions());
   const std::vector<int> mp_tensor_dims =
-      GetTensorDimensionsWithoutLeadingOnes(mp_tensor.shape().dims);
+      GetTensorDimensionsWithoutLeadingAndTrailingOnes(mp_tensor.shape().dims);
   const litert::ElementType litert_tensor_element_type =
       litert_tensor_type.ElementType();
   if (litert_tensor_dims.empty() && mp_tensor_dims.size() == 1 &&

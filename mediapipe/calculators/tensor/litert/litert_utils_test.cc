@@ -83,6 +83,30 @@ TEST(LiteRtUtilsTest, ShouldDetectEqualTensorShapes) {
   MP_EXPECT_OK(AreTensorSpecsEqual(litert_tensor_type, mp_tensor));
 }
 
+TEST(LiteRtUtilsTest,
+     ShouldDetectEqualTensorShapesWithTrailingSingletonDimension) {
+  constexpr int kHeight = 2001;
+  constexpr int kWidth = 128;
+  litert::RankedTensorType litert_tensor_type(
+      litert::ElementType::Float32,
+      litert::Layout(litert::Dimensions{kHeight, kWidth}));
+  Tensor mp_tensor(Tensor::ElementType::kFloat32,
+                   Tensor::Shape({1, kHeight, kWidth, 1}),
+                   /*memory_manager=*/nullptr,
+                   /*alignment=*/0);
+  MP_EXPECT_OK(AreTensorSpecsEqual(litert_tensor_type, mp_tensor));
+
+  litert::RankedTensorType litert_tensor_type_with_trailing(
+      litert::ElementType::Float32,
+      litert::Layout(litert::Dimensions{1, kHeight, kWidth, 1}));
+  Tensor mp_tensor_without_trailing(Tensor::ElementType::kFloat32,
+                                    Tensor::Shape({kHeight, kWidth}),
+                                    /*memory_manager=*/nullptr,
+                                    /*alignment=*/0);
+  MP_EXPECT_OK(AreTensorSpecsEqual(litert_tensor_type_with_trailing,
+                                   mp_tensor_without_trailing));
+}
+
 TEST(LiteRtUtilsTest, ShouldDetectScalarTensorShapes) {
   // Scalar input in TensorFlow is described by an empty shape.
   // In MediaPipe, we represent it as a shape with a single dimension of size 1.
