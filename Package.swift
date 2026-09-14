@@ -38,28 +38,28 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "MediaPipeTasksCommonBinary",
-            url: "https://dl.google.com/cpdc/20260904-143841/MediaPipeTasksCommon-1.0.1.xcframework.zip",
-            checksum: "7d96778bcc69cf0b294ef130f1d9e59f6ca5f0d072349ee488a94205ad23efec"
+            url: "https://dl.google.com/cpdc/20260911-163655/MediaPipeTasksCommon-1.0.1.xcframework.zip",
+            checksum: "5c4a6a9f4c866e8456178f0707110a05484caa50e69c1d4c4e0d76d296f08e13"
         ),
         .binaryTarget(
             name: "MediaPipeTaskGraphsBinary",
-            url: "https://dl.google.com/cpdc/20260904-143841/MediaPipeTaskGraphs-1.0.1.xcframework.zip",
-            checksum: "fd985165a4c59fb0161be1d7cbd8bd11ed8016be9ed05dde5d0f364aca774c29"
+            url: "https://dl.google.com/cpdc/20260911-163655/MediaPipeTaskGraphs-1.0.1.xcframework.zip",
+            checksum: "673e8f5be771dd54374e90224e1ac3a0a0ac0bbb686201595d9b6c49cb21378d"
         ),
         .binaryTarget(
             name: "MediaPipeTasksVision",
-            url: "https://dl.google.com/cpdc/20260904-143841/MediaPipeTasksVision-1.0.1.xcframework.zip",
-            checksum: "3b887020b44c488f3e0ca6d1895d8dfaa3554573a58c9f6cfa3282cf9768ae0e"
+            url: "https://dl.google.com/cpdc/20260911-163655/MediaPipeTasksVision-1.0.1.xcframework.zip",
+            checksum: "3ea09537d103c97ac4d40daf0b672e374ca7894fbba7fada037a8975936b9a1d"
         ),
         .binaryTarget(
             name: "MediaPipeTasksText",
-            url: "https://dl.google.com/cpdc/20260904-143841/MediaPipeTasksText-1.0.1.xcframework.zip",
-            checksum: "2af0e7b6ea02eb943b70be264c963b422b55dd84fe9ae9a9d9b28901fff72b5b"
+            url: "https://dl.google.com/cpdc/20260911-163655/MediaPipeTasksText-1.0.1.xcframework.zip",
+            checksum: "e9116fc78f43edd606616cd5ad983f1d9f2f6ee69df22829198a2ef1e984da8d"
         ),
         .binaryTarget(
             name: "MediaPipeTasksAudio",
-            url: "https://dl.google.com/cpdc/20260904-143841/MediaPipeTasksAudio-1.0.1.xcframework.zip",
-            checksum: "b72182cbbbaa015cb101459fcd4bdc4f35ab3d58393ed093e83b7c938926643b"
+            url: "https://dl.google.com/cpdc/20260911-163655/MediaPipeTasksAudio-1.0.1.xcframework.zip",
+            checksum: "d458eb5bf2f84281550f0b29b0455f34851d8db2522b91926143c1b625412306"
         ),
         .target(
             name: "MediaPipeTasksCommon",
