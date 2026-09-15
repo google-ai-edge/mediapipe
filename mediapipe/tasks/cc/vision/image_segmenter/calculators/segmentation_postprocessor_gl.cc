@@ -8,6 +8,7 @@
 
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -538,7 +539,7 @@ bool SegmentationPostprocessorGl::HasGlExtension(std::string const& extension) {
 #endif  // __EMSCRIPTEN__
 }
 
-std::vector<std::unique_ptr<Image>>
+absl::StatusOr<std::vector<std::unique_ptr<Image>>>
 SegmentationPostprocessorGl::GetSegmentationResultGpu(
     const Shape& input_shape, const Shape& output_shape, const Tensor& tensor,
     const bool produce_confidence_masks, const bool produce_category_mask) {
@@ -598,14 +599,26 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
     // Otherwise, we just try for F16. See b/277656755 for more information.
     // TODO: In the future, separate these 3 different restrictions.
     // TODO: Also, we should extend this logic to all platforms.
-    static bool can_use_f32 = HasGlExtension("EXT_color_buffer_float") &&
-                              HasGlExtension("OES_texture_float_linear") &&
-                              HasGlExtension("EXT_float_blend");
-    static bool can_use_f16_backup =
+    const bool has_ext_color_buffer_float =
+        HasGlExtension("EXT_color_buffer_float");
+    const bool has_oes_texture_float_linear =
+        HasGlExtension("OES_texture_float_linear");
+    const bool has_ext_float_blend = HasGlExtension("EXT_float_blend");
+    const bool has_ext_color_buffer_half_float =
         HasGlExtension("EXT_color_buffer_half_float");
-    RET_CHECK(can_use_f32 || can_use_f16_backup)
-        << "Segmentation postprocessing error: GPU does not fully support "
-        << "4-channel float32 or float16 formats.";
+    const bool can_use_f32 = has_ext_color_buffer_float &&
+                             has_oes_texture_float_linear &&
+                             has_ext_float_blend;
+    const bool can_use_f16_backup = has_ext_color_buffer_half_float;
+    if (!can_use_f32 && !can_use_f16_backup) {
+      return absl::FailedPreconditionError(absl::StrFormat(
+          "Segmentation postprocessing error: GPU does not fully support "
+          "4-channel float32 or float16 formats. WebGL extensions: "
+          "EXT_color_buffer_float=%v, OES_texture_float_linear=%v, "
+          "EXT_float_blend=%v, EXT_color_buffer_half_float=%v",
+          has_ext_color_buffer_float, has_oes_texture_float_linear,
+          has_ext_float_blend, has_ext_color_buffer_half_float));
+    }
 
     const GpuBufferFormat activation_output_format =
         can_use_f32 ? GpuBufferFormat::kRGBAFloat128
@@ -984,10 +997,8 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
     return absl::OkStatus();
   });
 
-  if (!status.ok()) {
-    ABSL_LOG(ERROR) << "Error with rendering: " << status;
-  }
-
+  if (!status.ok())
+    return status;
   return image_outputs;
 }
 
