@@ -17,6 +17,7 @@ ts_library(
     visibility = ["//visibility:public"],
     deps = [
         ":object_detector_types",
+        "//mediapipe/calculators/util:detection_label_id_to_text_calculator_jspb_proto",
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/framework:calculator_options_jspb_proto",
         "//mediapipe/framework/formats:detection_jspb_proto",
@@ -27,6 +28,7 @@ ts_library(
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/vision/core:image_processing_options",
         "//mediapipe/tasks/web/vision/core:vision_task_runner",
+        "//mediapipe/util:label_map_jspb_proto",
         "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )
@@ -57,11 +59,15 @@ ts_library(
     deps = [
         ":object_detector",
         ":object_detector_types",
+        "//mediapipe/calculators/util:detection_label_id_to_text_calculator_jspb_proto",
         "//mediapipe/framework:calculator_jspb_proto",
+        "//mediapipe/framework:calculator_options_jspb_proto",
         "//mediapipe/framework/formats:detection_jspb_proto",
         "//mediapipe/framework/formats:location_data_jspb_proto",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner_test_utils",
+        "//mediapipe/util:label_map_jspb_proto",
+        "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )
 
