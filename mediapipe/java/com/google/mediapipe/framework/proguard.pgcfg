@@ -1,11 +1,23 @@
 # Additional flags to pass to Proguard when processing a binary that uses
 # MediaPipe.
 
-# Keep public members of our public interfaces. This also prevents the
-# obfuscation of the corresponding methods in classes implementing them,
-# such as implementations of PacketCallback#process.
+# Keep public members of our public interfaces.
 -keep public interface com.google.mediapipe.framework.* {
   public *;
+}
+
+# Keep process() on all callback implementations including lambda-desugared
+# anonymous classes. R8 cannot see that these methods are invoked via JNI
+# (graph.cc CallbackToJava) and will strip them, causing a fatal SIGABRT when
+# GetMethodID fails at runtime. See #6045.
+-keep class * implements com.google.mediapipe.framework.PacketCallback {
+  void process(com.google.mediapipe.framework.Packet);
+}
+-keep class * implements com.google.mediapipe.framework.PacketListCallback {
+  void process(java.util.List);
+}
+-keep class * implements com.google.mediapipe.framework.PacketWithHeaderCallback {
+  void process(com.google.mediapipe.framework.Packet, com.google.mediapipe.framework.Packet);
 }
 
 # This method is invoked by native code.
