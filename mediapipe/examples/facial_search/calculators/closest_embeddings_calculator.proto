@@ -1,0 +1,12 @@
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message ClosestEmbeddingsCalculatorOptions {
+  extend CalculatorOptions {
+    optional ClosestEmbeddingsCalculatorOptions ext = 107632442;
+  }
+  optional uint32 top_k = 1 [default = 1];
+}
