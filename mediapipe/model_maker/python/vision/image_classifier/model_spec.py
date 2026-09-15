@@ -56,7 +56,7 @@ class ModelSpec(object):
 
 mobilenet_v2_keras_spec = functools.partial(
     ModelSpec,
-    uri=None,
+    uri=None,  # pyrefly: ignore[bad-argument-type]
     name='mobilenet_v2_keras',
     mean_rgb=[127.5],
     stddev_rgb=[128.0],
