@@ -355,6 +355,7 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:test_util",
+        "//third_party/ffmpeg:ffmpeg_version_header",
         "@com_google_absl//absl/flags:flag",
     ],
 )

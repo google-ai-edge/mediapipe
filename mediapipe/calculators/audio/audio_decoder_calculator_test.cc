@@ -21,6 +21,7 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/tool/test_util.h"
+#include "third_party/ffmpeg/ffmpeg_version.h"
 
 namespace mediapipe {
 namespace {
@@ -53,8 +54,15 @@ TEST(AudioDecoderCalculatorTest, TestWAV) {
           .header.Get<mediapipe::TimeSeriesHeader>();
   EXPECT_EQ(44100, header.sample_rate());
   EXPECT_EQ(1, header.num_channels());
+#if FFMPEG_VERSION_AVFORMAT_MAJOR < 62
+  // FFmpeg n6_1 had a default of 1024 samples per packet.
   EXPECT_TRUE(runner.Outputs().Tag("AUDIO").packets.size() >=
               std::ceil(44100.0 * 2 / 2048));
+#else
+  // FFmpeg n8_1_1 has a default of 4096 samples per packet.
+  EXPECT_TRUE(runner.Outputs().Tag("AUDIO").packets.size() >=
+              std::ceil(44100.0 / 4096));
+#endif
 }
 
 TEST(AudioDecoderCalculatorTest, Test48KWAV) {
@@ -83,8 +91,15 @@ TEST(AudioDecoderCalculatorTest, Test48KWAV) {
           .header.Get<mediapipe::TimeSeriesHeader>();
   EXPECT_EQ(48000, header.sample_rate());
   EXPECT_EQ(2, header.num_channels());
+#if FFMPEG_VERSION_AVFORMAT_MAJOR < 62
+  // FFmpeg n6_1 had a default of 1024 samples per packet.
   EXPECT_TRUE(runner.Outputs().Tag("AUDIO").packets.size() >=
               std::ceil(48000.0 * 2 / 1024));
+#else
+  // FFmpeg n8_1_1 has a default of 4096 samples per packet.
+  EXPECT_TRUE(runner.Outputs().Tag("AUDIO").packets.size() >=
+              std::ceil(48000.0 * 2 / 4096));
+#endif
 }
 
 TEST(AudioDecoderCalculatorTest, TestMP3) {
