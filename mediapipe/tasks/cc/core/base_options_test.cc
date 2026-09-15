@@ -59,6 +59,26 @@ TEST(BaseOptionsTest, ConvertBaseOptionsToProtoWithAcceleration) {
   EXPECT_TRUE(proto.acceleration().litert().has_cpu());
 }
 
+TEST(BaseOptionsTest, ConvertBaseOptionsToProtoWithCpuNumThreads) {
+  BaseOptions base_options;
+  base_options.delegate = BaseOptions::Delegate::CPU;
+  base_options.num_threads = 4;
+  proto::BaseOptions proto = ConvertBaseOptionsToProto(&base_options);
+  ASSERT_TRUE(proto.acceleration().has_xnnpack());
+  EXPECT_EQ(proto.acceleration().xnnpack().num_threads(), 4);
+  EXPECT_FALSE(proto.acceleration().has_tflite());
+}
+
+TEST(BaseOptionsTest, ConvertBaseOptionsToProtoWithDefaultNumThreadsUsesTfLite) {
+  BaseOptions base_options;
+  base_options.delegate = BaseOptions::Delegate::CPU;
+  // num_threads defaults to -1, which must keep the existing behavior of an
+  // empty TfLite delegate (no explicit XNNPACK thread count).
+  proto::BaseOptions proto = ConvertBaseOptionsToProto(&base_options);
+  EXPECT_TRUE(proto.acceleration().has_tflite());
+  EXPECT_FALSE(proto.acceleration().has_xnnpack());
+}
+
 TEST(DelegateOptionsTest, SucceedCpuOptions) {
   BaseOptions base_options;
   base_options.delegate = BaseOptions::Delegate::CPU;
