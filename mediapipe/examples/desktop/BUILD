@@ -20,6 +20,7 @@ package(default_visibility = [
     "//visibility:public",
 ])
 
+# buildifier: disable=no-hdrs-no-alwayslink
 cc_library(
     name = "simple_run_graph_main",
     srcs = ["simple_run_graph_main.cc"],
@@ -31,7 +32,6 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
-        "//third_party/gloop/base:init_google",  # copybara:strip
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/log:absl_log",
@@ -39,6 +39,7 @@ cc_library(
     ],
 )
 
+# buildifier: disable=no-hdrs-no-alwayslink
 cc_library(
     name = "demo_run_graph_main",
     srcs = ["demo_run_graph_main.cc"],
@@ -53,7 +54,6 @@ cc_library(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_util",
-        "//third_party/gloop/base:init_google",  # copybara:strip
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/log:absl_log",
@@ -64,6 +64,7 @@ cc_library(
 # Must have a GPU with EGL support:
 # ex: sudo apt-get install mesa-common-dev libegl1-mesa-dev libgles2-mesa-dev
 # (or similar nvidia/amd equivalent)
+# buildifier: disable=no-hdrs-no-alwayslink
 cc_library(
     name = "demo_run_graph_main_gpu",
     srcs = ["demo_run_graph_main_gpu.cc"],
@@ -81,7 +82,6 @@ cc_library(
         "//mediapipe/gpu:gpu_buffer",
         "//mediapipe/gpu:gpu_shared_data_internal",
         "//mediapipe/util:resource_util",
-        "//third_party/gloop/base:init_google",  # copybara:strip
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/log:absl_log",
