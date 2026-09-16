@@ -11,12 +11,11 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "litert/cc/internal/litert_extended_model.h"  // from @litert
-#include "litert/cc/litert_common.h"                   // from @litert
-#include "litert/cc/litert_compiled_model.h"           // from @litert
-#include "litert/cc/litert_expected.h"                 // from @litert
-#include "litert/cc/litert_model.h"                    // from @litert
-#include "litert/cc/litert_tensor_buffer.h"            // from @litert
+#include "litert/cc/litert_common.h"          // from @litert
+#include "litert/cc/litert_compiled_model.h"  // from @litert
+#include "litert/cc/litert_expected.h"        // from @litert
+#include "litert/cc/litert_model_types.h"     // from @litert
+#include "litert/cc/litert_tensor_buffer.h"   // from @litert
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/calculators/tensor/inference_io_mapper.h"
 
@@ -36,8 +35,8 @@ class InferenceFeedbackManagerLiteRt {
   absl::Status Init(
       const mediapipe::InferenceCalculatorOptions::InputOutputConfig& io_config,
       const InputOutputTensorNames& input_output_tensor_names_map,
-      const litert::Subgraph* subgraph, const litert::Model* model,
-      const litert::CompiledModel* compiled_model, int signature_index);
+      const litert::CompiledModel* compiled_model,
+      const litert::SimpleSignature& signature);
 
   // Returns true if a feedback tensor for the given tensor name is present.
   bool Contains(absl::string_view tensor_name) const {
@@ -71,8 +70,8 @@ class InferenceFeedbackManagerLiteRt {
  private:
   // Creates feedback input tensor buffers.
   absl::Status CreateFeedbackTensorBuffers(
-      const litert::Subgraph* subgraph, const litert::Model* model,
-      const litert::CompiledModel* compiled_model, int signature_index);
+      const litert::CompiledModel* compiled_model,
+      const litert::SimpleSignature& signature);
 
   // Links between feedback tensors defined by model tensor indices.
   struct TensorFeedbackIndicesLink {

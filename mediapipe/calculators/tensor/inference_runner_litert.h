@@ -40,15 +40,15 @@
 #if MEDIAPIPE_TENSOR_USE_AHWB
 #include "mediapipe/framework/formats/shared_fd.h"
 #include "mediapipe/framework/formats/unique_fd.h"
-#endif  // MEDIAPIPE_TENSOR_USE_AHWB
-#include "litert/cc/internal/litert_extended_model.h"  // from @litert
-#include "litert/cc/litert_compiled_model.h"           // from @litert
-#include "litert/cc/litert_environment.h"              // from @litert
-#include "litert/cc/litert_layout.h"                   // from @litert
-#include "litert/cc/litert_options.h"                  // from @litert
-#include "litert/cc/litert_ranked_tensor_type.h"       // from @litert
-#include "litert/cc/litert_tensor_buffer.h"            // from @litert
-#include "litert/cc/litert_tensor_buffer_types.h"      // from @litert
+#endif                                             // MEDIAPIPE_TENSOR_USE_AHWB
+#include "litert/cc/litert_compiled_model.h"       // from @litert
+#include "litert/cc/litert_environment.h"          // from @litert
+#include "litert/cc/litert_layout.h"               // from @litert
+#include "litert/cc/litert_model_types.h"          // from @litert
+#include "litert/cc/litert_options.h"              // from @litert
+#include "litert/cc/litert_ranked_tensor_type.h"   // from @litert
+#include "litert/cc/litert_tensor_buffer.h"        // from @litert
+#include "litert/cc/litert_tensor_buffer_types.h"  // from @litert
 #include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port/port.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
@@ -182,12 +182,10 @@ class InferenceRunnerLiteRt : public InferenceRunner {
       std::shared_ptr<mediapipe::GlContext> gl_context,
       api2::Packet<TfLiteModelPtr> model_packet,
       std::unique_ptr<litert::Environment> environment,
-      std::unique_ptr<litert::Model> model,
       std::unique_ptr<litert::CompiledModel> compiled_model, bool run_async,
       bool enable_dynamic_resize, bool use_npu, bool release_model_packet,
-      std::unique_ptr<litert::Subgraph> subgraph,
-      std::unique_ptr<std::vector<litert::Signature>> signatures,
-      int signature_index,
+      int signature_index, litert::SimpleSignature signature,
+      InputOutputTensorNames input_output_tensor_names,
       std::unique_ptr<InferenceFeedbackManagerLiteRt> feedback_manager
 #if MEDIAPIPE_METAL_ENABLED
       ,
@@ -196,7 +194,7 @@ class InferenceRunnerLiteRt : public InferenceRunner {
   );
 
   static InputOutputTensorNames CreateInputOutputTensorNames(
-      const std::vector<litert::Signature>& signatures, int signature_index);
+      const std::vector<litert::SimpleSignature>& signatures);
 
 #if MEDIAPIPE_TENSOR_USE_AHWB
   // Creates an input tensor buffer from an AHardwareBuffer with zero-copy.
@@ -252,13 +250,13 @@ class InferenceRunnerLiteRt : public InferenceRunner {
   // dynamic the litert tensor type is resized to match the MP input tensor
   // type.
   absl::StatusOr<litert::RankedTensorType> CreateInputRankedTensorType(
-      const litert::Tensor& model_tensor, const Tensor& mp_input_tensor,
-      int tensor_index);
+      const litert::RankedTensorType& tensor_type,
+      const Tensor& mp_input_tensor, int tensor_index);
 
   // Creates a ranked tensor type for the given output tensor. If the tensor is
   // dynamic, a updated ranked tensor type is returned.
   absl::StatusOr<litert::RankedTensorType> CreateOutputRankedTensorType(
-      const litert::Tensor& tensor, litert::Layout layout);
+      const litert::RankedTensorType& model_tensor_type, litert::Layout layout);
 
 #if MEDIAPIPE_METAL_ENABLED
   // Creates an input tensor buffer from a Metal buffer read view with
@@ -297,18 +295,17 @@ class InferenceRunnerLiteRt : public InferenceRunner {
   // Creates a vector of MP output tensors that matches the model signature of
   // the output tensors.
   absl::StatusOr<std::vector<Tensor>> CreateMpOutputTensors(
-      const litert::SubgraphOutputs& model_output_tensors,
+      const litert::SimpleSignature& signature,
       const std::vector<litert::Layout>& output_tensor_layouts);
 
   // Prepares the input buffers for a single inference run.
-  absl::Status PrepareInputBuffers(
-      const TensorSpan& tensor_span,
-      const litert::SubgraphInputs& model_input_tensors,
-      InferenceRunContext& ctx);
+  absl::Status PrepareInputBuffers(const litert::SimpleSignature& signature,
+                                   const TensorSpan& tensor_span,
+                                   InferenceRunContext& ctx);
 
   // Prepares the output buffers for a single inference run.
   absl::Status PrepareOutputBuffers(
-      const litert::SubgraphOutputs& model_output_tensors,
+      const litert::SimpleSignature& signature,
       const std::vector<litert::Layout>& output_tensor_layouts,
       const std::vector<Tensor>& mp_output_tensors, InferenceRunContext& ctx);
 
@@ -363,13 +360,14 @@ class InferenceRunnerLiteRt : public InferenceRunner {
   // of the model.
   api2::Packet<TfLiteModelPtr> model_packet_;
   std::unique_ptr<litert::Environment> environment_;
-  std::unique_ptr<litert::Model> model_;
   std::unique_ptr<litert::CompiledModel> compiled_model_;
   bool run_async_ = false;
-  std::unique_ptr<litert::Subgraph> subgraph_;
-  std::unique_ptr<std::vector<litert::Signature>> signatures_;
 
   int signature_index_ = -1;
+
+  // Signature of the model at signature_index_. Cached to avoid rebuilding it
+  // for every inference run.
+  litert::SimpleSignature signature_;
 
   // Whether dynamic tensor resizing is enabled
   bool enable_dynamic_resize_ = true;

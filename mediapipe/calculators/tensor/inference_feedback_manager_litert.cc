@@ -15,13 +15,13 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "litert/c/litert_model_types.h"               // from @litert
-#include "litert/cc/internal/litert_extended_model.h"  // from @litert
-#include "litert/cc/litert_compiled_model.h"           // from @litert
-#include "litert/cc/litert_macros.h"                   // from @litert
-#include "litert/cc/litert_model.h"                    // from @litert
-#include "litert/cc/litert_ranked_tensor_type.h"       // from @litert
-#include "litert/cc/litert_tensor_buffer.h"            // from @litert
+#include "litert/c/litert_model_types.h"          // from @litert
+#include "litert/cc/litert_api_types.h"           // from @litert
+#include "litert/cc/litert_compiled_model.h"      // from @litert
+#include "litert/cc/litert_macros.h"              // from @litert
+#include "litert/cc/litert_model_types.h"         // from @litert
+#include "litert/cc/litert_ranked_tensor_type.h"  // from @litert
+#include "litert/cc/litert_tensor_buffer.h"       // from @litert
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/calculators/tensor/inference_io_mapper.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -33,7 +33,8 @@ namespace mediapipe {
 namespace {
 
 // TODO: Move to a litert utility file.
-bool LiteRtTensorSpecEqual(const litert::Tensor& a, const litert::Tensor& b) {
+bool LiteRtTensorSpecEqual(const litert::SimpleTensor& a,
+                           const litert::SimpleTensor& b) {
   if (!(a.ElementType() == b.ElementType() && a.TypeId() == b.TypeId() &&
         a.HasQuantization() == b.HasQuantization())) {
     return false;
@@ -78,7 +79,7 @@ absl::flat_hash_map<std::string, int> CreateNameToIndexMap(
 }
 
 // TODO: Move to a litert utility file.
-bool IsDynamic(const litert::Tensor& tensor) {
+bool IsDynamic(const litert::SimpleTensor& tensor) {
   LITERT_ASSIGN_OR_RETURN(auto ranked_tensor_type, tensor.RankedTensorType());
   absl::Span<const int> shape = ranked_tensor_type.Layout().Dimensions();
   return absl::c_linear_search(shape, -1);
@@ -88,25 +89,29 @@ bool IsDynamic(const litert::Tensor& tensor) {
 
 // Initializes the feedback manager: Performs basic sanity checks on feedback
 // tensor configuration, and initializes feedback tensor buffers.
-// The passed-in pointers (subgraph, model, compiled_model) are only used to
-// create the feedback tensor buffers, and are not stored after Init.
+// The passed-in compiled_model pointer is only used to create the feedback
+// tensor buffers, and is not stored after Init.
 absl::Status InferenceFeedbackManagerLiteRt::Init(
     const InferenceCalculatorOptions::InputOutputConfig& io_config,
     const InputOutputTensorNames& input_output_tensor_names,
-    const litert::Subgraph* subgraph, const litert::Model* model,
-    const litert::CompiledModel* compiled_model, int signature_index) {
+    const litert::CompiledModel* compiled_model,
+    const litert::SimpleSignature& signature) {
   StoreFeedbackTensorNames(io_config);
 
   ABSL_ASSIGN_OR_RETURN(feedback_tensor_indices_links_,
                         ConvertSignatureTensorNamesToModelIndices(
                             io_config, input_output_tensor_names));
 
+  // Note that from_idx / to_idx are signature-relative indices, so the tensors
+  // must be looked up through the signature (and not through the subgraph,
+  // which may use a different ordering).
   for (const auto& link : feedback_tensor_indices_links_) {
     const auto [output_unused_iter, output_was_inserted] =
         feedback_output_indices_.insert(link.from_idx);
     RET_CHECK(output_was_inserted) << "Feedback output tensors must be unique.";
-    litert::SubgraphOutputs subgraph_outputs = subgraph->Outputs();
-    const litert::Tensor& from_tensor = subgraph_outputs[link.from_idx];
+    LITERT_ASSIGN_OR_RETURN(
+        const litert::SimpleTensor& from_tensor,
+        signature.OutputTensor(static_cast<size_t>(link.from_idx)));
 
     RET_CHECK(!IsDynamic(from_tensor))
         << "Feedback output tensors must not be dynamic.";
@@ -114,8 +119,9 @@ absl::Status InferenceFeedbackManagerLiteRt::Init(
         feedback_input_indices_.insert(link.to_idx);
     RET_CHECK(input_was_inserted) << "Feedback input tensors must be unique.";
 
-    litert::SubgraphInputs subgraph_inputs = subgraph->Inputs();
-    const litert::Tensor& to_tensor = subgraph_inputs[link.to_idx];
+    LITERT_ASSIGN_OR_RETURN(
+        const litert::SimpleTensor& to_tensor,
+        signature.InputTensor(static_cast<size_t>(link.to_idx)));
 
     RET_CHECK(!IsDynamic(to_tensor))
         << "Feedback input tensors must not be dynamic.";
@@ -126,14 +132,14 @@ absl::Status InferenceFeedbackManagerLiteRt::Init(
 
   // Populate input_tensor_to_model_indices_ which maps InferenceRunner input
   // tensors indices to the model input indices.
-  input_tensor_to_model_indices_.reserve(subgraph->Inputs().size());
-  for (int i = 0; i < subgraph->Inputs().size(); ++i) {
+  const int num_model_inputs = signature.InputNames().size();
+  input_tensor_to_model_indices_.reserve(num_model_inputs);
+  for (int i = 0; i < num_model_inputs; ++i) {
     if (!feedback_input_indices_.contains(i)) {
       input_tensor_to_model_indices_.push_back(i);
     }
   }
-  return CreateFeedbackTensorBuffers(subgraph, model, compiled_model,
-                                     signature_index);
+  return CreateFeedbackTensorBuffers(compiled_model, signature);
 }
 
 // static
@@ -228,25 +234,20 @@ int InferenceFeedbackManagerLiteRt::GetNumberOfFeedbackTensors() const {
 }
 
 absl::Status InferenceFeedbackManagerLiteRt::CreateFeedbackTensorBuffers(
-    const litert::Subgraph* subgraph, const litert::Model* model,
-    const litert::CompiledModel* compiled_model, int signature_index) {
+    const litert::CompiledModel* compiled_model,
+    const litert::SimpleSignature& signature) {
   // TODO: Create dedicated input and output tensor buffers
   // for feedback tensors and perform an actual swap, instead of 'Duplicating'
   // the input buffer.  It's hard to verify that the 'Duplicated' approach will
   // actually work for all OPs, use cases and accelerators.
-  const litert::SubgraphInputs& model_input_tensors = subgraph->Inputs();
-  LITERT_ASSIGN_OR_RETURN(
-      std::vector<absl::string_view> model_input_tensor_names,
-      model->GetSignatureInputNames(signature_index));
+  const std::vector<litert::StringView> model_input_tensor_names =
+      signature.InputNames();
 
-  LITERT_ASSIGN_OR_RETURN(auto signature, model->GetSignature(signature_index));
-
-  for (int i = 0; i < model_input_tensors.size(); ++i) {
+  for (int i = 0; i < model_input_tensor_names.size(); ++i) {
     if (!IsFeedbackInputTensorAtIndex(i)) {
       continue;
     }
-    const std::string& model_input_tensor_name =
-        std::string(model_input_tensor_names[i]);
+    const std::string model_input_tensor_name(model_input_tensor_names[i]);
     // Feedback tensors are stripped from the InferenceRunner input.
     // We need to create them if they are not already created.
     if (feedback_tensor_buffers_.contains(model_input_tensor_name)) {

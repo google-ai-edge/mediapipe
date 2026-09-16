@@ -2,6 +2,8 @@
 
 #include <optional>
 
+#include "litert/cc/litert_api_types.h"  // from @litert
+
 #if MEDIAPIPE_METAL_ENABLED
 #import <Metal/Metal.h>
 
@@ -28,13 +30,13 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "litert/cc/internal/litert_extended_model.h"        // from @litert
 #include "litert/cc/litert_buffer_ref.h"                     // from @litert
 #include "litert/cc/litert_common.h"                         // from @litert
 #include "litert/cc/litert_compiled_model.h"                 // from @litert
 #include "litert/cc/litert_environment.h"                    // from @litert
 #include "litert/cc/litert_layout.h"                         // from @litert
 #include "litert/cc/litert_macros.h"                         // from @litert
+#include "litert/cc/litert_model_types.h"                    // from @litert
 #include "litert/cc/litert_opaque_options.h"                 // from @litert
 #include "litert/cc/litert_options.h"                        // from @litert
 #include "litert/cc/litert_ranked_tensor_type.h"             // from @litert
@@ -353,12 +355,14 @@ InferenceRunnerLiteRt::Create(
 #endif  // __EMSCRIPTEN__
                                                     ));
 
-  // Repackage the model into a litert::Model.
+  // LiteRT does not copy the model buffer, so the model packet must outlive
+  // the compiled model -- except in the fully-accelerated GPU case, where
+  // ClearModelPacket() intentionally drops it after compilation (see below).
+  // The buffer is handed to CompiledModel::Create below, which loads and
+  // compiles the model through the LiteRT runtime C API function table.
   const auto* model_allocation = (*model_packet)->allocation();
-  LITERT_ASSIGN_OR_RETURN(
-      auto litert_model,
-      litert::ExtendedModel::CreateFromBuffer(litert::BufferRef<uint8_t>(
-          model_allocation->base(), model_allocation->bytes())));
+  const litert::BufferRef<uint8_t> model_buffer(model_allocation->base(),
+                                                model_allocation->bytes());
   ABSL_ASSIGN_OR_RETURN(litert::HwAcceleratorSet accelerator,
                         GetLiteRtHwAccelerators(options));
 
@@ -511,11 +515,10 @@ InferenceRunnerLiteRt::Create(
     }
   }
 
-  LITERT_ASSIGN_OR_RETURN(
-      auto compiled_model,
-      litert::CompiledModel::Create(environment, litert_model.Get(),
-                                    jit_compilation_options));
-  LITERT_ASSIGN_OR_RETURN(auto signatures, litert_model.GetSignatures());
+  LITERT_ASSIGN_OR_RETURN(auto compiled_model, litert::CompiledModel::Create(
+                                                   environment, model_buffer,
+                                                   jit_compilation_options));
+  LITERT_ASSIGN_OR_RETURN(auto signatures, compiled_model.GetSignatures());
   const int num_signatures = signatures.size();
   RET_CHECK_GT(num_signatures, 0) << "Model must have at least one signature";
 
@@ -532,32 +535,36 @@ InferenceRunnerLiteRt::Create(
     // Find default signature for models with multiple signatures.
     auto default_signature_itr =
         absl::c_find_if(signatures, [](const auto& signature) {
-          return signature.Key() == litert::Model::DefaultSignatureKey();
+          return signature.Key() ==
+                 litert::CompiledModel::DefaultSignatureKey();
         });
     RET_CHECK(default_signature_itr != signatures.end())
         << "Model must have default signature key";
     signature_index = std::distance(signatures.begin(), default_signature_itr);
   }
-  LITERT_ASSIGN_OR_RETURN(
-      auto subgraph,
-      litert_model.Subgraph(signatures.at(signature_index).Key()));
 
   bool run_async = options.run_async();
   bool enable_dynamic_resize = options.enable_dynamic_resize();
   bool use_npu = options.has_npu();
 
   InputOutputTensorNames input_output_tensor_names =
-      CreateInputOutputTensorNames(signatures, signature_index);
+      CreateInputOutputTensorNames(signatures);
+
+  litert::SimpleSignature signature = std::move(signatures[signature_index]);
+
   std::unique_ptr<InferenceFeedbackManagerLiteRt> feedback_manager;
   if (input_output_config) {
-    // The feedback manager is only using the LiteRT objects (subgraph, model,
-    // compiled_model) during initialization, so it's safe to move them after
-    // the feedback manager is created.
+    // The feedback manager is only using the compiled model during
+    // initialization, so it's safe to move it after the feedback manager is
+    // created.
     feedback_manager = std::make_unique<InferenceFeedbackManagerLiteRt>();
-    ABSL_RETURN_IF_ERROR(feedback_manager->Init(
-        *input_output_config, input_output_tensor_names, &subgraph,
-        &litert_model, &compiled_model, signature_index));
+    ABSL_RETURN_IF_ERROR(feedback_manager->Init(*input_output_config,
+                                                input_output_tensor_names,
+                                                &compiled_model, signature));
   }
+
+  const size_t num_inputs = signature.InputNames().size();
+  const size_t num_outputs = signature.OutputNames().size();
 
   auto runner =
       std::unique_ptr<InferenceRunnerLiteRt>(new InferenceRunnerLiteRt(
@@ -567,26 +574,26 @@ InferenceRunnerLiteRt::Create(
 #endif  // __EMSCRIPTEN__
           std::move(gl_context), std::move(model_packet),
           std::make_unique<litert::Environment>(std::move(environment)),
-          std::make_unique<litert::Model>(std::move(litert_model)),
           std::make_unique<litert::CompiledModel>(std::move(compiled_model)),
           run_async, enable_dynamic_resize, use_npu, release_model_packet,
-          std::make_unique<litert::Subgraph>(std::move(subgraph)),
-          std::make_unique<std::vector<litert::Signature>>(
-              std::move(signatures)),
-          signature_index, std::move(feedback_manager)
+          signature_index, std::move(signature),
+          std::move(input_output_tensor_names), std::move(feedback_manager)
 #if MEDIAPIPE_METAL_ENABLED
-                               ,
+                                                    ,
           metal_helper
 #endif  // MEDIAPIPE_METAL_ENABLED
           ));
 
+  runner->managed_input_buffers_.resize(num_inputs);
+  runner->managed_output_buffers_.resize(num_outputs);
+
   std::vector<litert::TensorBufferRequirements> reqs;
-  size_t num_inputs = runner->subgraph_->Inputs().size();
   reqs.reserve(num_inputs);
   for (int i = 0; i < num_inputs; ++i) {
-    LITERT_ASSIGN_OR_RETURN(auto req,
-                            runner->compiled_model_->GetInputBufferRequirements(
-                                runner->signature_index_, i));
+    LITERT_ASSIGN_OR_RETURN(
+        litert::TensorBufferRequirements req,
+        runner->compiled_model_->GetInputBufferRequirements(signature_index, i),
+        _ << "Failed to get input buffer requirements for input " << i);
     reqs.push_back(std::move(req));
   }
   runner->cached_input_buffer_requirements_ = std::move(reqs);
@@ -606,12 +613,10 @@ InferenceRunnerLiteRt::InferenceRunnerLiteRt(
     std::shared_ptr<mediapipe::GlContext> gl_context,
     api2::Packet<TfLiteModelPtr> model_packet,
     std::unique_ptr<litert::Environment> environment,
-    std::unique_ptr<litert::Model> model,
     std::unique_ptr<litert::CompiledModel> compiled_model, bool run_async,
     bool enable_dynamic_resize, bool use_npu, bool release_model_packet,
-    std::unique_ptr<litert::Subgraph> subgraph,
-    std::unique_ptr<std::vector<litert::Signature>> signatures,
-    int signature_index,
+    int signature_index, litert::SimpleSignature signature,
+    InputOutputTensorNames input_output_tensor_names,
     std::unique_ptr<InferenceFeedbackManagerLiteRt> feedback_manager
 #if MEDIAPIPE_METAL_ENABLED
     ,
@@ -625,19 +630,14 @@ InferenceRunnerLiteRt::InferenceRunnerLiteRt(
       gl_context_(std::move(gl_context)),
       model_packet_(std::move(model_packet)),
       environment_(std::move(environment)),
-      model_(std::move(model)),
       compiled_model_(std::move(compiled_model)),
       run_async_(run_async),
-      subgraph_(std::move(subgraph)),
-      signatures_(std::move(signatures)),
       signature_index_(signature_index),
+      signature_(std::move(signature)),
       enable_dynamic_resize_(enable_dynamic_resize),
       use_npu_(use_npu),
-      input_output_tensor_names_(
-          CreateInputOutputTensorNames(*signatures_, signature_index)),
-      feedback_manager_(std::move(feedback_manager)),
-      managed_input_buffers_(subgraph_->Inputs().size()),
-      managed_output_buffers_(subgraph_->Outputs().size()) {
+      input_output_tensor_names_(std::move(input_output_tensor_names)),
+      feedback_manager_(std::move(feedback_manager)) {
 #if MEDIAPIPE_METAL_ENABLED
   if (metal_helper) {
     metal_helper_ = (void*)CFRetain(metal_helper);
@@ -664,7 +664,6 @@ InferenceRunnerLiteRt::~InferenceRunnerLiteRt() {
       managed_input_buffers_.clear();
       managed_output_buffers_.clear();
       compiled_model_.reset();
-      model_.reset();
       environment_.reset();
     });
   }
@@ -687,11 +686,8 @@ absl::Status InferenceRunnerLiteRt::Close() {
 // Creates a ranked tensor type for the given input tensor.
 absl::StatusOr<litert::RankedTensorType>
 InferenceRunnerLiteRt::CreateInputRankedTensorType(
-    const litert::Tensor& model_tensor, const Tensor& mp_input_tensor,
+    const litert::RankedTensorType& tensor_type, const Tensor& mp_input_tensor,
     int tensor_index) {
-  LITERT_ASSIGN_OR_RETURN(litert::RankedTensorType tensor_type,
-                          model_tensor.RankedTensorType());
-
   absl::Span<const int> litert_shape = tensor_type.Layout().Dimensions();
 
   // Check if dynamic resizing is enabled and the tensor has a dynamic
@@ -711,6 +707,17 @@ InferenceRunnerLiteRt::CreateInputRankedTensorType(
     LITERT_RETURN_IF_ERROR(compiled_model_->ResizeInputTensor(
         signature_index_, tensor_index, mp_dims));
 
+    // Resizing invalidates the previously computed buffer requirements of this
+    // input tensor, so refresh the cached entry.
+    LITERT_ASSIGN_OR_RETURN(
+        litert::TensorBufferRequirements resized_requirements,
+        compiled_model_->GetInputBufferRequirements(signature_index_,
+                                                    tensor_index),
+        _ << "Failed to get input buffer requirements for input "
+          << tensor_index);
+    cached_input_buffer_requirements_[tensor_index] =
+        std::move(resized_requirements);
+
     return litert::RankedTensorType(
         tensor_type.ElementType(),
         litert::Layout(litert::BuildLayout(mp_dims)));
@@ -723,19 +730,17 @@ InferenceRunnerLiteRt::CreateInputRankedTensorType(
 // Creates a ranked tensor type for the given output tensor.
 absl::StatusOr<litert::RankedTensorType>
 InferenceRunnerLiteRt::CreateOutputRankedTensorType(
-    const litert::Tensor& tensor, litert::Layout layout) {
-  LITERT_ASSIGN_OR_RETURN(const litert::RankedTensorType ranked_tensor_type,
-                          tensor.RankedTensorType());
+    const litert::RankedTensorType& model_tensor_type, litert::Layout layout) {
   if (!has_dynamic_dimension_) {
-    return ranked_tensor_type;
+    return model_tensor_type;
   }
 
-  return litert::RankedTensorType(ranked_tensor_type.ElementType(),
+  return litert::RankedTensorType(model_tensor_type.ElementType(),
                                   std::move(layout));
 }
 
 InputOutputTensorNames InferenceRunnerLiteRt::CreateInputOutputTensorNames(
-    const std::vector<litert::Signature>& signatures, int signature_index) {
+    const std::vector<litert::SimpleSignature>& signatures) {
   InputOutputTensorNames input_output_tensor_names;
   for (const auto& signature : signatures) {
     SignatureInputOutputTensorNames signature_input_output_tensor_names;
@@ -1148,49 +1153,47 @@ absl::StatusOr<bool> InferenceRunnerLiteRt::TryAppendFeedbackBuffer(
 }
 
 absl::Status InferenceRunnerLiteRt::PrepareInputBuffers(
-    const TensorSpan& tensor_span,
-    const litert::SubgraphInputs& model_input_tensors,
+    const litert::SimpleSignature& signature, const TensorSpan& tensor_span,
     InferenceRunContext& ctx) {
-  ctx.litert_inputs.reserve(model_input_tensors.size());
-  LITERT_ASSIGN_OR_RETURN(
-      std::vector<absl::string_view> model_input_tensor_names,
-      model_->GetSignatureInputNames(signature_index_));
+  const std::vector<litert::StringView> input_names = signature.InputNames();
+  ctx.litert_inputs.reserve(input_names.size());
 
   // When feedback tensors are present then the model has more inputs than MP
   // has tensors, so we use a separate counter to track which MP tensor maps to
   // which model input.
   int mp_tensor_index = 0;
-  for (int i = 0; i < model_input_tensors.size(); ++i) {
+  for (int i = 0; i < input_names.size(); ++i) {
     ABSL_ASSIGN_OR_RETURN(
         bool is_feedback_tensor,
-        TryAppendFeedbackBuffer(true, i, model_input_tensor_names[i],
-                                ctx.litert_inputs));
+        TryAppendFeedbackBuffer(true, i, input_names[i], ctx.litert_inputs));
     if (is_feedback_tensor) continue;
     // We have a MP tensor for this model input tensor.
     const Tensor& mp_input_tensor = tensor_span[mp_tensor_index++];
     const Tensor* tensor_to_use = &mp_input_tensor;
 
-    const auto& input_buffer_requirements =
-        cached_input_buffer_requirements_[i];
-    ABSL_ASSIGN_OR_RETURN(litert::TensorBufferType buffer_type,
-                          ChooseBestBufferType(input_buffer_requirements));
+    ABSL_ASSIGN_OR_RETURN(
+        litert::TensorBufferType buffer_type,
+        ChooseBestBufferType(cached_input_buffer_requirements_[i]));
+
+    LITERT_ASSIGN_OR_RETURN(const litert::RankedTensorType model_tensor_type,
+                            signature.InputTensorType(i));
 
 #if MEDIAPIPE_METAL_ENABLED
     if (buffer_type == litert::TensorBufferType::kMetalBufferPacked) {
-      LITERT_ASSIGN_OR_RETURN(litert::RankedTensorType model_tensor_type,
-                              model_input_tensors[i].RankedTensorType());
       ABSL_ASSIGN_OR_RETURN(
           tensor_to_use, ConvertTensorChannelsIfNeeded(*tensor_to_use,
                                                        model_tensor_type, ctx));
     }
 #endif  // MEDIAPIPE_METAL_ENABLED
 
+    // Note: CreateInputRankedTensorType() may refresh
+    // cached_input_buffer_requirements_[i], so it must be read after this call.
     ABSL_ASSIGN_OR_RETURN(
         const litert::RankedTensorType tensor_type,
-        CreateInputRankedTensorType(model_input_tensors[i], *tensor_to_use, i));
+        CreateInputRankedTensorType(model_tensor_type, *tensor_to_use, i));
 
     LITERT_ASSIGN_OR_RETURN(size_t buffer_size,
-                            input_buffer_requirements.BufferSize());
+                            cached_input_buffer_requirements_[i].BufferSize());
     const bool size_mismatch = (buffer_size != tensor_to_use->bytes());
     if (size_mismatch) {
       if (!use_npu_) {
@@ -1248,26 +1251,24 @@ absl::Status InferenceRunnerLiteRt::PrepareInputBuffers(
 
 absl::StatusOr<std::vector<Tensor>>
 InferenceRunnerLiteRt::CreateMpOutputTensors(
-    const litert::SubgraphOutputs& model_output_tensors,
+    const litert::SimpleSignature& signature,
     const std::vector<litert::Layout>& output_tensor_layouts) {
+  const std::vector<litert::StringView> output_names = signature.OutputNames();
   std::vector<Tensor> mp_output_tensors;
-  mp_output_tensors.reserve(model_output_tensors.size());
+  mp_output_tensors.reserve(output_names.size());
 
-  RET_CHECK_EQ(model_output_tensors.size(), output_tensor_layouts.size());
+  RET_CHECK_EQ(output_names.size(), output_tensor_layouts.size());
 
-  LITERT_ASSIGN_OR_RETURN(
-      std::vector<absl::string_view> model_output_tensor_names,
-      model_->GetSignatureOutputNames(signature_index_));
-
-  for (int i = 0; i < model_output_tensors.size(); ++i) {
+  for (int i = 0; i < output_names.size(); ++i) {
     if (feedback_manager_ &&
         feedback_manager_->IsFeedbackOutputTensorAtIndex(i)) {
       continue;
     }
-    ABSL_ASSIGN_OR_RETURN(
-        const litert::RankedTensorType tensor_type,
-        CreateOutputRankedTensorType(model_output_tensors[i],
-                                     output_tensor_layouts[i]));
+    LITERT_ASSIGN_OR_RETURN(const litert::RankedTensorType model_tensor_type,
+                            signature.OutputTensorType(i));
+    ABSL_ASSIGN_OR_RETURN(const litert::RankedTensorType tensor_type,
+                          CreateOutputRankedTensorType(
+                              model_tensor_type, output_tensor_layouts[i]));
 
     ABSL_ASSIGN_OR_RETURN(
         Tensor mp_output_tensor,
@@ -1318,26 +1319,23 @@ InferenceRunnerLiteRt::CreateOutputTensorBufferFromMpTensor(
 }
 
 absl::Status InferenceRunnerLiteRt::PrepareOutputBuffers(
-    const litert::SubgraphOutputs& model_output_tensors,
+    const litert::SimpleSignature& signature,
     const std::vector<litert::Layout>& output_tensor_layouts,
     const std::vector<Tensor>& mp_output_tensors, InferenceRunContext& ctx) {
-  ctx.litert_outputs.reserve(model_output_tensors.size());
-
-  LITERT_ASSIGN_OR_RETURN(
-      std::vector<absl::string_view> model_output_tensor_names,
-      model_->GetSignatureOutputNames(signature_index_));
+  const std::vector<litert::StringView> output_names = signature.OutputNames();
+  ctx.litert_outputs.reserve(output_names.size());
 
   int mp_output_tensor_index = 0;
-  for (int i = 0; i < model_output_tensors.size(); ++i) {
+  for (int i = 0; i < output_names.size(); ++i) {
     ABSL_ASSIGN_OR_RETURN(
         bool is_feedback_tensor,
-        TryAppendFeedbackBuffer(false, i, model_output_tensor_names[i],
-                                ctx.litert_outputs));
+        TryAppendFeedbackBuffer(false, i, output_names[i], ctx.litert_outputs));
     if (is_feedback_tensor) continue;
-    ABSL_ASSIGN_OR_RETURN(
-        const litert::RankedTensorType tensor_type,
-        CreateOutputRankedTensorType(model_output_tensors[i],
-                                     output_tensor_layouts[i]));
+    LITERT_ASSIGN_OR_RETURN(const litert::RankedTensorType model_tensor_type,
+                            signature.OutputTensorType(i));
+    ABSL_ASSIGN_OR_RETURN(const litert::RankedTensorType tensor_type,
+                          CreateOutputRankedTensorType(
+                              model_tensor_type, output_tensor_layouts[i]));
 
     LITERT_ASSIGN_OR_RETURN(
         const auto output_buffer_requirements,
@@ -1436,8 +1434,6 @@ absl::StatusOr<std::vector<Tensor>> InferenceRunnerLiteRt::Run(
     CalculatorContext* cc, const TensorSpan& tensor_span) {
   InferenceRunContext ctx;
 
-  auto model_input_tensors = subgraph_->Inputs();
-
 #if MEDIAPIPE_METAL_ENABLED
   if (metal_command_buffer_) {
     id<MTLCommandBuffer> command_buffer =
@@ -1447,8 +1443,7 @@ absl::StatusOr<std::vector<Tensor>> InferenceRunnerLiteRt::Run(
   }
 #endif  // MEDIAPIPE_METAL_ENABLED
 
-  ABSL_RETURN_IF_ERROR(
-      PrepareInputBuffers(tensor_span, model_input_tensors, ctx));
+  ABSL_RETURN_IF_ERROR(PrepareInputBuffers(signature_, tensor_span, ctx));
 
 #if MEDIAPIPE_METAL_ENABLED
   id<MTLCommandBuffer> input_command_buffer = nil;
@@ -1465,13 +1460,12 @@ absl::StatusOr<std::vector<Tensor>> InferenceRunnerLiteRt::Run(
       compiled_model_->GetOutputTensorLayouts(
           signature_index_, /*update_allocation=*/has_dynamic_dimension_));
 
-  auto model_output_tensors = subgraph_->Outputs();
   ABSL_ASSIGN_OR_RETURN(
       std::vector<Tensor> mp_output_tensors,
-      CreateMpOutputTensors(model_output_tensors, output_tensor_layouts));
+      CreateMpOutputTensors(signature_, output_tensor_layouts));
 
-  ABSL_RETURN_IF_ERROR(PrepareOutputBuffers(
-      model_output_tensors, output_tensor_layouts, mp_output_tensors, ctx));
+  ABSL_RETURN_IF_ERROR(PrepareOutputBuffers(signature_, output_tensor_layouts,
+                                            mp_output_tensors, ctx));
 
 #if MEDIAPIPE_METAL_ENABLED
   id<MTLCommandBuffer> output_command_buffer = nil;
