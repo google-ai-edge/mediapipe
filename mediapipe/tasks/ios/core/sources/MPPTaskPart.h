@@ -28,7 +28,8 @@ NS_SWIFT_NAME(EmbeddingProvider)
 /**
  * Generates a high-dimensional vector embedding for the given list of task parts or objects.
  */
-- (nullable MPPEmbeddingResult *)embedContent:(NSArray<id> *)content error:(NSError **)error;
+- (nullable MPPEmbeddingResult *)embedContent:(NSArray<id> *)content
+                                        error:(NSError **)error NS_SWIFT_NAME(embed(content:));
 
 @end
 
