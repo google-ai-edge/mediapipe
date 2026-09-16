@@ -410,6 +410,25 @@ public class HolisticLandmarkerTest {
     }
 
     @Test
+    public void detect_successWithEmptyResultAndVideoMode() throws Exception {
+      HolisticLandmarkerOptions options =
+          HolisticLandmarkerOptions.builder()
+              .setBaseOptions(
+                  BaseOptions.builder()
+                      .setModelAssetPath(HOLISTIC_LANDMARKER_BUNDLE_ASSET_FILE)
+                      .build())
+              .setRunningMode(RunningMode.VIDEO)
+              .build();
+      HolisticLandmarker holisticLandmarker =
+          HolisticLandmarker.createFromOptions(
+              ApplicationProvider.getApplicationContext(), options);
+      HolisticLandmarkerResult actualResult =
+          holisticLandmarker.detectForVideo(getImageFromAsset(CAT_IMAGE), /* timestampMs= */ 4269);
+      assertThat(actualResult.faceLandmarks()).isEmpty();
+      assertThat(actualResult.timestampMs()).isEqualTo(4269);
+    }
+
+    @Test
     public void detect_failsWithOutOfOrderInputTimestamps() throws Exception {
       MPImage image = getImageFromAsset(POSE_IMAGE);
       HolisticLandmarkerOptions options =

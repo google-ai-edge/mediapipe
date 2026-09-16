@@ -236,7 +236,7 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
                 rightHandLandmarkProtos,
                 rightHandWorldLandmarkProtos,
                 BaseVisionTaskApi.generateResultTimestampMs(
-                    landmarkerOptions.runningMode(), packets.get(FACE_LANDMARKS_OUT_STREAM_INDEX)));
+                    landmarkerOptions.runningMode(), packets.get(IMAGE_OUT_STREAM_INDEX)));
           }
 
           @Override
