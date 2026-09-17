@@ -19,10 +19,11 @@
 #include <vector>
 
 #include "absl/status/status.h"
-#include "litert/c/litert_tensor_buffer.h"  // from @litert
-#include "litert/cc/litert_element_type.h"  // from @litert
-#include "litert/cc/litert_layout.h"        // from @litert
-#include "litert/cc/litert_model.h"         // from @litert
+#include "litert/c/litert_tensor_buffer_types.h"  // from @litert
+#include "litert/cc/litert_element_type.h"        // from @litert
+#include "litert/cc/litert_layout.h"              // from @litert
+#include "litert/cc/litert_ranked_tensor_type.h"  // from @litert
+#include "mediapipe/calculators/tensor/litert/litert_service.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -160,6 +161,11 @@ INSTANTIATE_TEST_SUITE_P(
         CreateTensorFromLiteRtRankedTensorTypeTest::ParamType>& info) {
       return info.param.name;
     });
+
+TEST(CreateLiteRtEnvironmentTest, MissingRuntimeHandleFails) {
+  EXPECT_THAT(CreateLiteRtEnvironment(LiteRtSystemHandles{}),
+              StatusIs(absl::StatusCode::kInvalidArgument));
+}
 
 }  // namespace
 }  // namespace mediapipe

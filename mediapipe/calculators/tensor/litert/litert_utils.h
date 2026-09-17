@@ -15,10 +15,16 @@
 #ifndef MEDIAPIPE_CALCULATORS_TENSOR_LITERT_LITERT_UTILS_H_
 #define MEDIAPIPE_CALCULATORS_TENSOR_LITERT_LITERT_UTILS_H_
 
+#include <vector>
+
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "litert/cc/litert_model.h"          // from @litert
-#include "litert/cc/litert_tensor_buffer.h"  // from @litert
+#include "absl/types/span.h"
+#include "litert/cc/litert_environment.h"          // from @litert
+#include "litert/cc/litert_environment_options.h"  // from @litert
+#include "litert/cc/litert_ranked_tensor_type.h"   // from @litert
+#include "litert/cc/litert_tensor_buffer.h"        // from @litert
+#include "mediapipe/calculators/tensor/litert/litert_service.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/memory_manager.h"
 namespace mediapipe {
@@ -57,6 +63,21 @@ absl::Status CopyMpTensorToLiteRtBuffer(const Tensor& mp_tensor,
 // Copies the data from a LiteRT buffer to a MP output tensor.
 absl::Status CopyLiteRtBufferToMpTensor(
     const litert::TensorBuffer& litert_buffer, Tensor& mp_tensor);
+
+// Creates a LiteRT environment that uses the LiteRT handles provided by the
+// system, e.g. those acquired through the Google Play Services API.
+//
+// `system_handles.runtime` is required: an unset runtime handle means the
+// system did not provide a LiteRT runtime, and this returns an error rather
+// than silently falling back to the built-in runtime. The remaining handles are
+// optional and are only forwarded when set.
+//
+// `extra_options` are appended after the options derived from `system_handles`.
+// LiteRT resolves duplicate tags in favor of the first occurrence, so an entry
+// in `extra_options` does not override a system handle.
+absl::StatusOr<litert::Environment> CreateLiteRtEnvironment(
+    const LiteRtSystemHandles& system_handles,
+    absl::Span<const litert::EnvironmentOptions::Option> extra_options = {});
 
 }  // namespace mediapipe
 

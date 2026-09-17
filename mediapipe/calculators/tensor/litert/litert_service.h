@@ -19,31 +19,54 @@
 #include <string>
 #include <utility>
 
+#include "absl/base/attributes.h"
 #include "mediapipe/framework/graph_service.h"
 
 namespace mediapipe {
 
+// Handles to the LiteRT facilities provided by the system, which are acquired
+// through the Google Play Services API. A default-initialized member means the
+// corresponding facility was not provided.
+//
+// TODO: Link to the public documentation once it is available.
+struct LiteRtSystemHandles {
+  // Handle to the LiteRT runtime.
+  uintptr_t runtime = 0;
+
+  // Handle to the GPU accelerator, which enables GPU acceleration for models
+  // running on the system LiteRT runtime.
+  uintptr_t gpu_accelerator = 0;
+
+  // Context of the system LiteRT runtime, which enables its logging.
+  const void* context = nullptr;
+};
+
 class LiteRtService {
  public:
   explicit LiteRtService(std::string dispatch_library_path,
-                         uintptr_t system_runtime_handle = 0)
+                         LiteRtSystemHandles system_handles = {})
       : dispatch_library_path_(std::move(dispatch_library_path)),
-        system_runtime_handle_(system_runtime_handle) {}
+        system_handles_(system_handles) {}
 
   // Returns the dispatch library path.
   const std::string& GetDispatchLibraryPath() const {
     return dispatch_library_path_;
   }
 
-  // Returns the externally provided LiteRT runtime handle, which is acquired
-  // through the Google Play Services API, or 0 if not provided.
+  // Returns the externally provided LiteRT handles, which are acquired
+  // through the Google Play Services API, or null pointers if not provide.
   //
   // TODO: Link to the public documentation once it is available.
-  uintptr_t GetSystemRuntimeHandle() const { return system_runtime_handle_; }
+  const LiteRtSystemHandles& GetSystemHandles() const {
+    return system_handles_;
+  }
+
+  ABSL_DEPRECATED("Use GetSystemHandles().runtime instead.")
+  uintptr_t GetSystemRuntimeHandle() const { return system_handles_.runtime; }
 
  private:
   std::string dispatch_library_path_;
-  uintptr_t system_runtime_handle_;
+  LiteRtSystemHandles system_handles_;
 };
 
 // Service for providing the native library path from the Java side to the

@@ -25,6 +25,7 @@ cc_library(
     hdrs = ["litert_service.h"],
     deps = [
         "//mediapipe/framework:graph_service",
+        "@com_google_absl//absl/base:core_headers",
     ],
 )
 
@@ -33,6 +34,7 @@ cc_library(
     srcs = ["litert_utils.cc"],
     hdrs = ["litert_utils.h"],
     deps = [
+        ":litert_service",
         "//mediapipe/framework:memory_manager",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
@@ -43,8 +45,10 @@ cc_library(
         "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/types:span",
         "@litert//litert/cc:litert_element_type",
+        "@litert//litert/cc:litert_environment",
+        "@litert//litert/cc:litert_environment_options",
         "@litert//litert/cc:litert_macros",
-        "@litert//litert/cc:litert_model",
+        "@litert//litert/cc:litert_ranked_tensor_type",
         "@litert//litert/cc:litert_tensor_buffer",
     ],
 )
@@ -53,16 +57,17 @@ cc_test(
     name = "litert_utils_test",
     srcs = ["litert_utils_test.cc"],
     deps = [
+        ":litert_service",
         ":litert_utils",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
         "@litert//litert/c:litert_environment",
         "@litert//litert/c:litert_tensor_buffer",
+        "@litert//litert/c:litert_tensor_buffer_types",
         "@litert//litert/cc:litert_element_type",
         "@litert//litert/cc:litert_layout",
-        "@litert//litert/cc:litert_model",
+        "@litert//litert/cc:litert_ranked_tensor_type",
     ],
 )
 

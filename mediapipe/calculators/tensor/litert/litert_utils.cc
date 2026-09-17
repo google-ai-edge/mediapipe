@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
@@ -25,9 +26,13 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-#include "litert/cc/litert_element_type.h"   // from @litert
-#include "litert/cc/litert_macros.h"         // from @litert
-#include "litert/cc/litert_tensor_buffer.h"  // from @litert
+#include "litert/cc/litert_element_type.h"         // from @litert
+#include "litert/cc/litert_environment.h"          // from @litert
+#include "litert/cc/litert_environment_options.h"  // from @litert
+#include "litert/cc/litert_macros.h"               // from @litert
+#include "litert/cc/litert_ranked_tensor_type.h"   // from @litert
+#include "litert/cc/litert_tensor_buffer.h"        // from @litert
+#include "mediapipe/calculators/tensor/litert/litert_service.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -280,6 +285,41 @@ absl::Status CopyLiteRtBufferToMpTensor(
   void* mp_tensor_data = mp_tensor_view.buffer<void>();
   std::memcpy(mp_tensor_data, lock_and_addr.second, tensor_size_bytes);
   return absl::OkStatus();
+}
+
+absl::StatusOr<litert::Environment> CreateLiteRtEnvironment(
+    const LiteRtSystemHandles& system_handles,
+    absl::Span<const litert::EnvironmentOptions::Option> extra_options) {
+  if (system_handles.runtime == 0) {
+    return absl::InvalidArgumentError(
+        "No LiteRT system runtime handle available.");
+  }
+
+  std::vector<litert::EnvironmentOptions::Option> options;
+  options.reserve(extra_options.size() + 3);
+  // LiteRT only honors these tags when the value is held as a `const void*`, so
+  // the handles must not be passed as integers.
+  options.push_back({litert::EnvironmentOptions::Tag::kSystemRuntimeHandle,
+                     reinterpret_cast<const void*>(system_handles.runtime)});
+  if (system_handles.gpu_accelerator != 0) {
+    options.push_back(
+        {litert::EnvironmentOptions::Tag::kSystemGpuAcceleratorHandle,
+         reinterpret_cast<const void*>(system_handles.gpu_accelerator)});
+  }
+  if (system_handles.context != nullptr) {
+    options.push_back(
+        {litert::EnvironmentOptions::Tag::kContext, system_handles.context});
+  }
+  options.insert(options.end(), extra_options.begin(), extra_options.end());
+
+  auto environment =
+      litert::Environment::Create(litert::EnvironmentOptions(options));
+  if (!environment) {
+    return absl::InternalError(
+        absl::StrCat("Failed to create LiteRT environment: ",
+                     environment.Error().Message()));
+  }
+  return std::move(*environment);
 }
 
 }  // namespace mediapipe
