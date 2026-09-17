@@ -4,19 +4,19 @@
 @rem for hands example app.
 cd /d %~dp0
 cd hands\src\main
-rm res
+del res
 mklink /d res ..\..\..\res
 
 @rem for facemesh example app.
 cd /d %~dp0
 cd facemesh\src\main
-rm res
+del res
 mklink /d res ..\..\..\res
 
 @rem for face detection example app.
 cd /d %~dp0
 cd facedetection\src\main
-rm res
+del res
 mklink /d res ..\..\..\res
 
 dir
