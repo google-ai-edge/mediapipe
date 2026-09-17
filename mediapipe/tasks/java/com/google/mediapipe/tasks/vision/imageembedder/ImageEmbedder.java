@@ -28,6 +28,7 @@ import com.google.mediapipe.tasks.components.processors.proto.EmbedderOptionsPro
 import com.google.mediapipe.tasks.components.utils.CosineSimilarity;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.BaseOptionsUtils;
+import com.google.mediapipe.tasks.core.EmbeddingProvider;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.OutputHandler.ResultListener;
 import com.google.mediapipe.tasks.core.TaskOptions;
@@ -130,6 +131,9 @@ public final class ImageEmbedder implements AutoCloseable {
    * @throws MediaPipeException if there is an error during {@link ImageEmbedder} creation.
    */
   public static ImageEmbedder createFromOptions(Context context, ImageEmbedderOptions options) {
+    if (BaseOptionsUtils.isLiteRtLmModel(context, options.baseOptions())) {
+      return new ImageEmbedder(createLiteRtLmExecutor(context, options));
+    }
     return new ImageEmbedder(createGraphExecutor(context, options));
   }
 
@@ -140,6 +144,33 @@ public final class ImageEmbedder implements AutoCloseable {
 
   private ImageEmbedder(ImageEmbedderExecutor executor) {
     this.executor = executor;
+  }
+
+  @SuppressWarnings("EnumOrdinal")
+  private static ImageEmbedderExecutor createLiteRtLmExecutor(
+      Context context, ImageEmbedderOptions options) {
+    // This creates the LiteRT-LM EmbeddingEngine via reflection to avoid a hard dependency on the
+    // LiteRT-LM library.
+    try {
+      Class.forName("com.google.ai.edge.litertlm.EmbeddingEngine");
+      return Class.forName(
+              "com.google.mediapipe.tasks.vision.imageembedder.ImageEmbedderLiteRtLmExecutorImpl")
+          .asSubclass(ImageEmbedderExecutor.class)
+          .getConstructor(Context.class, ImageEmbedderOptions.class)
+          .newInstance(context, options);
+    } catch (ClassNotFoundException e) {
+      throw new MediaPipeException(
+          MediaPipeException.StatusCode.FAILED_PRECONDITION,
+          "LiteRT-LM model detected, but the required com.google.ai.edge.litertlm library is"
+              + " missing from the classpath. Please add the litertlm-android dependency to your"
+              + " build configuration.",
+          e);
+    } catch (ReflectiveOperationException e) {
+      throw new MediaPipeException(
+          MediaPipeException.StatusCode.INTERNAL,
+          "Failed to load LiteRT-LM Image Embedder integration: " + e.getMessage(),
+          e);
+    }
   }
 
   /**
@@ -283,6 +314,27 @@ public final class ImageEmbedder implements AutoCloseable {
    */
   public static double cosineSimilarity(Embedding u, Embedding v) {
     return CosineSimilarity.compute(u, v);
+  }
+
+  /** Returns a {@link EmbeddingProvider} for this embedder. */
+  @Nullable
+  public EmbeddingProvider getProvider() {
+    return new EmbeddingProvider() {
+      @Override
+      @Nullable
+      public float[] embedContent(List<Object> content) {
+        for (Object part : content) {
+          if (part instanceof MPImage) {
+            ImageEmbedderResult result = embed((MPImage) part);
+            if (result.embeddingResult().embeddings().isEmpty()) {
+              return null;
+            }
+            return result.embeddingResult().embeddings().get(0).floatEmbedding();
+          }
+        }
+        return null;
+      }
+    };
   }
 
   @Override

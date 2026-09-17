@@ -118,3 +118,25 @@ cc_library(
         "@com_google_sentencepiece//:sentencepiece_trainer",
     ],
 )
+
+cc_library(
+    name = "genai_utils",
+    srcs = ["genai_utils.cc"],
+    hdrs = ["genai_utils.h"],
+    deps = [
+        "@com_github_nlohmann_json//:json",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "genai_utils_test",
+    srcs = ["genai_utils_test.cc"],
+    deps = [
+        ":genai_utils",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/strings",
+    ],
+)

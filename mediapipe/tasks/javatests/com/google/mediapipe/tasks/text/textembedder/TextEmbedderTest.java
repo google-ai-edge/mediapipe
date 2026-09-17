@@ -251,4 +251,22 @@ public class TextEmbedderTest {
             result1.embeddingResult().embeddings().get(0));
     assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.52);
   }
+
+  @Test
+  public void getProvider_embedsContentSuccessfully() throws Exception {
+    try (TextEmbedder textEmbedder =
+        TextEmbedder.createFromFile(
+            ApplicationProvider.getApplicationContext(), REGEX_MODEL_FILE)) {
+      EmbeddingProvider provider = textEmbedder.getProvider();
+      assertThat(provider).isNotNull();
+
+      List<Object> content = new ArrayList<>();
+      content.add("it's a charming and often affecting journey");
+
+      float[] embedding = provider.embedContent(content);
+      assertThat(embedding).isNotNull();
+      assertThat(embedding).hasLength(16);
+      assertThat(embedding[0]).isWithin(FLOAT_DIFF_TOLERANCE).of(0.03f);
+    }
+  }
 }

@@ -74,5 +74,6 @@ cc_library(
         "contrib/minizip/zip.h",
     ],
     copts = COPTS,
+    includes = ["contrib"],
     deps = [":zlib"],
 )

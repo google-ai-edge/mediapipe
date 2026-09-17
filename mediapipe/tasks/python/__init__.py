@@ -17,6 +17,7 @@
 from . import audio
 from . import components
 from . import core
+from . import retrieval
 from . import text
 from . import vision
 

@@ -29,6 +29,7 @@ import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.core.BaseOptions;
+import com.google.mediapipe.tasks.core.EmbeddingProvider;
 import com.google.mediapipe.tasks.core.TestUtils;
 import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
@@ -225,6 +226,23 @@ public class ImageEmbedderTest {
               resultCrop.embeddingResult().embeddings().get(0));
       assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.9745944861);
     }
+
+    @Test
+    public void getProvider_embedsContentSuccessfully() throws Exception {
+      ImageEmbedder imageEmbedder =
+          ImageEmbedder.createFromFile(
+              ApplicationProvider.getApplicationContext(), MOBILENET_EMBEDDER);
+      EmbeddingProvider provider = imageEmbedder.getProvider();
+      assertThat(provider).isNotNull();
+
+      List<Object> content = new ArrayList<>();
+      content.add(getImageFromAsset(BURGER_IMAGE));
+
+      float[] embedding = provider.embedContent(content);
+      assertThat(embedding).isNotNull();
+      assertThat(embedding).hasLength(1024);
+    }
+  }
 
   @RunWith(AndroidJUnit4.class)
   public static final class RunningModeTest extends ImageEmbedderTest {

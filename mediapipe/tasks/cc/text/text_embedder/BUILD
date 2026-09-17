@@ -60,11 +60,40 @@ cc_library(
 )
 
 cc_library(
+    name = "litert_lm_text_embedder_executor",
+    srcs = ["litert_lm_text_embedder_executor.cc"],
+    hdrs = ["litert_lm_text_embedder_executor.h"],
+    deps = [
+        ":text_embedder_executor",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc/components/containers:embedding_result",
+        "//mediapipe/tasks/cc/components/processors:embedder_options",
+        "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:running_mode",
+        "//mediapipe/tasks/cc/core:tasks_logging_factory",  # build_cleaner: keep
+        "//mediapipe/tasks/cc/core/logging:tasks_logger",
+        "//mediapipe/tasks/cc/core/logging/factory:logging_factory_hdr",
+        "@com_google_absl//absl/cleanup",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@litert_lm//runtime/core:embedding_engine_impl",
+        "@litert_lm//runtime/engine:embedding_engine",
+        "@litert_lm//runtime/engine:embedding_engine_settings",
+        "@litert_lm//runtime/engine:io_types",
+        "@litert_lm//runtime/executor:executor_settings_base",
+        "@litert_lm//runtime/util:memory_mapped_file",
+    ],
+)
+
+cc_library(
     name = "text_embedder",
     srcs = ["text_embedder.cc"],
     hdrs = ["text_embedder.h"],
     deps = [
         ":graph_text_embedder_executor",
+        ":litert_lm_text_embedder_executor",
         ":text_embedder_executor",
         "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
         "//mediapipe/framework:calculator_cc_proto",
@@ -123,4 +152,31 @@ cc_library(
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
+)
+
+cc_test(
+    name = "text_embedder_test",
+    srcs = ["text_embedder_test.cc"],
+    data = [
+        "//mediapipe/models/embedding_gemma:embedding_gemma.task",
+        "//mediapipe/tasks/testdata/text:gecko_model",
+        "//mediapipe/tasks/testdata/text:mobilebert_embedding_model",
+        "//mediapipe/tasks/testdata/text:regex_embedding_with_metadata",
+        "//mediapipe/tasks/testdata/text:universal_sentence_encoder_qa",
+    ],
+    tags = ["not_run:arm"],
+    deps = [
+        ":text_embedder",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/components/containers:embedding_result",
+        "//mediapipe/tasks/cc/core:embedding_provider",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:cord",
+        "@litert//tflite:test_util",
+    ],
 )

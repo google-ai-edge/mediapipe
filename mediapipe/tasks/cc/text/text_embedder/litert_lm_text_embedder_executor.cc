@@ -42,12 +42,12 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder_executor.h"
-#include "odml/litert_lm/runtime/core/embedding_engine_impl.h"  // from @odml
-#include "odml/litert_lm/runtime/engine/embedding_engine.h"     // from @odml
-#include "odml/litert_lm/runtime/engine/embedding_engine_settings.h"  // from @odml
-#include "odml/litert_lm/runtime/engine/io_types.h"  // from @odml
-#include "odml/litert_lm/runtime/executor/executor_settings_base.h"  // from @odml
-#include "odml/litert_lm/runtime/util/memory_mapped_file.h"  // from @odml
+#include "runtime/core/embedding_engine_impl.h"        // from @litert_lm
+#include "runtime/engine/embedding_engine.h"           // from @litert_lm
+#include "runtime/engine/embedding_engine_settings.h"  // from @litert_lm
+#include "runtime/engine/io_types.h"                   // from @litert_lm
+#include "runtime/executor/executor_settings_base.h"   // from @litert_lm
+#include "runtime/util/memory_mapped_file.h"           // from @litert_lm
 
 namespace mediapipe::tasks::text::text_embedder {
 namespace {

@@ -30,3 +30,19 @@ cc_library(
     copts = COPTS,
     includes = ["."],
 )
+
+cc_library(
+    name = "stb_image_resize",
+    hdrs = ["stb_image_resize2.h"],
+    includes = ["."],
+)
+
+cc_library(
+    name = "stblib",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":stb_image",
+        ":stb_image_resize",
+        ":stb_image_write",
+    ],
+)

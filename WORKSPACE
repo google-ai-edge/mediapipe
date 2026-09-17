@@ -117,6 +117,13 @@ maven_install(
         "androidx.camera:camera-core:aar:1.0.0-beta10",
         "androidx.camera:camera-lifecycle:aar:1.0.0-beta10",
         "androidx.constraintlayout:constraintlayout:aar:1.1.3",
+        "androidx.appsearch:appsearch:aar:1.2.0-alpha02",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1",
+        "org.jetbrains.kotlin:kotlin-stdlib:1.9.0",
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.0",
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1",
+        "androidx.appsearch:appsearch-local-storage:aar:1.2.0-alpha02",
         "androidx.concurrent:concurrent-futures:1.0.0-alpha03",
         "androidx.core:core:aar:1.1.0-rc03",
         "androidx.exifinterface:exifinterface:aar:1.3.3",
@@ -841,4 +848,56 @@ http_archive(
     sha256 = "6d2ce16738199adc5a3cdde76c3c6a6dac636d3b52a1d7790ea524fb0d59f7fc",
     strip_prefix = "LiteRT-2.2.0",
     urls = ["https://github.com/google-ai-edge/LiteRT/archive/refs/tags/v2.2.0.tar.gz"],
+)
+
+# LiteRT-LM
+# Fetch just the source tree and let it use our already-defined workspace
+# dependencies (@org_tensorflow, @com_google_absl, @litert, etc.) to avoid collisions.
+# Also map the @sentencepiece dependency to @com_google_sentencepiece which is already
+# provided by MediaPipe's WORKSPACE.
+http_archive(
+    name = "litert_lm",
+    patch_args = ["-p1"],
+    patch_tool = "patch",
+    patches = [
+        "@//third_party:litert_lm.diff",
+    ],
+    repo_mapping = {
+        "@minizip": "@zlib",
+        "@sentencepiece": "@com_google_sentencepiece",
+        "@stb": "@stb",
+    },
+    strip_prefix = "LiteRT-LM-e93f5f517e404bd4fa654c511ef50fbd0bb147fe",
+    urls = ["https://github.com/google-ai-edge/LiteRT-LM/archive/e93f5f517e404bd4fa654c511ef50fbd0bb147fe.tar.gz?v=9"],
+)
+
+# Transitive dependency of LiteRT-LM.
+http_archive(
+    name = "kissfft",
+    build_file = "@//third_party:kissfft.BUILD",
+    sha256 = "76c1aac87ddb7258f34b08a13f0eebf9e53afa299857568346aa5c82bcafaf1a",
+    strip_prefix = "kissfft-131.1.0",
+    urls = ["https://github.com/mborgerding/kissfft/archive/refs/tags/131.1.0.tar.gz"],
+)
+
+# Transitive dependency of LiteRT-LM.
+http_archive(
+    name = "miniaudio",
+    build_file = "@//third_party:miniaudio.BUILD",
+    sha256 = "bcb07bfb27e6fa94d34da73ba2d5642d4940b208ec2a660dbf4e52e6b7cd492f",
+    strip_prefix = "miniaudio-0.11.22",
+    urls = ["https://github.com/mackron/miniaudio/archive/refs/tags/0.11.22.tar.gz"],
+)
+
+# Dummy local repository for litert_lm's unused transitive huggingface_tokenizer dependency
+# (disabled via --define=DISABLE_HUGGINGFACE_TOKENIZER=1 in .bazelrc).
+new_local_repository(
+    name = "tokenizers_cpp",
+    build_file_content = """
+cc_library(
+    name = "huggingface_tokenizer",
+    visibility = ["//visibility:public"],
+)
+""",
+    path = ".",
 )

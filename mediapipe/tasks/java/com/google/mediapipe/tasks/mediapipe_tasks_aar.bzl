@@ -94,6 +94,11 @@ _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_java_proto_lite",
 ]
 
+_RETRIEVAL_TASKS_JAVA_PROTO_LITE_TARGETS = [
+    "//mediapipe/tasks/cc/retrieval/semantic_retriever/proto:memory_java_proto_lite",
+    "//mediapipe/tasks/cc/retrieval/semantic_retriever/proto:vector_stores_java_proto_lite",
+]
+
 def mediapipe_jni_binary(name, deps, uses_explicit_exports = False, shared_lib_name = None, version_script = None):
     """Builds MediaPipe JNI library. Uses prebuilt libraries if available.
 
@@ -210,6 +215,11 @@ def mediapipe_tasks_core_aar(name, srcs, manifest, deps = []):
             _mediapipe_tasks_java_proto_src_extractor(target = target),
         )
 
+    for target in _RETRIEVAL_TASKS_JAVA_PROTO_LITE_TARGETS:
+        mediapipe_tasks_java_proto_srcs.append(
+            _mediapipe_tasks_java_proto_src_extractor(target = target),
+        )
+
     for target in _VISION_TASKS_IMAGE_GENERATOR_JAVA_PROTO_LITE_SRC_TARGETS:
         mediapipe_tasks_java_proto_srcs.append(
             _mediapipe_tasks_java_proto_src_extractor(target = target),
@@ -253,6 +263,7 @@ def mediapipe_tasks_core_aar(name, srcs, manifest, deps = []):
                }),
         manifest = manifest,
         deps = deps + [
+                   "//third_party:any_java_proto",
                    "@com_google_protobuf//:protobuf_javalite",
                    "//mediapipe/calculators/core:flow_limiter_calculator_java_proto_lite",
                    "//mediapipe/calculators/tensor:inference_calculator_java_proto_lite",
@@ -282,6 +293,7 @@ def mediapipe_tasks_core_aar(name, srcs, manifest, deps = []):
                ] +
                _AUDIO_TASKS_JAVA_PROTO_LITE_TARGETS +
                _CORE_TASKS_JAVA_PROTO_LITE_TARGETS +
+               _RETRIEVAL_TASKS_JAVA_PROTO_LITE_TARGETS +
                _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS +
                _VISION_TASKS_JAVA_PROTO_LITE_TARGETS +
                select({
@@ -365,6 +377,7 @@ EOF
         name = name + "_dummy_app",
         manifest = name + "_generated_AndroidManifest.xml",
         custom_package = "dummy.package.for.so",
+        dexopts = ["--min-api", "24"],
         deps = [android_library],
     )
 

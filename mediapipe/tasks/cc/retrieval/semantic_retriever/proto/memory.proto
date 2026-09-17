@@ -1,0 +1,68 @@
+// Copyright 2026 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package mediapipe.tasks.retrieval;
+
+option java_multiple_files = false;
+option java_package = "com.google.mediapipe.tasks.retrieval.semanticretriever.proto";
+option java_outer_classname = "MemoryProto";
+
+message KeyValuePair {
+  string key = 1;
+  string value = 2;
+}
+
+message Metadata {
+  repeated KeyValuePair key_value_pairs = 1;
+}
+
+message Part {
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    TEXT = 1;
+    IMAGE = 2;
+    AUDIO = 3;
+  }
+  Kind kind = 1;
+
+  // Populated when kind is TEXT.
+  optional string text = 2;
+
+  // Populated when kind is IMAGE or AUDIO.
+  optional string mime_type = 3;
+  optional bytes data = 4;
+}
+
+message MemoryRecord {
+  optional string text = 1;
+  repeated float embeddings = 2 [packed = true];
+  Metadata metadata = 3;
+  repeated Part parts = 4;
+  optional float similarity_score = 5;
+  optional string parent_id = 6;
+  optional string record_id = 7;
+  optional string content_type = 8;
+  repeated string child_ids = 9;
+}
+
+message MemoryEntry {
+  optional string text = 1;
+  // Metadata associated with this memory entry.
+  Metadata metadata = 2;
+  // Custom text to get embeddings for. If this is not set, the text field
+  // will be used.
+  optional string custom_embedding_text = 3;
+}

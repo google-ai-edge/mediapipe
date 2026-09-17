@@ -1,0 +1,82 @@
+diff -ruN a/runtime/components/constrained_decoding/proto/BUILD b/runtime/components/constrained_decoding/proto/BUILD
+--- a/runtime/components/constrained_decoding/proto/BUILD	2026-08-31 14:35:07.000000000 +0000
++++ b/runtime/components/constrained_decoding/proto/BUILD	2026-09-10 17:29:45.337056046 +0000
+@@ -14,5 +14,5 @@
+ 
+ package(
+     default_hdrs_check = "strict",
+-    default_visibility = ["//:__subpackages__"],
++    default_visibility = ["//visibility:public"],
+ )
+diff -ruN a/runtime/core/BUILD b/runtime/core/BUILD
+--- a/runtime/core/BUILD	2026-08-31 14:35:07.000000000 +0000
++++ b/runtime/core/BUILD	2026-09-10 17:29:45.338165282 +0000
+@@ -537,7 +537,7 @@
+     name = "embedding_engine_impl",
+     srcs = ["embedding_engine_impl.cc"],
+     hdrs = ["embedding_engine_impl.h"],
+-    visibility = [":engine_impl_users"],
++    visibility = ["//visibility:public"],
+     deps = [
+         "@com_google_absl//absl/status",
+         "@com_google_absl//absl/status:status_macros",
+diff -ruN a/runtime/framework/resource_management/context_handler/BUILD b/runtime/framework/resource_management/context_handler/BUILD
+--- a/runtime/framework/resource_management/context_handler/BUILD	2026-08-31 14:35:07.000000000 +0000
++++ b/runtime/framework/resource_management/context_handler/BUILD	2026-09-10 17:29:45.339221360 +0000
+@@ -17,7 +17,7 @@
+ 
+ package(
+     default_hdrs_check = "strict",
+-    default_visibility = ["//:__subpackages__"],
++    default_visibility = ["//visibility:public"],
+ )
+ 
+ licenses(["notice"])
+diff -ruN a/runtime/framework/resource_management/processed_context/BUILD b/runtime/framework/resource_management/processed_context/BUILD
+--- a/runtime/framework/resource_management/processed_context/BUILD	2026-08-31 14:35:07.000000000 +0000
++++ b/runtime/framework/resource_management/processed_context/BUILD	2026-09-10 17:29:45.339298812 +0000
+@@ -16,7 +16,7 @@
+ 
+ package(
+     default_hdrs_check = "strict",
+-    default_visibility = ["//:__subpackages__"],
++    default_visibility = ["//visibility:public"],
+ )
+ 
+ licenses(["notice"])
+diff -ruN a/runtime/framework/resource_management/utils/BUILD b/runtime/framework/resource_management/utils/BUILD
+--- a/runtime/framework/resource_management/utils/BUILD	2026-08-31 14:35:07.000000000 +0000
++++ b/runtime/framework/resource_management/utils/BUILD	2026-09-10 17:29:45.339379211 +0000
+@@ -17,7 +17,7 @@
+ 
+ package(
+     default_hdrs_check = "strict",
+-    default_visibility = ["//:__subpackages__"],
++    default_visibility = ["//visibility:public"],
+ )
+ 
+ licenses(["notice"])
+diff -ruN a/rust/BUILD b/rust/BUILD
+--- a/rust/BUILD	2026-08-31 14:35:07.000000000 +0000
++++ b/rust/BUILD	2026-09-10 17:29:45.339787876 +0000
+@@ -34,7 +34,7 @@
+     flag_values = {
+         ":rust_proto_library_kernel": "upb",
+     },
+-    visibility = ["//:__subpackages__"],
++    visibility = ["//visibility:public"],
+ )
+ 
+ alias(
+diff -ruN a/support/tokenizer/sentencepiece_tokenizer.cc b/support/tokenizer/sentencepiece_tokenizer.cc
+--- a/support/tokenizer/sentencepiece_tokenizer.cc	2026-08-31 14:35:07.000000000 +0000
++++ b/support/tokenizer/sentencepiece_tokenizer.cc	2026-09-10 17:29:45.307836080 +0000
+@@ -103,7 +103,7 @@
+   }
+ 
+   std::string text;
+-  auto status = processor_->Decode(token_ids, &text);
++  auto status = processor_->Decode(std::vector<int>(token_ids.begin(), token_ids.end()), &text);
+   if (!status.ok()) {
+     return status;
+   }

@@ -42,6 +42,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/text/text_embedder/graph_text_embedder_executor.h"
+#include "mediapipe/tasks/cc/text/text_embedder/litert_lm_text_embedder_executor.h"
 #include "mediapipe/tasks/cc/text/text_embedder/proto/text_embedder_graph_options.pb.h"
 #include "mediapipe/tasks/cc/text/text_embedder/text_embedder_executor.h"
 
@@ -143,6 +144,16 @@ ConvertTextEmbedderOptionsToProto(TextEmbedderOptions* options) {
 
 absl::StatusOr<std::unique_ptr<TextEmbedder>> TextEmbedder::Create(
     std::unique_ptr<TextEmbedderOptions> options) {
+  // See if this is LiteRT LM model, otherwise fall back to graph executor.
+  if (tasks::core::IsLiteRtLmModel(options->base_options)) {
+    ABSL_ASSIGN_OR_RETURN(
+        auto executor, LiteRtLmTextEmbedderExecutor::Create(
+                           options->base_options, options->embedder_options));
+    auto text_embedder = std::make_unique<TextEmbedder>(nullptr);
+    text_embedder->executor_ = std::move(executor);
+    return text_embedder;
+  }
+
   auto options_proto = ConvertTextEmbedderOptionsToProto(options.get());
   auto task_runner_options = core::TaskRunnerOptions{
       .config = CreateGraphConfig(std::move(options_proto)),

@@ -48,6 +48,40 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "litert_lm_image_embedder_executor",
+    srcs = ["litert_lm_image_embedder_executor.cc"],
+    hdrs = ["litert_lm_image_embedder_executor.h"],
+    deps = [
+        ":image_embedder_executor",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc/components/containers:embedding_result",
+        "//mediapipe/tasks/cc/components/processors:embedder_options",
+        "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:running_mode",
+        "//mediapipe/tasks/cc/core:tasks_logging_factory",  # build_cleaner: keep
+        "//mediapipe/tasks/cc/core/logging:tasks_logger",
+        "//mediapipe/tasks/cc/core/logging/factory:logging_factory_hdr",
+        "@com_google_absl//absl/cleanup",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@litert_lm//runtime/core:embedding_engine_impl",
+        "@litert_lm//runtime/engine:embedding_engine",
+        "@litert_lm//runtime/engine:embedding_engine_settings",
+        "@litert_lm//runtime/engine:io_types",
+        "@litert_lm//runtime/executor:executor_settings_base",
+        "@litert_lm//runtime/util:memory_mapped_file",
+        "@litert_lm//support/util:io_types",
+    ],
+)
+
 # Docs for Mediapipe Tasks Image Embedder
 # https://developers.google.com/mediapipe/solutions/vision/image_embedder
 cc_library(
@@ -58,6 +92,7 @@ cc_library(
         ":graph_image_embedder_executor",
         ":image_embedder_executor",
         ":image_embedder_graph",  # buildcleaner: keep
+        ":litert_lm_image_embedder_executor",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",

@@ -46,6 +46,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
 #include "mediapipe/tasks/cc/vision/image_embedder/graph_image_embedder_executor.h"
+#include "mediapipe/tasks/cc/vision/image_embedder/litert_lm_image_embedder_executor.h"
 #include "mediapipe/tasks/cc/vision/image_embedder/proto/image_embedder_graph_options.pb.h"
 #include "stb_image.h"
 
@@ -125,6 +126,18 @@ std::unique_ptr<ImageEmbedderGraphOptions> ConvertImageEmbedderOptionsToProto(
 
 absl::StatusOr<std::unique_ptr<ImageEmbedder>> ImageEmbedder::Create(
     std::unique_ptr<ImageEmbedderOptions> options) {
+  if (tasks::core::IsLiteRtLmModel(options->base_options)) {
+    ABSL_ASSIGN_OR_RETURN(auto executor,
+                          LiteRtLmImageEmbedderExecutor::Create(
+                              options->base_options, options->embedder_options,
+                              options->result_callback));
+    auto image_embedder =
+        std::make_unique<ImageEmbedder>(nullptr, options->running_mode);
+    image_embedder->running_mode_ = options->running_mode;
+    image_embedder->executor_ = std::move(executor);
+    return image_embedder;
+  }
+
   auto options_proto = ConvertImageEmbedderOptionsToProto(options.get());
   tasks::core::PacketsCallback packets_callback = nullptr;
   if (options->result_callback) {
