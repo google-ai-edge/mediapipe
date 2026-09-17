@@ -27,7 +27,7 @@ iOS), web, desktop, edge devices, and IoT, effortlessly.
 
 ## Get started
 
-You can get started with MediaPipe Solutions by by checking out any of the
+You can get started with MediaPipe Solutions by checking out any of the
 developer guides for
 [vision](https://developers.google.com/mediapipe/solutions/vision/object_detector),
 [text](https://developers.google.com/mediapipe/solutions/text/text_classifier),
