@@ -27,6 +27,7 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/gpu/gpu_service.h"
 
 // Note: On Apple platforms MEDIAPIPE_DISABLE_GL_COMPUTE is automatically
 // defined in mediapipe/framework/port.h. Therefore,
@@ -281,7 +282,7 @@ absl::Status TensorsToDetectionsCalculator::UpdateContract(
 absl::Status TensorsToDetectionsCalculator::Open(CalculatorContext* cc) {
   ABSL_RETURN_IF_ERROR(LoadOptions(cc));
 
-  if (CanUseGpu()) {
+  if (CanUseGpu() && cc->Service(mediapipe::kGpuService).IsAvailable()) {
 #ifndef MEDIAPIPE_DISABLE_GL_COMPUTE
 #elif MEDIAPIPE_METAL_ENABLED
     gpu_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
@@ -295,7 +296,8 @@ absl::Status TensorsToDetectionsCalculator::Open(CalculatorContext* cc) {
 absl::Status TensorsToDetectionsCalculator::Process(CalculatorContext* cc) {
   auto output_detections = std::make_unique<std::vector<Detection>>();
   bool gpu_processing = false;
-  if (CanUseGpu() && gpu_has_enough_work_groups_) {
+  if (CanUseGpu() && cc->Service(mediapipe::kGpuService).IsAvailable() &&
+      gpu_has_enough_work_groups_) {
     // Use GPU processing only if at least one input tensor is already on GPU
     // (to avoid CPU->GPU overhead).
     for (const auto& tensor : *kInTensors(cc)) {
