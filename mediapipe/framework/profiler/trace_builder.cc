@@ -293,7 +293,7 @@ class TraceBuilder::Impl {
     }
   }
 
-  // Return a timestamp in micros relative to the base timetamp.
+  // Return a timestamp in micros relative to the base timestamp.
   int64_t LogTimestamp(Timestamp ts) { return ts.Value() - base_ts_; }
 
   // Return a time in micros relative to the base time.
