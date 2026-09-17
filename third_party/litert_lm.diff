@@ -80,3 +80,322 @@ diff -ruN a/support/tokenizer/sentencepiece_tokenizer.cc b/support/tokenizer/sen
    if (!status.ok()) {
      return status;
    }
+diff -ruP a/omni/asr/asr_engine.cc b/omni/asr/asr_engine.cc
+--- a/omni/asr/asr_engine.cc	2026-09-16 09:58:28.000000000 +0000
++++ b/omni/asr/asr_engine.cc	2026-09-17 19:18:41.444663312 +0000
+@@ -106,13 +106,13 @@
+   uint32_t accelerators = static_cast<uint32_t>(::litert::HwAccelerators::kCpu);
+   if (config.num_threads > 0) {
+     LITERT_ASSIGN_OR_RETURN(auto& cpu_options,
+-                            options.GetOptions<::litert::CpuOptions>());
++                            options.GetCpuOptions());
+     cpu_options.SetNumThreads(config.num_threads);
+   }
+   if (config.backend == AsrEngineConfig::Backend::kGpu) {
+     accelerators |= static_cast<uint32_t>(::litert::HwAccelerators::kGpu);
+     LITERT_ASSIGN_OR_RETURN(auto& gpu_options,
+-                            options.GetOptions<::litert::GpuOptions>());
++                            options.GetGpuOptions());
+     gpu_options.SetPrecision(::litert::GpuOptions::Precision::kFp32);
+     gpu_options.EnableConstantTensorSharing(true);
+     for (const auto& pattern : config.state_buffer_name_patterns) {
+@@ -123,7 +123,7 @@
+     accelerators |= static_cast<uint32_t>(::litert::HwAccelerators::kNpu);
+     LITERT_ASSIGN_OR_RETURN(
+         auto& qnn_options,
+-        options.GetOptions<::litert::qualcomm::QualcommOptions>());
++        options.GetQualcommOptions());
+     qnn_options.SetHtpPerformanceMode(::litert::qualcomm::QualcommOptions::
+                                           HtpPerformanceMode::kHighPerformance);
+   }
+diff -ruP a/omni/base/model_utils.cc b/omni/base/model_utils.cc
+--- a/omni/base/model_utils.cc	2026-09-16 09:58:28.000000000 +0000
++++ b/omni/base/model_utils.cc	2026-09-17 19:18:41.439825234 +0000
+@@ -223,7 +223,7 @@
+ 
+   if (target_gpu) {
+     LITERT_ASSIGN_OR_RETURN(auto& gpu_compilation_options,
+-                            comp_options.GetOptions<::litert::GpuOptions>());
++                            comp_options.GetGpuOptions());
+     gpu_compilation_options.EnableInfiniteFloatCapping(true);
+     gpu_compilation_options.SetPrecision(GpuOptions::Precision::kFp32);
+ #if defined(__APPLE__)
+@@ -242,7 +242,7 @@
+   } else {
+     comp_options.SetHardwareAccelerators(HwAccelerators::kCpu);
+     LITERT_ASSIGN_OR_RETURN(auto& cpu_options,
+-                            comp_options.GetOptions<::litert::CpuOptions>());
++                            comp_options.GetCpuOptions());
+     ABSL_RETURN_IF_ERROR(lm::SetCpuOptions(cpu_options, options.num_threads));
+ 
+     if (!options.cache_dir.empty()) {
+diff -ruP a/runtime/components/embedding_lookup/embedding_lookup_end_of_multi_modal.cc b/runtime/components/embedding_lookup/embedding_lookup_end_of_multi_modal.cc
+--- a/runtime/components/embedding_lookup/embedding_lookup_end_of_multi_modal.cc	2026-09-16 09:58:28.000000000 +0000
++++ b/runtime/components/embedding_lookup/embedding_lookup_end_of_multi_modal.cc	2026-09-17 19:18:41.430431218 +0000
+@@ -173,7 +173,7 @@
+ #if defined(__ANDROID__)
+   LITERT_ASSIGN_OR_RETURN(
+       ::litert::qualcomm::QualcommOptions & qnn_opts,
+-      options.GetOptions<::litert::qualcomm::QualcommOptions>());
++      options.GetQualcommOptions());
+   qnn_opts.SetLogLevel(::litert::qualcomm::QualcommOptions::LogLevel::kOff);
+   qnn_opts.SetHtpPerformanceMode(
+       ::litert::qualcomm::QualcommOptions::HtpPerformanceMode::
+diff -ruP a/runtime/components/embedding_lookup/embedding_lookup_text.cc b/runtime/components/embedding_lookup/embedding_lookup_text.cc
+--- a/runtime/components/embedding_lookup/embedding_lookup_text.cc	2026-09-16 09:58:28.000000000 +0000
++++ b/runtime/components/embedding_lookup/embedding_lookup_text.cc	2026-09-17 19:18:41.429483022 +0000
+@@ -317,7 +317,7 @@
+ #if defined(__ANDROID__)
+     LITERT_ASSIGN_OR_RETURN(
+         ::litert::qualcomm::QualcommOptions & qnn_opts,
+-        options.GetOptions<::litert::qualcomm::QualcommOptions>());
++        options.GetQualcommOptions());
+     qnn_opts.SetLogLevel(::litert::qualcomm::QualcommOptions::LogLevel::kOff);
+     qnn_opts.SetHtpPerformanceMode(
+         ::litert::qualcomm::QualcommOptions::HtpPerformanceMode::
+diff -ruP a/runtime/executor/audio_litert_compiled_model_executor.cc b/runtime/executor/audio_litert_compiled_model_executor.cc
+--- a/runtime/executor/audio_litert_compiled_model_executor.cc	2026-09-16 09:58:28.000000000 +0000
++++ b/runtime/executor/audio_litert_compiled_model_executor.cc	2026-09-17 19:18:41.408947546 +0000
+@@ -222,7 +222,7 @@
+       /*check_and_clean=*/true);
+   if (executor_settings_.GetBackend() == Backend::GPU) {
+     LITERT_ASSIGN_OR_RETURN(auto& gpu_options,
+-                            options.GetOptions<::litert::GpuOptions>());
++                            options.GetGpuOptions());
+     ABSL_ASSIGN_OR_RETURN(
+         const auto cache_files,
+         GetGpuModelCacheData(executor_settings_,
+@@ -236,7 +236,7 @@
+     options.SetHardwareAccelerators(litert::HwAccelerators::kGpu);
+   } else if (executor_settings_.GetBackend() == Backend::CPU) {
+     LITERT_ASSIGN_OR_RETURN(auto& cpu_options,
+-                            options.GetOptions<::litert::CpuOptions>());
++                            options.GetCpuOptions());
+     ABSL_RETURN_IF_ERROR(SetCpuOptions(executor_settings_, cpu_options));
+     ABSL_RETURN_IF_ERROR(SetCpuCacheOptions(
+         weight_cache_file, AudioExecutorSettings::kEncoderName, cpu_options));
+@@ -246,7 +246,7 @@
+   } else if (executor_settings_.GetBackend() == Backend::NPU) {
+     LITERT_ASSIGN_OR_RETURN(
+         auto& google_tensor_options,
+-        options.GetOptions<google_tensor::GoogleTensorOptions>());
++        options.GetGoogleTensorOptions());
+     google_tensor_options.SetPerformanceMode(
+         google_tensor::GoogleTensorOptions::PerformanceMode::kBurst);
+     options.SetHardwareAccelerators(litert::HwAccelerators::kNpu);
+@@ -371,7 +371,7 @@
+       /*check_and_clean=*/true);
+   if (executor_settings_.GetBackend() == Backend::GPU) {
+     LITERT_ASSIGN_OR_RETURN(auto& gpu_options,
+-                            options.GetOptions<::litert::GpuOptions>());
++                            options.GetGpuOptions());
+     ABSL_ASSIGN_OR_RETURN(
+         const auto cache_files,
+         GetGpuModelCacheData(executor_settings_,
+@@ -385,7 +385,7 @@
+     options.SetHardwareAccelerators(litert::HwAccelerators::kGpu);
+   } else if (executor_settings_.GetBackend() == Backend::CPU) {
+     LITERT_ASSIGN_OR_RETURN(auto& cpu_options,
+-                            options.GetOptions<::litert::CpuOptions>());
++                            options.GetCpuOptions());
+     ABSL_RETURN_IF_ERROR(SetCpuOptions(executor_settings_, cpu_options));
+     ABSL_RETURN_IF_ERROR(SetCpuCacheOptions(
+         weight_cache_file, AudioExecutorSettings::kEncoderName, cpu_options));
+@@ -394,7 +394,7 @@
+   } else if (executor_settings_.GetBackend() == Backend::NPU) {
+     LITERT_ASSIGN_OR_RETURN(
+         auto& google_tensor_options,
+-        options.GetOptions<google_tensor::GoogleTensorOptions>());
++        options.GetGoogleTensorOptions());
+     google_tensor_options.SetPerformanceMode(
+         google_tensor::GoogleTensorOptions::PerformanceMode::kBurst);
+     options.SetHardwareAccelerators(litert::HwAccelerators::kNpu);
+@@ -582,7 +582,7 @@
+       /*check_and_clean=*/true);
+   if (executor_settings_.GetBackend() == Backend::GPU) {
+     LITERT_ASSIGN_OR_RETURN(auto& gpu_options,
+-                            options.GetOptions<::litert::GpuOptions>());
++                            options.GetGpuOptions());
+     ABSL_ASSIGN_OR_RETURN(
+         const auto cache_files,
+         GetGpuModelCacheData(executor_settings_,
+@@ -602,7 +602,7 @@
+     options.SetHardwareAccelerators(litert::HwAccelerators::kGpu);
+   } else if (executor_settings_.GetBackend() == Backend::CPU) {
+     LITERT_ASSIGN_OR_RETURN(auto& cpu_options,
+-                            options.GetOptions<::litert::CpuOptions>());
++                            options.GetCpuOptions());
+     ABSL_RETURN_IF_ERROR(SetCpuOptions(executor_settings_, cpu_options));
+ 
+     ABSL_RETURN_IF_ERROR(SetCpuCacheOptions(
+@@ -613,7 +613,7 @@
+   } else if (executor_settings_.GetBackend() == Backend::NPU) {
+     LITERT_ASSIGN_OR_RETURN(
+         auto& google_tensor_options,
+-        options.GetOptions<google_tensor::GoogleTensorOptions>());
++        options.GetGoogleTensorOptions());
+     google_tensor_options.SetPerformanceMode(
+         google_tensor::GoogleTensorOptions::PerformanceMode::kBurst);
+     options.SetHardwareAccelerators(litert::HwAccelerators::kNpu);
+diff -ruP a/runtime/executor/embedding_litert_compiled_model_executor.cc b/runtime/executor/embedding_litert_compiled_model_executor.cc
+--- a/runtime/executor/embedding_litert_compiled_model_executor.cc	2026-09-16 09:58:28.000000000 +0000
++++ b/runtime/executor/embedding_litert_compiled_model_executor.cc	2026-09-17 19:18:41.408310531 +0000
+@@ -183,7 +183,7 @@
+   switch (executor_settings.GetBackend()) {
+     case Backend::CPU: {
+       LITERT_ASSIGN_OR_RETURN(auto& cpu_options,
+-                              options.GetOptions<::litert::CpuOptions>());
++                              options.GetCpuOptions());
+       LITERT_RETURN_IF_ERROR(
+           SetCpuOptions(cpu_options, executor_settings.GetNumThreads()));
+       auto weight_cache_file = executor_settings.GetWeightCacheFile(
+@@ -199,7 +199,7 @@
+     }
+     case Backend::GPU: {
+       LITERT_ASSIGN_OR_RETURN(auto& gpu_options,
+-                              options.GetOptions<::litert::GpuOptions>());
++                              options.GetGpuOptions());
+       ABSL_ASSIGN_OR_RETURN(
+           const auto cache_files,
+           GetGpuModelCacheData(executor_settings,
+@@ -217,13 +217,13 @@
+ #if !defined(LITERT_DISABLE_NPU)
+     case Backend::NPU: {
+       LITERT_ASSIGN_OR_RETURN(auto& qualcomm_options,
+-                              options.GetOptions<qualcomm::QualcommOptions>());
++                              options.GetQualcommOptions());
+       qualcomm_options.SetLogLevel(qualcomm::QualcommOptions::LogLevel::kOff);
+       qualcomm_options.SetHtpPerformanceMode(
+           qualcomm::QualcommOptions::HtpPerformanceMode::kBurst);
+       LITERT_ASSIGN_OR_RETURN(
+           auto& google_tensor_options,
+-          options.GetOptions<google_tensor::GoogleTensorOptions>());
++          options.GetGoogleTensorOptions());
+       google_tensor_options.SetPerformanceMode(
+           google_tensor::GoogleTensorOptions::PerformanceMode::kBurst);
+       options.SetHardwareAccelerators(litert::HwAccelerators::kNpu |
+diff -ruP a/runtime/executor/llm_executor_settings_utils.cc b/runtime/executor/llm_executor_settings_utils.cc
+--- a/runtime/executor/llm_executor_settings_utils.cc	2026-09-16 09:58:28.000000000 +0000
++++ b/runtime/executor/llm_executor_settings_utils.cc	2026-09-17 19:18:41.405682743 +0000
+@@ -86,7 +86,7 @@
+       // TODO: b/403132820 - Add accelerator compilation options for ML_DRIFT.
+       LITERT_ASSIGN_OR_RETURN(
+           auto& gpu_compilation_options,
+-          compilation_options.GetOptions<::litert::GpuOptions>());
++          compilation_options.GetGpuOptions());
+       gpu_compilation_options.EnableInfiniteFloatCapping(true);
+       if (activation_data_type == ActivationDataType::FLOAT32) {
+         gpu_compilation_options.SetPrecision(GpuOptions::Precision::kFp32);
+@@ -269,7 +269,7 @@
+     case Backend::CPU: {
+       LITERT_ASSIGN_OR_RETURN(
+           auto& cpu_compilation_options,
+-          compilation_options.GetOptions<::litert::CpuOptions>());
++          compilation_options.GetCpuOptions());
+       ABSL_ASSIGN_OR_RETURN(const CpuConfig cpu_config,
+                             executor_settings.GetBackendConfig<CpuConfig>());
+       const uint32_t num_threads = cpu_config.number_of_threads;
+diff -ruP a/runtime/executor/llm_litert_compiled_model_executor.cc b/runtime/executor/llm_litert_compiled_model_executor.cc
+--- a/runtime/executor/llm_litert_compiled_model_executor.cc	2026-09-16 09:58:28.000000000 +0000
++++ b/runtime/executor/llm_litert_compiled_model_executor.cc	2026-09-17 19:18:41.405196541 +0000
+@@ -1651,7 +1651,7 @@
+ litert::Options LlmLiteRtCompiledModelExecutorBase::GetRunOptions() const {
+   litert::Options run_options;
+ #if defined(__APPLE__)
+-  auto gpu_options = run_options.GetOptions<::litert::GpuOptions>();
++  auto gpu_options = run_options.GetGpuOptions();
+   if (gpu_options.HasValue()) {
+     (void)gpu_options->EnableMetalResidencySet(gpu_enable_metal_residency_set_);
+   }
+diff -ruP a/runtime/executor/npu/llm_litert_npu_compiled_model_executor_utils.cc b/runtime/executor/npu/llm_litert_npu_compiled_model_executor_utils.cc
+--- a/runtime/executor/npu/llm_litert_npu_compiled_model_executor_utils.cc	2026-09-16 09:58:28.000000000 +0000
++++ b/runtime/executor/npu/llm_litert_npu_compiled_model_executor_utils.cc	2026-09-17 19:18:41.411526378 +0000
+@@ -423,7 +423,7 @@
+ #if defined(__ANDROID__)
+   LITERT_ASSIGN_OR_RETURN(
+       ::litert::qualcomm::QualcommOptions & qnn_opts,
+-      options.GetOptions<::litert::qualcomm::QualcommOptions>());
++      options.GetQualcommOptions());
+   qnn_opts.SetLogLevel(::litert::qualcomm::QualcommOptions::LogLevel::kOff);
+   qnn_opts.SetHtpPerformanceMode(
+       ::litert::qualcomm::QualcommOptions::HtpPerformanceMode::kBurst);
+@@ -434,7 +434,7 @@
+   if (!is_dynamic_model) {
+     LITERT_ASSIGN_OR_RETURN(
+         auto& google_tensor_opts,
+-        options.GetOptions<::litert::google_tensor::GoogleTensorOptions>());
++        options.GetGoogleTensorOptions());
+     google_tensor_opts.SetPerformanceMode(
+         ::litert::google_tensor::GoogleTensorOptions::PerformanceMode::kBurst);
+   }
+diff -ruP a/runtime/executor/vision_litert_compiled_model_executor.cc b/runtime/executor/vision_litert_compiled_model_executor.cc
+--- a/runtime/executor/vision_litert_compiled_model_executor.cc	2026-09-16 09:58:28.000000000 +0000
++++ b/runtime/executor/vision_litert_compiled_model_executor.cc	2026-09-17 19:18:41.403015518 +0000
+@@ -231,7 +231,7 @@
+     case Backend::CPU: {
+       // TODO: b/403132820 - Add accelerator compilation options for XNNPACK.
+       LITERT_ASSIGN_OR_RETURN(auto& cpu_options,
+-                              options.GetOptions<::litert::CpuOptions>());
++                              options.GetCpuOptions());
+       ABSL_RETURN_IF_ERROR(
+           SetCpuOptions(vision_executor_settings_, cpu_options));
+       ABSL_RETURN_IF_ERROR(SetCpuCacheOptions(
+@@ -244,7 +244,7 @@
+     case Backend::GPU: {
+       // TODO: b/403132820 - Add accelerator compilation options for ML_DRIFT.
+       LITERT_ASSIGN_OR_RETURN(auto& gpu_options,
+-                              options.GetOptions<::litert::GpuOptions>());
++                              options.GetGpuOptions());
+       ABSL_ASSIGN_OR_RETURN(
+           const auto cache_files,
+           GetGpuModelCacheData(vision_executor_settings_,
+@@ -262,13 +262,13 @@
+ #if !defined(LITERT_DISABLE_NPU)
+     case Backend::NPU: {
+       LITERT_ASSIGN_OR_RETURN(auto& qualcomm_options,
+-                              options.GetOptions<qualcomm::QualcommOptions>());
++                              options.GetQualcommOptions());
+       qualcomm_options.SetLogLevel(qualcomm::QualcommOptions::LogLevel::kOff);
+       qualcomm_options.SetHtpPerformanceMode(
+           qualcomm::QualcommOptions::HtpPerformanceMode::kBurst);
+       LITERT_ASSIGN_OR_RETURN(
+           auto& google_tensor_options,
+-          options.GetOptions<google_tensor::GoogleTensorOptions>());
++          options.GetGoogleTensorOptions());
+       google_tensor_options.SetPerformanceMode(
+           google_tensor::GoogleTensorOptions::PerformanceMode::kBurst);
+       options.SetHardwareAccelerators(litert::HwAccelerators::kNpu |
+@@ -350,7 +350,7 @@
+     case Backend::CPU: {
+       // TODO: b/403132820 - Add accelerator compilation options for XNNPACK.
+       LITERT_ASSIGN_OR_RETURN(auto& cpu_options,
+-                              options.GetOptions<::litert::CpuOptions>());
++                              options.GetCpuOptions());
+       ABSL_RETURN_IF_ERROR(
+           SetCpuOptions(vision_executor_settings_, cpu_options));
+       ABSL_RETURN_IF_ERROR(SetCpuCacheOptions(
+@@ -361,7 +361,7 @@
+     }
+     case Backend::GPU: {
+       LITERT_ASSIGN_OR_RETURN(auto& gpu_options,
+-                              options.GetOptions<::litert::GpuOptions>());
++                              options.GetGpuOptions());
+       ABSL_ASSIGN_OR_RETURN(
+           const auto cache_files,
+           GetGpuModelCacheData(vision_executor_settings_,
+@@ -377,13 +377,13 @@
+ #if !defined(LITERT_DISABLE_NPU)
+     case Backend::NPU: {
+       LITERT_ASSIGN_OR_RETURN(auto& qualcomm_options,
+-                              options.GetOptions<qualcomm::QualcommOptions>());
++                              options.GetQualcommOptions());
+       qualcomm_options.SetLogLevel(qualcomm::QualcommOptions::LogLevel::kOff);
+       qualcomm_options.SetHtpPerformanceMode(
+           qualcomm::QualcommOptions::HtpPerformanceMode::kBurst);
+       LITERT_ASSIGN_OR_RETURN(
+           auto& google_tensor_options,
+-          options.GetOptions<google_tensor::GoogleTensorOptions>());
++          options.GetGoogleTensorOptions());
+       google_tensor_options.SetPerformanceMode(
+           google_tensor::GoogleTensorOptions::PerformanceMode::kBurst);
+ 

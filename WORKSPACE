@@ -318,6 +318,16 @@ load("@pypi//:requirements.bzl", "install_deps")
 install_deps()
 # End hermetic Python initialization
 
+# Transitive dependency of LiteRT-LM. We define this before tf_workspace2() to
+# override org_tensorflow's kissfft workspace, ensuring kissfftr is provided.
+http_archive(
+    name = "kissfft",
+    build_file = "@//third_party:kissfft.BUILD",
+    sha256 = "76c1aac87ddb7258f34b08a13f0eebf9e53afa299857568346aa5c82bcafaf1a",
+    strip_prefix = "kissfft-131.1.0",
+    urls = ["https://github.com/mborgerding/kissfft/archive/refs/tags/131.1.0.tar.gz"],
+)
+
 load("@org_tensorflow//tensorflow:workspace2.bzl", "tf_workspace2")
 
 tf_workspace2()
@@ -602,9 +612,9 @@ http_archive(
         # Fixes image implementation definitions and warnings in stblib header-only libraries.
         "@//third_party:stb_image_impl.diff",
     ],
-    sha256 = "13a99ad430e930907f5611325ec384168a958bf7610e63e60e2fd8e7b7379610",
-    strip_prefix = "stb-b42009b3b9d4ca35bc703f5310eedc74f584be58",
-    urls = ["https://github.com/nothings/stb/archive/b42009b3b9d4ca35bc703f5310eedc74f584be58.tar.gz"],
+    sha256 = "9a955b1b49a4410088a2e0ee2a9c057c3c907d0c1d75454144cb980aca0ba515",
+    strip_prefix = "stb-2c980bb59875b0d32144a71867fbdebb2f77cd20",
+    urls = ["https://github.com/nothings/stb/archive/2c980bb59875b0d32144a71867fbdebb2f77cd20.tar.gz"],
 )
 
 http_archive(
@@ -865,19 +875,10 @@ http_archive(
     repo_mapping = {
         "@minizip": "@zlib",
         "@sentencepiece": "@com_google_sentencepiece",
-        "@stb": "@stb",
+        "@stb": "@stblib",
     },
     strip_prefix = "LiteRT-LM-e93f5f517e404bd4fa654c511ef50fbd0bb147fe",
     urls = ["https://github.com/google-ai-edge/LiteRT-LM/archive/e93f5f517e404bd4fa654c511ef50fbd0bb147fe.tar.gz?v=9"],
-)
-
-# Transitive dependency of LiteRT-LM.
-http_archive(
-    name = "kissfft",
-    build_file = "@//third_party:kissfft.BUILD",
-    sha256 = "76c1aac87ddb7258f34b08a13f0eebf9e53afa299857568346aa5c82bcafaf1a",
-    strip_prefix = "kissfft-131.1.0",
-    urls = ["https://github.com/mborgerding/kissfft/archive/refs/tags/131.1.0.tar.gz"],
 )
 
 # Transitive dependency of LiteRT-LM.

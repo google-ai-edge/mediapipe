@@ -5,6 +5,12 @@ package(
     default_visibility = ["//visibility:public"],
 )
 
+exports_files([
+    "stb_image.h",
+    "stb_image_write.h",
+    "stb_image_resize2.h",
+])
+
 licenses(["notice"])  # MIT license
 
 COPTS = select({
@@ -33,7 +39,9 @@ cc_library(
 
 cc_library(
     name = "stb_image_resize",
+    srcs = ["stb_image_resize.c"],
     hdrs = ["stb_image_resize2.h"],
+    copts = COPTS,
     includes = ["."],
 )
 

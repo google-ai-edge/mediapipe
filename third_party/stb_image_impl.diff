@@ -33,3 +33,13 @@ index 0000000..623d757
 -- 
 2.32.0.rc1.229.g3e70b5a671-goog
 
+diff --git a/stb_image_resize.c b/stb_image_resize.c
+new file mode 100644
+index 0000000..f88aaf6
+--- /dev/null
++++ b/stb_image_resize.c
+@@ -0,0 +1,4 @@
++// By defining STB_IMAGE_RESIZE_IMPLEMENTATION
++#define STB_IMAGE_RESIZE_IMPLEMENTATION
++#include "stb_image_resize2.h"
++
