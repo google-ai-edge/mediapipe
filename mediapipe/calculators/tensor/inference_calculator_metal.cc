@@ -235,9 +235,11 @@ absl::Status InferenceCalculatorMetalImpl::InitInterpreter(
   ABSL_RETURN_IF_ERROR(CreateConverters(cc));
   RET_CHECK_EQ(interpreter_->AllocateTensors(), kTfLiteOk);
   // TODO: Support quantized tensors.
-  RET_CHECK_NE(
-      interpreter_->tensor(interpreter_->inputs()[0])->quantization.type,
-      kTfLiteAffineQuantization);
+  if (interpreter_->tensor(interpreter_->inputs()[0])->quantization.type ==
+      kTfLiteAffineQuantization) {
+    return absl::InvalidArgumentError(
+        "Quantized tensors are not supported by the macOS/iOS GPU delegate.");
+  }
   return absl::OkStatus();
 }
 

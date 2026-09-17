@@ -396,6 +396,12 @@ absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferForImageFrame(
       pixel_format = kCVPixelFormatType_128RGBAFloat;
       break;
 
+    case mediapipe::ImageFormat::SRGB:
+      return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
+             << "Unsupported ImageFrame format: SRGB. MacOS/iOS GPU "
+                "input requires an alpha channel.";
+      break;
+
     default:
       return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
              << "unsupported ImageFrame format: " << image_format;
