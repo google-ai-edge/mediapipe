@@ -232,7 +232,7 @@ absl::StatusOr<litert::Environment> InitializeLiteRtEnvironment(
     const mediapipe::GlContext* gl_context
 #if MEDIAPIPE_METAL_ENABLED
     ,
-    void* metal_helper
+    id<MTLCommandQueue> metal_command_queue, id<MTLDevice> metal_device
 #endif  // MEDIAPIPE_METAL_ENABLED
 #if defined(__EMSCRIPTEN__)
     ,
@@ -241,15 +241,20 @@ absl::StatusOr<litert::Environment> InitializeLiteRtEnvironment(
 ) {
   std::vector<litert::Environment::Option> environment_options;
 #if MEDIAPIPE_METAL_ENABLED
-  if (metal_helper) {
-    MPPMetalHelper* helper = (__bridge MPPMetalHelper*)metal_helper;
+  // NOTE: these are unretained pointers, so the caller must keep the queue and
+  // device alive for at least as long as the returned environment. The runner
+  // does so by retaining the command queue (see b/561616000).
+  if (metal_command_queue != nil) {
+    if (metal_device == nil) {
+      metal_device = metal_command_queue.device;
+    }
     environment_options.push_back(litert::Environment::Option{
         /*.tag=*/litert::Environment::OptionTag::MetalCommandQueue,
-        /*.value=*/(__bridge void*)helper.mtlCommandQueue,
+        /*.value=*/(__bridge void*)metal_command_queue,
     });
     environment_options.push_back(litert::Environment::Option{
         /*.tag=*/litert::Environment::OptionTag::MetalDevice,
-        /*.value=*/(__bridge void*)helper.mtlDevice,
+        /*.value=*/(__bridge void*)metal_device,
     });
   }
 #endif  // MEDIAPIPE_METAL_ENABLED
@@ -343,17 +348,30 @@ InferenceRunnerLiteRt::Create(
     void* metal_helper,
 #endif  // MEDIAPIPE_METAL_ENABLED
     std::optional<litert::Options> litert_options) {
-  ABSL_ASSIGN_OR_RETURN(auto environment,
-                        InitializeLiteRtEnvironment(options, gl_context.get()
 #if MEDIAPIPE_METAL_ENABLED
-                                                                 ,
-                                                    metal_helper
+  // Read everything we need out of the helper here, while the graph that
+  // created it (and therefore its GpuResources) is guaranteed to still be
+  // alive. The helper must not be retained beyond this function: see the
+  // comment on `metal_command_queue_`.
+  id<MTLCommandQueue> metal_command_queue = nil;
+  id<MTLDevice> metal_device = nil;
+  if (metal_helper != nullptr) {
+    MPPMetalHelper* helper = (__bridge MPPMetalHelper*)metal_helper;
+    metal_command_queue = helper.mtlCommandQueue;
+    metal_device = helper.mtlDevice ?: metal_command_queue.device;
+  }
+#endif  // MEDIAPIPE_METAL_ENABLED
+  ABSL_ASSIGN_OR_RETURN(auto environment, InitializeLiteRtEnvironment(
+                                              options, gl_context.get()
+#if MEDIAPIPE_METAL_ENABLED
+                                                           ,
+                                              metal_command_queue, metal_device
 #endif  // MEDIAPIPE_METAL_ENABLED
 #if defined(__EMSCRIPTEN__)
-                                                    ,
-                                                    webgpu_service
+                                              ,
+                                              webgpu_service
 #endif  // __EMSCRIPTEN__
-                                                    ));
+                                              ));
 
   // LiteRT does not copy the model buffer, so the model packet must outlive
   // the compiled model -- except in the fully-accelerated GPU case, where
@@ -471,7 +489,8 @@ InferenceRunnerLiteRt::Create(
       }
       if (cache.has_cache_only_compiled_programs()) {
 #if MEDIAPIPE_METAL_ENABLED
-        if (metal_helper != nullptr && cache.cache_only_compiled_programs()) {
+        if (metal_command_queue != nil &&
+            cache.cache_only_compiled_programs()) {
           return absl::InvalidArgumentError(
               "cache_only_compiled_programs (kernel caching) is not supported "
               "for Metal backend. Use full model caching "
@@ -580,7 +599,7 @@ InferenceRunnerLiteRt::Create(
           std::move(input_output_tensor_names), std::move(feedback_manager)
 #if MEDIAPIPE_METAL_ENABLED
                                                     ,
-          metal_helper
+          metal_command_queue
 #endif  // MEDIAPIPE_METAL_ENABLED
           ));
 
@@ -620,7 +639,7 @@ InferenceRunnerLiteRt::InferenceRunnerLiteRt(
     std::unique_ptr<InferenceFeedbackManagerLiteRt> feedback_manager
 #if MEDIAPIPE_METAL_ENABLED
     ,
-    void* metal_helper
+    id<MTLCommandQueue> metal_command_queue
 #endif  // MEDIAPIPE_METAL_ENABLED
     )
     : memory_manager_(memory_manager),
@@ -639,8 +658,8 @@ InferenceRunnerLiteRt::InferenceRunnerLiteRt(
       input_output_tensor_names_(std::move(input_output_tensor_names)),
       feedback_manager_(std::move(feedback_manager)) {
 #if MEDIAPIPE_METAL_ENABLED
-  if (metal_helper) {
-    metal_helper_ = (void*)CFRetain(metal_helper);
+  if (metal_command_queue != nil) {
+    metal_command_queue_ = (__bridge_retained void*)metal_command_queue;
   }
 #endif  // MEDIAPIPE_METAL_ENABLED
 }
@@ -663,15 +682,24 @@ InferenceRunnerLiteRt::~InferenceRunnerLiteRt() {
     gl_context_->Run([this]() {
       managed_input_buffers_.clear();
       managed_output_buffers_.clear();
+      feedback_manager_.reset();
       compiled_model_.reset();
       environment_.reset();
     });
   }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+  managed_input_buffers_.clear();
+  managed_output_buffers_.clear();
+  feedback_manager_.reset();
+  compiled_model_.reset();
+  environment_.reset();
 #if MEDIAPIPE_METAL_ENABLED
-  if (metal_helper_) {
-    CFRelease(metal_helper_);
-    metal_helper_ = nullptr;
+  // Released last: `environment_` holds an unretained pointer to this queue.
+  if (metal_command_queue_) {
+    id<MTLCommandQueue> command_queue =
+        (__bridge_transfer id<MTLCommandQueue>)metal_command_queue_;
+    (void)command_queue;
+    metal_command_queue_ = nullptr;
   }
 #endif  // MEDIAPIPE_METAL_ENABLED
 }
@@ -833,10 +861,13 @@ id<MTLCommandBuffer> InferenceRunnerLiteRt::GetMetalCommandBuffer() {
     return command_buffer;
   }
 
-  // Get command buffer from the helper.
-  MPPMetalHelper* helper = (__bridge MPPMetalHelper*)metal_helper_;
-  if (helper) {
-    command_buffer = [helper commandBuffer];
+  // Create the command buffer from the queue we retained at construction time.
+  // Do NOT route this through MPPMetalHelper: this runner may outlive the
+  // graph whose GpuResources the helper points at (b/561616000).
+  id<MTLCommandQueue> command_queue =
+      (__bridge id<MTLCommandQueue>)metal_command_queue_;
+  if (command_queue) {
+    command_buffer = [command_queue commandBuffer];
     metal_command_buffer_ = (__bridge_retained void*)command_buffer;
   }
   return command_buffer;
@@ -1435,6 +1466,14 @@ absl::StatusOr<std::vector<Tensor>> InferenceRunnerLiteRt::Run(
   InferenceRunContext ctx;
 
 #if MEDIAPIPE_METAL_ENABLED
+  auto cleanup_command_buffer = absl::MakeCleanup([this]() {
+    if (metal_command_buffer_) {
+      id<MTLCommandBuffer> command_buffer =
+          (__bridge_transfer id<MTLCommandBuffer>)metal_command_buffer_;
+      (void)command_buffer;
+      metal_command_buffer_ = nullptr;
+    }
+  });
   if (metal_command_buffer_) {
     id<MTLCommandBuffer> command_buffer =
         (__bridge_transfer id<MTLCommandBuffer>)metal_command_buffer_;

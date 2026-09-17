@@ -189,7 +189,7 @@ class InferenceRunnerLiteRt : public InferenceRunner {
       std::unique_ptr<InferenceFeedbackManagerLiteRt> feedback_manager
 #if MEDIAPIPE_METAL_ENABLED
       ,
-      void* metal_helper = nullptr
+      id<MTLCommandQueue> metal_command_queue = nil
 #endif  // MEDIAPIPE_METAL_ENABLED
   );
 
@@ -381,7 +381,16 @@ class InferenceRunnerLiteRt : public InferenceRunner {
   InputOutputTensorNames input_output_tensor_names_;
 
 #if MEDIAPIPE_METAL_ENABLED
-  void* metal_helper_ = nullptr;
+  // Retained `id<MTLCommandQueue>`, released in the destructor.
+  //
+  // We intentionally retain the command queue itself rather than the
+  // MPPMetalHelper it came from. MPPMetalHelper holds a *non-owning*
+  // pointer to the graph's GpuResources, while this runner can be stored in
+  // mediapipe::aimatter::Cache and reused by a later graph -- long after the
+  // GpuResources of the graph that created it has been destroyed. Calling back
+  // into the helper from the inference hot path therefore dereferences freed
+  // memory. See b/561616000.
+  void* metal_command_queue_ = nullptr;
   void* metal_command_buffer_ = nullptr;
   // Returns the current metal command buffer. Creates it if it doesn't exist.
   // The command buffer is committed just before running the model.
