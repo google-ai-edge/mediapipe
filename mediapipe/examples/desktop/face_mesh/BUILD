@@ -49,6 +49,15 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "face_mesh_out_cpu",
+    data = ["//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite"],
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_out_face",
+        "//mediapipe/graphs/face_mesh:desktop_live_calculators",
+    ],
+)
+
 # Linux only
 cc_binary(
     name = "face_mesh_gpu",
