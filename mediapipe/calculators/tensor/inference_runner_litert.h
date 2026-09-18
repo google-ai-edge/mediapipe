@@ -16,6 +16,7 @@
 #define MEDIAPIPE_CALCULATORS_TENSOR_INFERENCE_RUNNER_LITERT_H_
 
 #include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <memory>
 #include <optional>
@@ -32,6 +33,7 @@
 #include "mediapipe/calculators/tensor/inference_feedback_manager_litert.h"
 #include "mediapipe/calculators/tensor/inference_io_mapper.h"
 #include "mediapipe/calculators/tensor/inference_runner.h"
+#include "mediapipe/calculators/tensor/litert/litert_service.h"
 #include "mediapipe/calculators/tensor/tensor_span.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/calculator_context.h"
@@ -98,7 +100,8 @@ class InferenceRunnerLiteRt : public InferenceRunner {
 #if MEDIAPIPE_METAL_ENABLED
       void* metal_helper = nullptr,
 #endif  // MEDIAPIPE_METAL_ENABLED
-      std::optional<litert::Options> litert_options = std::nullopt);
+      std::optional<litert::Options> litert_options = std::nullopt,
+      LiteRtSystemHandles system_handles = {});
 
   absl::StatusOr<std::vector<Tensor>> Run(
       CalculatorContext* cc, const TensorSpan& tensor_span) override;

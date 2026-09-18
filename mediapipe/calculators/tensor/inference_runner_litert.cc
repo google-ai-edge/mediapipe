@@ -34,6 +34,7 @@
 #include "litert/cc/litert_common.h"                         // from @litert
 #include "litert/cc/litert_compiled_model.h"                 // from @litert
 #include "litert/cc/litert_environment.h"                    // from @litert
+#include "litert/cc/litert_environment_options.h"            // from @litert
 #include "litert/cc/litert_layout.h"                         // from @litert
 #include "litert/cc/litert_macros.h"                         // from @litert
 #include "litert/cc/litert_model_types.h"                    // from @litert
@@ -51,6 +52,7 @@
 #include "mediapipe/calculators/tensor/inference_calculator_utils.h"
 #include "mediapipe/calculators/tensor/inference_feedback_manager_litert.h"
 #include "mediapipe/calculators/tensor/inference_io_mapper.h"
+#include "mediapipe/calculators/tensor/litert/litert_service.h"
 #include "mediapipe/calculators/tensor/litert/litert_utils.h"
 #include "mediapipe/calculators/tensor/tensor_span.h"
 #include "mediapipe/framework/api2/packet.h"
@@ -229,17 +231,15 @@ absl::StatusOr<litert::HwAcceleratorSet> GetLiteRtHwAccelerators(
 
 absl::StatusOr<litert::Environment> InitializeLiteRtEnvironment(
     const InferenceCalculatorOptions::Delegate::LiteRt& options,
-    const mediapipe::GlContext* gl_context
+    const mediapipe::GlContext* gl_context,
 #if MEDIAPIPE_METAL_ENABLED
-    ,
-    id<MTLCommandQueue> metal_command_queue, id<MTLDevice> metal_device
+    id<MTLCommandQueue> metal_command_queue, id<MTLDevice> metal_device,
 #endif  // MEDIAPIPE_METAL_ENABLED
 #if defined(__EMSCRIPTEN__)
-    ,
-    WebGpuService* webgpu_service
+    WebGpuService* webgpu_service,
 #endif  // __EMSCRIPTEN__
-) {
-  std::vector<litert::Environment::Option> environment_options;
+    LiteRtSystemHandles system_handles) {
+  std::vector<litert::EnvironmentOptions::Option> environment_options;
 #if MEDIAPIPE_METAL_ENABLED
   // NOTE: these are unretained pointers, so the caller must keep the queue and
   // device alive for at least as long as the returned environment. The runner
@@ -248,26 +248,26 @@ absl::StatusOr<litert::Environment> InitializeLiteRtEnvironment(
     if (metal_device == nil) {
       metal_device = metal_command_queue.device;
     }
-    environment_options.push_back(litert::Environment::Option{
-        /*.tag=*/litert::Environment::OptionTag::MetalCommandQueue,
+    environment_options.push_back(litert::EnvironmentOptions::Option{
+        /*.tag=*/litert::EnvironmentOptions::Tag::kMetalCommandQueue,
         /*.value=*/(__bridge void*)metal_command_queue,
     });
-    environment_options.push_back(litert::Environment::Option{
-        /*.tag=*/litert::Environment::OptionTag::MetalDevice,
+    environment_options.push_back(litert::EnvironmentOptions::Option{
+        /*.tag=*/litert::EnvironmentOptions::Tag::kMetalDevice,
         /*.value=*/(__bridge void*)metal_device,
     });
   }
 #endif  // MEDIAPIPE_METAL_ENABLED
   if (options.has_npu()) {
     if (options.npu().has_compiler_plugin_library_path()) {
-      environment_options.push_back(litert::Environment::Option{
-          /*.tag=*/litert::Environment::OptionTag::CompilerPluginLibraryDir,
+      environment_options.push_back(litert::EnvironmentOptions::Option{
+          /*.tag=*/litert::EnvironmentOptions::Tag::kCompilerPluginLibraryDir,
           /*.value=*/options.npu().compiler_plugin_library_path().c_str(),
       });
     }
     if (options.npu().has_dispatch_library_path()) {
-      environment_options.push_back(litert::Environment::Option{
-          /*.tag=*/litert::Environment::OptionTag::DispatchLibraryDir,
+      environment_options.push_back(litert::EnvironmentOptions::Option{
+          /*.tag=*/litert::EnvironmentOptions::Tag::kDispatchLibraryDir,
           /*.value=*/options.npu().dispatch_library_path().c_str(),
       });
     }
@@ -276,12 +276,12 @@ absl::StatusOr<litert::Environment> InitializeLiteRtEnvironment(
 #if defined(__EMSCRIPTEN__)
   if (webgpu_service != nullptr) {
     const wgpu::Device& device = webgpu_service->device();
-    environment_options.push_back(litert::Environment::Option{
-        /*.tag=*/litert::Environment::OptionTag::WebGpuDevice,
+    environment_options.push_back(litert::EnvironmentOptions::Option{
+        /*.tag=*/litert::EnvironmentOptions::Tag::kWebGpuDevice,
         /*.value=*/reinterpret_cast<int64_t>(device.Get()),
     });
-    environment_options.push_back(litert::Environment::Option{
-        /*.tag=*/litert::Environment::OptionTag::WebGpuQueue,
+    environment_options.push_back(litert::EnvironmentOptions::Option{
+        /*.tag=*/litert::EnvironmentOptions::Tag::kWebGpuQueue,
         /*.value=*/reinterpret_cast<int64_t>(device.GetQueue().Get()),
     });
   }
@@ -291,18 +291,22 @@ absl::StatusOr<litert::Environment> InitializeLiteRtEnvironment(
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
   if (gl_context != nullptr) {
     // We expect EGL context and display to outlive the LiteRT environment.
-    environment_options.push_back(litert::Environment::Option{
-        /*.tag=*/litert::Environment::OptionTag::EglContext,
+    environment_options.push_back(litert::EnvironmentOptions::Option{
+        /*.tag=*/litert::EnvironmentOptions::Tag::kEglContext,
         /*.value=*/reinterpret_cast<int64_t>(gl_context->egl_context()),
     });
-    environment_options.push_back(litert::Environment::Option{
-        /*.tag=*/litert::Environment::OptionTag::EglDisplay,
+    environment_options.push_back(litert::EnvironmentOptions::Option{
+        /*.tag=*/litert::EnvironmentOptions::Tag::kEglDisplay,
         /*.value=*/reinterpret_cast<int64_t>(gl_context->egl_display()),
     });
   }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
-  auto environment = litert::Environment::Create(environment_options);
+  if (system_handles.runtime != 0) {
+    return CreateLiteRtEnvironment(system_handles, environment_options);
+  }
+  auto environment = litert::Environment::Create(
+      litert::EnvironmentOptions(environment_options));
   if (!environment) {
     return absl::InternalError(
         absl::StrCat("Failed to create LiteRt environment: ",
@@ -347,7 +351,8 @@ InferenceRunnerLiteRt::Create(
 #if MEDIAPIPE_METAL_ENABLED
     void* metal_helper,
 #endif  // MEDIAPIPE_METAL_ENABLED
-    std::optional<litert::Options> litert_options) {
+    std::optional<litert::Options> litert_options,
+    LiteRtSystemHandles system_handles) {
 #if MEDIAPIPE_METAL_ENABLED
   // Read everything we need out of the helper here, while the graph that
   // created it (and therefore its GpuResources) is guaranteed to still be
@@ -362,16 +367,14 @@ InferenceRunnerLiteRt::Create(
   }
 #endif  // MEDIAPIPE_METAL_ENABLED
   ABSL_ASSIGN_OR_RETURN(auto environment, InitializeLiteRtEnvironment(
-                                              options, gl_context.get()
+                                              options, gl_context.get(),
 #if MEDIAPIPE_METAL_ENABLED
-                                                           ,
-                                              metal_command_queue, metal_device
+                                              metal_command_queue, metal_device,
 #endif  // MEDIAPIPE_METAL_ENABLED
 #if defined(__EMSCRIPTEN__)
-                                              ,
-                                              webgpu_service
+                                              webgpu_service,
 #endif  // __EMSCRIPTEN__
-                                              ));
+                                              system_handles));
 
   // LiteRT does not copy the model buffer, so the model packet must outlive
   // the compiled model -- except in the fully-accelerated GPU case, where

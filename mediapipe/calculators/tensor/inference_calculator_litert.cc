@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -126,12 +127,16 @@ InferenceCalculatorLiteRtImpl::CreateInferenceRunner(CalculatorContext* cc) {
   ABSL_ASSIGN_OR_RETURN(auto model_packet, GetModelAsPacket(cc));
   auto litert = options.delegate().litert();
 
-  // If dispatch library path is not specified, try to get it from the service.
-  if (litert.has_npu() && litert.npu().dispatch_library_path().empty() &&
-      cc->Service(kLiteRtService).IsAvailable()) {
-    auto& litert_service = cc->Service(kLiteRtService).GetObject();
-    litert.mutable_npu()->set_dispatch_library_path(
-        litert_service.GetDispatchLibraryPath());
+  LiteRtSystemHandles system_handles;
+  if (cc->Service(kLiteRtService).IsAvailable()) {
+    const auto& litert_service = cc->Service(kLiteRtService).GetObject();
+    system_handles = litert_service.GetSystemHandles();
+    // If dispatch library path is not specified, try to get it from the
+    // service.
+    if (litert.has_npu() && litert.npu().dispatch_library_path().empty()) {
+      litert.mutable_npu()->set_dispatch_library_path(
+          litert_service.GetDispatchLibraryPath());
+    }
   }
 #if MEDIAPIPE_METAL_ENABLED
   void* metal_helper = nullptr;
@@ -154,7 +159,7 @@ InferenceCalculatorLiteRtImpl::CreateInferenceRunner(CalculatorContext* cc) {
 #if MEDIAPIPE_METAL_ENABLED
       metal_helper,
 #endif  // MEDIAPIPE_METAL_ENABLED
-      /*.litert_options=*/std::nullopt);
+      /*.litert_options=*/std::nullopt, system_handles);
 }
 
 }  // namespace api2
