@@ -33,11 +33,11 @@ import androidx.appsearch.app.SearchSpec;
 import androidx.appsearch.app.SetSchemaRequest;
 import androidx.appsearch.localstorage.LocalStorage;
 import com.google.mediapipe.framework.MediaPipeException;
+import com.google.mediapipe.tasks.core.AudioPart;
+import com.google.mediapipe.tasks.core.ImagePart;
 import com.google.mediapipe.tasks.core.Part;
-import com.google.mediapipe.tasks.retrieval.model.AudioPart;
-import com.google.mediapipe.tasks.retrieval.model.ImagePart;
+import com.google.mediapipe.tasks.core.TextPart;
 import com.google.mediapipe.tasks.retrieval.model.RetrievalRecord;
-import com.google.mediapipe.tasks.text.core.TextPart;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -134,10 +134,10 @@ public final class AppSearchVectorStore implements VectorStore {
           payload = ((TextPart) part).getText();
         } else if (part instanceof ImagePart) {
           contentType = "IMAGE";
-          payload = ((ImagePart) part).filePath().toString();
+          payload = ((ImagePart) part).getFilePath().toString();
         } else if (part instanceof AudioPart) {
           contentType = "AUDIO";
-          payload = ((AudioPart) part).filePath().toString();
+          payload = ((AudioPart) part).getFilePath().toString();
         } else {
           throw new IllegalArgumentException("Unsupported part type");
         }

@@ -13,30 +13,27 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-package com.google.mediapipe.tasks.retrieval.model;
+package com.google.mediapipe.tasks.core;
 
-import android.net.Uri;
-import com.google.mediapipe.tasks.core.Part;
-
-/** Represents an image part of a multi-modal content block. */
-public final class ImagePart extends Part {
-  private final Uri filePath;
+/** Represents a text part of a multi-modal content block. */
+public final class TextPart extends Part {
+  private final String text;
 
   /**
-   * Creates a new {@link ImagePart} with the specified image.
+   * Creates a new {@link TextPart} with the specified text.
    *
-   * @param filePath the image file path.
+   * @param text the text content.
    */
-  public ImagePart(Uri filePath) {
-    this.filePath = filePath;
+  public TextPart(String text) {
+    this.text = text;
   }
 
   /**
-   * Returns the file path of this image.
+   * Returns the text content of this part.
    *
-   * @return the file path.
+   * @return the text content.
    */
-  public Uri filePath() {
-    return filePath;
+  public String getText() {
+    return text;
   }
 }

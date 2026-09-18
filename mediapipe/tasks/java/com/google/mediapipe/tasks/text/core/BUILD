@@ -20,9 +20,8 @@ package(default_visibility = ["//visibility:public"])
 
 android_library(
     name = "core",
-    srcs = glob(["*.java"]),
-    deps = [
+    exports = [
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
-        "@maven//:com_google_guava_guava",
     ],
+    deps = ["@maven//:com_google_guava_guava"],
 )

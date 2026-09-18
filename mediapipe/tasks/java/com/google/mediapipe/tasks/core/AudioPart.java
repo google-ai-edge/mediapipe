@@ -13,29 +13,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-package com.google.mediapipe.tasks.text.core;
+package com.google.mediapipe.tasks.core;
 
-import com.google.mediapipe.tasks.core.Part;
+import android.net.Uri;
 
-/** Represents a text part of a multi-modal content block. */
-public final class TextPart extends Part {
-  private final String text;
+/** Represents an audio part of a multi-modal content block. */
+public final class AudioPart extends Part {
+  private final Uri filePath;
 
   /**
-   * Creates a new {@link TextPart} with the specified text.
+   * Creates a new {@link AudioPart} with the specified audio file path.
    *
-   * @param text the text content.
+   * @param filePath the audio file path.
    */
-  public TextPart(String text) {
-    this.text = text;
+  public AudioPart(Uri filePath) {
+    this.filePath = filePath;
   }
 
   /**
-   * Returns the text content of this part.
+   * Returns the file path of this audio.
    *
-   * @return the text content.
+   * @return the file path.
    */
-  public String getText() {
-    return text;
+  public Uri getFilePath() {
+    return filePath;
   }
 }

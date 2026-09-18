@@ -13,30 +13,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-package com.google.mediapipe.tasks.audio.core;
+package com.google.mediapipe.tasks.core;
 
-import com.google.mediapipe.tasks.components.containers.AudioData;
-import com.google.mediapipe.tasks.core.Part;
+import android.net.Uri;
 
-/** Represents an audio part of a multi-modal content block. */
-public final class AudioPart extends Part {
-  private final AudioData audioData;
+/** Represents an image part of a multi-modal content block. */
+public final class ImagePart extends Part {
+  private final Uri filePath;
 
   /**
-   * Creates a new {@link AudioPart} with the specified audio data.
+   * Creates a new {@link ImagePart} with the specified image.
    *
-   * @param audioData the audio data content.
+   * @param filePath the image file path.
    */
-  public AudioPart(AudioData audioData) {
-    this.audioData = audioData;
+  public ImagePart(Uri filePath) {
+    this.filePath = filePath;
   }
 
   /**
-   * Returns the audio data content of this part.
+   * Returns the file path of this image.
    *
-   * @return the audio data.
+   * @return the file path.
    */
-  public AudioData audioData() {
-    return audioData;
+  public Uri getFilePath() {
+    return filePath;
   }
 }
