@@ -716,6 +716,10 @@ load("@//third_party:wasm_files.bzl", "wasm_files")
 
 wasm_files()
 
+load("@//third_party:sqlite_prebuilt_files.bzl", "sqlite_prebuilt_files")
+
+sqlite_prebuilt_files()
+
 # Eigen
 # org_tensorflow depends on Eigen. If updating tensorflow version,
 # make sure to bump Eigen version as well and vice versa.

@@ -33,6 +33,79 @@ cc_library(
     ],
 )
 
+cc_import(
+    name = "sqlite_vector_store_prebuilt",
+    static_library = select({
+        "@platforms//cpu:armv7": "@com_google_mediapipe_android_armeabi_v7a_libsqlite_vector_store_a//file",
+        "@platforms//cpu:arm64": "@com_google_mediapipe_android_arm64_v8a_libsqlite_vector_store_a//file",
+        "@platforms//cpu:x86_32": "@com_google_mediapipe_android_x86_libsqlite_vector_store_a//file",
+        "@platforms//cpu:x86_64": "@com_google_mediapipe_android_x86_64_libsqlite_vector_store_a//file",
+        "@bazel_tools//src/conditions:linux_aarch64": "@com_google_mediapipe_desktop_linux_arm64_libsqlite_vector_store_a//file",
+        "@bazel_tools//src/conditions:linux_x86_64": "@com_google_mediapipe_desktop_linux_x86_64_libsqlite_vector_store_a//file",
+        "@bazel_tools//src/conditions:windows_arm64": "@com_google_mediapipe_desktop_windows_arm64_libsqlite_vector_store_lib//file",
+        "@bazel_tools//src/conditions:windows_x64": "@com_google_mediapipe_desktop_windows_x86_64_libsqlite_vector_store_lib//file",
+        "@bazel_tools//src/conditions:darwin_arm64": "@com_google_mediapipe_desktop_darwin_arm64_libsqlite_vector_store_a//file",
+        "//conditions:default": "@com_google_mediapipe_desktop_linux_x86_64_libsqlite_vector_store_a//file",
+    }),
+)
+
+cc_library(
+    name = "sqlite_vector_store",
+    hdrs = ["sqlite_vector_store.h"],
+    deps = [
+        ":sqlite_vector_store_prebuilt",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc/retrieval/semantic_retriever/proto:vector_stores_cc_proto",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+cc_import(
+    name = "sqlite_memory_store_prebuilt",
+    static_library = select({
+        "@platforms//cpu:armv7": "@com_google_mediapipe_android_armeabi_v7a_libsqlite_memory_store_a//file",
+        "@platforms//cpu:arm64": "@com_google_mediapipe_android_arm64_v8a_libsqlite_memory_store_a//file",
+        "@platforms//cpu:x86_32": "@com_google_mediapipe_android_x86_libsqlite_memory_store_a//file",
+        "@platforms//cpu:x86_64": "@com_google_mediapipe_android_x86_64_libsqlite_memory_store_a//file",
+        "@bazel_tools//src/conditions:linux_aarch64": "@com_google_mediapipe_desktop_linux_arm64_libsqlite_memory_store_a//file",
+        "@bazel_tools//src/conditions:linux_x86_64": "@com_google_mediapipe_desktop_linux_x86_64_libsqlite_memory_store_a//file",
+        "@bazel_tools//src/conditions:windows_arm64": "@com_google_mediapipe_desktop_windows_arm64_libsqlite_memory_store_lib//file",
+        "@bazel_tools//src/conditions:windows_x64": "@com_google_mediapipe_desktop_windows_x86_64_libsqlite_memory_store_lib//file",
+        "@bazel_tools//src/conditions:darwin_arm64": "@com_google_mediapipe_desktop_darwin_arm64_libsqlite_memory_store_a//file",
+        "//conditions:default": "@com_google_mediapipe_desktop_linux_x86_64_libsqlite_memory_store_a//file",
+    }),
+)
+
+cc_library(
+    name = "sqlite_memory_store",
+    hdrs = ["sqlite_memory_store.h"],
+    deps = [
+        ":memory_store",
+        ":sqlite_memory_store_prebuilt",
+        ":sqlite_vector_store",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc/retrieval/semantic_retriever/proto:memory_cc_proto",
+        "//mediapipe/tasks/cc/retrieval/semantic_retriever/proto:vector_stores_cc_proto",
+        "@com_github_nlohmann_json//:json",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
 cc_library(
     name = "text_chunker",
     srcs = ["text_chunker.cc"],
