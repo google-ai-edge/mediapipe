@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef THIRD_PARTY_ODML_LLM_EXTENSIONS_RAG_PIPELINE_CORE_MEMORY_MEMORY_STORE_H_
-#define THIRD_PARTY_ODML_LLM_EXTENSIONS_RAG_PIPELINE_CORE_MEMORY_MEMORY_STORE_H_
+#ifndef MEDIAPIPE_TASKS_CC_RETRIEVAL_SEMANTIC_RETRIEVER_MEMORY_STORE_H_
+#define MEDIAPIPE_TASKS_CC_RETRIEVAL_SEMANTIC_RETRIEVER_MEMORY_STORE_H_
 
 #include <algorithm>
 #include <cstddef>
@@ -44,19 +44,20 @@ class MemoryStore {
   virtual absl::Status InsertBatch(absl::Span<const MemoryRecord> records) = 0;
 
   virtual absl::StatusOr<std::vector<MemoryRecord>> GetNearestRecords(
-      std::vector<float> queryEmbeddings, int topK,
-      float minSimilarityScore) = 0;
+      std::vector<float> query_embeddings, int top_k,
+      float min_similarity_score) = 0;
 
   virtual absl::StatusOr<std::vector<MemoryRecord>> GetNearestRecords(
-      std::vector<float> queryEmbeddings, int topK, float minSimilarityScore,
+      std::vector<float> query_embeddings, int top_k,
+      float min_similarity_score,
       const absl::flat_hash_map<std::string, std::string>& metadata_filter) {
     if (metadata_filter.empty()) {
-      return GetNearestRecords(std::move(queryEmbeddings), topK,
-                               minSimilarityScore);
+      return GetNearestRecords(std::move(query_embeddings), top_k,
+                               min_similarity_score);
     }
     ABSL_ASSIGN_OR_RETURN(auto records,
-                          GetNearestRecords(std::move(queryEmbeddings), topK,
-                                            minSimilarityScore));
+                          GetNearestRecords(std::move(query_embeddings), top_k,
+                                            min_similarity_score));
     std::vector<MemoryRecord> filtered_records;
     for (const auto& record : records) {
       if (!record.has_metadata()) {
@@ -134,4 +135,4 @@ class MemoryStore {
 }  // namespace tasks
 }  // namespace mediapipe
 
-#endif  // THIRD_PARTY_ODML_LLM_EXTENSIONS_RAG_PIPELINE_CORE_MEMORY_MEMORY_STORE_H_
+#endif  // MEDIAPIPE_TASKS_CC_RETRIEVAL_SEMANTIC_RETRIEVER_MEMORY_STORE_H_

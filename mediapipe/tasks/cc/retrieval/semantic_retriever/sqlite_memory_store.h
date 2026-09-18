@@ -69,10 +69,11 @@ class SqliteMemoryStore : public MemoryStore {
   absl::Status Initialize(const Config& config);
   absl::Status Insert(MemoryRecord record) override;
   absl::StatusOr<std::vector<MemoryRecord>> GetNearestRecords(
-      std::vector<float> queryEmbeddings, int topK,
-      float minSimilarityScore) override;
+      std::vector<float> query_embeddings, int top_k,
+      float min_similarity_score) override;
   absl::StatusOr<std::vector<MemoryRecord>> GetNearestRecords(
-      std::vector<float> queryEmbeddings, int topK, float minSimilarityScore,
+      std::vector<float> query_embeddings, int top_k,
+      float min_similarity_score,
       const absl::flat_hash_map<std::string, std::string>& metadata_filter)
       override;
   absl::StatusOr<std::vector<MemoryRecord>> GetRecords(
