@@ -829,7 +829,7 @@ http_archive(
     url = "https://curl.haxx.se/download/curl-8.10.1.tar.gz",
 )
 
-# LiteRT v2.2.0
+# LiteRT HEAD from 09/17/2026
 # Fetch just the source tree and let it use our already-defined workspace
 # dependencies (@org_tensorflow, @xla, etc.) to avoid collisions.
 #
@@ -855,9 +855,9 @@ http_archive(
         "@//third_party:litert_custom_ops.diff",
         "@//third_party:litert_internal_fbs_fix.diff",
     ],
-    sha256 = "6d2ce16738199adc5a3cdde76c3c6a6dac636d3b52a1d7790ea524fb0d59f7fc",
-    strip_prefix = "LiteRT-2.2.0",
-    urls = ["https://github.com/google-ai-edge/LiteRT/archive/refs/tags/v2.2.0.tar.gz"],
+    sha256 = "b40bc9629e123071596bfdf7c6a682f2a5e62430178d72d6b4fcb8a0a16af6ce",
+    strip_prefix = "LiteRT-d90e665105195e58c98ca0e1f08f7fc700a40b05",
+    urls = ["https://github.com/google-ai-edge/LiteRT/archive/d90e665105195e58c98ca0e1f08f7fc700a40b05.tar.gz"],
 )
 
 # LiteRT-LM
