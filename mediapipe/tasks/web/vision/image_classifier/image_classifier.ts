@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import {TensorsToClassificationCalculatorOptions} from '../../../../calculators/tensor/tensors_to_classification_calculator_pb';
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {ClassificationResult} from '../../../../tasks/cc/components/containers/proto/classifications_pb';
@@ -21,6 +22,10 @@ import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/b
 import {ImageClassifierGraphOptions} from '../../../../tasks/cc/vision/image_classifier/proto/image_classifier_graph_options_pb';
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
 import {convertFromClassificationResultProto} from '../../../../tasks/web/components/processors/classifier_result';
+import {
+  categoryLabelMapFromItems,
+  findUniqueCalculatorNode,
+} from '../../../../tasks/web/components/processors/label_map';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {
@@ -41,6 +46,8 @@ const IMAGE_CLASSIFIER_GRAPH =
 const IMAGE_STREAM = 'input_image';
 const NORM_RECT_STREAM = 'norm_rect';
 const CLASSIFICATIONS_STREAM = 'classifications';
+const TENSORS_TO_CLASSIFICATION_CALCULATOR_NAME =
+  'TensorsToClassificationCalculator';
 
 export type {ImageClassifierOptions} from './image_classifier_options';
 export type {
@@ -56,6 +63,8 @@ export {type ImageSource}; // Used in the public API
 /** Performs classification on images. */
 export class ImageClassifier extends VisionTaskRunner {
   private classificationResult: ImageClassifierResult = {classifications: []};
+  private labels: string[] = [];
+  private displayNames: string[] = [];
   private readonly options = new ImageClassifierGraphOptions();
 
   /**
@@ -158,6 +167,64 @@ export class ImageClassifier extends VisionTaskRunner {
       ),
     );
     return this.applyOptions(options);
+  }
+
+  protected override onGraphRefreshed(): void {
+    this.populateLabels();
+  }
+
+  /**
+   * Populate labels from TensorsToClassificationCalculator in the expanded
+   * graph. The calculator is configured from TFLite Model Metadata when the
+   * ImageClassifier graph is built.
+   */
+  private populateLabels(): void {
+    this.labels = [];
+    this.displayNames = [];
+    const node = findUniqueCalculatorNode(
+      this.getCalculatorGraphConfig(),
+      TENSORS_TO_CLASSIFICATION_CALCULATOR_NAME,
+    );
+    if (!node) {
+      return;
+    }
+    const labelItems =
+      node
+        .getOptions()
+        ?.getExtension(TensorsToClassificationCalculatorOptions.ext)
+        ?.getLabelItemsMap() ?? new Map();
+    const labelMap = categoryLabelMapFromItems(labelItems);
+    this.labels = labelMap.labels;
+    this.displayNames = labelMap.displayNames;
+  }
+
+  /**
+   * Get the category label list the ImageClassifier can recognize. The index
+   * in the returned array corresponds to the category index in the model
+   * label map.
+   *
+   * If there is no labelmap provided in the model file, an empty array is
+   * returned.
+   *
+   * @export
+   * @return The labels used by the current model.
+   */
+  getLabels(): string[] {
+    return this.labels;
+  }
+
+  /**
+   * Get the locale display-name list for the current model.
+   *
+   * When the model includes a display-name associated file, the returned list
+   * is the same length as {@link getLabels} and index-aligned with it. When
+   * the model has no display names, an empty array is returned.
+   *
+   * @export
+   * @return The display names used by the current model, or `[]` if none.
+   */
+  getDisplayNames(): string[] {
+    return this.displayNames;
   }
 
   /**
