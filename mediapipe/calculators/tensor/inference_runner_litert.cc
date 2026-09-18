@@ -38,7 +38,6 @@
 #include "litert/cc/litert_layout.h"                         // from @litert
 #include "litert/cc/litert_macros.h"                         // from @litert
 #include "litert/cc/litert_model_types.h"                    // from @litert
-#include "litert/cc/litert_opaque_options.h"                 // from @litert
 #include "litert/cc/litert_options.h"                        // from @litert
 #include "litert/cc/litert_ranked_tensor_type.h"             // from @litert
 #include "litert/cc/litert_tensor_buffer.h"                  // from @litert
@@ -554,15 +553,19 @@ InferenceRunnerLiteRt::Create(
   }
   int signature_index = 0;
   if (num_signatures > 1) {
-    // Find default signature for models with multiple signatures.
-    auto default_signature_itr =
-        absl::c_find_if(signatures, [](const auto& signature) {
-          return signature.Key() ==
-                 litert::CompiledModel::DefaultSignatureKey();
+    // Find the specified signature for models with multiple signatures.
+    // If not specified, use the default signature key.
+    absl::string_view signature_key =
+        options.has_signature_key()
+            ? options.signature_key()
+            : litert::CompiledModel::DefaultSignatureKey();
+    auto signature_itr =
+        absl::c_find_if(signatures, [signature_key](const auto& signature) {
+          return signature.Key() == signature_key;
         });
-    RET_CHECK(default_signature_itr != signatures.end())
-        << "Model must have default signature key";
-    signature_index = std::distance(signatures.begin(), default_signature_itr);
+    RET_CHECK(signature_itr != signatures.end())
+        << "Signature key not found: " << signature_key;
+    signature_index = std::distance(signatures.begin(), signature_itr);
   }
 
   bool run_async = options.run_async();

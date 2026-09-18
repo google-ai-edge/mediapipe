@@ -363,6 +363,10 @@ message InferenceCalculatorOptions {
       // LiteRt::Webnn Accelerator.
       message Webnn {}
       optional Webnn webnn = 11;
+
+      // Which model signature to use. If no signature is specified, the default
+      // signature is used.
+      optional string signature_key = 12;
     }
 
     oneof delegate {
