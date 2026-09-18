@@ -17,7 +17,9 @@
 import 'jasmine';
 
 // Placeholder for internal dependency on encodeByteArray
+import {DetectionLabelIdToTextCalculatorOptions} from '../../../../calculators/util/detection_label_id_to_text_calculator_pb';
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
+import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {Detection as DetectionProto} from '../../../../framework/formats/detection_pb';
 import {LocationData} from '../../../../framework/formats/location_data_pb';
 import {
@@ -28,6 +30,11 @@ import {
   verifyGraph,
   verifyListenersRegistered,
 } from '../../../../tasks/web/core/task_runner_test_utils';
+import {LabelMapItem} from '../../../../util/label_map_pb';
+import {
+  CALCULATOR_GRAPH_CONFIG_LISTENER_NAME,
+  SimpleListener,
+} from '../../../../web/graph_runner/graph_runner';
 
 import {ObjectDetector} from './object_detector';
 import type {ObjectDetectorOptions} from './object_detector_options';
@@ -230,6 +237,70 @@ describe('ObjectDetector', () => {
       ],
       boundingBox: {originX: 0, originY: 0, width: 0, height: 0, angle: 0},
       keypoints: [],
+    });
+  });
+
+  describe('getLabels()', () => {
+    function graphConfigWithLabels(labels: string[]): Uint8Array {
+      const graph = new CalculatorGraphConfig();
+      const node = new CalculatorGraphConfig.Node();
+      node.setName('DetectionLabelIdToTextCalculator');
+      node.setCalculator('DetectionLabelIdToTextCalculator');
+
+      const labelOptions = new DetectionLabelIdToTextCalculatorOptions();
+      labels.forEach((name, index) => {
+        const item = new LabelMapItem();
+        item.setName(name);
+        labelOptions.getLabelItemsMap().set(index, item);
+      });
+
+      const calculatorOptions = new CalculatorOptions();
+      calculatorOptions.setExtension(
+        DetectionLabelIdToTextCalculatorOptions.ext,
+        labelOptions,
+      );
+      node.setOptions(calculatorOptions);
+      graph.addNode(node);
+      return graph.serializeBinary();
+    }
+
+    it('returns an empty list when the model has no labelmap', () => {
+      expect(objectDetector.getLabels()).toEqual([]);
+    });
+
+    it('returns labels from the model metadata labelmap', async () => {
+      objectDetector.fakeWasmModule._getGraphConfig.and.callFake(() => {
+        (
+          objectDetector.fakeWasmModule.simpleListeners![
+            CALCULATOR_GRAPH_CONFIG_LISTENER_NAME
+          ] as SimpleListener<Uint8Array>
+        )(
+          graphConfigWithLabels(['person', 'bicycle', 'car']),
+          0,
+        );
+      });
+
+      await objectDetector.setOptions({
+        baseOptions: {modelAssetBuffer: new Uint8Array([])},
+      });
+
+      expect(objectDetector.getLabels()).toEqual(['person', 'bicycle', 'car']);
+    });
+
+    it('reloads labels when the model is swapped', async () => {
+      objectDetector.fakeWasmModule._getGraphConfig.and.callFake(() => {
+        (
+          objectDetector.fakeWasmModule.simpleListeners![
+            CALCULATOR_GRAPH_CONFIG_LISTENER_NAME
+          ] as SimpleListener<Uint8Array>
+        )(graphConfigWithLabels(['cat', 'dog']), 0);
+      });
+
+      await objectDetector.setOptions({
+        baseOptions: {modelAssetBuffer: new Uint8Array([1, 2, 3])},
+      });
+
+      expect(objectDetector.getLabels()).toEqual(['cat', 'dog']);
     });
   });
 });
