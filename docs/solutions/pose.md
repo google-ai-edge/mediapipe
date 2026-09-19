@@ -497,7 +497,7 @@ on how to build MediaPipe examples.
     ([presentation](https://youtu.be/YPpUOTRn5tA))
 *   [Models and model cards](./models.md#pose)
 *   [GHUM & GHUML: Generative 3D Human Shape and Articulated Pose Models](https://github.com/google-research/google-research/tree/master/ghum)
-*   [Web demo](https://code.mediapipe.dev/codepen/pose)
+*   [Web demo](https://codepen.io/mediapipe/pen/LYRRYEw)
 *   [Python Colab](https://mediapipe.page.link/pose_py_colab)
 
 [`mAP`]: https://cocodataset.org/#keypoints-eval
