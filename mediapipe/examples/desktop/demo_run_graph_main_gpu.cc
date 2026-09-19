@@ -15,6 +15,7 @@
 // An example of sending OpenCV webcam frames into a MediaPipe graph.
 // This example requires a linux computer and a GPU with EGL support drivers.
 #include <cstdlib>
+#include <memory>
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
@@ -114,7 +115,7 @@ absl::Status RunMPPGraph() {
     }
 
     // Wrap Mat into an ImageFrame.
-    auto input_frame = std::make_unique<mediapipe::ImageFrame>(
+    auto input_frame = std::make_shared<mediapipe::ImageFrame>(
         mediapipe::ImageFormat::SRGBA, camera_frame.cols, camera_frame.rows,
         mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
     cv::Mat input_frame_mat = mediapipe::formats::MatView(input_frame.get());
@@ -123,20 +124,11 @@ absl::Status RunMPPGraph() {
     // Prepare and add graph input packet.
     size_t frame_timestamp_us =
         (double)cv::getTickCount() / (double)cv::getTickFrequency() * 1e6;
-    ABSL_RETURN_IF_ERROR(
-        gpu_helper.RunInGlContext([&input_frame, &frame_timestamp_us, &graph,
-                                   &gpu_helper]() -> absl::Status {
-          // Convert ImageFrame to GpuBuffer.
-          auto texture = gpu_helper.CreateSourceTexture(*input_frame.get());
-          auto gpu_frame = texture.GetFrame<mediapipe::GpuBuffer>();
-          glFlush();
-          texture.Release();
-          // Send GPU image packet into the graph.
-          ABSL_RETURN_IF_ERROR(graph.AddPacketToInputStream(
-              kInputStream, mediapipe::Adopt(gpu_frame.release())
-                                .At(mediapipe::Timestamp(frame_timestamp_us))));
-          return absl::OkStatus();
-        }));
+    auto gpu_frame = gpu_helper.GpuBufferWithImageFrame(input_frame);
+    ABSL_RETURN_IF_ERROR(graph.AddPacketToInputStream(
+        kInputStream,
+        mediapipe::MakePacket<mediapipe::GpuBuffer>(std::move(gpu_frame))
+            .At(mediapipe::Timestamp(frame_timestamp_us))));
 
     // Get the graph result packet, or stop if that fails.
     mediapipe::Packet packet;
