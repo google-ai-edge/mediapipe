@@ -48,7 +48,6 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:logging",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/text/core",
         "//third_party:autovalue",
         "@com_google_protobuf//java/lite",
         "@litert_lm//kotlin/java/com/google/ai/edge/litertlm:litertlm-android",
