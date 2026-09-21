@@ -23,7 +23,6 @@ TEXT_LIBS = [
     "//mediapipe/tasks/web/text/language_detector",
     "//mediapipe/tasks/web/text/text_classifier",
     "//mediapipe/tasks/web/text/text_embedder",
-    "//mediapipe/tasks/web/text/text_summarizer",
 ]
 
 ts_library(

@@ -18,7 +18,6 @@ import {FilesetResolver as FilesetResolverImpl} from '../../../tasks/web/core/fi
 import {LanguageDetector as LanguageDetectorImpl} from '../../../tasks/web/text/language_detector/language_detector';
 import {TextClassifier as TextClassifierImpl} from '../../../tasks/web/text/text_classifier/text_classifier';
 import {TextEmbedder as TextEmbedderImpl} from '../../../tasks/web/text/text_embedder/text_embedder';
-import {TextSummarizer as TextSummarizerImpl} from '../../../tasks/web/text/text_summarizer/text_summarizer';
 
 // tslint:disable:enforce-comments-on-exported-symbols
 
@@ -28,4 +27,3 @@ export const FilesetResolver = FilesetResolverImpl;
 export const LanguageDetector = LanguageDetectorImpl;
 export const TextClassifier = TextClassifierImpl;
 export const TextEmbedder = TextEmbedderImpl;
-export const TextSummarizer = TextSummarizerImpl;

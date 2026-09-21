@@ -18,4 +18,3 @@ export * from '../../../tasks/web/core/fileset_resolver';
 export * from '../../../tasks/web/text/language_detector/language_detector';
 export * from '../../../tasks/web/text/text_classifier/text_classifier';
 export * from '../../../tasks/web/text/text_embedder/text_embedder';
-export * from '../../../tasks/web/text/text_summarizer/text_summarizer';
