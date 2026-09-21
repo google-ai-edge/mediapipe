@@ -42,6 +42,7 @@ cc_binary(
     deps = [
         ":mediapipe_tasks_c_version_script.lds",
         "//mediapipe/tasks/c/audio/audio_classifier:audio_classifier_c_lib",
+        "//mediapipe/tasks/c/audio/audio_embedder:audio_embedder_c_lib",
         "//mediapipe/tasks/c/core:common",
         "//mediapipe/tasks/c/metadata:flatbuffer_api_c_lib",
         "//mediapipe/tasks/c/retrieval/semantic_retriever:semantic_retriever_lib",
