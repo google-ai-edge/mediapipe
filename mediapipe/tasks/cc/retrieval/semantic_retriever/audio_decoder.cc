@@ -256,25 +256,33 @@ absl::StatusOr<std::vector<float>> AudioDecoder::DecodeAudioData(
     return absl::NotFoundError(
         absl::StrCat("Failed to read audio file: ", path));
   }
+  return DecodeAudioBytes(wav_string);
+}
+
+absl::StatusOr<std::vector<float>> AudioDecoder::DecodeAudioBytes(
+    absl::string_view wav_bytes, uint32_t* sample_rate) {
+  if (wav_bytes.empty()) {
+    return absl::InvalidArgumentError("Audio bytes cannot be empty.");
+  }
 
   std::vector<float> decoded_values;
   uint32_t offset = 0;
   uint32_t sample_count = 0;
   uint16_t channel_count = 0;
-  uint32_t sample_rate = 0;
+  uint32_t parsed_sample_rate = 0;
 
-  auto status =
-      DecodeLin16WaveAsFloatVector(wav_string, &decoded_values, &offset,
-                                   &sample_count, &channel_count, &sample_rate);
-  if (!status.ok()) {
-    return status;
-  }
+  ABSL_RETURN_IF_ERROR(DecodeLin16WaveAsFloatVector(
+      wav_bytes, &decoded_values, &offset, &sample_count, &channel_count,
+      &parsed_sample_rate));
 
   if (channel_count != 1) {
     return absl::InvalidArgumentError(absl::StrCat(
         "Only mono (1 channel) audio is supported, but got: ", channel_count));
   }
 
+  if (sample_rate != nullptr) {
+    *sample_rate = parsed_sample_rate;
+  }
   return decoded_values;
 }
 

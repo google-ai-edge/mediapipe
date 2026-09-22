@@ -63,24 +63,25 @@ NS_SWIFT_NAME(ImagePart)
 @interface MPPImagePart : MPPTaskPart
 
 /**
- * The filesystem path to the image file, if initialized from a file.
- * Nil if initialized from in-memory data.
+ * The filesystem path or resource identifier handle (e.g., asset URI) for the image.
+ * May be provided alongside in-memory `data` to persist a lightweight handle while embedding
+ * from memory.
  */
 @property(nonatomic, readonly, copy, nullable) NSString *filePath;
 
 /**
- * The raw in-memory image buffer, if initialized from data.
- * Nil if initialized from a file path or deserialized from persistent storage.
+ * The raw in-memory image buffer, if initialized with data.
+ * Nil if initialized from a file path alone or deserialized from persistent storage.
  */
 @property(nonatomic, readonly, copy, nullable) NSData *data;
 
 /**
- * Initializes a new `MPPImagePart` using a path to an image file on the filesystem.
+ * Initializes a new `MPPImagePart` using a path or resource handle.
  *
- * @param filePath The path to the image file.
+ * @param filePath The path or resource handle for the image.
  * @return An instance of `MPPImagePart` configured with the file path.
  */
-- (instancetype)initWithFilePath:(NSString *)filePath NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithFilePath:(NSString *)filePath;
 
 /**
  * Initializes a new `MPPImagePart` using in-memory image buffer data.
@@ -88,7 +89,17 @@ NS_SWIFT_NAME(ImagePart)
  * @param data The raw image data bytes.
  * @return An instance of `MPPImagePart` configured with in-memory data.
  */
-- (instancetype)initWithData:(NSData *)data NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithData:(NSData *)data;
+
+/**
+ * Initializes a new `MPPImagePart` with both a resource handle and transient in-memory image data.
+ *
+ * @param filePath The optional path or resource identifier handle to persist in storage.
+ * @param data The optional raw image data bytes to use for in-memory embedding.
+ * @return An instance of `MPPImagePart`.
+ */
+- (instancetype)initWithFilePath:(nullable NSString *)filePath
+                            data:(nullable NSData *)data NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 + (instancetype)new NS_UNAVAILABLE;
@@ -101,9 +112,44 @@ NS_SWIFT_NAME(ImagePart)
 NS_SWIFT_NAME(AudioPart)
 @interface MPPAudioPart : MPPTaskPart
 
-@property(nonatomic, readonly, copy) NSString *filePath;
+/**
+ * The filesystem path or resource identifier handle (e.g., asset URI) for the audio.
+ * May be provided alongside in-memory `data` to persist a lightweight handle while embedding
+ * from memory.
+ */
+@property(nonatomic, readonly, copy, nullable) NSString *filePath;
 
+/**
+ * The raw in-memory audio buffer, if initialized with data.
+ * Nil if initialized from a file path alone or deserialized from persistent storage.
+ */
+@property(nonatomic, readonly, copy, nullable) NSData *data;
+
+/**
+ * Initializes a new `MPPAudioPart` using a path or resource handle.
+ *
+ * @param filePath The path or resource handle for the audio.
+ * @return An instance of `MPPAudioPart` configured with the file path.
+ */
 - (instancetype)initWithFilePath:(NSString *)filePath;
+
+/**
+ * Initializes a new `MPPAudioPart` using in-memory audio buffer data.
+ *
+ * @param data The raw audio data bytes.
+ * @return An instance of `MPPAudioPart` configured with in-memory data.
+ */
+- (instancetype)initWithData:(NSData *)data;
+
+/**
+ * Initializes a new `MPPAudioPart` with both a resource handle and transient in-memory audio data.
+ *
+ * @param filePath The optional path or resource identifier handle to persist in storage.
+ * @param data The optional raw audio data bytes to use for in-memory embedding.
+ * @return An instance of `MPPAudioPart`.
+ */
+- (instancetype)initWithFilePath:(nullable NSString *)filePath
+                            data:(nullable NSData *)data NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 + (instancetype)new NS_UNAVAILABLE;

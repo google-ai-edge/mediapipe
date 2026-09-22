@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_RETRIEVAL_SEMANTIC_RETRIEVER_AUDIO_DECODER_H_
 #define MEDIAPIPE_TASKS_CC_RETRIEVAL_SEMANTIC_RETRIEVER_AUDIO_DECODER_H_
 
+#include <cstdint>
 #include <vector>
 
 #include "absl/status/statusor.h"
@@ -27,6 +28,9 @@ class AudioDecoder {
  public:
   static absl::StatusOr<std::vector<float>> DecodeAudioData(
       absl::string_view path);
+
+  static absl::StatusOr<std::vector<float>> DecodeAudioBytes(
+      absl::string_view wav_bytes, uint32_t* sample_rate = nullptr);
 };
 
 }  // namespace mediapipe::tasks::retrieval

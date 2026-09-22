@@ -43,6 +43,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /** MediaPipe SemanticRetriever API that manages vector embedding and retrieval. */
+@SuppressWarnings({"IfChainToSwitch", "PatternMatchingInstanceof"})
 public final class SemanticRetriever implements AutoCloseable {
   private static final int DEFAULT_CHUNK_SIZE = 512;
   private static final int DEFAULT_CHUNK_OVERLAP = 100;
@@ -210,20 +211,29 @@ public final class SemanticRetriever implements AutoCloseable {
     for (Part part : content) {
       if (part instanceof ImagePart) {
         ImagePart imagePart = (ImagePart) part;
-        byte[] bytes = ImageDecoder.getImageBytes(context, imagePart.getFilePath());
+        byte[] bytes = imagePart.imageBytes();
+        if (bytes == null && imagePart.getFilePath() != null) {
+          bytes = ImageDecoder.getImageBytes(context, imagePart.getFilePath());
+        }
         if (bytes == null) {
           throw new IllegalArgumentException(
-              "Failed to load image bytes from URI: " + imagePart.getFilePath());
+              "Failed to load image bytes from ImagePart: " + imagePart.getFilePath());
         }
         resolvedContent.add(bytes);
       } else if (part instanceof AudioPart) {
         AudioPart audioPart = (AudioPart) part;
-        AudioData audio = AudioDecoder.decodeAudio(context, audioPart.getFilePath());
-        if (audio == null) {
-          throw new IllegalArgumentException(
-              "Failed to load audio from URI: " + audioPart.getFilePath());
+        if (audioPart.audioData() != null) {
+          resolvedContent.add(audioPart.audioData());
+        } else if (audioPart.getFilePath() != null) {
+          AudioData audio = AudioDecoder.decodeAudio(context, audioPart.getFilePath());
+          if (audio == null) {
+            throw new IllegalArgumentException(
+                "Failed to load audio from URI: " + audioPart.getFilePath());
+          }
+          resolvedContent.add(audio);
+        } else {
+          throw new IllegalArgumentException("AudioPart must contain audioData or filePath.");
         }
-        resolvedContent.add(audio);
       } else if (part instanceof TextPart) {
         TextPart textPart = (TextPart) part;
         resolvedContent.add(textPart.getText());

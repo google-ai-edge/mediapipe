@@ -33,18 +33,17 @@
 @implementation MPPImagePart
 
 - (instancetype)initWithFilePath:(NSString *)filePath {
-  self = [super init];
-  if (self) {
-    _filePath = [filePath copy];
-    _data = nil;
-  }
-  return self;
+  return [self initWithFilePath:filePath data:nil];
 }
 
 - (instancetype)initWithData:(NSData *)data {
+  return [self initWithFilePath:nil data:data];
+}
+
+- (instancetype)initWithFilePath:(nullable NSString *)filePath data:(nullable NSData *)data {
   self = [super init];
   if (self) {
-    _filePath = nil;
+    _filePath = [filePath copy];
     _data = [data copy];
   }
   return self;
@@ -55,9 +54,18 @@
 @implementation MPPAudioPart
 
 - (instancetype)initWithFilePath:(NSString *)filePath {
+  return [self initWithFilePath:filePath data:nil];
+}
+
+- (instancetype)initWithData:(NSData *)data {
+  return [self initWithFilePath:nil data:data];
+}
+
+- (instancetype)initWithFilePath:(nullable NSString *)filePath data:(nullable NSData *)data {
   self = [super init];
   if (self) {
     _filePath = [filePath copy];
+    _data = [data copy];
   }
   return self;
 }

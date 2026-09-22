@@ -18,6 +18,7 @@ limitations under the License.
 #include <cstdint>
 #include <fstream>
 #include <ios>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -81,6 +82,23 @@ TEST(AudioDecoderTest, TestDecodeAudioDataStereoReturnsError) {
   EXPECT_EQ(data_or.status().code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(data_or.status().message(),
               testing::HasSubstr("Only mono (1 channel) audio is supported"));
+}
+
+TEST(AudioDecoderTest, TestDecodeAudioBytesValidAndEmpty) {
+  std::string audio_path = JoinPath("./", "mediapipe/tasks/testdata/audio",
+                                    "speech_16000_hz_mono.wav");
+  std::ifstream fs(audio_path, std::ios::binary);
+  std::string wav_bytes((std::istreambuf_iterator<char>(fs)),
+                        std::istreambuf_iterator<char>());
+
+  uint32_t sample_rate = 0;
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto data, AudioDecoder::DecodeAudioBytes(wav_bytes, &sample_rate));
+  EXPECT_FALSE(data.empty());
+  EXPECT_EQ(sample_rate, 16000u);
+
+  auto empty_or = AudioDecoder::DecodeAudioBytes("");
+  EXPECT_EQ(empty_or.status().code(), absl::StatusCode::kInvalidArgument);
 }
 
 }  // namespace

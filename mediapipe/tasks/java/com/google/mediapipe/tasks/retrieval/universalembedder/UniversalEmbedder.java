@@ -34,9 +34,12 @@ import com.google.mediapipe.tasks.components.containers.AudioData;
 import com.google.mediapipe.tasks.components.containers.Embedding;
 import com.google.mediapipe.tasks.components.containers.EmbeddingResult;
 import com.google.mediapipe.tasks.components.utils.CosineSimilarity;
+import com.google.mediapipe.tasks.core.AudioPart;
 import com.google.mediapipe.tasks.core.BaseOptionsUtils;
 import com.google.mediapipe.tasks.core.Delegate;
 import com.google.mediapipe.tasks.core.EmbeddingProvider;
+import com.google.mediapipe.tasks.core.ImagePart;
+import com.google.mediapipe.tasks.core.TextPart;
 import com.google.mediapipe.tasks.core.logging.TasksStatsLogger;
 import com.google.mediapipe.tasks.core.logging.TasksStatsLoggerFactory;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
@@ -54,7 +57,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * adding support for video embeddings. It wraps the native LiteRT-LM EmbeddingEngine directly,
  * providing real on-device multimodal embeddings.
  */
-@SuppressWarnings("EnumOrdinal")
+@SuppressWarnings({"EnumOrdinal", "IfChainToSwitch", "PatternMatchingInstanceof"})
 public final class UniversalEmbedder implements AutoCloseable {
 
   private final UniversalEmbedderOptions options;
@@ -220,9 +223,7 @@ public final class UniversalEmbedder implements AutoCloseable {
   }
 
   public EmbeddingResult embedAudio(AudioData audioData) {
-    float[] buffer = audioData.getBuffer();
-    AudioData.AudioDataFormat format = audioData.getFormat();
-    byte[] wavBytes = encodeAsWav(buffer, (int) format.getSampleRate(), format.getNumOfChannels());
+    byte[] wavBytes = encodeAudioDataAsWav(audioData);
     ImmutableList<InputData> contents = ImmutableList.of(new InputData.Audio(wavBytes));
     return executeInference(contents);
   }
@@ -253,25 +254,50 @@ public final class UniversalEmbedder implements AutoCloseable {
   private List<InputData> convertToInputData(List<Object> content) {
     List<InputData> contents = new ArrayList<>();
     for (Object obj : content) {
-      if (obj instanceof String) {
+      if (obj instanceof InputData) {
+        contents.add((InputData) obj);
+      } else if (obj instanceof TextPart) {
+        contents.add(new InputData.Text(((TextPart) obj).getText()));
+      } else if (obj instanceof ImagePart) {
+        ImagePart imagePart = (ImagePart) obj;
+        if (imagePart.imageBytes() == null) {
+          throw new IllegalArgumentException(
+              "ImagePart passed to UniversalEmbedder must have in-memory imageBytes.");
+        }
+        contents.add(new InputData.Image(imagePart.imageBytes()));
+      } else if (obj instanceof AudioPart) {
+        AudioPart audioPart = (AudioPart) obj;
+        if (audioPart.audioData() != null) {
+          contents.add(new InputData.Audio(encodeAudioDataAsWav(audioPart.audioData())));
+        } else {
+          throw new IllegalArgumentException(
+              "AudioPart passed to UniversalEmbedder must have in-memory audioData.");
+        }
+      } else if (obj instanceof String) {
         contents.add(new InputData.Text((String) obj));
       } else if (obj instanceof byte[]) {
-        contents.add(new InputData.Image((byte[]) obj));
+        byte[] bytes = (byte[]) obj;
+        if (AudioPart.isWavHeader(bytes)) {
+          contents.add(new InputData.Audio(bytes));
+        } else {
+          contents.add(new InputData.Image(bytes));
+        }
       } else if (obj instanceof MPImage) {
         Bitmap bitmap = BitmapExtractor.extract((MPImage) obj);
         contents.add(new InputData.Image(encodeAsTga(bitmap)));
       } else if (obj instanceof AudioData) {
-        AudioData audioData = (AudioData) obj;
-        float[] buffer = audioData.getBuffer();
-        AudioData.AudioDataFormat format = audioData.getFormat();
-        byte[] wavBytes =
-            encodeAsWav(buffer, (int) format.getSampleRate(), format.getNumOfChannels());
-        contents.add(new InputData.Audio(wavBytes));
+        contents.add(new InputData.Audio(encodeAudioDataAsWav((AudioData) obj)));
       } else {
         contents.add(new InputData.Text(String.valueOf(obj)));
       }
     }
     return contents;
+  }
+
+  private static byte[] encodeAudioDataAsWav(AudioData audioData) {
+    float[] buffer = audioData.getBuffer();
+    AudioData.AudioDataFormat format = audioData.getFormat();
+    return encodeAsWav(buffer, (int) format.getSampleRate(), format.getNumOfChannels());
   }
 
   private EmbeddingResult executeInference(List<InputData> contents) {
