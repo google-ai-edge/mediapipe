@@ -15,6 +15,8 @@
 // An example of sending OpenCV webcam frames into a MediaPipe graph.
 // This example requires a linux computer and a GPU with EGL support drivers.
 #include <cstdlib>
+#include <memory>
+#include <utility>
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
@@ -127,10 +129,11 @@ absl::Status RunMPPGraph() {
         gpu_helper.RunInGlContext([&input_frame, &frame_timestamp_us, &graph,
                                    &gpu_helper]() -> absl::Status {
           // Convert ImageFrame to GpuBuffer.
-          auto texture = gpu_helper.CreateSourceTexture(*input_frame.get());
-          auto gpu_frame = texture.GetFrame<mediapipe::GpuBuffer>();
-          glFlush();
-          texture.Release();
+          std::shared_ptr<mediapipe::ImageFrame> shared_input_frame =
+              std::move(input_frame);
+          auto gpu_frame = std::make_unique<mediapipe::GpuBuffer>(
+              gpu_helper.GpuBufferWithImageFrame(
+                  std::move(shared_input_frame)));
           // Send GPU image packet into the graph.
           ABSL_RETURN_IF_ERROR(graph.AddPacketToInputStream(
               kInputStream, mediapipe::Adopt(gpu_frame.release())
