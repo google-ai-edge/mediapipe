@@ -1,7 +1,14 @@
 """This module contains utility macros for MediaPipe Tasks iOS BUILD files."""
 
-load("@build_bazel_rules_apple//apple:apple.bzl", "apple_static_xcframework")
+load(
+    "@build_bazel_rules_apple//apple:apple.bzl",
+    "apple_static_xcframework",
+)
 load("@rules_cc//cc:objc_library.bzl", "objc_library")
+load(
+    "//mediapipe:version.bzl",
+    "MEDIAPIPE_FULL_VERSION",
+)
 load(
     "//mediapipe/framework/tool:ios.bzl",
     "MPP_TASK_MINIMUM_OS_VERSION",
@@ -31,6 +38,34 @@ def _dummy_objc_library(name):
         visibility = ["//visibility:private"],
     )
 
+def _framework_infoplist(name):
+    """Creates a genrule that generates a valid Info.plist for a framework."""
+    plist_target = "_%s_infoplist" % name
+    plist_content = (
+        '<?xml version="1.0" encoding="UTF-8"?>\\n' +
+        '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" ' +
+        '"http://www.apple.com/DTDs/PropertyList-1.0.dtd">\\n' +
+        '<plist version="1.0">\\n' +
+        "<dict>\\n" +
+        "  <key>CFBundleInfoDictionaryVersion</key>\\n" +
+        "  <string>6.0</string>\\n" +
+        "  <key>CFBundlePackageType</key>\\n" +
+        "  <string>FMWK</string>\\n" +
+        "  <key>CFBundleShortVersionString</key>\\n" +
+        "  <string>%s</string>\\n" % MEDIAPIPE_FULL_VERSION +
+        "  <key>CFBundleVersion</key>\\n" +
+        "  <string>%s</string>\\n" % MEDIAPIPE_FULL_VERSION +
+        "</dict>\\n" +
+        "</plist>"
+    )
+    native.genrule(
+        name = plist_target,
+        outs = ["%s_Info.plist" % name],
+        cmd = "printf '%s\\n' > $@" % plist_content,
+        visibility = ["//visibility:private"],
+    )
+    return ":" + plist_target
+
 def mediapipe_static_xcframework(name, **kwargs):
     """An apple_static_xcframework with a dummy library to allow for empty frameworks.
 
@@ -38,6 +73,9 @@ def mediapipe_static_xcframework(name, **kwargs):
       name: The name of the apple_static_xcframework target.
       **kwargs: Arguments passed to apple_static_xcframework.
     """
+
+    if kwargs.get("bundle_format") == "framework":
+        kwargs["infoplists"] = [_framework_infoplist(name)]
 
     kwargs.pop("bundle_format", None)
     kwargs.pop("bundle_id", None)
