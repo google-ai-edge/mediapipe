@@ -18,7 +18,6 @@ package com.google.mediapipe.tasks.retrieval.components;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import android.content.Context;
-import android.net.Uri;
 import androidx.appsearch.app.AppSearchBatchResult;
 import androidx.appsearch.app.AppSearchSchema;
 import androidx.appsearch.app.AppSearchSession;
@@ -33,23 +32,13 @@ import androidx.appsearch.app.SearchSpec;
 import androidx.appsearch.app.SetSchemaRequest;
 import androidx.appsearch.localstorage.LocalStorage;
 import com.google.mediapipe.framework.MediaPipeException;
-import com.google.mediapipe.tasks.core.AudioPart;
-import com.google.mediapipe.tasks.core.ImagePart;
-import com.google.mediapipe.tasks.core.Part;
-import com.google.mediapipe.tasks.core.TextPart;
 import com.google.mediapipe.tasks.retrieval.model.RetrievalRecord;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /** A vector store implementation using Android system-level AppSearch storage. */
 final class AppSearchVectorStoreImpl implements VectorStore {
@@ -85,23 +74,11 @@ final class AppSearchVectorStoreImpl implements VectorStore {
     AppSearchSchema schema =
         new AppSearchSchema.Builder(SCHEMA_TYPE)
             .addProperty(
-                new AppSearchSchema.StringPropertyConfig.Builder("contentType")
-                    .setCardinality(AppSearchSchema.PropertyConfig.CARDINALITY_OPTIONAL)
-                    .build())
-            .addProperty(
-                new AppSearchSchema.StringPropertyConfig.Builder("data")
-                    .setCardinality(AppSearchSchema.PropertyConfig.CARDINALITY_OPTIONAL)
-                    .build())
-            .addProperty(
-                new AppSearchSchema.StringPropertyConfig.Builder("metadata")
+                new AppSearchSchema.BytesPropertyConfig.Builder("recordProto")
                     .setCardinality(AppSearchSchema.PropertyConfig.CARDINALITY_OPTIONAL)
                     .build())
             .addProperty(
                 new AppSearchSchema.StringPropertyConfig.Builder("parentId")
-                    .setCardinality(AppSearchSchema.PropertyConfig.CARDINALITY_OPTIONAL)
-                    .build())
-            .addProperty(
-                new AppSearchSchema.StringPropertyConfig.Builder("childIds")
                     .setCardinality(AppSearchSchema.PropertyConfig.CARDINALITY_OPTIONAL)
                     .build())
             .addProperty(
@@ -125,39 +102,16 @@ final class AppSearchVectorStoreImpl implements VectorStore {
     }
     List<GenericDocument> docs = new ArrayList<>();
     for (RetrievalRecord record : records) {
-      String contentType = "TEXT";
-      String payload = "";
-      if (!record.getContent().isEmpty()) {
-        Part part = record.getContent().get(0);
-        if (part instanceof TextPart) {
-          contentType = "TEXT";
-          payload = ((TextPart) part).getText();
-        } else if (part instanceof ImagePart) {
-          contentType = "IMAGE";
-          payload = ((ImagePart) part).getFilePath().toString();
-        } else if (part instanceof AudioPart) {
-          contentType = "AUDIO";
-          payload = ((AudioPart) part).getFilePath().toString();
-        } else {
-          throw new IllegalArgumentException("Unsupported part type");
-        }
-      }
-
-      String serializedMetadata = new JSONObject(record.getMetadata()).toString();
+      byte[] protoBytes = MemoryRecordConverter.toMemoryRecordProtoBytes(record);
 
       GenericDocument.Builder<?> docBuilder =
           new GenericDocument.Builder<>(NAMESPACE, record.getId(), SCHEMA_TYPE)
-              .setPropertyString("contentType", contentType)
-              .setPropertyString("data", payload)
-              .setPropertyString("metadata", serializedMetadata)
+              .setPropertyBytes("recordProto", protoBytes)
               .setPropertyEmbedding(
                   "embeddings", new EmbeddingVector(record.getEmbeddings(), MODEL_SIGNATURE));
 
       if (record.getParentId() != null) {
         docBuilder.setPropertyString("parentId", record.getParentId());
-      }
-      if (!record.getChildIds().isEmpty()) {
-        docBuilder.setPropertyString("childIds", new JSONArray(record.getChildIds()).toString());
       }
 
       docs.add(docBuilder.build());
@@ -282,69 +236,11 @@ final class AppSearchVectorStoreImpl implements VectorStore {
   }
 
   private RetrievalRecord toRetrievalRecord(GenericDocument doc) {
-    String id = doc.getId();
-    String contentType = doc.getPropertyString("contentType");
-    String data = doc.getPropertyString("data");
-    String serializedMetadata = doc.getPropertyString("metadata");
-
-    Map<String, String> metadata = new HashMap<>();
-    if (serializedMetadata != null && !serializedMetadata.isEmpty()) {
-      try {
-        JSONObject json = new JSONObject(serializedMetadata);
-        Iterator<String> keys = json.keys();
-        while (keys.hasNext()) {
-          String key = keys.next();
-          metadata.put(key, json.getString(key));
-        }
-      } catch (JSONException e) {
-        // Ignore or log
-      }
+    byte[] protoBytes = doc.getPropertyBytes("recordProto");
+    if (protoBytes == null || protoBytes.length == 0) {
+      throw new IllegalStateException("Missing recordProto in AppSearch document: " + doc.getId());
     }
-
-    String parentId = doc.getPropertyString("parentId");
-    String childIdsStr = doc.getPropertyString("childIds");
-    List<String> childIds = null;
-    if (childIdsStr != null && !childIdsStr.isEmpty()) {
-      if (childIdsStr.startsWith("[") && childIdsStr.endsWith("]")) {
-        try {
-          JSONArray jsonArray = new JSONArray(childIdsStr);
-          childIds = new ArrayList<>();
-          for (int i = 0; i < jsonArray.length(); i++) {
-            childIds.add(jsonArray.getString(i));
-          }
-        } catch (JSONException e) {
-          childIds = Arrays.asList(childIdsStr.split(","));
-        }
-      } else {
-        childIds = Arrays.asList(childIdsStr.split(","));
-      }
-    }
-
-    EmbeddingVector[] embeddingVectors = doc.getPropertyEmbeddingArray("embeddings");
-    float[] embeddings = null;
-    if (embeddingVectors != null && embeddingVectors.length > 0) {
-      embeddings = embeddingVectors[0].getValues();
-    }
-
-    if (contentType == null) {
-      contentType = "TEXT";
-    }
-
-    List<Part> content = new ArrayList<>();
-    switch (contentType) {
-      case "IMAGE":
-        content.add(new ImagePart(Uri.parse(data)));
-        break;
-      case "AUDIO":
-        content.add(new AudioPart(Uri.parse(data)));
-        break;
-      case "TEXT":
-      default:
-        content.add(new TextPart(data));
-        break;
-    }
-
-    return new RetrievalRecord(id, content, embeddings, metadata, parentId, childIds);
+    return MemoryRecordConverter.toRetrievalRecord(protoBytes);
   }
 
   @Override

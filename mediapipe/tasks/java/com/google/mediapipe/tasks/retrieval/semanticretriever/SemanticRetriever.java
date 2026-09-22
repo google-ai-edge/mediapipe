@@ -60,13 +60,13 @@ public final class SemanticRetriever implements AutoCloseable {
    */
   private static final class DatabaseRecord {
     final String id;
-    final Part part;
+    final List<Part> parts;
     final String parentId;
     final List<String> childIds;
 
-    DatabaseRecord(String id, Part part, String parentId, List<String> childIds) {
+    DatabaseRecord(String id, List<Part> parts, String parentId, List<String> childIds) {
       this.id = id;
-      this.part = part;
+      this.parts = parts;
       this.parentId = parentId;
       this.childIds = childIds;
     }
@@ -165,44 +165,43 @@ public final class SemanticRetriever implements AutoCloseable {
     List<DatabaseRecord> databaseRecords = new ArrayList<>();
     int childCount = 0;
 
-    // Phase 1: Iterate through parts and prepare database records
-    for (Part part : parts) {
-      if (part instanceof TextPart) {
-        TextPart textPart = (TextPart) part;
-        List<String> chunks = textChunker.chunk(textPart.getText());
-        if (chunks.size() > 1) {
-          List<String> childIds = new ArrayList<>();
-          for (String chunkText : chunks) {
-            String childId = recordId + "_chunk_" + childCount++;
-            childIds.add(childId);
-            databaseRecords.add(
-                new DatabaseRecord(childId, new TextPart(chunkText), recordId, null));
-          }
-          databaseRecords.add(new DatabaseRecord(recordId, textPart, null, childIds));
-          continue;
+    boolean isSingleTextPart = parts.size() == 1 && parts.get(0) instanceof TextPart;
+    if (isSingleTextPart) {
+      TextPart textPart = (TextPart) parts.get(0);
+      List<String> chunks = textChunker.chunk(textPart.getText());
+      if (chunks.size() > 1) {
+        List<String> childIds = new ArrayList<>();
+        for (String chunkText : chunks) {
+          String childId = recordId + "_chunk_" + childCount++;
+          childIds.add(childId);
+          databaseRecords.add(
+              new DatabaseRecord(
+                  childId, ImmutableList.of(new TextPart(chunkText)), recordId, null));
         }
+        databaseRecords.add(new DatabaseRecord(recordId, parts, null, childIds));
+      } else {
+        databaseRecords.add(new DatabaseRecord(recordId, parts, null, null));
       }
-      databaseRecords.add(new DatabaseRecord(recordId, part, null, null));
+    } else {
+      databaseRecords.add(new DatabaseRecord(recordId, parts, null, null));
     }
 
     // Phase 2: Generate embeddings and insert into vector store
     for (DatabaseRecord record : databaseRecords) {
-      float[] embedding = embedContent(ImmutableList.of(record.part));
-      persistPart(record.id, record.part, embedding, metadata, record.parentId, record.childIds);
+      float[] embedding = embedContent(record.parts);
+      persistRecord(record.id, record.parts, embedding, metadata, record.parentId, record.childIds);
     }
   }
 
-  private void persistPart(
+  private void persistRecord(
       String recordId,
-      Part part,
+      List<Part> parts,
       float[] embeddings,
       Map<String, String> metadata,
       String parentId,
       List<String> childIds) {
     ImmutableList.Builder<RetrievalRecord> records = ImmutableList.builder();
-    records.add(
-        new RetrievalRecord(
-            recordId, ImmutableList.of(part), embeddings, metadata, parentId, childIds));
+    records.add(new RetrievalRecord(recordId, parts, embeddings, metadata, parentId, childIds));
     components.vectorStore().upsert(records.build());
   }
 
@@ -211,15 +210,18 @@ public final class SemanticRetriever implements AutoCloseable {
     for (Part part : content) {
       if (part instanceof ImagePart) {
         ImagePart imagePart = (ImagePart) part;
-        byte[] bytes = imagePart.imageBytes();
-        if (bytes == null && imagePart.getFilePath() != null) {
-          bytes = ImageDecoder.getImageBytes(context, imagePart.getFilePath());
+        if (imagePart.imageBytes() != null) {
+          resolvedContent.add(imagePart.imageBytes());
+        } else if (imagePart.getFilePath() != null) {
+          byte[] bytes = ImageDecoder.getImageBytes(context, imagePart.getFilePath());
+          if (bytes == null) {
+            throw new IllegalArgumentException(
+                "Failed to load image bytes from URI: " + imagePart.getFilePath());
+          }
+          resolvedContent.add(bytes);
+        } else {
+          throw new IllegalArgumentException("ImagePart must contain imageBytes or filePath.");
         }
-        if (bytes == null) {
-          throw new IllegalArgumentException(
-              "Failed to load image bytes from ImagePart: " + imagePart.getFilePath());
-        }
-        resolvedContent.add(bytes);
       } else if (part instanceof AudioPart) {
         AudioPart audioPart = (AudioPart) part;
         if (audioPart.audioData() != null) {

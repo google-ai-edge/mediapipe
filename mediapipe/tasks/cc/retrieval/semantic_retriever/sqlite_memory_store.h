@@ -37,10 +37,6 @@ class SqliteMemoryStore : public MemoryStore {
   struct Config {
     // Name of the column that stores the source text.
     std::string text_column_name;
-    // Optional name of the column that stores image bytes.
-    std::string image_column_name;
-    // Optional name of the column that stores audio bytes.
-    std::string audio_column_name;
     // Name of the column that stores the embedding vector.
     std::string embedding_column_name;
     // Dimension of the embedding vector.
@@ -100,15 +96,14 @@ class SqliteMemoryStore : public MemoryStore {
  private:
   MemoryRecord ToMemoryRecord(
       const std::vector<SqliteVectorStore::ColumnValue>& column_values) const;
+  absl::StatusOr<std::vector<MemoryRecord>> ToMemoryRecords(
+      const std::vector<std::vector<SqliteVectorStore::ColumnValue>>&
+          table_column_values);
 
   std::unique_ptr<SqliteVectorStore> sqlite_store_;
   std::string table_name_;
   // Name of the column that stores the source text.
   std::string text_column_name_;
-  // Name of the column that stores image bytes.
-  std::string image_column_name_;
-  // Name of the column that stores audio bytes.
-  std::string audio_column_name_;
   // Name of the column that stores the embedding vector.
   std::string embedding_column_name_;
   // Dimension of the embedding vector.

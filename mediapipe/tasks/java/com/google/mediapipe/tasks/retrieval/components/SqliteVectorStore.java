@@ -16,22 +16,10 @@ limitations under the License.
 package com.google.mediapipe.tasks.retrieval.components;
 
 import android.content.Context;
-import android.net.Uri;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.mediapipe.tasks.core.AudioPart;
-import com.google.mediapipe.tasks.core.ImagePart;
-import com.google.mediapipe.tasks.core.Part;
-import com.google.mediapipe.tasks.core.TextPart;
 import com.google.mediapipe.tasks.retrieval.model.RetrievalRecord;
-import com.google.mediapipe.tasks.retrieval.semanticretriever.proto.MemoryProto.KeyValuePair;
-import com.google.mediapipe.tasks.retrieval.semanticretriever.proto.MemoryProto.MemoryRecord;
-import com.google.mediapipe.tasks.retrieval.semanticretriever.proto.MemoryProto.Metadata;
-import com.google.protobuf.ExtensionRegistryLite;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -89,34 +77,16 @@ public final class SqliteVectorStore implements VectorStore {
 
     for (RetrievalRecord record : records) {
       float[] resizedEmbeddings = resizeVector(record.getEmbeddings(), this.dimension);
-      ImmutableList.Builder<Float> embeddingsList = ImmutableList.builder();
-      for (float f : resizedEmbeddings) {
-        embeddingsList.add(f);
-      }
-
-      String recordId = record.getId();
-
-      VectorStoreRecord.ContentType contentType = VectorStoreRecord.ContentType.TEXT;
-      String payload = "";
-      if (!record.getContent().isEmpty()) {
-        Part part = record.getContent().get(0);
-        if (part instanceof TextPart) {
-          contentType = VectorStoreRecord.ContentType.TEXT;
-          payload = ((TextPart) part).getText();
-        } else if (part instanceof ImagePart) {
-          contentType = VectorStoreRecord.ContentType.IMAGE;
-          payload = ((ImagePart) part).getFilePath().toString();
-        } else if (part instanceof AudioPart) {
-          contentType = VectorStoreRecord.ContentType.AUDIO;
-          payload = ((AudioPart) part).getFilePath().toString();
-        } else {
-          throw new IllegalArgumentException("Unsupported part type");
-        }
-      }
-
+      RetrievalRecord recordWithResizedEmbeddings =
+          new RetrievalRecord(
+              record.getId(),
+              record.getContent(),
+              resizedEmbeddings,
+              record.getMetadata(),
+              record.getParentId(),
+              record.getChildIds());
       nativeInsert(
-          jniHandle,
-          toMemoryRecordProtoBytes(record, contentType, payload, embeddingsList.build()));
+          jniHandle, MemoryRecordConverter.toMemoryRecordProtoBytes(recordWithResizedEmbeddings));
     }
   }
 
@@ -166,55 +136,8 @@ public final class SqliteVectorStore implements VectorStore {
     nativeSqlQuery(jniHandle, "DELETE FROM rag_vector_store");
   }
 
-  @SuppressWarnings("EnumOrdinal")
   private RetrievalRecord toRetrievalRecord(byte[] storeRecordBytes) {
-    MemoryRecord memoryRecord;
-    try {
-      memoryRecord =
-          MemoryRecord.parseFrom(storeRecordBytes, ExtensionRegistryLite.getEmptyRegistry());
-    } catch (InvalidProtocolBufferException e) {
-      throw new IllegalArgumentException("Failed to parse memory record", e);
-    }
-
-    String recordId = memoryRecord.getRecordId();
-    VectorStoreRecord.ContentType contentType = VectorStoreRecord.ContentType.TEXT;
-    if (memoryRecord.hasContentType() && !memoryRecord.getContentType().isEmpty()) {
-      try {
-        contentType = VectorStoreRecord.ContentType.valueOf(memoryRecord.getContentType());
-      } catch (IllegalArgumentException e) {
-        contentType = VectorStoreRecord.ContentType.UNKNOWN;
-      }
-    }
-    String parentId = memoryRecord.hasParentId() ? memoryRecord.getParentId() : null;
-    List<String> childIds = memoryRecord.getChildIdsList();
-
-    Map<String, String> userMetadata = new HashMap<>();
-    if (memoryRecord.hasMetadata()) {
-      for (KeyValuePair pair : memoryRecord.getMetadata().getKeyValuePairsList()) {
-        userMetadata.put(pair.getKey(), pair.getValue());
-      }
-    }
-
-    float[] embeddings = new float[memoryRecord.getEmbeddingsList().size()];
-    for (int i = 0; i < embeddings.length; i++) {
-      embeddings[i] = memoryRecord.getEmbeddings(i);
-    }
-
-    List<Part> content = new ArrayList<>();
-    switch (contentType) {
-      case IMAGE:
-        content.add(new ImagePart(Uri.parse(memoryRecord.getText())));
-        break;
-      case AUDIO:
-        content.add(new AudioPart(Uri.parse(memoryRecord.getText())));
-        break;
-      case TEXT:
-      default:
-        content.add(new TextPart(memoryRecord.getText()));
-        break;
-    }
-
-    return new RetrievalRecord(recordId, content, embeddings, userMetadata, parentId, childIds);
+    return MemoryRecordConverter.toRetrievalRecord(storeRecordBytes);
   }
 
   @Override
@@ -279,48 +202,6 @@ public final class SqliteVectorStore implements VectorStore {
       jniHandle = 0;
     }
   }
-
-  private static byte[] toTableConfigProtoBytes(TableConfig tableConfig) {
-    return tableConfig.toProtoBytes();
-  }
-
-  private static byte[] toMemoryRecordProtoBytes(
-      RetrievalRecord record,
-      VectorStoreRecord.ContentType contentType,
-      String payload,
-      List<Float> embeddings) {
-    MemoryRecord.Builder builder = MemoryRecord.newBuilder().setText(payload);
-    for (float val : embeddings) {
-      builder.addEmbeddings(val);
-    }
-    Metadata.Builder metadataBuilder = Metadata.newBuilder();
-    if (record.getMetadata() != null) {
-      for (Map.Entry<String, String> entry : record.getMetadata().entrySet()) {
-        metadataBuilder.addKeyValuePairs(createKeyValuePair(entry.getKey(), entry.getValue()));
-      }
-    }
-
-    builder.setContentType(contentType.name());
-
-    if (record.getId() != null && !record.getId().isEmpty()) {
-      builder.setRecordId(record.getId());
-    }
-
-    if (record.getParentId() != null && !record.getParentId().isEmpty()) {
-      builder.setParentId(record.getParentId());
-    }
-    if (!record.getChildIds().isEmpty()) {
-      builder.addAllChildIds(record.getChildIds());
-    }
-
-    builder.setMetadata(metadataBuilder.build());
-    return builder.build().toByteArray();
-  }
-
-  private static KeyValuePair createKeyValuePair(String key, String value) {
-    return KeyValuePair.newBuilder().setKey(key).setValue(value).build();
-  }
-
   private static native long nativeCreateSqliteVectorStore(
       int numEmbeddingDimensions, String databasePath);
 
