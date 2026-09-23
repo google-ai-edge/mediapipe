@@ -698,6 +698,9 @@ cc_library(
     alwayslink = 1,
 )
 
+# The LiteRT v2.0.0 GPU accelerator is not open sourced.
+# Prebuilts are published per platform at
+# litert/prebuilt/<platform>/ (e.g. ios_arm64/libLiteRtMetalAccelerator.dylib)
 cc_library(
     name = "inference_calculator_litert",
     srcs = ["inference_calculator_litert.cc"],
@@ -731,7 +734,6 @@ cc_library(
     ] + select({
         "//mediapipe:apple": [
             "//mediapipe/gpu:MPPMetalHelper",
-            "@litert//litert/runtime/accelerators/gpu:ml_drift_metal_accelerator",
         ],
         "//conditions:default": [],
     }),

@@ -112,6 +112,10 @@ CALCULATORS_AND_GRAPHS = [
     "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
     "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
     "//mediapipe/tasks/cc/vision/holistic_landmarker:holistic_landmarker_graph",
+    # On Apple platforms this also statically links the LiteRT Metal GPU
+    # accelerator, which self-registers and must be force loaded. See
+    # //mediapipe/calculators/tensor:inference_calculator_litert.
+    "//mediapipe/calculators/tensor:inference_calculator_litert",
 ]
 
 objc_library(

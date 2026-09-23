@@ -33,6 +33,7 @@ mediapipe_jni_binary(
     name = "mediapipe_tasks_jni",
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_litert",
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
         "//mediapipe/tasks/cc/audio/audio_classifier:audio_classifier_graph",
         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
@@ -49,7 +50,12 @@ mediapipe_jni_binary(
         "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:base_options_utils_jni",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
-    ],
+    ] +
+    # Prebuilt accelerators are published in the LiteRT v2.0.0 repo under
+    # litert/prebuilt/<platform>/ (e.g. android_arm64/libLiteRtClGlAccelerator.so).
+    select({
+        "//conditions:default": [],
+    }),
 )
 
 android_library(
