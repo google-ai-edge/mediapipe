@@ -146,11 +146,16 @@ export abstract class TaskRunner {
    *     `options.baseOptions`.
    * @param isLiteRtLmModel Whether the model is a LiteRT LM model that should be
    *     written as a `.litertlm` file.
+   * @param useLitert Whether to route inference through the LiteRT backend
+   *     instead of the legacy TFLite backend. This is an internal
+   *     execution-engine choice made per task, not a user-facing option:
+   *     callers still select CPU or GPU via `baseOptions.delegate`.
    */
   protected applyOptions(
     options: TaskRunnerOptions,
     loadTfliteModel = true,
     isLiteRtLmModel = false,
+    useLitert = false,
   ): Promise<void> {
     if (loadTfliteModel) {
       const baseOptions: BaseOptions = options.baseOptions || {};
@@ -176,7 +181,7 @@ export abstract class TaskRunner {
         );
       }
 
-      this.setAcceleration(baseOptions);
+      this.setAcceleration(baseOptions, useLitert);
       const modelPath = isLiteRtLmModel ? 'model.litertlm' : 'model.dat';
 
       if (baseOptions.modelAssetPath) {
@@ -298,7 +303,8 @@ export abstract class TaskRunner {
    */
   protected startProcessing(timestamp?: number): void {
     if (this.logger && timestamp !== undefined) {
-      if (this.baseOptions.getAcceleration()?.hasGpu()) {
+      const acceleration = this.baseOptions.getAcceleration();
+      if (acceleration?.hasGpu() || acceleration?.getLitert()?.hasGpu()) {
         this.logger.recordGpuInputArrival(timestamp);
       } else {
         this.logger.recordCpuInputArrival(timestamp);
@@ -376,7 +382,7 @@ export abstract class TaskRunner {
   }
 
   /** Configures the `acceleration` option. */
-  private setAcceleration(options: BaseOptions) {
+  private setAcceleration(options: BaseOptions, useLitert = false) {
     let acceleration = this.baseOptions.getAcceleration();
 
     if (!acceleration) {
@@ -393,6 +399,35 @@ export abstract class TaskRunner {
           new InferenceCalculatorOptions.Delegate.TfLite(),
         );
       }
+    }
+
+    if (useLitert) {
+      // `delegate` is a oneof, so selecting LiteRT below clears whatever is
+      // set now. Read it first.
+      //
+      // A previous setOptions() call may have already selected LiteRT GPU, and
+      // this call rebuilds the delegate from scratch, so carry that forward.
+      // Otherwise setOptions({minDetectionConfidence: 0.7}) -- which passes no
+      // delegate at all -- would silently drop the task to CPU.
+      const currentLitert = acceleration.getLitert();
+      const wantsGpu =
+        acceleration.hasGpu() || currentLitert?.hasGpu() === true;
+
+      const litert = new InferenceCalculatorOptions.Delegate.LiteRt();
+      if (wantsGpu) {
+        // Deliberately GPU-only: LiteRT treats the accelerator set as an allowlist.
+        // If CPU were included, execution would silently fall back to CPU with no
+        // warning whenever GPU acceleration is missing or incomplete. Leaving CPU out
+        // forces LiteRT to fail at compilation if any op is undelegated, ensuring
+        // unsupported models are caught explicitly. Mirrors tasks/cc/core/base_options.cc.
+        //
+        // Note: The Web WASM binary does not currently link a LiteRT GPU accelerator,
+        // so LiteRT GPU requests will fail until an accelerator is provided.
+        litert.setGpu(new InferenceCalculatorOptions.Delegate.LiteRt.Gpu());
+      } else {
+        litert.setCpu(new InferenceCalculatorOptions.Delegate.LiteRt.Cpu());
+      }
+      acceleration.setLitert(litert);
     }
 
     this.baseOptions.setAcceleration(acceleration);

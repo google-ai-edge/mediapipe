@@ -148,6 +148,10 @@ public abstract class BaseOptions {
       // Only available on Android. Kernel caching will only be enabled if this
       // path is set. NOTE: binary cache usage may be skipped if valid serialized
       // model, specified by "serialized_model_dir", exists.
+      //
+      // Only applies to the GPU delegate. The LiteRT GPU accelerator has no
+      // separate kernel binary cache and ignores this field, logging a warning
+      // if it is set; use "serializedModelDir" there instead.
       abstract Optional<String> cachedKernelPath();
 
       // A dir to load from and save to a pre-compiled serialized model used to
@@ -155,6 +159,9 @@ public abstract class BaseOptions {
       // NOTE: serialized model takes precedence over binary cache
       // specified by "cached_kernel_path", which still can be used if
       // serialized model is invalid or missing.
+      //
+      // On the LiteRT GPU accelerator this is the only supported serialization
+      // location.
       abstract Optional<String> serializedModelDir();
 
       // Unique token identifying the model. Used in conjunction with

@@ -102,10 +102,15 @@ export abstract class VisionTaskRunner extends TaskRunner {
    * @param options The options for the task.
    * @param loadTfliteModel Whether to load the model specified in
    *     `options.baseOptions`.
+   * @param isLiteRtLmModel Whether the model is a LiteRT LM model that should
+   *     be written as a `.litertlm` file.
+   * @param useLitert Whether to use LiteRT for model inference.
    */
   protected override applyOptions(
     options: VisionTaskOptions,
     loadTfliteModel = true,
+    isLiteRtLmModel = false,
+    useLitert = false,
   ): Promise<void> {
     if ('runningMode' in options) {
       this.isStreamMode =
@@ -119,7 +124,12 @@ export abstract class VisionTaskRunner extends TaskRunner {
       }
     }
 
-    return super.applyOptions(options, loadTfliteModel);
+    return super.applyOptions(
+      options,
+      loadTfliteModel,
+      isLiteRtLmModel,
+      useLitert,
+    );
   }
 
   /** Sends a single image to the graph and awaits results. */

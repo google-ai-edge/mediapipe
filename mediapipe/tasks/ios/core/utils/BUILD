@@ -23,10 +23,8 @@ objc_library(
     srcs = ["sources/MPPBaseOptions+Helpers.mm"],
     hdrs = ["sources/MPPBaseOptions+Helpers.h"],
     deps = [
-        "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
-        "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
+        "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
-        "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "//mediapipe/tasks/ios/core:MPPBaseOptions",
     ],
 )

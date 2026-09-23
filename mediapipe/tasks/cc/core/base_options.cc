@@ -40,6 +40,67 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace core {
+namespace {
+
+using ProtoGpu = mediapipe::InferenceCalculatorOptions::Delegate::LiteRt::Gpu;
+
+ProtoGpu::Precision ConvertGpuPrecisionToProto(
+    BaseOptions::GpuOptions::Precision precision) {
+  switch (precision) {
+    case BaseOptions::GpuOptions::Precision::DEFAULT:
+      return ProtoGpu::DEFAULT;
+    case BaseOptions::GpuOptions::Precision::FP16:
+      return ProtoGpu::FP16;
+    case BaseOptions::GpuOptions::Precision::FP32:
+      return ProtoGpu::FP32;
+  }
+  return ProtoGpu::DEFAULT;
+}
+
+BaseOptions::GpuOptions::Precision ConvertProtoToGpuPrecision(
+    ProtoGpu::Precision precision) {
+  switch (precision) {
+    case ProtoGpu::DEFAULT:
+      return BaseOptions::GpuOptions::Precision::DEFAULT;
+    case ProtoGpu::FP16:
+      return BaseOptions::GpuOptions::Precision::FP16;
+    case ProtoGpu::FP32:
+      return BaseOptions::GpuOptions::Precision::FP32;
+  }
+  return BaseOptions::GpuOptions::Precision::DEFAULT;
+}
+
+ProtoGpu::Backend ConvertGpuBackendToProto(
+    BaseOptions::GpuOptions::Backend backend) {
+  switch (backend) {
+    case BaseOptions::GpuOptions::Backend::AUTOMATIC:
+      return ProtoGpu::AUTOMATIC;
+    case BaseOptions::GpuOptions::Backend::OPENGL:
+      return ProtoGpu::OPENGL;
+    case BaseOptions::GpuOptions::Backend::OPENCL:
+      return ProtoGpu::OPENCL;
+    case BaseOptions::GpuOptions::Backend::WEBGPU:
+      return ProtoGpu::WEBGPU;
+  }
+  return ProtoGpu::AUTOMATIC;
+}
+
+BaseOptions::GpuOptions::Backend ConvertProtoToGpuBackend(
+    ProtoGpu::Backend backend) {
+  switch (backend) {
+    case ProtoGpu::AUTOMATIC:
+      return BaseOptions::GpuOptions::Backend::AUTOMATIC;
+    case ProtoGpu::OPENGL:
+      return BaseOptions::GpuOptions::Backend::OPENGL;
+    case ProtoGpu::OPENCL:
+      return BaseOptions::GpuOptions::Backend::OPENCL;
+    case ProtoGpu::WEBGPU:
+      return BaseOptions::GpuOptions::Backend::WEBGPU;
+  }
+  return BaseOptions::GpuOptions::Backend::AUTOMATIC;
+}
+
+}  // namespace
 
 proto::Acceleration ConvertDelegateOptionsToAccelerationProto(
     const BaseOptions::CpuOptions& options) {
@@ -65,38 +126,57 @@ proto::Acceleration ConvertDelegateOptionsToAccelerationProto(
   return acceleration_proto;
 }
 
-proto::Acceleration ConvertDelegateOptionsToAccelerationProto(
-    const BaseOptions::NpuOptions& options) {
-  proto::Acceleration acceleration_proto = proto::Acceleration();
-  auto& litert = *acceleration_proto.mutable_litert();
-  litert.mutable_npu()->set_dispatch_library_path(
-      options.dispatch_library_directory);
+proto::Acceleration ConvertLiteRtDelegateOptionsToAccelerationProto(
+    const BaseOptions::CpuOptions& options) {
+  proto::Acceleration acceleration_proto;
+  auto* cpu = acceleration_proto.mutable_litert()->mutable_cpu();
   return acceleration_proto;
 }
 
-proto::Acceleration ConvertDelegateOptionsToAccelerationProto(
-    const BaseOptions::LiteRtOptions& options) {
-  proto::Acceleration acceleration_proto = proto::Acceleration();
-  auto& litert = *acceleration_proto.mutable_litert();
-  switch (options.hardware_accelerator) {
-    case BaseOptions::LiteRtOptions::HardwareAccelerator::CPU:
-      litert.mutable_cpu();
-      break;
-    case BaseOptions::LiteRtOptions::HardwareAccelerator::NPU: {
-      auto* npu = litert.mutable_npu();
-      if (std::holds_alternative<BaseOptions::LiteRtOptions::NpuOptions>(
-              options.accelerator_options)) {
-        const auto& npu_opts = std::get<BaseOptions::LiteRtOptions::NpuOptions>(
-            options.accelerator_options);
-        if (!npu_opts.dispatch_library_directory.empty()) {
-          npu->set_dispatch_library_path(npu_opts.dispatch_library_directory);
-        }
-      }
-      break;
+proto::Acceleration ConvertLiteRtDelegateOptionsToAccelerationProto(
+    const BaseOptions::GpuOptions& options) {
+  proto::Acceleration acceleration_proto;
+  auto* gpu = acceleration_proto.mutable_litert()->mutable_gpu();
+  gpu->set_precision(ConvertGpuPrecisionToProto(options.precision));
+  gpu->set_backend(ConvertGpuBackendToProto(options.backend));
+  if (!options.cached_kernel_path.empty()) {
+    if (options.serialized_model_dir.empty()) {
+      ABSL_LOG(WARNING)
+          << "BaseOptions::GpuOptions::cached_kernel_path ('"
+          << options.cached_kernel_path
+          << "') is ignored by the LiteRT GPU accelerator, which has no "
+             "separate kernel binary cache. Caching is disabled; set "
+             "serialized_model_dir instead.";
+    } else {
+      ABSL_LOG(WARNING) << "BaseOptions::GpuOptions::cached_kernel_path ('"
+                        << options.cached_kernel_path
+                        << "') is ignored by the LiteRT GPU accelerator; using "
+                           "serialized_model_dir ('"
+                        << options.serialized_model_dir
+                        << "') as the single serialization location.";
     }
-    case BaseOptions::LiteRtOptions::HardwareAccelerator::GPU:
-      litert.mutable_gpu();
-      break;
+  }
+  if (!options.serialized_model_dir.empty()) {
+    gpu->mutable_cache_options()->set_serialization_dir(
+        options.serialized_model_dir);
+  }
+  if (!options.model_token.empty()) {
+    gpu->mutable_cache_options()->set_model_cache_key(options.model_token);
+  }
+  if (gpu->has_cache_options() &&
+      gpu->cache_options().has_serialization_dir() &&
+      gpu->cache_options().has_model_cache_key()) {
+    gpu->mutable_cache_options()->set_serialize_program_cache(true);
+  }
+  return acceleration_proto;
+}
+
+proto::Acceleration ConvertLiteRtDelegateOptionsToAccelerationProto(
+    const BaseOptions::NpuOptions& options) {
+  proto::Acceleration acceleration_proto;
+  auto* npu = acceleration_proto.mutable_litert()->mutable_npu();
+  if (!options.dispatch_library_directory.empty()) {
+    npu->set_dispatch_library_path(options.dispatch_library_directory);
   }
   return acceleration_proto;
 }
@@ -109,19 +189,34 @@ void SetDelegateOptionsOrDie(const BaseOptions* base_options,
       ABSL_LOG(FATAL) << "Specified Delegate type does not match the provided "
                          "delegate options.";
     } else {
-      std::visit(
-          [&base_options_proto](const auto& delegate_options) {
-            proto::Acceleration acceleration_proto =
-                ConvertDelegateOptionsToAccelerationProto(delegate_options);
-            base_options_proto.mutable_acceleration()->Swap(
-                &acceleration_proto);
-          },
-          *base_options->delegate_options);
+      proto::Acceleration acceleration_proto =
+          ConvertDelegateOptionsToAccelerationProto(
+              std::get<T>(*base_options->delegate_options));
+      base_options_proto.mutable_acceleration()->Swap(&acceleration_proto);
     }
   }
 }
 
-proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options) {
+template <typename T>
+void SetLiteRtDelegateOptionsOrDie(const BaseOptions* base_options,
+                                   proto::BaseOptions& base_options_proto) {
+  if (base_options->delegate_options.has_value()) {
+    if (!std::holds_alternative<T>(*base_options->delegate_options)) {
+      ABSL_LOG(FATAL) << "Specified Delegate type does not match the provided "
+                         "delegate options.";
+    } else {
+      // Merge rather than swap, so that the accelerator selection the caller
+      // already made on `acceleration` is preserved when the delegate options
+      // are applied.
+      base_options_proto.mutable_acceleration()->MergeFrom(
+          ConvertLiteRtDelegateOptionsToAccelerationProto(
+              std::get<T>(*base_options->delegate_options)));
+    }
+  }
+}
+
+proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options,
+                                             bool use_litert) {
   proto::BaseOptions base_options_proto;
   if (!base_options->model_asset_path.empty()) {
     base_options_proto.mutable_model_asset()->set_file_name(
@@ -147,36 +242,49 @@ proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options) {
   }
   switch (base_options->delegate) {
     case BaseOptions::Delegate::CPU:
-      base_options_proto.mutable_acceleration()->mutable_tflite();
-      SetDelegateOptionsOrDie<BaseOptions::CpuOptions>(base_options,
-                                                       base_options_proto);
+      if (use_litert) {
+        base_options_proto.mutable_acceleration()
+            ->mutable_litert()
+            ->mutable_cpu();
+        SetLiteRtDelegateOptionsOrDie<BaseOptions::CpuOptions>(
+            base_options, base_options_proto);
+      } else {
+        base_options_proto.mutable_acceleration()->mutable_tflite();
+        SetDelegateOptionsOrDie<BaseOptions::CpuOptions>(base_options,
+                                                         base_options_proto);
+      }
       break;
     case BaseOptions::Delegate::GPU:
-      base_options_proto.mutable_acceleration()
-          ->mutable_gpu()
-          ->set_use_advanced_gpu_api(true);
-      SetDelegateOptionsOrDie<BaseOptions::GpuOptions>(base_options,
-                                                       base_options_proto);
-      break;
-    case BaseOptions::Delegate::EDGETPU_NNAPI:
-      base_options_proto.mutable_acceleration()
-          ->mutable_nnapi()
-          ->set_accelerator_name("google-edgetpu");
+      if (use_litert) {
+        base_options_proto.mutable_acceleration()
+            ->mutable_litert()
+            ->mutable_gpu();
+        // Deliberately GPU-only: CPU is left out of the accelerator set so a
+        // GPU request actually runs on the GPU. LiteRT fails compilation when
+        // any op is left undelegated, which surfaces models the GPU backend
+        // does not fully support. Note this is stricter than the legacy TFLite
+        // GPU delegate, which partial-delegates silently.
+        SetLiteRtDelegateOptionsOrDie<BaseOptions::GpuOptions>(
+            base_options, base_options_proto);
+      } else {
+        base_options_proto.mutable_acceleration()
+            ->mutable_gpu()
+            ->set_use_advanced_gpu_api(true);
+        SetDelegateOptionsOrDie<BaseOptions::GpuOptions>(base_options,
+                                                         base_options_proto);
+      }
       break;
     case BaseOptions::Delegate::NPU:
       base_options_proto.mutable_acceleration()
           ->mutable_litert()
           ->mutable_npu();
-      SetDelegateOptionsOrDie<BaseOptions::NpuOptions>(base_options,
-                                                       base_options_proto);
+      SetLiteRtDelegateOptionsOrDie<BaseOptions::NpuOptions>(
+          base_options, base_options_proto);
       break;
-
-    case BaseOptions::Delegate::LITERT:
+    case BaseOptions::Delegate::EDGETPU_NNAPI:
       base_options_proto.mutable_acceleration()
-          ->mutable_litert()
-          ->mutable_cpu();
-      SetDelegateOptionsOrDie<BaseOptions::LiteRtOptions>(base_options,
-                                                          base_options_proto);
+          ->mutable_nnapi()
+          ->set_accelerator_name("google-edgetpu");
       break;
   }
   return base_options_proto;
@@ -224,25 +332,45 @@ BaseOptions ConvertProtoToBaseOptions(proto::BaseOptions&& base_options_proto) {
     } else if (acceleration.has_nnapi()) {
       base_options.delegate = BaseOptions::Delegate::EDGETPU_NNAPI;
     } else if (acceleration.has_litert()) {
-      base_options.delegate = BaseOptions::Delegate::LITERT;
-      BaseOptions::LiteRtOptions litert_options;
-      if (acceleration.litert().has_npu()) {
-        litert_options.hardware_accelerator =
-            BaseOptions::LiteRtOptions::HardwareAccelerator::NPU;
-        if (acceleration.litert().npu().has_dispatch_library_path()) {
-          BaseOptions::LiteRtOptions::NpuOptions npu_options;
+      // Map the LiteRT accelerator back onto the equivalent `Delegate`.
+      // Without this, a proto carrying `litert` falls through to the default
+      // `CPU` delegate and silently loses the caller's accelerator choice on a
+      // proto -> BaseOptions -> proto round trip.
+      //
+      // `BaseOptions` has no LiteRT bit, so the engine selection itself is not
+      // preserved here; the task re-supplies it via the `use_litert` argument
+      // to ConvertBaseOptionsToProto.
+      const auto& litert = acceleration.litert();
+      if (litert.has_npu()) {
+        base_options.delegate = BaseOptions::Delegate::NPU;
+        if (litert.npu().has_dispatch_library_path()) {
+          BaseOptions::NpuOptions npu_options;
           npu_options.dispatch_library_directory =
-              acceleration.litert().npu().dispatch_library_path();
-          litert_options.accelerator_options = std::move(npu_options);
+              litert.npu().dispatch_library_path();
+          base_options.delegate_options = std::move(npu_options);
         }
-      } else if (acceleration.litert().has_gpu()) {
-        litert_options.hardware_accelerator =
-            BaseOptions::LiteRtOptions::HardwareAccelerator::GPU;
+      } else if (litert.has_gpu()) {
+        base_options.delegate = BaseOptions::Delegate::GPU;
+        BaseOptions::GpuOptions gpu_options;
+        gpu_options.precision =
+            ConvertProtoToGpuPrecision(litert.gpu().precision());
+        gpu_options.backend = ConvertProtoToGpuBackend(litert.gpu().backend());
+        if (litert.gpu().has_cache_options()) {
+          const auto& cache_options = litert.gpu().cache_options();
+          // `cached_kernel_path` is ignored on LiteRT, so only
+          // `serialization_dir` and `model_cache_key` are restored.
+          if (cache_options.has_serialization_dir()) {
+            gpu_options.serialized_model_dir =
+                cache_options.serialization_dir();
+          }
+          if (cache_options.has_model_cache_key()) {
+            gpu_options.model_token = cache_options.model_cache_key();
+          }
+        }
+        base_options.delegate_options = std::move(gpu_options);
       } else {
-        litert_options.hardware_accelerator =
-            BaseOptions::LiteRtOptions::HardwareAccelerator::CPU;
+        base_options.delegate = BaseOptions::Delegate::CPU;
       }
-      base_options.delegate_options = std::move(litert_options);
     }
   }
   return base_options;

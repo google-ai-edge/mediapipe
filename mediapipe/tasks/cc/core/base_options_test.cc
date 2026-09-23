@@ -52,11 +52,24 @@ TEST(BaseOptionsTest, ConvertBaseOptionsToProtoWithAcceleration) {
   proto = ConvertBaseOptionsToProto(&base_options);
   EXPECT_TRUE(proto.acceleration().has_litert());
   EXPECT_TRUE(proto.acceleration().litert().has_npu());
+}
 
-  base_options.delegate = BaseOptions::Delegate::LITERT;
-  proto = ConvertBaseOptionsToProto(&base_options);
+TEST(BaseOptionsTest, ConvertBaseOptionsToProtoWithUseLiteRt) {
+  BaseOptions base_options;
+
+  // CPU delegate with use_litert routes to LiteRT CPU
+  base_options.delegate = BaseOptions::Delegate::CPU;
+  proto::BaseOptions proto =
+      ConvertBaseOptionsToProto(&base_options, /*use_litert=*/true);
   EXPECT_TRUE(proto.acceleration().has_litert());
   EXPECT_TRUE(proto.acceleration().litert().has_cpu());
+
+  // GPU delegate with use_litert routes to LiteRT GPU
+  base_options.delegate = BaseOptions::Delegate::GPU;
+  base_options.delegate_options = std::nullopt;
+  proto = ConvertBaseOptionsToProto(&base_options, /*use_litert=*/true);
+  EXPECT_TRUE(proto.acceleration().has_litert());
+  EXPECT_TRUE(proto.acceleration().litert().has_gpu());
 }
 
 TEST(DelegateOptionsTest, SucceedCpuOptions) {
@@ -94,8 +107,7 @@ TEST(DelegateOptionsDeathTest, FailWrongDelegateOptionsType) {
   base_options.delegate_options = gpu_options;
   ASSERT_DEATH(
       { proto::BaseOptions proto = ConvertBaseOptionsToProto(&base_options); },
-      "Specified Delegate type does not match the provided "
-      "delegate options.");
+      "Specified Delegate type does not match the provided delegate options.");
 }
 
 TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithFile) {
@@ -131,28 +143,149 @@ TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithGpuDelegate) {
   EXPECT_EQ(gpu_opts.model_token, kModelToken);
 }
 
-TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithLiteRtDelegate) {
+TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithLiteRtGpu) {
+  proto::BaseOptions proto;
+  auto* gpu = proto.mutable_acceleration()->mutable_litert()->mutable_gpu();
+  gpu->mutable_cache_options()->set_serialization_dir(kCachedModelDir);
+  gpu->mutable_cache_options()->set_model_cache_key(kModelToken);
+
+  BaseOptions base_options = ConvertProtoToBaseOptions(std::move(proto));
+
+  // A LiteRT GPU accelerator must map back to the GPU delegate, not silently
+  // fall through to the default CPU delegate.
+  EXPECT_EQ(base_options.delegate, BaseOptions::Delegate::GPU);
+  ASSERT_TRUE(base_options.delegate_options.has_value());
+  ASSERT_TRUE(std::holds_alternative<BaseOptions::GpuOptions>(
+      *base_options.delegate_options));
+  const auto& gpu_opts =
+      std::get<BaseOptions::GpuOptions>(*base_options.delegate_options);
+  EXPECT_EQ(gpu_opts.serialized_model_dir, kCachedModelDir);
+  EXPECT_EQ(gpu_opts.model_token, kModelToken);
+  // `cached_kernel_path` is not part of the LiteRT GPU cache options, so it
+  // must stay empty rather than mirroring the serialization directory.
+  EXPECT_TRUE(gpu_opts.cached_kernel_path.empty());
+}
+
+TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithLiteRtNpu) {
   proto::BaseOptions proto;
   proto.mutable_acceleration()
       ->mutable_litert()
       ->mutable_npu()
       ->set_dispatch_library_path("/tmp/dispatch");
+
   BaseOptions base_options = ConvertProtoToBaseOptions(std::move(proto));
-  EXPECT_EQ(base_options.delegate, BaseOptions::Delegate::LITERT);
+
+  EXPECT_EQ(base_options.delegate, BaseOptions::Delegate::NPU);
   ASSERT_TRUE(base_options.delegate_options.has_value());
-  ASSERT_TRUE(std::holds_alternative<BaseOptions::LiteRtOptions>(
+  ASSERT_TRUE(std::holds_alternative<BaseOptions::NpuOptions>(
       *base_options.delegate_options));
-  const auto& litert_opts =
-      std::get<BaseOptions::LiteRtOptions>(*base_options.delegate_options);
-  EXPECT_EQ(litert_opts.hardware_accelerator,
-            BaseOptions::LiteRtOptions::HardwareAccelerator::NPU);
-  ASSERT_TRUE(std::holds_alternative<
-              mediapipe::tasks::core::BaseOptions::LiteRtOptions::NpuOptions>(
-      litert_opts.accelerator_options));
-  const auto& npu_opts =
-      std::get<mediapipe::tasks::core::BaseOptions::LiteRtOptions::NpuOptions>(
-          litert_opts.accelerator_options);
-  EXPECT_EQ(npu_opts.dispatch_library_directory, "/tmp/dispatch");
+  EXPECT_EQ(std::get<BaseOptions::NpuOptions>(*base_options.delegate_options)
+                .dispatch_library_directory,
+            "/tmp/dispatch");
+}
+
+TEST(BaseOptionsTest, ConvertProtoToBaseOptionsWithLiteRtCpu) {
+  proto::BaseOptions proto;
+  proto.mutable_acceleration()->mutable_litert()->mutable_cpu();
+
+  BaseOptions base_options = ConvertProtoToBaseOptions(std::move(proto));
+
+  EXPECT_EQ(base_options.delegate, BaseOptions::Delegate::CPU);
+}
+
+// Round trips are what interactive_segmenter_jni.cc and
+// interactive_segmenter_wasm.cc perform: they parse a BaseOptions proto,
+// convert it to a BaseOptions, and let the task convert it back. The task
+// re-supplies `use_litert`; what must survive the conversion is the
+// accelerator choice, otherwise a GPU request silently downgrades to CPU.
+TEST(BaseOptionsTest, LiteRtGpuSurvivesProtoRoundTrip) {
+  proto::BaseOptions proto;
+  auto* gpu = proto.mutable_acceleration()->mutable_litert()->mutable_gpu();
+  gpu->set_precision(
+      mediapipe::InferenceCalculatorOptions::Delegate::LiteRt::Gpu::FP32);
+  gpu->set_backend(
+      mediapipe::InferenceCalculatorOptions::Delegate::LiteRt::Gpu::OPENGL);
+  gpu->mutable_cache_options()->set_serialization_dir(kCachedModelDir);
+  gpu->mutable_cache_options()->set_model_cache_key(kModelToken);
+
+  BaseOptions base_options = ConvertProtoToBaseOptions(std::move(proto));
+  ASSERT_TRUE(base_options.delegate_options.has_value());
+  ASSERT_TRUE(std::holds_alternative<BaseOptions::GpuOptions>(
+      *base_options.delegate_options));
+  const auto& gpu_opts =
+      std::get<BaseOptions::GpuOptions>(*base_options.delegate_options);
+  EXPECT_EQ(gpu_opts.precision, BaseOptions::GpuOptions::Precision::FP32);
+  EXPECT_EQ(gpu_opts.backend, BaseOptions::GpuOptions::Backend::OPENGL);
+  EXPECT_EQ(gpu_opts.serialized_model_dir, kCachedModelDir);
+  EXPECT_EQ(gpu_opts.model_token, kModelToken);
+
+  proto::BaseOptions round_tripped =
+      ConvertBaseOptionsToProto(&base_options, /*use_litert=*/true);
+
+  ASSERT_TRUE(round_tripped.acceleration().has_litert());
+  EXPECT_TRUE(round_tripped.acceleration().litert().has_gpu());
+  EXPECT_EQ(round_tripped.acceleration().litert().gpu().precision(),
+            mediapipe::InferenceCalculatorOptions::Delegate::LiteRt::Gpu::FP32);
+  EXPECT_EQ(
+      round_tripped.acceleration().litert().gpu().backend(),
+      mediapipe::InferenceCalculatorOptions::Delegate::LiteRt::Gpu::OPENGL);
+  // Cache options must survive the round trip too, otherwise a caller that
+  // opted into model serialization silently loses it and pays the compilation
+  // cost on every run.
+  const auto& round_tripped_cache =
+      round_tripped.acceleration().litert().gpu().cache_options();
+  EXPECT_EQ(round_tripped_cache.serialization_dir(), kCachedModelDir);
+  EXPECT_EQ(round_tripped_cache.model_cache_key(), kModelToken);
+  // Re-derived because both the directory and the cache key are present.
+  EXPECT_TRUE(round_tripped_cache.serialize_program_cache());
+  // Still GPU-only after the round trip.
+  EXPECT_FALSE(round_tripped.acceleration().litert().has_cpu());
+  EXPECT_FALSE(round_tripped.acceleration().has_gpu());
+  EXPECT_FALSE(round_tripped.acceleration().has_tflite());
+}
+
+TEST(BaseOptionsTest, LiteRtNpuSurvivesProtoRoundTrip) {
+  proto::BaseOptions proto;
+  proto.mutable_acceleration()
+      ->mutable_litert()
+      ->mutable_npu()
+      ->set_dispatch_library_path("/tmp/dispatch");
+
+  BaseOptions base_options = ConvertProtoToBaseOptions(std::move(proto));
+  // NPU always routes through LiteRT, so no `use_litert` argument is needed.
+  proto::BaseOptions round_tripped = ConvertBaseOptionsToProto(&base_options);
+
+  ASSERT_TRUE(round_tripped.acceleration().has_litert());
+  ASSERT_TRUE(round_tripped.acceleration().litert().has_npu());
+  EXPECT_EQ(round_tripped.acceleration().litert().npu().dispatch_library_path(),
+            "/tmp/dispatch");
+}
+
+// A task that has not opted into LiteRT still gets the legacy backend, but it
+// must keep the GPU accelerator the caller asked for.
+TEST(BaseOptionsTest, LiteRtGpuProtoFallsBackToLegacyGpuWithoutUseLiteRt) {
+  proto::BaseOptions proto;
+  proto.mutable_acceleration()->mutable_litert()->mutable_gpu();
+
+  BaseOptions base_options = ConvertProtoToBaseOptions(std::move(proto));
+  proto::BaseOptions round_tripped = ConvertBaseOptionsToProto(&base_options);
+
+  ASSERT_TRUE(round_tripped.acceleration().has_gpu());
+  EXPECT_TRUE(round_tripped.acceleration().gpu().use_advanced_gpu_api());
+  EXPECT_FALSE(round_tripped.acceleration().has_tflite());
+}
+
+// The legacy (non-LiteRT) delegates must keep round tripping unchanged.
+TEST(BaseOptionsTest, LegacyGpuSurvivesProtoRoundTrip) {
+  proto::BaseOptions proto;
+  proto.mutable_acceleration()->mutable_gpu()->set_use_advanced_gpu_api(true);
+
+  BaseOptions base_options = ConvertProtoToBaseOptions(std::move(proto));
+  proto::BaseOptions round_tripped = ConvertBaseOptionsToProto(&base_options);
+
+  ASSERT_TRUE(round_tripped.acceleration().has_gpu());
+  EXPECT_TRUE(round_tripped.acceleration().gpu().use_advanced_gpu_api());
+  EXPECT_FALSE(round_tripped.acceleration().has_litert());
 }
 
 TEST(BaseOptionsTest, IsLiteRtLmModelReturnsFalseForDefaultOptions) {

@@ -98,8 +98,13 @@ class TaskRunnerFake extends TaskRunner {
     ).toHaveBeenCalled();
   }
 
-  setOptions(options: TaskRunnerOptions): Promise<void> {
-    return this.applyOptions(options);
+  setOptions(options: TaskRunnerOptions, useLitert = false): Promise<void> {
+    return this.applyOptions(
+      options,
+      /* loadTfliteModel= */ true,
+      /* isLiteRtLmModel= */ false,
+      useLitert,
+    );
   }
 
   private throwErrors(): void {
@@ -342,6 +347,66 @@ describe('TaskRunner', () => {
 
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(taskRunner.baseOptions.toObject()).toEqual(mockBytesResult);
+  });
+
+  describe('LiteRT delegate migration', () => {
+    function optionsWith(delegate?: 'CPU' | 'GPU') {
+      return {
+        baseOptions: {
+          modelAssetBuffer: new Uint8Array(mockBytes),
+          ...(delegate ? {delegate} : {}),
+        },
+      };
+    }
+
+    it('stays on the TFLite delegate by default', async () => {
+      await taskRunner.setOptions(optionsWith());
+
+      const acceleration = taskRunner.baseOptions.getAcceleration()!;
+      expect(acceleration.hasTflite()).toBe(true);
+      expect(acceleration.hasLitert()).toBe(false);
+    });
+
+    it('routes the default CPU path to LiteRT when useLitert is set', async () => {
+      await taskRunner.setOptions(optionsWith(), /* useLitert= */ true);
+
+      const acceleration = taskRunner.baseOptions.getAcceleration()!;
+      // `delegate` is a oneof, so selecting LiteRT must clear TFLite.
+      expect(acceleration.hasTflite()).toBe(false);
+      expect(acceleration.hasLitert()).toBe(true);
+      expect(acceleration.getLitert()!.hasCpu()).toBe(true);
+      expect(acceleration.getLitert()!.hasGpu()).toBe(false);
+    });
+
+    it('routes GPU to LiteRT without a CPU fallback', async () => {
+      await taskRunner.setOptions(optionsWith('GPU'), /* useLitert= */ true);
+
+      const acceleration = taskRunner.baseOptions.getAcceleration()!;
+      expect(acceleration.hasGpu()).toBe(false);
+      expect(acceleration.hasLitert()).toBe(true);
+      expect(acceleration.getLitert()!.hasGpu()).toBe(true);
+      // A GPU request must be GPU-only: LiteRT treats the accelerator set as
+      // the backends it is allowed to use, so permitting CPU would let the
+      // model silently run on CPU instead of failing.
+      expect(acceleration.getLitert()!.hasCpu()).toBe(false);
+    });
+
+    it('keeps the GPU selection when later options omit the delegate', async () => {
+      await taskRunner.setOptions(optionsWith('GPU'), /* useLitert= */ true);
+      await taskRunner.setOptions(optionsWith(), /* useLitert= */ true);
+
+      const litert = taskRunner.baseOptions.getAcceleration()!.getLitert()!;
+      expect(litert.hasGpu()).toBe(true);
+    });
+
+    it('downgrades to CPU when the delegate is explicitly changed to CPU', async () => {
+      await taskRunner.setOptions(optionsWith('GPU'), /* useLitert= */ true);
+      await taskRunner.setOptions(optionsWith('CPU'), /* useLitert= */ true);
+
+      const litert = taskRunner.baseOptions.getAcceleration()!.getLitert()!;
+      expect(litert.hasGpu()).toBe(false);
+      expect(litert.hasCpu()).toBe(true);
+    });
   });
 
   it('can read from ReadableStreamDefaultReader (with empty data)', async () => {

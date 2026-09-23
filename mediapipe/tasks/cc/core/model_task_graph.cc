@@ -140,6 +140,9 @@ class InferenceSubgraph : public Subgraph {
       case Acceleration::kNnapi:
         *delegate.mutable_nnapi() = acceleration.nnapi();
         break;
+      case Acceleration::kLitert:
+        *delegate.mutable_litert() = acceleration.litert();
+        break;
       case Acceleration::kTflite:
         *delegate.mutable_tflite() = acceleration.tflite();
         break;

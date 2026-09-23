@@ -12,34 +12,49 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/calculators/tensor/inference_calculator.pb.h"
-#include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
-#include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
+#include "mediapipe/tasks/cc/core/base_options.h"
+#include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
 namespace {
 using BaseOptionsProto = ::mediapipe::tasks::core::proto::BaseOptions;
-using InferenceCalculatorOptionsProto = ::mediapipe::InferenceCalculatorOptions;
-}
+using CppBaseOptions = ::mediapipe::tasks::core::BaseOptions;
+}  // namespace
 
 @implementation MPPBaseOptions (Helpers)
 
 - (void)copyToProto:(BaseOptionsProto *)baseOptionsProto withUseStreamMode:(BOOL)useStreamMode {
-  [self copyToProto:baseOptionsProto];
+  [self copyToProto:baseOptionsProto withUseStreamMode:useStreamMode withUseLitert:NO];
+}
+
+- (void)copyToProto:(BaseOptionsProto *)baseOptionsProto
+    withUseStreamMode:(BOOL)useStreamMode
+        withUseLitert:(BOOL)useLitert {
+  [self copyToProto:baseOptionsProto withUseLitert:useLitert];
   baseOptionsProto->set_use_stream_mode(useStreamMode);
 }
 
 - (void)copyToProto:(BaseOptionsProto *)baseOptionsProto {
-  baseOptionsProto->Clear();
+  [self copyToProto:baseOptionsProto withUseLitert:NO];
+}
 
+- (void)copyToProto:(BaseOptionsProto *)baseOptionsProto withUseLitert:(BOOL)useLitert {
+  CppBaseOptions cppBaseOptions;
   if (self.modelAssetPath) {
-    baseOptionsProto->mutable_model_asset()->set_file_name(self.modelAssetPath.UTF8String);
+    cppBaseOptions.model_asset_path = self.modelAssetPath.UTF8String;
+  }
+  switch (self.delegate) {
+    case MPPDelegateGPU:
+      cppBaseOptions.delegate = CppBaseOptions::Delegate::GPU;
+      break;
+    case MPPDelegateCPU:
+    default:
+      cppBaseOptions.delegate = CppBaseOptions::Delegate::CPU;
+      break;
   }
 
-  if (self.delegate == MPPDelegateGPU) {
-    baseOptionsProto->mutable_acceleration()->mutable_gpu()->MergeFrom(
-        InferenceCalculatorOptionsProto::Delegate::Gpu());
-  }
+  *baseOptionsProto =
+      ::mediapipe::tasks::core::ConvertBaseOptionsToProto(&cppBaseOptions, useLitert);
 }
 
 @end

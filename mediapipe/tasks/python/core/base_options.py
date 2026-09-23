@@ -78,7 +78,6 @@ class BaseOptions:
   class Delegate(enum.IntEnum):
     CPU = 0
     GPU = 1
-    LITERT = 4
 
 
   model_asset_path: Optional[str] = None
@@ -109,7 +108,6 @@ class BaseOptions:
     options.app_id = None
     options.app_version = None
     options.file_descriptor = -1
-    options.litert_options = None
     return options
 
   def __eq__(self, other: Any) -> bool:

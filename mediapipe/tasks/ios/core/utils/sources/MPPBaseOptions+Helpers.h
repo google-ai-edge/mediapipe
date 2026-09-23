@@ -21,7 +21,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)copyToProto:(mediapipe::tasks::core::proto::BaseOptions *)baseOptionsProto;
 - (void)copyToProto:(mediapipe::tasks::core::proto::BaseOptions *)baseOptionsProto
+      withUseLitert:(BOOL)useLitert;
+- (void)copyToProto:(mediapipe::tasks::core::proto::BaseOptions *)baseOptionsProto
     withUseStreamMode:(BOOL)useStreamMode;
+- (void)copyToProto:(mediapipe::tasks::core::proto::BaseOptions *)baseOptionsProto
+    withUseStreamMode:(BOOL)useStreamMode
+        withUseLitert:(BOOL)useLitert;
 
 @end
 

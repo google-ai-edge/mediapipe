@@ -125,6 +125,89 @@ public class BaseOptionsUtilsTest {
   }
 
   @Test
+  public void succeedsWithUseLitertAndDefaultCpu() throws Exception {
+    BaseOptions options = BaseOptions.builder().setModelAssetPath(MODEL_ASSET_PATH).build();
+    BaseOptionsProto.BaseOptions baseOptionsProto =
+        BaseOptionsUtils.convertBaseOptionsToProto(options, /* useLiteRt= */ true);
+    AccelerationProto.Acceleration acceleration = baseOptionsProto.getAcceleration();
+    assertThat(acceleration.hasTflite()).isFalse();
+    assertThat(acceleration.hasLitert()).isTrue();
+    assertThat(acceleration.getLitert().hasCpu()).isTrue();
+  }
+
+  @Test
+  public void succeedsWithUseLitertAndCpu() throws Exception {
+    BaseOptions options =
+        BaseOptions.builder()
+            .setModelAssetPath(MODEL_ASSET_PATH)
+            .setDelegate(Delegate.CPU)
+            .setDelegateOptions(
+                BaseOptions.DelegateOptions.CpuOptions.builder().setNumThreads(3).build())
+            .build();
+    BaseOptionsProto.BaseOptions baseOptionsProto =
+        BaseOptionsUtils.convertBaseOptionsToProto(options, /* useLiteRt= */ true);
+    AccelerationProto.Acceleration acceleration = baseOptionsProto.getAcceleration();
+    assertThat(acceleration.hasTflite()).isFalse();
+    assertThat(acceleration.hasLitert()).isTrue();
+    assertThat(acceleration.getLitert().hasCpu()).isTrue();
+    assertThat(acceleration.getLitert().getCpu().getNumThreads()).isEqualTo(3);
+  }
+
+  @Test
+  public void succeedsWithUseLitertAndGpu() throws Exception {
+    BaseOptions options =
+        BaseOptions.builder()
+            .setModelAssetPath(MODEL_ASSET_PATH)
+            .setDelegate(Delegate.GPU)
+            .setDelegateOptions(
+                BaseOptions.DelegateOptions.GpuOptions.builder()
+                    .setModelToken(MODEL_TOKEN)
+                    .setSerializedModelDir(SERIALIZED_MODEL_DIR)
+                    .build())
+            .build();
+    BaseOptionsProto.BaseOptions baseOptionsProto =
+        BaseOptionsUtils.convertBaseOptionsToProto(options, /* useLiteRt= */ true);
+    AccelerationProto.Acceleration acceleration = baseOptionsProto.getAcceleration();
+    assertThat(acceleration.hasTflite()).isFalse();
+    assertThat(acceleration.hasLitert()).isTrue();
+    assertThat(acceleration.getLitert().hasGpu()).isTrue();
+    // A GPU request must be GPU-only: no implicit CPU fallback, so that models the GPU backend
+    // cannot fully handle fail loudly instead of silently running on CPU.
+    assertThat(acceleration.getLitert().hasCpu()).isFalse();
+    assertThat(acceleration.getLitert().getGpu().hasCacheOptions()).isTrue();
+    assertThat(acceleration.getLitert().getGpu().getCacheOptions().getModelCacheKey())
+        .isEqualTo(MODEL_TOKEN);
+    assertThat(acceleration.getLitert().getGpu().getCacheOptions().getSerializeProgramCache())
+        .isTrue();
+    assertThat(acceleration.getLitert().getGpu().getCacheOptions().getSerializationDir())
+        .isEqualTo(SERIALIZED_MODEL_DIR);
+  }
+
+  // The LiteRT GPU accelerator has no separate kernel binary cache, so cachedKernelPath is
+  // ignored there (a warning is logged) and serializedModelDir is the single serialization
+  // location. Mirrors LiteRtGpuIgnoresCachedKernelPathWhenBothAreSet in
+  // mediapipe/tasks/cc/core/base_options_test.cc.
+  @Test
+  public void useLitertAndGpu_ignoresCachedKernelPath() throws Exception {
+    BaseOptions options =
+        BaseOptions.builder()
+            .setModelAssetPath(MODEL_ASSET_PATH)
+            .setDelegate(Delegate.GPU)
+            .setDelegateOptions(
+                BaseOptions.DelegateOptions.GpuOptions.builder()
+                    .setModelToken(MODEL_TOKEN)
+                    .setCachedKernelPath(CACHED_KERNEL_PATH)
+                    .setSerializedModelDir(SERIALIZED_MODEL_DIR)
+                    .build())
+            .build();
+    BaseOptionsProto.BaseOptions baseOptionsProto =
+        BaseOptionsUtils.convertBaseOptionsToProto(options, /* useLiteRt= */ true);
+    AccelerationProto.Acceleration acceleration = baseOptionsProto.getAcceleration();
+    assertThat(acceleration.getLitert().getGpu().getCacheOptions().getSerializationDir())
+        .isEqualTo(SERIALIZED_MODEL_DIR);
+  }
+
+  @Test
   public void succeedsWithLiteRtOptions() throws Exception {
     BaseOptions options =
         BaseOptions.builder()
@@ -137,7 +220,7 @@ public class BaseOptionsUtilsTest {
                     .setGpuOptions(
                         BaseOptions.DelegateOptions.GpuOptions.builder()
                             .setModelToken(MODEL_TOKEN)
-                            .setCachedKernelPath(CACHED_KERNEL_PATH)
+                            .setSerializedModelDir(SERIALIZED_MODEL_DIR)
                             .build())
                     .build())
             .build();
@@ -155,6 +238,6 @@ public class BaseOptionsUtilsTest {
     assertThat(acceleration.getLitert().getGpu().getCacheOptions().getSerializeProgramCache())
         .isTrue();
     assertThat(acceleration.getLitert().getGpu().getCacheOptions().getSerializationDir())
-        .isEqualTo(CACHED_KERNEL_PATH);
+        .isEqualTo(SERIALIZED_MODEL_DIR);
   }
 }

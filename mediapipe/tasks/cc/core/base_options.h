@@ -49,10 +49,7 @@ struct BaseOptions {
     // Edge TPU acceleration using NNAPI delegate.
     EDGETPU_NNAPI = 2,
     // NPU acceleration using LiteRT.
-    // Deprecated: Use LITERT delegate with LiteRt::NPU instead.
     NPU = 4,
-    // Acceleration using LiteRT.
-    LITERT = 5,
   };
 
   Delegate delegate = CPU;
@@ -62,10 +59,36 @@ struct BaseOptions {
 
   // Options for GPU.
   struct GpuOptions {
+    // The numerical precision to run inference with. Only applies to the
+    // Delegate::LiteRt::Gpu accelerator, where it maps to
+    // LiteRT::GpuOptions::Precision.
+    enum Precision {
+      DEFAULT = 0,
+      FP16 = 1,
+      FP32 = 2,
+    };
+    Precision precision = DEFAULT;
+
+    // The GPU API to run inference with. Only applies to the
+    // Delegate::LiteRt::Gpu accelerator, where it maps to
+    // LiteRT::GpuOptions::Backend.
+    enum Backend {
+      AUTOMATIC = 0,
+      OPENGL = 1,
+      OPENCL = 2,
+      WEBGPU = 3,
+    };
+    Backend backend = AUTOMATIC;
+
     // Load pre-compiled serialized binary cache to accelerate init process.
     // Only available on Android. Kernel caching will only be enabled if this
     // path is set. NOTE: binary cache usage may be skipped if valid serialized
     // model, specified by "serialized_model_dir", exists.
+    //
+    // Only applies to the Delegate::GPU accelerator. The
+    // Delegate::LiteRt::Gpu accelerator has no separate kernel binary cache
+    // and ignores this field, logging a warning if it is set; use
+    // "serialized_model_dir" there instead.
     std::string cached_kernel_path;
 
     // A dir to load from and save to a pre-compiled serialized model used to
@@ -73,38 +96,27 @@ struct BaseOptions {
     // NOTE: serialized model takes precedence over binary cache
     // specified by "cached_kernel_path", which still can be used if
     // serialized model is invalid or missing.
+    //
+    // Applies to both the Delegate::GPU and the Delegate::LiteRt::Gpu
+    // accelerators. On Delegate::LiteRt::Gpu it maps to
+    // LiteRT::GpuOptions::CacheOptions::serialization_dir and is the only
+    // supported serialization location.
     std::string serialized_model_dir;
 
     // Unique token identifying the model. Used in conjunction with
     // "serialized_model_dir". It is the caller's responsibility to ensure
     // there is no clash of the tokens.
+    //
+    // Applies to both the Delegate::GPU and the Delegate::LiteRt::Gpu
+    // accelerators. On Delegate::LiteRt::Gpu it maps to
+    // LiteRT::GpuOptions::CacheOptions::model_cache_key.
     std::string model_token;
   };
 
-  // Options for NPU. Deprecated: Use LiteRtOptions instead.
+  // Options for NPU.
   struct NpuOptions {
     // The directory containing the NPU dispatch library.
     std::string dispatch_library_directory;
-  };
-
-  // Options for LiteRT.
-  struct LiteRtOptions {
-    enum class HardwareAccelerator {
-      CPU = 0,
-      GPU = 1,
-      NPU = 2,
-    };
-
-    HardwareAccelerator hardware_accelerator = HardwareAccelerator::CPU;
-
-    struct CpuOptions {};
-    struct GpuOptions {};
-    struct NpuOptions {
-      std::string dispatch_library_directory;
-    };
-
-    std::variant<CpuOptions, GpuOptions, NpuOptions> accelerator_options =
-        CpuOptions{};
   };
 
   // The file descriptor to a file opened with open(2), with optional additional
@@ -129,7 +141,7 @@ struct BaseOptions {
 
   // Options for the chosen delegate. If not set, the default delegate options
   // is used.
-  std::optional<std::variant<CpuOptions, GpuOptions, NpuOptions, LiteRtOptions>>
+  std::optional<std::variant<CpuOptions, GpuOptions, NpuOptions>>
       delegate_options;
 
   // Disallows/disables default initialization of MediaPipe graph services. This
@@ -161,9 +173,16 @@ struct BaseOptions {
 };
 
 // Converts a BaseOptions to a proto::BaseOptions.
-proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options);
+// If `use_litert` is true, LiteRT will be used for execution.
+proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options,
+                                             bool use_litert = false);
 
 // Converts a proto::BaseOptions to a BaseOptions.
+// A LiteRT accelerator maps back to the equivalent `Delegate`, so the
+// CPU/GPU/NPU selection survives the conversion. Note that the choice of
+// execution engine itself does not: `BaseOptions` has no LiteRT bit, so a
+// caller that converts back with `ConvertBaseOptionsToProto` must pass
+// `use_litert` again to stay on LiteRT.
 BaseOptions ConvertProtoToBaseOptions(proto::BaseOptions&& base_options_proto);
 
 // Checks if the given base options correspond to a LiteRT LM model.
