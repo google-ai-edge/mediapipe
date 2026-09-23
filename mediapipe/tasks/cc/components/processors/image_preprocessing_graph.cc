@@ -119,6 +119,7 @@ absl::Status ConfigureImageToTensorCalculator(
 bool DetermineImagePreprocessingGpuBackend(
     const core::proto::Acceleration& acceleration) {
   return acceleration.has_gpu() ||
+         (acceleration.has_litert() && acceleration.litert().has_gpu()) ||
          (acceleration.has_nnapi() &&
           acceleration.nnapi().accelerator_name() == "google-edgetpu");
 }

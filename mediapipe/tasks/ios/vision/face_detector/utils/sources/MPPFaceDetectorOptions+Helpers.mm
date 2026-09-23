@@ -31,7 +31,7 @@ using FaceDetectorGraphOptionsProto =
 
   graphOptions->Clear();
 
-  [self.baseOptions copyToProto:graphOptions->mutable_base_options()];
+  [self.baseOptions copyToProto:graphOptions->mutable_base_options() withUseLitert:YES];
   graphOptions->set_min_detection_confidence(self.minDetectionConfidence);
   graphOptions->set_min_suppression_threshold(self.minSuppressionThreshold);
 }

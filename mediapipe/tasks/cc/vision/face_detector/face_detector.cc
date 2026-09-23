@@ -20,6 +20,7 @@ limitations under the License.
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/tasks/cc/components/containers/detection_result.h"
+#include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
@@ -78,8 +79,11 @@ CalculatorGraphConfig CreateGraphConfig(
 std::unique_ptr<FaceDetectorGraphOptionsProto>
 ConvertFaceDetectorGraphOptionsProto(FaceDetectorOptions* options) {
   auto options_proto = std::make_unique<FaceDetectorGraphOptionsProto>();
+  // Runs inference through LiteRT (InferenceCalculatorLiteRt) rather than the
+  // legacy TFLite delegates.
   auto base_options_proto = std::make_unique<tasks::core::proto::BaseOptions>(
-      tasks::core::ConvertBaseOptionsToProto(&(options->base_options)));
+      tasks::core::ConvertBaseOptionsToProto(&(options->base_options),
+                                             /*use_litert=*/true));
   options_proto->mutable_base_options()->Swap(base_options_proto.get());
   options_proto->mutable_base_options()->set_use_stream_mode(
       options->running_mode != core::RunningMode::IMAGE);

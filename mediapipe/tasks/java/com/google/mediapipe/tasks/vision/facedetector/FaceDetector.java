@@ -440,7 +440,7 @@ public final class FaceDetector extends BaseVisionTaskApi {
       BaseOptionsProto.BaseOptions.Builder baseOptionsBuilder =
           BaseOptionsProto.BaseOptions.newBuilder();
       baseOptionsBuilder.setUseStreamMode(runningMode() != RunningMode.IMAGE);
-      baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions()));
+      baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions(), /* useLiteRt= */ true));
       FaceDetectorGraphOptionsProto.FaceDetectorGraphOptions.Builder taskOptionsBuilder =
           FaceDetectorGraphOptionsProto.FaceDetectorGraphOptions.newBuilder()
               .setBaseOptions(baseOptionsBuilder);
