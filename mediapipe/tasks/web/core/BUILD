@@ -8,6 +8,7 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 ts_declaration(
     name = "core",
     srcs = [
+        "embedding_provider.d.ts",
         "task_runner_options.d.ts",
         "wasm_fileset.d.ts",
     ],
