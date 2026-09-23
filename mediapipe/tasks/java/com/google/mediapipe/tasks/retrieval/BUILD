@@ -29,6 +29,8 @@ android_library(
     srcs = glob([
         "model/*.java",
         "components/*.java",
+        "chunking/*.java",
+        "semanticretriever/*.java",
         "universalembedder/*.java",
     ]),
     manifest = "AndroidManifest.xml",
