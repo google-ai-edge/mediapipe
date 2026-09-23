@@ -31,6 +31,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/types/span.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/port/status.h"
@@ -176,6 +177,16 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   static StatusOrGlContext Create(EAGLSharegroup* sharegroup,
                                   bool create_thread);
 #endif  // HAS_EAGL
+
+  // Size in bytes of a GPU device UUID, matching Vulkan's VK_UUID_SIZE.
+  static constexpr int kDeviceUuidSize = 16;
+
+  // Creates a GlContext on the GPU identified by `device_uuid` (interpreted as
+  // a Vulkan VkPhysicalDeviceIDProperties::deviceUUID). `device_uuid` must be
+  // exactly kDeviceUuidSize bytes. Returns absl::UnimplementedError on
+  // platforms that cannot select a GPU by UUID.
+  static StatusOrGlContext CreateForDeviceUuid(
+      absl::Span<const uint8_t> device_uuid, bool create_thread);
 
   // Returns the GlContext that is current on this thread. May return nullptr.
   static std::shared_ptr<GlContext> GetCurrent();
@@ -354,6 +365,9 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   EmscriptenWebGLContextAttributes attrs_;
 #elif HAS_EGL
   absl::Status CreateContext(EGLContext share_context);
+  absl::Status CreateContext(EGLDisplay display, EGLContext share_context);
+  absl::Status CreateContextForDeviceUuid(absl::Span<const uint8_t> device_uuid,
+                                          EGLContext share_context);
   absl::Status CreateContextInternal(EGLContext share_context, int gl_version);
 
   EGLDisplay display_ = EGL_NO_DISPLAY;

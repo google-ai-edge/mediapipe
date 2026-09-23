@@ -12,13 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <array>
+#include <cstdint>
+#include <cstring>
+#include <string>
 #include <utility>
 
+#include "absl/base/no_destructor.h"
+#include "absl/container/node_hash_map.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/escaping.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
+#include "absl/synchronization/mutex.h"
+#include "absl/types/span.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
@@ -27,6 +38,22 @@
 
 #ifndef EGL_OPENGL_ES3_BIT_KHR
 #define EGL_OPENGL_ES3_BIT_KHR 0x00000040
+#endif
+
+// ANGLE-specific EGL extension tokens used for Vulkan device selection.
+// Defined locally because system EGL headers frequently lag behind the Khronos
+// and ANGLE extension registries.
+#ifndef EGL_PLATFORM_ANGLE_ANGLE
+#define EGL_PLATFORM_ANGLE_ANGLE 0x3202
+#endif
+#ifndef EGL_PLATFORM_ANGLE_TYPE_ANGLE
+#define EGL_PLATFORM_ANGLE_TYPE_ANGLE 0x3203
+#endif
+#ifndef EGL_PLATFORM_ANGLE_TYPE_VULKAN_ANGLE
+#define EGL_PLATFORM_ANGLE_TYPE_VULKAN_ANGLE 0x3450
+#endif
+#ifndef EGL_PLATFORM_ANGLE_VULKAN_DEVICE_UUID_ANGLE
+#define EGL_PLATFORM_ANGLE_VULKAN_DEVICE_UUID_ANGLE 0x34F0
 #endif
 
 #if HAS_EGL
@@ -88,6 +115,97 @@ static absl::StatusOr<EGLDisplay> GetInitializedDefaultEglDisplay() {
   return display;
 }
 
+// Formats a GPU device UUID for logs and error messages.
+static std::string DeviceUuidToHexString(
+    absl::Span<const uint8_t> device_uuid) {
+  return absl::BytesToHexString(absl::string_view(
+      reinterpret_cast<const char*>(device_uuid.data()), device_uuid.size()));
+}
+
+// Returns an initialized ANGLE EGLDisplay backed by the Vulkan physical device
+// identified by `device_uuid`. EGLDisplays are process-global, so successfully
+// initialized displays are cached and reused for later requests for the same
+// device.
+static absl::StatusOr<EGLDisplay> GetInitializedAngleDisplayForDeviceUuid(
+    absl::Span<const uint8_t> device_uuid) {
+  using DeviceUuid = std::array<uint8_t, GlContext::kDeviceUuidSize>;
+  using DisplayCache = absl::node_hash_map<DeviceUuid, EGLDisplay>;
+
+  if (device_uuid.size() != GlContext::kDeviceUuidSize) {
+    return absl::InvalidArgumentError(
+        absl::StrFormat("Device UUID must be %d bytes, got %d.",
+                        GlContext::kDeviceUuidSize, device_uuid.size()));
+  }
+  DeviceUuid uuid_key;
+  std::memcpy(uuid_key.data(), device_uuid.data(), uuid_key.size());
+
+  // Serializes first-time device initialization for the whole process. The
+  // lock is held across eglGetPlatformDisplay() and eglInitialize() so that
+  // concurrent requests for the same device cannot both initialize it; ANGLE
+  // does not call back into this code, so there is no re-entrancy risk.
+  static absl::Mutex display_mutex(absl::kConstInit);
+  // ANGLE retains the UUID pointer passed through EGLAttrib beyond the
+  // eglGetPlatformDisplay() call, so the pointer must outlive the display. The
+  // cache key doubles as that storage: absl::node_hash_map keeps its keys at
+  // stable addresses, entries are never erased, and the cache is never
+  // destroyed, so the keys stay valid until process exit.
+  static absl::NoDestructor<DisplayCache> display_cache;
+
+  absl::MutexLock lock(&display_mutex);
+  const DisplayCache::iterator it =
+      display_cache->try_emplace(uuid_key, EGL_NO_DISPLAY).first;
+  // node_hash_map stabilizes references, not iterators, so bind what we need
+  // out of the entry rather than keeping the iterator live below.
+  const uint8_t* const uuid_storage = it->first.data();
+  EGLDisplay& cached_display = it->second;
+  if (cached_display != EGL_NO_DISPLAY) {
+    return cached_display;
+  }
+
+  PFNEGLGETPLATFORMDISPLAYPROC eglGetPlatformDisplay =
+      reinterpret_cast<PFNEGLGETPLATFORMDISPLAYPROC>(
+          eglGetProcAddress("eglGetPlatformDisplay"));
+  if (eglGetPlatformDisplay == nullptr) {
+    return absl::UnavailableError("eglGetPlatformDisplay not supported");
+  }
+
+  EGLAttrib attribs[] = {
+      EGL_PLATFORM_ANGLE_TYPE_ANGLE,
+      EGL_PLATFORM_ANGLE_TYPE_VULKAN_ANGLE,
+      EGL_PLATFORM_ANGLE_VULKAN_DEVICE_UUID_ANGLE,
+      reinterpret_cast<EGLAttrib>(uuid_storage),
+      EGL_NONE,
+  };
+
+  EGLDisplay display = eglGetPlatformDisplay(
+      EGL_PLATFORM_ANGLE_ANGLE, reinterpret_cast<void*>(EGL_DEFAULT_DISPLAY),
+      attribs);
+  if (display == EGL_NO_DISPLAY) {
+    return absl::InternalError(absl::StrFormat(
+        "eglGetPlatformDisplay returned EGL_NO_DISPLAY for device UUID %s, "
+        "error: 0x%X",
+        DeviceUuidToHexString(device_uuid), eglGetError()));
+  }
+
+  EGLint major = 0;
+  EGLint minor = 0;
+  if (!eglInitialize(display, &major, &minor)) {
+    // Deliberately no eglTerminate(): ANGLE owns this handle in its own
+    // display cache keyed by the attributes above, so a later retry for the
+    // same UUID gets the same handle back and re-runs eglInitialize().
+    return absl::InternalError(absl::StrFormat(
+        "eglInitialize failed for ANGLE display for device UUID %s, "
+        "error: 0x%X",
+        DeviceUuidToHexString(device_uuid), eglGetError()));
+  }
+  ABSL_LOG(INFO) << "Successfully initialized ANGLE EGL display for device "
+                    "UUID "
+                 << DeviceUuidToHexString(device_uuid) << ". Major: " << major
+                 << " Minor: " << minor;
+  cached_display = display;
+  return display;
+}
+
 static absl::StatusOr<EGLDisplay> GetInitializedEglDisplay() {
   auto status_or_display = GetInitializedDefaultEglDisplay();
   return status_or_display;
@@ -102,13 +220,30 @@ GlContext::StatusOrGlContext GlContext::Create(std::nullptr_t nullp,
 
 GlContext::StatusOrGlContext GlContext::Create(const GlContext& share_context,
                                                bool create_thread) {
-  return Create(share_context.context_, create_thread);
+  std::shared_ptr<GlContext> context(new GlContext());
+  if (share_context.display_ != EGL_NO_DISPLAY) {
+    ABSL_RETURN_IF_ERROR(
+        context->CreateContext(share_context.display_, share_context.context_));
+  } else {
+    ABSL_RETURN_IF_ERROR(context->CreateContext(share_context.context_));
+  }
+  ABSL_RETURN_IF_ERROR(context->FinishInitialization(create_thread));
+  return std::move(context);
 }
 
 GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
                                                bool create_thread) {
   std::shared_ptr<GlContext> context(new GlContext());
   ABSL_RETURN_IF_ERROR(context->CreateContext(share_context));
+  ABSL_RETURN_IF_ERROR(context->FinishInitialization(create_thread));
+  return std::move(context);
+}
+
+GlContext::StatusOrGlContext GlContext::CreateForDeviceUuid(
+    absl::Span<const uint8_t> device_uuid, bool create_thread) {
+  std::shared_ptr<GlContext> context(new GlContext());
+  ABSL_RETURN_IF_ERROR(
+      context->CreateContextForDeviceUuid(device_uuid, EGL_NO_CONTEXT));
   ABSL_RETURN_IF_ERROR(context->FinishInitialization(create_thread));
   return std::move(context);
 }
@@ -178,7 +313,19 @@ absl::Status GlContext::CreateContextInternal(EGLContext share_context,
 
 absl::Status GlContext::CreateContext(EGLContext share_context) {
   ABSL_ASSIGN_OR_RETURN(display_, GetInitializedEglDisplay());
+  return CreateContext(display_, share_context);
+}
 
+absl::Status GlContext::CreateContextForDeviceUuid(
+    absl::Span<const uint8_t> device_uuid, EGLContext share_context) {
+  ABSL_ASSIGN_OR_RETURN(display_,
+                        GetInitializedAngleDisplayForDeviceUuid(device_uuid));
+  return CreateContext(display_, share_context);
+}
+
+absl::Status GlContext::CreateContext(EGLDisplay display,
+                                      EGLContext share_context) {
+  display_ = display;
   auto status = CreateContextInternal(share_context, 3);
   if (!status.ok()) {
     ABSL_LOG(WARNING) << "Creating a context with OpenGL ES 3 failed: "

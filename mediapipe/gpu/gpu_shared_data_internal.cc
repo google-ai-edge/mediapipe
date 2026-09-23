@@ -14,6 +14,7 @@
 
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
@@ -25,6 +26,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "absl/types/span.h"
 #include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/graph_service.h"
@@ -108,11 +110,26 @@ GpuResources::StatusOrGpuResources GpuResources::Create(
   return gpu_resources;
 }
 
+GpuResources::StatusOrGpuResources GpuResources::CreateForDeviceUuid(
+    absl::Span<const uint8_t> device_uuid,
+    const MultiPoolOptions* gpu_buffer_pool_options) {
+  ABSL_ASSIGN_OR_RETURN(std::shared_ptr<GlContext> context,
+                        GlContext::CreateForDeviceUuid(
+                            device_uuid, kGlContextUseDedicatedThread));
+  std::shared_ptr<GpuResources> gpu_resources(
+      new GpuResources(std::move(context), gpu_buffer_pool_options));
+  return gpu_resources;
+}
+
 GpuResources::StatusOrGpuResources GpuResources::Create(
     const GpuResources& gpu_resources,
     const MultiPoolOptions* gpu_buffer_pool_options) {
-  return Create(gpu_resources.gl_context()->native_context(),
-                gpu_buffer_pool_options);
+  ABSL_ASSIGN_OR_RETURN(std::shared_ptr<GlContext> context,
+                        GlContext::Create(*gpu_resources.gl_context(),
+                                          kGlContextUseDedicatedThread));
+  std::shared_ptr<GpuResources> new_gpu_resources(
+      new GpuResources(std::move(context), gpu_buffer_pool_options));
+  return new_gpu_resources;
 }
 
 GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context,

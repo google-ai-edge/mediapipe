@@ -21,6 +21,7 @@
 #ifndef MEDIAPIPE_GPU_GPU_SHARED_DATA_INTERNAL_H_
 #define MEDIAPIPE_GPU_GPU_SHARED_DATA_INTERNAL_H_
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
@@ -28,6 +29,7 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/types/span.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_node.h"
 #include "mediapipe/framework/executor.h"
@@ -55,6 +57,12 @@ class GpuResources {
   // GpuBufferMultiPool instance.
   static StatusOrGpuResources Create(
       PlatformGlContext external_context,
+      const MultiPoolOptions* gpu_buffer_pool_options = nullptr);
+
+  // Creates a GpuResources instance on the GPU identified by `device_uuid`.
+  // See GlContext::CreateForDeviceUuid for the expected UUID format.
+  static StatusOrGpuResources CreateForDeviceUuid(
+      absl::Span<const uint8_t> device_uuid,
       const MultiPoolOptions* gpu_buffer_pool_options = nullptr);
 
   // Creates a GpuResources instance that is shared with the GL context provided
