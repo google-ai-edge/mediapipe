@@ -178,18 +178,6 @@ public final class BaseOptionsUtils {
                         accelerationBuilder,
                         (BaseOptions.DelegateOptions.NpuOptions) delegateOptions));
         break;
-      case LITERT:
-        accelerationBuilder.setLitert(
-            InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.LiteRt
-                .getDefaultInstance());
-        options
-            .delegateOptions()
-            .ifPresent(
-                delegateOptions ->
-                    setLiteRtDelegateOptions(
-                        accelerationBuilder,
-                        (BaseOptions.DelegateOptions.LiteRtOptions) delegateOptions));
-        break;
     }
 
     return BaseOptionsProto.BaseOptions.newBuilder()
@@ -253,17 +241,6 @@ public final class BaseOptionsUtils {
         InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.LiteRt.newBuilder()
             .setNpu(createLiteRtNpu(options))
             .build());
-  }
-
-  private static void setLiteRtDelegateOptions(
-      AccelerationProto.Acceleration.Builder accelerationBuilder,
-      BaseOptions.DelegateOptions.LiteRtOptions options) {
-    InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.LiteRt.Builder litertBuilder =
-        InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.LiteRt.newBuilder();
-    options.cpuOptions().ifPresent(cpu -> litertBuilder.setCpu(createLiteRtCpu(cpu)));
-    options.gpuOptions().ifPresent(gpu -> litertBuilder.setGpu(createLiteRtGpu(gpu)));
-    options.npuOptions().ifPresent(npu -> litertBuilder.setNpu(createLiteRtNpu(npu)));
-    accelerationBuilder.setLitert(litertBuilder.build());
   }
 
   private static InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.LiteRt.Cpu

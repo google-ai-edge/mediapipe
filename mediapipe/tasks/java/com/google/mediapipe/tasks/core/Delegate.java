@@ -20,5 +20,4 @@ public enum Delegate {
   CPU,
   GPU,
   NPU,
-  LITERT,
 }

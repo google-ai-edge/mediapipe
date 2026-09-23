@@ -97,10 +97,6 @@ public abstract class BaseOptions {
             delegateMatchesDelegateOptions =
                 options.delegateOptions().get() instanceof DelegateOptions.NpuOptions;
             break;
-          case LITERT:
-            delegateMatchesDelegateOptions =
-                options.delegateOptions().get() instanceof DelegateOptions.LiteRtOptions;
-            break;
         }
         if (!delegateMatchesDelegateOptions) {
           throw new IllegalArgumentException(
@@ -210,32 +206,6 @@ public abstract class BaseOptions {
             String compilerPluginLibraryDirectory);
 
         public abstract NpuOptions build();
-      }
-    }
-
-    /** Options for LiteRt. */
-    @AutoValue
-    public abstract static class LiteRtOptions extends DelegateOptions {
-      abstract Optional<CpuOptions> cpuOptions();
-
-      abstract Optional<GpuOptions> gpuOptions();
-
-      abstract Optional<NpuOptions> npuOptions();
-
-      public static Builder builder() {
-        return new AutoValue_BaseOptions_DelegateOptions_LiteRtOptions.Builder();
-      }
-
-      /** Builder for {@link LiteRtOptions}. */
-      @AutoValue.Builder
-      public abstract static class Builder {
-        public abstract Builder setCpuOptions(CpuOptions cpuOptions);
-
-        public abstract Builder setGpuOptions(GpuOptions gpuOptions);
-
-        public abstract Builder setNpuOptions(NpuOptions npuOptions);
-
-        public abstract LiteRtOptions build();
       }
     }
   }
