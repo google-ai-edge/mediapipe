@@ -33,6 +33,13 @@ let package = Package(
                 "MediaPipeTasksCommon",
             ]
         ),
+        .library(
+            name: "MediaPipeTasksRetrieval",
+            targets: [
+                "MediaPipeTasksRetrieval",
+                "MediaPipeTasksCommon",
+            ]
+        ),
     ],
     dependencies: [],
     targets: [
@@ -56,6 +63,10 @@ let package = Package(
             name: "MediaPipeTasksAudio",
             ${MPP_AUDIO_TARGET_ARG}
         ),
+        .binaryTarget(
+            name: "MediaPipeTasksRetrieval",
+            ${MPP_RETRIEVAL_TARGET_ARG}
+        ),
         .target(
             name: "MediaPipeTasksCommon",
             dependencies: [
@@ -64,6 +75,7 @@ let package = Package(
                 "MediaPipeTasksVision",
                 "MediaPipeTasksText",
                 "MediaPipeTasksAudio",
+                "MediaPipeTasksRetrieval",
             ],
             linkerSettings: [
                 // Note: -all_load is required to prevent the Apple linker
@@ -75,6 +87,8 @@ let package = Package(
                 // .unsafeFlags restriction.
                 .unsafeFlags(["-Xlinker", "-all_load"]),
                 .linkedLibrary("c++"),
+                // Required by MPPSqliteVectorStore in MediaPipeTasksRetrieval.
+                .linkedLibrary("sqlite3"),
                 .linkedFramework("Accelerate"),
                 .linkedFramework("AVFoundation"),
                 .linkedFramework("CoreMedia"),

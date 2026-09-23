@@ -17,8 +17,8 @@
 #   * BAZEL: path to bazel. defaults to the first one available in PATH
 #   * FRAMEWORK_NAME: name of the iOS framework to be built. Currently the
 #   * accepted values are MediaPipeTasksCommon, MediaPipeTasksText,
-#   * MediaPipeTasksVision, MediaPipeTasksAudio, MediaPipeTasksGenAIC,
-#   * MediaPipeTasksGenAI.
+#   * MediaPipeTasksVision, MediaPipeTasksAudio, MediaPipeTasksRetrieval,
+#   * MediaPipeTasksGenAIC, MediaPipeTasksGenAI.
 #   * MPP_BUILD_VERSION: to specify the release version. defaults to 0.0.1-dev
 #   * IS_RELEASE_BUILD: set as true if this build should be a release build
 #   * ARCHIVE_FRAMEWORK: set as true if the framework should be archived
@@ -60,12 +60,14 @@ case $FRAMEWORK_NAME in
     ;;
   "MediaPipeTasksAudio")
     ;;
+  "MediaPipeTasksRetrieval")
+    ;;
   "MediaPipeTasksGenAIC")
     ;;
   "MediaPipeTasksGenAI")
     ;;
   *)
-    echo "Wrong framework name. The following framework names are allowed: MediaPipeTasksText, MediaPipeTasksVision, MediaPipeTasksAudio, MediaPipeTasksCommon, MediaPipeTasksGenAI, MediaPipeTasksGenAIC"
+    echo "Wrong framework name. The following framework names are allowed: MediaPipeTasksText, MediaPipeTasksVision, MediaPipeTasksAudio, MediaPipeTasksRetrieval, MediaPipeTasksCommon, MediaPipeTasksGenAI, MediaPipeTasksGenAIC"
     exit 1
   ;;
 esac

@@ -10,127 +10,169 @@ def sqlite_prebuilt_files():
     """Prebuilt SQLite-backed dependencies for MediaPipe."""
 
     http_file(
+        name = "com_google_mediapipe_ios_sim_x86_64_libsqlite_memory_store_a",
+        sha256 = "f7c8152deb6bedd81cac17439bd8f1553c648c9f705f0b07170cc169a0de7a55",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/ios/sim_x86_64/libsqlite_memory_store.a?generation=1790030267538340"],
+        downloaded_file_path = "libsqlite_memory_store.a",
+    )
+
+    http_file(
+        name = "com_google_mediapipe_ios_sim_x86_64_libsqlite_vector_store_a",
+        sha256 = "b03451f3388b1982c3a4f64e862046f8b3c9a7efde8265f0cb7a8fd007f6a189",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/ios/sim_x86_64/libsqlite_vector_store.a?generation=1790030271863748"],
+        downloaded_file_path = "libsqlite_vector_store.a",
+    )
+
+    http_file(
+        name = "com_google_mediapipe_ios_sim_arm64_libsqlite_memory_store_a",
+        sha256 = "976850b857f5739c723f6d513c2c0f6f3f05d55c22b5fd4c85d34058a8cdd3c4",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/ios/sim_arm64/libsqlite_memory_store.a?generation=1790030275911718"],
+        downloaded_file_path = "libsqlite_memory_store.a",
+    )
+
+    http_file(
+        name = "com_google_mediapipe_ios_sim_arm64_libsqlite_vector_store_a",
+        sha256 = "06794c635e39a2f18ff3b70317aadc7d9e7d15b5e664a1b7d19c949807313bc9",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/ios/sim_arm64/libsqlite_vector_store.a?generation=1790030279829216"],
+        downloaded_file_path = "libsqlite_vector_store.a",
+    )
+
+    http_file(
+        name = "com_google_mediapipe_ios_arm64_libsqlite_memory_store_a",
+        sha256 = "c7d99aeebdfc32ce3e1d1a687346047afc5d87e93471de7cbb2594fd1d7cde54",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/ios/arm64/libsqlite_memory_store.a?generation=1790030283868854"],
+        downloaded_file_path = "libsqlite_memory_store.a",
+    )
+
+    http_file(
+        name = "com_google_mediapipe_ios_arm64_libsqlite_vector_store_a",
+        sha256 = "d53cfd6d4e5935425c953d1b29828be02c0983b65b023880519fabad4b19c18d",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/ios/arm64/libsqlite_vector_store.a?generation=1790030287798725"],
+        downloaded_file_path = "libsqlite_vector_store.a",
+    )
+
+    http_file(
         name = "com_google_mediapipe_android_x86_64_libsqlite_memory_store_a",
-        sha256 = "0f0d7b1d887e87910e351aead06913b1761b5f4687945284ac861f209dd7df86",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/android/x86_64/libsqlite_memory_store.a?generation=1789682187283065"],
+        sha256 = "1ab96e37f049ed66c44e5703617775c84ab24e316acf874bfd29fb907e97ad86",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/android/x86_64/libsqlite_memory_store.a?generation=1790030291654748"],
         downloaded_file_path = "libsqlite_memory_store.a",
     )
 
     http_file(
         name = "com_google_mediapipe_android_x86_64_libsqlite_vector_store_a",
-        sha256 = "47a614fec412802a00ee0b4c3606cacb35aa032171e5f525a7f9cc11e29f52d5",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/android/x86_64/libsqlite_vector_store.a?generation=1789682191242278"],
+        sha256 = "e6d55f6c2b0ef556cca55c2b3ce20531bccbeb174c719964babfa3a7939a8d35",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/android/x86_64/libsqlite_vector_store.a?generation=1790030295623169"],
         downloaded_file_path = "libsqlite_vector_store.a",
     )
 
     http_file(
         name = "com_google_mediapipe_android_x86_libsqlite_memory_store_a",
-        sha256 = "d197adfa2953420e46631ec69d86560717ea2d1930378c410b0dd1394c4dcc21",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/android/x86/libsqlite_memory_store.a?generation=1789682195005985"],
+        sha256 = "fa52099a4f7905c428fc395d8b0f1686d194907d7f76ef0d2afb88657a37f99c",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/android/x86/libsqlite_memory_store.a?generation=1790030299407708"],
         downloaded_file_path = "libsqlite_memory_store.a",
     )
 
     http_file(
         name = "com_google_mediapipe_android_x86_libsqlite_vector_store_a",
-        sha256 = "3a1f19e66ae2837b9018554e7023ace6db085062f01735f2949b7014375b64db",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/android/x86/libsqlite_vector_store.a?generation=1789682198741938"],
+        sha256 = "3efe03cef8ff7f24910bbfd9e96f66e7e731e9d6a83e4d8422765c89356b4a78",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/android/x86/libsqlite_vector_store.a?generation=1790030303440520"],
         downloaded_file_path = "libsqlite_vector_store.a",
     )
 
     http_file(
         name = "com_google_mediapipe_android_arm64_v8a_libsqlite_memory_store_a",
-        sha256 = "a4e7dcf982112823a95df8acd8ba0155f07ba3ad687639715ef6b94ae5eec9c6",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/android/arm64-v8a/libsqlite_memory_store.a?generation=1789682202768639"],
+        sha256 = "f436d07dbf1875cd739950a5fee1a7db7b9c3d2c215aab82778d1531c1bd0340",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/android/arm64-v8a/libsqlite_memory_store.a?generation=1790030307376607"],
         downloaded_file_path = "libsqlite_memory_store.a",
     )
 
     http_file(
         name = "com_google_mediapipe_android_arm64_v8a_libsqlite_vector_store_a",
-        sha256 = "54251d297488fdc629e6e59bf3fdf7145dccd657a610aaca098af64ed91a1c34",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/android/arm64-v8a/libsqlite_vector_store.a?generation=1789682207703626"],
+        sha256 = "2fb12247424fff07cbac36cb920bbc2d79c803617af45eb91d0997947dc83e33",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/android/arm64-v8a/libsqlite_vector_store.a?generation=1790030311297372"],
         downloaded_file_path = "libsqlite_vector_store.a",
     )
 
     http_file(
         name = "com_google_mediapipe_android_armeabi_v7a_libsqlite_memory_store_a",
-        sha256 = "45eb1cd0a3a4276dee9eb93e922a8aa9234afa6bdf43447b36885be03d308ed4",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/android/armeabi-v7a/libsqlite_memory_store.a?generation=1789682211549085"],
+        sha256 = "dac4ed1be3617d67dd7374564583846af6070c0f5176b074ceb303f26756d0de",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/android/armeabi-v7a/libsqlite_memory_store.a?generation=1790030315244709"],
         downloaded_file_path = "libsqlite_memory_store.a",
     )
 
     http_file(
         name = "com_google_mediapipe_android_armeabi_v7a_libsqlite_vector_store_a",
-        sha256 = "a6b340d98a6b39eca50083382753e5dc8395968bbb4f75c6b6600f055705e841",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/android/armeabi-v7a/libsqlite_vector_store.a?generation=1789682215421741"],
+        sha256 = "1bba0c55c43118e8e263ea91b7a86688795c740de4f7a42479243f91bd27b148",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/android/armeabi-v7a/libsqlite_vector_store.a?generation=1790030319068515"],
         downloaded_file_path = "libsqlite_vector_store.a",
     )
 
     http_file(
         name = "com_google_mediapipe_desktop_windows_arm64_libsqlite_memory_store_lib",
-        sha256 = "86d5c7a492bdc276c36586a05f00ba801f1eeae7980bb928d7a5f0c5dd8cce00",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/windows_arm64/libsqlite_memory_store.lib?generation=1789682219225113"],
+        sha256 = "39ed667e22ba54c02e437d4b380ad4ddf459db981aa226e0b5a2db7b4952a8b8",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/windows_arm64/libsqlite_memory_store.lib?generation=1790030323116713"],
         downloaded_file_path = "libsqlite_memory_store.lib",
     )
 
     http_file(
         name = "com_google_mediapipe_desktop_windows_arm64_libsqlite_vector_store_lib",
-        sha256 = "d1fb93f34704a4671a06555123a42fbddee165066e6f74f259f2fe196e71174f",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/windows_arm64/libsqlite_vector_store.lib?generation=1789682223047789"],
+        sha256 = "a43df0ba376fafbfedee722cf11438566cc1c2fe3c083269be2bbab052abd523",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/windows_arm64/libsqlite_vector_store.lib?generation=1790030326962866"],
         downloaded_file_path = "libsqlite_vector_store.lib",
     )
 
     http_file(
         name = "com_google_mediapipe_desktop_windows_x86_64_libsqlite_memory_store_lib",
-        sha256 = "d0e42db0e897e868d7c19ff617f571d0334335e3236af3d4cd2a6478ed8148c1",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/windows_x86_64/libsqlite_memory_store.lib?generation=1789682226980355"],
+        sha256 = "871a6876d09580e4fb8cd9e35d06dce11029783d5b271864da09f6e21bff1b1e",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/windows_x86_64/libsqlite_memory_store.lib?generation=1790030331008693"],
         downloaded_file_path = "libsqlite_memory_store.lib",
     )
 
     http_file(
         name = "com_google_mediapipe_desktop_windows_x86_64_libsqlite_vector_store_lib",
-        sha256 = "aed0d8c84c7afca0d5e2212c860ffbde2501e248779959e995e2204cd7f2a0df",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/windows_x86_64/libsqlite_vector_store.lib?generation=1789682230964825"],
+        sha256 = "bb2da88529437ccbfb68fbc24fcc1e94530ce253fdfaea07d726cacb8f5a955d",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/windows_x86_64/libsqlite_vector_store.lib?generation=1790030334946490"],
         downloaded_file_path = "libsqlite_vector_store.lib",
     )
 
     http_file(
         name = "com_google_mediapipe_desktop_darwin_arm64_libsqlite_memory_store_a",
-        sha256 = "19851eeca0623261f4b3b9355a0c6618b7ef59105dffa9afb31e5d9b23c061e0",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/darwin_arm64/libsqlite_memory_store.a?generation=1789682234906146"],
+        sha256 = "69ad14d76f28514fc3d4195edc71200f7c6301c4e660d1bdcc5e5d3e55373217",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/darwin_arm64/libsqlite_memory_store.a?generation=1790030338856894"],
         downloaded_file_path = "libsqlite_memory_store.a",
     )
 
     http_file(
         name = "com_google_mediapipe_desktop_darwin_arm64_libsqlite_vector_store_a",
-        sha256 = "de8ab949f5939cf8bea06b0460286956006af7332fae3fdce600b64a828266b4",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/darwin_arm64/libsqlite_vector_store.a?generation=1789682238999987"],
+        sha256 = "2579841fddcb5cabf0a4beb5730d54b5489e3ea4f69c10fe30e482d2248dd173",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/darwin_arm64/libsqlite_vector_store.a?generation=1790030342755524"],
         downloaded_file_path = "libsqlite_vector_store.a",
     )
 
     http_file(
         name = "com_google_mediapipe_desktop_linux_arm64_libsqlite_memory_store_a",
-        sha256 = "fb09ef2c9d3aec7c2a4bf3d9620870e859b102cb54121e099be5836ce61cb5af",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/linux_arm64/libsqlite_memory_store.a?generation=1789682242828864"],
+        sha256 = "eef87e11c4b11c49b994a5f38c5a46135ba73d671589f69fca3a22cce2954544",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/linux_arm64/libsqlite_memory_store.a?generation=1790030346536639"],
         downloaded_file_path = "libsqlite_memory_store.a",
     )
 
     http_file(
         name = "com_google_mediapipe_desktop_linux_arm64_libsqlite_vector_store_a",
-        sha256 = "1578bed345799673ef6a44767a0839b76dfa515f9ba46387cbd2133c4609ce4e",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/linux_arm64/libsqlite_vector_store.a?generation=1789682246813300"],
+        sha256 = "747f92100facd5e4f6a7c0844d1af9b588e3725c9523288fc83f14af781c7ef9",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/linux_arm64/libsqlite_vector_store.a?generation=1790030350699892"],
         downloaded_file_path = "libsqlite_vector_store.a",
     )
 
     http_file(
         name = "com_google_mediapipe_desktop_linux_x86_64_libsqlite_memory_store_a",
-        sha256 = "ef6e5db007f50dfcf314343ca91de282faf116b410ec54ec1234479707f94f91",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/linux_x86_64/libsqlite_memory_store.a?generation=1789682250682462"],
+        sha256 = "bdc171538f917cdb8789f1a5d5eded2b650795089edbd810b7c2f088e7b039e9",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/linux_x86_64/libsqlite_memory_store.a?generation=1790030354880800"],
         downloaded_file_path = "libsqlite_memory_store.a",
     )
 
     http_file(
         name = "com_google_mediapipe_desktop_linux_x86_64_libsqlite_vector_store_a",
-        sha256 = "cf8f72711835d32394183a679aeff91fb6da1376c649cb342d43e74f374d05fa",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/linux_x86_64/libsqlite_vector_store.a?generation=1789682254609826"],
+        sha256 = "32219ae4796c4d01c4ae3edc48fc23ca1c150ce30ccdcd39df00003af164b3cb",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/prebuilts/desktop/linux_x86_64/libsqlite_vector_store.a?generation=1790030358839069"],
         downloaded_file_path = "libsqlite_vector_store.a",
     )

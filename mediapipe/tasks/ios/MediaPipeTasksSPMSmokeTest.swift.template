@@ -17,6 +17,7 @@ import MediaPipeTasksCommon
 import MediaPipeTasksVision
 import MediaPipeTasksText
 import MediaPipeTasksAudio
+import MediaPipeTasksRetrieval
 
 final class MediaPipeTasksSPMSmokeTest: XCTestCase {
 
@@ -28,6 +29,7 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
     verifyVisionRegistration()
     verifyTextRegistration()
     verifyAudioRegistration()
+    verifyRetrievalRegistration()
   }
 
   private func verifyTaskInit<T>(
@@ -137,6 +139,39 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
       options.baseOptions.modelAssetPath = dummyPath
       return try AudioClassifier(options: options)
     }
+  }
+
+  private func verifyRetrievalRegistration() {
+    let dummyPath = "/nonexistent/embedder.task"
+
+    // The universal embedder loads a LiteRT-LM model, so it follows the same
+    // asset-error contract as the graph-backed tasks above.
+    verifyTaskInit(name: "UniversalEmbedder", domain: "Retrieval") {
+      let options = UniversalEmbedderOptions()
+      options.baseOptions.modelAssetPath = dummyPath
+      return try UniversalEmbedder(options: options)
+    }
+
+    // The chunker and the vector store do not load a model, so they are
+    // exercised directly to prove their symbols are linked in.
+    do {
+      let chunker = try DefaultTextChunker(
+          chunkSize: 16, chunkOverlap: 4, wordThreshold: 0, mode: .character)
+      let chunks = try chunker.chunkText(
+          "MediaPipe Tasks retrieval smoke test input string.")
+      XCTAssertFalse(
+          chunks.isEmpty, "Retrieval - DefaultTextChunker: expected chunks.")
+    } catch {
+      XCTFail("Retrieval - DefaultTextChunker: unexpected error \(error)")
+    }
+
+    let dbPath = NSTemporaryDirectory()
+        .appending("mediapipe_spm_smoke_test_vector_store.db")
+    let store = SqliteVectorStore(
+        databasePath: dbPath,
+        embeddingDimension: 8)
+    XCTAssertEqual(store.databasePath, dbPath)
+    try? FileManager.default.removeItem(atPath: dbPath)
   }
 
   private func assertRegistrationError(_ error: Error, domain: String) {

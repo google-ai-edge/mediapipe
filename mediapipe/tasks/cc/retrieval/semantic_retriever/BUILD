@@ -36,6 +36,13 @@ cc_library(
 cc_import(
     name = "sqlite_vector_store_prebuilt",
     static_library = select({
+        # The iOS arms must come from config settings that carry an OS
+        # constraint. The bare CPU conditions below also match iOS, and without
+        # a more specific match Bazel would silently hand an Android archive to
+        # a Mach-O link.
+        "//mediapipe:ios_arm64": "@com_google_mediapipe_ios_arm64_libsqlite_vector_store_a//file",
+        "//mediapipe:ios_sim_arm64": "@com_google_mediapipe_ios_sim_arm64_libsqlite_vector_store_a//file",
+        "//mediapipe:ios_x86_64": "@com_google_mediapipe_ios_sim_x86_64_libsqlite_vector_store_a//file",
         "@platforms//cpu:armv7": "@com_google_mediapipe_android_armeabi_v7a_libsqlite_vector_store_a//file",
         "@platforms//cpu:arm64": "@com_google_mediapipe_android_arm64_v8a_libsqlite_vector_store_a//file",
         "@platforms//cpu:x86_32": "@com_google_mediapipe_android_x86_libsqlite_vector_store_a//file",
@@ -71,6 +78,10 @@ cc_library(
 cc_import(
     name = "sqlite_memory_store_prebuilt",
     static_library = select({
+        # See the note on sqlite_vector_store_prebuilt above.
+        "//mediapipe:ios_arm64": "@com_google_mediapipe_ios_arm64_libsqlite_memory_store_a//file",
+        "//mediapipe:ios_sim_arm64": "@com_google_mediapipe_ios_sim_arm64_libsqlite_memory_store_a//file",
+        "//mediapipe:ios_x86_64": "@com_google_mediapipe_ios_sim_x86_64_libsqlite_memory_store_a//file",
         "@platforms//cpu:armv7": "@com_google_mediapipe_android_armeabi_v7a_libsqlite_memory_store_a//file",
         "@platforms//cpu:arm64": "@com_google_mediapipe_android_arm64_v8a_libsqlite_memory_store_a//file",
         "@platforms//cpu:x86_32": "@com_google_mediapipe_android_x86_libsqlite_memory_store_a//file",
