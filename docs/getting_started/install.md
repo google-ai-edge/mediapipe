@@ -26,7 +26,7 @@ future.
 Note: If you plan to use TensorFlow calculators and example apps, there is a
 known issue with gcc and g++ version 6.3 and 7.3. Please use other versions.
 
-Note: To make Mediapipe work with TensorFlow, please set Python 3.7 as the
+Note: To make MediaPipe work with TensorFlow, please set Python 3.7 as the
 default Python version and install the Python "six" library by running `pip3
 install --user six`.
 
@@ -35,7 +35,7 @@ install --user six`.
 1.  Install Bazelisk.
 
     Follow the official
-    [Bazel documentation](https://docs.bazel.build/versions/master/install-bazelisk.html)
+    [Bazel documentation](https://docs.bazel.build/versions/main/install-bazelisk.html)
     to install Bazelisk.
 
 2.  Checkout MediaPipe repository.
@@ -60,7 +60,6 @@ install --user six`.
     Debian 11 (bullseye) | 4.5
     Ubuntu 16.04 LTS     | 2.4
     Ubuntu 18.04 LTS     | 3.2
-    Ubuntu 20.04 LTS     | 4.2
     Ubuntu 20.04 LTS     | 4.2
     Ubuntu 21.04         | 4.5
 

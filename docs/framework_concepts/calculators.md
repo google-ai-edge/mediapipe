@@ -31,7 +31,7 @@ packets and produces zero or more output streams and/or side packets.
 A calculator is created by defining a new sub-class of the
 [`CalculatorBase`](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/framework/calculator_base.cc)
 class, implementing a number of methods, and registering the new sub-class with
-Mediapipe. At a minimum, a new calculator must implement the below four methods
+MediaPipe. At a minimum, a new calculator must implement the below four methods
 
 *   `GetContract()`
     *   Calculator authors can specify the expected types of inputs and outputs
