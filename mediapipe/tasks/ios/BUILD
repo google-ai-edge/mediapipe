@@ -306,6 +306,7 @@ mediapipe_static_xcframework(
         ":MPPAudioData.h",
         ":MPPAudioDataFormat.h",
         ":MPPAudioLoader.h",
+        ":MPPAudioRecord.h",
         ":MPPBaseOptions.h",
         ":MPPCommon.h",
         ":MPPCoreRunningMode.h",
