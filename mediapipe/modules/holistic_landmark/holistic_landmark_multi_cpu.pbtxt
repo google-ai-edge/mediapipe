@@ -1,0 +1,145 @@
+# Predicts pose + left/right hand + face landmarks for MULTIPLE people.
+#
+# Mirrors HolisticLandmarkCpu, but the single-person PoseLandmarkCpu stage is
+# replaced by multi-person pose detection followed by a per-person loop: each
+# detected person is run through PoseLandmarkByRoiCpu and the
+# HolisticBodyFromPoseCpu (hands + face) subgraph. Outputs are vectors, one
+# element per detected person.
+#
+# People are detected every frame (the pose detector is multi-person via NMS).
+# Note: cross-frame ROI association (as in hand_landmark_tracking_cpu) is NOT
+# used here on purpose: pose ROIs are square and full-body-sized, so several
+# people standing apart in a wide frame still produce heavily-overlapping ROIs
+# that ROI-IoU association would wrongly merge. Per-frame detection keeps each
+# person distinct.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "HolisticLandmarkMultiCpu"
+#     input_stream: "IMAGE:input_video"
+#     input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+#     input_side_packet: "REFINE_FACE_LANDMARKS:refine_face_landmarks"
+#     output_stream: "POSE_LANDMARKS:multi_pose_landmarks"
+#     output_stream: "LEFT_HAND_LANDMARKS:multi_left_hand_landmarks"
+#     output_stream: "RIGHT_HAND_LANDMARKS:multi_right_hand_landmarks"
+#     output_stream: "FACE_LANDMARKS:multi_face_landmarks"
+#   }
+
+type: "HolisticLandmarkMultiCpu"
+
+# CPU image. (ImageFrame)
+input_stream: "IMAGE:image"
+
+# Complexity of the pose landmark model: 0, 1 or 2. (int)
+input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+# Whether to refine face landmarks. (bool)
+input_side_packet: "REFINE_FACE_LANDMARKS:refine_face_landmarks"
+
+# Per-person landmark vectors (std::vector<NormalizedLandmarkList>); element i
+# corresponds to person i.
+output_stream: "POSE_LANDMARKS:multi_pose_landmarks"
+output_stream: "LEFT_HAND_LANDMARKS:multi_left_hand_landmarks"
+output_stream: "RIGHT_HAND_LANDMARKS:multi_right_hand_landmarks"
+output_stream: "FACE_LANDMARKS:multi_face_landmarks"
+
+# Segmentation is disabled in multi-person mode.
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:enable_segmentation"
+  options: {
+    [mediapipe.ConstantSidePacketCalculatorOptions.ext] {
+      packet { bool_value: false }
+    }
+  }
+}
+
+# Image size, used to convert pose detections to ROIs.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:image"
+  output_stream: "SIZE:image_size"
+}
+
+# Detect all people in the frame.
+node {
+  calculator: "PoseDetectionCpu"
+  input_stream: "IMAGE:image"
+  output_stream: "DETECTIONS:all_pose_detections"
+}
+
+# Cap the number of people.
+node {
+  calculator: "ClipDetectionVectorSizeCalculator"
+  input_stream: "all_pose_detections"
+  output_stream: "pose_detections"
+  options: {
+    [mediapipe.ClipVectorSizeCalculatorOptions.ext] { max_vec_size: 10 }
+  }
+}
+
+# Loop over each detected person.
+node {
+  calculator: "BeginLoopDetectionCalculator"
+  input_stream: "ITERABLE:pose_detections"
+  input_stream: "CLONE:0:image"
+  input_stream: "CLONE:1:image_size"
+  output_stream: "ITEM:pose_detection"
+  output_stream: "CLONE:0:image_for_person"
+  output_stream: "CLONE:1:image_size_for_person"
+  output_stream: "BATCH_END:detections_timestamp"
+}
+
+# Per-person ROI from the detection.
+node {
+  calculator: "PoseDetectionToRoi"
+  input_stream: "DETECTION:pose_detection"
+  input_stream: "IMAGE_SIZE:image_size_for_person"
+  output_stream: "ROI:pose_roi"
+}
+
+# Per-person pose landmarks within the ROI.
+node {
+  calculator: "PoseLandmarkByRoiCpu"
+  input_stream: "IMAGE:image_for_person"
+  input_stream: "ROI:pose_roi"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+  input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
+  output_stream: "LANDMARKS:person_pose_landmarks"
+}
+
+# Per-person hands + face from the pose landmarks.
+node {
+  calculator: "HolisticBodyFromPoseCpu"
+  input_stream: "IMAGE:image_for_person"
+  input_stream: "POSE_LANDMARKS:person_pose_landmarks"
+  input_side_packet: "REFINE_FACE_LANDMARKS:refine_face_landmarks"
+  output_stream: "LEFT_HAND_LANDMARKS:person_left_hand_landmarks"
+  output_stream: "RIGHT_HAND_LANDMARKS:person_right_hand_landmarks"
+  output_stream: "FACE_LANDMARKS:person_face_landmarks"
+}
+
+# Collect per-person results back into vectors.
+node {
+  calculator: "EndLoopNormalizedLandmarkListVectorCalculator"
+  input_stream: "ITEM:person_pose_landmarks"
+  input_stream: "BATCH_END:detections_timestamp"
+  output_stream: "ITERABLE:multi_pose_landmarks"
+}
+node {
+  calculator: "EndLoopNormalizedLandmarkListVectorCalculator"
+  input_stream: "ITEM:person_left_hand_landmarks"
+  input_stream: "BATCH_END:detections_timestamp"
+  output_stream: "ITERABLE:multi_left_hand_landmarks"
+}
+node {
+  calculator: "EndLoopNormalizedLandmarkListVectorCalculator"
+  input_stream: "ITEM:person_right_hand_landmarks"
+  input_stream: "BATCH_END:detections_timestamp"
+  output_stream: "ITERABLE:multi_right_hand_landmarks"
+}
+node {
+  calculator: "EndLoopNormalizedLandmarkListVectorCalculator"
+  input_stream: "ITEM:person_face_landmarks"
+  input_stream: "BATCH_END:detections_timestamp"
+  output_stream: "ITERABLE:multi_face_landmarks"
+}
