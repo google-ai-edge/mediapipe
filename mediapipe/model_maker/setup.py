@@ -73,7 +73,7 @@ _setup_build_dir()
 setuptools.setup(
     name='mediapipe-model-maker',
     version=__version__,
-    url='https://github.com/google/mediapipe/tree/master/mediapipe/model_maker',
+    url='https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/model_maker',
     description='MediaPipe Model Maker is a simple, low-code solution for customizing on-device ML models',
     author='The MediaPipe Authors',
     author_email='mediapipe@google.com',

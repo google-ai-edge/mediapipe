@@ -58,7 +58,7 @@ example apps, start from, start from
 5.  Clone the MediaPipe repository.
 
     ```bash
-    git clone https://github.com/google/mediapipe.git
+    git clone https://github.com/google-ai-edge/mediapipe.git
     ```
 
 ### Set up a bundle ID prefix
@@ -226,7 +226,7 @@ developer (yourself) is trusted.
     You may see a permission request from `codesign` in order to sign the app.
 
     Tip: If you are using custom provisioning, you can run this
-    [script](https://github.com/google/mediapipe/blob/master/build_ios_examples.sh)
+    [script](https://github.com/google-ai-edge/mediapipe/blob/master/build_ios_examples.sh)
     to build all MediaPipe iOS example apps.
 
 3.  In Xcode, open the `Devices and Simulators` window (command-shift-2).
