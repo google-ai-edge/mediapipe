@@ -15,7 +15,7 @@
 
 import dataclasses
 import math
-from typing import List, Mapping, Optional, Tuple, Union
+from typing import Collection, List, Mapping, Optional, Tuple, Union
 
 import cv2
 import matplotlib.pyplot as plt
@@ -119,7 +119,7 @@ def draw_detection(
 def draw_landmarks(
     image: np.ndarray,
     landmark_list: landmark_pb2.NormalizedLandmarkList,
-    connections: Optional[List[Tuple[int, int]]] = None,
+    connections: Optional[Collection[Tuple[int, int]]] = None,
     landmark_drawing_spec: Optional[
         Union[DrawingSpec, Mapping[int, DrawingSpec]]
     ] = DrawingSpec(color=RED_COLOR),
