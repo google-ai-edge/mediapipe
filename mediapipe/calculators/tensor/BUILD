@@ -721,10 +721,10 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:memory_manager",
         "//mediapipe/framework:memory_manager_service",
+        "//mediapipe/framework:port",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/gpu:gl_calculator_helper",
         "//mediapipe/util/tflite:tflite_model_loader",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
@@ -736,6 +736,11 @@ cc_library(
             "//mediapipe/gpu:MPPMetalHelper",
         ],
         "//conditions:default": [],
+    }) + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gl_calculator_helper",
+        ],
     }),
     alwayslink = 1,
 )
@@ -857,7 +862,6 @@ cc_library(
         "//mediapipe/framework/port",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/gpu:gl_context",
         "//mediapipe/util/tflite:tflite_model_loader",
         "//mediapipe/util/tflite:tflite_signature_reader",
         "@com_google_absl//absl/algorithm:container",
@@ -911,6 +915,11 @@ cc_library(
             "//mediapipe/gpu/webgpu:webgpu_service",
         ],
         "//conditions:default": [],
+    }) + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gl_context",
+        ],
     }),
 )
 

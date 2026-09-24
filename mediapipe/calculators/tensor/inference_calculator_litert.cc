@@ -29,10 +29,14 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/memory_manager_service.h"
+#include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
-#include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
+
+#if !MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/gpu/gl_calculator_helper.h"
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
 #if MEDIAPIPE_METAL_ENABLED
 #include "mediapipe/gpu/MPPMetalHelper.h"
@@ -59,7 +63,9 @@ class InferenceCalculatorLiteRtImpl
       CalculatorContext* cc);
   absl::StatusOr<TfLiteDelegatePtr> CreateDelegate(CalculatorContext* cc);
 
+#if !MEDIAPIPE_DISABLE_GPU
   mediapipe::GlCalculatorHelper gpu_helper_;
+#endif  // !MEDIAPIPE_DISABLE_GPU
   std::unique_ptr<InferenceRunner> inference_runner_;
   // Enable pooling of AHWBs in Tensor instances.
   MemoryManager* memory_manager_ = nullptr;
@@ -80,7 +86,13 @@ absl::Status InferenceCalculatorLiteRtImpl::UpdateContract(
   cc->UseService(kMemoryManagerService).Optional();
   cc->UseService(kLiteRtService).Optional();
   if (UseGpu(options)) {
+#if MEDIAPIPE_DISABLE_GPU
+    return absl::UnimplementedError(
+        "InferenceCalculatorLiteRt was built without GPU support. Request the "
+        "CPU accelerator instead.");
+#else
     ABSL_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+#endif  // MEDIAPIPE_DISABLE_GPU
   }
   return absl::OkStatus();
 }
@@ -90,9 +102,11 @@ absl::Status InferenceCalculatorLiteRtImpl::Open(CalculatorContext* cc) {
     memory_manager_ = &cc->Service(kMemoryManagerService).GetObject();
   }
 
+#if !MEDIAPIPE_DISABLE_GPU
   if (UseGpu(cc->Options<mediapipe::InferenceCalculatorOptions>())) {
     ABSL_RETURN_IF_ERROR(gpu_helper_.Open(cc));
   }
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
   ABSL_ASSIGN_OR_RETURN(inference_runner_, CreateInferenceRunner(cc));
   return InferenceCalculatorNodeImpl::UpdateIoMapping(
@@ -102,17 +116,18 @@ absl::Status InferenceCalculatorLiteRtImpl::Open(CalculatorContext* cc) {
 absl::StatusOr<std::vector<Tensor>> InferenceCalculatorLiteRtImpl::Process(
     CalculatorContext* cc, const TensorSpan& tensor_span) {
   std::vector<Tensor> output_tensors;
+#if !MEDIAPIPE_DISABLE_GPU
   if (UseGpu(cc->Options<mediapipe::InferenceCalculatorOptions>())) {
     ABSL_RETURN_IF_ERROR(gpu_helper_.RunInGlContext([&]() -> absl::Status {
       ABSL_ASSIGN_OR_RETURN(output_tensors,
                             inference_runner_->Run(cc, tensor_span));
       return absl::OkStatus();
     }));
-  } else {
-    ABSL_ASSIGN_OR_RETURN(output_tensors,
-                          inference_runner_->Run(cc, tensor_span));
+    return output_tensors;
   }
-
+#endif  // !MEDIAPIPE_DISABLE_GPU
+  ABSL_ASSIGN_OR_RETURN(output_tensors,
+                        inference_runner_->Run(cc, tensor_span));
   return output_tensors;
 }
 
@@ -147,12 +162,19 @@ InferenceCalculatorLiteRtImpl::CreateInferenceRunner(CalculatorContext* cc) {
   }
 #endif  // MEDIAPIPE_METAL_ENABLED
 
+  auto get_glcontext_fn = [&]() -> std::shared_ptr<mediapipe::GlContext> {
+#if MEDIAPIPE_DISABLE_GPU
+    return nullptr;
+#else
+    return UseGpu(options) ? gpu_helper_.GetSharedGlContext() : nullptr;
+#endif  // MEDIAPIPE_DISABLE_GPU
+  };
+
   return InferenceRunnerLiteRt::Create(
       std::move(model_packet), litert,
       options.has_input_output_config() ? &options.input_output_config()
                                         : nullptr,
-      memory_manager_,
-      UseGpu(options) ? gpu_helper_.GetSharedGlContext() : nullptr,
+      memory_manager_, get_glcontext_fn(),
 #if defined(__EMSCRIPTEN__)
       /*.webgpu_service=*/nullptr,
 #endif  // __EMSCRIPTEN__
