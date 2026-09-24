@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "mediapipe/tasks/java/com/google/mediapipe/tasks/retrieval/jni/sqlite_vector_store_jni.h"
+
 #include <jni.h>
 
 #include <cstddef>

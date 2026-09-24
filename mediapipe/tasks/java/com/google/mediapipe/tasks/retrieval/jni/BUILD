@@ -42,6 +42,10 @@ cc_library(
         "sqlite_vector_store_jni.cc",
         "text_chunker_jni.cc",
     ],
+    hdrs = [
+        "sqlite_vector_store_jni.h",
+        "text_chunker_jni.h",
+    ],
     deps = [
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
         "//mediapipe/tasks/cc/retrieval/semantic_retriever:sqlite_memory_store",

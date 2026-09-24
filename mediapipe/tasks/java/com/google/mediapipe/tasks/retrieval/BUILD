@@ -21,7 +21,9 @@ package(default_visibility = ["//visibility:public"])
 mediapipe_jni_binary(
     name = "sqlite_vector_store_jni",
     uses_explicit_exports = True,
-    deps = [],
+    deps = [
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/retrieval/jni:retrieval_jni_impl",
+    ],
 )
 
 android_library(
