@@ -298,10 +298,10 @@ The recommended prefix format, enforced by some MediaPipe functions, is all caps
 with underscores, and numeric characters after the first character. e.g.
 `MY_FAVORITE_FEATURE_V1`.
 
-The convention for encoding groundtruth labels is to use no prefix, while
+The convention for encoding ground truth labels is to use no prefix, while
 predicted labels are typically tagged with prefixes. For example:
 
-*   Example groudntruth keys:
+*   Example ground truth keys:
     *   `region/label/string`
     *   `region/label/confidence`
 
