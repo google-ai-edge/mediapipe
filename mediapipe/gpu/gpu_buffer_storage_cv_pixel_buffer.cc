@@ -33,6 +33,7 @@ GlTextureView GpuBufferStorageCvPixelBuffer::GetTexture(
   auto gl_context = GlContext::GetCurrent();
   ABSL_CHECK(gl_context);
 #if TARGET_OS_OSX
+  CVOpenGLTextureCacheFlush(gl_context->cv_texture_cache(), 0);
   CVTextureType cv_texture_temp;
   err = CVOpenGLTextureCacheCreateTextureFromImage(
       kCFAllocatorDefault, gl_context->cv_texture_cache(), **this, NULL,
