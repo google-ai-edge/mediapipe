@@ -1233,14 +1233,9 @@ absl::Status InferenceRunnerLiteRt::PrepareInputBuffers(
                             cached_input_buffer_requirements_[i].BufferSize());
     const bool size_mismatch = (buffer_size != tensor_to_use->bytes());
     if (size_mismatch) {
-      if (!use_npu_) {
-        RET_CHECK_EQ(buffer_size, tensor_to_use->bytes())
-            << "LiteRt input buffer size differs from MP input tensor bytes.";
-      }
-
-      // The NPU compiler (Darwinn/TPU) may require the physical buffer to be
-      // padded for hardware alignment, making it larger than the logical tensor
-      // size.
+      // Accelerators (e.g. NPU hardware alignment or GPU vec4/PHWC4 padding)
+      // may require the physical buffer to be padded, making it larger than the
+      // logical tensor size.
       //
       // If there's a mismatch, we allow the LiteRT buffer to be larger and
       // force managed copying because zero-copy is impossible without a
@@ -1385,12 +1380,7 @@ absl::Status InferenceRunnerLiteRt::PrepareOutputBuffers(
         mp_output_tensors[mp_output_tensor_index].bytes();
     const bool size_mismatch = (buffer_size != mp_output_tensor_bytes);
     if (size_mismatch) {
-      if (!use_npu_) {
-        RET_CHECK_EQ(buffer_size, mp_output_tensor_bytes)
-            << "LiteRt output buffer size differs from MP output tensor bytes.";
-      }
-
-      // The NPU compiler may require padded output buffers. If they differ from
+      // Accelerators may require padded output buffers. If they differ from
       // the logical MP tensor size, we allow it but force managed copying.
       RET_CHECK_GT(buffer_size, mp_output_tensor_bytes)
           << "LiteRt output buffer size is smaller than MP output tensor "
