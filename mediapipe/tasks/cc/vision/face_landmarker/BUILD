@@ -141,6 +141,7 @@ cc_library(
     deps = [
         ":face_landmarker_graph",
         ":face_landmarker_result",
+        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:image",
@@ -148,9 +149,12 @@ cc_library(
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:matrix_data_cc_proto",
         "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc/components/containers:classification_result",
         "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core:base_task_api",
+        "//mediapipe/tasks/cc/core:host_environment",
+        "//mediapipe/tasks/cc/core:mediapipe_builtin_op_resolver",
         "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/cc/core:utils",
         "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
@@ -161,7 +165,9 @@ cc_library(
         "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_cc_proto",
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarker_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarks_detector_graph_options_cc_proto",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ],
 )
 
