@@ -4,9 +4,14 @@ type: "HandLandmarksFromPoseCpu"
 
 # CPU image. (ImageFrame)
 input_stream: "IMAGE:input_video"
-# Hand-related pose landmarks in [wrist, pinky, index] order.
-# (NormalizedLandmarkList)
+# Hand-related pose landmarks in [wrist, pinky, index] order, used for hand
+# visibility gating. (NormalizedLandmarkList)
 input_stream: "HAND_LANDMARKS_FROM_POSE:hand_landmarks_from_pose"
+# Six hand-related pose landmarks in [shoulder, elbow, wrist, thumb, index,
+# pinky] order, used by the learned ROI network. (NormalizedLandmarkList)
+input_stream: "HAND6_FROM_POSE:hand6_from_pose"
+# True for the left hand (selects the ROI network's handedness mirroring). (bool)
+input_side_packet: "IS_LEFT:is_left"
 
 # Hand landmarks. (NormalizedLandmarkList)
 output_stream: "HAND_LANDMARKS:hand_landmarks"
@@ -27,13 +32,13 @@ node {
   output_stream: "VISIBILITY:hand_visibility"
 }
 
-# Drops hand-related pose landmarks if pose wrist is not visible. It will
-# prevent from predicting hand landmarks on the current frame.
+# Drops the hand-related pose landmarks if the pose wrist is not visible. It
+# prevents predicting hand landmarks on the current frame.
 node {
   calculator: "GateCalculator"
-  input_stream: "hand_landmarks_from_pose"
+  input_stream: "hand6_from_pose"
   input_stream: "ALLOW:hand_visibility"
-  output_stream: "ensured_hand_landmarks_from_pose"
+  output_stream: "ensured_hand6_from_pose"
 }
 
 # Extracts image size from the input images.
@@ -43,11 +48,14 @@ node {
   output_stream: "SIZE:image_size"
 }
 
-# Gets ROI for re-crop model from hand-related pose landmarks.
+# Gets the ROI for the re-crop model from the six hand-related pose landmarks
+# using the learned network (replaces the HandLandmarksFromPoseToRecropRoi
+# heuristic).
 node {
-  calculator: "HandLandmarksFromPoseToRecropRoi"
-  input_stream: "HAND_LANDMARKS_FROM_POSE:ensured_hand_landmarks_from_pose"
+  calculator: "HandRoiFromPoseNetCalculator"
+  input_stream: "LANDMARKS:ensured_hand6_from_pose"
   input_stream: "IMAGE_SIZE:image_size"
+  input_side_packet: "IS_LEFT:is_left"
   output_stream: "ROI:hand_roi_from_pose"
 }
 
