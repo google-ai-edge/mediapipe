@@ -341,12 +341,50 @@ class Kinetics(object):
       if not tf.io.gfile.exists(tar_path):
         urlretrieve(ANNOTATION_URL, tar_path)
         with tarfile.open(tar_path) as annotations_tar:
-          annotations_tar.extractall(self.path_to_data)
+          def is_within_directory(directory, target):
+              
+              abs_directory = os.path.abspath(directory)
+              abs_target = os.path.abspath(target)
+          
+              prefix = os.path.commonprefix([abs_directory, abs_target])
+              
+              return prefix == abs_directory
+          
+          def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+          
+              for member in tar.getmembers():
+                  member_path = os.path.join(path, member.name)
+                  if not is_within_directory(path, member_path):
+                      raise Exception("Attempted Path Traversal in Tar File")
+          
+              tar.extractall(path, members, numeric_owner=numeric_owner) 
+              
+          
+          safe_extract(annotations_tar, self.path_to_data)
       for split in ["train", "test", "validate"]:
         csv_path = os.path.join(self.path_to_data, "kinetics700/%s.csv" % split)
         if not tf.io.gfile.exists(csv_path):
           with tarfile.open(tar_path) as annotations_tar:
-            annotations_tar.extractall(self.path_to_data)
+            def is_within_directory(directory, target):
+                
+                abs_directory = os.path.abspath(directory)
+                abs_target = os.path.abspath(target)
+            
+                prefix = os.path.commonprefix([abs_directory, abs_target])
+                
+                return prefix == abs_directory
+            
+            def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+            
+                for member in tar.getmembers():
+                    member_path = os.path.join(path, member.name)
+                    if not is_within_directory(path, member_path):
+                        raise Exception("Attempted Path Traversal in Tar File")
+            
+                tar.extractall(path, members, numeric_owner=numeric_owner) 
+                
+            
+            safe_extract(annotations_tar, self.path_to_data)
         paths[split] = csv_path
     for split, contents in SPLITS.items():
       if "csv" in contents and contents["csv"]:
