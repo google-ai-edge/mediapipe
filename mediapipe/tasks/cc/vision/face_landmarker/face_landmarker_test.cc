@@ -55,6 +55,7 @@ namespace {
 
 using ::file::Defaults;
 using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
+using ::testing::HasSubstr;
 using ::testing::TestParamInfo;
 using ::testing::TestWithParam;
 using ::testing::Values;
@@ -414,6 +415,30 @@ INSTANTIATE_TEST_SUITE_P(
     [](const TestParamInfo<LiveStreamModeTest::ParamType>& info) {
       return info.param.test_name;
     });
+
+TEST(FaceLandmarkerResetTest, AllowsNewVideoAfterReset) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      Image image, DecodeImageFromFile(file::JoinPath(
+                       "./", kTestDataDirectory, kPortraitImageName)));
+  auto options = std::make_unique<FaceLandmarkerOptions>();
+  options->base_options.model_asset_path = file::JoinPath(
+      "./", kTestDataDirectory, kFaceLandmarkerWithBlendshapesModelBundleName);
+  options->running_mode = core::RunningMode::VIDEO;
+
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<FaceLandmarker> face_landmarker,
+                          FaceLandmarker::Create(std::move(options)));
+  MP_ASSERT_OK(face_landmarker->DetectForVideo(image, /*timestamp_ms=*/1));
+
+  absl::StatusOr<FaceLandmarkerResult> out_of_order =
+      face_landmarker->DetectForVideo(image, /*timestamp_ms=*/0);
+  EXPECT_FALSE(out_of_order.ok());
+  EXPECT_THAT(out_of_order.status().message(),
+              HasSubstr("monotonically increasing"));
+
+  MP_ASSERT_OK(face_landmarker->Reset());
+  MP_ASSERT_OK(face_landmarker->DetectForVideo(image, /*timestamp_ms=*/0));
+  MP_ASSERT_OK(face_landmarker->Close());
+}
 
 }  // namespace
 }  // namespace face_landmarker
