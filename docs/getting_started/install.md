@@ -438,14 +438,17 @@ build issues.
 4.  Install OpenCV and FFmpeg.
 
     Option 1. Use HomeBrew package manager tool to install the pre-compiled
-    OpenCV 3 libraries. FFmpeg will be installed via OpenCV.
+    OpenCV libraries. FFmpeg will be installed via OpenCV.
 
     ```bash
-    $ brew install opencv@3
+    $ brew install opencv
 
     # There is a known issue caused by the glog dependency. Uninstall glog.
     $ brew uninstall --ignore-dependencies glog
     ```
+
+    Note: The `opencv@3` formula has been removed from Homebrew. The command
+    above now installs OpenCV 4.x, which is compatible with MediaPipe.
 
     Option 2. Use MacPorts package manager tool to install the OpenCV libraries.
 
