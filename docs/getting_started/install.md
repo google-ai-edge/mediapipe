@@ -450,13 +450,14 @@ build issues.
     Option 2. Use MacPorts package manager tool to install the OpenCV libraries.
 
     ```bash
-    $ port install opencv
+    $ port install opencv3
     ```
 
     Note: when using MacPorts, please edit the [`WORKSPACE`],
-    [`opencv_macos.BUILD`], and [`ffmpeg_macos.BUILD`] files like the following:
+    [`opencv_macos.BUILD`] files like the following:
 
     ```bash
+    # --- WORKSPACE ---
     new_local_repository(
         name = "macos_opencv",
         build_file = "@//third_party:opencv_macos.BUILD",
@@ -466,41 +467,29 @@ build issues.
     new_local_repository(
         name = "macos_ffmpeg",
         build_file = "@//third_party:ffmpeg_macos.BUILD",
-        path = "/opt",
+        path = "/opt/local/libexec/ffmpeg4",
     )
+
+    # --- third_party/opencv_macos.BUILD ---
+
+    PREFIX = "local"
 
     cc_library(
         name = "opencv",
         srcs = glob(
             [
-                "local/lib/libopencv_core.dylib",
-                "local/lib/libopencv_highgui.dylib",
-                "local/lib/libopencv_imgcodecs.dylib",
-                "local/lib/libopencv_imgproc.dylib",
-                "local/lib/libopencv_video.dylib",
-                "local/lib/libopencv_videoio.dylib",
+                paths.join(PREFIX, "lib/opencv3/libopencv_core.dylib"),
+                paths.join(PREFIX, "lib/opencv3/libopencv_calib3d.dylib"),
+                paths.join(PREFIX, "lib/opencv3/libopencv_features2d.dylib"),
+                paths.join(PREFIX, "lib/opencv3/libopencv_highgui.dylib"),
+                paths.join(PREFIX, "lib/opencv3/libopencv_imgcodecs.dylib"),
+                paths.join(PREFIX, "lib/opencv3/libopencv_imgproc.dylib"),
+                paths.join(PREFIX, "lib/opencv3/libopencv_video.dylib"),
+                paths.join(PREFIX, "lib/opencv3/libopencv_videoio.dylib"),
             ],
         ),
-        hdrs = glob(["local/include/opencv2/**/*.h*"]),
-        includes = ["local/include/"],
-        linkstatic = 1,
-        visibility = ["//visibility:public"],
-    )
-
-    cc_library(
-        name = "libffmpeg",
-        srcs = glob(
-            [
-                "local/lib/libav*.dylib",
-            ],
-        ),
-        hdrs = glob(["local/include/libav*/*.h"]),
-        includes = ["local/include/"],
-        linkopts = [
-            "-lavcodec",
-            "-lavformat",
-            "-lavutil",
-        ],
+        hdrs = glob([paths.join(PREFIX, "include/opencv3/opencv2/**/*.h*")]),
+        includes = [paths.join(PREFIX, "include/opencv3/")],
         linkstatic = 1,
         visibility = ["//visibility:public"],
     )
