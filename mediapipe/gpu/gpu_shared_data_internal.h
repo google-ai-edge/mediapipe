@@ -27,8 +27,10 @@
 #include <string>
 #include <utility>
 
+#include "absl/base/thread_annotations.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/synchronization/mutex.h"
 #include "absl/types/span.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_node.h"
@@ -77,13 +79,17 @@ class GpuResources {
 
   explicit GpuResources(PlatformGlContext external_context);
 
-  // Shared GL context for calculators.
+  // Shared GL context for calculators. Thread-safe (lock-free).
   // TODO: require passing a context or node identifier.
   const std::shared_ptr<GlContext>& gl_context() const {
-    return gl_context(nullptr);
+    return shared_gl_context_;
   }
 
-  const std::shared_ptr<GlContext>& gl_context(CalculatorContext* cc) const;
+  // Returns the GL context associated with the node `cc` belongs to, or the
+  // shared context if `cc` is null or the node has no dedicated context.
+  // Thread-safe: may be called concurrently with PrepareGpuNode, e.g. when
+  // several graphs share the same GpuResources instance.
+  std::shared_ptr<GlContext> gl_context(CalculatorContext* cc) const;
 
   // Shared buffer pool.
   GpuBufferMultiPool& gpu_buffer_pool() { return gpu_buffer_pool_; }
@@ -98,23 +104,36 @@ class GpuResources {
 
   // If the node requires custom GPU executors in the current configuration,
   // returns the executor's names and the executors themselves.
-  const std::map<std::string, std::shared_ptr<Executor>>& GetGpuExecutors() {
-    return named_executors_;
-  }
+  std::map<std::string, std::shared_ptr<Executor>> GetGpuExecutors() const;
 
  private:
   GpuResources() = delete;
   explicit GpuResources(std::shared_ptr<GlContext> gl_context,
                         const MultiPoolOptions* gpu_buffer_pool_options);
 
-  GlContext::StatusOrGlContext GetOrCreateGlContext(const std::string& key);
+  GlContext::StatusOrGlContext GetOrCreateGlContext(const std::string& key)
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
   const std::string& ContextKey(const std::string& canonical_node_name);
 
-  std::map<std::string, std::string> node_key_;
+  // Guards the maps below, which are mutated by PrepareGpuNode while other
+  // threads (in particular GL context threads running another graph that
+  // shares this GpuResources) read them through gl_context().
+  // Declared first so that it outlives the members it guards: destroying
+  // gl_key_context_ flushes pending GL jobs, which may still call gl_context().
+  mutable absl::Mutex mutex_;
+
+  std::map<std::string, std::string> node_key_ ABSL_GUARDED_BY(mutex_);
+
+  // The context shared by all calculators that don't request their own. Set
+  // once at construction and never reassigned, so it can be read without
+  // holding mutex_. This is the same object as gl_key_context_'s entry for
+  // SharedContextKey(). Declared after gl_key_context_ in destruction order
+  // (i.e. before it here) so the context outlives the map that flushes it.
+  const std::shared_ptr<GlContext> shared_gl_context_;
 
   using GlContextMapType = std::map<std::string, std::shared_ptr<GlContext>>;
-  std::unique_ptr<GlContextMapType, void (*)(GlContextMapType*)>
-      gl_key_context_;
+  std::unique_ptr<GlContextMapType, void (*)(GlContextMapType*)> gl_key_context_
+      ABSL_GUARDED_BY(mutex_);
 
 #ifdef MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   std::shared_ptr<CvTextureCacheManager> texture_caches_;
@@ -128,7 +147,8 @@ class GpuResources {
   std::unique_ptr<MetalSharedResources> metal_shared_;
 #endif  // MEDIAPIPE_METAL_ENABLED
 
-  std::map<std::string, std::shared_ptr<Executor>> named_executors_;
+  std::map<std::string, std::shared_ptr<Executor>> named_executors_
+      ABSL_GUARDED_BY(mutex_);
 };
 
 // Legacy struct to keep existing client code happy.
