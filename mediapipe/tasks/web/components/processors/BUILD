@@ -151,3 +151,28 @@ jasmine_node_test(
     name = "landmark_result_test",
     srcs = [":landmark_result_test_lib"],
 )
+
+ts_library(
+    name = "label_map",
+    srcs = ["label_map.ts"],
+    deps = [
+        "//mediapipe/framework:calculator_jspb_proto",
+        "//mediapipe/util:label_map_jspb_proto",
+    ],
+)
+
+ts_library(
+    name = "label_map_test_lib",
+    testonly = True,
+    srcs = ["label_map_test.ts"],
+    deps = [
+        ":label_map",
+        "//mediapipe/framework:calculator_jspb_proto",
+        "//mediapipe/util:label_map_jspb_proto",
+    ],
+)
+
+jasmine_node_test(
+    name = "label_map_test",
+    srcs = [":label_map_test_lib"],
+)
