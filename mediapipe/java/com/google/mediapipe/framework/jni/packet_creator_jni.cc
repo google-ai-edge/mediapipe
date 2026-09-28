@@ -182,6 +182,11 @@ CreateImageFrameFromByteBuffer(JNIEnv* env, jobject byte_buffer, jint width,
 
 }  // namespace
 
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateEmpty)(
+    JNIEnv* env, jobject thiz, jlong context) {
+  return CreatePacketWithContext(context, mediapipe::Packet());
+}
+
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateReferencePacket)(
     JNIEnv* env, jobject thiz, jlong context, jlong packet) {
   auto mediapipe_graph = reinterpret_cast<mediapipe::android::Graph*>(context);

@@ -58,6 +58,19 @@ public class PacketCreator {
   }
 
   /**
+   * Creates an empty MediaPipe Packet.
+   *
+   * <p>An empty packet carries no payload and signals the absence of data. Adding one to a graph
+   * input stream advances that stream's timestamp bounds, which lets a calculator with other
+   * synchronized, non-empty inputs run at that timestamp without receiving anything on the stream
+   * with the empty packet. If all graph inputs are empty for a specific timestamp, the calculator
+   * will not run unless the calculator is explicitly marked to receive timestamp bounds updates.
+   */
+  public Packet createEmpty() {
+    return Packet.create(nativeCreateEmpty(mediapipeGraph.getNativeHandle()));
+  }
+
+  /**
    * Create a MediaPipe Packet that contains a pointer to another MediaPipe packet.
    *
    * <p>This can be used as a way to update the value of a packet. Similar to a mutable packet using
@@ -492,6 +505,8 @@ public class PacketCreator {
   private void releaseWithSyncToken(long nativeSyncToken, TextureReleaseCallback releaseCallback) {
     releaseCallback.release(new GraphGlSyncToken(nativeSyncToken));
   }
+
+  private native long nativeCreateEmpty(long context);
 
   private native long nativeCreateReferencePacket(long context, long packet);
 
