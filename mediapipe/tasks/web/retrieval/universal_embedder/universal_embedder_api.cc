@@ -138,9 +138,8 @@ intptr_t CreateUniversalEmbedder(const std::string& model_path,
   if (max_input_length > 0) {
     options->max_input_length = max_input_length;
   }
-  if (vision_tokens_per_image > 0) {
-    options->vision_tokens_per_image = vision_tokens_per_image;
-  }
+  options->vision_tokens_per_image =
+      vision_tokens_per_image > 0 ? vision_tokens_per_image : 70;
   switch (activation_data_type) {
     case 0:
       // Default: do not set activation_data_type.

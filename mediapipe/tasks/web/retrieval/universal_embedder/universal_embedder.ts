@@ -87,16 +87,19 @@ export declare interface UniversalEmbedderWasmModule extends WasmModule {
     maxInputLength: number,
     visionTokensPerImage: number,
     activationDataType: number,
-  ): number;
-  universalEmbedder_embedText(handle: number, text: string): Float32Array;
+  ): Promise<number>;
+  universalEmbedder_embedText(
+    handle: number,
+    text: string,
+  ): Promise<Float32Array>;
   universalEmbedder_embedImage(
     handle: number,
     imageBytes: Uint8Array | string,
-  ): Float32Array;
+  ): Promise<Float32Array>;
   universalEmbedder_embedAudio(
     handle: number,
     audioSamples: number[] | Float32Array,
-  ): Float32Array;
+  ): Promise<Float32Array>;
   universalEmbedder_createContentBuilder(): number;
   universalEmbedder_builderAddText(builderHandle: number, text: string): void;
   universalEmbedder_builderAddImage(
@@ -110,9 +113,9 @@ export declare interface UniversalEmbedderWasmModule extends WasmModule {
   universalEmbedder_executeEmbedContent(
     handle: number,
     builderHandle: number,
-  ): Float32Array;
+  ): Promise<Float32Array>;
   universalEmbedder_freeContentBuilder(builderHandle: number): void;
-  universalEmbedder_close(handle: number): void;
+  universalEmbedder_close(handle: number): Promise<void> | void;
 }
 
 /**
@@ -287,7 +290,7 @@ export class UniversalEmbedder {
     );
 
     try {
-      this.nativeHandle = this.wasmModule.createUniversalEmbedder(
+      this.nativeHandle = await this.wasmModule.createUniversalEmbedder(
         modelPath,
         l2Normalize,
         isGpu,
@@ -307,7 +310,7 @@ export class UniversalEmbedder {
    */
   async embedText(text: string): Promise<UniversalEmbedderResult> {
     this.ensureNotClosed();
-    const floatArray = this.wasmModule.universalEmbedder_embedText(
+    const floatArray = await this.wasmModule.universalEmbedder_embedText(
       this.nativeHandle,
       text,
     );
@@ -328,7 +331,7 @@ export class UniversalEmbedder {
    */
   async embedImage(imageBytes: Uint8Array): Promise<UniversalEmbedderResult> {
     this.ensureNotClosed();
-    const floatArray = this.wasmModule.universalEmbedder_embedImage(
+    const floatArray = await this.wasmModule.universalEmbedder_embedImage(
       this.nativeHandle,
       imageBytes,
     );
@@ -349,7 +352,7 @@ export class UniversalEmbedder {
    */
   async embedAudio(audioData: Float32Array): Promise<UniversalEmbedderResult> {
     this.ensureNotClosed();
-    const floatArray = this.wasmModule.universalEmbedder_embedAudio(
+    const floatArray = await this.wasmModule.universalEmbedder_embedAudio(
       this.nativeHandle,
       audioData,
     );
@@ -410,10 +413,11 @@ export class UniversalEmbedder {
         }
       }
 
-      const floatArray = this.wasmModule.universalEmbedder_executeEmbedContent(
-        this.nativeHandle,
-        builderHandle,
-      );
+      const floatArray =
+        await this.wasmModule.universalEmbedder_executeEmbedContent(
+          this.nativeHandle,
+          builderHandle,
+        );
 
       return {
         embeddings: [

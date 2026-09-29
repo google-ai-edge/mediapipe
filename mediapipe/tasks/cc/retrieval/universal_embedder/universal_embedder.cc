@@ -47,7 +47,10 @@ limitations under the License.
 #include "runtime/engine/embedding_engine_settings.h"  // from @litert_lm
 #include "runtime/engine/io_types.h"                   // from @litert_lm
 #include "runtime/executor/executor_settings_base.h"   // from @litert_lm
-#include "runtime/util/memory_mapped_file.h"           // from @litert_lm
+#ifdef __EMSCRIPTEN__
+#include "runtime/util/file_data_stream.h"  // from @litert_lm
+#endif
+#include "runtime/util/memory_mapped_file.h"  // from @litert_lm
 
 namespace mediapipe::tasks::retrieval::universal_embedder {
 namespace {
@@ -173,14 +176,22 @@ absl::StatusOr<std::unique_ptr<UniversalEmbedder>> UniversalEmbedder::Create(
         "No model asset path specified in BaseOptions.");
   }
 
+  std::shared_ptr<MemoryMappedFile> shared_mmap = nullptr;
+#ifdef __EMSCRIPTEN__
+  ABSL_ASSIGN_OR_RETURN(auto file_stream,
+                        ::litert::lm::FileDataStream::Create(
+                            options->base_options.model_asset_path));
+  ABSL_ASSIGN_OR_RETURN(auto model_assets, ModelAssets::Create(file_stream));
+#else
   ABSL_ASSIGN_OR_RETURN(
       auto mmap_file,
       MemoryMappedFile::Create(options->base_options.model_asset_path));
-  auto shared_mmap = std::shared_ptr<MemoryMappedFile>(std::move(mmap_file));
-
+  shared_mmap = std::shared_ptr<MemoryMappedFile>(std::move(mmap_file));
   ABSL_ASSIGN_OR_RETURN(
       auto model_assets,
       ModelAssets::Create(shared_mmap, options->base_options.model_asset_path));
+#endif
+
   ABSL_ASSIGN_OR_RETURN(
       auto settings, EmbeddingEngineSettings::CreateDefault(
                          std::move(model_assets), backend, backend, backend));

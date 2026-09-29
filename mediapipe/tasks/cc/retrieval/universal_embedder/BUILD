@@ -46,5 +46,10 @@ cc_library(
         "@litert_lm//runtime/engine:io_types",
         "@litert_lm//runtime/executor:executor_settings_base",
         "@litert_lm//runtime/util:memory_mapped_file",
-    ],
+    ] + select({
+        "//mediapipe:emscripten": [
+            "@litert_lm//runtime/util:file_data_stream",
+        ],
+        "//conditions:default": [],
+    }),
 )
