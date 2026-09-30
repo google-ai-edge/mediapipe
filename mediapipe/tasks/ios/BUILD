@@ -432,6 +432,7 @@ mediapipe_static_xcframework(
 mediapipe_static_xcframework(
     name = "MediaPipeTaskGraphs_library",
     bundle_name = "MediaPipeTaskGraphs_library",
+    strip_rust_metadata = True,
     deps = [":MediaPipeTaskGraphs"],
 )
 

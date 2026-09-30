@@ -66,13 +66,29 @@ def _framework_infoplist(name):
     )
     return ":" + plist_target
 
-def mediapipe_static_xcframework(name, **kwargs):
+def _strip_rust_metadata(name, src, visibility):
+    fail("strip_rust_metadata is not supported in the OSS build.")
+
+def mediapipe_static_xcframework(name, strip_rust_metadata = False, **kwargs):
     """An apple_static_xcframework with a dummy library to allow for empty frameworks.
 
     Args:
       name: The name of the apple_static_xcframework target.
+      strip_rust_metadata: Whether to run `llvm-strip -S` on the binaries in the
+        generated xcframework to remove Rust crate metadata. rules_rust does not strip
+        it for Apple targets, and Apple's linker ignores it.
       **kwargs: Arguments passed to apple_static_xcframework.
     """
+
+    strip_rust_metadata = False
+
+    # When stripping, the xcframework is built under an internal name and the final
+    # target (with the original name and output file name) is the stripped copy.
+    target_name = name + "_with_rust_metadata" if strip_rust_metadata else name
+    final_visibility = kwargs.get("visibility")
+    if strip_rust_metadata:
+        kwargs.setdefault("bundle_name", name)
+        kwargs["visibility"] = ["//visibility:private"]
 
     if kwargs.get("bundle_format") == "framework":
         kwargs["infoplists"] = [_framework_infoplist(name)]
@@ -106,9 +122,11 @@ def mediapipe_static_xcframework(name, **kwargs):
     if not public_hdrs:
         # No issues, just build the xcframework as normal.
         apple_static_xcframework(
-            name = name,
+            name = target_name,
             **kwargs
         )
+        if strip_rust_metadata:
+            _strip_rust_metadata(name, ":" + target_name, final_visibility)
         return
 
     # WORKAROUND: b/504553290
@@ -191,9 +209,11 @@ def mediapipe_static_xcframework(name, **kwargs):
     )
 
     native.genrule(
-        name = name,
+        name = target_name,
         srcs = [":" + single_arch_name, ":" + multi_arch_name],
-        outs = [name + ".xcframework.zip"],
+        outs = [target_name + ".xcframework.zip"],
         cmd = stitch_cmd,
         visibility = kwargs.get("visibility"),
     )
+    if strip_rust_metadata:
+        _strip_rust_metadata(name, ":" + target_name, final_visibility)
