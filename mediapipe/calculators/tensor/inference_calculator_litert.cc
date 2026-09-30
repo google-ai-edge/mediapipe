@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include <memory>
-#include <optional>
 #include <utility>
 #include <vector>
 
@@ -98,12 +97,13 @@ absl::Status InferenceCalculatorLiteRtImpl::UpdateContract(
 }
 
 absl::Status InferenceCalculatorLiteRtImpl::Open(CalculatorContext* cc) {
+  const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   if (cc->Service(kMemoryManagerService).IsAvailable()) {
     memory_manager_ = &cc->Service(kMemoryManagerService).GetObject();
   }
 
 #if !MEDIAPIPE_DISABLE_GPU
-  if (UseGpu(cc->Options<mediapipe::InferenceCalculatorOptions>())) {
+  if (UseGpu(options)) {
     ABSL_RETURN_IF_ERROR(gpu_helper_.Open(cc));
   }
 #endif  // !MEDIAPIPE_DISABLE_GPU
