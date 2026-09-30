@@ -15,6 +15,7 @@
 // This Calculator takes an ImageFrame and scales it appropriately.
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -23,9 +24,10 @@
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
-#include "absl/status/status_macros.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/substitute.h"
+#include "absl/types/span.h"
+#include "libyuv/scale.h"
 #include "libyuv/video_common.h"
 #include "mediapipe/calculators/image/scale_image_calculator.pb.h"
 #include "mediapipe/calculators/image/scale_image_utils.h"
@@ -587,18 +589,10 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
     ABSL_RETURN_IF_ERROR(ValidateYUVImage(cc, *yuv_image));
 
     if (output_format_ == ImageFormat::SRGB) {
-      YUVImage scaled_yuv;
-      if (crop_width_ == input_width_ && crop_height_ == input_height_ &&
-          (output_width_ < crop_width_ || output_height_ < crop_height_) &&
-          output_width_ <= crop_width_ && output_height_ <= crop_height_ &&
-          output_width_ % 4 == 0 && output_height_ % 4 == 0 &&
-          options_.post_sharpening_coefficient() == 0.0f &&
-          alignment_boundary_ <= 16 &&
-          image_frame_util::ScaleYUVImage(*yuv_image, output_width_,
-                                          output_height_, &scaled_yuv)
-              .ok()) {
-        yuv_image = &scaled_yuv;
-      }
+      // TODO: For ease of implementation, YUVImage is converted to
+      // ImageFrame immediately, before cropping and scaling. Investigate how to
+      // make color space conversion more efficient when cropping or scaling is
+      // also needed.
       if (options_.use_bt709() || yuv_image->fourcc() == libyuv::FOURCC_ANY) {
         image_frame_util::YUVImageToImageFrame(
             *yuv_image, &converted_image_frame, options_.use_bt709());
@@ -614,9 +608,28 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
              "images, the output format must be SRGB.";
 
       // Scale the YUVImage and output without converting the color space.
+      const int y_size = output_width_ * output_height_;
+      const int uv_size = output_width_ * output_height_ / 4;
+      const size_t total_size = y_size + uv_size * 2;
+      std::unique_ptr<uint8_t[]> yuv_data(new uint8_t[total_size]);
+      absl::Span<uint8_t> yuv_span(yuv_data.get(), total_size);
+      absl::Span<uint8_t> y = yuv_span.subspan(0, y_size);
+      absl::Span<uint8_t> u = yuv_span.subspan(y_size, uv_size);
+      absl::Span<uint8_t> v = yuv_span.subspan(y_size + uv_size, uv_size);
+      RET_CHECK_EQ(
+          0, I420Scale(yuv_image->data(0), yuv_image->stride(0),
+                       yuv_image->data(1), yuv_image->stride(1),
+                       yuv_image->data(2), yuv_image->stride(2),
+                       yuv_image->width(), yuv_image->height(), y.data(),
+                       output_width_, u.data(), output_width_ / 2, v.data(),
+                       output_width_ / 2, output_width_, output_height_,
+                       libyuv::kFilterBox));
       auto output_image = std::make_unique<YUVImage>();
-      ABSL_RETURN_IF_ERROR(image_frame_util::ScaleYUVImage(
-          *yuv_image, output_width_, output_height_, output_image.get()));
+      output_image->Initialize(
+          libyuv::FOURCC_I420,
+          [data = std::move(yuv_data)]() mutable { data.reset(); }, y,
+          output_width_, u, output_width_ / 2, v, output_width_ / 2,
+          output_width_, output_height_);
       cc->GetCounter("Outputs Scaled")->Increment();
       if (yuv_image->width() >= output_width_ &&
           yuv_image->height() >= output_height_) {
@@ -722,11 +735,8 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
 
   // Rescale the image frame.
   std::unique_ptr<ImageFrame> output_frame(new ImageFrame());
-  if (image_frame->Width() == output_width_ &&
-      image_frame->Height() == output_height_) {
-    *output_frame = std::move(converted_image_frame);
-  } else if (image_frame->Width() >= output_width_ &&
-             image_frame->Height() >= output_height_) {
+  if (image_frame->Width() >= output_width_ &&
+      image_frame->Height() >= output_height_) {
     // Downscale.
     cc->GetCounter("Downscales")->Increment();
     cv::Mat input_mat = ::mediapipe::formats::MatView(image_frame);

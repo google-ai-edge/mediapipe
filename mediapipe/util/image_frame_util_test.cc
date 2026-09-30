@@ -11,7 +11,6 @@
 #include "mediapipe/framework/port/benchmark.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
-#include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {
 namespace image_frame_util {
@@ -184,48 +183,6 @@ TEST(ImageFrameUtilTest, Nv21ToImageFrame) {
                      cv::Mat_<cv::Vec3b>(2, 2, cv::Vec3b(200, 100, 50)),
                      cv::NORM_INF),
             kTolerance);
-}
-
-TEST(ScaleYUVImageTest, DownscaleI420AndNV12) {
-  ImageFrame src_rgb(ImageFormat::SRGB, 64, 64, 16);
-  for (int y = 0; y < 64; ++y) {
-    uint8_t* row = src_rgb.MutablePixelData() + y * src_rgb.WidthStep();
-    for (int x = 0; x < 64; ++x) {
-      row[x * 3 + 0] = 40;
-      row[x * 3 + 1] = 180;
-      row[x * 3 + 2] = 100;
-    }
-  }
-  YUVImage i420;
-  ImageFrameToYUVImage(src_rgb, &i420);
-  YUVImage nv12;
-  ImageFrameToYUVNV12Image(src_rgb, &nv12);
-
-  YUVImage scaled_i420;
-  MP_ASSERT_OK(ScaleYUVImage(i420, 16, 16, &scaled_i420));
-  EXPECT_EQ(scaled_i420.fourcc(), libyuv::FOURCC_I420);
-  EXPECT_EQ(scaled_i420.width(), 16);
-  EXPECT_EQ(scaled_i420.height(), 16);
-
-  YUVImage scaled_nv12;
-  MP_ASSERT_OK(ScaleYUVImage(nv12, 16, 16, &scaled_nv12));
-  EXPECT_EQ(scaled_nv12.fourcc(), libyuv::FOURCC_NV12);
-  EXPECT_EQ(scaled_nv12.width(), 16);
-  EXPECT_EQ(scaled_nv12.height(), 16);
-
-  ImageFrame dst_i420;
-  YUVImageToImageFrameFromFormat(scaled_i420, &dst_i420);
-  ImageFrame dst_nv12;
-  YUVImageToImageFrameFromFormat(scaled_nv12, &dst_nv12);
-  for (int c = 0; c < 3; ++c) {
-    EXPECT_NEAR(dst_i420.PixelData()[c], src_rgb.PixelData()[c], 2);
-    EXPECT_NEAR(dst_nv12.PixelData()[c], src_rgb.PixelData()[c], 2);
-  }
-
-  MP_ASSERT_OK(ScaleYUVImage(i420, 15, 15, &scaled_i420));
-  EXPECT_EQ(scaled_i420.width(), 15);
-  EXPECT_EQ(scaled_i420.height(), 15);
-  EXPECT_FALSE(ScaleYUVImage(i420, 0, 16, &scaled_i420).ok());
 }
 
 cv::Mat MakeRGBTestImage(int rows, int cols) {
