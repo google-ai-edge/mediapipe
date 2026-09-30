@@ -41,3 +41,24 @@ py_library(
         "//mediapipe/tasks/python/core:serial_dispatcher",
     ],
 )
+
+py_library(
+    name = "audio_embedder",
+    srcs = [
+        "audio_embedder.py",
+    ],
+    deps = [
+        "//mediapipe/tasks/python/audio/core:audio_record",
+        "//mediapipe/tasks/python/components/containers:audio_data",
+        "//mediapipe/tasks/python/components/containers:audio_data_c",
+        "//mediapipe/tasks/python/components/containers:embedding_result",
+        "//mediapipe/tasks/python/components/containers:embedding_result_c",
+        "//mediapipe/tasks/python/components/utils:cosine_similarity",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:base_options_c",
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:mediapipe_c_utils",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:serial_dispatcher",
+    ],
+)

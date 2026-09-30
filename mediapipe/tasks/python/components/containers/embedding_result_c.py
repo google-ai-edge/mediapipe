@@ -34,6 +34,6 @@ class MpEmbeddingResultC(ctypes.Structure):
   _fields_ = [
       ('embeddings', ctypes.POINTER(MpEmbeddingC)),
       ('embeddings_count', ctypes.c_uint32),
-      ('has_timestamp_ms', ctypes.c_bool),
       ('timestamp_ms', ctypes.c_int64),
+      ('has_timestamp_ms', ctypes.c_bool),
   ]
