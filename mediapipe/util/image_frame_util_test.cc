@@ -1,5 +1,13 @@
 #include "mediapipe/util/image_frame_util.h"
 
+#include <cstdint>
+
+#include "absl/types/span.h"
+#include "libyuv/video_common.h"
+#include "mediapipe/framework/formats/image_format.pb.h"
+#include "mediapipe/framework/formats/image_frame.h"
+#include "mediapipe/framework/formats/image_frame_opencv.h"
+#include "mediapipe/framework/formats/yuv_image.h"
 #include "mediapipe/framework/port/benchmark.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
@@ -54,6 +62,127 @@ TEST(LinearRgb16ToSrgbTest, MixedValues2x2) {
   // 400 -> 18
   // 600 -> 24
   EXPECT_EQ(destination.at<cv::Vec3b>(1, 1), cv::Vec3b(10, 18, 24));
+}
+
+// YUV tests use a solid 2x2 RGB (200, 100, 50) image, which is (123, 91, 175)
+// in limited-range BT.601 YCbCr. Tolerance covers 8-bit rounding and libyuv's
+// fixed-point math.
+constexpr int kTolerance = 5;
+
+TEST(ImageFrameUtilTest, ImageFrameToYUVImage) {
+  for (ImageFormat::Format format : {ImageFormat::SRGB, ImageFormat::SRGBA}) {
+    ImageFrame rgb(format, 2, 2);
+    formats::MatView(&rgb).setTo(cv::Scalar(200, 100, 50, 255));
+    YUVImage yuv;
+    ImageFrameToYUVImage(rgb, &yuv);
+    EXPECT_EQ(yuv.fourcc(), libyuv::FOURCC_I420);
+    EXPECT_LE(
+        cv::norm(cv::Mat_<uint8_t>(2, 2, yuv.mutable_data(0), yuv.stride(0)),
+                 cv::Mat_<uint8_t>(2, 2, 123), cv::NORM_INF),
+        kTolerance);
+    EXPECT_LE(cv::norm(cv::Mat_<uint8_t>(1, 1, yuv.mutable_data(1)),
+                       cv::Mat_<uint8_t>(1, 1, 91), cv::NORM_INF),
+              kTolerance);
+    EXPECT_LE(cv::norm(cv::Mat_<uint8_t>(1, 1, yuv.mutable_data(2)),
+                       cv::Mat_<uint8_t>(1, 1, 175), cv::NORM_INF),
+              kTolerance);
+  }
+}
+
+TEST(ImageFrameUtilTest, ImageFrameToYUVNV12Image) {
+  ImageFrame rgb(ImageFormat::SRGB, 2, 2);
+  formats::MatView(&rgb).setTo(cv::Scalar(200, 100, 50));
+  YUVImage yuv;
+  ImageFrameToYUVNV12Image(rgb, &yuv);
+  EXPECT_EQ(yuv.fourcc(), libyuv::FOURCC_NV12);
+  EXPECT_LE(
+      cv::norm(cv::Mat_<uint8_t>(2, 2, yuv.mutable_data(0), yuv.stride(0)),
+               cv::Mat_<uint8_t>(2, 2, 123), cv::NORM_INF),
+      kTolerance);
+  EXPECT_LE(cv::norm(cv::Mat_<uint8_t>(1, 2, yuv.mutable_data(1)),
+                     cv::Mat_<uint8_t>({1, 2}, {91, 175}), cv::NORM_INF),
+            kTolerance);
+}
+
+TEST(ImageFrameUtilTest, YUVImageToImageFrameBt601) {
+  uint8_t y[] = {123, 123, 123, 123}, u[] = {91}, v[] = {175};
+  YUVImage yuv;
+  yuv.Initialize(libyuv::FOURCC_I420, nullptr, absl::MakeSpan(y), 2,
+                 absl::MakeSpan(u), 1, absl::MakeSpan(v), 1, 2, 2);
+  ImageFrame frame;
+  YUVImageToImageFrame(yuv, &frame, /*use_bt709=*/false);
+  EXPECT_EQ(frame.Format(), ImageFormat::SRGB);
+  EXPECT_LE(cv::norm(formats::MatView(&frame),
+                     cv::Mat_<cv::Vec3b>(2, 2, cv::Vec3b(200, 100, 50)),
+                     cv::NORM_INF),
+            kTolerance);
+}
+
+TEST(ImageFrameUtilTest, YUVImageToImageFrameBt709) {
+  uint8_t y[] = {123, 123, 123, 123}, u[] = {91}, v[] = {175};
+  YUVImage yuv;
+  yuv.Initialize(libyuv::FOURCC_I420, nullptr, absl::MakeSpan(y), 2,
+                 absl::MakeSpan(u), 1, absl::MakeSpan(v), 1, 2, 2);
+  ImageFrame frame;
+  YUVImageToImageFrame(yuv, &frame, /*use_bt709=*/true);
+  // The samples are BT.601-encoded, so decoding them with the BT.709 matrix
+  // shifts the color by ~10 per channel; 30 leaves headroom.
+  EXPECT_LE(cv::norm(formats::MatView(&frame),
+                     cv::Mat_<cv::Vec3b>(2, 2, cv::Vec3b(200, 100, 50)),
+                     cv::NORM_INF),
+            30);
+}
+
+TEST(ImageFrameUtilTest, I420ToImageFrame) {
+  uint8_t y[] = {123, 123, 123, 123}, u[] = {91}, v[] = {175};
+  YUVImage yuv;
+  yuv.Initialize(libyuv::FOURCC_I420, nullptr, absl::MakeSpan(y), 2,
+                 absl::MakeSpan(u), 1, absl::MakeSpan(v), 1, 2, 2);
+  ImageFrame frame;
+  YUVImageToImageFrameFromFormat(yuv, &frame);
+  EXPECT_LE(cv::norm(formats::MatView(&frame),
+                     cv::Mat_<cv::Vec3b>(2, 2, cv::Vec3b(200, 100, 50)),
+                     cv::NORM_INF),
+            kTolerance);
+}
+
+TEST(ImageFrameUtilTest, Yv12ToImageFrame) {
+  uint8_t y[] = {123, 123, 123, 123}, u[] = {91}, v[] = {175};
+  YUVImage yuv;  // YV12: V plane before U plane.
+  yuv.Initialize(libyuv::FOURCC_YV12, nullptr, absl::MakeSpan(y), 2,
+                 absl::MakeSpan(v), 1, absl::MakeSpan(u), 1, 2, 2);
+  ImageFrame frame;
+  YUVImageToImageFrameFromFormat(yuv, &frame);
+  EXPECT_LE(cv::norm(formats::MatView(&frame),
+                     cv::Mat_<cv::Vec3b>(2, 2, cv::Vec3b(200, 100, 50)),
+                     cv::NORM_INF),
+            kTolerance);
+}
+
+TEST(ImageFrameUtilTest, Nv12ToImageFrame) {
+  uint8_t y[] = {123, 123, 123, 123}, uv[] = {91, 175};
+  YUVImage yuv;
+  yuv.Initialize(libyuv::FOURCC_NV12, nullptr, absl::MakeSpan(y), 2,
+                 absl::MakeSpan(uv), 2, {}, 0, 2, 2);
+  ImageFrame frame;
+  YUVImageToImageFrameFromFormat(yuv, &frame);
+  EXPECT_LE(cv::norm(formats::MatView(&frame),
+                     cv::Mat_<cv::Vec3b>(2, 2, cv::Vec3b(200, 100, 50)),
+                     cv::NORM_INF),
+            kTolerance);
+}
+
+TEST(ImageFrameUtilTest, Nv21ToImageFrame) {
+  uint8_t y[] = {123, 123, 123, 123}, vu[] = {175, 91};
+  YUVImage yuv;
+  yuv.Initialize(libyuv::FOURCC_NV21, nullptr, absl::MakeSpan(y), 2,
+                 absl::MakeSpan(vu), 2, {}, 0, 2, 2);
+  ImageFrame frame;
+  YUVImageToImageFrameFromFormat(yuv, &frame);
+  EXPECT_LE(cv::norm(formats::MatView(&frame),
+                     cv::Mat_<cv::Vec3b>(2, 2, cv::Vec3b(200, 100, 50)),
+                     cv::NORM_INF),
+            kTolerance);
 }
 
 cv::Mat MakeRGBTestImage(int rows, int cols) {

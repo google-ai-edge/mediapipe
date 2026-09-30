@@ -162,9 +162,15 @@ cc_test(
     srcs = ["image_frame_util_test.cc"],
     deps = [
         ":image_frame_util",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:yuv_image",
         "//mediapipe/framework/port:benchmark",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:opencv_core",
+        "@com_google_absl//absl/types:span",
+        "@libyuv",
     ],
 )
 
