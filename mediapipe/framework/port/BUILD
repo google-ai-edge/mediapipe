@@ -494,3 +494,17 @@ cc_library(
     hdrs = ["compile_time_string.h"],
     deps = ["//mediapipe/framework/deps:compile_time_string"],
 )
+
+cc_library(
+    name = "libyuv_port",
+    hdrs = ["libyuv_port.h"],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/types:span",
+    ] + select({
+        "//conditions:default": [
+            "@libyuv",
+        ],
+    }),
+)
