@@ -88,9 +88,9 @@ mediapipe::tasks::core::BaseOptions::Delegate CppDelegateFromMPPDelegate(MPPDele
     cppOptions->vision_delegate = CppDelegateFromMPPDelegate(
         options.visionDelegate == MPPDelegateDefault ? options.baseOptions.delegate
                                                      : options.visionDelegate);
-    // Audio defaults to CPU: some audio encoders are CPU-only.
     cppOptions->audio_delegate = CppDelegateFromMPPDelegate(
-        options.audioDelegate == MPPDelegateDefault ? MPPDelegateCPU : options.audioDelegate);
+        options.audioDelegate == MPPDelegateDefault ? options.baseOptions.delegate
+                                                    : options.audioDelegate);
     cppOptions->l2_normalize = options.l2Normalize;
     if (options.maxInputLength > 0) {
       cppOptions->max_input_length = (int)options.maxInputLength;

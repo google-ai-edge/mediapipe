@@ -59,7 +59,7 @@ public abstract class UniversalEmbedderOptions {
 
   /**
    * Optional hardware delegate to use specifically for the audio encoder model. If unset, defaults
-   * to CPU regardless of {@link #baseOptions()}, since some audio encoders only run on CPU.
+   * to the delegate configured in {@link #baseOptions()}.
    */
   public abstract Optional<Delegate> audioDelegate();
 
@@ -107,8 +107,7 @@ public abstract class UniversalEmbedderOptions {
 
     /**
      * Sets the hardware delegate to use specifically for the audio encoder model. If unset,
-     * defaults to CPU regardless of {@link #setBaseOptions(BaseOptions)}, since some audio encoders
-     * only run on CPU.
+     * defaults to the delegate configured in {@link #setBaseOptions(BaseOptions)}.
      */
     public abstract Builder setAudioDelegate(Delegate value);
 

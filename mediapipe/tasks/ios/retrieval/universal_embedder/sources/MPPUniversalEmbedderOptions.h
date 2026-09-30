@@ -84,8 +84,7 @@ NS_SWIFT_NAME(UniversalEmbedderOptions)
 /**
  * Delegate for running the audio encoder.
  *
- * Defaults to `MPPDelegateDefault`, which uses `MPPDelegateCPU` regardless of
- * `baseOptions.delegate`, since some models only support running the audio encoder on CPU.
+ * Defaults to `MPPDelegateDefault`, which uses `baseOptions.delegate`.
  */
 @property(nonatomic) MPPDelegate audioDelegate;
 

@@ -64,9 +64,8 @@ struct UniversalEmbedderOptions {
   // Optional directory path for storing compiled model cache artifacts.
   std::optional<std::string> cache_dir;
 
-  // Optional per-modality delegates. When unset, the text and vision encoders
-  // use `base_options.delegate`, while the audio encoder uses CPU since some
-  // audio encoders only run on CPU.
+  // Optional per-modality delegates. When unset, the corresponding encoder
+  // uses `base_options.delegate`.
   std::optional<tasks::core::BaseOptions::Delegate> text_delegate;
   std::optional<tasks::core::BaseOptions::Delegate> vision_delegate;
   std::optional<tasks::core::BaseOptions::Delegate> audio_delegate;

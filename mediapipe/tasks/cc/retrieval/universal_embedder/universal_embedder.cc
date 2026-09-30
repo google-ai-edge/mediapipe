@@ -206,9 +206,7 @@ absl::StatusOr<std::unique_ptr<UniversalEmbedder>> UniversalEmbedder::Create(
           std::move(model_assets),
           ToLiteRtLmBackend(options->text_delegate.value_or(base_delegate)),
           ToLiteRtLmBackend(options->vision_delegate.value_or(base_delegate)),
-          // Audio defaults to CPU: some audio encoders are CPU-only.
-          ToLiteRtLmBackend(options->audio_delegate.value_or(
-              tasks::core::BaseOptions::CPU))));
+          ToLiteRtLmBackend(options->audio_delegate.value_or(base_delegate))));
 
   if (options->max_input_length.has_value()) {
     settings.SetMaxInputLength(options->max_input_length);
