@@ -129,6 +129,7 @@ intptr_t CreateUniversalEmbedder(const std::string& model_path,
   auto options = std::make_unique<UniversalEmbedderOptions>();
   options->base_options.model_asset_path = model_path;
   options->base_options.delegate = tasks::core::BaseOptions::GPU;
+  options->audio_delegate = tasks::core::BaseOptions::GPU;
   options->l2_normalize = l2_normalize;
   if (max_input_length > 0) {
     options->max_input_length = max_input_length;
