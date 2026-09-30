@@ -23,6 +23,9 @@
     _maxInputLength = 0;
     _visionTokensPerImage = 0;
     _activationDataType = MPPActivationDataTypeDefault;
+    _textDelegate = MPPDelegateDefault;
+    _visionDelegate = MPPDelegateDefault;
+    _audioDelegate = MPPDelegateDefault;
   }
   return self;
 }
@@ -34,6 +37,9 @@
   universalEmbedderOptions.visionTokensPerImage = self.visionTokensPerImage;
   universalEmbedderOptions.activationDataType = self.activationDataType;
   universalEmbedderOptions.cacheDir = self.cacheDir;
+  universalEmbedderOptions.textDelegate = self.textDelegate;
+  universalEmbedderOptions.visionDelegate = self.visionDelegate;
+  universalEmbedderOptions.audioDelegate = self.audioDelegate;
   return universalEmbedderOptions;
 }
 

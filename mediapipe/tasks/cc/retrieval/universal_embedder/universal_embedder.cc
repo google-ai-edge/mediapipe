@@ -142,6 +142,18 @@ absl::StatusOr<std::string> EncodeToTga(const mediapipe::Image& image) {
   return tga_bytes;
 }
 
+::litert::lm::Backend ToLiteRtLmBackend(
+    tasks::core::BaseOptions::Delegate delegate) {
+  switch (delegate) {
+    case tasks::core::BaseOptions::GPU:
+      return ::litert::lm::Backend::GPU;
+    case tasks::core::BaseOptions::NPU:
+      return ::litert::lm::Backend::NPU;
+    default:
+      return ::litert::lm::Backend::CPU;
+  }
+}
+
 }  // namespace
 
 UniversalEmbedder::UniversalEmbedder(
@@ -164,12 +176,6 @@ absl::StatusOr<std::unique_ptr<UniversalEmbedder>> UniversalEmbedder::Create(
        .app_id = options->base_options.app_id,
        .app_version = options->base_options.app_version,
        .ca_bundle_path = options->base_options.ca_bundle_path});
-  ::litert::lm::Backend backend = ::litert::lm::Backend::CPU;
-  if (options->base_options.delegate == tasks::core::BaseOptions::GPU) {
-    backend = ::litert::lm::Backend::GPU;
-  } else if (options->base_options.delegate == tasks::core::BaseOptions::NPU) {
-    backend = ::litert::lm::Backend::NPU;
-  }
 
   if (options->base_options.model_asset_path.empty()) {
     return absl::FailedPreconditionError(
@@ -192,9 +198,17 @@ absl::StatusOr<std::unique_ptr<UniversalEmbedder>> UniversalEmbedder::Create(
       ModelAssets::Create(shared_mmap, options->base_options.model_asset_path));
 #endif
 
+  const tasks::core::BaseOptions::Delegate base_delegate =
+      options->base_options.delegate;
   ABSL_ASSIGN_OR_RETURN(
-      auto settings, EmbeddingEngineSettings::CreateDefault(
-                         std::move(model_assets), backend, backend, backend));
+      auto settings,
+      EmbeddingEngineSettings::CreateDefault(
+          std::move(model_assets),
+          ToLiteRtLmBackend(options->text_delegate.value_or(base_delegate)),
+          ToLiteRtLmBackend(options->vision_delegate.value_or(base_delegate)),
+          // Audio defaults to CPU: some audio encoders are CPU-only.
+          ToLiteRtLmBackend(options->audio_delegate.value_or(
+              tasks::core::BaseOptions::CPU))));
 
   if (options->max_input_length.has_value()) {
     settings.SetMaxInputLength(options->max_input_length);

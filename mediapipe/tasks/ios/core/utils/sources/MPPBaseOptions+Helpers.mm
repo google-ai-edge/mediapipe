@@ -47,6 +47,7 @@ using CppBaseOptions = ::mediapipe::tasks::core::BaseOptions;
     case MPPDelegateGPU:
       cppBaseOptions.delegate = CppBaseOptions::Delegate::GPU;
       break;
+    case MPPDelegateDefault:
     case MPPDelegateCPU:
     default:
       cppBaseOptions.delegate = CppBaseOptions::Delegate::CPU;

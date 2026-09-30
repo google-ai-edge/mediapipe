@@ -19,6 +19,7 @@
  * delegate CPU is used.
  */
 typedef NS_ENUM(NSUInteger, MPPDelegate) {
+  MPPDelegateDefault,
   MPPDelegateCPU,
   MPPDelegateGPU,
 } NS_SWIFT_NAME(Delegate);

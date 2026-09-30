@@ -96,10 +96,11 @@ public final class UniversalEmbedder implements AutoCloseable {
         options.visionDelegate().isPresent()
             ? getBackendForDelegate(context, options.visionDelegate().get(), defaultBackend)
             : defaultBackend;
+    // Audio defaults to CPU: some audio encoders are CPU-only.
     Backend audioBackend =
         options.audioDelegate().isPresent()
             ? getBackendForDelegate(context, options.audioDelegate().get(), defaultBackend)
-            : defaultBackend;
+            : new Backend.CPU();
 
     Integer maxInputLength = options.maxInputLength().orElse(null);
     Integer visionTokensPerImage = options.visionTokensPerImage().orElse(null);

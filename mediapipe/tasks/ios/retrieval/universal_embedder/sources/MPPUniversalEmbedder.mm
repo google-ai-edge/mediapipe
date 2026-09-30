@@ -40,6 +40,16 @@
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "mediapipe/tasks/cc/retrieval/universal_embedder/universal_embedder.h"
 
+namespace {
+
+// Maps an `MPPDelegate` to its C++ `BaseOptions::Delegate` counterpart.
+mediapipe::tasks::core::BaseOptions::Delegate CppDelegateFromMPPDelegate(MPPDelegate delegate) {
+  return delegate == MPPDelegateGPU ? mediapipe::tasks::core::BaseOptions::GPU
+                                    : mediapipe::tasks::core::BaseOptions::CPU;
+}
+
+}  // namespace
+
 @interface MPPUniversalEmbedder () {
   std::unique_ptr<mediapipe::tasks::retrieval::universal_embedder::UniversalEmbedder>
       _universalEmbedder;
@@ -71,11 +81,16 @@
     auto cppOptions = std::make_unique<
         mediapipe::tasks::retrieval::universal_embedder::UniversalEmbedderOptions>();
     cppOptions->base_options.model_asset_path = options.baseOptions.modelAssetPath.UTF8String;
-    if (options.baseOptions.delegate == MPPDelegateGPU) {
-      cppOptions->base_options.delegate = mediapipe::tasks::core::BaseOptions::GPU;
-    } else {
-      cppOptions->base_options.delegate = mediapipe::tasks::core::BaseOptions::CPU;
-    }
+    cppOptions->base_options.delegate = CppDelegateFromMPPDelegate(options.baseOptions.delegate);
+    cppOptions->text_delegate = CppDelegateFromMPPDelegate(
+        options.textDelegate == MPPDelegateDefault ? options.baseOptions.delegate
+                                                   : options.textDelegate);
+    cppOptions->vision_delegate = CppDelegateFromMPPDelegate(
+        options.visionDelegate == MPPDelegateDefault ? options.baseOptions.delegate
+                                                     : options.visionDelegate);
+    // Audio defaults to CPU: some audio encoders are CPU-only.
+    cppOptions->audio_delegate = CppDelegateFromMPPDelegate(
+        options.audioDelegate == MPPDelegateDefault ? MPPDelegateCPU : options.audioDelegate);
     cppOptions->l2_normalize = options.l2Normalize;
     if (options.maxInputLength > 0) {
       cppOptions->max_input_length = (int)options.maxInputLength;

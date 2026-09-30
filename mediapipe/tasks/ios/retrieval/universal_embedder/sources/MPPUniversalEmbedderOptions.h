@@ -67,6 +67,28 @@ NS_SWIFT_NAME(UniversalEmbedderOptions)
  */
 @property(nonatomic, copy, nullable) NSString *cacheDir NS_SWIFT_NAME(cacheDirectory);
 
+/**
+ * Delegate for running the text encoder.
+ *
+ * Defaults to `MPPDelegateDefault`, which uses `baseOptions.delegate`.
+ */
+@property(nonatomic) MPPDelegate textDelegate;
+
+/**
+ * Delegate for running the vision encoder.
+ *
+ * Defaults to `MPPDelegateDefault`, which uses `baseOptions.delegate`.
+ */
+@property(nonatomic) MPPDelegate visionDelegate;
+
+/**
+ * Delegate for running the audio encoder.
+ *
+ * Defaults to `MPPDelegateDefault`, which uses `MPPDelegateCPU` regardless of
+ * `baseOptions.delegate`, since some models only support running the audio encoder on CPU.
+ */
+@property(nonatomic) MPPDelegate audioDelegate;
+
 @end
 
 NS_ASSUME_NONNULL_END
