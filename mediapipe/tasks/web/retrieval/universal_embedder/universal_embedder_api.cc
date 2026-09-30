@@ -122,18 +122,13 @@ std::vector<float> ExtractFloatArrayFromJs(emscripten::val float_array_val) {
 // Creates the native UniversalEmbedder instance and returns its pointer as an
 // opaque handle.
 intptr_t CreateUniversalEmbedder(const std::string& model_path,
-                                 bool l2_normalize, bool use_gpu_backend,
-                                 int max_input_length,
+                                 bool l2_normalize, int max_input_length,
                                  int vision_tokens_per_image,
                                  int activation_data_type) {
   DisableLogging();
   auto options = std::make_unique<UniversalEmbedderOptions>();
   options->base_options.model_asset_path = model_path;
-  if (use_gpu_backend) {
-    options->base_options.delegate = tasks::core::BaseOptions::GPU;
-  } else {
-    options->base_options.delegate = tasks::core::BaseOptions::CPU;
-  }
+  options->base_options.delegate = tasks::core::BaseOptions::GPU;
   options->l2_normalize = l2_normalize;
   if (max_input_length > 0) {
     options->max_input_length = max_input_length;

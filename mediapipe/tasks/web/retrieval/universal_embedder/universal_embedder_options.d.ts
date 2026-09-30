@@ -22,8 +22,6 @@ export declare interface UniversalEmbedderBaseOptions {
   modelAssetBuffer?: Uint8Array | ReadableStreamDefaultReader;
   /** The path to the model asset file. */
   modelAssetPath?: string | string;
-  /** The hardware accelerator delegate to use ('CPU' or 'GPU'). */
-  delegate?: 'CPU' | 'GPU';
   /** An optional pre-created GPUDevice to use for GPU inference. */
   device?: GPUDevice;
 }
@@ -43,7 +41,7 @@ export type ActivationDataType = 'FLOAT32' | 'FLOAT16' | 'INT16' | 'INT8';
 
 /** Options to configure the MediaPipe Universal Embedder Task. */
 export declare interface UniversalEmbedderOptions {
-  /** Base options specifying the model asset and delegate. */
+  /** Base options specifying the model asset and WebGPU device. */
   baseOptions: UniversalEmbedderBaseOptions;
   /** Whether to L2-normalize the output embedding vector. Defaults to true. */
   l2Normalize?: boolean;

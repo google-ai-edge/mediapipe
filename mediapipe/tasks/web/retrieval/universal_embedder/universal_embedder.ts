@@ -83,7 +83,6 @@ export declare interface UniversalEmbedderWasmModule extends WasmModule {
   createUniversalEmbedder(
     modelPath: string,
     l2Normalize: boolean,
-    useGpuBackend: boolean,
     maxInputLength: number,
     visionTokensPerImage: number,
     activationDataType: number,
@@ -137,10 +136,9 @@ export class UniversalEmbedder {
     wasmFileset: WasmFileset,
     options: UniversalEmbedderOptions,
   ): Promise<UniversalEmbedder> {
-    const isGpu = options.baseOptions.delegate === 'GPU';
     let device = options.baseOptions.device;
 
-    if (isGpu && !device) {
+    if (!device) {
       device = await UniversalEmbedder.createWebGpuDevice();
     }
 
@@ -248,7 +246,6 @@ export class UniversalEmbedder {
     options: UniversalEmbedderOptions,
     injectedDevice?: GPUDevice,
   ): Promise<void> {
-    const isGpu = options.baseOptions.delegate === 'GPU';
     const l2Normalize = options.l2Normalize !== false;
     let modelPath = options.baseOptions.modelAssetPath
       ? options.baseOptions.modelAssetPath.toString()
@@ -258,12 +255,10 @@ export class UniversalEmbedder {
       injectedDevice ||
       options.baseOptions.device ||
       this.wasmModule.preinitializedWebGPUDevice;
-    if (isGpu && !device) {
+    if (!device) {
       device = await UniversalEmbedder.createWebGpuDevice();
     }
-    if (device) {
-      this.wasmModule.preinitializedWebGPUDevice = device;
-    }
+    this.wasmModule.preinitializedWebGPUDevice = device;
 
     if (options.baseOptions.modelAssetBuffer) {
       const buffer =
@@ -293,7 +288,6 @@ export class UniversalEmbedder {
       this.nativeHandle = await this.wasmModule.createUniversalEmbedder(
         modelPath,
         l2Normalize,
-        isGpu,
         maxInputLength,
         visionTokensPerImage,
         activationDataType,
