@@ -1043,12 +1043,12 @@ TEST(FrameBufferUtil, NV21ConvertRgb) {
   const int kInputSize =
       GetFrameBufferByteSize(kBufferDimension, FrameBuffer::Format::kNV21);
   std::vector<uint8_t> input_data(kInputSize);
-  input_data.data()[0] = 1;
-  input_data.data()[1] = 2;
-  input_data.data()[32] = 7;
-  input_data.data()[33] = 8;
-  input_data.data()[256] = 13;
-  input_data.data()[257] = 14;
+  input_data[0] = 1;
+  input_data[1] = 2;
+  input_data[32] = 7;
+  input_data[33] = 8;
+  input_data[256] = 13;
+  input_data[257] = 14;
   MP_ASSERT_OK_AND_ASSIGN(
       auto input, CreateFromRawBuffer(input_data.data(), kBufferDimension,
                                       FrameBuffer::Format::kNV21));
