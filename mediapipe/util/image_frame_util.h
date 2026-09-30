@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <string>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
@@ -68,6 +69,11 @@ void YUVImageToImageFrame(const YUVImage& yuv_image, ImageFrame* image_frame,
 // format.  Fails if no format is provided.
 void YUVImageToImageFrameFromFormat(const YUVImage& yuv_image,
                                     ImageFrame* image_frame);
+
+// Scales an 8-bit 4:2:0 YUVImage (I420, YV12, NV12, or NV21) to
+// output_width x output_height using box filtering.
+absl::Status ScaleYUVImage(const YUVImage& source, int output_width,
+                           int output_height, YUVImage* destination);
 
 // Convert sRGB values into MPEG YCbCr values.  Notice that MPEG YCbCr
 // values use a smaller range of values than JPEG YCbCr.  The conversion

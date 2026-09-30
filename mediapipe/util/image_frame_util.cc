@@ -20,7 +20,10 @@
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/types/span.h"
+#include "libyuv/scale.h"
 #include "libyuv/video_common.h"
 #include "mediapipe/framework/deps/mathutil.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -29,6 +32,7 @@
 #include "mediapipe/framework/port/aligned_malloc_and_free.h"
 #include "mediapipe/framework/port/libyuv_port.h"
 #include "mediapipe/framework/port/port.h"
+#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 
 namespace mediapipe {
@@ -231,6 +235,65 @@ void YUVImageToImageFrameFromFormat(const YUVImage& yuv_image,
     default:
       ABSL_LOG(FATAL) << "Unsupported YUVImage format.";
   }
+}
+
+absl::Status ScaleYUVImage(const YUVImage& source, int output_width,
+                           int output_height, YUVImage* destination) {
+  RET_CHECK(destination != nullptr);
+  RET_CHECK_LE(source.bit_depth(), 8);
+  RET_CHECK_GT(output_width, 0);
+  RET_CHECK_GT(output_height, 0);
+
+  const int y_size = output_width * output_height;
+  const int uv_width = (output_width + 1) / 2;
+  const int uv_height = (output_height + 1) / 2;
+  const int uv_size = uv_width * uv_height;
+  const libyuv::FourCC format = source.fourcc();
+  if (format == libyuv::FOURCC_I420 || format == libyuv::FOURCC_YV12 ||
+      format == libyuv::FOURCC_ANY) {
+    const int u_plane = (format == libyuv::FOURCC_YV12) ? 2 : 1;
+    const int v_plane = (format == libyuv::FOURCC_YV12) ? 1 : 2;
+    uint8_t* data =
+        reinterpret_cast<uint8_t*>(aligned_malloc(y_size + uv_size * 2, 16));
+    absl::Span<uint8_t> y(data, y_size);
+    absl::Span<uint8_t> u(data + y_size, uv_size);
+    absl::Span<uint8_t> v(data + y_size + uv_size, uv_size);
+    const int rv = libyuv::I420Scale(
+        source.data(0), source.stride(0), source.data(u_plane),
+        source.stride(u_plane), source.data(v_plane), source.stride(v_plane),
+        source.width(), source.height(), y.data(), output_width, u.data(),
+        uv_width, v.data(), uv_width, output_width, output_height,
+        libyuv::kFilterBox);
+    if (rv != 0) {
+      aligned_free(data);
+    }
+    RET_CHECK_EQ(rv, 0);
+    destination->Initialize(
+        libyuv::FOURCC_I420, [data]() { aligned_free(data); }, y, output_width,
+        u, uv_width, v, uv_width, output_width, output_height);
+    return absl::OkStatus();
+  }
+  if (format == libyuv::FOURCC_NV12 || format == libyuv::FOURCC_NV21) {
+    const int uv_stride = uv_width * 2;
+    uint8_t* data =
+        reinterpret_cast<uint8_t*>(aligned_malloc(y_size + uv_size * 2, 16));
+    absl::Span<uint8_t> y(data, y_size);
+    absl::Span<uint8_t> uv(data + y_size, uv_size * 2);
+    const int rv = libyuv::NV12Scale(
+        source.data(0), source.stride(0), source.data(1), source.stride(1),
+        source.width(), source.height(), y.data(), output_width, uv.data(),
+        uv_stride, output_width, output_height, libyuv::kFilterBox);
+    if (rv != 0) {
+      aligned_free(data);
+    }
+    RET_CHECK_EQ(rv, 0);
+    destination->Initialize(
+        format, [data]() { aligned_free(data); }, y, output_width, uv,
+        uv_stride, {}, 0, output_width, output_height);
+    return absl::OkStatus();
+  }
+  return absl::InvalidArgumentError(
+      absl::StrCat("Unsupported YUVImage format: ", format));
 }
 
 void SrgbToMpegYCbCr(const uint8_t r, const uint8_t g, const uint8_t b,  //
