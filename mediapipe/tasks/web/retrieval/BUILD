@@ -32,6 +32,12 @@ ts_library(
     deps = RETRIEVAL_LIBS,
 )
 
+ts_library(
+    name = "logging_utils",
+    srcs = ["logging_utils.ts"],
+    visibility = ["//mediapipe/tasks/web/retrieval:__subpackages__"],
+)
+
 mediapipe_files(srcs = [
     "wasm/retrieval_wasm_internal.js",
     "wasm/retrieval_wasm_internal.wasm",

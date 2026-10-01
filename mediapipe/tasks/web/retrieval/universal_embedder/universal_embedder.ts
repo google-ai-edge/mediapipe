@@ -17,8 +17,11 @@
 import {Embedding} from '../../../../tasks/web/components/containers/embedding_result';
 import {computeCosineSimilarity} from '../../../../tasks/web/components/utils/cosine_similarity';
 import {AsyncMutex} from '../../../../tasks/web/core/async_mutex';
+import {TaskLogger} from '../../../../tasks/web/core/task_logger';
+import {createTasksLogger} from '../../../../tasks/web/core/task_logger_factory';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {streamToUint8Array} from '../../../../tasks/web/genai/llm_inference/model_loading_utils';
+import {getMediapipeApiKey} from '../../../../tasks/web/retrieval/logging_utils';
 import {
   createMediaPipeLib,
   FileLocator,
@@ -129,6 +132,8 @@ export class UniversalEmbedder {
   private isClosed = false;
   private nativeHandle = 0;
   private readonly mutex = new AsyncMutex();
+  private logger?: TaskLogger;
+  private loggerTimestamp = 0;
 
   /**
    * Initializes the Wasm runtime and creates a new UniversalEmbedder instance.
@@ -248,6 +253,12 @@ export class UniversalEmbedder {
     options: UniversalEmbedderOptions,
     injectedDevice?: GPUDevice,
   ): Promise<void> {
+    this.logger = createTasksLogger(
+      'UniversalEmbedder',
+      '',
+      getMediapipeApiKey(),
+    );
+
     const l2Normalize = options.l2Normalize !== false;
     let modelPath = options.baseOptions.modelAssetPath
       ? options.baseOptions.modelAssetPath.toString()
@@ -294,6 +305,7 @@ export class UniversalEmbedder {
         visionTokensPerImage,
         activationDataType,
       );
+      this.logger.logSessionStart();
     } catch (e) {
       this.unlinkVfsFile();
       throw e;
@@ -307,10 +319,13 @@ export class UniversalEmbedder {
   async embedText(text: string): Promise<UniversalEmbedderResult> {
     return this.mutex.runExclusive(async () => {
       this.ensureNotClosed();
+      const timestamp = this.loggerTimestamp++;
+      this.logger!.recordGpuInputArrival(timestamp);
       const floatArray = await this.wasmModule.universalEmbedder_embedText(
         this.nativeHandle,
         text,
       );
+      this.logger!.recordInvocationEnd(timestamp);
       return {
         embeddings: [
           {
@@ -330,10 +345,13 @@ export class UniversalEmbedder {
   async embedImage(imageBytes: Uint8Array): Promise<UniversalEmbedderResult> {
     return this.mutex.runExclusive(async () => {
       this.ensureNotClosed();
+      const timestamp = this.loggerTimestamp++;
+      this.logger!.recordGpuInputArrival(timestamp);
       const floatArray = await this.wasmModule.universalEmbedder_embedImage(
         this.nativeHandle,
         imageBytes,
       );
+      this.logger!.recordInvocationEnd(timestamp);
       return {
         embeddings: [
           {
@@ -353,10 +371,13 @@ export class UniversalEmbedder {
   async embedAudio(audioData: Float32Array): Promise<UniversalEmbedderResult> {
     return this.mutex.runExclusive(async () => {
       this.ensureNotClosed();
+      const timestamp = this.loggerTimestamp++;
+      this.logger!.recordGpuInputArrival(timestamp);
       const floatArray = await this.wasmModule.universalEmbedder_embedAudio(
         this.nativeHandle,
         audioData,
       );
+      this.logger!.recordInvocationEnd(timestamp);
       return {
         embeddings: [
           {
@@ -417,11 +438,14 @@ export class UniversalEmbedder {
           }
         }
 
+        const timestamp = this.loggerTimestamp++;
+        this.logger!.recordGpuInputArrival(timestamp);
         const floatArray =
           await this.wasmModule.universalEmbedder_executeEmbedContent(
             this.nativeHandle,
             builderHandle,
           );
+        this.logger!.recordInvocationEnd(timestamp);
 
         return {
           embeddings: [
@@ -468,6 +492,8 @@ export class UniversalEmbedder {
   close(): void {
     if (!this.isClosed) {
       this.isClosed = true;
+      this.logger!.logSessionEnd();
+      this.logger!.close();
       if (this.nativeHandle !== 0) {
         this.wasmModule.universalEmbedder_close(this.nativeHandle);
         this.nativeHandle = 0;
