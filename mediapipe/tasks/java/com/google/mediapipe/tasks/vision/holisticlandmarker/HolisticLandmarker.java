@@ -615,12 +615,11 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
           .setPoseDetectorGraphOptions(poseDetectorGraphOptions.build())
           .setPoseLandmarksDetectorGraphOptions(poseLandmarkerGraphOptions.build());
 
-      
-          return Any.newBuilder()
-              .setTypeUrl(
-                  "type.googleapis.com/mediapipe.tasks.vision.holistic_landmarker.proto.HolisticLandmarkerGraphOptions")
-              .setValue(holisticLandmarkerGraphOptions.build().toByteString())
-              .build();
+      return Any.newBuilder()
+          .setTypeUrl(
+              "type.googleapis.com/mediapipe.tasks.vision.holistic_landmarker.proto.HolisticLandmarkerGraphOptions")
+          .setValue(holisticLandmarkerGraphOptions.build().toByteString())
+          .build();
     }
   }
 

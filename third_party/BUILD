@@ -343,10 +343,16 @@ java_library(
     ],
 )
 
-java_import(
+# Lite-runtime `com.google.protobuf.Any` for the Android MediaPipe Tasks targets.
+#
+# This must stay on the protobuf lite runtime. The Tasks AARs ship against
+# `protobuf-javalite`, and compiling them against the full runtime.
+# `@com_google_protobuf//java/lite` already bundles the lite well-known types
+# (including `Any`), so this is just a lite-runtime re-export.
+java_library(
     name = "any_java_proto",
-    jars = [
-        "@com_google_protobuf//java/core:libcore.jar",
+    exports = [
+        "@com_google_protobuf//java/lite",
     ],
 )
 
