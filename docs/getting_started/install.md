@@ -441,7 +441,7 @@ build issues.
     OpenCV 3 libraries. FFmpeg will be installed via OpenCV.
 
     ```bash
-    $ brew install opencv@3
+    $ brew install opencv
 
     # There is a known issue caused by the glog dependency. Uninstall glog.
     $ brew uninstall --ignore-dependencies glog
