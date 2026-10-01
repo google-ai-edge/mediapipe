@@ -476,7 +476,7 @@ class ObjectDetector:
     images if needed. In other words, it's not guaranteed to have output per
     input image.
 
-    The `result_callback` prvoides:
+    The `result_callback` provides:
       - A detection result object that contains a list of detections, each
         detection has a bounding box that is expressed in the unrotated input
         frame of reference coordinates system, i.e. in `[0,image_width) x [0,
