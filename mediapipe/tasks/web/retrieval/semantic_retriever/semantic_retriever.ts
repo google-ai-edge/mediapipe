@@ -19,6 +19,9 @@ import type {
   ContentPart,
   EmbeddingProvider,
 } from '../../../../tasks/web/core/embedding_provider';
+import {TaskLogger} from '../../../../tasks/web/core/task_logger';
+import {createTasksLogger} from '../../../../tasks/web/core/task_logger_factory';
+import {getMediapipeApiKey} from '../../../../tasks/web/retrieval/logging_utils';
 
 import type {RetrievalOptions} from './retrieval_options';
 import type {RetrievalRecord} from './retrieval_record';
@@ -43,6 +46,8 @@ export type {ContentPart, EmbeddingProvider};
  */
 export class SemanticRetriever {
   private isClosed = false;
+  private readonly logger: TaskLogger;
+  private loggerTimestamp = 0;
 
   /**
    * Creates a SemanticRetriever from SemanticRetrieverComponents.
@@ -82,7 +87,14 @@ export class SemanticRetriever {
     private readonly components: SemanticRetrieverComponents,
     private readonly vectorStore: VectorStore,
     private readonly textChunker: TextChunker,
-  ) {}
+  ) {
+    this.logger = createTasksLogger(
+      'SemanticRetriever',
+      '',
+      getMediapipeApiKey(),
+    );
+    this.logger.logSessionStart();
+  }
 
   private async embedContent(
     parts: readonly ContentPart[],
@@ -220,6 +232,8 @@ export class SemanticRetriever {
     if (limit <= 0) {
       throw new Error(`'limit' must be greater than 0, got ${limit}.`);
     }
+    const timestamp = this.loggerTimestamp++;
+    this.logger.recordCpuInputArrival(timestamp);
     const queryParts: readonly ContentPart[] =
       typeof query === 'string' ? [{text: query}] : query;
     const queryEmbedding = await this.embedContent(queryParts);
@@ -306,6 +320,7 @@ export class SemanticRetriever {
         break;
       }
     }
+    this.logger.recordInvocationEnd(timestamp);
     return clientResults;
   }
 
@@ -354,6 +369,8 @@ export class SemanticRetriever {
   close(): void {
     if (!this.isClosed) {
       this.isClosed = true;
+      this.logger.logSessionEnd();
+      this.logger.close();
       try {
         this.vectorStore.close();
       } catch {

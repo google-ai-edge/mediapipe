@@ -33,6 +33,9 @@ ts_library(
         "//mediapipe/tasks/web/components/containers:embedding_result",
         "//mediapipe/tasks/web/components/utils:cosine_similarity",
         "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/core:task_logger",
+        "//mediapipe/tasks/web/core:task_logger_factory",
+        "//mediapipe/tasks/web/retrieval:logging_utils",
         "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )
