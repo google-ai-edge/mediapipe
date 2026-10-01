@@ -29,20 +29,20 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/base/log_severity.h"
-#include "absl/log/globals.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/retrieval/universal_embedder/universal_embedder.h"
+#include "runtime/util/logging.h"  // from @litert_lm
 
 namespace mediapipe::tasks::retrieval::universal_embedder {
 namespace {
 
-void DisableLogging() {
-  absl::SetStderrThreshold(absl::LogSeverityAtLeast::kInfinity);
+// Silences extensive internal LiteRT LM logging.
+void DisableLiteRtLmLogging() {
+  litert::lm::SetMinLogSeverity(litert::lm::LogSeverity::kSilent);
 }
 
 // Throws a JavaScript Error exception across the Wasm boundary.
@@ -125,7 +125,7 @@ intptr_t CreateUniversalEmbedder(const std::string& model_path,
                                  bool l2_normalize, int max_input_length,
                                  int vision_tokens_per_image,
                                  int activation_data_type) {
-  DisableLogging();
+  DisableLiteRtLmLogging();
   auto options = std::make_unique<UniversalEmbedderOptions>();
   options->base_options.model_asset_path = model_path;
   options->base_options.delegate = tasks::core::BaseOptions::GPU;
@@ -165,7 +165,7 @@ intptr_t CreateUniversalEmbedder(const std::string& model_path,
 
 emscripten::val UniversalEmbedderEmbedText(intptr_t handle,
                                            const std::string& text) {
-  DisableLogging();
+  DisableLiteRtLmLogging();
   auto* embedder = GetEmbedderFromHandleOrThrow(handle);
   auto res_or = embedder->EmbedText(text);
   if (!res_or.ok()) {
@@ -176,7 +176,7 @@ emscripten::val UniversalEmbedderEmbedText(intptr_t handle,
 
 emscripten::val UniversalEmbedderEmbedImage(intptr_t handle,
                                             emscripten::val image_val) {
-  DisableLogging();
+  DisableLiteRtLmLogging();
   auto* embedder = GetEmbedderFromHandleOrThrow(handle);
   auto res_or = embedder->EmbedImage(ExtractBytesFromJs(image_val));
   if (!res_or.ok()) {
@@ -187,7 +187,7 @@ emscripten::val UniversalEmbedderEmbedImage(intptr_t handle,
 
 emscripten::val UniversalEmbedderEmbedAudio(intptr_t handle,
                                             emscripten::val audio_samples_val) {
-  DisableLogging();
+  DisableLiteRtLmLogging();
   auto* embedder = GetEmbedderFromHandleOrThrow(handle);
   auto res_or =
       embedder->EmbedAudio(ExtractFloatArrayFromJs(audio_samples_val));
@@ -210,21 +210,21 @@ void UniversalEmbedderFreeContentBuilder(intptr_t builder_handle) {
 
 void UniversalEmbedderBuilderAddText(intptr_t builder_handle,
                                      const std::string& text) {
-  DisableLogging();
+  DisableLiteRtLmLogging();
   auto* parts = GetContentBuilderFromHandleOrThrow(builder_handle);
   parts->push_back(UniversalEmbedder::TextPart{text});
 }
 
 void UniversalEmbedderBuilderAddImage(intptr_t builder_handle,
                                       emscripten::val image_val) {
-  DisableLogging();
+  DisableLiteRtLmLogging();
   auto* parts = GetContentBuilderFromHandleOrThrow(builder_handle);
   parts->push_back(UniversalEmbedder::ImagePart{ExtractBytesFromJs(image_val)});
 }
 
 void UniversalEmbedderBuilderAddAudio(intptr_t builder_handle,
                                       emscripten::val audio_samples_val) {
-  DisableLogging();
+  DisableLiteRtLmLogging();
   auto* parts = GetContentBuilderFromHandleOrThrow(builder_handle);
   parts->push_back(
       UniversalEmbedder::AudioPart{ExtractFloatArrayFromJs(audio_samples_val)});
@@ -232,7 +232,7 @@ void UniversalEmbedderBuilderAddAudio(intptr_t builder_handle,
 
 emscripten::val UniversalEmbedderExecuteEmbedContent(intptr_t handle,
                                                      intptr_t builder_handle) {
-  DisableLogging();
+  DisableLiteRtLmLogging();
   auto* embedder = GetEmbedderFromHandleOrThrow(handle);
   auto* parts = GetContentBuilderFromHandleOrThrow(builder_handle);
 
@@ -244,7 +244,7 @@ emscripten::val UniversalEmbedderExecuteEmbedContent(intptr_t handle,
 }
 
 void UniversalEmbedderClose(intptr_t handle) {
-  DisableLogging();
+  DisableLiteRtLmLogging();
   auto* embedder = reinterpret_cast<UniversalEmbedder*>(handle);
   if (embedder) {
     embedder->Close().IgnoreError();
