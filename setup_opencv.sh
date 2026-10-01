@@ -40,8 +40,8 @@ if [ -z "$1" ]
     echo "Installing OpenCV from source"
     if [[ -x "$(command -v apt)" ]]; then
       sudo apt update && sudo apt install build-essential git
-      sudo apt install cmake ffmpeg libavformat-dev libdc1394-22-dev libgtk2.0-dev \
-                       libjpeg-dev libpng-dev libswscale-dev libtbb2 libtbb-dev \
+      sudo apt install cmake ffmpeg libavformat-dev libdc1394-dev libgtk2.0-dev \
+                       libjpeg-dev libpng-dev libswscale-dev libtbbmalloc2 libtbb-dev \
                        libtiff-dev
     elif [[ -x "$(command -v dnf)" ]]; then
       sudo dnf update && sudo dnf install cmake gcc gcc-c git
