@@ -16,6 +16,7 @@
 
 import {Embedding} from '../../../../tasks/web/components/containers/embedding_result';
 import {computeCosineSimilarity} from '../../../../tasks/web/components/utils/cosine_similarity';
+import {AsyncMutex} from '../../../../tasks/web/core/async_mutex';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {streamToUint8Array} from '../../../../tasks/web/genai/llm_inference/model_loading_utils';
 import {
@@ -127,6 +128,7 @@ export class UniversalEmbedder {
   private static instanceCounter = 0;
   private isClosed = false;
   private nativeHandle = 0;
+  private readonly mutex = new AsyncMutex();
 
   /**
    * Initializes the Wasm runtime and creates a new UniversalEmbedder instance.
@@ -303,20 +305,22 @@ export class UniversalEmbedder {
    * @export
    */
   async embedText(text: string): Promise<UniversalEmbedderResult> {
-    this.ensureNotClosed();
-    const floatArray = await this.wasmModule.universalEmbedder_embedText(
-      this.nativeHandle,
-      text,
-    );
-    return {
-      embeddings: [
-        {
-          floatEmbedding: floatArray ? Array.from(floatArray) : [],
-          headIndex: 0,
-          headName: 'default',
-        },
-      ],
-    };
+    return this.mutex.runExclusive(async () => {
+      this.ensureNotClosed();
+      const floatArray = await this.wasmModule.universalEmbedder_embedText(
+        this.nativeHandle,
+        text,
+      );
+      return {
+        embeddings: [
+          {
+            floatEmbedding: floatArray ? Array.from(floatArray) : [],
+            headIndex: 0,
+            headName: 'default',
+          },
+        ],
+      };
+    });
   }
 
   /**
@@ -324,20 +328,22 @@ export class UniversalEmbedder {
    * @export
    */
   async embedImage(imageBytes: Uint8Array): Promise<UniversalEmbedderResult> {
-    this.ensureNotClosed();
-    const floatArray = await this.wasmModule.universalEmbedder_embedImage(
-      this.nativeHandle,
-      imageBytes,
-    );
-    return {
-      embeddings: [
-        {
-          floatEmbedding: floatArray ? Array.from(floatArray) : [],
-          headIndex: 0,
-          headName: 'default',
-        },
-      ],
-    };
+    return this.mutex.runExclusive(async () => {
+      this.ensureNotClosed();
+      const floatArray = await this.wasmModule.universalEmbedder_embedImage(
+        this.nativeHandle,
+        imageBytes,
+      );
+      return {
+        embeddings: [
+          {
+            floatEmbedding: floatArray ? Array.from(floatArray) : [],
+            headIndex: 0,
+            headName: 'default',
+          },
+        ],
+      };
+    });
   }
 
   /**
@@ -345,20 +351,22 @@ export class UniversalEmbedder {
    * @export
    */
   async embedAudio(audioData: Float32Array): Promise<UniversalEmbedderResult> {
-    this.ensureNotClosed();
-    const floatArray = await this.wasmModule.universalEmbedder_embedAudio(
-      this.nativeHandle,
-      audioData,
-    );
-    return {
-      embeddings: [
-        {
-          floatEmbedding: floatArray ? Array.from(floatArray) : [],
-          headIndex: 0,
-          headName: 'default',
-        },
-      ],
-    };
+    return this.mutex.runExclusive(async () => {
+      this.ensureNotClosed();
+      const floatArray = await this.wasmModule.universalEmbedder_embedAudio(
+        this.nativeHandle,
+        audioData,
+      );
+      return {
+        embeddings: [
+          {
+            floatEmbedding: floatArray ? Array.from(floatArray) : [],
+            headIndex: 0,
+            headName: 'default',
+          },
+        ],
+      };
+    });
   }
 
   /**
@@ -373,58 +381,61 @@ export class UniversalEmbedder {
       throw new Error('Content must be an array of ContentParts.');
     }
 
-    const builderHandle =
-      this.wasmModule.universalEmbedder_createContentBuilder();
-    try {
-      for (const part of content) {
-        if ('text' in part && typeof part.text === 'string') {
-          this.wasmModule.universalEmbedder_builderAddText(
-            builderHandle,
-            part.text,
-          );
-        } else if (
-          'imageBytes' in part &&
-          (part.imageBytes instanceof Uint8Array ||
-            typeof part.imageBytes === 'string')
-        ) {
-          this.wasmModule.universalEmbedder_builderAddImage(
-            builderHandle,
-            part.imageBytes,
-          );
-        } else if (
-          'audioData' in part &&
-          (part.audioData instanceof Float32Array ||
-            Array.isArray(part.audioData))
-        ) {
-          this.wasmModule.universalEmbedder_builderAddAudio(
-            builderHandle,
-            part.audioData,
-          );
-        } else {
-          throw new Error(
-            `Unsupported or invalid ContentPart: ${JSON.stringify(part)}`,
-          );
+    return this.mutex.runExclusive(async () => {
+      this.ensureNotClosed();
+      const builderHandle =
+        this.wasmModule.universalEmbedder_createContentBuilder();
+      try {
+        for (const part of content) {
+          if ('text' in part && typeof part.text === 'string') {
+            this.wasmModule.universalEmbedder_builderAddText(
+              builderHandle,
+              part.text,
+            );
+          } else if (
+            'imageBytes' in part &&
+            (part.imageBytes instanceof Uint8Array ||
+              typeof part.imageBytes === 'string')
+          ) {
+            this.wasmModule.universalEmbedder_builderAddImage(
+              builderHandle,
+              part.imageBytes,
+            );
+          } else if (
+            'audioData' in part &&
+            (part.audioData instanceof Float32Array ||
+              Array.isArray(part.audioData))
+          ) {
+            this.wasmModule.universalEmbedder_builderAddAudio(
+              builderHandle,
+              part.audioData,
+            );
+          } else {
+            throw new Error(
+              `Unsupported or invalid ContentPart: ${JSON.stringify(part)}`,
+            );
+          }
         }
+
+        const floatArray =
+          await this.wasmModule.universalEmbedder_executeEmbedContent(
+            this.nativeHandle,
+            builderHandle,
+          );
+
+        return {
+          embeddings: [
+            {
+              floatEmbedding: floatArray ? Array.from(floatArray) : [],
+              headIndex: 0,
+              headName: 'default',
+            },
+          ],
+        };
+      } finally {
+        this.wasmModule.universalEmbedder_freeContentBuilder(builderHandle);
       }
-
-      const floatArray =
-        await this.wasmModule.universalEmbedder_executeEmbedContent(
-          this.nativeHandle,
-          builderHandle,
-        );
-
-      return {
-        embeddings: [
-          {
-            floatEmbedding: floatArray ? Array.from(floatArray) : [],
-            headIndex: 0,
-            headName: 'default',
-          },
-        ],
-      };
-    } finally {
-      this.wasmModule.universalEmbedder_freeContentBuilder(builderHandle);
-    }
+    });
   }
 
   /**

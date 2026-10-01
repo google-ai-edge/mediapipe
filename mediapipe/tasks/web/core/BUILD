@@ -15,6 +15,23 @@ ts_declaration(
 )
 
 ts_library(
+    name = "async_mutex",
+    srcs = ["async_mutex.ts"],
+)
+
+ts_library(
+    name = "async_mutex_test_lib",
+    testonly = True,
+    srcs = ["async_mutex_test.ts"],
+    deps = [":async_mutex"],
+)
+
+jasmine_node_test(
+    name = "async_mutex_test",
+    srcs = [":async_mutex_test_lib"],
+)
+
+ts_library(
     name = "task_logger",
     srcs = ["task_logger.ts"],
 )
