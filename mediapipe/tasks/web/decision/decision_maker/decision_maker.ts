@@ -246,6 +246,13 @@ export class DecisionMaker extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new Decision based
    * on options.
+   *
+   * @export
+   * @param wasmFileset A configuration object that provides the location of
+   *     the Wasm binary and its loader.
+   * @param options The options for the DecisionMaker. Note that either a path
+   *     to the model or the model itself needs to be provided (via
+   *     `baseOptions`).
    */
   static async createFromOptions(
     wasmFileset: WasmFileset,
@@ -274,6 +281,14 @@ export class DecisionMaker extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new Decision from
    * model asset path.
+   *
+   * @export
+   * @param wasmFileset A configuration object that provides the location of
+   *     the Wasm binary and its loader.
+   * @param modelAssetPath The path to the model asset.
+   * @param backendType The backend type (0=AUTO, 1=ENCODER, 2=DIRECT_LOGIT,
+   *     3=EMBEDDING).
+   * @param maxNumTokens The maximum number of tokens in prompt context.
    */
   static createFromModelPath(
     wasmFileset: WasmFileset,
@@ -293,6 +308,15 @@ export class DecisionMaker extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new Decision from
    * model buffer.
+   *
+   * @export
+   * @param wasmFileset A configuration object that provides the location of
+   *     the Wasm binary and its loader.
+   * @param modelAssetBuffer An array or a stream containing a binary
+   *     representation of the model.
+   * @param backendType The backend type (0=AUTO, 1=ENCODER, 2=DIRECT_LOGIT,
+   *     3=EMBEDDING).
+   * @param maxNumTokens The maximum number of tokens in prompt context.
    */
   static createFromModelBuffer(
     wasmFileset: WasmFileset,
@@ -321,17 +345,30 @@ export class DecisionMaker extends TaskRunner {
     return 'DecisionMaker';
   }
 
-  /** Maximum token window supported by the active model/session. */
+  /**
+   * Maximum token window supported by the active model/session.
+   *
+   * @export
+   */
   get contextWindow(): number {
     return this.maxNumTokens;
   }
 
-  /** Estimated token usage of the active schema and most recent evaluation. */
+  /**
+   * Estimated token usage of the active schema and most recent evaluation.
+   *
+   * @export
+   */
   get contextUsage(): number {
     return this.lastContextUsage;
   }
 
-  /** Updates the session-bound ClassifierSchema used by `classify()`. */
+  /**
+   * Updates the session-bound ClassifierSchema used by `classify()`.
+   *
+   * @export
+   * @param schema The schema to bind to this session.
+   */
   setSchema(schema: ClassifierSchema): void {
     this.sessionSchema = schema;
     this.lastContextUsage = this.computeSchemaTokens(schema);
@@ -339,6 +376,9 @@ export class DecisionMaker extends TaskRunner {
 
   /**
    * Prewarms the underlying engine KV/prefix cache for the given schema.
+   *
+   * @export
+   * @param schema The schema whose shared prefix should be prewarmed.
    */
   async prewarm(schema: ClassifierSchema): Promise<void> {
     if (this.makerPtr === 0) return;
@@ -380,6 +420,10 @@ export class DecisionMaker extends TaskRunner {
   /**
    * Estimates the total token usage for evaluating `input` (and optional
    * per-call `context`) against the session schema.
+   *
+   * @export
+   * @param input The input text to be evaluated.
+   * @param options Optional per-call evaluation options.
    */
   async measureContextUsage(
     input: string,
@@ -498,6 +542,13 @@ export class DecisionMaker extends TaskRunner {
     return {ptr, rawPtr, size: totalSize};
   }
 
+  /**
+   * Sets the options for the DecisionMaker and initializes the underlying
+   * engine. Options cannot be updated once the engine has been created.
+   *
+   * @export
+   * @param options The options for the DecisionMaker.
+   */
   override async setOptions(options: DecisionMakerOptions): Promise<void> {
     if (this.makerPtr !== 0) {
       throw new Error(
@@ -522,10 +573,13 @@ export class DecisionMaker extends TaskRunner {
 
     if (typeof navigator !== 'undefined' && navigator.gpu) {
       try {
-        const wasmModule = this.graphRunner.wasmModule as unknown as {
-          preinitializedWebGPUDevice?: GPUDevice;
-        };
-        if (!wasmModule.preinitializedWebGPUDevice) {
+        // Use quoted property access: Emscripten reads this field by name
+        // from the Module object, so it must not be renamed by the compiler.
+        const wasmModule = this.graphRunner.wasmModule as unknown as Record<
+          string,
+          unknown
+        >;
+        if (!wasmModule['preinitializedWebGPUDevice']) {
           const adapter = await navigator.gpu.requestAdapter({
             powerPreference: 'high-performance',
           });
@@ -573,10 +627,10 @@ export class DecisionMaker extends TaskRunner {
                 } catch {}
               }
             }
-            wasmModule.preinitializedWebGPUDevice = device;
+            wasmModule['preinitializedWebGPUDevice'] = device;
           }
         }
-        if (wasmModule.preinitializedWebGPUDevice) {
+        if (wasmModule['preinitializedWebGPUDevice']) {
           const globalScope = self as unknown as Record<string, unknown>;
           if (
             typeof globalScope['Module'] === 'object' &&
@@ -584,7 +638,7 @@ export class DecisionMaker extends TaskRunner {
           ) {
             (globalScope['Module'] as Record<string, unknown>)[
               'preinitializedWebGPUDevice'
-            ] = wasmModule.preinitializedWebGPUDevice;
+            ] = wasmModule['preinitializedWebGPUDevice'];
           }
         }
       } catch (e) {
@@ -662,6 +716,11 @@ export class DecisionMaker extends TaskRunner {
 
   /**
    * Evaluates a Boolean Predicate condition against input text.
+   *
+   * @export
+   * @param text The input text to be evaluated.
+   * @param question The boolean question to evaluate.
+   * @return The boolean evaluation result.
    */
   evaluateBoolean(
     text: string,
@@ -686,6 +745,11 @@ export class DecisionMaker extends TaskRunner {
 
   /**
    * Evaluates a Categorical Choice against input text.
+   *
+   * @export
+   * @param text The input text to be evaluated.
+   * @param question The choice question to evaluate.
+   * @return The choice evaluation result.
    */
   evaluateChoice(
     text: string,
@@ -714,6 +778,11 @@ export class DecisionMaker extends TaskRunner {
 
   /**
    * Evaluates an Ordinal Score rubric against input text.
+   *
+   * @export
+   * @param text The input text to be evaluated.
+   * @param question The score question to evaluate.
+   * @return The score evaluation result.
    */
   async evaluateScore(
     text: string,
@@ -746,6 +815,12 @@ export class DecisionMaker extends TaskRunner {
    * Evaluates a multi-question `ClassifierSchema` against `input` and returns
    * a unified `ClassifierResult` record keyed by question `id` (compatible
    * with `window.Classifier`).
+   *
+   * @export
+   * @param input The input text to be evaluated.
+   * @param schema The schema containing the questions to evaluate.
+   * @param options Optional per-call evaluation options.
+   * @return The results keyed by question `id`.
    */
   async evaluate(
     input: string,
@@ -859,6 +934,12 @@ export class DecisionMaker extends TaskRunner {
 
   /**
    * Evaluates a multi-question `ClassifierSchema` across a batch of `inputs`.
+   *
+   * @export
+   * @param inputs The input texts to be evaluated.
+   * @param schema The schema containing the questions to evaluate.
+   * @param options Optional per-call evaluation options.
+   * @return One result per input, in the same order as `inputs`.
    */
   async evaluateBatch(
     inputs: string[],
@@ -875,6 +956,11 @@ export class DecisionMaker extends TaskRunner {
   /**
    * Evaluates `input` against the session-bound `ClassifierSchema` configured
    * via `DecisionMakerOptions` or `setSchema()`.
+   *
+   * @export
+   * @param input The input text to be evaluated.
+   * @param options Optional per-call evaluation options.
+   * @return The results keyed by question `id`.
    */
   async classify(
     input: string,
@@ -892,6 +978,12 @@ export class DecisionMaker extends TaskRunner {
   /**
    * Evaluates a Boolean Predicate condition against a batch of input texts
    * (with an optional sharedPrefix for candidate batching).
+   *
+   * @export
+   * @param texts The input texts to be evaluated.
+   * @param question The boolean question to evaluate.
+   * @param sharedPrefix An optional prefix shared by all inputs.
+   * @return One result per input text.
    */
   async evaluateBooleanBatch(
     texts: string[],
@@ -930,6 +1022,12 @@ export class DecisionMaker extends TaskRunner {
   /**
    * Evaluates a Categorical Choice against a batch of input texts
    * (with an optional sharedPrefix for candidate batching).
+   *
+   * @export
+   * @param texts The input texts to be evaluated.
+   * @param question The choice question to evaluate.
+   * @param sharedPrefix An optional prefix shared by all inputs.
+   * @return One result per input text.
    */
   async evaluateChoiceBatch(
     texts: string[],
@@ -972,6 +1070,12 @@ export class DecisionMaker extends TaskRunner {
   /**
    * Evaluates an Ordinal Score rubric against a batch of input texts
    * (with an optional sharedPrefix for candidate batching).
+   *
+   * @export
+   * @param texts The input texts to be evaluated.
+   * @param question The score question to evaluate.
+   * @param sharedPrefix An optional prefix shared by all inputs.
+   * @return One result per input text.
    */
   async evaluateScoreBatch(
     texts: string[],
@@ -1015,6 +1119,11 @@ export class DecisionMaker extends TaskRunner {
     return results;
   }
 
+  /**
+   * Closes the DecisionMaker and releases the native engine and model memory.
+   *
+   * @export
+   */
   override close(): void {
     if (this.isClosed) return;
     this.isClosed = true;
