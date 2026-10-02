@@ -207,6 +207,75 @@ class SerialDispatcherTest(parameterized.TestCase):
 
     dispatcher.close()
 
+  def test_task_close_function_runs_once_when_called_concurrently(self):
+    mock_lib = mock.MagicMock(spec_set=["MpFooClose"])
+    num_threads = 8
+    start = threading.Barrier(num_threads)
+    signatures = [_register_func("MpFooClose", [ctypes.c_void_p])]
+    dispatcher = serial_dispatcher.SerialDispatcher(mock_lib, signatures)
+
+    def close():
+      start.wait()
+      dispatcher.MpFooClose(1)
+
+    threads = [threading.Thread(target=close) for _ in range(num_threads)]
+    for thread in threads:
+      thread.start()
+    for thread in threads:
+      thread.join()
+
+    # Freeing the native task twice would be a double free.
+    mock_lib.MpFooClose.assert_called_once()
+    dispatcher.close()
+
+  def test_calls_queued_behind_task_close_function_are_not_dispatched(self):
+    mock_lib = mock.MagicMock(spec_set=["MpFooClose", "MpFooUse"])
+    use_started = threading.Event()
+    use_may_complete = threading.Event()
+
+    def use(*unused_args):
+      use_started.set()
+      use_may_complete.wait()
+
+    mock_lib.MpFooUse.side_effect = use
+    signatures = [
+        _register_func("MpFooClose", [ctypes.c_void_p]),
+        _register_func("MpFooUse", [ctypes.c_void_p]),
+    ]
+    dispatcher = serial_dispatcher.SerialDispatcher(mock_lib, signatures)
+
+    in_flight = threading.Thread(target=dispatcher.MpFooUse, args=(1,))
+    in_flight.start()
+    use_started.wait()
+    # Both of these wait behind the in-flight call. `MpFooClose` frees the
+    # handle, so `MpFooUse` must not reach the library after it.
+    closer = threading.Thread(target=dispatcher.MpFooClose, args=(1,))
+    closer.start()
+    late_user = threading.Thread(target=dispatcher.MpFooUse, args=(1,))
+    late_user.start()
+    use_may_complete.set()
+    for thread in (in_flight, closer, late_user):
+      thread.join()
+
+    mock_lib.MpFooClose.assert_called_once()
+    # The in-flight call, plus the late call only if it ran before the close.
+    self.assertLessEqual(mock_lib.MpFooUse.call_count, 2)
+    mock_lib.MpFooUse.reset_mock()
+    self.assertIsNone(dispatcher.MpFooUse(1))
+    mock_lib.MpFooUse.assert_not_called()
+    dispatcher.close()
+
+  def test_close_after_task_close_function_shuts_down_executor(self):
+    mock_lib = mock.MagicMock(spec_set=["MpFooClose"])
+    signatures = [_register_func("MpFooClose", [ctypes.c_void_p])]
+    dispatcher = serial_dispatcher.SerialDispatcher(mock_lib, signatures)
+
+    dispatcher.MpFooClose(1)
+    dispatcher.close()
+
+    with self.assertRaises(RuntimeError):
+      dispatcher._executor.submit(lambda: None)
+
 
 if __name__ == "__main__":
   absltest.main()
