@@ -283,13 +283,6 @@ class Tensor {
       ahwb_usage_->release_callbacks.push_back(std::move(callback));
     }
 
-    // Passed `callback` is invoked when the underlying HardwareBuffer is
-    // released (e.g., on destruction or pool eviction).
-    void AddHardwareBufferReleaseCallback(
-        absl::AnyInvocable<void() &&> callback) const {
-      hardware_buffer_->AddReleaseCallback(std::move(callback));
-    }
-
    protected:
     friend class Tensor;
     AHardwareBufferView(HardwareBuffer* hardware_buffer,

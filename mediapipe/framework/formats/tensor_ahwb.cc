@@ -230,24 +230,11 @@ absl::Status Tensor::AllocateAHardwareBuffer() const {
 bool Tensor::AllocateAhwbMapToSsbo() const {
   if (__builtin_available(android 26, *)) {
     if (AllocateAHardwareBuffer().ok()) {
-      auto& releaser = gl_context_->GetCachedAttachment(kAhwbGpuReleaser);
-      GLuint cached_ssbo = releaser.LookupSsbo(ahwb_->GetAHardwareBuffer());
-      if (cached_ssbo != GL_INVALID_INDEX) {
-        opengl_buffer_ = cached_ssbo;
-        return true;
-      }
-      glGenBuffers(1, &opengl_buffer_);
-      glBindBuffer(GL_SHADER_STORAGE_BUFFER, opengl_buffer_);
-      if (MapAHardwareBufferToGlBuffer(ahwb_->GetAHardwareBuffer(),
-                                       ahwb_->spec().width)
+      if (MapAHardwareBufferToGlBuffer(ahwb_->GetAHardwareBuffer(), bytes())
               .ok()) {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-        releaser.RegisterSsbo(*ahwb_, opengl_buffer_);
         return true;
       }
-      glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-      glDeleteBuffers(1, &opengl_buffer_);
-      opengl_buffer_ = GL_INVALID_INDEX;
       // Unable to make OpenGL <-> AHWB binding. Use regular SSBO instead.
       ahwb_.reset();
     }
@@ -337,9 +324,6 @@ absl::Status Tensor::ReleaseAhwbStuff() {
   write_complete_fence_fd_.Reset();
   if (__builtin_available(android 26, *)) {
     if (ahwb_) {
-      // opengl_buffer_ is cached in kAhwbGpuReleaser::ssbo_cache_ and owned by
-      // the GlContext attachment, so detach it from this Tensor instance.
-      opengl_buffer_ = GL_INVALID_INDEX;
       const bool gl_operation_maybe_pending =
           ssbo_read_ != 0 || fence_sync_ != EGL_NO_SYNC_KHR;
       if (gl_operation_maybe_pending && gl_context_ == nullptr) {
@@ -352,10 +336,11 @@ absl::Status Tensor::ReleaseAhwbStuff() {
         // Delay release until the GPU usage is finished.
         ABSL_RETURN_IF_ERROR(gl_context_->Run([this]() -> absl::Status {
           auto& releaser = gl_context_->GetCachedAttachment(kAhwbGpuReleaser);
-          return releaser.AddAndFreeUnusedResources(ahwb_, GL_INVALID_INDEX,
+          return releaser.AddAndFreeUnusedResources(ahwb_, opengl_buffer_,
                                                     fence_sync_, ssbo_read_,
                                                     std::move(ahwb_usages_));
         }));
+        opengl_buffer_ = GL_INVALID_INDEX;
 #else
         return absl::InternalError("OpenGL ES 3.1 is not spported.");
 #endif

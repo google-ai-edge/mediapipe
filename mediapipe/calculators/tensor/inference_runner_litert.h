@@ -200,36 +200,19 @@ class InferenceRunnerLiteRt : public InferenceRunner {
       const std::vector<litert::SimpleSignature>& signatures);
 
 #if MEDIAPIPE_TENSOR_USE_AHWB
-  struct AhwbBufferCache {
-    absl::Mutex mutex;
-    absl::flat_hash_map<AHardwareBuffer*, std::vector<litert::TensorBuffer>>
-        entries ABSL_GUARDED_BY(mutex);
-  };
-
-  // Returns true if `handle` is already bound in `ctx` or in an active async
-  // run, meaning its underlying `LiteRtTensorBufferT` (and mutable `event_`)
-  // must not be shared with another input/output binding.
-  bool IsAhwbTensorBufferInUse(LiteRtTensorBuffer handle,
-                               const InferenceRunContext& ctx) const;
-
-  // Looks up or creates a cached LiteRT TensorBuffer for the given AHWB view,
-  // validating that the cached TensorType (including strides) matches
-  // `tensor_type`, ensuring the cached instance is not concurrently in use, and
-  // registering an eviction callback on the underlying HardwareBuffer.
-  absl::StatusOr<litert::TensorBuffer> GetOrCreateAhwbTensorBuffer(
-      const Tensor::AHardwareBufferView& ahwb_view,
-      const litert::RankedTensorType& tensor_type,
-      const InferenceRunContext& ctx);
-
   // Creates an input tensor buffer from an AHardwareBuffer with zero-copy.
   absl::StatusOr<litert::TensorBuffer> CreateAhwbInputTensorBufferFromMpTensor(
       const Tensor& mp_input_tensor,
-      const litert::RankedTensorType& tensor_type, InferenceRunContext& ctx);
+      const litert::RankedTensorType& tensor_type,
+      std::vector<InferenceRunnerLiteRt::MpTensorReadView>&
+          mp_input_tensor_views);
 
   // Creates an output tensor buffer from an AHardwareBuffer with zero-copy.
   absl::StatusOr<litert::TensorBuffer> CreateAhwbOutputTensorBufferFromMpTensor(
       const Tensor& mp_output_tensor,
-      const litert::RankedTensorType& tensor_type, InferenceRunContext& ctx);
+      const litert::RankedTensorType& tensor_type,
+      std::vector<InferenceRunnerLiteRt::MpTensorWriteView>&
+          mp_output_tensor_views);
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
@@ -429,13 +412,6 @@ class InferenceRunnerLiteRt : public InferenceRunner {
   // Precomputed buffer requirements for the default signature's input tensors.
   std::vector<litert::TensorBufferRequirements>
       cached_input_buffer_requirements_;
-
-#if MEDIAPIPE_TENSOR_USE_AHWB
-  // Cache of LiteRT TensorBuffers created from pooled AHardwareBuffer handles
-  // so OpenCL memory imports (clImportMemoryARM) are reused across frames.
-  std::shared_ptr<AhwbBufferCache> ahwb_buffer_cache_ =
-      std::make_shared<AhwbBufferCache>();
-#endif  // MEDIAPIPE_TENSOR_USE_AHWB
 };
 
 }  // namespace mediapipe

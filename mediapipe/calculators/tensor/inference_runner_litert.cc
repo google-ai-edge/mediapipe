@@ -182,35 +182,12 @@ absl::StatusOr<litert::qualcomm::QualcommOptions::LogLevel> ToLiteRtLogLevel(
   }
 }
 
-bool CanUseAhwbForInput(
-    const Tensor& input_tensor,
-    absl::Span<const litert::TensorBufferType> supported_types) {
-  // Tensor::GetAHardwareBufferReadView() does not support converting from
-  // OpenGL 2D textures.
-  if (input_tensor.ready_as_opengl_texture_2d()) {
-    return false;
-  }
-  // Prefer direct GL-CL buffer sharing (`kGlBuffer`) when available if the
-  // input tensor is an OpenGL buffer not already backed by AHWB.
-  if (!input_tensor.ready_as_ahwb() && input_tensor.ready_as_opengl_buffer() &&
-      absl::c_contains(supported_types, litert::TensorBufferType::kGlBuffer)) {
-    return false;
-  }
-  return true;
-}
-
 // Returns the best supported LiteRT tensor buffer type.
 absl::StatusOr<litert::TensorBufferType> ChooseBestBufferType(
-    const litert::TensorBufferRequirements& buffer_requirements,
-    const Tensor* input_tensor = nullptr) {
+    const litert::TensorBufferRequirements& buffer_requirements) {
   LITERT_ASSIGN_OR_RETURN(const auto supported_types,
                           buffer_requirements.SupportedTypes());
   for (const auto& buffer_type : kPreferredBufferTypes) {
-    if (buffer_type == litert::TensorBufferType::kAhwb &&
-        input_tensor != nullptr &&
-        !CanUseAhwbForInput(*input_tensor, supported_types)) {
-      continue;
-    }
     if (absl::c_contains(supported_types, buffer_type)) {
       return buffer_type;
     }
@@ -527,32 +504,6 @@ InferenceRunnerLiteRt::Create(
             cache.cache_only_compiled_programs()));
       }
     }
-    if (options.gpu().has_priority()) {
-      switch (options.gpu().priority()) {
-        case InferenceCalculatorOptions::Delegate::LiteRt::Gpu::PRIORITY_HIGH:
-          LITERT_RETURN_IF_ERROR(
-              gpu_options.SetPriority(litert::GpuOptions::Priority::kHigh));
-          break;
-        case InferenceCalculatorOptions::Delegate::LiteRt::Gpu::PRIORITY_NORMAL:
-          LITERT_RETURN_IF_ERROR(
-              gpu_options.SetPriority(litert::GpuOptions::Priority::kNormal));
-          break;
-        case InferenceCalculatorOptions::Delegate::LiteRt::Gpu::PRIORITY_LOW:
-          LITERT_RETURN_IF_ERROR(
-              gpu_options.SetPriority(litert::GpuOptions::Priority::kLow));
-          break;
-        default:
-          break;
-      }
-    }
-    if (options.gpu().has_convert_weights_on_gpu()) {
-      LITERT_RETURN_IF_ERROR(gpu_options.SetConvertWeightsOnGpu(
-          options.gpu().convert_weights_on_gpu()));
-    }
-    if (options.gpu().has_prefer_texture_weights()) {
-      LITERT_RETURN_IF_ERROR(gpu_options.SetPreferTextureWeights(
-          options.gpu().prefer_texture_weights()));
-    }
   }
   if (accelerator & litert::HwAccelerators::kNpu) {
     if (options.npu().has_darwinn()) {
@@ -735,12 +686,6 @@ InferenceRunnerLiteRt::~InferenceRunnerLiteRt() {
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   if (gl_context_) {
     gl_context_->Run([this]() {
-#if MEDIAPIPE_TENSOR_USE_AHWB
-      {
-        absl::MutexLock lock(&ahwb_buffer_cache_->mutex);
-        ahwb_buffer_cache_->entries.clear();
-      }
-#endif  // MEDIAPIPE_TENSOR_USE_AHWB
       managed_input_buffers_.clear();
       managed_output_buffers_.clear();
       feedback_manager_.reset();
@@ -749,14 +694,6 @@ InferenceRunnerLiteRt::~InferenceRunnerLiteRt() {
     });
   }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
-#if MEDIAPIPE_TENSOR_USE_AHWB
-  // Fallback for runners without a GL context (or non-GL builds); a no-op if
-  // the cache was already cleared on the GL thread above.
-  {
-    absl::MutexLock lock(&ahwb_buffer_cache_->mutex);
-    ahwb_buffer_cache_->entries.clear();
-  }
-#endif  // MEDIAPIPE_TENSOR_USE_AHWB
   managed_input_buffers_.clear();
   managed_output_buffers_.clear();
   feedback_manager_.reset();
@@ -1071,74 +1008,18 @@ absl::StatusOr<int> DupFd(int fd) {
   return dup_fd;
 }
 
-bool InferenceRunnerLiteRt::IsAhwbTensorBufferInUse(
-    LiteRtTensorBuffer handle, const InferenceRunContext& ctx) const {
-  auto contains_handle = [handle](const std::vector<litert::TensorBuffer>& v) {
-    return absl::c_any_of(
-        v, [handle](const auto& buf) { return buf.Get() == handle; });
-  };
-  if (contains_handle(ctx.litert_inputs) ||
-      contains_handle(ctx.litert_outputs)) {
-    return true;
-  }
-  if (run_async_) {
-    absl::MutexLock lock(&async_runs_mutex_);
-    for (const auto& state : active_async_runs_) {
-      if (contains_handle(state.context.litert_inputs) ||
-          contains_handle(state.context.litert_outputs)) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-absl::StatusOr<litert::TensorBuffer>
-InferenceRunnerLiteRt::GetOrCreateAhwbTensorBuffer(
-    const Tensor::AHardwareBufferView& ahwb_view,
-    const litert::RankedTensorType& tensor_type,
-    const InferenceRunContext& ctx) {
-  AHardwareBuffer* ahwb = ahwb_view.handle();
-  absl::MutexLock lock(&ahwb_buffer_cache_->mutex);
-  auto [it, inserted] = ahwb_buffer_cache_->entries.try_emplace(ahwb);
-  if (inserted) {
-    ahwb_view.AddHardwareBufferReleaseCallback(
-        [weak_cache = std::weak_ptr<AhwbBufferCache>(ahwb_buffer_cache_),
-         ahwb]() {
-          if (auto cache = weak_cache.lock()) {
-            absl::MutexLock lock(&cache->mutex);
-            cache->entries.erase(ahwb);
-          }
-        });
-  }
-  std::vector<litert::TensorBuffer>& cached_buffers = it->second;
-  for (auto& candidate : cached_buffers) {
-    LITERT_ASSIGN_OR_RETURN(auto cached_type, candidate.TensorType());
-    // RankedTensorType::operator== compares element type and layout
-    // (dimensions and strides).
-    if (cached_type == tensor_type &&
-        !IsAhwbTensorBufferInUse(candidate.Get(), ctx)) {
-      LITERT_ASSIGN_OR_RETURN(auto duplicated_buffer, candidate.Duplicate());
-      return duplicated_buffer;
-    }
-  }
-  LITERT_ASSIGN_OR_RETURN(auto new_buffer, litert::TensorBuffer::CreateFromAhwb(
-                                               *environment_, tensor_type, ahwb,
-                                               /*ahwb_offset=*/0));
-  cached_buffers.push_back(std::move(new_buffer));
-  LITERT_ASSIGN_OR_RETURN(auto duplicated_buffer,
-                          cached_buffers.back().Duplicate());
-  return duplicated_buffer;
-}
-
 absl::StatusOr<litert::TensorBuffer>
 InferenceRunnerLiteRt::CreateAhwbInputTensorBufferFromMpTensor(
     const Tensor& mp_input_tensor, const litert::RankedTensorType& tensor_type,
-    InferenceRunContext& ctx) {
+    std::vector<InferenceRunnerLiteRt::MpTensorReadView>&
+        mp_input_tensor_views) {
   auto input_tensor_view = mp_input_tensor.GetAHardwareBufferReadView();
-  ABSL_ASSIGN_OR_RETURN(
+
+  AHardwareBuffer* ahwb = input_tensor_view.handle();
+  LITERT_ASSIGN_OR_RETURN(
       auto litert_buffer,
-      GetOrCreateAhwbTensorBuffer(input_tensor_view, tensor_type, ctx));
+      litert::TensorBuffer::CreateFromAhwb(*environment_, tensor_type, ahwb,
+                                           /*ahwb_offset=*/0));
 
   const int write_complete_fence_fd =
       input_tensor_view.GetWriteCompleteFenceFd();
@@ -1150,31 +1031,23 @@ InferenceRunnerLiteRt::CreateAhwbInputTensorBufferFromMpTensor(
         auto event, litert::Event::CreateFromSyncFenceFd(*environment_, dup_fd,
                                                          /*owns_fd=*/true));
     LITERT_RETURN_IF_ERROR(litert_buffer.SetEvent(std::move(event)));
-  } else if (litert_buffer.HasEvent()) {
-    // TensorBuffer::Duplicate() shares the underlying LiteRtTensorBufferT (and
-    // its event_ field) with the cached entry, so clear any stale sync event
-    // left over from a previous run when no input fence FD is present.
-    LITERT_RETURN_IF_ERROR(litert_buffer.ClearEvent());
   }
-  ctx.active_input_views.push_back(std::move(input_tensor_view));
+  mp_input_tensor_views.push_back(std::move(input_tensor_view));
   return litert_buffer;
 }
 
 absl::StatusOr<litert::TensorBuffer>
 InferenceRunnerLiteRt::CreateAhwbOutputTensorBufferFromMpTensor(
     const Tensor& mp_output_tensor, const litert::RankedTensorType& tensor_type,
-    InferenceRunContext& ctx) {
+    std::vector<InferenceRunnerLiteRt::MpTensorWriteView>&
+        mp_output_tensor_views) {
   auto output_tensor_view = mp_output_tensor.GetAHardwareBufferWriteView();
-  ABSL_ASSIGN_OR_RETURN(
+  AHardwareBuffer* ahwb = output_tensor_view.handle();
+  LITERT_ASSIGN_OR_RETURN(
       auto output_buffer,
-      GetOrCreateAhwbTensorBuffer(output_tensor_view, tensor_type, ctx));
-  if (output_buffer.HasEvent()) {
-    // TensorBuffer::Duplicate() shares the underlying LiteRtTensorBufferT (and
-    // its event_ field) with the cached entry, so clear any stale event left on
-    // a pooled AHardwareBuffer from a prior async output or fenced input run.
-    LITERT_RETURN_IF_ERROR(output_buffer.ClearEvent());
-  }
-  ctx.active_output_views.push_back(std::move(output_tensor_view));
+      litert::TensorBuffer::CreateFromAhwb(*environment_, tensor_type, ahwb,
+                                           /*ahwb_offset=*/0));
+  mp_output_tensor_views.push_back(std::move(output_tensor_view));
   return output_buffer;
 }
 
@@ -1248,7 +1121,8 @@ InferenceRunnerLiteRt::CreateInputTensorBufferFromMpTensor(
           tensor, tensor_type, ctx.active_input_views, ctx.temporary_tensors);
 #if MEDIAPIPE_TENSOR_USE_AHWB
     case litert::TensorBufferType::kAhwb:
-      return CreateAhwbInputTensorBufferFromMpTensor(tensor, tensor_type, ctx);
+      return CreateAhwbInputTensorBufferFromMpTensor(tensor, tensor_type,
+                                                     ctx.active_input_views);
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 #if MEDIAPIPE_METAL_ENABLED
     case litert::TensorBufferType::kMetalBufferPacked:
@@ -1336,8 +1210,7 @@ absl::Status InferenceRunnerLiteRt::PrepareInputBuffers(
 
     ABSL_ASSIGN_OR_RETURN(
         litert::TensorBufferType buffer_type,
-        ChooseBestBufferType(cached_input_buffer_requirements_[i],
-                             tensor_to_use));
+        ChooseBestBufferType(cached_input_buffer_requirements_[i]));
 
     LITERT_ASSIGN_OR_RETURN(const litert::RankedTensorType model_tensor_type,
                             signature.InputTensorType(i));
@@ -1453,7 +1326,8 @@ InferenceRunnerLiteRt::CreateOutputTensorBufferFromMpTensor(
 #endif  // MEDIAPIPE_METAL_ENABLED
 #if MEDIAPIPE_TENSOR_USE_AHWB
     case litert::TensorBufferType::kAhwb:
-      return CreateAhwbOutputTensorBufferFromMpTensor(tensor, tensor_type, ctx);
+      return CreateAhwbOutputTensorBufferFromMpTensor(tensor, tensor_type,
+                                                      ctx.active_output_views);
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
     case litert::TensorBufferType::kGlBuffer:
@@ -1586,12 +1460,6 @@ absl::Status InferenceRunnerLiteRt::CleanAsyncRunStates(bool wait_for_all) {
 absl::StatusOr<std::vector<Tensor>> InferenceRunnerLiteRt::Run(
     CalculatorContext* cc, const TensorSpan& tensor_span) {
   InferenceRunContext ctx;
-
-#if MEDIAPIPE_TENSOR_USE_AHWB
-  if (run_async_) {
-    ABSL_RETURN_IF_ERROR(CleanAsyncRunStates(/*wait_for_all=*/false));
-  }
-#endif  // MEDIAPIPE_TENSOR_USE_AHWB
 
 #if MEDIAPIPE_METAL_ENABLED
   auto cleanup_command_buffer = absl::MakeCleanup([this]() {
