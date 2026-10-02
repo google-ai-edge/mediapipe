@@ -69,14 +69,82 @@ def _framework_infoplist(name):
 def _strip_rust_metadata(name, src, visibility):
     fail("strip_rust_metadata is not supported in the OSS build.")
 
-def mediapipe_static_xcframework(name, strip_rust_metadata = False, **kwargs):
-    """An apple_static_xcframework with a dummy library to allow for empty frameworks.
+_LLVM_TOOLS = []
+_LLVM_TOOLS_SETUP_SH = 'NM_BIN="$$(xcrun -f llvm-nm 2>/dev/null || which llvm-nm)"; OBJCOPY_BIN="$$(xcrun -f llvm-objcopy 2>/dev/null || which llvm-objcopy)"'
+
+def mediapipe_symbol_rename_map(
+        name,
+        srcs,
+        visibility = ["//visibility:private"]):
+    """Generates an llvm-objcopy --redefine-syms map prefixing non-MPP symbols.
+
+    Args:
+      name: The name of the genrule target.
+      srcs: List of raw .xcframework.zip targets to extract global symbols from.
+      visibility: Target visibility.
+    """
+    srcs_locations = " ".join(["$(execpath %s)" % s for s in srcs])
+    cmd = """
+    WORK_DIR=$$(mktemp -d)
+    """ + _LLVM_TOOLS_SETUP_SH + """
+    idx=0
+    for z in {srcs_locations}; do
+      idx=$$((idx + 1))
+      mkdir -p "$$WORK_DIR/in_$$idx"
+      unzip -q "$$z" -d "$$WORK_DIR/in_$$idx"
+    done
+    : > "$$WORK_DIR/raw_syms.txt"
+    for archive in $$(find "$$WORK_DIR" -path "$$WORK_DIR/in_*" -type f \\
+        \\( -name "*.a" -o -path "*.framework/*" \\) \\
+        ! -name "*.plist" ! -name "*.h" ! -name "*.modulemap" ! -name "*.xcprivacy"); do
+      "$$NM_BIN" --arch=arm64 --defined-only -g "$$archive" \\
+        2>/dev/null >> "$$WORK_DIR/raw_syms.txt" || true
+      "$$NM_BIN" --arch=x86_64 --defined-only -g "$$archive" \\
+        2>/dev/null >> "$$WORK_DIR/raw_syms.txt" || true
+    done
+    awk 'NF==3 {{print $$3}}' "$$WORK_DIR/raw_syms.txt" \\
+      | LC_ALL=C sort -u \\
+      | awk '
+        $$0 ~ /^_?MPP/ {{ next }}
+        $$0 ~ /^_OBJC_(CLASS|METACLASS|IVAR)_\\$$_MPP/ {{ next }}
+        $$0 ~ /^__?OBJC_(PROTOCOL|LABEL_PROTOCOL)_\\$$_/ {{ next }}
+        $$0 ~ /^__Z(N|NK|NO|NKR|TV|TI|TS|TT|Thn|Tv|GV|Z)?N?St/ {{ next }}
+        $$0 ~ /^___(cxa|gxx)_/ {{ next }}
+        $$0 ~ /^_OBJC_(CLASS|METACLASS|IVAR)_\\$$_/ {{
+          r = $$0
+          sub(/^_OBJC_(CLASS|METACLASS|IVAR)_\\$$_/, "&MPP_", r)
+          print $$0 " " r
+          next
+        }}
+        $$0 ~ /^_/ {{ print $$0 " _MPP" $$0; next }}
+        {{ print $$0 " MPP_" $$0 }}
+      ' > $@
+    rm -rf "$$WORK_DIR"
+    """.format(srcs_locations = srcs_locations)
+
+    native.genrule(
+        name = name,
+        srcs = srcs,
+        outs = [name + ".txt"],
+        cmd = cmd,
+        tools = _LLVM_TOOLS,
+        visibility = visibility,
+    )
+
+def mediapipe_static_xcframework(
+        name,
+        strip_rust_metadata = False,
+        symbol_rename_map = None,
+        **kwargs):
+    """An apple_static_xcframework with a dummy library for empty frameworks.
 
     Args:
       name: The name of the apple_static_xcframework target.
       strip_rust_metadata: Whether to run `llvm-strip -S` on the binaries in the
         generated xcframework to remove Rust crate metadata. rules_rust does not strip
         it for Apple targets, and Apple's linker ignores it.
+      symbol_rename_map: Optional label of a mediapipe_symbol_rename_map target
+        used to prefix internal global symbols with MPP_ via llvm-objcopy.
       **kwargs: Arguments passed to apple_static_xcframework.
     """
 
@@ -86,7 +154,7 @@ def mediapipe_static_xcframework(name, strip_rust_metadata = False, **kwargs):
     # target (with the original name and output file name) is the stripped copy.
     target_name = name + "_with_rust_metadata" if strip_rust_metadata else name
     final_visibility = kwargs.get("visibility")
-    if strip_rust_metadata:
+    if strip_rust_metadata or symbol_rename_map:
         kwargs.setdefault("bundle_name", name)
         kwargs["visibility"] = ["//visibility:private"]
 
@@ -96,6 +164,7 @@ def mediapipe_static_xcframework(name, strip_rust_metadata = False, **kwargs):
     kwargs.pop("bundle_format", None)
     kwargs.pop("bundle_id", None)
     kwargs.pop("infoplists", None)
+    symbol_rename_map = None
 
     if "deps" not in kwargs or kwargs.get("bundle_format") == "framework":
         _dummy_objc_library(name = name)
@@ -120,14 +189,56 @@ def mediapipe_static_xcframework(name, strip_rust_metadata = False, **kwargs):
     public_hdrs = kwargs.get("public_hdrs", [])
 
     if not public_hdrs:
-        # No issues, just build the xcframework as normal.
+        if not symbol_rename_map:
+            # No issues, just build the xcframework as normal.
+            apple_static_xcframework(
+                name = target_name,
+                **kwargs
+            )
+            if strip_rust_metadata:
+                _strip_rust_metadata(name, ":" + target_name, final_visibility)
+            return
+
+        raw_name = name + "_raw"
         apple_static_xcframework(
-            name = target_name,
+            name = raw_name,
             **kwargs
+        )
+        rename_cmd = """
+        WORK_DIR=$$(mktemp -d)
+        OUT_DIR=$$WORK_DIR/out
+        RENAME_MAP="$$PWD/$(execpath {symbol_rename_map})"
+        """.format(symbol_rename_map = symbol_rename_map) + _LLVM_TOOLS_SETUP_SH + """
+        mkdir -p "$$OUT_DIR"
+        unzip -q $(execpath :{raw_name}) -d "$$OUT_DIR"
+        for archive in $$(find "$$OUT_DIR" -type f \\
+            \\( -name "*.a" -o -path "*.framework/*" \\) \\
+            ! -name "*.plist" ! -name "*.h" ! -name "*.modulemap" ! -name "*.xcprivacy"); do
+          "$$OBJCOPY_BIN" --redefine-syms="$$RENAME_MAP" \\
+            "$$archive" "$$archive.renamed"
+          mv "$$archive.renamed" "$$archive"
+        done
+        pushd "$$OUT_DIR" > /dev/null
+        zip -qr output.zip *
+        popd > /dev/null
+        mv "$$OUT_DIR/output.zip" $@
+        rm -rf "$$WORK_DIR"
+        """.format(raw_name = raw_name)
+
+        native.genrule(
+            name = target_name,
+            srcs = [":" + raw_name, symbol_rename_map],
+            outs = [target_name + ".xcframework.zip"],
+            cmd = rename_cmd,
+            tools = _LLVM_TOOLS,
+            visibility = ["//visibility:private"] if strip_rust_metadata else final_visibility,
         )
         if strip_rust_metadata:
             _strip_rust_metadata(name, ":" + target_name, final_visibility)
         return
+
+    if symbol_rename_map:
+        fail("symbol_rename_map is not supported together with public_hdrs")
 
     # WORKAROUND: b/504553290
     # We are unable to build an xcframework with multiple architectures and headers, due to

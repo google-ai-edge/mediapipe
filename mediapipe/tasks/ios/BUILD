@@ -17,7 +17,10 @@ load(
     "//mediapipe/framework/tool:ios.bzl",
     "strip_api_include_path_prefix",
 )
-load(":ios_build_rules.bzl", "mediapipe_static_xcframework")
+load(
+    ":ios_build_rules.bzl",
+    "mediapipe_static_xcframework",
+)
 
 package(default_visibility = ["//visibility:public"])
 
