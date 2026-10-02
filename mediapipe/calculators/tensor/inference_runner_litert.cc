@@ -333,6 +333,39 @@ absl::Status CopyMpTensorToMpTensor(const Tensor& src_tensor,
   return absl::OkStatus();
 }
 
+// Returns true if any tensor of `signature` only gets its real shape at
+// runtime, in which case the runner must size its buffers from the runtime
+// layouts reported by the compiled model instead of the declared tensor types.
+// This is the case for:
+//  - inputs with a dynamic (-1) dimension, when dynamic resizing is enabled,
+//    since the input tensor is resized to the MP input shape on every run;
+//  - outputs declared without a shape (rank 0). Some models end in ops that
+//    compute their output shape at runtime and are serialized with
+//    `shape=[]`; using the declared rank-0 type would collapse such outputs
+//    to a single element.
+absl::StatusOr<bool> HasDynamicDimension(
+    const litert::SimpleSignature& signature, bool enable_dynamic_resize) {
+  if (enable_dynamic_resize) {
+    const size_t num_inputs = signature.InputNames().size();
+    for (size_t i = 0; i < num_inputs; ++i) {
+      LITERT_ASSIGN_OR_RETURN(const litert::RankedTensorType input_type,
+                              signature.InputTensorType(i));
+      if (absl::c_linear_search(input_type.Layout().Dimensions(), -1)) {
+        return true;
+      }
+    }
+  }
+  const size_t num_outputs = signature.OutputNames().size();
+  for (size_t i = 0; i < num_outputs; ++i) {
+    LITERT_ASSIGN_OR_RETURN(const litert::RankedTensorType output_type,
+                            signature.OutputTensorType(i));
+    if (output_type.Layout().Rank() == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace
 
 absl::StatusOr<std::unique_ptr<InferenceRunnerLiteRt>>
@@ -591,6 +624,11 @@ InferenceRunnerLiteRt::Create(
   const size_t num_inputs = signature.InputNames().size();
   const size_t num_outputs = signature.OutputNames().size();
 
+  // Decided once per model: see HasDynamicDimension() for which tensors force
+  // the runner onto the runtime-layout path.
+  ABSL_ASSIGN_OR_RETURN(const bool has_dynamic_dimension,
+                        HasDynamicDimension(signature, enable_dynamic_resize));
+
   auto runner =
       std::unique_ptr<InferenceRunnerLiteRt>(new InferenceRunnerLiteRt(
           memory_manager,
@@ -600,8 +638,8 @@ InferenceRunnerLiteRt::Create(
           std::move(gl_context), std::move(model_packet),
           std::make_unique<litert::Environment>(std::move(environment)),
           std::make_unique<litert::CompiledModel>(std::move(compiled_model)),
-          run_async, enable_dynamic_resize, use_npu, release_model_packet,
-          signature_index, std::move(signature),
+          run_async, enable_dynamic_resize, has_dynamic_dimension, use_npu,
+          release_model_packet, signature_index, std::move(signature),
           std::move(input_output_tensor_names), std::move(feedback_manager)
 #if MEDIAPIPE_METAL_ENABLED
                                                     ,
@@ -639,8 +677,9 @@ InferenceRunnerLiteRt::InferenceRunnerLiteRt(
     api2::Packet<TfLiteModelPtr> model_packet,
     std::unique_ptr<litert::Environment> environment,
     std::unique_ptr<litert::CompiledModel> compiled_model, bool run_async,
-    bool enable_dynamic_resize, bool use_npu, bool release_model_packet,
-    int signature_index, litert::SimpleSignature signature,
+    bool enable_dynamic_resize, bool has_dynamic_dimension, bool use_npu,
+    bool release_model_packet, int signature_index,
+    litert::SimpleSignature signature,
     InputOutputTensorNames input_output_tensor_names,
     std::unique_ptr<InferenceFeedbackManagerLiteRt> feedback_manager
 #if MEDIAPIPE_METAL_ENABLED
@@ -661,6 +700,7 @@ InferenceRunnerLiteRt::InferenceRunnerLiteRt(
       signature_(std::move(signature)),
       enable_dynamic_resize_(enable_dynamic_resize),
       use_npu_(use_npu),
+      has_dynamic_dimension_(has_dynamic_dimension),
       input_output_tensor_names_(std::move(input_output_tensor_names)),
       feedback_manager_(std::move(feedback_manager)) {
 #if MEDIAPIPE_METAL_ENABLED
@@ -725,9 +765,9 @@ InferenceRunnerLiteRt::CreateInputRankedTensorType(
   absl::Span<const int> litert_shape = tensor_type.Layout().Dimensions();
 
   // Check if dynamic resizing is enabled and the tensor has a dynamic
-  // dimension.
+  // dimension. This mirrors the input condition of HasDynamicDimension(), so
+  // `has_dynamic_dimension_` is already true whenever this branch is taken.
   if (enable_dynamic_resize_ && absl::c_linear_search(litert_shape, -1)) {
-    has_dynamic_dimension_ = true;
     // Check if shapes are compatible first (allowing for dynamic dimensions)
     ABSL_RETURN_IF_ERROR(
         AreTensorSpecsCompatible(tensor_type, mp_input_tensor));
@@ -765,6 +805,10 @@ InferenceRunnerLiteRt::CreateInputRankedTensorType(
 absl::StatusOr<litert::RankedTensorType>
 InferenceRunnerLiteRt::CreateOutputRankedTensorType(
     const litert::RankedTensorType& model_tensor_type, litert::Layout layout) {
+  // Models whose tensors only get their real shape at runtime (dynamic input
+  // dims, rank-0 declared outputs; see HasDynamicDimension()) must use the
+  // runtime layout reported by the compiled model. Otherwise the declared type
+  // is already exact.
   if (!has_dynamic_dimension_) {
     return model_tensor_type;
   }

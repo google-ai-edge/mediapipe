@@ -186,8 +186,9 @@ class InferenceRunnerLiteRt : public InferenceRunner {
       api2::Packet<TfLiteModelPtr> model_packet,
       std::unique_ptr<litert::Environment> environment,
       std::unique_ptr<litert::CompiledModel> compiled_model, bool run_async,
-      bool enable_dynamic_resize, bool use_npu, bool release_model_packet,
-      int signature_index, litert::SimpleSignature signature,
+      bool enable_dynamic_resize, bool has_dynamic_dimension, bool use_npu,
+      bool release_model_packet, int signature_index,
+      litert::SimpleSignature signature,
       InputOutputTensorNames input_output_tensor_names,
       std::unique_ptr<InferenceFeedbackManagerLiteRt> feedback_manager
 #if MEDIAPIPE_METAL_ENABLED
@@ -378,8 +379,11 @@ class InferenceRunnerLiteRt : public InferenceRunner {
   // Whether the NPU delegate is used
   bool use_npu_ = false;
 
-  // Whether the model has a dynamic dimension
-  bool has_dynamic_dimension_ = false;
+  // Whether any input or output tensor only gets its real shape at runtime
+  // (dynamic -1 input dims with resize enabled, or rank-0 declared outputs).
+  // Computed once from the model signature in Create(); when true, output
+  // tensors are sized from the runtime layouts of the compiled model.
+  const bool has_dynamic_dimension_;
 
   InputOutputTensorNames input_output_tensor_names_;
 
