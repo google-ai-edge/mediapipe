@@ -59,12 +59,20 @@ export class MemoryVectorStore implements VectorStore {
    */
   private readonly records = new Map<string, RetrievalRecord>();
 
+  /**
+   * Upserts records into the vector store.
+   * @export
+   */
   upsert(records: readonly RetrievalRecord[]): void {
     for (const record of records) {
       this.records.set(record.id, cloneRecord(record));
     }
   }
 
+  /**
+   * Deletes records by their IDs.
+   * @export
+   */
   delete(ids: readonly string[]): void {
     const idSet = new Set(ids);
     for (const id of ids) {
@@ -80,6 +88,10 @@ export class MemoryVectorStore implements VectorStore {
     }
   }
 
+  /**
+   * Deletes records matching a metadata filter.
+   * @export
+   */
   deleteByMetadata(metadataFilter: Record<string, string>): void {
     const filterKeys = Object.keys(metadataFilter);
     if (filterKeys.length === 0) {
@@ -101,6 +113,10 @@ export class MemoryVectorStore implements VectorStore {
     }
   }
 
+  /**
+   * Searches for top-K matching records.
+   * @export
+   */
   search(
     queryEmbedding: Float32Array | readonly number[],
     topK: number,
@@ -141,6 +157,10 @@ export class MemoryVectorStore implements VectorStore {
     return scored.slice(0, topK).map((item) => cloneRecord(item.record));
   }
 
+  /**
+   * Retrieves records by IDs.
+   * @export
+   */
   get(ids: readonly string[]): RetrievalRecord[] {
     const results: RetrievalRecord[] = [];
     for (const id of ids) {
@@ -152,6 +172,10 @@ export class MemoryVectorStore implements VectorStore {
     return results;
   }
 
+  /**
+   * Gets all unique record IDs.
+   * @export
+   */
   getAllRecordIds(): string[] {
     const ids: string[] = [];
     for (const [id, record] of this.records.entries()) {
@@ -162,11 +186,21 @@ export class MemoryVectorStore implements VectorStore {
     return ids;
   }
 
+  /**
+   * Deletes all records.
+   * @export
+   */
   deleteAll(): void {
     this.records.clear();
   }
 
+  /**
+   * Closes the vector store.
+   * @export
+   */
   close(): void {
     this.records.clear();
   }
 }
+
+

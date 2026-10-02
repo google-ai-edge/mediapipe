@@ -33,7 +33,7 @@ export declare interface AudioPart {
 export type ContentPart = TextPart | ImagePart | AudioPart;
 
 /** Package-neutral interface for generating embeddings across modalities. */
-export interface EmbeddingProvider {
+export declare interface EmbeddingProvider {
   /**
    * Generates a high-dimensional vector embedding for the given content parts.
    * Returns null if the content parts are unsupported by this provider.

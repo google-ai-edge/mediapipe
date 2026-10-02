@@ -19,7 +19,7 @@ import {RetrievalRecord} from './retrieval_record';
 /**
  * Interface for vector storage and similarity search backends.
  */
-export interface VectorStore {
+export declare interface VectorStore {
   /** Inserts or updates records in the vector store. */
   upsert(records: readonly RetrievalRecord[]): Promise<void> | void;
 

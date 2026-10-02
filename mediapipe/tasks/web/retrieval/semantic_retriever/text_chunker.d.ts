@@ -20,7 +20,7 @@ export type ChunkingMode = 'CHARACTER' | 'WORD';
 /**
  * Interface for chunking long text into smaller segments.
  */
-export interface TextChunker {
+export declare interface TextChunker {
   /** Chunks the input text into a list of strings. */
   chunk(text: string): string[] | Promise<string[]>;
 }

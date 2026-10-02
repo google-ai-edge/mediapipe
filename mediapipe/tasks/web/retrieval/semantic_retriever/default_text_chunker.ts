@@ -136,6 +136,10 @@ export class DefaultTextChunker implements TextChunker {
     this.mode = mode;
   }
 
+  /**
+   * Chunks input text according to configured size and overlap.
+   * @export
+   */
   chunk(text: string): string[] {
     if (!text || text.trim().length === 0) {
       return [];

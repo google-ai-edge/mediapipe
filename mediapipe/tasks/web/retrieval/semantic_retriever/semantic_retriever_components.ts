@@ -29,6 +29,7 @@ export class SemanticRetrieverComponents {
   /**
    * Adds an embedding provider to the SemanticRetriever.
    *
+   * @export
    * @param provider The embedding provider to add.
    * @return The SemanticRetrieverComponents instance for chaining.
    */
@@ -40,6 +41,7 @@ export class SemanticRetrieverComponents {
   /**
    * Returns the registered embedding providers for the SemanticRetriever.
    *
+   * @export
    * @return A list of registered embedding providers.
    */
   providers(): readonly EmbeddingProvider[] {
@@ -49,6 +51,7 @@ export class SemanticRetrieverComponents {
   /**
    * Sets the vector store for the SemanticRetriever.
    *
+   * @export
    * @param vectorStore The vector store to set.
    * @return The SemanticRetrieverComponents instance for chaining.
    */
@@ -60,6 +63,7 @@ export class SemanticRetrieverComponents {
   /**
    * Returns the vector store for the SemanticRetriever.
    *
+   * @export
    * @return The vector store for the SemanticRetriever.
    */
   vectorStore(): VectorStore | undefined {
@@ -69,6 +73,7 @@ export class SemanticRetrieverComponents {
   /**
    * Sets the text chunker for the SemanticRetriever.
    *
+   * @export
    * @param textChunker The text chunker to set.
    * @return The SemanticRetrieverComponents instance for chaining.
    */
@@ -80,9 +85,12 @@ export class SemanticRetrieverComponents {
   /**
    * Returns the text chunker for the SemanticRetriever.
    *
+   * @export
    * @return The text chunker for the SemanticRetriever.
    */
   textChunker(): TextChunker | undefined {
     return this.textChunkerInstance;
   }
 }
+
+
