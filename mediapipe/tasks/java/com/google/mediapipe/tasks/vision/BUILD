@@ -395,6 +395,7 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:landmark",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
         "//third_party:autovalue",
+        "@com_google_protobuf//java/lite",  # buildcleaner: keep
         "@maven//:com_google_guava_guava",
     ],
 )
@@ -468,6 +469,7 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:logging",
         "//mediapipe/util:color_java_proto_lite",
         "//third_party:autovalue",
+        "@com_google_protobuf//java/lite",  # buildcleaner: keep
         "@litert_lm//kotlin/java/com/google/ai/edge/litertlm:litertlm-android",
         "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",

@@ -44,7 +44,6 @@ cc_binary(
         "//mediapipe/tasks/c/audio/audio_classifier:audio_classifier_c_lib",
         "//mediapipe/tasks/c/audio/audio_embedder:audio_embedder_c_lib",
         "//mediapipe/tasks/c/core:common",
-        "//mediapipe/tasks/c/decision/decision_maker:decision_maker_c_lib",
         "//mediapipe/tasks/c/metadata:flatbuffer_api_c_lib",
         "//mediapipe/tasks/c/retrieval/semantic_retriever:semantic_retriever_lib",
         "//mediapipe/tasks/c/retrieval/universal_embedder:universal_embedder_lib",
