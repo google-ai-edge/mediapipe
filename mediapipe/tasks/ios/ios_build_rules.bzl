@@ -99,8 +99,6 @@ def mediapipe_symbol_rename_map(
         ! -name "*.plist" ! -name "*.h" ! -name "*.modulemap" ! -name "*.xcprivacy"); do
       "$$NM_BIN" --arch=arm64 --defined-only -g "$$archive" \\
         2>/dev/null >> "$$WORK_DIR/raw_syms.txt" || true
-      "$$NM_BIN" --arch=x86_64 --defined-only -g "$$archive" \\
-        2>/dev/null >> "$$WORK_DIR/raw_syms.txt" || true
     done
     awk 'NF==3 {{print $$3}}' "$$WORK_DIR/raw_syms.txt" \\
       | LC_ALL=C sort -u \\
@@ -177,7 +175,6 @@ def mediapipe_static_xcframework(
         kwargs["ios"] = {
             "simulator": [
                 "arm64",
-                "x86_64",
             ],
             "device": ["arm64"],
         }
@@ -186,145 +183,51 @@ def mediapipe_static_xcframework(
             "ios": MPP_TASK_MINIMUM_OS_VERSION,
         }
 
-    public_hdrs = kwargs.get("public_hdrs", [])
-
-    if not public_hdrs:
-        if not symbol_rename_map:
-            # No issues, just build the xcframework as normal.
-            apple_static_xcframework(
-                name = target_name,
-                **kwargs
-            )
-            if strip_rust_metadata:
-                _strip_rust_metadata(name, ":" + target_name, final_visibility)
-            return
-
-        raw_name = name + "_raw"
+    if not symbol_rename_map:
         apple_static_xcframework(
-            name = raw_name,
-            **kwargs
-        )
-        rename_cmd = """
-        WORK_DIR=$$(mktemp -d)
-        OUT_DIR=$$WORK_DIR/out
-        RENAME_MAP="$$PWD/$(execpath {symbol_rename_map})"
-        """.format(symbol_rename_map = symbol_rename_map) + _LLVM_TOOLS_SETUP_SH + """
-        mkdir -p "$$OUT_DIR"
-        unzip -q $(execpath :{raw_name}) -d "$$OUT_DIR"
-        for archive in $$(find "$$OUT_DIR" -type f \\
-            \\( -name "*.a" -o -path "*.framework/*" \\) \\
-            ! -name "*.plist" ! -name "*.h" ! -name "*.modulemap" ! -name "*.xcprivacy"); do
-          "$$OBJCOPY_BIN" --redefine-syms="$$RENAME_MAP" \\
-            "$$archive" "$$archive.renamed"
-          mv "$$archive.renamed" "$$archive"
-        done
-        pushd "$$OUT_DIR" > /dev/null
-        zip -qr output.zip *
-        popd > /dev/null
-        mv "$$OUT_DIR/output.zip" $@
-        rm -rf "$$WORK_DIR"
-        """.format(raw_name = raw_name)
-
-        native.genrule(
             name = target_name,
-            srcs = [":" + raw_name, symbol_rename_map],
-            outs = [target_name + ".xcframework.zip"],
-            cmd = rename_cmd,
-            tools = _LLVM_TOOLS,
-            visibility = ["//visibility:private"] if strip_rust_metadata else final_visibility,
+            **kwargs
         )
         if strip_rust_metadata:
             _strip_rust_metadata(name, ":" + target_name, final_visibility)
         return
 
-    if symbol_rename_map:
+    if kwargs.get("public_hdrs"):
         fail("symbol_rename_map is not supported together with public_hdrs")
 
-    # WORKAROUND: b/504553290
-    # We are unable to build an xcframework with multiple architectures and headers, due to
-    # file name conflicts during the build process.
-    # So we build a single architecture xcframework with headers and a multi-architecture xcframework
-    # without headers and then stitch them together.
-
-    # 1. Build for a single architecture with headers
-    kwargs_single = dict(kwargs)
-    kwargs_single["ios"] = {"simulator": ["x86_64"]}
-    kwargs_single["bundle_name"] = kwargs.get("bundle_name", name) + "_single"
-    single_arch_name = name + "_single_arch_with_hdrs"
-
+    raw_name = name + "_raw"
     apple_static_xcframework(
-        name = single_arch_name,
-        **kwargs_single
+        name = raw_name,
+        **kwargs
     )
-
-    # 2. Build for multi-architecture without headers
-    kwargs_multi = dict(kwargs)
-    kwargs_multi.pop("public_hdrs")
-    multi_arch_name = name + "_multi_arch_headerless"
-
-    apple_static_xcframework(
-        name = multi_arch_name,
-        **kwargs_multi
-    )
-
-    original_bundle_name = kwargs.get("bundle_name", name)
-    single_bundle_name = kwargs_single["bundle_name"]
-
-    stitch_cmd = """
+    rename_cmd = """
     WORK_DIR=$$(mktemp -d)
-    SINGLE_DIR=$$WORK_DIR/single
-    MULTI_DIR=$$WORK_DIR/multi
-
-    mkdir -p $$SINGLE_DIR $$MULTI_DIR
-    unzip -q $(location :{single_arch_name}) -d $$SINGLE_DIR
-    unzip -q $(location :{multi_arch_name}) -d $$MULTI_DIR
-
-    SINGLE_FRAMEWORK=$$(find $$SINGLE_DIR -type d -name "*.framework" | head -n 1)
-    MULTI_FRAMEWORKS=$$(find $$MULTI_DIR -type d -name "*.framework")
-
-    for fw in $$MULTI_FRAMEWORKS; do
-        if [ -d "$$SINGLE_FRAMEWORK/Headers" ]; then
-            mkdir -p "$$fw/Headers"
-            cp -R "$$SINGLE_FRAMEWORK/Headers/"* "$$fw/Headers/"
-            if [ -f "$$fw/Headers/{single_bundle_name}.h" ]; then
-                mv "$$fw/Headers/{single_bundle_name}.h" "$$fw/Headers/{original_bundle_name}.h"
-            fi
-            for hdr in "$$fw/Headers/"*.h; do
-                if [ -f "$$hdr" ]; then
-                    sed 's/{single_bundle_name}/{original_bundle_name}/g' "$$hdr" > "$$hdr.tmp"
-                    mv "$$hdr.tmp" "$$hdr"
-                fi
-            done
-        fi
-        if [ -d "$$SINGLE_FRAMEWORK/Modules" ]; then
-            mkdir -p "$$fw/Modules"
-            cp -R "$$SINGLE_FRAMEWORK/Modules/"* "$$fw/Modules/"
-            if [ -f "$$fw/Modules/module.modulemap" ]; then
-                sed 's/{single_bundle_name}/{original_bundle_name}/g' "$$fw/Modules/module.modulemap" > "$$fw/Modules/module.modulemap.tmp"
-                mv "$$fw/Modules/module.modulemap.tmp" "$$fw/Modules/module.modulemap"
-            fi
-        fi
+    OUT_DIR=$$WORK_DIR/out
+    RENAME_MAP="$$PWD/$(execpath {symbol_rename_map})"
+    """.format(symbol_rename_map = symbol_rename_map) + _LLVM_TOOLS_SETUP_SH + """
+    mkdir -p "$$OUT_DIR"
+    unzip -q $(execpath :{raw_name}) -d "$$OUT_DIR"
+    for archive in $$(find "$$OUT_DIR" -type f \\
+        \\( -name "*.a" -o -path "*.framework/*" \\) \\
+        ! -name "*.plist" ! -name "*.h" ! -name "*.modulemap" ! -name "*.xcprivacy"); do
+      "$$OBJCOPY_BIN" --redefine-syms="$$RENAME_MAP" \\
+        "$$archive" "$$archive.renamed"
+      mv "$$archive.renamed" "$$archive"
     done
-
-    # Zip exactly from the multi directory so the .xcframework is at the root
-    pushd $$MULTI_DIR > /dev/null
+    pushd "$$OUT_DIR" > /dev/null
     zip -qr output.zip *
     popd > /dev/null
-    mv $$MULTI_DIR/output.zip $@
-    rm -rf $$WORK_DIR
-    """.format(
-        single_arch_name = single_arch_name,
-        multi_arch_name = multi_arch_name,
-        single_bundle_name = single_bundle_name,
-        original_bundle_name = original_bundle_name,
-    )
+    mv "$$OUT_DIR/output.zip" $@
+    rm -rf "$$WORK_DIR"
+    """.format(raw_name = raw_name)
 
     native.genrule(
         name = target_name,
-        srcs = [":" + single_arch_name, ":" + multi_arch_name],
+        srcs = [":" + raw_name, symbol_rename_map],
         outs = [target_name + ".xcframework.zip"],
-        cmd = stitch_cmd,
-        visibility = kwargs.get("visibility"),
+        cmd = rename_cmd,
+        tools = _LLVM_TOOLS,
+        visibility = ["//visibility:private"] if strip_rust_metadata else final_visibility,
     )
     if strip_rust_metadata:
         _strip_rust_metadata(name, ":" + target_name, final_visibility)
