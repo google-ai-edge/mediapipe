@@ -29,6 +29,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc/components/containers:embedding_result",
         "//mediapipe/tasks/cc/components/utils:cosine_similarity",
+        "//mediapipe/tasks/cc/components/utils:tga_utils",
         "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core:embedding_provider",
         "//mediapipe/tasks/cc/core:running_mode",

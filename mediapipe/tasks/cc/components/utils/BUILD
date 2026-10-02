@@ -51,4 +51,16 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "tga_utils",
+    srcs = ["tga_utils.cc"],
+    hdrs = ["tga_utils.h"],
+    deps = [
+        "//mediapipe/framework/formats:image",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 # TODO: Enable this test

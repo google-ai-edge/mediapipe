@@ -15,9 +15,6 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/retrieval/universal_embedder/universal_embedder.h"
 
-#include <cstddef>
-#include <cstdint>
-#include <cstring>
 #include <memory>
 #include <optional>
 #include <string>
@@ -30,13 +27,13 @@ limitations under the License.
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/components/utils/cosine_similarity.h"
+#include "mediapipe/tasks/cc/components/utils/tga_utils.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/embedding_provider.h"
 #include "mediapipe/tasks/cc/core/logging/factory/logging_factory.h"
@@ -64,83 +61,7 @@ using ::litert::lm::InputImage;
 using ::litert::lm::InputText;
 using ::litert::lm::MemoryMappedFile;
 using ::litert::lm::ModelAssets;
-
-absl::StatusOr<std::string> EncodeToTga(const mediapipe::Image& image) {
-  auto image_frame = image.GetImageFrameSharedPtr();
-  if (image_frame == nullptr) {
-    return absl::InvalidArgumentError("Image cannot be converted to CPU.");
-  }
-  int width = image_frame->Width();
-  int height = image_frame->Height();
-  int channels = image_frame->NumberOfChannels();
-
-  if (channels != 1 && channels != 3 && channels != 4) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("Unsupported number of image channels: ", channels));
-  }
-
-  // Initialize TGA Header
-  std::uint8_t header[18] = {0};
-  if (channels == 1) {
-    header[2] = 3;  // Uncompressed Grayscale Image
-  } else {
-    header[2] = 2;  // Uncompressed True-Color Image
-  }
-  header[12] = width & 0xFF;  // Width LSB
-  header[13] = (width >> 8) & 0xFF;
-  header[14] = height & 0xFF;  // Height LSB
-  header[15] = (height >> 8) & 0xFF;
-  header[16] = channels * 8;  // Bits per pixel (8, 24, or 32)
-  header[17] = (channels == 4)
-                   ? 0x28
-                   : 0x20;  // Top-Left origin flag (0x20) + 8-bit alpha (0x08)
-
-  const std::size_t pixel_size = width * height * channels;
-  std::string tga_bytes;
-  tga_bytes.reserve(18 + pixel_size);
-  tga_bytes.append(reinterpret_cast<const char*>(header), 18);
-  tga_bytes.resize(18 + pixel_size);
-  std::uint8_t* dst_pixels = reinterpret_cast<std::uint8_t*>(&tga_bytes[18]);
-
-  const std::uint8_t* pixel_data = image_frame->PixelData();
-  int width_step = image_frame->WidthStep();
-  int row_size = width * channels;
-
-  // Standard TGA specifications expect BGR or BGRA ordering (Blue, Green, Red).
-  // If we have 3 or 4 channels, we need to swap Red and Blue components.
-  // Grayscale has only 1 channel and does not need swapping.
-  if (channels == 3) {
-    for (int y = 0; y < height; ++y) {
-      const std::uint8_t* src_row = pixel_data + y * width_step;
-      std::uint8_t* dst_row = dst_pixels + y * row_size;
-      for (int x = 0; x < width; ++x) {
-        dst_row[x * 3 + 0] = src_row[x * 3 + 2];  // Blue
-        dst_row[x * 3 + 1] = src_row[x * 3 + 1];  // Green
-        dst_row[x * 3 + 2] = src_row[x * 3 + 0];  // Red
-      }
-    }
-  } else if (channels == 4) {
-    for (int y = 0; y < height; ++y) {
-      const std::uint8_t* src_row = pixel_data + y * width_step;
-      std::uint8_t* dst_row = dst_pixels + y * row_size;
-      for (int x = 0; x < width; ++x) {
-        dst_row[x * 4 + 0] = src_row[x * 4 + 2];  // Blue
-        dst_row[x * 4 + 1] = src_row[x * 4 + 1];  // Green
-        dst_row[x * 4 + 2] = src_row[x * 4 + 0];  // Red
-        dst_row[x * 4 + 3] = src_row[x * 4 + 3];  // Alpha
-      }
-    }
-  } else {
-    // 1-channel Grayscale: copy directly
-    for (int y = 0; y < height; ++y) {
-      const std::uint8_t* src_row = pixel_data + y * width_step;
-      std::uint8_t* dst_row = dst_pixels + y * row_size;
-      std::memcpy(dst_row, src_row, row_size);
-    }
-  }
-
-  return tga_bytes;
-}
+using ::mediapipe::tasks::components::utils::EncodeToTga;
 
 ::litert::lm::Backend ToLiteRtLmBackend(
     tasks::core::BaseOptions::Delegate delegate) {
