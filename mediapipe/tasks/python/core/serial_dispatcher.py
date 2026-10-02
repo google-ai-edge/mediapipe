@@ -48,8 +48,14 @@ class SerialDispatcher:
     """
     self._lib = lib
     self._executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+    # Guards the two flags below and makes every call atomic with respect to
+    # them. Calls are already serialized by the single-threaded executor, so
+    # holding this lock for the duration of a call costs no concurrency.
     self._lock = threading.Lock()
+    # True once calls are no longer forwarded to the C library.
     self._is_closed = False
+    # True once the executor has been shut down.
+    self._is_shut_down = False
 
     for signature in signatures:
       self._register_signature(signature)
@@ -67,20 +73,32 @@ class SerialDispatcher:
         register.
     """
     handler = signature.create_python_wrapper(self._lib, self._executor)
+    # The Mp<Task>Close() functions free the native task whose handle every
+    # other call receives as its first argument, so no call may reach the C
+    # library after one has run (use-after-free), and it must not run twice
+    # (double free). Mp<Task>CloseResult() frees a result, not the task.
+    closes_handle = signature.func_name.endswith('Close')
+
     def shutdown_aware_handler(*args, **kwargs) -> Any:
+      # The closed check and the call itself must be atomic: if the lock were
+      # released in between, a call that had passed the check could be queued
+      # behind a concurrent close() and run on a freed handle.
       with self._lock:
         if self._is_closed:
           return
-      return handler(*args, **kwargs)
+        if closes_handle:
+          self._is_closed = True
+        return handler(*args, **kwargs)
 
     setattr(self, signature.func_name, shutdown_aware_handler)
 
   def close(self):
     """Shuts down the dispatcher and waits for pending tasks to complete."""
     with self._lock:
-      if self._is_closed:
-        return
       self._is_closed = True
+      if self._is_shut_down:
+        return
+      self._is_shut_down = True
     self._executor.shutdown(wait=True)
 
   def __enter__(self):
