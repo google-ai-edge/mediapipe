@@ -21,7 +21,23 @@ output_stream: "RIGHT_HAND_ROI_FROM_POSE:right_hand_roi_from_pose"
 output_stream: "RIGHT_HAND_ROI_FROM_RECROP:right_hand_roi_from_recrop"
 output_stream: "RIGHT_HAND_TRACKING_ROI:right_hand_tracking_roi"
 
-# Extracts left-hand-related landmarks from the pose landmarks.
+# Handedness side packets for the learned ROI network (selects mirroring).
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:is_left_true"
+  options: {
+    [mediapipe.ConstantSidePacketCalculatorOptions.ext] { packet { bool_value: true } }
+  }
+}
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:is_left_false"
+  options: {
+    [mediapipe.ConstantSidePacketCalculatorOptions.ext] { packet { bool_value: false } }
+  }
+}
+
+# Extracts left-hand-related landmarks (wrist, pinky, index) for visibility.
 node {
   calculator: "SplitNormalizedLandmarkListCalculator"
   input_stream: "pose_landmarks"
@@ -36,11 +52,32 @@ node {
   }
 }
 
+# Extracts the six left-hand-related landmarks
+# (shoulder, elbow, wrist, thumb, index, pinky) for the learned ROI network.
+node {
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "pose_landmarks"
+  output_stream: "left_hand6_from_pose"
+  options: {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges: { begin: 11 end: 12 }  # shoulder
+      ranges: { begin: 13 end: 14 }  # elbow
+      ranges: { begin: 15 end: 16 }  # wrist
+      ranges: { begin: 21 end: 22 }  # thumb
+      ranges: { begin: 19 end: 20 }  # index
+      ranges: { begin: 17 end: 18 }  # pinky
+      combine_outputs: true
+    }
+  }
+}
+
 # Predicts left hand landmarks.
 node {
   calculator: "HandLandmarksFromPoseCpu"
   input_stream: "IMAGE:input_video"
   input_stream: "HAND_LANDMARKS_FROM_POSE:left_hand_landmarks_from_pose"
+  input_stream: "HAND6_FROM_POSE:left_hand6_from_pose"
+  input_side_packet: "IS_LEFT:is_left_true"
   output_stream: "HAND_LANDMARKS:left_hand_landmarks"
   # Debug outputs.
   output_stream: "HAND_ROI_FROM_POSE:left_hand_roi_from_pose"
@@ -48,7 +85,7 @@ node {
   output_stream: "HAND_TRACKING_ROI:left_hand_tracking_roi"
 }
 
-# Extracts right-hand-related landmarks from the pose landmarks.
+# Extracts right-hand-related landmarks (wrist, pinky, index) for visibility.
 node {
   calculator: "SplitNormalizedLandmarkListCalculator"
   input_stream: "pose_landmarks"
@@ -63,11 +100,32 @@ node {
   }
 }
 
-# Extracts right-hand-related landmarks from the pose landmarks.
+# Extracts the six right-hand-related landmarks
+# (shoulder, elbow, wrist, thumb, index, pinky) for the learned ROI network.
+node {
+  calculator: "SplitNormalizedLandmarkListCalculator"
+  input_stream: "pose_landmarks"
+  output_stream: "right_hand6_from_pose"
+  options: {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges: { begin: 12 end: 13 }  # shoulder
+      ranges: { begin: 14 end: 15 }  # elbow
+      ranges: { begin: 16 end: 17 }  # wrist
+      ranges: { begin: 22 end: 23 }  # thumb
+      ranges: { begin: 20 end: 21 }  # index
+      ranges: { begin: 18 end: 19 }  # pinky
+      combine_outputs: true
+    }
+  }
+}
+
+# Predicts right hand landmarks.
 node {
   calculator: "HandLandmarksFromPoseCpu"
   input_stream: "IMAGE:input_video"
   input_stream: "HAND_LANDMARKS_FROM_POSE:right_hand_landmarks_from_pose"
+  input_stream: "HAND6_FROM_POSE:right_hand6_from_pose"
+  input_side_packet: "IS_LEFT:is_left_false"
   output_stream: "HAND_LANDMARKS:right_hand_landmarks"
   # Debug outputs.
   output_stream: "HAND_ROI_FROM_POSE:right_hand_roi_from_pose"
