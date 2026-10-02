@@ -15,6 +15,7 @@
 licenses(["notice"])
 
 exports_files([
+    "decision_version_script.lds",
     "textgenai_version_script.lds",
     "version_script.lds",
 ])

@@ -18,6 +18,7 @@ import MediaPipeTasksVision
 import MediaPipeTasksText
 import MediaPipeTasksAudio
 import MediaPipeTasksRetrieval
+import MediaPipeTasksDecision
 
 final class MediaPipeTasksSPMSmokeTest: XCTestCase {
 
@@ -30,6 +31,7 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
     verifyTextRegistration()
     verifyAudioRegistration()
     verifyRetrievalRegistration()
+    verifyDecisionRegistration()
   }
 
   private func verifyTaskInit<T>(
@@ -172,6 +174,25 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
         embeddingDimension: 8)
     XCTAssertEqual(store.databasePath, dbPath)
     try? FileManager.default.removeItem(atPath: dbPath)
+  }
+
+  private func verifyDecisionRegistration() {
+    // The Decision Maker is a Swift-only module backed by the C API in
+    // MediaPipeTasksCommon. Creating it with a nonexistent model proves the
+    // Swift module and the C symbols (MpDecisionMakerCreate) are linked in:
+    // the call must reach the engine and fail with an engine initialization
+    // error, not a missing symbol / module error.
+    do {
+      _ = try DecisionMaker(modelPath: "/nonexistent/decision.task")
+      XCTFail("Decision - DecisionMaker: Expected asset error, but init succeeded.")
+    } catch let error as DecisionMakerError {
+      guard case .failedToInitializeEngine = error else {
+        XCTFail("Decision - DecisionMaker: unexpected error \(error)")
+        return
+      }
+    } catch {
+      XCTFail("Decision - DecisionMaker: unexpected error \(error)")
+    }
   }
 
   private func assertRegistrationError(_ error: Error, domain: String) {

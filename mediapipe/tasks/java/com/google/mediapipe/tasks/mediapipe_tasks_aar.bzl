@@ -343,7 +343,7 @@ zip -r $$origdir/$(location :{}.aar) META-INF/NOTICE
 """.format(android_library, name, name, name),
     )
 
-def mediapipe_build_aar_with_jni(name, android_library):
+def mediapipe_build_aar_with_jni(name, android_library, extra_classes_jars = []):
     """Builds MediaPipe AAR with jni.
 
     This target is used for building AAR packages from the list of sources, while also adding the
@@ -352,6 +352,10 @@ def mediapipe_build_aar_with_jni(name, android_library):
     Args:
       name: The bazel target name.
       android_library: the android library that contains jni.
+      extra_classes_jars: Optional list of jar targets whose classes are merged into the AAR's
+        classes.jar. The .aar output of an android_library only contains the classes compiled from
+        its own srcs, so classes that are only reachable through `exports` (e.g. Kotlin classes
+        compiled by kt_android_library) need to be added explicitly.
     """
 
     # Generates dummy AndroidManifest.xml for dummy apk usage
@@ -380,23 +384,43 @@ EOF
         deps = [android_library],
     )
 
+    merge_classes_cmd = ""
+    if extra_classes_jars:
+        merge_classes_cmd = """
+mkdir -p classes
+unzip -q -o $$origdir/$(location {android_library}.aar) classes.jar -d orig_classes
+unzip -q -o orig_classes/classes.jar -d classes
+""".format(android_library = android_library)
+        for jar in extra_classes_jars:
+            merge_classes_cmd += "unzip -q -n $$origdir/$(location {jar}) -d classes\n".format(jar = jar)
+        merge_classes_cmd += """
+rm -f classes/META-INF/*.SF classes/META-INF/*.RSA classes/META-INF/*.DSA
+(cd classes && zip -q -r ../classes.jar .)
+zip -q $$origdir/$(location :{name}.aar) classes.jar
+""".format(name = name)
+
     native.genrule(
         name = name,
-        srcs = [android_library + ".aar", name + "_dummy_app_unsigned.apk", "//mediapipe/tasks/internal/release/android:NOTICE"],
+        srcs = [android_library + ".aar", name + "_dummy_app_unsigned.apk", "//mediapipe/tasks/internal/release/android:NOTICE"] + extra_classes_jars,
         outs = [name + ".aar"],
         tags = ["manual"],
         cmd = """
-cp $(location {}.aar) $(location :{}.aar)
-chmod +w $(location :{}.aar)
+cp $(location {android_library}.aar) $(location :{name}.aar)
+chmod +w $(location :{name}.aar)
 origdir=$$PWD
 cd $$(mktemp -d)
-unzip $$origdir/$(location :{}_dummy_app_unsigned.apk) "lib/*"
+unzip $$origdir/$(location :{name}_dummy_app_unsigned.apk) "lib/*"
 find lib -name *_dummy_app.so -delete
 cp -r lib jni
 mkdir -p META-INF
 cp $$origdir/$(location //mediapipe/tasks/internal/release/android:NOTICE) META-INF/NOTICE
-zip -r $$origdir/$(location :{}.aar) jni/*/*.so META-INF/NOTICE
-""".format(android_library, name, name, name, name),
+zip -r $$origdir/$(location :{name}.aar) jni/*/*.so META-INF/NOTICE
+{merge_classes_cmd}
+""".format(
+            android_library = android_library,
+            name = name,
+            merge_classes_cmd = merge_classes_cmd,
+        ),
     )
 
 def mediapipe_java_proto_src_extractor(target, src_out, name = ""):

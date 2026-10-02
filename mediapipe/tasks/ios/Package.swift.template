@@ -40,6 +40,13 @@ let package = Package(
                 "MediaPipeTasksCommon",
             ]
         ),
+        .library(
+            name: "MediaPipeTasksDecision",
+            targets: [
+                "MediaPipeTasksDecision",
+                "MediaPipeTasksCommon",
+            ]
+        ),
     ],
     dependencies: [],
     targets: [
@@ -67,6 +74,10 @@ let package = Package(
             name: "MediaPipeTasksRetrieval",
             ${MPP_RETRIEVAL_TARGET_ARG}
         ),
+        .binaryTarget(
+            name: "MediaPipeTasksDecision",
+            ${MPP_DECISION_TARGET_ARG}
+        ),
         .target(
             name: "MediaPipeTasksCommon",
             dependencies: [
@@ -76,6 +87,7 @@ let package = Package(
                 "MediaPipeTasksText",
                 "MediaPipeTasksAudio",
                 "MediaPipeTasksRetrieval",
+                "MediaPipeTasksDecision",
             ],
             linkerSettings: [
                 // Note: -all_load is required to prevent the Apple linker
