@@ -31,6 +31,15 @@ class SerialDispatcher:
 
   If a function is a CStatusFunction, the dispatcher will raise a Python
   exception if the returned MpStatus code is not kMpOk.
+
+  Once the dispatcher is closed, which happens when the native task is closed
+  (the `Mp<Task>Close()` function ran) or `close()` is called, calls are not
+  forwarded to the C library any more, as they would run on a freed task. Such
+  a call raises a ValueError, so that using a closed task fails loudly instead
+  of returning an empty result. Only the calls that release resources (the
+  `Mp<Task>Close()` function itself, and the functions that free results and
+  strings, such as `Mp<Task>CloseResult()`) are silently ignored, so that
+  cleaning up after a task was closed concurrently stays safe.
   """
 
   # Enable dynamic attributes as we register methods on this class via
@@ -77,7 +86,12 @@ class SerialDispatcher:
     # other call receives as its first argument, so no call may reach the C
     # library after one has run (use-after-free), and it must not run twice
     # (double free). Mp<Task>CloseResult() frees a result, not the task.
-    closes_handle = signature.func_name.endswith('Close')
+    func_name = signature.func_name
+    closes_handle = func_name.endswith('Close')
+    # Functions that free resources (`Mp<Task>Close()`, `Mp<Task>CloseResult()`,
+    # `MpStringListFree()`, ...) are no-ops on a closed dispatcher. Every other
+    # function needs the task and raises.
+    releases_resources = 'Close' in func_name or 'Free' in func_name
 
     def shutdown_aware_handler(*args, **kwargs) -> Any:
       # The closed check and the call itself must be atomic: if the lock were
@@ -85,12 +99,16 @@ class SerialDispatcher:
       # behind a concurrent close() and run on a freed handle.
       with self._lock:
         if self._is_closed:
-          return
+          if releases_resources:
+            return
+          raise ValueError(
+              f'Cannot call {func_name}(): the task has been closed.'
+          )
         if closes_handle:
           self._is_closed = True
         return handler(*args, **kwargs)
 
-    setattr(self, signature.func_name, shutdown_aware_handler)
+    setattr(self, func_name, shutdown_aware_handler)
 
   def close(self):
     """Shuts down the dispatcher and waits for pending tasks to complete."""
