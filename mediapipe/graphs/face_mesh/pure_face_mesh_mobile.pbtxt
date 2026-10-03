@@ -1,0 +1,74 @@
+# MediaPipe graph that performs face mesh with TensorFlow Lite on GPU.
+# Edited from face_mesh_mobile.pbtxt because I don't want babysitting of auto throttling and such. I'll do it myself
+
+# GPU buffer. (GpuBuffer)
+input_stream: "input_video"
+
+# Max number of faces to detect/process. (int)
+input_side_packet: "num_faces"
+
+# Output image with rendered results. (GpuBuffer)
+# nope no rendering
+# output_stream: "output_video"
+
+# Collection of detected/processed faces, each represented as a list of
+# landmarks. (std::vector<NormalizedLandmarkList>)
+output_stream: "multi_face_landmarks"
+
+# Regions of interest calculated based on landmarks.
+# (For more info see mediapipe/modules/face_landmark/face_landmark_front_gpu.pbtxt)
+# (std::vector<NormalizedRect>)
+# For typings see "mediapipe/framework/formats/rect.pb.h"
+output_stream: "face_rects_from_landmarks"
+
+# The detections from the box model
+# see detection.proto
+# Regions of interest calculated based on face detections.
+# (std::vector<NormalizedRect>)
+# output_stream: "face_rects_from_detections"
+
+# Extra outputs (for debugging, for instance).
+# Detected faces. (std::vector<Detection>)
+# (std::vector<Detections>)
+# output_stream: "face_detections"
+
+# Landmark presence (needed because whole graph won't emit anything if no faces are detected)
+output_stream: "landmark_presence"
+
+# screw the throttling, we do that ourselves.
+# *throttling node code was deleted from here*
+
+# Subgraph that detects faces and corresponding landmarks.
+node {
+  calculator: "FaceLandmarkFrontGpu"
+# the IMAGE: part is saying, pipe this data into the input with the name `image`
+  input_stream: "IMAGE:input_video"
+  input_side_packet: "NUM_FACES:num_faces"
+  output_stream: "LANDMARKS:multi_face_landmarks"
+  output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"
+  # face_detections is the stream that comes out from face_detection_short_range_common
+  # output_stream: "DETECTIONS:face_detections"
+  
+  # output_stream: "ROIS_FROM_DETECTIONS:face_rects_from_detections"
+}
+
+# See this thread here https://github.com/google/mediapipe/issues/850#issuecomment-683268033
+# "if there are no packets in the corresponding output stream, it is designed to wait until the packet comes in"
+# That means that we'd get absolutely nothing to work with and won't know if our frame had anythin!
+# So we add PacketPresenceCalculator
+node {
+  calculator: "PacketPresenceCalculator"
+  input_stream: "PACKET:multi_face_landmarks"
+  output_stream: "PRESENCE:landmark_presence"
+}
+
+# nope not rendering.
+# Subgraph that renders face-landmark annotation onto the input image.
+# node {
+#  calculator: "FaceRendererGpu"
+#  input_stream: "IMAGE:throttled_input_video"
+#  input_stream: "LANDMARKS:multi_face_landmarks"
+#  input_stream: "NORM_RECTS:face_rects_from_landmarks"
+#  input_stream: "DETECTIONS:face_detections"
+#  output_stream: "IMAGE:output_video"
+#}
