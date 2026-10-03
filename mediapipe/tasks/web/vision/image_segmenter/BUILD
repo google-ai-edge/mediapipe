@@ -24,6 +24,7 @@ ts_library(
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_jspb_proto",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:classifier_options",
+        "//mediapipe/tasks/web/components/processors:label_map",
         "//mediapipe/tasks/web/vision/core:image_processing_options",
         "//mediapipe/tasks/web/vision/core:mask",
         "//mediapipe/tasks/web/vision/core:vision_task_runner",
@@ -48,10 +49,14 @@ ts_library(
         ":image_segmenter",
         ":image_segmenter_types",
         "//mediapipe/framework:calculator_jspb_proto",
+        "//mediapipe/framework:calculator_options_jspb_proto",
+        "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_jspb_proto",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner_test_utils",
         "//mediapipe/tasks/web/vision/core:mask",
+        "//mediapipe/util:label_map_jspb_proto",
         "//mediapipe/web/graph_runner:graph_runner_image_lib_ts",
+        "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )
 

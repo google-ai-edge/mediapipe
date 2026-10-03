@@ -16,6 +16,7 @@ ts_library(
     visibility = ["//visibility:public"],
     deps = [
         ":image_classifier_types",
+        "//mediapipe/calculators/tensor:tensors_to_classification_calculator_jspb_proto",
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/framework:calculator_options_jspb_proto",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_jspb_proto",
@@ -25,6 +26,7 @@ ts_library(
         "//mediapipe/tasks/web/components/containers:classification_result",
         "//mediapipe/tasks/web/components/processors:classifier_options",
         "//mediapipe/tasks/web/components/processors:classifier_result",
+        "//mediapipe/tasks/web/components/processors:label_map",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:classifier_options",
         "//mediapipe/tasks/web/vision/core:image_processing_options",
@@ -57,11 +59,15 @@ ts_library(
     deps = [
         ":image_classifier",
         ":image_classifier_types",
+        "//mediapipe/calculators/tensor:tensors_to_classification_calculator_jspb_proto",
         "//mediapipe/framework:calculator_jspb_proto",
+        "//mediapipe/framework:calculator_options_jspb_proto",
         "//mediapipe/framework/formats:classification_jspb_proto",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_jspb_proto",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner_test_utils",
+        "//mediapipe/util:label_map_jspb_proto",
+        "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )
 
