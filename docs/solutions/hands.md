@@ -36,7 +36,7 @@ and hand gesture control, and can also enable the overlay of digital content and
 information on top of the physical world in augmented reality. While coming
 naturally to people, robust real-time hand perception is a decidedly challenging
 computer vision task, as hands often occlude themselves or each other (e.g.
-finger/palm occlusions and hand shakes) and lack high contrast patterns.
+finger/palm occlusions and handshakes) and lack high contrast patterns.
 
 MediaPipe Hands is a high-fidelity hand and finger tracking solution. It employs
 machine learning (ML) to infer 21 3D landmarks of a hand from just a single
@@ -116,12 +116,12 @@ train a palm detector instead of a hand detector, since estimating bounding
 boxes of rigid objects like palms and fists is significantly simpler than
 detecting hands with articulated fingers. In addition, as palms are smaller
 objects, the non-maximum suppression algorithm works well even for two-hand
-self-occlusion cases, like handshakes. Moreover, palms can be modelled using
+self-occlusion cases, like handshakes. Moreover, palms can be modeled using
 square bounding boxes (anchors in ML terminology) ignoring other aspect ratios,
 and therefore reducing the number of anchors by a factor of 3-5. Second, an
 encoder-decoder feature extractor is used for bigger scene context awareness
 even for small objects (similar to the RetinaNet approach). Lastly, we minimize
-the focal loss during training to support a large amount of anchors resulting
+the focal loss during training to support a large number of anchors resulting
 from the high scale variance.
 
 With the above techniques, we achieve an average precision of 95.7% in palm
@@ -138,7 +138,7 @@ The model learns a consistent internal hand pose representation and is robust
 even to partially visible hands and self-occlusions.
 
 To obtain ground truth data, we have manually annotated ~30K real-world images
-with 21 3D coordinates, as shown below (we take Z-value from image depth map, if
+with 21 3D coordinates, as shown below (we take Z-value from the image depth map, if
 it exists per corresponding coordinate). To better cover the possible hand poses
 and provide additional supervision on the nature of hand geometry, we also
 render a high-quality synthetic hand model over various backgrounds and map it
@@ -172,11 +172,11 @@ unrelated, images. Default to `false`.
 
 #### max_num_hands
 
-Maximum number of hands to detect. Default to `2`.
+The maximum number of hands to detect. Default to `2`.
 
 #### model_complexity
 
-Complexity of the hand landmark model: `0` or `1`. Landmark accuracy as well as
+The complexity of the hand landmark model: `0` or `1`. Landmark accuracy as well as
 inference latency generally go up with the model complexity. Default to `1`.
 
 #### min_detection_confidence
@@ -217,7 +217,7 @@ approximate geometric center.
 
 Collection of handedness of the detected/tracked hands (i.e. is it a left or
 right hand). Each hand is composed of `label` and `score`. `label` is a string
-of value either `"Left"` or `"Right"`. `score` is the estimated probability of
+of values either `"Left"` or `"Right"`. `score` is the estimated probability of
 the predicted handedness and is always greater than or equal to `0.5` (and the
 opposite handedness has an estimated probability of `1 - score`).
 
