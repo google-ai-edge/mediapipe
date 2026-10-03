@@ -204,6 +204,16 @@ absl::Status CppFaceLandmarkerClose(MpFaceLandmarkerPtr landmarker) {
   return absl::OkStatus();
 }
 
+absl::Status CppFaceLandmarkerSetOptions(MpFaceLandmarkerPtr landmarker,
+                                         int num_faces,
+                                         float min_face_detection_confidence,
+                                         float min_face_presence_confidence,
+                                         float min_tracking_confidence) {
+  return GetCppLandmarker(landmarker)->SetOptions(
+      num_faces, min_face_detection_confidence, min_face_presence_confidence,
+      min_tracking_confidence);
+}
+
 }  // namespace mediapipe::tasks::c::vision::face_landmarker
 
 extern "C" {
@@ -257,6 +267,19 @@ MpStatus MpFaceLandmarkerClose(MpFaceLandmarkerPtr landmarker,
   absl::Status status =
       mediapipe::tasks::c::vision::face_landmarker::CppFaceLandmarkerClose(
           landmarker);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
+}
+
+MpStatus MpFaceLandmarkerSetOptions(MpFaceLandmarkerPtr landmarker,
+                                    int num_faces,
+                                    float min_face_detection_confidence,
+                                    float min_face_presence_confidence,
+                                    float min_tracking_confidence,
+                                    char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::face_landmarker::CppFaceLandmarkerSetOptions(
+          landmarker, num_faces, min_face_detection_confidence,
+          min_face_presence_confidence, min_tracking_confidence);
   return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
