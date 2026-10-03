@@ -51,7 +51,7 @@ Generating examples for a new data set typically only requires defining the
 metadata. MediaPipe graphs can interpret this metadata to fill out the
 SequenceExamples using the `UnpackMediaSequenceCalculator` and
 `PackMediaSequenceCalculator`. This section will list the metadata required for
-different types of tasks and provide a limited descripiton for the data filled
+different types of tasks and provide a limited description for the data filled
 by MediaPipe. The input media will be referred to as video because that is a
 common case, but audio files or other sequences could be supported. The function
 calls in the Python API will be used in examples, and the equivalent C++ calls
