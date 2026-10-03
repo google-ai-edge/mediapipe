@@ -14,6 +14,7 @@
 
 import ctypes
 import threading
+import time
 from unittest import mock
 
 from absl.testing import absltest
@@ -104,6 +105,37 @@ class AsyncResultDispatcherTest(absltest.TestCase):
 
     self.assertIsNotNone(callback_thread_id)
     self.assertNotEqual(main_thread_id, callback_thread_id)
+
+  def test_concurrent_first_callbacks_start_a_single_thread(self):
+    mock_callback = mock.Mock()
+    dispatcher = _AsyncResultDispatcher(converter=_to_int_converter)
+    c_callback = dispatcher.wrap_callback(mock_callback, _C_CALLBACK_TYPE)
+    num_threads = 8
+    start = threading.Barrier(num_threads)
+    started_threads = []
+    original_start = dispatcher._start
+
+    def counting_start():
+      started_threads.append(threading.get_ident())
+      # Widen the window between the "not started" check and the state change.
+      time.sleep(0.05)
+      original_start()
+
+    dispatcher._start = counting_start
+
+    def call():
+      start.wait()
+      c_callback(_MpStatus.MP_OK.value, b"1", b"1")
+
+    threads = [threading.Thread(target=call) for _ in range(num_threads)]
+    for thread in threads:
+      thread.start()
+    for thread in threads:
+      thread.join()
+    dispatcher.close()
+
+    self.assertLen(started_threads, 1)
+    self.assertEqual(mock_callback.call_count, num_threads)
 
   def test_ignores_calls_after_close(self):
     mock_callback = mock.Mock()

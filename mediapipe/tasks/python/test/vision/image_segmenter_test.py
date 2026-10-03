@@ -424,6 +424,50 @@ class ImageSegmenterTest(parameterized.TestCase):
       with self.assertRaises(ValueError):
         segmenter.segment_async(self.test_image, 0)
 
+  def test_calling_segment_after_close_raises(self):
+    options = _ImageSegmenterOptions(
+        base_options=_BaseOptions(model_asset_path=self.model_path),
+        running_mode=_RUNNING_MODE.IMAGE,
+    )
+    segmenter = _ImageSegmenter.create_from_options(options)
+    segmenter.close()
+
+    with self.assertRaisesRegex(ValueError, 'closed'):
+      segmenter.segment(self.test_image)
+
+  def test_calling_segment_for_video_after_close_raises(self):
+    options = _ImageSegmenterOptions(
+        base_options=_BaseOptions(model_asset_path=self.model_path),
+        running_mode=_RUNNING_MODE.VIDEO,
+    )
+    segmenter = _ImageSegmenter.create_from_options(options)
+    segmenter.close()
+
+    with self.assertRaisesRegex(ValueError, 'closed'):
+      segmenter.segment_for_video(self.test_image, 0)
+
+  def test_calling_segment_async_after_close_raises(self):
+    options = _ImageSegmenterOptions(
+        base_options=_BaseOptions(model_asset_path=self.model_path),
+        running_mode=_RUNNING_MODE.LIVE_STREAM,
+        result_callback=mock.MagicMock(),
+    )
+    segmenter = _ImageSegmenter.create_from_options(options)
+    segmenter.close()
+
+    with self.assertRaisesRegex(ValueError, 'closed'):
+      segmenter.segment_async(self.test_image, 0)
+
+  def test_close_is_idempotent(self):
+    options = _ImageSegmenterOptions(
+        base_options=_BaseOptions(model_asset_path=self.model_path),
+        running_mode=_RUNNING_MODE.IMAGE,
+    )
+    with _ImageSegmenter.create_from_options(options) as segmenter:
+      segmenter.close()
+      segmenter.close()
+    # The context manager closes the segmenter a third time.
+
   def test_segment_async_calls_in_category_mask_mode(self):
     observed_timestamp_ms = -1
     callback_event = threading.Event()
