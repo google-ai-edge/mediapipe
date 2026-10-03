@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import {TaskLogger} from '../../../../tasks/web/core/task_logger';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 import 'jasmine';
 import {
@@ -22,6 +23,10 @@ import {
   DecisionMaker,
   ScoreResult,
 } from './decision_maker';
+
+interface DecisionMakerInternals {
+  logger?: TaskLogger;
+}
 
 class DecisionMakerFake extends DecisionMaker {
   mockModule: Record<string, jasmine.Spy>;
@@ -262,6 +267,107 @@ describe('DecisionMaker', () => {
     expect(() =>
       decisionMaker.evaluateBoolean('test', {condition: 'is test'}),
     ).toThrowError('Decision is already closed.');
+  });
+
+  function createFakeLogger(): jasmine.SpyObj<TaskLogger> {
+    return jasmine.createSpyObj<TaskLogger>('TaskLogger', [
+      'logSessionStart',
+      'logSessionEnd',
+      'recordCpuInputArrival',
+      'recordGpuInputArrival',
+      'recordInvocationEnd',
+      'close',
+    ]);
+  }
+
+  it('logs session start once the native maker is created', async () => {
+    const fakeLogger = createFakeLogger();
+    const maker = new DecisionMakerFake();
+    (maker as unknown as DecisionMakerInternals).logger = fakeLogger;
+    expect(fakeLogger.logSessionStart).not.toHaveBeenCalled();
+
+    await maker.init();
+    expect(fakeLogger.logSessionStart).toHaveBeenCalledTimes(1);
+    maker.close();
+  });
+
+  it('logs invocations and session end/close on evaluate and close calls', async () => {
+    const fakeLogger = createFakeLogger();
+    (decisionMaker as unknown as DecisionMakerInternals).logger = fakeLogger;
+
+    await decisionMaker.evaluateBoolean('Play jazz music', {
+      condition: 'The user wants to play media',
+    });
+    expect(fakeLogger.recordGpuInputArrival).toHaveBeenCalledWith(0);
+    expect(fakeLogger.recordInvocationEnd).toHaveBeenCalledWith(0);
+
+    await decisionMaker.evaluateChoice('Turn off living room', {
+      criteria: {'cloud': 'Complex cloud query', 'device': 'On-device task'},
+    });
+    expect(fakeLogger.recordGpuInputArrival).toHaveBeenCalledWith(1);
+    expect(fakeLogger.recordInvocationEnd).toHaveBeenCalledWith(1);
+
+    await decisionMaker.evaluateScore('Great service and food', {
+      rubric: ['Poor', 'Fair', 'Good', 'Excellent'],
+    });
+    expect(fakeLogger.recordGpuInputArrival).toHaveBeenCalledWith(2);
+    expect(fakeLogger.recordInvocationEnd).toHaveBeenCalledWith(2);
+
+    await decisionMaker.evaluateChoiceBatch(
+      ['Set a timer', 'Explain quantum mechanics'],
+      {criteria: {'cloud': 'Complex cloud query', 'device': 'On-device task'}},
+    );
+    expect(fakeLogger.recordGpuInputArrival).toHaveBeenCalledWith(3);
+    expect(fakeLogger.recordInvocationEnd).toHaveBeenCalledWith(3);
+
+    // Without a native `evaluateSchema`, schema evaluation falls back to one
+    // native call per question, each of which is logged individually.
+    await decisionMaker.evaluate('Production outage', {
+      questions: [
+        {id: 'is_urgent', type: 'binary', prompt: 'Is it urgent?'},
+        {
+          id: 'route',
+          type: 'categorical',
+          prompt: 'Which queue?',
+          options: [{label: 'cloud'}, {label: 'device'}],
+        },
+      ],
+    });
+    expect(fakeLogger.recordGpuInputArrival).toHaveBeenCalledWith(4);
+    expect(fakeLogger.recordInvocationEnd).toHaveBeenCalledWith(4);
+    expect(fakeLogger.recordGpuInputArrival).toHaveBeenCalledWith(5);
+    expect(fakeLogger.recordInvocationEnd).toHaveBeenCalledWith(5);
+    expect(fakeLogger.recordCpuInputArrival).not.toHaveBeenCalled();
+
+    decisionMaker.close();
+    expect(fakeLogger.logSessionEnd).toHaveBeenCalledTimes(1);
+    expect(fakeLogger.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('records invocation end when the native evaluation fails', async () => {
+    const fakeLogger = createFakeLogger();
+    (decisionMaker as unknown as DecisionMakerInternals).logger = fakeLogger;
+    mockModule['evaluateBoolean'].and.callFake(() =>
+      Promise.reject(new Error('native failure')),
+    );
+
+    await expectAsync(
+      decisionMaker.evaluateBoolean('text', {condition: 'is test'}),
+    ).toBeRejectedWithError('native failure');
+    expect(fakeLogger.recordGpuInputArrival).toHaveBeenCalledWith(0);
+    expect(fakeLogger.recordInvocationEnd).toHaveBeenCalledWith(0);
+  });
+
+  it('records CPU input arrival for the CPU-only encoder backend', async () => {
+    const cpuMaker = await DecisionMakerFake.create(/* backendType= */ 1);
+    const fakeLogger = createFakeLogger();
+    (cpuMaker as unknown as DecisionMakerInternals).logger = fakeLogger;
+
+    await cpuMaker.evaluateBoolean('text', {condition: 'is test'});
+    expect(fakeLogger.recordCpuInputArrival).toHaveBeenCalledWith(0);
+    expect(fakeLogger.recordGpuInputArrival).not.toHaveBeenCalled();
+    expect(fakeLogger.recordInvocationEnd).toHaveBeenCalledWith(0);
+    cpuMaker.close();
   });
 
   it('streams model and companion per-layer embedder into Wasm heap with zero-copy pointers and frees on close', async () => {

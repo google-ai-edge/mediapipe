@@ -36,6 +36,7 @@ ts_library(
     srcs = ["decision_maker_test.ts"],
     deps = [
         ":decision_maker",
+        "//mediapipe/tasks/web/core:task_logger",
         "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )

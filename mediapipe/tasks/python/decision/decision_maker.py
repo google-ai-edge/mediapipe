@@ -190,11 +190,11 @@ class DecisionMakerOptions:
 
   def to_ctypes(self) -> _MpDecisionMakerOptionsC:
     """Converts the options to a ctypes struct."""
-    base_options_c = (
-        self.base_options.to_ctypes()
-        if self.base_options
-        else base_options_c_module.MpBaseOptionsC()
-    )
+    # Always go through `BaseOptions.to_ctypes()` so that the host environment,
+    # host version and CA bundle path used for usage logging are populated
+    # even when no base options are provided.
+    base_options = self.base_options or base_options_module.BaseOptions()
+    base_options_c = base_options.to_ctypes()
     return _MpDecisionMakerOptionsC(
         base_options=base_options_c,
         max_num_tokens=self.max_num_tokens,

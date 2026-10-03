@@ -63,6 +63,13 @@ export type {
 };
 
 /**
+ * `DecisionMakerOptions.backendType` value for the encoder backend. This is
+ * the only backend that runs on CPU; all other backends run on WebGPU (see the
+ * delegate selection in `decision_maker_api.cc`).
+ */
+const ENCODER_BACKEND_TYPE = 1;
+
+/**
  * The Wasm module for Decision with custom C++ bindings.
  */
 declare interface DecisionMakerWasmModule {
@@ -242,6 +249,7 @@ export class DecisionMaker extends TaskRunner {
   private isClosed = false;
   private sessionSchema?: ClassifierSchema;
   private lastContextUsage = 0;
+  private loggerTimestamp = 0;
 
   /**
    * Initializes the Wasm runtime and creates a new Decision based
@@ -343,6 +351,32 @@ export class DecisionMaker extends TaskRunner {
 
   protected override getTaskName(): string {
     return 'DecisionMaker';
+  }
+
+  /**
+   * Runs a native evaluation and records it with the usage logger: input
+   * arrival is recorded before `run()` is invoked and invocation end once the
+   * returned promise settles.
+   */
+  private logInvocation<T>(run: () => Promise<T>): Promise<T> {
+    const timestamp = this.loggerTimestamp++;
+    if (this.logger) {
+      if (this.backendType === ENCODER_BACKEND_TYPE) {
+        this.logger.recordCpuInputArrival(timestamp);
+      } else {
+        this.logger.recordGpuInputArrival(timestamp);
+      }
+    }
+    return run().then(
+      (result) => {
+        this.logger?.recordInvocationEnd(timestamp);
+        return result;
+      },
+      (error: unknown) => {
+        this.logger?.recordInvocationEnd(timestamp);
+        throw error;
+      },
+    );
   }
 
   /**
@@ -692,6 +726,7 @@ export class DecisionMaker extends TaskRunner {
         this.backendType,
         this.maxNumTokens,
       );
+      this.logger?.logSessionStart();
       return;
     }
 
@@ -708,6 +743,7 @@ export class DecisionMaker extends TaskRunner {
       this.backendType,
       this.maxNumTokens,
     );
+    this.logger?.logSessionStart();
   }
 
   protected override refreshGraph(): void {
@@ -734,12 +770,14 @@ export class DecisionMaker extends TaskRunner {
     const condition = question.context
       ? `${question.context}\n${question.condition}`
       : question.condition;
-    return wasmModule.evaluateBoolean(
-      this.makerPtr,
-      text,
-      condition,
-      question.threshold ?? 0.5,
-      question.temperature ?? 0,
+    return this.logInvocation(() =>
+      wasmModule.evaluateBoolean(
+        this.makerPtr,
+        text,
+        condition,
+        question.threshold ?? 0.5,
+        question.temperature ?? 0,
+      ),
     );
   }
 
@@ -767,12 +805,14 @@ export class DecisionMaker extends TaskRunner {
         ? `${question.context}\n${baseInstructions}`
         : question.context
       : baseInstructions;
-    return wasmModule.evaluateChoice(
-      this.makerPtr,
-      text,
-      criteria,
-      question.temperature ?? 0,
-      instructions,
+    return this.logInvocation(() =>
+      wasmModule.evaluateChoice(
+        this.makerPtr,
+        text,
+        criteria,
+        question.temperature ?? 0,
+        instructions,
+      ),
     );
   }
 
@@ -801,12 +841,14 @@ export class DecisionMaker extends TaskRunner {
         ? `${question.context}\n${baseInstructions}`
         : question.context
       : baseInstructions;
-    const raw = await wasmModule.evaluateScore(
-      this.makerPtr,
-      text,
-      rubric,
-      question.temperature ?? 0,
-      instructions,
+    const raw = await this.logInvocation(() =>
+      wasmModule.evaluateScore(
+        this.makerPtr,
+        text,
+        rubric,
+        question.temperature ?? 0,
+        instructions,
+      ),
     );
     return enrichOrdinalResult(raw, labels, levels, hasCustomLevels);
   }
@@ -844,11 +886,13 @@ export class DecisionMaker extends TaskRunner {
       typeof wasmModule.evaluateSchema === 'function' &&
       (schema.questions ?? []).length > 0
     ) {
-      return wasmModule.evaluateSchema(
-        this.makerPtr,
-        stateText,
-        schemaContext ?? '',
-        schema.questions ?? [],
+      return this.logInvocation(() =>
+        wasmModule.evaluateSchema!(
+          this.makerPtr,
+          stateText,
+          schemaContext ?? '',
+          schema.questions ?? [],
+        ),
       );
     }
 
@@ -1002,13 +1046,15 @@ export class DecisionMaker extends TaskRunner {
       ? `${question.context}\n${question.condition}`
       : question.condition;
     if (typeof wasmModule.evaluateBooleanBatch === 'function') {
-      return wasmModule.evaluateBooleanBatch(
-        this.makerPtr,
-        texts,
-        condition,
-        question.threshold ?? 0.5,
-        question.temperature ?? 0,
-        sharedPrefix,
+      return this.logInvocation(() =>
+        wasmModule.evaluateBooleanBatch!(
+          this.makerPtr,
+          texts,
+          condition,
+          question.threshold ?? 0.5,
+          question.temperature ?? 0,
+          sharedPrefix,
+        ),
       );
     }
     const results: BooleanResult[] = [];
@@ -1050,13 +1096,15 @@ export class DecisionMaker extends TaskRunner {
         : question.context
       : baseInstructions;
     if (typeof wasmModule.evaluateChoiceBatch === 'function') {
-      return wasmModule.evaluateChoiceBatch(
-        this.makerPtr,
-        texts,
-        criteria,
-        question.temperature ?? 0,
-        instructions,
-        sharedPrefix,
+      return this.logInvocation(() =>
+        wasmModule.evaluateChoiceBatch!(
+          this.makerPtr,
+          texts,
+          criteria,
+          question.temperature ?? 0,
+          instructions,
+          sharedPrefix,
+        ),
       );
     }
     const results: ChoiceResult[] = [];
@@ -1099,13 +1147,15 @@ export class DecisionMaker extends TaskRunner {
         : question.context
       : baseInstructions;
     if (typeof wasmModule.evaluateScoreBatch === 'function') {
-      const rawBatch = await wasmModule.evaluateScoreBatch(
-        this.makerPtr,
-        texts,
-        rubric,
-        question.temperature ?? 0,
-        instructions,
-        sharedPrefix,
+      const rawBatch = await this.logInvocation(() =>
+        wasmModule.evaluateScoreBatch!(
+          this.makerPtr,
+          texts,
+          rubric,
+          question.temperature ?? 0,
+          instructions,
+          sharedPrefix,
+        ),
       );
       return rawBatch.map((r) =>
         enrichOrdinalResult(r, labels, levels, hasCustomLevels),
