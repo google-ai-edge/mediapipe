@@ -70,6 +70,12 @@ export type {
 const ENCODER_BACKEND_TYPE = 1;
 
 /**
+ * `backendType` value passed to `createDecision` / `createDecisionFromBuffers`
+ * in `decision_maker_api.cc` to select `MP_DELEGATE_CPU` (`backend_type < 0`).
+ */
+const CPU_DELEGATE_BACKEND_TYPE = -1;
+
+/**
  * The Wasm module for Decision with custom C++ bindings.
  */
 declare interface DecisionMakerWasmModule {
@@ -240,7 +246,7 @@ const recycledWasmModules: WasmModule[] = [];
 export class DecisionMaker extends TaskRunner {
   protected override baseOptions: BaseOptionsProto = new BaseOptionsProto();
   private backendType = 0;
-  private maxNumTokens = 256;
+  private maxNumTokens = 0;
   private makerPtr = 0;
   private modelWasmPtr = 0;
   private modelWasmRawPtr = 0;
@@ -302,7 +308,7 @@ export class DecisionMaker extends TaskRunner {
     wasmFileset: WasmFileset,
     modelAssetPath: string,
     backendType = 0,
-    maxNumTokens = 256,
+    maxNumTokens = 0,
   ): Promise<DecisionMaker> {
     return DecisionMaker.createFromOptions(wasmFileset, {
       baseOptions: {
@@ -330,7 +336,7 @@ export class DecisionMaker extends TaskRunner {
     wasmFileset: WasmFileset,
     modelAssetBuffer: Uint8Array | ReadableStreamDefaultReader,
     backendType = 0,
-    maxNumTokens = 256,
+    maxNumTokens = 0,
   ): Promise<DecisionMaker> {
     return DecisionMaker.createFromOptions(wasmFileset, {
       baseOptions: {
@@ -361,7 +367,10 @@ export class DecisionMaker extends TaskRunner {
   private logInvocation<T>(run: () => Promise<T>): Promise<T> {
     const timestamp = this.loggerTimestamp++;
     if (this.logger) {
-      if (this.backendType === ENCODER_BACKEND_TYPE) {
+      if (
+        this.backendType === ENCODER_BACKEND_TYPE ||
+        this.backendType === CPU_DELEGATE_BACKEND_TYPE
+      ) {
         this.logger.recordCpuInputArrival(timestamp);
       } else {
         this.logger.recordGpuInputArrival(timestamp);
@@ -589,7 +598,9 @@ export class DecisionMaker extends TaskRunner {
         'Decision does not support updating options after ' + 'initialization.',
       );
     }
-    if (options.backendType !== undefined) {
+    if (options.baseOptions?.delegate === 'CPU') {
+      this.backendType = CPU_DELEGATE_BACKEND_TYPE;
+    } else if (options.backendType !== undefined) {
       this.backendType = options.backendType;
     }
     if (options.maxNumTokens !== undefined) {
@@ -605,7 +616,23 @@ export class DecisionMaker extends TaskRunner {
       });
     }
 
-    if (typeof navigator !== 'undefined' && navigator.gpu) {
+    if (this.backendType === CPU_DELEGATE_BACKEND_TYPE) {
+      // Use quoted property access: Emscripten reads this field by name
+      // from the Module object, so it must not be renamed by the compiler.
+      const wasmModule = this.graphRunner.wasmModule as unknown as Record<
+        string,
+        unknown
+      >;
+      wasmModule['preinitializedWebGPUDevice'] = undefined;
+      const globalScope = (typeof self !== 'undefined'
+        ? self
+        : globalThis) as unknown as Record<string, unknown>;
+      if (typeof globalScope['Module'] === 'object' && globalScope['Module']) {
+        (globalScope['Module'] as Record<string, unknown>)[
+          'preinitializedWebGPUDevice'
+        ] = undefined;
+      }
+    } else if (typeof navigator !== 'undefined' && navigator.gpu) {
       try {
         // Use quoted property access: Emscripten reads this field by name
         // from the Module object, so it must not be renamed by the compiler.
@@ -617,7 +644,25 @@ export class DecisionMaker extends TaskRunner {
           const adapter = await navigator.gpu.requestAdapter({
             powerPreference: 'high-performance',
           });
-          if (adapter) {
+          const adapterInfo = (
+            adapter as unknown as {
+              info?: {
+                vendor?: string;
+                architecture?: string;
+                description?: string;
+              };
+            }
+          )?.info;
+          const isFallback = Boolean(
+            (adapter as unknown as {isFallbackAdapter?: boolean})
+              ?.isFallbackAdapter,
+          );
+          const isSoftwareAdapter =
+            isFallback ||
+            /swiftshader|llvmpipe|software|lavapipe/i.test(
+              `${adapterInfo?.vendor ?? ''} ${adapterInfo?.architecture ?? ''} ${adapterInfo?.description ?? ''}`,
+            );
+          if (adapter && !isSoftwareAdapter) {
             const requiredFeatures: GPUFeatureName[] = [];
             for (const feat of [
               'shader-f16',
@@ -647,7 +692,6 @@ export class DecisionMaker extends TaskRunner {
               requiredLimits,
             });
             const deviceWithInfo = device as unknown as {adapterInfo?: unknown};
-            const adapterInfo = (adapter as unknown as {info?: unknown}).info;
             if (!deviceWithInfo.adapterInfo && adapterInfo) {
               try {
                 Object.defineProperty(device, 'adapterInfo', {

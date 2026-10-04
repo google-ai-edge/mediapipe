@@ -370,6 +370,48 @@ describe('DecisionMaker', () => {
     cpuMaker.close();
   });
 
+  it('uses CPU_DELEGATE_BACKEND_TYPE (-1) when delegate is CPU and defaults maxNumTokens to 0', async () => {
+    const cpuMaker = new DecisionMakerFake();
+    const fakeLogger = createFakeLogger();
+    (cpuMaker as unknown as DecisionMakerInternals).logger = fakeLogger;
+    (cpuMaker.mockModule as unknown as Record<string, unknown>)[
+      'preinitializedWebGPUDevice'
+    ] = {};
+    const globalScope = (typeof self !== 'undefined'
+      ? self
+      : globalThis) as unknown as Record<string, unknown>;
+    const prevGlobalModule = globalScope['Module'];
+    const fakeGlobalModule: Record<string, unknown> = {
+      'preinitializedWebGPUDevice': {},
+    };
+    globalScope['Module'] = fakeGlobalModule;
+
+    try {
+      await cpuMaker.setOptions({
+        baseOptions: {delegate: 'CPU'},
+        backendType: 3,
+      });
+      expect(cpuMaker.mockModule['createDecision']).toHaveBeenCalledWith(
+        '/model.litertlm',
+        -1,
+        0,
+      );
+      expect(
+        (cpuMaker.mockModule as unknown as Record<string, unknown>)[
+          'preinitializedWebGPUDevice'
+        ],
+      ).toBeUndefined();
+      expect(fakeGlobalModule['preinitializedWebGPUDevice']).toBeUndefined();
+
+      await cpuMaker.evaluateBoolean('text', {condition: 'is test'});
+      expect(fakeLogger.recordCpuInputArrival).toHaveBeenCalledWith(0);
+      expect(fakeLogger.recordGpuInputArrival).not.toHaveBeenCalled();
+    } finally {
+      globalScope['Module'] = prevGlobalModule;
+      cpuMaker.close();
+    }
+  });
+
   it('streams model and companion per-layer embedder into Wasm heap with zero-copy pointers and frees on close', async () => {
     const fakeHeap = new Uint8Array(1024);
     let nextPtr = 64;
@@ -421,5 +463,57 @@ describe('DecisionMaker', () => {
     expect(deleteSdmSpy).toHaveBeenCalledWith(99999);
     expect(freeSpy).toHaveBeenCalledWith(64);
     expect(freeSpy).toHaveBeenCalledWith(72);
+  });
+
+  it('skips software-emulated WebGPU adapters so WASM SIMD runs instead of SwiftShader', async () => {
+    const requestDeviceSpy = jasmine.createSpy('requestDevice');
+    const fakeAdapter = {
+      isFallbackAdapter: false,
+      info: {
+        vendor: 'google',
+        architecture: 'swiftshader',
+        description: 'Google SwiftShader',
+      },
+      features: new Set<string>(),
+      limits: {},
+      requestDevice: requestDeviceSpy,
+    };
+    const navObj = (typeof navigator !== 'undefined'
+      ? navigator
+      : undefined) as unknown as Record<string, unknown> | undefined;
+    if (!navObj) {
+      return;
+    }
+    const prevGpu = navObj['gpu'];
+    Object.defineProperty(navObj, 'gpu', {
+      value: {
+        requestAdapter: jasmine
+          .createSpy('requestAdapter')
+          .and.returnValue(Promise.resolve(fakeAdapter)),
+      },
+      configurable: true,
+      writable: true,
+    });
+
+    const maker = new DecisionMakerFake();
+    try {
+      await maker.setOptions({
+        baseOptions: {delegate: 'GPU'},
+        backendType: 2,
+      });
+      expect(requestDeviceSpy).not.toHaveBeenCalled();
+      expect(
+        (maker.mockModule as unknown as Record<string, unknown>)[
+          'preinitializedWebGPUDevice'
+        ],
+      ).toBeUndefined();
+    } finally {
+      Object.defineProperty(navObj, 'gpu', {
+        value: prevGpu,
+        configurable: true,
+        writable: true,
+      });
+      maker.close();
+    }
   });
 });
