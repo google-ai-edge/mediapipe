@@ -37,6 +37,9 @@ struct FaceLandmarkerResult {
   // Detected face landmarks in normalized image coordinates.
   std::vector<components::containers::NormalizedLandmarks> face_landmarks;
   // Optional face blendshapes results.
+  // Note: *Left and *Right blendshapes correspond to the subject's face, not
+  // the viewer. Passing a horizontally mirrored image will invert these
+  // outputs.
   std::optional<std::vector<components::containers::Classifications>>
       face_blendshapes;
   // Optional facial transformation matrix.

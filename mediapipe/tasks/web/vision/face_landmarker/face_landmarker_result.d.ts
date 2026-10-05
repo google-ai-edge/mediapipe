@@ -31,7 +31,12 @@ export declare interface FaceLandmarkerResult {
   /** Detected face landmarks in normalized image coordinates. */
   faceLandmarks: NormalizedLandmark[][];
 
-  /** Optional face blendshapes results. */
+  /**
+   * Optional face blendshapes results.
+   * Note: *Left and *Right blendshapes correspond to the subject's face, not
+   * the viewer. Passing a horizontally mirrored image will invert these
+   * outputs.
+   */
   faceBlendshapes: Classifications[];
 
   /** Optional facial transformation matrix. */

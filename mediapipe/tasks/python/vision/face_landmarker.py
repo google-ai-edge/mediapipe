@@ -46,7 +46,11 @@ _LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
 
 
 class Blendshapes(enum.IntEnum):
-  """The 52 blendshape coefficients."""
+  """The 52 blendshape coefficients.
+
+  Note: *Left and *Right blendshapes correspond to the subject's face, not the
+  viewer. Passing a horizontally mirrored image will invert these outputs.
+  """
 
   NEUTRAL = 0
   BROW_DOWN_LEFT = 1
