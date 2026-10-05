@@ -15,9 +15,13 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/retrieval/universal_embedder/universal_embedder.h"
 
+#include <filesystem>  // NOLINT(build/c++17)
+#include <fstream>
+#include <ios>
 #include <memory>
 #include <optional>
 #include <string>
+#include <system_error>  // NOLINT(build/c++11)
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -27,6 +31,7 @@ limitations under the License.
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -75,6 +80,19 @@ using ::mediapipe::tasks::components::utils::EncodeToTga;
   }
 }
 
+// Returns true if `path` refers to an existing regular file that can be opened
+// for reading. This is checked up front so that a bad model path never reaches
+// the inference engine and always surfaces as a regular error status.
+bool IsReadableFile(const std::string& path) {
+  std::error_code ec;
+  const std::filesystem::path fs_path(path);
+  if (!std::filesystem::is_regular_file(fs_path, ec) || ec) {
+    return false;
+  }
+  std::ifstream stream(fs_path, std::ios::binary);
+  return stream.good();
+}
+
 }  // namespace
 
 UniversalEmbedder::UniversalEmbedder(
@@ -88,35 +106,32 @@ UniversalEmbedder::UniversalEmbedder(
 
 absl::StatusOr<std::unique_ptr<UniversalEmbedder>> UniversalEmbedder::Create(
     std::unique_ptr<UniversalEmbedderOptions> options) {
-  auto tasks_logger = tasks::core::logging::CreateTasksLogger(
-      {.task_name = "UniversalEmbedder",
-       .task_running_mode = tasks::core::RunningMode::kUnspecified,
-       .host_environment = options->base_options.host_environment,
-       .host_system = options->base_options.host_system,
-       .host_version = options->base_options.host_version,
-       .app_id = options->base_options.app_id,
-       .app_version = options->base_options.app_version,
-       .ca_bundle_path = options->base_options.ca_bundle_path});
+  if (options == nullptr) {
+    return absl::InvalidArgumentError(
+        "UniversalEmbedderOptions must not be null.");
+  }
 
-  if (options->base_options.model_asset_path.empty()) {
+  const std::string& model_path = options->base_options.model_asset_path;
+  if (model_path.empty()) {
     return absl::FailedPreconditionError(
         "No model asset path specified in BaseOptions.");
+  }
+  if (!IsReadableFile(model_path)) {
+    return absl::NotFoundError(absl::StrCat(
+        "Model asset path does not exist or is not a readable file: ",
+        model_path));
   }
 
   std::shared_ptr<MemoryMappedFile> shared_mmap = nullptr;
 #ifdef __EMSCRIPTEN__
   ABSL_ASSIGN_OR_RETURN(auto file_stream,
-                        ::litert::lm::FileDataStream::Create(
-                            options->base_options.model_asset_path));
+                        ::litert::lm::FileDataStream::Create(model_path));
   ABSL_ASSIGN_OR_RETURN(auto model_assets, ModelAssets::Create(file_stream));
 #else
-  ABSL_ASSIGN_OR_RETURN(
-      auto mmap_file,
-      MemoryMappedFile::Create(options->base_options.model_asset_path));
+  ABSL_ASSIGN_OR_RETURN(auto mmap_file, MemoryMappedFile::Create(model_path));
   shared_mmap = std::shared_ptr<MemoryMappedFile>(std::move(mmap_file));
-  ABSL_ASSIGN_OR_RETURN(
-      auto model_assets,
-      ModelAssets::Create(shared_mmap, options->base_options.model_asset_path));
+  ABSL_ASSIGN_OR_RETURN(auto model_assets,
+                        ModelAssets::Create(shared_mmap, model_path));
 #endif
 
   const tasks::core::BaseOptions::Delegate base_delegate =
@@ -195,6 +210,17 @@ absl::StatusOr<std::unique_ptr<UniversalEmbedder>> UniversalEmbedder::Create(
   ABSL_ASSIGN_OR_RETURN(auto engine,
                         EmbeddingEngineImpl::Create(std::move(settings)));
 
+  // Only set up telemetry once the engine exists, so that a failed Create()
+  // (e.g. missing model) does not construct and tear down the logging client.
+  auto tasks_logger = tasks::core::logging::CreateTasksLogger(
+      {.task_name = "UniversalEmbedder",
+       .task_running_mode = tasks::core::RunningMode::kUnspecified,
+       .host_environment = options->base_options.host_environment,
+       .host_system = options->base_options.host_system,
+       .host_version = options->base_options.host_version,
+       .app_id = options->base_options.app_id,
+       .app_version = options->base_options.app_version,
+       .ca_bundle_path = options->base_options.ca_bundle_path});
   tasks_logger->LogSessionStart();
 
   return absl::WrapUnique(

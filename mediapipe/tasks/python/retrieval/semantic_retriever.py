@@ -456,7 +456,6 @@ class SemanticRetriever:
       metadata: Optional dictionary of key-value metadata to associate.
     """
     arr = self._convert_metadata(metadata) if metadata else None
-    arr_ref = ctypes.byref(arr) if arr else None
 
     parts_arr_type = _MpTaskPartC * len(parts)
     parts_arr = parts_arr_type()
@@ -507,7 +506,7 @@ class SemanticRetriever:
         record_id.encode('utf-8'),
         parts_arr,
         len(parts),
-        arr_ref,
+        arr,
         len(metadata) if metadata else 0,
     )
 

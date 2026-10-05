@@ -21,7 +21,6 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
@@ -51,8 +50,13 @@ using ::mediapipe::tasks::retrieval::universal_embedder::UniversalEmbedder;
 
 const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
 
-UniversalEmbedder* GetCppEmbedder(MpUniversalEmbedderPtr wrapper) {
-  ABSL_CHECK(wrapper != nullptr) << "UniversalEmbedder is null.";
+absl::StatusOr<UniversalEmbedder*> GetCppEmbedder(
+    MpUniversalEmbedderPtr wrapper) {
+  if (wrapper == nullptr || wrapper->instance == nullptr) {
+    return absl::InvalidArgumentError(
+        "UniversalEmbedder handle is null. The embedder may have failed to "
+        "initialize or has already been closed.");
+  }
   return wrapper->instance.get();
 }
 
@@ -61,6 +65,11 @@ UniversalEmbedder* GetCppEmbedder(MpUniversalEmbedderPtr wrapper) {
 absl::Status CppUniversalEmbedderCreate(
     const MpUniversalEmbedderOptions& options,
     MpUniversalEmbedderPtr* embedder) {
+  if (embedder == nullptr) {
+    return absl::InvalidArgumentError("Output embedder pointer is null.");
+  }
+  *embedder = nullptr;
+
   auto cpp_options =
       std::make_unique<::mediapipe::tasks::retrieval::universal_embedder::
                            UniversalEmbedderOptions>();
@@ -110,7 +119,11 @@ absl::Status CppUniversalEmbedderCreate(
 absl::Status CppUniversalEmbedderEmbedText(MpUniversalEmbedderPtr embedder,
                                            absl::string_view utf8_str,
                                            MpUniversalEmbedderResult* result) {
-  auto cpp_embedder = GetCppEmbedder(embedder);
+  ABSL_ASSIGN_OR_RETURN(UniversalEmbedder * cpp_embedder,
+                        GetCppEmbedder(embedder));
+  if (result == nullptr) {
+    return absl::InvalidArgumentError("Output result pointer is null.");
+  }
   ABSL_ASSIGN_OR_RETURN(EmbeddingResult cpp_result,
                         cpp_embedder->EmbedText(utf8_str));
   CppConvertToEmbeddingResult(cpp_result, result);
@@ -120,7 +133,11 @@ absl::Status CppUniversalEmbedderEmbedText(MpUniversalEmbedderPtr embedder,
 absl::Status CppUniversalEmbedderEmbedImage(MpUniversalEmbedderPtr embedder,
                                             absl::string_view image_bytes,
                                             MpUniversalEmbedderResult* result) {
-  auto cpp_embedder = GetCppEmbedder(embedder);
+  ABSL_ASSIGN_OR_RETURN(UniversalEmbedder * cpp_embedder,
+                        GetCppEmbedder(embedder));
+  if (result == nullptr) {
+    return absl::InvalidArgumentError("Output result pointer is null.");
+  }
   ABSL_ASSIGN_OR_RETURN(EmbeddingResult cpp_result,
                         cpp_embedder->EmbedImage(image_bytes));
   CppConvertToEmbeddingResult(cpp_result, result);
@@ -130,7 +147,14 @@ absl::Status CppUniversalEmbedderEmbedImage(MpUniversalEmbedderPtr embedder,
 absl::Status CppUniversalEmbedderEmbedMpImage(
     MpUniversalEmbedderPtr embedder, MpImagePtr image,
     MpUniversalEmbedderResult* result) {
-  auto cpp_embedder = GetCppEmbedder(embedder);
+  ABSL_ASSIGN_OR_RETURN(UniversalEmbedder * cpp_embedder,
+                        GetCppEmbedder(embedder));
+  if (image == nullptr) {
+    return absl::InvalidArgumentError("Input image is null.");
+  }
+  if (result == nullptr) {
+    return absl::InvalidArgumentError("Output result pointer is null.");
+  }
   ABSL_ASSIGN_OR_RETURN(EmbeddingResult cpp_result,
                         cpp_embedder->EmbedImage(ToImage(image)));
   CppConvertToEmbeddingResult(cpp_result, result);
@@ -141,7 +165,17 @@ absl::Status CppUniversalEmbedderEmbedAudio(MpUniversalEmbedderPtr embedder,
                                             const float* audio_data,
                                             int audio_data_size,
                                             MpUniversalEmbedderResult* result) {
-  auto cpp_embedder = GetCppEmbedder(embedder);
+  ABSL_ASSIGN_OR_RETURN(UniversalEmbedder * cpp_embedder,
+                        GetCppEmbedder(embedder));
+  if (audio_data == nullptr && audio_data_size > 0) {
+    return absl::InvalidArgumentError("Input audio data is null.");
+  }
+  if (audio_data_size < 0) {
+    return absl::InvalidArgumentError("Input audio data size is negative.");
+  }
+  if (result == nullptr) {
+    return absl::InvalidArgumentError("Output result pointer is null.");
+  }
   std::vector<float> audio_vector(audio_data, audio_data + audio_data_size);
   ABSL_ASSIGN_OR_RETURN(EmbeddingResult cpp_result,
                         cpp_embedder->EmbedAudio(audio_vector));
@@ -152,23 +186,29 @@ absl::Status CppUniversalEmbedderEmbedAudio(MpUniversalEmbedderPtr embedder,
 absl::Status CppUniversalEmbedderEmbedMpAudioData(
     MpUniversalEmbedderPtr embedder, const MpAudioData* audio_data,
     MpUniversalEmbedderResult* result) {
-  auto cpp_embedder = GetCppEmbedder(embedder);
-  std::vector<float> audio_vector(
-      audio_data->audio_data,
-      audio_data->audio_data + audio_data->audio_data_size);
-  ABSL_ASSIGN_OR_RETURN(EmbeddingResult cpp_result,
-                        cpp_embedder->EmbedAudio(audio_vector));
-  CppConvertToEmbeddingResult(cpp_result, result);
-  return absl::OkStatus();
+  if (audio_data == nullptr) {
+    return absl::InvalidArgumentError("Input audio data is null.");
+  }
+  return CppUniversalEmbedderEmbedAudio(embedder, audio_data->audio_data,
+                                        audio_data->audio_data_size, result);
 }
 
 void CppUniversalEmbedderCloseResult(MpUniversalEmbedderResult* result) {
+  if (result == nullptr) {
+    return;
+  }
   CppCloseEmbeddingResult(result);
 }
 
 absl::Status CppUniversalEmbedderClose(MpUniversalEmbedderPtr embedder) {
-  auto cpp_embedder = GetCppEmbedder(embedder);
-  auto result = cpp_embedder->Close();
+  // Closing a null handle (e.g. after a failed Create) is a no-op.
+  if (embedder == nullptr) {
+    return absl::OkStatus();
+  }
+  absl::Status result = absl::OkStatus();
+  if (embedder->instance != nullptr) {
+    result = embedder->instance->Close();
+  }
   delete embedder;
   return result;
 }
@@ -180,6 +220,11 @@ extern "C" {
 MP_EXPORT MpStatus
 MpUniversalEmbedderCreate(struct MpUniversalEmbedderOptions* options,
                           MpUniversalEmbedderPtr* embedder, char** error_msg) {
+  if (options == nullptr) {
+    return mediapipe::tasks::c::core::HandleStatus(
+        absl::InvalidArgumentError("MpUniversalEmbedderOptions is null."),
+        error_msg);
+  }
   absl::Status status = mediapipe::tasks::c::retrieval::universal_embedder::
       CppUniversalEmbedderCreate(*options, embedder);
   return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
