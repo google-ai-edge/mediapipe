@@ -104,6 +104,7 @@ def mediapipe_symbol_rename_map(
       | LC_ALL=C sort -u \\
       | awk '
         $$0 ~ /^_?MPP/ {{ next }}
+        $$0 ~ /^_Mp[A-Z]/ {{ next }}
         $$0 ~ /^_OBJC_(CLASS|METACLASS|IVAR)_\\$$_MPP/ {{ next }}
         $$0 ~ /^__?OBJC_(PROTOCOL|LABEL_PROTOCOL)_\\$$_/ {{ next }}
         $$0 ~ /^__Z(N|NK|NO|NKR|TV|TI|TS|TT|Thn|Tv|GV|Z)?N?St/ {{ next }}
