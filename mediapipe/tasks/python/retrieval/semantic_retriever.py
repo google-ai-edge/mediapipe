@@ -354,12 +354,18 @@ class SemanticRetriever:
       metadata: Optional[Dict[str, str]] = None,
   ) -> None:
     """Inserts text document with optional metadata."""
-    arr = self._convert_metadata(metadata) if metadata else None
+    metadata_arr = self._convert_metadata(metadata) if metadata else None
+    metadata_ptr = (
+        ctypes.cast(metadata_arr, ctypes.POINTER(_MpKeyValuePairC))
+        if metadata_arr is not None
+        else None
+    )
+
     self._lib.MpSemanticRetrieverInsertDocument(
         self._retriever_handle,
         doc_id.encode('utf-8'),
         text.encode('utf-8'),
-        arr,
+        metadata_ptr,
         len(metadata) if metadata else 0,
     )
 
@@ -382,7 +388,12 @@ class SemanticRetriever:
       image_bytes: Optional raw encoded image bytes (e.g. JPEG, PNG).
       metadata: Optional dictionary of key-value metadata to associate.
     """
-    arr = self._convert_metadata(metadata) if metadata else None
+    metadata_arr = self._convert_metadata(metadata) if metadata else None
+    metadata_ptr = (
+        ctypes.cast(metadata_arr, ctypes.POINTER(_MpKeyValuePairC))
+        if metadata_arr is not None
+        else None
+    )
 
     if image_bytes is not None:
       bytes_arr = ctypes.cast(image_bytes, ctypes.POINTER(ctypes.c_uint8))
@@ -397,7 +408,7 @@ class SemanticRetriever:
         bytes_arr,
         bytes_len,
         image_path.encode('utf-8'),
-        arr,
+        metadata_ptr,
         len(metadata) if metadata else 0,
     )
 
@@ -420,23 +431,29 @@ class SemanticRetriever:
       audio_data: Optional list of raw mono PCM float samples.
       metadata: Optional dictionary of key-value metadata to associate.
     """
-    arr = self._convert_metadata(metadata) if metadata else None
+    metadata_arr = self._convert_metadata(metadata) if metadata else None
+    metadata_ptr = (
+        ctypes.cast(metadata_arr, ctypes.POINTER(_MpKeyValuePairC))
+        if metadata_arr is not None
+        else None
+    )
 
     if audio_data is not None and len(audio_data) > 0:
       audio_arr = (ctypes.c_float * len(audio_data))()
       audio_arr[:] = audio_data
+      audio_ptr = ctypes.cast(audio_arr, ctypes.POINTER(ctypes.c_float))
       audio_len = len(audio_data)
     else:
-      audio_arr = None
+      audio_ptr = None
       audio_len = 0
 
     self._lib.MpSemanticRetrieverInsertAudio(
         self._retriever_handle,
         audio_id.encode('utf-8'),
-        audio_arr,
+        audio_ptr,
         audio_len,
         audio_path.encode('utf-8'),
-        arr,
+        metadata_ptr,
         len(metadata) if metadata else 0,
     )
 
@@ -455,10 +472,16 @@ class SemanticRetriever:
         'file_path': ..., 'audio_data': ..., 'audio_path': ...}`.
       metadata: Optional dictionary of key-value metadata to associate.
     """
-    arr = self._convert_metadata(metadata) if metadata else None
+    metadata_arr = self._convert_metadata(metadata) if metadata else None
+    metadata_ptr = (
+        ctypes.cast(metadata_arr, ctypes.POINTER(_MpKeyValuePairC))
+        if metadata_arr is not None
+        else None
+    )
 
     parts_arr_type = _MpTaskPartC * len(parts)
     parts_arr = parts_arr_type()
+    parts_ptr = ctypes.cast(parts_arr, ctypes.POINTER(_MpTaskPartC))
 
     # Keep references to byte arrays to prevent garbage collection
     refs = []
@@ -492,7 +515,9 @@ class SemanticRetriever:
           audio_arr = (ctypes.c_float * len(audio_data))()
           audio_arr[:] = audio_data
           refs.append(audio_arr)
-          parts_arr[i].audio_part.audio_data = audio_arr
+          parts_arr[i].audio_part.audio_data = ctypes.cast(
+              audio_arr, ctypes.POINTER(ctypes.c_float)
+          )
           parts_arr[i].audio_part.audio_data_size = len(audio_data)
         else:
           parts_arr[i].audio_part.audio_data = None
@@ -504,9 +529,9 @@ class SemanticRetriever:
     self._lib.MpSemanticRetrieverInsertContent(
         self._retriever_handle,
         record_id.encode('utf-8'),
-        parts_arr,
+        parts_ptr,
         len(parts),
-        arr,
+        metadata_ptr,
         len(metadata) if metadata else 0,
     )
 
@@ -538,6 +563,7 @@ class SemanticRetriever:
 
     parts_arr_type = _MpTaskPartC * len(query)
     parts_arr = parts_arr_type()
+    parts_ptr = ctypes.cast(parts_arr, ctypes.POINTER(_MpTaskPartC))
 
     # Keep references to byte arrays to prevent garbage collection
     refs = []
@@ -571,7 +597,9 @@ class SemanticRetriever:
           audio_arr = (ctypes.c_float * len(audio_data))()
           audio_arr[:] = audio_data
           refs.append(audio_arr)
-          parts_arr[i].audio_part.audio_data = audio_arr
+          parts_arr[i].audio_part.audio_data = ctypes.cast(
+              audio_arr, ctypes.POINTER(ctypes.c_float)
+          )
           parts_arr[i].audio_part.audio_data_size = len(audio_data)
         else:
           parts_arr[i].audio_part.audio_data = None
@@ -582,12 +610,13 @@ class SemanticRetriever:
 
     if metadata_filter:
       filter_arr = self._convert_metadata(metadata_filter)
+      filter_ptr = ctypes.cast(filter_arr, ctypes.POINTER(_MpKeyValuePairC))
       self._lib.MpSemanticRetrieverRetrieveWithMetadataFilter(
           self._retriever_handle,
-          parts_arr,
+          parts_ptr,
           len(query),
           limit,
-          filter_arr,
+          filter_ptr,
           len(metadata_filter),
           min_similarity,
           ctypes.byref(result_c),
@@ -595,7 +624,7 @@ class SemanticRetriever:
     else:
       self._lib.MpSemanticRetrieverRetrieve(
           self._retriever_handle,
-          parts_arr,
+          parts_ptr,
           len(query),
           limit,
           min_similarity,
@@ -622,10 +651,11 @@ class SemanticRetriever:
     """Deletes records matching the specified metadata filter."""
     if not metadata_filter:
       return
-    arr = self._convert_metadata(metadata_filter)
+    metadata_arr = self._convert_metadata(metadata_filter)
+    metadata_ptr = ctypes.cast(metadata_arr, ctypes.POINTER(_MpKeyValuePairC))
     self._lib.MpSemanticRetrieverDeleteWithMetadataFilter(
         self._retriever_handle,
-        arr,
+        metadata_ptr,
         len(metadata_filter),
     )
 
