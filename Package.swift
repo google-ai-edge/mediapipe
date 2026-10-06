@@ -33,33 +33,57 @@ let package = Package(
                 "MediaPipeTasksCommon",
             ]
         ),
+        .library(
+            name: "MediaPipeTasksRetrieval",
+            targets: [
+                "MediaPipeTasksRetrieval",
+                "MediaPipeTasksCommon",
+            ]
+        ),
+        .library(
+            name: "MediaPipeTasksDecision",
+            targets: [
+                "MediaPipeTasksDecision",
+                "MediaPipeTasksCommon",
+            ]
+        ),
     ],
     dependencies: [],
     targets: [
         .binaryTarget(
             name: "MediaPipeTasksCommonBinary",
-            url: "https://dl.google.com/cpdc/20260911-163655/MediaPipeTasksCommon-1.0.1.xcframework.zip",
-            checksum: "5c4a6a9f4c866e8456178f0707110a05484caa50e69c1d4c4e0d76d296f08e13"
+            url: "https://dl.google.com/cpdc/20261005-190020/MediaPipeTasksCommon-1.1.0.xcframework.zip",
+            checksum: "d2194b929b91f0c866b2f8d65003e08c474f6c85e8ca7293511e9ff4a780aa68"
         ),
         .binaryTarget(
             name: "MediaPipeTaskGraphsBinary",
-            url: "https://dl.google.com/cpdc/20260911-163655/MediaPipeTaskGraphs-1.0.1.xcframework.zip",
-            checksum: "673e8f5be771dd54374e90224e1ac3a0a0ac0bbb686201595d9b6c49cb21378d"
+            url: "https://dl.google.com/cpdc/20261005-190020/MediaPipeTaskGraphs-1.1.0.xcframework.zip",
+            checksum: "6e59def0a86dcf8b357d6dc4220c8f45a3704449e7c7734677f2db50671c7def"
         ),
         .binaryTarget(
             name: "MediaPipeTasksVision",
-            url: "https://dl.google.com/cpdc/20260911-163655/MediaPipeTasksVision-1.0.1.xcframework.zip",
-            checksum: "3ea09537d103c97ac4d40daf0b672e374ca7894fbba7fada037a8975936b9a1d"
+            url: "https://dl.google.com/cpdc/20261005-190020/MediaPipeTasksVision-1.1.0.xcframework.zip",
+            checksum: "d66d9929a28febdd52aba49b3336e1550e4526ab0b772c49321db05af5c7614e"
         ),
         .binaryTarget(
             name: "MediaPipeTasksText",
-            url: "https://dl.google.com/cpdc/20260911-163655/MediaPipeTasksText-1.0.1.xcframework.zip",
-            checksum: "e9116fc78f43edd606616cd5ad983f1d9f2f6ee69df22829198a2ef1e984da8d"
+            url: "https://dl.google.com/cpdc/20261005-190020/MediaPipeTasksText-1.1.0.xcframework.zip",
+            checksum: "b99e9f993a4e5c366122a62f2a14a654fa5625d6f96035cd2c1bafd4c69eaa0f"
         ),
         .binaryTarget(
             name: "MediaPipeTasksAudio",
-            url: "https://dl.google.com/cpdc/20260911-163655/MediaPipeTasksAudio-1.0.1.xcframework.zip",
-            checksum: "d458eb5bf2f84281550f0b29b0455f34851d8db2522b91926143c1b625412306"
+            url: "https://dl.google.com/cpdc/20261005-190020/MediaPipeTasksAudio-1.1.0.xcframework.zip",
+            checksum: "9c4506f23169a0387a745d67f4fe8872e0c381f4b67e33babd75b2187c463d11"
+        ),
+        .binaryTarget(
+            name: "MediaPipeTasksRetrieval",
+            url: "https://dl.google.com/cpdc/20261005-190020/MediaPipeTasksRetrieval-1.1.0.xcframework.zip",
+            checksum: "e9703c40ce7becef0e1302a80a7fc8e6bb3205de41f367934d50f5e06f43de44"
+        ),
+        .binaryTarget(
+            name: "MediaPipeTasksDecision",
+            url: "https://dl.google.com/cpdc/20261005-190020/MediaPipeTasksDecision-1.1.0.xcframework.zip",
+            checksum: "aec1c72c583d25161b68750e19656c2b4092feded7ca4acb62c76de0cc479efb"
         ),
         .target(
             name: "MediaPipeTasksCommon",
@@ -69,6 +93,8 @@ let package = Package(
                 "MediaPipeTasksVision",
                 "MediaPipeTasksText",
                 "MediaPipeTasksAudio",
+                "MediaPipeTasksRetrieval",
+                "MediaPipeTasksDecision",
             ],
             linkerSettings: [
                 // Note: -all_load is required to prevent the Apple linker
@@ -80,6 +106,8 @@ let package = Package(
                 // .unsafeFlags restriction.
                 .unsafeFlags(["-Xlinker", "-all_load"]),
                 .linkedLibrary("c++"),
+                // Required by MPPSqliteVectorStore in MediaPipeTasksRetrieval.
+                .linkedLibrary("sqlite3"),
                 .linkedFramework("Accelerate"),
                 .linkedFramework("AVFoundation"),
                 .linkedFramework("CoreMedia"),

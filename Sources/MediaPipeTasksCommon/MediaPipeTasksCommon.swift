@@ -20,5 +20,5 @@ import Foundation
 /// options shared across MediaPipe Tasks domain libraries.
 public enum MediaPipeTasks {
   /// The release version of the MediaPipe Tasks iOS package.
-  public static let version = "1.0.1"
+  public static let version = "1.1.0"
 }
