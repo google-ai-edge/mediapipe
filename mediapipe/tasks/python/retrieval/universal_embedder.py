@@ -21,6 +21,7 @@ from typing import List, Optional
 
 from mediapipe.tasks.python.components.containers import embedding_result as embedding_result_module
 from mediapipe.tasks.python.components.containers import embedding_result_c as embedding_result_c_module
+from mediapipe.tasks.python.components.utils import cosine_similarity
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c as base_options_c_module
 from mediapipe.tasks.python.core import mediapipe_c_bindings
@@ -197,6 +198,32 @@ class UniversalEmbedder:
     result = embedding_result_module.EmbeddingResult.from_ctypes(result_c)
     self._lib.MpUniversalEmbedderCloseResult(ctypes.byref(result_c))
     return result
+
+  @classmethod
+  def cosine_similarity(
+      cls,
+      u: embedding_result_module.Embedding,
+      v: embedding_result_module.Embedding,
+  ) -> float:
+    """Utility function to compute cosine similarity between two embedding entries.
+
+    May return an InvalidArgumentError if e.g. the feature vectors are
+    of different types (quantized vs. float), have different sizes, or have a
+    an L2-norm of 0.
+
+    Args:
+      u: An embedding entry.
+      v: An embedding entry.
+
+    Returns:
+      The cosine similarity for the two embeddings.
+
+    Raises:
+      ValueError: May return an error if e.g. the feature vectors are of
+        different types (quantized vs. float), have different sizes, or have
+        an L2-norm of 0.
+    """
+    return cosine_similarity.cosine_similarity(u, v)
 
   def close(self) -> None:
     """Shuts down and releases the UniversalEmbedder."""

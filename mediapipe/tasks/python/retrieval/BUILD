@@ -33,6 +33,7 @@ py_library(
     deps = [
         "//mediapipe/tasks/python/components/containers:embedding_result",
         "//mediapipe/tasks/python/components/containers:embedding_result_c",
+        "//mediapipe/tasks/python/components/utils:cosine_similarity",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:base_options_c",
         "//mediapipe/tasks/python/core:mediapipe_c_bindings",
