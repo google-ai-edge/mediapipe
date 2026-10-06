@@ -1,4 +1,4 @@
-// Copyright 2023 The MediaPipe Authors.
+// Copyright 2026 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,29 +13,13 @@
 // limitations under the License.
 
 #import <Foundation/Foundation.h>
-
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class MPPInteractiveSegmenter;
-
 /** Options for setting up a `InteractiveSegmenter`. */
 NS_SWIFT_NAME(InteractiveSegmenterOptions)
 @interface MPPInteractiveSegmenterOptions : MPPTaskOptions <NSCopying>
-
-/**
- * The locale to use for display names specified through the TFLite Model Metadata, if any. Defaults
- * to English.
- */
-@property(nonatomic, copy) NSString *displayNamesLocale;
-
-/** Represents whether to output confidence masks. */
-@property(nonatomic) BOOL shouldOutputConfidenceMasks;
-
-/** Represents whether to output category mask. */
-@property(nonatomic) BOOL shouldOutputCategoryMask;
-
 @end
 
 NS_ASSUME_NONNULL_END

@@ -15,6 +15,7 @@
 #include "mediapipe/tasks/c/vision/core/image.h"
 
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -25,6 +26,9 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
+#include "exif.h"
+#include "mediapipe/framework/deps/file_helpers.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
@@ -33,6 +37,16 @@
 #include "stb_image.h"
 
 namespace {
+
+// EXIF orientation values (1-8)
+constexpr uint16_t kExifOrientationNormal = 1;
+constexpr uint16_t kExifOrientationMirrorHorizontal = 2;
+constexpr uint16_t kExifOrientationRotate180 = 3;
+constexpr uint16_t kExifOrientationMirrorVertical = 4;
+constexpr uint16_t kExifOrientationMirrorHorizontalRotate270CW = 5;
+constexpr uint16_t kExifOrientationRotate90CW = 6;
+constexpr uint16_t kExifOrientationMirrorHorizontalRotate90CW = 7;
+constexpr uint16_t kExifOrientationRotate270CW = 8;
 
 using ::mediapipe::Image;
 using ::mediapipe::ImageFormat;
@@ -193,6 +207,99 @@ absl::Status CreateMpImageInternal(MpImageFormat format, int width, int height,
   return absl::OkStatus();
 }
 
+// Applies EXIF orientation to the loaded image bytes directly writing to a
+// Creates an ImageFrame from loaded pixel data, applying EXIF orientation.
+// If orientation <= 1, wraps the loaded stbi pixel data zero-copy and uses
+// stbi_image_free deleter. If orientation > 1, creates a new aligned
+// ImageFrame, rotates the pixels from the loaded data, and frees the original
+// loaded data.
+std::shared_ptr<ImageFrame> CreateImageFrameWithOrientation(
+    unsigned char* image_data, int width, int height, int channels,
+    ImageFormat::Format format, uint16_t orientation) {
+  if (orientation <= kExifOrientationNormal ||
+      orientation > kExifOrientationRotate270CW) {
+    return std::make_shared<ImageFrame>(format, width, height, channels * width,
+                                        image_data, stbi_image_free);
+  }
+
+  int dest_width = width;
+  int dest_height = height;
+  if (orientation >= kExifOrientationMirrorHorizontalRotate270CW &&
+      orientation <= kExifOrientationRotate270CW) {
+    dest_width = height;
+    dest_height = width;
+  }
+
+  auto image = std::make_shared<ImageFrame>(
+      format, dest_width, dest_height, ImageFrame::kDefaultAlignmentBoundary);
+
+  unsigned char* dest_data = image->MutablePixelData();
+  int dest_width_step = image->WidthStep();
+
+  // Helper lambda to abstract pixel copying with width step / row stride
+  auto copy_pixel = [&](int dest_x, int dest_y, int src_x, int src_y) {
+    std::memcpy(&dest_data[dest_y * dest_width_step + dest_x * channels],
+                &image_data[(src_y * width + src_x) * channels], channels);
+  };
+
+  switch (orientation) {
+    case kExifOrientationMirrorHorizontal:
+      for (int y = 0; y < dest_height; ++y) {
+        for (int x = 0; x < dest_width; ++x) {
+          copy_pixel(x, y, width - 1 - x, y);
+        }
+      }
+      break;
+    case kExifOrientationRotate180:
+      for (int y = 0; y < dest_height; ++y) {
+        for (int x = 0; x < dest_width; ++x) {
+          copy_pixel(x, y, width - 1 - x, height - 1 - y);
+        }
+      }
+      break;
+    case kExifOrientationMirrorVertical:
+      for (int y = 0; y < dest_height; ++y) {
+        std::memcpy(&dest_data[y * dest_width_step],
+                    &image_data[(height - 1 - y) * width * channels],
+                    dest_width * channels);
+      }
+      break;
+    case kExifOrientationMirrorHorizontalRotate270CW:
+      for (int y = 0; y < dest_height; ++y) {
+        for (int x = 0; x < dest_width; ++x) {
+          copy_pixel(x, y, y, x);
+        }
+      }
+      break;
+    case kExifOrientationRotate90CW:
+      for (int y = 0; y < dest_height; ++y) {
+        for (int x = 0; x < dest_width; ++x) {
+          copy_pixel(x, y, y, height - 1 - x);
+        }
+      }
+      break;
+    case kExifOrientationMirrorHorizontalRotate90CW:
+      for (int y = 0; y < dest_height; ++y) {
+        for (int x = 0; x < dest_width; ++x) {
+          copy_pixel(x, y, width - 1 - y, height - 1 - x);
+        }
+      }
+      break;
+    case kExifOrientationRotate270CW:
+      for (int y = 0; y < dest_height; ++y) {
+        for (int x = 0; x < dest_width; ++x) {
+          copy_pixel(x, y, width - 1 - y, x);
+        }
+      }
+      break;
+    default:
+      break;
+  }
+
+  stbi_image_free(image_data);
+  return image;
+}
+
 }  // namespace
 
 extern "C" {
@@ -266,6 +373,25 @@ MP_EXPORT MpStatus MpImageCreateFromFloatData(
 
 MP_EXPORT MpStatus MpImageCreateFromFile(const char* file_name, MpImagePtr* out,
                                          char** error_msg) {
+  if (!file_name) {
+    return HandleStatus(absl::InvalidArgumentError("File name is null"),
+                        error_msg);
+  }
+  std::string file_contents;
+  absl::Status file_status = ::mediapipe::file::GetContents(
+      file_name, &file_contents, /*read_as_binary=*/true);
+  if (!file_status.ok()) {
+    return HandleStatus(file_status, error_msg);
+  }
+
+  uint16_t orientation = 1;
+  easyexif::EXIFInfo exif_info;
+  if (exif_info.parseFrom(
+          reinterpret_cast<const unsigned char*>(file_contents.data()),
+          file_contents.size()) == 0) {
+    orientation = exif_info.Orientation;
+  }
+
   unsigned char* image_data = nullptr;
   int width = 0;
   int height = 0;
@@ -274,16 +400,22 @@ MP_EXPORT MpStatus MpImageCreateFromFile(const char* file_name, MpImagePtr* out,
 #if TARGET_OS_OSX && !MEDIAPIPE_DISABLE_GPU
   // On MacOS, stbi_load does not support 3-channel images, so we read the
   // number of channels first and request RGBA if needed.
-  if (stbi_info(file_name, &width, &height, &channels)) {
+  if (stbi_info_from_memory(
+          reinterpret_cast<const unsigned char*>(file_contents.data()),
+          file_contents.size(), &width, &height, &channels)) {
     if (channels == 3) {
       channels = 4;
     }
     int unused;
-    image_data = stbi_load(file_name, &width, &height, &unused, channels);
+    image_data = stbi_load_from_memory(
+        reinterpret_cast<const unsigned char*>(file_contents.data()),
+        file_contents.size(), &width, &height, &unused, channels);
   }
 #else
-  image_data = stbi_load(file_name, &width, &height, &channels,
-                         /*desired_channels=*/0);
+  image_data = stbi_load_from_memory(
+      reinterpret_cast<const unsigned char*>(file_contents.data()),
+      file_contents.size(), &width, &height, &channels,
+      /*desired_channels=*/0);
 #endif  // TARGET_OS_OSX && !MEDIAPIPE_DISABLE_GPU
   if (image_data == nullptr) {
     return HandleStatus(absl::InternalError("Failed to load image from file"),
@@ -296,8 +428,8 @@ MP_EXPORT MpStatus MpImageCreateFromFile(const char* file_name, MpImagePtr* out,
     return HandleStatus(format.status(), error_msg);
   }
 
-  auto image = std::make_shared<ImageFrame>(
-      *format, width, height, channels * width, image_data, stbi_image_free);
+  auto image = CreateImageFrameWithOrientation(image_data, width, height,
+                                               channels, *format, orientation);
 
   auto mp_image = std::make_unique<MpImageInternal>();
   mp_image->image = Image(std::move(image));

@@ -71,6 +71,9 @@ absl::StatusOr<std::array<float, 4>> PadRoi(int input_tensor_width,
                                             bool keep_aspect_ratio,
                                             RotatedRect* roi);
 
+// Validates ROI parameters (checks for NaNs and positive dimensions).
+absl::Status ValidateRoi(const RotatedRect& roi);
+
 // Represents a transformation of value which involves scaling and offsetting.
 // To apply transformation:
 // ValueTransformation transform = ...

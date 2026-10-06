@@ -41,7 +41,7 @@ class Classifications:
   @classmethod
   @doc_controls.do_not_generate_docs
   def from_ctypes(
-      cls, c_struct: classification_result_c.ClassificationsC
+      cls, c_struct: classification_result_c.MpClassificationsC
   ) -> 'Classifications':
     """Creates a `Classifications` object from the given ctypes struct."""
     if c_struct.categories and c_struct.categories_count > 0:
@@ -82,7 +82,7 @@ class ClassificationResult:
   @classmethod
   @doc_controls.do_not_generate_docs
   def from_ctypes(
-      cls, c_struct: classification_result_c.ClassificationResultC
+      cls, c_struct: classification_result_c.MpClassificationResultC
   ) -> 'ClassificationResult':
     """Creates a `ClassificationResult` object from a ctypes struct."""
     if c_struct.classifications and c_struct.classifications_count > 0:

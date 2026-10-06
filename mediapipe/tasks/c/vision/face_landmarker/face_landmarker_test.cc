@@ -58,7 +58,7 @@ std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
 }
 
-void AssertFaceLandmarkerResult(const FaceLandmarkerResult* result,
+void AssertFaceLandmarkerResult(const MpFaceLandmarkerResult* result,
                                 const float blendshapes_precision,
                                 const float landmark_precision,
                                 const float matrix_precison) {
@@ -93,7 +93,7 @@ void AssertFaceLandmarkerResult(const FaceLandmarkerResult* result,
   }
 }
 
-void AssertRotatedFaceLandmarkerResult(const FaceLandmarkerResult* result,
+void AssertRotatedFaceLandmarkerResult(const MpFaceLandmarkerResult* result,
                                        const float blendshapes_precision,
                                        const float landmark_precision,
                                        const float matrix_precison) {
@@ -132,11 +132,11 @@ TEST(FaceLandmarkerTest, ImageModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  FaceLandmarkerOptions options = {
+  MpFaceLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_IMAGE,
       /* num_faces= */ 1,
       /* min_face_detection_confidence= */ 0.5,
       /* min_face_presence_confidence= */ 0.5,
@@ -151,7 +151,7 @@ TEST(FaceLandmarkerTest, ImageModeTest) {
       kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
-  FaceLandmarkerResult result;
+  MpFaceLandmarkerResult result;
   ASSERT_EQ(MpFaceLandmarkerDetectImage(landmarker, image.get(),
                                         /* image_processing_options= */ nullptr,
                                         &result,
@@ -168,11 +168,11 @@ TEST(FaceLandmarkerTest, ImageModeWithRotationTest) {
   const auto image = GetImage(GetFullPath(kImageRotatedFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  FaceLandmarkerOptions options = {
+  MpFaceLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_IMAGE,
       /* num_faces= */ 1,
       /* min_face_detection_confidence= */ 0.5,
       /* min_face_presence_confidence= */ 0.5,
@@ -187,11 +187,11 @@ TEST(FaceLandmarkerTest, ImageModeWithRotationTest) {
       kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
-  ImageProcessingOptions image_processing_options;
+  MpImageProcessingOptions image_processing_options;
   image_processing_options.has_region_of_interest = 0;
   image_processing_options.rotation_degrees = -90;
 
-  FaceLandmarkerResult result;
+  MpFaceLandmarkerResult result;
   ASSERT_EQ(MpFaceLandmarkerDetectImage(landmarker, image.get(),
                                         &image_processing_options, &result,
                                         /* error_msg= */ nullptr),
@@ -207,11 +207,11 @@ TEST(FaceLandmarkerTest, VideoModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  FaceLandmarkerOptions options = {
+  MpFaceLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::VIDEO,
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_VIDEO,
       /* num_faces= */ 1,
       /* min_face_detection_confidence= */ 0.5,
       /* min_face_presence_confidence= */ 0.5,
@@ -227,7 +227,7 @@ TEST(FaceLandmarkerTest, VideoModeTest) {
   EXPECT_NE(landmarker, nullptr);
 
   for (int i = 0; i < kIterations; ++i) {
-    FaceLandmarkerResult result;
+    MpFaceLandmarkerResult result;
     ASSERT_EQ(
         MpFaceLandmarkerDetectForVideo(landmarker, image.get(),
                                        /* image_processing_options= */ nullptr,
@@ -250,7 +250,8 @@ TEST(FaceLandmarkerTest, VideoModeTest) {
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
   static absl::BlockingCounter* blocking_counter;
-  static void Fn(MpStatus status, const FaceLandmarkerResult* landmarker_result,
+  static void Fn(MpStatus status,
+                 const MpFaceLandmarkerResult* landmarker_result,
                  MpImagePtr image, int64_t timestamp) {
     ASSERT_EQ(status, kMpOk);
     ASSERT_NE(landmarker_result, nullptr);
@@ -275,11 +276,11 @@ TEST(FaceLandmarkerTest, LiveStreamModeTest) {
 
   const std::string model_path = GetFullPath(kModelName);
 
-  FaceLandmarkerOptions options = {
+  MpFaceLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::LIVE_STREAM,
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM,
       /* num_faces= */ 1,
       /* min_face_detection_confidence= */ 0.5,
       /* min_face_presence_confidence= */ 0.5,
@@ -322,11 +323,11 @@ TEST(FaceLandmarkerTest, LiveStreamModeTest) {
 
 TEST(FaceLandmarkerTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
-  FaceLandmarkerOptions options = {
+  MpFaceLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ nullptr},
-      /* running_mode= */ RunningMode::IMAGE,
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_IMAGE,
       /* num_faces= */ 1,
       /* min_face_detection_confidence= */ 0.5,
       /* min_face_presence_confidence= */ 0.5,

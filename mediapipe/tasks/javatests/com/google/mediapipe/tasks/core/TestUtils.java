@@ -57,6 +57,7 @@ public final class TestUtils {
 
     ByteBuffer buffer = ByteBuffer.allocateDirect(bytes.length).order(ByteOrder.nativeOrder());
     buffer.put(bytes);
+    buffer.rewind();
     return buffer;
   }
 

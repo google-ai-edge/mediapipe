@@ -28,7 +28,7 @@ extern "C" {
 // One and only one of the two 'float_embedding' and 'quantized_embedding' will
 // contain data, based on whether or not the embedder was configured to perform
 // scalar quantization.
-struct Embedding {
+struct MpEmbedding {
   // Floating-point embedding. `nullptr` if the embedder was configured to
   // perform scalar-quantization.
   float* float_embedding;
@@ -53,9 +53,9 @@ struct Embedding {
 };
 
 // Defines embedding results of a model.
-struct EmbeddingResult {
+struct MpEmbeddingResult {
   // The embedding results for each head of the model.
-  struct Embedding* embeddings;
+  struct MpEmbedding* embeddings;
 
   // Keep the count of embeddings.
   uint32_t embeddings_count;

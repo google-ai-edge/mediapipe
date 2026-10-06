@@ -249,11 +249,6 @@ class Optional;
 template <typename S, typename ProtoT>
 struct Options;
 
-// Used in cases when inputs/outputs are provided in alternative ways.
-// (E.g. `Build(Graph<>& graph, Stream<..> input) -> Stream<...>)`)
-template <typename S>
-struct GenericContract {};
-
 // Repeated / Optional template implementation
 
 template <typename P, typename>

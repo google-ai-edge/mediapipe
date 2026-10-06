@@ -32,7 +32,7 @@ TEST(ClassifierOptionsConverterTest, ConvertsClassifierOptionsCustomValues) {
   std::vector<const char*> category_allowlist = {kCategoryAllowlist};
   std::vector<const char*> category_denylist = {kCategoryDenylist};
 
-  ClassifierOptions c_classifier_options = {
+  MpClassifierOptions c_classifier_options = {
       /* display_names_locale= */ kDisplayNamesLocaleGerman,
       /* max_results= */ 1,
       /* score_threshold= */ 0.1,
@@ -58,13 +58,14 @@ TEST(ClassifierOptionsConverterTest, ConvertsClassifierOptionsDefaultValues) {
   std::vector<const char*> category_allowlist = {kCategoryAllowlist};
   std::vector<const char*> category_denylist = {kCategoryDenylist};
 
-  ClassifierOptions c_classifier_options = {/* display_names_locale= */ nullptr,
-                                            /* max_results= */ -1,
-                                            /* score_threshold= */ 0.0,
-                                            /* category_allowlist= */ nullptr,
-                                            /* category_allowlist_count= */ 0,
-                                            /* category_denylist= */ nullptr,
-                                            /* category_denylist_count= */ 0};
+  MpClassifierOptions c_classifier_options = {
+      /* display_names_locale= */ nullptr,
+      /* max_results= */ -1,
+      /* score_threshold= */ 0.0,
+      /* category_allowlist= */ nullptr,
+      /* category_allowlist_count= */ 0,
+      /* category_denylist= */ nullptr,
+      /* category_denylist_count= */ 0};
 
   mediapipe::tasks::components::processors::ClassifierOptions
       cpp_classifier_options = {};

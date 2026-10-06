@@ -38,8 +38,8 @@ class BoundingBox:
 
   @classmethod
   @doc_controls.do_not_generate_docs
-  def from_ctypes(cls, c_obj: rect_c_lib.RectC) -> 'BoundingBox':
-    """Creates a `BoundingBox` object from a ctypes RectC struct."""
+  def from_ctypes(cls, c_obj: rect_c_lib.MpRectC) -> 'BoundingBox':
+    """Creates a `BoundingBox` object from a ctypes MpRectC struct."""
     return BoundingBox(
         origin_x=c_obj.left,
         origin_y=c_obj.top,

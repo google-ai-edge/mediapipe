@@ -411,6 +411,31 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateMatrix)(
   return CreatePacketWithContext(context, packet);
 }
 
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateMatrixDirect)(
+    JNIEnv* env, jobject thiz, jlong context, jint rows, jint cols,
+    jobject data) {
+  const float* float_data =
+      reinterpret_cast<const float*>(env->GetDirectBufferAddress(data));
+  int64_t capacity = env->GetDirectBufferCapacity(data);
+  if (!float_data || capacity < 0) {
+    ThrowIfError(env, absl::InvalidArgumentError(
+                          "Cannot get direct access to the input buffer. It "
+                          "should be created using allocateDirect."));
+    return 0L;
+  }
+  int64_t required_size = static_cast<int64_t>(rows) * cols * sizeof(float);
+  if (capacity < required_size) {
+    ThrowIfError(env, absl::InvalidArgumentError(
+                          "Buffer capacity is too small for the requested "
+                          "matrix size."));
+    return 0L;
+  }
+  auto matrix = std::make_unique<mediapipe::Matrix>(rows, cols);
+  std::memcpy(matrix->data(), float_data, required_size);
+  mediapipe::Packet packet = mediapipe::Adopt(matrix.release());
+  return CreatePacketWithContext(context, packet);
+}
+
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateCpuImage)(
     JNIEnv* env, jobject thiz, jlong context, jobject byte_buffer, jint width,
     jint height, jint width_step, jint num_channels) {

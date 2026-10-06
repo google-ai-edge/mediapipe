@@ -40,10 +40,10 @@ extern "C" {
 typedef struct MpGestureRecognizerInternal* MpGestureRecognizerPtr;
 
 // The options for configuring a MediaPipe gesture recognizer task.
-struct GestureRecognizerOptions {
+struct MpGestureRecognizerOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
-  struct BaseOptions base_options;
+  struct MpBaseOptions base_options;
 
   // The running mode of the task. Default to the image mode.
   // GestureRecognizer has three running modes:
@@ -53,7 +53,7 @@ struct GestureRecognizerOptions {
   // 3) The live stream mode for recognizing hand gestures on the live stream of
   //    input data, such as from camera. In this mode, the "result_callback"
   //    below must be specified to receive the detection results asynchronously.
-  RunningMode running_mode;
+  MpRunningMode running_mode;
 
   // The maximum number of hands can be detected by the GestureRecognizer.
   int num_hands = 1;
@@ -74,23 +74,23 @@ struct GestureRecognizerOptions {
   // threshold, allow list and deny list of gestures. The categories for canned
   // gesture classifier are: ["None", "Closed_Fist", "Open_Palm",
   // "Pointing_Up", "Thumb_Down", "Thumb_Up", "Victory", "ILoveYou"]
-  struct ClassifierOptions canned_gestures_classifier_options;
+  struct MpClassifierOptions canned_gestures_classifier_options;
 
   // Options for configuring the custom gestures classifier, such as score
   // threshold, allow list and deny list of gestures.
-  struct ClassifierOptions custom_gestures_classifier_options;
+  struct MpClassifierOptions custom_gestures_classifier_options;
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
-  // to RunningMode::LIVE_STREAM. Arguments of the callback function include:
-  // the pointer to recognition result, the image that result was obtained
-  // on, the timestamp relevant to recognition results and pointer to error
-  // message in case of any failure. The validity of the passed arguments is
-  // true for the lifetime of the callback function.
+  // to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
+  // function include: the pointer to recognition result, the image that result
+  // was obtained on, the timestamp relevant to recognition results and pointer
+  // to error message in case of any failure. The validity of the passed
+  // arguments is true for the lifetime of the callback function.
   //
   // The passed arguments are only valid for the lifetime of the callback.
   typedef void (*result_callback_fn)(MpStatus status,
-                                     const GestureRecognizerResult* result,
+                                     const MpGestureRecognizerResult* result,
                                      const MpImagePtr image,
                                      int64_t timestamp_ms);
   result_callback_fn result_callback;
@@ -105,12 +105,12 @@ struct GestureRecognizerOptions {
 // failure. It's the caller responsibility to free the error message with
 // `MpErrorFree()`.
 MP_EXPORT MpStatus
-MpGestureRecognizerCreate(const struct GestureRecognizerOptions* options,
+MpGestureRecognizerCreate(const struct MpGestureRecognizerOptions* options,
                           MpGestureRecognizerPtr* recognizer, char** error_msg);
 
 // Performs gesture recognition on the input `image`.
 // If successful, returns `kMpOk` and sets `*result` to the new
-// `GestureRecognizerResult`.
+// `MpGestureRecognizerResult`.
 //
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
@@ -118,8 +118,8 @@ MpGestureRecognizerCreate(const struct GestureRecognizerOptions* options,
 // `MpErrorFree()`.
 MP_EXPORT MpStatus MpGestureRecognizerRecognizeImage(
     MpGestureRecognizerPtr recognizer, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
-    GestureRecognizerResult* result, char** error_msg);
+    const MpImageProcessingOptions* image_processing_options,
+    MpGestureRecognizerResult* result, char** error_msg);
 
 // Performs gesture recognition on the provided video frame.
 // Only use this method when the GestureRecognizer is created with the video
@@ -128,25 +128,24 @@ MP_EXPORT MpStatus MpGestureRecognizerRecognizeImage(
 // provide the video frame's timestamp (in milliseconds). The input timestamps
 // must be monotonically increasing.
 // If successful, returns `kMpOk` and sets `*result` to the new
-// `GestureRecognizerResult`. To obtain a detailed error, `error_msg` must be
+// `MpGestureRecognizerResult`. To obtain a detailed error, `error_msg` must be
 // non-null pointer to a `char*`, which will be populated with a newly-allocated
 // error message upon failure. It's the caller responsibility to free the error
 // message with `MpErrorFree()`.
 MP_EXPORT MpStatus MpGestureRecognizerRecognizeForVideo(
     MpGestureRecognizerPtr recognizer, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms, GestureRecognizerResult* result, char** error_msg);
+    const MpImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, MpGestureRecognizerResult* result, char** error_msg);
 
 // Sends live image data to gesture recognition, and the results will be
-// available via the `result_callback` provided in the GestureRecognizerOptions.
-// Only use this method when the GestureRecognizer is created with the live
-// stream running mode.
-// The image can be of any size with format RGB or RGBA. It's required to
-// provide a timestamp (in milliseconds) to indicate when the input image is
-// sent to the gesture recognizer. The input timestamps must be monotonically
-// increasing.
-// The `result_callback` provides:
-//   - The recognition results as an GestureRecognizerResult object.
+// available via the `result_callback` provided in the
+// MpGestureRecognizerOptions. Only use this method when the GestureRecognizer
+// is created with the live stream running mode. The image can be of any size
+// with format RGB or RGBA. It's required to provide a timestamp (in
+// milliseconds) to indicate when the input image is sent to the gesture
+// recognizer. The input timestamps must be monotonically increasing. The
+// `result_callback` provides:
+//   - The recognition results as an MpGestureRecognizerResult object.
 //   - The const reference to the corresponding input image that the gesture
 //     recognizer runs on. Note that the const reference to the image will no
 //     longer be valid when the callback returns. To access the image data
@@ -159,12 +158,13 @@ MP_EXPORT MpStatus MpGestureRecognizerRecognizeForVideo(
 // `MpErrorFree()`.
 MP_EXPORT MpStatus MpGestureRecognizerRecognizeAsync(
     MpGestureRecognizerPtr recognizer, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
+    const MpImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, char** error_msg);
 
-// Frees the memory allocated inside a GestureRecognizerResult result.
+// Frees the memory allocated inside a MpGestureRecognizerResult result.
 // Does not free the result pointer itself.
-MP_EXPORT void MpGestureRecognizerCloseResult(GestureRecognizerResult* result);
+MP_EXPORT void MpGestureRecognizerCloseResult(
+    MpGestureRecognizerResult* result);
 
 // Frees gesture recognizer.
 //

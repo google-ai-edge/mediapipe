@@ -144,10 +144,7 @@ py_library(
 py_library(
     name = "classification_result_c",
     srcs = ["classification_result_c.py"],
-    deps = [
-        ":category_c",
-        "//mediapipe/tasks/python/core:optional_dependencies",
-    ],
+    deps = [":category_c"],
 )
 
 py_library(

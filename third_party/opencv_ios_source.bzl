@@ -122,6 +122,7 @@ def _unzip_opencv_xcframework_impl(ctx):
     args.add(ctx.file.zip_file.dirname)
 
     ctx.actions.run_shell(
+        mnemonic = "UnzipOpencvXcframework",
         inputs = [ctx.file.zip_file],
         outputs = output_files,
         arguments = [args],

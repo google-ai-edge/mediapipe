@@ -17,6 +17,8 @@
 import mediapipe.tasks.python.text.language_detector
 import mediapipe.tasks.python.text.text_classifier
 import mediapipe.tasks.python.text.text_embedder
+import mediapipe.tasks.python.text.text_summarizer
+import mediapipe.tasks.python.text.text_proofreader
 
 LanguageDetector = language_detector.LanguageDetector
 LanguageDetectorOptions = language_detector.LanguageDetectorOptions
@@ -27,9 +29,23 @@ TextClassifierResult = text_classifier.TextClassifierResult
 TextEmbedder = text_embedder.TextEmbedder
 TextEmbedderOptions = text_embedder.TextEmbedderOptions
 TextEmbedderResult = text_embedder.TextEmbedderResult
+TextEmbeddingType = text_embedder.EmbeddingType
+TextEmbeddingTextRole = text_embedder.TextRole
+TextEmbeddingFormatContext = text_embedder.TextFormatContext
+TextSummarizer = text_summarizer.TextSummarizer
+TextSummarizerOptions = text_summarizer.TextSummarizerOptions
+TextSummarizerResult = text_summarizer.TextSummarizerResult
+TextSummarizerMode = text_summarizer.Mode
+TextProofreader = text_proofreader.TextProofreader
+TextProofreaderOptions = text_proofreader.TextProofreaderOptions
+TextProofreaderResult = text_proofreader.TextProofreaderResult
+TextProofreaderCorrection = text_proofreader.Correction
+TextProofreaderCorrectionType = text_proofreader.CorrectionType
 
 # Remove unnecessary modules to avoid duplication in API docs.
 del mediapipe
 del language_detector
 del text_classifier
 del text_embedder
+del text_summarizer
+del text_proofreader

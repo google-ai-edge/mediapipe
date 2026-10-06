@@ -438,7 +438,7 @@ class EffectRendererImpl : public EffectRenderer {
       std::unique_ptr<RenderTarget> render_target,
       std::unique_ptr<Renderer> renderer,
       RenderableMesh3d&& renderable_quad_mesh_3d,
-      absl::optional<RenderableMesh3d>&& renderable_effect_mesh_3d,
+      std::optional<RenderableMesh3d>&& renderable_effect_mesh_3d,
       std::unique_ptr<Texture> empty_color_texture,
       std::unique_ptr<Texture> effect_texture)
       : environment_(environment),
@@ -637,7 +637,7 @@ class EffectRendererImpl : public EffectRenderer {
   std::unique_ptr<Renderer> renderer_;
 
   RenderableMesh3d renderable_quad_mesh_3d_;
-  absl::optional<RenderableMesh3d> renderable_effect_mesh_3d_;
+  std::optional<RenderableMesh3d> renderable_effect_mesh_3d_;
 
   std::unique_ptr<Texture> empty_color_texture_;
   std::unique_ptr<Texture> effect_texture_;
@@ -689,8 +689,8 @@ ImageFrame CreateEmptyColorTexture() {
 }  // namespace
 
 absl::StatusOr<std::unique_ptr<EffectRenderer>> CreateEffectRenderer(
-    const Environment& environment,                //
-    const absl::optional<Mesh3d>& effect_mesh_3d,  //
+    const Environment& environment,               //
+    const std::optional<Mesh3d>& effect_mesh_3d,  //
     ImageFrame&& effect_texture) {
   MP_RETURN_IF_ERROR(ValidateEnvironment(environment))
       << "Invalid environment!";

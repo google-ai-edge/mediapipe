@@ -22,10 +22,10 @@ limitations under the License.
 namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToRect(const mediapipe::tasks::components::containers::Rect& in,
-                      MPRect* out);
+                      MpRect* out);
 
 void CppConvertToRectF(
-    const mediapipe::tasks::components::containers::RectF& in, MPRectF* out);
+    const mediapipe::tasks::components::containers::RectF& in, MpRectF* out);
 
 }  // namespace mediapipe::tasks::c::components::containers
 

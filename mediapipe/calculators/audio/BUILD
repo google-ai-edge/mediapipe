@@ -15,7 +15,7 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library", "mediapipe_proto_library")
 # Placeholder: load py_proto_library
 # Placeholder: load proto_library
 
@@ -504,5 +504,45 @@ cc_test(
         "@com_google_absl//absl/types:span",
         "@com_google_audio_tools//audio/dsp:resampler_q",
         "@eigen//:eigen3",
+    ],
+)
+
+mediapipe_proto_library(
+    name = "add_audio_header_calculator_options_proto",
+    srcs = ["add_audio_header_calculator_options.proto"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "add_audio_header_calculator",
+    srcs = ["add_audio_header_calculator.cc"],
+    hdrs = ["add_audio_header_calculator.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":add_audio_header_calculator_options_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api3:calculator",
+        "//mediapipe/framework/api3:calculator_context",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:node",
+        "//mediapipe/framework/formats:matrix",
+        "//mediapipe/framework/formats:time_series_header_cc_proto",
+        "@com_google_absl//absl/status",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "add_audio_header_calculator_test",
+    srcs = ["add_audio_header_calculator_test.cc"],
+    deps = [
+        ":add_audio_header_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/formats:matrix",
+        "//mediapipe/framework/formats:time_series_header_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
     ],
 )

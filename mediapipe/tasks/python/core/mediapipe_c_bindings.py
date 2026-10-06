@@ -27,7 +27,9 @@ _shared_lib = None
 _CFunction = mediapipe_c_utils.CFunction
 
 
-def load_raw_library(signatures: Sequence[_CFunction] = ()) -> ctypes.CDLL:
+def load_raw_library(
+    signatures: Sequence[_CFunction] = (), lib_name: str = 'mediapipe'
+) -> ctypes.CDLL:
   """Loads the raw ctypes.CDLL shared library and registers signatures.
 
   This function loads the raw ctypes.CDLL shared library if it hasn't been
@@ -36,6 +38,7 @@ def load_raw_library(signatures: Sequence[_CFunction] = ()) -> ctypes.CDLL:
 
   Args:
     signatures: The ctypes function signatures to register in the library.
+    lib_name: The name of the library to load. Defaults to 'mediapipe'.
 
   Returns:
     The ctypes shared library.
@@ -44,11 +47,11 @@ def load_raw_library(signatures: Sequence[_CFunction] = ()) -> ctypes.CDLL:
   if _shared_lib is None:
     if os.name == 'posix':
       if platform.system() == 'Darwin':  # macOS
-        lib_filename = 'libmediapipe.dylib'
+        lib_filename = f'lib{lib_name}.dylib'
       else:  # Linux
-        lib_filename = 'libmediapipe.so'
+        lib_filename = f'lib{lib_name}.so'
     else:  # Windows
-      lib_filename = 'libmediapipe.dll'
+      lib_filename = f'lib{lib_name}.dll'
     lib_path_context = resources.files('mediapipe.tasks.c')
     absolute_lib_path = str(lib_path_context / lib_filename)
     _shared_lib = ctypes.CDLL(absolute_lib_path)

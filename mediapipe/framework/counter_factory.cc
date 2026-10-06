@@ -31,17 +31,17 @@ class BasicCounter : public Counter {
   explicit BasicCounter(const std::string& name) : value_(0) {}
 
   void Increment() ABSL_LOCKS_EXCLUDED(mu_) override {
-    absl::WriterMutexLock lock(&mu_);
+    absl::WriterMutexLock lock(mu_);
     ++value_;
   }
 
   void IncrementBy(int amount) ABSL_LOCKS_EXCLUDED(mu_) override {
-    absl::WriterMutexLock lock(&mu_);
+    absl::WriterMutexLock lock(mu_);
     value_ += amount;
   }
 
   int64_t Get() ABSL_LOCKS_EXCLUDED(mu_) override {
-    absl::ReaderMutexLock lock(&mu_);
+    absl::ReaderMutexLock lock(mu_);
     return value_;
   }
 
@@ -59,7 +59,7 @@ CounterSet::~CounterSet() ABSL_LOCKS_EXCLUDED(mu_) { PublishCounters(); }
 void CounterSet::PublishCounters() ABSL_LOCKS_EXCLUDED(mu_) {}
 
 void CounterSet::PrintCounters() ABSL_LOCKS_EXCLUDED(mu_) {
-  absl::ReaderMutexLock lock(&mu_);
+  absl::ReaderMutexLock lock(mu_);
   ABSL_LOG_IF(INFO, !counters_.empty()) << "MediaPipe Counters:";
   for (const auto& counter : counters_) {
     ABSL_LOG(INFO) << counter.first << ": " << counter.second->Get();
@@ -67,7 +67,7 @@ void CounterSet::PrintCounters() ABSL_LOCKS_EXCLUDED(mu_) {
 }
 
 Counter* CounterSet::Get(const std::string& name) ABSL_LOCKS_EXCLUDED(mu_) {
-  absl::ReaderMutexLock lock(&mu_);
+  absl::ReaderMutexLock lock(mu_);
   if (!mediapipe::ContainsKey(counters_, name)) {
     return nullptr;
   }
@@ -76,7 +76,7 @@ Counter* CounterSet::Get(const std::string& name) ABSL_LOCKS_EXCLUDED(mu_) {
 
 std::map<std::string, int64_t> CounterSet::GetCountersValues()
     ABSL_LOCKS_EXCLUDED(mu_) {
-  absl::ReaderMutexLock lock(&mu_);
+  absl::ReaderMutexLock lock(mu_);
   std::map<std::string, int64_t> result;
   for (const auto& it : counters_) {
     result[it.first] = it.second->Get();

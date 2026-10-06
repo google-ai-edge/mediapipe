@@ -42,10 +42,10 @@ extern "C" {
 typedef struct MpImageSegmenterInternal* MpImageSegmenterPtr;
 
 // The options for configuring a mediapipe image segmenter task.
-struct ImageSegmenterOptions {
+struct MpImageSegmenterOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
-  struct BaseOptions base_options;
+  struct MpBaseOptions base_options;
 
   // The running mode of the task. Default to the image mode.
   // Image segmenter has three running modes:
@@ -54,7 +54,7 @@ struct ImageSegmenterOptions {
   // 3) The live stream mode for segmenting image on the live stream of input
   // data, such as from camera. In this mode, the "result_callback" below must
   // be specified to receive the segmentation results asynchronously.
-  RunningMode running_mode;
+  MpRunningMode running_mode;
 
   // The locale to use for display names specified through the TFLite Model
   // Metadata, if any. Defaults to English.
@@ -68,21 +68,21 @@ struct ImageSegmenterOptions {
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
-  // to RunningMode::LIVE_STREAM. Arguments of the callback function include:
-  // the pointer to recognition result, the image that result was obtained
-  // on, the timestamp relevant to recognition results and pointer to error
-  // message in case of any failure. The validity of the passed arguments is
-  // true for the lifetime of the callback function.
+  // to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
+  // function include: the pointer to recognition result, the image that result
+  // was obtained on, the timestamp relevant to recognition results and pointer
+  // to error message in case of any failure. The validity of the passed
+  // arguments is true for the lifetime of the callback function.
   //
   // The passed arguments are only valid for the lifetime of the callback.
   typedef void (*result_callback_fn)(MpStatus status,
-                                     const ImageSegmenterResult* result,
+                                     const MpImageSegmenterResult* result,
                                      MpImagePtr image, int64_t timestamp_ms);
   result_callback_fn result_callback;
 };
 
 // Options for configuring runtime behavior of ImageSegmenter.
-struct SegmentationOptions {
+struct MpSegmentationOptions {
   // The width of the output segmentation masks.
   int output_width;
 
@@ -98,9 +98,9 @@ struct SegmentationOptions {
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
 // `MpErrorFree()`.
-MP_EXPORT MpStatus MpImageSegmenterCreate(struct ImageSegmenterOptions* options,
-                                          MpImageSegmenterPtr* segmenter,
-                                          char** error_msg);
+MP_EXPORT MpStatus
+MpImageSegmenterCreate(struct MpImageSegmenterOptions* options,
+                       MpImageSegmenterPtr* segmenter, char** error_msg);
 
 // Performs image segmentation on the input `image`.
 // Returns 'kMpOk' on success and sets `result` to the segmentation result.
@@ -112,8 +112,8 @@ MP_EXPORT MpStatus MpImageSegmenterCreate(struct ImageSegmenterOptions* options,
 // `MpErrorFree()`.
 MP_EXPORT MpStatus
 MpImageSegmenterSegmentImage(MpImageSegmenterPtr segmenter, MpImagePtr image,
-                             const ImageProcessingOptions* options,
-                             ImageSegmenterResult* result, char** error_msg);
+                             const MpImageProcessingOptions* options,
+                             MpImageSegmenterResult* result, char** error_msg);
 
 // Performs image segmentation on the provided video frame.
 // Only use this method when the ImageSegmenter is created with the video
@@ -130,11 +130,11 @@ MpImageSegmenterSegmentImage(MpImageSegmenterPtr segmenter, MpImagePtr image,
 // `MpErrorFree()`.
 MP_EXPORT MpStatus MpImageSegmenterSegmentForVideo(
     MpImageSegmenterPtr segmenter, MpImagePtr image,
-    const ImageProcessingOptions* options, int64_t timestamp_ms,
-    ImageSegmenterResult* result, char** error_msg);
+    const MpImageProcessingOptions* options, int64_t timestamp_ms,
+    MpImageSegmenterResult* result, char** error_msg);
 
 // Sends live image data to image segmentation, and the results will be
-// available via the `result_callback` provided in the ImageSegmenterOptions.
+// available via the `result_callback` provided in the MpImageSegmenterOptions.
 // Only use this method when the ImageSegmenter is created with the live
 // stream running mode.
 // The image can be of any size with format RGB or RGBA. It's required to
@@ -142,7 +142,7 @@ MP_EXPORT MpStatus MpImageSegmenterSegmentForVideo(
 // sent to the image segmenter. The input timestamps must be monotonically
 // increasing.
 // The `result_callback` provides:
-//   - The recognition results as an ImageSegmenterResult object.
+//   - The recognition results as an MpImageSegmenterResult object.
 //   - The const reference to the corresponding input image that the image
 //     segmenter runs on. Note that the const reference to the image will no
 //     longer be valid when the callback returns. To access the image data
@@ -155,12 +155,12 @@ MP_EXPORT MpStatus MpImageSegmenterSegmentForVideo(
 // message with `MpErrorFree()`.
 MP_EXPORT MpStatus
 MpImageSegmenterSegmentAsync(MpImageSegmenterPtr segmenter, MpImagePtr image,
-                             const ImageProcessingOptions* options,
+                             const MpImageProcessingOptions* options,
                              int64_t timestamp_ms, char** error_msg);
 
-// Frees the memory allocated inside a ImageSegmenterResult result.
+// Frees the memory allocated inside a MpImageSegmenterResult result.
 // Does not free the result pointer itself.
-MP_EXPORT void MpImageSegmenterCloseResult(ImageSegmenterResult* result);
+MP_EXPORT void MpImageSegmenterCloseResult(MpImageSegmenterResult* result);
 
 // Shuts down the ImageSegmenter when all the work is done. Frees all memory.
 //

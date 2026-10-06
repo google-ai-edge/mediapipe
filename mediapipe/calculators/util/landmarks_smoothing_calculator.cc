@@ -70,7 +70,7 @@ class LandmarksSmoothingCalculatorImpl
       int image_height;
       std::tie(image_width, image_height) = kImageSize(cc).Get();
 
-      absl::optional<float> object_scale;
+      std::optional<float> object_scale;
       if (kObjectScaleRoi(cc).IsConnected() && !kObjectScaleRoi(cc).IsEmpty()) {
         auto& roi = kObjectScaleRoi(cc).Get<NormalizedRect>();
         object_scale = GetObjectScale(roi, image_width, image_height);
@@ -92,7 +92,7 @@ class LandmarksSmoothingCalculatorImpl
     } else {
       const auto& in_landmarks = kInLandmarks(cc).Get();
 
-      absl::optional<float> object_scale;
+      std::optional<float> object_scale;
       if (kObjectScaleRoi(cc).IsConnected() && !kObjectScaleRoi(cc).IsEmpty()) {
         auto& roi = kObjectScaleRoi(cc).Get<Rect>();
         object_scale = GetObjectScale(roi);

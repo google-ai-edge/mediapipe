@@ -23,11 +23,11 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToCategory(
     const mediapipe::tasks::components::containers::Category& in,
-    Category* out);
+    MpCategory* out);
 
-void CppCloseCategory(Category* in);
+void CppCloseCategory(MpCategory* in);
 
-void CppCloseCategories(Categories* in);
+void CppCloseCategories(MpCategories* in);
 
 }  // namespace mediapipe::tasks::c::components::containers
 

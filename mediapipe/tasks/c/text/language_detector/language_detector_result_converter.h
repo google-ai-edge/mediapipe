@@ -23,9 +23,9 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToLanguageDetectorResult(
     const mediapipe::tasks::text::language_detector::LanguageDetectorResult& in,
-    LanguageDetectorResult* out);
+    MpLanguageDetectorResult* out);
 
-void CppCloseLanguageDetectorResult(LanguageDetectorResult* in);
+void CppCloseLanguageDetectorResult(MpLanguageDetectorResult* in);
 
 }  // namespace mediapipe::tasks::c::components::containers
 

@@ -69,7 +69,7 @@ TEST(FaceLandmarkerResultConverterTest, ConvertsCustomResult) {
   ::mediapipe::tasks::vision::face_landmarker::FaceLandmarkerResult cpp_result;
   InitFaceLandmarkerResult(&cpp_result);
 
-  FaceLandmarkerResult c_result;
+  MpFaceLandmarkerResult c_result;
   CppConvertToFaceLandmarkerResult(cpp_result, &c_result);
 
   // Verify conversion of face_landmarks
@@ -114,7 +114,7 @@ TEST(FaceLandmarkerResultConverterTest, ConvertsCustomResult) {
   for (uint32_t i = 0; i < c_result.facial_transformation_matrixes_count; ++i) {
     const auto& cpp_facial_transformation_matrixes =
         cpp_result.facial_transformation_matrixes.value();
-    // Assuming Matrix struct contains data array and dimensions
+    // Assuming MpMatrix struct contains data array and dimensions
     const auto& cpp_matrix = cpp_facial_transformation_matrixes[i];
     EXPECT_EQ(c_result.facial_transformation_matrixes[i].rows,
               cpp_matrix.rows());
@@ -137,7 +137,7 @@ TEST(FaceLandmarkerResultConverterTest, FreesMemory) {
   ::mediapipe::tasks::vision::face_landmarker::FaceLandmarkerResult cpp_result;
   InitFaceLandmarkerResult(&cpp_result);
 
-  FaceLandmarkerResult c_result;
+  MpFaceLandmarkerResult c_result;
   CppConvertToFaceLandmarkerResult(cpp_result, &c_result);
 
   EXPECT_NE(c_result.face_blendshapes, nullptr);

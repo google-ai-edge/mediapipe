@@ -21,6 +21,52 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
+ * The embedding task type, used to format input text for Gecko models.
+ */
+typedef NS_ENUM(NSUInteger, MPPEmbeddingType) {
+  MPPEmbeddingTypeRetrievalQuery = 1,
+  MPPEmbeddingTypeRetrievalDocument = 2,
+  MPPEmbeddingTypeSemanticSimilarity = 3,
+  MPPEmbeddingTypeClassification = 4,
+  MPPEmbeddingTypeClustering = 5,
+  MPPEmbeddingTypeQuestionAnswering = 6,
+  MPPEmbeddingTypeFactChecking = 7,
+  MPPEmbeddingTypeCodeRetrieval = 8,
+};
+
+/**
+ * The role of the text in the context of the embedding task for Gecko models.
+ */
+typedef NS_ENUM(NSUInteger, MPPTextRole) {
+  MPPTextRoleQuery = 0,
+  MPPTextRoleDocument = 1,
+};
+
+/**
+ * Encapsulates formatting instructions for models that require a specific prompt format.
+ */
+NS_SWIFT_NAME(TextFormatContext)
+@interface MPPTextFormatContext : NSObject
+
+/**
+ * The embedding type of type `MPPEmbeddingType`.
+ */
+@property(nonatomic) MPPEmbeddingType embeddingType;
+
+/**
+ * The title of the text. This is only used for `MPPEmbeddingTypeRetrievalDocument`.
+ */
+@property(nonatomic, nullable, copy) NSString *title;
+
+/**
+ * The role of the text of type `MPPTextRole`.
+ * Defaults to `MPPTextRoleQuery`.
+ */
+@property(nonatomic) MPPTextRole textRole;
+
+@end
+
+/**
  * @brief Performs embedding extraction on text.
  *
  * This API expects a TFLite model with (optional) [TFLite Model
@@ -83,6 +129,22 @@ NS_SWIFT_NAME(TextEmbedder)
  */
 - (nullable MPPTextEmbedderResult *)embedText:(NSString *)text
                                         error:(NSError **)error NS_SWIFT_NAME(embed(text:));
+
+/**
+ * Performs embedding extraction on the input text with formatting options for models with prompt
+ * requirements.
+ *
+ * @param text The `NSString` on which embedding extraction is to be performed.
+ * @param textFormatContext The `MPPTextFormatContext` to use for formatting the input text.
+ * @param error An optional error parameter populated when there is an error in performing
+ * embedding extraction on the input text.
+ *
+ * @return  A `MPPTextEmbedderResult` object that contains a list of embeddings.
+ */
+- (nullable MPPTextEmbedderResult *)embedText:(NSString *)text
+                            textFormatContext:(nullable MPPTextFormatContext *)textFormatContext
+                                        error:(NSError **)error
+    NS_SWIFT_NAME(embed(text:textFormatContext:));
 
 - (instancetype)init NS_UNAVAILABLE;
 

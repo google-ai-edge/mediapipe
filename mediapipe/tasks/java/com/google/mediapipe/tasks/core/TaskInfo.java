@@ -23,6 +23,7 @@ import com.google.mediapipe.calculator.proto.FlowLimiterCalculatorProto.FlowLimi
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.protobuf.Any;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -48,6 +49,9 @@ public abstract class TaskInfo<T extends TaskOptions> {
 
     /** Sets a list of task graph output stream info {@link String}s in the form TAG:name. */
     public abstract Builder<T> setOutputStreams(List<String> value);
+
+    /** Sets a list of task graph input side packet info {@link String}s in the form TAG:name. */
+    public abstract Builder<T> setInputSidePackets(List<String> value);
 
     /** Sets to true if the task requires a flow limiter. */
     public abstract Builder<T> setEnableFlowLimiting(boolean value);
@@ -91,10 +95,15 @@ public abstract class TaskInfo<T extends TaskOptions> {
 
   abstract List<String> outputStreams();
 
+  abstract List<String> inputSidePackets();
+
   abstract boolean enableFlowLimiting();
 
   public static <T extends TaskOptions> Builder<T> builder() {
-    return new AutoValue_TaskInfo.Builder<T>().setTaskName("").setTaskRunningModeName("");
+    return new AutoValue_TaskInfo.Builder<T>()
+        .setTaskName("")
+        .setTaskRunningModeName("")
+        .setInputSidePackets(Collections.emptyList());
   }
 
   /* Returns a list of the output stream names without the stream tags. */
@@ -130,6 +139,10 @@ public abstract class TaskInfo<T extends TaskOptions> {
     for (String outputStream : outputStreams()) {
       taskSubgraphBuilder.addOutputStream(outputStream);
       graphBuilder.addOutputStream(outputStream);
+    }
+    for (String sidePacket : inputSidePackets()) {
+      taskSubgraphBuilder.addInputSidePacket(sidePacket);
+      graphBuilder.addInputSidePacket(sidePacket);
     }
     if (!enableFlowLimiting()) {
       for (String inputStream : inputStreams()) {

@@ -164,6 +164,9 @@ JNIEXPORT jdouble JNICALL PACKET_GETTER_METHOD(
 JNIEXPORT jfloatArray JNICALL PACKET_GETTER_METHOD(nativeGetMatrixData)(
     JNIEnv* env, jobject thiz, jlong packet);
 
+JNIEXPORT jobject JNICALL PACKET_GETTER_METHOD(nativeGetMatrixBuffer)(
+    JNIEnv* env, jobject thiz, jlong packet);
+
 // Returns the number of rows of the matrix.
 JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetMatrixRows)(JNIEnv* env,
                                                                  jobject thiz,

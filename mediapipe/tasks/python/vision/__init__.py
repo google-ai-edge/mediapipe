@@ -21,10 +21,12 @@ import mediapipe.tasks.python.vision.face_detector
 import mediapipe.tasks.python.vision.face_landmarker
 import mediapipe.tasks.python.vision.gesture_recognizer
 import mediapipe.tasks.python.vision.hand_landmarker
+import mediapipe.tasks.python.vision.holistic_landmarker
 import mediapipe.tasks.python.vision.image_classifier
 import mediapipe.tasks.python.vision.image_embedder
 import mediapipe.tasks.python.vision.image_segmenter
 import mediapipe.tasks.python.vision.interactive_segmenter
+import mediapipe.tasks.python.vision.interactive_segmenter_legacy
 import mediapipe.tasks.python.vision.object_detector
 import mediapipe.tasks.python.vision.pose_landmarker
 
@@ -44,6 +46,9 @@ HandLandmarker = hand_landmarker.HandLandmarker
 HandLandmarkerOptions = hand_landmarker.HandLandmarkerOptions
 HandLandmarkerResult = hand_landmarker.HandLandmarkerResult
 HandLandmarksConnections = hand_landmarker.HandLandmarksConnections
+HolisticLandmarker = holistic_landmarker.HolisticLandmarker
+HolisticLandmarkerOptions = holistic_landmarker.HolisticLandmarkerOptions
+HolisticLandmarkerResult = holistic_landmarker.HolisticLandmarkerResult
 ImageClassifier = image_classifier.ImageClassifier
 ImageClassifierOptions = image_classifier.ImageClassifierOptions
 ImageClassifierResult = image_classifier.ImageClassifierResult
@@ -55,7 +60,12 @@ ImageSegmenterOptions = image_segmenter.ImageSegmenterOptions
 ImageProcessingOptions = core.image_processing_options.ImageProcessingOptions
 InteractiveSegmenter = interactive_segmenter.InteractiveSegmenter
 InteractiveSegmenterOptions = interactive_segmenter.InteractiveSegmenterOptions
-InteractiveSegmenterRegionOfInterest = interactive_segmenter.RegionOfInterest
+InteractiveSegmenterBrushMode = interactive_segmenter.BrushMode
+InteractiveSegmenterStrokePoint = interactive_segmenter.StrokePoint
+InteractiveSegmenterStroke = interactive_segmenter.Stroke
+InteractiveSegmenterLegacy = interactive_segmenter_legacy.InteractiveSegmenterLegacy
+InteractiveSegmenterLegacyOptions = interactive_segmenter_legacy.InteractiveSegmenterLegacyOptions
+InteractiveSegmenterLegacyRegionOfInterest = interactive_segmenter_legacy.RegionOfInterest
 ObjectDetector = object_detector.ObjectDetector
 ObjectDetectorOptions = object_detector.ObjectDetectorOptions
 ObjectDetectorResult = object_detector.ObjectDetectorResult
@@ -73,10 +83,12 @@ del face_detector
 del face_landmarker
 del gesture_recognizer
 del hand_landmarker
+del holistic_landmarker
 del image_classifier
 del image_embedder
 del image_segmenter
 del interactive_segmenter
+del interactive_segmenter_legacy
 del object_detector
 del pose_landmarker
 del mediapipe

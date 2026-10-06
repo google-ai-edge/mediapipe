@@ -46,7 +46,7 @@ using ::mediapipe::Tensor;
 using ::testing::HasSubstr;
 
 void PushTensorsToRunner(int tensor_height, int tensor_width,
-                         const std::vector<float>& test_values,
+                         absl::Span<const float> test_values,
                          CalculatorRunner* runner) {
   // Creates input tensor.
   auto tensors = absl::make_unique<std::vector<Tensor>>();
@@ -605,6 +605,50 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsCategoryMaskResize) {
   EXPECT_THAT(packets, testing::ElementsAre(Uint8ImagePacket(
                            output_height, output_width, ImageFormat::GRAY8,
                            kExpectedIndex, buffer_indices)));
+}
+
+TEST(TensorsToSegmentationCalculatorTest,
+     SucceedsConfidenceMaskWithGpuPostprocessingDisabled) {
+  // Note: This test verifies option parsing and CPU fallback but uses a CPU
+  // tensor. Testing true GPU tensor override requires a GL context.
+  CalculatorRunner runner(
+      ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
+          R"pb(
+            calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
+            input_stream: "TENSORS:tensors"
+            output_stream: "CONFIDENCE_MASK:0:segmented_mask_0"
+            output_stream: "CONFIDENCE_MASK:1:segmented_mask_1"
+            output_stream: "CONFIDENCE_MASK:2:segmented_mask_2"
+            output_stream: "CONFIDENCE_MASK:3:segmented_mask_3"
+            options {
+              [mediapipe.tasks.TensorsToSegmentationCalculatorOptions.ext] {
+                segmenter_options { activation: NONE }
+                use_gpu_postprocessing: false
+              }
+            }
+          )pb"));
+
+  constexpr std::array<float, 4> kTestValues = {0.2, 1.5, -0.6, 3.4};
+
+  constexpr int tensor_height = 3;
+  constexpr int tensor_width = 4;
+  const int tensor_channels = kTestValues.size();
+  PushTensorsToRunner(tensor_height, tensor_width, kTestValues, &runner);
+  MP_ASSERT_OK(runner.Run());
+  ASSERT_EQ(runner.Outputs().NumEntries(), tensor_channels);
+  const std::vector<int> buffer_indices = {0};
+  const std::vector<Packet> packets = GetPackets(runner);
+  EXPECT_THAT(
+      packets,
+      testing::ElementsAre(
+          FloatImagePacket(tensor_height, tensor_width, ImageFormat::VEC32F1,
+                           kTestValues[0], buffer_indices),
+          FloatImagePacket(tensor_height, tensor_width, ImageFormat::VEC32F1,
+                           kTestValues[1], buffer_indices),
+          FloatImagePacket(tensor_height, tensor_width, ImageFormat::VEC32F1,
+                           kTestValues[2], buffer_indices),
+          FloatImagePacket(tensor_height, tensor_width, ImageFormat::VEC32F1,
+                           kTestValues[3], buffer_indices)));
 }
 
 TEST(TensorsToSegmentationCalculatorTest, HasCorrectRegistrationName) {

@@ -41,6 +41,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
@@ -83,6 +84,10 @@ constexpr char kShortRangeBlazeMetadataFaceModel[] =
 constexpr char kPortraitImage[] = "portrait.jpg";
 constexpr char kPortraitExpectedDetection[] =
     "portrait_expected_detection.pbtxt";
+constexpr char kPortraitExpectedFullRangeDetection[] =
+    "portrait_expected_full_range_detection.pbtxt";
+constexpr char kPortraitExpectedFullRangeSparseDetection[] =
+    "portrait_expected_full_range_sparse_detection.pbtxt";
 
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kImageName[] = "image";
@@ -117,7 +122,10 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
       graph[Output<std::vector<Detection>>(kDetectionsTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(), std::make_unique<core::MediaPipeBuiltinOpResolver>());
+      {.config = graph.GetConfig(),
+       .task_name = "face_detector_test",
+       .task_running_mode = core::RunningMode::kImage,
+       .op_resolver = std::make_unique<core::MediaPipeBuiltinOpResolver>()});
 }
 
 Detection GetExpectedFaceDetectionResult(absl::string_view file_name) {
@@ -186,6 +194,22 @@ INSTANTIATE_TEST_SUITE_P(
             .test_image_name = kPortraitImage,
             .expected_result = {GetExpectedFaceDetectionResult(
                 kPortraitExpectedDetection)},
+            .graph_name =
+                "mediapipe.tasks.vision.face_detector.FaceDetectorGraph"},
+        TestParams{
+            .test_name = "FullRange",
+            .face_detection_model_name = kFullRangeBlazeFaceModel,
+            .test_image_name = kPortraitImage,
+            .expected_result = {GetExpectedFaceDetectionResult(
+                kPortraitExpectedFullRangeDetection)},
+            .graph_name =
+                "mediapipe.tasks.vision.face_detector.FaceDetectorGraph"},
+        TestParams{
+            .test_name = "FullRangeSparse",
+            .face_detection_model_name = kFullRangeSparseBlazeFaceModel,
+            .test_image_name = kPortraitImage,
+            .expected_result = {GetExpectedFaceDetectionResult(
+                kPortraitExpectedFullRangeSparseDetection)},
             .graph_name =
                 "mediapipe.tasks.vision.face_detector.FaceDetectorGraph"}),
     [](const TestParamInfo<FaceDetectorGraphTest::ParamType>& info) {

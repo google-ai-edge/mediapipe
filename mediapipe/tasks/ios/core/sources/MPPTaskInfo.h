@@ -16,6 +16,7 @@
 
 #include "mediapipe/framework/calculator.pb.h"
 
+#import "mediapipe/tasks/ios/core/sources/MPPCoreRunningMode.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
 
@@ -26,6 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @interface MPPTaskInfo : NSObject <NSCopying>
 
+@property(nonatomic, copy, nonnull) NSString *taskName;
 @property(nonatomic, copy, nonnull) NSString *taskGraphName;
 
 /**
@@ -49,14 +51,21 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @property(nonatomic) BOOL enableFlowLimiting;
 
+/**
+ * Running mode of the MediaPipe task.
+ */
+@property(nonatomic) MPPCoreRunningMode runningMode;
+
 + (instancetype)new NS_UNAVAILABLE;
 
-- (instancetype)initWithTaskGraphName:(NSString *)taskGraphName
-                         inputStreams:(NSArray<NSString *> *)inputStreams
-                        outputStreams:(NSArray<NSString *> *)outputStreams
-                          taskOptions:(id<MPPTaskOptionsProtocol>)taskOptions
-                   enableFlowLimiting:(BOOL)enableFlowLimiting
-                                error:(NSError **)error NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithTaskName:(NSString *)taskName
+                   taskGraphName:(NSString *)taskGraphName
+                    inputStreams:(NSArray<NSString *> *)inputStreams
+                   outputStreams:(NSArray<NSString *> *)outputStreams
+                     taskOptions:(id<MPPTaskOptionsProtocol>)taskOptions
+              enableFlowLimiting:(BOOL)enableFlowLimiting
+                     runningMode:(MPPCoreRunningMode)runningMode
+                           error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
  * Creates a MediaPipe Task  protobuf message from the MPPTaskInfo instance.

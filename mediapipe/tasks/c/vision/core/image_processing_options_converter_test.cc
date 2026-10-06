@@ -28,7 +28,7 @@ using ::mediapipe::tasks::components::containers::RectF;
 
 TEST(ImageprocessingOptionsConverterTest, ConvertsOptionsWithRegionOfInterest) {
   RectF roi = {0.1f, 0.2f, 0.3f, 0.4f};
-  ImageProcessingOptions c_options;
+  MpImageProcessingOptions c_options;
   c_options.rotation_degrees = 180;
   c_options.has_region_of_interest = true;
   c_options.region_of_interest.left = roi.left;
@@ -49,7 +49,7 @@ TEST(ImageprocessingOptionsConverterTest, ConvertsOptionsWithRegionOfInterest) {
 
 TEST(ImageprocessingOptionsConverterTest,
      ConvertsOptionsWithoutRegionOfInterest) {
-  ImageProcessingOptions c_options;
+  MpImageProcessingOptions c_options;
   c_options.rotation_degrees = 90;
   c_options.has_region_of_interest = false;
 

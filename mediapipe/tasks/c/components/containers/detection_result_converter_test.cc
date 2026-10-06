@@ -30,7 +30,7 @@ TEST(DetectionResultConverterTest, ConvertsDetectionResultCustomCategory) {
            /* bounding_box= */ {10, 11, 12, 13},
            {/* keypoints */ {{0.1, 0.1, "foo", 0.5}}}}}};
 
-  DetectionResult c_detection_result;
+  MpDetectionResult c_detection_result;
   CppConvertToDetectionResult(cpp_detection_result, &c_detection_result);
   EXPECT_NE(c_detection_result.detections, nullptr);
   EXPECT_EQ(c_detection_result.detections_count, 1);
@@ -49,7 +49,7 @@ TEST(DetectionResultConverterTest, ConvertsDetectionResultNoCategory) {
   mediapipe::tasks::components::containers::DetectionResult
       cpp_detection_result = {/* detections= */ {/* categories= */ {}}};
 
-  DetectionResult c_detection_result;
+  MpDetectionResult c_detection_result;
   CppConvertToDetectionResult(cpp_detection_result, &c_detection_result);
   EXPECT_NE(c_detection_result.detections, nullptr);
   EXPECT_EQ(c_detection_result.detections_count, 1);
@@ -63,7 +63,7 @@ TEST(DetectionResultConverterTest, FreesMemory) {
   mediapipe::tasks::components::containers::DetectionResult
       cpp_detection_result = {/* detections= */ {{/* categories= */ {}}}};
 
-  DetectionResult c_detection_result;
+  MpDetectionResult c_detection_result;
   CppConvertToDetectionResult(cpp_detection_result, &c_detection_result);
   EXPECT_NE(c_detection_result.detections, nullptr);
 

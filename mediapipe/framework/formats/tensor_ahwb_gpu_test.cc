@@ -9,7 +9,9 @@
 #include "absl/algorithm/container.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/formats/tensor/views/data_types.h"
+#include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/gpu/gpu_test_base.h"
+#include "mediapipe/gpu/multi_pool.h"
 #include "mediapipe/gpu/shader_util.h"
 #include "tensorflow/lite/delegates/gpu/gl/gl_call.h"
 #include "testing/base/public/gunit.h"
@@ -280,6 +282,13 @@ TEST_F(TensorAhwbGpuTest, TestGetOpenGlBufferReadViewAhwbFromGpu) {
   });
 
   RunInGlContext([&] {
+    // TODO: This test is currently broken. It can be fixed by
+    // requesting AHWB read view here, but that doesn't seem right.
+    // {
+    //   // Request AHWB read view from GPU buffer and make sure view is
+    //   destroyed. auto view = tensor.GetAHardwareBufferReadView();
+    //   ASSERT_NE(view.handle(), nullptr);
+    // }
     // Triggers conversion to GL buffer.
     auto ssbo_view = tensor.GetOpenGlBufferReadView();
     ASSERT_NE(ssbo_view.name(), 0);
@@ -288,6 +297,103 @@ TEST_F(TensorAhwbGpuTest, TestGetOpenGlBufferReadViewAhwbFromGpu) {
     ASSERT_NE(ssbo_view.ssbo_read_, nullptr);
 
     std::vector<float> output = ReadGlBufferView(ssbo_view, kNumElements);
+    EXPECT_THAT(output, testing::Pointwise(testing::FloatEq(), reference));
+  });
+}
+
+TEST_F(TensorAhwbGpuTest, TestPreferAhwbCpuWriteThenGlBufferRead) {
+  constexpr size_t kNumElements = 20;
+  MemoryManager memory_manager(kDefaultMultiPoolOptions, /*prefer_ahwb=*/true);
+
+  for (int n = 0; n < 2; ++n) {
+    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape({kNumElements}),
+                  &memory_manager);
+    {
+      auto view = tensor.GetCpuWriteView();
+      EXPECT_NE(view.buffer<float>(), nullptr);
+    }
+
+    // Due to Black Voodoo Magic in the Tensor class, the second time a write
+    // view is requested (even for a different instance) an AHWB is used that
+    // avoids the copy.
+    bool expect_ahwb = n == 1;
+    EXPECT_EQ(tensor.ready_as_ahwb(), expect_ahwb);
+
+    RunInGlContext([&] {
+      auto ssbo_view = tensor.GetOpenGlBufferReadView();
+      EXPECT_NE(ssbo_view.name(), 0);
+    });
+  }
+}
+
+TEST_F(TensorAhwbGpuTest, TestPreferAhwbGlBufferWriteThenCpuRead) {
+  constexpr size_t kNumElements = 20;
+  MemoryManager memory_manager(kDefaultMultiPoolOptions, /*prefer_ahwb=*/true);
+
+  for (int n = 0; n < 2; ++n) {
+    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape({kNumElements}),
+                  &memory_manager);
+    RunInGlContext([&] {
+      auto ssbo_view = tensor.GetOpenGlBufferWriteView();
+      EXPECT_NE(ssbo_view.name(), 0);
+    });
+
+    // The second time an AHWB is requested (see above).
+    bool expect_ahwb = n == 1;
+    EXPECT_EQ(tensor.ready_as_ahwb(), expect_ahwb);
+
+    {
+      auto view = tensor.GetCpuReadView();
+      EXPECT_NE(view.buffer<float>(), nullptr);
+    }
+  }
+}
+
+std::vector<float> ReadGlTextureView(const Tensor::OpenGlTexture2dView& view,
+                                     int width, int height) {
+  glBindTexture(GL_TEXTURE_2D, view.name());
+
+  GLuint fbo = 0;
+  glGenFramebuffers(1, &fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                         view.name(), 0);
+
+  std::vector<float> data;
+  data.resize(width * height);
+  glReadPixels(0, 0, width / 4, height, GL_RGBA, GL_FLOAT, data.data());
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glDeleteFramebuffers(1, &fbo);
+  return data;
+}
+
+TEST_F(TensorAhwbGpuTest, TestGetOpenGlTextureReadViewAhwbFromCpu) {
+  constexpr size_t kWidth = 20;
+  constexpr size_t kHeight = 10;
+  // Tensor uses RGBA as OpenGL format. Ensure all 4 channels are filled for
+  // convenience.
+  ASSERT_EQ(kWidth % 4, 0);
+  std::vector<float> reference = CreateReferenceData(kWidth * kHeight);
+
+  Tensor tensor(Tensor::ElementType::kFloat32,
+                Tensor::Shape({kHeight, kWidth}));
+  {
+    // Make tensor to allocate ahwb and make sure view is destroyed.
+    ASSERT_NE(tensor.GetAHardwareBufferWriteView().handle(), nullptr);
+  }
+  {
+    // Populate tensor on CPU and make sure view is destroyed
+    absl::c_copy(reference, tensor.GetCpuWriteView().buffer<float>());
+  }
+
+  RunInGlContext([&] {
+    // Triggers conversion to GL texture.
+    auto texture_view = tensor.GetOpenGlTexture2dReadView();
+    ASSERT_NE(texture_view.name(), 0);
+
+    std::vector<float> output =
+        ReadGlTextureView(texture_view, kWidth, kHeight);
     EXPECT_THAT(output, testing::Pointwise(testing::FloatEq(), reference));
   });
 }

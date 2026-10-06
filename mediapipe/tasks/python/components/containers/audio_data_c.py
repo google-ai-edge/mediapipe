@@ -16,7 +16,7 @@
 import ctypes
 
 
-class AudioDataC(ctypes.Structure):
+class MpAudioDataC(ctypes.Structure):
   """The audio data used in the C API."""
 
   _fields_ = [

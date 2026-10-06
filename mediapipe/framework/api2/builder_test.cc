@@ -257,6 +257,31 @@ TEST(BuilderTest, BuildGraphSettingSourceLayer) {
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
 }
 
+TEST(BuilderTest, BuildGraphSettingNodeName) {
+  Graph graph;
+  Stream<AnyType> base = graph.In("IN").SetName("base");
+
+  auto& foo = graph.AddNode("Foo");
+  foo.SetName("my_named_foo_node");
+  base >> foo.In("BASE");
+  Stream<AnyType> foo_out = foo.Out("OUT");
+
+  foo_out.SetName("out") >> graph.Out("OUT");
+
+  CalculatorGraphConfig expected =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "IN:base"
+        output_stream: "OUT:out"
+        node {
+          name: "my_named_foo_node"
+          calculator: "Foo"
+          input_stream: "BASE:base"
+          output_stream: "OUT:out"
+        }
+      )pb");
+  EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
+}
+
 TEST(BuilderTest, CanUseBackEdges) {
   Graph graph;
   // Graph inputs.

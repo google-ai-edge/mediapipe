@@ -15,10 +15,45 @@
 
 import dataclasses
 import enum
+import platform
+import sys
+import types
 from typing import Any, Optional
+
+import certifi
 
 from mediapipe.tasks.python.core import base_options_c as base_options_c_lib
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
+
+
+
+# C enum value for host environment.
+HOST_ENVIRONMENT_PYTHON: int = 3
+
+
+class _HostSystem(enum.IntEnum):
+  """An mapping for the C enum values for the host operating system.
+
+  Attributes:
+    HOST_SYSTEM_UNKNOWN: Unknown host system.
+    HOST_SYSTEM_LINUX: Linux host system.
+    HOST_SYSTEM_MAC: MacOS host system.
+    HOST_SYSTEM_WINDOWS: Windows host system.
+  """
+
+  HOST_SYSTEM_UNKNOWN = 0
+  HOST_SYSTEM_LINUX = 1
+  HOST_SYSTEM_MAC = 2
+  HOST_SYSTEM_WINDOWS = 3
+
+
+
+
+_HOST_SYSTEM_BY_PLATFORM = types.MappingProxyType({
+    'Darwin': _HostSystem.HOST_SYSTEM_MAC,
+    'Windows': _HostSystem.HOST_SYSTEM_WINDOWS,
+    'Linux': _HostSystem.HOST_SYSTEM_LINUX,
+})
 
 
 @dataclasses.dataclass
@@ -50,9 +85,13 @@ class BaseOptions:
   delegate: Optional[Delegate] = None
 
   @doc_controls.do_not_generate_docs
-  def to_ctypes(self) -> base_options_c_lib.BaseOptionsC:
-    """Creates a BaseOptionsC struct from the BaseOptions object."""
-    options = base_options_c_lib.BaseOptionsC()
+  def to_ctypes(self) -> base_options_c_lib.MpBaseOptionsC:
+    """Creates a MpBaseOptionsC struct from the BaseOptions object."""
+    ca_bundle_path = certifi.where()
+    host_system = _HOST_SYSTEM_BY_PLATFORM.get(
+        platform.system(), _HostSystem.HOST_SYSTEM_UNKNOWN
+    )
+    options = base_options_c_lib.MpBaseOptionsC()
     options.model_asset_buffer = self.model_asset_buffer
     options.model_asset_buffer_count = (
         len(self.model_asset_buffer) if self.model_asset_buffer else 0
@@ -61,6 +100,14 @@ class BaseOptions:
         self.model_asset_path.encode('utf-8') if self.model_asset_path else None
     )
     options.delegate = self.delegate.value if self.delegate else 0
+    options.host_environment = HOST_ENVIRONMENT_PYTHON
+    host_version, *_ = sys.version.split(' ')
+    options.host_system = host_system
+    options.host_version = host_version.encode('utf-8')
+    options.ca_bundle_path = ca_bundle_path.encode('utf-8')
+    options.app_id = None
+    options.app_version = None
+    options.file_descriptor = -1
     return options
 
   def __eq__(self, other: Any) -> bool:

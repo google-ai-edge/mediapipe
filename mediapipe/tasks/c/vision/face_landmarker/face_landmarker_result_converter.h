@@ -23,9 +23,9 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToFaceLandmarkerResult(
     const mediapipe::tasks::vision::face_landmarker::FaceLandmarkerResult& in,
-    FaceLandmarkerResult* out);
+    MpFaceLandmarkerResult* out);
 
-void CppCloseFaceLandmarkerResult(FaceLandmarkerResult* result);
+void CppCloseFaceLandmarkerResult(MpFaceLandmarkerResult* result);
 
 }  // namespace mediapipe::tasks::c::components::containers
 

@@ -33,7 +33,7 @@ class LandmarkTest(absltest.TestCase):
     self.assertDictAlmostEqual(actual_values, expected_values)
 
   def test_create_landmark_from_ctypes(self):
-    c_landmark = landmark_c_lib.LandmarkC(
+    c_landmark = landmark_c_lib.MpLandmarkC(
         x=0.1,
         y=0.2,
         z=0.3,
@@ -57,7 +57,7 @@ class LandmarkTest(absltest.TestCase):
     self._expect_landmark_equal(actual_landmark, expected_values)
 
   def test_create_landmark_from_ctypes_without_optional_fields(self):
-    c_landmark = landmark_c_lib.LandmarkC(
+    c_landmark = landmark_c_lib.MpLandmarkC(
         x=0.1,
         y=0.2,
         z=0.3,
@@ -92,7 +92,7 @@ class NormalizedLandmarkTest(absltest.TestCase):
     self.assertDictAlmostEqual(actual_values, expected_values)
 
   def test_create_normalized_landmark_from_ctypes(self):
-    c_landmark = landmark_c_lib.NormalizedLandmarkC(
+    c_landmark = landmark_c_lib.MpNormalizedLandmarkC(
         x=0.1,
         y=0.2,
         z=0.3,
@@ -116,7 +116,7 @@ class NormalizedLandmarkTest(absltest.TestCase):
     self._expect_landmark_equal(actual_landmark, expected_values)
 
   def test_create_normalized_landmark_from_ctypes_without_optional_fields(self):
-    c_landmark = landmark_c_lib.NormalizedLandmarkC(
+    c_landmark = landmark_c_lib.MpNormalizedLandmarkC(
         x=0.1,
         y=0.2,
         z=0.3,

@@ -16,7 +16,7 @@ absl::Status GraphProcessor::Initialize(CalculatorGraphConfig graph_config) {
 }
 
 absl::Status GraphProcessor::AddPacket(CollectionItemId id, Packet packet) {
-  absl::MutexLock lock(&graph_mutex_);
+  absl::MutexLock lock(graph_mutex_);
   const std::string& stream_name = graph_input_map_->Names().at(id.value());
   return graph_->AddPacketToInputStream(stream_name, packet);
 }
@@ -36,7 +36,7 @@ absl::Status GraphProcessor::SendPacket(CollectionItemId id, Packet packet) {
 }
 
 void GraphProcessor::SetConsumer(PacketConsumer* consumer) {
-  absl::MutexLock lock(&graph_mutex_);
+  absl::MutexLock lock(graph_mutex_);
   consumer_ = consumer;
   auto input_map = consumer_->InputTags();
   for (auto id = input_map->BeginId(); id != input_map->EndId(); ++id) {
@@ -59,7 +59,7 @@ absl::Status GraphProcessor::ObserveGraph() {
 }
 
 absl::Status GraphProcessor::WaitUntilInitialized() {
-  absl::MutexLock lock(&graph_mutex_);
+  absl::MutexLock lock(graph_mutex_);
   auto is_initialized = [this]() ABSL_SHARED_LOCKS_REQUIRED(graph_mutex_) {
     return graph_ != nullptr && consumer_ != nullptr;
   };
@@ -70,7 +70,7 @@ absl::Status GraphProcessor::WaitUntilInitialized() {
 }
 
 absl::Status GraphProcessor::Start() {
-  absl::MutexLock lock(&graph_mutex_);
+  absl::MutexLock lock(graph_mutex_);
   graph_ = std::make_unique<CalculatorGraph>();
 
   // The graph is validated here with its specified inputs and output.
@@ -81,7 +81,7 @@ absl::Status GraphProcessor::Start() {
 }
 
 absl::Status GraphProcessor::Shutdown() {
-  absl::MutexLock lock(&graph_mutex_);
+  absl::MutexLock lock(graph_mutex_);
   if (!graph_) {
     return absl::OkStatus();
   }
@@ -92,7 +92,7 @@ absl::Status GraphProcessor::Shutdown() {
 }
 
 absl::Status GraphProcessor::WaitUntilIdle() {
-  absl::MutexLock lock(&graph_mutex_);
+  absl::MutexLock lock(graph_mutex_);
   return graph_->WaitUntilIdle();
 }
 

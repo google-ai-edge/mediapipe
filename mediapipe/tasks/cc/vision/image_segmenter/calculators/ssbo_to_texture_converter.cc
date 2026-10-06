@@ -155,6 +155,7 @@ absl::StatusOr<GLuint> SsboToTextureConverter::ConvertTensorToGlTexture(
       NumGroups(texture_width, kWorkgroupSize),
       NumGroups(texture_height, kWorkgroupSize), 1};
   MP_RETURN_IF_ERROR(delinearization_program_->Dispatch(workgroups));
+  glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
   return out_texture_.id();
 }
 

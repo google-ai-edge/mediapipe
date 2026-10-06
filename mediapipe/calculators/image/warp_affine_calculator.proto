@@ -36,6 +36,7 @@ message WarpAffineCalculatorOptions {
     INTER_UNSPECIFIED = 0;
     INTER_LINEAR = 1;
     INTER_CUBIC = 2;
+    INTER_NEAREST = 3;
   }
 
   // Pixel extrapolation method.
@@ -54,6 +55,7 @@ message WarpAffineCalculatorOptions {
   // Sampling method for neighboring pixels.
   // INTER_LINEAR (bilinear) linearly interpolates from the nearest 4 neighbors.
   // INTER_CUBIC (bicubic) interpolates a small neighborhood with cubic weights.
+  // INTER_NEAREST (nearest neighbor) uses the nearest pixel.
   // INTER_UNSPECIFIED or unset interpreted as INTER_LINEAR.
   optional Interpolation interpolation = 3;
 }

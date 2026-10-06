@@ -15,10 +15,9 @@
 #ifndef MEDIAPIPE_TASKS_CC_CORE_LOGGING_TASKS_DUMMY_LOGGER_H_
 #define MEDIAPIPE_TASKS_CC_CORE_LOGGING_TASKS_DUMMY_LOGGER_H_
 
-#include <cstdint>
 #include <memory>
-#include <string>
 
+#include "mediapipe/framework/timestamp.h"
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 
 namespace mediapipe {
@@ -30,8 +29,7 @@ namespace logging {
 class TasksDummyLogger : public TasksLogger {
  public:
   // Creates the MediaPipe Tasks stats dummy logger.
-  static std::unique_ptr<TasksDummyLogger> Create(
-      const std::string& task_name, const std::string& task_running_mode) {
+  static std::unique_ptr<TasksDummyLogger> Create() {
     return std::unique_ptr<TasksDummyLogger>(new TasksDummyLogger());
   }
 
@@ -39,11 +37,11 @@ class TasksDummyLogger : public TasksLogger {
 
   void LogSessionClone() override {}
 
-  void RecordCpuInputArrival(int64_t packet_timestamp) override {}
+  void RecordCpuInputArrival(Timestamp packet_timestamp) override {}
 
-  void RecordGpuInputArrival(int64_t packet_timestamp) override {}
+  void RecordGpuInputArrival(Timestamp packet_timestamp) override {}
 
-  void RecordInvocationEnd(int64_t packet_timestamp) override {}
+  void RecordInvocationEnd(Timestamp packet_timestamp) override {}
 
   void LogInvocationReport(const StatsSnapshot& stats) override {}
 

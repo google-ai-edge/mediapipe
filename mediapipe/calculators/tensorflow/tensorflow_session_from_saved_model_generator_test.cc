@@ -118,6 +118,24 @@ TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
 }
 
 TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
+       CreateSessionWithEmptyTagOptionIgnoresSpecifiedTags) {
+  generator_options_->set_saved_model_has_empty_tag(true);
+  generator_options_->add_saved_model_tag("some_tag");
+  generator_options_->add_saved_model_tag("some_other_tag");
+
+  PacketSet input_side_packets(tool::CreateTagMap({}).value());
+  PacketSet output_side_packets(
+      tool::CreateTagMap({"SESSION:session"}).value());
+  absl::Status run_status = tool::RunGenerateAndValidateTypes(
+      "TensorFlowSessionFromSavedModelGenerator", extendable_options_,
+      input_side_packets, &output_side_packets);
+
+  EXPECT_FALSE(run_status.ok());
+  EXPECT_THAT(run_status.message(),
+              ::testing::HasSubstr("matching supplied tags: {  }"));
+}
+
+TEST_F(TensorFlowSessionFromSavedModelGeneratorTest,
        CreateSessionFromSidePacket) {
   generator_options_->clear_saved_model_path();
   PacketSet input_side_packets(

@@ -37,9 +37,9 @@ using CppNormalizedLandmark =
 
 void CppConvertToFaceLandmarkerResult(
     const ::mediapipe::tasks::vision::face_landmarker::FaceLandmarkerResult& in,
-    FaceLandmarkerResult* out) {
+    MpFaceLandmarkerResult* out) {
   out->face_landmarks_count = in.face_landmarks.size();
-  out->face_landmarks = new NormalizedLandmarks[out->face_landmarks_count];
+  out->face_landmarks = new MpNormalizedLandmarks[out->face_landmarks_count];
   for (uint32_t i = 0; i < out->face_landmarks_count; ++i) {
     std::vector<CppNormalizedLandmark> cpp_normalized_landmarks;
     for (uint32_t j = 0; j < in.face_landmarks[i].landmarks.size(); ++j) {
@@ -52,13 +52,13 @@ void CppConvertToFaceLandmarkerResult(
 
   if (in.face_blendshapes.has_value()) {
     out->face_blendshapes_count = in.face_blendshapes->size();
-    out->face_blendshapes = new Categories[out->face_blendshapes_count];
+    out->face_blendshapes = new MpCategories[out->face_blendshapes_count];
 
     for (uint32_t i = 0; i < out->face_blendshapes_count; ++i) {
       uint32_t categories_count =
           in.face_blendshapes.value()[i].categories.size();
       out->face_blendshapes[i].categories_count = categories_count;
-      out->face_blendshapes[i].categories = new Category[categories_count];
+      out->face_blendshapes[i].categories = new MpCategory[categories_count];
 
       for (uint32_t j = 0; j < categories_count; ++j) {
         const auto& cpp_category = in.face_blendshapes.value()[i].categories[j];
@@ -75,7 +75,7 @@ void CppConvertToFaceLandmarkerResult(
     out->facial_transformation_matrixes_count =
         in.facial_transformation_matrixes.value().size();
     out->facial_transformation_matrixes =
-        new ::Matrix[out->facial_transformation_matrixes_count];
+        new ::MpMatrix[out->facial_transformation_matrixes_count];
     for (uint32_t i = 0; i < out->facial_transformation_matrixes_count; ++i) {
       CppConvertToMatrix(in.facial_transformation_matrixes.value()[i],
                          &out->facial_transformation_matrixes[i]);
@@ -86,7 +86,7 @@ void CppConvertToFaceLandmarkerResult(
   }
 }
 
-void CppCloseFaceLandmarkerResult(FaceLandmarkerResult* result) {
+void CppCloseFaceLandmarkerResult(MpFaceLandmarkerResult* result) {
   for (uint32_t i = 0; i < result->face_blendshapes_count; ++i) {
     for (uint32_t j = 0; j < result->face_blendshapes[i].categories_count;
          ++j) {

@@ -3,11 +3,11 @@
 #include "mediapipe/calculators/tensor/tensors_to_detections_calculator.pb.h"
 #include "mediapipe/calculators/tflite/ssd_anchors_calculator.pb.h"
 #include "mediapipe/framework/formats/object_detection/anchor.pb.h"
+#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
 #include "research/aimatter/api/face_detector_metadata_generated.h"
 #include "research/aimatter/api/internal/blaze_face/anchor_ssd_decoder.h"
-#include "util/task/contrib/status_macros/ret_check.h"
 
 namespace mediapipe::tasks::vision::hand_detector {
 

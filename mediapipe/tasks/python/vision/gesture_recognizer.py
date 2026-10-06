@@ -46,16 +46,17 @@ GestureRecognizerResult = (
 _C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
     None,
     ctypes.c_int32,  # MpStatus
-    ctypes.POINTER(gesture_recognizer_result_c.GestureRecognizerResultC),
+    ctypes.POINTER(gesture_recognizer_result_c.MpGestureRecognizerResultC),
     ctypes.c_void_p,  # MpImage
     ctypes.c_int64,  # timestamp_ms
 )
 
 
-class GestureRecognizerOptionsC(ctypes.Structure):
-  """C types for GestureRecognizerOptions."""
+class MpGestureRecognizerOptionsC(ctypes.Structure):
+  """C types for MpGestureRecognizerOptions."""
+
   _fields_ = [
-      ('base_options', base_options_c.BaseOptionsC),
+      ('base_options', base_options_c.MpBaseOptionsC),
       ('running_mode', ctypes.c_int),
       ('num_hands', ctypes.c_int),
       ('min_hand_detection_confidence', ctypes.c_float),
@@ -63,11 +64,11 @@ class GestureRecognizerOptionsC(ctypes.Structure):
       ('min_tracking_confidence', ctypes.c_float),
       (
           'canned_gestures_classifier_options',
-          classifier_options_c.ClassifierOptionsC,
+          classifier_options_c.MpClassifierOptionsC,
       ),
       (
           'custom_gestures_classifier_options',
-          classifier_options_c.ClassifierOptionsC,
+          classifier_options_c.MpClassifierOptionsC,
       ),
       ('result_callback', _C_TYPES_RESULT_CALLBACK),
   ]
@@ -76,17 +77,17 @@ class GestureRecognizerOptionsC(ctypes.Structure):
   @doc_controls.do_not_generate_docs
   def from_c_options(
       cls,
-      base_options: base_options_c.BaseOptionsC,
+      base_options: base_options_c.MpBaseOptionsC,
       running_mode: _RunningMode,
       num_hands: int,
       min_hand_detection_confidence: float,
       min_hand_presence_confidence: float,
       min_tracking_confidence: float,
-      canned_gestures_classifier_options: classifier_options_c.ClassifierOptionsC,
-      custom_gestures_classifier_options: classifier_options_c.ClassifierOptionsC,
+      canned_gestures_classifier_options: classifier_options_c.MpClassifierOptionsC,
+      custom_gestures_classifier_options: classifier_options_c.MpClassifierOptionsC,
       result_callback: '_C_TYPES_RESULT_CALLBACK',
-  ) -> 'GestureRecognizerOptionsC':
-    """Creates a GestureRecognizerOptionsC object from the given options."""
+  ) -> 'MpGestureRecognizerOptionsC':
+    """Creates a MpGestureRecognizerOptionsC object from the given options."""
     return cls(
         base_options=base_options,
         running_mode=running_mode.ctype,
@@ -104,7 +105,7 @@ _CTYPES_SIGNATURES = (
     mediapipe_c_utils.CStatusFunction(
         'MpGestureRecognizerCreate',
         (
-            ctypes.POINTER(GestureRecognizerOptionsC),
+            ctypes.POINTER(MpGestureRecognizerOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
         ),
     ),
@@ -113,9 +114,11 @@ _CTYPES_SIGNATURES = (
         (
             ctypes.c_void_p,
             ctypes.c_void_p,
-            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
             ctypes.POINTER(
-                gesture_recognizer_result_c.GestureRecognizerResultC
+                image_processing_options_c.MpImageProcessingOptionsC
+            ),
+            ctypes.POINTER(
+                gesture_recognizer_result_c.MpGestureRecognizerResultC
             ),
         ),
     ),
@@ -124,10 +127,12 @@ _CTYPES_SIGNATURES = (
         (
             ctypes.c_void_p,
             ctypes.c_void_p,
-            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.POINTER(
+                image_processing_options_c.MpImageProcessingOptionsC
+            ),
             ctypes.c_int64,
             ctypes.POINTER(
-                gesture_recognizer_result_c.GestureRecognizerResultC
+                gesture_recognizer_result_c.MpGestureRecognizerResultC
             ),
         ),
     ),
@@ -136,13 +141,19 @@ _CTYPES_SIGNATURES = (
         (
             ctypes.c_void_p,
             ctypes.c_void_p,
-            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.POINTER(
+                image_processing_options_c.MpImageProcessingOptionsC
+            ),
             ctypes.c_int64,
         ),
     ),
     mediapipe_c_utils.CFunction(
         'MpGestureRecognizerCloseResult',
-        [ctypes.POINTER(gesture_recognizer_result_c.GestureRecognizerResultC)],
+        [
+            ctypes.POINTER(
+                gesture_recognizer_result_c.MpGestureRecognizerResultC
+            )
+        ],
         None,
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -279,7 +290,7 @@ class GestureRecognizer:
 
     def convert_result(
         c_result_ptr: ctypes.POINTER(
-            gesture_recognizer_result_c.GestureRecognizerResultC
+            gesture_recognizer_result_c.MpGestureRecognizerResultC
         ),
         image_ptr: ctypes.c_void_p,
         timestamp_ms: int,
@@ -295,7 +306,7 @@ class GestureRecognizer:
     c_callback = dispatcher.wrap_callback(
         options.result_callback, _C_TYPES_RESULT_CALLBACK
     )
-    options_c = GestureRecognizerOptionsC.from_c_options(
+    options_c = MpGestureRecognizerOptionsC.from_c_options(
         base_options=options.base_options.to_ctypes(),
         running_mode=options.running_mode,
         num_hands=options.num_hands,
@@ -348,7 +359,7 @@ class GestureRecognizer:
       RuntimeError: If gesture recognition failed to run.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    c_result = gesture_recognizer_result_c.GestureRecognizerResultC()
+    c_result = gesture_recognizer_result_c.MpGestureRecognizerResultC()
     options_c = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
@@ -394,7 +405,7 @@ class GestureRecognizer:
       RuntimeError: If gesture recognition failed to run.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    c_result = gesture_recognizer_result_c.GestureRecognizerResultC()
+    c_result = gesture_recognizer_result_c.MpGestureRecognizerResultC()
     options_c = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options

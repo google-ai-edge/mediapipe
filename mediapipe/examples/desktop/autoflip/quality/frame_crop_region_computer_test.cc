@@ -144,7 +144,7 @@ std::unique_ptr<TestClass> GetTestableClass(
   KeyFrameCropOptions options;
   options.set_non_required_region_min_coverage_fraction(
       non_required_region_min_coverage_fraction);
-  auto test_class = absl::make_unique<TestClass>(options);
+  auto test_class = std::make_unique<TestClass>(options);
   return test_class;
 }
 

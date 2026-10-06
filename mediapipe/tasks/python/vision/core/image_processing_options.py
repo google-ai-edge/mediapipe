@@ -44,14 +44,14 @@ class ImageProcessingOptions:
   @doc_controls.do_not_generate_docs
   def to_ctypes(
       self,
-  ) -> image_processing_options_c_module.ImageProcessingOptionsC:
-    """Generates a ImageProcessingOptionsC object."""
-    return image_processing_options_c_module.ImageProcessingOptionsC(
+  ) -> image_processing_options_c_module.MpImageProcessingOptionsC:
+    """Generates a MpImageProcessingOptionsC object."""
+    return image_processing_options_c_module.MpImageProcessingOptionsC(
         has_region_of_interest=self.region_of_interest is not None,
         region_of_interest=(
             self.region_of_interest.to_ctypes()
             if self.region_of_interest
-            else rect_c_module.RectFC()
+            else rect_c_module.MpRectFC()
         ),
         rotation_degrees=self.rotation_degrees,
     )

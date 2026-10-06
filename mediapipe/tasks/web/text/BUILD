@@ -1,18 +1,19 @@
 # This contains the MediaPipe Text Tasks.
 
-load("@build_bazel_rules_nodejs//:index.bzl", "pkg_npm")
-load("@npm//@bazel/rollup:index.bzl", "rollup_bundle")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_library")
+load("//mediapipe/framework/port:build_config.bzl", "ts_library")
 load(
     "//mediapipe/framework/tool:mediapipe_files.bzl",
     "mediapipe_files",
 )
+load("//mediapipe/tasks/web:build_defs.bzl", "pkg_npm", "rollup_bundle")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 mediapipe_files(srcs = [
     "wasm/text_wasm_internal.js",
     "wasm/text_wasm_internal.wasm",
+    "wasm/text_wasm_module_internal.js",
+    "wasm/text_wasm_module_internal.wasm",
     "wasm/text_wasm_nosimd_internal.js",
     "wasm/text_wasm_nosimd_internal.wasm",
 ])
@@ -24,14 +25,14 @@ TEXT_LIBS = [
     "//mediapipe/tasks/web/text/text_embedder",
 ]
 
-mediapipe_ts_library(
+ts_library(
     name = "text_lib",
     srcs = ["index.ts"],
     visibility = ["//visibility:public"],
     deps = TEXT_LIBS,
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "text_types",
     srcs = ["types.ts"],
     visibility = ["//visibility:public"],
@@ -47,10 +48,10 @@ rollup_bundle(
     sourcemap = "true",
     deps = [
         ":text_lib",
-        "@npm//@rollup/plugin-commonjs",
-        "@npm//@rollup/plugin-node-resolve",
-        "@npm//@rollup/plugin-terser",
-        "@npm//google-protobuf",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
     ],
 )
 
@@ -63,10 +64,30 @@ rollup_bundle(
     sourcemap = "true",
     deps = [
         ":text_lib",
-        "@npm//@rollup/plugin-commonjs",
-        "@npm//@rollup/plugin-node-resolve",
-        "@npm//@rollup/plugin-terser",
-        "@npm//google-protobuf",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
+    ],
+)
+
+rollup_bundle(
+    name = "text_bundle_iife",
+    args = [
+        "--name",
+        "Text",
+    ],
+    config_file = "//mediapipe/tasks/web:rollup.config.mjs",
+    entry_point = "index.ts",
+    format = "iife",
+    output_dir = False,
+    sourcemap = "true",
+    deps = [
+        ":text_lib",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
     ],
 )
 
@@ -75,17 +96,20 @@ genrule(
     srcs = [
         ":text_bundle_cjs",
         ":text_bundle_mjs",
+        ":text_bundle_iife",
     ],
     outs = [
         "text_bundle.cjs",
         "text_bundle.cjs.map",
         "text_bundle.mjs",
         "text_bundle.mjs.map",
+        "text_bundle.js",
+        "text_bundle.js.map",
     ],
     cmd = (
         "for FILE in $(SRCS); do " +
         "  OUT_FILE=$(GENDIR)/mediapipe/tasks/web/text/$$(" +
-        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/'" +
+        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/; s/_iife\\.js/.js/'" +
         "  ); " +
         "  echo $$FILE ; echo $$OUT_FILE ; " +
         "  cp $$FILE $$OUT_FILE ; " +
@@ -93,29 +117,22 @@ genrule(
     ),
 )
 
-genrule(
-    name = "package_json",
-    srcs = ["//mediapipe/tasks/web:package.json"],
-    outs = ["package.json"],
-    cmd = "cp $< $@",
-)
-
 pkg_npm(
     name = "text_pkg",
-    package_name = "@mediapipe/tasks-__NAME__",
     srcs = ["README.md"],
+    package_json = "//mediapipe/tasks/web:package.json",
     substitutions = {
         "__NAME__": "text",
         "__DESCRIPTION__": "MediaPipe Text Tasks",
         "__TYPES__": "text.d.ts",
     },
-    tgz = "text.tgz",
     deps = [
         "wasm/text_wasm_internal.js",
         "wasm/text_wasm_internal.wasm",
+        "wasm/text_wasm_module_internal.js",
+        "wasm/text_wasm_module_internal.wasm",
         "wasm/text_wasm_nosimd_internal.js",
         "wasm/text_wasm_nosimd_internal.wasm",
-        ":package_json",
         ":text_sources",
     ],
 )

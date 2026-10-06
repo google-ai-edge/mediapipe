@@ -18,6 +18,8 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
+exports_files(glob(["sources/*.h"]))
+
 objc_library(
     name = "MPPBaseOptions",
     srcs = ["sources/MPPBaseOptions.m"],
@@ -53,6 +55,14 @@ objc_library(
 )
 
 objc_library(
+    name = "MPPCoreRunningMode",
+    hdrs = ["sources/MPPCoreRunningMode.h"],
+    deps = [
+        "//third_party/apple_frameworks:Foundation",
+    ],
+)
+
+objc_library(
     name = "MPPTaskInfo",
     srcs = ["sources/MPPTaskInfo.mm"],
     hdrs = ["sources/MPPTaskInfo.h"],
@@ -62,6 +72,7 @@ objc_library(
         "-Xclang=-fno-cxx-modules",
     ],
     deps = [
+        ":MPPCoreRunningMode",
         ":MPPTaskOptions",
         ":MPPTaskOptionsProtocol",
         "//mediapipe/calculators/core:flow_limiter_calculator_cc_proto",
@@ -102,11 +113,11 @@ objc_library(
     deps = [
         ":MPPTaskInfo",
         "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/tasks/cc/core:host_environment",
         "//mediapipe/tasks/cc/core:mediapipe_builtin_op_resolver",
         "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//third_party/apple_frameworks:Foundation",
-        "@com_google_protobuf//:protobuf",
     ],
 )
 

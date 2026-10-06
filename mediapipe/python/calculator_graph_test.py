@@ -15,8 +15,8 @@
 """Tests for mediapipe.python._framework_bindings.calculator_graph."""
 
 from absl.testing import absltest
-
 from google.protobuf import text_format
+
 from mediapipe.framework import calculator_pb2
 from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter

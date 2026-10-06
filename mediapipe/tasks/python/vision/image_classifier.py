@@ -44,21 +44,21 @@ _AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 _C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
     None,
     ctypes.c_int32,  # MpStatus
-    ctypes.POINTER(classification_result_c.ClassificationResultC),
+    ctypes.POINTER(classification_result_c.MpClassificationResultC),
     ctypes.c_void_p,  # MpImage
     ctypes.c_int64,  # timestamp_ms
 )
 
 
-class ImageClassifierOptionsC(ctypes.Structure):
-  """The ctypes struct for ImageClassifierOptions."""
+class MpImageClassifierOptionsC(ctypes.Structure):
+  """The ctypes struct for MpImageClassifierOptions."""
 
   _fields_ = [
-      ("base_options", base_options_c.BaseOptionsC),
+      ("base_options", base_options_c.MpBaseOptionsC),
       ("running_mode", ctypes.c_int),
       (
           "classifier_options",
-          classifier_options_c.ClassifierOptionsC,
+          classifier_options_c.MpClassifierOptionsC,
       ),
       ("result_callback", _C_TYPES_RESULT_CALLBACK),
   ]
@@ -67,12 +67,12 @@ class ImageClassifierOptionsC(ctypes.Structure):
   @doc_controls.do_not_generate_docs
   def from_c_options(
       cls,
-      base_options: base_options_c.BaseOptionsC,
+      base_options: base_options_c.MpBaseOptionsC,
       running_mode: _RunningMode,
-      classifier_options: classifier_options_c.ClassifierOptionsC,
+      classifier_options: classifier_options_c.MpClassifierOptionsC,
       result_callback: _C_TYPES_RESULT_CALLBACK,
-  ) -> "ImageClassifierOptionsC":
-    """Creates an ImageClassifierOptionsC object from the given options."""
+  ) -> "MpImageClassifierOptionsC":
+    """Creates an MpImageClassifierOptionsC object from the given options."""
     return cls(
         base_options=base_options,
         running_mode=running_mode.ctype,
@@ -85,7 +85,7 @@ _CTYPES_SIGNATURES = (
     mediapipe_c_utils.CStatusFunction(
         "MpImageClassifierCreate",
         (
-            ctypes.POINTER(ImageClassifierOptionsC),
+            ctypes.POINTER(MpImageClassifierOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
         ),
     ),
@@ -94,8 +94,10 @@ _CTYPES_SIGNATURES = (
         (
             ctypes.c_void_p,
             ctypes.c_void_p,
-            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
-            ctypes.POINTER(classification_result_c.ClassificationResultC),
+            ctypes.POINTER(
+                image_processing_options_c.MpImageProcessingOptionsC
+            ),
+            ctypes.POINTER(classification_result_c.MpClassificationResultC),
         ),
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -103,9 +105,11 @@ _CTYPES_SIGNATURES = (
         (
             ctypes.c_void_p,
             ctypes.c_void_p,
-            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.POINTER(
+                image_processing_options_c.MpImageProcessingOptionsC
+            ),
             ctypes.c_int64,
-            ctypes.POINTER(classification_result_c.ClassificationResultC),
+            ctypes.POINTER(classification_result_c.MpClassificationResultC),
         ),
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -113,13 +117,15 @@ _CTYPES_SIGNATURES = (
         (
             ctypes.c_void_p,
             ctypes.c_void_p,
-            ctypes.POINTER(image_processing_options_c.ImageProcessingOptionsC),
+            ctypes.POINTER(
+                image_processing_options_c.MpImageProcessingOptionsC
+            ),
             ctypes.c_int64,
         ),
     ),
     mediapipe_c_utils.CFunction(
         "MpImageClassifierCloseResult",
-        [ctypes.POINTER(classification_result_c.ClassificationResultC)],
+        [ctypes.POINTER(classification_result_c.MpClassificationResultC)],
         None,
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -282,7 +288,7 @@ class ImageClassifier:
 
     def convert_result(
         c_result_ptr: ctypes.POINTER(
-            classification_result_c.ClassificationResultC
+            classification_result_c.MpClassificationResultC
         ),
         image_ptr: ctypes.c_void_p,
         timestamp_ms: int,
@@ -296,7 +302,7 @@ class ImageClassifier:
     c_callback = dispatcher.wrap_callback(
         options.result_callback, _C_TYPES_RESULT_CALLBACK
     )
-    options_c = ImageClassifierOptionsC.from_c_options(
+    options_c = MpImageClassifierOptionsC.from_c_options(
         base_options=options.base_options.to_ctypes(),
         running_mode=options.running_mode,
         classifier_options=classifier_options_c.convert_to_classifier_options_c(
@@ -343,7 +349,7 @@ class ImageClassifier:
       RuntimeError: If image classification failed to run.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    c_result = classification_result_c.ClassificationResultC()
+    c_result = classification_result_c.MpClassificationResultC()
     options_c = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options
@@ -386,7 +392,7 @@ class ImageClassifier:
       RuntimeError: If image classification failed to run.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    c_result = classification_result_c.ClassificationResultC()
+    c_result = classification_result_c.MpClassificationResultC()
     options_c = (
         ctypes.byref(image_processing_options.to_ctypes())
         if image_processing_options

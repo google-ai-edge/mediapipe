@@ -27,28 +27,28 @@ extern "C" {
 
 // The gesture recognition result from GestureRecognizer, where each vector
 // element represents a single hand detected in the image.
-struct GestureRecognizerResult {
+struct MpGestureRecognizerResult {
   // Recognized hand gestures with sorted order such that the winning label is
   // the first item in the list.
-  struct Categories* gestures;
+  struct MpCategories* gestures;
 
   // The number of elements in the gestures array.
   uint32_t gestures_count;
 
   // Classification of handedness.
-  struct Categories* handedness;
+  struct MpCategories* handedness;
 
   // The number of elements in the handedness array.
   uint32_t handedness_count;
 
   // Detected hand landmarks in normalized image coordinates.
-  struct NormalizedLandmarks* hand_landmarks;
+  struct MpNormalizedLandmarks* hand_landmarks;
 
   // The number of elements in the hand_landmarks array.
   uint32_t hand_landmarks_count;
 
   // Detected hand landmarks in world coordinates.
-  struct Landmarks* hand_world_landmarks;
+  struct MpLandmarks* hand_world_landmarks;
 
   // The number of elements in the hand_world_landmarks array.
   uint32_t hand_world_landmarks_count;

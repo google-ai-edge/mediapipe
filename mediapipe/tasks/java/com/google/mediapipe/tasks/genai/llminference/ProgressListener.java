@@ -17,7 +17,11 @@ package com.google.mediapipe.tasks.genai.llminference;
 /**
  * Interface for the customizable MediaPipe task result listener that receives partial task updates
  * until it is invoked with `done` set to {@code true}.
+ *
+ * @deprecated Migrate to LiteRT LM instead. For more details, refer to LiteRT LM on GitHub:
+ *     https://github.com/google-ai-edge/LiteRT-LM
  */
+@Deprecated
 public interface ProgressListener<OutputT> {
   void run(OutputT partialResult, boolean done);
 }

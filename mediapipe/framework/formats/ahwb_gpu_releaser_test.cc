@@ -154,6 +154,80 @@ TEST(AhwbGpuReleaserTest,
 
   EXPECT_TRUE(weak_to_be_released.expired());
 }
+
+TEST(AhwbGpuReleaserTest,
+     ShouldForceReleaseAhwbGpuUsageDuringDestructionEvenIfIncomplete) {
+  struct GpuResourcesHolder {
+    GpuSharedData gpu_shared;
+    std::shared_ptr<GpuResources> gpu_resources = gpu_shared.gpu_resources;
+    std::shared_ptr<GlContext> gl_context = gpu_resources->gl_context();
+  };
+  std::unique_ptr<GpuResourcesHolder> gpu_resources_holder =
+      std::make_unique<GpuResourcesHolder>();
+
+  std::shared_ptr<ReleaseTracker> to_be_released =
+      std::make_shared<ReleaseTracker>();
+  std::weak_ptr<ReleaseTracker> weak_to_be_released = to_be_released;
+  // Usage remains incomplete even when requested.
+  auto is_complete_fn = [to_be_released = std::move(to_be_released)](
+                            bool force_completion) { return force_completion; };
+
+  std::unique_ptr<Tensor> tensor = std::make_unique<Tensor>(
+      Tensor::ElementType::kFloat32, Tensor::Shape({123}));
+  {
+    auto view = tensor->GetAHardwareBufferWriteView();
+    ASSERT_NE(view.handle(), nullptr);
+    view.SetWritingFinishedFD(-1, std::move(is_complete_fn));
+  }
+
+  // GPU usage requires to respect the writing finish signal.
+  gpu_resources_holder->gl_context->Run([&] {
+    auto ssbo_view = tensor->GetOpenGlBufferWriteView();
+    ASSERT_GT(ssbo_view.name(), 0);
+  });
+
+  tensor.reset();
+  // Buffer is not released yet.
+  EXPECT_FALSE(weak_to_be_released.expired());
+
+  // Destruction of the gpu resources will trigger the release of the buffer
+  // even if it was incomplete, because the destructor should force completion.
+  gpu_resources_holder.reset();
+
+  // Buffer is now released.
+  EXPECT_TRUE(weak_to_be_released.expired());
+}
+
+TEST(AhwbGpuReleaserTest, ShouldInvokeReleaseCallbacksDuringForcedTeardown) {
+  struct GpuResourcesHolder {
+    GpuSharedData gpu_shared;
+    std::shared_ptr<GpuResources> gpu_resources = gpu_shared.gpu_resources;
+    std::shared_ptr<GlContext> gl_context = gpu_resources->gl_context();
+  };
+  std::unique_ptr<GpuResourcesHolder> gpu_resources_holder =
+      std::make_unique<GpuResourcesHolder>();
+
+  bool callback_invoked = false;
+  {
+    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape({123}));
+    auto view = tensor.GetAHardwareBufferWriteView();
+    // Register a release callback.
+    view.ahwb_usage()->release_callbacks.push_back(
+        [&callback_invoked]() { callback_invoked = true; });
+
+    // Use GPU to trigger delayed release path.
+    gpu_resources_holder->gl_context->Run(
+        [&] { (void)tensor.GetOpenGlBufferWriteView().name(); });
+    // Tensor goes out of scope here.
+  }
+
+  EXPECT_FALSE(callback_invoked);
+
+  // Forced teardown of the whole context/releaser.
+  gpu_resources_holder.reset();
+
+  EXPECT_TRUE(callback_invoked);
+}
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
 }  // namespace

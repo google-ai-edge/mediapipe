@@ -23,9 +23,9 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToNormalizedKeypoint(
     const mediapipe::tasks::components::containers::NormalizedKeypoint& in,
-    NormalizedKeypoint* out);
+    MpNormalizedKeypoint* out);
 
-void CppCloseNormalizedKeypoint(NormalizedKeypoint* keypoint);
+void CppCloseNormalizedKeypoint(MpNormalizedKeypoint* keypoint);
 
 }  // namespace mediapipe::tasks::c::components::containers
 

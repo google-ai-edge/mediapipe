@@ -17,6 +17,7 @@
 
 #include "HalideBuffer.h"
 #include "absl/strings/string_view.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
@@ -39,6 +40,10 @@ void LogTensorChannel(const mediapipe::Tensor& tensor, int channel,
 void LogTensor(const mediapipe::Tensor& tensor,
                absl::string_view name = "tensor", float min_range = 0.0f,
                float max_range = 1.0f);
+
+// Logs the given image as a color or ASCII image, depending on terminal
+// capabilities.
+void LogImage(const mediapipe::Image& image, absl::string_view name = "image");
 
 // Logs the given image as a color or ASCII image, depending on terminal
 // capabilities.

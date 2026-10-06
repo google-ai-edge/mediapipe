@@ -101,7 +101,9 @@ android_library(
     deps = [
         ":framework_proto_lite",
         ":mediapipe_exception_android",
+        "//third_party:autovalue",
         "@com_google_protobuf//:protobuf_javalite",
+        "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_code_findbugs_jsr305",
         "@maven//:com_google_flogger_flogger",
         "@maven//:com_google_flogger_flogger_system_backend",

@@ -127,14 +127,14 @@ absl::Mutex* trace_builder_mutex() {
 
 void GraphTracer::GetTrace(absl::Time begin_time, absl::Time end_time,
                            GraphTrace* result) {
-  absl::MutexLock lock(trace_builder_mutex());
+  absl::MutexLock lock(*trace_builder_mutex());
   trace_builder_.CreateTrace(trace_buffer_, begin_time, end_time, result);
   trace_builder_.Clear();
 }
 
 void GraphTracer::GetLog(absl::Time begin_time, absl::Time end_time,
                          GraphTrace* result) {
-  absl::MutexLock lock(trace_builder_mutex());
+  absl::MutexLock lock(*trace_builder_mutex());
   trace_builder_.CreateLog(trace_buffer_, begin_time, end_time, result);
   trace_builder_.Clear();
 }

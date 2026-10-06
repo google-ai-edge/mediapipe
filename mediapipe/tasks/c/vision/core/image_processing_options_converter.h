@@ -22,7 +22,7 @@ limitations under the License.
 namespace mediapipe::tasks::c::vision::core {
 
 void CppConvertToImageProcessingOptions(
-    const ImageProcessingOptions& in,
+    const MpImageProcessingOptions& in,
     mediapipe::tasks::vision::core::ImageProcessingOptions* out);
 
 }  // namespace mediapipe::tasks::c::vision::core

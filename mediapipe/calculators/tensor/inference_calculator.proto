@@ -1,3 +1,4 @@
+// LINT: LEGACY_NAMES
 // Copyright 2019 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +45,25 @@ message InferenceCalculatorOptions {
   message Delegate {
     // Default inference provided by tflite.
     message TfLite {}
+    message WebNn {
+      enum DeviceType {
+        DEFAULT_CPU = 0;  // Default if unspecified.
+        GPU = 1;
+        NPU = 2;
+      }
+      optional DeviceType device_type = 1;
+
+      enum PowerPreference {
+        DEFAULT = 0;  // Default if unspecified.
+        HIGH_PERFORMANCE = 1;
+        LOW_POWER = 2;
+      }
+      optional PowerPreference power_preference = 2;
+
+      // Set to true to use 16-bit float precision. If max precision is
+      // needed, set to false to prefer 32-bit float calculations.
+      optional bool allow_precision_loss = 3;
+    }
     // Delegate to run GPU inference depending on the device.
     // (Can use OpenGl, OpenCl, Metal depending on the device.)
     message Gpu {
@@ -56,6 +76,8 @@ message InferenceCalculatorOptions {
       // This option is valid for TFLite GPU delegate API2 only,
       // Choose any of available APIs to force running inference using it.
       enum Api {
+        reserved 8;
+
         ANY = 0;
         OPENGL = 1;
         OPENCL = 2;
@@ -129,6 +151,9 @@ message InferenceCalculatorOptions {
         SUSTAINED_SPEED = 2;
       }
       optional InferenceUsage usage = 5 [default = SUSTAINED_SPEED];
+
+      // Experimental support for WebNN delegate for GPU/NPU mode.
+      optional WebNn webnn = 13;
     }
 
     // Android only.

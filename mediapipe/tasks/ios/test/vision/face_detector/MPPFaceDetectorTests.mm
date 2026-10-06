@@ -27,15 +27,22 @@ static NSDictionary *const kPortraitImage =
 static NSDictionary *const kPortraitRotatedImage =
     @{@"name" : @"portrait_rotated", @"type" : @"jpg", @"orientation" : @(UIImageOrientationLeft)};
 static NSDictionary *const kCatImage = @{@"name" : @"cat", @"type" : @"jpg"};
+
 static NSString *const kShortRangeBlazeFaceModel = @"face_detection_short_range";
-static NSArray<NSArray *> *const kPortraitExpectedKeypoints = @[
+static NSString *const kFullRangeBlazeFaceModel = @"face_detection_full_range";
+static NSArray<NSArray<NSNumber *> *> *const kPortraitExpectedKeypoints = @[
   @[ @0.44416f, @0.17643f ], @[ @0.55514f, @0.17731f ], @[ @0.50467f, @0.22657f ],
   @[ @0.50227f, @0.27199f ], @[ @0.36063f, @0.20143f ], @[ @0.60841f, @0.20409f ]
 ];
-static NSArray<NSArray *> *const kPortraitRotatedExpectedKeypoints = @[
+static NSArray<NSArray<NSNumber *> *> *const kPortraitRotatedExpectedKeypoints = @[
   @[ @0.82075f, @0.44679f ], @[ @0.81965f, @0.56261f ], @[ @0.76194f, @0.51719f ],
   @[ @0.71993f, @0.51719f ], @[ @0.80700f, @0.36298f ], @[ @0.80882f, @0.61204f ]
 ];
+static NSArray<NSArray<NSNumber *> *> *const kPortraitFullRangeExpectedKeypoints = @[
+  @[ @0.44088f, @0.17409f ], @[ @0.55402f, @0.17958f ], @[ @0.49858f, @0.22155f ],
+  @[ @0.49662f, @0.26796f ], @[ @0.37493f, @0.20280f ], @[ @0.61058f, @0.20888f ]
+];
+
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 static NSString *const kLiveStreamTestsDictFaceDetectorKey = @"face_detector";
 static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
@@ -87,6 +94,18 @@ static const float kKeypointErrorThreshold = 1e-2;
   [self assertResultsOfDetectInImageWithFileInfo:kPortraitImage
                                usingFaceDetector:faceDetector
                        containsExpectedKeypoints:kPortraitExpectedKeypoints];
+}
+
+- (void)testDetectWithImageModeAndFullRangeSucceeds {
+  MPPFaceDetectorOptions *options =
+      [self faceDetectorOptionsWithModelName:kFullRangeBlazeFaceModel];
+  options.runningMode = MPPRunningModeImage;
+  MPPFaceDetector *faceDetector = [self faceDetectorWithOptionsSucceeds:options];
+
+  MPPImage *image = [self imageWithFileInfo:kPortraitImage];
+  [self assertResultsOfDetectInImage:image
+                   usingFaceDetector:faceDetector
+           containsExpectedKeypoints:kPortraitFullRangeExpectedKeypoints];
 }
 
 - (void)testDetectWithImageModeAndRotatedPotraitSucceeds {
@@ -437,7 +456,7 @@ static const float kKeypointErrorThreshold = 1e-2;
 }
 
 - (void)assertKeypoints:(NSArray<MPPNormalizedKeypoint *> *)keypoints
-    areEqualToExpectedKeypoints:(NSArray<NSArray *> *)expectedKeypoint {
+    areEqualToExpectedKeypoints:(NSArray<NSArray<NSNumber *> *> *)expectedKeypoint {
   XCTAssertEqual(keypoints.count, expectedKeypoint.count);
   for (int i = 0; i < keypoints.count; ++i) {
     XCTAssertEqualWithAccuracy(keypoints[i].location.x, [expectedKeypoint[i][0] floatValue],
@@ -448,7 +467,7 @@ static const float kKeypointErrorThreshold = 1e-2;
 }
 
 - (void)assertDetections:(NSArray<MPPDetection *> *)detections
-    containExpectedKeypoints:(NSArray<NSArray *> *)expectedKeypoints {
+    containExpectedKeypoints:(NSArray<NSArray<NSNumber *> *> *)expectedKeypoints {
   XCTAssertEqual(detections.count, 1);
   MPPDetection *detection = detections[0];
   XCTAssertNotNil(detection);
@@ -456,7 +475,7 @@ static const float kKeypointErrorThreshold = 1e-2;
 }
 
 - (void)assertFaceDetectorResult:(MPPFaceDetectorResult *)faceDetectorResult
-       containsExpectedKeypoints:(NSArray<NSArray *> *)expectedKeypoints {
+       containsExpectedKeypoints:(NSArray<NSArray<NSNumber *> *> *)expectedKeypoints {
   [self assertDetections:faceDetectorResult.detections containExpectedKeypoints:expectedKeypoints];
 }
 
@@ -501,7 +520,7 @@ static const float kKeypointErrorThreshold = 1e-2;
 
 - (void)assertResultsOfDetectInImage:(MPPImage *)mppImage
                    usingFaceDetector:(MPPFaceDetector *)faceDetector
-           containsExpectedKeypoints:(NSArray<NSArray *> *)expectedKeypoints {
+           containsExpectedKeypoints:(NSArray<NSArray<NSNumber *> *> *)expectedKeypoints {
   NSError *error;
   MPPFaceDetectorResult *faceDetectorResult = [faceDetector detectImage:mppImage error:&error];
   XCTAssertNil(error);
@@ -511,7 +530,7 @@ static const float kKeypointErrorThreshold = 1e-2;
 
 - (void)assertResultsOfDetectInImageWithFileInfo:(NSDictionary *)fileInfo
                                usingFaceDetector:(MPPFaceDetector *)faceDetector
-                       containsExpectedKeypoints:(NSArray<NSArray *> *)expectedKeypoints {
+                       containsExpectedKeypoints:(NSArray<NSArray<NSNumber *> *> *)expectedKeypoints {
   MPPImage *mppImage = [self imageWithFileInfo:fileInfo];
 
   [self assertResultsOfDetectInImage:mppImage

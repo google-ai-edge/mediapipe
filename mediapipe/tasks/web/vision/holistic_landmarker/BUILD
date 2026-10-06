@@ -3,15 +3,15 @@
 # This task takes video frames and outputs synchronized frames along with
 # the detection results for one or more holistic categories, using Hand Landmarker.
 
-load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
+load("//mediapipe/framework/port:build_config.bzl", "ts_declaration", "ts_library")
+load("//mediapipe/tasks/web:build_defs.bzl", "jasmine_node_test")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
-mediapipe_ts_library(
+ts_library(
     name = "holistic_landmarker",
     srcs = [
         "holistic_landmarker.ts",
@@ -46,7 +46,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_declaration(
+ts_declaration(
     name = "holistic_landmarker_types",
     srcs = ["holistic_landmarker_options.d.ts"],
     visibility = ["//visibility:public"],
@@ -60,7 +60,7 @@ mediapipe_ts_declaration(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "holistic_landmarker_test_lib",
     testonly = True,
     srcs = [
@@ -85,7 +85,7 @@ jasmine_node_test(
     tags = ["nomsan"],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "holistic_landmarker_connections",
     deps = [
         "//mediapipe/tasks/web/vision/face_landmarker:face_landmarks_connections",

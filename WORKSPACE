@@ -8,64 +8,9 @@ bind(
     actual = "@local_config_python//:python_headers",
 )
 
-http_archive(
-    name = "bazel_skylib",
-    sha256 = "bc283cdfcd526a52c3201279cda4bc298652efa898b10b4db0837dc51652756f",
-    urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.7.1/bazel-skylib-1.7.1.tar.gz",
-        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.7.1/bazel-skylib-1.7.1.tar.gz",
-    ],
-)
+load("@com_google_protobuf//bazel/private:proto_bazel_features.bzl", "proto_bazel_features")  # buildifier: disable=bzl-visibility
 
-load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
-
-bazel_skylib_workspace()
-
-load("@bazel_skylib//lib:versions.bzl", "versions")
-
-versions.check(minimum_bazel_version = "3.7.2")
-
-# ABSL on 2023-10-18
-http_archive(
-    name = "com_google_absl",
-    patch_args = [
-        "-p1",
-    ],
-    patches = [
-        "@//third_party:com_google_absl_windows_patch.diff",
-    ],
-    sha256 = "f841f78243f179326f2a80b719f2887c38fe226d288ecdc46e2aa091e6aa43bc",
-    strip_prefix = "abseil-cpp-9687a8ea750bfcddf790372093245a1d041b21a3",
-    urls = ["https://github.com/abseil/abseil-cpp/archive//9687a8ea750bfcddf790372093245a1d041b21a3.tar.gz"],
-)
-
-http_archive(
-    name = "rules_cc",
-    patch_args = ["-p1"],
-    patches = ["@//third_party:rules_cc.diff"],
-    sha256 = "0d3b4f984c4c2e1acfd1378e0148d35caf2ef1d9eb95b688f8e19ce0c41bdf5b",
-    strip_prefix = "rules_cc-0.1.4",
-    url = "https://github.com/bazelbuild/rules_cc/releases/download/0.1.4/rules_cc-0.1.4.tar.gz",
-)
-
-http_archive(
-    name = "rules_java",
-    sha256 = "c73336802d0b4882e40770666ad055212df4ea62cfa6edf9cb0f9d29828a0934",
-    url = "https://github.com/bazelbuild/rules_java/releases/download/5.3.5/rules_java-5.3.5.tar.gz",
-)
-
-http_archive(
-    name = "com_google_protobuf",
-    patch_args = [
-        "-p1",
-    ],
-    patches = [
-        "@//third_party:com_google_protobuf_fixes.diff",
-    ],
-    sha256 = "f645e6e42745ce922ca5388b1883ca583bafe4366cc74cf35c3c9299005136e2",
-    strip_prefix = "protobuf-5.28.3",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v5.28.3.zip"],
-)
+proto_bazel_features(name = "proto_bazel_features")
 
 http_archive(
     name = "rules_android_ndk",
@@ -74,35 +19,7 @@ http_archive(
     url = "https://github.com/bazelbuild/rules_android_ndk/releases/download/v0.1.3/rules_android_ndk-v0.1.3.tar.gz",
 )
 
-http_archive(
-    name = "rules_shell",
-    sha256 = "bc61ef94facc78e20a645726f64756e5e285a045037c7a61f65af2941f4c25e1",
-    strip_prefix = "rules_shell-0.4.1",
-    url = "https://github.com/bazelbuild/rules_shell/releases/download/v0.4.1/rules_shell-v0.4.1.tar.gz",
-)
-
-load("@rules_shell//shell:repositories.bzl", "rules_shell_dependencies", "rules_shell_toolchains")
-
-rules_shell_dependencies()
-
-rules_shell_toolchains()
-
 load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")  # @unused
-
-http_archive(
-    name = "build_bazel_rules_apple",
-    patch_args = [
-        "-p1",
-    ],
-    patches = [
-        # Bypass checking ios unit test runner when building MP ios applications.
-        "@//third_party:build_bazel_rules_apple_bypass_test_runner_check.diff",
-        # https://github.com/bazelbuild/rules_apple/commit/95b1305255dc29874cacc3dc7fdc017f16d8dbe8
-        "@//third_party:build_bazel_rules_apple_multi_arch_split_with_new_transition.diff",
-    ],
-    sha256 = "3e2c7ae0ddd181c4053b6491dad1d01ae29011bc322ca87eea45957c76d3a0c3",
-    url = "https://github.com/bazelbuild/rules_apple/releases/download/2.1.0/rules_apple.2.1.0.tar.gz",
-)
 
 # GoogleTest/GoogleMock framework. Used by most unit-tests.
 # Last updated 2021-07-02.
@@ -118,15 +35,9 @@ http_archive(
 http_archive(
     name = "zlib",
     build_file = "@//third_party:zlib.BUILD",
-    patch_args = [
-        "-p1",
-    ],
-    patches = [
-        "@//third_party:zlib.diff",
-    ],
-    sha256 = "b3a24de97a8fdbc835b9833169501030b8977031bcb54b3b3ac13740f846ab30",
-    strip_prefix = "zlib-1.2.13",
-    url = "http://zlib.net/fossils/zlib-1.2.13.tar.gz",
+    sha256 = "17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c",
+    strip_prefix = "zlib-1.3.1",
+    url = "https://github.com/madler/zlib/archive/refs/tags/v1.3.1.tar.gz",
 )
 
 # gflags needed by glog
@@ -199,35 +110,42 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 # Important: there can only be one maven_install rule. Add new maven deps here.
 maven_install(
     artifacts = [
-        "androidx.concurrent:concurrent-futures:1.0.0-alpha03",
-        "androidx.lifecycle:lifecycle-common:2.3.1",
         "androidx.activity:activity:1.2.2",
-        "androidx.exifinterface:exifinterface:1.3.3",
-        "androidx.fragment:fragment:1.3.4",
         "androidx.annotation:annotation:aar:1.1.0",
         "androidx.appcompat:appcompat:aar:1.1.0-rc01",
-        "androidx.camera:camera-core:1.0.0-beta10",
         "androidx.camera:camera-camera2:1.0.0-beta10",
+        "androidx.camera:camera-core:1.0.0-beta10",
         "androidx.camera:camera-lifecycle:1.0.0-beta10",
         "androidx.constraintlayout:constraintlayout:aar:1.1.3",
+        "androidx.concurrent:concurrent-futures:1.0.0-alpha03",
         "androidx.core:core:aar:1.1.0-rc03",
+        "androidx.exifinterface:exifinterface:1.3.3",
+        "androidx.fragment:fragment:1.3.4",
         "androidx.legacy:legacy-support-v4:aar:1.0.0",
+        "androidx.lifecycle:lifecycle-common:2.3.1",
         "androidx.recyclerview:recyclerview:aar:1.1.0-beta02",
         "androidx.test.espresso:espresso-core:3.1.1",
+        "com.android.tools.build:gradle-api:8.12.0",
         "com.github.bumptech.glide:glide:4.11.0",
-        "com.google.android.material:material:aar:1.0.0-rc01",
-        "com.google.auto.value:auto-value:1.8.1",
-        "com.google.auto.value:auto-value-annotations:1.8.1",
-        "com.google.code.findbugs:jsr305:latest.release",
         "com.google.android.datatransport:transport-api:3.0.0",
         "com.google.android.datatransport:transport-backend-cct:3.1.0",
         "com.google.android.datatransport:transport-runtime:3.1.0",
+        "com.google.android.material:material:aar:1.0.0-rc01",
+        "com.google.android.play:ai-delivery:0.1.1-alpha01",
+        "com.google.android.play:asset-delivery:2.3.0",
+        "com.google.android.play:feature-delivery:2.1.0",
+        "com.google.auto.value:auto-value-annotations:1.8.1",
+        "com.google.auto.value:auto-value:1.8.1",
+        "com.google.code.findbugs:jsr305:latest.release",
+        "com.google.code.gson:gson:2.13.2",
         "com.google.flogger:flogger-system-backend:0.6",
         "com.google.flogger:flogger:0.6",
         "com.google.guava:guava:27.0.1-android",
         "com.google.guava:listenablefuture:1.0",
+        "com.squareup:kotlinpoet-jvm:2.2.0",
         "junit:junit:4.12",
         "org.hamcrest:hamcrest-library:1.3",
+        "org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.21",
     ],
     fetch_sources = True,
     repositories = [
@@ -339,6 +257,7 @@ http_archive(
         # Works around Bazel issue with objc_library.
         # See https://github.com/bazelbuild/bazel/issues/19912
         "@//third_party:org_tensorflow_objc_build_fixes.diff",
+        "@//third_party:org_tensorflow_verifier_int4.diff",
     ],
     sha256 = _TENSORFLOW_SHA256,
     strip_prefix = "tensorflow-%s" % _TENSORFLOW_GIT_COMMIT,
@@ -432,49 +351,6 @@ load("@bazel_features//:deps.bzl", "bazel_features_deps")
 
 bazel_features_deps()
 
-load(
-    "@build_bazel_rules_apple//apple:repositories.bzl",
-    "apple_rules_dependencies",
-)
-
-apple_rules_dependencies()
-
-load(
-    "@build_bazel_rules_swift//swift:repositories.bzl",
-    "swift_rules_dependencies",
-)
-
-swift_rules_dependencies()
-
-load(
-    "@build_bazel_rules_swift//swift:extras.bzl",
-    "swift_rules_extra_dependencies",
-)
-
-swift_rules_extra_dependencies()
-
-load(
-    "@build_bazel_apple_support//lib:repositories.bzl",
-    "apple_support_dependencies",
-)
-
-apple_support_dependencies()
-
-# Kotlin rules
-http_archive(
-    name = "rules_kotlin",
-    sha256 = "e1448a56b2462407b2688dea86df5c375b36a0991bd478c2ddd94c97168125e2",
-    url = "https://github.com/bazelbuild/rules_kotlin/releases/download/v2.1.3/rules_kotlin-v2.1.3.tar.gz",
-)
-
-load("@rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories")
-
-kotlin_repositories()
-
-load("@rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")
-
-kt_register_toolchains()
-
 # This is used to select all contents of the archives for CMake-based packages to give CMake access to them.
 all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
 
@@ -500,16 +376,20 @@ http_archive(
     name = "libyuv",
     build_file = "@//third_party:libyuv.BUILD",
     # Error: operand type mismatch for `vbroadcastss' caused by commit 8a13626e42f7fdcf3a6acbb0316760ee54cda7d8.
-    urls = ["https://chromium.googlesource.com/libyuv/libyuv/+archive/2525698acba9bf9b701ba6b4d9584291a1f62257.tar.gz"],
+    urls = [
+        "https://storage.googleapis.com/tensorstore-bazel-mirror/chromium.googlesource.com/libyuv/libyuv/+archive/2525698acba9bf9b701ba6b4d9584291a1f62257.tar.gz",
+        "https://chromium.googlesource.com/libyuv/libyuv/+archive/2525698acba9bf9b701ba6b4d9584291a1f62257.tar.gz",
+    ],
 )
 
 # Note: protobuf-javalite is no longer released as a separate download, it's included in the main Java download.
 # ...but the Java download is currently broken, so we use the "source" download.
 http_archive(
     name = "com_google_protobuf_javalite",
-    sha256 = "f645e6e42745ce922ca5388b1883ca583bafe4366cc74cf35c3c9299005136e2",
-    strip_prefix = "protobuf-5.28.3",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v5.28.3.zip"],
+    repo_mapping = {"@abseil-cpp": "@com_google_absl"},
+    sha256 = "6e09bbc950ba60c3a7b30280210cd285af8d7d8ed5e0a6ed101c72aff22e8d88",
+    strip_prefix = "protobuf-6.31.1",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/refs/tags/v6.31.1.zip"],
 )
 
 load("@//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
@@ -574,15 +454,6 @@ http_archive(
     strip_prefix = "text-2.2.0",
     urls = [
         "https://github.com/tensorflow/text/archive/v2.2.0.zip",
-    ],
-)
-
-http_archive(
-    name = "com_googlesource_code_re2",
-    sha256 = "ef516fb84824a597c4d5d0d6d330daedb18363b5a99eda87d027e6bdd9cba299",
-    strip_prefix = "re2-03da4fc0857c285e3a26782f6bc8931c4c950df4",
-    urls = [
-        "https://github.com/google/re2/archive/03da4fc0857c285e3a26782f6bc8931c4c950df4.tar.gz",
     ],
 )
 
@@ -780,55 +651,6 @@ load("@coral_crosstool//:configure.bzl", "cc_crosstool")
 
 cc_crosstool(name = "crosstool")
 
-# Node dependencies
-http_archive(
-    name = "build_bazel_rules_nodejs",
-    sha256 = "94070eff79305be05b7699207fbac5d2608054dd53e6109f7d00d923919ff45a",
-    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/5.8.2/rules_nodejs-5.8.2.tar.gz"],
-)
-
-load("@build_bazel_rules_nodejs//:repositories.bzl", "build_bazel_rules_nodejs_dependencies")
-
-build_bazel_rules_nodejs_dependencies()
-
-# fetches nodejs, npm, and yarn
-load("@build_bazel_rules_nodejs//:index.bzl", "node_repositories", "yarn_install")
-
-node_repositories()
-
-yarn_install(
-    name = "npm",
-    package_json = "@//:package.json",
-    yarn_lock = "@//:yarn.lock",
-)
-
-# Protobuf for Node dependencies
-http_archive(
-    name = "rules_proto_grpc",
-    sha256 = "bbe4db93499f5c9414926e46f9e35016999a4e9f6e3522482d3760dc61011070",
-    strip_prefix = "rules_proto_grpc-4.2.0",
-    urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/archive/4.2.0.tar.gz"],
-)
-
-http_archive(
-    name = "com_google_protobuf_javascript",
-    sha256 = "8cef92b4c803429af0c11c4090a76b6a931f82d21e0830760a17f9c6cb358150",
-    strip_prefix = "protobuf-javascript-3.21.4",
-    urls = ["https://github.com/protocolbuffers/protobuf-javascript/archive/refs/tags/v3.21.4.tar.gz"],
-)
-
-load("@rules_proto_grpc//:repositories.bzl", "rules_proto_grpc_repos", "rules_proto_grpc_toolchains")
-
-rules_proto_grpc_toolchains()
-
-rules_proto_grpc_repos()
-
-load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
-
-rules_proto_dependencies()
-
-rules_proto_toolchains()
-
 load("@//third_party:external_files.bzl", "external_files")
 
 external_files()
@@ -925,4 +747,27 @@ http_archive(
     sha256 = "2fe28173428f8eebf2aa8a665bad32136086cc065f50c7154678a96250d1cde1",
     strip_prefix = "skia-226ae9d866748a2e68b6dbf114b37129c380a298/include/config",
     urls = ["https://github.com/google/skia/archive/226ae9d866748a2e68b6dbf114b37129c380a298.zip"],
+)
+
+http_archive(
+    name = "gradle_distribution",
+    build_file = "@//third_party:gradle_distribution.BUILD",
+    sha256 = "3e1af3ae886920c3ac87f7a91f816c0c7c436f276a6eefdb3da152100fef72ae",
+    strip_prefix = "gradle-8.4",
+    urls = ["https://services.gradle.org/distributions/gradle-8.4-bin.zip"],
+)
+
+http_archive(
+    name = "boringssl",
+    sha256 = "52e2d96759d483e384e3964a2513781ea05cb6b2d677f1f8f5a4049aea30535d",
+    strip_prefix = "boringssl-0.20260211.0",
+    url = "https://github.com/google/boringssl/archive/refs/tags/0.20260211.0.tar.gz",
+)
+
+http_archive(
+    name = "libcurl",
+    build_file = "@//third_party:curl.BUILD",
+    sha256 = "d15ebab765d793e2e96db090f0e172d127859d78ca6f6391d7eafecfd894bbc0",
+    strip_prefix = "curl-8.10.1",
+    url = "https://curl.haxx.se/download/curl-8.10.1.tar.gz",
 )

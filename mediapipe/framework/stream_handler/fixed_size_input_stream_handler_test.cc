@@ -51,21 +51,21 @@ class TestSourceCalculator : public CalculatorBase {
     return absl::OkStatus();
   }
   absl::Status Open(CalculatorContext* cc) override {
-    absl::MutexLock lock(&g_source_mutex);
+    absl::MutexLock lock(g_source_mutex);
     g_source_counter = 0;
     g_source_done = false;
     return absl::OkStatus();
   }
   absl::Status Process(CalculatorContext* cc) override {
     if (current_packet_id_ == kMaxPacketId) {
-      absl::MutexLock lock(&g_source_mutex);
+      absl::MutexLock lock(g_source_mutex);
       g_source_done = true;
       return tool::StatusStop();
     }
     cc->Outputs().Index(0).Add(new int64_t(0), Timestamp(current_packet_id_));
     ++current_packet_id_;
     {
-      absl::MutexLock lock(&g_source_mutex);
+      absl::MutexLock lock(g_source_mutex);
       ++g_source_counter;
       g_source_mutex.Await(
           absl::Condition(this, &TestSourceCalculator::CanProceed));
@@ -92,7 +92,7 @@ class TestSlowCalculator : public CalculatorBase {
     return absl::OkStatus();
   }
   absl::Status Open(CalculatorContext* cc) override {
-    absl::MutexLock lock(&g_source_mutex);
+    absl::MutexLock lock(g_source_mutex);
     g_slow_counter = 0;
     return absl::OkStatus();
   }
@@ -100,7 +100,7 @@ class TestSlowCalculator : public CalculatorBase {
     cc->Outputs().Index(0).Add(new int64_t(0),
                                cc->Inputs().Index(0).Value().Timestamp());
     {
-      absl::MutexLock lock(&g_source_mutex);
+      absl::MutexLock lock(g_source_mutex);
       ++g_slow_counter;
       g_source_mutex.Await(
           absl::Condition(this, &TestSlowCalculator::CanProceed));

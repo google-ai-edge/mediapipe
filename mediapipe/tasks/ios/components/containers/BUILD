@@ -21,6 +21,8 @@ package(default_visibility = [
 
 licenses(["notice"])
 
+exports_files(glob(["sources/*.h"]))
+
 objc_library(
     name = "MPPCategory",
     srcs = ["sources/MPPCategory.m"],

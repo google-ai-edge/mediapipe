@@ -21,13 +21,17 @@
 #include <initializer_list>
 #include <memory>
 #include <numeric>
+#include <ostream>
+#include <string>
 #include <tuple>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
+#include "absl/base/thread_annotations.h"
 #include "absl/functional/any_invocable.h"
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/formats/tensor/internal.h"
 #include "mediapipe/framework/memory_manager.h"
@@ -46,6 +50,7 @@
 #include "mediapipe/framework/formats/tensor_ahwb_usage.h"
 #include "mediapipe/framework/formats/unique_fd.h"
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
+
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context.h"
@@ -126,6 +131,9 @@ class Tensor {
     kChar,
     kBool
   };
+
+  static absl::string_view ElementTypeName(ElementType element_type);
+
   struct Shape {
     Shape() = default;
     Shape(std::initializer_list<int> dimensions) : dims(dimensions) {}
@@ -171,6 +179,18 @@ class Tensor {
   Tensor(Tensor&& src);
   Tensor& operator=(Tensor&&);
   ~Tensor();
+
+  // Returns a numpy-style string representation of the tensor. If the tensor
+  // has more than max_num_elements elements, all dimensions larger than 8 are
+  // shortened to x1 x2 x3 ... xn-2, xn-1, xn.
+  // Example: Tensor<Float32> [2 2] =
+  // [[-0.21845226  0.5312876 ]
+  //  [-0.1596979   0.40760058]]
+  std::string DebugString(int max_num_elements = 1024) const;
+
+  friend std::ostream& operator<<(std::ostream& stream, const Tensor& tensor) {
+    return stream << tensor.DebugString();
+  }
 
   template <typename T>
   class CpuView : public View {
@@ -480,16 +500,51 @@ class Tensor {
   bool ready_as_opengl_texture_2d() const {
     return valid_ & kValidOpenGlTexture2d;
   }
-  bool ready_as_ahwb() const { return use_ahwb_; }
+  bool ready_as_ahwb() const;
   bool ready_as_webgpu_texture_2d() const {
     return valid_ & kValidWebGpuTexture2d;
   }
 
  private:
   friend class MtlBufferView;
+
+  // RAII object to own CPU buffer and release callback. It is intended to be
+  // used internally to access tensor CPU data when lock is already in place.
+  template <typename T>
+  class CpuBufferHandle {
+   public:
+    explicit CpuBufferHandle(T* buffer,
+                             absl::AnyInvocable<void()> release_callback)
+        : buffer_(buffer), release_callback_(std::move(release_callback)) {}
+    CpuBufferHandle(const CpuBufferHandle&) = delete;
+    CpuBufferHandle& operator=(const CpuBufferHandle&) = delete;
+    CpuBufferHandle(CpuBufferHandle&&) = delete;
+    CpuBufferHandle& operator=(CpuBufferHandle&&) = delete;
+
+    ~CpuBufferHandle() {
+      if (release_callback_) release_callback_();
+    }
+    template <typename P>
+    auto buffer() const {
+      // const and non-const return type selection.
+      return static_cast<typename std::tuple_element<
+          std::is_const<T>::value, std::tuple<P*, const P*>>::type>(buffer_);
+    }
+    CpuView<T> ToCpuView(std::unique_ptr<absl::MutexLock> lock) && {
+      return CpuView<T>(buffer_, std::move(lock), std::move(release_callback_));
+    }
+
+   private:
+    T* buffer_;
+    absl::AnyInvocable<void()> release_callback_;
+  };
+
   void Move(Tensor*);
   absl::Status Invalidate();
   absl::Status ReadBackGpuToCpu() const;
+  // Returns a CPU buffer handle of the tensor. view_mutex_ must be held during
+  // the function call and the lifetime of the returned handle.
+  CpuBufferHandle<const void> AcquireCpuBufferHandle() const;
 
   ElementType element_type_;
   Shape shape_;
@@ -523,6 +578,7 @@ class Tensor {
   mutable wgpu::Device webgpu_device_;
   mutable wgpu::Texture webgpu_texture2d_;
 #endif  // MEDIAPIPE_USE_WEBGPU
+
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   mutable std::shared_ptr<HardwareBuffer> ahwb_;
 
@@ -553,6 +609,9 @@ class Tensor {
 
   // Use Ahwb for other views: OpenGL / CPU buffer.
   mutable bool use_ahwb_ = false;
+  // If true, the tensor will use an AHWB if the tensor is written on CPU and
+  // read as GL buffer or vice versa.
+  mutable bool prefer_ahwb_ = false;
   mutable uint64_t ahwb_tracking_key_ = 0;
   // Expects the target SSBO to be already bound.
   bool AllocateAhwbMapToSsbo() const;
@@ -562,8 +621,14 @@ class Tensor {
   void* MapAhwbToCpuRead() const;
   void* MapAhwbToCpuWrite() const;
   void MoveCpuOrSsboToAhwb() const;
-  // Set current tracking key, set "use ahwb" if the key is already marked.
+  // Sets current tracking key to the given source_location_hash, and sets
+  // use_ahwb_ if the key is already marked (see below)
   void TrackAhwbUsage(uint64_t key) const;
+  // Memorizes the tracking key set by TrackAhwbUsage(), so that if
+  // TrackAhwbUsage() is called again with the same key, the tensor will use an
+  // AHWB, even if the tensor instance is different from the one that called
+  // TrackAhwbUsage().
+  void MarkAhwbUsage() const;
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   mutable std::shared_ptr<mediapipe::GlContext> gl_context_;
@@ -571,16 +636,21 @@ class Tensor {
   mutable GLuint frame_buffer_ = GL_INVALID_INDEX;
   mutable int texture_width_;
   mutable int texture_height_;
+
 #ifdef __EMSCRIPTEN__
   mutable bool texture_is_half_float_ = false;
 #endif  // __EMSCRIPTEN__
+
   void AllocateOpenGlTexture2d() const;
+
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
   mutable GLuint opengl_buffer_ = GL_INVALID_INDEX;
   void AllocateOpenGlBuffer() const;
   mutable std::shared_ptr<GlSyncPoint> gl_write_read_sync_;
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+
   bool NeedsHalfFloatRenderTarget() const;
+
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 };
 
@@ -589,6 +659,10 @@ int BhwcHeightFromShape(const Tensor::Shape& shape);
 int BhwcWidthFromShape(const Tensor::Shape& shape);
 int BhwcDepthFromShape(const Tensor::Shape& shape);
 
+template <typename Sink>
+void AbslStringify(Sink& sink, Tensor::ElementType e) {
+  sink.Append(Tensor::ElementTypeName(e));
+}
 }  // namespace mediapipe
 
 #endif  // MEDIAPIPE_FRAMEWORK_FORMATS_TENSOR_H_

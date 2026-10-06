@@ -108,8 +108,107 @@ TEST(ScaleImageCalculatorTest, ScaleRgbaToRgb) {
   ASSERT_EQ(output_packets.size(), 1);
   const auto& output_frame = output_packets[0].Get<mediapipe::ImageFrame>();
   EXPECT_EQ(output_frame.Format(), mediapipe::ImageFormat::SRGB);
-  EXPECT_EQ(output_frame.Width(), 720);
-  EXPECT_EQ(output_frame.Height(), 1280);
+  EXPECT_EQ(output_frame.Width(), 404);
+  EXPECT_EQ(output_frame.Height(), 720);
+}
+
+TEST(ScaleImageCalculatorTest, ScaleRgbaToRgbNoInputFormatInOption) {
+  // This is exactly the same as ScaleRgbaToRgb except that we don't specify
+  // the input_format in the option. It should therfore be obtained from the
+  // frame itself.
+  auto calculator_node =
+      ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
+          R"pb(
+            calculator: "ScaleImageCalculator"
+            input_stream: "input_frames"
+            output_stream: "scaled_frames"
+            options {
+              [mediapipe.ScaleImageCalculatorOptions.ext] {
+                # input_format: SRGBA
+                output_format: SRGB
+                target_width: 720
+                target_height: 720
+                preserve_aspect_ratio: true
+              }
+            }
+          )pb");
+  mediapipe::CalculatorRunner runner(calculator_node);
+
+  // Vertical 9:16 720P input frame
+  auto input_frame = GetInputFrame(720, 1280, 4, mediapipe::ImageFormat::SRGBA);
+  auto input_frame_packet =
+      mediapipe::MakePacket<mediapipe::ImageFrame>(std::move(input_frame));
+  runner.MutableInputs()->Index(0).packets.push_back(
+      input_frame_packet.At(mediapipe::Timestamp(1)));
+  MP_ASSERT_OK(runner.Run());
+
+  const auto& output_packets = runner.Outputs().Index(0).packets;
+  ASSERT_EQ(output_packets.size(), 1);
+  const auto& output_frame = output_packets[0].Get<mediapipe::ImageFrame>();
+  EXPECT_EQ(output_frame.Format(), mediapipe::ImageFormat::SRGB);
+  EXPECT_EQ(output_frame.Width(), 404);
+  EXPECT_EQ(output_frame.Height(), 720);
+}
+
+TEST(ScaleImageCalculatorTest, ScaleRgbToRgb) {
+  // This is exactly the same as ScaleRgbaToRgb except that we use SRGB instead
+  // of SRGBA.
+  auto calculator_node =
+      ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
+          R"pb(
+            calculator: "ScaleImageCalculator"
+            input_stream: "input_frames"
+            output_stream: "scaled_frames"
+            options {
+              [mediapipe.ScaleImageCalculatorOptions.ext] {
+                input_format: SRGB
+                output_format: SRGB
+                target_width: 720
+                target_height: 720
+                preserve_aspect_ratio: true
+              }
+            }
+          )pb");
+  mediapipe::CalculatorRunner runner(calculator_node);
+
+  // Vertical 9:16 720P input frame
+  auto input_frame = GetInputFrame(720, 1280, 3, mediapipe::ImageFormat::SRGB);
+  auto input_frame_packet =
+      mediapipe::MakePacket<mediapipe::ImageFrame>(std::move(input_frame));
+  runner.MutableInputs()->Index(0).packets.push_back(
+      input_frame_packet.At(mediapipe::Timestamp(1)));
+  MP_ASSERT_OK(runner.Run());
+
+  const auto& output_packets = runner.Outputs().Index(0).packets;
+  ASSERT_EQ(output_packets.size(), 1);
+  const auto& output_frame = output_packets[0].Get<mediapipe::ImageFrame>();
+  EXPECT_EQ(output_frame.Format(), mediapipe::ImageFormat::SRGB);
+  EXPECT_EQ(output_frame.Width(), 404);
+  EXPECT_EQ(output_frame.Height(), 720);
+}
+
+void ExpectEmptyImageFails(int width, int height) {
+  auto calculator_node = GetTestingGraphNode();
+  mediapipe::CalculatorRunner runner(calculator_node);
+
+  mediapipe::ImageFrame input_frame(mediapipe::ImageFormat::SRGB, width, height,
+                                    1);
+  auto input_frame_packet =
+      mediapipe::MakePacket<mediapipe::ImageFrame>(std::move(input_frame));
+  runner.MutableInputs()->Index(0).packets.push_back(
+      input_frame_packet.At(mediapipe::Timestamp(1)));
+  ASSERT_THAT(runner.Run(), StatusIs(absl::StatusCode::kInvalidArgument,
+                                     HasSubstr("Input image frame is empty.")));
+}
+
+TEST(ScaleImageCalculatorTest, ScaleEmptyImage) { ExpectEmptyImageFails(0, 0); }
+
+TEST(ScaleImageCalculatorTest, ScaleImageWithZeroWidth) {
+  ExpectEmptyImageFails(0, 100);
+}
+
+TEST(ScaleImageCalculatorTest, ScaleImageWithZeroHeight) {
+  ExpectEmptyImageFails(100, 0);
 }
 
 }  // namespace

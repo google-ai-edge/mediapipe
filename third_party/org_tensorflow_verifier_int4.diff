@@ -1,0 +1,10 @@
+--- a/tensorflow/lite/core/tools/verifier.cc
++++ b/tensorflow/lite/core/tools/verifier.cc
+@@ -431,6 +431,3 @@
+     case TensorType_INT4:
+-      // TODO(b/246647008): Multiplying this value by the number of elements
+-      // does not yield the size of a tensor when 4-bit values are packed
+-      // 2 to a byte.
+-      bytes_required *= sizeof(int8_t);
++      bytes_required = (bytes_required + 1) / 2;
+       break;

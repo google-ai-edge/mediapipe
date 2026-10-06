@@ -18,6 +18,7 @@ VERS_1.0 {
     Java_com_google_mediapipe_framework_PacketGetter*;
     Java_com_google_mediapipe_framework_Packet*;
     Java_com_google_mediapipe_tasks_core_ModelResourcesCache*;
+    Java_com_google_mediapipe_tasks_core_BaseOptionsUtils*;
 
   # Hide everything else.
   local:

@@ -22,7 +22,7 @@ namespace mediapipe::tasks::c::components::containers {
 
 // Converts a C++ Rect to a C Rect.
 void CppConvertToRect(const mediapipe::tasks::components::containers::Rect& in,
-                      struct MPRect* out) {
+                      struct MpRect* out) {
   out->left = in.left;
   out->top = in.top;
   out->right = in.right;
@@ -31,7 +31,7 @@ void CppConvertToRect(const mediapipe::tasks::components::containers::Rect& in,
 
 // Converts a C++ RectF to a C RectF.
 void CppConvertToRectF(
-    const mediapipe::tasks::components::containers::RectF& in, MPRectF* out) {
+    const mediapipe::tasks::components::containers::RectF& in, MpRectF* out) {
   out->left = in.left;
   out->top = in.top;
   out->right = in.right;

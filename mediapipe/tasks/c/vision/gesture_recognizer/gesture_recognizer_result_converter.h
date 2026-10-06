@@ -24,9 +24,9 @@ namespace mediapipe::tasks::c::components::containers {
 void CppConvertToGestureRecognizerResult(
     const mediapipe::tasks::vision::gesture_recognizer::GestureRecognizerResult&
         in,
-    GestureRecognizerResult* out);
+    MpGestureRecognizerResult* out);
 
-void CppCloseGestureRecognizerResult(GestureRecognizerResult* result);
+void CppCloseGestureRecognizerResult(MpGestureRecognizerResult* result);
 
 }  // namespace mediapipe::tasks::c::components::containers
 

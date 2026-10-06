@@ -39,13 +39,13 @@ extern "C" {
 #endif
 
 typedef struct MpImageEmbedderInternal* MpImageEmbedderPtr;
-typedef EmbeddingResult ImageEmbedderResult;
+typedef MpEmbeddingResult ImageEmbedderResult;
 
 // The options for configuring a MediaPipe image embedder task.
 struct ImageEmbedderOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
-  struct BaseOptions base_options;
+  struct MpBaseOptions base_options;
 
   // The running mode of the task. Default to the image mode.
   // Image embedder has three running modes:
@@ -54,19 +54,19 @@ struct ImageEmbedderOptions {
   // 3) The live stream mode for embedding image on the live stream of input
   // data, such as from camera. In this mode, the "result_callback" below must
   // be specified to receive the embedding results asynchronously.
-  RunningMode running_mode;
+  MpRunningMode running_mode;
 
   // Options for configuring the embedder behavior, such as l2_normalize and
   // quantize.
-  struct EmbedderOptions embedder_options;
+  struct MpEmbedderOptions embedder_options;
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
-  // to RunningMode::LIVE_STREAM. Arguments of the callback function include:
-  // the pointer to embedding result, the image that result was obtained
-  // on, the timestamp relevant to embedding extraction results and pointer to
-  // error message in case of any failure. The validity of the passed arguments
-  // is true for the lifetime of the callback function.
+  // to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
+  // function include: the pointer to embedding result, the image that result
+  // was obtained on, the timestamp relevant to embedding extraction results and
+  // pointer to error message in case of any failure. The validity of the passed
+  // arguments is true for the lifetime of the callback function.
   //
   // The passed arguments are only valid for the lifetime of the callback.
   typedef void (*result_callback_fn)(MpStatus status,
@@ -96,7 +96,7 @@ MP_EXPORT MpStatus MpImageEmbedderCreate(struct ImageEmbedderOptions* options,
 // `MpErrorFree()`.
 MP_EXPORT MpStatus MpImageEmbedderEmbedImage(
     MpImageEmbedderPtr embedder, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
+    const MpImageProcessingOptions* image_processing_options,
     ImageEmbedderResult* result, char** error_msg);
 
 // Performs embedding extraction on the provided video frame.
@@ -114,7 +114,7 @@ MP_EXPORT MpStatus MpImageEmbedderEmbedImage(
 // `MpErrorFree()`.
 MP_EXPORT MpStatus MpImageEmbedderEmbedForVideo(
     MpImageEmbedderPtr embedder, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
+    const MpImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, ImageEmbedderResult* result, char** error_msg);
 
 // Sends live image data to embedder, and the results will be available via
@@ -139,7 +139,7 @@ MP_EXPORT MpStatus MpImageEmbedderEmbedForVideo(
 // message with `MpErrorFree()`.
 MP_EXPORT MpStatus MpImageEmbedderEmbedAsync(
     MpImageEmbedderPtr embedder, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
+    const MpImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, char** error_msg);
 
 // Frees the memory allocated inside a ImageEmbedderResult result.
@@ -163,8 +163,8 @@ MP_EXPORT MpStatus MpImageEmbedderClose(MpImageEmbedderPtr embedder,
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
 // `MpErrorFree()`.
-MP_EXPORT MpStatus MpImageEmbedderCosineSimilarity(const Embedding& u,
-                                                   const Embedding& v,
+MP_EXPORT MpStatus MpImageEmbedderCosineSimilarity(const MpEmbedding& u,
+                                                   const MpEmbedding& v,
                                                    double* similarity,
                                                    char** error_msg);
 

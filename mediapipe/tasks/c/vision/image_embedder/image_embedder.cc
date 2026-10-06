@@ -87,8 +87,8 @@ absl::Status CppImageEmbedderCreate(const ImageEmbedderOptions& options,
   cpp_options->running_mode = static_cast<RunningMode>(options.running_mode);
 
   // Enable callback for processing live stream data when the running mode is
-  // set to RunningMode::LIVE_STREAM.
-  if (cpp_options->running_mode == RunningMode::LIVE_STREAM) {
+  // set to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM.
+  if (cpp_options->running_mode == MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM) {
     if (options.result_callback == nullptr) {
       return absl::InvalidArgumentError(
           "Provided null pointer to callback function.");
@@ -122,7 +122,7 @@ absl::Status CppImageEmbedderCreate(const ImageEmbedderOptions& options,
 
 absl::Status CppImageEmbedderEmbed(
     MpImageEmbedderPtr embedder, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
+    const MpImageProcessingOptions* image_processing_options,
     ImageEmbedderResult* result) {
   ImageEmbedder* cpp_embedder = GetCppEmbedder(embedder);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
@@ -142,7 +142,7 @@ absl::Status CppImageEmbedderEmbed(
 
 absl::Status CppImageEmbedderEmbedForVideo(
     MpImageEmbedderPtr embedder, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
+    const MpImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, ImageEmbedderResult* result) {
   ImageEmbedder* cpp_embedder = GetCppEmbedder(embedder);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
@@ -162,7 +162,7 @@ absl::Status CppImageEmbedderEmbedForVideo(
 
 absl::Status CppImageEmbedderEmbedAsync(
     MpImageEmbedderPtr embedder, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
+    const MpImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms) {
   ImageEmbedder* cpp_embedder = GetCppEmbedder(embedder);
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
@@ -189,8 +189,8 @@ absl::Status CppImageEmbedderClose(MpImageEmbedderPtr embedder) {
   return absl::OkStatus();
 }
 
-absl::Status CppImageEmbedderCosineSimilarity(const Embedding& u,
-                                              const Embedding& v,
+absl::Status CppImageEmbedderCosineSimilarity(const MpEmbedding& u,
+                                              const MpEmbedding& v,
                                               double* similarity) {
   CppEmbedding cpp_u;
   CppConvertToCppEmbedding(u, &cpp_u);
@@ -221,7 +221,7 @@ MP_EXPORT MpStatus MpImageEmbedderCreate(struct ImageEmbedderOptions* options,
 
 MP_EXPORT MpStatus MpImageEmbedderEmbedImage(
     MpImageEmbedderPtr embedder, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
+    const MpImageProcessingOptions* image_processing_options,
     ImageEmbedderResult* result, char** error_msg) {
   absl::Status status =
       mediapipe::tasks::c::vision::image_embedder::CppImageEmbedderEmbed(
@@ -231,7 +231,7 @@ MP_EXPORT MpStatus MpImageEmbedderEmbedImage(
 
 MP_EXPORT MpStatus MpImageEmbedderEmbedForVideo(
     MpImageEmbedderPtr embedder, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
+    const MpImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, ImageEmbedderResult* result, char** error_msg) {
   absl::Status status = mediapipe::tasks::c::vision::image_embedder::
       CppImageEmbedderEmbedForVideo(embedder, image, image_processing_options,
@@ -241,7 +241,7 @@ MP_EXPORT MpStatus MpImageEmbedderEmbedForVideo(
 
 MP_EXPORT MpStatus MpImageEmbedderEmbedAsync(
     MpImageEmbedderPtr embedder, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
+    const MpImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, char** error_msg) {
   absl::Status status =
       mediapipe::tasks::c::vision::image_embedder::CppImageEmbedderEmbedAsync(
@@ -262,8 +262,8 @@ MP_EXPORT MpStatus MpImageEmbedderClose(MpImageEmbedderPtr embedder,
   return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
-MP_EXPORT MpStatus MpImageEmbedderCosineSimilarity(const Embedding& u,
-                                                   const Embedding& v,
+MP_EXPORT MpStatus MpImageEmbedderCosineSimilarity(const MpEmbedding& u,
+                                                   const MpEmbedding& v,
                                                    double* similarity_out,
                                                    char** error_msg) {
   absl::Status status = mediapipe::tasks::c::vision::image_embedder::

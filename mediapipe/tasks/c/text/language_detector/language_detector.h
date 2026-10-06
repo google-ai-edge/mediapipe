@@ -35,7 +35,7 @@ extern "C" {
 typedef struct MpLanguageDetectorInternal* MpLanguageDetectorPtr;
 
 // A language code and its probability.
-struct LanguageDetectorPrediction {
+struct MpLanguageDetectorPrediction {
   // An i18n language / locale code, e.g. "en" for English, "uz" for Uzbek,
   // "ja"-Latn for Japanese (romaji).
   char* language_code;
@@ -44,22 +44,22 @@ struct LanguageDetectorPrediction {
 };
 
 // Task output.
-struct LanguageDetectorResult {
-  struct LanguageDetectorPrediction* predictions;
+struct MpLanguageDetectorResult {
+  struct MpLanguageDetectorPrediction* predictions;
 
   // The count of predictions.
   uint32_t predictions_count;
 };
 
 // The options for configuring a MediaPipe language detector task.
-struct LanguageDetectorOptions {
+struct MpLanguageDetectorOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
-  struct BaseOptions base_options;
+  struct MpBaseOptions base_options;
 
   // Options for configuring the detector behavior, such as score threshold,
   // number of results, etc.
-  struct ClassifierOptions classifier_options;
+  struct MpClassifierOptions classifier_options;
 };
 
 // Creates a LanguageDetector from the provided `options`.
@@ -71,12 +71,12 @@ struct LanguageDetectorOptions {
 // failure. It's the caller responsibility to free the error message with
 // `free()`.
 MP_EXPORT MpStatus
-MpLanguageDetectorCreate(struct LanguageDetectorOptions* options,
+MpLanguageDetectorCreate(struct MpLanguageDetectorOptions* options,
                          MpLanguageDetectorPtr* detector, char** error_msg);
 
 // Performs language detection on the input `utf8_str`.
 // If successful, returns `kMpOk` and sets `*result` to the new
-// `LanguageDetectorResult`.
+// `MpLanguageDetectorResult`.
 //
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
@@ -84,12 +84,12 @@ MpLanguageDetectorCreate(struct LanguageDetectorOptions* options,
 // `free()`.
 MP_EXPORT MpStatus MpLanguageDetectorDetect(
     MpLanguageDetectorPtr detector, const char* utf8_str,
-    struct LanguageDetectorResult* result, char** error_msg);
+    struct MpLanguageDetectorResult* result, char** error_msg);
 
-// Frees the memory allocated inside a LanguageDetectorResult result. Does not
+// Frees the memory allocated inside a MpLanguageDetectorResult result. Does not
 // free the result pointer itself.
 MP_EXPORT void MpLanguageDetectorCloseResult(
-    struct LanguageDetectorResult* result);
+    struct MpLanguageDetectorResult* result);
 
 // Shuts down the LanguageDetector when all the work is done. Frees all memory.
 // Returns `kMpOk` on success.

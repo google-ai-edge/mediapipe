@@ -335,6 +335,9 @@ class NodeBuilder {
   // `CalculatorGraphConfig::Node::source_layer`.
   void SetSourceLayer(int source_layer) { source_layer_ = source_layer; }
 
+  // Sets name corresponding to `CalculatorGraphConfig::Node::name`.
+  void SetName(absl::string_view name) { name_ = std::string(name); }
+
  protected:
   // GetOptionsInternal resolutes the overload greedily, which finds the first
   // match then succeed (template specialization tries all matches, thus could
@@ -358,6 +361,7 @@ class NodeBuilder {
   }
 
   std::string type_;
+  std::string name_;
   TagIndexMap<Destination> in_streams_;
   TagIndexMap<Source> out_streams_;
   TagIndexMap<SideDestination> in_sides_;
@@ -604,6 +608,9 @@ class GraphBuilder {
   absl::Status UpdateNodeConfig(const NodeBuilder& node,
                                 CalculatorGraphConfig::Node* config) {
     config->set_calculator(node.type_);
+    if (!node.name_.empty()) {
+      config->set_name(node.name_);
+    }
     MP_RETURN_IF_ERROR(node.in_streams_.Visit(
         [&](const TagIndexLocation& loc,
             const Destination& endpoint) -> absl::Status {

@@ -122,7 +122,7 @@ void OptionsRegistry::Register(const FieldData& message_type,
   std::string full_name = absl::StrCat(parent_name, ".", name);
   Descriptor descriptor(full_name, message_type);
   {
-    absl::MutexLock lock(&mutex());
+    absl::MutexLock lock(mutex());
     descriptors()[full_name] = descriptor;
   }
   auto nested_types = GetFieldValues(message_type, "nested_type");
@@ -134,7 +134,7 @@ void OptionsRegistry::Register(const FieldData& message_type,
     FieldDescriptor field(extension);
     std::string extendee = GetFieldString(extension, "extendee");
     {
-      absl::MutexLock lock(&mutex());
+      absl::MutexLock lock(mutex());
       extensions()[CanonicalTypeName(extendee)].push_back(field);
     }
   }
@@ -145,14 +145,14 @@ const Descriptor* OptionsRegistry::GetProtobufDescriptor(
   if (descriptors().count("google::protobuf.DescriptorProto") == 0) {
     RegisterDescriptorProtos(descriptors());
   }
-  absl::ReaderMutexLock lock(&mutex());
+  absl::ReaderMutexLock lock(mutex());
   auto it = descriptors().find(CanonicalTypeName(type_name));
   return (it == descriptors().end()) ? nullptr : &it->second;
 }
 
 void OptionsRegistry::FindAllExtensions(
     absl::string_view extendee, std::vector<const FieldDescriptor*>* result) {
-  absl::ReaderMutexLock lock(&mutex());
+  absl::ReaderMutexLock lock(mutex());
   result->clear();
   if (extensions().count(extendee) > 0) {
     for (const FieldDescriptor& field : extensions().at(extendee)) {

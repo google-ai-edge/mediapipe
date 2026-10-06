@@ -1,49 +1,43 @@
 # This contains the MediaPipe Interactive Segmenter Task.
 
-load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//mediapipe/framework/port:build_config.bzl", "ts_library")
+load("//mediapipe/tasks/web:build_defs.bzl", "jasmine_node_test")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
-mediapipe_ts_library(
+ts_library(
     name = "interactive_segmenter",
     srcs = [
         "interactive_segmenter.ts",
-        "interactive_segmenter_result.ts",
     ],
     deps = [
         ":interactive_segmenter_types",
-        "//mediapipe/framework:calculator_jspb_proto",
-        "//mediapipe/framework:calculator_options_jspb_proto",
+        "//mediapipe/calculators/tensor:inference_calculator_jspb_proto",
+        "//mediapipe/tasks/cc/core/proto:acceleration_jspb_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
-        "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_jspb_proto",
-        "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_jspb_proto",
-        "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_jspb_proto",
-        "//mediapipe/tasks/web/components/containers:keypoint",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:stroke_jspb_proto",
         "//mediapipe/tasks/web/core",
-        "//mediapipe/tasks/web/core:classifier_options",
-        "//mediapipe/tasks/web/vision/core:image_processing_options",
+        "//mediapipe/tasks/web/core:task_runner",
+        "//mediapipe/tasks/web/vision/core:image_shader_context",
         "//mediapipe/tasks/web/vision/core:mask",
-        "//mediapipe/tasks/web/vision/core:types",
-        "//mediapipe/tasks/web/vision/core:vision_task_runner",
-        "//mediapipe/util:color_jspb_proto",
+        "//mediapipe/web/graph_runner:graph_runner_image_lib_ts",
         "//mediapipe/web/graph_runner:graph_runner_ts",
+        "//mediapipe/web/graph_runner:platform_utils",
     ],
 )
 
-mediapipe_ts_declaration(
+ts_library(
     name = "interactive_segmenter_types",
-    srcs = ["interactive_segmenter_options.d.ts"],
+    srcs = ["interactive_segmenter_options.ts"],
     deps = [
         "//mediapipe/tasks/web/core",
-        "//mediapipe/tasks/web/vision/core:vision_task_options",
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "interactive_segmenter_test_lib",
     testonly = True,
     srcs = [
@@ -51,16 +45,24 @@ mediapipe_ts_library(
     ],
     deps = [
         ":interactive_segmenter",
-        "//mediapipe/framework:calculator_jspb_proto",
-        "//mediapipe/tasks/cc/vision/interactive_segmenter/proto:region_of_interest_jspb_proto",
+        "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/core:fileset_resolver",
+        "//mediapipe/tasks/web/core:task_logger",
+        "//mediapipe/tasks/web/core:task_runner",
         "//mediapipe/tasks/web/core:task_runner_test_utils",
+        "//mediapipe/tasks/web/vision/core:drawing_utils",
+        "//mediapipe/tasks/web/vision/core:image_shader_context",
         "//mediapipe/tasks/web/vision/core:mask",
-        "//mediapipe/util:render_data_jspb_proto",
         "//mediapipe/web/graph_runner:graph_runner_image_lib_ts",
+        "//mediapipe/web/graph_runner:platform_utils",
     ],
 )
 
+# Headless unit tests verifying options contract, DOM mocking, and native Wasm memory bridge.
+# Executes natively on standard Linux development clients in NodeJS using:
+#
+# bazel test //mediapipe/tasks/web/vision/interactive_segmenter:interactive_segmenter_test
 jasmine_node_test(
     name = "interactive_segmenter_test",
     srcs = [":interactive_segmenter_test_lib"],

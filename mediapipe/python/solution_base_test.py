@@ -16,9 +16,9 @@
 
 from absl.testing import absltest
 from absl.testing import parameterized
+from google.protobuf import text_format
 import numpy as np
 
-from google.protobuf import text_format
 from mediapipe.framework import calculator_pb2
 from mediapipe.framework.formats import detection_pb2
 from mediapipe.framework.formats import time_series_header_pb2

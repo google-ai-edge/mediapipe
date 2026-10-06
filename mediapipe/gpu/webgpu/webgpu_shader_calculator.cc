@@ -660,8 +660,8 @@ absl::Status WebGpuShaderCalculator::InitWebGpuShader() {
               .constants = nullptr,
           },
   };
-  pipeline_future_ =
-      WebGpuCreateComputePipelineAsync(service_->device(), &pipeline_desc);
+  pipeline_future_ = WebGpuCreateComputePipelineAsync(
+      service_->instance(), service_->device(), &pipeline_desc);
 
   // Create a uniform buffer for the parameters
   wgpu::BufferDescriptor buffer_desc = {

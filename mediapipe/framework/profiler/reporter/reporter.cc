@@ -234,7 +234,7 @@ void Reporter::Accumulate(const mediapipe::GraphProfile& profile) {
   // The start and finish time of PROCESS events might be split between
   // events. If a start event has been seen, we'll record it so that we can
   // match it up later.
-  std::map<int32_t, absl::optional<int64_t>> start_times;
+  std::map<int32_t, std::optional<int64_t>> start_times;
 
   for (const auto& graph_trace : profile.graph_trace()) {
     for (const auto& calc_trace : graph_trace.calculator_trace()) {
@@ -264,7 +264,7 @@ void Reporter::Accumulate(const mediapipe::GraphProfile& profile) {
             calc_trace.finish_time() + graph_trace.base_time();
         max_time = std::max(max_time, static_cast<int64_t>(finish_time));
 
-        absl::optional<int64_t> start_time;
+        std::optional<int64_t> start_time;
         if (calc_trace.has_start_time()) {
           start_time.emplace(calc_trace.start_time());
         } else {

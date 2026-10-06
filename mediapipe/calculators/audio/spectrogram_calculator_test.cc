@@ -69,6 +69,11 @@ class SpectrogramCalculatorTest
     return RunGraph();
   }
 
+  void SendResetPacket(int64_t timestamp) {
+    runner_->MutableInputs()->Tag("RESET").packets.push_back(
+        mediapipe::MakePacket<bool>(true).At(mediapipe::Timestamp(timestamp)));
+  }
+
   // Creates test multichannel input with specified packet sizes and containing
   // a constant-frequency sinusoid that maintains phase between adjacent
   // packets.
@@ -1081,4 +1086,56 @@ void BM_ProcessDC(benchmark::State& state) {
 BENCHMARK(BM_ProcessDC);
 
 }  // anonymous namespace
+TEST_F(SpectrogramCalculatorTest, ResetInput) {
+  options_.set_frame_duration_seconds(100.0 / input_sample_rate_);
+  options_.set_frame_overlap_seconds(0.0);
+  options_.set_output_type(SpectrogramCalculatorOptions::SQUARED_MAGNITUDE);
+
+  CalculatorGraphConfig::Node node_config;
+  node_config.set_calculator(calculator_name_);
+  node_config.add_input_stream("input_audio");
+  node_config.add_input_stream("RESET:reset");
+  node_config.add_output_stream("output_audio");
+  node_config.mutable_options()
+      ->MutableExtension(SpectrogramCalculatorOptions::ext)
+      ->CopyFrom(options_);
+
+  runner_ = std::make_unique<CalculatorRunner>(node_config);
+  FillInputHeader(0);
+
+  // Send first packet.
+  Matrix frame1 = Matrix::Ones(num_input_channels_, 100);
+  runner_->MutableInputs()->Index(0).packets.push_back(
+      Adopt(new Matrix(frame1)).At(Timestamp(0)));
+
+  // Send RESET packet.
+  SendResetPacket(1000000);
+
+  // Send second packet after RESET.
+  Matrix frame2 = Matrix::Ones(num_input_channels_, 100);
+  runner_->MutableInputs()->Index(0).packets.push_back(
+      Adopt(new Matrix(frame2)).At(Timestamp(2000000)));
+
+  MP_ASSERT_OK(Run());
+
+  const auto& packets = output().packets;
+  ASSERT_GE(packets.size(), 1);
+
+  // The first output might be at 0.
+  bool found_packet_at_0 = false;
+  bool found_packet_after_reset = false;
+  for (const auto& packet : packets) {
+    if (packet.Timestamp().Value() == 0) {
+      found_packet_at_0 = true;
+    }
+    if (packet.Timestamp().Value() >= 2000000) {
+      EXPECT_EQ(packet.Timestamp().Value(), 2000000);
+      found_packet_after_reset = true;
+    }
+  }
+  EXPECT_TRUE(found_packet_at_0);
+  EXPECT_TRUE(found_packet_after_reset);
+  EXPECT_TRUE(found_packet_after_reset);
+}
+
 }  // namespace mediapipe

@@ -38,6 +38,8 @@ cc_library(
     deps = [
         ":base_options",
         "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:host_environment",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 

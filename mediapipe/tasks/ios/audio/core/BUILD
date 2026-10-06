@@ -18,6 +18,8 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
+exports_files(glob(["sources/*.h"]))
+
 objc_library(
     name = "MPPAudioData",
     srcs = ["sources/MPPAudioData.m"],
@@ -116,6 +118,10 @@ objc_library(
 objc_library(
     name = "MPPAudioRunningMode",
     hdrs = ["sources/MPPAudioRunningMode.h"],
+    deps = [
+        "//mediapipe/tasks/ios/core:MPPCoreRunningMode",
+        "//third_party/apple_frameworks:Foundation",
+    ],
 )
 
 objc_library(

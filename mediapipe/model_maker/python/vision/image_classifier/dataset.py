@@ -19,6 +19,7 @@ import os
 import random
 from typing import List, Optional
 
+from google.protobuf import text_format
 import tensorflow as tf
 
 from mediapipe.model_maker.python.core.data import classification_dataset
@@ -70,7 +71,7 @@ class Dataset(classification_dataset.ClassificationDataset):
         for path in all_image_paths
     ]
 
-    path_ds = tf.data.Dataset.from_tensor_slices(all_image_paths)
+    path_ds = tf.data.Dataset.from_tensor_slices(all_image_paths)  # pyrefly: ignore[bad-argument-type]
 
     image_ds = path_ds.map(
         image_utils.load_image, num_parallel_calls=tf.data.AUTOTUNE
@@ -81,7 +82,7 @@ class Dataset(classification_dataset.ClassificationDataset):
         tf.cast(all_image_labels, tf.int64))
 
     # Create a dataset if (image, label) pairs
-    image_label_ds = tf.data.Dataset.zip((image_ds, label_ds))
+    image_label_ds = tf.data.Dataset.zip((image_ds, label_ds))  # pyrefly: ignore[bad-argument-type]
 
     tf.compat.v1.logging.info(
         'Load image with size: %d, num_label: %d, labels: %s.', all_image_size,

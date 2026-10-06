@@ -25,6 +25,7 @@ cc_binary(
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
+        "//third_party/gloop/base:init_google",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:file_helpers",

@@ -7,7 +7,7 @@ load("//mediapipe/framework/tool:mediapipe_proto_allowlist.bzl", "rewrite_target
 load("@com_google_protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load("@com_google_protobuf//bazel:py_proto_library.bzl", "py_proto_library")
 load("@rules_proto//proto:defs.bzl", _proto_library = "proto_library")
-load("@rules_proto_grpc//js:defs.bzl", "js_proto_library")
+load("@rules_proto_grpc_js//:defs.bzl", "js_proto_library")
 
 java_proto_library = native.java_proto_library
 java_lite_proto_library = native.java_lite_proto_library
@@ -454,6 +454,7 @@ def mediapipe_js_proto_library_oss(
     _ignore = [deps, testonly, compatible_with]
 
     js_deps = replace_deps(lib_proto_deps, "_proto", "_jspb_proto", False)
+    js_deps = [d for d in js_deps if not d.endswith("cc_wkt_protos")]
     _proto_library(
         name = replace_suffix(name, "_jspb_proto", "_lib_proto"),
         srcs = srcs,

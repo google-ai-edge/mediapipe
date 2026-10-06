@@ -161,7 +161,8 @@ absl::Status TensorsToImageCalculator::UpdateContract(CalculatorContract* cc) {
       << "Either TENSORS or TENSOR must be specified";
 #if !MEDIAPIPE_DISABLE_GPU
 #if MEDIAPIPE_METAL_ENABLED
-  MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
+  MP_RETURN_IF_ERROR(
+      [MPPMetalHelper updateContract:cc requestGpuAsOptional:true]);
 #else
   return GlCalculatorHelper::UpdateContract(cc,
                                             /*request_gpu_as_optional=*/true);

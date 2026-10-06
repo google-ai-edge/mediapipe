@@ -18,9 +18,9 @@ import gc
 import random
 import sys
 from absl.testing import absltest
+from google.protobuf import text_format
 import numpy as np
 
-from google.protobuf import text_format
 from mediapipe.framework.formats import detection_pb2
 from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter

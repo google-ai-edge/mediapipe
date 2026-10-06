@@ -134,11 +134,14 @@ class TensorFlowSessionFromSavedModelGenerator : public PacketGenerator {
     // Set user specified tags properly.
     // If no tags specified will use tensorflow::kSavedModelTagServe by default.
     std::unordered_set<std::string> tags_set;
-    for (const std::string& tag : options.saved_model_tag()) {
-      tags_set.insert(tag);
-    }
-    if (tags_set.empty()) {
-      tags_set.insert(tensorflow::kSavedModelTagServe);
+
+    if (!options.saved_model_has_empty_tag()) {
+      for (const std::string& tag : options.saved_model_tag()) {
+        tags_set.insert(tag);
+      }
+      if (tags_set.empty()) {
+        tags_set.insert(tensorflow::kSavedModelTagServe);
+      }
     }
 
     tensorflow::RunOptions run_options;

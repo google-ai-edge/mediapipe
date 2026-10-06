@@ -179,7 +179,7 @@ RationalFactorResampleCalculator::ResamplerFromOptions(
 
   // NOTE: QResampler supports multichannel resampling, so the code might be
   // simplified using a single instance rather than one per channel.
-  resampler = absl::make_unique<audio_dsp::QResampler<float>>(
+  resampler = std::make_unique<audio_dsp::QResampler<float>>(
       source_sample_rate, target_sample_rate, /*num_channels=*/1, params);
   if (resampler != nullptr && !resampler->Valid()) {
     resampler = std::unique_ptr<Resampler<float>>();

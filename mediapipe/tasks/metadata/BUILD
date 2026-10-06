@@ -1,4 +1,5 @@
 load("@flatbuffers//:build_defs.bzl", "flatbuffer_cc_library", "flatbuffer_py_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 package(
     default_visibility = [
@@ -10,6 +11,12 @@ package(
 exports_files(glob([
     "*.fbs",
 ]))
+
+mediapipe_proto_library(
+    name = "bundle_manifest_proto",
+    srcs = ["bundle_manifest.proto"],
+    visibility = ["//visibility:public"],
+)
 
 # Generic schema for model metadata.
 flatbuffer_cc_library(

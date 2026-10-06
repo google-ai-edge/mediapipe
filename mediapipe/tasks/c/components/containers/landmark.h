@@ -26,7 +26,7 @@ extern "C" {
 // Landmark represents a point in 3D space with x, y, z coordinates. The
 // landmark coordinates are in meters. z represents the landmark depth, and the
 // smaller the value the closer the world landmark is to the camera.
-struct Landmark {
+struct MpLandmark {
   float x;
   float y;
   float z;
@@ -56,9 +56,9 @@ struct Landmark {
   char* name;
 };
 
-// A normalized version of above Landmark struct. All coordinates should be
+// A normalized version of above MpLandmark struct. All coordinates should be
 // within [0, 1].
-struct NormalizedLandmark {
+struct MpNormalizedLandmark {
   float x;
   float y;
   float z;
@@ -72,15 +72,15 @@ struct NormalizedLandmark {
   char* name;
 };
 
-// A list of Landmarks.
-struct Landmarks {
-  struct Landmark* landmarks;
+// A list of MpLandmarks.
+struct MpLandmarks {
+  struct MpLandmark* landmarks;
   uint32_t landmarks_count;
 };
 
-// A list of NormalizedLandmarks.
-struct NormalizedLandmarks {
-  struct NormalizedLandmark* landmarks;
+// A list of MpNormalizedLandmarks.
+struct MpNormalizedLandmarks {
+  struct MpNormalizedLandmark* landmarks;
   uint32_t landmarks_count;
 };
 

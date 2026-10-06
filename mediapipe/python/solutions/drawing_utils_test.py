@@ -17,9 +17,9 @@
 from absl.testing import absltest
 from absl.testing import parameterized
 import cv2
+from google.protobuf import text_format
 import numpy as np
 
-from google.protobuf import text_format
 from mediapipe.framework.formats import detection_pb2
 from mediapipe.framework.formats import landmark_pb2
 from mediapipe.python.solutions import drawing_utils

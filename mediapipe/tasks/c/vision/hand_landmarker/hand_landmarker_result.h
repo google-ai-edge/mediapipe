@@ -27,21 +27,21 @@ extern "C" {
 
 // The hand landmarker result from HandLandmarker, where each vector
 // element represents a single hand detected in the image.
-struct HandLandmarkerResult {
+struct MpHandLandmarkerResult {
   // Classification of handedness.
-  struct Categories* handedness;
+  struct MpCategories* handedness;
 
   // The number of elements in the handedness array.
   uint32_t handedness_count;
 
   // Detected hand landmarks in normalized image coordinates.
-  struct NormalizedLandmarks* hand_landmarks;
+  struct MpNormalizedLandmarks* hand_landmarks;
 
   // The number of elements in the hand_landmarks array.
   uint32_t hand_landmarks_count;
 
   // Detected hand landmarks in world coordinates.
-  struct Landmarks* hand_world_landmarks;
+  struct MpLandmarks* hand_world_landmarks;
 
   // The number of elements in the hand_world_landmarks array.
   uint32_t hand_world_landmarks_count;

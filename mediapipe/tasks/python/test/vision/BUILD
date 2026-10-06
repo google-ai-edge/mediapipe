@@ -14,8 +14,6 @@
 
 # Placeholder for internal Python strict contrib test macro and library compatibility macro.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
-
 licenses(["notice"])
 
 py_library(
@@ -38,7 +36,7 @@ py_library(
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:hand_landmarker",
         "//mediapipe/tasks/python/vision:pose_landmarker",
-        "@com_google_protobuf//:protobuf_python",
+        "//third_party/py/google/protobuf",
     ],
 )
 
@@ -148,7 +146,7 @@ py_test(
         "//mediapipe/tasks/python/vision/core:image",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
-        "@com_google_protobuf//:protobuf_python",
+        "//third_party/py/google/protobuf",
         "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )
@@ -172,7 +170,7 @@ py_test(
         "//mediapipe/tasks/python/vision/core:image",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
-        "@com_google_protobuf//:protobuf_python",
+        "//third_party/py/google/protobuf",
         "@mediapipe_pip_deps_absl_py//:pkg",
         "@mediapipe_pip_deps_numpy//:pkg",
     ],
@@ -199,7 +197,7 @@ py_test(
         "//mediapipe/tasks/python/vision/core:image",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
-        "@com_google_protobuf//:protobuf_python",
+        "//third_party/py/google/protobuf",
         "@mediapipe_pip_deps_absl_py//:pkg",
         "@mediapipe_pip_deps_numpy//:pkg",
     ],
@@ -226,7 +224,32 @@ py_test(
         "//mediapipe/tasks/python/vision/core:image",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
-        "@com_google_protobuf//:protobuf_python",
+        "//third_party/py/google/protobuf",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)
+
+py_test(
+    name = "holistic_landmarker_test",
+    srcs = ["holistic_landmarker_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
+        "//mediapipe/tasks/testdata/vision:test_protos",
+    ],
+    tags = ["not_run:arm"],
+    deps = [
+        "//mediapipe/tasks/cc/vision/holistic_landmarker/proto:holistic_result_py_pb2",
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/vision:holistic_landmarker",
+        "//mediapipe/tasks/python/vision/core:image",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "//third_party/py/google/protobuf",
         "@mediapipe_pip_deps_absl_py//:pkg",
         "@mediapipe_pip_deps_numpy//:pkg",
     ],

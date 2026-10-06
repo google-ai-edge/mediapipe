@@ -14,8 +14,6 @@
 
 # Placeholder: load py_test
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
-
 licenses(["notice"])
 
 py_test(

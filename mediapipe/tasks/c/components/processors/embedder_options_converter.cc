@@ -19,7 +19,7 @@ limitations under the License.
 namespace mediapipe::tasks::c::components::processors {
 
 void CppConvertToEmbedderOptions(
-    const EmbedderOptions& in,
+    const MpEmbedderOptions& in,
     mediapipe::tasks::components::processors::EmbedderOptions* out) {
   out->l2_normalize = in.l2_normalize;
   out->quantize = in.quantize;

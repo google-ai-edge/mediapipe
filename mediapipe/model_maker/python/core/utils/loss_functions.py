@@ -344,12 +344,12 @@ class PerceptualLoss(tf.keras.Model, metaclass=abc.ABCMeta):
 
     if self._loss_weight.style > 0.0:
       self._loss_style = tf_utils.safe_mean(
-          self._loss_weight.style
+          self._loss_weight.style  # pyrefly: ignore[unsupported-operation]
           * self._get_style_loss(x_feats=x_features, y_feats=y_features)
       )
     if self._loss_weight.content > 0.0:
       self._loss_content = tf_utils.safe_mean(
-          self._loss_weight.content
+          self._loss_weight.content  # pyrefly: ignore[unsupported-operation]
           * self._get_content_loss(x_feats=x_features, y_feats=y_features)
       )
 
@@ -379,7 +379,7 @@ class PerceptualLoss(tf.keras.Model, metaclass=abc.ABCMeta):
       A scalar tensor for the content loss.
     """
     content_losses = []
-    for coef, x_feat, y_feat in zip(self._feature_weight, x_feats, y_feats):
+    for coef, x_feat, y_feat in zip(self._feature_weight, x_feats, y_feats):  # pyrefly: ignore[bad-argument-type]
       content_loss = self._loss_op(x_feat, y_feat) * coef
       content_losses.append(content_loss)
     return tf.math.reduce_sum(content_losses)
@@ -398,14 +398,14 @@ class PerceptualLoss(tf.keras.Model, metaclass=abc.ABCMeta):
     """
     style_losses = []
     i = 0
-    for coef, x_feat, y_feat in zip(self._feature_weight, x_feats, y_feats):
+    for coef, x_feat, y_feat in zip(self._feature_weight, x_feats, y_feats):  # pyrefly: ignore[bad-argument-type]
       x_feat_g = _compute_gram_matrix(x_feat)
       y_feat_g = _compute_gram_matrix(y_feat)
       style_loss = self._loss_op(x_feat_g, y_feat_g) * coef
       style_losses.append(style_loss)
       i = i + 1
 
-    return tf.math.reduce_sum(style_loss)
+    return tf.math.reduce_sum(style_loss)  # pyrefly: ignore[unbound-name]
 
 
 class VGGPerceptualLoss(PerceptualLoss):
@@ -429,7 +429,7 @@ class VGGPerceptualLoss(PerceptualLoss):
       loss_weight: Loss weight coefficients.
     """
     super().__init__(
-        feature_weight=np.array([0.1, 0.1, 1.0, 1.0, 1.0]),
+        feature_weight=np.array([0.1, 0.1, 1.0, 1.0, 1.0]),  # pyrefly: ignore[bad-argument-type]
         loss_weight=loss_weight,
     )
 
@@ -448,10 +448,10 @@ class VGGPerceptualLoss(PerceptualLoss):
 
   def _compute_features(self, img: tf.Tensor) -> Sequence[tf.Tensor]:
     """Computes VGG19 features."""
-    img = (img + 1) / 2.0
+    img = (img + 1) / 2.0  # pyrefly: ignore[bad-assignment, unsupported-operation]
     norm_img = (img - self._rgb_mean) / self._rgb_std
     # no grad, as it only serves as a frozen feature extractor.
-    return self._vgg19(norm_img)
+    return self._vgg19(norm_img)  # pyrefly: ignore[not-callable]
 
 
 def _compute_gram_matrix(feature: tf.Tensor) -> tf.Tensor:

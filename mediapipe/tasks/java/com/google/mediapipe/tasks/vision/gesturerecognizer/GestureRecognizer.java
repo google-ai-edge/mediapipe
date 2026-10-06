@@ -94,7 +94,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
       "mediapipe.tasks.vision.gesture_recognizer.GestureRecognizerGraph";
 
   static {
-    System.loadLibrary("mediapipe_tasks_vision_jni");
+    System.loadLibrary("mediapipe_tasks_jni");
   }
 
   /**

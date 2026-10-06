@@ -23,35 +23,35 @@ _MOCK_CATEGORY = category.Category(
 def _create_classification_result_c(
     categories_count: int, classifications_count: int
 ):
-  """Creates a ClassificationResultC struct.
+  """Creates a MpClassificationResultC struct.
 
   Args:
     categories_count: The number of categories to create.
     classifications_count: The number of classifications to create.
 
   Returns:
-    A ClassificationResultC struct with the given properties.
+    A MpClassificationResultC struct with the given properties.
   """
-  c_category = category_c.CategoryC(
+  c_category = category_c.MpCategoryC(
       index=_MOCK_CATEGORY.index,
       score=_MOCK_CATEGORY.score,
       category_name=_MOCK_CATEGORY_NAME.encode("utf-8"),
       display_name=_MOCK_DISPLAY_NAME.encode("utf-8"),
   )
-  c_categories = (category_c.CategoryC * categories_count)(
+  c_categories = (category_c.MpCategoryC * categories_count)(
       *[c_category for _ in range(categories_count)]
   )
-  c_classifications = classification_result_c.ClassificationsC(
+  c_classifications = classification_result_c.MpClassificationsC(
       categories=c_categories,
       categories_count=categories_count,
       head_index=_MOCK_HEAD_INDEX,
       head_name=_MOCK_HEAD_NAME.encode("utf-8"),
   )
   c_classifications_array = (
-      classification_result_c.ClassificationsC * classifications_count
+      classification_result_c.MpClassificationsC * classifications_count
   )(*[c_classifications for _ in range(classifications_count)])
 
-  return classification_result_c.ClassificationResultC(
+  return classification_result_c.MpClassificationResultC(
       classifications=c_classifications_array,
       classifications_count=classifications_count,
       timestamp_ms=_MOCK_TIMESTAMP_MS,

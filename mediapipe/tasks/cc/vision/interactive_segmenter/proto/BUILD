@@ -1,4 +1,4 @@
-# Copyright 2025 The MediaPipe Authors.
+# Copyright 2026 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,6 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 mediapipe_proto_library(
-    name = "region_of_interest_proto",
-    srcs = ["region_of_interest.proto"],
+    name = "stroke_proto",
+    srcs = ["stroke.proto"],
 )

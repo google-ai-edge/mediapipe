@@ -66,6 +66,8 @@ AffineTransformation::Interpolation GetInterpolation(
       return AffineTransformation::Interpolation::kLinear;
     case mediapipe::WarpAffineCalculatorOptions::INTER_CUBIC:
       return AffineTransformation::Interpolation::kCubic;
+    case mediapipe::WarpAffineCalculatorOptions::INTER_NEAREST:
+      return AffineTransformation::Interpolation::kNearest;
   }
 }
 

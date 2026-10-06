@@ -143,7 +143,7 @@ class ObjectDetectorModel(tf.keras.Model):
         Defaults to False.
     """
     dummy_input = tf.zeros([1] + self._model_spec.input_image_shape)
-    self._model(dummy_input, training=True)
+    self._model(dummy_input, training=True)  # pyrefly: ignore[not-callable]
     if include_last_layer:
       head = self._model.head
     else:
@@ -172,7 +172,7 @@ class ObjectDetectorModel(tf.keras.Model):
     """Converts the model to a QAT RetinaNet model."""
     model = self._build_model(omit_l2=True)
     dummy_input = tf.zeros([1] + self._model_spec.input_image_shape)
-    model(dummy_input, training=True)
+    model(dummy_input, training=True)  # pyrefly: ignore[not-callable]
     model.set_weights(self._model.get_weights())
     quantization_config = qat_common.Quantization(
         quantize_detection_decoder=True, quantize_detection_head=True
@@ -262,10 +262,10 @@ class ObjectDetectorModel(tf.keras.Model):
       image_shape: Optional[tf.Tensor] = None,
       anchor_boxes: Optional[Mapping[str, tf.Tensor]] = None,
       output_intermediate_features: bool = False,
-      training: bool = None,
+      training: bool = None,  # pyrefly: ignore[bad-function-definition]
   ) -> Mapping[str, tf.Tensor]:
     """Overrides call from tf.keras.Model."""
-    return self._model(
+    return self._model(  # pyrefly: ignore[not-callable]
         images,
         image_shape,
         anchor_boxes,
@@ -285,29 +285,29 @@ class ObjectDetectorModel(tf.keras.Model):
     outputs = y_pred
     # Sums all positives in a batch for normalization and avoids zero
     # num_positives_sum, which would lead to inf loss during training
-    cls_sample_weight = labels['cls_weights']
-    box_sample_weight = labels['box_weights']
+    cls_sample_weight = labels['cls_weights']  # pyrefly: ignore[unsupported-operation]
+    box_sample_weight = labels['box_weights']  # pyrefly: ignore[unsupported-operation]
     num_positives = tf.reduce_sum(box_sample_weight) + 1.0
     cls_sample_weight = cls_sample_weight / num_positives
     box_sample_weight = box_sample_weight / num_positives
     y_true_cls = loss_utils.multi_level_flatten(
-        labels['cls_targets'], last_dim=None
+        labels['cls_targets'], last_dim=None  # pyrefly: ignore[unsupported-operation]
     )
     y_true_cls = tf.one_hot(y_true_cls, self._num_classes)
     y_pred_cls = loss_utils.multi_level_flatten(
-        outputs['cls_outputs'], last_dim=self._num_classes
+        outputs['cls_outputs'], last_dim=self._num_classes  # pyrefly: ignore[unsupported-operation]
     )
     y_true_box = loss_utils.multi_level_flatten(
-        labels['box_targets'], last_dim=4
+        labels['box_targets'], last_dim=4  # pyrefly: ignore[unsupported-operation]
     )
     y_pred_box = loss_utils.multi_level_flatten(
-        outputs['box_outputs'], last_dim=4
+        outputs['box_outputs'], last_dim=4  # pyrefly: ignore[unsupported-operation]
     )
 
     cls_loss = cls_loss_fn(
         y_true=y_true_cls, y_pred=y_pred_cls, sample_weight=cls_sample_weight
     )
-    box_loss = box_loss_fn(
+    box_loss = box_loss_fn(  # pyrefly: ignore[not-callable]
         y_true=y_true_box, y_pred=y_pred_box, sample_weight=box_sample_weight
     )
 
@@ -328,7 +328,7 @@ class ObjectDetectorModel(tf.keras.Model):
     return total_loss
 
   @property
-  def metrics(self):
+  def metrics(self):  # pyrefly: ignore[bad-override]
     """Overrides metrics from tf.keras.Model."""
     return self.loss_trackers
 
@@ -342,7 +342,7 @@ class ObjectDetectorModel(tf.keras.Model):
     x, y = data
     # Run forward pass.
     with tf.GradientTape() as tape:
-      y_pred = self(x, training=True)
+      y_pred = self(x, training=True)  # pyrefly: ignore[not-callable]
       loss = self.compute_loss(x, y, y_pred)
     self._validate_target_and_loss(y, loss)
     # Run backwards pass.
@@ -353,7 +353,7 @@ class ObjectDetectorModel(tf.keras.Model):
     """Overrides test_step from tf.keras.Model."""
     tf.keras.backend.set_learning_phase(0)
     x, y = data
-    y_pred = self(
+    y_pred = self(  # pyrefly: ignore[not-callable]
         x,
         anchor_boxes=y['anchor_boxes'],
         image_shape=y['image_info'][:, 1, :],

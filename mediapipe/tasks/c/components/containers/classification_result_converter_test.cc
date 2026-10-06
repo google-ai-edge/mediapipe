@@ -40,7 +40,7 @@ TEST(ClassificationResultConverterTest,
           /* timestamp_ms= */ 42,
       };
 
-  ClassificationResult c_classification_result;
+  MpClassificationResult c_classification_result;
   CppConvertToClassificationResult(cpp_classification_result,
                                    &c_classification_result);
   EXPECT_NE(c_classification_result.classifications, nullptr);
@@ -65,7 +65,7 @@ TEST(ClassificationResultConverterTest,
           /* timestamp_ms= */ std::nullopt,
       };
 
-  ClassificationResult c_classification_result;
+  MpClassificationResult c_classification_result;
   CppConvertToClassificationResult(cpp_classification_result,
                                    &c_classification_result);
   EXPECT_NE(c_classification_result.classifications, nullptr);
@@ -88,7 +88,7 @@ TEST(ClassificationResultConverterTest,
           /* timestamp_ms= */ std::nullopt,
       };
 
-  ClassificationResult c_classification_result;
+  MpClassificationResult c_classification_result;
   CppConvertToClassificationResult(cpp_classification_result,
                                    &c_classification_result);
   EXPECT_EQ(c_classification_result.classifications, nullptr);
@@ -106,7 +106,7 @@ TEST(ClassificationResultConverterTest, FreesMemory) {
           /* timestamp_ms= */ 42,
       };
 
-  ClassificationResult c_classification_result;
+  MpClassificationResult c_classification_result;
   CppConvertToClassificationResult(cpp_classification_result,
                                    &c_classification_result);
   EXPECT_NE(c_classification_result.classifications, nullptr);

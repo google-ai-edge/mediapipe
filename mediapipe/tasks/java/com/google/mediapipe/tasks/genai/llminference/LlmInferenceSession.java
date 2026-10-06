@@ -21,7 +21,11 @@ import java.util.function.Function;
  * shared efficiently across multiple calls to {@link #generateResponse()} or {@link
  * #generateResponseAsync()} and can also be shared across multiple sessions using {@link
  * #cloneSession()}.
+ *
+ * @deprecated Migrate to LiteRT LM instead. For more details, refer to LiteRT LM on GitHub:
+ *     https://github.com/google-ai-edge/LiteRT-LM
  */
+@Deprecated
 public class LlmInferenceSession implements AutoCloseable {
   private static final char TOKEN_SPLITTER = '▁'; // Note this is NOT an underscore: ▁(U+2581)
   private static final String NEW_LINE = "<0x0A>";

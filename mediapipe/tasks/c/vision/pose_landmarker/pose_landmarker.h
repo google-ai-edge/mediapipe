@@ -42,10 +42,10 @@ extern "C" {
 typedef struct MpPoseLandmarkerInternal* MpPoseLandmarkerPtr;
 
 // The options for configuring a MediaPipe pose landmarker task.
-struct PoseLandmarkerOptions {
+struct MpPoseLandmarkerOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
-  struct BaseOptions base_options;
+  struct MpBaseOptions base_options;
 
   // The running mode of the task. Default to the image mode.
   // PoseLandmarker has three running modes:
@@ -55,7 +55,7 @@ struct PoseLandmarkerOptions {
   // 3) The live stream mode for recognizing pose landmarks on the live stream
   //    of input data, such as from camera. In this mode, the "result_callback"
   //    below must be specified to receive the detection results asynchronously.
-  RunningMode running_mode;
+  MpRunningMode running_mode;
 
   // The maximum number of poses can be detected by the PoseLandmarker.
   int num_poses = 1;
@@ -77,15 +77,15 @@ struct PoseLandmarkerOptions {
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
-  // to RunningMode::LIVE_STREAM. Arguments of the callback function include:
-  // the pointer to recognition result, the image that result was obtained
-  // on, the timestamp relevant to recognition results and pointer to error
-  // message in case of any failure. The validity of the passed arguments is
-  // true for the lifetime of the callback function.
+  // to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
+  // function include: the pointer to recognition result, the image that result
+  // was obtained on, the timestamp relevant to recognition results and pointer
+  // to error message in case of any failure. The validity of the passed
+  // arguments is true for the lifetime of the callback function.
   //
   // The passed arguments are only valid for the lifetime of the callback.
   typedef void (*result_callback_fn)(MpStatus status,
-                                     const PoseLandmarkerResult* result,
+                                     const MpPoseLandmarkerResult* result,
                                      const MpImagePtr image,
                                      int64_t timestamp_ms);
   result_callback_fn result_callback;
@@ -96,9 +96,9 @@ struct PoseLandmarkerOptions {
 // If an error occurs, returns `nullptr` and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
-MP_EXPORT MpStatus MpPoseLandmarkerCreate(struct PoseLandmarkerOptions* options,
-                                          MpPoseLandmarkerPtr* landmarker_out,
-                                          char** error_msg);
+MP_EXPORT MpStatus
+MpPoseLandmarkerCreate(struct MpPoseLandmarkerOptions* options,
+                       MpPoseLandmarkerPtr* landmarker_out, char** error_msg);
 
 // Performs pose landmark detection on the input `image`. Returns `0` on
 // success. If an error occurs, returns an error code and sets the error
@@ -106,8 +106,8 @@ MP_EXPORT MpStatus MpPoseLandmarkerCreate(struct PoseLandmarkerOptions* options,
 // free the memory allocated for the error message.
 MP_EXPORT MpStatus
 MpPoseLandmarkerDetectImage(MpPoseLandmarkerPtr landmarker, MpImagePtr image,
-                            const ImageProcessingOptions* options,
-                            PoseLandmarkerResult* result, char** error_msg);
+                            const MpImageProcessingOptions* options,
+                            MpPoseLandmarkerResult* result, char** error_msg);
 
 // Performs pose landmark detection on the provided video frame.
 // Only use this method when the PoseLandmarker is created with the video
@@ -120,11 +120,11 @@ MpPoseLandmarkerDetectImage(MpPoseLandmarkerPtr landmarker, MpImagePtr image,
 // allocated for the error message.
 MP_EXPORT MpStatus MpPoseLandmarkerDetectForVideo(
     MpPoseLandmarkerPtr landmarker, MpImagePtr image,
-    const ImageProcessingOptions* options, int64_t timestamp_ms,
-    PoseLandmarkerResult* result, char** error_msg);
+    const MpImageProcessingOptions* options, int64_t timestamp_ms,
+    MpPoseLandmarkerResult* result, char** error_msg);
 
 // Sends live image data to pose landmark detection, and the results will be
-// available via the `result_callback` provided in the PoseLandmarkerOptions.
+// available via the `result_callback` provided in the MpPoseLandmarkerOptions.
 // Only use this method when the PoseLandmarker is created with the live
 // stream running mode.
 // The image can be of any size with format RGB or RGBA. It's required to
@@ -132,7 +132,7 @@ MP_EXPORT MpStatus MpPoseLandmarkerDetectForVideo(
 // sent to the pose landmarker. The input timestamps must be monotonically
 // increasing.
 // The `result_callback` provides:
-//   - The recognition results as an PoseLandmarkerResult object.
+//   - The recognition results as an MpPoseLandmarkerResult object.
 //   - The const reference to the corresponding input image that the pose
 //     landmarker runs on. Note that the const reference to the image will no
 //     longer be valid when the callback returns. To access the image data
@@ -143,12 +143,12 @@ MP_EXPORT MpStatus MpPoseLandmarkerDetectForVideo(
 // allocated for the error message.
 MP_EXPORT MpStatus
 MpPoseLandmarkerDetectAsync(MpPoseLandmarkerPtr landmarker, MpImagePtr image,
-                            const ImageProcessingOptions* options,
+                            const MpImageProcessingOptions* options,
                             int64_t timestamp_ms, char** error_msg);
 
-// Frees the memory allocated inside a PoseLandmarkerResult result.
+// Frees the memory allocated inside a MpPoseLandmarkerResult result.
 // Does not free the result pointer itself.
-MP_EXPORT void MpPoseLandmarkerCloseResult(PoseLandmarkerResult* result);
+MP_EXPORT void MpPoseLandmarkerCloseResult(MpPoseLandmarkerResult* result);
 
 // Frees pose landmarker.
 // If an error occurs, returns an error code and sets the error parameter to an

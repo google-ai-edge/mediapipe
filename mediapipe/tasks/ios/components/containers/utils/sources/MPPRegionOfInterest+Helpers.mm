@@ -16,13 +16,14 @@
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPRegionOfInterest+Helpers.h"
 
-#include "mediapipe/tasks/cc/vision/interactive_segmenter/proto/region_of_interest.pb.h"
+#include "mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto/region_of_interest.pb.h"
 #include "mediapipe/util/color.pb.h"
 
 namespace {
 using RenderData = ::mediapipe::RenderData;
 using RenderAnnotation = ::mediapipe::RenderAnnotation;
-using RegionOfInterest = ::mediapipe::tasks::vision::interactive_segmenter::proto::RegionOfInterest;
+using RegionOfInterest =
+    ::mediapipe::tasks::vision::interactive_segmenter_legacy::proto::RegionOfInterest;
 }  // namespace
 
 @implementation MPPRegionOfInterest (Helpers)

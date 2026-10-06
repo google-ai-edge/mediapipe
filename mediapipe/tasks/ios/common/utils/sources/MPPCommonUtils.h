@@ -75,6 +75,16 @@ extern NSString *const MPPTasksErrorDomain;
  * terminates program execution.
  */
 + (void *)mallocWithSize:(size_t)memSize error:(NSError **)error;
+
+/** Returns the iOS application's bundle identifier. */
++ (nullable NSString *)appID;
+
+/** Returns the iOS application's short version string. */
++ (nullable NSString *)appVersion;
+
+/** Returns the iOS operating system version in the format "major.minor.patch". */
++ (NSString *)osVersion;
+
 @end
 
 NS_ASSUME_NONNULL_END

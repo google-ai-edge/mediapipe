@@ -53,7 +53,7 @@ std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
 }
 
-void CheckSingleResult(const ClassificationResult& result, int index) {
+void CheckSingleResult(const MpClassificationResult& result, int index) {
   SCOPED_TRACE("Classification index: " + std::to_string(index));
   EXPECT_EQ(result.classifications_count, 1);
   EXPECT_EQ(result.classifications[0].head_index, 0);

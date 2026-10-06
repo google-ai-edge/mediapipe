@@ -43,7 +43,7 @@ std::string GetFullPath(absl::string_view file_name) {
 
 TEST(LanguageDetectorTest, SmokeTest) {
   std::string model_path = GetFullPath(kTestLanguageDetectorModelPath);
-  LanguageDetectorOptions options = {
+  MpLanguageDetectorOptions options = {
       .base_options = {.model_asset_path = model_path.c_str()},
       .classifier_options = {.max_results = -1, .score_threshold = 0.0},
   };
@@ -54,7 +54,7 @@ TEST(LanguageDetectorTest, SmokeTest) {
       kMpOk);
   EXPECT_NE(detector, nullptr);
 
-  LanguageDetectorResult result;
+  MpLanguageDetectorResult result;
   EXPECT_EQ(MpLanguageDetectorDetect(detector, kTestString, &result,
                                      /*error_msg=*/nullptr),
             kMpOk);
@@ -67,7 +67,7 @@ TEST(LanguageDetectorTest, SmokeTest) {
 
 TEST(LanguageDetectorTest, ErrorHandling) {
   // It is an error to set neither the asset buffer nor the path.
-  LanguageDetectorOptions options = {
+  MpLanguageDetectorOptions options = {
       .base_options = {.model_asset_path = nullptr},
       .classifier_options = {},
   };

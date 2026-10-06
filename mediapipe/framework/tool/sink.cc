@@ -177,7 +177,7 @@ void AddMultiStreamCallback(
     CalculatorGraphConfig* config,
     std::pair<std::string, Packet>* side_packet) {
   std::map<std::string, Packet> side_packets;
-  AddMultiStreamCallback(streams, callback, config, &side_packets,
+  AddMultiStreamCallback(streams, std::move(callback), config, &side_packets,
                          /*observe_timestamp_bounds=*/false);
   *side_packet = *side_packets.begin();
 }
@@ -215,6 +215,28 @@ void AddMultiStreamCallback(
       side_packets, input_side_packet_name,
       MakePacket<std::function<void(const std::vector<Packet>&)>>(
           std::move(callback)));
+}
+
+void AddMultiStreamCallback(const std::vector<std::string>& streams,
+                            std::function<void(PacketMap)> callback,
+                            CalculatorGraphConfig* config,
+                            std::map<std::string, Packet>* side_packets,
+                            bool observe_timestamp_bounds) {
+  // Convert output vector to a PacketMap.
+  auto wrapped_callback = [callback = std::move(callback),
+                           streams](const std::vector<Packet>& packets) {
+    ABSL_CHECK_EQ(packets.size(), streams.size());
+    PacketMap packet_map;
+    packet_map.reserve(packets.size());
+    for (int n = 0; n < streams.size(); ++n) {
+      packet_map.insert({streams[n], packets[n]});
+    }
+    callback(std::move(packet_map));
+  };
+
+  mediapipe::tool::AddMultiStreamCallback(streams, std::move(wrapped_callback),
+                                          config, side_packets,
+                                          observe_timestamp_bounds);
 }
 
 void AddCallbackWithHeaderCalculator(const std::string& stream_name,

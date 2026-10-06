@@ -40,13 +40,13 @@ class Classifier(custom_model.CustomModel):
     super().__init__(model_spec, shuffle)
     self._label_names = label_names
     self._num_classes = len(label_names)
-    self._model: tf.keras.Model = None
+    self._model: tf.keras.Model = None  # pyrefly: ignore[bad-assignment]
     self._optimizer: Union[str, tf.keras.optimizers.Optimizer] = None
-    self._loss_function: Union[str, tf.keras.losses.Loss] = None
-    self._metric_functions: Sequence[Union[str, tf.keras.metrics.Metric]] = None
-    self._callbacks: Sequence[tf.keras.callbacks.Callback] = None
-    self._hparams: hp.BaseHParams = None
-    self._history: tf.keras.callbacks.History = None
+    self._loss_function: Union[str, tf.keras.losses.Loss] = None  # pyrefly: ignore[bad-assignment]
+    self._metric_functions: Sequence[Union[str, tf.keras.metrics.Metric]] = None  # pyrefly: ignore[bad-assignment]
+    self._callbacks: Sequence[tf.keras.callbacks.Callback] = None  # pyrefly: ignore[bad-assignment]
+    self._hparams: hp.BaseHParams = None  # pyrefly: ignore[bad-assignment]
+    self._history: tf.keras.callbacks.History = None  # pyrefly: ignore[bad-assignment]
 
   def _train_model(
       self,

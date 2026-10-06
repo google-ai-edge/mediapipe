@@ -116,7 +116,7 @@ void GlContext::DedicatedThread::SelfDestruct() {
 }
 
 GlContext::DedicatedThread::Job GlContext::DedicatedThread::GetJob() {
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   while (jobs_.empty()) {
     has_jobs_cv_.Wait(&mutex_);
   }
@@ -126,7 +126,7 @@ GlContext::DedicatedThread::Job GlContext::DedicatedThread::GetJob() {
 }
 
 void GlContext::DedicatedThread::PutJob(Job job) {
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   jobs_.push_back(std::move(job));
   has_jobs_cv_.SignalAll();
 }
@@ -179,7 +179,7 @@ absl::Status GlContext::DedicatedThread::Run(GlStatusFunction gl_func) {
   PutJob(
       util::functional::WithCurrentContext([this, gl_func, &done, &status]() {
         status = gl_func();
-        absl::MutexLock lock(&mutex_);
+        absl::MutexLock lock(mutex_);
         done = true;
         gl_job_done_cv_.SignalAll();
         ENDO_EVENT("Done signal");
@@ -193,7 +193,7 @@ absl::Status GlContext::DedicatedThread::Run(GlStatusFunction gl_func) {
   });
 #endif
 
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   while (!done) {
     gl_job_done_cv_.Wait(&mutex_);
   }
@@ -422,8 +422,9 @@ GlContext::~GlContext() {
 
   auto clear_attachments = [this] {
     attachments_.clear();
-    if (profiling_helper_) {
-      profiling_helper_->LogAllTimestamps();
+    auto* profiling_helper = profiling_helper_owner_.Get();
+    if (profiling_helper) {
+      profiling_helper->LogAllTimestamps();
     }
   };
 
@@ -460,9 +461,8 @@ GlContext::~GlContext() {
 
 void GlContext::SetProfilingContext(
     std::shared_ptr<mediapipe::ProfilingContext> profiling_context) {
-  // Create the GlProfilingHelper if it is uninitialized.
-  if (!profiling_helper_ && profiling_context) {
-    profiling_helper_ = profiling_context->CreateGlProfilingHelper();
+  if (profiling_context) {
+    profiling_helper_owner_.CreateIfUnset(std::move(profiling_context));
   }
 }
 
@@ -478,13 +478,14 @@ absl::Status GlContext::SwitchContextAndRun(GlStatusFunction gl_func) {
 absl::Status GlContext::Run(GlStatusFunction gl_func, int node_id,
                             Timestamp input_timestamp) {
   absl::Status status;
-  if (profiling_helper_) {
+  auto* profiling_helper = profiling_helper_owner_.Get();
+  if (profiling_helper) {
     gl_func = [=] {
-      profiling_helper_->MarkTimestamp(node_id, input_timestamp,
-                                       /*is_finish=*/false);
+      profiling_helper->MarkTimestamp(node_id, input_timestamp,
+                                      /*is_finish=*/false);
       auto status = gl_func();
-      profiling_helper_->MarkTimestamp(node_id, input_timestamp,
-                                       /*is_finish=*/true);
+      profiling_helper->MarkTimestamp(node_id, input_timestamp,
+                                      /*is_finish=*/true);
       return status;
     };
   }
@@ -576,17 +577,17 @@ absl::Status GlContext::SwitchContext(ContextBinding* saved_context,
     // 2. We need to unset the old context before we unlock the old mutex,
     // Therefore, we first unset the old one before setting the new one.
     MP_RETURN_IF_ERROR(SetCurrentContextBinding({}));
-    old_context_obj->context_use_mutex_.Unlock();
+    old_context_obj->context_use_mutex_.unlock();
     CurrentContext().reset();
   }
 
   if (new_context_obj) {
-    new_context_obj->context_use_mutex_.Lock();
+    new_context_obj->context_use_mutex_.lock();
     auto status = SetCurrentContextBinding(new_context);
     if (status.ok()) {
       CurrentContext() = new_context_obj;
     } else {
-      new_context_obj->context_use_mutex_.Unlock();
+      new_context_obj->context_use_mutex_.unlock();
     }
     return status;
   } else {
@@ -620,7 +621,7 @@ std::shared_ptr<GlContext> GlContext::GetCurrent() {
 }
 
 void GlContext::GlFinishCalled() {
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   ++gl_finish_count_;
   wait_for_gl_finish_cv_.SignalAll();
 }
@@ -997,7 +998,7 @@ void GlContext::WaitForGlFinishCountPast(int64_t count_to_pass) {
   // If we've been asked to do a glFinish, note the count we need to reach and
   // signal the context our thread may currently be blocked on.
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     assign_larger_value(&gl_finish_count_target_, count_to_pass + 1);
     wait_for_gl_finish_cv_.SignalAll();
     if (context_waiting_on_) {
@@ -1030,7 +1031,7 @@ void GlContext::WaitForGlFinishCountPast(int64_t count_to_pass) {
     // If another context is current, make a note that it is blocked on us, so
     // it can signal the right condition variable if it is asked to do a
     // glFinish.
-    absl::MutexLock other_lock(&other->mutex_);
+    absl::MutexLock other_lock(other->mutex_);
     ABSL_DCHECK(!other->context_waiting_on_);
     other->context_waiting_on_ = this;
   }
@@ -1039,7 +1040,7 @@ void GlContext::WaitForGlFinishCountPast(int64_t count_to_pass) {
   // sooner, we are done.
   RunWithoutWaiting(std::move(finish_task));
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     while (gl_finish_count_ <= count_to_pass) {
       if (other && other->gl_finish_count_ < other->gl_finish_count_target_) {
         // If another context's dedicated thread is current, it is blocked
@@ -1052,12 +1053,12 @@ void GlContext::WaitForGlFinishCountPast(int64_t count_to_pass) {
         //
         // We unlock this context's mutex to avoid holding both at the same
         // time.
-        mutex_.Unlock();
+        mutex_.unlock();
         {
           glFinish();
           other->GlFinishCalled();
         }
-        mutex_.Lock();
+        mutex_.lock();
         // Because we temporarily unlocked mutex_, we cannot wait on the
         // condition variable wait away; we need to go back to re-checking the
         // condition. Otherwise we might miss a signal.
@@ -1069,7 +1070,7 @@ void GlContext::WaitForGlFinishCountPast(int64_t count_to_pass) {
 
   if (other) {
     // The other context is no longer waiting on us.
-    absl::MutexLock other_lock(&other->mutex_);
+    absl::MutexLock other_lock(other->mutex_);
     other->context_waiting_on_ = nullptr;
   }
 }
@@ -1167,7 +1168,22 @@ void GlContext::SetStandardTextureParams(GLenum target, GLint internal_format) {
   glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
-const GlContext::Attachment<GLuint> kUtilityFramebuffer(
+void GlContext::ProfilingHelperOwner::CreateIfUnset(
+    std::shared_ptr<mediapipe::ProfilingContext> profiling_context) {
+  if (profiling_context && !is_set_) {
+    absl::MutexLock lock(mutex_);
+    if (!is_set_) {
+      profiling_helper_ = profiling_context->CreateGlProfilingHelper();
+      is_set_ = profiling_helper_ != nullptr;
+    }
+  }
+}
+
+mediapipe::GlProfilingHelper* GlContext::ProfilingHelperOwner::Get() const {
+  return is_set_ ? profiling_helper_.get() : nullptr;
+}
+
+ABSL_CONST_INIT const GlContext::Attachment<GLuint> kUtilityFramebuffer(
     [](GlContext&) -> GlContext::Attachment<GLuint>::Ptr {
       GLuint framebuffer;
       glGenFramebuffers(1, &framebuffer);

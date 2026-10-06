@@ -52,6 +52,7 @@ constexpr char kNormRectStreamName[] = "norm_rect_in";
 constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kQualityScoresStreamName[] = "quality_scores";
 constexpr char kQualityScoresTag[] = "QUALITY_SCORES";
+constexpr char kTaskName[] = "ImageSegmenter";
 constexpr char kSubgraphTypeName[] =
     "mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
@@ -193,17 +194,21 @@ absl::StatusOr<std::unique_ptr<ImageSegmenter>> ImageSegmenter::Create(
               image_packet.Timestamp().Value() / kMicroSecondsPerMilliSecond);
         };
   }
-  auto image_segmenter =
-      core::VisionTaskApiFactory::Create<ImageSegmenter,
-                                         ImageSegmenterGraphOptionsProto>(
-          CreateGraphConfig(
-              std::move(options_proto), options->output_confidence_masks,
-              options->output_category_mask,
-              options->running_mode == core::RunningMode::LIVE_STREAM),
-          std::move(options->base_options.op_resolver), options->running_mode,
-          std::move(packets_callback),
-          /*disable_default_service=*/
-          options->base_options.disable_default_service);
+  auto image_segmenter = core::VisionTaskApiFactory::Create<
+      ImageSegmenter, ImageSegmenterGraphOptionsProto>(
+      {.config = CreateGraphConfig(
+           std::move(options_proto), options->output_confidence_masks,
+           options->output_category_mask,
+           options->running_mode == core::RunningMode::LIVE_STREAM),
+       .task_name = kTaskName,
+       .task_running_mode = core::GetCoreRunningMode(options->running_mode),
+       .op_resolver = std::move(options->base_options.op_resolver),
+       .packets_callback = std::move(packets_callback),
+       .disable_default_service = options->base_options.disable_default_service,
+       .host_environment = options->base_options.host_environment,
+       .host_system = options->base_options.host_system,
+       .host_version = options->base_options.host_version,
+       .ca_bundle_path = options->base_options.ca_bundle_path});
   if (!image_segmenter.ok()) {
     return image_segmenter.status();
   }

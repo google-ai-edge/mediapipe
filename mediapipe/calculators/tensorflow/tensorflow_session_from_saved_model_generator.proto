@@ -53,9 +53,16 @@ message TensorFlowSessionFromSavedModelGeneratorOptions {
   // automatically taken care of.
   optional bool use_tpu = 5 [deprecated = true];
   // User specified tags in a saved model.
-  // If no tag is specified, then use "serve" as the default. Note that in order
+  // If no tag is specified and saved_model_has_empty_tag is left to its default
+  // value of false, then use "serve" as the default. Note that in order
   // to use TPU accelerator hardware, the tag "tpu" needs to be specified.
   repeated string saved_model_tag = 6;
+
+  // Set this to true if the model has an empty list of tags. Note, that this
+  // needs to be set to true in this case, as just setting `saved_model_tag` to
+  // an empty list will set the tag to "serve" by default. If set to true, the
+  // value of `saved_model_tag` will be ignored.
+  optional bool saved_model_has_empty_tag = 10 [default = false];
 
   // Tensorflow session config options.
   optional tensorflow.ConfigProto session_config = 9;

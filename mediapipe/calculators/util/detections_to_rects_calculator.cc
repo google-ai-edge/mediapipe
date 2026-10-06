@@ -328,7 +328,7 @@ absl::Status DetectionsToRectsCalculator::ComputeRotation(
 
 DetectionSpec DetectionsToRectsCalculator::GetDetectionSpec(
     const CalculatorContext* cc) {
-  absl::optional<std::pair<int, int>> image_size;
+  std::optional<std::pair<int, int>> image_size;
   if (HasTagValue(cc->Inputs(), kImageSizeTag)) {
     image_size = cc->Inputs().Tag(kImageSizeTag).Get<std::pair<int, int>>();
   }

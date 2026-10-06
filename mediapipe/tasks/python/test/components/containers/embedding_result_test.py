@@ -22,8 +22,8 @@ import numpy as np
 from mediapipe.tasks.python.components.containers import embedding_result as embedding_result_module
 from mediapipe.tasks.python.components.containers import embedding_result_c as embedding_result_c_module
 
-_EmbeddingC = embedding_result_c_module.EmbeddingC
-_EmbeddingResultC = embedding_result_c_module.EmbeddingResultC
+_EmbeddingC = embedding_result_c_module.MpEmbeddingC
+_EmbeddingResultC = embedding_result_c_module.MpEmbeddingResultC
 _EmbeddingResult = embedding_result_module.EmbeddingResult
 
 
@@ -32,7 +32,7 @@ def _create_c_embedding_result(
     is_quantized: bool,
     timestamp_ms: int | None = None,
 ) -> _EmbeddingResultC:
-  """Creates a mock C EmbeddingResultC struct."""
+  """Creates a mock C MpEmbeddingResultC struct."""
   c_embedding = _EmbeddingC(
       values_count=len(values),
       head_index=0,

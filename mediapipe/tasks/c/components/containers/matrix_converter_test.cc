@@ -26,8 +26,8 @@ TEST(MatrixConversionTest, ConvertsEigenMatrixToCMatrixAndFreesMemory) {
   Eigen::MatrixXf cpp_matrix(2, 2);
   cpp_matrix << 1.0f, 2.0f, 3.0f, 4.0f;
 
-  // Convert this Eigen matrix to C-style Matrix
-  ::Matrix c_matrix;
+  // Convert this Eigen matrix to C-style MpMatrix
+  MpMatrix c_matrix;
   CppConvertToMatrix(cpp_matrix, &c_matrix);
 
   // Verify the conversion
@@ -39,7 +39,7 @@ TEST(MatrixConversionTest, ConvertsEigenMatrixToCMatrixAndFreesMemory) {
   EXPECT_FLOAT_EQ(c_matrix.data[2], 2.0f);
   EXPECT_FLOAT_EQ(c_matrix.data[3], 4.0f);
 
-  // Close the C-style Matrix
+  // Close the C-style MpMatrix
   CppCloseMatrix(&c_matrix);
 
   // Verify that memory is freed

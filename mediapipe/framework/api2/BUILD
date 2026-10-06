@@ -183,6 +183,7 @@ cc_library(
         "//mediapipe/framework:calculator_contract",
         "//mediapipe/framework:output_side_packet",
         "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:type_util",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/strings",

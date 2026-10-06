@@ -77,7 +77,7 @@ PacketType& PacketType::Optional() {
 }
 
 bool PacketType::IsInitialized() const {
-  return !absl::holds_alternative<absl::monostate>(type_spec_);
+  return !absl::holds_alternative<std::monostate>(type_spec_);
 }
 
 const PacketType* PacketType::SameAsPtr() const {

@@ -39,10 +39,10 @@ extern "C" {
 typedef struct MpHandLandmarkerInternal* MpHandLandmarkerPtr;
 
 // The options for configuring a MediaPipe hand landmarker task.
-struct HandLandmarkerOptions {
+struct MpHandLandmarkerOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
-  struct BaseOptions base_options;
+  struct MpBaseOptions base_options;
 
   // The running mode of the task. Default to the image mode.
   // HandLandmarker has three running modes:
@@ -52,7 +52,7 @@ struct HandLandmarkerOptions {
   // 3) The live stream mode for recognizing hand landmarks on the live stream
   //    of input data, such as from camera. In this mode, the "result_callback"
   //    below must be specified to receive the detection results asynchronously.
-  RunningMode running_mode;
+  MpRunningMode running_mode;
 
   // The maximum number of hands can be detected by the HandLandmarker.
   int num_hands = 1;
@@ -71,15 +71,15 @@ struct HandLandmarkerOptions {
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
-  // to RunningMode::LIVE_STREAM. Arguments of the callback function include:
-  // the pointer to recognition result, the image that result was obtained
-  // on, the timestamp relevant to recognition results and pointer to error
-  // message in case of any failure. The validity of the passed arguments is
-  // true for the lifetime of the callback function.
+  // to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
+  // function include: the pointer to recognition result, the image that result
+  // was obtained on, the timestamp relevant to recognition results and pointer
+  // to error message in case of any failure. The validity of the passed
+  // arguments is true for the lifetime of the callback function.
   //
   // The passed arguments are only valid for the lifetime of the callback.
   typedef void (*result_callback_fn)(MpStatus status,
-                                     const HandLandmarkerResult* result,
+                                     const MpHandLandmarkerResult* result,
                                      MpImagePtr image, int64_t timestamp_ms);
   result_callback_fn result_callback;
 };
@@ -92,13 +92,13 @@ struct HandLandmarkerOptions {
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
 // `free()`.
-MP_EXPORT MpStatus MpHandLandmarkerCreate(struct HandLandmarkerOptions* options,
-                                          MpHandLandmarkerPtr* landmarker,
-                                          char** error_msg);
+MP_EXPORT MpStatus
+MpHandLandmarkerCreate(struct MpHandLandmarkerOptions* options,
+                       MpHandLandmarkerPtr* landmarker, char** error_msg);
 
 // Performs hand landmark detection on the input `image`.
 // If successful, returns `kMpOk` and sets `*result` to the new
-// `HandLandmarkerResult`.
+// `MpHandLandmarkerResult`.
 //
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
@@ -106,8 +106,8 @@ MP_EXPORT MpStatus MpHandLandmarkerCreate(struct HandLandmarkerOptions* options,
 // `free()`.
 MP_EXPORT MpStatus
 MpHandLandmarkerDetectImage(MpHandLandmarkerPtr landmarker, MpImagePtr image,
-                            const struct ImageProcessingOptions* options,
-                            HandLandmarkerResult* result, char** error_msg);
+                            const struct MpImageProcessingOptions* options,
+                            MpHandLandmarkerResult* result, char** error_msg);
 
 // Performs hand landmark detection on the provided video frame.
 // Only use this method when the HandLandmarker is created with the video
@@ -116,7 +116,7 @@ MpHandLandmarkerDetectImage(MpHandLandmarkerPtr landmarker, MpImagePtr image,
 // provide the video frame's timestamp (in milliseconds). The input timestamps
 // must be monotonically increasing.
 // If successful, returns `kMpOk` and sets `*result` to the new
-// `HandLandmarkerResult`.
+// `MpHandLandmarkerResult`.
 //
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon
@@ -124,11 +124,11 @@ MpHandLandmarkerDetectImage(MpHandLandmarkerPtr landmarker, MpImagePtr image,
 // `free()`.
 MP_EXPORT MpStatus MpHandLandmarkerDetectForVideo(
     MpHandLandmarkerPtr landmarker, MpImagePtr image,
-    const struct ImageProcessingOptions* options, int64_t timestamp_ms,
-    HandLandmarkerResult* result, char** error_msg);
+    const struct MpImageProcessingOptions* options, int64_t timestamp_ms,
+    MpHandLandmarkerResult* result, char** error_msg);
 
 // Sends live image data to hand landmark detection, and the results will be
-// available via the `result_callback` provided in the HandLandmarkerOptions.
+// available via the `result_callback` provided in the MpHandLandmarkerOptions.
 // Only use this method when the HandLandmarker is created with the live
 // stream running mode.
 // The image can be of any size with format RGB or RGBA. It's required to
@@ -136,7 +136,7 @@ MP_EXPORT MpStatus MpHandLandmarkerDetectForVideo(
 // sent to the hand landmarker. The input timestamps must be monotonically
 // increasing.
 // The `result_callback` provides:
-//   - The recognition results as an HandLandmarkerResult object.
+//   - The recognition results as an MpHandLandmarkerResult object.
 //   - The const reference to the corresponding input image that the hand
 //     landmarker runs on. Note that the const reference to the image will no
 //     longer be valid when the callback returns. To access the image data
@@ -149,12 +149,12 @@ MP_EXPORT MpStatus MpHandLandmarkerDetectForVideo(
 // message with `free()`.
 MP_EXPORT MpStatus
 MpHandLandmarkerDetectAsync(MpHandLandmarkerPtr landmarker, MpImagePtr image,
-                            const struct ImageProcessingOptions* options,
+                            const struct MpImageProcessingOptions* options,
                             int64_t timestamp_ms, char** error_msg);
 
-// Frees the memory allocated inside a HandLandmarkerResult result.
+// Frees the memory allocated inside a MpHandLandmarkerResult result.
 // Does not free the result pointer itself.
-MP_EXPORT void MpHandLandmarkerCloseResult(HandLandmarkerResult* result);
+MP_EXPORT void MpHandLandmarkerCloseResult(MpHandLandmarkerResult* result);
 
 // Frees hand landmarker.
 //

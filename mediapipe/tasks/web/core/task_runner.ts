@@ -30,7 +30,10 @@ import {
   WasmMediaPipeConstructor,
   createMediaPipeLib,
 } from '../../../web/graph_runner/graph_runner';
+import {SupportLogging} from '../../../web/graph_runner/graph_runner_logging_lib';
 import {SupportModelResourcesGraphService} from '../../../web/graph_runner/register_model_resources_graph_service';
+import {TaskLogger} from './task_logger';
+import {createTasksLogger} from './task_logger_factory';
 
 import {WasmFileset} from './wasm_fileset';
 
@@ -39,7 +42,9 @@ const FREE_MEMORY_STREAM = 'free_memory';
 const UNUSED_STREAM_SUFFIX = '_unused_out';
 
 // tslint:disable-next-line:enforce-name-casing
-const CachedGraphRunnerType = SupportModelResourcesGraphService(GraphRunner);
+const CachedGraphRunnerType = SupportLogging(
+  SupportModelResourcesGraphService(GraphRunner),
+);
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -83,6 +88,7 @@ export async function createTaskRunner<T extends TaskRunner>(
     canvas,
     fileLocator,
   );
+  instance.enableLogging(type.name, options);
   await instance.setOptions(options);
   return instance;
 }
@@ -90,6 +96,7 @@ export async function createTaskRunner<T extends TaskRunner>(
 /** Base class for all MediaPipe Tasks. */
 export abstract class TaskRunner {
   protected abstract baseOptions: BaseOptionsProto;
+  protected logger?: TaskLogger;
   private processingErrors: Error[] = [];
   private latestOutputTimestamp = 0;
   private keepaliveNode?: CalculatorGraphConfig.Node;
@@ -117,6 +124,12 @@ export abstract class TaskRunner {
 
   /** Configures the task with custom options. */
   abstract setOptions(options: TaskRunnerOptions): Promise<void>;
+
+  enableLogging(taskName: string, options: TaskRunnerOptions): void {
+    const runningMode = (options as {runningMode: string}).runningMode ?? '';
+    const apiKey = this.graphRunner.getMediapipeApiKey();
+    this.logger = createTasksLogger(taskName, runningMode, apiKey);
+  }
 
   /**
    * Applies the current set of options, including optionally any base options
@@ -251,8 +264,23 @@ export abstract class TaskRunner {
     this.graphRunner.registerModelResourcesGraphService();
 
     this.graphRunner.setGraph(graphData, isBinary);
+    this.logger?.logSessionStart();
     this.keepaliveNode = undefined;
     this.handleErrors();
+  }
+
+  /**
+   * Signals beginning of graph processing.
+   * @param timestamp The timestamp of the input packets.
+   */
+  protected startProcessing(timestamp?: number): void {
+    if (this.logger && timestamp !== undefined) {
+      if (this.baseOptions.getAcceleration()?.hasGpu()) {
+        this.logger.recordGpuInputArrival(timestamp);
+      } else {
+        this.logger.recordCpuInputArrival(timestamp);
+      }
+    }
   }
 
   /**
@@ -260,9 +288,12 @@ export abstract class TaskRunner {
    * far as possible, performing all processing until no more processing can be
    * done.
    */
-  protected finishProcessing(): void {
+  protected finishProcessing(timestamp?: number): void {
     this.graphRunner.finishProcessing();
     this.handleErrors();
+    if (this.logger && timestamp !== undefined) {
+      this.logger.recordInvocationEnd(timestamp);
+    }
   }
 
   /*
@@ -278,11 +309,11 @@ export abstract class TaskRunner {
   }
 
   /**
-   * Gets a syncthethic timestamp in ms that can be used to send data to the
+   * Gets a synthetic timestamp in ms that can be used to send data to the
    * next packet. The timestamp is one millisecond past the last timestamp
    * received from the graph.
    */
-  protected getSynctheticTimestamp(): number {
+  protected getSyntheticTimestamp(): number {
     return this.latestOutputTimestamp + 1;
   }
 
@@ -381,6 +412,8 @@ export abstract class TaskRunner {
    */
   close(): void {
     this.keepaliveNode = undefined;
+    this.logger?.logSessionEnd();
+    this.logger?.close();
     this.graphRunner.closeGraph();
   }
 }

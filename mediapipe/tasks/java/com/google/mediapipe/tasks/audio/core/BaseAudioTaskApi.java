@@ -43,7 +43,7 @@ public class BaseAudioTaskApi implements AutoCloseable {
   private double defaultSampleRate;
 
   static {
-    System.loadLibrary("mediapipe_tasks_audio_jni");
+    System.loadLibrary("mediapipe_tasks_jni");
   }
 
   /**

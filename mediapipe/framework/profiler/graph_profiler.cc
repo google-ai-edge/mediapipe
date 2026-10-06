@@ -158,7 +158,7 @@ GraphProfiler::~GraphProfiler() {}
 
 void GraphProfiler::Initialize(
     const ValidatedGraphConfig& validated_graph_config) {
-  absl::WriterMutexLock lock(&profiler_mutex_);
+  absl::WriterMutexLock lock(profiler_mutex_);
   validated_graph_ = &validated_graph_config;
   ABSL_CHECK(!is_initialized_)
       << "Cannot initialize the profiler for the same graph multiple times.";
@@ -202,7 +202,7 @@ void GraphProfiler::Initialize(
 }
 
 void GraphProfiler::SetClock(const std::shared_ptr<mediapipe::Clock>& clock) {
-  absl::WriterMutexLock lock(&profiler_mutex_);
+  absl::WriterMutexLock lock(profiler_mutex_);
   ABSL_CHECK(clock) << "GraphProfiler::SetClock() is called with a nullptr.";
   clock_ = clock;
 }
@@ -226,7 +226,7 @@ void GraphProfiler::Resume() {
 }
 
 void GraphProfiler::Reset() {
-  absl::WriterMutexLock lock(&profiler_mutex_);
+  absl::WriterMutexLock lock(profiler_mutex_);
   for (auto iter = calculator_profiles_.begin();
        iter != calculator_profiles_.end(); ++iter) {
     CalculatorProfile* calculator_profile = &iter->second;
@@ -313,7 +313,7 @@ void GraphProfiler::LogEvent(const TraceEvent& event) {
 }
 
 void GraphProfiler::AddPacketInfo(const TraceEvent& packet_info) {
-  absl::ReaderMutexLock lock(&profiler_mutex_);
+  absl::ReaderMutexLock lock(profiler_mutex_);
   if (!is_profiling_) {
     return;
   }
@@ -342,7 +342,7 @@ void GraphProfiler::AddPacketInfo(const TraceEvent& packet_info) {
 
 absl::Status GraphProfiler::GetCalculatorProfiles(
     std::vector<CalculatorProfile>* profiles) const {
-  absl::ReaderMutexLock lock(&profiler_mutex_);
+  absl::ReaderMutexLock lock(profiler_mutex_);
   RET_CHECK(is_initialized_)
       << "GetCalculatorProfiles can only be called after Initialize()";
   for (auto& entry : calculator_profiles_) {
@@ -448,7 +448,7 @@ int64_t GraphProfiler::AddStreamLatencies(
 void GraphProfiler::SetOpenRuntime(const CalculatorContext& calculator_context,
                                    int64_t start_time_usec,
                                    int64_t end_time_usec) {
-  absl::ReaderMutexLock lock(&profiler_mutex_);
+  absl::ReaderMutexLock lock(profiler_mutex_);
   if (!is_profiling_) {
     return;
   }
@@ -471,7 +471,7 @@ void GraphProfiler::SetOpenRuntime(const CalculatorContext& calculator_context,
 void GraphProfiler::SetCloseRuntime(const CalculatorContext& calculator_context,
                                     int64_t start_time_usec,
                                     int64_t end_time_usec) {
-  absl::ReaderMutexLock lock(&profiler_mutex_);
+  absl::ReaderMutexLock lock(profiler_mutex_);
   if (!is_profiling_) {
     return;
   }
@@ -561,7 +561,7 @@ int64_t GraphProfiler::AddInputStreamTimeSamples(
 void GraphProfiler::AddProcessSample(
     const CalculatorContext& calculator_context, int64_t start_time_usec,
     int64_t end_time_usec) {
-  absl::ReaderMutexLock lock(&profiler_mutex_);
+  absl::ReaderMutexLock lock(profiler_mutex_);
   if (!is_profiling_) {
     return;
   }
@@ -755,15 +755,16 @@ absl::Status GraphProfiler::WriteProfile() {
   // Write the GraphProfile to the trace_log_path.
   int log_index = previous_log_index / log_interval_count % log_file_count;
   std::string log_path = absl::StrCat(trace_log_path, log_index, ".binarypb");
-  std::ofstream ofs;
+  std::string profile_bytes;
+  RET_CHECK(profile.SerializeToString(&profile_bytes))
+      << "Could not serialize GraphProfile";
   if (is_new_file) {
-    ofs.open(log_path, std::ofstream::out | std::ofstream::trunc);
+    RET_CHECK(mediapipe::file::SetContents(log_path, profile_bytes).ok())
+        << "Could not write binary GraphProfile to: " << log_path;
   } else {
-    ofs.open(log_path, std::ofstream::out | std::ofstream::app);
+    RET_CHECK(mediapipe::file::AppendStringToFile(log_path, profile_bytes).ok())
+        << "Could not write binary GraphProfile to: " << log_path;
   }
-  OstreamStream out(&ofs);
-  RET_CHECK(profile.SerializeToZeroCopyStream(&out))
-      << "Could not write binary GraphProfile to: " << log_path;
   return absl::OkStatus();
 }
 

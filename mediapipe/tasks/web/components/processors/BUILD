@@ -1,11 +1,11 @@
 # This package contains options shared by all MediaPipe Tasks for Web.
 
-load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_library")
+load("//mediapipe/framework/port:build_config.bzl", "ts_library")
+load("//mediapipe/tasks/web:build_defs.bzl", "jasmine_node_test")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
-mediapipe_ts_library(
+ts_library(
     name = "classifier_options",
     srcs = ["classifier_options.ts"],
     deps = [
@@ -14,7 +14,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "classifier_options_test_lib",
     testonly = True,
     srcs = ["classifier_options_test.ts"],
@@ -30,7 +30,7 @@ jasmine_node_test(
     srcs = [":classifier_options_test_lib"],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "classifier_result",
     srcs = ["classifier_result.ts"],
     deps = [
@@ -41,7 +41,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "classifier_result_test_lib",
     testonly = True,
     srcs = ["classifier_result_test.ts"],
@@ -57,7 +57,7 @@ jasmine_node_test(
     srcs = [":classifier_result_test_lib"],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "detection_result",
     srcs = ["detection_result.ts"],
     deps = [
@@ -66,7 +66,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "detection_result_test_lib",
     testonly = True,
     srcs = ["detection_result_test.ts"],
@@ -78,7 +78,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "embedder_result",
     srcs = ["embedder_result.ts"],
     deps = [
@@ -88,7 +88,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "embedder_result_test_lib",
     testonly = True,
     srcs = ["embedder_result_test.ts"],
@@ -103,7 +103,7 @@ jasmine_node_test(
     srcs = [":embedder_result_test_lib"],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "embedder_options",
     srcs = ["embedder_options.ts"],
     deps = [
@@ -112,7 +112,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "embedder_options_test_lib",
     testonly = True,
     srcs = ["embedder_options_test.ts"],
@@ -128,7 +128,7 @@ jasmine_node_test(
     srcs = [":embedder_options_test_lib"],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "landmark_result",
     srcs = [
         "landmark_result.ts",
@@ -140,7 +140,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "landmark_result_test_lib",
     testonly = True,
     srcs = ["landmark_result_test.ts"],

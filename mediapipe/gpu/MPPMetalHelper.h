@@ -42,6 +42,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// Calculators should use this in GetContract.
 + (absl::Status)updateContract:(mediapipe::CalculatorContract*)cc;
 
+/// Configures a calculator's contract for accessing GPU resources.
+/// If request_gpu_as_optional is true, GpuResources are optional.
+/// Calculators should use this in GetContract.
++ (absl::Status)updateContract:(mediapipe::CalculatorContract*)cc
+          requestGpuAsOptional:(bool)requestGpuAsOptional;
+
 /// Deprecated initializer.
 - (instancetype)initWithSidePackets:(const mediapipe::PacketSet&)inputSidePackets;
 

@@ -584,6 +584,14 @@ JNIEXPORT jfloatArray JNICALL PACKET_GETTER_METHOD(nativeGetMatrixData)(
   return float_data;
 }
 
+JNIEXPORT jobject JNICALL PACKET_GETTER_METHOD(nativeGetMatrixBuffer)(
+    JNIEnv* env, jobject thiz, jlong packet) {
+  const mediapipe::Matrix& audio_mat =
+      GetFromNativeHandle<mediapipe::Matrix>(packet);
+  void* unsafe_ptr = static_cast<void*>(const_cast<float*>(audio_mat.data()));
+  return env->NewDirectByteBuffer(unsafe_ptr, audio_mat.size() * sizeof(float));
+}
+
 JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetMatrixRows)(JNIEnv* env,
                                                                  jobject thiz,
                                                                  jlong packet) {

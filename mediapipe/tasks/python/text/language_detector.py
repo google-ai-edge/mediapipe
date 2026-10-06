@@ -47,7 +47,7 @@ class LanguageDetectorResult:
   detections: List[Detection]
 
 
-class LanguageDetectorPredictionC(ctypes.Structure):
+class MpLanguageDetectorPredictionC(ctypes.Structure):
   """A language code and its probability."""
 
   _fields_ = [
@@ -56,17 +56,17 @@ class LanguageDetectorPredictionC(ctypes.Structure):
   ]
 
 
-class LanguageDetectorResultC(ctypes.Structure):
+class MpLanguageDetectorResultC(ctypes.Structure):
   """Language detector output."""
 
   _fields_ = [
-      ("predictions", ctypes.POINTER(LanguageDetectorPredictionC)),
+      ("predictions", ctypes.POINTER(MpLanguageDetectorPredictionC)),
       ("predictions_count", ctypes.c_uint32),
   ]
 
 
 def _convert_to_python_language_detector_result(
-    c_result: LanguageDetectorResultC,
+    c_result: MpLanguageDetectorResultC,
 ) -> LanguageDetectorResult:
   """Converts a C LanguageDetectorResult to a Python LanguageDetectorResult."""
   py_result = LanguageDetectorResult(detections=[])
@@ -80,10 +80,10 @@ def _convert_to_python_language_detector_result(
   return py_result
 
 
-class LanguageDetectorOptionsC(ctypes.Structure):
+class MpLanguageDetectorOptionsC(ctypes.Structure):
   _fields_ = [
-      ("base_options", base_options_c_module.BaseOptionsC),
-      ("classifier_options", classifier_options_c_module.ClassifierOptionsC),
+      ("base_options", base_options_c_module.MpBaseOptionsC),
+      ("classifier_options", classifier_options_c_module.MpClassifierOptionsC),
   ]
 
 
@@ -115,8 +115,8 @@ class LanguageDetectorOptions:
   category_allowlist: Optional[List[str]] = None
   category_denylist: Optional[List[str]] = None
 
-  def to_ctypes(self) -> LanguageDetectorOptionsC:
-    """Generates a ctypes LanguageDetectorOptionsC."""
+  def to_ctypes(self) -> MpLanguageDetectorOptionsC:
+    """Generates a ctypes MpLanguageDetectorOptionsC."""
     base_options_c = self.base_options.to_ctypes()
     classifier_options_c = (
         classifier_options_c_module.convert_to_classifier_options_c(
@@ -130,7 +130,7 @@ class LanguageDetectorOptions:
         )
     )
 
-    c_options = LanguageDetectorOptionsC()
+    c_options = MpLanguageDetectorOptionsC()
     c_options.base_options = base_options_c
     c_options.classifier_options = classifier_options_c
     return c_options
@@ -140,7 +140,7 @@ _CTYPES_SIGNATURES = (
     mediapipe_c_utils.CStatusFunction(
         "MpLanguageDetectorCreate",
         (
-            ctypes.POINTER(LanguageDetectorOptionsC),
+            ctypes.POINTER(MpLanguageDetectorOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
         ),
     ),
@@ -149,18 +149,16 @@ _CTYPES_SIGNATURES = (
         (
             ctypes.c_void_p,
             ctypes.c_char_p,
-            ctypes.POINTER(LanguageDetectorResultC),
+            ctypes.POINTER(MpLanguageDetectorResultC),
         ),
     ),
     mediapipe_c_utils.CStatusFunction(
         "MpLanguageDetectorClose",
-        (
-            ctypes.c_void_p,
-        ),
+        (ctypes.c_void_p,),
     ),
     mediapipe_c_utils.CFunction(
         "MpLanguageDetectorCloseResult",
-        [ctypes.POINTER(LanguageDetectorResultC)],
+        [ctypes.POINTER(MpLanguageDetectorResultC)],
         None,
     ),
 )
@@ -255,7 +253,7 @@ class LanguageDetector:
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If language detection failed to run.
     """
-    ctypes_result = LanguageDetectorResultC()
+    ctypes_result = MpLanguageDetectorResultC()
 
     self._lib.MpLanguageDetectorDetect(
         self._detector_handle,

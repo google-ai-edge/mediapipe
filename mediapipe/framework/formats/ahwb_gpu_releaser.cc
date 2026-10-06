@@ -28,6 +28,21 @@ bool IsGlSupported() {
 
 AhwbGpuReleaser::AhwbGpuResources::~AhwbGpuResources() {
   CompleteAndEraseUsages(ahwb_usages_);
+  if (ssbo_read_ != nullptr) {
+    glDeleteSync(ssbo_read_);
+    ssbo_read_ = nullptr;
+  }
+  if (fence_sync_ != EGL_NO_SYNC_KHR && IsGlSupported()) {
+    auto egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    if (egl_display != EGL_NO_DISPLAY) {
+      eglDestroySyncKHR(egl_display, fence_sync_);
+    }
+    fence_sync_ = EGL_NO_SYNC_KHR;
+  }
+  if (opengl_buffer_ != GL_INVALID_INDEX) {
+    glDeleteBuffers(1, &opengl_buffer_);
+    opengl_buffer_ = GL_INVALID_INDEX;
+  }
 }
 
 absl::Status AhwbGpuReleaser::AddAndFreeUnusedResources(

@@ -582,6 +582,7 @@ cc_library(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:map_util",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
@@ -1852,6 +1853,7 @@ cc_test(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 
@@ -1944,11 +1946,11 @@ cc_library(
     hdrs = ["memory_manager.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework:port",
+        ":port",
+        "//mediapipe/gpu:multi_pool",
     ] + select({
         "//mediapipe:android": [
             "//mediapipe/framework/formats:hardware_buffer_pool",
-            "//mediapipe/gpu:multi_pool",
         ],
         "//conditions:default": [],
     }),

@@ -291,6 +291,11 @@ options can be specified in the `options` field using proto2 syntax.
   }
 ```
 
+> [!NOTE] For details on using the LiteRT Inference Calculator
+> (`InferenceCalculator` with `litert` delegate) and configuring/linking its
+> accelerators (GPU, NPU/TPU), see
+> [Using LiteRT in MediaPipe](https://github.com/google-ai-edge/mediapipe/tree/master/odml/litert/opensource_only/g3doc/google/litert_mediapipe.md).
+
 Not all calculators accept calcuator options. In order to accept options, a
 calculator will normally define a new protobuf message type to represent its
 options, such as `PacketClonerCalculatorOptions`. The calculator will then

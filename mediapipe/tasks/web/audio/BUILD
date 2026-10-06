@@ -1,12 +1,11 @@
 # This contains the MediaPipe Audio Tasks.
 
-load("@build_bazel_rules_nodejs//:index.bzl", "pkg_npm")
-load("@npm//@bazel/rollup:index.bzl", "rollup_bundle")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_library")
+load("//mediapipe/framework/port:build_config.bzl", "ts_library")
 load(
     "//mediapipe/framework/tool:mediapipe_files.bzl",
     "mediapipe_files",
 )
+load("//mediapipe/tasks/web:build_defs.bzl", "pkg_npm", "rollup_bundle")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -15,14 +14,14 @@ AUDIO_LIBS = [
     "//mediapipe/tasks/web/core:fileset_resolver",
 ]
 
-mediapipe_ts_library(
+ts_library(
     name = "audio_lib",
     srcs = ["index.ts"],
     visibility = ["//visibility:public"],
     deps = AUDIO_LIBS,
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "audio_types",
     srcs = ["types.ts"],
     visibility = ["//visibility:public"],
@@ -32,6 +31,8 @@ mediapipe_ts_library(
 mediapipe_files(srcs = [
     "wasm/audio_wasm_internal.js",
     "wasm/audio_wasm_internal.wasm",
+    "wasm/audio_wasm_module_internal.js",
+    "wasm/audio_wasm_module_internal.wasm",
     "wasm/audio_wasm_nosimd_internal.js",
     "wasm/audio_wasm_nosimd_internal.wasm",
 ])
@@ -45,10 +46,10 @@ rollup_bundle(
     sourcemap = "true",
     deps = [
         ":audio_lib",
-        "@npm//@rollup/plugin-commonjs",
-        "@npm//@rollup/plugin-node-resolve",
-        "@npm//@rollup/plugin-terser",
-        "@npm//google-protobuf",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
     ],
 )
 
@@ -61,10 +62,30 @@ rollup_bundle(
     sourcemap = "true",
     deps = [
         ":audio_lib",
-        "@npm//@rollup/plugin-commonjs",
-        "@npm//@rollup/plugin-node-resolve",
-        "@npm//@rollup/plugin-terser",
-        "@npm//google-protobuf",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
+    ],
+)
+
+rollup_bundle(
+    name = "audio_bundle_iife",
+    args = [
+        "--name",
+        "Audio",
+    ],
+    config_file = "//mediapipe/tasks/web:rollup.config.mjs",
+    entry_point = "index.ts",
+    format = "iife",
+    output_dir = False,
+    sourcemap = "true",
+    deps = [
+        ":audio_lib",
+        "//:node_modules/@rollup/plugin-commonjs",
+        "//:node_modules/@rollup/plugin-node-resolve",
+        "//:node_modules/@rollup/plugin-terser",
+        "//:node_modules/google-protobuf",
     ],
 )
 
@@ -73,17 +94,20 @@ genrule(
     srcs = [
         ":audio_bundle_cjs",
         ":audio_bundle_mjs",
+        ":audio_bundle_iife",
     ],
     outs = [
         "audio_bundle.cjs",
         "audio_bundle.cjs.map",
         "audio_bundle.mjs",
         "audio_bundle.mjs.map",
+        "audio_bundle.js",
+        "audio_bundle.js.map",
     ],
     cmd = (
         "for FILE in $(SRCS); do " +
         "  OUT_FILE=$(GENDIR)/mediapipe/tasks/web/audio/$$(" +
-        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/'" +
+        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/; s/_iife\\.js/.js/'" +
         "  ); " +
         "  echo $$FILE ; echo $$OUT_FILE ; " +
         "  cp $$FILE $$OUT_FILE ; " +
@@ -91,29 +115,22 @@ genrule(
     ),
 )
 
-genrule(
-    name = "package_json",
-    srcs = ["//mediapipe/tasks/web:package.json"],
-    outs = ["package.json"],
-    cmd = "cp $< $@",
-)
-
 pkg_npm(
     name = "audio_pkg",
-    package_name = "@mediapipe/tasks-__NAME__",
     srcs = ["README.md"],
+    package_json = "//mediapipe/tasks/web:package.json",
     substitutions = {
         "__NAME__": "audio",
         "__DESCRIPTION__": "MediaPipe Audio Tasks",
         "__TYPES__": "audio.d.ts",
     },
-    tgz = "audio.tgz",
     deps = [
         "wasm/audio_wasm_internal.js",
         "wasm/audio_wasm_internal.wasm",
+        "wasm/audio_wasm_module_internal.js",
+        "wasm/audio_wasm_module_internal.wasm",
         "wasm/audio_wasm_nosimd_internal.js",
         "wasm/audio_wasm_nosimd_internal.wasm",
         ":audio_sources",
-        ":package_json",
     ],
 )

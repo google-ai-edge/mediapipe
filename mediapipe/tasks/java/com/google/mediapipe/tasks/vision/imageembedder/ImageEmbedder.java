@@ -16,6 +16,7 @@ package com.google.mediapipe.tasks.vision.imageembedder;
 
 import android.content.Context;
 import android.os.ParcelFileDescriptor;
+import androidx.annotation.Nullable;
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.proto.CalculatorOptionsProto.CalculatorOptions;
 import com.google.mediapipe.framework.AndroidPacketGetter;
@@ -87,7 +88,7 @@ public final class ImageEmbedder extends BaseVisionTaskApi {
       "mediapipe.tasks.vision.image_embedder.ImageEmbedderGraph";
 
   static {
-    System.loadLibrary("mediapipe_tasks_vision_jni");
+    System.loadLibrary("mediapipe_tasks_jni");
     ProtoUtil.registerTypeName(
         EmbeddingsProto.EmbeddingResult.class,
         "mediapipe.tasks.components.containers.proto.EmbeddingResult");

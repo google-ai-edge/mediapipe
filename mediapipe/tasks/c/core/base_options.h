@@ -21,14 +21,33 @@ extern "C" {
 #endif
 
 // The delegate to run MediaPipe.
-enum Delegate {
-  CPU = 0,
-  GPU = 1,
-  EDGETPU_NNAPI = 2,
+enum MpDelegate {
+  MP_DELEGATE_CPU = 0,
+  MP_DELEGATE_GPU = 1,
+  MP_DELEGATE_EDGETPU_NNAPI = 2,
+};
+
+// The environment that MediaPipe runs in.
+enum MpHostEnvironment {
+  MP_HOST_ENVIRONMENT_UNKNOWN = 0,
+  MP_HOST_ENVIRONMENT_ANDROID = 1,
+  MP_HOST_ENVIRONMENT_IOS = 2,
+  MP_HOST_ENVIRONMENT_PYTHON = 3,
+  MP_HOST_ENVIRONMENT_WEB = 4,
+};
+
+// Host OS on which MediaPipe tasks are running.
+enum MpHostSystem {
+  MP_HOST_SYSTEM_UNKNOWN = 0,
+  MP_HOST_SYSTEM_LINUX = 1,
+  MP_HOST_SYSTEM_MAC = 2,
+  MP_HOST_SYSTEM_WINDOWS = 3,
+  MP_HOST_SYSTEM_IOS = 4,
+  MP_HOST_SYSTEM_ANDROID = 5,
 };
 
 // Base options for MediaPipe C Tasks.
-struct BaseOptions {
+struct MpBaseOptions {
   // The model asset file contents as bytes.
   const char* model_asset_buffer;
 
@@ -38,8 +57,29 @@ struct BaseOptions {
   // The path to the model asset to open and mmap in memory.
   const char* model_asset_path;
 
+  // The file descriptor to a file opened with open(2).
+  int file_descriptor;
+
   // The delegate to use for the MediaPipe graph.
-  enum Delegate delegate;
+  enum MpDelegate delegate;
+
+  // The environment on which the task is running.
+  enum MpHostEnvironment host_environment;
+
+  // The OS on which the task is running.
+  enum MpHostSystem host_system;
+
+  // The host version, e.g., python version.
+  const char* host_version;
+
+  // The path to CA bundle to use for usage logging.
+  const char* ca_bundle_path;
+
+  // The app id of the host environment, e.g., Android package name.
+  const char* app_id;
+
+  // The app version of the host environment, e.g., Android version code.
+  const char* app_version;
 };
 
 #ifdef __cplusplus

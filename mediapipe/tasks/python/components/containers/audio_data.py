@@ -142,9 +142,9 @@ class AudioData(object):
     return self._buffer
 
   @doc_controls.do_not_generate_docs
-  def to_ctypes(self) -> audio_data_c.AudioDataC:
+  def to_ctypes(self) -> audio_data_c.MpAudioDataC:
     """Converts the object to a ctypes audio data object."""
-    return audio_data_c.AudioDataC(
+    return audio_data_c.MpAudioDataC(
         num_channels=self.audio_format.num_channels,
         sample_rate=self.audio_format.sample_rate,
         audio_data=self._buffer.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),

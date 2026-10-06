@@ -16,24 +16,37 @@
 import 'jasmine';
 
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
-import {Classification, ClassificationList} from '../../../../framework/formats/classification_pb';
+import {
+  Classification,
+  ClassificationList,
+} from '../../../../framework/formats/classification_pb';
 import {HolisticLandmarkerGraphOptions} from '../../../../tasks/cc/vision/holistic_landmarker/proto/holistic_landmarker_graph_options_pb';
-import {createLandmarks, createWorldLandmarks} from '../../../../tasks/web/components/processors/landmark_result_test_lib';
-import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, Deserializer, MediapipeTasksFake, SpyWasmModule, verifyGraph, verifyListenersRegistered} from '../../../../tasks/web/core/task_runner_test_utils';
+import {
+  createLandmarks,
+  createWorldLandmarks,
+} from '../../../../tasks/web/components/processors/landmark_result_test_lib';
+import {
+  addJasmineCustomFloatEqualityTester,
+  createSpyWasmModule,
+  Deserializer,
+  MediapipeTasksFake,
+  SpyWasmModule,
+  verifyGraph,
+  verifyListenersRegistered,
+} from '../../../../tasks/web/core/task_runner_test_utils';
 import {VisionGraphRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 
 import {HolisticLandmarker} from './holistic_landmarker';
-import {HolisticLandmarkerOptions} from './holistic_landmarker_options';
-
+import type {HolisticLandmarkerOptions} from './holistic_landmarker_options';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
 
-type ProtoListener = ((binaryProtos: Uint8Array, timestamp: number) => void);
-const holisticLandmarkerDeserializer =
-    (binaryProto =>
-         HolisticLandmarkerGraphOptions.deserializeBinary(binaryProto)
-             .toObject()) as Deserializer;
+type ProtoListener = (binaryProtos: Uint8Array, timestamp: number) => void;
+const holisticLandmarkerDeserializer = ((binaryProto) =>
+  HolisticLandmarkerGraphOptions.deserializeBinary(
+    binaryProto,
+  ).toObject()) as Deserializer;
 
 function createBlendshapes(): ClassificationList {
   const blendshapesProto = new ClassificationList();
@@ -46,29 +59,33 @@ function createBlendshapes(): ClassificationList {
   return blendshapesProto;
 }
 
-class HolisticLandmarkerFake extends HolisticLandmarker implements
-    MediapipeTasksFake {
+class HolisticLandmarkerFake
+  extends HolisticLandmarker
+  implements MediapipeTasksFake
+{
   calculatorName =
-      'mediapipe.tasks.vision.holistic_landmarker.HolisticLandmarkerGraph';
+    'mediapipe.tasks.vision.holistic_landmarker.HolisticLandmarkerGraph';
   attachListenerSpies: jasmine.Spy[] = [];
-  graph: CalculatorGraphConfig|undefined;
+  graph: CalculatorGraphConfig | undefined;
   fakeWasmModule: SpyWasmModule;
   listeners = new Map<string, ProtoListener>();
 
   constructor() {
     super(createSpyWasmModule(), /* glCanvas= */ null);
-    this.fakeWasmModule =
-        this.graphRunner.wasmModule as unknown as SpyWasmModule;
+    this.fakeWasmModule = this.graphRunner
+      .wasmModule as unknown as SpyWasmModule;
 
-    this.attachListenerSpies[0] =
-        spyOn(this.graphRunner, 'attachProtoListener')
-            .and.callFake((stream, listener) => {
-              expect(stream).toMatch(
-                  /(pose_landmarks|pose_world_landmarks|pose_segmentation_mask|face_landmarks|extra_blendshapes|left_hand_landmarks|left_hand_world_landmarks|right_hand_landmarks|right_hand_world_landmarks)/);
-              this.listeners.set(stream, listener);
-            });
+    this.attachListenerSpies[0] = spyOn(
+      this.graphRunner,
+      'attachProtoListener',
+    ).and.callFake((stream, listener) => {
+      expect(stream).toMatch(
+        /(pose_landmarks|pose_world_landmarks|pose_segmentation_mask|face_landmarks|extra_blendshapes|left_hand_landmarks|left_hand_world_landmarks|right_hand_landmarks|right_hand_world_landmarks)/,
+      );
+      this.listeners.set(stream, listener);
+    });
 
-    spyOn(this.graphRunner, 'setGraph').and.callFake(binaryGraph => {
+    spyOn(this.graphRunner, 'setGraph').and.callFake((binaryGraph) => {
       this.graph = CalculatorGraphConfig.deserializeBinary(binaryGraph);
     });
     spyOn(this.graphRunner, 'addGpuBufferAsImageToStream');
@@ -86,8 +103,9 @@ describe('HolisticLandmarker', () => {
   beforeEach(async () => {
     addJasmineCustomFloatEqualityTester();
     holisticLandmarker = new HolisticLandmarkerFake();
-    await holisticLandmarker.setOptions(
-        {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
+    await holisticLandmarker.setOptions({
+      baseOptions: {modelAssetBuffer: new Uint8Array([])},
+    });
   });
 
   afterEach(() => {
@@ -97,8 +115,11 @@ describe('HolisticLandmarker', () => {
   it('initializes graph', async () => {
     verifyGraph(holisticLandmarker);
     verifyGraph(
-        holisticLandmarker, undefined, undefined,
-        holisticLandmarkerDeserializer);
+      holisticLandmarker,
+      undefined,
+      undefined,
+      holisticLandmarkerDeserializer,
+    );
   });
 
   it('reloads graph when settings are changed', async () => {
@@ -106,16 +127,20 @@ describe('HolisticLandmarker', () => {
 
     await holisticLandmarker.setOptions({minFaceDetectionConfidence: 0.6});
     verifyGraph(
-        holisticLandmarker,
-        [['faceDetectorGraphOptions', 'minDetectionConfidence'], 0.6],
-        undefined, holisticLandmarkerDeserializer);
+      holisticLandmarker,
+      [['faceDetectorGraphOptions', 'minDetectionConfidence'], 0.6],
+      undefined,
+      holisticLandmarkerDeserializer,
+    );
     verifyListenersRegistered(holisticLandmarker);
 
     await holisticLandmarker.setOptions({minFaceDetectionConfidence: 0.7});
     verifyGraph(
-        holisticLandmarker,
-        [['faceDetectorGraphOptions', 'minDetectionConfidence'], 0.7],
-        undefined, holisticLandmarkerDeserializer);
+      holisticLandmarker,
+      [['faceDetectorGraphOptions', 'minDetectionConfidence'], 0.7],
+      undefined,
+      holisticLandmarkerDeserializer,
+    );
     verifyListenersRegistered(holisticLandmarker);
   });
 
@@ -129,55 +154,69 @@ describe('HolisticLandmarker', () => {
     await holisticLandmarker.setOptions({minHandLandmarksConfidence: 0.5});
 
     verifyGraph(
-        holisticLandmarker,
-        [
-          'faceDetectorGraphOptions', {
-            baseOptions: undefined,
-            minDetectionConfidence: 0.5,
-            minSuppressionThreshold: 0.5,
-            numFaces: undefined
-          }
-        ],
-        undefined, holisticLandmarkerDeserializer);
+      holisticLandmarker,
+      [
+        'faceDetectorGraphOptions',
+        {
+          baseOptions: undefined,
+          minDetectionConfidence: 0.5,
+          minSuppressionThreshold: 0.5,
+          numFaces: undefined,
+        },
+      ],
+      undefined,
+      holisticLandmarkerDeserializer,
+    );
     verifyGraph(
-        holisticLandmarker,
-        [
-          'faceLandmarksDetectorGraphOptions', {
-            baseOptions: undefined,
-            minDetectionConfidence: 0.5,
-            smoothLandmarks: undefined,
-            faceBlendshapesGraphOptions: undefined
-          }
-        ],
-        undefined, holisticLandmarkerDeserializer);
+      holisticLandmarker,
+      [
+        'faceLandmarksDetectorGraphOptions',
+        {
+          baseOptions: undefined,
+          minDetectionConfidence: 0.5,
+          smoothLandmarks: undefined,
+          faceBlendshapesGraphOptions: undefined,
+        },
+      ],
+      undefined,
+      holisticLandmarkerDeserializer,
+    );
     verifyGraph(
-        holisticLandmarker,
-        [
-          'poseDetectorGraphOptions', {
-            baseOptions: undefined,
-            minDetectionConfidence: 0.5,
-            minSuppressionThreshold: 0.5,
-            numPoses: undefined
-          }
-        ],
-        undefined, holisticLandmarkerDeserializer);
+      holisticLandmarker,
+      [
+        'poseDetectorGraphOptions',
+        {
+          baseOptions: undefined,
+          minDetectionConfidence: 0.5,
+          minSuppressionThreshold: 0.5,
+          numPoses: undefined,
+        },
+      ],
+      undefined,
+      holisticLandmarkerDeserializer,
+    );
     verifyGraph(
-        holisticLandmarker,
-        [
-          'poseLandmarksDetectorGraphOptions', {
-            baseOptions: undefined,
-            minDetectionConfidence: 0.5,
-            smoothLandmarks: undefined
-          }
-        ],
-        undefined, holisticLandmarkerDeserializer);
+      holisticLandmarker,
+      [
+        'poseLandmarksDetectorGraphOptions',
+        {
+          baseOptions: undefined,
+          minDetectionConfidence: 0.5,
+          smoothLandmarks: undefined,
+        },
+      ],
+      undefined,
+      holisticLandmarkerDeserializer,
+    );
     verifyGraph(
-        holisticLandmarker,
-        [
-          'handLandmarksDetectorGraphOptions',
-          {baseOptions: undefined, minDetectionConfidence: 0.5}
-        ],
-        undefined, holisticLandmarkerDeserializer);
+      holisticLandmarker,
+      [
+        'handLandmarksDetectorGraphOptions',
+        {baseOptions: undefined, minDetectionConfidence: 0.5},
+      ],
+      undefined,
+      holisticLandmarkerDeserializer,
+    );
   });
 
   describe('setOptions()', () => {
@@ -193,52 +232,60 @@ describe('HolisticLandmarker', () => {
         optionPath: ['minFaceDetectionConfidence'],
         fieldPath: ['faceDetectorGraphOptions', 'minDetectionConfidence'],
         customValue: 0.1,
-        defaultValue: 0.5
+        defaultValue: 0.5,
       },
       {
         optionPath: ['minFaceSuppressionThreshold'],
         fieldPath: ['faceDetectorGraphOptions', 'minSuppressionThreshold'],
         customValue: 0.2,
-        defaultValue: 0.3
+        defaultValue: 0.3,
       },
       {
         optionPath: ['minFacePresenceConfidence'],
-        fieldPath:
-            ['faceLandmarksDetectorGraphOptions', 'minDetectionConfidence'],
+        fieldPath: [
+          'faceLandmarksDetectorGraphOptions',
+          'minDetectionConfidence',
+        ],
         customValue: 0.2,
-        defaultValue: 0.5
+        defaultValue: 0.5,
       },
       {
         optionPath: ['minPoseDetectionConfidence'],
         fieldPath: ['poseDetectorGraphOptions', 'minDetectionConfidence'],
         customValue: 0.1,
-        defaultValue: 0.5
+        defaultValue: 0.5,
       },
       {
         optionPath: ['minPoseSuppressionThreshold'],
         fieldPath: ['poseDetectorGraphOptions', 'minSuppressionThreshold'],
         customValue: 0.2,
-        defaultValue: 0.3
+        defaultValue: 0.3,
       },
       {
         optionPath: ['minPosePresenceConfidence'],
-        fieldPath:
-            ['poseLandmarksDetectorGraphOptions', 'minDetectionConfidence'],
+        fieldPath: [
+          'poseLandmarksDetectorGraphOptions',
+          'minDetectionConfidence',
+        ],
         customValue: 0.2,
-        defaultValue: 0.5
+        defaultValue: 0.5,
       },
       {
         optionPath: ['minHandLandmarksConfidence'],
-        fieldPath:
-            ['handLandmarksDetectorGraphOptions', 'minDetectionConfidence'],
+        fieldPath: [
+          'handLandmarksDetectorGraphOptions',
+          'minDetectionConfidence',
+        ],
         customValue: 0.1,
-        defaultValue: 0.5
+        defaultValue: 0.5,
       },
     ];
 
     /** Creates an options object that can be passed to setOptions() */
     function createOptions(
-        path: string[], value: unknown): HolisticLandmarkerOptions {
+      path: string[],
+      value: unknown,
+    ): HolisticLandmarkerOptions {
       const options: Record<string, unknown> = {};
       let currentLevel = options;
       for (const element of path.slice(0, -1)) {
@@ -252,30 +299,45 @@ describe('HolisticLandmarker', () => {
     for (const testCase of testCases) {
       it(`uses default value for ${testCase.optionPath[0]}`, async () => {
         verifyGraph(
-            holisticLandmarker, [testCase.fieldPath, testCase.defaultValue],
-            undefined, holisticLandmarkerDeserializer);
+          holisticLandmarker,
+          [testCase.fieldPath, testCase.defaultValue],
+          undefined,
+          holisticLandmarkerDeserializer,
+        );
       });
 
       it(`can set ${testCase.optionPath[0]}`, async () => {
         await holisticLandmarker.setOptions(
-            createOptions(testCase.optionPath, testCase.customValue));
+          createOptions(testCase.optionPath, testCase.customValue),
+        );
         verifyGraph(
-            holisticLandmarker, [testCase.fieldPath, testCase.customValue],
-            undefined, holisticLandmarkerDeserializer);
+          holisticLandmarker,
+          [testCase.fieldPath, testCase.customValue],
+          undefined,
+          holisticLandmarkerDeserializer,
+        );
       });
 
       it(`can clear ${testCase.optionPath[0]}`, async () => {
         await holisticLandmarker.setOptions(
-            createOptions(testCase.optionPath, testCase.customValue));
+          createOptions(testCase.optionPath, testCase.customValue),
+        );
         verifyGraph(
-            holisticLandmarker, [testCase.fieldPath, testCase.customValue],
-            undefined, holisticLandmarkerDeserializer);
+          holisticLandmarker,
+          [testCase.fieldPath, testCase.customValue],
+          undefined,
+          holisticLandmarkerDeserializer,
+        );
 
         await holisticLandmarker.setOptions(
-            createOptions(testCase.optionPath, undefined));
+          createOptions(testCase.optionPath, undefined),
+        );
         verifyGraph(
-            holisticLandmarker, [testCase.fieldPath, testCase.defaultValue],
-            undefined, holisticLandmarkerDeserializer);
+          holisticLandmarker,
+          [testCase.fieldPath, testCase.defaultValue],
+          undefined,
+          holisticLandmarkerDeserializer,
+        );
       });
     }
   });
@@ -283,12 +345,14 @@ describe('HolisticLandmarker', () => {
   it('supports outputFaceBlendshapes', async () => {
     const stream = 'extra_blendshapes';
     await holisticLandmarker.setOptions({});
-    expect(holisticLandmarker.graph!.getOutputStreamList())
-        .not.toContain(stream);
+    expect(holisticLandmarker.graph!.getOutputStreamList()).not.toContain(
+      stream,
+    );
 
     await holisticLandmarker.setOptions({outputFaceBlendshapes: false});
-    expect(holisticLandmarker.graph!.getOutputStreamList())
-        .not.toContain(stream);
+    expect(holisticLandmarker.graph!.getOutputStreamList()).not.toContain(
+      stream,
+    );
 
     await holisticLandmarker.setOptions({outputFaceBlendshapes: true});
     expect(holisticLandmarker.graph!.getOutputStreamList()).toContain(stream);
@@ -303,63 +367,86 @@ describe('HolisticLandmarker', () => {
 
     const leftHandLandmarksProto = createLandmarks().serializeBinary();
     const leftHandWorldLandmarksProto =
-        createWorldLandmarks().serializeBinary();
+      createWorldLandmarks().serializeBinary();
     const rightHandLandmarksProto = createLandmarks().serializeBinary();
     const rightHandWorldLandmarksProto =
-        createWorldLandmarks().serializeBinary();
+      createWorldLandmarks().serializeBinary();
 
-    await holisticLandmarker.setOptions(
-        {outputFaceBlendshapes: true, outputPoseSegmentationMasks: false});
+    await holisticLandmarker.setOptions({
+      outputFaceBlendshapes: true,
+      outputPoseSegmentationMasks: false,
+    });
 
     // Pass the test data to our listener
     holisticLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
       verifyListenersRegistered(holisticLandmarker);
-      holisticLandmarker.listeners.get('face_landmarks')!
-          (faceLandmarksProto, 1337);
-      holisticLandmarker.listeners.get('extra_blendshapes')!
-          (blendshapesProto, 1337);
+      holisticLandmarker.listeners.get('face_landmarks')!(
+        faceLandmarksProto,
+        1337,
+      );
+      holisticLandmarker.listeners.get('extra_blendshapes')!(
+        blendshapesProto,
+        1337,
+      );
 
-      holisticLandmarker.listeners.get('pose_landmarks')!
-          (poseLandmarksProto, 1337);
-      holisticLandmarker.listeners.get('pose_world_landmarks')!
-          (poseWorldLandmarksProto, 1337);
+      holisticLandmarker.listeners.get('pose_landmarks')!(
+        poseLandmarksProto,
+        1337,
+      );
+      holisticLandmarker.listeners.get('pose_world_landmarks')!(
+        poseWorldLandmarksProto,
+        1337,
+      );
 
-      holisticLandmarker.listeners.get('left_hand_landmarks')!
-          (leftHandLandmarksProto, 1337);
-      holisticLandmarker.listeners.get('left_hand_world_landmarks')!
-          (leftHandWorldLandmarksProto, 1337);
+      holisticLandmarker.listeners.get('left_hand_landmarks')!(
+        leftHandLandmarksProto,
+        1337,
+      );
+      holisticLandmarker.listeners.get('left_hand_world_landmarks')!(
+        leftHandWorldLandmarksProto,
+        1337,
+      );
 
-      holisticLandmarker.listeners.get('right_hand_landmarks')!
-          (rightHandLandmarksProto, 1337);
-      holisticLandmarker.listeners.get('right_hand_world_landmarks')!
-          (rightHandWorldLandmarksProto, 1337);
+      holisticLandmarker.listeners.get('right_hand_landmarks')!(
+        rightHandLandmarksProto,
+        1337,
+      );
+      holisticLandmarker.listeners.get('right_hand_world_landmarks')!(
+        rightHandWorldLandmarksProto,
+        1337,
+      );
     });
 
     // Invoke the holistic landmarker
     const landmarks = holisticLandmarker.detect({} as HTMLImageElement);
-    expect(holisticLandmarker.getGraphRunner().addGpuBufferAsImageToStream)
-        .toHaveBeenCalledTimes(1);
+    expect(
+      holisticLandmarker.getGraphRunner().addGpuBufferAsImageToStream,
+    ).toHaveBeenCalledTimes(1);
     expect(holisticLandmarker.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
 
     expect(landmarks).toEqual({
       faceLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]],
-      faceBlendshapes: [{
-        categories: [{
-          index: 1,
-          score: 0.1,
-          categoryName: 'face_label',
-          displayName: 'face_display_name'
-        }],
-        headIndex: -1,
-        headName: ''
-      }],
+      faceBlendshapes: [
+        {
+          categories: [
+            {
+              index: 1,
+              score: 0.1,
+              categoryName: 'face_label',
+              displayName: 'face_display_name',
+            },
+          ],
+          headIndex: -1,
+          headName: '',
+        },
+      ],
       poseLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]],
       poseWorldLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]],
       poseSegmentationMasks: [],
       leftHandLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]],
       leftHandWorldLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]],
       rightHandLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]],
-      rightHandWorldLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]]
+      rightHandWorldLandmarks: [[{x: 0, y: 0, z: 0, visibility: 0}]],
     });
   });
 
@@ -369,27 +456,41 @@ describe('HolisticLandmarker', () => {
     const poseWorldLandmarksProto = createWorldLandmarks().serializeBinary();
     const leftHandLandmarksProto = createLandmarks().serializeBinary();
     const leftHandWorldLandmarksProto =
-        createWorldLandmarks().serializeBinary();
+      createWorldLandmarks().serializeBinary();
     const rightHandLandmarksProto = createLandmarks().serializeBinary();
     const rightHandWorldLandmarksProto =
-        createWorldLandmarks().serializeBinary();
+      createWorldLandmarks().serializeBinary();
 
     // Pass the test data to our listener
     holisticLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
-      holisticLandmarker.listeners.get('face_landmarks')!
-          (faceLandmarksProto, 1337);
-      holisticLandmarker.listeners.get('pose_landmarks')!
-          (poseLandmarksProto, 1337);
-      holisticLandmarker.listeners.get('pose_world_landmarks')!
-          (poseWorldLandmarksProto, 1337);
-      holisticLandmarker.listeners.get('left_hand_landmarks')!
-          (leftHandLandmarksProto, 1337);
-      holisticLandmarker.listeners.get('left_hand_world_landmarks')!
-          (leftHandWorldLandmarksProto, 1337);
-      holisticLandmarker.listeners.get('right_hand_landmarks')!
-          (rightHandLandmarksProto, 1337);
-      holisticLandmarker.listeners.get('right_hand_world_landmarks')!
-          (rightHandWorldLandmarksProto, 1337);
+      holisticLandmarker.listeners.get('face_landmarks')!(
+        faceLandmarksProto,
+        1337,
+      );
+      holisticLandmarker.listeners.get('pose_landmarks')!(
+        poseLandmarksProto,
+        1337,
+      );
+      holisticLandmarker.listeners.get('pose_world_landmarks')!(
+        poseWorldLandmarksProto,
+        1337,
+      );
+      holisticLandmarker.listeners.get('left_hand_landmarks')!(
+        leftHandLandmarksProto,
+        1337,
+      );
+      holisticLandmarker.listeners.get('left_hand_world_landmarks')!(
+        leftHandWorldLandmarksProto,
+        1337,
+      );
+      holisticLandmarker.listeners.get('right_hand_landmarks')!(
+        rightHandLandmarksProto,
+        1337,
+      );
+      holisticLandmarker.listeners.get('right_hand_world_landmarks')!(
+        rightHandWorldLandmarksProto,
+        1337,
+      );
     });
 
     // Invoke the holistic landmarker twice

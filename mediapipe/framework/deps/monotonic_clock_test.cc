@@ -426,7 +426,7 @@ class ClockFrenzy {
 
   // Start Feed-ing threads.
   void Start(int nthreads) {
-    absl::MutexLock l(&lock_);
+    absl::MutexLock l(lock_);
     running_ = true;
     threads_ = absl::make_unique<mediapipe::ThreadPool>("Frenzy", nthreads);
     threads_->StartWorkers();
@@ -436,12 +436,12 @@ class ClockFrenzy {
   }
 
   void Stop() {
-    absl::MutexLock l(&lock_);
+    absl::MutexLock l(lock_);
     running_ = false;
   }
 
   bool Running() {
-    absl::MutexLock l(&lock_);
+    absl::MutexLock l(lock_);
     return running_;
   }
 
@@ -464,12 +464,12 @@ class ClockFrenzy {
   // Thread-safe random number generation functions for use by other class
   // member functions.
   int32_t UniformRandom(int32_t n) {
-    absl::MutexLock l(&lock_);
+    absl::MutexLock l(lock_);
     return std::uniform_int_distribution<int32_t>(0, n - 1)(*random_);
   }
 
   float RndFloatRandom() {
-    absl::MutexLock l(&lock_);
+    absl::MutexLock l(lock_);
     return std::uniform_real_distribution<float>(0.0f, 1.0f)(*random_);
   }
 };

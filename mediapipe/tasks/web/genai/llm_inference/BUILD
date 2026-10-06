@@ -6,13 +6,13 @@
 # TODO: See if we can migrate to the new js_test_* rules eventually
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
+load("//mediapipe/framework/port:build_config.bzl", "ts_declaration", "ts_library")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
-mediapipe_ts_library(
+ts_library(
     name = "llm_inference",
     srcs = [
         "llm_inference.ts",
@@ -23,15 +23,15 @@ mediapipe_ts_library(
         ":model_loading_utils",
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
-        "//mediapipe/tasks/cc/genai/inference/calculators:detokenizer_calculator_jspb_proto",
-        "//mediapipe/tasks/cc/genai/inference/calculators:llm_gpu_calculator_jspb_proto",
-        "//mediapipe/tasks/cc/genai/inference/calculators:tokenizer_calculator_jspb_proto",
-        "//mediapipe/tasks/cc/genai/inference/proto:llm_params_jspb_proto",
-        "//mediapipe/tasks/cc/genai/inference/proto:sampler_params_jspb_proto",
-        "//mediapipe/tasks/cc/genai/inference/proto:transformer_params_jspb_proto",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner",
+        "//mediapipe/tasks/web/genai/llm_inference/proto:detokenizer_calculator_jspb_proto",
+        "//mediapipe/tasks/web/genai/llm_inference/proto:llm_gpu_calculator_jspb_proto",
         "//mediapipe/tasks/web/genai/llm_inference/proto:llm_inference_graph_options_jspb_proto",
+        "//mediapipe/tasks/web/genai/llm_inference/proto:llm_params_jspb_proto",
+        "//mediapipe/tasks/web/genai/llm_inference/proto:sampler_params_jspb_proto",
+        "//mediapipe/tasks/web/genai/llm_inference/proto:tokenizer_calculator_jspb_proto",
+        "//mediapipe/tasks/web/genai/llm_inference/proto:transformer_params_jspb_proto",
         "//mediapipe/web/graph_runner:graph_runner_llm_inference_lib_ts",
         "//mediapipe/web/graph_runner:graph_runner_streaming_reader_ts",
         "//mediapipe/web/graph_runner:graph_runner_ts",
@@ -40,7 +40,7 @@ mediapipe_ts_library(
     ],
 )
 
-mediapipe_ts_declaration(
+ts_declaration(
     name = "llm_inference_types",
     srcs = [
         "llm_inference_options.d.ts",
@@ -51,7 +51,7 @@ mediapipe_ts_declaration(
     ],
 )
 
-mediapipe_ts_library(
+ts_library(
     name = "model_loading_utils",
     srcs = [
         "model_loading_utils.ts",

@@ -43,9 +43,9 @@ class NormalizedKeypoint:
   @classmethod
   @doc_controls.do_not_generate_docs
   def from_ctypes(
-      cls, c_obj: keypoint_c_lib.NormalizedKeypointC
+      cls, c_obj: keypoint_c_lib.MpNormalizedKeypointC
   ) -> 'NormalizedKeypoint':
-    """Creates a `NormalizedKeypoint` object from a `NormalizedKeypointC."""
+    """Creates a `NormalizedKeypoint` object from a `MpNormalizedKeypointC."""
     return NormalizedKeypoint(
         x=c_obj.x,
         y=c_obj.y,

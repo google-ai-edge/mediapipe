@@ -53,7 +53,7 @@ class NormalizedKeypointTest(parameterized.TestCase):
   def test_create_from_ctypes_succeeds(
       self, x: float, y: float, label: str | None, score: float
   ):
-    c_keypoint = keypoint_c_lib.NormalizedKeypointC(
+    c_keypoint = keypoint_c_lib.MpNormalizedKeypointC(
         x=x, y=y, label=label.encode('utf-8') if label else None, score=score
     )
     actual_keypoint = keypoint_lib.NormalizedKeypoint.from_ctypes(c_keypoint)

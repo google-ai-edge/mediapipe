@@ -29,7 +29,7 @@ TEST(LanguageDetectorResultConverterTest,
                              {/* language_code= */ "en",
                               /* probability= */ 0.5}};
 
-  LanguageDetectorResult c_detector_result;
+  MpLanguageDetectorResult c_detector_result;
   CppConvertToLanguageDetectorResult(cpp_detector_result, &c_detector_result);
   EXPECT_NE(c_detector_result.predictions, nullptr);
   EXPECT_EQ(c_detector_result.predictions_count, 2);
@@ -43,7 +43,7 @@ TEST(LanguageDetectorResultConverterTest, FreesMemory) {
   mediapipe::tasks::text::language_detector::LanguageDetectorResult
       cpp_detector_result = {{"fr", 0.5}};
 
-  LanguageDetectorResult c_detector_result;
+  MpLanguageDetectorResult c_detector_result;
   CppConvertToLanguageDetectorResult(cpp_detector_result, &c_detector_result);
   EXPECT_NE(c_detector_result.predictions, nullptr);
 

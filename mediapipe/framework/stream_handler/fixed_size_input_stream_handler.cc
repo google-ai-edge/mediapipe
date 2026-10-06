@@ -136,7 +136,7 @@ void FixedSizeInputStreamHandler::EraseSurplusPackets(bool keep_one) {
 NodeReadiness FixedSizeInputStreamHandler::GetNodeReadiness(
     Timestamp* min_stream_timestamp) {
   ABSL_DCHECK(min_stream_timestamp);
-  absl::MutexLock lock(&erase_mutex_);
+  absl::MutexLock lock(erase_mutex_);
   // kReadyForProcess is returned only once until FillInputSet completes.
   // In late_preparation mode, GetNodeReadiness must return kReadyForProcess
   // exactly once for each input-set produced.  Here, GetNodeReadiness
@@ -162,7 +162,7 @@ NodeReadiness FixedSizeInputStreamHandler::GetNodeReadiness(
 void FixedSizeInputStreamHandler::AddPackets(CollectionItemId id,
                                              const std::list<Packet>& packets) {
   InputStreamHandler::AddPackets(id, packets);
-  absl::MutexLock lock(&erase_mutex_);
+  absl::MutexLock lock(erase_mutex_);
   if (!pending_) {
     EraseSurplusPackets(false);
   }
@@ -171,7 +171,7 @@ void FixedSizeInputStreamHandler::AddPackets(CollectionItemId id,
 void FixedSizeInputStreamHandler::MovePackets(CollectionItemId id,
                                               std::list<Packet>* packets) {
   InputStreamHandler::MovePackets(id, packets);
-  absl::MutexLock lock(&erase_mutex_);
+  absl::MutexLock lock(erase_mutex_);
   if (!pending_) {
     EraseSurplusPackets(false);
   }
@@ -180,7 +180,7 @@ void FixedSizeInputStreamHandler::MovePackets(CollectionItemId id,
 void FixedSizeInputStreamHandler::FillInputSet(Timestamp input_timestamp,
                                                InputStreamShardSet* input_set) {
   ABSL_CHECK(input_set);
-  absl::MutexLock lock(&erase_mutex_);
+  absl::MutexLock lock(erase_mutex_);
   if (!pending_) {
     ABSL_LOG(ERROR) << "FillInputSet called without GetNodeReadiness.";
   }

@@ -37,9 +37,9 @@ using Node = ::mediapipe::CalculatorGraphConfig::Node;
 struct SetJointsVisibilityTestCase {
   std::string test_name;
   std::string mapping;
-  std::vector<absl::optional<float>> in_joint_visibilities;
-  std::vector<absl::optional<float>> landmark_visibilities;
-  std::vector<absl::optional<float>> out_joint_visibilities;
+  std::vector<std::optional<float>> in_joint_visibilities;
+  std::vector<std::optional<float>> landmark_visibilities;
+  std::vector<std::optional<float>> out_joint_visibilities;
 };
 
 using SetJointsVisibilityTest =
@@ -117,33 +117,33 @@ INSTANTIATE_TEST_SUITE_P(
         {"Empty_Joints", "", {}, {1, 2, 3}, {}},
         {"Empty_Landmarks",
          "{ unchanged: {} }, { unchanged: {} }, { unchanged: {} }",
-         {1, 2, absl::nullopt},
+         {1, 2, std::nullopt},
          {},
-         {1, 2, absl::nullopt}},
+         {1, 2, std::nullopt}},
 
         {"Mapping_Unchanged", "{ unchanged: {} }", {1}, {2}, {1}},
         {"Mapping_Unchanged_UnsetJointVisRemainsUnset",
          "{ unchanged: {} }",
-         {absl::nullopt},
+         {std::nullopt},
          {2},
-         {absl::nullopt}},
+         {std::nullopt}},
 
         {"Mapping_Copy", "{ copy: { idx: 0 } }", {1}, {2}, {2}},
         {"Mapping_Copy_UnsetLmkVisResultsIntoZeroJointVis",
          "{ copy: { idx: 0 } }",
-         {absl::nullopt},
-         {absl::nullopt},
+         {std::nullopt},
+         {std::nullopt},
          {0}},
 
         {"Mapping_Highest",
          "{ highest: { idx: [0, 1, 2] } }",
-         {absl::nullopt},
+         {std::nullopt},
          {2, 4, 3},
          {4}},
         {"Mapping_Highest_UnsetLmkIsIgnored",
          "{ highest: { idx: [0, 1, 2] } }",
-         {absl::nullopt},
-         {-2, absl::nullopt, -3},
+         {std::nullopt},
+         {-2, std::nullopt, -3},
          {-2}},
     }),
     [](const testing::TestParamInfo<SetJointsVisibilityTest::ParamType>& info) {

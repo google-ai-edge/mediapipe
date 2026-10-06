@@ -51,7 +51,7 @@ void OutputStreamHandler::PrepareForRun(
   for (auto& manager : output_stream_managers_) {
     manager->PrepareForRun(error_callback);
   }
-  absl::MutexLock lock(&timestamp_mutex_);
+  absl::MutexLock lock(timestamp_mutex_);
   completed_input_timestamps_.clear();
   task_timestamp_bound_ = Timestamp::Unset();
   propagation_state_ = kIdle;
@@ -81,7 +81,7 @@ void OutputStreamHandler::UpdateTaskTimestampBound(Timestamp timestamp) {
     return;
   }
   {
-    absl::MutexLock lock(&timestamp_mutex_);
+    absl::MutexLock lock(timestamp_mutex_);
     if (task_timestamp_bound_ == timestamp) {
       return;
     }
@@ -106,7 +106,7 @@ void OutputStreamHandler::PostProcess(Timestamp input_timestamp) {
     return;
   }
   {
-    absl::MutexLock lock(&timestamp_mutex_);
+    absl::MutexLock lock(timestamp_mutex_);
     completed_input_timestamps_.insert(input_timestamp);
     if (propagation_state_ == kPropagatingBound) {
       propagation_state_ = kPropagationPending;

@@ -14,6 +14,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import "mediapipe/tasks/ios/core/sources/MPPCoreRunningMode.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 /**
@@ -48,6 +50,19 @@ NS_INLINE NSString *_Nullable MPPRunningModeDisplayName(MPPRunningMode runningMo
       return @"Live Stream";
     default:
       return nil;
+  }
+}
+
+NS_INLINE MPPCoreRunningMode MPPCoreRunningModeFromVisionRunningMode(MPPRunningMode runningMode) {
+  switch (runningMode) {
+    case MPPRunningModeImage:
+      return MPPCoreRunningModeImage;
+    case MPPRunningModeVideo:
+      return MPPCoreRunningModeVideo;
+    case MPPRunningModeLiveStream:
+      return MPPCoreRunningModeLiveStream;
+    default:
+      return MPPCoreRunningModeUnspecified;
   }
 }
 

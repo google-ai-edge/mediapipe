@@ -31,7 +31,10 @@ cc_library(
         "-framework CoreGraphics",
         "-framework CoreVideo",
     ],
-    visibility = ["//mediapipe/framework:mediapipe_internal"],
+    visibility = [
+        "//googlemac/iPhone/Shared/MediaEngine/Compositor/Tests:__pkg__",
+        "//mediapipe/framework:mediapipe_internal",
+    ],
     deps = [
         ":CFHolder",
         "//mediapipe/framework:packet",
@@ -72,7 +75,6 @@ cc_library(
     copts = [
         "-x objective-c++",
         "-fobjc-arc",  # enable reference-counting
-        "-Wno-shorten-64-to-32",
     ],
     # This build rule is public to allow external customers to build their own iOS apps.
     visibility = ["//visibility:public"],
@@ -148,9 +150,6 @@ objc_library(
     hdrs = [
         "MPPGLViewRenderer.h",
     ],
-    copts = [
-        "-Wno-shorten-64-to-32",
-    ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
         ":mediapipe_framework_ios",
@@ -170,9 +169,6 @@ objc_library(
     hdrs = [
         "MPPLayerRenderer.h",
     ],
-    copts = [
-        "-Wno-shorten-64-to-32",
-    ],
     # This build rule is public to allow external customers to build their own iOS apps.
     visibility = ["//visibility:public"],
     deps = [
@@ -191,9 +187,6 @@ objc_library(
     ],
     hdrs = [
         "CGImageRefUtils.h",
-    ],
-    copts = [
-        "-Wno-shorten-64-to-32",
     ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
@@ -228,9 +221,6 @@ objc_library(
     hdrs = [
         "MPPGraphTestBase.h",
     ],
-    copts = [
-        "-Wno-shorten-64-to-32",
-    ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
         ":CGImageRefUtils",
@@ -246,6 +236,7 @@ objc_library(
         "//third_party/apple_frameworks:OpenGLES",
         "//third_party/apple_frameworks:QuartzCore",
         "//third_party/apple_frameworks:UIKit",
+        "//third_party/apple_frameworks:XCTest",
     ],
 )
 
@@ -257,9 +248,6 @@ objc_library(
         "MPPDisplayLinkWeakTargetTests.mm",
         "MPPGraphTests.mm",
         "MediaPipeAudioUtilTests.mm",
-    ],
-    copts = [
-        "-Wno-shorten-64-to-32",
     ],
     data = [
         "testdata/googlelogo_color_272x92dp.png",

@@ -59,7 +59,7 @@ class EmbeddingResult:
   @classmethod
   @doc_controls.do_not_generate_docs
   def from_ctypes(
-      cls, c_result: embedding_result_c.EmbeddingResultC
+      cls, c_result: embedding_result_c.MpEmbeddingResultC
   ) -> 'EmbeddingResult':
     """Converts a C EmbeddingResult to a Python EmbeddingResult."""
     python_embeddings = []
@@ -78,7 +78,7 @@ class EmbeddingResult:
         embedding = np.array(embedding_array, dtype=np.uint8)
 
       python_embedding = Embedding(
-          embedding=embedding,
+          embedding=embedding,  # pyrefly: ignore[bad-argument-type]
           head_index=c_embedding.head_index,
           head_name=(
               c_embedding.head_name.decode('utf-8')

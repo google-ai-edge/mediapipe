@@ -15,8 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/metadata/utils/zip_writable_mem_file.h"
 
-#include <algorithm>
 #include <cstdio>
+#include <cstring>
 
 #include "absl/strings/string_view.h"
 #include "contrib/minizip/ioapi.h"

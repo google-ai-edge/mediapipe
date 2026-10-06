@@ -106,4 +106,11 @@ export declare interface LlmInferenceOptions extends TaskRunnerOptions {
    * streaming loading, and therefore is not compatible with "converted" models.
    */
   supportAudio?: boolean;
+
+  /**
+   * When set to true, will disable optimizations for fast rewinding, but will
+   * consequently use much less memory for long contexts. Default is false, to
+   * allow for fast rewinding and shared prefix reuse.
+   */
+  disableRewinding?: boolean;
 }

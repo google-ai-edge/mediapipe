@@ -73,6 +73,9 @@ constexpr char kExpandedFaceRectsTag[] = "EXPANDED_FACE_RECTS";
 constexpr char kPixelDetectionsTag[] = "PIXEL_DETECTIONS";
 constexpr char kDetectorMetadataName[] = "FACE_DETECTOR_METADATA";
 
+constexpr int kShortRangeImageSize = 128;
+constexpr int kLongRangeImageSize = 192;
+
 struct FaceDetectionOuts {
   Source<std::vector<Detection>> face_detections;
   Source<std::vector<NormalizedRect>> face_rects;
@@ -98,7 +101,8 @@ const FaceDetectorOptions* GetFaceDetectorOptionsFromMetadata(
 }
 
 absl::Status ConfigureSsdAnchorsCalculator(
-    const FaceDetectorOptions* face_detector_options, const int image_width,
+    const FaceDetectorOptions* face_detector_options,
+    const FaceDetectorGraphOptions& tasks_options, const int image_width,
     const int image_height, mediapipe::SsdAnchorsCalculatorOptions* options) {
   if (face_detector_options != nullptr) {
     // For models with metadata.
@@ -122,20 +126,34 @@ absl::Status ConfigureSsdAnchorsCalculator(
         ssd_anchors_options->interpolated_scale_aspect_ratio());
   } else {
     // Default settings for legacy model without metadata.
-    options->set_num_layers(4);
-    options->set_min_scale(0.1484375);
-    options->set_max_scale(0.75);
-    options->set_input_size_height(128);
-    options->set_input_size_width(128);
-    options->set_anchor_offset_x(0.5);
-    options->set_anchor_offset_y(0.5);
-    options->add_strides(8);
-    options->add_strides(16);
-    options->add_strides(16);
-    options->add_strides(16);
-    options->add_aspect_ratios(1.0);
-    options->set_fixed_anchor_size(true);
-    options->set_interpolated_scale_aspect_ratio(1.0);
+    if (image_width == kShortRangeImageSize) {
+      options->set_num_layers(4);
+      options->set_min_scale(0.1484375);
+      options->set_max_scale(0.75);
+      options->set_input_size_height(128);
+      options->set_input_size_width(128);
+      options->set_anchor_offset_x(0.5);
+      options->set_anchor_offset_y(0.5);
+      options->add_strides(8);
+      options->add_strides(16);
+      options->add_strides(16);
+      options->add_strides(16);
+      options->add_aspect_ratios(1.0);
+      options->set_fixed_anchor_size(true);
+      options->set_interpolated_scale_aspect_ratio(1.0);
+    } else {
+      options->set_num_layers(1);
+      options->set_min_scale(0.1484375);
+      options->set_max_scale(0.75);
+      options->set_input_size_height(192);
+      options->set_input_size_width(192);
+      options->set_anchor_offset_x(0.5);
+      options->set_anchor_offset_y(0.5);
+      options->add_strides(4);
+      options->add_aspect_ratios(1.0);
+      options->set_fixed_anchor_size(true);
+      options->set_interpolated_scale_aspect_ratio(0.0);
+    }
   }
   return absl::OkStatus();
 }
@@ -143,7 +161,8 @@ absl::Status ConfigureSsdAnchorsCalculator(
 absl::Status ConfigureTensorsToDetectionsCalculator(
     const FaceDetectorOptions* face_detector_options,
     const FaceDetectorGraphOptions& tasks_options,
-    mediapipe::TensorsToDetectionsCalculatorOptions* options) {
+    mediapipe::TensorsToDetectionsCalculatorOptions* options,
+    bool is_long_range = false) {
   if (face_detector_options != nullptr) {
     // For models with metadata.
     const auto* tensors_decoding_options =
@@ -170,21 +189,39 @@ absl::Status ConfigureTensorsToDetectionsCalculator(
         tensors_decoding_options->reverse_output_order());
   } else {
     // Default settings for legacy model without metadata.
-    options->set_num_classes(1);
-    options->set_num_boxes(896);
-    options->set_num_coords(16);
-    options->set_box_coord_offset(0);
-    options->set_keypoint_coord_offset(4);
-    options->set_num_keypoints(6);
-    options->set_num_values_per_keypoint(2);
-    options->set_sigmoid_score(true);
-    options->set_score_clipping_thresh(100.0);
-    options->set_reverse_output_order(true);
-    options->set_min_score_thresh(tasks_options.min_detection_confidence());
-    options->set_x_scale(128.0);
-    options->set_y_scale(128.0);
-    options->set_w_scale(128.0);
-    options->set_h_scale(128.0);
+    if (is_long_range) {
+      options->set_num_classes(1);
+      options->set_num_boxes(2304);
+      options->set_num_coords(16);
+      options->set_box_coord_offset(0);
+      options->set_keypoint_coord_offset(4);
+      options->set_num_keypoints(6);
+      options->set_num_values_per_keypoint(2);
+      options->set_sigmoid_score(true);
+      options->set_score_clipping_thresh(100.0);
+      options->set_reverse_output_order(true);
+      options->set_min_score_thresh(tasks_options.min_detection_confidence());
+      options->set_x_scale(kLongRangeImageSize);
+      options->set_y_scale(kLongRangeImageSize);
+      options->set_w_scale(kLongRangeImageSize);
+      options->set_h_scale(kLongRangeImageSize);
+    } else {
+      options->set_num_classes(1);
+      options->set_num_boxes(896);
+      options->set_num_coords(16);
+      options->set_box_coord_offset(0);
+      options->set_keypoint_coord_offset(4);
+      options->set_num_keypoints(6);
+      options->set_num_values_per_keypoint(2);
+      options->set_sigmoid_score(true);
+      options->set_score_clipping_thresh(100.0);
+      options->set_reverse_output_order(true);
+      options->set_min_score_thresh(tasks_options.min_detection_confidence());
+      options->set_x_scale(kShortRangeImageSize);
+      options->set_y_scale(kShortRangeImageSize);
+      options->set_w_scale(kShortRangeImageSize);
+      options->set_h_scale(kShortRangeImageSize);
+    }
   }
   return absl::OkStatus();
 }
@@ -336,7 +373,7 @@ class FaceDetectorGraph : public core::ModelTaskGraph {
     // Generates a single side packet containing a vector of SSD anchors.
     auto& ssd_anchor = graph.AddNode("SsdAnchorsCalculator");
     MP_RETURN_IF_ERROR(ConfigureSsdAnchorsCalculator(
-        face_detector_options, input_specs.image_width,
+        face_detector_options, subgraph_options, input_specs.image_width,
         input_specs.image_height,
         &ssd_anchor.GetOptions<mediapipe::SsdAnchorsCalculatorOptions>()));
     auto anchors = ssd_anchor.SideOut("");
@@ -344,14 +381,15 @@ class FaceDetectorGraph : public core::ModelTaskGraph {
     // Converts output tensors to Detections.
     auto& tensors_to_detections =
         graph.AddNode("TensorsToDetectionsCalculator");
+    bool is_long_range = input_specs.image_width == kLongRangeImageSize;
     MP_RETURN_IF_ERROR(ConfigureTensorsToDetectionsCalculator(
         face_detector_options, subgraph_options,
         &tensors_to_detections
-             .GetOptions<mediapipe::TensorsToDetectionsCalculatorOptions>()));
+             .GetOptions<mediapipe::TensorsToDetectionsCalculatorOptions>(),
+        is_long_range));
     model_output_tensors >> tensors_to_detections.In(kTensorsTag);
     anchors >> tensors_to_detections.SideIn(kAnchorsTag);
     auto detections = tensors_to_detections.Out(kDetectionsTag);
-
     // Non maximum suppression removes redundant face detections.
     auto& non_maximum_suppression =
         graph.AddNode("NonMaxSuppressionCalculator");

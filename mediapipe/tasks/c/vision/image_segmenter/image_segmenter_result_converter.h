@@ -23,9 +23,9 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToImageSegmenterResult(
     const mediapipe::tasks::vision::image_segmenter::ImageSegmenterResult& in,
-    ImageSegmenterResult* out);
+    MpImageSegmenterResult* out);
 
-void CppCloseImageSegmenterResult(ImageSegmenterResult* result);
+void CppCloseImageSegmenterResult(MpImageSegmenterResult* result);
 
 }  // namespace mediapipe::tasks::c::components::containers
 

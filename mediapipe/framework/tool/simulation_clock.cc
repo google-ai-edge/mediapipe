@@ -26,17 +26,17 @@ SimulationClock::~SimulationClock() {
 }
 
 absl::Time SimulationClock::TimeNow() {
-  absl::MutexLock l(&time_mutex_);
+  absl::MutexLock l(time_mutex_);
   return time_;
 }
 
 void SimulationClock::Sleep(absl::Duration d) {
-  absl::MutexLock l(&time_mutex_);
+  absl::MutexLock l(time_mutex_);
   SleepInternal(time_ + d);
 }
 
 void SimulationClock::SleepUntil(absl::Time wakeup_time) {
-  absl::MutexLock l(&time_mutex_);
+  absl::MutexLock l(time_mutex_);
   SleepInternal(wakeup_time);
 }
 
@@ -52,12 +52,12 @@ void SimulationClock::SleepInternal(absl::Time wakeup_time) {
 }
 
 void SimulationClock::ThreadStart() {
-  absl::MutexLock l(&time_mutex_);
+  absl::MutexLock l(time_mutex_);
   num_running_++;
 }
 
 void SimulationClock::ThreadFinish() {
-  absl::MutexLock l(&time_mutex_);
+  absl::MutexLock l(time_mutex_);
   num_running_--;
   TryAdvanceTime();
 }

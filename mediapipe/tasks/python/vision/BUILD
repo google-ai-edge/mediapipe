@@ -136,6 +136,22 @@ py_library(
         "interactive_segmenter.py",
     ],
     deps = [
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:base_options_c",
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:mediapipe_c_utils",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:serial_dispatcher",
+        "//mediapipe/tasks/python/vision/core:image",
+    ],
+)
+
+py_library(
+    name = "interactive_segmenter_legacy",
+    srcs = [
+        "interactive_segmenter_legacy.py",
+    ],
+    deps = [
         ":image_segmenter",
         "//mediapipe/tasks/python/components/containers:keypoint",
         "//mediapipe/tasks/python/components/containers:keypoint_c",
@@ -287,5 +303,29 @@ py_library(
         "//mediapipe/tasks/python/vision/core:image_processing_options_c",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)
+
+py_library(
+    name = "holistic_landmarker",
+    srcs = [
+        "holistic_landmarker.py",
+    ],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:category_c",
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//mediapipe/tasks/python/components/containers:landmark_c",
+        "//mediapipe/tasks/python/core:async_result_dispatcher",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:base_options_c",
+        "//mediapipe/tasks/python/core:mediapipe_c_bindings",
+        "//mediapipe/tasks/python/core:mediapipe_c_utils",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:serial_dispatcher",
+        "//mediapipe/tasks/python/vision/core:image",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:image_processing_options_c",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
     ],
 )

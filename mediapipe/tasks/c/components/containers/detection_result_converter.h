@@ -23,15 +23,15 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToDetection(
     const mediapipe::tasks::components::containers::Detection& in,
-    Detection* out);
+    MpDetection* out);
 
 void CppConvertToDetectionResult(
     const mediapipe::tasks::components::containers::DetectionResult& in,
-    DetectionResult* out);
+    MpDetectionResult* out);
 
-void CppCloseDetection(Detection* in);
+void CppCloseDetection(MpDetection* in);
 
-void CppCloseDetectionResult(DetectionResult* in);
+void CppCloseDetectionResult(MpDetectionResult* in);
 
 }  // namespace mediapipe::tasks::c::components::containers
 

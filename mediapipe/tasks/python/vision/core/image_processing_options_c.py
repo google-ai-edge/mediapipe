@@ -18,11 +18,11 @@ import ctypes
 from mediapipe.tasks.python.components.containers import rect_c
 
 
-class ImageProcessingOptionsC(ctypes.Structure):
+class MpImageProcessingOptionsC(ctypes.Structure):
   """CTypes for ImageProcessingOptions."""
 
   _fields_ = [
       ('has_region_of_interest', ctypes.c_bool),
-      ('region_of_interest', rect_c.RectFC),
+      ('region_of_interest', rect_c.MpRectFC),
       ('rotation_degrees', ctypes.c_int),
   ]

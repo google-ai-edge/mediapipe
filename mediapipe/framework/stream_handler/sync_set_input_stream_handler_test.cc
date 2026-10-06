@@ -73,7 +73,7 @@ absl::Status InputsToDebugString(const InputStreamShardSet& inputs,
   ABSL_CONST_INIT static absl::Mutex mu(absl::kConstInit);
   static Timestamp static_timestamp = Timestamp(0);
   {
-    absl::MutexLock lock(&mu);
+    absl::MutexLock lock(mu);
     output_packet = MakePacket<std::string>(output).At(static_timestamp);
     ++static_timestamp;
   }

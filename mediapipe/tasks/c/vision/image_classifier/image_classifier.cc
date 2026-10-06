@@ -60,7 +60,7 @@ using ::mediapipe::tasks::c::core::ToMpStatus;
 using ::mediapipe::tasks::c::vision::core::CppConvertToImageProcessingOptions;
 using ::mediapipe::tasks::vision::core::RunningMode;
 using ::mediapipe::tasks::vision::image_classifier::ImageClassifier;
-using CppImageClassifierResult =
+using CppMpImageClassifierResult =
     ::mediapipe::tasks::vision::image_classifier::ImageClassifierResult;
 using CppImageProcessingOptions =
     ::mediapipe::tasks::vision::core::ImageProcessingOptions;
@@ -74,7 +74,7 @@ ImageClassifier* GetCppClassifier(MpImageClassifierPtr classifier) {
 
 }  // namespace
 
-absl::Status CppMpImageClassifierCreate(const ImageClassifierOptions& options,
+absl::Status CppMpImageClassifierCreate(const MpImageClassifierOptions& options,
                                         MpImageClassifierPtr* classifier) {
   auto cpp_options = std::make_unique<
       ::mediapipe::tasks::vision::image_classifier::ImageClassifierOptions>();
@@ -82,20 +82,22 @@ absl::Status CppMpImageClassifierCreate(const ImageClassifierOptions& options,
   CppConvertToBaseOptions(options.base_options, &cpp_options->base_options);
   CppConvertToClassifierOptions(options.classifier_options,
                                 &cpp_options->classifier_options);
-  cpp_options->running_mode = static_cast<RunningMode>(options.running_mode);
+  cpp_options->running_mode =
+      static_cast<::mediapipe::tasks::vision::core::RunningMode>(
+          options.running_mode);
 
   // Enable callback for processing live stream data when the running mode is
-  // set to RunningMode::LIVE_STREAM.
-  if (cpp_options->running_mode == RunningMode::LIVE_STREAM) {
+  // set to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM.
+  if (cpp_options->running_mode == MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM) {
     if (options.result_callback == nullptr) {
       return absl::InvalidArgumentError(
           "Provided null pointer to callback function.");
     }
 
-    ImageClassifierOptions::result_callback_fn result_callback =
+    MpImageClassifierOptions::result_callback_fn result_callback =
         options.result_callback;
     cpp_options->result_callback =
-        [result_callback](absl::StatusOr<CppImageClassifierResult> cpp_result,
+        [result_callback](absl::StatusOr<CppMpImageClassifierResult> cpp_result,
                           const Image& image, int64_t timestamp) {
           MpImageInternal mp_image({.image = image});
           if (!cpp_result.ok()) {
@@ -104,7 +106,7 @@ absl::Status CppMpImageClassifierCreate(const ImageClassifierOptions& options,
             return;
           }
 
-          ImageClassifierResult result;
+          MpImageClassifierResult result;
           CppConvertToClassificationResult(*cpp_result, &result);
           result_callback(kMpOk, &result, &mp_image, timestamp);
           CppCloseClassificationResult(&result);
@@ -122,8 +124,8 @@ absl::Status CppMpImageClassifierCreate(const ImageClassifierOptions& options,
 
 absl::Status CppMpImageClassifierClassifyImage(
     MpImageClassifierPtr classifier, const MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
-    ImageClassifierResult* result) {
+    const MpImageProcessingOptions* image_processing_options,
+    MpImageClassifierResult* result) {
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
@@ -142,8 +144,8 @@ absl::Status CppMpImageClassifierClassifyImage(
 
 absl::Status CppMpImageClassifierClassifyForVideo(
     MpImageClassifierPtr classifier, const MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms, ImageClassifierResult* result) {
+    const MpImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, MpImageClassifierResult* result) {
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
     CppImageProcessingOptions options;
@@ -162,7 +164,7 @@ absl::Status CppMpImageClassifierClassifyForVideo(
 
 absl::Status CppMpImageClassifierClassifyAsync(
     MpImageClassifierPtr classifier, const MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
+    const MpImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms) {
   std::optional<CppImageProcessingOptions> cpp_image_processing_options;
   if (image_processing_options) {
@@ -175,7 +177,7 @@ absl::Status CppMpImageClassifierClassifyAsync(
                                        cpp_image_processing_options);
 }
 
-void CppMpImageClassifierCloseResult(ImageClassifierResult* result) {
+void CppMpImageClassifierCloseResult(MpImageClassifierResult* result) {
   CppCloseClassificationResult(result);
 }
 
@@ -194,7 +196,7 @@ absl::Status CppMpImageClassifierClose(MpImageClassifierPtr classifier) {
 extern "C" {
 
 MP_EXPORT MpStatus
-MpImageClassifierCreate(struct ImageClassifierOptions* options,
+MpImageClassifierCreate(struct MpImageClassifierOptions* options,
                         MpImageClassifierPtr* classifier, char** error_msg) {
   absl::Status status =
       mediapipe::tasks::c::vision::image_classifier::CppMpImageClassifierCreate(
@@ -204,8 +206,8 @@ MpImageClassifierCreate(struct ImageClassifierOptions* options,
 
 MP_EXPORT MpStatus MpImageClassifierClassifyImage(
     MpImageClassifierPtr classifier, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
-    ImageClassifierResult* result, char** error_msg) {
+    const MpImageProcessingOptions* image_processing_options,
+    MpImageClassifierResult* result, char** error_msg) {
   absl::Status status = mediapipe::tasks::c::vision::image_classifier::
       CppMpImageClassifierClassifyImage(classifier, image,
                                         image_processing_options, result);
@@ -214,8 +216,8 @@ MP_EXPORT MpStatus MpImageClassifierClassifyImage(
 
 MP_EXPORT MpStatus MpImageClassifierClassifyForVideo(
     MpImageClassifierPtr classifier, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
-    int64_t timestamp_ms, ImageClassifierResult* result, char** error_msg) {
+    const MpImageProcessingOptions* image_processing_options,
+    int64_t timestamp_ms, MpImageClassifierResult* result, char** error_msg) {
   absl::Status status = mediapipe::tasks::c::vision::image_classifier::
       CppMpImageClassifierClassifyForVideo(
           classifier, image, image_processing_options, timestamp_ms, result);
@@ -224,7 +226,7 @@ MP_EXPORT MpStatus MpImageClassifierClassifyForVideo(
 
 MP_EXPORT MpStatus MpImageClassifierClassifyAsync(
     MpImageClassifierPtr classifier, MpImagePtr image,
-    const ImageProcessingOptions* image_processing_options,
+    const MpImageProcessingOptions* image_processing_options,
     int64_t timestamp_ms, char** error_msg) {
   absl::Status status = mediapipe::tasks::c::vision::image_classifier::
       CppMpImageClassifierClassifyAsync(classifier, image,
@@ -232,7 +234,7 @@ MP_EXPORT MpStatus MpImageClassifierClassifyAsync(
   return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
-MP_EXPORT void MpImageClassifierCloseResult(ImageClassifierResult* result) {
+MP_EXPORT void MpImageClassifierCloseResult(MpImageClassifierResult* result) {
   mediapipe::tasks::c::vision::image_classifier::
       CppMpImageClassifierCloseResult(result);
 }

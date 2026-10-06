@@ -61,6 +61,9 @@ struct ContextSpecializer {};
 // Specializer for contract fields used for `Graph`.
 struct GraphSpecializer {};
 
+// Specializer for contract fields used for `SubgraphContext`.
+struct SubgraphSpecializer {};
+
 // Specializer for contract fields used for `Graph` packet generators returned
 // by `Graph::AddLegacyPacketGenerator<...>()`
 struct GraphGeneratorSpecializer {};

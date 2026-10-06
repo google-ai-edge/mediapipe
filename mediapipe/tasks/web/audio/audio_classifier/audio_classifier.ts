@@ -171,6 +171,7 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
     sampleRate: number,
     timestampMs: number,
   ): AudioClassifierResult[] {
+    this.startProcessing(timestampMs);
     this.graphRunner.addDoubleToStream(
       sampleRate,
       SAMPLE_RATE_STREAM,
@@ -185,7 +186,7 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
     );
 
     this.classificationResults = [];
-    this.finishProcessing();
+    this.finishProcessing(timestampMs);
     return [...this.classificationResults];
   }
 

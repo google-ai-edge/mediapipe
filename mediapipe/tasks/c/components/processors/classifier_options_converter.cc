@@ -23,7 +23,7 @@ limitations under the License.
 namespace mediapipe::tasks::c::components::processors {
 
 void CppConvertToClassifierOptions(
-    const ClassifierOptions& in,
+    const MpClassifierOptions& in,
     mediapipe::tasks::components::processors::ClassifierOptions* out) {
   out->display_names_locale =
       in.display_names_locale ? std::string(in.display_names_locale) : "en";

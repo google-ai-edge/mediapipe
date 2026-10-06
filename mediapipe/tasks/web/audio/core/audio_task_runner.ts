@@ -19,16 +19,21 @@ import {TaskRunnerOptions} from '../../../../tasks/web/core/task_runner_options'
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {WasmMediaPipeConstructor} from '../../../../web/graph_runner/graph_runner';
 
-
 /** Base class for all MediaPipe Audio Tasks. */
 export abstract class AudioTaskRunner<T> extends TaskRunner {
   private defaultSampleRate = 48000;
 
   protected static async createAudioInstance<T, I extends AudioTaskRunner<T>>(
-      type: WasmMediaPipeConstructor<I>, fileset: WasmFileset,
-      options: TaskRunnerOptions): Promise<I> {
+    type: WasmMediaPipeConstructor<I>,
+    fileset: WasmFileset,
+    options: TaskRunnerOptions,
+  ): Promise<I> {
     return TaskRunner.createInstance(
-        type, /* canvas= */ null, fileset, options);
+      type,
+      /* canvas= */ null,
+      fileset,
+      options,
+    );
   }
 
   /**
@@ -44,13 +49,18 @@ export abstract class AudioTaskRunner<T> extends TaskRunner {
 
   /** Sends an audio packet to the graph and awaits results. */
   protected abstract process(
-      audioData: Float32Array, sampleRate: number, timestampMs: number): T;
+    audioData: Float32Array,
+    sampleRate: number,
+    timestampMs: number,
+  ): T;
 
   /** Sends a single audio clip to the graph and awaits results. */
   protected processAudioClip(audioData: Float32Array, sampleRate?: number): T {
     return this.process(
-        audioData, sampleRate ?? this.defaultSampleRate,
-        this.getSynctheticTimestamp());
+      audioData,
+      sampleRate ?? this.defaultSampleRate,
+      this.getSyntheticTimestamp(),
+    );
   }
 }
 

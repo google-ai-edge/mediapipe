@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 The MediaPipe Authors.
+ * Copyright 2026 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,389 +16,538 @@
 
 import 'jasmine';
 
-// Placeholder for internal dependency on encodeByteArray
-import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
-import {RegionOfInterest as RegionOfInterestProto} from '../../../../tasks/cc/vision/interactive_segmenter/proto/region_of_interest_pb';
+// Add NodeJS global DOM mocks for headless unit testing.
+if (typeof navigator === 'undefined') {
+  // tslint:disable-next-line:no-any
+  (globalThis as any).navigator = {userAgent: 'NodeJS'};
+}
+if (typeof document === 'undefined') {
+  // tslint:disable-next-line:no-any
+  (globalThis as any).document = {
+    createElement: (tag: string) => {
+      return {width: 2, height: 2, getContext: () => null};
+    },
+  };
+}
+if (typeof window === 'undefined') {
+  // tslint:disable-next-line:no-any
+  (globalThis as any).window = globalThis;
+}
+
+function runGpuTest(): boolean {
+  if (typeof navigator !== 'undefined' && navigator.userAgent === 'NodeJS') {
+    return true;
+  }
+  if (typeof document === 'undefined') {
+    return false;
+  }
+  try {
+    const canvas = document.createElement('canvas');
+    return !!(canvas.getContext('webgl2') || canvas.getContext('webgl'));
+  } catch (e) {
+    return false;
+  }
+}
+
+import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
+import {TaskLogger} from '../../../../tasks/web/core/task_logger';
+import {TaskRunner} from '../../../../tasks/web/core/task_runner';
 import {
-  addJasmineCustomFloatEqualityTester,
   createSpyWasmModule,
-  MediapipeTasksFake,
   SpyWasmModule,
-  verifyGraph,
 } from '../../../../tasks/web/core/task_runner_test_utils';
+import {MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
 import {MPMask} from '../../../../tasks/web/vision/core/mask';
 import {WasmImage} from '../../../../web/graph_runner/graph_runner_image_lib';
+import * as platformUtils from '../../../../web/graph_runner/platform_utils';
+// Placeholder for internal dependency on trusted resource URL builder
 
-import {InteractiveSegmenter, RegionOfInterest} from './interactive_segmenter';
+import {
+  BrushMode,
+  InteractiveSegmenter,
+  InteractiveSegmenterWasmModule,
+  Stroke,
+} from './interactive_segmenter';
 
-const KEYPOINT: RegionOfInterest = {
-  keypoint: {x: 0.1, y: 0.2},
-};
-
-const SCRIBBLE: RegionOfInterest = {
-  scribble: [
-    {x: 0.1, y: 0.2},
-    {x: 0.3, y: 0.4},
-  ],
-};
-
-class InteractiveSegmenterFake
-  extends InteractiveSegmenter
-  implements MediapipeTasksFake
-{
-  calculatorName =
-    'mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph';
-  attachListenerSpies: jasmine.Spy[] = [];
-  graph: CalculatorGraphConfig | undefined;
-
-  fakeWasmModule: SpyWasmModule;
-  categoryMaskListener:
-    | ((images: WasmImage, timestamp: number) => void)
-    | undefined;
-  confidenceMasksListener:
-    | ((images: WasmImage[], timestamp: number) => void)
-    | undefined;
-  qualityScoresListener:
-    | ((data: number[], timestamp: number) => void)
-    | undefined;
-  lastRoi?: RegionOfInterestProto;
+class InteractiveSegmenterFake extends InteractiveSegmenter {
+  fakeWasmModule: SpyWasmModule &
+    jasmine.SpyObj<InteractiveSegmenterWasmModule>;
+  fakeLogger = jasmine.createSpyObj<TaskLogger>('TaskLogger', [
+    'logSessionStart',
+    'logSessionEnd',
+    'recordCpuInputArrival',
+    'recordGpuInputArrival',
+    'recordInvocationEnd',
+    'close',
+  ]);
 
   constructor() {
     super(createSpyWasmModule(), /* glCanvas= */ null);
+    // Forces casting the generic Wasm module to mock spy types for testing.
+    // tslint:disable-next-line:no-unnecessary-type-assertion
     this.fakeWasmModule = this.graphRunner
-      .wasmModule as unknown as SpyWasmModule;
+      .wasmModule as unknown as SpyWasmModule &
+      jasmine.SpyObj<InteractiveSegmenterWasmModule>;
 
-    this.attachListenerSpies[0] = spyOn(
-      this.graphRunner,
-      'attachImageListener',
-    ).and.callFake((stream, listener) => {
-      expect(stream).toEqual('category_mask');
-      this.categoryMaskListener = listener;
-    });
-    this.attachListenerSpies[1] = spyOn(
-      this.graphRunner,
-      'attachImageVectorListener',
-    ).and.callFake((stream, listener) => {
-      expect(stream).toEqual('confidence_masks');
-      this.confidenceMasksListener = listener;
-    });
-    this.attachListenerSpies[2] = spyOn(
-      this.graphRunner,
-      'attachFloatVectorListener',
-    ).and.callFake((stream, listener) => {
-      expect(stream).toEqual('quality_scores');
-      this.qualityScoresListener = listener;
-    });
-    spyOn(this.graphRunner, 'setGraph').and.callFake((binaryGraph) => {
-      this.graph = CalculatorGraphConfig.deserializeBinary(binaryGraph);
-    });
-    spyOn(this.graphRunner, 'addGpuBufferAsImageToStream');
+    this.logger = this.fakeLogger;
 
-    spyOn(this.graphRunner, 'addProtoToStream').and.callFake(
-      (data, protoName, stream) => {
-        if (stream === 'roi_in') {
-          expect(protoName).toEqual(
-            'mediapipe.tasks.vision.interactive_segmenter.proto.RegionOfInterest',
-          );
-          this.lastRoi = RegionOfInterestProto.deserializeBinary(data);
-        }
-      },
-    );
+    this.setupWasmHeap();
+    this.mockMallocAndFree();
+    this.mockNativeMethods();
+  }
+
+  private setupWasmHeap(): void {
+    const heap8 = new Uint8Array(10000);
+    const heap32 = new Uint32Array(heap8.buffer);
+    this.fakeWasmModule.HEAPU8 = heap8;
+    this.fakeWasmModule.HEAPU32 = heap32;
+  }
+
+  private mockMallocAndFree(): void {
+    let nextPtr = 1000;
+    this.fakeWasmModule._malloc.and.callFake((size: number) => {
+      const ptr = nextPtr;
+      nextPtr += 100;
+      return ptr;
+    });
+    this.fakeWasmModule._free.and.callFake((ptr: number) => {});
+  }
+
+  private mockNativeMethods(): void {
+    this.fakeWasmModule._interactive_segmenter_create = jasmine
+      .createSpy<
+        InteractiveSegmenterWasmModule['_interactive_segmenter_create']
+      >('_create')
+      .and.returnValue(123);
+    this.fakeWasmModule._interactive_segmenter_set_image = jasmine
+      .createSpy<
+        InteractiveSegmenterWasmModule['_interactive_segmenter_set_image']
+      >('_set_image')
+      .and.returnValue(true);
+    this.fakeWasmModule._interactive_segmenter_segment = jasmine
+      .createSpy<
+        InteractiveSegmenterWasmModule['_interactive_segmenter_segment']
+      >('_segment')
+      .and.callFake(
+        (
+          handle: number,
+          strokes: number,
+          strokesSize: number,
+          wPtr: number,
+          hPtr: number,
+          sPtr: number,
+        ) => {
+          this.fakeWasmModule.HEAPU32[wPtr / 4] = 2;
+          this.fakeWasmModule.HEAPU32[hPtr / 4] = 2;
+          this.fakeWasmModule.HEAPU32[sPtr / 4] = 16; // 2x2 Float32 mask is 16 bytes
+          return 1000;
+        },
+      );
+    this.fakeWasmModule._interactive_segmenter_close =
+      jasmine.createSpy<
+        InteractiveSegmenterWasmModule['_interactive_segmenter_close']
+      >('_close');
+  }
+
+  override convertToMPMask(
+    wasmImage: WasmImage,
+    options: {interpolateValues: boolean; shouldCopyData: boolean},
+  ): MPMask {
+    return super.convertToMPMask(wasmImage, options);
   }
 }
 
 describe('InteractiveSegmenter', () => {
-  let interactiveSegmenter: InteractiveSegmenterFake;
+  // Boilerplate helpers to generate test inputs
+  function createDummyImage(): ImageData {
+    return {
+      width: 2,
+      height: 2,
+      data: new Uint8ClampedArray([
+        0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255,
+      ]),
+    } as unknown as ImageData;
+  }
 
-  beforeEach(async () => {
-    addJasmineCustomFloatEqualityTester();
-    interactiveSegmenter = new InteractiveSegmenterFake();
-    await interactiveSegmenter.setOptions({
-      baseOptions: {modelAssetBuffer: new Uint8Array([])},
-    });
+  function createTestStrokes(): Stroke[] {
+    return [
+      {
+        brushMode: BrushMode.POSITIVE,
+        point: [{x: 0.5, y: 0.5}],
+        isCompleted: true,
+      },
+    ];
+  }
+
+  it('exports BrushMode correctly', () => {
+    expect(BrushMode.UNSPECIFIED).toBe(0);
+    expect(BrushMode.POSITIVE).toBe(1);
+    expect(BrushMode.NEGATIVE).toBe(2);
+    expect(BrushMode.LASSO).toBe(3);
   });
 
-  afterEach(() => {
-    interactiveSegmenter.close();
-  });
-
-  it('initializes graph', async () => {
-    verifyGraph(interactiveSegmenter);
-
-    // Verify default options
-    expect(interactiveSegmenter.categoryMaskListener).not.toBeDefined();
-    expect(interactiveSegmenter.confidenceMasksListener).toBeDefined();
-  });
-
-  it('reloads graph when settings are changed', async () => {
-    await interactiveSegmenter.setOptions({
-      outputConfidenceMasks: true,
-      outputCategoryMask: false,
-    });
-    expect(interactiveSegmenter.categoryMaskListener).not.toBeDefined();
-    expect(interactiveSegmenter.confidenceMasksListener).toBeDefined();
-
-    await interactiveSegmenter.setOptions({
-      outputConfidenceMasks: false,
-      outputCategoryMask: true,
-    });
-    expect(interactiveSegmenter.categoryMaskListener).toBeDefined();
-  });
-
-  it('can use custom models', async () => {
-    const newModel = new Uint8Array([0, 1, 2, 3, 4]);
-    const newModelBase64 = Buffer.from(newModel).toString('base64');
-    await interactiveSegmenter.setOptions({
+  it('initializes options and executes segmentation successfully returning a float32 mask', async () => {
+    const segmenter = new InteractiveSegmenterFake();
+    await segmenter.setOptions({
       baseOptions: {
-        modelAssetBuffer: newModel,
+        modelAssetBuffer: new Uint8Array([0, 1, 2, 3]),
       },
     });
 
-    verifyGraph(
-      interactiveSegmenter,
-      /* expectedCalculatorOptions= */ undefined,
-      /* expectedBaseOptions= */
-      [
-        'modelAsset',
-        {
-          fileContent: newModelBase64,
-          fileName: undefined,
-          fileDescriptorMeta: undefined,
-          filePointerMeta: undefined,
-        },
-      ],
+    expect(segmenter).toBeDefined();
+    expect(
+      segmenter.fakeWasmModule._interactive_segmenter_create,
+    ).toHaveBeenCalled();
+
+    segmenter.setImage(createDummyImage());
+
+    expect(
+      segmenter.fakeWasmModule._interactive_segmenter_set_image,
+    ).toHaveBeenCalled();
+
+    const result = segmenter.segment(createTestStrokes());
+
+    expect(result).toBeInstanceOf(MPMask);
+    expect(result.width).toBe(2);
+    expect(result.height).toBe(2);
+    expect(result.hasFloat32Array()).toBeTrue();
+    expect(result.hasUint8Array()).toBeFalse();
+
+    segmenter.close();
+
+    expect(
+      segmenter.fakeWasmModule._interactive_segmenter_close,
+    ).toHaveBeenCalled();
+  });
+
+  it('throws descriptive error when segmenting prior to initialization', () => {
+    const uninitializedFake = new InteractiveSegmenterFake();
+    // Overwrite handle to simulate uninitialized state.
+    // tslint:disable-next-line:no-any
+    (uninitializedFake as any).nativeSegmenterHandle = 0;
+    expect(() => uninitializedFake.segment([])).toThrowError(
+      'Segmenter is not initialized.',
     );
   });
 
-  it("doesn't support region of interest", () => {
+  it('reloads native engine when options are changed (e.g., delegate change)', async () => {
+    const segmenter = new InteractiveSegmenterFake();
+    await segmenter.setOptions({
+      baseOptions: {
+        modelAssetBuffer: new Uint8Array([0, 1, 2, 3]),
+        delegate: 'CPU',
+      },
+    });
+    expect(
+      segmenter.fakeWasmModule._interactive_segmenter_create,
+    ).toHaveBeenCalledTimes(1);
+
+    // Change options to GPU
+    await segmenter.setOptions({
+      baseOptions: {
+        modelAssetBuffer: new Uint8Array([0, 1, 2, 3]),
+        delegate: 'GPU',
+      },
+    });
+    // Should close first handle and create a new one
+    expect(
+      segmenter.fakeWasmModule._interactive_segmenter_close,
+    ).toHaveBeenCalledTimes(1);
+    expect(
+      segmenter.fakeWasmModule._interactive_segmenter_create,
+    ).toHaveBeenCalledTimes(2);
+  });
+
+  it('frees previous image allocation during setImage to prevent memory leaks', () => {
+    const segmenter = new InteractiveSegmenterFake();
+    const segmenterAsPrivate = segmenter as unknown as {
+      nativeSegmenterHandle: number;
+      currentImagePixelPtr: number;
+    };
+    // Overwrite handle to simulate initialized state.
+    segmenterAsPrivate.nativeSegmenterHandle = 123;
+
+    segmenter.setImage(createDummyImage());
+    const initialPtr = segmenterAsPrivate.currentImagePixelPtr;
+    expect(initialPtr).not.toBe(0);
+
+    // Set a new image
+    segmenter.setImage(createDummyImage());
+
+    // It should have freed the initial pointer
+    expect(segmenter.fakeWasmModule._free).toHaveBeenCalledWith(initialPtr);
+  });
+
+  it('frees native segmenter handle and image allocations on close', () => {
+    const segmenter = new InteractiveSegmenterFake();
+    const segmenterAsPrivate = segmenter as unknown as {
+      nativeSegmenterHandle: number;
+      currentImagePixelPtr: number;
+    };
+    // Overwrite handle to simulate initialized state.
+    segmenterAsPrivate.nativeSegmenterHandle = 123;
+    segmenter.setImage(createDummyImage());
+    const initialPtr = segmenterAsPrivate.currentImagePixelPtr;
+
+    segmenter.close();
+
+    expect(
+      segmenter.fakeWasmModule._interactive_segmenter_close,
+    ).toHaveBeenCalledWith(123);
+    expect(segmenter.fakeWasmModule._free).toHaveBeenCalledWith(initialPtr);
+    expect(segmenterAsPrivate.nativeSegmenterHandle).toBe(0);
+    expect(segmenterAsPrivate.currentImagePixelPtr).toBe(0);
+  });
+
+  it('throws error if channel count is unsupported', () => {
+    const segmenter = new InteractiveSegmenterFake();
+    const segmenterAsPrivate = segmenter as unknown as {
+      nativeSegmenterHandle: number;
+    };
+    segmenterAsPrivate.nativeSegmenterHandle = 123;
+
+    // 2x2 image with 2 channels (8 bytes) -> unsupported
+    const badImage = {
+      width: 2,
+      height: 2,
+      data: new Uint8Array(8),
+    } as unknown as ImageData;
+
     expect(() => {
-      interactiveSegmenter.segment(
-        {} as HTMLImageElement,
-        KEYPOINT,
-        {regionOfInterest: {left: 0, right: 0, top: 0, bottom: 0}},
-        () => {},
-      );
-    }).toThrowError("This task doesn't support region-of-interest.");
+      segmenter.setImage(badImage);
+    }).toThrowError(/Invalid image dimensions or pixel data length/);
   });
 
-  it('sends region-of-interest with keypoint', (done) => {
-    interactiveSegmenter.fakeWasmModule._waitUntilIdle.and.callFake(() => {
-      expect(interactiveSegmenter.lastRoi).toBeDefined();
-      expect(interactiveSegmenter.lastRoi!.toObject().keypoint!).toEqual(
-        jasmine.objectContaining({
-          x: 0.1,
-          y: 0.2,
-          normalized: true,
-        }),
-      );
-      done();
+  it('initializes GPU-delegated options and executes segmentation with standard CPU ImageData', async () => {
+    if (!runGpuTest()) {
+      pending('WebGL2 is not supported in this environment.');
+      return;
+    }
+    const segmenter = new InteractiveSegmenterFake();
+    await segmenter.setOptions({
+      baseOptions: {
+        modelAssetBuffer: new Uint8Array([0, 1, 2, 3]),
+        delegate: 'GPU',
+      },
     });
+    const createSpy = segmenter.fakeWasmModule._interactive_segmenter_create;
+    expect(createSpy).toHaveBeenCalled();
+    const [ptr, length] = createSpy.calls.mostRecent().args as [number, number];
+    const bytes = segmenter.fakeWasmModule.HEAPU8.subarray(ptr, ptr + length);
+    const baseOptions = BaseOptionsProto.deserializeBinary(bytes);
+    expect(baseOptions.getAcceleration()?.hasGpu()).toBeTrue();
 
-    interactiveSegmenter.segment({} as HTMLImageElement, KEYPOINT, () => {});
+    segmenter.setImage(createDummyImage());
+    expect(
+      segmenter.fakeWasmModule._interactive_segmenter_set_image,
+    ).toHaveBeenCalled();
+
+    const result = segmenter.segment(createTestStrokes());
+    expect(result).toBeInstanceOf(MPMask);
+    expect(result.width).toBe(2);
+    expect(result.height).toBe(2);
+    expect(result.hasFloat32Array()).toBeTrue();
+    expect(result.hasUint8Array()).toBeFalse();
+
+    segmenter.close();
+    expect(
+      segmenter.fakeWasmModule._interactive_segmenter_close,
+    ).toHaveBeenCalled();
   });
 
-  it('sends region-of-interest with scribble', (done) => {
-    interactiveSegmenter.fakeWasmModule._waitUntilIdle.and.callFake(() => {
-      expect(interactiveSegmenter.lastRoi).toBeDefined();
-      expect(interactiveSegmenter.lastRoi!.toObject().scribble!).toEqual(
-        jasmine.objectContaining({
-          pointList: [
-            {x: 0.1, y: 0.2, normalized: true},
-            {x: 0.3, y: 0.4, normalized: true},
-          ],
-        }),
-      );
-      done();
-    });
 
-    interactiveSegmenter.segment({} as HTMLImageElement, SCRIBBLE, () => {});
-  });
+  // tslint:disable:no-any
+  it('creates a canvas when OffscreenCanvas is not supported', async () => {
+    spyOn(platformUtils, 'supportsOffscreenCanvas').and.returnValue(false);
+    const createInstanceSpy = spyOn(
+      TaskRunner as any,
+      'createInstance',
+    ).and.resolveTo({} as any);
 
-  it('supports category mask', async () => {
-    const mask = new Uint8Array([1, 2, 3, 4]);
-
-    await interactiveSegmenter.setOptions({
-      outputCategoryMask: true,
-      outputConfidenceMasks: false,
-    });
-
-    // Pass the test data to our listener
-    interactiveSegmenter.fakeWasmModule._waitUntilIdle.and.callFake(() => {
-      expect(interactiveSegmenter.categoryMaskListener).toBeDefined();
-      interactiveSegmenter.categoryMaskListener!(
-        {data: mask, width: 2, height: 2},
-        /* timestamp= */ 1337,
-      );
-    });
-
-    // Invoke the image segmenter
-    return new Promise<void>((resolve) => {
-      interactiveSegmenter.segment(
-        {} as HTMLImageElement,
-        KEYPOINT,
-        (result) => {
-          expect(
-            interactiveSegmenter.fakeWasmModule._waitUntilIdle,
-          ).toHaveBeenCalled();
-          expect(result.categoryMask).toBeInstanceOf(MPMask);
-          expect(result.categoryMask!.width).toEqual(2);
-          expect(result.categoryMask!.height).toEqual(2);
-          expect(result.confidenceMasks).not.toBeDefined();
-          resolve();
-        },
-      );
-    });
-  });
-
-  it('supports confidence masks', async () => {
-    const mask1 = new Float32Array([0.1, 0.2, 0.3, 0.4]);
-    const mask2 = new Float32Array([0.5, 0.6, 0.7, 0.8]);
-
-    await interactiveSegmenter.setOptions({
-      outputCategoryMask: false,
-      outputConfidenceMasks: true,
-    });
-
-    // Pass the test data to our listener
-    interactiveSegmenter.fakeWasmModule._waitUntilIdle.and.callFake(() => {
-      expect(interactiveSegmenter.confidenceMasksListener).toBeDefined();
-      interactiveSegmenter.confidenceMasksListener!(
-        [
-          {data: mask1, width: 2, height: 2},
-          {data: mask2, width: 2, height: 2},
-        ],
-        1337,
-      );
-    });
-    return new Promise<void>((resolve) => {
-      // Invoke the image segmenter
-      interactiveSegmenter.segment(
-        {} as HTMLImageElement,
-        KEYPOINT,
-        (result) => {
-          expect(
-            interactiveSegmenter.fakeWasmModule._waitUntilIdle,
-          ).toHaveBeenCalled();
-          expect(result.categoryMask).not.toBeDefined();
-
-          expect(result.confidenceMasks![0]).toBeInstanceOf(MPMask);
-          expect(result.confidenceMasks![0].width).toEqual(2);
-          expect(result.confidenceMasks![0].height).toEqual(2);
-
-          expect(result.confidenceMasks![1]).toBeInstanceOf(MPMask);
-          resolve();
-        },
-      );
-    });
-  });
-
-  it('supports combined category and confidence masks', async () => {
-    const categoryMask = new Uint8Array([1]);
-    const confidenceMask1 = new Float32Array([0.0]);
-    const confidenceMask2 = new Float32Array([1.0]);
-
-    await interactiveSegmenter.setOptions({
-      outputCategoryMask: true,
-      outputConfidenceMasks: true,
-    });
-
-    // Pass the test data to our listener
-    interactiveSegmenter.fakeWasmModule._waitUntilIdle.and.callFake(() => {
-      expect(interactiveSegmenter.categoryMaskListener).toBeDefined();
-      expect(interactiveSegmenter.confidenceMasksListener).toBeDefined();
-      interactiveSegmenter.categoryMaskListener!(
-        {data: categoryMask, width: 1, height: 1},
-        1337,
-      );
-      interactiveSegmenter.confidenceMasksListener!(
-        [
-          {data: confidenceMask1, width: 1, height: 1},
-          {data: confidenceMask2, width: 1, height: 1},
-        ],
-        1337,
-      );
-    });
-
-    return new Promise<void>((resolve) => {
-      // Invoke the image segmenter
-      interactiveSegmenter.segment(
-        {} as HTMLImageElement,
-        KEYPOINT,
-        (result) => {
-          expect(
-            interactiveSegmenter.fakeWasmModule._waitUntilIdle,
-          ).toHaveBeenCalled();
-          expect(result.categoryMask).toBeInstanceOf(MPMask);
-          expect(result.categoryMask!.width).toEqual(1);
-          expect(result.categoryMask!.height).toEqual(1);
-
-          expect(result.confidenceMasks![0]).toBeInstanceOf(MPMask);
-          expect(result.confidenceMasks![1]).toBeInstanceOf(MPMask);
-          resolve();
-        },
-      );
-    });
-  });
-
-  it('invokes listener after masks are available', async () => {
-    const categoryMask = new Uint8Array([1]);
-    const confidenceMask = new Float32Array([0.0]);
-    const qualityScores = [1.0];
-    let listenerCalled = false;
-
-    await interactiveSegmenter.setOptions({
-      outputCategoryMask: true,
-      outputConfidenceMasks: true,
-    });
-
-    // Pass the test data to our listener
-    interactiveSegmenter.fakeWasmModule._waitUntilIdle.and.callFake(() => {
-      expect(listenerCalled).toBeFalse();
-      interactiveSegmenter.categoryMaskListener!(
-        {data: categoryMask, width: 1, height: 1},
-        1337,
-      );
-      expect(listenerCalled).toBeFalse();
-      interactiveSegmenter.confidenceMasksListener!(
-        [{data: confidenceMask, width: 1, height: 1}],
-        1337,
-      );
-      expect(listenerCalled).toBeFalse();
-      interactiveSegmenter.qualityScoresListener!(qualityScores, 1337);
-      expect(listenerCalled).toBeFalse();
-    });
-
-    return new Promise<void>((resolve) => {
-      interactiveSegmenter.segment(
-        {} as HTMLImageElement,
-        KEYPOINT,
-        (result) => {
-          listenerCalled = true;
-          expect(result.categoryMask).toBeInstanceOf(MPMask);
-          expect(result.confidenceMasks![0]).toBeInstanceOf(MPMask);
-          expect(result.qualityScores).toEqual(qualityScores);
-          resolve();
-        },
-      );
-    });
-  });
-
-  it('returns result', () => {
-    const confidenceMask = new Float32Array([0.0]);
-
-    // Pass the test data to our listener
-    interactiveSegmenter.fakeWasmModule._waitUntilIdle.and.callFake(() => {
-      interactiveSegmenter.confidenceMasksListener!(
-        [{data: confidenceMask, width: 1, height: 1}],
-        1337,
-      );
-    });
-
-    const result = interactiveSegmenter.segment(
-      {} as HTMLImageElement,
-      KEYPOINT,
+    await InteractiveSegmenter.createFromOptions(
+      {wasmLoaderPath: `wasm.js`, wasmBinaryPath: {} as any},
+      {},
     );
-    expect(result.confidenceMasks![0]).toBeInstanceOf(MPMask);
-    result.close();
+
+    expect(createInstanceSpy).toHaveBeenCalled();
+    const canvas = createInstanceSpy.calls.mostRecent().args[1] as any;
+    expect(canvas).toBeDefined();
+    expect(canvas.getContext).toBeDefined();
+  });
+
+  it('does not create a canvas when OffscreenCanvas is supported', async () => {
+    spyOn(platformUtils, 'supportsOffscreenCanvas').and.returnValue(true);
+    const createInstanceSpy = spyOn(
+      TaskRunner as any,
+      'createInstance',
+    ).and.resolveTo({} as any);
+
+    await InteractiveSegmenter.createFromOptions(
+      {wasmLoaderPath: `wasm.js`, wasmBinaryPath: {} as any},
+      {},
+    );
+
+    expect(createInstanceSpy).toHaveBeenCalled();
+    const canvas = createInstanceSpy.calls.mostRecent().args[1];
+    expect(canvas).toBeUndefined();
+  });
+  // tslint:enable:no-any
+
+  it('clones mask when shouldCopyData is true', () => {
+    const segmenter = new InteractiveSegmenterFake();
+    const wasmImage: WasmImage = {
+      data: new Float32Array([0.1, 0.2, 0.3, 0.4]),
+      width: 2,
+      height: 2,
+    };
+
+    const maskNoCopy = segmenter.convertToMPMask(wasmImage, {
+      interpolateValues: true,
+      shouldCopyData: false,
+    });
+    const maskCopy = segmenter.convertToMPMask(wasmImage, {
+      interpolateValues: true,
+      shouldCopyData: true,
+    });
+
+    expect(maskNoCopy.getAsFloat32Array()).toBe(wasmImage.data as Float32Array);
+    expect(maskCopy.getAsFloat32Array()).not.toBe(
+      wasmImage.data as Float32Array,
+    );
+    expect(maskCopy.getAsFloat32Array()).toEqual(
+      wasmImage.data as Float32Array,
+    );
+  });
+
+  it('convertToMPMask throws error if Float32Array mask has unsupported channel count', () => {
+    const segmenter = new InteractiveSegmenterFake();
+    const wasmImage: WasmImage = {
+      data: new Float32Array([0.1, 0.2, 0.3]), // length 3, pixels = 2 * 2 = 4
+      width: 2,
+      height: 2,
+    };
+
+    expect(() => {
+      segmenter.convertToMPMask(wasmImage, {
+        interpolateValues: true,
+        shouldCopyData: false,
+      });
+    }).toThrowError(/Unsupported channel count/);
+  });
+
+  it('convertToMPMask throws error if Uint8Array mask has unsupported channel count', () => {
+    const segmenter = new InteractiveSegmenterFake();
+    const wasmImage: WasmImage = {
+      data: new Uint8Array([1, 2, 3]), // length 3, pixels = 2 * 2 = 4
+      width: 2,
+      height: 2,
+    };
+
+    expect(() => {
+      segmenter.convertToMPMask(wasmImage, {
+        interpolateValues: true,
+        shouldCopyData: false,
+      });
+    }).toThrowError(/Unsupported channel count/);
+  });
+
+  it('closes shader context on close', () => {
+    const segmenter = new InteractiveSegmenterFake();
+    const shaderCloseSpy = spyOn(
+      MPImageShaderContext.prototype,
+      'close',
+    ).and.callThrough();
+
+    segmenter.close();
+
+    expect(shaderCloseSpy).toHaveBeenCalled();
+  });
+
+  it('logs session start when options are initially configured', async () => {
+    const segmenter = new InteractiveSegmenterFake();
+
+    await segmenter.setOptions({
+      baseOptions: {
+        modelAssetBuffer: new Uint8Array([0, 1, 2, 3]),
+        delegate: 'CPU',
+      },
+    });
+
+    expect(segmenter.fakeLogger.logSessionStart).toHaveBeenCalledTimes(1);
+    expect(segmenter.fakeLogger.logSessionEnd).not.toHaveBeenCalled();
+  });
+
+  it('logs session end and start when options are updated', async () => {
+    const segmenter = new InteractiveSegmenterFake();
+    await segmenter.setOptions({
+      baseOptions: {
+        modelAssetBuffer: new Uint8Array([0, 1, 2, 3]),
+        delegate: 'CPU',
+      },
+    });
+    segmenter.fakeLogger.logSessionStart.calls.reset();
+    segmenter.fakeLogger.logSessionEnd.calls.reset();
+
+    await segmenter.setOptions({
+      baseOptions: {
+        modelAssetBuffer: new Uint8Array([0, 1, 2, 3]),
+        delegate: 'GPU',
+      },
+    });
+
+    expect(segmenter.fakeLogger.logSessionEnd).toHaveBeenCalledTimes(1);
+    expect(segmenter.fakeLogger.logSessionStart).toHaveBeenCalledTimes(1);
+  });
+
+  it('logs input arrival and invocation end during segment()', async () => {
+    const segmenter = new InteractiveSegmenterFake();
+    await segmenter.setOptions({
+      baseOptions: {
+        modelAssetBuffer: new Uint8Array([0, 1, 2, 3]),
+        delegate: 'GPU',
+      },
+    });
+    segmenter.setImage(createDummyImage());
+
+    segmenter.segment(createTestStrokes());
+
+    expect(segmenter.fakeLogger.recordGpuInputArrival).toHaveBeenCalledWith(0);
+    expect(segmenter.fakeLogger.recordCpuInputArrival).not.toHaveBeenCalled();
+    expect(segmenter.fakeLogger.recordInvocationEnd).toHaveBeenCalledWith(0);
+  });
+
+  it('increments the logged timestamp for subsequent segment() calls', async () => {
+    const segmenter = new InteractiveSegmenterFake();
+    await segmenter.setOptions({
+      baseOptions: {
+        modelAssetBuffer: new Uint8Array([0, 1, 2, 3]),
+        delegate: 'GPU',
+      },
+    });
+    segmenter.setImage(createDummyImage());
+    segmenter.segment(createTestStrokes());
+
+    segmenter.segment(createTestStrokes());
+
+    expect(segmenter.fakeLogger.recordGpuInputArrival).toHaveBeenCalledWith(0);
+    expect(segmenter.fakeLogger.recordGpuInputArrival).toHaveBeenCalledWith(1);
+    expect(segmenter.fakeLogger.recordInvocationEnd).toHaveBeenCalledWith(0);
+    expect(segmenter.fakeLogger.recordInvocationEnd).toHaveBeenCalledWith(1);
+  });
+
+  it('logs session end and close when segmenter is closed', async () => {
+    const segmenter = new InteractiveSegmenterFake();
+    await segmenter.setOptions({
+      baseOptions: {
+        modelAssetBuffer: new Uint8Array([0, 1, 2, 3]),
+        delegate: 'CPU',
+      },
+    });
+    segmenter.fakeLogger.logSessionEnd.calls.reset();
+
+    segmenter.close();
+
+    expect(segmenter.fakeLogger.logSessionEnd).toHaveBeenCalledTimes(1);
+    expect(segmenter.fakeLogger.close).toHaveBeenCalledTimes(1);
   });
 });

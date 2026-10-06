@@ -14,6 +14,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import "mediapipe/tasks/ios/core/sources/MPPCoreRunningMode.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 /**
@@ -42,6 +44,18 @@ NS_INLINE NSString *MPPAudioRunningModeDisplayName(MPPAudioRunningMode runningMo
       return @"Audio Stream";
     default:
       return @"";
+  }
+}
+
+NS_INLINE MPPCoreRunningMode
+MMPCoreRunningModeFromAudioRunningMode(MPPAudioRunningMode runningMode) {
+  switch (runningMode) {
+    case MPPAudioRunningModeAudioClips:
+      return MPPCoreRunningModeAudioClips;
+    case MPPAudioRunningModeAudioStream:
+      return MPPCoreRunningModeAudioStream;
+    default:
+      return MPPCoreRunningModeUnspecified;
   }
 }
 

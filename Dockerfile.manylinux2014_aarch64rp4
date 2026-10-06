@@ -24,14 +24,18 @@
 
 FROM quay.io/pypa/manylinux2014_aarch64
 
+ARG MEDIAPIPE_DISABLE_GPU=0
+ENV MEDIAPIPE_DISABLE_GPU=${MEDIAPIPE_DISABLE_GPU}
+
 # Install Bazel
 RUN curl -L -o bazel https://github.com/bazelbuild/bazel/releases/download/7.4.1/bazel-7.4.1-linux-arm64
 RUN chmod +x bazel
 RUN mv ./bazel /usr/local/bin
 
 # Copy Protobuf Compiler binary
-ARG PROTOC_ZIP=protoc-5.28.3-linux-aarch_64.zip
-RUN curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v5.28.3/$PROTOC_ZIP
+ARG PROTOC_VERSION=28.3
+ARG PROTOC_ZIP=protoc-${PROTOC_VERSION}-linux-aarch_64.zip
+RUN curl -fLO https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/$PROTOC_ZIP
 RUN unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
 RUN unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
 RUN rm -f $PROTOC_ZIP
@@ -95,10 +99,8 @@ RUN echo "build --client_env=CC=/usr/lib/llvm-18/bin/clang++" >> .bazelrc && \
     echo 'cc_library(name = "opencv", srcs = ["lib64/libopencv_imgproc.a", "lib64/libopencv_core.a"],hdrs = glob(["include/opencv4/opencv2/**/*.h*"]), includes = ["include/opencv4/"], linkstatic = 1, visibility = ["//visibility:public"])' > third_party/opencv_linux.BUILD && \
     sed -i "s|bazel_command.append('--define=OPENCV=source')|pass|g" setup.py
 
-# Apply diff to reduce the number of OpenCV dependencies.
-RUN patch -p1 < mediapipe_python_build.diff
-
 ARG PYTHON_BIN="/opt/python/cp312-cp312/bin/python3.12"
+RUN $PYTHON_BIN -m pip install --upgrade pip setuptools
 RUN ln -sf $PYTHON_BIN /usr/bin/python && \
    ln -sf $PYTHON_BIN /usr/bin/python3 && \
    $PYTHON_BIN -m pip install wheel "numpy<2" auditwheel && \

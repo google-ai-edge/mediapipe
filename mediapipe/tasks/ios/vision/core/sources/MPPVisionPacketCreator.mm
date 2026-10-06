@@ -20,7 +20,7 @@
 
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/timestamp.h"
-#include "mediapipe/tasks/cc/vision/interactive_segmenter/proto/region_of_interest.pb.h"
+#include "mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto/region_of_interest.pb.h"
 
 static const NSUInteger kMicrosecondsPerMillisecond = 1000;
 
@@ -32,7 +32,7 @@ using ::mediapipe::MakePacket;
 using ::mediapipe::NormalizedRect;
 using ::mediapipe::Packet;
 using ::mediapipe::Timestamp;
-using ::mediapipe::tasks::vision::interactive_segmenter::proto::RegionOfInterest;
+using ::mediapipe::tasks::vision::interactive_segmenter_legacy::proto::RegionOfInterest;
 }  // namespace
 
 @implementation MPPVisionPacketCreator

@@ -42,7 +42,7 @@ void SyncSetInputStreamHandler::PrepareForRun(
   const auto& handler_options =
       options_.GetExtension(mediapipe::SyncSetInputStreamHandlerOptions::ext);
   {
-    absl::MutexLock lock(&mutex_);
+    absl::MutexLock lock(mutex_);
     sync_sets_.clear();
     std::set<CollectionItemId> used_ids;
     for (const auto& sync_set : handler_options.sync_set()) {
@@ -84,7 +84,7 @@ void SyncSetInputStreamHandler::PrepareForRun(
 NodeReadiness SyncSetInputStreamHandler::GetNodeReadiness(
     Timestamp* min_stream_timestamp) {
   ABSL_DCHECK(min_stream_timestamp);
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   if (ready_sync_set_index_ >= 0) {
     *min_stream_timestamp = ready_timestamp_;
     // TODO: Return kNotReady unless a new ready syncset is found.
@@ -130,7 +130,7 @@ NodeReadiness SyncSetInputStreamHandler::GetNodeReadiness(
 void SyncSetInputStreamHandler::FillInputSet(Timestamp input_timestamp,
                                              InputStreamShardSet* input_set) {
   // Assume that all current packets are already cleared.
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   ABSL_CHECK_LE(0, ready_sync_set_index_);
   sync_sets_[ready_sync_set_index_].FillInputSet(input_timestamp, input_set);
   for (int i = 0; i < sync_sets_.size(); ++i) {
@@ -143,7 +143,7 @@ void SyncSetInputStreamHandler::FillInputSet(Timestamp input_timestamp,
 }
 
 int SyncSetInputStreamHandler::SyncSetCount() {
-  absl::MutexLock lock(&mutex_);
+  absl::MutexLock lock(mutex_);
   return sync_sets_.size();
 }
 

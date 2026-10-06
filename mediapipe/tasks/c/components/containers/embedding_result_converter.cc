@@ -26,13 +26,13 @@ namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToEmbeddingResult(
     const mediapipe::tasks::components::containers::EmbeddingResult& in,
-    EmbeddingResult* out) {
+    MpEmbeddingResult* out) {
   out->has_timestamp_ms = in.timestamp_ms.has_value();
   out->timestamp_ms = out->has_timestamp_ms ? in.timestamp_ms.value() : 0;
 
   out->embeddings_count = in.embeddings.size();
   out->embeddings =
-      out->embeddings_count ? new Embedding[out->embeddings_count] : nullptr;
+      out->embeddings_count ? new MpEmbedding[out->embeddings_count] : nullptr;
 
   for (uint32_t i = 0; i < out->embeddings_count; ++i) {
     auto embedding_in = in.embeddings[i];
@@ -67,7 +67,7 @@ void CppConvertToEmbeddingResult(
 }
 
 void CppConvertToCppEmbedding(
-    const Embedding& in,  // C struct as input
+    const MpEmbedding& in,  // C struct as input
     mediapipe::tasks::components::containers::Embedding* out) {
   // Handle float embeddings
   if (in.float_embedding != nullptr) {
@@ -89,7 +89,7 @@ void CppConvertToCppEmbedding(
   }
 }
 
-void CppCloseEmbeddingResult(EmbeddingResult* in) {
+void CppCloseEmbeddingResult(MpEmbeddingResult* in) {
   for (uint32_t i = 0; i < in->embeddings_count; ++i) {
     auto embedding_in = in->embeddings[i];
 

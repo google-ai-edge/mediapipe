@@ -89,7 +89,7 @@ absl::Status OutputStreamObserver::Notify() {
   // Lets one thread perform packets notification as much as possible.
   // Other threads should quit if a thread is already performing notification.
   {
-    absl::MutexLock l(&mutex_);
+    absl::MutexLock l(mutex_);
 
     if (notifying_ == false) {
       notifying_ = true;
@@ -117,7 +117,7 @@ absl::Status OutputStreamObserver::Notify() {
       // case of the min timestamp or bound getting updated, jumps to the
       // beginning of the notification loop for a new iteration.
       {
-        absl::MutexLock l(&mutex_);
+        absl::MutexLock l(mutex_);
         Timestamp new_min_timestamp =
             input_stream_->MinTimestampOrBound(&empty);
         if (new_min_timestamp == min_timestamp) {
@@ -159,12 +159,12 @@ void OutputStreamPollerImpl::PrepareForRun(
   input_stream_handler_->PrepareForRun(
       /*headers_ready_callback=*/[] {}, std::move(notification_callback),
       /*schedule_callback=*/nullptr, std::move(error_callback));
-  absl::MutexLock l(&mutex_);
+  absl::MutexLock l(mutex_);
   graph_has_error_ = false;
 }
 
 void OutputStreamPollerImpl::Reset() {
-  absl::MutexLock l(&mutex_);
+  absl::MutexLock l(mutex_);
   graph_has_error_ = false;
   input_stream_->PrepareForRun();
 }
@@ -178,13 +178,13 @@ void OutputStreamPollerImpl::SetMaxQueueSize(int queue_size) {
 int OutputStreamPollerImpl::QueueSize() { return input_stream_->QueueSize(); }
 
 absl::Status OutputStreamPollerImpl::Notify() {
-  absl::MutexLock l(&mutex_);
+  absl::MutexLock l(mutex_);
   handler_condvar_.Signal();
   return absl::OkStatus();
 }
 
 void OutputStreamPollerImpl::NotifyError() {
-  absl::MutexLock l(&mutex_);
+  absl::MutexLock l(mutex_);
   graph_has_error_ = true;
   handler_condvar_.Signal();
 }
@@ -195,7 +195,7 @@ bool OutputStreamPollerImpl::Next(Packet* packet) {
   bool timestamp_bound_changed = false;
   Timestamp min_timestamp = Timestamp::Unset();
   {
-    absl::MutexLock l(&mutex_);
+    absl::MutexLock l(mutex_);
     while (true) {
       min_timestamp = input_stream_->MinTimestampOrBound(&empty_queue);
       if (empty_queue) {

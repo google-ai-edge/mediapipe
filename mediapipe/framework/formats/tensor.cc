@@ -24,6 +24,7 @@
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port.h"
@@ -190,7 +191,8 @@ Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dReadView() const {
         texture_height_ * texture_width_ * 4 * element_size();
     auto temp_buffer = std::make_unique<uint8_t[]>(padded_size);
     uint8_t* dest_buffer = temp_buffer.get();
-    uint8_t* src_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
+    CpuBufferHandle<const void> cpu_buffer_handle = AcquireCpuBufferHandle();
+    const uint8_t* src_buffer = cpu_buffer_handle.buffer<const uint8_t>();
     const int num_elements = BhwcWidthFromShape(shape_) *
                              BhwcHeightFromShape(shape_) *
                              BhwcBatchFromShape(shape_);
@@ -367,6 +369,11 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
       ABSL_CHECK(ptr) << "glMapBufferRange failed: " << glGetError();
       std::memcpy(ptr, cpu_buffer_, bytes());
       glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+      if (prefer_ahwb_) {
+        // Next time Tensor is written, AHWB will be used.
+        MarkAhwbUsage();
+      }
     }
     valid_ |= kValidOpenGlBuffer;
   }
@@ -482,6 +489,7 @@ Tensor::Tensor(ElementType element_type, const Shape& shape,
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   if (memory_manager) {
     hardware_buffer_pool_ = memory_manager->GetAndroidHardwareBufferPool();
+    prefer_ahwb_ = memory_manager->PreferAhwb();
   }
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 }
@@ -496,6 +504,7 @@ Tensor::Tensor(ElementType element_type, const Shape& shape,
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   if (memory_manager) {
     hardware_buffer_pool_ = memory_manager->GetAndroidHardwareBufferPool();
+    prefer_ahwb_ = memory_manager->PreferAhwb();
   }
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 }
@@ -551,7 +560,7 @@ absl::Status Tensor::Invalidate() {
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   {
-    absl::MutexLock lock(&view_mutex_);
+    absl::MutexLock lock(view_mutex_);
     MP_RETURN_IF_ERROR(ReleaseAhwbStuff());
 
     // Don't need to wait for the resource to be deleted because if will be
@@ -619,6 +628,11 @@ absl::Status Tensor::ReadBackGpuToCpu() const {
       std::memcpy(cpu_buffer_, ptr, bytes());
       glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     });
+
+    if (prefer_ahwb_) {
+      // Next time Tensor is written, AHWB will be used.
+      MarkAhwbUsage();
+    }
     return absl::OkStatus();
   }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
@@ -701,8 +715,7 @@ absl::Status Tensor::ReadBackGpuToCpu() const {
       "Failed to read back data from GPU to CPU. Valid formats: ", valid_));
 }
 
-Tensor::CpuReadView Tensor::GetCpuReadView() const {
-  auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
+Tensor::CpuBufferHandle<const void> Tensor::AcquireCpuBufferHandle() const {
   ABSL_LOG_IF(FATAL, valid_ == kValidNone)
       << "Tensor must be written prior to read from.";
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
@@ -710,9 +723,9 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
     void* ptr = MapAhwbToCpuRead();
     if (ptr) {
       valid_ |= kValidCpu;
-      return {ptr, std::move(lock), [ahwb = ahwb_.get()] {
-                ABSL_CHECK_OK(ahwb->Unlock()) << "Unlock failed.";
-              }};
+      return CpuBufferHandle<const void>(ptr, [ahwb = ahwb_.get()] {
+        ABSL_CHECK_OK(ahwb->Unlock()) << "Unlock failed.";
+      });
     }
   }
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
@@ -722,7 +735,13 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
     ABSL_CHECK_OK(ReadBackGpuToCpu()) << "ReadBackGpuToCpu failed.";
     valid_ |= kValidCpu;
   }
-  return {cpu_buffer_, std::move(lock)};
+  return CpuBufferHandle<const void>(cpu_buffer_, nullptr);
+}
+
+Tensor::CpuReadView Tensor::GetCpuReadView() const {
+  auto lock = std::make_unique<absl::MutexLock>(&view_mutex_);
+  view_mutex_.AssertHeld();
+  return AcquireCpuBufferHandle().ToCpuView(std::move(lock));
 }
 
 Tensor::CpuWriteView Tensor::GetCpuWriteView(
@@ -796,6 +815,31 @@ void Tensor::FreeCpuBuffer() const {
   }
 #endif  // MEDIAPIPE_METAL_ENABLED
   cpu_buffer_ = nullptr;
+}
+
+absl::string_view Tensor::ElementTypeName(Tensor::ElementType element_type) {
+  switch (element_type) {
+    case Tensor::ElementType::kNone:
+      return "None";
+    case Tensor::ElementType::kFloat16:
+      return "Float16";
+    case Tensor::ElementType::kFloat32:
+      return "Float32";
+    case Tensor::ElementType::kUInt8:
+      return "UInt8";
+    case Tensor::ElementType::kInt8:
+      return "Int8";
+    case Tensor::ElementType::kInt32:
+      return "Int32";
+    case Tensor::ElementType::kInt64:
+      return "Int64";
+    case Tensor::ElementType::kChar:
+      return "Char";
+    case Tensor::ElementType::kBool:
+      return "Bool";
+    default:
+      return "Unknown";
+  }
 }
 
 }  // namespace mediapipe

@@ -119,6 +119,7 @@ cc_library(
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:running_mode",
         "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "//mediapipe/tasks/cc/vision/core:base_vision_task_api",

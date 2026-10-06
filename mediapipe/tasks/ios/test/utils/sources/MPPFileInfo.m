@@ -27,7 +27,31 @@
 }
 
 - (NSString *)path {
-  return [[NSBundle bundleForClass:self.class] pathForResource:self.name ofType:self.type];
+  if (self.name.length == 0) {
+    return nil;
+  }
+
+  // 1. Try resolving from the app/test bundle first
+  NSString *bundlePath = [[NSBundle bundleForClass:self.class] pathForResource:self.name
+                                                                        ofType:self.type];
+  NSFileManager *fileManager = [NSFileManager defaultManager];
+  if (bundlePath && [fileManager fileExistsAtPath:bundlePath]) {
+    return bundlePath;
+  }
+
+  // 2. Fall back to resolving from the Documents sandbox directory (for physical device tests)
+  NSArray<NSString *> *docDirs =
+      NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+  if (docDirs.count > 0) {
+    NSString *docDir = docDirs.firstObject;
+    NSString *fileName = [NSString stringWithFormat:@"%@.%@", self.name, self.type];
+    NSString *sandboxPath = [docDir stringByAppendingPathComponent:fileName];
+    if ([fileManager fileExistsAtPath:sandboxPath]) {
+      return sandboxPath;
+    }
+  }
+
+  return nil;
 }
 
 @end

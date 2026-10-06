@@ -28,11 +28,16 @@ WebGpuDeviceRegistration& WebGpuDeviceRegistration::GetInstance() {
   return *instance;
 }
 
-void WebGpuDeviceRegistration::RegisterWebGpuDevice(wgpu::Device device) {
+void WebGpuDeviceRegistration::RegisterWebGpuDevice(wgpu::Device device,
+                                                    wgpu::Instance instance) {
   device_ = std::move(device);
+  instance_ = std::move(instance);
 }
 
-void WebGpuDeviceRegistration::UnRegisterWebGpuDevice() { device_ = nullptr; }
+void WebGpuDeviceRegistration::UnRegisterWebGpuDevice() {
+  device_ = nullptr;
+  instance_ = nullptr;
+}
 
 WebGpuDeviceRegistration::WebGpuDeviceRegistration() = default;
 

@@ -26,7 +26,7 @@ from mediapipe.tasks.python.components.containers import audio_data_c as audio_d
 from mediapipe.tasks.python.test import test_utils
 
 _AudioData = audio_data_lib.AudioData
-_AudioDataC = audio_data_c_lib.AudioDataC
+_AudioDataC = audio_data_c_lib.MpAudioDataC
 _AudioDataFormat = audio_data_lib.AudioDataFormat
 
 _TEST_DATA_DIR = 'mediapipe/tasks/testdata/audio'

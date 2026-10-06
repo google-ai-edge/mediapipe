@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /** The runner of MediaPipe task graphs. */
 public class TaskRunner implements AutoCloseable {
   private static final String TAG = TaskRunner.class.getSimpleName();
-  private static final long TIMESATMP_UNITS_PER_SECOND = 1000000;
+  private static final long TIMESTAMP_UNITS_PER_SECOND = 1000000;
 
   private final OutputHandler<? extends TaskResult, ?> outputHandler;
   private final AtomicBoolean graphStarted = new AtomicBoolean(false);
@@ -55,12 +55,34 @@ public class TaskRunner implements AutoCloseable {
       Context context,
       TaskInfo<? extends TaskOptions> taskInfo,
       OutputHandler<? extends TaskResult, ?> outputHandler) {
+    return create(context, taskInfo, outputHandler, /* extraSidePackets= */ null);
+  }
+
+  /**
+   * Create a {@link TaskRunner} instance.
+   *
+   * @param context an Android {@link Context}.
+   * @param taskInfo a {@link TaskInfo} instance contains task graph name, task options, and graph
+   *     input and output stream names.
+   * @param outputHandler a {@link OutputHandler} instance handles task result object and runtime
+   *     exception.
+   * @param extraSidePackets a map of extra input side packets to initialize graph with.
+   * @throws MediaPipeException for any error during {@link TaskRunner} creation.
+   */
+  public static TaskRunner create(
+      Context context,
+      TaskInfo<? extends TaskOptions> taskInfo,
+      OutputHandler<? extends TaskResult, ?> outputHandler,
+      Map<String, Packet> extraSidePackets) {
     TasksStatsLogger statsLogger =
         TasksStatsLoggerFactory.create(
             context, taskInfo.taskName(), taskInfo.taskRunningModeName());
     AndroidAssetUtil.initializeNativeAssetManager(context);
     Graph mediapipeGraph = new Graph();
     mediapipeGraph.loadBinaryGraph(taskInfo.generateGraphConfig());
+    if (extraSidePackets != null && !extraSidePackets.isEmpty()) {
+      mediapipeGraph.setInputSidePackets(extraSidePackets);
+    }
     ModelResourcesCache graphModelResourcesCache = new ModelResourcesCache();
     mediapipeGraph.setServiceObject(new ModelResourcesCacheService(), graphModelResourcesCache);
     mediapipeGraph.addMultiStreamCallback(
@@ -102,7 +124,7 @@ public class TaskRunner implements AutoCloseable {
    */
   public synchronized TaskResult process(Map<String, Packet> inputs) {
     long syntheticInputTimestamp = generateSyntheticTimestamp();
-    // TODO: Support recording GPU input arrival.
+    // TODO: Support recording GPU input arrival. NOLINT
     statsLogger.recordCpuInputArrival(syntheticInputTimestamp);
     addPackets(inputs, syntheticInputTimestamp);
     graph.waitUntilGraphIdle();
@@ -124,7 +146,7 @@ public class TaskRunner implements AutoCloseable {
    * @param inputTimestamp the timestamp of the input packets.
    */
   public synchronized TaskResult process(Map<String, Packet> inputs, long inputTimestamp) {
-    validateInputTimstamp(inputTimestamp);
+    validateInputTimestamp(inputTimestamp);
     statsLogger.recordCpuInputArrival(inputTimestamp);
     addPackets(inputs, inputTimestamp);
     graph.waitUntilGraphIdle();
@@ -145,9 +167,15 @@ public class TaskRunner implements AutoCloseable {
    * @param inputTimestamp the timestamp of the input packets.
    */
   public synchronized void send(Map<String, Packet> inputs, long inputTimestamp) {
-    validateInputTimstamp(inputTimestamp);
+    validateInputTimestamp(inputTimestamp);
     statsLogger.recordCpuInputArrival(inputTimestamp);
     addPackets(inputs, inputTimestamp);
+  }
+
+  /** Flushes the graph and waits until processing is complete. */
+  public void flush() {
+    graph.closeAllPacketSources();
+    graph.waitUntilGraphIdle();
   }
 
   /**
@@ -165,14 +193,27 @@ public class TaskRunner implements AutoCloseable {
         reportError(e);
       }
     }
+
     try {
       graph.startRunningGraph();
       // Waits until all calculators are opened and the graph is fully restarted.
       graph.waitUntilGraphIdle();
       graphStarted.set(true);
+      lastSeenTimestamp = Long.MIN_VALUE;
       statsLogger.logSessionStart();
     } catch (MediaPipeException e) {
       reportError(e);
+    }
+  }
+
+  /**
+   * Cancels the underlying MediaPipe graph.
+   *
+   * <p>Note: This is for internal use only.
+   */
+  public void cancel() {
+    if (graphStarted.get()) {
+      graph.cancelGraph();
     }
   }
 
@@ -207,13 +248,22 @@ public class TaskRunner implements AutoCloseable {
     return graph.getCalculatorGraphConfig();
   }
 
+  /**
+   * Retrieves the cached task result.
+   *
+   * <p>Note: This is for internal use only.
+   */
+  public synchronized TaskResult retrieveCachedTaskResult() {
+    return outputHandler.retrieveCachedTaskResult();
+  }
+
   private synchronized void addPackets(Map<String, Packet> inputs, long inputTimestamp) {
     if (!graphStarted.get()) {
       reportError(
           new MediaPipeException(
               MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
               "The task graph hasn't been successfully started or error occurs during graph"
-                  + " initializaton."));
+                  + " initialization."));
     }
     try {
       for (Map.Entry<String, Packet> entry : inputs.entrySet()) {
@@ -224,7 +274,7 @@ public class TaskRunner implements AutoCloseable {
         entry.setValue(null);
       }
     } catch (MediaPipeException e) {
-      // TODO: do not suppress exceptions here!
+      // TODO: do not suppress exceptions here! NOLINT
       if (errorListener == null) {
         Log.e(TAG, "Mediapipe error: ", e);
       } else {
@@ -247,7 +297,7 @@ public class TaskRunner implements AutoCloseable {
    *
    * @param inputTimestamp the input timestamp.
    */
-  private void validateInputTimstamp(long inputTimestamp) {
+  private void validateInputTimestamp(long inputTimestamp) {
     if (lastSeenTimestamp >= inputTimestamp) {
       reportError(
           new MediaPipeException(
@@ -260,7 +310,7 @@ public class TaskRunner implements AutoCloseable {
   /** Generates a synthetic input timestamp in the batch processing mode. */
   private long generateSyntheticTimestamp() {
     long timestamp =
-        lastSeenTimestamp == Long.MIN_VALUE ? 0 : lastSeenTimestamp + TIMESATMP_UNITS_PER_SECOND;
+        lastSeenTimestamp == Long.MIN_VALUE ? 0 : lastSeenTimestamp + TIMESTAMP_UNITS_PER_SECOND;
     lastSeenTimestamp = timestamp;
     return timestamp;
   }

@@ -199,6 +199,7 @@ class GlTextureWarpAffineRunner
           )";
           break;
         case AffineTransformation::Interpolation::kLinear:
+        case AffineTransformation::Interpolation::kNearest:
           break;
       }
 
@@ -285,8 +286,13 @@ class GlTextureWarpAffineRunner
     glBindTexture(texture.target(), texture.name());
 
     // a) Filtering.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    if (interpolation_ == AffineTransformation::Interpolation::kNearest) {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    } else {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
 
     // b) Clamping.
     std::optional<Program> program = program_;

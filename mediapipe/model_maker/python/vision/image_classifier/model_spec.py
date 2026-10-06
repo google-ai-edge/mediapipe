@@ -106,4 +106,4 @@ class SupportedModels(enum.Enum):
     if spec not in cls:
       raise TypeError('Unsupported image classifier spec: {}'.format(spec))
 
-    return spec.value()
+    return spec.value()  # pyrefly: ignore[not-callable]

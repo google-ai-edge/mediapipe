@@ -82,7 +82,7 @@ public final class FaceDetector extends BaseVisionTaskApi {
       "mediapipe.tasks.vision.face_detector.FaceDetectorGraph";
 
   static {
-    System.loadLibrary("mediapipe_tasks_vision_jni");
+    System.loadLibrary("mediapipe_tasks_jni");
   }
 
   /**

@@ -25,6 +25,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "google/protobuf/message_lite.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/packet_test.pb.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
@@ -182,9 +183,11 @@ TEST(PacketTest, ReturnGenericProtobufMessage) {
       new ::mediapipe::PacketTestProto);
   proto_ptr->add_x(123);
   Packet packet = Adopt(static_cast<proto_ns::Message*>(proto_ptr.release()));
-  EXPECT_EQ(123, dynamic_cast<const ::mediapipe::PacketTestProto&>(
-                     packet.Get<proto_ns::Message>())
-                     .x(0));
+  EXPECT_EQ(
+      123,
+      google::protobuf::DynamicCastMessage<const ::mediapipe::PacketTestProto>(
+          packet.Get<proto_ns::Message>())
+          .x(0));
 }
 
 TEST(PacketTest, TryWrongProtobufMessageSubType) {

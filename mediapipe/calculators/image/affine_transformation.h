@@ -30,7 +30,7 @@ class AffineTransformation {
   enum class BorderMode { kZero, kReplicate };
 
   // Pixel sampling interpolation method.
-  enum class Interpolation { kLinear, kCubic };
+  enum class Interpolation { kLinear, kCubic, kNearest };
 
   struct Size {
     int width;

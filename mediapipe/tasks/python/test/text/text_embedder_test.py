@@ -323,6 +323,23 @@ class TextEmbedderTest(parameterized.TestCase):
     # a context.
     embedder.close()
 
+  def test_embed_succeeds_with_gecko(self):
+    model_path = test_utils.get_test_data_path(
+        os.path.join(_TEST_DATA_DIR, _GECKO_MODEL_FILE)
+    )
+    base_options = _BaseOptions(model_asset_path=model_path)
+    options = _TextEmbedderOptions(base_options=base_options)
+    with _TextEmbedder.create_from_options(options) as embedder:
+      format_context = text_embedder.TextFormatContext(
+          task_type=text_embedder.EmbeddingType.RETRIEVAL_QUERY,
+          role=text_embedder.TextRole.QUERY,
+      )
+      result = embedder.embed(
+          "it's a charming and often affecting journey", format_context
+      )
+      self.assertLen(result.embeddings, 1)
+      self.assertLen(result.embeddings[0].embedding, 768)
+
 
 if __name__ == '__main__':
   absltest.main()

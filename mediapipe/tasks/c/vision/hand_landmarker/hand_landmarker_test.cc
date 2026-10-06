@@ -78,7 +78,7 @@ LandmarksDetectionResult GetLandmarksDetectionResult(
 }
 
 void ExpectHandLandmarkerResultsCorrect(
-    const HandLandmarkerResult* actual,
+    const MpHandLandmarkerResult* actual,
     const LandmarksDetectionResult& expected_proto,
     const float landmark_precision, const float score_precision) {
   ASSERT_EQ(actual->handedness_count, 1);
@@ -116,11 +116,11 @@ TEST(HandLandmarkerTest, ImageModeTest) {
   const auto image = GetImage(GetFullPath(kPointingUpImage));
 
   const std::string model_path = GetFullPath(kModelName);
-  HandLandmarkerOptions options = {
+  MpHandLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_IMAGE,
       /* num_hands= */ 1,
       /* min_hand_detection_confidence= */ 0.5,
       /* min_hand_presence_confidence= */ 0.5,
@@ -133,7 +133,7 @@ TEST(HandLandmarkerTest, ImageModeTest) {
       kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
-  HandLandmarkerResult result;
+  MpHandLandmarkerResult result;
   EXPECT_EQ(MpHandLandmarkerDetectImage(landmarker, image.get(),
                                         /* image_processing_options= */ nullptr,
                                         &result, /* error_msg= */ nullptr),
@@ -151,11 +151,11 @@ TEST(HandLandmarkerTest, ImageModeWithRotationTest) {
   const auto image = GetImage(GetFullPath(kPointingUpRotatedImage));
 
   const std::string model_path = GetFullPath(kModelName);
-  HandLandmarkerOptions options = {
+  MpHandLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::IMAGE,
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_IMAGE,
       /* num_hands= */ 1,
       /* min_hand_detection_confidence= */ 0.5,
       /* min_hand_presence_confidence= */ 0.5,
@@ -168,11 +168,11 @@ TEST(HandLandmarkerTest, ImageModeWithRotationTest) {
       kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
-  ImageProcessingOptions image_processing_options;
+  MpImageProcessingOptions image_processing_options;
   image_processing_options.has_region_of_interest = 0;
   image_processing_options.rotation_degrees = -90;
 
-  HandLandmarkerResult result;
+  MpHandLandmarkerResult result;
   EXPECT_EQ(MpHandLandmarkerDetectImage(landmarker, image.get(),
                                         &image_processing_options, &result,
                                         /* error_msg= */ nullptr),
@@ -190,11 +190,11 @@ TEST(HandLandmarkerTest, VideoModeTest) {
   const auto image = GetImage(GetFullPath(kPointingUpImage));
 
   const std::string model_path = GetFullPath(kModelName);
-  HandLandmarkerOptions options = {
+  MpHandLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::VIDEO,
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_VIDEO,
       /* num_hands= */ 1,
       /* min_hand_detection_confidence= */ 0.5,
       /* min_hand_presence_confidence= */ 0.5,
@@ -210,7 +210,7 @@ TEST(HandLandmarkerTest, VideoModeTest) {
   LandmarksDetectionResult expected_landmarks =
       GetLandmarksDetectionResult(kPointingUpLandmarksFilename);
   for (int i = 0; i < kIterations; ++i) {
-    HandLandmarkerResult result;
+    MpHandLandmarkerResult result;
     EXPECT_EQ(
         MpHandLandmarkerDetectForVideo(landmarker, image.get(),
                                        /* image_processing_options= */ nullptr,
@@ -232,7 +232,8 @@ TEST(HandLandmarkerTest, VideoModeTest) {
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
   static absl::BlockingCounter* blocking_counter;
-  static void Fn(MpStatus status, const HandLandmarkerResult* landmarker_result,
+  static void Fn(MpStatus status,
+                 const MpHandLandmarkerResult* landmarker_result,
                  MpImagePtr image, int64_t timestamp) {
     ASSERT_EQ(status, kMpOk);
     ASSERT_NE(landmarker_result, nullptr);
@@ -258,11 +259,11 @@ TEST(HandLandmarkerTest, LiveStreamModeTest) {
 
   const std::string model_path = GetFullPath(kModelName);
 
-  HandLandmarkerOptions options = {
+  MpHandLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ model_path.c_str()},
-      /* running_mode= */ RunningMode::LIVE_STREAM,
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM,
       /* num_hands= */ 1,
       /* min_hand_detection_confidence= */ 0.5,
       /* min_hand_presence_confidence= */ 0.5,
@@ -303,11 +304,11 @@ TEST(HandLandmarkerTest, LiveStreamModeTest) {
 
 TEST(HandLandmarkerTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
-  HandLandmarkerOptions options = {
+  MpHandLandmarkerOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
                            /* model_asset_path= */ nullptr},
-      /* running_mode= */ RunningMode::IMAGE,
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_IMAGE,
       /* num_hands= */ 1,
       /* min_hand_detection_confidence= */ 0.5,
       /* min_hand_presence_confidence= */ 0.5,

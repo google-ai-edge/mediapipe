@@ -33,7 +33,7 @@ TEST(CategoryConverterTest, ConvertsCategoryCustomValues) {
       /* display_name= */ "display_name",
   };
 
-  Category c_category;
+  MpCategory c_category;
   CppConvertToCategory(cpp_category, &c_category);
   EXPECT_EQ(c_category.index, 1);
   EXPECT_FLOAT_EQ(c_category.score, 0.1);
@@ -51,7 +51,7 @@ TEST(CategoryConverterTest, ConvertsCategoryDefaultValues) {
       /* display_name= */ std::nullopt,
   };
 
-  Category c_category;
+  MpCategory c_category;
   CppConvertToCategory(cpp_category, &c_category);
   EXPECT_EQ(c_category.index, 1);
   EXPECT_FLOAT_EQ(c_category.score, 0.1);

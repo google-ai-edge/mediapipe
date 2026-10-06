@@ -39,22 +39,23 @@ _AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 _LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
 
 
-class PoseLandmarkerResultC(ctypes.Structure):
-  """The ctypes struct for PoseLandmarkerResult."""
+class MpPoseLandmarkerResultC(ctypes.Structure):
+  """The ctypes struct for MpPoseLandmarkerResult."""
 
   _fields_ = [
       ('segmentation_masks', ctypes.POINTER(ctypes.c_void_p)),
       ('segmentation_masks_count', ctypes.c_uint32),
-      ('pose_landmarks', ctypes.POINTER(landmark_c_lib.NormalizedLandmarksC)),
+      ('pose_landmarks', ctypes.POINTER(landmark_c_lib.MpNormalizedLandmarksC)),
       ('pose_landmarks_count', ctypes.c_uint32),
-      ('pose_world_landmarks', ctypes.POINTER(landmark_c_lib.LandmarksC)),
+      ('pose_world_landmarks', ctypes.POINTER(landmark_c_lib.MpLandmarksC)),
       ('pose_world_landmarks_count', ctypes.c_uint32),
   ]
+
 
 _C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
     None,
     ctypes.c_int32,  # MpStatus
-    ctypes.POINTER(PoseLandmarkerResultC),
+    ctypes.POINTER(MpPoseLandmarkerResultC),
     ctypes.c_void_p,  # MpImage
     ctypes.c_int64,  # timestamp_ms
 )
@@ -77,7 +78,7 @@ class PoseLandmarkerResult:
   @classmethod
   @doc_controls.do_not_generate_docs
   def from_ctypes(
-      cls, c_struct: PoseLandmarkerResultC
+      cls, c_struct: MpPoseLandmarkerResultC
   ) -> 'PoseLandmarkerResult':
     """Creates a PoseLandmarkerResult from a ctypes struct."""
     pose_landmarks = []
@@ -194,11 +195,11 @@ class PoseLandmarksConnections:
   ]
 
 
-class PoseLandmarkerOptionsC(ctypes.Structure):
-  """The ctypes struct for PoseLandmarkerOptions."""
+class MpPoseLandmarkerOptionsC(ctypes.Structure):
+  """The ctypes struct for MpPoseLandmarkerOptions."""
 
   _fields_ = [
-      ('base_options', base_options_c_lib.BaseOptionsC),
+      ('base_options', base_options_c_lib.MpBaseOptionsC),
       ('running_mode', ctypes.c_int),
       ('num_poses', ctypes.c_int),
       ('min_pose_detection_confidence', ctypes.c_float),
@@ -215,7 +216,7 @@ class PoseLandmarkerOptionsC(ctypes.Structure):
   @doc_controls.do_not_generate_docs
   def from_c_options(
       cls,
-      base_options: base_options_c_lib.BaseOptionsC,
+      base_options: base_options_c_lib.MpBaseOptionsC,
       running_mode: _RunningMode,
       num_poses: int,
       min_pose_detection_confidence: float,
@@ -223,8 +224,8 @@ class PoseLandmarkerOptionsC(ctypes.Structure):
       min_tracking_confidence: float,
       output_segmentation_masks: bool,
       result_callback: _C_TYPES_RESULT_CALLBACK,
-  ) -> 'PoseLandmarkerOptionsC':
-    """Creates a PoseLandmarkerOptionsC object from the given options."""
+  ) -> 'MpPoseLandmarkerOptionsC':
+    """Creates a MpPoseLandmarkerOptionsC object from the given options."""
     return cls(
         base_options=base_options,
         running_mode=running_mode.ctype,
@@ -280,7 +281,7 @@ _CTYPES_SIGNATURES = (
     mediapipe_c_utils.CStatusFunction(
         'MpPoseLandmarkerCreate',
         (
-            ctypes.POINTER(PoseLandmarkerOptionsC),
+            ctypes.POINTER(MpPoseLandmarkerOptionsC),
             ctypes.POINTER(ctypes.c_void_p),
         ),
     ),
@@ -290,9 +291,9 @@ _CTYPES_SIGNATURES = (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(
-                image_processing_options_c_lib.ImageProcessingOptionsC
+                image_processing_options_c_lib.MpImageProcessingOptionsC
             ),
-            ctypes.POINTER(PoseLandmarkerResultC),
+            ctypes.POINTER(MpPoseLandmarkerResultC),
         ),
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -301,10 +302,10 @@ _CTYPES_SIGNATURES = (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(
-                image_processing_options_c_lib.ImageProcessingOptionsC
+                image_processing_options_c_lib.MpImageProcessingOptionsC
             ),
             ctypes.c_int64,
-            ctypes.POINTER(PoseLandmarkerResultC),
+            ctypes.POINTER(MpPoseLandmarkerResultC),
         ),
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -313,14 +314,14 @@ _CTYPES_SIGNATURES = (
             ctypes.c_void_p,
             ctypes.c_void_p,
             ctypes.POINTER(
-                image_processing_options_c_lib.ImageProcessingOptionsC
+                image_processing_options_c_lib.MpImageProcessingOptionsC
             ),
             ctypes.c_int64,
         ),
     ),
     mediapipe_c_utils.CFunction(
         'MpPoseLandmarkerCloseResult',
-        [ctypes.POINTER(PoseLandmarkerResultC)],
+        [ctypes.POINTER(MpPoseLandmarkerResultC)],
         None,
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -407,7 +408,7 @@ class PoseLandmarker:
     lib = mediapipe_c_bindings_lib.load_shared_library(_CTYPES_SIGNATURES)
 
     def convert_result(
-        c_result_ptr: ctypes.POINTER(PoseLandmarkerResultC),
+        c_result_ptr: ctypes.POINTER(MpPoseLandmarkerResultC),
         image_ptr: ctypes.c_void_p,
         timestamp_ms: int,
     ) -> Tuple[PoseLandmarkerResult, image_lib.Image, int]:
@@ -421,7 +422,7 @@ class PoseLandmarker:
     c_callback = dispatcher.wrap_callback(
         options.result_callback, _C_TYPES_RESULT_CALLBACK
     )
-    ctypes_options = PoseLandmarkerOptionsC.from_c_options(
+    ctypes_options = MpPoseLandmarkerOptionsC.from_c_options(
         base_options=options.base_options.to_ctypes(),
         running_mode=options.running_mode,
         num_poses=options.num_poses,
@@ -462,7 +463,7 @@ class PoseLandmarker:
       RuntimeError: If pose landmarker detection failed to run.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    result_c = PoseLandmarkerResultC()
+    result_c = MpPoseLandmarkerResultC()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())
@@ -509,7 +510,7 @@ class PoseLandmarker:
       RuntimeError: If pose landmarker detection failed to run.
     """
     c_image = image._image_ptr  # pylint: disable=protected-access
-    result_c = PoseLandmarkerResultC()
+    result_c = MpPoseLandmarkerResultC()
 
     c_image_processing_options = (
         ctypes.byref(image_processing_options.to_ctypes())

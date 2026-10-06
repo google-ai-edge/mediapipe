@@ -197,7 +197,7 @@ TEST_F(CreateFromOptionsTest, SucceedsWithSelectiveOpResolver) {
   auto options = std::make_unique<ImageSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata);
-  options->base_options.op_resolver = absl::make_unique<DeepLabOpResolver>();
+  options->base_options.op_resolver = std::make_unique<DeepLabOpResolver>();
   MP_ASSERT_OK(ImageSegmenter::Create(std::move(options)));
 }
 
@@ -206,7 +206,7 @@ TEST_F(CreateFromOptionsTest, FailsWithSelectiveOpResolverMissingOps) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata);
   options->base_options.op_resolver =
-      absl::make_unique<DeepLabOpResolverMissingOps>();
+      std::make_unique<DeepLabOpResolverMissingOps>();
   auto segmenter_or = ImageSegmenter::Create(std::move(options));
   // TODO: Make MediaPipe InferenceCalculator report the detailed
   // interpreter errors (e.g., "Encountered unresolved custom op").

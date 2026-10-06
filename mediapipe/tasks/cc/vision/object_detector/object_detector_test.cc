@@ -169,7 +169,7 @@ TEST_F(CreateFromOptionsTest, SucceedsWithSelectiveOpResolver) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kMobileSsdWithMetadata);
   options->base_options.op_resolver =
-      absl::make_unique<MobileSsdQuantizedOpResolver>();
+      std::make_unique<MobileSsdQuantizedOpResolver>();
   MP_ASSERT_OK(ObjectDetector::Create(std::move(options)));
 }
 
@@ -201,7 +201,7 @@ TEST_F(CreateFromOptionsTest, FailsWithSelectiveOpResolverMissingOps) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kMobileSsdWithMetadata);
   options->base_options.op_resolver =
-      absl::make_unique<MobileSsdQuantizedOpResolverMissingOps>();
+      std::make_unique<MobileSsdQuantizedOpResolverMissingOps>();
   auto object_detector = ObjectDetector::Create(std::move(options));
   // TODO: Make MediaPipe InferenceCalculator report the detailed.
   // interpreter errors (e.g., "Encountered unresolved custom op").

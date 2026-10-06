@@ -21,41 +21,54 @@ import {MPImage} from '../../../../tasks/web/vision/core/image';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
 import {MPMask} from '../../../../tasks/web/vision/core/mask';
-import {getImageSourceSize, GraphRunner, ImageSource, WasmMediaPipeConstructor} from '../../../../web/graph_runner/graph_runner';
-import {SupportImage, WasmImage} from '../../../../web/graph_runner/graph_runner_image_lib';
+import {
+  getImageSourceSize,
+  GraphRunner,
+  ImageSource,
+  WasmMediaPipeConstructor,
+} from '../../../../web/graph_runner/graph_runner';
+import {
+  SupportImage,
+  WasmImage,
+} from '../../../../web/graph_runner/graph_runner_image_lib';
+import {SupportLogging} from '../../../../web/graph_runner/graph_runner_logging_lib';
 import {supportsOffscreenCanvas} from '../../../../web/graph_runner/platform_utils';
 import {SupportModelResourcesGraphService} from '../../../../web/graph_runner/register_model_resources_graph_service';
 
-import {VisionTaskOptions} from './vision_task_options';
+import type {VisionTaskOptions} from './vision_task_options';
 
 // tslint:disable-next-line:enforce-name-casing
-const GraphRunnerVisionType =
-    SupportModelResourcesGraphService(SupportImage(GraphRunner));
+const GraphRunnerVisionType = SupportModelResourcesGraphService(
+  SupportImage(SupportLogging(GraphRunner)),
+);
 /** An implementation of the GraphRunner that supports image operations */
 export class VisionGraphRunner extends GraphRunnerVisionType {}
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
 
-
 /**
  * Creates a canvas for a MediaPipe vision task. Returns `undefined` if the
  * GraphRunner should create its own canvas.
  */
-function createCanvas(): HTMLCanvasElement|OffscreenCanvas|undefined {
+function createCanvas(): HTMLCanvasElement | OffscreenCanvas | undefined {
   // Returns an HTML canvas or `undefined` if OffscreenCanvas is fully supported
   // (since the graph runner can initialize its own OffscreenCanvas).
-  return supportsOffscreenCanvas() ? undefined :
-                                     document.createElement('canvas');
+  return supportsOffscreenCanvas()
+    ? undefined
+    : document.createElement('canvas');
 }
 
 /** Base class for all MediaPipe Vision Tasks. */
 export abstract class VisionTaskRunner extends TaskRunner {
   private readonly shaderContext = new MPImageShaderContext();
+  private isStreamMode = false;
 
   protected static async createVisionInstance<T extends VisionTaskRunner>(
-      type: WasmMediaPipeConstructor<T>, fileset: WasmFileset,
-      options: VisionTaskOptions): Promise<T> {
+    type: WasmMediaPipeConstructor<T>,
+    fileset: WasmFileset,
+    options: VisionTaskOptions,
+  ): Promise<T> {
     const canvas = options.canvas ?? createCanvas();
     return TaskRunner.createInstance(type, canvas, fileset, options);
   }
@@ -75,10 +88,11 @@ export abstract class VisionTaskRunner extends TaskRunner {
    * @hideconstructor protected
    */
   constructor(
-      protected override readonly graphRunner: VisionGraphRunner,
-      private readonly imageStreamName: string,
-      private readonly normRectStreamName: string|null,
-      private readonly roiAllowed: boolean) {
+    protected override readonly graphRunner: VisionGraphRunner,
+    private readonly imageStreamName: string,
+    private readonly normRectStreamName: string | null,
+    private readonly roiAllowed: boolean,
+  ) {
     super(graphRunner);
   }
 
@@ -90,11 +104,13 @@ export abstract class VisionTaskRunner extends TaskRunner {
    *     `options.baseOptions`.
    */
   protected override applyOptions(
-      options: VisionTaskOptions, loadTfliteModel = true): Promise<void> {
+    options: VisionTaskOptions,
+    loadTfliteModel = true,
+  ): Promise<void> {
     if ('runningMode' in options) {
-      const useStreamMode =
-          !!options.runningMode && options.runningMode !== 'IMAGE';
-      this.baseOptions.setUseStreamMode(useStreamMode);
+      this.isStreamMode =
+        !!options.runningMode && options.runningMode !== 'IMAGE';
+      this.baseOptions.setUseStreamMode(this.isStreamMode);
     }
 
     if (options.canvas !== undefined) {
@@ -108,37 +124,42 @@ export abstract class VisionTaskRunner extends TaskRunner {
 
   /** Sends a single image to the graph and awaits results. */
   protected processImageData(
-      image: ImageSource,
-      imageProcessingOptions: ImageProcessingOptions|undefined): void {
-    if (!!this.baseOptions?.getUseStreamMode()) {
+    image: ImageSource,
+    imageProcessingOptions: ImageProcessingOptions | undefined,
+  ): void {
+    if (this.isStreamMode) {
       throw new Error(
-          'Task is not initialized with image mode. ' +
-          '\'runningMode\' must be set to \'IMAGE\'.');
+        'Task is not initialized with image mode. ' +
+          "'runningMode' must be set to 'IMAGE'.",
+      );
     }
-    this.process(image, imageProcessingOptions, this.getSynctheticTimestamp());
+    this.process(image, imageProcessingOptions, this.getSyntheticTimestamp());
   }
 
   /** Sends a single video frame to the graph and awaits results. */
   protected processVideoData(
-      imageFrame: ImageSource,
-      imageProcessingOptions: ImageProcessingOptions|undefined,
-      timestamp: number): void {
-    if (!this.baseOptions?.getUseStreamMode()) {
+    imageFrame: ImageSource,
+    imageProcessingOptions: ImageProcessingOptions | undefined,
+    timestamp: number,
+  ): void {
+    if (!this.isStreamMode) {
       throw new Error(
-          'Task is not initialized with video mode. ' +
-          '\'runningMode\' must be set to \'VIDEO\'.');
+        'Task is not initialized with video mode. ' +
+          "'runningMode' must be set to 'VIDEO'.",
+      );
     }
     this.process(imageFrame, imageProcessingOptions, timestamp);
   }
 
   private convertToNormalizedRect(
-      imageSource: ImageSource,
-      imageProcessingOptions?: ImageProcessingOptions): NormalizedRect {
+    imageSource: ImageSource,
+    imageProcessingOptions?: ImageProcessingOptions,
+  ): NormalizedRect {
     const normalizedRect = new NormalizedRect();
 
     if (imageProcessingOptions?.regionOfInterest) {
       if (!this.roiAllowed) {
-        throw new Error('This task doesn\'t support region-of-interest.');
+        throw new Error("This task doesn't support region-of-interest.");
       }
 
       const roi = imageProcessingOptions.regionOfInterest;
@@ -163,14 +184,13 @@ export abstract class VisionTaskRunner extends TaskRunner {
 
     if (imageProcessingOptions?.rotationDegrees) {
       if (imageProcessingOptions?.rotationDegrees % 90 !== 0) {
-        throw new Error(
-            'Expected rotation to be a multiple of 90°.',
-        );
+        throw new Error('Expected rotation to be a multiple of 90°.');
       }
 
       // Convert to radians anti-clockwise.
       normalizedRect.setRotation(
-          -Math.PI * imageProcessingOptions.rotationDegrees / 180.0);
+        (-Math.PI * imageProcessingOptions.rotationDegrees) / 180.0,
+      );
 
       // For 90° and 270° rotations, we need to swap width and height.
       // This is due to the internal behavior of ImageToTensorCalculator, which:
@@ -182,8 +202,8 @@ export abstract class VisionTaskRunner extends TaskRunner {
       if (imageProcessingOptions?.rotationDegrees % 180 !== 0) {
         const [imageWidth, imageHeight] = getImageSourceSize(imageSource);
         // tslint:disable:no-unnecessary-type-assertion
-        const width = normalizedRect.getHeight()! * imageHeight / imageWidth;
-        const height = normalizedRect.getWidth()! * imageWidth / imageHeight;
+        const width = (normalizedRect.getHeight()! * imageHeight) / imageWidth;
+        const height = (normalizedRect.getWidth()! * imageWidth) / imageHeight;
         // tslint:enable:no-unnecessary-type-assertion
         normalizedRect.setWidth(width);
         normalizedRect.setHeight(height);
@@ -195,19 +215,29 @@ export abstract class VisionTaskRunner extends TaskRunner {
 
   /** Runs the graph and blocks on the response. */
   private process(
-      imageSource: ImageSource,
-      imageProcessingOptions: ImageProcessingOptions|undefined,
-      timestamp: number): void {
+    imageSource: ImageSource,
+    imageProcessingOptions: ImageProcessingOptions | undefined,
+    timestamp: number,
+  ): void {
+    this.startProcessing(timestamp);
     if (this.normRectStreamName) {
-      const normalizedRect =
-          this.convertToNormalizedRect(imageSource, imageProcessingOptions);
+      const normalizedRect = this.convertToNormalizedRect(
+        imageSource,
+        imageProcessingOptions,
+      );
       this.graphRunner.addProtoToStream(
-          normalizedRect.serializeBinary(), 'mediapipe.NormalizedRect',
-          this.normRectStreamName, timestamp);
+        normalizedRect.serializeBinary(),
+        'mediapipe.NormalizedRect',
+        this.normRectStreamName,
+        timestamp,
+      );
     }
     this.graphRunner.addGpuBufferAsImageToStream(
-        imageSource, this.imageStreamName, timestamp ?? performance.now());
-    this.finishProcessing();
+      imageSource,
+      this.imageStreamName,
+      timestamp ?? performance.now(),
+    );
+    this.finishProcessing(timestamp);
   }
 
   /**
@@ -217,12 +247,14 @@ export abstract class VisionTaskRunner extends TaskRunner {
    * (adding an alpha channel if necessary), passes through WebGLTextures and
    * throws for Float32Array-backed images.
    */
-  protected convertToMPImage(wasmImage: WasmImage, shouldCopyData: boolean):
-      MPImage {
+  protected convertToMPImage(
+    wasmImage: WasmImage,
+    shouldCopyData: boolean,
+  ): MPImage {
     const {data, width, height} = wasmImage;
     const pixels = width * height;
 
-    let container: ImageData|WebGLTexture;
+    let container: ImageData | WebGLTexture;
     if (data instanceof Uint8Array) {
       if (data.length === pixels * 3) {
         // TODO: Convert in C++
@@ -236,10 +268,12 @@ export abstract class VisionTaskRunner extends TaskRunner {
         container = new ImageData(rgba, width, height);
       } else if (data.length === pixels * 4) {
         container = new ImageData(
-            new Uint8ClampedArray(data.buffer, data.byteOffset, data.length),
-            width, height);
+          new Uint8ClampedArray(data.buffer, data.byteOffset, data.length),
+          width,
+          height,
+        );
       } else {
-        throw new Error(`Unsupported channel count: ${data.length/pixels}`);
+        throw new Error(`Unsupported channel count: ${data.length / pixels}`);
       }
     } else if (data instanceof WebGLTexture) {
       container = data;
@@ -248,20 +282,27 @@ export abstract class VisionTaskRunner extends TaskRunner {
     }
 
     const image = new MPImage(
-        [container], /* ownsImageBitmap= */ false,
-        /* ownsWebGLTexture= */ false, this.graphRunner.wasmModule.canvas!,
-        this.shaderContext, width, height);
+      [container],
+      /* ownsImageBitmap= */ false,
+      /* ownsWebGLTexture= */ false,
+      this.graphRunner.wasmModule.canvas!,
+      this.shaderContext,
+      width,
+      height,
+    );
     return shouldCopyData ? image.clone() : image;
   }
 
   /** Converts a WasmImage to an MPMask.  */
   protected convertToMPMask(
-      wasmImage: WasmImage, interpolateValues: boolean,
-      shouldCopyData: boolean): MPMask {
+    wasmImage: WasmImage,
+    interpolateValues: boolean,
+    shouldCopyData: boolean,
+  ): MPMask {
     const {data, width, height} = wasmImage;
     const pixels = width * height;
 
-    let container: WebGLTexture|Uint8Array|Float32Array;
+    let container: WebGLTexture | Uint8Array | Float32Array;
     if (data instanceof Uint8Array || data instanceof Float32Array) {
       if (data.length === pixels) {
         container = data;
@@ -273,9 +314,14 @@ export abstract class VisionTaskRunner extends TaskRunner {
     }
 
     const mask = new MPMask(
-        [container], interpolateValues,
-        /* ownsWebGLTexture= */ false, this.graphRunner.wasmModule.canvas!,
-        this.shaderContext, width, height);
+      [container],
+      interpolateValues,
+      /* ownsWebGLTexture= */ false,
+      this.graphRunner.wasmModule.canvas!,
+      this.shaderContext,
+      width,
+      height,
+    );
     return shouldCopyData ? mask.clone() : mask;
   }
 

@@ -76,7 +76,7 @@ TEST(GestureRecognizerResultConverterTest, ConvertsCustomResult) {
       cpp_result;
   InitGestureRecognizerResult(&cpp_result);
 
-  GestureRecognizerResult c_result;
+  MpGestureRecognizerResult c_result;
   CppConvertToGestureRecognizerResult(cpp_result, &c_result);
 
   // Verify conversion of gestures
@@ -153,7 +153,7 @@ TEST(GestureRecognizerResultConverterTest, FreesMemory) {
       cpp_result;
   InitGestureRecognizerResult(&cpp_result);
 
-  GestureRecognizerResult c_result;
+  MpGestureRecognizerResult c_result;
   CppConvertToGestureRecognizerResult(cpp_result, &c_result);
 
   EXPECT_NE(c_result.gestures, nullptr);

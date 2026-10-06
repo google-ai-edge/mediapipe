@@ -5,7 +5,7 @@ import {
   ReadMode,
   StreamingReader,
 } from '../../web/graph_runner/graph_runner_streaming_reader';
-import {SamplerParameters} from '../../tasks/cc/genai/inference/proto/sampler_params_pb';
+import {SamplerParameters} from '../../tasks/web/genai/llm_inference/proto/sampler_params_pb';
 
 const DEFAULT_MAX_TOKENS = 512;
 const DEFAULT_TOP_K = 40;

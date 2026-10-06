@@ -119,6 +119,52 @@ proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options) {
   }
   return base_options_proto;
 }
+
+BaseOptions ConvertProtoToBaseOptions(proto::BaseOptions&& base_options_proto) {
+  BaseOptions base_options;
+  if (base_options_proto.has_model_asset()) {
+    auto* model_asset = base_options_proto.mutable_model_asset();
+    if (model_asset->has_file_name()) {
+      base_options.model_asset_path = model_asset->file_name();
+    }
+    if (model_asset->has_file_content()) {
+      base_options.model_asset_buffer = std::make_unique<std::string>(
+          std::move(*model_asset->mutable_file_content()));
+    }
+    if (model_asset->has_file_descriptor_meta()) {
+      base_options.model_asset_descriptor_meta.fd =
+          model_asset->file_descriptor_meta().fd();
+      base_options.model_asset_descriptor_meta.length =
+          model_asset->file_descriptor_meta().length();
+      base_options.model_asset_descriptor_meta.offset =
+          model_asset->file_descriptor_meta().offset();
+    }
+  }
+  if (base_options_proto.has_acceleration()) {
+    const auto& acceleration = base_options_proto.acceleration();
+    if (acceleration.has_gpu()) {
+      base_options.delegate = BaseOptions::Delegate::GPU;
+      BaseOptions::GpuOptions gpu_options;
+      if (acceleration.gpu().has_cached_kernel_path()) {
+        gpu_options.cached_kernel_path =
+            acceleration.gpu().cached_kernel_path();
+      }
+      if (acceleration.gpu().has_serialized_model_dir()) {
+        gpu_options.serialized_model_dir =
+            acceleration.gpu().serialized_model_dir();
+      }
+      if (acceleration.gpu().has_model_token()) {
+        gpu_options.model_token = acceleration.gpu().model_token();
+      }
+      base_options.delegate_options = std::move(gpu_options);
+    } else if (acceleration.has_xnnpack() || acceleration.has_tflite()) {
+      base_options.delegate = BaseOptions::Delegate::CPU;
+    } else if (acceleration.has_nnapi()) {
+      base_options.delegate = BaseOptions::Delegate::EDGETPU_NNAPI;
+    }
+  }
+  return base_options;
+}
 }  // namespace core
 }  // namespace tasks
 }  // namespace mediapipe

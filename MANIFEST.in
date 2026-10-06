@@ -3,6 +3,7 @@ global-exclude *_test.py
 
 include CONTRIBUTING.md
 include LICENSE
+include NOTICE
 include MANIFEST.in
 include README.md
 include requirements.txt

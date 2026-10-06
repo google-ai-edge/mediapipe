@@ -38,7 +38,7 @@ namespace {
 class CalculatorGraphEventLoopTest : public testing::Test {
  public:
   void AddThreadSafeVectorSink(const Packet& packet) {
-    absl::WriterMutexLock lock(&output_packets_mutex_);
+    absl::WriterMutexLock lock(output_packets_mutex_);
     output_packets_.push_back(packet);
   }
 
@@ -66,10 +66,10 @@ class BlockingPassThroughCalculator : public CalculatorBase {
   }
 
   absl::Status Process(CalculatorContext* cc) final {
-    mutex_->Lock();
+    mutex_->lock();
     cc->Outputs().Index(0).AddPacket(
         cc->Inputs().Index(0).Value().At(cc->InputTimestamp()));
-    mutex_->Unlock();
+    mutex_->unlock();
     return absl::OkStatus();
   }
 
@@ -147,7 +147,7 @@ TEST_F(CalculatorGraphEventLoopTest, WellProvisionedEventLoop) {
     // Wait for all packets to be received by the sink.
     while (true) {
       {
-        absl::ReaderMutexLock lock(&output_packets_mutex_);
+        absl::ReaderMutexLock lock(output_packets_mutex_);
         if (output_packets_.size() > i) {
           break;
         }
@@ -157,7 +157,7 @@ TEST_F(CalculatorGraphEventLoopTest, WellProvisionedEventLoop) {
   }
   // Check partial results.
   {
-    absl::ReaderMutexLock lock(&output_packets_mutex_);
+    absl::ReaderMutexLock lock(output_packets_mutex_);
     ASSERT_EQ(100, output_packets_.size());
     for (int i = 0; i < 100; ++i) {
       EXPECT_EQ(i, output_packets_[i].Get<int>());
@@ -175,7 +175,7 @@ TEST_F(CalculatorGraphEventLoopTest, WellProvisionedEventLoop) {
   MP_ASSERT_OK(graph.WaitUntilDone());
   // Check final results.
   {
-    absl::ReaderMutexLock lock(&output_packets_mutex_);
+    absl::ReaderMutexLock lock(output_packets_mutex_);
     ASSERT_EQ(200, output_packets_.size());
     for (int i = 0; i < 200; ++i) {
       EXPECT_EQ(i, output_packets_[i].Get<int>());
@@ -279,7 +279,7 @@ TEST_F(CalculatorGraphEventLoopTest, StepByStepSchedulerLoop) {
     MP_ASSERT_OK(graph.AddPacketToInputStream(
         "input_numbers", Adopt(new int(i)).At(Timestamp(i))));
     MP_ASSERT_OK(graph.WaitUntilIdle());
-    absl::ReaderMutexLock lock(&output_packets_mutex_);
+    absl::ReaderMutexLock lock(output_packets_mutex_);
     ASSERT_EQ(i + 1, output_packets_.size());
   }
   // Don't wait but just close the input stream.
@@ -378,7 +378,7 @@ TEST_F(CalculatorGraphEventLoopTest, TryToAddPacketToInputStream) {
 
   // Lock the mutex so that the BlockingPassThroughCalculator cannot read any of
   // these packets.
-  mutex->Lock();
+  mutex->lock();
   int fail_count = 0;
   // Expect at least kNumInputPackets - kMaxQueueSize - 1 attempts to add
   // packets to fail since the queue builds up. The -1 is because our throttling
@@ -391,7 +391,7 @@ TEST_F(CalculatorGraphEventLoopTest, TryToAddPacketToInputStream) {
       ++fail_count;
     }
   }
-  mutex->Unlock();
+  mutex->unlock();
 
   EXPECT_GE(fail_count, kNumInputPackets - kMaxQueueSize - 1);
   // Don't wait but just close the input stream.
@@ -428,12 +428,12 @@ TEST_F(CalculatorGraphEventLoopTest, ThrottlingDisabled) {
 
   // Lock the mutex so that the BlockingPassThroughCalculator cannot read any
   // of these packets.
-  mutex->Lock();
+  mutex->lock();
   for (int i = 0; i < 10; ++i) {
     MP_EXPECT_OK(graph.AddPacketToInputStream(
         "input_numbers", Adopt(new int(i)).At(Timestamp(i))));
   }
-  mutex->Unlock();
+  mutex->unlock();
   MP_EXPECT_OK(graph.CloseInputStream("input_numbers"));
   MP_EXPECT_OK(graph.WaitUntilDone());
 }
@@ -469,7 +469,7 @@ TEST_F(CalculatorGraphEventLoopTest, ThrottleGraphInputStreamTwice) {
 
     // Lock the mutex so that the BlockingPassThroughCalculator cannot read any
     // of these packets.
-    mutex->Lock();
+    mutex->lock();
     absl::Status status = absl::OkStatus();
     for (int i = 0; i < 10; ++i) {
       status = graph.AddPacketToInputStream("input_numbers",
@@ -478,7 +478,7 @@ TEST_F(CalculatorGraphEventLoopTest, ThrottleGraphInputStreamTwice) {
         break;
       }
     }
-    mutex->Unlock();
+    mutex->unlock();
     ASSERT_FALSE(status.ok());
     EXPECT_EQ(status.code(), absl::StatusCode::kUnavailable);
     EXPECT_THAT(status.message(), testing::HasSubstr("Graph is throttled."));
@@ -535,7 +535,7 @@ TEST_F(CalculatorGraphEventLoopTest, WaitToAddPacketToInputStream) {
   // Wait properly via the API until the graph is done.
   MP_ASSERT_OK(graph.WaitUntilDone());
 
-  absl::ReaderMutexLock lock(&output_packets_mutex_);
+  absl::ReaderMutexLock lock(output_packets_mutex_);
   ASSERT_EQ(kNumInputPackets, output_packets_.size());
 }
 

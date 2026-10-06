@@ -28,21 +28,21 @@ extern "C" {
 
 // The hand landmarker result from HandLandmarker, where each vector
 // element represents a single hand detected in the image.
-struct FaceLandmarkerResult {
+struct MpFaceLandmarkerResult {
   // Detected face landmarks in normalized image coordinates.
-  struct NormalizedLandmarks* face_landmarks;
+  struct MpNormalizedLandmarks* face_landmarks;
 
   // The number of elements in the face_landmarks array.
   uint32_t face_landmarks_count;
 
   // Optional face blendshapes results.
-  struct Categories* face_blendshapes;
+  struct MpCategories* face_blendshapes;
 
   // The number of elements in the face_blendshapes array.
   uint32_t face_blendshapes_count;
 
   // Optional facial transformation matrixes.
-  struct Matrix* facial_transformation_matrixes;
+  struct MpMatrix* facial_transformation_matrixes;
 
   // The number of elements in the facial_transformation_matrixes array.
   uint32_t facial_transformation_matrixes_count;

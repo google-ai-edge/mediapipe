@@ -274,6 +274,9 @@ TensorsToSegmentationGlBufferConverter::Convert(const Tensor& input_tensor,
         }
 
         // Upsample small mask into output.
+        // Synchronize before reading the small_mask_texture_ that was just
+        // written to via compute shader.
+        glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
         mediapipe::GlTexture output_texture =
             gpu_helper_.CreateDestinationTexture(
                 output_width, output_height,
