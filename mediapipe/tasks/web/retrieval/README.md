@@ -19,7 +19,7 @@ const retrieval = await FilesetResolver.forRetrievalTasks("https://cdn.jsdelivr.
 
 const embedder = await UniversalEmbedder.createFromOptions(retrieval, {
   baseOptions: {
-    modelAssetPath: "https://storage.googleapis.com/mediapipe-models/universal_embedder/embededder.litertlm"
+    modelAssetPath: "embededder.litertlm"
   }
 });
 
@@ -52,18 +52,18 @@ const universalEmbedder = await UniversalEmbedder.createFromOptions(
   retrieval,
   {
     baseOptions: {
-      modelAssetPath: "https://storage.googleapis.com/mediapipe-models/universal_embedder/embededder.litertlm"
+      modelAssetPath: "embededder.litertlm"
     }
   }
 );
 
 // Embed text
-const textEmbeddingResult = universalEmbedder.embedText("The quick brown fox jumps over the lazy dog");
+const textEmbeddingResult = await universalEmbedder.embedText("The quick brown fox jumps over the lazy dog");
 console.log("Text embedding:", textEmbeddingResult.embeddings[0].floatEmbedding);
 
 // Embed images directly from the DOM
 const image = document.getElementById("myImage");
-const imageEmbeddingResult = universalEmbedder.embedImage(image);
+const imageEmbeddingResult = await universalEmbedder.embedImage(image);
 
 // Compute similarity
 const similarity = UniversalEmbedder.cosineSimilarity(
