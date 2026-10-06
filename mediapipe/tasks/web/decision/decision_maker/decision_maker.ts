@@ -483,18 +483,18 @@ export class DecisionMaker extends TaskRunner {
     rawPtr: number;
   } {
     const rawWasm = this.graphRunner.wasmModule;
-    const allocSize = size >= 64 ? size + 16 : size;
+    const allocSize = size >= 64 ? size + 64 : size;
     const rawPtr = rawWasm._malloc(allocSize) >>> 0;
     if (!rawPtr) {
       throw new Error(`Failed to allocate ${size} bytes on Wasm heap.`);
     }
-    const ptr = size >= 64 ? ((rawPtr + 15) & ~15) >>> 0 : rawPtr;
+    const ptr = size >= 64 ? ((rawPtr + 63) & ~63) >>> 0 : rawPtr;
     return {ptr, rawPtr};
   }
 
   /**
    * Streams an asset (from URL, ReadableStreamDefaultReader, or Uint8Array)
-   * directly into 16-byte aligned Wasm linear memory (`_malloc(size + 16)`)
+   * directly into 64-byte aligned Wasm linear memory (`_malloc(size + 64)`)
    * using the `WasmFileReference` / `StreamingReader` pattern so no large JS
    * ArrayBuffer or MEMFS copy is retained.
    */
