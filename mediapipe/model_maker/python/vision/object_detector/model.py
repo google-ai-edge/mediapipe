@@ -143,7 +143,7 @@ class ObjectDetectorModel(tf.keras.Model):
         Defaults to False.
     """
     dummy_input = tf.zeros([1] + self._model_spec.input_image_shape)
-    self._model(dummy_input, training=True)  # pyrefly: ignore[not-callable]
+    self._model(dummy_input, training=True)
     if include_last_layer:
       head = self._model.head
     else:
@@ -172,7 +172,7 @@ class ObjectDetectorModel(tf.keras.Model):
     """Converts the model to a QAT RetinaNet model."""
     model = self._build_model(omit_l2=True)
     dummy_input = tf.zeros([1] + self._model_spec.input_image_shape)
-    model(dummy_input, training=True)  # pyrefly: ignore[not-callable]
+    model(dummy_input, training=True)
     model.set_weights(self._model.get_weights())
     quantization_config = qat_common.Quantization(
         quantize_detection_decoder=True, quantize_detection_head=True
@@ -256,7 +256,7 @@ class ObjectDetectorModel(tf.keras.Model):
 
   # The remaining method overrides are used to train this object detector model
   # using model.fit().
-  def call(  # pytype: disable=annotation-type-mismatch
+  def call(  # pyrefly: ignore[bad-override]
       self,
       images: Union[tf.Tensor, Sequence[tf.Tensor]],
       image_shape: Optional[tf.Tensor] = None,
@@ -265,7 +265,7 @@ class ObjectDetectorModel(tf.keras.Model):
       training: bool = None,  # pyrefly: ignore[bad-function-definition]
   ) -> Mapping[str, tf.Tensor]:
     """Overrides call from tf.keras.Model."""
-    return self._model(  # pyrefly: ignore[not-callable]
+    return self._model(
         images,
         image_shape,
         anchor_boxes,
@@ -307,7 +307,7 @@ class ObjectDetectorModel(tf.keras.Model):
     cls_loss = cls_loss_fn(
         y_true=y_true_cls, y_pred=y_pred_cls, sample_weight=cls_sample_weight
     )
-    box_loss = box_loss_fn(  # pyrefly: ignore[not-callable]
+    box_loss = box_loss_fn(
         y_true=y_true_box, y_pred=y_pred_box, sample_weight=box_sample_weight
     )
 
@@ -342,7 +342,7 @@ class ObjectDetectorModel(tf.keras.Model):
     x, y = data
     # Run forward pass.
     with tf.GradientTape() as tape:
-      y_pred = self(x, training=True)  # pyrefly: ignore[not-callable]
+      y_pred = self(x, training=True)
       loss = self.compute_loss(x, y, y_pred)
     self._validate_target_and_loss(y, loss)
     # Run backwards pass.
@@ -353,7 +353,7 @@ class ObjectDetectorModel(tf.keras.Model):
     """Overrides test_step from tf.keras.Model."""
     tf.keras.backend.set_learning_phase(0)
     x, y = data
-    y_pred = self(  # pyrefly: ignore[not-callable]
+    y_pred = self(
         x,
         anchor_boxes=y['anchor_boxes'],
         image_shape=y['image_info'][:, 1, :],
