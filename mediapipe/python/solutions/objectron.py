@@ -262,10 +262,10 @@ class Objectron(SolutionBase):
     """
 
     results = super().process(input_data={'image': image})
-    if results.detected_objects:  # pytype: disable=attribute-error
+    if results.detected_objects:  # pyrefly: ignore[missing-attribute]
       results.detected_objects = self._convert_format(results.detected_objects)  # type: ignore
     else:
-      results.detected_objects = None  # pytype: disable=not-writable
+      results.detected_objects = None  # pyrefly: ignore[missing-attribute]
     return results
 
   def _convert_format(
