@@ -151,7 +151,7 @@ static absl::StatusOr<EGLDisplay> GetInitializedAngleDisplayForDeviceUuid(
   // destroyed, so the keys stay valid until process exit.
   static absl::NoDestructor<DisplayCache> display_cache;
 
-  absl::MutexLock lock(&display_mutex);
+  absl::MutexLock lock(display_mutex);
   const DisplayCache::iterator it =
       display_cache->try_emplace(uuid_key, EGL_NO_DISPLAY).first;
   // node_hash_map stabilizes references, not iterators, so bind what we need
