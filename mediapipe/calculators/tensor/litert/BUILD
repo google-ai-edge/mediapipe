@@ -45,7 +45,7 @@ cc_library(
         "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/types:span",
         "@litert//litert/cc:litert_element_type",
-        "@litert//litert/cc:litert_environment",
+        "@litert//litert/cc:litert_environment_api",
         "@litert//litert/cc:litert_environment_options",
         "@litert//litert/cc:litert_macros",
         "@litert//litert/cc:litert_ranked_tensor_type",
@@ -66,6 +66,7 @@ cc_test(
         "@litert//litert/c:litert_tensor_buffer",
         "@litert//litert/c:litert_tensor_buffer_types",
         "@litert//litert/cc:litert_element_type",
+        "@litert//litert/cc:litert_environment",
         "@litert//litert/cc:litert_layout",
         "@litert//litert/cc:litert_ranked_tensor_type",
     ],
@@ -77,5 +78,6 @@ cc_test(
     deps = [
         ":litert_utils",
         "//mediapipe/framework/port:gtest_main",
+        "@litert//litert/cc:litert_environment",
     ],
 )
