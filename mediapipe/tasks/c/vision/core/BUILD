@@ -48,12 +48,9 @@ cc_library(
     srcs = ["image.cc"],
     hdrs = ["image.h"],
     deps = IMAGE_DEPS,
-)
-
-cc_library(
-    name = "image_c_lib",
-    hdrs = ["image.h"],
-    deps = IMAGE_DEPS + [":image"],
+    # The MpImage* C API is exported from shared libraries that are linked
+    # without whole-archive; nothing inside e.g. the retrieval library
+    # references it, so it has to be linked unconditionally.
     alwayslink = 1,
 )
 
