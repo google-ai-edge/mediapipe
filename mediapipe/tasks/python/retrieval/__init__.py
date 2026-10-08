@@ -14,12 +14,20 @@
 
 """MediaPipe Tasks Retrieval API."""
 
+import mediapipe.tasks.python.retrieval.semantic_retriever
 import mediapipe.tasks.python.retrieval.universal_embedder
 
+ChunkingMode = semantic_retriever.ChunkingMode
+RetrievalRecord = semantic_retriever.RetrievalRecord
+RetrievalResult = semantic_retriever.RetrievalResult
+SemanticRetriever = semantic_retriever.SemanticRetriever
+SemanticRetrieverOptions = semantic_retriever.SemanticRetrieverOptions
+TaskPartKind = semantic_retriever.TaskPartKind
 UniversalEmbedder = universal_embedder.UniversalEmbedder
 UniversalEmbedderOptions = universal_embedder.UniversalEmbedderOptions
 UniversalEmbedderResult = universal_embedder.UniversalEmbedderResult
 
 # Remove unnecessary modules to avoid duplication in API docs.
 del mediapipe
+del semantic_retriever
 del universal_embedder
