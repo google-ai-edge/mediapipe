@@ -13,26 +13,29 @@ For more information, refer to the [Semantic Retriever](https://developers.googl
 documentation.
 
 ```javascript
-import { SemanticRetriever, InMemoryVectorStore, UniversalEmbedder, FilesetResolver } from "@mediapipe/tasks-retrieval";
+import {
+  SemanticRetriever, MemoryVectorStore, SemanticRetrieverComponents,
+  DefaultTextChunker, UniversalEmbedder, FilesetResolver
+} from "@mediapipe/tasks-retrieval";
 
-const retrieval = await FilesetResolver.forRetrievalTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-retrieval@latest/wasm");
+const retrieval = await FilesetResolver.forRetrievalTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-retrieval/wasm");
 
 const embedder = await UniversalEmbedder.createFromOptions(retrieval, {
-  baseOptions: {
-    modelAssetPath: "embededder.litertlm"
-  }
+   baseOptions: { modelAssetPath: "https://huggingface.co/litert-community/embeddinggemma-2-text-vision-440m-litert-lm/resolve/main/embeddinggemma-2-text-vision-440m.litertlm" }
 });
 
-const semanticRetriever = await SemanticRetriever.createFromComponents(retrieval, {
-  vectorStore: new InMemoryVectorStore(),
-  providers: [embedder.getProvider()]
-});
+const components = new SemanticRetrieverComponents()
+  .setVectorStore(new MemoryVectorStore())
+  .addProvider(embedder.getProvider())
+  .setTextChunker(await DefaultTextChunker.create(retrieval));
 
-await semanticRetriever.insertDocument("doc1", "How to compute semantic distance on the web");
-await semanticRetriever.insertDocument("doc2", "Best vector search libraries for JavaScript");
+const semanticRetriever = await SemanticRetriever.createFromComponents(components);
 
-const results = await semanticRetriever.retrieve("What is vector search in JS?", { limit: 1 });
-console.log(`Similarity Score: ${results[0].score}, Text Data: ${results[0].textData}`);
+await semanticRetriever.insertDocument("doc1", "How to compute semantic distance");
+await semanticRetriever.insertDocument("doc2", "Best vector search libraries");
+
+const results = await semanticRetriever.retrieve("What is vector search?");
+console.log(`Score: ${results[0].score}, Text: ${results[0].content[0].text}`);
 ```
 
 ## Universal Embedder
@@ -47,29 +50,21 @@ documentation.
 ```javascript
 import { UniversalEmbedder, FilesetResolver } from "@mediapipe/tasks-retrieval";
 
-const retrieval = await FilesetResolver.forRetrievalTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-retrieval@latest/wasm");
-const universalEmbedder = await UniversalEmbedder.createFromOptions(
-  retrieval,
-  {
-    baseOptions: {
-      modelAssetPath: "embededder.litertlm"
-    }
-  }
-);
+const retrieval = await FilesetResolver.forRetrievalTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-retrieval/wasm");
 
-// Embed text
-const textEmbeddingResult = await universalEmbedder.embedText("The quick brown fox jumps over the lazy dog");
-console.log("Text embedding:", textEmbeddingResult.embeddings[0].floatEmbedding);
+const embedder = await UniversalEmbedder.createFromOptions(retrieval, {
+  baseOptions: { modelAssetPath: "https://huggingface.co/litert-community/embeddinggemma-2-text-vision-440m-litert-lm/resolve/main/embeddinggemma-2-text-vision-440m.litertlm" }
+});
 
-// Embed images directly from the DOM
-const image = document.getElementById("myImage");
-const imageEmbeddingResult = await universalEmbedder.embedImage(image);
+const textResult = await embedder.embedText("The quick brown fox");
 
-// Compute similarity
-const similarity = UniversalEmbedder.cosineSimilarity(
-  textEmbeddingResult.embeddings[0],
-  imageEmbeddingResult.embeddings[0]
-);
+const imgBytes = new Uint8Array(await (await fetch("myImage.jpg")).arrayBuffer());
+const imgResult = await embedder.embedImage(imgBytes);
+
+console.log("Cosine Similarity:", UniversalEmbedder.cosineSimilarity(
+  textResult.embeddings[0],
+  imgResult.embeddings[0]
+));
 ```
 
 ### Privacy Notice
