@@ -1501,8 +1501,7 @@ void CalculatorGraph::CleanupAfterRun(absl::Status* status) {
 
 const OutputStreamManager* CalculatorGraph::FindOutputStreamManager(
     const std::string& name) {
-  return &output_stream_managers_
-              .get()[validated_graph_->OutputStreamIndex(name)];
+  return &output_stream_managers_[validated_graph_->OutputStreamIndex(name)];
 }
 
 std::string CalculatorGraph::ListSourceNodes() const {
