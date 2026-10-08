@@ -1573,50 +1573,60 @@ absl::StatusOr<std::vector<Tensor>> InferenceRunnerLiteRt::Run(
     bool async = true;
     LITERT_RETURN_IF_ERROR(compiled_model_->RunAsync(
         signature_index_, ctx.litert_inputs, ctx.litert_outputs, async));
-    RET_CHECK(async) << "LiteRT async execution requested but failed";
+    if (async) {
+      // Create vector of SharedFds from LiteRT output buffer events.
+      std::vector<SharedFd> litert_output_buffer_fds;
+      litert_output_buffer_fds.reserve(ctx.litert_outputs.size());
+      for (auto& output_buffer : ctx.litert_outputs) {
+        LITERT_ASSIGN_OR_RETURN(auto output_event, output_buffer.GetEvent());
+        LITERT_ASSIGN_OR_RETURN(int fd, output_event.DupFd());
+        litert_output_buffer_fds.push_back(SharedFd(UniqueFd(fd)));
+      }
 
-    // Create vector of SharedFds from LiteRT output buffer events.
-    std::vector<SharedFd> litert_output_buffer_fds;
-    litert_output_buffer_fds.reserve(ctx.litert_outputs.size());
-    for (auto& output_buffer : ctx.litert_outputs) {
-      LITERT_ASSIGN_OR_RETURN(auto output_event, output_buffer.GetEvent());
-      LITERT_ASSIGN_OR_RETURN(int fd, output_event.DupFd());
-      litert_output_buffer_fds.push_back(SharedFd(UniqueFd(fd)));
-    }
+      // Synchronize when reading is finished for each MP input buffer.
+      // This is done by checking that all LiteRT output buffer events (vector
+      // of SharedFds) are signaled.
+      for (auto& view : ctx.active_input_views) {
+        auto& ahwb_view = std::get<Tensor::AHardwareBufferView>(view);
+        ahwb_view.SetReadingFinishedFunc(
+            MultipleFdsFinishedFunc(litert_output_buffer_fds));
+      }
+      // Synchronize when writing is finished for each MP output buffer.
+      // This is done by checking each respective LiteRT output buffer's event.
+      RET_CHECK_EQ(ctx.litert_outputs.size(), ctx.active_output_views.size());
+      for (int i = 0; i < ctx.litert_outputs.size(); ++i) {
+        LITERT_ASSIGN_OR_RETURN(auto output_event,
+                                ctx.litert_outputs[i].GetEvent());
+        auto& ahwb_view =
+            std::get<Tensor::AHardwareBufferView>(ctx.active_output_views[i]);
+        LITERT_ASSIGN_OR_RETURN(int write_finished_fd, output_event.DupFd());
+        LITERT_ASSIGN_OR_RETURN(int write_finished_fd_for_func,
+                                output_event.DupFd());
+        ahwb_view.SetWritingFinishedFD(
+            write_finished_fd,
+            FdFinishedFunc(SharedFd(UniqueFd(write_finished_fd_for_func))));
+      }
+      ctx.active_output_views.clear();
+      ctx.active_input_views.clear();
 
-    // Synchronize when reading is finished for each MP input buffer.
-    // This is done by checking that all LiteRT output buffer events (vector
-    // of SharedFds) are signaled.
-    for (auto& view : ctx.active_input_views) {
-      auto& ahwb_view = std::get<Tensor::AHardwareBufferView>(view);
-      ahwb_view.SetReadingFinishedFunc(
-          MultipleFdsFinishedFunc(litert_output_buffer_fds));
-    }
-    // Synchronize when writing is finished for each MP output buffer.
-    // This is done by checking each respective LiteRT output buffer's event.
-    RET_CHECK_EQ(ctx.litert_outputs.size(), ctx.active_output_views.size());
-    for (int i = 0; i < ctx.litert_outputs.size(); ++i) {
-      LITERT_ASSIGN_OR_RETURN(auto output_event,
-                              ctx.litert_outputs[i].GetEvent());
-      auto& ahwb_view =
-          std::get<Tensor::AHardwareBufferView>(ctx.active_output_views[i]);
-      LITERT_ASSIGN_OR_RETURN(int write_finished_fd, output_event.DupFd());
-      LITERT_ASSIGN_OR_RETURN(int write_finished_fd_for_func,
-                              output_event.DupFd());
-      ahwb_view.SetWritingFinishedFD(
-          write_finished_fd,
-          FdFinishedFunc(SharedFd(UniqueFd(write_finished_fd_for_func))));
-    }
-    ctx.active_output_views.clear();
-    ctx.active_input_views.clear();
+      // Move the context and fences to the async run state and add to the
+      // queue.
+      AsyncRunState async_state;
+      async_state.context = std::move(ctx);
+      async_state.async_run_fences = std::move(litert_output_buffer_fds);
+      {
+        absl::MutexLock lock(&async_runs_mutex_);
+        active_async_runs_.push_back(std::move(async_state));
+      }
+    } else {
+      ABSL_LOG_FIRST_N(WARNING, 1)
+          << "LiteRT async execution requested, but backend fell back to "
+             "synchronous execution.";
+      ctx.active_output_views.clear();
+      ctx.active_input_views.clear();
 
-    // Move the context and fences to the async run state and add to the queue.
-    AsyncRunState async_state;
-    async_state.context = std::move(ctx);
-    async_state.async_run_fences = std::move(litert_output_buffer_fds);
-    {
-      absl::MutexLock lock(&async_runs_mutex_);
-      active_async_runs_.push_back(std::move(async_state));
+      ABSL_RETURN_IF_ERROR(CopyLiteRtManagedOutputBuffersToMpTensors(
+          ctx.litert_outputs, mp_output_tensors));
     }
 #else
     return absl::InternalError("LiteRT requires AHWB support to run async");
