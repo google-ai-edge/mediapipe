@@ -70,7 +70,7 @@ public final class InteractiveSegmenter implements AutoCloseable {
       Context context, InteractiveSegmenterOptions options) {
     AndroidAssetUtil.initializeNativeAssetManager(context);
     BaseOptionsProto.BaseOptions baseOptionsProto =
-        BaseOptionsUtils.convertBaseOptionsToProto(options.baseOptions());
+        BaseOptionsUtils.convertBaseOptionsToProto(options.baseOptions(), /* useLiteRt= */ true);
     byte[] baseOptionsBytes = baseOptionsProto.toByteArray();
     String appVersion = BaseOptionsUtils.getAppVersion(context);
     String appId = BaseOptionsUtils.getAppId(context);
