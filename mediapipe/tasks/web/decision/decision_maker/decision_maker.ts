@@ -478,25 +478,53 @@ export class DecisionMaker extends TaskRunner {
     );
   }
 
-  private allocateAlignedWasmBuffer(size: number): {
+  private getZipFirstEntryOffset(bytes: Uint8Array): number {
+    if (
+      bytes.byteLength >= 30 &&
+      bytes[0] === 0x50 &&
+      bytes[1] === 0x4b &&
+      bytes[2] === 0x03 &&
+      bytes[3] === 0x04
+    ) {
+      const nameLen = bytes[26] | (bytes[27] << 8);
+      const extraLen = bytes[28] | (bytes[29] << 8);
+      if (nameLen + extraLen <= 4096) {
+        return 30 + nameLen + extraLen;
+      }
+    }
+    return 0;
+  }
+
+  private allocateAlignedWasmBuffer(
+    size: number,
+    payloadOffset = 0,
+  ): {
     ptr: number;
     rawPtr: number;
   } {
     const rawWasm = this.graphRunner.wasmModule;
-    const allocSize = size >= 64 ? size + 64 : size;
-    const rawPtr = rawWasm._malloc(allocSize) >>> 0;
+    if (size < 64) {
+      const rawPtr = rawWasm._malloc(size) >>> 0;
+      if (!rawPtr) {
+        throw new Error(`Failed to allocate ${size} bytes on Wasm heap.`);
+      }
+      return {ptr: rawPtr, rawPtr};
+    }
+    const rawPtr = rawWasm._malloc(size + 64) >>> 0;
     if (!rawPtr) {
       throw new Error(`Failed to allocate ${size} bytes on Wasm heap.`);
     }
-    const ptr = size >= 64 ? ((rawPtr + 63) & ~63) >>> 0 : rawPtr;
+    const ptr = (((rawPtr + payloadOffset + 63) & ~63) - payloadOffset) >>> 0;
     return {ptr, rawPtr};
   }
 
   /**
    * Streams an asset (from URL, ReadableStreamDefaultReader, or Uint8Array)
-   * directly into 64-byte aligned Wasm linear memory (`_malloc(size + 64)`)
-   * using the `WasmFileReference` / `StreamingReader` pattern so no large JS
-   * ArrayBuffer or MEMFS copy is retained.
+   * directly into aligned Wasm linear memory using the `WasmFileReference` /
+   * `StreamingReader` pattern so no large JS ArrayBuffer or MEMFS copy is
+   * retained. When the asset is a `.task` ZIP archive, aligns the buffer so
+   * the first entry (`model.tflite`) starts on a 64-byte boundary for
+   * zero-copy FlatBuffer mapping.
    */
   private async streamAssetToWasmHeap(
     assetPath?: string | string,
@@ -507,7 +535,8 @@ export class DecisionMaker extends TaskRunner {
     if (assetBuffer instanceof Uint8Array) {
       const size = assetBuffer.byteLength;
       if (size === 0) return {ptr: 0, rawPtr: 0, size: 0};
-      const {ptr, rawPtr} = this.allocateAlignedWasmBuffer(size);
+      const payloadOffset = this.getZipFirstEntryOffset(assetBuffer);
+      const {ptr, rawPtr} = this.allocateAlignedWasmBuffer(size, payloadOffset);
       rawWasm.HEAPU8.set(assetBuffer, ptr);
       return {ptr, rawPtr, size};
     }
@@ -535,8 +564,49 @@ export class DecisionMaker extends TaskRunner {
     }
 
     if (expectedSize > 0) {
-      const {ptr, rawPtr} = this.allocateAlignedWasmBuffer(expectedSize);
+      const initialChunks: Uint8Array[] = [];
+      let bufferedLen = 0;
+      while (bufferedLen < 30) {
+        const {value, done} = await reader.read();
+        if (done) break;
+        if (value && value.byteLength > 0) {
+          initialChunks.push(value);
+          bufferedLen += Number(value.byteLength);
+        }
+      }
+      if (bufferedLen === 0) {
+        return {ptr: 0, rawPtr: 0, size: 0};
+      }
+      let headerProbe = initialChunks[0];
+      if (headerProbe.byteLength < 30 && initialChunks.length > 1) {
+        headerProbe = new Uint8Array(Math.min(bufferedLen, 30));
+        let pOff = 0;
+        for (const c of initialChunks) {
+          const take = Math.min(c.byteLength, headerProbe.byteLength - pOff);
+          headerProbe.set(c.subarray(0, take), pOff);
+          pOff += take;
+          if (pOff >= headerProbe.byteLength) break;
+        }
+      }
+      const payloadOffset = this.getZipFirstEntryOffset(headerProbe);
+      const {ptr, rawPtr} = this.allocateAlignedWasmBuffer(
+        expectedSize,
+        payloadOffset,
+      );
       let offset = 0;
+      for (const c of initialChunks) {
+        const chunkLen = Number(c.byteLength);
+        if (offset + chunkLen > expectedSize) {
+          rawWasm._free(rawPtr);
+          throw new Error(
+            `Stream exceeded expected content-length (${expectedSize} bytes).`,
+          );
+        }
+        rawWasm.HEAPU8.set(c, (ptr + offset) >>> 0);
+        offset += chunkLen;
+      }
+      initialChunks.length = 0;
+
       while (true) {
         const {value, done} = await reader.read();
         if (done) break;
@@ -572,7 +642,14 @@ export class DecisionMaker extends TaskRunner {
     if (totalSize === 0) {
       return {ptr: 0, rawPtr: 0, size: 0};
     }
-    const {ptr, rawPtr} = this.allocateAlignedWasmBuffer(totalSize);
+    const firstChunk = chunks[0];
+    const payloadOffset = firstChunk
+      ? this.getZipFirstEntryOffset(firstChunk)
+      : 0;
+    const {ptr, rawPtr} = this.allocateAlignedWasmBuffer(
+      totalSize,
+      payloadOffset,
+    );
     let offset = 0;
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];

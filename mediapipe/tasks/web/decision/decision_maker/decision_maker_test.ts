@@ -465,6 +465,58 @@ describe('DecisionMaker', () => {
     expect(freeSpy).toHaveBeenCalledWith(72);
   });
 
+  it('aligns .task ZIP first entry payload to a 64-byte boundary in Wasm memory', async () => {
+    const fakeHeap = new Uint8Array(1024);
+    let nextPtr = 68;
+    const mallocSpy = jasmine
+      .createSpy('_malloc')
+      .and.callFake((size: number) => {
+        const ptr = nextPtr;
+        nextPtr += size;
+        return ptr;
+      });
+    const freeSpy = jasmine.createSpy('_free');
+    const createFromBuffersSpy = jasmine
+      .createSpy('createDecisionFromBuffers')
+      .and.returnValue(Promise.resolve(88888));
+    const deleteSdmSpy = jasmine.createSpy('deleteDecision');
+    const streamingModule: Record<string, unknown> = {
+      'HEAPU8': fakeHeap,
+      '_malloc': mallocSpy,
+      '_free': freeSpy,
+      'createDecisionFromBuffers': createFromBuffersSpy,
+      'deleteDecision': deleteSdmSpy,
+      '_setAutoRenderToScreen': jasmine.createSpy('_setAutoRenderToScreen'),
+      '_closeGraph': jasmine.createSpy('_closeGraph'),
+    };
+    const streamingMaker = new DecisionMaker(
+      streamingModule as unknown as WasmModule,
+      null,
+    );
+    // Construct a synthetic 128-byte ZIP local file header with filename
+    // length 12 ("model.tflite", payload offset = 30 + 12 = 42).
+    const zipBytes = new Uint8Array(128);
+    zipBytes[0] = 0x50;
+    zipBytes[1] = 0x4b;
+    zipBytes[2] = 0x03;
+    zipBytes[3] = 0x04;
+    zipBytes[26] = 12;
+    zipBytes[27] = 0;
+    zipBytes[28] = 0;
+    zipBytes[29] = 0;
+    await streamingMaker.setOptions({
+      baseOptions: {
+        modelAssetBuffer: zipBytes,
+      },
+      backendType: 2,
+      maxNumTokens: 4096,
+    });
+    const passedPtr = createFromBuffersSpy.calls.mostRecent().args[0] as number;
+    expect((passedPtr + 42) % 64).toBe(0);
+    streamingMaker.close();
+    expect(freeSpy).toHaveBeenCalledWith(68);
+  });
+
   it('skips software-emulated WebGPU adapters so WASM SIMD runs instead of SwiftShader', async () => {
     const requestDeviceSpy = jasmine.createSpy('requestDevice');
     const fakeAdapter = {
