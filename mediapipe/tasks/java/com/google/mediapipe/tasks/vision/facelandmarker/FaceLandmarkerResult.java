@@ -93,7 +93,11 @@ public abstract class FaceLandmarkerResult implements TaskResult {
   /** Face landmarks of detected faces. */
   public abstract List<List<NormalizedLandmark>> faceLandmarks();
 
-  /** Optional face blendshapes classifications. */
+  /**
+   * Optional face blendshapes classifications. Note: *Left and *Right blendshapes correspond to the
+   * subject's face, not the viewer. Passing a horizontally mirrored image will invert these
+   * outputs.
+   */
   public abstract Optional<List<List<Category>>> faceBlendshapes();
 
   /**

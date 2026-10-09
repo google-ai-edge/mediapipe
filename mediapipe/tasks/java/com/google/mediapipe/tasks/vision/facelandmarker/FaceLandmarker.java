@@ -467,6 +467,9 @@ public final class FaceLandmarker extends BaseVisionTaskApi {
       /**
        * Whether FaceLandmarker outputs face blendshapes classification. Face blendshapes are used
        * for rendering the 3D face model.
+       *
+       * <p>Note: *Left and *Right blendshapes correspond to the subject's face, not the viewer.
+       * Passing a horizontally mirrored image will invert these outputs.
        */
       public abstract Builder setOutputFaceBlendshapes(boolean value);
 

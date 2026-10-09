@@ -100,6 +100,9 @@ NS_SWIFT_NAME(FaceLandmarkerOptions)
 /**
  * Whether FaceLandmarker outputs face blendshapes classification. Face blendshapes are used for
  * rendering the 3D face model.
+ * Note: *Left and *Right blendshapes correspond to the subject's face, not
+ * the viewer. Passing a horizontally mirrored image will invert these
+ * outputs.
  */
 @property(nonatomic) BOOL outputFaceBlendshapes;
 

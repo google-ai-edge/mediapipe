@@ -63,6 +63,9 @@ NS_SWIFT_NAME(FaceLandmarkerResult)
 
 /**
  * Face blendshapes results. Defaults to an empty array if not enabled.
+ * Note: *Left and *Right blendshapes correspond to the subject's face, not
+ * the viewer. Passing a horizontally mirrored image will invert these
+ * outputs.
  */
 @property(nonatomic, readonly) NSArray<MPPClassifications *> *faceBlendshapes;
 
