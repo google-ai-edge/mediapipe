@@ -21,7 +21,33 @@
 
 #ifdef __APPLE__
 #include <CoreVideo/CoreVideo.h>
+#include <TargetConditionals.h>
 #define MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER 1
+
+// Whether the GPU buffer *pool* vends CVPixelBuffer-backed storage.
+//
+// This is deliberately narrower than MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER,
+// which says only that CVPixelBuffer support is compiled in. On macOS (CGL),
+// CVPixelBuffer-backed buffers are vended as GL_TEXTURE_RECTANGLE_ARB, which
+// cannot be read through sampler2D uniforms, and
+// CreateCVPixelBufferForImageFrame has no representation for 3-channel SRGB
+// frames. The pool therefore allocates GlTextureBuffer on macOS instead.
+//
+// Only the allocation path and the storage converters consult this macro. Other
+// call sites (ImageMultiPool, GlCalculatorHelper::GpuBufferCopyingImageFrame,
+// the ImageFrame<->GpuBuffer calculators, Image's CVPixelBuffer accessors)
+// still key off MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER and so remain
+// CVPixelBuffer-only on macOS. Those entry points are not exercised by the
+// macOS GPU graphs today and were already unsupported there; converting them is
+// intentionally left out of scope rather than overlooked.
+#if !TARGET_OS_OSX
+#define MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER 1
+#else
+#define MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER 0
+#endif
+
+#else
+#define MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER 0
 #endif  // defined(__APPLE__)
 
 #include "mediapipe/framework/formats/image_format.pb.h"

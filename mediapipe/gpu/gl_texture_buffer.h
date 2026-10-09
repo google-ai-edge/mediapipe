@@ -145,9 +145,13 @@ class GlTextureBuffer
     return producer_context_;
   }
 
-#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#if MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER
+  // Where the pool vends CVPixelBuffer-backed storage, GlTextureBuffer must not
+  // register a competing factory. On macOS the pool vends GlTextureBuffer, so
+  // it stays registered there; see gpu_shared_data_internal.cc for how its
+  // factory is ordered after GpuBufferStorageCvPixelBuffer's.
   static constexpr bool kDisableGpuBufferRegistration = true;
-#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#endif  // MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER
 
  private:
   // Creates a texture of dimensions width x height and allocates space for it.

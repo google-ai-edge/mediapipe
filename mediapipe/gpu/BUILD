@@ -469,6 +469,7 @@ cc_library(
         ":gl_base",
         ":gl_context",
         ":gl_texture_view",
+        ":gpu_buffer_format",
         ":gpu_buffer_storage",
         ":gpu_buffer_storage_image_frame",
         ":image_frame_view",
@@ -816,6 +817,7 @@ cc_library(
         ":gl_base",
         ":gl_context",
         ":gl_context_options_cc_proto",
+        ":gpu_buffer_format",
         ":gpu_buffer_multi_pool",
         ":gpu_shared_data_header",
         ":graph_support",
@@ -841,6 +843,7 @@ cc_library(
         "//conditions:default": [],
         "//mediapipe:apple": [
             ":cv_texture_cache_manager",
+            ":gpu_buffer_storage_cv_pixel_buffer",
             ":metal_shared_resources",
         ],
     }),

@@ -34,6 +34,9 @@
 
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
+// IWYU pragma: begin_keep (MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER)
+#include "mediapipe/gpu/gpu_buffer_format.h"
+// IWYU pragma: end_keep
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 #include "mediapipe/calculators/tensor/tensors_to_segmentation_converter_gl_buffer.h"
@@ -149,8 +152,28 @@ absl::Status TensorsToSegmentationCalculator::Process(
 
   bool use_gpu = false;
   if (CanUseGpu()) {
+#if MEDIAPIPE_METAL_ENABLED && !MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER
+    // The Metal converter writes the mask into a Metal view of a GpuBuffer and
+    // then reads it back through a GL view of that same GpuBuffer. Those are
+    // only the same memory while GpuBuffers are CVPixelBuffer-backed, where
+    // both views wrap one IOSurface.
+    //
+    // Where the pool vends GlTextureBuffer instead (macOS, which needs
+    // GL_TEXTURE_2D rather than the GL_TEXTURE_RECTANGLE_ARB that CoreVideo
+    // hands out), asking for a Metal texture finds no CVPixelBuffer storage and
+    // allocates a detached copy. The Metal kernel writes the mask into that
+    // copy, but the GL view still reads the original GpuBuffer, which was never
+    // written to, so the output mask is all zeros.
+    //
+    // The CPU converter has no such split. On Apple it is also behaviorally
+    // identical: IsGpuOriginAtBottom() is always false there, so the Metal
+    // converter's optional Y flip is never active and neither converter flips.
+    use_gpu = false;
+#else
     // Use GPU processing only if at least one input tensor is already on GPU.
     use_gpu = input_tensor->ready_on_gpu();
+#endif  // MEDIAPIPE_METAL_ENABLED &&
+        // !MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER
   }
 
   // Validate tensor channels and activation type.

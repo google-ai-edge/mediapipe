@@ -5,6 +5,7 @@
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/gpu/gl_context.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"  // IWYU pragma: keep (MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER)
 #include "mediapipe/gpu/gpu_buffer_storage_image_frame.h"
 #include "mediapipe/objc/util.h"
 
@@ -147,6 +148,11 @@ std::shared_ptr<ImageFrame> GpuBufferStorageCvPixelBuffer::GetWriteView(
   return CreateImageFrameForCVPixelBuffer(**this);
 }
 
+#if MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER
+// Only register this converter where the GPU buffer pool actually vends
+// CVPixelBuffer-backed storage. On macOS the pool vends GlTextureBuffer, and
+// registering this converter would hijack ImageFrame -> GpuBuffer conversions
+// and abort on formats CVPixelBuffer cannot represent (e.g. 3-channel SRGB).
 static std::shared_ptr<GpuBufferStorageCvPixelBuffer> ConvertFromImageFrame(
     std::shared_ptr<GpuBufferStorageImageFrame> frame) {
   auto status_or_buffer =
@@ -161,6 +167,7 @@ static auto kConverterFromImageFrameRegistration =
         .RegisterConverter<GpuBufferStorageImageFrame,
                            GpuBufferStorageCvPixelBuffer>(
             ConvertFromImageFrame);
+#endif  // MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER
 
 namespace internal {
 std::shared_ptr<internal::GpuBufferStorage> AsGpuBufferStorage(

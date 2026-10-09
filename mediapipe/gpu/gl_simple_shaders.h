@@ -123,10 +123,18 @@ static const GLfloat kBasicTextureVerticesFlipY[] = {
 #undef V4
 #undef V
 
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
+
 // Used in shaders to differentiate desktop OpenGL vs OpenGL ES.
 // The newer spec requires this to be the first line of a shader.
 // Desktop OpenGL 3.3+ = #version 330
-#ifndef GL_ES_VERSION_2_0
+#if defined(__APPLE__) && TARGET_OS_OSX && !defined(OSX_ENABLE_3_2_CORE)
+// Without OSX_ENABLE_3_2_CORE, gl_context_nsgl.cc creates a legacy 2.1 context
+// (GLSL 1.20), which rejects #version 330.
+#define GLES_VERSION_COMPAT "\n"
+#elif !defined(GL_ES_VERSION_2_0)
 #define GLES_VERSION_COMPAT "#version 330 \n"
 #else
 #define GLES_VERSION_COMPAT "\n"

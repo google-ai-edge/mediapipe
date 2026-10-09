@@ -38,11 +38,16 @@
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gl_context_options.pb.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/multi_pool.h"
 
 #if MEDIAPIPE_METAL_ENABLED
 #include "mediapipe/gpu/metal_shared_resources.h"
 #endif  // MEDIAPIPE_METAL_ENABLED
+
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#include "mediapipe/gpu/gpu_buffer_storage_cv_pixel_buffer.h"
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
 namespace mediapipe {
 
@@ -155,6 +160,8 @@ GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context,
                       }),
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
       texture_caches_(std::make_shared<CvTextureCacheManager>()),
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#if MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER
       gpu_buffer_pool_(
           [tc = texture_caches_](const internal::GpuBufferSpec& spec,
                                  const MultiPoolOptions& options) {
@@ -162,10 +169,10 @@ GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context,
           },
           gpu_buffer_pool_options ? *gpu_buffer_pool_options
                                   : kDefaultMultiPoolOptions)
-#else   // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-          gpu_buffer_pool_(gpu_buffer_pool_options ? *gpu_buffer_pool_options
-                                            : kDefaultMultiPoolOptions)
-#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#else   // MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER
+      gpu_buffer_pool_(gpu_buffer_pool_options ? *gpu_buffer_pool_options
+                                               : kDefaultMultiPoolOptions)
+#endif  // MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER
 {
   gl_key_context_->insert({SharedContextKey(), shared_gl_context_});
   const std::string executor_name =
@@ -307,7 +314,7 @@ GlContext::StatusOrGlContext GpuResources::GetOrCreateGlContext(
 
 GpuSharedData::GpuSharedData() : GpuSharedData(kPlatformGlContextNone) {}
 
-#if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#if !MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER
 static std::shared_ptr<GlTextureBuffer> GetGlTextureBufferFromPool(
     int width, int height, GpuBufferFormat format) {
   std::shared_ptr<GlTextureBuffer> texture_buffer;
@@ -316,8 +323,9 @@ static std::shared_ptr<GlTextureBuffer> GetGlTextureBufferFromPool(
   if (cc && cc->Service(kGpuService).IsAvailable()) {
     GpuBufferMultiPool* pool =
         &cc->Service(kGpuService).GetObject().gpu_buffer_pool();
-    // Note that the "gpu_buffer_pool" serves GlTextureBuffers on non-Apple
-    // platforms. TODO: refactor into storage pools.
+    // Note that the "gpu_buffer_pool" serves GlTextureBuffers wherever
+    // MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER is 0 (non-Apple platforms
+    // and macOS). TODO: refactor into storage pools.
     auto texture_buffer_from_pool = pool->GetBuffer(width, height, format);
     ABSL_CHECK_OK(texture_buffer_from_pool);
     texture_buffer =
@@ -329,12 +337,19 @@ static std::shared_ptr<GlTextureBuffer> GetGlTextureBufferFromPool(
 }
 
 static auto kGlTextureBufferPoolRegistration = [] {
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+  // On macOS GpuBufferStorageCvPixelBuffer is compiled in and also registers a
+  // factory for GlTextureView. The registry is last-wins, so register it first
+  // to make the pool-backed GlTextureBuffer factory below win deterministically
+  // rather than by static initialization order across translation units.
+  GpuBufferStorageCvPixelBuffer::RegisterOnce();
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   // Ensure that the GlTextureBuffer's own factory is already registered, so we
   // can override it.
   GlTextureBuffer::RegisterOnce();
   return internal::GpuBufferStorageRegistry::Get()
       .RegisterFactory<GlTextureBuffer>(GetGlTextureBufferFromPool);
 }();
-#endif  // !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#endif  // !MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER
 
 }  // namespace mediapipe
