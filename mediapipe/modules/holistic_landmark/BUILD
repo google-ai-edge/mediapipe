@@ -268,3 +268,41 @@ mediapipe_simple_subgraph(
         "//mediapipe/modules/pose_landmark:pose_landmark_cpu",
     ],
 )
+
+mediapipe_simple_subgraph(
+    name = "holistic_body_from_pose_cpu",
+    graph = "holistic_body_from_pose_cpu.pbtxt",
+    register_as = "HolisticBodyFromPoseCpu",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":face_detection_front_detections_to_roi",
+        ":face_landmarks_from_pose_to_recrop_roi",
+        ":hand_landmarks_from_pose_to_recrop_roi",
+        ":hand_recrop_by_roi_cpu",
+        ":hand_visibility_from_hand_landmarks_from_pose",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:split_proto_list_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/modules/face_detection:face_detection_short_range_by_roi_cpu",
+        "//mediapipe/modules/face_landmark:face_landmark_cpu",
+        "//mediapipe/modules/hand_landmark:hand_landmark_cpu",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "holistic_landmark_multi_cpu",
+    graph = "holistic_landmark_multi_cpu.pbtxt",
+    register_as = "HolisticLandmarkMultiCpu",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":holistic_body_from_pose_cpu",
+        "//mediapipe/calculators/core:begin_loop_calculator",
+        "//mediapipe/calculators/core:clip_vector_size_calculator",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/core:end_loop_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/modules/pose_detection:pose_detection_cpu",
+        "//mediapipe/modules/pose_landmark:pose_detection_to_roi",
+        "//mediapipe/modules/pose_landmark:pose_landmark_by_roi_cpu",
+    ],
+)
