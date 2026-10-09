@@ -99,6 +99,7 @@ TEST(BaseOptionsConverterTest, ToMpHostEnvironmentConvertsValues) {
   EXPECT_EQ(ToMpHostEnvironment(2), MP_HOST_ENVIRONMENT_IOS);
   EXPECT_EQ(ToMpHostEnvironment(3), MP_HOST_ENVIRONMENT_PYTHON);
   EXPECT_EQ(ToMpHostEnvironment(4), MP_HOST_ENVIRONMENT_WEB);
+  EXPECT_EQ(ToMpHostEnvironment(5), MP_HOST_ENVIRONMENT_FLUTTER);
 }
 
 TEST(BaseOptionsConverterTest, ToMpHostSystemConvertsValues) {

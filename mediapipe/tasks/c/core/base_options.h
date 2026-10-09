@@ -35,6 +35,7 @@ enum MpHostEnvironment {
   MP_HOST_ENVIRONMENT_IOS = 2,
   MP_HOST_ENVIRONMENT_PYTHON = 3,
   MP_HOST_ENVIRONMENT_WEB = 4,
+  MP_HOST_ENVIRONMENT_FLUTTER = 5,
 };
 
 // Host OS on which MediaPipe tasks are running.

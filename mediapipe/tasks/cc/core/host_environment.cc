@@ -33,6 +33,8 @@ HostEnvironment ToHostEnvironment(int host_environment) {
       return HostEnvironment::HOST_ENVIRONMENT_PYTHON;
     case 4:
       return HostEnvironment::HOST_ENVIRONMENT_WEB;
+    case 5:
+      return HostEnvironment::HOST_ENVIRONMENT_FLUTTER;
     default:
       ABSL_LOG(DFATAL) << "Unknown HostEnvironment int value: "
                        << host_environment;

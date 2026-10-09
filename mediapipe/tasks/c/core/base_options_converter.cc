@@ -51,6 +51,8 @@ mediapipe::tasks::core::HostEnvironment CppConvertToHostEnvironment(
       return mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_PYTHON;
     case MP_HOST_ENVIRONMENT_WEB:
       return mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_WEB;
+    case MP_HOST_ENVIRONMENT_FLUTTER:
+      return mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_FLUTTER;
     default:
       return mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_UNKNOWN;
   }
@@ -112,6 +114,8 @@ MpHostEnvironment ToMpHostEnvironment(int host_environment) {
       return MP_HOST_ENVIRONMENT_PYTHON;
     case MP_HOST_ENVIRONMENT_WEB:
       return MP_HOST_ENVIRONMENT_WEB;
+    case MP_HOST_ENVIRONMENT_FLUTTER:
+      return MP_HOST_ENVIRONMENT_FLUTTER;
     default:
       ABSL_LOG(DFATAL) << "Unknown MpHostEnvironment int value: "
                        << host_environment;
