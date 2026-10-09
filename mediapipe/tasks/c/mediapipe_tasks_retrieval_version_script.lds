@@ -7,7 +7,9 @@ VERS_1.0 {
     MpErrorFree;
     MpFlatbuffer*;
     MpImage*;
+    MpRemoveLoggingCallback;
     MpSemanticRetriever*;
+    MpSetLoggingCallback;
     MpStringList*;
     MpTextEmbedder*;
     MpUniversalEmbedder*;

@@ -11,6 +11,8 @@ VERS_1.0 {
     MpInteractiveSegmenterLegacy*;
     MpObjectDetector*;
     MpPoseLandmarker*;
+    MpRemoveLoggingCallback;
+    MpSetLoggingCallback;
     MpStringList*;
   local:
     *;

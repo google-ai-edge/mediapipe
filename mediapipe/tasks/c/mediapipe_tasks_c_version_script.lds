@@ -14,7 +14,9 @@ VERS_1.0 {
     MpLanguageDetector*;
     MpObjectDetector*;
     MpPoseLandmarker*;
+    MpRemoveLoggingCallback;
     MpSemanticRetriever*;
+    MpSetLoggingCallback;
     MpStringList*;
     MpTextClassifier*;
     MpTextEmbedder*;

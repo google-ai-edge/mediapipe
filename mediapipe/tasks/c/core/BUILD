@@ -61,6 +61,34 @@ cc_library(
 )
 
 cc_library(
+    name = "mp_logging_c_lib",
+    srcs = ["mp_logging.cc"],
+    hdrs = ["mp_logging.h"],
+    deps = [
+        ":common",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:log_entry",
+        "@com_google_absl//absl/log:log_sink",
+        "@com_google_absl//absl/log:log_sink_registry",
+        "@com_google_absl//absl/synchronization",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "mp_logging_test",
+    srcs = ["mp_logging_test.cc"],
+    deps = [
+        ":mp_logging_c_lib",
+        "//mediapipe/framework/port:gtest",
+        "@com_google_absl//absl/base:log_severity",
+        "@com_google_absl//absl/cleanup",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "mp_status_converter",
     srcs = ["mp_status_converter.cc"],
     hdrs = ["mp_status_converter.h"],

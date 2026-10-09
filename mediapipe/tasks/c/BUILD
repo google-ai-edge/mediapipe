@@ -30,6 +30,7 @@ exports_files([
 # C API libraries that are part of every domain library.
 MEDIAPIPE_TASKS_C_CORE_DEPS = [
     "//mediapipe/tasks/c/core:common",
+    "//mediapipe/tasks/c/core:mp_logging_c_lib",
     "//mediapipe/tasks/c/metadata:flatbuffer_api_c_lib",
 ]
 

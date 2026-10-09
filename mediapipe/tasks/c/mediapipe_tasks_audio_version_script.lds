@@ -4,6 +4,8 @@ VERS_1.0 {
     MpAudioEmbedder*;
     MpErrorFree;
     MpFlatbuffer*;
+    MpRemoveLoggingCallback;
+    MpSetLoggingCallback;
     MpStringList*;
   local:
     *;
