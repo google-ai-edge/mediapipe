@@ -99,9 +99,9 @@ output_stream: "LANDMARKS:pose_landmarks"
 # Pose world landmarks. (LandmarkList)
 # World landmarks are real-world 3D coordinates in meters with the origin at the
 # center between hips. WORLD_LANDMARKS shares the same landmark topology as
-# LANDMARKS. However, LANDMARKS provides coordinates (in pixels) of a 3D object
-# projected onto the 2D image surface, while WORLD_LANDMARKS provides
-# coordinates (in meters) of the 3D object itself.
+# LANDMARKS. However, LANDMARKS provides normalized image-space coordinates of
+# a 3D object projected onto the 2D image surface, while WORLD_LANDMARKS
+# provides real-world 3D coordinates (in meters) of the object itself.
 output_stream: "WORLD_LANDMARKS:pose_world_landmarks"
 
 # Segmentation mask. (ImageFrame in ImageFormat::VEC32F1)
