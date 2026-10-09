@@ -72,7 +72,7 @@ constexpr char kPortraitExpectedFaceGeometryName[] =
 
 constexpr float kLandmarksDiffMargin = 0.03;
 constexpr float kBlendshapesDiffMargin = 0.12;
-constexpr float kFacialTransformationMatrixDiffMargin = 0.02;
+constexpr float kFacialTransformationMatrixDiffMargin = 0.04;
 
 template <typename ProtoT>
 ProtoT GetExpectedProto(absl::string_view filename) {

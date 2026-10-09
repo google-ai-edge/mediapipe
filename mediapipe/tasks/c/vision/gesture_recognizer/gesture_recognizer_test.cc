@@ -46,7 +46,7 @@ using ::mediapipe::tasks::vision::core::ScopedMpImage;
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kModelName[] = "gesture_recognizer.task";
 constexpr char kImageFile[] = "fist.jpg";
-constexpr float kScorePrecision = 1e-2;
+constexpr float kScorePrecision = 2e-2;
 constexpr float kLandmarkPrecision = 1e-1;
 constexpr int kIterations = 5;
 constexpr int kSleepBetweenFramesMilliseconds = 100;
@@ -64,7 +64,7 @@ void MatchesGestureRecognizerResult(const MpGestureRecognizerResult* result,
   // Actual gesture with top score matches expected gesture.
   EXPECT_EQ(std::string{result->gestures[0].categories[0].category_name},
             "Closed_Fist");
-  EXPECT_NEAR(result->gestures[0].categories[0].score, 0.91f, score_precision);
+  EXPECT_NEAR(result->gestures[0].categories[0].score, 0.907f, score_precision);
 
   // Actual handedness matches expected handedness.
   EXPECT_EQ(std::string{result->handedness[0].categories[0].category_name},

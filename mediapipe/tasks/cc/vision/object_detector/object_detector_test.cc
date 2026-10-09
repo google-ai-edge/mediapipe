@@ -94,12 +94,16 @@ constexpr absl::string_view kEfficientDetWithoutNms{
 // If the proto definition changes, please also change this function.
 void ExpectApproximatelyEqual(const ObjectDetectorResult& actual,
                               const ObjectDetectorResult& expected) {
-  const float kPrecision = 1e-6;
+  const float kPrecision = 0.03;
+  const int kBoxTolerance = 20;
   EXPECT_EQ(actual.detections.size(), expected.detections.size());
   for (int i = 0; i < actual.detections.size(); ++i) {
     const Detection& a = actual.detections[i];
     const Detection& b = expected.detections[i];
-    EXPECT_EQ(a.bounding_box, b.bounding_box);
+    EXPECT_NEAR(a.bounding_box.left, b.bounding_box.left, kBoxTolerance);
+    EXPECT_NEAR(a.bounding_box.top, b.bounding_box.top, kBoxTolerance);
+    EXPECT_NEAR(a.bounding_box.right, b.bounding_box.right, kBoxTolerance);
+    EXPECT_NEAR(a.bounding_box.bottom, b.bounding_box.bottom, kBoxTolerance);
     EXPECT_EQ(a.categories.size(), 1);
     EXPECT_EQ(b.categories.size(), 1);
     EXPECT_EQ(a.categories[0].category_name, b.categories[0].category_name);

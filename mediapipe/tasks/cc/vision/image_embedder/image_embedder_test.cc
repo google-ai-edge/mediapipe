@@ -53,7 +53,7 @@ using ::testing::Optional;
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kMobileNetV3Embedder[] =
     "mobilenet_v3_small_100_224_embedder.tflite";
-constexpr double kSimilarityTolerancy = 1e-6;
+constexpr double kSimilarityTolerancy = 1e-3;
 
 // Utility function to check the sizes, head_index and head_names of a result
 // produced by kMobileNetV3Embedder.

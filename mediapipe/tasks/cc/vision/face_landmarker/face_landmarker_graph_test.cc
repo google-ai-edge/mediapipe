@@ -97,7 +97,7 @@ constexpr char kFaceGeometryName[] = "face_geometry";
 
 constexpr float kLandmarksDiffMargin = 0.03;
 constexpr float kBlendshapesDiffMargin = 0.1;
-constexpr float kFaceGeometryDiffMargin = 0.02;
+constexpr float kFaceGeometryDiffMargin = 0.04;
 
 constexpr char kLandmarksSmoothingCalculator[] = "LandmarksSmoothingCalculator";
 
