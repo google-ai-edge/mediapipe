@@ -120,12 +120,12 @@ void StringReplace(absl::string_view s, absl::string_view oldsub,
     if (pos == absl::string_view::npos) {
       break;
     }
-    res->append(s.data() + start_pos, pos - start_pos);
+    res->append(s, start_pos, pos - start_pos);
     res->append(newsub.data(), newsub.length());
     // Start searching again after the "old".
     start_pos = pos + oldsub.length();
   } while (replace_all);
-  res->append(s.data() + start_pos, s.length() - start_pos);
+  res->append(s, start_pos);
 }
 
 ptrdiff_t StripDupCharacters(std::string* s, char dup_char,
