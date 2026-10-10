@@ -223,18 +223,28 @@ class MPMaskTestContext {
     expect(mask.hasUint8Array()).toBe(true);
     expect(mask.hasFloat32Array()).toBe(false);
     expect(mask.hasWebGLTexture()).toBe(false);
+    expect(mask.hasImageBitmap()).toBe(false);
 
     mask.getAsFloat32Array();
 
     expect(mask.hasUint8Array()).toBe(true);
     expect(mask.hasFloat32Array()).toBe(true);
     expect(mask.hasWebGLTexture()).toBe(false);
+    expect(mask.hasImageBitmap()).toBe(false);
 
     mask.getAsWebGLTexture();
 
     expect(mask.hasUint8Array()).toBe(true);
     expect(mask.hasFloat32Array()).toBe(true);
     expect(mask.hasWebGLTexture()).toBe(true);
+    expect(mask.hasImageBitmap()).toBe(false);
+
+    mask.getAsImageBitmap();
+
+    expect(mask.hasUint8Array()).toBe(true);
+    expect(mask.hasFloat32Array()).toBe(true);
+    expect(mask.hasWebGLTexture()).toBe(true);
+    expect(mask.hasImageBitmap()).toBe(true);
 
     mask.close();
     shaderContext.close();
@@ -268,5 +278,111 @@ class MPMaskTestContext {
     runConversionTest(
         context.float32Array, context.uint8Array, /* width= */ 2,
         /* height= */ 3);
+  });
+
+  function readPixelsFromImageBitmap(imageBitmap: ImageBitmap): ImageData {
+    const canvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
+    const ctx = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
+    ctx.drawImage(imageBitmap, 0, 0);
+    return ctx.getImageData(0, 0, imageBitmap.width, imageBitmap.height);
+  }
+
+  function expectRedsCloseTo(reds: number[], expected: number[]): void {
+    const sorted = reds.slice().sort((a, b) => a - b);
+    const exp = expected.slice().sort((a, b) => a - b);
+    expect(sorted.length).toEqual(exp.length);
+    for (let i = 0; i < exp.length; i++) {
+      expect(Math.abs(sorted[i] - exp[i])).toBeLessThanOrEqual(1);
+    }
+  }
+
+  it('getAsImageBitmap returns grayscale RGBA from Uint8Array', async () => {
+    await context.init([255, 0, 128, 64]);
+
+    const shaderContext = new MPImageShaderContext();
+    const mask = createImage(shaderContext, context.uint8Array, WIDTH, HEIGHT);
+    const bitmap = mask.getAsImageBitmap();
+
+    expect(bitmap.width).toEqual(WIDTH);
+    expect(bitmap.height).toEqual(HEIGHT);
+    expect(mask.hasImageBitmap()).toBe(true);
+
+    const pixels = readPixelsFromImageBitmap(bitmap).data;
+    const reds: number[] = [];
+    for (let i = 0; i < pixels.length; i += 4) {
+      expect(pixels[i]).toEqual(pixels[i + 1]);
+      expect(pixels[i]).toEqual(pixels[i + 2]);
+      expect(pixels[i]).toEqual(pixels[i + 3]);
+      reds.push(pixels[i]);
+    }
+    expectRedsCloseTo(reds, [0, 64, 128, 255]);
+
+    mask.close();
+    shaderContext.close();
+  });
+
+  it('getAsImageBitmap converts a WebGLTexture without throwing', async () => {
+    await context.init([255, 0, 128, 64]);
+
+    const shaderContext = new MPImageShaderContext();
+    const mask =
+        createImage(shaderContext, context.webGLTexture, WIDTH, HEIGHT);
+    const bitmap = mask.getAsImageBitmap();
+
+    expect(bitmap.width).toEqual(WIDTH);
+    expect(bitmap.height).toEqual(HEIGHT);
+    const pixels = readPixelsFromImageBitmap(bitmap).data;
+    for (let i = 0; i < pixels.length; i += 4) {
+      expect(pixels[i]).toEqual(pixels[i + 1]);
+      expect(pixels[i]).toEqual(pixels[i + 2]);
+      expect(pixels[i]).toEqual(pixels[i + 3]);
+    }
+    const reds: number[] = [];
+    for (let i = 0; i < pixels.length; i += 4) {
+      reds.push(pixels[i]);
+    }
+    expectRedsCloseTo(reds, [0, 64, 128, 255]);
+
+    mask.close();
+    shaderContext.close();
+  });
+
+  it('getAsImageBitmap is cached until close', async () => {
+    await context.init();
+
+    const shaderContext = new MPImageShaderContext();
+    const mask = createImage(shaderContext, context.uint8Array, WIDTH, HEIGHT);
+    const first = mask.getAsImageBitmap();
+    const second = mask.getAsImageBitmap();
+    expect(second).toBe(first);
+
+    mask.close();
+    shaderContext.close();
+  });
+
+  it('clone owns a copy of the ImageBitmap', async () => {
+    await context.init([255, 0, 0, 0]);
+
+    const shaderContext = new MPImageShaderContext();
+    const mask = createImage(shaderContext, context.uint8Array, WIDTH, HEIGHT);
+    mask.getAsImageBitmap();
+    const clone = mask.clone();
+    expect(clone.hasImageBitmap()).toBe(true);
+    expect(clone.getAsImageBitmap().width).toEqual(WIDTH);
+    expect(clone.getAsImageBitmap()).not.toBe(mask.getAsImageBitmap());
+
+    clone.close();
+    mask.close();
+    shaderContext.close();
+  });
+
+  it('getAsImageBitmap throws without a canvas', () => {
+    const mask = new MPMask(
+        [new Uint8Array([1, 2, 3, 4])], /* interpolateValues= */ false,
+        /* ownsWebGLTexture= */ false, /* canvas= */ undefined,
+        /* shaderContext= */ undefined, WIDTH, HEIGHT);
+    expect(() => {
+      mask.getAsImageBitmap();
+    }).toThrowError(/canvas/);
   });
 });
