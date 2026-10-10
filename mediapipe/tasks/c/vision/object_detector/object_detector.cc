@@ -78,6 +78,7 @@ void CppConvertToDetectorOptions(
       in.display_names_locale ? std::string(in.display_names_locale) : "en";
   out->max_results = in.max_results;
   out->score_threshold = in.score_threshold;
+  out->non_max_suppression_options.multiclass_nms = in.multiclass_nms;
   out->category_allowlist =
       std::vector<std::string>(in.category_allowlist_count);
   for (uint32_t i = 0; i < in.category_allowlist_count; ++i) {
