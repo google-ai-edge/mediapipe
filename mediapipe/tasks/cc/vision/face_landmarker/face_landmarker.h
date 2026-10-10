@@ -20,6 +20,7 @@ limitations under the License.
 #include <optional>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
@@ -103,6 +104,7 @@ struct FaceLandmarkerOptions {
 class FaceLandmarker : tasks::vision::core::BaseVisionTaskApi {
  public:
   using BaseVisionTaskApi::BaseVisionTaskApi;
+  ~FaceLandmarker() override;
 
   // Creates a FaceLandmarker from a FaceLandmarkerOptions to process image data
   // or streaming data. Face landmarker can be created with one of the following
@@ -186,8 +188,23 @@ class FaceLandmarker : tasks::vision::core::BaseVisionTaskApi {
                            std::optional<core::ImageProcessingOptions>
                                image_processing_options = std::nullopt);
 
+  // Updates detector / tracker thresholds on a running FaceLandmarker without
+  // the caller constructing a new task. The model file stays in memory; the
+  // graph is rebuilt with the new values so the next Detect / DetectForVideo /
+  // DetectAsync call uses them.
+  //
+  // `num_faces` must be >= 1. Confidence values must be in [0, 1].
+  absl::Status SetOptions(int num_faces,
+                          float min_face_detection_confidence,
+                          float min_face_presence_confidence,
+                          float min_tracking_confidence);
+
   // Shuts down the FaceLandmarker when all works are done.
   absl::Status Close() { return runner_->Close(); }
+
+ private:
+  struct RebuildState;
+  std::unique_ptr<RebuildState> rebuild_state_;
 };
 
 }  // namespace face_landmarker
