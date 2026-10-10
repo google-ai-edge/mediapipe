@@ -190,6 +190,11 @@ class BeginLoopCalculator : public CalculatorBase {
           cc->Outputs()
               .Get("CLONE", i)
               .AddPacket(std::move(input_packet).At(output_timestamp));
+        } else {
+          // In case the clone input stream is empty, timestamp bound needs to be updated so that downstream calculators don't have to wait
+          // Increment output_timestamp by 1 to signal that the output is empty for current timestamp. This allows downstream calculators
+          // to start processing on their current inputs.
+          cc->Outputs().Get("CLONE", i).SetNextTimestampBound(output_timestamp + 1);
         }
       }
     }
