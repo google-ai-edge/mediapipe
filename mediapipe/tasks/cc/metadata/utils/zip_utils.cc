@@ -142,6 +142,18 @@ absl::Status ExtractFilesfromZipFile(
     int error = unzGoToFirstFile(zf);
     while (error == UNZ_OK) {
       ABSL_ASSIGN_OR_RETURN(auto zip_file_info, GetCurrentZipFileInfo(zf));
+      // Validate that the entry's position and size stay within the model
+      // buffer before constructing a string_view into it. `position` and `size`
+      // originate from the (untrusted) zip central directory and are otherwise
+      // unchecked, so a crafted archive could otherwise yield an out-of-bounds
+      // read. Written to avoid unsigned overflow.
+      if (zip_file_info.position > buffer_size ||
+          zip_file_info.size > buffer_size - zip_file_info.position) {
+        return CreateStatusWithPayload(
+            StatusCode::kInvalidArgument,
+            "Zip archive entry extends beyond the model buffer.",
+            MediaPipeTasksStatus::kFileZipError);
+      }
       // Store result in map.
       (*files)[zip_file_info.name] = absl::string_view(
           buffer_data + zip_file_info.position, zip_file_info.size);
