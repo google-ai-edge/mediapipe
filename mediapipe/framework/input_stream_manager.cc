@@ -175,8 +175,7 @@ absl::Status InputStreamManager::AddOrMovePacketsInternal(Container container,
       ++num_packets_added_;
       VLOG(3) << "Input stream:" << name_
               << " has added packet at time: " << packet.Timestamp();
-      if (std::is_const<
-              typename std::remove_reference<Container>::type>::value) {
+      if (std::is_const_v<std::remove_reference_t<Container>>) {
         queue_.emplace_back(packet);
       } else {
         queue_.emplace_back(std::move(packet));
