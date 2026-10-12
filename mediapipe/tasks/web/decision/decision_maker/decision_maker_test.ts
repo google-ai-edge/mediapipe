@@ -90,6 +90,93 @@ class DecisionMakerFake extends DecisionMaker {
         .and.callFake((_ptr: number, texts: string[]) =>
           Promise.resolve(texts.map(() => mockScoreResult)),
         ),
+      'evaluateContextBoolean': jasmine
+        .createSpy('evaluateContextBoolean')
+        .and.returnValue(Promise.resolve(mockPredicateResult)),
+      'evaluateContextChoice': jasmine
+        .createSpy('evaluateContextChoice')
+        .and.returnValue(Promise.resolve(mockChoiceResult)),
+      'evaluateContextScore': jasmine
+        .createSpy('evaluateContextScore')
+        .and.returnValue(Promise.resolve(mockScoreResult)),
+      'evaluateSchema': jasmine
+        .createSpy('evaluateSchema')
+        .and.returnValue(
+          Promise.resolve({
+            'is_urgent': {
+              id: 'is_urgent',
+              label: 'true',
+              probability: 0.88,
+              probabilities: [
+                {label: 'false', probability: 0.12},
+                {label: 'true', probability: 0.88},
+              ],
+              confidence: 0.95,
+            },
+            'route': {
+              id: 'route',
+              label: 'device',
+              probabilities: [
+                {label: 'cloud', probability: 0.1},
+                {label: 'device', probability: 0.85},
+                {label: 'search', probability: 0.05},
+              ],
+              confidence: 0.91,
+            },
+            'severity': {
+              id: 'severity',
+              label: '4',
+              probabilities: [
+                {label: '1', probability: 0.01},
+                {label: '2', probability: 0.04},
+                {label: '3', probability: 0.15},
+                {label: '4', probability: 0.7},
+                {label: '5', probability: 0.1},
+              ],
+              confidence: 0.85,
+              expectedScore: 3.84,
+            },
+          }),
+        ),
+      'evaluateContextSchema': jasmine
+        .createSpy('evaluateContextSchema')
+        .and.returnValue(
+          Promise.resolve({
+            'is_damaged': {
+              id: 'is_damaged',
+              label: 'true',
+              probability: 0.92,
+              probabilities: [
+                {label: 'false', probability: 0.08},
+                {label: 'true', probability: 0.92},
+              ],
+              confidence: 0.94,
+            },
+            'resolution': {
+              id: 'resolution',
+              label: 'instant_refund',
+              probabilities: [
+                {label: 'instant_refund', probability: 0.87},
+                {label: 'human_audit', probability: 0.1},
+                {label: 'reject_claim', probability: 0.03},
+              ],
+              confidence: 0.91,
+            },
+            'severity': {
+              id: 'severity',
+              label: '4',
+              probabilities: [
+                {label: '1', probability: 0.01},
+                {label: '2', probability: 0.04},
+                {label: '3', probability: 0.1},
+                {label: '4', probability: 0.75},
+                {label: '5', probability: 0.1},
+              ],
+              confidence: 0.89,
+              expectedScore: 3.89,
+            },
+          }),
+        ),
       '_setAutoRenderToScreen': jasmine.createSpy('_setAutoRenderToScreen'),
       '_closeGraph': jasmine.createSpy('_closeGraph'),
     };
@@ -188,6 +275,22 @@ describe('DecisionMaker', () => {
       '',
     );
     expect(result.expectedScore).toBe(3.8);
+
+    const customResult = await decisionMaker.evaluateScore(
+      'Great service and food',
+      {
+        options: [
+          {label: '1', description: 'Cosmetic'},
+          {label: '2', description: 'Minor'},
+          {label: '3', description: 'Moderate'},
+          {label: '4', description: 'Major'},
+          {label: '5', description: 'Critical'},
+        ],
+      },
+    );
+    expect(customResult.selectedKey).toBe('4');
+    // 1*0.01 + 2*0.04 + 3*0.15 + 4*0.70 + 5*0.10 = 3.84
+    expect(customResult.expectedScore).toBeCloseTo(3.84, 2);
   });
 
   it('deletes maker pointer on close', () => {
@@ -262,6 +365,142 @@ describe('DecisionMaker', () => {
     expect(result['severity'].expectedScore).toBeCloseTo(3.84, 2);
   });
 
+  it('evaluates multimodal context (imageBytes and audioSamples) across boolean, choice, score, schema, and classify', async () => {
+    const sampleImage = new Uint8Array([137, 80, 78, 71]);
+    const sampleAudio = new Float32Array([0.1, -0.2, 0.3, -0.1]);
+
+    const boolResult = await decisionMaker.evaluateBoolean(
+      {
+        text: 'Customer claims mug arrived shattered',
+        imageBytes: sampleImage,
+      },
+      {
+        condition: 'The item in the photo is visibly broken or shattered',
+        threshold: 0.5,
+        temperature: 0.9,
+      },
+    );
+    expect(mockModule['evaluateContextBoolean']).toHaveBeenCalledWith(
+      54321,
+      'Customer claims mug arrived shattered',
+      'The item in the photo is visibly broken or shattered',
+      0.5,
+      0.9,
+      {
+        imageBytes: sampleImage,
+        audioSamples: undefined,
+      },
+    );
+    expect(boolResult.value).toBeTrue();
+
+    const choiceResult = await decisionMaker.evaluateChoice(
+      {
+        text: 'Doorbell camera alert',
+        imageBytes: sampleImage,
+        audioSamples: sampleAudio,
+      },
+      {
+        criteria: {
+          'unlock': 'Courier delivering package',
+          'alert': 'Intruder or glass break',
+        },
+        temperature: 0.8,
+        instructions: 'Select edge action',
+      },
+    );
+    expect(mockModule['evaluateContextChoice']).toHaveBeenCalledWith(
+      54321,
+      'Doorbell camera alert',
+      {
+        'unlock': 'Courier delivering package',
+        'alert': 'Intruder or glass break',
+      },
+      [],
+      0.8,
+      'Select edge action',
+      {
+        imageBytes: sampleImage,
+        audioSamples: sampleAudio,
+      },
+    );
+    expect(choiceResult.selectedKey).toBe('device');
+
+    const scoreResult = await decisionMaker.evaluateScore(
+      {
+        text: 'Assess bumper dent severity',
+        imageBytes: sampleImage,
+      },
+      {
+        rubric: ['Scratch', 'Minor dent', 'Moderate', 'Structural'],
+        temperature: 1.0,
+        instructions: 'Rate damage',
+      },
+    );
+    expect(mockModule['evaluateContextScore']).toHaveBeenCalledWith(
+      54321,
+      'Assess bumper dent severity',
+      ['Scratch', 'Minor dent', 'Moderate', 'Structural'],
+      1.0,
+      'Rate damage',
+      {
+        imageBytes: sampleImage,
+        audioSamples: undefined,
+      },
+    );
+    expect(scoreResult.expectedScore).toBe(3.8);
+
+    const schema = {
+      context: 'E-commerce return desk',
+      questions: [
+        {
+          id: 'is_damaged',
+          type: 'binary' as const,
+          prompt: 'Is the item visibly damaged?',
+        },
+        {
+          id: 'resolution',
+          type: 'categorical' as const,
+          prompt: 'Select refund action.',
+          options: [
+            {label: 'instant_refund', description: 'Approve instant refund'},
+            {label: 'human_audit', description: 'Send to manual review'},
+            {label: 'reject_claim', description: 'Reject return'},
+          ],
+        },
+        {
+          id: 'severity',
+          type: 'ordinal' as const,
+          prompt: 'Rate damage severity.',
+          options: [
+            {label: '1', description: 'Intact'},
+            {label: '2', description: 'Scuff'},
+            {label: '3', description: 'Moderate'},
+            {label: '4', description: 'Broken'},
+            {label: '5', description: 'Destroyed'},
+          ],
+        },
+      ],
+    };
+    const schemaResult = await decisionMaker.evaluate(
+      {
+        text: 'Return claim: shattered ceramic mug',
+        imageBytes: sampleImage,
+      },
+      schema,
+    );
+    expect(mockModule['evaluateContextSchema']).toHaveBeenCalled();
+    expect(schemaResult['is_damaged'].label).toBe('true');
+    expect(schemaResult['resolution'].label).toBe('instant_refund');
+    expect(schemaResult['severity'].expectedScore).toBeCloseTo(3.89, 2);
+
+    decisionMaker.setSchema(schema);
+    const classifyResult = await decisionMaker.classify({
+      text: 'Shattered mug photo',
+      imageBytes: sampleImage,
+    });
+    expect(classifyResult['is_damaged'].label).toBe('true');
+  });
+
   it('throws error when evaluating after close', () => {
     decisionMaker.close();
     expect(() =>
@@ -320,8 +559,6 @@ describe('DecisionMaker', () => {
     expect(fakeLogger.recordGpuInputArrival).toHaveBeenCalledWith(3);
     expect(fakeLogger.recordInvocationEnd).toHaveBeenCalledWith(3);
 
-    // Without a native `evaluateSchema`, schema evaluation falls back to one
-    // native call per question, each of which is logged individually.
     await decisionMaker.evaluate('Production outage', {
       questions: [
         {id: 'is_urgent', type: 'binary', prompt: 'Is it urgent?'},
@@ -335,8 +572,6 @@ describe('DecisionMaker', () => {
     });
     expect(fakeLogger.recordGpuInputArrival).toHaveBeenCalledWith(4);
     expect(fakeLogger.recordInvocationEnd).toHaveBeenCalledWith(4);
-    expect(fakeLogger.recordGpuInputArrival).toHaveBeenCalledWith(5);
-    expect(fakeLogger.recordInvocationEnd).toHaveBeenCalledWith(5);
     expect(fakeLogger.recordCpuInputArrival).not.toHaveBeenCalled();
 
     decisionMaker.close();

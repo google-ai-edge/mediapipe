@@ -17,6 +17,19 @@
 import {TaskRunnerOptions} from '../../../../tasks/web/core/task_runner_options';
 
 /**
+ * Multimodal decision input combining text, encoded image bytes, and/or
+ * 16kHz mono PCM audio samples.
+ */
+export declare interface DecisionContextInput {
+  /** Optional text context or query description. */
+  text?: string;
+  /** Optional raw encoded image bytes (PNG, JPEG, WebP, or TGA). */
+  imageBytes?: Uint8Array;
+  /** Optional mono 16kHz PCM audio samples in [-1.0, 1.0]. */
+  audioSamples?: Float32Array;
+}
+
+/**
  * A single candidate option for binary, categorical, or ordinal questions.
  */
 export declare interface ClassifierOption {
@@ -24,6 +37,10 @@ export declare interface ClassifierOption {
   label: string;
   /** Optional natural language description of the option criteria. */
   description?: string;
+  /** Optional encoded image bytes (PNG, JPEG, WebP, or TGA) for multimodal options. */
+  imageBytes?: Uint8Array;
+  /** Optional mono 16kHz PCM audio samples in [-1.0, 1.0] for multimodal options. */
+  audioSamples?: Float32Array;
 }
 
 /**
@@ -86,6 +103,10 @@ export declare interface ClassifierSchema {
 export declare interface ClassifierEvaluateOptions {
   /** Optional per-call context prepended to the input text. */
   context?: string;
+  /** Optional raw encoded image bytes (PNG, JPEG, WebP, or TGA) for multimodal decisions. */
+  imageBytes?: Uint8Array;
+  /** Optional mono 16kHz PCM audio samples in [-1.0, 1.0] for multimodal decisions. */
+  audioSamples?: Float32Array;
   /** Optional AbortSignal to cancel an in-flight evaluation. */
   signal?: AbortSignal;
 }
@@ -116,6 +137,10 @@ export declare interface BooleanQuestion {
   options?: ClassifierOption[];
   /** Optional domain or schema context prepended to the condition. */
   context?: string;
+  /** Optional raw encoded image bytes (PNG, JPEG, WebP, or TGA) for the context. */
+  imageBytes?: Uint8Array;
+  /** Optional mono 16kHz PCM audio samples in [-1.0, 1.0] for the context. */
+  audioSamples?: Float32Array;
 }
 
 /**
@@ -148,6 +173,10 @@ export declare interface ChoiceQuestion {
    * log-probability space to eliminate positional or label bias.
    */
   normalizePrior?: boolean;
+  /** Optional raw encoded image bytes (PNG, JPEG, WebP, or TGA) for the context. */
+  imageBytes?: Uint8Array;
+  /** Optional mono 16kHz PCM audio samples in [-1.0, 1.0] for the context. */
+  audioSamples?: Float32Array;
 }
 
 /**
@@ -171,6 +200,10 @@ export declare interface ScoreQuestion {
   instructions?: string;
   /** Optional domain or schema context prepended to instructions. */
   context?: string;
+  /** Optional raw encoded image bytes (PNG, JPEG, WebP, or TGA) for the context. */
+  imageBytes?: Uint8Array;
+  /** Optional mono 16kHz PCM audio samples in [-1.0, 1.0] for the context. */
+  audioSamples?: Float32Array;
 }
 
 /**
