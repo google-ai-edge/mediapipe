@@ -178,7 +178,7 @@ http_archive(
 # XNNPACK
 # org_tensorflow and @litert depend on XNNPACK. If updating tensorflow
 # or LiteRT version, make sure to bump XNNPACK version as well and vice versa.
-# Bumped to match what @litert (LiteRT v2.2.0's own pinned org_tensorflow,
+# Bumped to match what @litert (LiteRT v2.3.0's own pinned org_tensorflow,
 # commit bcdab1a62e138c8f8784a7477c0be8af6dd0bd0a) expects - its
 # tflite/delegates/xnnpack code uses newer XNNPACK API (qint2/qint4,
 # xnn_define_static_constant_pad_v2) than mediapipe's org_tensorflow
@@ -835,7 +835,7 @@ http_archive(
     url = "https://curl.haxx.se/download/curl-8.10.1.tar.gz",
 )
 
-# LiteRT HEAD from 09/17/2026
+# LiteRT v2.3.0
 # Fetch just the source tree and let it use our already-defined workspace
 # dependencies (@org_tensorflow, @xla, etc.) to avoid collisions.
 #
@@ -861,9 +861,9 @@ http_archive(
         "@//third_party:litert_custom_ops.diff",
         "@//third_party:litert_internal_fbs_fix.diff",
     ],
-    sha256 = "b40bc9629e123071596bfdf7c6a682f2a5e62430178d72d6b4fcb8a0a16af6ce",
-    strip_prefix = "LiteRT-d90e665105195e58c98ca0e1f08f7fc700a40b05",
-    urls = ["https://github.com/google-ai-edge/LiteRT/archive/d90e665105195e58c98ca0e1f08f7fc700a40b05.tar.gz"],
+    sha256 = "ec32db733e93501c693a8ab99e413c2d5d746dee7d452a8d6912046d7bc5c04e",
+    strip_prefix = "LiteRT-2.3.0",
+    urls = ["https://github.com/google-ai-edge/LiteRT/archive/refs/tags/v2.3.0.tar.gz"],
 )
 
 # LiteRT-LM
