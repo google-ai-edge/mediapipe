@@ -255,9 +255,9 @@ class ScaleImageCalculator : public CalculatorBase {
 
 REGISTER_CALCULATOR(ScaleImageCalculator);
 
-ScaleImageCalculator::ScaleImageCalculator() {}
+ScaleImageCalculator::ScaleImageCalculator() = default;
 
-ScaleImageCalculator::~ScaleImageCalculator() {}
+ScaleImageCalculator::~ScaleImageCalculator() = default;
 
 absl::Status ScaleImageCalculator::InitializeFrameInfo(CalculatorContext* cc) {
   ABSL_RETURN_IF_ERROR(
