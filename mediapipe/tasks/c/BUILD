@@ -22,6 +22,7 @@ licenses(["notice"])
 exports_files([
     "mediapipe_tasks_audio_version_script.lds",
     "mediapipe_tasks_c_version_script.lds",
+    "mediapipe_tasks_decision_version_script.lds",
     "mediapipe_tasks_retrieval_version_script.lds",
     "mediapipe_tasks_text_version_script.lds",
     "mediapipe_tasks_vision_version_script.lds",
@@ -31,6 +32,11 @@ exports_files([
 MEDIAPIPE_TASKS_C_CORE_DEPS = [
     "//mediapipe/tasks/c/core:common",
     "//mediapipe/tasks/c/core:mp_logging_c_lib",
+]
+
+# Flatbuffer C API used by the Python metadata writers of Model Maker. Only part
+# of the monolithic library; the per-domain libraries don't need it.
+MEDIAPIPE_TASKS_C_MODEL_MAKER_DEPS = [
     "//mediapipe/tasks/c/metadata:flatbuffer_api_c_lib",
 ]
 
@@ -58,6 +64,10 @@ MEDIAPIPE_TASKS_C_TEXT_DEPS = [
 MEDIAPIPE_TASKS_C_AUDIO_DEPS = [
     "//mediapipe/tasks/c/audio/audio_classifier:audio_classifier_c_lib",
     "//mediapipe/tasks/c/audio/audio_embedder:audio_embedder_c_lib",
+]
+
+MEDIAPIPE_TASKS_C_DECISION_DEPS = [
+    "//mediapipe/tasks/c/decision/decision_maker",
 ]
 
 MEDIAPIPE_TASKS_C_RETRIEVAL_DEPS = [
@@ -115,6 +125,15 @@ mediapipe_tasks_c_shared_library(
 )
 
 mediapipe_tasks_c_shared_library(
+    name = "mediapipe_tasks_decision",
+    framework_bundle_id = "com.google.mediapipe.tasks.c.decision",
+    framework_name = "MediaPipeTasksDecisionC",
+    version_script = ":mediapipe_tasks_decision_version_script.lds",
+    visibility = ["//visibility:public"],
+    deps = MEDIAPIPE_TASKS_C_CORE_DEPS + MEDIAPIPE_TASKS_C_DECISION_DEPS,
+)
+
+mediapipe_tasks_c_shared_library(
     name = "mediapipe_tasks_retrieval",
     framework_bundle_id = "com.google.mediapipe.tasks.c.retrieval",
     framework_name = "MediaPipeTasksRetrievalC",
@@ -148,6 +167,7 @@ cc_binary(
     ],
     deps = [":mediapipe_tasks_c_version_script.lds"] +
            MEDIAPIPE_TASKS_C_CORE_DEPS +
+           MEDIAPIPE_TASKS_C_MODEL_MAKER_DEPS +
            MEDIAPIPE_TASKS_C_AUDIO_DEPS +
            MEDIAPIPE_TASKS_C_RETRIEVAL_DEPS +
            MEDIAPIPE_TASKS_C_TEXT_DEPS +
