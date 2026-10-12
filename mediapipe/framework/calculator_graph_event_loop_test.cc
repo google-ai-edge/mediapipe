@@ -543,7 +543,7 @@ TEST_F(CalculatorGraphEventLoopTest, WaitToAddPacketToInputStream) {
 class TextMessageLogSink : public LogSink {
  public:
   std::vector<std::string> messages;
-  void Send(const LogEntry& entry) {
+  void Send(const LogEntry& entry) override {
     messages.push_back(std::string(entry.text_message()));
   }
 };
