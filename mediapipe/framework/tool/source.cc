@@ -36,12 +36,12 @@ namespace tool {
 // inputs and the number of outputs equals the number of input side packets.
 class SidePacketsToStreamsCalculator : public CalculatorBase {
  public:
-  SidePacketsToStreamsCalculator() {}
+  SidePacketsToStreamsCalculator() = default;
   SidePacketsToStreamsCalculator(const SidePacketsToStreamsCalculator&) =
       delete;
   SidePacketsToStreamsCalculator& operator=(
       const SidePacketsToStreamsCalculator&) = delete;
-  ~SidePacketsToStreamsCalculator() override {}
+  ~SidePacketsToStreamsCalculator() override = default;
 
   static absl::Status GetContract(CalculatorContract* cc) {
     auto& options = cc->Options<SidePacketsToStreamsCalculatorOptions>();

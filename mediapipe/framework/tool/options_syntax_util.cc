@@ -25,7 +25,7 @@ namespace {
 // double-colon tokens.
 class SingleColonDelimiter {
  public:
-  SingleColonDelimiter() {}
+  SingleColonDelimiter() = default;
   absl::string_view Find(absl::string_view text, size_t pos) const {
     while (pos < text.length()) {
       size_t p = text.find(':', pos);
@@ -178,7 +178,7 @@ OptionsSyntaxUtil::OptionsSyntaxUtil(const std::string& tag_name,
   syntax_helper_->syntax_.separator = separator;
 }
 
-OptionsSyntaxUtil::~OptionsSyntaxUtil() {}
+OptionsSyntaxUtil::~OptionsSyntaxUtil() = default;
 
 std::string OptionsSyntaxUtil::OptionFieldsTag(absl::string_view option_names) {
   return syntax_helper_->OptionFieldsTag(option_names);

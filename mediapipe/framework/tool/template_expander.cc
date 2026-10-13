@@ -676,7 +676,7 @@ class TemplateExpanderImpl {
   std::vector<absl::Status>* errors_;
 };
 
-TemplateExpander::TemplateExpander() {}
+TemplateExpander::TemplateExpander() = default;
 
 // Expands template rules within a proto message.
 // Replaces template rules with expanded sub-messages.

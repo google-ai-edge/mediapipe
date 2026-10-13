@@ -53,8 +53,8 @@ Packet pack(int data, int timestamp) {
 // Tests showing packet channel synchronization through SwitchMuxCalculator.
 class SwitchMuxCalculatorTest : public ::testing::Test {
  protected:
-  SwitchMuxCalculatorTest() {}
-  ~SwitchMuxCalculatorTest() override {}
+  SwitchMuxCalculatorTest() = default;
+  ~SwitchMuxCalculatorTest() override = default;
   void SetUp() override {}
   void TearDown() override {}
 
