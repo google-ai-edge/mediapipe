@@ -81,7 +81,7 @@ class GlSurfaceSinkCalculator : public Node {
 
   MEDIAPIPE_NODE_INTERFACE(GlSurfaceSinkCalculator, kInVideo, kIn, kSurface);
 
-  ~GlSurfaceSinkCalculator();
+  ~GlSurfaceSinkCalculator() override;
 
   static absl::Status UpdateContract(CalculatorContract* cc);
 

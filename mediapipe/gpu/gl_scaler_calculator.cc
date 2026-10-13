@@ -81,7 +81,7 @@ using Image = mediapipe::Image;
 class GlScalerCalculator : public CalculatorBase {
  public:
   GlScalerCalculator() {}
-  ~GlScalerCalculator();
+  ~GlScalerCalculator() override;
 
   static absl::Status GetContract(CalculatorContract* cc);
 
