@@ -34,3 +34,13 @@ If you have bug fixes and documentation fixes to MediaPipe, send us your pull re
 just getting started, GitHub has a [howto](https://help.github.com/articles/using-pull-requests/).
 
 MediaPipe team members will be assigned to review your pull requests. Once the bug/documentation fixes are verified, a MediaPipe team member will acknowledge your contribution in the pull request comments, manually merge the fixes into our internal codebase upstream, and apply the `to be closed` label to the pull request. These fixes will later be pushed to GitHub in the next release, and a MediaPipe team member will then close the pull request.
+
+### Security Requirements for CI/CD
+
+When submitting pull requests that modify or add GitHub Actions workflows (`.github/workflows/`), please adhere to the following security requirements enforced by [zizmor](https://github.com/woodruffw/zizmor):
+
+1. **Pin Action Versions to Commit Hashes**: Do not use mutable tags (like `@v3` or `@main`). Always pin third-party actions to a specific commit SHA (e.g., `uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4`).
+2. **Principle of Least Privilege**: Ensure that the `permissions` block in your workflows specifies only the minimum scopes necessary to execute.
+3. **Avoid Script Injections**: Do not interpolate untrusted variables (such as `${{ github.event.pull_request.title }}`) directly into scripts via `run` steps. Instead, pass them as environment variables.
+
+All Pull Requests are automatically scanned with `zizmor`. Workflows must pass this security check to be merged. You can run it locally by installing `zizmor` and running `zizmor .github/workflows`.
