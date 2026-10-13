@@ -20,9 +20,9 @@
 
 namespace mediapipe {
 
-CalculatorBase::CalculatorBase() {}
+CalculatorBase::CalculatorBase() = default;
 
-CalculatorBase::~CalculatorBase() {}
+CalculatorBase::~CalculatorBase() = default;
 
 Timestamp CalculatorBase::SourceProcessOrder(
     const CalculatorContext* cc) const {

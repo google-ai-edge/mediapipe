@@ -51,7 +51,7 @@ CalculatorState::CalculatorState(
   ResetBetweenRuns();
 }
 
-CalculatorState::~CalculatorState() {}
+CalculatorState::~CalculatorState() = default;
 
 void CalculatorState::ResetBetweenRuns() {
   input_side_packets_ = nullptr;

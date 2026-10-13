@@ -502,8 +502,8 @@ TEST(CalculatorGraph, OutputSidePacketConsumedBySourceNode) {
 // Returns the first packet of the input stream.
 class FirstPacketFilterCalculator : public CalculatorBase {
  public:
-  FirstPacketFilterCalculator() {}
-  ~FirstPacketFilterCalculator() override {}
+  FirstPacketFilterCalculator() = default;
+  ~FirstPacketFilterCalculator() override = default;
 
   static absl::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).SetAny();

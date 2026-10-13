@@ -163,7 +163,7 @@ CalculatorRunner::CalculatorRunner(const std::string& calculator_type,
 }
 #endif
 
-CalculatorRunner::~CalculatorRunner() {}
+CalculatorRunner::~CalculatorRunner() = default;
 
 void CalculatorRunner::SetNumInputs(int n) {
   tool::TagAndNameInfo info;

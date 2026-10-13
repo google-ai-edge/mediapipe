@@ -52,7 +52,7 @@ class BasicCounter : public Counter {
 
 }  // namespace
 
-CounterSet::CounterSet() {}
+CounterSet::CounterSet() = default;
 
 CounterSet::~CounterSet() ABSL_LOCKS_EXCLUDED(mu_) { PublishCounters(); }
 
