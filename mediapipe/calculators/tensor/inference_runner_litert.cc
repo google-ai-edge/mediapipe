@@ -568,8 +568,10 @@ InferenceRunnerLiteRt::Create(
                 kBalanced);
       }
     } else if (options.npu().has_qualcomm()) {
-      LITERT_ASSIGN_OR_RETURN(auto& qualcomm_options,
-                              jit_compilation_options.GetQualcommOptions());
+      LITERT_ASSIGN_OR_RETURN(
+          auto& qualcomm_options,
+          jit_compilation_options
+              .GetOptions<::litert::qualcomm::QualcommOptions>());
       const auto& qualcomm_proto = options.npu().qualcomm();
       if (qualcomm_proto.has_htp_performance_mode()) {
         LITERT_ASSIGN_OR_RETURN(
