@@ -23,7 +23,7 @@ namespace {
 class CircularBufferTest : public ::testing::Test {
  protected:
   // Called before every TEST_F using this fixture.
-  CircularBufferTest() {}
+  CircularBufferTest() = default;
 };
 
 TEST_F(CircularBufferTest, SequentialWriteAndRead) {

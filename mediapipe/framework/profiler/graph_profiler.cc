@@ -154,7 +154,7 @@ GraphProfiler::GraphProfiler()
       mediapipe::MonotonicClock::CreateSynchronizedMonotonicClock());
 }
 
-GraphProfiler::~GraphProfiler() {}
+GraphProfiler::~GraphProfiler() = default;
 
 void GraphProfiler::Initialize(
     const ValidatedGraphConfig& validated_graph_config) {

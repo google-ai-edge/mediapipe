@@ -402,7 +402,7 @@ class TraceBuilder::Impl {
 };
 
 TraceBuilder::TraceBuilder() : impl_(new Impl) {}
-TraceBuilder::~TraceBuilder() {}
+TraceBuilder::~TraceBuilder() = default;
 
 TraceEventRegistry* TraceBuilder::trace_event_registry() {
   return impl_->trace_event_registry();
