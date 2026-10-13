@@ -102,7 +102,7 @@ message GraphTrace {
     // The time at which the packet exited the stream.
     optional int64 finish_time = 2;
 
-    // The identifying timetamp of the packet.
+    // The identifying timestamp of the packet.
     optional int64 packet_timestamp = 3;
 
     // The index of the stream in the stream_name list.
@@ -160,7 +160,7 @@ message GraphTrace {
     // The timing data for each input packet.
     repeated StreamTrace input_trace = 6;
 
-    // The identifying timetamp and stream_id for each output packet.
+    // The identifying timestamp and stream_id for each output packet.
     repeated StreamTrace output_trace = 7;
 
     // An identifier for the current process thread.
