@@ -223,7 +223,7 @@ class UpdateFaceLandmarksCalculator : public CalculatorBase {
 
     return absl::OkStatus();
   }
-  absl::Status Open(CalculatorContext* cc) {
+  absl::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
     return absl::OkStatus();
   }
