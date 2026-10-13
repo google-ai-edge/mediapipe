@@ -560,7 +560,8 @@ InferenceRunnerLiteRt::Create(
       } else {
         LITERT_ASSIGN_OR_RETURN(
             auto& google_tensor_options,
-            jit_compilation_options.GetGoogleTensorOptions());
+            jit_compilation_options
+                .GetOptions<litert::google_tensor::GoogleTensorOptions>());
         // Default performance mode is kBalanced; this can be updated if
         // required.
         google_tensor_options.SetPerformanceMode(
