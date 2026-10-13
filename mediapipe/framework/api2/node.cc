@@ -3,7 +3,7 @@
 namespace mediapipe {
 namespace api2 {
 
-Node::~Node() {}
+Node::~Node() = default;
 
 }  // namespace api2
 }  // namespace mediapipe
