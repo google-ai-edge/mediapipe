@@ -28,9 +28,9 @@
 
 namespace mediapipe {
 
-GlCalculatorHelper::GlCalculatorHelper() {}
+GlCalculatorHelper::GlCalculatorHelper() = default;
 
-GlCalculatorHelper::~GlCalculatorHelper() {}
+GlCalculatorHelper::~GlCalculatorHelper() = default;
 
 void GlCalculatorHelper::InitializeInternal(CalculatorContext* cc,
                                             GpuResources* gpu_resources) {
