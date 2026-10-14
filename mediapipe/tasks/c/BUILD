@@ -50,6 +50,7 @@ MEDIAPIPE_TASKS_C_VISION_DEPS = [
     "//mediapipe/tasks/c/vision/image_classifier:image_classifier_c_lib",
     "//mediapipe/tasks/c/vision/image_embedder:image_embedder_c_lib",
     "//mediapipe/tasks/c/vision/image_segmenter:image_segmenter_c_lib",
+    "//mediapipe/tasks/c/vision/interactive_segmenter:interactive_segmenter_hdr",
     "//mediapipe/tasks/c/vision/interactive_segmenter_legacy:interactive_segmenter_legacy_c_lib",
     "//mediapipe/tasks/c/vision/object_detector:object_detector_c_lib",
     "//mediapipe/tasks/c/vision/pose_landmarker:pose_landmarker_c_lib",
@@ -59,6 +60,8 @@ MEDIAPIPE_TASKS_C_TEXT_DEPS = [
     "//mediapipe/tasks/c/text/language_detector:language_detector_c_lib",
     "//mediapipe/tasks/c/text/text_classifier:text_classifier_c_lib",
     "//mediapipe/tasks/c/text/text_embedder:text_embedder_c_lib",
+    "//mediapipe/tasks/c/text/text_proofreader:text_proofreader_hdr",
+    "//mediapipe/tasks/c/text/text_summarizer:text_summarizer_hdr",
 ]
 
 MEDIAPIPE_TASKS_C_AUDIO_DEPS = [
