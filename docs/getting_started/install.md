@@ -42,7 +42,7 @@ install --user six`.
 
     ```bash
     $ cd $HOME
-    $ git clone --depth 1 https://github.com/google/mediapipe.git
+    $ git clone --depth 1 https://github.com/google-ai-edge/mediapipe.git
 
     # Change directory into MediaPipe root directory
     $ cd mediapipe
@@ -301,7 +301,7 @@ build issues.
 2.  Checkout MediaPipe repository.
 
     ```bash
-    $ git clone --depth 1 https://github.com/google/mediapipe.git
+    $ git clone --depth 1 https://github.com/google-ai-edge/mediapipe.git
 
     # Change directory into MediaPipe root directory
     $ cd mediapipe
@@ -430,7 +430,7 @@ build issues.
 3.  Checkout MediaPipe repository.
 
     ```bash
-    $ git clone --depth 1 https://github.com/google/mediapipe.git
+    $ git clone --depth 1 https://github.com/google-ai-edge/mediapipe.git
 
     $ cd mediapipe
     ```
@@ -604,7 +604,7 @@ next section.
 7.  Checkout MediaPipe repository.
 
     ```
-    C:\Users\Username\mediapipe_repo> git clone --depth 1 https://github.com/google/mediapipe.git
+    C:\Users\Username\mediapipe_repo> git clone --depth 1 https://github.com/google-ai-edge/mediapipe.git
 
     # Change directory into MediaPipe root directory
     C:\Users\Username\mediapipe_repo> cd mediapipe
@@ -629,7 +629,7 @@ next section.
     Note: For building MediaPipe on Windows, please add `--action_env
     PYTHON_BIN_PATH="C://path//to//python.exe"` to the build command.
     Alternatively, you can follow
-    [issue 724](https://github.com/google/mediapipe/issues/724) to fix the
+    [issue 724](https://github.com/google-ai-edge/mediapipe/issues/724) to fix the
     python configuration manually.
 
     ```
@@ -694,7 +694,7 @@ cameras. Alternatively, you use a video file as input.
 6.  Checkout MediaPipe repository.
 
     ```bash
-    username@DESKTOP-TMVLBJ1:~$ git clone --depth 1 https://github.com/google/mediapipe.git
+    username@DESKTOP-TMVLBJ1:~$ git clone --depth 1 https://github.com/google-ai-edge/mediapipe.git
 
     username@DESKTOP-TMVLBJ1:~$ cd mediapipe
     ```
@@ -785,7 +785,7 @@ This will use a Docker image that will isolate mediapipe's installation from the
 2.  Build a docker image with tag "mediapipe".
 
     ```bash
-    $ git clone --depth 1 https://github.com/google/mediapipe.git
+    $ git clone --depth 1 https://github.com/google-ai-edge/mediapipe.git
     $ cd mediapipe
     $ docker build --tag=mediapipe .
 
@@ -866,9 +866,9 @@ common build issues.
     docker run -i -t mediapipe:latest
     ``` -->
 
-[`WORKSPACE`]: https://github.com/google/mediapipe/blob/master/WORKSPACE
-[`opencv_linux.BUILD`]: https://github.com/google/mediapipe/tree/master/third_party/opencv_linux.BUILD
-[`ffmpeg_linux.BUILD`]:https://github.com/google/mediapipe/tree/master/third_party/ffmpeg_linux.BUILD
-[`opencv_macos.BUILD`]: https://github.com/google/mediapipe/tree/master/third_party/opencv_macos.BUILD
-[`ffmpeg_macos.BUILD`]:https://github.com/google/mediapipe/tree/master/third_party/ffmpeg_macos.BUILD
-[`setup_opencv.sh`]: https://github.com/google/mediapipe/blob/master/setup_opencv.sh
+[`WORKSPACE`]: https://github.com/google-ai-edge/mediapipe/blob/master/WORKSPACE
+[`opencv_linux.BUILD`]: https://github.com/google-ai-edge/mediapipe/tree/master/third_party/opencv_linux.BUILD
+[`ffmpeg_linux.BUILD`]:https://github.com/google-ai-edge/mediapipe/tree/master/third_party/ffmpeg_linux.BUILD
+[`opencv_macos.BUILD`]: https://github.com/google-ai-edge/mediapipe/tree/master/third_party/opencv_macos.BUILD
+[`ffmpeg_macos.BUILD`]:https://github.com/google-ai-edge/mediapipe/tree/master/third_party/ffmpeg_macos.BUILD
+[`setup_opencv.sh`]: https://github.com/google-ai-edge/mediapipe/blob/master/setup_opencv.sh
