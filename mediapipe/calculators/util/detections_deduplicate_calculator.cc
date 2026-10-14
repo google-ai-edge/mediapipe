@@ -67,12 +67,12 @@ class DetectionsDeduplicateCalculator : public Node {
 
   MEDIAPIPE_NODE_CONTRACT(kIn, kOut);
 
-  absl::Status Open(mediapipe::CalculatorContext* cc) {
+  absl::Status Open(mediapipe::CalculatorContext* cc) override {
     cc->SetOffset(::mediapipe::TimestampDiff(0));
     return absl::OkStatus();
   }
 
-  absl::Status Process(mediapipe::CalculatorContext* cc) {
+  absl::Status Process(mediapipe::CalculatorContext* cc) override {
     const std::vector<Detection>& raw_detections = kIn(cc).Get();
     // Hash map to store the bbox to the index of the detection in the
     // deduplicated detection vector.
