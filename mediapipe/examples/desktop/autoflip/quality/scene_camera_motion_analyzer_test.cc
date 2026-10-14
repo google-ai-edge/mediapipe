@@ -163,7 +163,7 @@ class TestableSceneCameraMotionAnalyzer : public SceneCameraMotionAnalyzer {
       const SceneCameraMotionAnalyzerOptions&
           scene_camera_motion_analyzer_options)
       : SceneCameraMotionAnalyzer(scene_camera_motion_analyzer_options) {}
-  ~TestableSceneCameraMotionAnalyzer() {}
+  ~TestableSceneCameraMotionAnalyzer() = default;
   using SceneCameraMotionAnalyzer::DecideCameraMotionType;
   using SceneCameraMotionAnalyzer::PopulateFocusPointFrames;
 };
