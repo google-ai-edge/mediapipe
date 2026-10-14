@@ -40,7 +40,7 @@ class PacketProducer {
  public:
   virtual ~PacketProducer() = default;
 
-  // Connects a consumer to recieve packets from this producer.
+  // Connects a consumer to receive packets from this producer.
   virtual void SetConsumer(PacketConsumer* consumer) = 0;
 };
 
@@ -61,7 +61,7 @@ class SidePacketProducer {
  public:
   virtual ~SidePacketProducer() = default;
 
-  // Connects a consumer to recieve packets from this producer.
+  // Connects a consumer to receive packets from this producer.
   virtual void SetSideConsumer(SidePacketConsumer* consumer) = 0;
 };
 
