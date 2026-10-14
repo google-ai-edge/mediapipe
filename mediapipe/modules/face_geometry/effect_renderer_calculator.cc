@@ -203,7 +203,7 @@ class EffectRendererCalculator : public CalculatorBase {
     });
   }
 
-  ~EffectRendererCalculator() {
+  ~EffectRendererCalculator() override {
     gpu_helper_.RunInGlContext([this]() { effect_renderer_.reset(); });
   }
 
