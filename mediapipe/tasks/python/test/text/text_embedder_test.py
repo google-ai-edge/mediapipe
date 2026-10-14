@@ -110,7 +110,7 @@ class TextEmbedderTest(parameterized.TestCase):
           False,
           _BERT_MODEL_FILE,
           ModelFileType.FILE_NAME,
-          0.9624276,∂ç
+          0.9624276,
           512,
           (21.2054, 19.6843),
       ),
