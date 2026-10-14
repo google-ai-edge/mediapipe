@@ -50,7 +50,7 @@ constexpr char kClockTag[] = "CLOCK";
 //
 class ClockTimestampCalculator : public CalculatorBase {
  public:
-  ClockTimestampCalculator() {}
+  ClockTimestampCalculator() = default;
 
   static absl::Status GetContract(CalculatorContract* cc);
 

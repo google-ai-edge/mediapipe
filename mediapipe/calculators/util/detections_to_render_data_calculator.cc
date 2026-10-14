@@ -76,8 +76,8 @@ constexpr float kNumScoreDecimalDigitsMultipler = 100;
 // }
 class DetectionsToRenderDataCalculator : public CalculatorBase {
  public:
-  DetectionsToRenderDataCalculator() {}
-  ~DetectionsToRenderDataCalculator() override {}
+  DetectionsToRenderDataCalculator() = default;
+  ~DetectionsToRenderDataCalculator() override = default;
   DetectionsToRenderDataCalculator(const DetectionsToRenderDataCalculator&) =
       delete;
   DetectionsToRenderDataCalculator& operator=(

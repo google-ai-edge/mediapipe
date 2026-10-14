@@ -58,7 +58,7 @@ constexpr char kReferenceTag[] = "REFERENCE";
 //
 class ClockLatencyCalculator : public CalculatorBase {
  public:
-  ClockLatencyCalculator() {}
+  ClockLatencyCalculator() = default;
 
   static absl::Status GetContract(CalculatorContract* cc);
 

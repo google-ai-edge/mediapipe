@@ -68,7 +68,7 @@ namespace mediapipe {
 // }
 class PacketFrequencyCalculator : public CalculatorBase {
  public:
-  PacketFrequencyCalculator() {}
+  PacketFrequencyCalculator() = default;
 
   static absl::Status GetContract(CalculatorContract* cc);
 

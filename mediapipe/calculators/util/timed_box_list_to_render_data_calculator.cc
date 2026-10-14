@@ -113,8 +113,8 @@ void AddTimedBoxProtoToRenderData(
 // }
 class TimedBoxListToRenderDataCalculator : public CalculatorBase {
  public:
-  TimedBoxListToRenderDataCalculator() {}
-  ~TimedBoxListToRenderDataCalculator() override {}
+  TimedBoxListToRenderDataCalculator() = default;
+  ~TimedBoxListToRenderDataCalculator() override = default;
   TimedBoxListToRenderDataCalculator(
       const TimedBoxListToRenderDataCalculator&) = delete;
   TimedBoxListToRenderDataCalculator& operator=(

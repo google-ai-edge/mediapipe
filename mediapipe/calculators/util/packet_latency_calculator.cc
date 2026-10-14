@@ -99,7 +99,7 @@ constexpr char kReferenceSignalTag[] = "REFERENCE_SIGNAL";
 // }
 class PacketLatencyCalculator : public CalculatorBase {
  public:
-  PacketLatencyCalculator() {}
+  PacketLatencyCalculator() = default;
 
   static absl::Status GetContract(CalculatorContract* cc);
 
