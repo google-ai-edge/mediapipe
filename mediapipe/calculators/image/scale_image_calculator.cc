@@ -221,6 +221,11 @@ class ScaleImageCalculator : public CalculatorBase {
   // on which this function is called is used to initialize.
   absl::Status ValidateYUVImage(CalculatorContext* cc,
                                 const YUVImage& yuv_image);
+  // Decides whether this input's YUV should be read as BT.709 or BT.601.
+  // Honors the matrix the input declares when
+  // options_.use_input_matrix_coefficients() is set, and otherwise (or when
+  // the input declares nothing usable) falls back to options_.use_bt709().
+  bool ResolveUseBt709(const YUVImage& yuv_image) const;
 
   bool has_header_;  // True if the input stream has a header.
   int input_width_;
@@ -559,6 +564,40 @@ absl::Status ScaleImageCalculator::ValidateYUVImage(CalculatorContext* cc,
   return absl::OkStatus();
 }
 
+bool ScaleImageCalculator::ResolveUseBt709(const YUVImage& yuv_image) const {
+  if (!options_.use_input_matrix_coefficients()) {
+    return options_.use_bt709();
+  }
+  // YUVImageToImageFrame (used when use_bt709 is true) assumes planar I420,
+  // whereas YUVImageToImageFrameFromFormat handles YV12/NV12/NV21 as BT.601.
+  if (yuv_image.fourcc() != libyuv::FOURCC_I420 &&
+      yuv_image.fourcc() != libyuv::FOURCC_ANY) {
+    return options_.use_bt709();
+  }
+  switch (yuv_image.matrix_coefficients()) {
+    case YUVImage::COLOR_MATRIX_COEFFICIENTS_BT709:
+      return true;
+    // FCC and SMPTE 240M have no dedicated conversion here, so they are
+    // converted as BT.601, the same grouping some VP9 decoders use.
+    case YUVImage::COLOR_MATRIX_COEFFICIENTS_FCC:
+    case YUVImage::COLOR_MATRIX_COEFFICIENTS_BT470BG:
+    case YUVImage::COLOR_MATRIX_COEFFICIENTS_SMPTE170M:
+    case YUVImage::COLOR_MATRIX_COEFFICIENTS_SMPTE240M:
+      return false;
+    case YUVImage::COLOR_MATRIX_COEFFICIENTS_UNSPECIFIED:
+      return options_.use_bt709();
+    default:
+      // The YUV->RGB conversion below only knows BT.601 and BT.709, so
+      // anything else (BT.2020, YCoCg, ...) cannot be honored. Keep the
+      // graph's configured assumption rather than quietly picking BT.601.
+      ABSL_LOG_FIRST_N(WARNING, 1)
+          << "ScaleImageCalculator cannot convert matrix coefficients "
+          << yuv_image.matrix_coefficients()
+          << "; falling back to use_bt709=" << options_.use_bt709();
+      return options_.use_bt709();
+  }
+}
+
 absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
   if (cc->InputTimestamp() == Timestamp::PreStream()) {
     if (cc->Inputs().HasTag("OVERRIDE_OPTIONS")) {
@@ -593,9 +632,10 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
       // ImageFrame immediately, before cropping and scaling. Investigate how to
       // make color space conversion more efficient when cropping or scaling is
       // also needed.
-      if (options_.use_bt709() || yuv_image->fourcc() == libyuv::FOURCC_ANY) {
+      const bool use_bt709 = ResolveUseBt709(*yuv_image);
+      if (use_bt709 || yuv_image->fourcc() == libyuv::FOURCC_ANY) {
         image_frame_util::YUVImageToImageFrame(
-            *yuv_image, &converted_image_frame, options_.use_bt709());
+            *yuv_image, &converted_image_frame, use_bt709);
       } else {
         image_frame_util::YUVImageToImageFrameFromFormat(
             *yuv_image, &converted_image_frame);
@@ -630,6 +670,7 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
           [data = std::move(yuv_data)]() mutable { data.reset(); }, y,
           output_width_, u, output_width_ / 2, v, output_width_ / 2,
           output_width_, output_height_);
+      output_image->set_matrix_coefficients(yuv_image->matrix_coefficients());
       cc->GetCounter("Outputs Scaled")->Increment();
       if (yuv_image->width() >= output_width_ &&
           yuv_image->height() >= output_height_) {

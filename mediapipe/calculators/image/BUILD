@@ -486,9 +486,14 @@ cc_test(
         "//mediapipe/framework:packet",
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:yuv_image",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+        "@libyuv",
     ],
 )
 

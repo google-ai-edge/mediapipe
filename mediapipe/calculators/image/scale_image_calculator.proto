@@ -112,8 +112,27 @@ message ScaleImageCalculatorOptions {
 
   // If true, assume the input YUV is BT.709 (this is the HDTV standard, so most
   // content is likely using it). If false use the previous assumption of BT.601
-  // (mid-80s standard). Ideally this information should be contained in the
-  // input YUV Frame, but as of 02/06/2019, it's not. Once this info is baked
-  // in, this flag becomes useless.
+  // (mid-80s standard).
+  //
+  // When use_input_matrix_coefficients is true, this flag serves only as the
+  // fallback for inputs whose matrix is COLOR_MATRIX_COEFFICIENTS_UNSPECIFIED
+  // or not supported by the RGB conversion.
   optional bool use_bt709 = 14 [default = false];
+
+  // If true, convert I420 YUVImage inputs to RGB using the matrix the input
+  // declares in YUVImage::matrix_coefficients() rather than the fixed
+  // use_bt709 assumption above:
+  // - COLOR_MATRIX_COEFFICIENTS_BT709 -> BT.709
+  // - COLOR_MATRIX_COEFFICIENTS_BT470BG, COLOR_MATRIX_COEFFICIENTS_SMPTE170M,
+  //   COLOR_MATRIX_COEFFICIENTS_FCC, COLOR_MATRIX_COEFFICIENTS_SMPTE240M
+  //   -> BT.601
+  // - COLOR_MATRIX_COEFFICIENTS_UNSPECIFIED, or matrices the RGB conversion
+  //   does not implement (e.g. BT.2020, YCoCg) -> fall back to use_bt709.
+  //
+  // This is a per-frame auto-detection switch, not a "force BT.709" switch: a
+  // graph that sets use_bt709 today and turns this on will keep decoding
+  // BT.709 content as BT.709 and start decoding BT.601 content as BT.601.
+  //
+  // Defaults to false so that existing graphs keep producing the same pixels.
+  optional bool use_input_matrix_coefficients = 16 [default = false];
 }
