@@ -787,8 +787,8 @@ http_archive(
 http_archive(
     name = "com_github_nlohmann_json",
     build_file = "@//third_party:nlohmann.BUILD",
-    sha256 = "6bea5877b1541d353bd77bdfbdb2696333ae5ed8f9e8cc22df657192218cad91",
-    urls = ["https://github.com/nlohmann/json/releases/download/v3.9.1/include.zip"],
+    sha256 = "b8cb0ef2dd7f57f18933997c9934bb1fa962594f701cd5a8d3c2c80541559372",
+    urls = ["https://github.com/nlohmann/json/releases/download/v3.12.0/include.zip"],
 )
 
 http_archive(
@@ -869,7 +869,8 @@ http_archive(
 # LiteRT-LM
 # Fetch just the source tree and let it use our already-defined workspace
 # dependencies (@org_tensorflow, @com_google_absl, @litert, etc.) to avoid collisions.
-# Also map the @sentencepiece dependency to @com_google_sentencepiece which is already
+# Also map the @sentencepiece and @nlohmann_json dependencies to
+# @com_google_sentencepiece and @com_github_nlohmann_json, which are already
 # provided by MediaPipe's WORKSPACE.
 http_archive(
     name = "litert_lm",
@@ -880,11 +881,13 @@ http_archive(
     ],
     repo_mapping = {
         "@minizip": "@zlib",
+        "@nlohmann_json": "@com_github_nlohmann_json",
         "@sentencepiece": "@com_google_sentencepiece",
         "@stb": "@stblib",
     },
-    strip_prefix = "LiteRT-LM-e93f5f517e404bd4fa654c511ef50fbd0bb147fe",
-    urls = ["https://github.com/google-ai-edge/LiteRT-LM/archive/e93f5f517e404bd4fa654c511ef50fbd0bb147fe.tar.gz?v=9"],
+    sha256 = "1930e77088bcc688720cf93c32552b9f349fe774200f4ddf5c8f793eedfaf86b",
+    strip_prefix = "LiteRT-LM-903455d18d7705e9d35c59198cb67b7d50172860",
+    urls = ["https://github.com/google-ai-edge/LiteRT-LM/archive/903455d18d7705e9d35c59198cb67b7d50172860.tar.gz"],
 )
 
 # Transitive dependency of LiteRT-LM.
@@ -894,6 +897,17 @@ http_archive(
     sha256 = "bcb07bfb27e6fa94d34da73ba2d5642d4940b208ec2a660dbf4e52e6b7cd492f",
     strip_prefix = "miniaudio-0.11.22",
     urls = ["https://github.com/mackron/miniaudio/archive/refs/tags/0.11.22.tar.gz"],
+)
+
+# C++ token diff library (editscript.h, exported from //third_party/diff in Verible).
+http_archive(
+    name = "com_github_chipsalliance_verible",
+    build_file = "@//third_party:verible.BUILD",
+    patch_args = ["-p1"],
+    patches = ["@//third_party:verible.diff"],
+    sha256 = "fb625903e3529f9ff4d5e2865881486258475c0c88a6716e236f27b2d3fdc3d4",
+    strip_prefix = "verible-7ce5463836fdf60056f8413526f237c445ae5730/external_libs",
+    urls = ["https://github.com/chipsalliance/verible/archive/7ce5463836fdf60056f8413526f237c445ae5730.tar.gz"],
 )
 
 # Dummy local repository for litert_lm's unused transitive huggingface_tokenizer dependency

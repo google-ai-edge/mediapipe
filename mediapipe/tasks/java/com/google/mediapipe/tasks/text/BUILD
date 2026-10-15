@@ -135,7 +135,10 @@ mediapipe_jni_binary(
     name = "mediapipe_tasks_textgenai_jni",
     uses_explicit_exports = False,
     version_script = "//mediapipe/tasks/java:textgenai_version_script.lds",
-    deps = [],
+    deps = [
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/text/textproofreader/jni:text_proofreader_jni_lib",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/text/textsummarizer/jni:text_summarizer_jni_lib",
+    ],
 )
 
 android_library(

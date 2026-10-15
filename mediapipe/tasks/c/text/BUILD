@@ -20,6 +20,7 @@ TEXT_LIBRARIES = [
     "//mediapipe/tasks/c/text/language_detector:language_detector_lib",
     "//mediapipe/tasks/c/text/text_classifier:text_classifier_lib",
     "//mediapipe/tasks/c/text/text_embedder:text_embedder_lib",
+    "//mediapipe/tasks/c/text/text_summarizer:text_summarizer_lib",
 ]
 
 # bazel build -c opt --linkopt -s --strip always --define MEDIAPIPE_DISABLE_GPU=1 \

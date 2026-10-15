@@ -1,0 +1,17 @@
+--- a/editscript.h
++++ b/editscript.h
+@@ -35,6 +35,7 @@
+ #include <utility>
+ #include <vector>
+ 
++namespace third_party {
+ namespace diff {
+ 
+ enum class Operation { EQUALS, DELETE, INSERT };
+@@ -490,5 +491,6 @@
+ }
+ 
+ }  // namespace diff
++}  // namespace third_party
+ 
+ #endif  // EDITSCRIPT_H_

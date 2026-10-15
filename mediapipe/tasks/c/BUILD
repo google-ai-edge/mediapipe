@@ -60,8 +60,8 @@ MEDIAPIPE_TASKS_C_TEXT_DEPS = [
     "//mediapipe/tasks/c/text/language_detector:language_detector_c_lib",
     "//mediapipe/tasks/c/text/text_classifier:text_classifier_c_lib",
     "//mediapipe/tasks/c/text/text_embedder:text_embedder_c_lib",
-    "//mediapipe/tasks/c/text/text_proofreader:text_proofreader_hdr",
-    "//mediapipe/tasks/c/text/text_summarizer:text_summarizer_hdr",
+    "//mediapipe/tasks/c/text/text_proofreader:text_proofreader_c_lib",
+    "//mediapipe/tasks/c/text/text_summarizer:text_summarizer_c_lib",
 ]
 
 MEDIAPIPE_TASKS_C_AUDIO_DEPS = [

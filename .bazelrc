@@ -17,6 +17,13 @@ build --enable_platform_specific_config
 build --java_runtime_version=remotejdk_21
 build --tool_java_runtime_version=remotejdk_21
 build --define=DISABLE_HUGGINGFACE_TOKENIZER=1
+# Optional LiteRT-LM components that are implemented in Rust (Jinja prompt
+# templates, constrained decoding and tool call parsing). Without the Jinja
+# template engine, the LiteRT-LM conversation API can't apply the prompt
+# templates of models such as the text summarizer and proofreader models.
+build --define=LITERT_LM_MINIJINJA_TEMPLATE_DISABLED=1
+build --define=LITERT_LM_CONSTRAINED_DECODING_DISABLED=1
+build --define=LITERT_LM_TOOL_USE_PARSER_DISABLED=1
 
 # Enable stack traces
 test --test_env="GTEST_INSTALL_FAILURE_SIGNAL_HANDLER=1"

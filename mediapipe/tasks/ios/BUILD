@@ -119,6 +119,8 @@ CALCULATORS_AND_GRAPHS = [
     # accelerator, which self-registers and must be force loaded. See
     # //mediapipe/calculators/tensor:inference_calculator_litert.
     "//mediapipe/calculators/tensor:inference_calculator_litert",
+    # LiteRT-LM CPU engine uses static self-registration that gets stripped unless force loaded.
+    "@litert_lm//c:engine_cpu",
 ]
 
 objc_library(

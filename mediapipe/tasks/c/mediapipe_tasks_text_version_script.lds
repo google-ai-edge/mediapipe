@@ -8,6 +8,8 @@ VERS_1.0 {
     MpStringList*;
     MpTextClassifier*;
     MpTextEmbedder*;
+    MpTextProofreader*;
+    MpTextSummarizer*;
   local:
     *;
 };

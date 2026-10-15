@@ -2,6 +2,7 @@ VERS_1.0 {
   global:
     MpAudioClassifier*;
     MpAudioEmbedder*;
+    MpDecision*;
     MpErrorFree;
     MpFaceDetector*;
     MpFaceLandmarker*;
@@ -20,6 +21,8 @@ VERS_1.0 {
     MpStringList*;
     MpTextClassifier*;
     MpTextEmbedder*;
+    MpTextProofreader*;
+    MpTextSummarizer*;
     MpUniversalEmbedder*;
   local:
     *;
