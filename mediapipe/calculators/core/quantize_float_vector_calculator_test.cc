@@ -162,15 +162,15 @@ TEST(QuantizeFloatVectorCalculatorTest, TestNonEmptyVector) {
   ASSERT_FALSE(result.empty());
   EXPECT_EQ(5, result.size());
   // 127
-  EXPECT_EQ('\x7F', result.c_str()[0]);
+  EXPECT_EQ('\x7F', result[0]);
   // 0
-  EXPECT_EQ('\0', result.c_str()[1]);
+  EXPECT_EQ('\0', result[1]);
   // 255
-  EXPECT_EQ('\xFF', result.c_str()[2]);
+  EXPECT_EQ('\xFF', result[2]);
   // 63
-  EXPECT_EQ('\x3F', result.c_str()[3]);
+  EXPECT_EQ('\x3F', result[3]);
   // 191
-  EXPECT_EQ('\xBF', result.c_str()[4]);
+  EXPECT_EQ('\xBF', result[4]);
   EXPECT_EQ(Timestamp(0), outputs[0].Timestamp());
 }
 
@@ -201,9 +201,9 @@ TEST(QuantizeFloatVectorCalculatorTest, TestSaturation) {
   ASSERT_FALSE(result.empty());
   EXPECT_EQ(2, result.size());
   // 0
-  EXPECT_EQ('\0', result.c_str()[0]);
+  EXPECT_EQ('\0', result[0]);
   // 255
-  EXPECT_EQ('\xFF', result.c_str()[1]);
+  EXPECT_EQ('\xFF', result[1]);
   EXPECT_EQ(Timestamp(0), outputs[0].Timestamp());
 }
 
