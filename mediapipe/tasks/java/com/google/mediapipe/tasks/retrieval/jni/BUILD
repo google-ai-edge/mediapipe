@@ -47,7 +47,6 @@ cc_library(
         "text_chunker_jni.h",
     ],
     deps = [
-        "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
         "//mediapipe/tasks/cc/retrieval/semantic_retriever:sqlite_memory_store",
         "//mediapipe/tasks/cc/retrieval/semantic_retriever:sqlite_vector_store",
         "//mediapipe/tasks/cc/retrieval/semantic_retriever/proto:vector_stores_cc_proto",

@@ -20,7 +20,7 @@ package(default_visibility = ["//visibility:public"])
 
 mediapipe_jni_binary(
     name = "sqlite_vector_store_jni",
-    uses_explicit_exports = True,
+    uses_explicit_exports = False,
     deps = [],
 )
 
