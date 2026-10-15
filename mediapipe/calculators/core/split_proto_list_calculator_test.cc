@@ -33,7 +33,7 @@ constexpr float kLocationVal = 3;
 
 class SplitNormalizedLandmarkListCalculatorTest : public ::testing::Test {
  protected:
-  void TearDown() { expected_landmarks_.reset(); }
+  void TearDown() override { expected_landmarks_.reset(); }
 
   void PrepareNormalizedLandmarkList(int list_size) {
     // Prepare input landmark list.

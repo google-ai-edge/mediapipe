@@ -41,7 +41,7 @@ const int channels = 1;
 
 class SplitTfLiteTensorVectorCalculatorTest : public ::testing::Test {
  protected:
-  void TearDown() {
+  void TearDown() override {
     // Note: Since the pointers contained in this vector will be cleaned up by
     // the interpreter, only ensure that the vector is cleaned up for the next
     // test.
