@@ -11,7 +11,7 @@ const text = await FilesetResolver.forTextTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-text/wasm"
 );
 const languageDetector = await LanguageDetector.createFromModelPath(text,
-    "https://storage.googleapis.com/mediapipe-models/language_detector/language_detector/float32/1/language_detector.tflite
+    "https://storage.googleapis.com/mediapipe-models/language_detector/language_detector/float32/1/language_detector.tflite"
 );
 const result = languageDetector.detect(textData);
 ```
