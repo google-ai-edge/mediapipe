@@ -30,6 +30,48 @@
 #include "mediapipe/tasks/cc/retrieval/semantic_retriever/sqlite_memory_store.h"
 #include "mediapipe/tasks/cc/retrieval/semantic_retriever/sqlite_vector_store.h"
 
+/**
+ * Immutable `NSArray<NSNumber *>` backed by a contiguous `float` buffer so database records do not
+ * eagerly box floats into `NSNumber` objects unless elements are accessed.
+ */
+@interface MPPFloatEmbeddingArray : NSArray<NSNumber *>
+
+- (instancetype)initWithFloats:(nullable const float *)floats count:(NSUInteger)count;
+
+@end
+
+@implementation MPPFloatEmbeddingArray {
+  std::vector<float> _values;
+}
+
+- (instancetype)initWithFloats:(nullable const float *)floats count:(NSUInteger)count {
+  self = [super init];
+  if (self && floats != nullptr && count > 0) {
+    _values.assign(floats, floats + count);
+  }
+  return self;
+}
+
+- (NSUInteger)count {
+  return _values.size();
+}
+
+- (id)objectAtIndex:(NSUInteger)index {
+  if (index >= _values.size()) {
+    [NSException raise:NSRangeException
+                format:@"Index %lu beyond bounds [0 .. %lu]",
+                       static_cast<unsigned long>(index),
+                       static_cast<unsigned long>(_values.size())];
+  }
+  return @(_values[index]);
+}
+
+- (id)copyWithZone:(nullable NSZone *)zone {
+  return self;
+}
+
+@end
+
 @interface MPPSqliteVectorStore () {
   std::unique_ptr<mediapipe::tasks::retrieval::SqliteMemoryStore> _sqliteMemoryStore;
   int _dimension;
@@ -108,11 +150,11 @@
     childIds = cIds;
   }
 
-  NSMutableArray<NSNumber *> *embeddings =
-      [NSMutableArray arrayWithCapacity:cppRecord.embeddings_size()];
-  for (int i = 0; i < cppRecord.embeddings_size(); ++i) {
-    [embeddings addObject:@(cppRecord.embeddings(i))];
-  }
+  NSArray<NSNumber *> *embeddings =
+      [[MPPFloatEmbeddingArray alloc] initWithFloats:cppRecord.embeddings().data()
+                                               count:cppRecord.embeddings_size()];
+  NSNumber *similarityScore =
+      cppRecord.has_similarity_score() ? @(cppRecord.similarity_score()) : nil;
 
   NSMutableArray<MPPTaskPart *> *content = [NSMutableArray array];
   for (const auto &cppPart : cppRecord.parts()) {
@@ -155,6 +197,7 @@
   return [[MPPRetrievalRecord alloc] initWithRecordId:recordId
                                               content:content
                                            embeddings:embeddings
+                                      similarityScore:similarityScore
                                              metadata:userMetadata
                                              parentId:parentId
                                              childIds:childIds];

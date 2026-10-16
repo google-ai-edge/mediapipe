@@ -497,6 +497,7 @@ const NSInteger MPPSemanticRetrieverDefaultEmbeddingDimension = 768;
               [[MPPRetrievalRecord alloc] initWithRecordId:parent.recordId
                                                    content:parent.content
                                                 embeddings:record.embeddings
+                                           similarityScore:record.similarityScore
                                                   metadata:parent.metadata
                                                   parentId:parent.parentId
                                                   childIds:parent.childIds];
@@ -513,24 +514,33 @@ const NSInteger MPPSemanticRetrieverDefaultEmbeddingDimension = 768;
 
   NSMutableArray<MPPRetrievalResult *> *clientResults =
       [NSMutableArray arrayWithCapacity:results.count];
-  MPPEmbedding *query = [[MPPEmbedding alloc] initWithFloatEmbedding:queryEmbedding
-                                                  quantizedEmbedding:nil
-                                                           headIndex:0
-                                                            headName:nil];
+  MPPEmbedding *query = nil;
   for (MPPRetrievalRecord *record in results) {
-    MPPEmbedding *stored = [[MPPEmbedding alloc] initWithFloatEmbedding:record.embeddings
-                                                     quantizedEmbedding:nil
-                                                              headIndex:0
-                                                               headName:nil];
-    NSNumber *scoreNum = [MPPCosineSimilarity computeBetweenEmbedding1:query
-                                                         andEmbedding2:stored
-                                                                 error:error];
-    double score = scoreNum ? scoreNum.doubleValue : 0.0;
-    MPPRetrievalResult *resultObj = [[MPPRetrievalResult alloc] initWithRecordId:record.recordId
-                                                                         content:record.content
-                                                                      embeddings:record.embeddings
-                                                                        metadata:record.metadata
-                                                                           score:score];
+    double score = 0.0;
+    if (record.similarityScore != nil) {
+      score = record.similarityScore.doubleValue;
+    } else {
+      if (!query) {
+        query = [[MPPEmbedding alloc] initWithFloatEmbedding:queryEmbedding
+                                          quantizedEmbedding:nil
+                                                   headIndex:0
+                                                    headName:nil];
+      }
+      MPPEmbedding *stored = [[MPPEmbedding alloc] initWithFloatEmbedding:record.embeddings
+                                                       quantizedEmbedding:nil
+                                                                headIndex:0
+                                                                 headName:nil];
+      NSNumber *scoreNum = [MPPCosineSimilarity computeBetweenEmbedding1:query
+                                                           andEmbedding2:stored
+                                                                   error:error];
+      score = scoreNum ? scoreNum.doubleValue : 0.0;
+    }
+    MPPRetrievalResult *resultObj =
+        [[MPPRetrievalResult alloc] initWithRecordId:record.recordId
+                                             content:record.content
+                                          embeddings:record.embeddings
+                                            metadata:record.metadata
+                                               score:score];
     [clientResults addObject:resultObj];
   }
 

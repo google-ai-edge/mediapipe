@@ -25,10 +25,19 @@ NS_SWIFT_NAME(RetrievalRecord)
 
 @property(nonatomic, readonly, copy) NSString *recordId;
 @property(nonatomic, readonly, copy) NSArray<MPPTaskPart *> *content;
-@property(nonatomic, readonly) NSArray<NSNumber *> *embeddings;
+@property(nonatomic, readonly, copy) NSArray<NSNumber *> *embeddings;
+@property(nonatomic, readonly, nullable) NSNumber *similarityScore;
 @property(nonatomic, readonly, copy) NSDictionary<NSString *, NSString *> *metadata;
 @property(nonatomic, readonly, copy, nullable) NSString *parentId;
 @property(nonatomic, readonly, copy, nullable) NSArray<NSString *> *childIds;
+
+- (instancetype)initWithRecordId:(NSString *)recordId
+                         content:(NSArray<MPPTaskPart *> *)content
+                      embeddings:(NSArray<NSNumber *> *)embeddings
+                 similarityScore:(nullable NSNumber *)similarityScore
+                        metadata:(NSDictionary<NSString *, NSString *> *)metadata
+                        parentId:(nullable NSString *)parentId
+                        childIds:(nullable NSArray<NSString *> *)childIds NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithRecordId:(NSString *)recordId
                          content:(NSArray<MPPTaskPart *> *)content

@@ -19,6 +19,7 @@
 - (instancetype)initWithRecordId:(NSString *)recordId
                          content:(NSArray<MPPTaskPart *> *)content
                       embeddings:(NSArray<NSNumber *> *)embeddings
+                 similarityScore:(nullable NSNumber *)similarityScore
                         metadata:(NSDictionary<NSString *, NSString *> *)metadata
                         parentId:(nullable NSString *)parentId
                         childIds:(nullable NSArray<NSString *> *)childIds {
@@ -26,12 +27,28 @@
   if (self) {
     _recordId = [recordId copy];
     _content = [content copy];
-    _embeddings = embeddings;
+    _embeddings = [embeddings copy];
+    _similarityScore = similarityScore;
     _metadata = [metadata copy];
     _parentId = [parentId copy];
     _childIds = [childIds copy];
   }
   return self;
+}
+
+- (instancetype)initWithRecordId:(NSString *)recordId
+                         content:(NSArray<MPPTaskPart *> *)content
+                      embeddings:(NSArray<NSNumber *> *)embeddings
+                        metadata:(NSDictionary<NSString *, NSString *> *)metadata
+                        parentId:(nullable NSString *)parentId
+                        childIds:(nullable NSArray<NSString *> *)childIds {
+  return [self initWithRecordId:recordId
+                        content:content
+                     embeddings:embeddings
+                similarityScore:nil
+                       metadata:metadata
+                       parentId:parentId
+                       childIds:childIds];
 }
 
 @end

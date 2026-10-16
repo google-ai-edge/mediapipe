@@ -36,26 +36,28 @@
     return nil;
   }
 
-  __block double dotProduct = 0.0;
-  __block double normU = 0.0;
-  __block double normV = 0.0;
+  double dotProduct = 0.0;
+  double normU = 0.0;
+  double normV = 0.0;
+  const NSUInteger count = u.count;
 
-  [u enumerateObjectsUsingBlock:^(NSNumber *num, NSUInteger idx, BOOL *stop) {
-    double uVal = 0.0;
-    double vVal = 0.0;
-
-    if (isFloat) {
-      uVal = num.floatValue;
-      vVal = v[idx].floatValue;
-    } else {
-      uVal = num.charValue;
-      vVal = v[idx].charValue;
+  if (isFloat) {
+    for (NSUInteger idx = 0; idx < count; ++idx) {
+      const double uVal = u[idx].floatValue;
+      const double vVal = v[idx].floatValue;
+      dotProduct += uVal * vVal;
+      normU += uVal * uVal;
+      normV += vVal * vVal;
     }
-
-    dotProduct += uVal * vVal;
-    normU += uVal * uVal;
-    normV += vVal * vVal;
-  }];
+  } else {
+    for (NSUInteger idx = 0; idx < count; ++idx) {
+      const double uVal = u[idx].charValue;
+      const double vVal = v[idx].charValue;
+      dotProduct += uVal * vVal;
+      normU += uVal * uVal;
+      normV += vVal * vVal;
+    }
+  }
 
   return [NSNumber numberWithDouble:dotProduct / sqrt(normU * normV)];
 }
