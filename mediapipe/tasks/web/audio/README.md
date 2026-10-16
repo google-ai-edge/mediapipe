@@ -11,7 +11,7 @@ const audio = await FilesetResolver.forAudioTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-audio/wasm"
 );
 const audioClassifier = await AudioClassifier.createFromModelPath(audio,
-    "https://storage.googleapis.com/mediapipe-models/audio_classifier/yamnet/float32/1/yamnet.tflite
+    "https://storage.googleapis.com/mediapipe-models/audio_classifier/yamnet/float32/1/yamnet.tflite"
 );
 const classifications = audioClassifier.classify(audioData);
 ```
