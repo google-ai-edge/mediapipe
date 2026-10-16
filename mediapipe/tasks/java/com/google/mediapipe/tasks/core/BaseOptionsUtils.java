@@ -46,6 +46,7 @@ public final class BaseOptionsUtils {
   public static final int HOST_ENVIRONMENT_PYTHON = 3;
   public static final int HOST_ENVIRONMENT_WEB = 4;
   public static final int HOST_ENVIRONMENT_FLUTTER = 5;
+  public static final int HOST_ENVIRONMENT_FLUTTER_WEB = 6;
 
   // C enum values for HostSystem.
   public static final int HOST_SYSTEM_UNKNOWN = 0;

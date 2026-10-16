@@ -53,6 +53,9 @@ mediapipe::tasks::core::HostEnvironment CppConvertToHostEnvironment(
       return mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_WEB;
     case MP_HOST_ENVIRONMENT_FLUTTER:
       return mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_FLUTTER;
+    case MP_HOST_ENVIRONMENT_FLUTTER_WEB:
+      return mediapipe::tasks::core::HostEnvironment::
+          HOST_ENVIRONMENT_FLUTTER_WEB;
     default:
       return mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_UNKNOWN;
   }
@@ -116,6 +119,8 @@ MpHostEnvironment ToMpHostEnvironment(int host_environment) {
       return MP_HOST_ENVIRONMENT_WEB;
     case MP_HOST_ENVIRONMENT_FLUTTER:
       return MP_HOST_ENVIRONMENT_FLUTTER;
+    case MP_HOST_ENVIRONMENT_FLUTTER_WEB:
+      return MP_HOST_ENVIRONMENT_FLUTTER_WEB;
     default:
       ABSL_LOG(DFATAL) << "Unknown MpHostEnvironment int value: "
                        << host_environment;

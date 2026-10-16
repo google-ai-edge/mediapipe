@@ -35,6 +35,8 @@ HostEnvironment ToHostEnvironment(int host_environment) {
       return HostEnvironment::HOST_ENVIRONMENT_WEB;
     case 5:
       return HostEnvironment::HOST_ENVIRONMENT_FLUTTER;
+    case 6:
+      return HostEnvironment::HOST_ENVIRONMENT_FLUTTER_WEB;
     default:
       ABSL_LOG(DFATAL) << "Unknown HostEnvironment int value: "
                        << host_environment;
