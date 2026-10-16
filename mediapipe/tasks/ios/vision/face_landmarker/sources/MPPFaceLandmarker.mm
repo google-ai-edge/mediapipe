@@ -225,6 +225,10 @@ static NSString *const kTaskName = @"faceLandmarker";
   return MPPFaceConnections;
 }
 
+- (BOOL)closeWithError:(NSError **)error {
+  return [_visionTaskRunner closeWithError:error];
+}
+
 #pragma mark - Private
 
 + (nullable MPPFaceLandmarkerResult *)faceLandmarkerResultWithOptionalOutputPacketMap:

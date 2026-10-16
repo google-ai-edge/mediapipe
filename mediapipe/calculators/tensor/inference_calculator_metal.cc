@@ -105,8 +105,12 @@ class InferenceCalculatorMetalImpl
 
   // TfLite requires us to keep the model alive as long as the interpreter is.
   Packet<TfLiteModelPtr> model_packet_;
-  std::unique_ptr<tflite::Interpreter> interpreter_;
+  // delegate_ must be declared before interpreter_: members are destroyed in
+  // reverse order and ~Interpreter calls back into the delegate
+  // (FreeBufferHandle). If the graph is destroyed without Close(), the old
+  // order freed the delegate first and crashed.
   TfLiteDelegatePtr delegate_;
+  std::unique_ptr<tflite::Interpreter> interpreter_;
   bool allow_precision_loss_ = false;
 
 #if MEDIAPIPE_TFLITE_METAL_INFERENCE
