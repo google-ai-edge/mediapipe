@@ -137,10 +137,10 @@ describe('GestureRecognizer', () => {
   });
 
   it('merges options', async () => {
-    await gestureRecognizer.setOptions({numHands: 1});
+    await gestureRecognizer.setOptions({numHands: 5});
     await gestureRecognizer.setOptions({minHandDetectionConfidence: 0.5});
     verifyGraph(gestureRecognizer, [
-      ['handLandmarkerGraphOptions', 'handDetectorGraphOptions', 'numHands'], 1
+      ['handLandmarkerGraphOptions', 'handDetectorGraphOptions', 'numHands'], 5
     ]);
     verifyGraph(gestureRecognizer, [
       [
