@@ -117,9 +117,9 @@ each project.
     Build the MediaPipe binary graph and copy the assets into
     app/src/main/assets, e.g., for the face detection graph, you need to build
     and copy
-    [the binary graph](https://github.com/google/mediapipe/blob/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu/BUILD#L41)
+    [the binary graph](https://github.com/google-ai-edge/mediapipe/blob/master/mediapipe/examples/android/src/java/com/google/mediapipe/apps/facedetectiongpu/BUILD#L41)
     and
-    [the face detection tflite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_short_range.tflite).
+    [the face detection tflite model](https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/modules/face_detection/face_detection_short_range.tflite).
 
     ```bash
     bazel build -c opt mediapipe/graphs/face_detection:face_detection_mobile_gpu_binary_graph

@@ -77,7 +77,7 @@ hosted by Google sites. In some regions, you may need to set up a network proxy
 or use a VPN to access those resources. You may also need to append
 `--host_jvm_args "-DsocksProxyHost=<ip address> -DsocksProxyPort=<port number>"`
 to the Bazel command. See
-[this GitHub issue](https://github.com/google/mediapipe/issues/581#issuecomment-610356857)
+[this GitHub issue](https://github.com/google-ai-edge/mediapipe/issues/581#issuecomment-610356857)
 for more details.
 
 If you believe that it's not a network issue, another possibility is that some
@@ -101,7 +101,7 @@ usually indicates that OpenCV is not properly configured for MediaPipe. Please
 take a look at the "Install OpenCV and FFmpeg" sections in
 [Installation](./install.md) to see how to modify MediaPipe's WORKSPACE and
 linux_opencv/macos_opencv/windows_opencv.BUILD files for your local opencv
-libraries. [This GitHub issue](https://github.com/google/mediapipe/issues/666)
+libraries. [This GitHub issue](https://github.com/google-ai-edge/mediapipe/issues/666)
 may also help.
 
 ## Python pip install failure

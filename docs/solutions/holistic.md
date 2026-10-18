@@ -1,6 +1,6 @@
 ---
 layout: forward
-target: https://github.com/google/mediapipe/blob/master/docs/solutions/holistic.md
+target: https://github.com/google-ai-edge/mediapipe/blob/master/docs/solutions/holistic.md
 title: Holistic
 parent: MediaPipe Legacy Solutions
 nav_order: 6
