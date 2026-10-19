@@ -34,6 +34,7 @@ namespace {
 
 using ::mediapipe::android::JStringToStdString;
 using ::mediapipe::android::ThrowIfError;
+using ::mediapipe::tasks::core::BaseOptions;
 using ::mediapipe::tasks::core::ConvertProtoToBaseOptions;
 using ::mediapipe::tasks::core::ToHostEnvironment;
 using ::mediapipe::tasks::core::ToHostSystem;
@@ -47,7 +48,8 @@ extern "C" {
 JNIEXPORT jlong JNICALL
 Java_com_google_mediapipe_tasks_vision_interactivesegmenter_InteractiveSegmenter_nativeCreate(
     JNIEnv* env, jclass clazz, jbyteArray base_options_bytes, jstring app_id,
-    jstring app_version, jint host_environment, jint host_system) {
+    jstring app_version, jint host_environment, jint host_system,
+    jobject litert_system_runtime_handle) {
   jsize base_options_len = env->GetArrayLength(base_options_bytes);
   jbyte* base_options_data =
       env->GetByteArrayElements(base_options_bytes, nullptr);

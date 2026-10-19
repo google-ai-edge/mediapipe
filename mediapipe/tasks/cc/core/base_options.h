@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_CORE_BASE_OPTIONS_H_
 #define MEDIAPIPE_TASKS_CC_CORE_BASE_OPTIONS_H_
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
