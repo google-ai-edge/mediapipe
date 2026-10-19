@@ -94,7 +94,11 @@ public final class InteractiveSegmenter implements AutoCloseable {
     return new InteractiveSegmenter(nativeSegmenterHandle);
   }
 
-  /** Sets the image to be segmented. */
+  /**
+   * Sets the image to be segmented.
+   *
+   * @throws MediaPipeException if the graph cannot be created.
+   */
   public void setImage(MPImage image) {
     Objects.requireNonNull(image, "Image must not be null");
     Packet imagePacket = packetCreator.createImage(image);
