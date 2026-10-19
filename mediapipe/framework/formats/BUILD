@@ -171,7 +171,6 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/gpu:gl_base_hdr",
         "//mediapipe/gpu:gl_context",
-        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/synchronization",
     ],
@@ -213,7 +212,6 @@ cc_library(
     deps = [
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:statusor",
-        "@com_google_absl//absl/functional:any_invocable",
         "@com_google_absl//absl/log:absl_check",
     ],
 )

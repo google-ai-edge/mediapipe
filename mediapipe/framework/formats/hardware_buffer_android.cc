@@ -35,7 +35,6 @@ HardwareBuffer::HardwareBuffer(HardwareBuffer&& other) {
   spec_ = std::exchange(other.spec_, {});
   ahw_buffer_ = std::exchange(other.ahw_buffer_, nullptr);
   is_locked_ = std::exchange(other.is_locked_, false);
-  release_callbacks_ = std::move(other.release_callbacks_);
 }
 
 HardwareBuffer::HardwareBuffer(const HardwareBufferSpec& spec,
@@ -110,13 +109,6 @@ absl::StatusOr<HardwareBufferSpec> HardwareBuffer::AcquireAHardwareBuffer(
 }
 
 absl::Status HardwareBuffer::ReleaseAHardwareBuffer() {
-  auto callbacks = std::move(release_callbacks_);
-  release_callbacks_.clear();
-  for (auto& callback : callbacks) {
-    if (callback) {
-      std::move(callback)();
-    }
-  }
   if (ahw_buffer_ == nullptr) {
     return absl::OkStatus();
   }
