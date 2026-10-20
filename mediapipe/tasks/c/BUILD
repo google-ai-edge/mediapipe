@@ -32,7 +32,9 @@ exports_files([
 MEDIAPIPE_TASKS_C_CORE_DEPS = [
     "//mediapipe/tasks/c/core:common",
     "//mediapipe/tasks/c/core:mp_logging_c_lib",
-]
+] + select({
+    "//conditions:default": [],
+})
 
 # Flatbuffer C API used by the Python metadata writers of Model Maker. Only part
 # of the monolithic library; the per-domain libraries don't need it.

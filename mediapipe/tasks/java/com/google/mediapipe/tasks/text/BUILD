@@ -138,7 +138,11 @@ mediapipe_jni_binary(
     deps = [
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/text/textproofreader/jni:text_proofreader_jni_lib",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/text/textsummarizer/jni:text_summarizer_jni_lib",
-    ],
+    ] + select({
+        "//mediapipe:android": [
+        ],
+        "//conditions:default": [],
+    }),
 )
 
 android_library(
