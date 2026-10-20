@@ -22,6 +22,7 @@
 #include "absl/types/span.h"
 #include "litert/cc/litert_environment.h"          // from @litert
 #include "litert/cc/litert_environment_options.h"  // from @litert
+#include "litert/cc/litert_model_types.h"          // from @litert
 #include "litert/cc/litert_ranked_tensor_type.h"   // from @litert
 #include "litert/cc/litert_tensor_buffer.h"        // from @litert
 #include "mediapipe/calculators/tensor/litert/litert_service.h"
@@ -48,6 +49,19 @@ absl::Status AreTensorSpecsCompatible(
 // 224, 3].
 bool IsShapeCompatibleWithDynamicDims(const std::vector<int>& model_shape,
                                       const std::vector<int>& input_shape);
+
+// Returns true if any tensor of `signature` only gets its real shape at
+// runtime, in which case its buffers must be sized from the runtime layouts
+// reported by the compiled model instead of the declared tensor types.
+// This is the case for:
+//  - inputs with a dynamic (-1) dimension, when dynamic resizing is enabled,
+//    since the input tensor is resized to the MP input shape on every run;
+//  - outputs declared without a shape (rank 0). Some models end in ops that
+//    compute their output shape at runtime and are serialized with
+//    `shape=[]`; using the declared rank-0 type would collapse such outputs
+//    to a single element.
+absl::StatusOr<bool> HasDynamicDimension(
+    const litert::SimpleSignature& signature, bool enable_dynamic_resize);
 
 // Creates a tensor with the given LiteRt ranked tensor type. The tensor is
 // allocated using the given memory manager. The memory is aligned to the given

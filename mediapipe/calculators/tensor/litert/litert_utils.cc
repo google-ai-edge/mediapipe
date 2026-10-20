@@ -19,6 +19,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -30,6 +31,7 @@
 #include "litert/cc/litert_environment.h"          // from @litert
 #include "litert/cc/litert_environment_options.h"  // from @litert
 #include "litert/cc/litert_macros.h"               // from @litert
+#include "litert/cc/litert_model_types.h"          // from @litert
 #include "litert/cc/litert_ranked_tensor_type.h"   // from @litert
 #include "litert/cc/litert_tensor_buffer.h"        // from @litert
 #include "mediapipe/calculators/tensor/litert/litert_service.h"
@@ -203,6 +205,29 @@ absl::Status AreTensorSpecsCompatible(
                          GetTensorTypeString(litert_tensor_element_type),
                          GetTensorTypeString(input_tensor_type));
   return absl::OkStatus();
+}
+
+absl::StatusOr<bool> HasDynamicDimension(
+    const litert::SimpleSignature& signature, bool enable_dynamic_resize) {
+  if (enable_dynamic_resize) {
+    const size_t num_inputs = signature.InputNames().size();
+    for (size_t i = 0; i < num_inputs; ++i) {
+      LITERT_ASSIGN_OR_RETURN(const litert::RankedTensorType input_type,
+                              signature.InputTensorType(i));
+      if (absl::c_linear_search(input_type.Layout().Dimensions(), -1)) {
+        return true;
+      }
+    }
+  }
+  const size_t num_outputs = signature.OutputNames().size();
+  for (size_t i = 0; i < num_outputs; ++i) {
+    LITERT_ASSIGN_OR_RETURN(const litert::RankedTensorType output_type,
+                            signature.OutputTensorType(i));
+    if (output_type.Layout().Rank() == 0) {
+      return true;
+    }
+  }
+  return false;
 }
 
 absl::StatusOr<Tensor> CreateTensorFromLiteRtRankedTensorType(

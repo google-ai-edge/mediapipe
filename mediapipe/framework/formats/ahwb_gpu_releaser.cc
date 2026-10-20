@@ -26,6 +26,61 @@ bool IsGlSupported() {
 }
 }  // namespace
 
+AhwbGpuReleaser::~AhwbGpuReleaser() {
+  // Delete the cached SSBOs before releasing `to_release_`: releasing an entry
+  // there can drop the last reference to its HardwareBuffer, whose release
+  // callback (see RegisterSsbo()) removes the SSBO from the cache but cannot
+  // delete it anymore, since this runs from ~GlContext(), where the owning
+  // context's weak_ptr has already expired.
+  {
+    absl::MutexLock cache_lock(&ssbo_cache_->mutex);
+    const bool is_owning_context_current =
+        gl_context_ != nullptr ? gl_context_->IsCurrent()
+                               : GlContext::IsAnyContextCurrent();
+    if (is_owning_context_current) {
+      for (const auto& [ahwb, opengl_buffer] : ssbo_cache_->entries) {
+        if (opengl_buffer != GL_INVALID_INDEX) {
+          glDeleteBuffers(1, &opengl_buffer);
+        }
+      }
+    }
+    ssbo_cache_->entries.clear();
+  }
+  // Must not hold `ssbo_cache_->mutex` here: the release callbacks acquire it.
+  absl::MutexLock lock(&mutex_);
+  to_release_.clear();
+}
+
+void AhwbGpuReleaser::RegisterSsbo(HardwareBuffer& ahwb, GLuint opengl_buffer) {
+  AHardwareBuffer* raw_ahwb = ahwb.GetAHardwareBuffer();
+  {
+    absl::MutexLock lock(&ssbo_cache_->mutex);
+    if (!ssbo_cache_->entries.try_emplace(raw_ahwb, opengl_buffer).second) {
+      return;
+    }
+  }
+  std::weak_ptr<GlContext> weak_gl_context = gl_context_ != nullptr
+                                                 ? gl_context_->weak_from_this()
+                                                 : std::weak_ptr<GlContext>();
+  ahwb.AddReleaseCallback([weak_cache = std::weak_ptr<SsboCache>(ssbo_cache_),
+                           weak_gl_context = std::move(weak_gl_context),
+                           raw_ahwb]() {
+    GLuint ssbo_to_delete = GL_INVALID_INDEX;
+    if (auto cache = weak_cache.lock()) {
+      absl::MutexLock lock(&cache->mutex);
+      if (auto node = cache->entries.extract(raw_ahwb); !node.empty()) {
+        ssbo_to_delete = node.mapped();
+      }
+    }
+    if (ssbo_to_delete != GL_INVALID_INDEX) {
+      if (auto gl_ctx = weak_gl_context.lock()) {
+        gl_ctx->RunWithoutWaiting(
+            [ssbo_to_delete]() { glDeleteBuffers(1, &ssbo_to_delete); });
+      }
+    }
+  });
+}
+
 AhwbGpuReleaser::AhwbGpuResources::~AhwbGpuResources() {
   CompleteAndEraseUsages(ahwb_usages_);
   if (ssbo_read_ != nullptr) {

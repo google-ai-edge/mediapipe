@@ -310,6 +310,24 @@ message InferenceCalculatorOptions {
         reserved "serialize_program_cache", "serialization_dir",
             "model_cache_key", "cache_only_compiled_programs";
         optional CacheOptions cache_options = 10;
+
+        // Scheduling priority hint for the GPU inference workload.
+        enum Priority {
+          PRIORITY_DEFAULT = 0;
+          PRIORITY_LOW = 1;
+          PRIORITY_NORMAL = 2;
+          PRIORITY_HIGH = 3;
+        }
+        optional Priority priority = 11 [default = PRIORITY_DEFAULT];
+
+        // Sets whether to convert constant tensors (e.g. weights) on the GPU
+        // instead of the CPU, which speeds up model initialization.
+        optional bool convert_weights_on_gpu = 12 [default = false];
+
+        // Sets whether to prefer texture storage for constant tensors (e.g.
+        // weights). This lets the GPU load them through the texture cache,
+        // which is faster than linear buffer loads on many mobile GPUs.
+        optional bool prefer_texture_weights = 13 [default = false];
       }
       optional Gpu gpu = 9;
 
@@ -367,6 +385,23 @@ message InferenceCalculatorOptions {
       // Which model signature to use. If no signature is specified, the default
       // signature is used.
       optional string signature_key = 12;
+
+      // Defers inference runner creation from Open() to the first packet in
+      // Process(), so that a graph branch which never receives a packet does
+      // not pay for model compilation during graph initialization.
+      //
+      // Off by default because deferring moves initialization failures (bad
+      // model path, delegate init failure) from graph startup to the first
+      // frame. Callers that rely on StartRun() failing in order to fall back
+      // to another backend must leave this disabled.
+      //
+      // Note that a node which receives an *empty* packet still initializes;
+      // only branches whose Process() is never invoked skip the work.
+      //
+      // In open-source builds, the hook that completes the deferred creation
+      // on the first packet is not enabled, so the option is ignored (with a
+      // warning) and the runner is always created in Open().
+      optional bool defer_runner_creation = 13 [default = false];
     }
 
     oneof delegate {

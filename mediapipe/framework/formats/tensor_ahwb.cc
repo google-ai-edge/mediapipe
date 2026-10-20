@@ -229,13 +229,49 @@ absl::Status Tensor::AllocateAHardwareBuffer() const {
 
 bool Tensor::AllocateAhwbMapToSsbo() const {
   if (__builtin_available(android 26, *)) {
+    const bool had_ahwb = ahwb_ != nullptr;
     if (AllocateAHardwareBuffer().ok()) {
-      if (MapAHardwareBufferToGlBuffer(ahwb_->GetAHardwareBuffer(), bytes())
-              .ok()) {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+      auto& releaser = gl_context_->GetCachedAttachment(kAhwbGpuReleaser);
+      GLuint cached_ssbo = releaser.LookupSsbo(ahwb_->GetAHardwareBuffer());
+      if (cached_ssbo != GL_INVALID_INDEX) {
+        opengl_buffer_ = cached_ssbo;
         return true;
       }
+      glGenBuffers(1, &opengl_buffer_);
+      glBindBuffer(GL_SHADER_STORAGE_BUFFER, opengl_buffer_);
+      if (MapAHardwareBufferToGlBuffer(ahwb_->GetAHardwareBuffer(),
+                                       ahwb_->spec().width)
+              .ok()) {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+        releaser.RegisterSsbo(*ahwb_, opengl_buffer_);
+        return true;
+      }
+      glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+      glDeleteBuffers(1, &opengl_buffer_);
+      opengl_buffer_ = GL_INVALID_INDEX;
       // Unable to make OpenGL <-> AHWB binding. Use regular SSBO instead.
+      // If the AHWB existed before this call, it holds the tensor's latest
+      // AHWB or CPU data: while `ahwb_` is set, GetCpuWriteView() writes into
+      // and GetCpuReadView() reads from the AHWB, even if a stale `cpu_buffer_`
+      // is still allocated from an earlier CPU write. Copy that data into host
+      // memory first; otherwise the SSBO fallback in GetOpenGlBufferReadView()
+      // would read from a null or stale `cpu_buffer_`. An AHWB allocated by
+      // this call holds no data, so there is nothing to copy.
+      if (had_ahwb && (valid_ & (kValidAHardwareBuffer | kValidCpu))) {
+        void* src = MapAhwbToCpuRead();
+        ABSL_CHECK(src) << "MapAhwbToCpuRead failed.";
+        // AllocateCpuBuffer() returns early without allocating host memory
+        // while `use_ahwb_` is set; this Tensor is no longer AHWB backed.
+        use_ahwb_ = false;
+        ABSL_CHECK_OK(AllocateCpuBuffer()) << "AllocateCpuBuffer failed.";
+        std::memcpy(cpu_buffer_, src, bytes());
+        ABSL_CHECK_OK(ahwb_->Unlock()) << "Unlock of AHWB failed.";
+        valid_ |= kValidCpu;
+      }
+      valid_ &= ~kValidAHardwareBuffer;
+      write_complete_fence_fd_.Reset();
+      CompleteAndEraseUsages(ahwb_usages_);
+      use_ahwb_ = false;
       ahwb_.reset();
     }
   }
@@ -324,6 +360,9 @@ absl::Status Tensor::ReleaseAhwbStuff() {
   write_complete_fence_fd_.Reset();
   if (__builtin_available(android 26, *)) {
     if (ahwb_) {
+      // opengl_buffer_ is cached in kAhwbGpuReleaser::ssbo_cache_ and owned by
+      // the GlContext attachment, so detach it from this Tensor instance.
+      opengl_buffer_ = GL_INVALID_INDEX;
       const bool gl_operation_maybe_pending =
           ssbo_read_ != 0 || fence_sync_ != EGL_NO_SYNC_KHR;
       if (gl_operation_maybe_pending && gl_context_ == nullptr) {
@@ -336,11 +375,10 @@ absl::Status Tensor::ReleaseAhwbStuff() {
         // Delay release until the GPU usage is finished.
         ABSL_RETURN_IF_ERROR(gl_context_->Run([this]() -> absl::Status {
           auto& releaser = gl_context_->GetCachedAttachment(kAhwbGpuReleaser);
-          return releaser.AddAndFreeUnusedResources(ahwb_, opengl_buffer_,
+          return releaser.AddAndFreeUnusedResources(ahwb_, GL_INVALID_INDEX,
                                                     fence_sync_, ssbo_read_,
                                                     std::move(ahwb_usages_));
         }));
-        opengl_buffer_ = GL_INVALID_INDEX;
 #else
         return absl::InternalError("OpenGL ES 3.1 is not spported.");
 #endif

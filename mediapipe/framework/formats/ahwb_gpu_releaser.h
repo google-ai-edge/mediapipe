@@ -12,6 +12,8 @@
 #include <memory>
 #include <utility>
 
+#include "absl/base/thread_annotations.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/formats/hardware_buffer.h"
@@ -31,6 +33,23 @@ namespace mediapipe {
 // the status of a buffer.
 class AhwbGpuReleaser {
  public:
+  explicit AhwbGpuReleaser(GlContext* gl_context = nullptr)
+      : gl_context_(gl_context), ssbo_cache_(std::make_shared<SsboCache>()) {}
+  ~AhwbGpuReleaser();
+
+  // Note: This method must be called on GPU thread.
+  GLuint LookupSsbo(AHardwareBuffer* ahwb) const {
+    absl::MutexLock lock(&ssbo_cache_->mutex);
+    auto it = ssbo_cache_->entries.find(ahwb);
+    if (it != ssbo_cache_->entries.end()) {
+      return it->second;
+    }
+    return GL_INVALID_INDEX;
+  }
+
+  // Note: This method must be called on GPU thread.
+  void RegisterSsbo(HardwareBuffer& ahwb, GLuint opengl_buffer);
+
   // Note: This method must be called on GPU thread.
   absl::Status AddAndFreeUnusedResources(
       std::shared_ptr<HardwareBuffer> ahwb, GLuint opengl_buffer,
@@ -42,6 +61,12 @@ class AhwbGpuReleaser {
   }
 
  private:
+  struct SsboCache {
+    absl::Mutex mutex;
+    absl::flat_hash_map<AHardwareBuffer*, GLuint> entries
+        ABSL_GUARDED_BY(mutex);
+  };
+
   class AhwbGpuResources {
    public:
     AhwbGpuResources(std::shared_ptr<HardwareBuffer> ahwb, GLuint opengl_buffer,
@@ -76,14 +101,16 @@ class AhwbGpuReleaser {
   absl::Status AddAndFreeUnusedResources(
       std::unique_ptr<AhwbGpuResources> ahwb_gpu_resources);
 
+  GlContext* gl_context_ = nullptr;
   absl::Mutex mutex_;
   std::deque<std::unique_ptr<AhwbGpuResources>> to_release_
       ABSL_GUARDED_BY(mutex_);
+  std::shared_ptr<SsboCache> ssbo_cache_;
 };
 
 inline constexpr GlContext::Attachment<AhwbGpuReleaser> kAhwbGpuReleaser(
-    [](GlContext&) -> GlContext::Attachment<AhwbGpuReleaser>::Ptr {
-      return GlContext::Attachment<AhwbGpuReleaser>::MakePtr();
+    [](GlContext& gl_context) -> GlContext::Attachment<AhwbGpuReleaser>::Ptr {
+      return GlContext::Attachment<AhwbGpuReleaser>::MakePtr(&gl_context);
     });
 
 }  // namespace mediapipe
