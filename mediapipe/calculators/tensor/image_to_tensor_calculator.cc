@@ -98,7 +98,6 @@ class ImageToTensorNodeImpl
     ABSL_RETURN_IF_ERROR([MPPMetalHelper updateContract:&cc.GetGenericContract()
                                    requestGpuAsOptional:true]);
 #else
-
     cc.UseService(kGpuService).Optional();
 #if MEDIAPIPE_USE_WEBGPU
     cc.UseService(kWebGpuService).Optional();
@@ -212,13 +211,16 @@ class ImageToTensorNodeImpl
                                         const Image& image) {
     // Lazy initialization of the GPU or CPU converter.
     if (image.UsesGpu()) {
+#if MEDIAPIPE_DISABLE_GPU
+      return absl::UnimplementedError(
+          "GPU processing is disabled in build flags");
+#else
       if (!params_.is_float_output) {
         return absl::UnimplementedError(
             "ImageToTensorConverter for the input GPU image currently doesn't "
             "support quantization.");
       }
       if (!gpu_converter_) {
-#if !MEDIAPIPE_DISABLE_GPU
 #if MEDIAPIPE_METAL_ENABLED
         ABSL_ASSIGN_OR_RETURN(
             gpu_converter_,
@@ -252,8 +254,8 @@ class ImageToTensorNodeImpl
               "ImageToTensorConverter for the input GPU image is unavailable.");
         }
 #endif  // MEDIAPIPE_METAL_ENABLED
-#endif  // !MEDIAPIPE_DISABLE_GPU
       }
+#endif  // MEDIAPIPE_DISABLE_GPU
     } else {
       if (!cpu_converter_) {
 #if !MEDIAPIPE_DISABLE_OPENCV
