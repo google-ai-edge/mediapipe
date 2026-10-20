@@ -6,6 +6,7 @@
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
+#include <android/hardware_buffer.h>
 
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/gpu/gl_base.h"
@@ -29,9 +30,9 @@ bool IsGlSupported() {
 AhwbGpuReleaser::~AhwbGpuReleaser() {
   // Delete the cached SSBOs before releasing `to_release_`: releasing an entry
   // there can drop the last reference to its HardwareBuffer, whose release
-  // callback (see RegisterSsbo()) removes the SSBO from the cache but cannot
-  // delete it anymore, since this runs from ~GlContext(), where the owning
-  // context's weak_ptr has already expired.
+  // callback (see RegisterSsbo()) cannot delete the SSBO anymore since this
+  // runs from ~GlContext(), where the owning context's weak_ptr has already
+  // expired.
   {
     absl::MutexLock cache_lock(&ssbo_cache_->mutex);
     const bool is_owning_context_current =
@@ -65,6 +66,12 @@ void AhwbGpuReleaser::RegisterSsbo(HardwareBuffer& ahwb, GLuint opengl_buffer) {
   ahwb.AddReleaseCallback([weak_cache = std::weak_ptr<SsboCache>(ssbo_cache_),
                            weak_gl_context = std::move(weak_gl_context),
                            raw_ahwb]() {
+    // Check `weak_gl_context` before extracting from `cache->entries` so that
+    // if `~GlContext()` has started, `~AhwbGpuReleaser()` still deletes it.
+    auto gl_ctx = weak_gl_context.lock();
+    if (!gl_ctx) {
+      return;
+    }
     GLuint ssbo_to_delete = GL_INVALID_INDEX;
     if (auto cache = weak_cache.lock()) {
       absl::MutexLock lock(&cache->mutex);
@@ -73,9 +80,22 @@ void AhwbGpuReleaser::RegisterSsbo(HardwareBuffer& ahwb, GLuint opengl_buffer) {
       }
     }
     if (ssbo_to_delete != GL_INVALID_INDEX) {
-      if (auto gl_ctx = weak_gl_context.lock()) {
-        gl_ctx->RunWithoutWaiting(
-            [ssbo_to_delete]() { glDeleteBuffers(1, &ssbo_to_delete); });
+      // This callback runs in ReleaseAHardwareBuffer() right before
+      // AHardwareBuffer_release(). The SSBO must be deleted on `gl_ctx`
+      // before the last AHardwareBuffer reference is dropped:
+      // - If `gl_ctx` is already current, delete the SSBO synchronously.
+      // - Otherwise, acquire a temporary AHardwareBuffer reference to keep it
+      //   alive until the async deletion runs on `gl_ctx`.
+      if (gl_ctx->IsCurrent()) {
+        glDeleteBuffers(1, &ssbo_to_delete);
+      } else if (__builtin_available(android 26, *)) {
+        AHardwareBuffer_acquire(raw_ahwb);
+        gl_ctx->RunWithoutWaiting([ssbo_to_delete, raw_ahwb]() {
+          glDeleteBuffers(1, &ssbo_to_delete);
+          if (__builtin_available(android 26, *)) {
+            AHardwareBuffer_release(raw_ahwb);
+          }
+        });
       }
     }
   });
@@ -159,8 +179,10 @@ bool AhwbGpuReleaser::AhwbGpuResources::IsSignalled() {
     }
     fence_sync_ = EGL_NO_SYNC_KHR;
   }
-  glDeleteBuffers(1, &opengl_buffer_);
-  opengl_buffer_ = GL_INVALID_INDEX;
+  if (opengl_buffer_ != GL_INVALID_INDEX) {
+    glDeleteBuffers(1, &opengl_buffer_);
+    opengl_buffer_ = GL_INVALID_INDEX;
+  }
   return true;
 }
 

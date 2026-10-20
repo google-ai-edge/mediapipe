@@ -324,6 +324,7 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     private int framesInUse = 0;
     private int bufferPoolSize;
     private int bufferPoolMaxSize;
+    private boolean released = false;
 
     private ExternalTextureRenderer renderer = null;
     private boolean shouldAdjustTimestamps = true;
@@ -458,8 +459,11 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     @Override
     public void releaseGl() {
       setSurfaceTexture(null, 0, 0);
-      while (!framesAvailable.isEmpty()) {
-        teardownFrame(framesAvailable.remove());
+      synchronized (this) {
+        released = true;
+        while (!framesAvailable.isEmpty()) {
+          teardownFrame(framesAvailable.remove());
+        }
       }
 
       internalSurfaceTexture.release();
@@ -523,7 +527,8 @@ public class ExternalTextureConverter implements TextureFrameProducer {
       }
     }
 
-    private static void teardownFrame(AppTextureFrame frame) {
+    private void teardownFrame(AppTextureFrame frame) {
+      waitUntilReleased(frame);
       GLES20.glDeleteTextures(1, new int[] {frame.getTextureName()}, 0);
     }
 
@@ -586,7 +591,6 @@ public class ExternalTextureConverter implements TextureFrameProducer {
           || outputFrame.getHeight() != destinationHeight) {
         // Create anew if size has changed.
         // TODO: waiting for the consumer sync here may not be necessary.
-        waitUntilReleased(outputFrame);
         teardownFrame(outputFrame);
         outputFrame = createFrame();
       } else {
@@ -599,12 +603,18 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     }
 
     protected synchronized void poolFrameReleased(PoolTextureFrame frame) {
+      if (released) {
+        waitUntilReleased(frame, /* gpuSync= */ false);
+        return;
+      }
       framesAvailable.offer(frame);
       framesInUse--;
       int keep = max(bufferPoolSize - framesInUse, 0);
       while (framesAvailable.size() > keep) {
         PoolTextureFrame textureFrameToRemove = framesAvailable.remove();
-        handler.post(() -> teardownFrame(textureFrameToRemove));
+        if (!handler.post(() -> teardownFrame(textureFrameToRemove))) {
+          waitUntilReleased(textureFrameToRemove, /* gpuSync= */ false);
+        }
       }
     }
 
@@ -628,6 +638,10 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     }
 
     private void waitUntilReleased(AppTextureFrame frame) {
+      waitUntilReleased(frame, /* gpuSync= */ true);
+    }
+
+    private void waitUntilReleased(AppTextureFrame frame, boolean gpuSync) {
       try {
         if (Log.isLoggable(TAG, Log.VERBOSE)) {
           Log.v(
@@ -639,7 +653,11 @@ public class ExternalTextureConverter implements TextureFrameProducer {
                   frame.getHeight(),
                   frame.getTimestamp()));
         }
-        frame.waitUntilReleasedWithGpuSync();
+        if (gpuSync) {
+          frame.waitUntilReleasedWithGpuSync();
+        } else {
+          frame.waitUntilReleased();
+        }
         if (Log.isLoggable(TAG, Log.VERBOSE)) {
           Log.v(
               TAG,

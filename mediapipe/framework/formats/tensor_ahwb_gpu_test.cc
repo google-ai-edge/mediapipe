@@ -7,6 +7,7 @@
 #include <cstdint>
 
 #include "absl/algorithm/container.h"
+#include "absl/synchronization/notification.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/formats/tensor/views/data_types.h"
 #include "mediapipe/framework/memory_manager.h"
@@ -559,6 +560,113 @@ TEST_F(TensorAhwbGpuTest, TestGetOpenGlTextureReadViewAhwbFromCpu) {
         ReadGlTextureView(texture_view, kWidth, kHeight);
     EXPECT_THAT(output, testing::Pointwise(testing::FloatEq(), reference));
   });
+}
+
+TEST_F(TensorAhwbGpuTest,
+       TestDeletesSsboSynchronouslyBeforeReleasingAhwbOnOwningGlThread) {
+  constexpr size_t kNumElements = 20;
+  auto tensor = std::make_unique<Tensor>(Tensor::ElementType::kFloat32,
+                                         Tensor::Shape({kNumElements}));
+  {
+    auto view = tensor->GetAHardwareBufferWriteView();
+    ASSERT_NE(view.handle(), nullptr);
+  }
+
+  GLuint ssbo_name = 0;
+  RunInGlContext([&] {
+    auto ssbo_view = tensor->GetOpenGlBufferWriteView();
+    ssbo_name = ssbo_view.name();
+    ASSERT_GT(ssbo_name, 0u);
+    EXPECT_EQ(glIsBuffer(ssbo_name), GL_TRUE);
+  });
+
+  bool ssbo_deleted_before_ahwb_release = false;
+  {
+    auto view = tensor->GetAHardwareBufferReadView();
+    view.AddHardwareBufferReleaseCallback([&]() {
+      ssbo_deleted_before_ahwb_release = (glIsBuffer(ssbo_name) == GL_FALSE);
+    });
+  }
+
+  RunInGlContext([&] {
+    tensor.reset();
+    EXPECT_EQ(glIsBuffer(ssbo_name), GL_FALSE);
+  });
+  EXPECT_TRUE(ssbo_deleted_before_ahwb_release);
+}
+
+TEST_F(TensorAhwbGpuTest,
+       TestDeletesSsboWithRetainedAhwbWhenReleasedOffGlThread) {
+  constexpr size_t kNumElements = 20;
+  auto tensor = std::make_unique<Tensor>(Tensor::ElementType::kFloat32,
+                                         Tensor::Shape({kNumElements}));
+  {
+    auto view = tensor->GetAHardwareBufferWriteView();
+    ASSERT_NE(view.handle(), nullptr);
+  }
+
+  GLuint ssbo_name = 0;
+  RunInGlContext([&] {
+    auto ssbo_view = tensor->GetOpenGlBufferWriteView();
+    ssbo_name = ssbo_view.name();
+    ASSERT_GT(ssbo_name, 0u);
+    EXPECT_EQ(glIsBuffer(ssbo_name), GL_TRUE);
+  });
+
+  bool ahwb_release_callback_ran = false;
+  {
+    auto view = tensor->GetAHardwareBufferReadView();
+    view.AddHardwareBufferReleaseCallback(
+        [&]() { ahwb_release_callback_ran = true; });
+  }
+
+  absl::Notification gl_thread_blocked;
+  absl::Notification unblock_gl_thread;
+  bool ssbo_alive_before_queued_delete = false;
+  helper_.GetGlContext().RunWithoutWaiting([&]() {
+    gl_thread_blocked.Notify();
+    unblock_gl_thread.WaitForNotification();
+    ssbo_alive_before_queued_delete = (glIsBuffer(ssbo_name) == GL_TRUE);
+  });
+  gl_thread_blocked.WaitForNotification();
+
+  tensor.reset();
+  EXPECT_TRUE(ahwb_release_callback_ran);
+
+  unblock_gl_thread.Notify();
+  RunInGlContext([&] { EXPECT_EQ(glIsBuffer(ssbo_name), GL_FALSE); });
+  EXPECT_TRUE(ssbo_alive_before_queued_delete);
+}
+
+TEST_F(TensorAhwbGpuTest,
+       TestDeletesSsboOnGlThreadWhenReleasedWithSignaledReadFence) {
+  constexpr size_t kNumElements = 20;
+  auto tensor = std::make_unique<Tensor>(Tensor::ElementType::kFloat32,
+                                         Tensor::Shape({kNumElements}));
+  {
+    auto view = tensor->GetAHardwareBufferWriteView();
+    ASSERT_NE(view.handle(), nullptr);
+  }
+
+  bool ssbo_deleted_before_ahwb_release = false;
+  GLuint ssbo_name = 0;
+  {
+    auto view = tensor->GetAHardwareBufferReadView();
+    view.AddHardwareBufferReleaseCallback([&]() {
+      ssbo_deleted_before_ahwb_release = (glIsBuffer(ssbo_name) == GL_FALSE);
+    });
+  }
+
+  RunInGlContext([&] {
+    auto ssbo_view = tensor->GetOpenGlBufferReadView();
+    ssbo_name = ssbo_view.name();
+    ASSERT_GT(ssbo_name, 0u);
+    EXPECT_EQ(glIsBuffer(ssbo_name), GL_TRUE);
+    glFinish();
+  });
+
+  tensor.reset();
+  EXPECT_TRUE(ssbo_deleted_before_ahwb_release);
 }
 
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31

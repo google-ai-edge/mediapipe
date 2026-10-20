@@ -375,9 +375,9 @@ absl::Status Tensor::ReleaseAhwbStuff() {
         // Delay release until the GPU usage is finished.
         ABSL_RETURN_IF_ERROR(gl_context_->Run([this]() -> absl::Status {
           auto& releaser = gl_context_->GetCachedAttachment(kAhwbGpuReleaser);
-          return releaser.AddAndFreeUnusedResources(ahwb_, GL_INVALID_INDEX,
-                                                    fence_sync_, ssbo_read_,
-                                                    std::move(ahwb_usages_));
+          return releaser.AddAndFreeUnusedResources(
+              std::move(ahwb_), GL_INVALID_INDEX, fence_sync_, ssbo_read_,
+              std::move(ahwb_usages_));
         }));
 #else
         return absl::InternalError("OpenGL ES 3.1 is not spported.");
