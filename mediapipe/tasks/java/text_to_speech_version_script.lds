@@ -1,9 +1,0 @@
-VERS_1.0 {
-  # Export JNI symbols.
-  global:
-    Java_com_google_mediapipe_tasks_audio_texttospeech_MediaPipeTtsJni_*;
-
-  # Hide everything else.
-  local:
-    *;
-};

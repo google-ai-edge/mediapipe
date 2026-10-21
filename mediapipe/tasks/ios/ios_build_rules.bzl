@@ -96,6 +96,7 @@ def mediapipe_symbol_rename_map(
     : > "$$WORK_DIR/raw_syms.txt"
     for archive in $$(find "$$WORK_DIR" -path "$$WORK_DIR/in_*" -type f \\
         \\( -name "*.a" -o -path "*.framework/*" \\) \\
+        ! -path "*.swiftmodule/*" ! -name "*.swift*" ! -name "*.abi.json" \\
         ! -name "*.plist" ! -name "*.h" ! -name "*.modulemap" ! -name "*.xcprivacy"); do
       "$$NM_BIN" --arch=arm64 --defined-only -g "$$archive" \\
         2>/dev/null >> "$$WORK_DIR/raw_syms.txt" || true
@@ -103,6 +104,8 @@ def mediapipe_symbol_rename_map(
     awk 'NF==3 {{print $$3}}' "$$WORK_DIR/raw_syms.txt" \\
       | LC_ALL=C sort -u \\
       | awk '
+        $$0 ~ /^_\\$$[sS]/ {{ next }}
+        $$0 ~ /^___?swift/ {{ next }}
         $$0 ~ /^_?MPP/ {{ next }}
         $$0 ~ /^_Mp[A-Z]/ {{ next }}
         $$0 ~ /^_OBJC_(CLASS|METACLASS|IVAR)_\\$$_MPP/ {{ next }}
@@ -210,6 +213,7 @@ def mediapipe_static_xcframework(
     unzip -q $(execpath :{raw_name}) -d "$$OUT_DIR"
     for archive in $$(find "$$OUT_DIR" -type f \\
         \\( -name "*.a" -o -path "*.framework/*" \\) \\
+        ! -path "*.swiftmodule/*" ! -name "*.swift*" ! -name "*.abi.json" \\
         ! -name "*.plist" ! -name "*.h" ! -name "*.modulemap" ! -name "*.xcprivacy"); do
       "$$OBJCOPY_BIN" --redefine-syms="$$RENAME_MAP" \\
         "$$archive" "$$archive.renamed"

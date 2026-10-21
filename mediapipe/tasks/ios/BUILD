@@ -273,32 +273,34 @@ strip_api_include_path_prefix(
     ],
 )
 
+MEDIAPIPE_TASKS_AUDIO_PUBLIC_HDRS = [
+    ":MPPAudioClassifier.h",
+    ":MPPAudioClassifierOptions.h",
+    ":MPPAudioClassifierResult.h",
+    ":MPPAudioData.h",
+    ":MPPAudioDataFormat.h",
+    ":MPPAudioRecord.h",
+    ":MPPAudioRunningMode.h",
+    ":MPPBaseOptions.h",
+    ":MPPCategory.h",
+    ":MPPClassificationResult.h",
+    ":MPPCommon.h",
+    ":MPPCoreRunningMode.h",
+    ":MPPEmbedding.h",
+    ":MPPEmbeddingResult.h",
+    ":MPPFloatBuffer.h",
+    ":MPPTaskOptions.h",
+    ":MPPTaskPart.h",
+    ":MPPTaskResult.h",
+]
+
 mediapipe_static_xcframework(
     name = "MediaPipeTasksAudio_framework",
     bundle_format = "framework",
     bundle_id = "com.google.mediapipe.tasks.audio",
     bundle_name = "MediaPipeTasksAudio",
     infoplists = [":empty.plist"],
-    public_hdrs = [
-        ":MPPAudioClassifier.h",
-        ":MPPAudioClassifierOptions.h",
-        ":MPPAudioClassifierResult.h",
-        ":MPPAudioData.h",
-        ":MPPAudioDataFormat.h",
-        ":MPPAudioRecord.h",
-        ":MPPAudioRunningMode.h",
-        ":MPPBaseOptions.h",
-        ":MPPCategory.h",
-        ":MPPClassificationResult.h",
-        ":MPPCommon.h",
-        ":MPPCoreRunningMode.h",
-        ":MPPEmbedding.h",
-        ":MPPEmbeddingResult.h",
-        ":MPPFloatBuffer.h",
-        ":MPPTaskOptions.h",
-        ":MPPTaskPart.h",
-        ":MPPTaskResult.h",
-    ],
+    public_hdrs = MEDIAPIPE_TASKS_AUDIO_PUBLIC_HDRS,
 )
 
 mediapipe_static_xcframework(

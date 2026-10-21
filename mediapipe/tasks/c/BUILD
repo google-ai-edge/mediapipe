@@ -69,6 +69,8 @@ MEDIAPIPE_TASKS_C_TEXT_DEPS = [
 MEDIAPIPE_TASKS_C_AUDIO_DEPS = [
     "//mediapipe/tasks/c/audio/audio_classifier:audio_classifier_c_lib",
     "//mediapipe/tasks/c/audio/audio_embedder:audio_embedder_c_lib",
+    "//mediapipe/tasks/c/audio/audio_transcriber:audio_transcriber_hdr",
+    "//mediapipe/tasks/c/audio/text_to_speech:text_to_speech_hdr",
 ]
 
 MEDIAPIPE_TASKS_C_DECISION_DEPS = [
