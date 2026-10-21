@@ -18,6 +18,8 @@ import 'jasmine';
 
 // Placeholder for internal dependency on encodeByteArray
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
+import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
+import {TensorsToSegmentationCalculatorOptions} from '../../../../tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator_pb';
 import {
   addJasmineCustomFloatEqualityTester,
   createSpyWasmModule,
@@ -26,7 +28,12 @@ import {
   verifyGraph,
 } from '../../../../tasks/web/core/task_runner_test_utils';
 import {MPMask} from '../../../../tasks/web/vision/core/mask';
+import {LabelMapItem} from '../../../../util/label_map_pb';
 import {WasmImage} from '../../../../web/graph_runner/graph_runner_image_lib';
+import {
+  CALCULATOR_GRAPH_CONFIG_LISTENER_NAME,
+  SimpleListener,
+} from '../../../../web/graph_runner/graph_runner';
 
 import {ImageSegmenter} from './image_segmenter';
 import type {ImageSegmenterOptions} from './image_segmenter_options';
@@ -362,5 +369,57 @@ describe('ImageSegmenter', () => {
     const result = imageSegmenter.segment({} as HTMLImageElement);
     expect(result.confidenceMasks![0]).toBeInstanceOf(MPMask);
     result.close();
+  });
+
+  describe('getLabels() and getDisplayNames()', () => {
+    function graphConfigWithLabels(
+        entries: Array<{name: string; displayName?: string}>): Uint8Array {
+      const graph = new CalculatorGraphConfig();
+      const node = new CalculatorGraphConfig.Node();
+      node.setName('mediapipe.tasks.TensorsToSegmentationCalculator');
+
+      const labelOptions = new TensorsToSegmentationCalculatorOptions();
+      entries.forEach((entry, index) => {
+        const item = new LabelMapItem();
+        item.setName(entry.name);
+        if (entry.displayName !== undefined) {
+          item.setDisplayName(entry.displayName);
+        }
+        labelOptions.getLabelItemsMap().set(index, item);
+      });
+
+      const calculatorOptions = new CalculatorOptions();
+      calculatorOptions.setExtension(
+          TensorsToSegmentationCalculatorOptions.ext, labelOptions);
+      node.setOptions(calculatorOptions);
+      graph.addNode(node);
+      return graph.serializeBinary();
+    }
+
+    async function loadLabelMap(
+        entries: Array<{name: string; displayName?: string}>): Promise<void> {
+      imageSegmenter.fakeWasmModule._getGraphConfig.and.callFake(() => {
+        (imageSegmenter.fakeWasmModule.simpleListeners![
+           CALCULATOR_GRAPH_CONFIG_LISTENER_NAME
+         ] as SimpleListener<Uint8Array>)(graphConfigWithLabels(entries), 0);
+      });
+      await imageSegmenter.setOptions(
+          {baseOptions: {modelAssetBuffer: new Uint8Array([1])}});
+    }
+
+    it('returns empty lists when the model has no labelmap', () => {
+      expect(imageSegmenter.getLabels()).toEqual([]);
+      expect(imageSegmenter.getDisplayNames()).toEqual([]);
+    });
+
+    it('returns labels and display names from the model metadata', async () => {
+      await loadLabelMap([
+        {name: 'background', displayName: 'fondo'},
+        {name: 'person', displayName: 'persona'},
+      ]);
+
+      expect(imageSegmenter.getLabels()).toEqual(['background', 'person']);
+      expect(imageSegmenter.getDisplayNames()).toEqual(['fondo', 'persona']);
+    });
   });
 });
