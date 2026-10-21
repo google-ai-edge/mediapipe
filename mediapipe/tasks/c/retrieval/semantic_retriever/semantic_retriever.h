@@ -19,6 +19,7 @@ limitations under the License.
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/retrieval/universal_embedder/universal_embedder.h"
 #include "mediapipe/tasks/c/text/text_embedder/text_embedder.h"
@@ -99,6 +100,9 @@ enum MpChunkingMode {
 
 // The options for configuring a MediaPipe SemanticRetriever task.
 struct MpSemanticRetrieverOptions {
+  // Base options for configuring MediaPipe Tasks, such as telemetry options.
+  struct MpBaseOptions base_options;
+
   // Path to the SQLite database file. If empty, an in-memory database is used.
   const char* database_path;
 

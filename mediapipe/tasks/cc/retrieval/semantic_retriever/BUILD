@@ -205,6 +205,7 @@ cc_library(
         ":memory_store",
         ":text_chunker",
         "//mediapipe/framework:timestamp",
+        "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core:embedding_provider",
         "//mediapipe/tasks/cc/core:running_mode",
         "//mediapipe/tasks/cc/core:tasks_logging_factory",  # build_cleaner: keep

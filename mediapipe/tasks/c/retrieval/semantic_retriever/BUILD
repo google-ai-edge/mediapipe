@@ -24,6 +24,8 @@ SEMANTIC_RETRIEVER_DEPS = [
     "@com_google_absl//absl/status:status_macros",
     "@com_google_absl//absl/status:statusor",
     "@com_google_absl//absl/strings",
+    "//mediapipe/tasks/c/core:base_options",
+    "//mediapipe/tasks/c/core:base_options_converter",
     "//mediapipe/tasks/c/core:mp_status",
     "//mediapipe/tasks/c/core:mp_status_converter",
     "//mediapipe/tasks/c/core:common",

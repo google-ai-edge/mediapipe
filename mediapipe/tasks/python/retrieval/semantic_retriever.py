@@ -18,6 +18,8 @@ import ctypes
 import dataclasses
 from typing import Any, Dict, List, Optional, Union
 
+from mediapipe.tasks.python.core import base_options as base_options_module
+from mediapipe.tasks.python.core import base_options_c as base_options_c_module
 from mediapipe.tasks.python.core import mediapipe_c_bindings
 from mediapipe.tasks.python.core import mediapipe_c_utils
 from mediapipe.tasks.python.core import serial_dispatcher
@@ -57,6 +59,7 @@ class _MpSemanticRetrieverOptionsC(ctypes.Structure):
   """C struct for MpSemanticRetrieverOptions."""
 
   _fields_ = [
+      ('base_options', base_options_c_module.MpBaseOptionsC),
       ('database_path', ctypes.c_char_p),
       ('embedding_dimension', ctypes.c_int),
       ('embedder', ctypes.c_void_p),
@@ -282,6 +285,7 @@ class SemanticRetrieverOptions:
   def to_ctypes(self) -> _MpSemanticRetrieverOptionsC:
     """Generates a ctypes MpSemanticRetrieverOptionsC object."""
     return _MpSemanticRetrieverOptionsC(
+        base_options=base_options_module.BaseOptions().to_ctypes(),
         database_path=self.database_path.encode('utf-8')
         if self.database_path
         else None,

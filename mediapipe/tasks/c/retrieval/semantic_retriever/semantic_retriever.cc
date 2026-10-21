@@ -29,6 +29,7 @@ limitations under the License.
 #include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "mediapipe/tasks/c/core/base_options_converter.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/core/mp_status_converter.h"
 #include "mediapipe/tasks/c/retrieval/universal_embedder/universal_embedder_internal.h"
@@ -186,6 +187,8 @@ absl::Status CppSemanticRetrieverCreate(
                                            : kDefaultEmbeddingDimension)));
 
   ::mediapipe::tasks::retrieval::SemanticRetrieverComponents components;
+  ::mediapipe::tasks::c::core::CppConvertToBaseOptions(
+      options.base_options, &components.base_options);
   components.memory_store = std::move(memory_store);
   components.embedding_provider = std::move(embedding_provider);
 

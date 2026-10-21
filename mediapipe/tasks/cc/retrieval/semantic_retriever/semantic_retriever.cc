@@ -93,7 +93,13 @@ absl::StatusOr<std::unique_ptr<SemanticRetriever>> SemanticRetriever::Create(
 
   auto tasks_logger = core::logging::CreateTasksLogger(
       {.task_name = "SemanticRetriever",
-       .task_running_mode = core::RunningMode::kUnspecified});
+       .task_running_mode = core::RunningMode::kUnspecified,
+       .host_environment = components.base_options.host_environment,
+       .host_system = components.base_options.host_system,
+       .host_version = components.base_options.host_version,
+       .app_id = components.base_options.app_id,
+       .app_version = components.base_options.app_version,
+       .ca_bundle_path = components.base_options.ca_bundle_path});
   tasks_logger->LogSessionStart();
 
   std::unique_ptr<TextChunker> text_chunker =

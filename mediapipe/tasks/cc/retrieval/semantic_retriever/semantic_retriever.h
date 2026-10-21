@@ -24,6 +24,7 @@ limitations under the License.
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/embedding_provider.h"
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "mediapipe/tasks/cc/retrieval/semantic_retriever/memory_store.h"
@@ -33,6 +34,9 @@ namespace mediapipe::tasks::retrieval {
 
 // Components required to construct a SemanticRetriever instance.
 struct SemanticRetrieverComponents {
+  // Base options for configuring MediaPipe Tasks, such as telemetry options.
+  core::BaseOptions base_options;
+
   // The data store used to save, retrieve, and delete memory records. Must not
   // be null.
   std::unique_ptr<MemoryStore> memory_store;
