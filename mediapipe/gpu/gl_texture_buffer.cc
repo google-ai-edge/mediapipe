@@ -140,8 +140,11 @@ bool GlTextureBuffer::CreateInternal(const void* data, int alignment) {
   if (info.gl_internal_format == GL_RGBA16F &&
       context->GetGlVersion() != GlVersion::kGLES2 &&
       SymbolAvailable(&glTexStorage2D)) {
-    ABSL_CHECK(data == nullptr) << "unimplemented";
     glTexStorage2D(target_, 1, info.gl_internal_format, width_, height_);
+    if (data != nullptr) {
+      glTexSubImage2D(target_, 0 /* level */, 0 /* xoffset */, 0 /* yoffset */,
+                      width_, height_, info.gl_format, info.gl_type, data);
+    }
   } else if (info.immutable) {
     ABSL_CHECK(SymbolAvailable(&glTexStorage2D) &&
                context->GetGlVersion() != GlVersion::kGLES2)

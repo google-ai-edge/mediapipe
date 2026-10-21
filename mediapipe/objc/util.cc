@@ -284,7 +284,20 @@ CVReturn CreateCVPixelBufferWithoutPool(int width, int height, OSType cv_format,
   //
   // TODO: verify if we can use kIOSurfaceBytesPerRow to force
   // CoreVideo to give us contiguous data.
-  size_t bytes_per_row = width * 4;
+  size_t bytes_per_pixel = 4;
+  switch (cv_format) {
+    case kCVPixelFormatType_64RGBAHalf:
+    case kCVPixelFormatType_TwoComponent32Float:
+      bytes_per_pixel = 8;
+      break;
+    case kCVPixelFormatType_128RGBAFloat:
+      bytes_per_pixel = 16;
+      break;
+    default:
+      bytes_per_pixel = 4;
+      break;
+  }
+  size_t bytes_per_row = width * bytes_per_pixel;
   void* data = malloc(bytes_per_row * height);
   return CVPixelBufferCreateWithBytes(
       kCFAllocatorDefault, width, height, cv_format, data, bytes_per_row,
@@ -396,6 +409,18 @@ absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferForImageFrame(
       pixel_format = kCVPixelFormatType_128RGBAFloat;
       break;
 
+    case mediapipe::ImageFormat::VEC16F1:
+      pixel_format = kCVPixelFormatType_OneComponent16Half;
+      break;
+
+    case mediapipe::ImageFormat::VEC16F2:
+      pixel_format = kCVPixelFormatType_TwoComponent16Half;
+      break;
+
+    case mediapipe::ImageFormat::VEC16F4:
+      pixel_format = kCVPixelFormatType_64RGBAHalf;
+      break;
+
     case mediapipe::ImageFormat::SRGB:
       return ::mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
              << "Unsupported ImageFrame format: SRGB. MacOS/iOS GPU "
@@ -479,6 +504,18 @@ absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferCopyingImageFrame(
 
     case mediapipe::ImageFormat::VEC32F4:
       pixel_format = kCVPixelFormatType_128RGBAFloat;
+      break;
+
+    case mediapipe::ImageFormat::VEC16F1:
+      pixel_format = kCVPixelFormatType_OneComponent16Half;
+      break;
+
+    case mediapipe::ImageFormat::VEC16F2:
+      pixel_format = kCVPixelFormatType_TwoComponent16Half;
+      break;
+
+    case mediapipe::ImageFormat::VEC16F4:
+      pixel_format = kCVPixelFormatType_64RGBAHalf;
       break;
 
     default:
@@ -654,6 +691,18 @@ std::unique_ptr<mediapipe::ImageFrame> CreateImageFrameForCVPixelBuffer(
 
     case kCVPixelFormatType_OneComponent32Float:
       image_format = mediapipe::ImageFormat::VEC32F1;
+      break;
+
+    case kCVPixelFormatType_OneComponent16Half:
+      image_format = mediapipe::ImageFormat::VEC16F1;
+      break;
+
+    case kCVPixelFormatType_TwoComponent16Half:
+      image_format = mediapipe::ImageFormat::VEC16F2;
+      break;
+
+    case kCVPixelFormatType_64RGBAHalf:
+      image_format = mediapipe::ImageFormat::VEC16F4;
       break;
 
     default: {
