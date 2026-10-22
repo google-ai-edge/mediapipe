@@ -242,10 +242,17 @@ message InferenceCalculatorOptions {
 
       // LiteRt::Gpu Accelerator.
       message Gpu {
+        // Calculation precision used by the GPU accelerator.
         enum Precision {
+          // Precision is chosen by the accelerator. Typically FP16 if the GPU
+          // supports it, since it is faster and uses less memory.
           DEFAULT = 0;
           FP16 = 1;
           FP32 = 2;
+          // FP16 storage and arithmetic with FP32 accumulation for
+          // convolution-like operations. Trades a little performance for better
+          // accuracy compared to plain FP16.
+          FP16_WITH_FP32_ACCUM = 3;
         }
         optional Precision precision = 1 [default = DEFAULT];
         // Enables sharing of constant tensors (e.g. weights) between different
@@ -305,6 +312,22 @@ message InferenceCalculatorOptions {
           // cache_only_compiled_programs = false for Metal).
           // If false, full GPU model graph and serialized data will be cached.
           optional bool cache_only_compiled_programs = 4 [default = false];
+          // File descriptor to read and write the program cache from. If set,
+          // it takes precedence over serialization_dir + model_cache_key.
+          // The file descriptor must stay open for the lifetime of the
+          // calculator.
+          optional int32 program_cache_fd = 5;
+          // File descriptor to read and write the weight cache from. If set,
+          // it takes precedence over serialization_dir + model_cache_key.
+          // The file descriptor must stay open for the lifetime of the
+          // calculator.
+          optional int32 weight_cache_fd = 6;
+          // If true, immutable external tensors (see
+          // enable_constant_tensors_sharing) are serialized as well. This
+          // removes the weight rearrangement done during initialization and
+          // therefore reduces warm start-up time, at the cost of a larger
+          // cache. By default only non-external tensors are serialized.
+          optional bool serialize_external_tensors = 7 [default = false];
         }
         reserved 6 to 9;
         reserved "serialize_program_cache", "serialization_dir",
@@ -328,6 +351,119 @@ message InferenceCalculatorOptions {
         // weights). This lets the GPU load them through the texture cache,
         // which is faster than linear buffer loads on many mobile GPUs.
         optional bool prefer_texture_weights = 13 [default = false];
+
+        // Enforces capping inf/-inf to the max float values for the softmax
+        // input and padding.
+        optional bool enable_infinite_float_capping = 14;
+
+        // Runs the GPU accelerator in benchmark mode, which disables
+        // optimizations that are not needed for benchmarking.
+        optional bool benchmark_mode = 15;
+
+        // Enables dynamic range quantization of the input tensor for large
+        // fully connected and convolution operations, if the device supports
+        // it. This results in accuracy loss (inputs are quantized to 8 bits)
+        // and increases initialization time, since extra constant tensors are
+        // calculated.
+        // Requires enable_constant_tensors_sharing to be true.
+        optional bool allow_src_quantized_fc_conv_ops = 16;
+
+        // Storage type used for GPU tensors.
+        enum BufferStorageType {
+          // The accelerator picks the fastest storage type for the device.
+          BUFFER_STORAGE_TYPE_UNSPECIFIED = 0;
+          // Forces buffer storage. On devices which would default to
+          // TEXTURE_2D (non-Apple devices) this reduces memory consumption at
+          // the cost of latency.
+          BUFFER_STORAGE_TYPE_BUFFER = 1;
+          BUFFER_STORAGE_TYPE_TEXTURE_2D = 2;
+        }
+        optional BufferStorageType buffer_storage_type = 17;
+
+        // Prefix patterns of tensor names which should use buffer storage,
+        // independently of buffer_storage_type.
+        //
+        // WARNING: This option is experimental and subject to change.
+        repeated string buffer_storage_tensor_patterns = 18;
+
+        // If true, input and output tensors are used directly as external
+        // tensors. External tensors are in PHWC4 format, so no additional
+        // conversion is needed. If false (default), GPU input and output
+        // tensors are converted to PHWC4 format, which performs slightly
+        // better and is easier to use.
+        //
+        // WARNING: This option is experimental and subject to change.
+        optional bool external_tensors_mode = 19;
+
+        // Prefix patterns of tensor names which are bound as external tensors
+        // even if external_tensors_mode is false. This is useful for state
+        // tensors (e.g. "kv_cache_") to avoid layout conversions.
+        repeated string external_tensor_patterns = 20;
+
+        // If false, disables madvising the original tensor memory of shared
+        // constant tensors after use. Only relevant if
+        // enable_constant_tensors_sharing is true, where madvising is enabled
+        // by default.
+        optional bool madvise_original_shared_tensors = 21;
+
+        // If true, initialization blocks until the weight conversion on the GPU
+        // has completed. Only meaningful if convert_weights_on_gpu is true.
+        optional bool wait_for_weights_conversion_complete = 22;
+
+        // WebGPU and Vulkan only.
+        //
+        // Number of steps to prepare command buffers in advance:
+        //   0 (default): No command buffer preparation in advance. Must be used
+        //     if GPU resource bindings change during inference.
+        //   1: Prepare one step ahead, assuming that all GPU resource bindings
+        //     are the same as in the previous step.
+        //   2: Prepare two steps ahead, e.g. for LLM inference which swaps
+        //     input and output KV caches.
+        optional int32 num_steps_of_command_buffer_preparations = 23;
+
+        // Options which only apply to a specific GPU backend. They are ignored
+        // if another backend is used.
+
+        message OpenCl {
+          // If true, the accelerator waits for all enqueued commands to
+          // complete after each invoke. This fixes a known quality issue on
+          // some AMD and Mali GPUs, at the cost of roughly 10% performance.
+          optional bool hint_waiting_for_completion = 1;
+          // If > 0, specifies the kernel (op) batch size for a flush.
+          optional int32 kernel_batch_size = 2;
+        }
+        optional OpenCl opencl = 28;
+
+        message WebGpu {
+          // Preferred WebGPU device name substring, case-insensitive. If set,
+          // the adapter whose device name contains this substring is chosen.
+          // Otherwise the device is determined by other factors.
+          optional string preferred_device_substr = 1;
+          // Number of threads used for WebGPU upload.
+          optional int32 num_threads_to_upload = 2;
+          // Number of threads used for WebGPU kernel shader compilation.
+          optional int32 num_threads_to_compile = 3;
+        }
+        optional WebGpu webgpu = 29;
+
+        message Vulkan {
+          // If true, kernel shader optimization is disabled, which reduces
+          // initialization time.
+          optional bool disable_shader_optimization = 1;
+        }
+        optional Vulkan vulkan = 30;
+
+        message Metal {
+          // If true, Metal argument buffers are used, which reduces the number
+          // of buffers bound to the argument table. This can be required for
+          // models (e.g. some LLMs) which exhaust the available buffer binding
+          // slots. Requires a Tier 2 GPU.
+          optional bool use_argument_buffers = 1;
+          // If true, MTLResidencySet is used to prevent memory swapping.
+          // Requires macOS 15.0+ or iOS 18.0+.
+          optional bool enable_residency_set = 2;
+        }
+        optional Metal metal = 31;
       }
       optional Gpu gpu = 9;
 

@@ -242,6 +242,25 @@ TEST(BaseOptionsTest, LiteRtGpuSurvivesProtoRoundTrip) {
   EXPECT_FALSE(round_tripped.acceleration().litert().has_cpu());
   EXPECT_FALSE(round_tripped.acceleration().has_gpu());
   EXPECT_FALSE(round_tripped.acceleration().has_tflite());
+
+  proto::BaseOptions fp16_accum_proto;
+  fp16_accum_proto.mutable_acceleration()
+      ->mutable_litert()
+      ->mutable_gpu()
+      ->set_precision(mediapipe::InferenceCalculatorOptions::Delegate::LiteRt::
+                          Gpu::FP16_WITH_FP32_ACCUM);
+  BaseOptions fp16_accum_options =
+      ConvertProtoToBaseOptions(std::move(fp16_accum_proto));
+  ASSERT_TRUE(fp16_accum_options.delegate_options.has_value());
+  EXPECT_EQ(
+      std::get<BaseOptions::GpuOptions>(*fp16_accum_options.delegate_options)
+          .precision,
+      BaseOptions::GpuOptions::Precision::FP16_WITH_FP32_ACCUM);
+  proto::BaseOptions fp16_accum_round_tripped =
+      ConvertBaseOptionsToProto(&fp16_accum_options, /*use_litert=*/true);
+  EXPECT_EQ(fp16_accum_round_tripped.acceleration().litert().gpu().precision(),
+            mediapipe::InferenceCalculatorOptions::Delegate::LiteRt::Gpu::
+                FP16_WITH_FP32_ACCUM);
 }
 
 TEST(BaseOptionsTest, LiteRtNpuSurvivesProtoRoundTrip) {

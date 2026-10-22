@@ -442,6 +442,11 @@ InferenceRunnerLiteRt::Create(
         case InferenceCalculatorOptions::Delegate::LiteRt::Gpu::FP32:
           gpu_options.SetPrecision(litert::GpuOptions::Precision::kFp32);
           break;
+        case InferenceCalculatorOptions::Delegate::LiteRt::Gpu::
+            FP16_WITH_FP32_ACCUM:
+          gpu_options.SetPrecision(
+              litert::GpuOptions::Precision::kFp16WithFp32Accum);
+          break;
         case InferenceCalculatorOptions::Delegate::LiteRt::Gpu::DEFAULT:
           gpu_options.SetPrecision(litert::GpuOptions::Precision::kDefault);
           break;
@@ -527,6 +532,70 @@ InferenceRunnerLiteRt::Create(
         LITERT_RETURN_IF_ERROR(gpu_options.CacheCompiledProgramsOnly(
             cache.cache_only_compiled_programs()));
       }
+      if (cache.has_program_cache_fd()) {
+        LITERT_RETURN_IF_ERROR(
+            gpu_options.SetProgramCacheFd(cache.program_cache_fd()));
+      }
+      if (cache.has_weight_cache_fd()) {
+        LITERT_RETURN_IF_ERROR(
+            gpu_options.SetWeightCacheFd(cache.weight_cache_fd()));
+      }
+      if (cache.has_serialize_external_tensors()) {
+        LITERT_RETURN_IF_ERROR(gpu_options.SetSerializeExternalTensors(
+            cache.serialize_external_tensors()));
+      }
+    }
+    if (options.gpu().has_enable_infinite_float_capping()) {
+      LITERT_RETURN_IF_ERROR(gpu_options.EnableInfiniteFloatCapping(
+          options.gpu().enable_infinite_float_capping()));
+    }
+    if (options.gpu().has_benchmark_mode()) {
+      LITERT_RETURN_IF_ERROR(
+          gpu_options.EnableBenchmarkMode(options.gpu().benchmark_mode()));
+    }
+    if (options.gpu().has_allow_src_quantized_fc_conv_ops()) {
+      LITERT_RETURN_IF_ERROR(gpu_options.EnableAllowSrcQuantizedFcConvOps(
+          options.gpu().allow_src_quantized_fc_conv_ops()));
+    }
+    if (options.gpu().has_buffer_storage_type()) {
+      switch (options.gpu().buffer_storage_type()) {
+        case InferenceCalculatorOptions::Delegate::LiteRt::Gpu::
+            BUFFER_STORAGE_TYPE_UNSPECIFIED:
+          LITERT_RETURN_IF_ERROR(gpu_options.SetBufferStorageType(
+              litert::GpuOptions::BufferStorageType::kDefault));
+          break;
+        case InferenceCalculatorOptions::Delegate::LiteRt::Gpu::
+            BUFFER_STORAGE_TYPE_BUFFER:
+          LITERT_RETURN_IF_ERROR(gpu_options.SetBufferStorageType(
+              litert::GpuOptions::BufferStorageType::kBuffer));
+          break;
+        case InferenceCalculatorOptions::Delegate::LiteRt::Gpu::
+            BUFFER_STORAGE_TYPE_TEXTURE_2D:
+          LITERT_RETURN_IF_ERROR(gpu_options.SetBufferStorageType(
+              litert::GpuOptions::BufferStorageType::kTexture2D));
+          break;
+        default:
+          return absl::InvalidArgumentError(
+              "Unsupported GPU buffer storage type");
+      }
+    }
+    for (const std::string& pattern :
+         options.gpu().buffer_storage_tensor_patterns()) {
+      LITERT_RETURN_IF_ERROR(
+          gpu_options.AddBufferStorageTensorPattern(pattern.c_str()));
+    }
+    if (options.gpu().has_external_tensors_mode()) {
+      LITERT_RETURN_IF_ERROR(gpu_options.EnableExternalTensorsMode(
+          options.gpu().external_tensors_mode()));
+    }
+    for (const std::string& pattern :
+         options.gpu().external_tensor_patterns()) {
+      LITERT_RETURN_IF_ERROR(
+          gpu_options.AddExternalTensorPattern(pattern.c_str()));
+    }
+    if (options.gpu().has_madvise_original_shared_tensors()) {
+      LITERT_RETURN_IF_ERROR(gpu_options.SetMadviseOriginalSharedTensors(
+          options.gpu().madvise_original_shared_tensors()));
     }
     if (options.gpu().has_priority()) {
       switch (options.gpu().priority()) {
@@ -553,6 +622,61 @@ InferenceRunnerLiteRt::Create(
     if (options.gpu().has_prefer_texture_weights()) {
       LITERT_RETURN_IF_ERROR(gpu_options.SetPreferTextureWeights(
           options.gpu().prefer_texture_weights()));
+    }
+    if (options.gpu().has_wait_for_weights_conversion_complete()) {
+      LITERT_RETURN_IF_ERROR(gpu_options.WaitForWeightsConversionComplete(
+          options.gpu().wait_for_weights_conversion_complete()));
+    }
+    if (options.gpu().has_num_steps_of_command_buffer_preparations()) {
+      LITERT_RETURN_IF_ERROR(gpu_options.SetNumStepsOfCommandBufferPreparations(
+          options.gpu().num_steps_of_command_buffer_preparations()));
+    }
+    if (options.gpu().has_opencl()) {
+      const auto& opencl = options.gpu().opencl();
+      if (opencl.has_hint_waiting_for_completion()) {
+        LITERT_RETURN_IF_ERROR(gpu_options.HintWaitingForCompletion(
+            opencl.hint_waiting_for_completion()));
+      }
+      if (opencl.has_kernel_batch_size()) {
+        LITERT_RETURN_IF_ERROR(
+            gpu_options.SetKernelBatchSize(opencl.kernel_batch_size()));
+      }
+    }
+    if (options.gpu().has_webgpu()) {
+      const auto& webgpu = options.gpu().webgpu();
+      if (webgpu.has_preferred_device_substr()) {
+        LITERT_RETURN_IF_ERROR(gpu_options.SetPreferredDeviceSubstr(
+            webgpu.preferred_device_substr().c_str()));
+      }
+      if (webgpu.has_num_threads_to_upload()) {
+        LITERT_RETURN_IF_ERROR(
+            gpu_options.SetNumThreadsToUpload(webgpu.num_threads_to_upload()));
+      }
+      if (webgpu.has_num_threads_to_compile()) {
+        LITERT_RETURN_IF_ERROR(gpu_options.SetNumThreadsToCompile(
+            webgpu.num_threads_to_compile()));
+      }
+    }
+    if (options.gpu().has_vulkan() &&
+        options.gpu().vulkan().has_disable_shader_optimization()) {
+      LITERT_RETURN_IF_ERROR(gpu_options.DisableShaderOptimization(
+          options.gpu().vulkan().disable_shader_optimization()));
+    }
+    if (options.gpu().has_metal()) {
+#ifdef __APPLE__
+      const auto& metal = options.gpu().metal();
+      if (metal.has_use_argument_buffers()) {
+        LITERT_RETURN_IF_ERROR(gpu_options.SetUseMetalArgumentBuffers(
+            metal.use_argument_buffers()));
+      }
+      if (metal.has_enable_residency_set()) {
+        LITERT_RETURN_IF_ERROR(
+            gpu_options.EnableMetalResidencySet(metal.enable_residency_set()));
+      }
+#else
+      return absl::InvalidArgumentError(
+          "LiteRt::Gpu::Metal options are only supported on Apple platforms.");
+#endif  // __APPLE__
     }
   }
   if (accelerator & litert::HwAccelerators::kNpu) {

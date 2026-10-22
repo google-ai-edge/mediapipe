@@ -67,6 +67,7 @@ struct BaseOptions {
       DEFAULT = 0,
       FP16 = 1,
       FP32 = 2,
+      FP16_WITH_FP32_ACCUM = 3,
     };
     Precision precision = DEFAULT;
 
