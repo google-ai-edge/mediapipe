@@ -26,18 +26,14 @@
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph_service_jni.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 
-using HandleType = std::shared_ptr<mediapipe::Resources>*;
-
 JNIEXPORT void JNICALL MEDIAPIPE_RESOURCES_SERVICE_METHOD(
     nativeInstallServiceObject)(JNIEnv* env, jobject thiz, jlong context,
                                 jobject resourcesMapping) {
   absl::flat_hash_map<std::string, std::string> mapping =
       mediapipe::android::JMapToAbslStringMap(env, resourcesMapping);
-  std::unique_ptr<mediapipe::Resources> resources =
+  std::shared_ptr<mediapipe::Resources> resources =
       mediapipe::CreateDefaultResourcesWithMapping(mapping);
-  HandleType handle =
-      new std::shared_ptr<mediapipe::Resources>(std::move(resources));
 
   mediapipe::android::GraphServiceHelper::SetServiceObject(
-      context, mediapipe::kResourcesService, *handle);
+      context, mediapipe::kResourcesService, std::move(resources));
 }
