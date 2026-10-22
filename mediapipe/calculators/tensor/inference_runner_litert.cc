@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>  // IWYU pragma: keep
+#include <functional>
 #include <iterator>
 #include <memory>
 #include <string>
@@ -1303,17 +1304,17 @@ absl::StatusOr<bool> InferenceRunnerLiteRt::NeedsReallocation(
                         tensor_type.Layout().Dimensions());
 }
 
-absl::StatusOr<bool> InferenceRunnerLiteRt::TryAppendFeedbackBuffer(
-    bool is_input, int tensor_index, absl::string_view tensor_name,
-    std::vector<litert::TensorBuffer>& litert_buffers) const {
+absl::StatusOr<std::optional<litert::TensorBuffer>>
+InferenceRunnerLiteRt::TryGetFeedbackBuffer(
+    bool is_input, int tensor_index, absl::string_view tensor_name) const {
   if (!feedback_manager_) {
-    return false;
+    return std::nullopt;
   }
   bool is_feedback_tensor =
       is_input ? feedback_manager_->IsFeedbackInputTensorAtIndex(tensor_index)
                : feedback_manager_->IsFeedbackOutputTensorAtIndex(tensor_index);
   if (!is_feedback_tensor) {
-    return false;
+    return std::nullopt;
   }
   if (!feedback_manager_->Contains(tensor_name)) {
     return absl::InternalError(absl::StrCat(
@@ -1325,28 +1326,64 @@ absl::StatusOr<bool> InferenceRunnerLiteRt::TryAppendFeedbackBuffer(
       feedback_manager_->GetFeedbackTensorBuffer(tensor_name));
   LITERT_ASSIGN_OR_RETURN(litert::TensorBuffer buffer_dup,
                           feedback_buffer.Duplicate());
-  litert_buffers.push_back(std::move(buffer_dup));
-  return true;
+  return std::move(buffer_dup);
 }
 
 absl::Status InferenceRunnerLiteRt::PrepareInputBuffers(
     const litert::SimpleSignature& signature, const TensorSpan& tensor_span,
     InferenceRunContext& ctx) {
   const std::vector<litert::StringView> input_names = signature.InputNames();
-  ctx.litert_inputs.reserve(input_names.size());
+  RET_CHECK_EQ(input_names.size(),
+               tensor_span.size() + GetNumberOfFeedbackTensors());
+  std::vector<std::optional<litert::TensorBuffer>> litert_inputs(
+      input_names.size());
 
   // When feedback tensors are present then the model has more inputs than MP
-  // has tensors, so we use a separate counter to track which MP tensor maps to
-  // which model input.
+  // has tensors, so we populate feedback buffers directly and map the remaining
+  // signature input indices to their corresponding MP Tensors.
   int mp_tensor_index = 0;
+  struct TensorIndexPair {
+    const Tensor* tensor;
+    int idx;
+  };
+  std::vector<TensorIndexPair> mp_input_tensors;
+  mp_input_tensors.reserve(input_names.size());
   for (int i = 0; i < input_names.size(); ++i) {
     ABSL_ASSIGN_OR_RETURN(
-        bool is_feedback_tensor,
-        TryAppendFeedbackBuffer(true, i, input_names[i], ctx.litert_inputs));
-    if (is_feedback_tensor) continue;
-    // We have a MP tensor for this model input tensor.
-    const Tensor& mp_input_tensor = tensor_span[mp_tensor_index++];
-    const Tensor* tensor_to_use = &mp_input_tensor;
+        std::optional<litert::TensorBuffer> feedback_buffer,
+        TryGetFeedbackBuffer(/*is_input=*/true, i, input_names[i]));
+    if (feedback_buffer) {
+      litert_inputs[i] = std::move(*feedback_buffer);
+    } else {
+      // We have a MP tensor for this model input tensor.
+      mp_input_tensors.push_back(
+          {.tensor = &tensor_span[mp_tensor_index++], .idx = i});
+    }
+  }
+
+  // If two runners run in parallel and acquire input tensor ReadViews in
+  // different orders, they may deadlock. See b/575484155 for details. This is
+  // because Tensors don't actually acquire read locks, but always full locks.
+  // Thus, sort tensors by address to ensure consistent lock acquisition order.
+  absl::c_sort(mp_input_tensors,
+               [](const TensorIndexPair& a, const TensorIndexPair& b) {
+                 return std::less<const Tensor*>{}(a.tensor, b.tensor);
+               });
+
+  // Also check if the same tensor is passed multiple times. This would lock
+  // the same tensor in multiple places, leading to a deadlock.
+  auto adjacent_it = std::adjacent_find(
+      mp_input_tensors.begin(), mp_input_tensors.end(),
+      [](const TensorIndexPair& a, const TensorIndexPair& b) {
+        return a.tensor == b.tensor;
+      });
+  RET_CHECK(adjacent_it == mp_input_tensors.end())
+      << "Tensor '" << input_names[adjacent_it->idx]
+      << "' is passed multiple times. This is currently not supported.";
+
+  for (const TensorIndexPair& info : mp_input_tensors) {
+    int i = info.idx;
+    const Tensor* tensor_to_use = info.tensor;
 
     ABSL_ASSIGN_OR_RETURN(
         litert::TensorBufferType buffer_type,
@@ -1406,19 +1443,21 @@ absl::Status InferenceRunnerLiteRt::PrepareInputBuffers(
       }
       ABSL_RETURN_IF_ERROR(CopyMpTensorToLiteRtBuffer(
           *tensor_to_use, *managed_input_buffers_[i]));
-      LITERT_ASSIGN_OR_RETURN(litert::TensorBuffer duplicated_buffer,
+      LITERT_ASSIGN_OR_RETURN(litert_inputs[i],
                               managed_input_buffers_[i]->Duplicate());
-      ctx.litert_inputs.push_back(std::move(duplicated_buffer));
     } else {
-      ABSL_ASSIGN_OR_RETURN(litert::TensorBuffer litert_input_tensor,
+      ABSL_ASSIGN_OR_RETURN(litert_inputs[i],
                             CreateInputTensorBufferFromMpTensor(
                                 buffer_type, *tensor_to_use, tensor_type, ctx));
-      ctx.litert_inputs.push_back(std::move(litert_input_tensor));
     }
   }
 
-  RET_CHECK_EQ(tensor_span.size() + GetNumberOfFeedbackTensors(),
-               ctx.litert_inputs.size());
+  ctx.litert_inputs.reserve(input_names.size());
+  for (std::optional<litert::TensorBuffer>& input : litert_inputs) {
+    RET_CHECK(input.has_value());
+    ctx.litert_inputs.push_back(*std::move(input));
+  }
+
   return absl::OkStatus();
 }
 
@@ -1500,9 +1539,12 @@ absl::Status InferenceRunnerLiteRt::PrepareOutputBuffers(
   int mp_output_tensor_index = 0;
   for (int i = 0; i < output_names.size(); ++i) {
     ABSL_ASSIGN_OR_RETURN(
-        bool is_feedback_tensor,
-        TryAppendFeedbackBuffer(false, i, output_names[i], ctx.litert_outputs));
-    if (is_feedback_tensor) continue;
+        std::optional<litert::TensorBuffer> feedback_buffer,
+        TryGetFeedbackBuffer(/*is_input=*/false, i, output_names[i]));
+    if (feedback_buffer.has_value()) {
+      ctx.litert_outputs.push_back(*std::move(feedback_buffer));
+      continue;
+    }
     LITERT_ASSIGN_OR_RETURN(const litert::RankedTensorType model_tensor_type,
                             signature.OutputTensorType(i));
     ABSL_ASSIGN_OR_RETURN(const litert::RankedTensorType tensor_type,

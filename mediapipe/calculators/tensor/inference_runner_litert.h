@@ -335,12 +335,10 @@ class InferenceRunnerLiteRt : public InferenceRunner {
       const std::optional<litert::TensorBuffer>& managed_buffer,
       size_t buffer_size, const litert::RankedTensorType& tensor_type) const;
 
-  // Appends a feedback tensor buffer to the given list of LiteRT buffers if the
-  // tensor is a feedback tensor. Returns true if a feedback tensor was
-  // appended.
-  absl::StatusOr<bool> TryAppendFeedbackBuffer(
-      bool is_input, int tensor_index, absl::string_view tensor_name,
-      std::vector<litert::TensorBuffer>& litert_buffers) const;
+  // Returns a duplicated feedback tensor buffer if the tensor at `tensor_index`
+  // is a feedback tensor, or `std::nullopt` otherwise.
+  absl::StatusOr<std::optional<litert::TensorBuffer>> TryGetFeedbackBuffer(
+      bool is_input, int tensor_index, absl::string_view tensor_name) const;
 
   // Copies data from LiteRT managed output buffers to MP tensors. This is
   // required for buffer types that don't support zero-copy with MP tensors.
@@ -351,9 +349,9 @@ class InferenceRunnerLiteRt : public InferenceRunner {
   // Converts channels on CPU if needed.
   absl::StatusOr<const Tensor*> ConvertTensorChannelsIfNeeded(
       const Tensor& mp_input_tensor,
-      const litert::RankedTensorType& tensor_type,
-      InferenceRunContext&
-          ctx);  // Creates an input tensor buffer for the given buffer type.
+      const litert::RankedTensorType& tensor_type, InferenceRunContext& ctx);
+
+  // Creates an input tensor buffer for the given buffer type.
   absl::StatusOr<litert::TensorBuffer> CreateInputTensorBufferFromMpTensor(
       litert::TensorBufferType buffer_type, const Tensor& tensor,
       const litert::RankedTensorType& tensor_type, InferenceRunContext& ctx);
