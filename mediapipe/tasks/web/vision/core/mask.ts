@@ -39,16 +39,19 @@ export type MPMaskContainer = Uint8Array|Float32Array|WebGLTexture;
  * The wrapper class for MediaPipe segmentation masks.
  *
  * Masks are stored as `Uint8Array`, `Float32Array` or `WebGLTexture` objects.
- * You can convert the underlying type to any other type by passing the desired
- * type to `getAs...()`. As type conversions can be expensive, it is recommended
- * to limit these conversions. You can verify what underlying types are already
- * available by invoking `has...()`.
+ * GPU-backed tasks generally expose masks as `WebGLTexture` objects so the
+ * data can remain on the GPU, while CPU-backed tasks generally expose array
+ * storage. You can convert the underlying type to any other type by passing
+ * the desired type to `getAs...()`. As type conversions can be expensive,
+ * especially when transferring data between GPU and CPU memory, it is
+ * recommended to limit these conversions. You can verify what underlying
+ * types are already available by invoking `has...()`.
  *
- * Masks that are returned from a MediaPipe Tasks are owned by by the
- * underlying C++ Task. If you need to extend the lifetime of these objects,
- * you can invoke the `clone()` method. To free up the resources obtained
- * during any clone or type conversion operation, it is important to invoke
- * `close()` on the `MPMask` instance.
+ * Masks passed to a MediaPipe Tasks callback are temporary and only valid for
+ * the duration of that callback. If you need to retain one, invoke `clone()`
+ * before the callback returns. Masks returned directly (without a callback),
+ * as well as cloned masks, can own resources and should be released with
+ * `close()` when they are no longer needed.
  */
 export class MPMask {
   private gl?: WebGL2RenderingContext;
@@ -384,10 +387,11 @@ export class MPMask {
   /**
    * Frees up any resources owned by this `MPMask` instance.
    *
-   * Note that this method does not free masks that are owned by the C++
-   * Task, as these are freed automatically once you leave the MediaPipe
-   * callback. Additionally, some shared state is freed only once you invoke
-   * the Task's `close()` method.
+   * Callback masks are temporary and their task-owned resources are released
+   * automatically when the callback returns. Masks returned directly, cloned
+   * masks, and masks that acquire resources through type conversion should be
+   * closed by the caller when they are no longer needed. Some shared state is
+   * freed only once you invoke the Task's `close()` method.
    *
    * @export
    */
