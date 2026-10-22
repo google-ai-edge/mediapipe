@@ -423,5 +423,159 @@ TEST(TtsOmniVsMediaPipeEvalTest, Qwen3TtsCodecLmRvqMediaPipeEval) {
   ABSL_MP_ASSERT_OK(qwen_tts->Close());
 }
 
+void VerifySubClauseParagraphStreaming(
+    TextToSpeech& mp_tts, absl::string_view model_label = "PocketTTS") {
+  constexpr absl::string_view kStreamParagraph =
+      "First sentence is synthesized immediately. Second sentence follows! "
+      "Third sentence tests cadence. Fourth sentence completes the stream.";
+  absl::Time t_mp_para = absl::Now();
+  ABSL_MP_ASSERT_OK_AND_ASSIGN(
+      AudioResult mp_para_res,
+      mp_tts.Synthesize(std::string(kStreamParagraph)));
+  double mp_para_ms = absl::ToDoubleMilliseconds(absl::Now() - t_mp_para);
+  EXPECT_THAT(mp_para_res.samples, Not(IsEmpty()));
+
+  absl::Time t_start = absl::Now();
+  ABSL_MP_ASSERT_OK_AND_ASSIGN(
+      auto mp_stream, mp_tts.SynthesizeStream(std::string(kStreamParagraph)));
+  double ttfa_ms = 0.0;
+  int chunks_read = 0;
+  size_t first_chunk_samples = 0;
+  while (true) {
+    auto chunk_or = mp_stream->ReadNext();
+    if (absl::IsOutOfRange(chunk_or.status())) break;
+    ABSL_MP_ASSERT_OK(chunk_or.status());
+    if (chunks_read++ == 0) {
+      ttfa_ms = absl::ToDoubleMilliseconds(absl::Now() - t_start);
+      first_chunk_samples = chunk_or->samples.size();
+    }
+  }
+  double mp_stream_total_ms = absl::ToDoubleMilliseconds(absl::Now() - t_start);
+  EXPECT_GE(chunks_read, 8);
+  EXPECT_LT(ttfa_ms, mp_stream_total_ms * 0.35);
+  std::cout << absl::StrFormat(
+      "  [%s 4-Clause Stream (Sub-Clause Pipelining)] "
+      "MP Unary: %5.1f ms | MP Stream: TTFA=%4.1f ms "
+      "(1st chunk=%zu samples / %.2fs @ 24kHz), Total=%5.1f ms (%d chunks)\n",
+      model_label, mp_para_ms, ttfa_ms, first_chunk_samples,
+      static_cast<double>(first_chunk_samples) / kSampleRate24kHz,
+      mp_stream_total_ms, chunks_read);
+}
+
+void VerifyPocketTtsUnaryAndClosedLoopAsr(TextToSpeech& mp_tts) {
+  ABSL_MP_ASSERT_OK_AND_ASSIGN(std::string tdt_path,
+                               ResolveStagedModel(kParakeetTdtModelName));
+  ABSL_MP_ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<AudioTranscriber> mp_asr,
+      CreatePrewarmedMediaPipeAsr(tdt_path, kSampleRate24kHz));
+
+  struct PocketTtsUnaryEvalCase {
+    absl::string_view prompt;
+    absl::string_view expected_asr;
+  };
+  for (const PocketTtsUnaryEvalCase& tc : std::vector<PocketTtsUnaryEvalCase>{
+           {"Hello world, this is a test of the Kyutai Pocket speech "
+            "synthesizer.",
+            "hello world this is a test of the kyutai pocket speech "
+            "synthesizer"},
+           {"The quick brown fox jumps over the lazy dog.",
+            "the quick brown fox jumps over the lazy dog"},
+       }) {
+    absl::string_view prompt = tc.prompt;
+    absl::Time t_mp = absl::Now();
+    ABSL_MP_ASSERT_OK_AND_ASSIGN(AudioResult mp_res,
+                                 mp_tts.Synthesize(std::string(prompt)));
+    double mp_ms = absl::ToDoubleMilliseconds(absl::Now() - t_mp);
+
+    EXPECT_EQ(mp_res.sample_rate_hz, kSampleRate24kHz);
+    double dur_s =
+        static_cast<double>(mp_res.samples.size()) / mp_res.sample_rate_hz;
+    std::vector<float> asr_samples = mp_res.samples;
+    asr_samples.insert(asr_samples.end(), kHalfSecondSilenceSamples24kHz, 0.0f);
+    ABSL_MP_ASSERT_OK_AND_ASSIGN(
+        AsrRunMetrics asr_rt,
+        RunMediaPipeAsr(*mp_asr, asr_samples, kSampleRate24kHz,
+                        kHalfSecondSilenceSamples24kHz));
+    double wer = ComputeWordErrorRate(
+        tc.expected_asr, NormalizeTranscript(asr_rt.final_transcript));
+    EXPECT_LE(wer, 0.20) << "Prompt=" << prompt
+                         << " Got=" << asr_rt.final_transcript;
+    std::cout << absl::StrFormat(
+        "  [PocketTTS Unary 24kHz] MP: %5.1f ms | Audio: %.2fs (RTF=%.4f / "
+        "%.1fx) | WER: %.1f%% | ASR: \"%s\"\n",
+        mp_ms, dur_s, (mp_ms / 1000.0) / dur_s, dur_s / (mp_ms / 1000.0),
+        wer * 100.0, asr_rt.final_transcript);
+  }
+  ABSL_MP_ASSERT_OK(mp_asr->Close());
+}
+
+void VerifyPocketTtsVoiceSwitching(TextToSpeech& mp_tts) {
+  const std::vector<MultilingualTtsCase> pocket_cases = {
+      {"1. en-US (Alba)", "alba", "en-US",
+       "Hello world, speech synthesis runs fast on edge devices.", false},
+      {"2. en-US (Marius)", "marius", "en-US",
+       "Artificial intelligence models can generate natural speech locally.",
+       false},
+      {"3. en-US (Javert)", "javert", "en-US",
+       "Streaming audio chunks start playing within milliseconds.", false},
+      {"4. en-US (Fantine)", "fantine", "en-US",
+       "Real time voice narration works smoothly in the browser.", false},
+      {"5. en-US (Cosette)", "cosette", "en-US",
+       "The quick brown fox jumps over the lazy dog.", false},
+  };
+
+  for (const auto& tc : pocket_cases) {
+    SynthesisOptions opts{.voice_id = std::string(tc.voice),
+                          .locale = std::string(tc.locale)};
+    absl::Time t_mp_sw = absl::Now();
+    ABSL_MP_ASSERT_OK_AND_ASSIGN(
+        AudioResult mp_sw, mp_tts.Synthesize(std::string(tc.prompt), opts));
+    double mp_sw_ms = absl::ToDoubleMilliseconds(absl::Now() - t_mp_sw);
+
+    absl::Time t_mp_cached = absl::Now();
+    ABSL_MP_ASSERT_OK(mp_tts.Synthesize(std::string(tc.prompt), opts).status());
+    double mp_cached_ms = absl::ToDoubleMilliseconds(absl::Now() - t_mp_cached);
+
+    EXPECT_GT(mp_sw.samples.size(), kMinMultilingualSamples) << tc.lang_label;
+    std::cout << absl::StrFormat(
+        "  [%-24s | %-8s] Switch: MP=%5.1f ms | Cached: MP=%5.1f ms | "
+        "Samples=%zu\n",
+        tc.lang_label, tc.voice, mp_sw_ms, mp_cached_ms, mp_sw.samples.size());
+  }
+}
+
+TEST(TtsOmniVsMediaPipeEvalTest,
+     PocketTtsMediaPipeMultilingualAndStreamingBenchmark) {
+  ABSL_MP_ASSERT_OK_AND_ASSIGN(std::string pocket_path,
+                               ResolveStagedModel(kPocketTtsModelName));
+
+  int threads_before_mp = GetCurrentProcessThreadCount();
+  absl::Time t_mp_init = absl::Now();
+  ABSL_MP_ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<TextToSpeech> mp_tts,
+      CreateMediaPipeKokoroTts(pocket_path, kDefaultPocketTtsVoice,
+                               kDefaultPocketTtsLocale));
+  double mp_init_ms = absl::ToDoubleMilliseconds(absl::Now() - t_mp_init);
+  int mp_threads =
+      std::max(0, GetCurrentProcessThreadCount() - threads_before_mp);
+
+  std::cout << absl::StrFormat(
+      "\n======================================================================"
+      "========\n"
+      "POCKET-TTS-100M (MIT/CC-BY-4.0 | 24 kHz Flow-Matching + Mimi Codec) "
+      "BENCHMARK\n"
+      "======================================================================"
+      "========\n"
+      "Init Latency & Threads: MP = %.1f ms (+%d)\n",
+      mp_init_ms, mp_threads);
+
+  ABSL_MP_ASSERT_OK(mp_tts->Synthesize("Warmup.").status());
+
+  VerifyPocketTtsUnaryAndClosedLoopAsr(*mp_tts);
+  VerifySubClauseParagraphStreaming(*mp_tts, "PocketTTS");
+  VerifyPocketTtsVoiceSwitching(*mp_tts);
+  ABSL_MP_ASSERT_OK(mp_tts->Close());
+}
+
 }  // namespace
 }  // namespace mediapipe::tasks::audio::benchmarks

@@ -19,7 +19,10 @@ limitations under the License.
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <fstream>
+#include <ios>
+#include <iterator>
 #include <memory>
 #include <numeric>
 #include <string>
@@ -33,30 +36,36 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "absl/types/span.h"
+#include "flatbuffers/buffer.h"
+#include "flatbuffers/flatbuffer_builder.h"
+#include "flatbuffers/vector.h"
 #include "mediapipe/tasks/cc/audio/audio_transcriber/audio_transcriber.h"
 #include "mediapipe/tasks/cc/audio/audio_transcriber/mediapipe_asr_processor.h"
 #include "mediapipe/tasks/cc/audio/text_to_speech/mediapipe_tts_session.h"
+#include "mediapipe/tasks/cc/audio/text_to_speech/pocket_tts/common.h"
 #include "mediapipe/tasks/cc/audio/text_to_speech/text_to_speech.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "odml/audio/transcription/omni/speech_processor_omni.h"  // from @odml
 #include "odml/audio/transcription/proto/omni_options.pb.h"       // from @odml
 #include "odml/audio/transcription/speech_processor.h"            // from @odml
 #include "odml/audio/transcription/transcription_result.h"        // from @odml
-#include "omni/base/io_types.h"                           // from @litert_lm
-#include "omni/base/model_utils.h"                        // from @litert_lm
-#include "omni/multi_staged_session.h"                    // from @litert_lm
-#include "omni/omni_engine.h"                             // from @litert_lm
-#include "omni/omni_session.h"                            // from @litert_lm
-#include "omni/text2speech/stream_text_source.h"          // from @litert_lm
-#include "runtime/proto/text2speech_metadata.pb.h"        // from @litert_lm
-#include "runtime/proto/text2speech_model_type.pb.h"      // from @litert_lm
-#include "runtime/proto/text2speech_session_config.pb.h"  // from @litert_lm
+#include "omni/base/io_types.h"                            // from @litert_lm
+#include "omni/base/model_utils.h"                         // from @litert_lm
+#include "omni/multi_staged_session.h"                     // from @litert_lm
+#include "omni/omni_engine.h"                              // from @litert_lm
+#include "omni/omni_session.h"                             // from @litert_lm
+#include "omni/text2speech/stream_text_source.h"           // from @litert_lm
+#include "runtime/proto/text2speech_metadata.pb.h"         // from @litert_lm
+#include "runtime/proto/text2speech_model_type.pb.h"       // from @litert_lm
+#include "runtime/proto/text2speech_session_config.pb.h"   // from @litert_lm
+#include "schema/core/litertlm_header_schema_generated.h"  // from @litert_lm
 
 ABSL_FLAG(std::string, cache_dir,
           std::string(mediapipe::tasks::audio::benchmarks::kDefaultCacheDir),
@@ -83,8 +92,16 @@ constexpr absl::string_view kLatin1FoldTable =
     "aaaaaa.ceeeeiiii.nooooo..uuuuy.y";
 
 bool FoldLatin1Diacritic(unsigned char c2, std::string& out) {
+  if (c2 == 0x9F) {
+    out.append("ss");
+    return true;
+  }
   const unsigned char lower = static_cast<unsigned char>(c2 | 0x20);
-  if (lower < 0xA0 || lower > 0xBF || c2 == 0x9F) return false;
+  if (lower == 0xA6) {
+    out.append("ae");
+    return true;
+  }
+  if (lower < 0xA0 || lower > 0xBF) return false;
   const char folded = kLatin1FoldTable[lower - 0xA0];
   if (folded == '.') return false;
   out.push_back(folded);
@@ -151,6 +168,9 @@ std::string GetBenchmarkCacheDir() {
 }
 
 absl::StatusOr<std::string> ResolveStagedModel(absl::string_view filename) {
+  if (filename == kPocketTtsModelName) {
+    return EnsurePocketTtsLitertLmModel();
+  }
   std::string cache_dir = GetBenchmarkCacheDir();
   std::string local = absl::StrCat(cache_dir, "/", filename);
   if (std::ifstream(local).good()) return local;
@@ -191,6 +211,16 @@ std::string NormalizeTranscript(absl::string_view text) {
         out.append("oe");
         last_was_space = false;
       }
+    } else if (c == 0xE2 && i + 2 < text.size()) {
+      const unsigned char c1 = static_cast<unsigned char>(text[i + 1]);
+      const unsigned char c2 = static_cast<unsigned char>(text[i + 2]);
+      if (c1 == 0x80 &&
+          (c2 == 0x99 || c2 == 0x98 || c2 == 0x93 || c2 == 0x94) &&
+          !last_was_space) {
+        out.push_back(' ');
+        last_was_space = true;
+      }
+      i += 2;
     } else if ((absl::ascii_isspace(c) || c == '\'' || c == '-') &&
                !last_was_space) {
       out.push_back(' ');
@@ -204,7 +234,116 @@ std::string NormalizeTranscript(absl::string_view text) {
 std::vector<std::string> SplitNormalizedWords(absl::string_view text) {
   std::string norm = NormalizeTranscript(text);
   if (norm.empty()) return {};
-  return absl::StrSplit(norm, ' ', absl::SkipEmpty());
+  static const auto* const kCanonicalTokenMap =
+      new std::vector<std::pair<absl::string_view, absl::string_view>>{
+          {"zero", "0"},
+          {"one", "1"},
+          {"two", "2"},
+          {"three", "3"},
+          {"four", "4"},
+          {"five", "5"},
+          {"six", "6"},
+          {"seven", "7"},
+          {"eight", "8"},
+          {"nine", "9"},
+          {"ten", "10"},
+          {"eleven", "11"},
+          {"twelve", "12"},
+          {"thirteen", "13"},
+          {"fourteen", "14"},
+          {"fifteen", "15"},
+          {"sixteen", "16"},
+          {"seventeen", "17"},
+          {"eighteen", "18"},
+          {"nineteen", "19"},
+          {"twenty", "20"},
+          {"thirty", "30"},
+          {"forty", "40"},
+          {"fifty", "50"},
+          {"sixty", "60"},
+          {"seventy", "70"},
+          {"eighty", "80"},
+          {"ninety", "90"},
+          {"hundred", "100"},
+          {"un", "1"},
+          {"deux", "2"},
+          {"trois", "3"},
+          {"quatre", "4"},
+          {"cinq", "5"},
+          {"sept", "7"},
+          {"huit", "8"},
+          {"neuf", "9"},
+          {"dix", "10"},
+          {"eins", "1"},
+          {"zwei", "2"},
+          {"drei", "3"},
+          {"vier", "4"},
+          {"funf", "5"},
+          {"fuenf", "5"},
+          {"sechs", "6"},
+          {"sieben", "7"},
+          {"acht", "8"},
+          {"neun", "9"},
+          {"zehn", "10"},
+          {"zwanzig", "20"},
+          {"uno", "1"},
+          {"dos", "2"},
+          {"tres", "3"},
+          {"cuatro", "4"},
+          {"cinco", "5"},
+          {"seis", "6"},
+          {"siete", "7"},
+          {"ocho", "8"},
+          {"nueve", "9"},
+          {"diez", "10"},
+          {"due", "2"},
+          {"tre", "3"},
+          {"quattro", "4"},
+          {"cinque", "5"},
+          {"sei", "6"},
+          {"sette", "7"},
+          {"otto", "8"},
+          {"nove", "9"},
+          {"dieci", "10"},
+          {"dois", "2"},
+          {"oito", "8"},
+          {"dez", "10"},
+          {"een", "1"},
+          {"twee", "2"},
+          {"drie", "3"},
+          {"vijf", "5"},
+          {"zes", "6"},
+          {"zeven", "7"},
+          {"negen", "9"},
+          {"tien", "10"},
+          {"colourful", "colorful"},
+          {"colour", "color"},
+          {"colours", "colors"},
+          {"favouring", "favoring"},
+          {"favour", "favor"},
+          {"alsjeblieft", "alstublieft"},
+      };
+  std::vector<std::string> raw_words =
+      absl::StrSplit(norm, ' ', absl::SkipEmpty());
+  std::vector<std::string> out;
+  out.reserve(raw_words.size());
+  for (std::string& w : raw_words) {
+    if (w.size() >= 2 && w.back() == 'h' &&
+        std::all_of(w.begin(), w.end() - 1,
+                    [](unsigned char c) { return absl::ascii_isdigit(c); })) {
+      out.push_back(w.substr(0, w.size() - 1));
+      out.push_back("heures");
+      continue;
+    }
+    for (const auto& [from, to] : *kCanonicalTokenMap) {
+      if (w == from) {
+        w = std::string(to);
+        break;
+      }
+    }
+    out.push_back(std::move(w));
+  }
+  return out;
 }
 
 double ComputeWordErrorRate(absl::string_view reference,
@@ -340,6 +479,419 @@ absl::StatusOr<std::unique_ptr<OmniEngine>> CreateOmniKokoroEngine(
   kokoro_cfg->set_voice_name(voice);
   kokoro_cfg->set_language(locale);
   return OmniEngine::Create("kokoro", settings, &cfg, &meta);
+}
+
+namespace {
+
+float Bfloat16ToFloat32(uint16_t bf16) {
+  uint32_t bits = static_cast<uint32_t>(bf16) << 16;
+  float out = 0.0f;
+  std::memcpy(&out, &bits, sizeof(float));
+  return out;
+}
+
+uint16_t Float32ToBfloat16(float f) {
+  uint32_t bits = 0;
+  std::memcpy(&bits, &f, sizeof(float));
+  if ((bits & 0x7F800000u) == 0x7F800000u && (bits & 0x007FFFFFu) != 0) {
+    return 0x7FC0u;
+  }
+  bits += 0x7FFFu + ((bits >> 16) & 1u);
+  return static_cast<uint16_t>(bits >> 16);
+}
+
+bool FindSafetensorsOffsets(absl::string_view header_json,
+                            absl::string_view tensor_key, uint64_t* start_out,
+                            uint64_t* end_out, bool* is_bf16_out = nullptr) {
+  std::string needle = absl::StrCat("\"", tensor_key, "\"");
+  size_t key_pos = header_json.find(needle);
+  if (key_pos == std::string::npos) return false;
+  if (is_bf16_out != nullptr) {
+    size_t dtype_pos = header_json.find("\"dtype\"", key_pos);
+    size_t brace_end = header_json.find('}', key_pos);
+    if (dtype_pos != std::string::npos && dtype_pos < brace_end) {
+      *is_bf16_out = absl::StrContains(
+          header_json.substr(dtype_pos, brace_end - dtype_pos), "BF16");
+    }
+  }
+  size_t offsets_pos = header_json.find("\"data_offsets\"", key_pos);
+  if (offsets_pos == std::string::npos) return false;
+  size_t lb = header_json.find('[', offsets_pos);
+  size_t comma = header_json.find(',', lb);
+  size_t rb = header_json.find(']', comma);
+  if (lb == std::string::npos || comma == std::string::npos ||
+      rb == std::string::npos) {
+    return false;
+  }
+  uint64_t start_off = 0;
+  uint64_t end_off = 0;
+  if (!absl::SimpleAtoi(absl::StripAsciiWhitespace(
+                            header_json.substr(lb + 1, comma - lb - 1)),
+                        &start_off) ||
+      !absl::SimpleAtoi(absl::StripAsciiWhitespace(
+                            header_json.substr(comma + 1, rb - comma - 1)),
+                        &end_off) ||
+      end_off <= start_off) {
+    return false;
+  }
+  *start_out = start_off;
+  *end_out = end_off;
+  return true;
+}
+
+std::vector<float> ReadSafetensorsSliceAsFloat(
+    absl::string_view safetensors_path, absl::string_view tensor_key,
+    size_t expected_floats, float scale = 1.0f) {
+  std::vector<float> result(expected_floats, 0.0f);
+  std::ifstream in(std::string(safetensors_path), std::ios::binary);
+  if (!in.is_open()) return result;
+  uint64_t header_len = 0;
+  in.read(reinterpret_cast<char*>(&header_len), sizeof(uint64_t));
+  if (!in || header_len == 0 || header_len > (16u << 20)) {
+    return result;
+  }
+  std::string header_json(header_len, '\0');
+  in.read(header_json.data(), header_len);
+  uint64_t start_off = 0;
+  uint64_t end_off = 0;
+  bool is_bf16 = true;
+  if (!FindSafetensorsOffsets(header_json, tensor_key, &start_off, &end_off,
+                              &is_bf16)) {
+    return result;
+  }
+  in.seekg(static_cast<std::streamoff>(8 + header_len + start_off),
+           std::ios::beg);
+  if (is_bf16) {
+    const size_t avail_elems = (end_off - start_off) / sizeof(uint16_t);
+    const size_t to_read = std::min(expected_floats, avail_elems);
+    std::vector<uint16_t> raw_bf16(to_read);
+    in.read(reinterpret_cast<char*>(raw_bf16.data()),
+            to_read * sizeof(uint16_t));
+    for (size_t i = 0; i < to_read; ++i) {
+      float v = Bfloat16ToFloat32(raw_bf16[i]);
+      result[i] = std::isfinite(v) ? (v * scale) : 0.0f;
+    }
+  } else {
+    const size_t avail_elems = (end_off - start_off) / sizeof(float);
+    const size_t to_read = std::min(expected_floats, avail_elems);
+    in.read(reinterpret_cast<char*>(result.data()), to_read * sizeof(float));
+    for (size_t i = 0; i < to_read; ++i) {
+      result[i] = std::isfinite(result[i]) ? (result[i] * scale) : 0.0f;
+    }
+  }
+  return result;
+}
+
+struct SafetensorsEntry {
+  std::string name;
+  bool is_bf16 = false;
+  uint64_t start_off = 0;
+  uint64_t end_off = 0;
+};
+
+std::vector<SafetensorsEntry> ParseSafetensorsEntries(
+    const std::string& header_json) {
+  std::vector<SafetensorsEntry> entries;
+  size_t pos = 0;
+  while (pos < header_json.size()) {
+    size_t q1 = header_json.find('"', pos);
+    if (q1 == std::string::npos) break;
+    size_t q2 = header_json.find('"', q1 + 1);
+    if (q2 == std::string::npos) break;
+    std::string key = header_json.substr(q1 + 1, q2 - q1 - 1);
+    size_t colon = header_json.find(':', q2 + 1);
+    if (colon == std::string::npos) break;
+    size_t next_brace = header_json.find('{', colon);
+    if (next_brace == std::string::npos) break;
+    size_t close_brace = header_json.find('}', next_brace);
+    if (close_brace == std::string::npos) break;
+    pos = close_brace + 1;
+
+    if (key == "__metadata__" ||
+        absl::StartsWith(
+            key,
+            "flow_lm.condition_provider.conditioners.transcript_in_segment.") ||
+        absl::StartsWith(
+            key, "flow_lm.condition_provider.conditioners.speaker_wavs.") ||
+        absl::StartsWith(key, "mimi.encoder.") ||
+        absl::StartsWith(key, "mimi.encoder_transformer.") ||
+        absl::StartsWith(key, "mimi.downsample.") ||
+        key == "flow_lm.speaker_proj_weight" ||
+        key == "flow_lm.bos_before_voice") {
+      continue;
+    }
+    uint64_t s_off = 0, e_off = 0;
+    bool is_bf16 = false;
+    if (FindSafetensorsOffsets(header_json, key, &s_off, &e_off, &is_bf16)) {
+      entries.push_back({key, is_bf16, s_off, e_off});
+    }
+  }
+  return entries;
+}
+
+absl::StatusOr<std::vector<uint8_t>> BuildPocketTtsWeightsBinarySection(
+    absl::string_view safetensors_path) {
+  std::ifstream in(std::string(safetensors_path), std::ios::binary);
+  if (!in.is_open()) {
+    return absl::NotFoundError(
+        absl::StrCat("PocketTTS safetensors not found at: ", safetensors_path));
+  }
+  uint64_t header_len = 0;
+  in.read(reinterpret_cast<char*>(&header_len), sizeof(uint64_t));
+  if (!in || header_len == 0 || header_len > (16u << 20)) {
+    return absl::InvalidArgumentError("Invalid safetensors header length.");
+  }
+  std::string header_json(header_len, '\0');
+  in.read(header_json.data(), header_len);
+  std::vector<SafetensorsEntry> entries = ParseSafetensorsEntries(header_json);
+
+  std::vector<uint8_t> out;
+  out.reserve(120u << 20);
+  auto append_bytes = [&](const void* ptr, size_t n) {
+    const uint8_t* p = reinterpret_cast<const uint8_t*>(ptr);
+    out.insert(out.end(), p, p + n);
+  };
+  append_bytes("PKTW", 4);
+  uint32_t num_tensors = static_cast<uint32_t>(entries.size());
+  append_bytes(&num_tensors, sizeof(uint32_t));
+
+  std::vector<uint16_t> bf16_scratch;
+  std::vector<float> scales_scratch;
+  std::vector<int8_t> q_scratch;
+  for (const auto& entry : entries) {
+    const uint32_t name_len = static_cast<uint32_t>(entry.name.size());
+    append_bytes(&name_len, sizeof(uint32_t));
+    append_bytes(entry.name.data(), name_len);
+
+    const uint64_t raw_bytes = entry.end_off - entry.start_off;
+    in.seekg(static_cast<std::streamoff>(8 + header_len + entry.start_off),
+             std::ios::beg);
+    const uint32_t num_elems =
+        static_cast<uint32_t>(raw_bytes / sizeof(uint16_t));
+    bf16_scratch.resize(num_elems);
+    in.read(reinterpret_cast<char*>(bf16_scratch.data()), raw_bytes);
+
+    const bool quantize_int8 =
+        entry.name == "flow_lm.conditioner.embed.weight" ||
+        (absl::StartsWith(entry.name, "flow_lm.transformer.layers.") &&
+         absl::EndsWith(entry.name, ".weight") &&
+         !absl::StrContains(entry.name, "norm"));
+    if (quantize_int8) {
+      const uint32_t dtype = 2;
+      const uint32_t cols =
+          absl::EndsWith(entry.name, ".linear2.weight") ? 4096u : 1024u;
+      const uint32_t rows = num_elems / cols;
+      append_bytes(&dtype, sizeof(uint32_t));
+      append_bytes(&num_elems, sizeof(uint32_t));
+      append_bytes(&rows, sizeof(uint32_t));
+      scales_scratch.resize(rows);
+      q_scratch.resize(num_elems);
+      for (uint32_t r = 0; r < rows; ++r) {
+        const uint16_t* row_src =
+            bf16_scratch.data() + static_cast<size_t>(r) * cols;
+        float max_abs = 0.0f;
+        for (uint32_t c = 0; c < cols; ++c) {
+          max_abs = std::max(max_abs, std::abs(Bfloat16ToFloat32(row_src[c])));
+        }
+        scales_scratch[r] = max_abs > 0.0f ? (max_abs / 127.0f) : 0.0f;
+        const float inv = max_abs > 0.0f ? (127.0f / max_abs) : 0.0f;
+        int8_t* row_dst = q_scratch.data() + static_cast<size_t>(r) * cols;
+        for (uint32_t c = 0; c < cols; ++c) {
+          float v = Bfloat16ToFloat32(row_src[c]) * inv;
+          row_dst[c] =
+              static_cast<int8_t>(std::clamp(std::llround(v), -127LL, 127LL));
+        }
+      }
+      append_bytes(scales_scratch.data(), rows * sizeof(float));
+      append_bytes(q_scratch.data(), num_elems * sizeof(int8_t));
+    } else {
+      const uint32_t dtype = 1;
+      append_bytes(&dtype, sizeof(uint32_t));
+      append_bytes(&num_elems, sizeof(uint32_t));
+      append_bytes(bf16_scratch.data(), raw_bytes);
+    }
+  }
+  return out;
+}
+
+struct PendingLitertLmSection {
+  ::litert::lm::schema::AnySectionDataType data_type;
+  std::string item_key;
+  std::string item_val;
+  std::vector<uint8_t> payload;
+};
+
+void AppendPocketTtsVoiceSections(
+    absl::string_view hf_dir, std::vector<PendingLitertLmSection>& pending) {
+  constexpr int kLayers = 6;
+  constexpr int kDim = 1024;
+  for (absl::string_view voice :
+       {"alba", "marius", "javert", "jean", "fantine", "cosette", "eponine",
+        "azelma", "estelle", "juergen", "lola", "rafael", "giovanni", "daan"}) {
+    std::string v_path =
+        absl::StrCat(hf_dir, "/embeddings/", voice, ".safetensors");
+    if (!std::ifstream(v_path).good()) {
+      v_path = absl::StrCat(hf_dir, "/embeddings_v2/", voice, ".safetensors");
+    }
+    std::ifstream in(v_path, std::ios::binary);
+    if (!in.is_open()) continue;
+    uint64_t header_len = 0;
+    in.read(reinterpret_cast<char*>(&header_len), sizeof(uint64_t));
+    if (!in || header_len == 0 || header_len > (1u << 20)) continue;
+    std::string header_json(header_len, '\0');
+    in.read(header_json.data(), header_len);
+
+    uint64_t s0 = 0, e0 = 0;
+    if (!FindSafetensorsOffsets(
+            header_json, "transformer.layers.0.self_attn/cache", &s0, &e0)) {
+      continue;
+    }
+    const uint32_t frames =
+        static_cast<uint32_t>((e0 - s0) / (2 * kDim * sizeof(float)));
+    if (frames == 0) continue;
+
+    std::vector<uint8_t> v_bytes(8 + static_cast<size_t>(kLayers) * 2 * frames *
+                                         kDim * sizeof(uint16_t));
+    std::memcpy(v_bytes.data(), "PKTV", 4);
+    std::memcpy(v_bytes.data() + 4, &frames, sizeof(uint32_t));
+    uint16_t* dst = reinterpret_cast<uint16_t*>(v_bytes.data() + 8);
+    for (int l = 0; l < kLayers; ++l) {
+      std::string key =
+          absl::StrCat("transformer.layers.", l, ".self_attn/cache");
+      std::vector<float> layer_kv =
+          ReadSafetensorsSliceAsFloat(v_path, key, 2 * frames * kDim, 1.0f);
+      for (size_t i = 0; i < layer_kv.size(); ++i) {
+        dst[static_cast<size_t>(l) * 2 * frames * kDim + i] =
+            Float32ToBfloat16(layer_kv[i]);
+      }
+    }
+    pending.push_back(
+        {::litert::lm::schema::AnySectionDataType_GenericBinaryData, "name",
+         std::string(voice), std::move(v_bytes)});
+  }
+}
+
+absl::Status WriteLitertLmContainerFile(
+    absl::string_view output_path,
+    const std::vector<PendingLitertLmSection>& pending) {
+  constexpr uint64_t kAlign = 16384;
+  auto align_up = [](uint64_t off) -> uint64_t {
+    return ((off + kAlign - 1) / kAlign) * kAlign;
+  };
+
+  uint64_t cur_offset = kAlign;
+  std::vector<std::pair<uint64_t, uint64_t>> offsets;
+  for (const auto& sec : pending) {
+    cur_offset = align_up(cur_offset);
+    offsets.push_back({cur_offset, cur_offset + sec.payload.size()});
+    cur_offset += sec.payload.size();
+  }
+
+  flatbuffers::FlatBufferBuilder fb(4096);
+  auto author_val = ::litert::lm::schema::CreateStringValue(
+      fb, fb.CreateString("MediaPipe Audio Team"));
+  auto author_kv = ::litert::lm::schema::CreateKeyValuePair(
+      fb, fb.CreateString("author"), ::litert::lm::schema::VData_StringValue,
+      author_val.Union());
+  auto sys_meta = ::litert::lm::schema::CreateSystemMetadata(
+      fb, fb.CreateVector({author_kv}));
+
+  std::vector<flatbuffers::Offset<::litert::lm::schema::SectionObject>>
+      sec_objs;
+  for (size_t i = 0; i < pending.size(); ++i) {
+    flatbuffers::Offset<flatbuffers::Vector<
+        flatbuffers::Offset<::litert::lm::schema::KeyValuePair>>>
+        items_vec = 0;
+    if (!pending[i].item_key.empty()) {
+      auto sval = ::litert::lm::schema::CreateStringValue(
+          fb, fb.CreateString(pending[i].item_val));
+      auto kv = ::litert::lm::schema::CreateKeyValuePair(
+          fb, fb.CreateString(pending[i].item_key),
+          ::litert::lm::schema::VData_StringValue, sval.Union());
+      items_vec = fb.CreateVector({kv});
+    }
+    sec_objs.push_back(::litert::lm::schema::CreateSectionObject(
+        fb, items_vec, offsets[i].first, offsets[i].second,
+        pending[i].data_type));
+  }
+  auto sec_meta = ::litert::lm::schema::CreateSectionMetadata(
+      fb, fb.CreateVector(sec_objs));
+  fb.Finish(
+      ::litert::lm::schema::CreateLiteRTLMMetaData(fb, sys_meta, sec_meta));
+
+  std::ofstream out(std::string(output_path),
+                    std::ios::binary | std::ios::trunc);
+  if (!out.is_open()) {
+    return absl::PermissionDeniedError(
+        absl::StrCat("Failed to open output file: ", output_path));
+  }
+  out.write("LITERTLM", 8);
+  uint32_t major = 1, minor = 0, patch = 0, pad = 0;
+  out.write(reinterpret_cast<const char*>(&major), 4);
+  out.write(reinterpret_cast<const char*>(&minor), 4);
+  out.write(reinterpret_cast<const char*>(&patch), 4);
+  out.write(reinterpret_cast<const char*>(&pad), 4);
+  uint64_t header_end_offset = 32 + fb.GetSize();
+  out.write(reinterpret_cast<const char*>(&header_end_offset), 8);
+  out.write(reinterpret_cast<const char*>(fb.GetBufferPointer()), fb.GetSize());
+
+  for (size_t i = 0; i < pending.size(); ++i) {
+    uint64_t pos = static_cast<uint64_t>(out.tellp());
+    if (offsets[i].first > pos) {
+      std::string zeros(offsets[i].first - pos, '\0');
+      out.write(zeros.data(), zeros.size());
+    }
+    out.write(reinterpret_cast<const char*>(pending[i].payload.data()),
+              pending[i].payload.size());
+  }
+  return absl::OkStatus();
+}
+
+}  // namespace
+
+absl::StatusOr<std::string> EnsurePocketTtsLitertLmModel() {
+  std::string cache_dir = GetBenchmarkCacheDir();
+  std::string output_path = absl::StrCat(cache_dir, "/", kPocketTtsModelName);
+  std::string marker_path = absl::StrCat(output_path, ".v3");
+  if (std::ifstream(output_path).good() && std::ifstream(marker_path).good()) {
+    return output_path;
+  }
+
+  const std::string hf_dir = absl::StrCat(cache_dir, "/pocket_tts_hf");
+  const std::string safetensors_path =
+      absl::StrCat(hf_dir, "/model.safetensors");
+  const std::string sp_path = absl::StrCat(hf_dir, "/tokenizer.model");
+
+  std::ifstream sp_file(sp_path, std::ios::binary);
+  if (!sp_file.is_open()) {
+    return absl::NotFoundError(absl::StrCat(
+        "PocketTTS SentencePiece tokenizer not found at: ", sp_path));
+  }
+  std::vector<uint8_t> sp_bytes((std::istreambuf_iterator<char>(sp_file)),
+                                std::istreambuf_iterator<char>());
+
+  ::litert::lm::proto::Text2SpeechMetadata tts_meta;
+  std::string tts_meta_str = tts_meta.SerializeAsString();
+  std::vector<uint8_t> tts_meta_bytes(tts_meta_str.begin(), tts_meta_str.end());
+  ABSL_ASSIGN_OR_RETURN(std::vector<uint8_t> pocket_weights_bytes,
+                        BuildPocketTtsWeightsBinarySection(safetensors_path));
+
+  std::vector<PendingLitertLmSection> pending = {
+      {::litert::lm::schema::AnySectionDataType_Text2SpeechMetadataProto, "",
+       "", std::move(tts_meta_bytes)},
+      {::litert::lm::schema::AnySectionDataType_SP_Tokenizer, "", "",
+       std::move(sp_bytes)},
+      {::litert::lm::schema::AnySectionDataType_GenericBinaryData, "name",
+       std::string(::mediapipe::tasks::audio::text_to_speech::pocket_tts::
+                       kPocketTtsWeightsSectionName),
+       std::move(pocket_weights_bytes)},
+  };
+  AppendPocketTtsVoiceSections(hf_dir, pending);
+  ABSL_RETURN_IF_ERROR(WriteLitertLmContainerFile(output_path, pending));
+
+  std::ofstream marker(marker_path, std::ios::binary | std::ios::trunc);
+  marker << "v3\n";
+  return output_path;
 }
 
 absl::StatusOr<std::unique_ptr<TextToSpeech>> CreateMediaPipeKokoroTts(

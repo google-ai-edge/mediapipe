@@ -52,8 +52,12 @@ inline constexpr absl::string_view kKokoroNoEspeakModelName =
     "kokoro_int8_cpu_gpu_vocoder_no_espeak.litertlm";
 inline constexpr absl::string_view kQwen3TtsModelName =
     "qwen3_tts_int4.litertlm";
+inline constexpr absl::string_view kPocketTtsModelName =
+    "pocket_tts_int8.litertlm";
 inline constexpr absl::string_view kDefaultKokoroVoice = "af_heart";
 inline constexpr absl::string_view kDefaultKokoroLocale = "en-US";
+inline constexpr absl::string_view kDefaultPocketTtsVoice = "alba";
+inline constexpr absl::string_view kDefaultPocketTtsLocale = "en-US";
 
 inline constexpr int kDefaultCpuThreads = 4;
 inline constexpr int kSampleRate16kHz = 16000;
@@ -123,6 +127,8 @@ absl::StatusOr<AsrRunMetrics> RunMediaPipeAsr(
 absl::StatusOr<std::unique_ptr<::litert::omni::OmniEngine>>
 CreateOmniKokoroEngine(absl::string_view model_path, absl::string_view voice,
                        absl::string_view locale);
+
+absl::StatusOr<std::string> EnsurePocketTtsLitertLmModel();
 
 absl::StatusOr<
     std::unique_ptr<::mediapipe::tasks::audio::text_to_speech::TextToSpeech>>
