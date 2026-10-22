@@ -577,5 +577,121 @@ TEST(TtsOmniVsMediaPipeEvalTest,
   ABSL_MP_ASSERT_OK(mp_tts->Close());
 }
 
+void VerifyPhononUnaryAndClosedLoopAsr(TextToSpeech& mp_tts) {
+  ABSL_MP_ASSERT_OK_AND_ASSIGN(std::string tdt_path,
+                               ResolveStagedModel(kParakeetTdtModelName));
+  ABSL_MP_ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<AudioTranscriber> mp_asr,
+      CreatePrewarmedMediaPipeAsr(tdt_path, kSampleRate24kHz));
+
+  struct PhononUnaryEvalCase {
+    absl::string_view prompt;
+    absl::string_view expected_asr;
+  };
+  for (const PhononUnaryEvalCase& tc : std::vector<PhononUnaryEvalCase>{
+           {"Hello world, this is a test of the Gradium Phonon speech "
+            "synthesizer.",
+            "hello world this is a test of the gradium phonon speech "
+            "synthesizer"},
+           {"The quick brown fox jumps over the lazy dog.",
+            "the quick brown fox jumps over the lazy dog"},
+       }) {
+    absl::string_view prompt = tc.prompt;
+    absl::Time t_mp = absl::Now();
+    ABSL_MP_ASSERT_OK_AND_ASSIGN(AudioResult mp_res,
+                                 mp_tts.Synthesize(std::string(prompt)));
+    double mp_ms = absl::ToDoubleMilliseconds(absl::Now() - t_mp);
+
+    EXPECT_EQ(mp_res.sample_rate_hz, kSampleRate24kHz);
+    double dur_s =
+        static_cast<double>(mp_res.samples.size()) / mp_res.sample_rate_hz;
+    std::vector<float> asr_samples = mp_res.samples;
+    asr_samples.insert(asr_samples.end(), kHalfSecondSilenceSamples24kHz, 0.0f);
+    ABSL_MP_ASSERT_OK_AND_ASSIGN(
+        AsrRunMetrics asr_rt,
+        RunMediaPipeAsr(*mp_asr, asr_samples, kSampleRate24kHz,
+                        kHalfSecondSilenceSamples24kHz));
+    double wer = ComputeWordErrorRate(
+        tc.expected_asr, NormalizeTranscript(asr_rt.final_transcript));
+    EXPECT_LE(wer, 0.20) << "Prompt=" << prompt
+                         << " Got=" << asr_rt.final_transcript;
+    std::cout << absl::StrFormat(
+        "  [Phonon Unary 24kHz] MP: %5.1f ms | Audio: %.2fs (RTF=%.4f) | "
+        "WER: %.1f%% | ASR: \"%s\"\n",
+        mp_ms, dur_s, (mp_ms / 1000.0) / dur_s, wer * 100.0,
+        asr_rt.final_transcript);
+  }
+  ABSL_MP_ASSERT_OK(mp_asr->Close());
+}
+
+void VerifyPhononMultilingualVoiceSwitching(TextToSpeech& mp_tts) {
+  const std::vector<MultilingualTtsCase> phonon_cases = {
+      {"1. en-US (English)", "freya", "en-US",
+       "Hello world, speech synthesis runs fast on edge devices.", false},
+      {"2. fr-FR (French)", "claire", "fr-FR",
+       "Bonjour le monde, voici un test de synthèse vocale en français.",
+       false},
+      {"3. de-DE (German)", "lukas", "de-DE",
+       "Guten Tag, die Sprachsynthese läuft sehr schnell auf dem Gerät.",
+       false},
+      {"4. es-ES (Spanish)", "sofia", "es-ES",
+       "¡Buenos días! Esta es una prueba del sintetizador de voz en español.",
+       false},
+      {"5. pt-BR (Portuguese)", "lucas", "pt-BR",
+       "Olá mundo, este é um teste do sintetizador de voz em português.",
+       false},
+  };
+
+  for (const auto& tc : phonon_cases) {
+    SynthesisOptions opts{.voice_id = std::string(tc.voice),
+                          .locale = std::string(tc.locale)};
+    absl::Time t_mp_sw = absl::Now();
+    ABSL_MP_ASSERT_OK_AND_ASSIGN(
+        AudioResult mp_sw, mp_tts.Synthesize(std::string(tc.prompt), opts));
+    double mp_sw_ms = absl::ToDoubleMilliseconds(absl::Now() - t_mp_sw);
+
+    absl::Time t_mp_cached = absl::Now();
+    ABSL_MP_ASSERT_OK(mp_tts.Synthesize(std::string(tc.prompt), opts).status());
+    double mp_cached_ms = absl::ToDoubleMilliseconds(absl::Now() - t_mp_cached);
+
+    EXPECT_GT(mp_sw.samples.size(), kMinMultilingualSamples) << tc.lang_label;
+    std::cout << absl::StrFormat(
+        "  [%-24s | %-6s] Switch: MP=%5.1f ms | Cached: MP=%5.1f ms | "
+        "Samples=%zu\n",
+        tc.lang_label, tc.voice, mp_sw_ms, mp_cached_ms, mp_sw.samples.size());
+  }
+}
+
+TEST(TtsOmniVsMediaPipeEvalTest,
+     PhononTtsOmniVsMediaPipeMultilingualAndOptimizationBenchmark) {
+  ABSL_MP_ASSERT_OK_AND_ASSIGN(std::string phonon_path,
+                               ResolveStagedModel(kPhononModelName));
+
+  int threads_before_mp = GetCurrentProcessThreadCount();
+  absl::Time t_mp_init = absl::Now();
+  ABSL_MP_ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<TextToSpeech> mp_tts,
+      CreateMediaPipeKokoroTts(phonon_path, kDefaultPhononVoice,
+                               kDefaultPhononLocale));
+  double mp_init_ms = absl::ToDoubleMilliseconds(absl::Now() - t_mp_init);
+  int mp_threads =
+      std::max(0, GetCurrentProcessThreadCount() - threads_before_mp);
+
+  std::cout << absl::StrFormat(
+      "\n======================================================================"
+      "========\n"
+      "PHONON-31M (Apache-2.0 | 24 kHz Flow-Matching + Mimi Codec) BENCHMARK\n"
+      "======================================================================"
+      "========\n"
+      "Init Latency & Threads: MP = %.1f ms (+%d)\n",
+      mp_init_ms, mp_threads);
+
+  ABSL_MP_ASSERT_OK(mp_tts->Synthesize("Warmup.").status());
+
+  VerifyPhononUnaryAndClosedLoopAsr(*mp_tts);
+  VerifySubClauseParagraphStreaming(*mp_tts, "Phonon");
+  VerifyPhononMultilingualVoiceSwitching(*mp_tts);
+  ABSL_MP_ASSERT_OK(mp_tts->Close());
+}
 }  // namespace
 }  // namespace mediapipe::tasks::audio::benchmarks

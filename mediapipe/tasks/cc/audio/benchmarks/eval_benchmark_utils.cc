@@ -49,6 +49,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/audio/audio_transcriber/audio_transcriber.h"
 #include "mediapipe/tasks/cc/audio/audio_transcriber/mediapipe_asr_processor.h"
 #include "mediapipe/tasks/cc/audio/text_to_speech/mediapipe_tts_session.h"
+#include "mediapipe/tasks/cc/audio/text_to_speech/phonon/common.h"
 #include "mediapipe/tasks/cc/audio/text_to_speech/pocket_tts/common.h"
 #include "mediapipe/tasks/cc/audio/text_to_speech/text_to_speech.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
@@ -66,6 +67,7 @@ limitations under the License.
 #include "runtime/proto/text2speech_model_type.pb.h"       // from @litert_lm
 #include "runtime/proto/text2speech_session_config.pb.h"   // from @litert_lm
 #include "schema/core/litertlm_header_schema_generated.h"  // from @litert_lm
+#include "tflite/schema/schema_generated.h"
 
 ABSL_FLAG(std::string, cache_dir,
           std::string(mediapipe::tasks::audio::benchmarks::kDefaultCacheDir),
@@ -170,6 +172,9 @@ std::string GetBenchmarkCacheDir() {
 absl::StatusOr<std::string> ResolveStagedModel(absl::string_view filename) {
   if (filename == kPocketTtsModelName) {
     return EnsurePocketTtsLitertLmModel();
+  }
+  if (filename == kPhononModelName) {
+    return EnsurePhononLitertLmModel();
   }
   std::string cache_dir = GetBenchmarkCacheDir();
   std::string local = absl::StrCat(cache_dir, "/", filename);
@@ -714,6 +719,267 @@ absl::StatusOr<std::vector<uint8_t>> BuildPocketTtsWeightsBinarySection(
   return out;
 }
 
+absl::StatusOr<std::vector<uint8_t>> BuildPhononWeightsBinarySection(
+    absl::string_view safetensors_path) {
+  std::ifstream in(std::string(safetensors_path), std::ios::binary);
+  if (!in.is_open()) {
+    return absl::NotFoundError(
+        absl::StrCat("Phonon safetensors not found at: ", safetensors_path));
+  }
+  uint64_t header_len = 0;
+  in.read(reinterpret_cast<char*>(&header_len), sizeof(uint64_t));
+  if (!in || header_len == 0 || header_len > (16u << 20)) {
+    return absl::InvalidArgumentError("Invalid safetensors header length.");
+  }
+  std::string header_json(header_len, '\0');
+  in.read(header_json.data(), header_len);
+  std::vector<SafetensorsEntry> entries = ParseSafetensorsEntries(header_json);
+
+  std::vector<uint8_t> out;
+  out.reserve(80u << 20);
+  auto append_bytes = [&](const void* ptr, size_t n) {
+    const uint8_t* p = reinterpret_cast<const uint8_t*>(ptr);
+    out.insert(out.end(), p, p + n);
+  };
+  append_bytes("PHNW", 4);
+  uint32_t num_tensors = static_cast<uint32_t>(entries.size());
+  append_bytes(&num_tensors, sizeof(uint32_t));
+
+  std::vector<float> f32_scratch;
+  std::vector<uint16_t> bf16_scratch;
+  for (const auto& entry : entries) {
+    const uint32_t name_len = static_cast<uint32_t>(entry.name.size());
+    append_bytes(&name_len, sizeof(uint32_t));
+    append_bytes(entry.name.data(), name_len);
+
+    const uint64_t raw_bytes = entry.end_off - entry.start_off;
+    in.seekg(static_cast<std::streamoff>(8 + header_len + entry.start_off),
+             std::ios::beg);
+    if (entry.is_bf16) {
+      const uint32_t dtype = 1;
+      const uint32_t num_elems =
+          static_cast<uint32_t>(raw_bytes / sizeof(uint16_t));
+      append_bytes(&dtype, sizeof(uint32_t));
+      append_bytes(&num_elems, sizeof(uint32_t));
+      bf16_scratch.resize(num_elems);
+      in.read(reinterpret_cast<char*>(bf16_scratch.data()), raw_bytes);
+      append_bytes(bf16_scratch.data(), raw_bytes);
+    } else {
+      const uint32_t num_elems =
+          static_cast<uint32_t>(raw_bytes / sizeof(float));
+      f32_scratch.resize(num_elems);
+      in.read(reinterpret_cast<char*>(f32_scratch.data()), raw_bytes);
+      const uint32_t dtype = (num_elems <= 2048) ? 0u : 1u;
+      append_bytes(&dtype, sizeof(uint32_t));
+      append_bytes(&num_elems, sizeof(uint32_t));
+      if (dtype == 0) {
+        append_bytes(f32_scratch.data(), raw_bytes);
+      } else {
+        bf16_scratch.resize(num_elems);
+        for (uint32_t i = 0; i < num_elems; ++i) {
+          bf16_scratch[i] = Float32ToBfloat16(f32_scratch[i]);
+        }
+        append_bytes(bf16_scratch.data(),
+                     static_cast<size_t>(num_elems) * sizeof(uint16_t));
+      }
+    }
+  }
+  return out;
+}
+
+flatbuffers::Offset<tflite::Buffer> CreateFloatBuffer(
+    flatbuffers::FlatBufferBuilder& b, absl::Span<const float> data) {
+  const auto* bytes = reinterpret_cast<const uint8_t*>(data.data());
+  return tflite::CreateBuffer(
+      b, b.CreateVector(bytes, data.size() * sizeof(float)));
+}
+
+std::vector<uint8_t> BuildPhononTextEmbeddingTflite(
+    absl::string_view safetensors_path) {
+  constexpr int kVocabSize = 4001;
+  constexpr int kDim =
+      ::mediapipe::tasks::audio::text_to_speech::phonon::kHiddenDim;
+  std::vector<float> emb_weights =
+      ReadSafetensorsSliceAsFloat(safetensors_path,
+                                  "flow_lm.condition_provider.conditioners."
+                                  "transcript_in_segment.embed.weight",
+                                  kVocabSize * kDim, 1.0f);
+
+  flatbuffers::FlatBufferBuilder b;
+  auto gather_op =
+      tflite::CreateOperatorCode(b, tflite::BuiltinOperator_GATHER);
+  auto opcodes_vec = b.CreateVector({gather_op});
+
+  auto empty_buf = tflite::CreateBuffer(b);
+  auto weights_buf = CreateFloatBuffer(b, emb_weights);
+  auto buffers_vec = b.CreateVector({empty_buf, weights_buf});
+
+  auto params_tensor = tflite::CreateTensor(
+      b, b.CreateVector<int32_t>({kVocabSize, kDim}),
+      tflite::TensorType_FLOAT32, /*buffer=*/1, b.CreateString("params"));
+  auto indices_tensor = tflite::CreateTensor(
+      b, b.CreateVector<int32_t>({1}), tflite::TensorType_INT32,
+      /*buffer=*/0, b.CreateString("indices"));
+  auto output_tensor = tflite::CreateTensor(
+      b, b.CreateVector<int32_t>({1, kDim}), tflite::TensorType_FLOAT32,
+      /*buffer=*/0, b.CreateString("output"));
+  auto tensors_vec =
+      b.CreateVector({params_tensor, indices_tensor, output_tensor});
+
+  auto gather_opts =
+      tflite::CreateGatherOptions(b, /*axis=*/0, /*batch_dims=*/0);
+  auto op = tflite::CreateOperator(
+      b, /*opcode_index=*/0, b.CreateVector<int32_t>({0, 1}),
+      b.CreateVector<int32_t>({2}), tflite::BuiltinOptions_GatherOptions,
+      gather_opts.Union());
+  auto ops_vec = b.CreateVector({op});
+
+  auto subgraph = tflite::CreateSubGraph(
+      b, tensors_vec, b.CreateVector<int32_t>({1}),
+      b.CreateVector<int32_t>({2}), ops_vec, b.CreateString("main"));
+  auto subgraphs_vec = b.CreateVector({subgraph});
+
+  auto in_map = tflite::CreateTensorMap(b, b.CreateString("indices"), 1);
+  auto out_map = tflite::CreateTensorMap(b, b.CreateString("output"), 2);
+  auto sig_def = tflite::CreateSignatureDef(
+      b, b.CreateVector({in_map}), b.CreateVector({out_map}),
+      b.CreateString("serving_default"), /*subgraph_index=*/0);
+
+  auto model = tflite::CreateModel(
+      b, /*version=*/3, opcodes_vec, subgraphs_vec,
+      b.CreateString("phonon_text_embedding"), buffers_vec,
+      /*metadata_buffer=*/0, /*metadata=*/0, b.CreateVector({sig_def}));
+  tflite::FinishModelBuffer(b, model);
+  return std::vector<uint8_t>(b.GetBufferPointer(),
+                              b.GetBufferPointer() + b.GetSize());
+}
+
+std::vector<uint8_t> FinishSingleSubgraphTflite(
+    flatbuffers::FlatBufferBuilder& b,
+    flatbuffers::Offset<tflite::OperatorCode> opcode,
+    std::vector<flatbuffers::Offset<tflite::Buffer>> buffers,
+    std::vector<flatbuffers::Offset<tflite::Tensor>> tensors,
+    std::vector<int32_t> inputs, std::vector<int32_t> outputs,
+    flatbuffers::Offset<tflite::Operator> op,
+    std::vector<flatbuffers::Offset<tflite::TensorMap>> in_maps,
+    std::vector<flatbuffers::Offset<tflite::TensorMap>> out_maps,
+    absl::string_view description) {
+  auto subgraph = tflite::CreateSubGraph(
+      b, b.CreateVector(tensors), b.CreateVector(inputs),
+      b.CreateVector(outputs), b.CreateVector({op}), b.CreateString("main"));
+  auto sig_def = tflite::CreateSignatureDef(
+      b, b.CreateVector(in_maps), b.CreateVector(out_maps),
+      b.CreateString("serving_default"), 0);
+  auto model = tflite::CreateModel(
+      b, 3, b.CreateVector({opcode}), b.CreateVector({subgraph}),
+      b.CreateString(std::string(description)), b.CreateVector(buffers), 0, 0,
+      b.CreateVector({sig_def}));
+  tflite::FinishModelBuffer(b, model);
+  return std::vector<uint8_t>(b.GetBufferPointer(),
+                              b.GetBufferPointer() + b.GetSize());
+}
+
+std::vector<uint8_t> BuildPhononBackboneTflite() {
+  constexpr int kDim =
+      ::mediapipe::tasks::audio::text_to_speech::phonon::kHiddenDim;
+  flatbuffers::FlatBufferBuilder b;
+  std::vector<float> zeros(kDim, 0.0f);
+  auto add_opts =
+      tflite::CreateAddOptions(b, tflite::ActivationFunctionType_NONE);
+  return FinishSingleSubgraphTflite(
+      b, tflite::CreateOperatorCode(b, tflite::BuiltinOperator_ADD),
+      {tflite::CreateBuffer(b), CreateFloatBuffer(b, zeros)},
+      {tflite::CreateTensor(b, b.CreateVector<int32_t>({1, kDim}),
+                            tflite::TensorType_FLOAT32, 0,
+                            b.CreateString("input_embeds")),
+       tflite::CreateTensor(b, b.CreateVector<int32_t>({1, kDim}),
+                            tflite::TensorType_FLOAT32, 1,
+                            b.CreateString("zeros")),
+       tflite::CreateTensor(b, b.CreateVector<int32_t>({1, kDim}),
+                            tflite::TensorType_FLOAT32, 0,
+                            b.CreateString("conditioning"))},
+      {0}, {2},
+      tflite::CreateOperator(
+          b, 0, b.CreateVector<int32_t>({0, 1}), b.CreateVector<int32_t>({2}),
+          tflite::BuiltinOptions_AddOptions, add_opts.Union()),
+      {tflite::CreateTensorMap(b, b.CreateString("input_embeds"), 0)},
+      {tflite::CreateTensorMap(b, b.CreateString("conditioning"), 2)},
+      "phonon_backbone");
+}
+
+std::vector<uint8_t> BuildPhononFlowHeadTflite() {
+  constexpr int kDim =
+      ::mediapipe::tasks::audio::text_to_speech::phonon::kHiddenDim;
+  constexpr int kLatent =
+      ::mediapipe::tasks::audio::text_to_speech::phonon::kLatentDim;
+  flatbuffers::FlatBufferBuilder b;
+  std::vector<float> zeros(kLatent, 0.0f);
+  auto add_opts =
+      tflite::CreateAddOptions(b, tflite::ActivationFunctionType_NONE);
+  return FinishSingleSubgraphTflite(
+      b, tflite::CreateOperatorCode(b, tflite::BuiltinOperator_ADD),
+      {tflite::CreateBuffer(b), CreateFloatBuffer(b, zeros)},
+      {tflite::CreateTensor(b, b.CreateVector<int32_t>({1, kLatent}),
+                            tflite::TensorType_FLOAT32, 0,
+                            b.CreateString("a_latent_z")),
+       tflite::CreateTensor(b, b.CreateVector<int32_t>({1, 1}),
+                            tflite::TensorType_FLOAT32, 0,
+                            b.CreateString("b_timestep_t")),
+       tflite::CreateTensor(b, b.CreateVector<int32_t>({1, kDim}),
+                            tflite::TensorType_FLOAT32, 0,
+                            b.CreateString("c_conditioning")),
+       tflite::CreateTensor(b, b.CreateVector<int32_t>({1, kLatent}),
+                            tflite::TensorType_FLOAT32, 1,
+                            b.CreateString("zeros")),
+       tflite::CreateTensor(b, b.CreateVector<int32_t>({1, kLatent}),
+                            tflite::TensorType_FLOAT32, 0,
+                            b.CreateString("velocity"))},
+      {0, 1, 2}, {4},
+      tflite::CreateOperator(
+          b, 0, b.CreateVector<int32_t>({0, 3}), b.CreateVector<int32_t>({4}),
+          tflite::BuiltinOptions_AddOptions, add_opts.Union()),
+      {tflite::CreateTensorMap(b, b.CreateString("a_latent_z"), 0),
+       tflite::CreateTensorMap(b, b.CreateString("b_timestep_t"), 1),
+       tflite::CreateTensorMap(b, b.CreateString("c_conditioning"), 2)},
+      {tflite::CreateTensorMap(b, b.CreateString("velocity"), 4)},
+      "phonon_flow_head");
+}
+
+std::vector<uint8_t> BuildPhononCodecTflite() {
+  constexpr int kWindowFrames = 32;
+  constexpr int kLatent =
+      ::mediapipe::tasks::audio::text_to_speech::phonon::kLatentDim;
+  constexpr int kUpsample =
+      ::mediapipe::tasks::audio::text_to_speech::phonon::kAudioUpsampleFactor;
+  flatbuffers::FlatBufferBuilder b;
+  std::vector<float> w(kUpsample * kLatent, 0.0f);
+  std::vector<float> bias(kUpsample, 0.0f);
+  auto fc_none = tflite::CreateFullyConnectedOptions(
+      b, tflite::ActivationFunctionType_NONE);
+  return FinishSingleSubgraphTflite(
+      b, tflite::CreateOperatorCode(b, tflite::BuiltinOperator_FULLY_CONNECTED),
+      {tflite::CreateBuffer(b), CreateFloatBuffer(b, w),
+       CreateFloatBuffer(b, bias)},
+      {tflite::CreateTensor(
+           b, b.CreateVector<int32_t>({kWindowFrames, kLatent}),
+           tflite::TensorType_FLOAT32, 0, b.CreateString("latents")),
+       tflite::CreateTensor(b, b.CreateVector<int32_t>({kUpsample, kLatent}),
+                            tflite::TensorType_FLOAT32, 1, b.CreateString("w")),
+       tflite::CreateTensor(b, b.CreateVector<int32_t>({kUpsample}),
+                            tflite::TensorType_FLOAT32, 2, b.CreateString("b")),
+       tflite::CreateTensor(
+           b, b.CreateVector<int32_t>({kWindowFrames, kUpsample}),
+           tflite::TensorType_FLOAT32, 0, b.CreateString("waveform"))},
+      {0}, {3},
+      tflite::CreateOperator(b, 0, b.CreateVector<int32_t>({0, 1, 2}),
+                             b.CreateVector<int32_t>({3}),
+                             tflite::BuiltinOptions_FullyConnectedOptions,
+                             fc_none.Union()),
+      {tflite::CreateTensorMap(b, b.CreateString("latents"), 0)},
+      {tflite::CreateTensorMap(b, b.CreateString("waveform"), 3)},
+      "phonon_mimi_codec");
+}
+
 struct PendingLitertLmSection {
   ::litert::lm::schema::AnySectionDataType data_type;
   std::string item_key;
@@ -765,6 +1031,44 @@ void AppendPocketTtsVoiceSections(
             Float32ToBfloat16(layer_kv[i]);
       }
     }
+    pending.push_back(
+        {::litert::lm::schema::AnySectionDataType_GenericBinaryData, "name",
+         std::string(voice), std::move(v_bytes)});
+  }
+}
+
+void AppendPhononVoiceSections(absl::string_view hf_dir,
+                               absl::string_view safetensors_path,
+                               std::vector<PendingLitertLmSection>& pending) {
+  constexpr int kDim =
+      ::mediapipe::tasks::audio::text_to_speech::phonon::kHiddenDim;
+  constexpr int kVoiceFrames =
+      ::mediapipe::tasks::audio::text_to_speech::phonon::kDefaultVoiceFrames;
+  std::vector<float> spk_proj_w = ReadSafetensorsSliceAsFloat(
+      safetensors_path,
+      "flow_lm.condition_provider.conditioners.speaker_wavs.output_proj.weight",
+      kDim * kDim, 1.0f);
+
+  for (absl::string_view voice :
+       {"freya", "claire", "lukas", "sofia", "lucas"}) {
+    std::string v_path =
+        absl::StrCat(hf_dir, "/voices/", voice, ".safetensors");
+    std::vector<float> speaker_wavs = ReadSafetensorsSliceAsFloat(
+        v_path, "speaker_wavs", kDim * kVoiceFrames, 1.0f);
+    std::vector<float> v_floats(kVoiceFrames * kDim, 0.0f);
+    for (int t = 0; t < kVoiceFrames; ++t) {
+      for (int o = 0; o < kDim; ++o) {
+        float sum = 0.0f;
+        const float* proj_row = spk_proj_w.data() + o * kDim;
+        for (int c = 0; c < kDim; ++c) {
+          sum += speaker_wavs[c * kVoiceFrames + t] * proj_row[c];
+        }
+        v_floats[t * kDim + o] = sum;
+      }
+    }
+    const auto* v_ptr = reinterpret_cast<const uint8_t*>(v_floats.data());
+    std::vector<uint8_t> v_bytes(v_ptr,
+                                 v_ptr + v_floats.size() * sizeof(float));
     pending.push_back(
         {::litert::lm::schema::AnySectionDataType_GenericBinaryData, "name",
          std::string(voice), std::move(v_bytes)});
@@ -887,6 +1191,60 @@ absl::StatusOr<std::string> EnsurePocketTtsLitertLmModel() {
        std::move(pocket_weights_bytes)},
   };
   AppendPocketTtsVoiceSections(hf_dir, pending);
+  ABSL_RETURN_IF_ERROR(WriteLitertLmContainerFile(output_path, pending));
+
+  std::ofstream marker(marker_path, std::ios::binary | std::ios::trunc);
+  marker << "v3\n";
+  return output_path;
+}
+
+absl::StatusOr<std::string> EnsurePhononLitertLmModel() {
+  std::string cache_dir = GetBenchmarkCacheDir();
+  std::string output_path = absl::StrCat(cache_dir, "/", kPhononModelName);
+  std::string marker_path = absl::StrCat(output_path, ".v3");
+  if (std::ifstream(output_path).good() && std::ifstream(marker_path).good()) {
+    return output_path;
+  }
+
+  const std::string hf_dir = absl::StrCat(cache_dir, "/phonon_hf");
+  const std::string safetensors_path =
+      absl::StrCat(hf_dir, "/model.safetensors");
+  const std::string sp_path = absl::StrCat(hf_dir, "/tokenizer.model");
+
+  std::ifstream sp_file(sp_path, std::ios::binary);
+  if (!sp_file.is_open()) {
+    return absl::NotFoundError(
+        absl::StrCat("Phonon SentencePiece tokenizer not found at: ", sp_path));
+  }
+  std::vector<uint8_t> sp_bytes((std::istreambuf_iterator<char>(sp_file)),
+                                std::istreambuf_iterator<char>());
+
+  ::litert::lm::proto::Text2SpeechMetadata tts_meta;
+  std::string tts_meta_str = tts_meta.SerializeAsString();
+  std::vector<uint8_t> tts_meta_bytes(tts_meta_str.begin(), tts_meta_str.end());
+  ABSL_ASSIGN_OR_RETURN(std::vector<uint8_t> phonon_weights_bytes,
+                        BuildPhononWeightsBinarySection(safetensors_path));
+
+  std::vector<PendingLitertLmSection> pending = {
+      {::litert::lm::schema::AnySectionDataType_Text2SpeechMetadataProto, "",
+       "", std::move(tts_meta_bytes)},
+      {::litert::lm::schema::AnySectionDataType_SP_Tokenizer, "", "",
+       std::move(sp_bytes)},
+      {::litert::lm::schema::AnySectionDataType_TFLiteModel, "model_type",
+       "tf_lite_text_embedding",
+       BuildPhononTextEmbeddingTflite(safetensors_path)},
+      {::litert::lm::schema::AnySectionDataType_TFLiteModel, "model_type",
+       "tf_lite_acoustic", BuildPhononBackboneTflite()},
+      {::litert::lm::schema::AnySectionDataType_TFLiteModel, "model_type",
+       "tf_lite_mtp_drafter", BuildPhononFlowHeadTflite()},
+      {::litert::lm::schema::AnySectionDataType_TFLiteModel, "model_type",
+       "tf_lite_vocoder", BuildPhononCodecTflite()},
+      {::litert::lm::schema::AnySectionDataType_GenericBinaryData, "name",
+       std::string(::mediapipe::tasks::audio::text_to_speech::phonon::
+                       kPhononWeightsSectionName),
+       std::move(phonon_weights_bytes)},
+  };
+  AppendPhononVoiceSections(hf_dir, safetensors_path, pending);
   ABSL_RETURN_IF_ERROR(WriteLitertLmContainerFile(output_path, pending));
 
   std::ofstream marker(marker_path, std::ios::binary | std::ios::trunc);
