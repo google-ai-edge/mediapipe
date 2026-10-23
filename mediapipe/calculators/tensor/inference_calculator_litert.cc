@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -20,6 +21,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/time/time.h"
+#include "litert/cc/litert_options.h"  // from @litert
 #include "mediapipe/calculators/tensor/inference_calculator.h"
 #include "mediapipe/calculators/tensor/inference_runner.h"
 #include "mediapipe/calculators/tensor/inference_runner_litert.h"
@@ -179,6 +181,8 @@ InferenceCalculatorLiteRtImpl::CreateInferenceRunner(CalculatorContext* cc) {
 #endif  // MEDIAPIPE_DISABLE_GPU
   };
 
+  std::optional<litert::Options> litert_options;
+
   return InferenceRunnerLiteRt::Create(
       std::move(model_packet), litert,
       options.has_input_output_config() ? &options.input_output_config()
@@ -190,7 +194,7 @@ InferenceCalculatorLiteRtImpl::CreateInferenceRunner(CalculatorContext* cc) {
 #if MEDIAPIPE_METAL_ENABLED
       metal_helper,
 #endif  // MEDIAPIPE_METAL_ENABLED
-      /*.litert_options=*/std::nullopt, system_handles);
+      std::move(litert_options), system_handles);
 }
 
 }  // namespace api2
