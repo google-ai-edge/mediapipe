@@ -118,7 +118,7 @@ void RenderState(const MotionBoxState& box_state, bool print_stats,
     lock_text = "Lock lost";
     lock_color = cv::Scalar(255, 0, 0, 255);
   } else if (box_state.motion_disparity() > 0.4) {
-    lock_text = "Aquiring lock";
+    lock_text = "Acquiring lock";
     lock_color = cv::Scalar(255, 255, 0, 255);
   } else if (box_state.motion_disparity() > 0.1) {
     lock_text = "Locked";
