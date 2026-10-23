@@ -15,17 +15,26 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/vision/face_landmarker/face_landmarker.h"
 
+#include <memory>
+#include <string>
 #include <utility>
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "mediapipe/framework/api2/builder.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/matrix_data.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/components/containers/classification_result.h"
 #include "mediapipe/tasks/cc/core/base_task_api.h"
+#include "mediapipe/tasks/cc/core/host_environment.h"
+#include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
@@ -152,53 +161,91 @@ FaceLandmarkerResult GetFaceLandmarkerResultFromPacketMap(
       /* facial_transformation_matrixes_proto= */ matrix_data_list);
 }
 
+bool ConfidenceInRange(float value) { return value >= 0.0f && value <= 1.0f; }
+
 }  // namespace
+
+struct FaceLandmarker::RebuildState {
+  proto::FaceLandmarkerGraphOptions graph_options;
+  bool output_face_blendshapes = false;
+  bool output_facial_transformation_matrixes = false;
+  core::RunningMode running_mode = core::RunningMode::IMAGE;
+  tasks::core::PacketsCallback packets_callback;
+  bool disable_default_service = false;
+  tasks::core::HostEnvironment host_environment =
+      tasks::core::HOST_ENVIRONMENT_UNKNOWN;
+  tasks::core::HostSystem host_system = tasks::core::HOST_SYSTEM_UNKNOWN;
+  std::string host_version;
+  std::string ca_bundle_path;
+};
+
+FaceLandmarker::~FaceLandmarker() = default;
 
 absl::StatusOr<std::unique_ptr<FaceLandmarker>> FaceLandmarker::Create(
     std::unique_ptr<FaceLandmarkerOptions> options) {
   auto options_proto = ConvertFaceLandmarkerGraphOptionsProto(options.get());
-  tasks::core::PacketsCallback packets_callback = nullptr;
+  auto rebuild_state = std::make_unique<RebuildState>();
+  rebuild_state->graph_options = *options_proto;
+  rebuild_state->output_face_blendshapes = options->output_face_blendshapes;
+  rebuild_state->output_facial_transformation_matrixes =
+      options->output_facial_transformation_matrixes;
+  rebuild_state->running_mode = options->running_mode;
+  rebuild_state->disable_default_service =
+      options->base_options.disable_default_service;
+  rebuild_state->host_environment = options->base_options.host_environment;
+  rebuild_state->host_system = options->base_options.host_system;
+  rebuild_state->host_version = options->base_options.host_version;
+  rebuild_state->ca_bundle_path = options->base_options.ca_bundle_path;
+
   if (options->result_callback) {
     auto result_callback = options->result_callback;
-    packets_callback = [=](absl::StatusOr<tasks::core::PacketMap> packet_map) {
-      if (!packet_map.ok()) {
-        Image image;
-        result_callback(packet_map.status(), image, Timestamp::Unset().Value());
-        return;
-      }
-      if (packet_map->at(kImageOutStreamName).IsEmpty()) {
-        return;
-      }
-      Packet image_packet = packet_map->at(kImageOutStreamName);
-      if (packet_map->at(kNormLandmarksStreamName).IsEmpty()) {
-        Packet empty_packet = packet_map->at(kNormLandmarksStreamName);
-        result_callback(
-            {FaceLandmarkerResult()}, image_packet.Get<Image>(),
-            empty_packet.Timestamp().Value() / kMicroSecondsPerMilliSecond);
-        return;
-      }
-      result_callback(
-          GetFaceLandmarkerResultFromPacketMap(*packet_map),
-          image_packet.Get<Image>(),
-          packet_map->at(kNormLandmarksStreamName).Timestamp().Value() /
-              kMicroSecondsPerMilliSecond);
-    };
+    rebuild_state->packets_callback =
+        [=](absl::StatusOr<tasks::core::PacketMap> packet_map) {
+          if (!packet_map.ok()) {
+            Image image;
+            result_callback(packet_map.status(), image,
+                            Timestamp::Unset().Value());
+            return;
+          }
+          if (packet_map->at(kImageOutStreamName).IsEmpty()) {
+            return;
+          }
+          Packet image_packet = packet_map->at(kImageOutStreamName);
+          if (packet_map->at(kNormLandmarksStreamName).IsEmpty()) {
+            Packet empty_packet = packet_map->at(kNormLandmarksStreamName);
+            result_callback(
+                {FaceLandmarkerResult()}, image_packet.Get<Image>(),
+                empty_packet.Timestamp().Value() / kMicroSecondsPerMilliSecond);
+            return;
+          }
+          result_callback(
+              GetFaceLandmarkerResultFromPacketMap(*packet_map),
+              image_packet.Get<Image>(),
+              packet_map->at(kNormLandmarksStreamName).Timestamp().Value() /
+                  kMicroSecondsPerMilliSecond);
+        };
   }
-  return core::VisionTaskApiFactory::Create<FaceLandmarker,
-                                            FaceLandmarkerGraphOptionsProto>(
-      {.config = CreateGraphConfig(
-           std::move(options_proto), options->output_face_blendshapes,
-           options->output_facial_transformation_matrixes,
-           options->running_mode == core::RunningMode::LIVE_STREAM),
-       .task_name = kTaskName,
-       .task_running_mode = core::GetCoreRunningMode(options->running_mode),
-       .op_resolver = std::move(options->base_options.op_resolver),
-       .packets_callback = std::move(packets_callback),
-       .disable_default_service = options->base_options.disable_default_service,
-       .host_environment = options->base_options.host_environment,
-       .host_system = options->base_options.host_system,
-       .host_version = options->base_options.host_version,
-       .ca_bundle_path = options->base_options.ca_bundle_path});
+
+  ABSL_ASSIGN_OR_RETURN(
+      auto landmarker,
+      core::VisionTaskApiFactory::Create<FaceLandmarker,
+                                         FaceLandmarkerGraphOptionsProto>(
+          {.config = CreateGraphConfig(
+               std::move(options_proto), options->output_face_blendshapes,
+               options->output_facial_transformation_matrixes,
+               options->running_mode == core::RunningMode::LIVE_STREAM),
+           .task_name = kTaskName,
+           .task_running_mode = core::GetCoreRunningMode(options->running_mode),
+           .op_resolver = std::move(options->base_options.op_resolver),
+           .packets_callback = rebuild_state->packets_callback,
+           .disable_default_service =
+               options->base_options.disable_default_service,
+           .host_environment = options->base_options.host_environment,
+           .host_system = options->base_options.host_system,
+           .host_version = options->base_options.host_version,
+           .ca_bundle_path = options->base_options.ca_bundle_path}));
+  landmarker->rebuild_state_ = std::move(rebuild_state);
+  return landmarker;
 }
 
 absl::StatusOr<FaceLandmarkerResult> FaceLandmarker::Detect(
@@ -253,6 +300,60 @@ absl::Status FaceLandmarker::DetectAsync(
        {kNormRectStreamName,
         MakePacket<NormalizedRect>(std::move(norm_rect))
             .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}});
+}
+
+absl::Status FaceLandmarker::SetOptions(int num_faces,
+                                        float min_face_detection_confidence,
+                                        float min_face_presence_confidence,
+                                        float min_tracking_confidence) {
+  if (!rebuild_state_) {
+    return absl::FailedPreconditionError("FaceLandmarker is not initialized.");
+  }
+  if (num_faces < 1) {
+    return absl::InvalidArgumentError("num_faces must be >= 1.");
+  }
+  if (!ConfidenceInRange(min_face_detection_confidence) ||
+      !ConfidenceInRange(min_face_presence_confidence) ||
+      !ConfidenceInRange(min_tracking_confidence)) {
+    return absl::InvalidArgumentError(
+        "Confidence thresholds must be in the range [0.0, 1.0].");
+  }
+
+  rebuild_state_->graph_options.mutable_face_detector_graph_options()
+      ->set_num_faces(num_faces);
+  rebuild_state_->graph_options.mutable_face_detector_graph_options()
+      ->set_min_detection_confidence(min_face_detection_confidence);
+  rebuild_state_->graph_options
+      .mutable_face_landmarks_detector_graph_options()
+      ->set_min_detection_confidence(min_face_presence_confidence);
+  rebuild_state_->graph_options.set_min_tracking_confidence(
+      min_tracking_confidence);
+
+  auto options_copy = std::make_unique<FaceLandmarkerGraphOptionsProto>(
+      rebuild_state_->graph_options);
+  ABSL_ASSIGN_OR_RETURN(
+      auto replacement,
+      core::VisionTaskApiFactory::Create<FaceLandmarker,
+                                         FaceLandmarkerGraphOptionsProto>(
+          {.config = CreateGraphConfig(
+               std::move(options_copy),
+               rebuild_state_->output_face_blendshapes,
+               rebuild_state_->output_facial_transformation_matrixes,
+               rebuild_state_->running_mode == core::RunningMode::LIVE_STREAM),
+           .task_name = kTaskName,
+           .task_running_mode =
+               core::GetCoreRunningMode(rebuild_state_->running_mode),
+           .op_resolver =
+               std::make_unique<tasks::core::MediaPipeBuiltinOpResolver>(),
+           .packets_callback = rebuild_state_->packets_callback,
+           .disable_default_service = rebuild_state_->disable_default_service,
+           .host_environment = rebuild_state_->host_environment,
+           .host_system = rebuild_state_->host_system,
+           .host_version = rebuild_state_->host_version,
+           .ca_bundle_path = rebuild_state_->ca_bundle_path}));
+  ABSL_RETURN_IF_ERROR(runner_->Close());
+  runner_ = std::move(replacement->runner_);
+  return absl::OkStatus();
 }
 
 }  // namespace face_landmarker

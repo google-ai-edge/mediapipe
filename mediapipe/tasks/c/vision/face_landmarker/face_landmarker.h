@@ -173,6 +173,20 @@ MP_EXPORT void MpFaceLandmarkerCloseResult(MpFaceLandmarkerResult* result);
 MP_EXPORT MpStatus MpFaceLandmarkerClose(MpFaceLandmarkerPtr landmarker,
                                          char** error_msg);
 
+// Updates detector / tracker thresholds on a running FaceLandmarker without
+// constructing a new task. The model file stays in memory; the graph is
+// rebuilt so the next detect call uses the new values.
+// `num_faces` must be >= 1. Confidence values must be in [0, 1].
+//
+// Returns `kMpOk` on success. To obtain a detailed error, error_msg must be
+// non-null pointer to a char*, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with MpErrorFree().
+MP_EXPORT MpStatus MpFaceLandmarkerSetOptions(
+    MpFaceLandmarkerPtr landmarker, int num_faces,
+    float min_face_detection_confidence, float min_face_presence_confidence,
+    float min_tracking_confidence, char** error_msg);
+
 #ifdef __cplusplus
 }  // extern C
 #endif
