@@ -656,7 +656,7 @@ cc_test(
     data = ["//mediapipe/calculators/image/testdata:test_images"],
     tags = [
         "angle",
-        "requires-gpu-nvidia",
+        "requires-gpu-sm90",
     ],
     deps = [
         ":mask_overlay_calculator",

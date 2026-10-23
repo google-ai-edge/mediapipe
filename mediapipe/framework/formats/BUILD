@@ -688,7 +688,7 @@ cc_test(
     tags = [
         "angle",
         "not_run:arm",
-        "requires-gpu-nvidia",
+        "requires-gpu-sm90",
     ],
     deps = [
         ":tensor",
