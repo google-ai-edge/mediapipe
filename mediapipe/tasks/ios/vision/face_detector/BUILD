@@ -27,6 +27,7 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/components/containers:MPPDetection",
         "//mediapipe/tasks/ios/core:MPPTaskResult",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -52,6 +53,7 @@ objc_library(
         "-Xclang=-fno-cxx-modules",
         "-x objective-c++",
     ],
+    module_name = "MPPFaceDetector",
     deps = [
         ":MPPFaceDetectorOptions",
         ":MPPFaceDetectorResult",

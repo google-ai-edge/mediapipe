@@ -80,3 +80,25 @@ ios_unit_test(
         ":MPPTextClassifierSwiftTestLibrary",
     ],
 )
+
+swift_library(
+    name = "TextClassifierSmokeTestLibrary",
+    testonly = True,
+    srcs = ["TextClassifierSmokeTests.swift"],
+    tags = TFL_DEFAULT_TAGS,
+    deps = [
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifier",
+        "//third_party/apple_frameworks:XCTest",
+    ],
+)
+
+ios_unit_test(
+    name = "TextClassifierSmokeTest",
+    minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
+    runner = tflite_ios_lab_runner("IOS_LATEST"),
+    tags = TFL_DEFAULT_TAGS + TFL_DISABLED_SANITIZER_TAGS,
+    deps = [
+        ":TextClassifierSmokeTestLibrary",
+    ],
+)

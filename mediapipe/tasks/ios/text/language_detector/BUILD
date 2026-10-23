@@ -36,6 +36,7 @@ objc_library(
     hdrs = ["sources/MPPLanguageDetectorResult.h"],
     deps = [
         "//mediapipe/tasks/ios/core:MPPTaskResult",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 

@@ -53,6 +53,7 @@ objc_library(
         "-Xclang=-fno-cxx-modules",
         "-x objective-c++",
     ],
+    module_name = "MPPObjectDetector",
     deps = [
         ":MPPObjectDetectorOptions",
         ":MPPObjectDetectorResult",

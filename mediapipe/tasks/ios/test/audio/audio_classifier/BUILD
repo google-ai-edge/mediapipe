@@ -3,6 +3,10 @@ load(
     "ios_unit_test",
 )
 load(
+    "@build_bazel_rules_swift//swift:swift.bzl",
+    "swift_library",
+)
+load(
     "@litert//tflite:special_rules.bzl",
     "tflite_ios_lab_runner",
 )
@@ -61,5 +65,27 @@ ios_unit_test(
     tags = TFL_DEFAULT_TAGS + TFL_DISABLED_SANITIZER_TAGS,
     deps = [
         ":MPPAudioClassifierObjcTestLibrary",
+    ],
+)
+
+swift_library(
+    name = "AudioClassifierSmokeTestLibrary",
+    testonly = True,
+    srcs = ["AudioClassifierSmokeTests.swift"],
+    tags = TFL_DEFAULT_TAGS,
+    deps = [
+        "//mediapipe/tasks/ios/audio/audio_classifier:MPPAudioClassifier",
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//third_party/apple_frameworks:XCTest",
+    ],
+)
+
+ios_unit_test(
+    name = "AudioClassifierSmokeTest",
+    minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
+    runner = tflite_ios_lab_runner("IOS_LATEST"),
+    tags = TFL_DEFAULT_TAGS + TFL_DISABLED_SANITIZER_TAGS,
+    deps = [
+        ":AudioClassifierSmokeTestLibrary",
     ],
 )

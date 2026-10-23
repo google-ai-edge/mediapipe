@@ -53,7 +53,6 @@ objc_library(
 objc_library(
     name = "MPPFaceLandmarksConnections",
     hdrs = ["sources/MPPFaceLandmarksConnections.h"],
-    module_name = "MPPFaceLandmarksConnections",
     deps = [
         "//mediapipe/tasks/ios/components/containers:MPPConnection",
         "//third_party/apple_frameworks:Foundation",
@@ -70,6 +69,7 @@ objc_library(
         "-Xclang=-fno-cxx-modules",
         "-x objective-c++",
     ],
+    module_name = "MPPFaceLandmarker",
     deps = [
         ":MPPFaceLandmarkerOptions",
         ":MPPFaceLandmarkerResult",

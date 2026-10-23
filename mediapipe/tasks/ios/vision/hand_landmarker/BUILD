@@ -47,7 +47,6 @@ objc_library(
 objc_library(
     name = "MPPHandLandmarksConnections",
     hdrs = ["sources/MPPHandLandmarksConnections.h"],
-    module_name = "MPPHandLandmarksConnections",
     deps = [
         "//mediapipe/tasks/ios/components/containers:MPPConnection",
         "//third_party/apple_frameworks:Foundation",

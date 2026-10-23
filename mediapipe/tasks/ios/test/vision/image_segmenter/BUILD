@@ -13,6 +13,7 @@
 # limitations under the License.
 
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
+load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 load(
     "@litert//tflite:special_rules.bzl",
     "tflite_ios_lab_runner",
@@ -77,5 +78,27 @@ ios_unit_test(
     tags = TFL_DEFAULT_TAGS + TFL_DISABLED_SANITIZER_TAGS,
     deps = [
         ":MPPImageSegmenterObjcTestLibrary",
+    ],
+)
+
+swift_library(
+    name = "ImageSegmenterSmokeTestLibrary",
+    testonly = True,
+    srcs = ["ImageSegmenterSmokeTests.swift"],
+    tags = TFL_DEFAULT_TAGS,
+    deps = [
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/vision/image_segmenter:MPPImageSegmenter",
+        "//third_party/apple_frameworks:XCTest",
+    ],
+)
+
+ios_unit_test(
+    name = "ImageSegmenterSmokeTest",
+    minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
+    runner = tflite_ios_lab_runner("IOS_LATEST"),
+    tags = TFL_DEFAULT_TAGS + TFL_DISABLED_SANITIZER_TAGS,
+    deps = [
+        ":ImageSegmenterSmokeTestLibrary",
     ],
 )
