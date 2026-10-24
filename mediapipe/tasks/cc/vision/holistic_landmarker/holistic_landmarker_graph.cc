@@ -387,6 +387,14 @@ class HolisticLandmarkerGraph : public core::ModelTaskGraph {
             holistic_options->mutable_face_landmarks_detector_graph_options()
                 ->mutable_face_blendshapes_graph_options(),
             kFaceBlendshapesModelName, create_copy));
+        // The blendshapes model is not supported by the GPU delegate (it fails
+        // with a batch size mismatch), so always run it on CPU with XNNPACK,
+        // consistent with FaceLandmarkerGraph.
+        holistic_options->mutable_face_landmarks_detector_graph_options()
+            ->mutable_face_blendshapes_graph_options()
+            ->mutable_base_options()
+            ->mutable_acceleration()
+            ->mutable_xnnpack();
       }
     }
 
