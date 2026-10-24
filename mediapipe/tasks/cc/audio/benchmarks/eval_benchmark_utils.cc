@@ -119,11 +119,16 @@ const auto& ExtractSegments(const AudioTranscriberResult& res) {
 
 template <typename SegmentContainer>
 void CollectSegments(const SegmentContainer& segments, AsrRunMetrics& metrics,
-                     bool count_interims) {
+                     bool count_interims, double fed_audio_sec = 0.0,
+                     double elapsed_ms = 0.0) {
   for (const auto& seg : segments) {
     if (seg.is_final) {
       AppendSegmentTranscript(metrics.final_transcript, seg.transcript);
     } else if (count_interims) {
+      if (metrics.interim_updates == 0 && !seg.transcript.empty()) {
+        metrics.first_interim_audio_sec = fed_audio_sec;
+        metrics.first_interim_latency_ms = elapsed_ms;
+      }
       ++metrics.interim_updates;
     }
   }
@@ -145,8 +150,11 @@ absl::StatusOr<AsrRunMetrics> RunAsrEngine(Engine& engine,
     absl::Time c0 = absl::Now();
     ABSL_ASSIGN_OR_RETURN(auto res,
                           engine.Transcribe(samples.subspan(off, n), is_unary));
-    chunk_ms.push_back(absl::ToDoubleMilliseconds(absl::Now() - c0));
-    CollectSegments(ExtractSegments(res), metrics, true);
+    absl::Time c_end = absl::Now();
+    chunk_ms.push_back(absl::ToDoubleMilliseconds(c_end - c0));
+    const double fed_sec = static_cast<double>(off + n) / sample_rate_hz;
+    const double elapsed_ms = absl::ToDoubleMilliseconds(c_end - t_start);
+    CollectSegments(ExtractSegments(res), metrics, true, fed_sec, elapsed_ms);
   }
   if (!is_unary) {
     absl::Time f0 = absl::Now();
@@ -270,6 +278,11 @@ std::vector<std::string> SplitNormalizedWords(absl::string_view text) {
           {"eighty", "80"},
           {"ninety", "90"},
           {"hundred", "100"},
+          {"first", "1st"},
+          {"second", "2nd"},
+          {"third", "3rd"},
+          {"fourth", "4th"},
+          {"fifth", "5th"},
           {"un", "1"},
           {"deux", "2"},
           {"trois", "3"},
@@ -371,6 +384,124 @@ double ComputeWordErrorRate(absl::string_view reference,
   return static_cast<double>(dp[n][m]) / static_cast<double>(n);
 }
 
+namespace {
+
+std::vector<uint32_t> ExtractNormalizedCodepoints(absl::string_view utf8) {
+  std::vector<uint32_t> cps;
+  cps.reserve(utf8.size());
+  for (size_t i = 0; i < utf8.size();) {
+    const uint8_t b0 = static_cast<uint8_t>(utf8[i]);
+    uint32_t cp = 0;
+    size_t len = 1;
+    if ((b0 & 0x80u) == 0) {
+      cp = b0;
+    } else if ((b0 & 0xE0u) == 0xC0u && i + 1 < utf8.size()) {
+      cp = ((b0 & 0x1Fu) << 6) | (static_cast<uint8_t>(utf8[i + 1]) & 0x3Fu);
+      len = 2;
+    } else if ((b0 & 0xF0u) == 0xE0u && i + 2 < utf8.size()) {
+      cp = ((b0 & 0x0Fu) << 12) |
+           ((static_cast<uint8_t>(utf8[i + 1]) & 0x3Fu) << 6) |
+           (static_cast<uint8_t>(utf8[i + 2]) & 0x3Fu);
+      len = 3;
+    } else if ((b0 & 0xF8u) == 0xF0u && i + 3 < utf8.size()) {
+      cp = ((b0 & 0x07u) << 18) |
+           ((static_cast<uint8_t>(utf8[i + 1]) & 0x3Fu) << 12) |
+           ((static_cast<uint8_t>(utf8[i + 2]) & 0x3Fu) << 6) |
+           (static_cast<uint8_t>(utf8[i + 3]) & 0x3Fu);
+      len = 4;
+    }
+    i += len;
+
+    if (cp <= 0x7Fu) {
+      if (absl::ascii_isalnum(static_cast<unsigned char>(cp))) {
+        cps.push_back(
+            static_cast<uint32_t>(absl::ascii_tolower(static_cast<char>(cp))));
+      }
+      continue;
+    }
+    // Strip general & CJK punctuation, Devanagari danda/nukta, and zero-width.
+    if ((cp >= 0x2000u && cp <= 0x206Fu) ||
+        (cp >= 0x3000u && cp <= 0x303Fu && cp != 0x3007u) ||
+        (cp >= 0xFF00u && cp <= 0xFF0Fu) || (cp >= 0xFF1Au && cp <= 0xFF20u) ||
+        (cp >= 0xFF3Bu && cp <= 0xFF40u) || (cp >= 0xFF5Bu && cp <= 0xFF65u) ||
+        cp == 0x093Cu || cp == 0x0964u || cp == 0x0965u || cp == 0x0970u ||
+        cp == 0xFEFFu) {
+      continue;
+    }
+    if (cp >= 0xFF10u && cp <= 0xFF19u) {
+      cp = '0' + (cp - 0xFF10u);
+    } else if (cp >= 0x0966u && cp <= 0x096Fu) {
+      cp = '0' + (cp - 0x0966u);
+    } else {
+      switch (cp) {
+        case 0x96F6u:
+        case 0x3007u:
+          cp = '0';
+          break;
+        case 0x4E00u:
+          cp = '1';
+          break;
+        case 0x4E8Cu:
+        case 0x4E24u:
+          cp = '2';
+          break;
+        case 0x4E09u:
+          cp = '3';
+          break;
+        case 0x56DBu:
+          cp = '4';
+          break;
+        case 0x4E94u:
+          cp = '5';
+          break;
+        case 0x516Du:
+          cp = '6';
+          break;
+        case 0x4E03u:
+          cp = '7';
+          break;
+        case 0x516Bu:
+          cp = '8';
+          break;
+        case 0x4E5Du:
+          cp = '9';
+          break;
+        default:
+          break;
+      }
+    }
+    cps.push_back(cp);
+  }
+  return cps;
+}
+
+}  // namespace
+
+double ComputeMultilingualErrorRate(absl::string_view reference,
+                                    absl::string_view hypothesis,
+                                    absl::string_view locale) {
+  if (!absl::StartsWith(locale, "ja") && !absl::StartsWith(locale, "zh") &&
+      !absl::StartsWith(locale, "hi")) {
+    return ComputeWordErrorRate(reference, hypothesis);
+  }
+  std::vector<uint32_t> ref = ExtractNormalizedCodepoints(reference);
+  std::vector<uint32_t> hyp = ExtractNormalizedCodepoints(hypothesis);
+  if (ref.empty()) return hyp.empty() ? 0.0 : 1.0;
+  const size_t n = ref.size();
+  const size_t m = hyp.size();
+  std::vector<std::vector<size_t>> dp(n + 1, std::vector<size_t>(m + 1, 0));
+  for (size_t i = 0; i <= n; ++i) dp[i][0] = i;
+  for (size_t j = 0; j <= m; ++j) dp[0][j] = j;
+  for (size_t i = 1; i <= n; ++i) {
+    for (size_t j = 1; j <= m; ++j) {
+      size_t cost = (ref[i - 1] == hyp[j - 1]) ? 0 : 1;
+      dp[i][j] = std::min(
+          {dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost});
+    }
+  }
+  return static_cast<double>(dp[n][m]) / static_cast<double>(n);
+}
+
 double Percentile(std::vector<double> vals, double p) {
   if (vals.empty()) return 0.0;
   std::sort(vals.begin(), vals.end());
@@ -448,6 +579,7 @@ absl::StatusOr<std::unique_ptr<AudioTranscriber>> CreatePrewarmedMediaPipeAsr(
   opts->model_architecture =
       ::mediapipe::tasks::audio::audio_transcriber::ModelArchitecture::kOmni;
   opts->enable_interim_results = true;
+  opts->overlap_ratio = kDefaultAsrOverlapRatio;
   opts->cache_dir = GetBenchmarkCacheDir();
   ABSL_ASSIGN_OR_RETURN(auto tr, AudioTranscriber::Create(std::move(opts)));
   ABSL_RETURN_IF_ERROR(tr->Prewarm());

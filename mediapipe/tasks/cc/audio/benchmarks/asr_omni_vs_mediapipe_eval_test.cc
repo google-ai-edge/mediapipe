@@ -75,18 +75,22 @@ struct AsrModelPair {
 
 std::vector<AsrEvalCase> GetStandardAsrEvalCases() {
   return {
-      {kAudioWhatColorIsCheese, "what color is cheese", "what color is cheese"},
+      {kAudioWhatColorIsCheese, "what color is cheese",
+       "What color is cheese?"},
       {kAudioShouldntMissTheBeginning, "beginning",
-       "its not really missing the beginning"},
-      {kAudioHelloWhatIsGoingOn, "what is going on", "hello what is going on"},
+       "It's not really missing the beginning."},
+      {kAudioHelloWhatIsGoingOn, "what is going on",
+       "Hello? What is going on?"},
       {kAudioThereIsSomethingInTheWater, "something in the water",
-       "there is something in the water"},
-      {kAudioWhisper, "whisper", "whisper"},
+       "There is something in the water."},
+      {kAudioWhisper, "whisper", "Can you hear me when I whisper?"},
       {kAudio123456789, "one two three",
-       "one two three four five six seven eight nine"},
+       "One two three four five six seven eight nine."},
       {kAudioHelloIsThereAnybodyInThere, "anybody in there",
-       "hello is there anybody in there"},
-      {kAudioCarolineAndPeter, "caroline", "caroline and peter"},
+       "Hello, is there anybody in there? Just note if you can hear me."},
+      {kAudioCarolineAndPeter, "caroline",
+       "Are Caroline and Peter happy with the progress of the project? Yeah, "
+       "I'm a little worried they might not be able to do that."},
   };
 }
 
@@ -187,16 +191,21 @@ void VerifyWikipediaLongFormStreamingParity(AsrModelPair& pair) {
     EXPECT_THAT(norm_mp, HasSubstr("wikipedia"));
     EXPECT_EQ(norm_mp, norm_omni);
     EXPECT_EQ(mp_wiki.interim_updates, omni_wiki.interim_updates);
+    EXPECT_GE(mp_wiki.interim_updates, 20);
+    EXPECT_LE(mp_wiki.first_interim_audio_sec, 2.0);
 
     std::cout << absl::StrFormat(
         "  [Wiki-34s %4dms] Omni: total=%6.1f ms, p50=%5.1f ms, p90=%5.1f "
-        "ms, RTF=%.3f, interims=%d | MP: total=%6.1f ms, p50=%5.1f ms, "
-        "p90=%5.1f ms, RTF=%.3f, interims=%d | Parity: %s\n",
+        "ms, RTF=%.3f, 1st_interim=%.2fs (%5.1fms), interims=%d | MP: "
+        "total=%6.1f ms, p50=%5.1f ms, p90=%5.1f ms, RTF=%.3f, "
+        "1st_interim=%.2fs (%5.1fms), interims=%d | Parity: %s\n",
         chunk_ms, omni_wiki.total_latency_ms, omni_wiki.p50_chunk_ms,
-        omni_wiki.p90_chunk_ms, omni_wiki.rtf, omni_wiki.interim_updates,
-        mp_wiki.total_latency_ms, mp_wiki.p50_chunk_ms, mp_wiki.p90_chunk_ms,
-        mp_wiki.rtf, mp_wiki.interim_updates,
-        (norm_mp == norm_omni ? "EXACT" : "DIFF"));
+        omni_wiki.p90_chunk_ms, omni_wiki.rtf,
+        omni_wiki.first_interim_audio_sec, omni_wiki.first_interim_latency_ms,
+        omni_wiki.interim_updates, mp_wiki.total_latency_ms,
+        mp_wiki.p50_chunk_ms, mp_wiki.p90_chunk_ms, mp_wiki.rtf,
+        mp_wiki.first_interim_audio_sec, mp_wiki.first_interim_latency_ms,
+        mp_wiki.interim_updates, (norm_mp == norm_omni ? "EXACT" : "DIFF"));
   }
 }
 
@@ -225,6 +234,11 @@ TEST(AsrOmniVsMediaPipeEvalTest,
 
 TEST(AsrOmniVsMediaPipeEvalTest, ParakeetCtcOmniVsMediaPipeRealAudioParity) {
   RunParakeetModelComprehensiveEval(kParakeetCtcModelName);
+}
+
+TEST(AsrOmniVsMediaPipeEvalTest,
+     Qwen3AsrOmniVsMediaPipeRealAudioAndStreamingParity) {
+  RunParakeetModelComprehensiveEval(kQwen3AsrModelName);
 }
 
 struct OpenAsrFamilyDescriptor {

@@ -66,7 +66,7 @@ inline constexpr int kDefaultCpuThreads = 4;
 inline constexpr int kSampleRate16kHz = 16000;
 inline constexpr int kSampleRate24kHz = 24000;
 inline constexpr int kSampleRate48kHz = 48000;
-inline constexpr float kDefaultAsrOverlapRatio = 0.4f;
+inline constexpr float kDefaultAsrOverlapRatio = 0.75f;
 
 struct AsrEvalCase {
   absl::string_view wav_name;
@@ -77,6 +77,8 @@ struct AsrEvalCase {
 struct AsrRunMetrics {
   std::string final_transcript;
   int interim_updates = 0;
+  double first_interim_latency_ms = 0.0;
+  double first_interim_audio_sec = 0.0;
   double total_latency_ms = 0.0;
   double finish_stream_ms = 0.0;
   double p50_chunk_ms = 0.0;
@@ -100,6 +102,9 @@ std::string NormalizeTranscript(absl::string_view text);
 std::vector<std::string> SplitNormalizedWords(absl::string_view text);
 double ComputeWordErrorRate(absl::string_view reference,
                             absl::string_view hypothesis);
+double ComputeMultilingualErrorRate(absl::string_view reference,
+                                    absl::string_view hypothesis,
+                                    absl::string_view locale = "en-US");
 
 double Percentile(std::vector<double> vals, double p);
 double Mean(absl::Span<const double> vals);

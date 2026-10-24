@@ -394,5 +394,26 @@ TEST(SchedulerVsMediaPipeBenchmarkTest,
          "==================\n";
 }
 
+TEST(SchedulerVsMediaPipeBenchmarkTest,
+     ComputeMultilingualErrorRateNormalizesScriptsAndDigits) {
+  EXPECT_DOUBLE_EQ(
+      ComputeMultilingualErrorRate("Hello, World!", "hello world", "en-US"),
+      0.0);
+  EXPECT_DOUBLE_EQ(ComputeMultilingualErrorRate("", "", "ja-JP"), 0.0);
+  EXPECT_DOUBLE_EQ(ComputeMultilingualErrorRate("", "abc", "ja-JP"), 1.0);
+  // Full-width digits, CJK numerals, CJK punctuation, 2-byte and 4-byte UTF-8.
+  EXPECT_DOUBLE_EQ(ComputeMultilingualErrorRate(
+                       "零〇一二两三四五六七八九、。！？"
+                       "\xEF\xBC\x91\xEF\xBC\x92\xC3\xA9\xF0\x9F\x98\x80",
+                       "00122345678912\xC3\xA9\xF0\x9F\x98\x80", "zh-CN"),
+                   0.0);
+  // Devanagari digits and danda/nukta.
+  EXPECT_DOUBLE_EQ(
+      ComputeMultilingualErrorRate(
+          "\xE0\xA5\xA7\xE0\xA5\xA8\xE0\xA5\xA4\xE0\xA4\xBC", "12", "hi-IN"),
+      0.0);
+  EXPECT_GT(ComputeMultilingualErrorRate("一二三", "一二四", "ja-JP"), 0.0);
+}
+
 }  // namespace
 }  // namespace mediapipe::tasks::audio::benchmarks
