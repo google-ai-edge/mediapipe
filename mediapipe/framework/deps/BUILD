@@ -142,6 +142,7 @@ cc_library(
         "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ] + select({
@@ -345,6 +346,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -371,6 +373,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_builder",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
@@ -396,6 +399,7 @@ cc_library(
         ":status",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
     ],
 )

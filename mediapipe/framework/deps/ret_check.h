@@ -17,9 +17,9 @@
 
 #include "absl/base/optimization.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/deps/status_builder.h"
-#include "mediapipe/framework/deps/status_macros.h"
 
 namespace mediapipe {
 // Returns a Status given a Status or StatusOr.

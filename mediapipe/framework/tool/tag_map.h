@@ -21,6 +21,7 @@
 
 #include "absl/base/macros.h"
 #include "absl/container/btree_map.h"
+#include "absl/status/status_macros.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/port/canonical_errors.h"
@@ -28,7 +29,6 @@
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/tool/validate_name.h"
 

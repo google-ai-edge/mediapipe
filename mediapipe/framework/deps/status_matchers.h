@@ -21,12 +21,12 @@
 
 #include "absl/status/status.h"
 #include "absl/status/status_builder.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "mediapipe/framework/deps/status_builder.h"
-#include "mediapipe/framework/port/status_macros.h"
 
 namespace mediapipe {
 

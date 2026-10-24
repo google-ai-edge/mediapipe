@@ -23,6 +23,7 @@
 #include "absl/base/attributes.h"
 #include "absl/log/absl_check.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/api3/any.h"
 #include "mediapipe/framework/api3/internal/contract_fields.h"
@@ -33,7 +34,6 @@
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/status_macros.h"
 
 namespace mediapipe::api3 {
 

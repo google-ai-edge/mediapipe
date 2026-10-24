@@ -30,6 +30,7 @@
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
@@ -50,7 +51,6 @@
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/tool/calculator_graph_template.pb.h"
 #include "mediapipe/framework/tool/proto_util_lite.h"
 

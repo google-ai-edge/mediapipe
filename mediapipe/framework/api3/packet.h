@@ -20,10 +20,10 @@
 #include <utility>
 
 #include "absl/functional/any_invocable.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/api3/any.h"
 #include "mediapipe/framework/packet.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/timestamp.h"
 
 namespace mediapipe::api3 {

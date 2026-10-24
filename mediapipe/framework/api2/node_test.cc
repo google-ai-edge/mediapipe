@@ -8,6 +8,7 @@
 
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/contract.h"
@@ -20,7 +21,6 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {

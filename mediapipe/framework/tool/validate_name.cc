@@ -17,6 +17,7 @@
 
 #include <cstdint>
 
+#include "absl/status/status_macros.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -27,7 +28,6 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/source_location.h"
 #include "mediapipe/framework/port/status_builder.h"
-#include "mediapipe/framework/port/status_macros.h"
 
 namespace mediapipe {
 namespace tool {

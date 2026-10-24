@@ -27,6 +27,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -41,7 +42,6 @@
 #include "mediapipe/framework/output_stream_poller.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/thread_pool_executor.h"
 #include "mediapipe/framework/timestamp.h"
 

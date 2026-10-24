@@ -226,6 +226,7 @@ cc_library(
         ":hardware_buffer",
         "//mediapipe/gpu:multi_pool",
         "//mediapipe/gpu:reusable_pool",
+        "@com_google_absl//absl/status:status_macros",
     ],
 )
 
@@ -633,6 +634,7 @@ cc_library(
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
@@ -755,6 +757,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],

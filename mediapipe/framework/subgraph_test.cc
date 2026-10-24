@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_format.h"
@@ -29,7 +30,6 @@
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status_macros.h"
 
 // Because of portability issues, we include this directly.
 #include "mediapipe/framework/port/parse_text_proto.h"

@@ -19,7 +19,6 @@
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/re2.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/status_macros.h"
 
 namespace mediapipe {
 namespace reporter {

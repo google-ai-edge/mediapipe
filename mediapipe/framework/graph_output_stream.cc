@@ -22,6 +22,7 @@
 #include "absl/log/absl_check.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/strings/substitute.h"
 #include "absl/synchronization/mutex.h"
 #include "google/protobuf/repeated_ptr_field.h"
@@ -32,7 +33,6 @@
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/framework/tool/tag_map.h"
 

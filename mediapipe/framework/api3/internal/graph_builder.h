@@ -29,6 +29,7 @@
 #include "absl/log/absl_check.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -39,7 +40,6 @@
 #include "mediapipe/framework/port/any_proto.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_builder.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/stream_handler.pb.h"
 #include "mediapipe/framework/tool/type_util.h"
 

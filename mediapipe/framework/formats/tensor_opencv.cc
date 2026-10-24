@@ -21,12 +21,12 @@
 
 #include "absl/log/absl_check.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status_macros.h"
 
 namespace mediapipe::formats {
 namespace {

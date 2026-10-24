@@ -116,6 +116,7 @@ cc_library(
         "//mediapipe/framework/deps:file_helpers",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/deps:mmapped_file",
+        "@com_google_absl//absl/status:status_macros",
     ],
 )
 

@@ -44,7 +44,7 @@
 #ifndef _WIN32
 #include "mediapipe/framework/formats/unique_fd.h"
 #endif  // !_WIN32
-#include "mediapipe/framework/port/status_macros.h"
+#include "absl/status/status_macros.h"
 
 namespace mediapipe {
 namespace file {

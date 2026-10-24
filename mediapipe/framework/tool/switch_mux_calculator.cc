@@ -29,7 +29,6 @@
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/tool/container_util.h"
 #include "mediapipe/framework/tool/switch_container.pb.h"
 

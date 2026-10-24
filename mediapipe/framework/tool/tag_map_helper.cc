@@ -23,7 +23,6 @@
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/tool/tag_map.h"
 

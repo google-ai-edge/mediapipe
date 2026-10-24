@@ -21,13 +21,13 @@
 #include "absl/log/absl_log.h"
 #include "absl/meta/type_traits.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/api2/tuple.h"
 #include "mediapipe/framework/legacy_calculator_support.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/logging.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/timestamp.h"
 
 namespace mediapipe {

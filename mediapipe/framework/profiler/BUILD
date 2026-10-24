@@ -322,6 +322,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status:status_macros",
     ] + select({
         "//conditions:default": [
             "//mediapipe/framework/port:file_helpers",
