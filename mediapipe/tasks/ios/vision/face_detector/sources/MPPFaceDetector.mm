@@ -157,6 +157,10 @@ static NSString *const kTaskName = @"faceDetector";
                                              error:error];
 }
 
+- (BOOL)closeWithError:(NSError **)error {
+  return [_visionTaskRunner closeWithError:error];
+}
+
 - (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
   if (![self.faceDetectorLiveStreamDelegate
           respondsToSelector:@selector(faceDetector:
