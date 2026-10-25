@@ -19,6 +19,7 @@
 
 #include "absl/functional/overload.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/api3/calculator.h"
 #include "mediapipe/framework/api3/calculator_context.h"
@@ -26,7 +27,6 @@
 #include "mediapipe/framework/api3/packet.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/port/status_macros.h"
 
 namespace mediapipe::api3 {
 

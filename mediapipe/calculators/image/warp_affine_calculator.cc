@@ -32,11 +32,11 @@
 #if !MEDIAPIPE_DISABLE_OPENCV
 #include "mediapipe/calculators/image/affine_transformation_runner_opencv.h"
 #endif  // !MEDIAPIPE_DISABLE_OPENCV
+#include "absl/status/status_macros.h"
 #include "mediapipe/calculators/image/warp_affine_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/port/status_macros.h"
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gpu_buffer.h"

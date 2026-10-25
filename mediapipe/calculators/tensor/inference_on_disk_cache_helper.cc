@@ -7,11 +7,11 @@
 
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/file_helpers.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/util/tflite/tflite_gpu_runner.h"
 
 namespace mediapipe::api2 {

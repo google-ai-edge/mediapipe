@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
@@ -28,7 +29,6 @@
 #include "mediapipe/framework/formats/frame_buffer.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/tensor.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/frame_buffer_view.h"
 #include "mediapipe/util/frame_buffer/frame_buffer_util.h"
 

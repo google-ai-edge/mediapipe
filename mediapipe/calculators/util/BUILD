@@ -322,6 +322,7 @@ cc_library(
         "//mediapipe/util:resource_util",
         "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/strings:string_view",
     ] + select({
         "//mediapipe:android": [
@@ -468,6 +469,7 @@ cc_library(
         "//mediapipe/framework/formats:location_data_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status:status_macros",
     ],
     alwayslink = 1,
 )
@@ -1031,6 +1033,7 @@ cc_library(
         "//mediapipe/util/filtering:relative_velocity_filter",
         "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/time",
     ],
@@ -1253,6 +1256,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_util",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
     ],
     alwayslink = 1,
 )
@@ -1281,6 +1285,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/functional:any_invocable",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:string_view",
     ],
@@ -1493,6 +1498,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/functional:overload",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
@@ -1594,6 +1600,7 @@ cc_library(
         "//mediapipe/framework/port:vector",
         "//mediapipe/gpu:gpu_buffer",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
@@ -1717,6 +1724,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
     ],
     alwayslink = 1,

@@ -357,6 +357,7 @@ cc_library(
         "//mediapipe/tasks/cc/text/tokenizers:tokenizer_utils",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
@@ -433,6 +434,7 @@ cc_test(
         "//mediapipe/tasks/cc/core:utils",
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
@@ -499,6 +501,7 @@ cc_library_with_tflite(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
@@ -536,6 +539,7 @@ cc_library_with_tflite(
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@litert//tflite/core/api:op_resolver",
@@ -594,6 +598,7 @@ cc_library_with_tflite(
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
@@ -657,6 +662,7 @@ cc_library(
         "//mediapipe/util/tflite:tflite_model_loader",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/time",
@@ -689,6 +695,7 @@ cc_library(
         "//mediapipe/util/tflite:tflite_model_loader",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
@@ -728,6 +735,7 @@ cc_library(
         "//mediapipe/util/tflite:tflite_model_loader",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/types:optional",
@@ -813,6 +821,7 @@ cc_library(
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
@@ -872,6 +881,7 @@ cc_library(
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
@@ -957,6 +967,7 @@ cc_library_with_tflite(
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@litert//tflite:string_util",
@@ -990,6 +1001,7 @@ cc_test(
         "//mediapipe/util/tflite:tflite_model_loader",
         "@com_google_absl//absl/functional:any_invocable",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@litert//tflite:framework_stable",
         "@litert//tflite:util",
         "@litert//tflite/core/api:op_resolver",
@@ -1019,6 +1031,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/time",
         "@litert//tflite:framework_stable",
@@ -1046,6 +1059,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
@@ -1103,6 +1117,7 @@ cc_library(
         "//mediapipe/util/tflite:tflite_model_loader",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
     ],
@@ -1124,6 +1139,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/time",
         "@litert//tflite/delegates/xnnpack:xnnpack_delegate",
@@ -1202,6 +1218,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
@@ -1235,6 +1252,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
     ],
 )
@@ -1274,6 +1292,7 @@ cc_library(
         ":tensor_converter_gpu",
         "//mediapipe/framework:port",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status:status_macros",
     ] + select({
         "//mediapipe:apple": [],
         "//conditions:default": [
@@ -1318,6 +1337,7 @@ cc_library(
     }),
     deps = [
         "//mediapipe/framework:port",
+        "@com_google_absl//absl/status:status_macros",
     ] + select({
         "//mediapipe:apple": [
             ":tensor_converter_calculator_gpu_deps",
@@ -1340,6 +1360,7 @@ cc_library(
         ":tensor_converter_gpu",
         "//mediapipe/framework:port",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status:status_macros",
     ] + select({
         "//mediapipe:apple": [],
         "//conditions:default": [
@@ -1631,6 +1652,7 @@ cc_library(
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/types:span",
@@ -1763,6 +1785,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/strings:string_view",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
@@ -1947,6 +1970,7 @@ cc_library(
         "//mediapipe/gpu:frame_buffer_view",
         "//mediapipe/util/frame_buffer:frame_buffer_util",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -2094,6 +2118,7 @@ cc_library(
         "//mediapipe/framework/port:statusor",
         "//mediapipe/gpu:gpu_origin_cc_proto",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/types:optional",
     ] + select({
@@ -2161,6 +2186,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_util",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@litert//tflite:framework",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
@@ -2210,6 +2236,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/gpu:gpu_origin_cc_proto",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
     ] + selects.with_or({
         "//mediapipe/gpu:disable_gpu": [],
@@ -2259,6 +2286,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
     ],
 )
@@ -2270,6 +2298,7 @@ cc_library(
     visibility = ["//visibility:private"],
     deps = [
         "//mediapipe/framework:port",
+        "@com_google_absl//absl/status:status_macros",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
@@ -2312,6 +2341,7 @@ cc_library(
             ":tensors_to_segmentation_utils",
             "@com_google_absl//absl/memory",
             "@com_google_absl//absl/status",
+            "@com_google_absl//absl/status:status_macros",
             "@com_google_absl//absl/status:statusor",
             "@com_google_absl//absl/strings",
             "@com_google_absl//absl/strings:str_format",
@@ -2353,6 +2383,7 @@ cc_library(
     visibility = ["//visibility:private"],
     deps = [
         "//mediapipe/framework:port",
+        "@com_google_absl//absl/status:status_macros",
     ] + selects.with_or({
         ":gpu_inference_disabled": [],
         ":platform_apple_with_gpu": [
@@ -2507,6 +2538,7 @@ cc_library(
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
     ],
     alwayslink = 1,
 )
@@ -2528,6 +2560,7 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],

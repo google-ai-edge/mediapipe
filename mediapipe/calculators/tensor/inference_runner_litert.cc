@@ -25,6 +25,7 @@
 #include "absl/log/absl_log.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"  // IWYU pragma: keep
@@ -62,7 +63,6 @@
 #include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port.h"  // IWYU pragma: keep
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
 #include "mediapipe/util/tflite/tflite_signature_reader.h"
 

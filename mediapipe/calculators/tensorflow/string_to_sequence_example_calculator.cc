@@ -15,7 +15,6 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "tensorflow/core/example/example.pb.h"
 
 // A calculator to serialize/deserialize tensorflow::SequenceExample protos
