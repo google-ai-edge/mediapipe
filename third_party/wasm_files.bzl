@@ -120,38 +120,38 @@ def wasm_files():
 
     http_file(
         name = "com_google_mediapipe_tasks_web_genai_wasm_genai_wasm_module_internal_wasm",
-        sha256 = "d73a9c60794bced07d4e2eaec363e104a48d1f8ddae8be3f2c6f70af5a321bf5",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/tasks/web/genai/wasm/genai_wasm_module_internal.wasm?generation=1792766403611954"],
+        sha256 = "36808df5ece42b455764c5c8dc7bc57de9da4192afdf8a08b3ef60c10dbe4e9e",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/tasks/web/genai/wasm/genai_wasm_module_internal.wasm?generation=1792888857017427"],
     )
 
     http_file(
         name = "com_google_mediapipe_tasks_web_genai_wasm_genai_wasm_module_internal_js",
-        sha256 = "054ef0a9fba84bf3b4ab711d0f4ee00c8be302757ae8dd66dc3d97e75ba3891d",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/tasks/web/genai/wasm/genai_wasm_module_internal.js?generation=1792766407453001"],
+        sha256 = "7cf1532f6ada705ae0a331988a858c7b58b00979128ee1b69ae2bf7680d2085e",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/tasks/web/genai/wasm/genai_wasm_module_internal.js?generation=1792888860755454"],
     )
 
     http_file(
         name = "com_google_mediapipe_tasks_web_genai_wasm_genai_wasm_nosimd_internal_wasm",
-        sha256 = "f7915ddecb63640e6806c2d7148ec6f7a4119c7fffaaf8f132eff2f573af1597",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/tasks/web/genai/wasm/genai_wasm_nosimd_internal.wasm?generation=1792766411719826"],
+        sha256 = "06d0010d444e3651065c358be39956916f5f44c5aeed4b4104ca467f7332070a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/tasks/web/genai/wasm/genai_wasm_nosimd_internal.wasm?generation=1792888865096149"],
     )
 
     http_file(
         name = "com_google_mediapipe_tasks_web_genai_wasm_genai_wasm_nosimd_internal_js",
-        sha256 = "964e27144f1e80e994377f01e3de9eec5ab887f7a108a33aee5c6cc78e60ff31",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/tasks/web/genai/wasm/genai_wasm_nosimd_internal.js?generation=1792766415359480"],
+        sha256 = "8c93cf591d5dc6428afb7cf266ed955ec21090dd0e36d242da03fca73997d5f3",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/tasks/web/genai/wasm/genai_wasm_nosimd_internal.js?generation=1792888868697955"],
     )
 
     http_file(
         name = "com_google_mediapipe_tasks_web_genai_wasm_genai_wasm_internal_wasm",
-        sha256 = "183986a075ca4e20532c306665233ffa912d68b84a8a3106eb345114174a302e",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/tasks/web/genai/wasm/genai_wasm_internal.wasm?generation=1792766419548957"],
+        sha256 = "0f4103d32f7df0e75bd2894e7d7e521f203a58794d79202d18ac40207a522509",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/tasks/web/genai/wasm/genai_wasm_internal.wasm?generation=1792888872777689"],
     )
 
     http_file(
         name = "com_google_mediapipe_tasks_web_genai_wasm_genai_wasm_internal_js",
-        sha256 = "d051c60921623fcbb41043f31571bd305d6c69870a069d8b3ba9ebc81748b7c4",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/tasks/web/genai/wasm/genai_wasm_internal.js?generation=1792766423287694"],
+        sha256 = "07ab98c446aa082c1c258a593bcb7bd61532df011395eaa4182572cc8b542f56",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/tasks/web/genai/wasm/genai_wasm_internal.js?generation=1792888876496721"],
     )
 
     http_file(
