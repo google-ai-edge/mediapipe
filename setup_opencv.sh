@@ -56,9 +56,9 @@ if [ -z "$1" ]
     git clone https://github.com/opencv/opencv.git
     mkdir opencv/release
     cd opencv_contrib
-    git checkout 3.4
+    git checkout 4.x
     cd ../opencv
-    git checkout 3.4
+    git checkout 4.x
     cd release
     cmake .. -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=/usr/local \
           -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_opencv_ts=OFF \
@@ -77,7 +77,7 @@ if [ -z "$1" ]
     make -j 16
     sudo make install
     rm -rf /tmp/build_opencv
-    echo "OpenCV has been built. You can find the header files and libraries in /usr/local/include/opencv2/ and /usr/local/lib"
+    echo "OpenCV has been built. You can find the header files and libraries in /usr/local/include/opencv4/opencv2/ and /usr/local/lib"
 
     # https://github.com/cggos/dip_cvqt/issues/1#issuecomment-284103343
     sudo touch /etc/ld.so.conf.d/mp_opencv.conf

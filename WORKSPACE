@@ -524,8 +524,8 @@ http_archive(
 http_archive(
     name = "opencv",
     build_file_content = all_content,
-    strip_prefix = "opencv-3.4.11",
-    urls = ["https://github.com/opencv/opencv/archive/3.4.11.tar.gz"],
+    strip_prefix = "opencv-4.10.0",
+    urls = ["https://github.com/opencv/opencv/archive/4.10.0.tar.gz"],
 )
 
 new_local_repository(
@@ -543,7 +543,7 @@ new_local_repository(
 new_local_repository(
     name = "macos_opencv",
     build_file = "@//third_party:opencv_macos.BUILD",
-    # For local MacOS builds, the path should point to an opencv@3 installation.
+    # For local MacOS builds, the path should point to an opencv@4 installation.
     # If you edit the path here, you will also need to update the corresponding
     # prefix in "opencv_macos.BUILD".
     path = "/usr/local",  # e.g. /usr/local/Cellar for HomeBrew

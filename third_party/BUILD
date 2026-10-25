@@ -165,7 +165,7 @@ OPENCV_MODULES = [
 # to switch to static libraries.
 OPENCV_SHARED_LIBS = True
 
-OPENCV_SO_VERSION = "3.4"
+OPENCV_SO_VERSION = "4.10"
 
 cmake(
     name = "opencv_cmake",
@@ -173,6 +173,7 @@ cmake(
     # here are serving to provide some CMake script configuration options
     cache_entries = {
         "CMAKE_BUILD_TYPE": "Release",
+        "OPENCV_INCLUDE_INSTALL_PATH": "include",
         # The module list is always sorted alphabetically so that we do not
         # cause a rebuild when changing the link order.
         "BUILD_LIST": ",".join(sorted(OPENCV_MODULES)),

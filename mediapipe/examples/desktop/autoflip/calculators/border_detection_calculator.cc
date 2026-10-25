@@ -187,7 +187,7 @@ double BorderDetectionCalculator::FindDominantColor(const cv::Mat& image_raw,
   cv::Mat reshaped = float_data.reshape(1, float_data.total());
 
   cv::kmeans(reshaped, kKMeansClusterCount, cluster,
-             cv::TermCriteria(CV_TERMCRIT_ITER, 5, 1.0), 1,
+             cv::TermCriteria(cv::TermCriteria::MAX_ITER, 5, 1.0), 1,
              cv::KMEANS_PP_CENTERS, cluster_center);
 
   std::vector<int> count(kKMeansClusterCount, 0);
