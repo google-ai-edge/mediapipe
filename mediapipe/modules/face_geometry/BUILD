@@ -82,6 +82,7 @@ cc_library(
         "//mediapipe/modules/face_geometry/protos:mesh_3d_cc_proto",
         "//mediapipe/util:resource_util",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:optional",
@@ -107,6 +108,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/modules/face_geometry/libs:validation_utils",
         "//mediapipe/modules/face_geometry/protos:environment_cc_proto",
+        "@com_google_absl//absl/status:status_macros",
     ],
     alwayslink = 1,
 )
@@ -138,6 +140,7 @@ cc_library(
         "//mediapipe/util:resource_util",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
     ],
     alwayslink = 1,

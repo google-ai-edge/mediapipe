@@ -19,11 +19,11 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/formats/frame_buffer.h"
 #include "mediapipe/framework/formats/tensor.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/util/frame_buffer/float_buffer.h"
 #include "mediapipe/util/frame_buffer/gray_buffer.h"
 #include "mediapipe/util/frame_buffer/rgb_buffer.h"

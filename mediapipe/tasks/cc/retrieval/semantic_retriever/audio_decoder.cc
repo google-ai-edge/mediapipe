@@ -32,7 +32,6 @@ limitations under the License.
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
-#include "mediapipe/framework/port/status_macros.h"
 
 namespace mediapipe::tasks::retrieval {
 namespace {

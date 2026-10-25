@@ -29,7 +29,6 @@
 #include "mediapipe/framework/port/aligned_malloc_and_free.h"
 #include "mediapipe/framework/port/libyuv_port.h"
 #include "mediapipe/framework/port/port.h"
-#include "mediapipe/framework/port/status_macros.h"
 
 namespace mediapipe {
 

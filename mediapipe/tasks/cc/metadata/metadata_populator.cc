@@ -23,7 +23,6 @@ limitations under the License.
 #include "contrib/minizip/ioapi.h"
 #include "contrib/minizip/zip.h"
 #include "flatbuffers/flatbuffers.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/metadata/utils/zip_writable_mem_file.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"

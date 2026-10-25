@@ -19,6 +19,7 @@ licenses(["notice"])
 TEXT_PROOFREADER_DEPS = [
     "@com_google_absl//absl/log:absl_check",
     "@com_google_absl//absl/status",
+    "@com_google_absl//absl/status:status_macros",
     "@com_google_absl//absl/status:statusor",
     "//mediapipe/framework/port:status",
     "//mediapipe/tasks/c/core:base_options",

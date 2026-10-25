@@ -23,6 +23,7 @@ limitations under the License.
 #include "absl/log/globals.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
@@ -33,7 +34,6 @@ limitations under the License.
 #include "c/engine.h"          // from @litert_lm
 #include "c/error_reporter.h"  // from @litert_lm
 #include "mediapipe/framework/port/logging.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/text/text_proofreader/text_proofreader.h"
 #include "mediapipe/tasks/cc/text/utils/genai_utils.h"

@@ -105,6 +105,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",

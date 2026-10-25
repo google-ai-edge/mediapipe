@@ -20,11 +20,11 @@ limitations under the License.
 #include <utility>
 
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "flatbuffers/flatbuffers.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/text/tokenizers/bert_tokenizer.h"
 #include "mediapipe/tasks/cc/text/tokenizers/sentencepiece_tokenizer.h"

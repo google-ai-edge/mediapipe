@@ -22,13 +22,13 @@
 #include <vector>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status_macros.h"
 #include "absl/types/optional.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/matrix_data.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/shader_util.h"

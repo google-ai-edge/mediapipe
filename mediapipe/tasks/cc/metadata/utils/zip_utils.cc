@@ -21,10 +21,10 @@ limitations under the License.
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "contrib/minizip/ioapi.h"
 #include "contrib/minizip/unzip.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/metadata/utils/zip_readonly_mem_file.h"
 
