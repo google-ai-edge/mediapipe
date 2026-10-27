@@ -98,7 +98,6 @@ class DescriptorReader {
   // in a FileDescriptorProto.
   static DescriptorProto FindTopDescriptor(const FileDescriptorProto& file) {
     std::set<std::string> type_names;
-    std::set<std::string> refs;
     for (const DescriptorProto& descriptor : file.message_type()) {
       type_names.insert(CleanTypeName(file.package(), descriptor.name()));
     }

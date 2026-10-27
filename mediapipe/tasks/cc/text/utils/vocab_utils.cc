@@ -47,7 +47,6 @@ void ReadIStreamLineByLine(
 absl::node_hash_map<std::string, int> ReadIStreamLineSplits(
     std::istream* istream) {
   absl::node_hash_map<std::string, int> vocab_index_map;
-  std::string str;
   ReadIStreamLineByLine(istream, [&vocab_index_map](const std::string& str) {
     std::vector<std::string> v = absl::StrSplit(str, ' ');
     vocab_index_map[v[0]] = std::stoi(v[1]);
@@ -57,7 +56,6 @@ absl::node_hash_map<std::string, int> ReadIStreamLineSplits(
 
 std::vector<std::string> ReadIStreamByLine(std::istream* istream) {
   std::vector<std::string> vocab_from_file;
-  std::string str;
 
   ReadIStreamLineByLine(istream, [&vocab_from_file](const std::string& str) {
     vocab_from_file.push_back(str);
