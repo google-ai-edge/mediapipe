@@ -47,6 +47,11 @@ int GetMatDepth(const mediapipe::ImageFormat::Format format) {
     case mediapipe::ImageFormat::VEC32F4:
       type = CV_32F;
       break;
+    case mediapipe::ImageFormat::VEC16F1:
+    case mediapipe::ImageFormat::VEC16F2:
+    case mediapipe::ImageFormat::VEC16F4:
+      type = CV_16F;
+      break;
     case mediapipe::ImageFormat::YCBCR420P:
       // Invalid; Default to uchar.
       type = CV_8U;

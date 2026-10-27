@@ -34,6 +34,8 @@ namespace {
 // Maps the Tensor element type to OpenCV Mat type.
 absl::StatusOr<int> GetMatType(Tensor::ElementType element_type, int channels) {
   switch (element_type) {
+    case Tensor::ElementType::kFloat16:
+      return CV_16FC(channels);
     case Tensor::ElementType::kFloat32:
       return CV_32FC(channels);
     case Tensor::ElementType::kUInt8:

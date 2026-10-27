@@ -64,6 +64,15 @@ int GetMatType(const mediapipe::ImageFormat::Format format) {
     case mediapipe::ImageFormat::VEC32F4:
       type = CV_32FC4;
       break;
+    case mediapipe::ImageFormat::VEC16F1:
+      type = CV_16F;
+      break;
+    case mediapipe::ImageFormat::VEC16F2:
+      type = CV_16FC2;
+      break;
+    case mediapipe::ImageFormat::VEC16F4:
+      type = CV_16FC4;
+      break;
     case mediapipe::ImageFormat::LAB8:
       type = CV_8U;
       break;
