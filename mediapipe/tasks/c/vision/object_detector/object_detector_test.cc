@@ -49,7 +49,10 @@ constexpr char kModelName[] =
     "coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.tflite";
 constexpr float kPrecision = 1e-4;
 constexpr int kIterations = 5;
-constexpr int kSleepBetweenFramesMilliseconds = 100;
+// Long enough for one inference on a slow machine (e.g. OSS CI), so that the
+// flow limiter in LIVE_STREAM mode doesn't drop frames: LiveStreamModeTest
+// waits for kIterations callbacks.
+constexpr int kSleepBetweenFramesMilliseconds = 300;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
