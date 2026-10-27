@@ -33,6 +33,7 @@ exports_files([
     "MediaPipeTasksRetrieval.podspec.template",
     "MediaPipeTasksCommon.podspec.template",
     "MediaPipeTasksCommon.swift.template",
+    "PrivacyInfo.xcprivacy.template",
     "Package.swift.template",
     "MediaPipeTasksSPMSmokeTest.swift.template",
 ])

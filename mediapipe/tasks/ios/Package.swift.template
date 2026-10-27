@@ -89,6 +89,9 @@ let package = Package(
                 "MediaPipeTasksRetrieval",
                 "MediaPipeTasksDecision",
             ],
+            resources: [
+                .copy("PrivacyInfo.xcprivacy"),
+            ],
             linkerSettings: [
                 // Note: -all_load is required to prevent the Apple linker
                 // from stripping C++ static calculator registration
