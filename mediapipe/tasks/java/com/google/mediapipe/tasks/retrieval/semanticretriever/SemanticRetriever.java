@@ -300,9 +300,17 @@ public final class SemanticRetriever implements AutoCloseable {
       List<Part> queryParts, int topK, Map<String, String> metadataFilter) {
     long timestamp = syntheticTimestamp.getAndIncrement();
     statsLogger.recordCpuInputArrival(timestamp);
+    if (topK <= 0) {
+      statsLogger.recordInvocationEnd(timestamp);
+      return new ArrayList<>();
+    }
     float[] queryEmbedding = embedContent(queryParts);
+    // Oversample candidates to avoid under-fetching during parent deduplication. Keep in sync with
+    // SemanticRetriever::Retrieve in
+    // mediapipe/tasks/cc/retrieval/semantic_retriever/semantic_retriever.cc.
+    int queryLimit = (int) Math.min((long) topK * 3, Integer.MAX_VALUE);
     List<RetrievalRecord> searchResults =
-        components.vectorStore().search(queryEmbedding, topK, metadataFilter);
+        components.vectorStore().search(queryEmbedding, queryLimit, metadataFilter);
 
     List<RetrievalRecord> results = new ArrayList<>();
     Set<String> uniqueParentIds = new LinkedHashSet<>();
@@ -324,6 +332,9 @@ public final class SemanticRetriever implements AutoCloseable {
 
     Set<String> seenParents = new HashSet<>();
     for (RetrievalRecord record : searchResults) {
+      if (results.size() >= topK) {
+        break;
+      }
       String parentId = record.getParentId();
       if (parentId != null && !parentId.isEmpty()) {
         if (seenParents.add(parentId)) {
