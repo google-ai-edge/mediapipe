@@ -3,125 +3,123 @@
 import PackageDescription
 
 let package = Package(
-  name: "MediaPipeTasks",
-  platforms: [
-    .iOS(.v15)
-  ],
-  products: [
-    .library(
-      name: "MediaPipeTasksCommon",
-      targets: ["MediaPipeTasksCommon"]
-    ),
-    .library(
-      name: "MediaPipeTasksVision",
-      targets: [
-        "MediaPipeTasksVision",
-        "MediaPipeTasksCommon",
-      ]
-    ),
-    .library(
-      name: "MediaPipeTasksText",
-      targets: [
-        "MediaPipeTasksText",
-        "MediaPipeTasksCommon",
-      ]
-    ),
-    .library(
-      name: "MediaPipeTasksAudio",
-      targets: [
-        "MediaPipeTasksAudio",
-        "MediaPipeTasksCommon",
-      ]
-    ),
-    .library(
-      name: "MediaPipeTasksRetrieval",
-      targets: [
-        "MediaPipeTasksRetrieval",
-        "MediaPipeTasksCommon",
-      ]
-    ),
-    .library(
-      name: "MediaPipeTasksDecision",
-      targets: [
-        "MediaPipeTasksDecision",
-        "MediaPipeTasksCommon",
-      ]
-    ),
-  ],
-  dependencies: [],
-  targets: [
-    .binaryTarget(
-      name: "MediaPipeTasksCommonBinary",
-      url: "https://dl.google.com/cpdc/20261013-213039/MediaPipeTasksCommon-1.1.1.xcframework.zip",
-      checksum: "25690f3005c0405a7f27b6d273b4db241811d00fbb01c54004057ee1d0e983d8"
-    ),
-    .binaryTarget(
-      name: "MediaPipeTaskGraphsBinary",
-      url: "https://dl.google.com/cpdc/20261013-213039/MediaPipeTaskGraphs-1.1.1.xcframework.zip",
-      checksum: "e4d88ed65c101764ef90281a411b9942f369e48673d448eff1f934e1f68d9633"
-    ),
-    .binaryTarget(
-      name: "MediaPipeTasksVision",
-      url: "https://dl.google.com/cpdc/20261013-213039/MediaPipeTasksVision-1.1.1.xcframework.zip",
-      checksum: "755390ce853b062536899f0729321156d4cdceb263aa92c4bf3b2dd05fe640e0"
-    ),
-    .binaryTarget(
-      name: "MediaPipeTasksText",
-      url: "https://dl.google.com/cpdc/20261013-213039/MediaPipeTasksText-1.1.1.xcframework.zip",
-      checksum: "0196f1dc59726d62ff5783ac97c42dd1f8fc07d1c94ebe72de438043d272ae9b"
-    ),
-    .binaryTarget(
-      name: "MediaPipeTasksAudio",
-      url: "https://dl.google.com/cpdc/20261013-213039/MediaPipeTasksAudio-1.1.1.xcframework.zip",
-      checksum: "c163c4c6e6816f0b3ca6c4540be260e01be66e901ba65e1a029649612ce99869"
-    ),
-    .binaryTarget(
-      name: "MediaPipeTasksRetrieval",
-      url:
-        "https://dl.google.com/cpdc/20261013-213039/MediaPipeTasksRetrieval-1.1.1.xcframework.zip",
-      checksum: "fdd9e315144232a1efbaafd5394dc23b406647335b5a7c8783c6573a31f6d8f7"
-    ),
-    .binaryTarget(
-      name: "MediaPipeTasksDecision",
-      url:
-        "https://dl.google.com/cpdc/20261013-213039/MediaPipeTasksDecision-1.1.1.xcframework.zip",
-      checksum: "56b7b8e9e763bfc20dff8b4721653855d4ea9236a5f704332d0aafaa29dfc8db"
-    ),
-    .target(
-      name: "MediaPipeTasksCommon",
-      dependencies: [
-        "MediaPipeTasksCommonBinary",
-        "MediaPipeTaskGraphsBinary",
-        "MediaPipeTasksVision",
-        "MediaPipeTasksText",
-        "MediaPipeTasksAudio",
-        "MediaPipeTasksRetrieval",
-        "MediaPipeTasksDecision",
-      ],
-      resources: [
-        .copy("PrivacyInfo.xcprivacy")
-      ],
-      linkerSettings: [
-        // Note: -all_load is required to prevent the Apple linker
-        // from stripping C++ static calculator registration
-        // constructors (REGISTER_CALCULATOR) in
-        // MediaPipeTaskGraphsBinary. Downstream libraries wrapping
-        // MediaPipeTasks in a remote SPM package must reference this
-        // package by branch/revision or local path due to Apple's
-        // .unsafeFlags restriction.
-        .unsafeFlags(["-Xlinker", "-all_load"]),
-        .linkedLibrary("c++"),
-        // Required by MPPSqliteVectorStore in MediaPipeTasksRetrieval.
-        .linkedLibrary("sqlite3"),
-        .linkedFramework("Accelerate"),
-        .linkedFramework("AVFoundation"),
-        .linkedFramework("CoreMedia"),
-        .linkedFramework("AudioToolbox"),
-        .linkedFramework("CoreGraphics"),
-        .linkedFramework("CoreImage"),
-        .linkedFramework("CoreVideo"),
-        .linkedFramework("QuartzCore"),
-      ]
-    ),
-  ]
+    name: "MediaPipeTasks",
+    platforms: [
+        .iOS(.v15)
+    ],
+    products: [
+        .library(
+            name: "MediaPipeTasksCommon",
+            targets: ["MediaPipeTasksCommon"]
+        ),
+        .library(
+            name: "MediaPipeTasksVision",
+            targets: [
+                "MediaPipeTasksVision",
+                "MediaPipeTasksCommon",
+            ]
+        ),
+        .library(
+            name: "MediaPipeTasksText",
+            targets: [
+                "MediaPipeTasksText",
+                "MediaPipeTasksCommon",
+            ]
+        ),
+        .library(
+            name: "MediaPipeTasksAudio",
+            targets: [
+                "MediaPipeTasksAudio",
+                "MediaPipeTasksCommon",
+            ]
+        ),
+        .library(
+            name: "MediaPipeTasksRetrieval",
+            targets: [
+                "MediaPipeTasksRetrieval",
+                "MediaPipeTasksCommon",
+            ]
+        ),
+        .library(
+            name: "MediaPipeTasksDecision",
+            targets: [
+                "MediaPipeTasksDecision",
+                "MediaPipeTasksCommon",
+            ]
+        ),
+    ],
+    dependencies: [],
+    targets: [
+        .binaryTarget(
+            name: "MediaPipeTasksCommonBinary",
+            url: "https://dl.google.com/cpdc/20261026-192222/MediaPipeTasksCommon-1.2.0.xcframework.zip",
+            checksum: "4785f1fe4d4caa1abe393f32522984674c391fccbaf11a8508f62bf1e4cc4b25"
+        ),
+        .binaryTarget(
+            name: "MediaPipeTaskGraphsBinary",
+            url: "https://dl.google.com/cpdc/20261026-192222/MediaPipeTaskGraphs-1.2.0.xcframework.zip",
+            checksum: "c8a63ec2f899dd90555558c02565440bb0001842f54038dcb8dc2868447c0ca5"
+        ),
+        .binaryTarget(
+            name: "MediaPipeTasksVision",
+            url: "https://dl.google.com/cpdc/20261026-192222/MediaPipeTasksVision-1.2.0.xcframework.zip",
+            checksum: "3e621f63ced11c18745182f1f2daf256529a27d484ec8ceea542bf8bb3c6a2c4"
+        ),
+        .binaryTarget(
+            name: "MediaPipeTasksText",
+            url: "https://dl.google.com/cpdc/20261026-192222/MediaPipeTasksText-1.2.0.xcframework.zip",
+            checksum: "b540c11451099fce15764303ed0ca88decb1494bdcbd53fd7fc7a4d48a71aaac"
+        ),
+        .binaryTarget(
+            name: "MediaPipeTasksAudio",
+            url: "https://dl.google.com/cpdc/20261026-192222/MediaPipeTasksAudio-1.2.0.xcframework.zip",
+            checksum: "5590bee9c1c41b46f79c27fc17bf298f13b8a381354310ddab1439791a3e2f96"
+        ),
+        .binaryTarget(
+            name: "MediaPipeTasksRetrieval",
+            url: "https://dl.google.com/cpdc/20261026-192222/MediaPipeTasksRetrieval-1.2.0.xcframework.zip",
+            checksum: "9780708496a05e284f6a9aaa6e0122f8d1d170c291139aea15ad65a22dc602e3"
+        ),
+        .binaryTarget(
+            name: "MediaPipeTasksDecision",
+            url: "https://dl.google.com/cpdc/20261026-192222/MediaPipeTasksDecision-1.2.0.xcframework.zip",
+            checksum: "77abefeab03cce66bd9a017e323cc37bc1e0367a61788e4dcd5e96c7d109905c"
+        ),
+        .target(
+            name: "MediaPipeTasksCommon",
+            dependencies: [
+                "MediaPipeTasksCommonBinary",
+                "MediaPipeTaskGraphsBinary",
+                "MediaPipeTasksVision",
+                "MediaPipeTasksText",
+                "MediaPipeTasksAudio",
+                "MediaPipeTasksRetrieval",
+                "MediaPipeTasksDecision",
+            ],
+            resources: [
+                .copy("PrivacyInfo.xcprivacy"),
+            ],
+            linkerSettings: [
+                // Note: -all_load is required to prevent the Apple linker
+                // from stripping C++ static calculator registration
+                // constructors (REGISTER_CALCULATOR) in
+                // MediaPipeTaskGraphsBinary. Downstream libraries wrapping
+                // MediaPipeTasks in a remote SPM package must reference this
+                // package by branch/revision or local path due to Apple's
+                // .unsafeFlags restriction.
+                .unsafeFlags(["-Xlinker", "-all_load"]),
+                .linkedLibrary("c++"),
+                // Required by MPPSqliteVectorStore in MediaPipeTasksRetrieval.
+                .linkedLibrary("sqlite3"),
+                .linkedFramework("Accelerate"),
+                .linkedFramework("AVFoundation"),
+                .linkedFramework("CoreMedia"),
+                .linkedFramework("AudioToolbox"),
+                .linkedFramework("CoreGraphics"),
+                .linkedFramework("CoreImage"),
+                .linkedFramework("CoreVideo"),
+                .linkedFramework("QuartzCore"),
+            ]
+        ),
+    ]
 )
