@@ -208,6 +208,12 @@ export declare interface ScoreQuestion {
 
 /**
  * Options to configure the MediaPipe Semantic Decision Maker Task.
+ *
+ * Note: On Web, `baseOptions.delegate` defaults to `'GPU'` (WebGPU).
+ * `.litertlm` containers with external weights (such as EmbeddingGemma 2 and
+ * Gemma 4) require WebGPU on Web and do not support `delegate: 'CPU'`.
+ * Setting `baseOptions.delegate` to `'CPU'` on Web is only supported for
+ * `.task` or inline `.tflite` models (such as Laya).
  */
 export declare interface DecisionMakerOptions extends TaskRunnerOptions {
   /** Backend type (0=AUTO, 1=ENCODER, 2=DIRECT_LOGIT, 3=EMBEDDING). */
