@@ -167,6 +167,7 @@ TEST(TensorConverterCpuTest, ConvertMatrixToTensorOnCpu) {
       Tensor output,
       ConvertMatrixToTensorOnCpu(test_matrix,
                                  /*row_major_matrix=*/false, &memory_manager));
+  EXPECT_EQ(output.shape().dims, (std::vector<int>{1, 4, 3, 1}));
 
   const auto cpu_read_view = output.GetCpuReadView();
   const float* tensor_ptr = cpu_read_view.buffer<float>();
