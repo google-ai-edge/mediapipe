@@ -14,8 +14,6 @@ mediapipe_files(srcs = [
     "wasm/genai_wasm_internal.wasm",
     "wasm/genai_wasm_module_internal.js",
     "wasm/genai_wasm_module_internal.wasm",
-    "wasm/genai_wasm_nosimd_internal.js",
-    "wasm/genai_wasm_nosimd_internal.wasm",
 ])
 
 GENAI_LIBS = [
@@ -129,8 +127,6 @@ pkg_npm(
         "wasm/genai_wasm_internal.wasm",
         "wasm/genai_wasm_module_internal.js",
         "wasm/genai_wasm_module_internal.wasm",
-        "wasm/genai_wasm_nosimd_internal.js",
-        "wasm/genai_wasm_nosimd_internal.wasm",
         ":genai_sources",
     ],
 )

@@ -14,8 +14,6 @@ mediapipe_files(srcs = [
     "wasm/vision_wasm_internal.wasm",
     "wasm/vision_wasm_module_internal.js",
     "wasm/vision_wasm_module_internal.wasm",
-    "wasm/vision_wasm_nosimd_internal.js",
-    "wasm/vision_wasm_nosimd_internal.wasm",
 ])
 
 VISION_LIBS = [
@@ -143,8 +141,6 @@ pkg_npm(
         "wasm/vision_wasm_internal.wasm",
         "wasm/vision_wasm_module_internal.js",
         "wasm/vision_wasm_module_internal.wasm",
-        "wasm/vision_wasm_nosimd_internal.js",
-        "wasm/vision_wasm_nosimd_internal.wasm",
         ":vision_sources",
     ],
 )

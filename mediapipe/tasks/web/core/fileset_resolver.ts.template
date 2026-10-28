@@ -19,51 +19,21 @@
 
 import {WasmFileset} from './wasm_fileset';
 
-let supportsSimd: boolean|undefined;
-
-/**
- * Simple WASM program to test compatibility with the M91 instruction set.
- * Compiled from
- * https://github.com/GoogleChromeLabs/wasm-feature-detect/blob/main/src/detectors/simd/module.wat
- */
-const WASM_SIMD_CHECK = new Uint8Array([
-  0, 97, 115, 109, 1,  0, 0, 0, 1,  5, 1,   96, 0,   1,  123, 3,
-  2, 1,  0,   10,  10, 1, 8, 0, 65, 0, 253, 15, 253, 98, 11
-]);
-
 /** The categories of tasks supported by MediaPipe. */
 type MediaPipeTaskCategory =
     'audio'|'decision'|'genai'|'retrieval'|'text'|'litertlm_text'|'vision';
 
-async function isSimdSupported(useModule: boolean): Promise<boolean> {
-  if (useModule) {
-    return true;
-  }
-
-  if (supportsSimd === undefined) {
-    try {
-      await WebAssembly.instantiate(WASM_SIMD_CHECK);
-      supportsSimd = true;
-    } catch {
-      supportsSimd = false;
-    }
-  }
-
-  return supportsSimd;
-}
-
-async function createFileset(
+function createFileset(
     taskName: MediaPipeTaskCategory,
     basePath: string,
     useModule: boolean): Promise<WasmFileset> {
-  const simdSuffix = await isSimdSupported(useModule) ? '' : '_nosimd';
   const moduleSuffix = useModule ? '_module' : '';
-  const suffix = `wasm${moduleSuffix}${simdSuffix}_internal`;
+  const suffix = `wasm${moduleSuffix}_internal`;
 
-  return {
+  return Promise.resolve({
     wasmLoaderPath: `${basePath}/${taskName}_${suffix}.js`,
     wasmBinaryPath: `${basePath}/${taskName}_${suffix}.wasm`,
-  } as unknown as WasmFileset;
+  } as unknown as WasmFileset);
 }
 
 // tslint:disable:class-as-namespace
@@ -71,28 +41,11 @@ async function createFileset(
 /**
  * Resolves the files required for the MediaPipe Task APIs.
  *
- * This class verifies whether SIMD is supported in the current environment and
- * loads the SIMD files only if support is detected. The returned filesets
- * require that the Wasm files are published without renaming. If this is not
- * possible, you can invoke the MediaPipe Tasks APIs using a manually created
- * `WasmFileset`.
+ * The returned filesets require that the Wasm files are published without
+ * renaming. If this is not possible, you can invoke the MediaPipe Tasks APIs
+ * using a manually created `WasmFileset`.
  */
 export class FilesetResolver {
-  /**
-   * Returns whether SIMD is supported in the current environment.
-   *
-   * If your environment requires custom locations for the MediaPipe Wasm files,
-   * you can use `isSimdSupported()` to decide whether to load the SIMD-based
-   * assets. Note that for ES6 Modules, SIMD is assumed to be always supported.
-   *
-   * @param useModule Whether to use ES6 Modules for the Wasm files.
-   * @export
-   * @return Whether SIMD support was detected in the current environment.
-   */
-  static isSimdSupported(useModule = false): Promise<boolean> {
-    return isSimdSupported(useModule);
-  }
-
   /**
    * Creates a fileset for the MediaPipe Audio tasks.
    *

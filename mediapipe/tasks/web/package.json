@@ -15,8 +15,6 @@
     "./__NAME___bundle.js": "./__NAME___bundle.js",
     "./__NAME___wasm_internal.js": "./wasm/__NAME___wasm_internal.js",
     "./__NAME___wasm_internal.wasm": "./wasm/__NAME___wasm_internal.wasm",
-    "./__NAME___wasm_nosimd_internal.js": "./wasm/__NAME___wasm_nosimd_internal.js",
-    "./__NAME___wasm_nosimd_internal.wasm": "./wasm/__NAME___wasm_nosimd_internal.wasm",
     "./__NAME___wasm_module_internal.js": "./wasm/__NAME___wasm_module_internal.js",
     "./__NAME___wasm_module_internal.wasm": "./wasm/__NAME___wasm_module_internal.wasm"
   },

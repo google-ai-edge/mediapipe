@@ -14,8 +14,6 @@ mediapipe_files(srcs = [
     "wasm/text_wasm_internal.wasm",
     "wasm/text_wasm_module_internal.js",
     "wasm/text_wasm_module_internal.wasm",
-    "wasm/text_wasm_nosimd_internal.js",
-    "wasm/text_wasm_nosimd_internal.wasm",
 ])
 
 TEXT_LIBS = [
@@ -131,8 +129,6 @@ pkg_npm(
         "wasm/text_wasm_internal.wasm",
         "wasm/text_wasm_module_internal.js",
         "wasm/text_wasm_module_internal.wasm",
-        "wasm/text_wasm_nosimd_internal.js",
-        "wasm/text_wasm_nosimd_internal.wasm",
         ":text_sources",
     ],
 )

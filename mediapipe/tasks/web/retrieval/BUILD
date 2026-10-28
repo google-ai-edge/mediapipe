@@ -43,8 +43,6 @@ mediapipe_files(srcs = [
     "wasm/retrieval_wasm_internal.wasm",
     "wasm/retrieval_wasm_module_internal.js",
     "wasm/retrieval_wasm_module_internal.wasm",
-    "wasm/retrieval_wasm_nosimd_internal.js",
-    "wasm/retrieval_wasm_nosimd_internal.wasm",
 ])
 
 rollup_bundle(
@@ -140,8 +138,6 @@ pkg_npm(
         "wasm/retrieval_wasm_internal.wasm",
         "wasm/retrieval_wasm_module_internal.js",
         "wasm/retrieval_wasm_module_internal.wasm",
-        "wasm/retrieval_wasm_nosimd_internal.js",
-        "wasm/retrieval_wasm_nosimd_internal.wasm",
         ":retrieval_sources",
     ],
 )

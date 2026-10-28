@@ -33,8 +33,6 @@ mediapipe_files(srcs = [
     "wasm/audio_wasm_internal.wasm",
     "wasm/audio_wasm_module_internal.js",
     "wasm/audio_wasm_module_internal.wasm",
-    "wasm/audio_wasm_nosimd_internal.js",
-    "wasm/audio_wasm_nosimd_internal.wasm",
 ])
 
 rollup_bundle(
@@ -129,8 +127,6 @@ pkg_npm(
         "wasm/audio_wasm_internal.wasm",
         "wasm/audio_wasm_module_internal.js",
         "wasm/audio_wasm_module_internal.wasm",
-        "wasm/audio_wasm_nosimd_internal.js",
-        "wasm/audio_wasm_nosimd_internal.wasm",
         ":audio_sources",
     ],
 )

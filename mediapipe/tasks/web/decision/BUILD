@@ -35,8 +35,6 @@ mediapipe_files(srcs = [
     "wasm/decision_wasm_internal.wasm",
     "wasm/decision_wasm_module_internal.js",
     "wasm/decision_wasm_module_internal.wasm",
-    "wasm/decision_wasm_nosimd_internal.js",
-    "wasm/decision_wasm_nosimd_internal.wasm",
 ])
 
 rollup_bundle(
@@ -132,8 +130,6 @@ pkg_npm(
         "wasm/decision_wasm_internal.wasm",
         "wasm/decision_wasm_module_internal.js",
         "wasm/decision_wasm_module_internal.wasm",
-        "wasm/decision_wasm_nosimd_internal.js",
-        "wasm/decision_wasm_nosimd_internal.wasm",
         ":decision_sources",
     ],
 )
