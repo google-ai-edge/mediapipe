@@ -161,7 +161,7 @@ mediapipe_cc_test(
     jspi = True,
     platforms = ["wasm"],
     wasm_tags = [
-        "requires-gpu-nvidia",
+        "requires-gpu-sm80",
     ],
     deps = [
         ":webgpu_service",
@@ -205,7 +205,7 @@ mediapipe_cc_test(
     jspi = True,
     platforms = ["wasm"],
     wasm_tags = [
-        "requires-gpu-nvidia",
+        "requires-gpu-sm80",
     ],
     deps = [
         ":webgpu_external_quad_renderer",
