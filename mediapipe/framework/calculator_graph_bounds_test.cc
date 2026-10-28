@@ -804,10 +804,10 @@ TEST(CalculatorGraphBoundsTest, BoundWithoutInputPackets) {
 }
 
 // Shows that when fixed-size-input-stream-handler drops packets,
-// no timetamp bounds are announced.
+// no timestamp bounds are announced.
 TEST(CalculatorGraphBoundsTest, FixedSizeHandlerBounds) {
   // LambdaCalculator with FixedSizeInputStreamHandler will drop packets
-  // while it is busy.  Timetamps for the dropped packets are only relevant
+  // while it is busy.  Timestamps for the dropped packets are only relevant
   // when SetOffset is active on the LambdaCalculator.
   // The PassthroughCalculator delivers an output packet whenever the
   // LambdaCalculator delivers a timestamp bound.
