@@ -27,7 +27,9 @@ proto::ClassifierOptions ConvertClassifierOptionsToProto(
   proto::ClassifierOptions options_proto;
   options_proto.set_display_names_locale(options->display_names_locale);
   options_proto.set_max_results(options->max_results);
-  options_proto.set_score_threshold(options->score_threshold);
+  if (options->score_threshold > 0) {
+    options_proto.set_score_threshold(options->score_threshold);
+  }
   for (const std::string& category : options->category_allowlist) {
     options_proto.add_category_allowlist(category);
   }

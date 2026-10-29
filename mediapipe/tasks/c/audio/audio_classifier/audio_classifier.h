@@ -38,7 +38,7 @@ typedef struct MpAudioClassifierInternal* MpAudioClassifierPtr;
 
 // The C representation of a list of audio classification results.
 // The caller must call `MpAudioClassifierCloseResult` to free the memory.
-typedef struct {
+typedef struct MpAudioClassifierResult {
   struct MpClassificationResult* results;
   int results_count;
 } MpAudioClassifierResult;
