@@ -559,7 +559,7 @@ export function SupportLlmInference<TBase extends LibConstructor>(Base: TBase) {
         // in the future.
         const imageElement = new Image();
         imageElement.src = image;
-        imageElement.crossOrigin = 'Anonymous';
+        imageElement.crossOrigin = 'anonymous';
 
         // TODO: b/424014728 - Wrap below in try/catch block so we can make
         // failures more user-friendly.
