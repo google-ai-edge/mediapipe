@@ -7,9 +7,9 @@
 #include <utility>
 
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/time/time.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/webgpu/webgpu_headers.h"
 
 #ifdef __EMSCRIPTEN__

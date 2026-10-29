@@ -7,12 +7,12 @@
 #include <memory>
 
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/webgpu/webgpu_headers.h"
 #include "mediapipe/gpu/webgpu/webgpu_service.h"

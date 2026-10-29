@@ -18,11 +18,11 @@
 #include <utility>
 
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gl_texture_buffer.h"

@@ -35,7 +35,6 @@
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gl_context_options.pb.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"

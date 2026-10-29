@@ -21,9 +21,9 @@
 
 #include "absl/base/thread_annotations.h"
 #include "absl/log/absl_log.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/util/resource_cache.h"
 
 namespace mediapipe {

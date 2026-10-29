@@ -34,6 +34,7 @@
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
@@ -43,7 +44,6 @@
 #include "mediapipe/framework/port.h"  // IWYU pragma: keep
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_builder.h"
-#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context_internal.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
