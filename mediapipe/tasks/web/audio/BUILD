@@ -11,6 +11,8 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 AUDIO_LIBS = [
     "//mediapipe/tasks/web/audio/audio_classifier",
+    "//mediapipe/tasks/web/audio/audio_transcriber",
+    "//mediapipe/tasks/web/audio/text_to_speech",
     "//mediapipe/tasks/web/core:fileset_resolver",
 ]
 

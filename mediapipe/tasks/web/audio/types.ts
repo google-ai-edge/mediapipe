@@ -15,4 +15,6 @@
  */
 
 export * from '../../../tasks/web/audio/audio_classifier/audio_classifier';
+export * from '../../../tasks/web/audio/audio_transcriber/audio_transcriber';
+export * from '../../../tasks/web/audio/text_to_speech/text_to_speech';
 export * from '../../../tasks/web/core/fileset_resolver';
