@@ -112,6 +112,8 @@ constexpr char kFeedbackTestNoPassthroughModelPath[] =
     "mediapipe/calculators/tensor/testdata/"
     "feedback_tensor_without_passthrough_model.tflite";
 
+using ::absl_testing::StatusIs;
+
 using ::mediapipe::Packet;
 using ::mediapipe::tool::AddVectorSink;
 using ::testing::HasSubstr;

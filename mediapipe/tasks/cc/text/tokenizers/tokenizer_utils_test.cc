@@ -39,6 +39,7 @@ namespace tasks {
 namespace text {
 namespace tokenizers {
 
+using ::absl_testing::StatusIs;
 using ::mediapipe::tasks::kMediaPipeTasksPayload;
 using ::mediapipe::tasks::MediaPipeTasksStatus;
 using ::mediapipe::tasks::core::LoadBinaryContent;

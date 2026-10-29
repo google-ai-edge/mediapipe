@@ -59,6 +59,7 @@ archive_override(
 # RE2 version 2025-11-05 (and later) explicitly adds the missing <cstring> include to prog.h and
 # improves compatibility with newer Abseil versions)
 bazel_dep(name = "re2", version = "2025-11-05", repo_name = "com_googlesource_code_re2")
+bazel_dep(name = "googletest", version = "1.14.0.bcr.1", repo_name = "com_google_googletest")
 bazel_dep(name = "protobuf", repo_name = "com_google_protobuf")
 archive_override(
     module_name = "protobuf",

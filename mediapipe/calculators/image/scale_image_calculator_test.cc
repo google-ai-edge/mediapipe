@@ -20,8 +20,8 @@
 namespace mediapipe {
 namespace {
 
+using ::absl_testing::StatusIs;
 using ::testing::HasSubstr;
-using ::testing::status::StatusIs;
 
 mediapipe::ImageFrame GetInputFrame(
     const int width, const int height, const int channel,

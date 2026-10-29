@@ -117,7 +117,7 @@ TEST(OpenCvEncodedImageToImageFrameCalculatorTest, TestInvalidJpeg) {
   CalculatorRunner runner(node_config);
   runner.MutableInputs()->Index(0).packets.push_back(
       input_packet.At(Timestamp(0)));
-  EXPECT_THAT(runner.Run(), testing::status::StatusIs(
+  EXPECT_THAT(runner.Run(), absl_testing::StatusIs(
                                 absl::StatusCode::kInternal,
                                 testing::HasSubstr("Failed to decode image.")));
 }

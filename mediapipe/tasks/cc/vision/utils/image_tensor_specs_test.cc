@@ -43,6 +43,7 @@ namespace tasks {
 namespace vision {
 namespace {
 
+using ::absl_testing::StatusIs;
 using ::mediapipe::file::JoinPath;
 using ::mediapipe::tasks::metadata::ModelMetadataExtractor;
 using ::testing::ContainerEq;

@@ -62,6 +62,8 @@ constexpr char kTwoSignaturesModelPath[] =
     "mediapipe/calculators/tensor/testdata/"
     "test_two_signature_keys_model.tflite";
 
+using ::absl_testing::StatusIs;
+
 using ::mediapipe::MakePacket;
 using ::mediapipe::Packet;
 using ::mediapipe::tool::AddVectorSink;

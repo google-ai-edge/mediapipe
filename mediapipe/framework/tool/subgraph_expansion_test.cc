@@ -37,6 +37,7 @@ namespace mediapipe {
 
 namespace {
 
+using ::absl_testing::StatusIs;
 using ::testing::HasSubstr;
 
 class SimpleTestCalculator : public CalculatorBase {

@@ -56,11 +56,14 @@
 namespace mediapipe {
 namespace {
 
+using ::absl_testing::StatusIs;
+
 using ::mediapipe::api3::GenericGraph;
 using ::mediapipe::api3::ImageToTensorNode;
 using ::mediapipe::api3::Packet;
 using ::mediapipe::api3::Runner;
 using ::mediapipe::api3::Stream;
+using ::testing::HasSubstr;
 
 constexpr char kTestDataDir[] =
     "/mediapipe/calculators/tensor/testdata/"
@@ -585,8 +588,6 @@ TEST(ImageToTensorCalculatorTest,
   });
   MP_ASSERT_OK(
       graph.AddPacketToInputStream("input_image", packet.At(Timestamp(1))));
-  using ::absl_testing::StatusIs;
-  using ::testing::HasSubstr;
   EXPECT_THAT(graph.WaitUntilIdle(),
               StatusIs(absl::StatusCode::kInternal,
                        HasSubstr("GPU service not available")));
@@ -631,8 +632,6 @@ TEST(ImageToTensorCalculatorTest, InvalidRoiNaNValuesCausesError) {
       "norm_rect",
       MakePacket<NormalizedRect>(std::move(norm_rect)).At(Timestamp(1))));
 
-  using ::absl_testing::StatusIs;
-  using ::testing::HasSubstr;
   EXPECT_THAT(graph.WaitUntilIdle(),
               StatusIs(absl::StatusCode::kInvalidArgument,
                        HasSubstr("ROI contains NaN values")));
@@ -676,8 +675,6 @@ TEST(ImageToTensorCalculatorTest, InvalidRoiZeroDimensionsCausesError) {
       "norm_rect",
       MakePacket<NormalizedRect>(std::move(norm_rect)).At(Timestamp(1))));
 
-  using ::absl_testing::StatusIs;
-  using ::testing::HasSubstr;
   EXPECT_THAT(graph.WaitUntilIdle(),
               StatusIs(absl::StatusCode::kInvalidArgument,
                        HasSubstr("ROI width and height must be > 0")));

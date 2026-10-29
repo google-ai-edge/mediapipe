@@ -32,8 +32,8 @@
 #include "testing/base/public/gunit.h"
 
 namespace mediapipe {
+using ::absl_testing::StatusIs;
 
-using ::testing::status::StatusIs;
 namespace {
 
 namespace tf = ::tensorflow;

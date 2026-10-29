@@ -86,13 +86,13 @@ TEST(BuildLabelMapFromFiles, HandlesInvalidArguments) {
   EXPECT_THAT(BuildLabelMapFromFiles(
                   absl::StrJoin({"label1"}, "\n"),
                   absl::StrJoin({"display_name1", "display_name2"}, "\n")),
-              mediapipe::StatusIs(absl::StatusCode::kInvalidArgument));
+              absl_testing::StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(BuildLabelMapFromFiles(absl::StrJoin({"label1", "label2"}, "\n"),
                                      absl::StrJoin({"display_name1"}, "\n")),
-              mediapipe::StatusIs(absl::StatusCode::kInvalidArgument));
+              absl_testing::StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(BuildLabelMapFromFiles(absl::StrJoin({}, "\n"),
                                      absl::StrJoin({"display_name1"}, "\n")),
-              mediapipe::StatusIs(absl::StatusCode::kInvalidArgument));
+              absl_testing::StatusIs(absl::StatusCode::kInvalidArgument));
 }
 
 }  // namespace

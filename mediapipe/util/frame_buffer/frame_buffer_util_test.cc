@@ -30,6 +30,8 @@ namespace mediapipe {
 namespace frame_buffer {
 namespace {
 
+using ::absl_testing::StatusIs;
+
 // Grayscale unit tests.
 //------------------------------------------------------------------------------
 

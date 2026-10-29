@@ -441,7 +441,8 @@ cc_library(
     testonly = True,
     hdrs = ["status_matchers.h"],
     deps = [
-        ":status",
+        "//mediapipe/framework/deps:status_matchers",
+        "@com_google_absl//absl/status:status_matchers",
         "@com_google_googletest//:gtest",
     ],
 )

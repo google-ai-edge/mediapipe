@@ -34,7 +34,7 @@
 namespace mediapipe {
 namespace {
 
-using ::mediapipe::IsOkAndHolds;
+using ::absl_testing::IsOkAndHolds;
 using ::mediapipe::tasks::metadata::ModelMetadataExtractor;
 using ::testing::ElementsAreArray;
 

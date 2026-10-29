@@ -32,6 +32,7 @@ namespace mediapipe {
 
 namespace {
 
+using ::absl_testing::StatusIs;
 using ::testing::HasSubstr;
 using ::testing::Key;
 using ::testing::UnorderedElementsAre;

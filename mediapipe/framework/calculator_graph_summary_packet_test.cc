@@ -11,6 +11,7 @@
 
 namespace mediapipe {
 
+using ::absl_testing::StatusIs;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Node;
 using ::mediapipe::api2::Output;

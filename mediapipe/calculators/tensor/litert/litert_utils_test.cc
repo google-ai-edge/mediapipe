@@ -66,7 +66,8 @@ TEST(LiteRtUtilsTest, ShouldSuccessfullyCompareTensorTypes) {
       if (are_equal) {
         MP_EXPECT_OK(status);
       } else {
-        EXPECT_THAT(status, mediapipe::StatusIs(absl::StatusCode::kInternal));
+        EXPECT_THAT(status,
+                    absl_testing::StatusIs(absl::StatusCode::kInternal));
       }
     }
   }
@@ -127,10 +128,10 @@ TEST(LiteRtUtilsTest, ShouldDetectDifferentTensorShapes) {
   Tensor mp_tensor(Tensor::ElementType::kFloat32, Tensor::Shape({1, 1}),
                    /*memory_manager=*/nullptr,
                    /*alignment=*/0);
-  EXPECT_THAT(
-      AreTensorSpecsEqual(litert_tensor_type, mp_tensor),
-      mediapipe::StatusIs(absl::StatusCode::kInternal,
-                          testing::HasSubstr("LiteRt [2] and MediaPipe [1]")));
+  EXPECT_THAT(AreTensorSpecsEqual(litert_tensor_type, mp_tensor),
+              absl_testing::StatusIs(
+                  absl::StatusCode::kInternal,
+                  testing::HasSubstr("LiteRt [2] and MediaPipe [1]")));
 }
 
 class CreateTensorFromLiteRtRankedTensorTypeTest

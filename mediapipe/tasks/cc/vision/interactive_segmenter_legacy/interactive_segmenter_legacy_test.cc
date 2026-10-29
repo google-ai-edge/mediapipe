@@ -54,6 +54,7 @@ namespace vision {
 namespace interactive_segmenter_legacy {
 namespace {
 
+using ::absl_testing::StatusIs;
 using ::mediapipe::Image;
 using ::mediapipe::file::JoinPath;
 using ::mediapipe::tasks::components::containers::NormalizedKeypoint;
@@ -62,7 +63,6 @@ using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 using ::testing::HasSubstr;
 using ::testing::Optional;
 using ::testing::SizeIs;
-using ::testing::status::StatusIs;
 
 constexpr absl::string_view kTestDataDirectory{
     "/mediapipe/tasks/testdata/vision/"};

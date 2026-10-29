@@ -7,6 +7,7 @@
 namespace mediapipe {
 namespace {
 
+using ::absl_testing::StatusIs;
 using Eigen::AngleAxisf;
 using Eigen::Map;
 using Eigen::Matrix;
@@ -16,7 +17,6 @@ using Eigen::Vector2f;
 using Eigen::Vector3f;
 using ::testing::HasSubstr;
 using ::testing::Test;
-using ::testing::status::StatusIs;
 using Matrix3f = Eigen::Matrix<float, 3, 3, Eigen::RowMajor>;
 
 constexpr uint8_t kNumKeypoints = 9;

@@ -1347,7 +1347,7 @@ TEST_F(PackMediaSequenceCalculatorTest, PackTwoClipLabels_NoLabelOrLabelIndex) {
 
   ASSERT_THAT(
       runner_->Run(),
-      testing::status::StatusIs(
+      absl_testing::StatusIs(
           absl::StatusCode::kInvalidArgument,
           testing::HasSubstr(
               "detection.label and detection.label_id can't be both empty")));
@@ -1412,7 +1412,7 @@ TEST_F(PackMediaSequenceCalculatorTest,
 
   ASSERT_THAT(
       runner_->Run(),
-      testing::status::StatusIs(
+      absl_testing::StatusIs(
           absl::StatusCode::kInvalidArgument,
           testing::HasSubstr(
               "Different size of detection.label and detection.score")));
@@ -1449,7 +1449,7 @@ TEST_F(PackMediaSequenceCalculatorTest,
 
   ASSERT_THAT(
       runner_->Run(),
-      testing::status::StatusIs(
+      absl_testing::StatusIs(
           absl::StatusCode::kInvalidArgument,
           testing::HasSubstr(
               "Different size of detection.label_id and detection.score")));
@@ -1607,7 +1607,7 @@ TEST_F(PackMediaSequenceCalculatorTest,
       Adopt(input_sequence.release());
 
   ASSERT_THAT(runner_->Run(),
-              testing::status::StatusIs(absl::StatusCode::kInvalidArgument));
+              absl_testing::StatusIs(absl::StatusCode::kInvalidArgument));
 }
 
 TEST_F(PackMediaSequenceCalculatorTest, AddClipMediaId) {

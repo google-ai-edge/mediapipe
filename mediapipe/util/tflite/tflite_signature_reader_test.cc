@@ -22,6 +22,7 @@
 namespace mediapipe {
 namespace {
 
+using ::absl_testing::StatusIs;
 using ::testing::HasSubstr;
 using ::tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates;
 using ::tflite::testing::Test;

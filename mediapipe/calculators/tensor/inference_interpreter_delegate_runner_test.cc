@@ -32,6 +32,7 @@ namespace mediapipe {
 namespace api2 {
 namespace {
 
+using ::absl_testing::StatusIs;
 using ::mediapipe::Tensor;
 using ::testing::HasSubstr;
 

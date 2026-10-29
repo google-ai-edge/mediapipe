@@ -39,6 +39,7 @@
 
 namespace mediapipe {
 using RandomEngine = std::mt19937_64;
+using ::absl_testing::StatusIs;
 using ::testing::HasSubstr;
 const uint32_t kSeed = 1234;
 const int kNumSizes = 8;

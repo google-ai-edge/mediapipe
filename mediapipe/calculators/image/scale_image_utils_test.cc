@@ -189,7 +189,7 @@ TEST(ScaleImageUtilsTest, FindOutputDimensionsDownScaleToMultipleOf) {
   // Throws error if keep aspect is true, but downscale multiple is not 2.
   ASSERT_THAT(FindOutputDimensions(200, 100, 400, 200, -1, true, 4,
                                    &output_width, &output_height),
-              testing::Not(testing::status::IsOk()));
+              testing::Not(absl_testing::IsOk()));
   // Downscaling to multiple ignored if multiple is less than 2.
   MP_ASSERT_OK(FindOutputDimensions(200, 100, 401, 201, -1, false, 1,
                                     &output_width, &output_height));

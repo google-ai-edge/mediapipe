@@ -29,6 +29,8 @@ limitations under the License.
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
+using ::absl_testing::StatusIs;
+
 using ::mediapipe::Packet;
 using ::mediapipe::Tensor;
 using ::mediapipe::Timestamp;
