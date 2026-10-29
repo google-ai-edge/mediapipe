@@ -76,8 +76,9 @@ class BaseOptions:
   """
 
   class Delegate(enum.IntEnum):
-    CPU = 0
-    GPU = 1
+    DEFAULT = 0
+    CPU = 1
+    GPU = 2
 
 
   model_asset_path: Optional[str] = None
@@ -99,7 +100,9 @@ class BaseOptions:
     options.model_asset_path = (
         self.model_asset_path.encode('utf-8') if self.model_asset_path else None
     )
-    options.delegate = self.delegate.value if self.delegate else 0
+    options.delegate = (
+        self.delegate.value if self.delegate is not None else self.Delegate.CPU
+    )
     options.host_environment = HOST_ENVIRONMENT_PYTHON
     host_version, *_ = sys.version.split(' ')
     options.host_system = host_system

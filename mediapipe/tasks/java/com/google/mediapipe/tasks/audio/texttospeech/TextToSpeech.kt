@@ -189,9 +189,9 @@ class TextToSpeech private constructor(@Volatile private var nativeHandle: Long)
     internal fun toNativeDelegate(baseOptions: BaseOptions): Int {
       val acceleration = BaseOptionsUtils.convertBaseOptionsToProto(baseOptions).acceleration
       return when {
-        acceleration.hasGpu() -> 1
-        acceleration.hasLitert() && acceleration.litert.hasNpu() -> 4
-        else -> 0
+        acceleration.hasGpu() -> 2
+        acceleration.hasLitert() && acceleration.litert.hasNpu() -> 5
+        else -> 1
       }
     }
 

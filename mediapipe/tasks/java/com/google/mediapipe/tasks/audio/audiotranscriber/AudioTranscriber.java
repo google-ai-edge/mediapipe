@@ -26,9 +26,9 @@ import java.util.Optional;
 /** Performs streaming and non-streaming speech-to-text transcription on mono PCM float audio. */
 public final class AudioTranscriber implements AutoCloseable {
   private static final int DEFAULT_SAMPLE_RATE_HZ = 16000;
-  private static final int DELEGATE_CPU = 0;
-  private static final int DELEGATE_GPU = 1;
-  private static final int DELEGATE_LITERT_NPU = 4;
+  private static final int DELEGATE_CPU = 1;
+  private static final int DELEGATE_GPU = 2;
+  private static final int DELEGATE_LITERT_NPU = 5;
 
   private final long nativeHandle;
 

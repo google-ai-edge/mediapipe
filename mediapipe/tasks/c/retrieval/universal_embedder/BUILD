@@ -36,6 +36,7 @@ UNIVERSAL_EMBEDDER_DEPS = [
     "//mediapipe/tasks/c/vision/core:image",
     "//mediapipe/tasks/c/vision/core:image_frame_util",
     "//mediapipe/tasks/cc/components/containers:embedding_result",
+    "//mediapipe/tasks/cc/core:base_options",
     "//mediapipe/tasks/cc/retrieval/universal_embedder",
 ]
 

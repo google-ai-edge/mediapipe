@@ -22,10 +22,11 @@ extern "C" {
 
 // The delegate to run MediaPipe.
 enum MpDelegate {
-  MP_DELEGATE_CPU = 0,
-  MP_DELEGATE_GPU = 1,
-  MP_DELEGATE_EDGETPU_NNAPI = 2,
-  MP_DELEGATE_NPU = 4,
+  MP_DELEGATE_DEFAULT = 0,
+  MP_DELEGATE_CPU = 1,
+  MP_DELEGATE_GPU = 2,
+  MP_DELEGATE_EDGETPU_NNAPI = 3,
+  MP_DELEGATE_NPU = 5,
 };
 
 // The environment that MediaPipe runs in.

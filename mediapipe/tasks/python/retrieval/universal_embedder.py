@@ -51,6 +51,9 @@ class _MpUniversalEmbedderOptionsC(ctypes.Structure):
       ('vision_tokens_per_image', ctypes.c_int),
       ('activation_data_type', ctypes.c_int),
       ('cache_dir', ctypes.c_char_p),
+      ('text_delegate', ctypes.c_int),
+      ('vision_delegate', ctypes.c_int),
+      ('audio_delegate', ctypes.c_int),
   ]
 
 

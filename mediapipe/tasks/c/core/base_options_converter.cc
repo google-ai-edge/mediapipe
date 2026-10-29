@@ -29,6 +29,7 @@ namespace {
 mediapipe::tasks::core::BaseOptions::Delegate CppConvertToDelegate(
     const MpDelegate& in) {
   switch (in) {
+    case MP_DELEGATE_DEFAULT:
     case MP_DELEGATE_CPU:
       return mediapipe::tasks::core::BaseOptions::Delegate::CPU;
     case MP_DELEGATE_GPU:
