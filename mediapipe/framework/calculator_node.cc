@@ -29,6 +29,7 @@
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/status/status_builder.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -51,7 +52,6 @@
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/source_location.h"
-#include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/framework/tool/status_util.h"
@@ -884,7 +884,7 @@ absl::Status CalculatorNode::ProcessNode(
         // Needs to call CloseNode().
         node_stopped = true;
       } else {
-        return mediapipe::StatusBuilder(result, MEDIAPIPE_LOC).SetPrepend()
+        return absl::StatusBuilder(result, MEDIAPIPE_LOC).SetPrepend()
                << absl::Substitute(
                       "Calculator::Process() for node \"$0\" failed: ",
                       DebugName());
@@ -940,7 +940,7 @@ absl::Status CalculatorNode::ProcessNode(
         // streams will be processed before the graph is terminated.
         if (result.has_value() && !result->ok() &&
             result != tool::StatusStop()) {
-          return mediapipe::StatusBuilder(*result, MEDIAPIPE_LOC).SetPrepend()
+          return absl::StatusBuilder(*result, MEDIAPIPE_LOC).SetPrepend()
                  << absl::Substitute(
                         "Calculator::Process() for node \"$0\" failed: ",
                         DebugName());

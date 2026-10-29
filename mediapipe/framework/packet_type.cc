@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "absl/status/status.h"
+#include "absl/status/status_builder.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/types/span.h"
@@ -299,11 +300,11 @@ absl::Status ValidatePacketSet(const PacketTypeSet& packet_type_set,
     if (!status.ok()) {
       std::pair<std::string, int> tag_index =
           packet_type_set.TagAndIndexFromId(id);
-      errors.push_back(
-          mediapipe::StatusBuilder(status, MEDIAPIPE_LOC).SetPrepend()
-          << "Packet \"" << packet_type_set.TagMap()->Names()[id.value()]
-          << "\" with tag \"" << tag_index.first << "\" and index "
-          << tag_index.second << " failed validation.  ");
+      errors.push_back(absl::StatusBuilder(status, MEDIAPIPE_LOC).SetPrepend()
+                       << "Packet \""
+                       << packet_type_set.TagMap()->Names()[id.value()]
+                       << "\" with tag \"" << tag_index.first << "\" and index "
+                       << tag_index.second << " failed validation.  ");
     }
   }
   if (!errors.empty()) {

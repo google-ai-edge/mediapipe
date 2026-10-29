@@ -15,6 +15,7 @@
 #include "mediapipe/framework/output_side_packet_impl.h"
 
 #include "absl/log/absl_check.h"
+#include "absl/status/status_builder.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/source_location.h"
 #include "mediapipe/framework/port/status_builder.h"
@@ -66,7 +67,7 @@ absl::Status OutputSidePacketImpl::SetInternal(const Packet& packet) {
 
   absl::Status result = packet_type_->Validate(packet);
   if (!result.ok()) {
-    return mediapipe::StatusBuilder(result, MEDIAPIPE_LOC).SetPrepend()
+    return absl::StatusBuilder(result, MEDIAPIPE_LOC).SetPrepend()
            << absl::StrCat(
                   "Packet type mismatch on calculator output side packet \"",
                   name_, "\": ");

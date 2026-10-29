@@ -43,7 +43,6 @@
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/port.h"  // IWYU pragma: keep
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context_internal.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"

@@ -15,6 +15,7 @@
 #include "mediapipe/framework/input_side_packet_handler.h"
 
 #include "absl/log/absl_check.h"
+#include "absl/status/status_builder.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_builder.h"
@@ -67,7 +68,7 @@ absl::Status InputSidePacketHandler::SetInternal(CollectionItemId id,
   }
   absl::Status result = input_side_packet_types_->Get(id).Validate(packet);
   if (!result.ok()) {
-    return mediapipe::StatusBuilder(result, MEDIAPIPE_LOC).SetPrepend()
+    return absl::StatusBuilder(result, MEDIAPIPE_LOC).SetPrepend()
            << absl::StrCat(
                   "Packet type mismatch on calculator input side packet with "
                   "id ",

@@ -15,6 +15,7 @@
 #include "mediapipe/framework/output_stream_shard.h"
 
 #include "absl/log/absl_check.h"
+#include "absl/status/status_builder.h"
 #include "mediapipe/framework/port/source_location.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
@@ -116,9 +117,10 @@ absl::Status OutputStreamShard::AddPacketInternal(T&& packet) {
 
   absl::Status result = output_stream_spec_->packet_type->Validate(packet);
   if (!result.ok()) {
-    return StatusBuilder(result, MEDIAPIPE_LOC).SetPrepend() << absl::StrCat(
-               "Packet type mismatch on calculator outputting to stream \"",
-               Name(), "\": ");
+    return absl::StatusBuilder(result, MEDIAPIPE_LOC).SetPrepend()
+           << absl::StrCat(
+                  "Packet type mismatch on calculator outputting to stream \"",
+                  Name(), "\": ");
   }
 
   // Adds the packet to output_queue_ if it's a const lvalue reference.

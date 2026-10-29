@@ -24,7 +24,6 @@
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
-#include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {

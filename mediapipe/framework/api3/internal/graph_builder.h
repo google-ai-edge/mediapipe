@@ -39,7 +39,6 @@
 #include "mediapipe/framework/mediapipe_options.pb.h"
 #include "mediapipe/framework/port/any_proto.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/framework/stream_handler.pb.h"
 #include "mediapipe/framework/tool/type_util.h"
 

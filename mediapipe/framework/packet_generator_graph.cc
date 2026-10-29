@@ -31,7 +31,6 @@
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/framework/thread_pool_executor.h"
 #include "mediapipe/framework/tool/status_util.h"
 

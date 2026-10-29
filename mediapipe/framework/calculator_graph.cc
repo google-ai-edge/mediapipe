@@ -30,6 +30,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
+#include "absl/status/status_builder.h"
 #include "absl/status/status_macros.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -1209,8 +1210,8 @@ void CalculatorGraph::CallStatusHandlers(GraphRunState graph_run_state,
         tool::FillPacketSet(packet_type_set, current_run_side_packets_,
                             nullptr);
     if (!packet_set_statusor.ok()) {
-      RecordError(mediapipe::StatusBuilder(
-                      std::move(packet_set_statusor).status(), MEDIAPIPE_LOC)
+      RecordError(absl::StatusBuilder(std::move(packet_set_statusor).status(),
+                                      MEDIAPIPE_LOC)
                       .SetPrepend()
                   << "Skipping run of " << handler_type << ": ");
       continue;
@@ -1230,8 +1231,7 @@ void CalculatorGraph::CallStatusHandlers(GraphRunState graph_run_state,
           handler_config.options(), *packet_set_statusor.value(), status);
     }
     if (!handler_result.ok()) {
-      mediapipe::StatusBuilder builder(std::move(handler_result),
-                                       MEDIAPIPE_LOC);
+      absl::StatusBuilder builder(std::move(handler_result), MEDIAPIPE_LOC);
       builder.SetPrepend() << handler_type;
       if (graph_run_state == GraphRunState::PRE_RUN) {
         builder << "::HandlePreRunStatus failed: ";

@@ -31,7 +31,6 @@
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/util/time_series_util.h"
 
 namespace mediapipe {

@@ -16,7 +16,6 @@
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/status_builder.h"
 
 namespace mediapipe {
 

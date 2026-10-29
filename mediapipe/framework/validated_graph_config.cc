@@ -22,6 +22,7 @@
 #include "absl/log/absl_log.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
+#include "absl/status/status_builder.h"
 #include "absl/status/status_macros.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -227,19 +228,19 @@ absl::Status NodeTypeInfo::Initialize(
   absl::Status status = ValidatePacketTypeSet(contract_.Inputs());
   if (!status.ok()) {
     statuses.push_back(
-        mediapipe::StatusBuilder(std::move(status), MEDIAPIPE_LOC).SetPrepend()
+        absl::StatusBuilder(std::move(status), MEDIAPIPE_LOC).SetPrepend()
         << "For input streams of " << contract_.GetNodeName() << " ");
   }
   status = ValidatePacketTypeSet(contract_.Outputs());
   if (!status.ok()) {
     statuses.push_back(
-        mediapipe::StatusBuilder(std::move(status), MEDIAPIPE_LOC).SetPrepend()
+        absl::StatusBuilder(std::move(status), MEDIAPIPE_LOC).SetPrepend()
         << "For output streams of " << contract_.GetNodeName() << " ");
   }
   status = ValidatePacketTypeSet(contract_.InputSidePackets());
   if (!status.ok()) {
     statuses.push_back(
-        mediapipe::StatusBuilder(std::move(status), MEDIAPIPE_LOC).SetPrepend()
+        absl::StatusBuilder(std::move(status), MEDIAPIPE_LOC).SetPrepend()
         << "For input side packets of " << contract_.GetNodeName() << " ");
   }
   if (!statuses.empty()) {
@@ -1046,8 +1047,7 @@ absl::Status ValidatedGraphConfig::ValidateRequiredSidePackets(
           input_side_packets_[index].packet_type->Validate(iter->second);
       if (!status.ok()) {
         statuses.push_back(
-            mediapipe::StatusBuilder(std::move(status), MEDIAPIPE_LOC)
-                .SetPrepend()
+            absl::StatusBuilder(std::move(status), MEDIAPIPE_LOC).SetPrepend()
             << "Side packet \"" << required_item.first
             << "\" failed validation: ");
       }
