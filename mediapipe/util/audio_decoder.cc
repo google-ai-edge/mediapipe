@@ -420,8 +420,8 @@ absl::Status AudioPacketProcessor::ValidateSampleFormat() {
     case AV_SAMPLE_FMT_FLTP:
       return absl::OkStatus();
     default:
-      return mediapipe::UnimplementedErrorBuilder(MEDIAPIPE_LOC)
-             << "sample_fmt = " << avcodec_ctx_->sample_fmt;
+      return absl::UnimplementedError(
+          absl::StrCat("sample_fmt = ", avcodec_ctx_->sample_fmt));
   }
 }
 
@@ -583,8 +583,8 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
       }
       break;
     default:
-      return mediapipe::UnimplementedErrorBuilder(MEDIAPIPE_LOC)
-             << "sample_fmt = " << avcodec_ctx_->sample_fmt;
+      return absl::UnimplementedError(
+          absl::StrCat("sample_fmt = ", avcodec_ctx_->sample_fmt));
   }
 
   if (options_.output_regressing_timestamps() ||

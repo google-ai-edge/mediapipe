@@ -17,13 +17,12 @@
 #include "absl/status/status.h"
 #include "absl/status/status_builder.h"
 #include "absl/types/source_location.h"
-#include "mediapipe/framework/deps/status_builder.h"
 
 namespace mediapipe {
 
 absl::StatusBuilder RetCheckFailSlowPath(absl::SourceLocation location) {
   // TODO Implement LogWithStackTrace().
-  return mediapipe::InternalErrorBuilder(location)
+  return absl::StatusBuilder(absl::StatusCode::kInternal, location)
          << "RET_CHECK failure (" << location.file_name() << ":"
          << location.line() << ") ";
 }

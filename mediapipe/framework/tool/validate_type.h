@@ -18,9 +18,9 @@
 
 #include <map>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/packet_set.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 

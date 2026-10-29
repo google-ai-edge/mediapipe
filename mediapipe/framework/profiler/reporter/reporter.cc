@@ -18,7 +18,6 @@
 #include "mediapipe/framework/calculator_profile.pb.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/re2.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 namespace reporter {

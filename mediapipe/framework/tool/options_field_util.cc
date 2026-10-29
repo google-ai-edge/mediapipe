@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -16,7 +17,6 @@
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/any_proto.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/framework/tool/proto_util_lite.h"
 #include "mediapipe/framework/tool/type_util.h"

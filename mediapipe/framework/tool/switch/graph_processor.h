@@ -3,10 +3,10 @@
 
 #include <memory>
 
+#include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/collection_item_id.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/switch/packet_processor.h"
 
 namespace mediapipe {

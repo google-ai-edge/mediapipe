@@ -25,6 +25,7 @@
 #include <vector>
 
 // TODO: Move protos in another CL after the C++ code migration.
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_context_manager.h"
 #include "mediapipe/framework/collection.h"
@@ -36,7 +37,6 @@
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/packet_type.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/tag_map.h"
 
 namespace mediapipe {

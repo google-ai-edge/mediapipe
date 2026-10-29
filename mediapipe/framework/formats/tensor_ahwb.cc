@@ -1,4 +1,5 @@
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "mediapipe/framework/formats/tensor.h"
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB

@@ -5,6 +5,7 @@
 #include <tuple>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -12,7 +13,6 @@
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/any_proto.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/framework/tool/options_registry.h"
 

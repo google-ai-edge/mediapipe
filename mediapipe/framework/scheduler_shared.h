@@ -23,10 +23,10 @@
 #include <utility>
 
 #include "absl/base/macros.h"
+#include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/deps/clock.h"
 #include "mediapipe/framework/deps/monotonic_clock.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 namespace internal {

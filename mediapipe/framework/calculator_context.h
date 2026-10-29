@@ -31,7 +31,6 @@
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/any_proto.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/framework/timestamp.h"
 

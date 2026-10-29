@@ -15,6 +15,49 @@
 #ifndef MEDIAPIPE_PORT_STATUS_BUILDER_H_
 #define MEDIAPIPE_PORT_STATUS_BUILDER_H_
 
-#include "mediapipe/framework/deps/status_builder.h"
+#include "absl/status/status.h"
+#include "absl/status/status_builder.h"
+#include "absl/types/source_location.h"
+#include "mediapipe/framework/port/source_location.h"
+
+namespace mediapipe {
+
+using StatusBuilder = ::absl::StatusBuilder;
+
+inline StatusBuilder AlreadyExistsErrorBuilder(absl::SourceLocation location) {
+  return StatusBuilder(absl::StatusCode::kAlreadyExists, location);
+}
+
+inline StatusBuilder FailedPreconditionErrorBuilder(
+    absl::SourceLocation location) {
+  return StatusBuilder(absl::StatusCode::kFailedPrecondition, location);
+}
+
+inline StatusBuilder InternalErrorBuilder(absl::SourceLocation location) {
+  return StatusBuilder(absl::StatusCode::kInternal, location);
+}
+
+inline StatusBuilder InvalidArgumentErrorBuilder(
+    absl::SourceLocation location) {
+  return StatusBuilder(absl::StatusCode::kInvalidArgument, location);
+}
+
+inline StatusBuilder NotFoundErrorBuilder(absl::SourceLocation location) {
+  return StatusBuilder(absl::StatusCode::kNotFound, location);
+}
+
+inline StatusBuilder UnavailableErrorBuilder(absl::SourceLocation location) {
+  return StatusBuilder(absl::StatusCode::kUnavailable, location);
+}
+
+inline StatusBuilder UnimplementedErrorBuilder(absl::SourceLocation location) {
+  return StatusBuilder(absl::StatusCode::kUnimplemented, location);
+}
+
+inline StatusBuilder UnknownErrorBuilder(absl::SourceLocation location) {
+  return StatusBuilder(absl::StatusCode::kUnknown, location);
+}
+
+}  // namespace mediapipe
 
 #endif  // MEDIAPIPE_PORT_STATUS_BUILDER_H_

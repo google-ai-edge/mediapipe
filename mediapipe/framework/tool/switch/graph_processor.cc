@@ -1,5 +1,7 @@
 #include "mediapipe/framework/tool/switch/graph_processor.h"
 
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mediapipe {

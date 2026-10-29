@@ -22,6 +22,7 @@
 
 #include "Eigen/Core"
 #include "absl/log/absl_check.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -29,7 +30,6 @@
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/test_calculators.pb.h"
 
 namespace mediapipe {

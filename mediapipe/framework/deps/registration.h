@@ -38,7 +38,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/deps/registration_token.h"
-#include "mediapipe/framework/port/statusor.h"
 
 namespace mediapipe {
 

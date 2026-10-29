@@ -15,8 +15,8 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TOOL_TAG_MAP_HELPER_H_
 #define MEDIAPIPE_FRAMEWORK_TOOL_TAG_MAP_HELPER_H_
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/tag_map.h"
 
 namespace mediapipe {

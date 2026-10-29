@@ -21,11 +21,11 @@
 #include <memory>
 #include <string>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/packet_type.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 

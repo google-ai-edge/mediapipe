@@ -18,8 +18,8 @@
 #ifndef MEDIAPIPE_FRAMEWORK_GRAPH_VALIDATION_H_
 #define MEDIAPIPE_FRAMEWORK_GRAPH_VALIDATION_H_
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 

@@ -19,8 +19,8 @@
 #include <vector>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/status/status_macros.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/framework/tool/packet_generator_wrapper_calculator.pb.h"
 #include "mediapipe/framework/tool/tag_map.h"

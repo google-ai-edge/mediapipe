@@ -20,9 +20,9 @@
 #include <utility>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/port/advanced_proto_lite_inc.h"
 #include "mediapipe/framework/port/proto_ns.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/field_data.pb.h"
 
 namespace mediapipe {

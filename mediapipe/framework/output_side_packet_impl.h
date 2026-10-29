@@ -19,13 +19,13 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/input_side_packet_handler.h"
 #include "mediapipe/framework/output_side_packet.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/framework/port.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 

@@ -19,12 +19,12 @@
 #include <string>
 #include <type_traits>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/deps/registration.h"
 #include "mediapipe/framework/mediapipe_options.pb.h"
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/framework/port.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 

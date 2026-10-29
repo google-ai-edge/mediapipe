@@ -22,9 +22,9 @@
 #include <vector>
 
 #include "absl/base/macros.h"
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/proto_ns.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 namespace internal {

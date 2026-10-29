@@ -116,7 +116,9 @@ cc_library(
         "//mediapipe/framework/deps:file_helpers",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/deps:mmapped_file",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
@@ -415,7 +417,6 @@ cc_library(
     deps = [
         ":source_location",
         "//mediapipe/framework:port",
-        "//mediapipe/framework/deps:status",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_builder",

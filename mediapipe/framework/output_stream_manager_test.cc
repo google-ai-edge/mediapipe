@@ -19,6 +19,7 @@
 #include <string>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/input_stream_handler.h"
 #include "mediapipe/framework/input_stream_manager.h"
 #include "mediapipe/framework/output_stream_shard.h"

@@ -5,10 +5,10 @@
 #include <ostream>
 #include <set>
 
+#include "absl/status/status.h"
 #include "map"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_profile.pb.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/profiler/reporter/statistic.h"
 
 namespace mediapipe {

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
 #include "absl/status/status_macros.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/file_helpers.h"

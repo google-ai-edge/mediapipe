@@ -17,7 +17,7 @@
 
 #include <vector>
 
-#include "mediapipe/framework/port/status.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/tool/calculator_graph_template.pb.h"
 
 namespace mediapipe {

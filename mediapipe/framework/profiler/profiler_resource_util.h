@@ -17,8 +17,8 @@
 
 #include <string>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 

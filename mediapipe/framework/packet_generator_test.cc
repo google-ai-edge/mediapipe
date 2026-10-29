@@ -14,6 +14,7 @@
 
 #include "mediapipe/framework/packet_generator.h"
 
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/packet_generator.pb.h"
 #include "mediapipe/framework/packet_type.h"

@@ -17,9 +17,9 @@
 
 #include <memory>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/packet.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 

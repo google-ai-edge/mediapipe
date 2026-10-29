@@ -19,7 +19,6 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/source.pb.h"
 
 namespace mediapipe {
