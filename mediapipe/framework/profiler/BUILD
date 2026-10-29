@@ -220,12 +220,12 @@ cc_library(
         "//mediapipe/framework:calculator_state",
         "//mediapipe/framework:mediapipe_options_cc_proto",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/tool:tag_map",
         "//mediapipe/framework/tool:tag_map_helper",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
@@ -321,9 +321,9 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status:status_macros",
+        "@com_google_absl//absl/status:statusor",
     ] + select({
         "//conditions:default": [
             "//mediapipe/framework/port:file_helpers",

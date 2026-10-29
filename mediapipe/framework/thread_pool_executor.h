@@ -15,9 +15,9 @@
 #ifndef MEDIAPIPE_FRAMEWORK_THREAD_POOL_EXECUTOR_H_
 #define MEDIAPIPE_FRAMEWORK_THREAD_POOL_EXECUTOR_H_
 
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/deps/thread_options.h"
 #include "mediapipe/framework/executor.h"
-#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/port/threadpool.h"
 
 namespace mediapipe {

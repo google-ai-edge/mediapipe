@@ -176,7 +176,6 @@ cc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
         "//mediapipe/tasks/cc/components/processors:image_preprocessing_graph",
         "//mediapipe/tasks/cc/components/processors/proto:image_preprocessing_graph_options_cc_proto",
         "//mediapipe/tasks/cc/core:model_task_graph",

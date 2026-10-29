@@ -18,10 +18,10 @@
 #include <memory>
 #include <vector>
 
+#include "absl/status/statusor.h"
 #include "absl/types/optional.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/modules/face_geometry/protos/environment.pb.h"
 #include "mediapipe/modules/face_geometry/protos/face_geometry.pb.h"

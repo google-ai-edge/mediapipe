@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -168,8 +169,8 @@ FieldData SerializeProtobufAny(const FieldData& data) {
 }
 
 // Returns the field index of an extension type in a repeated field.
-StatusOr<int> FindExtensionIndex(const FieldData& message_data,
-                                 FieldPathEntry* entry) {
+absl::StatusOr<int> FindExtensionIndex(const FieldData& message_data,
+                                       FieldPathEntry* entry) {
   if (entry->field == nullptr || !IsProtobufAny(entry->field)) {
     return -1;
   }

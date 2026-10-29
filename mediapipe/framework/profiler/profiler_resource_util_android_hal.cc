@@ -1,8 +1,8 @@
-#include "mediapipe/framework/port/statusor.h"
+#include "absl/status/statusor.h"
 
 namespace mediapipe {
 
-StatusOr<std::string> GetDefaultTraceLogDirectory() {
+absl::StatusOr<std::string> GetDefaultTraceLogDirectory() {
   return "/data/local/tmp";
 }
 

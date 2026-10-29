@@ -17,8 +17,8 @@
 #include <cstdint>
 #include <cstdlib>
 
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/modules/face_geometry/protos/mesh_3d.pb.h"
 
 namespace mediapipe::face_geometry {

@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <cstdlib>
 
-#include "mediapipe/framework/port/statusor.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/mesh_3d.pb.h"
 
 namespace mediapipe::tasks::vision::face_geometry {

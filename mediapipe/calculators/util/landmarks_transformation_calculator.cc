@@ -16,19 +16,20 @@
 
 #include <utility>
 
+#include "absl/status/statusor.h"
 #include "mediapipe/calculators/util/landmarks_transformation_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/statusor.h"
 
 namespace mediapipe {
 namespace api2 {
 
 namespace {
 
-StatusOr<LandmarkList> NormalizeTranslation(const LandmarkList& in_landmarks) {
+absl::StatusOr<LandmarkList> NormalizeTranslation(
+    const LandmarkList& in_landmarks) {
   RET_CHECK_GT(in_landmarks.landmark_size(), 0);
 
   double x_sum = 0.0f;
@@ -56,7 +57,7 @@ StatusOr<LandmarkList> NormalizeTranslation(const LandmarkList& in_landmarks) {
   return out_landmarks;
 }
 
-StatusOr<LandmarkList> FlipAxis(
+absl::StatusOr<LandmarkList> FlipAxis(
     const LandmarkList& in_landmarks,
     const LandmarksTransformationCalculatorOptions::FlipAxis& options) {
   float x_mul = options.flip_x() ? -1 : 1;

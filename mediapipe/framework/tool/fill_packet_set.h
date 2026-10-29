@@ -19,9 +19,9 @@
 #include <memory>
 #include <string>
 
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/packet_type.h"
-#include "mediapipe/framework/port/statusor.h"
 
 namespace mediapipe {
 namespace tool {

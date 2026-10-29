@@ -27,12 +27,12 @@
 #include <fstream>
 
 #include "absl/algorithm/container.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/port/canonical_errors.h"
-#include "mediapipe/framework/port/statusor.h"
 
 namespace mediapipe {
 namespace {

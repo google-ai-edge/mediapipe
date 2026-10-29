@@ -14,10 +14,10 @@
 
 #include "mediapipe/util/rectangle_util.h"
 
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/rectangle.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/statusor.h"
 
 namespace mediapipe {
 

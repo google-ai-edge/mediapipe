@@ -30,7 +30,6 @@ cc_library(
         "//mediapipe/framework/formats:matrix_data_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
         "//mediapipe/gpu:gl_base",
         "//mediapipe/gpu:shader_util",
         "//mediapipe/modules/face_geometry/protos:environment_cc_proto",
@@ -38,6 +37,7 @@ cc_library(
         "//mediapipe/modules/face_geometry/protos:mesh_3d_cc_proto",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status:status_macros",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/types:optional",
     ],
 )
@@ -55,13 +55,13 @@ cc_library(
         "//mediapipe/framework/formats:matrix_data_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
         "//mediapipe/modules/face_geometry/protos:environment_cc_proto",
         "//mediapipe/modules/face_geometry/protos:face_geometry_cc_proto",
         "//mediapipe/modules/face_geometry/protos:geometry_pipeline_metadata_cc_proto",
         "//mediapipe/modules/face_geometry/protos:mesh_3d_cc_proto",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status:status_macros",
+        "@com_google_absl//absl/status:statusor",
         "@eigen//:eigen3",
     ],
 )
@@ -72,8 +72,8 @@ cc_library(
     hdrs = ["mesh_3d_utils.h"],
     deps = [
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:statusor",
         "//mediapipe/modules/face_geometry/protos:mesh_3d_cc_proto",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
@@ -84,9 +84,9 @@ cc_library(
     deps = [
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status:status_macros",
+        "@com_google_absl//absl/status:statusor",
         "@eigen//:eigen3",
     ],
 )

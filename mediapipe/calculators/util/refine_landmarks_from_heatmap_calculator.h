@@ -17,10 +17,10 @@
 
 #include <vector>
 
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
-#include "mediapipe/framework/port/statusor.h"
 
 namespace mediapipe {
 namespace api2 {

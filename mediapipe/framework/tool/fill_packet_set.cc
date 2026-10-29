@@ -19,8 +19,8 @@
 
 #include "absl/memory/memory.h"
 #include "absl/status/status_builder.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/port/status_builder.h"
-#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/tool/status_util.h"
 
 namespace mediapipe {

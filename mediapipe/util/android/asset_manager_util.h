@@ -22,10 +22,10 @@
 
 #include <string>
 
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/singleton.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/statusor.h"
 
 namespace mediapipe {
 

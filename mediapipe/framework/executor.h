@@ -20,9 +20,9 @@
 #include <functional>
 
 // TODO: Move protos in another CL after the C++ code migration.
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/deps/registration.h"
 #include "mediapipe/framework/mediapipe_options.pb.h"
-#include "mediapipe/framework/port/statusor.h"
 
 namespace mediapipe {
 

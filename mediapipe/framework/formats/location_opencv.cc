@@ -17,11 +17,11 @@
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/formats/annotation/rasterization.pb.h"
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
-#include "mediapipe/framework/port/statusor.h"
 
 namespace mediapipe {
 

@@ -150,10 +150,10 @@ cc_library(
         "//mediapipe/framework/port:point",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/tool:status_util",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_protobuf//:protobuf",
     ],
@@ -212,9 +212,9 @@ cc_library(
     ],
     deps = [
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:statusor",
         "@com_google_absl//absl/functional:any_invocable",
         "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
@@ -297,12 +297,12 @@ cc_library(
         "//mediapipe/framework/port:rectangle",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/tool:status_util",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_protobuf//:protobuf",
     ] + select({
@@ -537,8 +537,8 @@ cc_library(
         ":image_format_cc_proto",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
-        "//mediapipe/framework/port:statusor",
         "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 

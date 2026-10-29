@@ -88,7 +88,6 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/port:threadpool",
         "//mediapipe/gpu:gl_base",
         "//mediapipe/gpu:gpu_buffer",
@@ -102,6 +101,7 @@ cc_library(
         "//third_party/apple_frameworks:CoreMedia",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
         "@google_toolbox_for_mac//:GTM_Defines",
@@ -204,10 +204,10 @@ objc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/formats:matrix",
-        "//mediapipe/framework/port:statusor",
         "//third_party/apple_frameworks:AVFoundation",
         "//third_party/apple_frameworks:CoreAudio",
         "//third_party/apple_frameworks:CoreMedia",
+        "@com_google_absl//absl/status:statusor",
         "@eigen//:eigen3",
     ],
 )

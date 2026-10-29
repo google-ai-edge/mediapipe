@@ -22,6 +22,7 @@
 #include <memory>
 #include <vector>
 
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
@@ -31,7 +32,6 @@
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/gpu/MPPMetalHelper.h"
 #include "tflite/delegates/gpu/common/shape.h"
 #include "tflite/delegates/gpu/common/types.h"

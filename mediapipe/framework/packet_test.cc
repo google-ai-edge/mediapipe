@@ -32,7 +32,6 @@
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
-#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/type_map.h"
 
 namespace mediapipe {
@@ -523,7 +522,7 @@ TEST(PacketTest, PacketFromSerializedProto) {
   original.add_value("foo");
   std::string serialized = original.SerializeAsString();
 
-  StatusOr<Packet> maybe_packet = packet_internal::PacketFromDynamicProto(
+  absl::StatusOr<Packet> maybe_packet = packet_internal::PacketFromDynamicProto(
       "mediapipe.SimpleProto", serialized);
   MP_ASSERT_OK(maybe_packet);
   Packet packet = maybe_packet.value();

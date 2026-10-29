@@ -636,7 +636,7 @@ cc_library(
         ":mediapipe_options_cc_proto",
         "//mediapipe/framework/deps:registration",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
@@ -685,9 +685,9 @@ cc_library(
     deps = [
         ":packet",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1048,7 +1048,6 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/tool:type_util",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/functional:any_invocable",
@@ -1313,9 +1312,9 @@ cc_library(
         "//mediapipe/framework/deps:thread_options",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/port:threadpool",
         "//mediapipe/util:cpu_util",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
@@ -1863,7 +1862,6 @@ cc_test(
         ":type_map",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:statusor",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

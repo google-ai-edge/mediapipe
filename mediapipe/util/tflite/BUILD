@@ -120,7 +120,6 @@ cc_library(
                    "//mediapipe/framework/port:logging",
                    "//mediapipe/framework/port:ret_check",
                    "//mediapipe/framework/port:status",
-                   "//mediapipe/framework/port:statusor",
                    "@com_google_absl//absl/strings",
                    "@litert//tflite:framework",
                    "@litert//tflite/delegates/gpu:api",

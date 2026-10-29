@@ -31,7 +31,6 @@
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"    // NOTYPO
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gpu_buffer.h"

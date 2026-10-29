@@ -101,9 +101,9 @@ cc_library(
     deps = [
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:statusor",
         "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ] + select({
         "//conditions:default": [],
@@ -506,7 +506,6 @@ cc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:rectangle",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:statusor",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/types:span",
     ],
