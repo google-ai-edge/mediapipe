@@ -506,6 +506,30 @@ message InferenceCalculatorOptions {
           }
           // Defaults to INFO if not specified.
           optional LogLevel log_level = 2;
+
+          enum HtpPdSession {
+            HTP_PD_SESSION_UNSPECIFIED = 0;
+            // Runs in a sandboxed, lower-privilege Unsigned User Process Domain
+            // (PD) on the cDSP. Does not require OEM cryptographic signing of
+            // the DSP shared libraries ("skel" .so files like
+            // libQnnHtpV*Skel.so) or test-signature (testsig) enablement on the
+            // device. Any third-party Android app can bundle and load
+            // QNN/LiteRT libraries into an unsigned PD out of the box. Has
+            // restricted access to certain low-level DSP kernel/hardware APIs
+            // and system resources.
+            HTP_PD_SESSION_UNSIGNED = 1;
+            // Runs in a Signed User PD, which requires all DSP-side shared
+            // libraries (.so skels) loaded into the session to be
+            // cryptographically signed by the OEM/SoC vendor (typically
+            // pre-installed in /vendor/dsp/cdsp/ or /vendor/lib/rfsa/adsp/) or
+            // authorized via a device-specific engineering testsig.
+            HTP_PD_SESSION_SIGNED = 2;
+          }
+
+          // Selects the HTP Process Domain session. Defaults to
+          // HTP_PD_SESSION_UNSIGNED if not specified. Unless you're writing
+          // some system service, stick with the default.
+          optional HtpPdSession htp_pd_session = 3;
         }
         oneof accelerator {
           Darwinn darwinn = 3;

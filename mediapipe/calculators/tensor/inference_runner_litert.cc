@@ -183,6 +183,26 @@ absl::StatusOr<litert::qualcomm::QualcommOptions::LogLevel> ToLiteRtLogLevel(
   }
 }
 
+absl::StatusOr<litert::qualcomm::QualcommOptions::HtpPdSession>
+ToLiteRtHtpPdSession(
+    InferenceCalculatorOptions::Delegate::LiteRt::Npu::Qualcomm::HtpPdSession
+        mp_pd_session) {
+  using HtpPdSession = litert::qualcomm::QualcommOptions::HtpPdSession;
+  using QualcommDelegateOptions =
+      InferenceCalculatorOptions::Delegate::LiteRt::Npu::Qualcomm;
+  switch (mp_pd_session) {
+    case QualcommDelegateOptions::HTP_PD_SESSION_UNSPECIFIED:
+    case QualcommDelegateOptions::HTP_PD_SESSION_UNSIGNED:
+      return HtpPdSession::kUnsigned;
+    case QualcommDelegateOptions::HTP_PD_SESSION_SIGNED:
+      return HtpPdSession::kSigned;
+    default:
+      return absl::InvalidArgumentError(
+          absl::StrCat("Unsupported Qualcomm HTP PD session ",
+                       static_cast<int>(mp_pd_session)));
+  }
+}
+
 bool CanUseAhwbForInput(
     const Tensor& input_tensor,
     absl::Span<const litert::TensorBufferType> supported_types) {
@@ -709,6 +729,12 @@ InferenceRunnerLiteRt::Create(
         LITERT_ASSIGN_OR_RETURN(auto log_level,
                                 ToLiteRtLogLevel(qualcomm_proto.log_level()));
         qualcomm_options.SetLogLevel(log_level);
+      }
+      if (qualcomm_proto.has_htp_pd_session()) {
+        LITERT_ASSIGN_OR_RETURN(
+            auto htp_pd_session,
+            ToLiteRtHtpPdSession(qualcomm_proto.htp_pd_session()));
+        qualcomm_options.SetHtpPdSession(htp_pd_session);
       }
     }
   }
