@@ -332,7 +332,7 @@ CVPixelBufferRef CreateCVPixelBufferForImageFramePacket(
   CFHolder<CVPixelBufferRef> buffer;
   absl::Status status =
       CreateCVPixelBufferForImageFramePacket(image_frame_packet, &buffer);
-  MEDIAPIPE_CHECK_OK(status) << "Failed to create CVPixelBufferRef";
+  ABSL_CHECK_OK(status) << "Failed to create CVPixelBufferRef";
   return (CVPixelBufferRef)CFRetain(*buffer);
 }
 

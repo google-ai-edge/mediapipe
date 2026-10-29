@@ -15,7 +15,8 @@
 #ifndef MEDIAPIPE_DEPS_CANONICAL_ERRORS_H_
 #define MEDIAPIPE_DEPS_CANONICAL_ERRORS_H_
 
-#include "mediapipe/framework/deps/status.h"
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 
 namespace mediapipe {
 

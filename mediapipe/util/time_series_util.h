@@ -21,6 +21,7 @@
 #include <string>
 #include <typeinfo>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"
@@ -85,7 +86,7 @@ absl::Status IsMatrixShapeConsistentWithHeader(const Matrix& matrix,
 template <typename OptionsClass>
 void FillOptionsExtensionOrDie(const CalculatorOptions& options,
                                OptionsClass* extension) {
-  MEDIAPIPE_CHECK_OK(HasOptionsExtension<OptionsClass>(options));
+  ABSL_CHECK_OK(HasOptionsExtension<OptionsClass>(options));
   extension->CopyFrom(options.GetExtension(OptionsClass::ext));
 }
 

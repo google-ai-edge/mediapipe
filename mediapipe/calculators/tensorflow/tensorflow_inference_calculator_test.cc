@@ -93,7 +93,7 @@ class TensorflowInferenceCalculatorTest : public ::testing::Test {
 
     PacketSet input_side_packets({});
     PacketSet output_side_packets({"SESSION"});
-    MEDIAPIPE_CHECK_OK(tool::RunGenerateAndValidateTypes(
+    ABSL_CHECK_OK(tool::RunGenerateAndValidateTypes(
         "TensorFlowSessionFromFrozenGraphGenerator", extendable_options,
         input_side_packets, &output_side_packets));
     runner_->MutableSidePackets()->Tag(kSessionTag) =

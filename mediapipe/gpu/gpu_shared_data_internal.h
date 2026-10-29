@@ -28,6 +28,7 @@
 #include <utility>
 
 #include "absl/base/thread_annotations.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
@@ -174,7 +175,7 @@ struct GpuSharedData {
   static std::shared_ptr<GpuResources> CreateGpuResourcesOrDie(
       PlatformGlContext external_context) {
     auto status_or_resources = GpuResources::Create(external_context);
-    MEDIAPIPE_CHECK_OK(status_or_resources.status())
+    ABSL_CHECK_OK(status_or_resources.status())
         << ": could not create GpuResources";
     return std::move(status_or_resources).value();
   }

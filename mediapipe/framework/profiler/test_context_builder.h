@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -82,10 +83,10 @@ class TestContextBuilder {
         input_map_, nullptr, MediaPipeOptions(), false);
     input_managers_.reset(new InputStreamManager[input_map_->NumEntries()]);
     for (auto id = input_map_->BeginId(); id < input_map_->EndId(); ++id) {
-      MEDIAPIPE_CHECK_OK(input_managers_[id.value()].Initialize(
+      ABSL_CHECK_OK(input_managers_[id.value()].Initialize(
           input_map_->Names()[id.value()], packet_type, false));
     }
-    MEDIAPIPE_CHECK_OK(
+    ABSL_CHECK_OK(
         input_handler_->InitializeInputStreamManagers(input_managers_.get()));
     for (auto id = output_map_->BeginId(); id < output_map_->EndId(); ++id) {
       static auto packet_type_ = new PacketType;
@@ -105,7 +106,7 @@ class TestContextBuilder {
   std::unique_ptr<CalculatorContext> CreateCalculatorContext() {
     auto result = std::make_unique<CalculatorContext>(state_.get(), input_map_,
                                                       output_map_);
-    MEDIAPIPE_CHECK_OK(input_handler_->SetupInputShards(&result->Inputs()));
+    ABSL_CHECK_OK(input_handler_->SetupInputShards(&result->Inputs()));
     for (auto id = output_map_->BeginId(); id < output_map_->EndId(); ++id) {
       auto& out_stream = result->Outputs().Get(id);
       const std::string& stream_name = output_map_->Names()[id.value()];

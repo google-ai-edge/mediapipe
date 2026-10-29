@@ -416,6 +416,7 @@ cc_library(
         ":source_location",
         "//mediapipe/framework:port",
         "//mediapipe/framework/deps:status",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_builder",
         "@com_google_absl//absl/status:status_macros",

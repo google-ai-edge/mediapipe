@@ -189,7 +189,7 @@ class GraphProfilerTestPeer : public testing::Test {
     validated_graph_ptr_ = std::make_unique<mediapipe::ValidatedGraphConfig>();
     ABSL_QCHECK_OK(validated_graph_ptr_->Initialize(graph_config));
     profiler_.Initialize(*validated_graph_ptr_);
-    QCHECK_OK(profiler_.Start(nullptr));
+    ABSL_QCHECK_OK(profiler_.Start(nullptr));
   }
 
   void SetOpenRuntime(const CalculatorContext& calculator_context,
@@ -492,7 +492,7 @@ TEST_F(GraphProfilerTestPeer, InitializeMultipleProfilers) {
         std::make_shared<ProfilingContext>();
     auto graph_config = CreateGraphConfig(raw_graph_config);
     mediapipe::ValidatedGraphConfig validated_graph;
-    QCHECK_OK(validated_graph.Initialize(graph_config));
+    ABSL_QCHECK_OK(validated_graph.Initialize(graph_config));
     profiler->Initialize(validated_graph);
 
     int id = profiler->GetGraphId();

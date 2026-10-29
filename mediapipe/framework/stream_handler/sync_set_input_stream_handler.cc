@@ -51,7 +51,7 @@ void SyncSetInputStreamHandler::PrepareForRun(
       for (const auto& tag_index : sync_set.tag_index()) {
         std::string tag;
         int index;
-        MEDIAPIPE_CHECK_OK(tool::ParseTagIndex(tag_index, &tag, &index));
+        ABSL_CHECK_OK(tool::ParseTagIndex(tag_index, &tag, &index));
         CollectionItemId id = input_stream_managers_.GetId(tag, index);
         ABSL_CHECK(id.IsValid())
             << "stream \"" << tag_index << "\" is not found.";

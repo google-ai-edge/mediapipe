@@ -47,8 +47,8 @@ TimestampAlignInputStreamHandler::TimestampAlignInputStreamHandler(
       mediapipe::TimestampAlignInputStreamHandlerOptions::ext);
   std::string tag;
   int index;
-  MEDIAPIPE_CHECK_OK(tool::ParseTagIndex(
-      handler_options.timestamp_base_tag_index(), &tag, &index));
+  ABSL_CHECK_OK(tool::ParseTagIndex(handler_options.timestamp_base_tag_index(),
+                                    &tag, &index));
   timestamp_base_stream_id_ = input_stream_managers_.GetId(tag, index);
   ABSL_CHECK(timestamp_base_stream_id_.IsValid())
       << "stream \"" << handler_options.timestamp_base_tag_index()

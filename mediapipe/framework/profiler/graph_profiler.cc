@@ -392,7 +392,7 @@ std::set<int> GraphProfiler::GetBackEdgeIds(
     }
     std::string tag;
     int index;
-    MEDIAPIPE_CHECK_OK(
+    ABSL_CHECK_OK(
         tool::ParseTagIndex(input_stream_info.tag_index(), &tag, &index))
         << absl::Substitute("Cannot parse TAG or index for the backedge \"$0\"",
                             input_stream_info.tag_index());

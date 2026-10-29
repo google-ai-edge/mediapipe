@@ -330,12 +330,8 @@ cc_library(
 
 cc_library(
     name = "status",
-    srcs = [
-        "status.cc",
-    ],
     hdrs = [
         "canonical_errors.h",
-        "status.h",
         "status_builder.h",
         "status_macros.h",
     ],
@@ -345,12 +341,9 @@ cc_library(
     deps = [
         ":source_location",
         "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_builder",
         "@com_google_absl//absl/status:status_macros",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:source_location",
     ],
 )
@@ -508,18 +501,6 @@ cc_test(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
-    ],
-)
-
-cc_test(
-    name = "status_test",
-    size = "small",
-    srcs = ["status_test.cc"],
-    linkstatic = 1,
-    deps = [
-        ":status",
-        ":status_matchers",
-        "//mediapipe/framework/port:gtest_main",
     ],
 )
 

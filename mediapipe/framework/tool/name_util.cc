@@ -18,6 +18,7 @@
 #include <unordered_map>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/port/map_util.h"
@@ -54,7 +55,7 @@ std::string GetUnusedSidePacketName(
       std::string tag;
       std::string name;
       int index;
-      MEDIAPIPE_CHECK_OK(ParseTagIndexName(tag_and_name, &tag, &index, &name));
+      ABSL_CHECK_OK(ParseTagIndexName(tag_and_name, &tag, &index, &name));
       input_side_packets.insert(name);
     }
   }
@@ -96,21 +97,21 @@ std::string CanonicalNodeName(const CalculatorGraphConfig& graph_config,
 std::string ParseNameFromStream(const std::string& stream) {
   std::string tag, name;
   int index;
-  MEDIAPIPE_CHECK_OK(tool::ParseTagIndexName(stream, &tag, &index, &name));
+  ABSL_CHECK_OK(tool::ParseTagIndexName(stream, &tag, &index, &name));
   return name;
 }
 
 std::pair<std::string, int> ParseTagIndex(const std::string& tag_index) {
   std::string tag;
   int index;
-  MEDIAPIPE_CHECK_OK(tool::ParseTagIndex(tag_index, &tag, &index));
+  ABSL_CHECK_OK(tool::ParseTagIndex(tag_index, &tag, &index));
   return {tag, index};
 }
 
 std::pair<std::string, int> ParseTagIndexFromStream(const std::string& stream) {
   std::string tag, name;
   int index;
-  MEDIAPIPE_CHECK_OK(tool::ParseTagIndexName(stream, &tag, &index, &name));
+  ABSL_CHECK_OK(tool::ParseTagIndexName(stream, &tag, &index, &name));
   return {tag, index};
 }
 

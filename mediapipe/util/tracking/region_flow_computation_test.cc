@@ -64,7 +64,7 @@ class RegionFlowComputationTest
     data_dir_ = file::JoinPath("./", "/mediapipe/util/tracking/testdata/");
 
     std::string png_data;
-    MEDIAPIPE_CHECK_OK(
+    ABSL_CHECK_OK(
         file::GetContents(data_dir_ + "stabilize_test.png", &png_data));
     std::vector<char> buffer(png_data.begin(), png_data.end());
     original_frame_ = cv::imdecode(cv::Mat(buffer), 1);

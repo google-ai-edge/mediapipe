@@ -79,7 +79,7 @@ CalculatorContext* CalculatorContextManager::PrepareCalculatorContext(
   if (idle_contexts_.empty()) {
     auto new_context = std::make_unique<CalculatorContext>(
         calculator_state_, input_tag_map_, output_tag_map_);
-    MEDIAPIPE_CHECK_OK(setup_shards_callback_(new_context.get()));
+    ABSL_CHECK_OK(setup_shards_callback_(new_context.get()));
     calculator_context = new_context.get();
     active_contexts_.emplace(input_timestamp, std::move(new_context));
   } else {

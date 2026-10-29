@@ -174,7 +174,7 @@ CalculatorGraph::CalculatorGraph(CalculatorContext* cc)
 CalculatorGraph::CalculatorGraph(CalculatorGraphConfig config)
     : CalculatorGraph() {
   counter_factory_ = std::make_unique<BasicCounterFactory>();
-  MEDIAPIPE_CHECK_OK(Initialize(std::move(config)));
+  ABSL_CHECK_OK(Initialize(std::move(config)));
 }
 
 // Defining the destructor here lets us use incomplete types in the header;
@@ -412,8 +412,8 @@ absl::Status CalculatorGraph::InitializeExecutors() {
                          validated_graph_->Package(),
                          executor_config.type(), executor_config.options()));
     // clang-format on
-    MEDIAPIPE_CHECK_OK(SetExecutorInternal(
-        executor_config.name(), std::shared_ptr<Executor>(executor)));
+    ABSL_CHECK_OK(SetExecutorInternal(executor_config.name(),
+                                      std::shared_ptr<Executor>(executor)));
   }
 #ifdef __EMSCRIPTEN__
   // Emscripten runs the application single threaded and therefore requires to
@@ -440,7 +440,7 @@ absl::Status CalculatorGraph::InitializeDefaultExecutor(
   // If specified, run synchronously on the calling thread.
   if (use_application_thread) {
     use_application_thread_ = true;
-    MEDIAPIPE_CHECK_OK(SetExecutorInternal(
+    ABSL_CHECK_OK(SetExecutorInternal(
         "", std::make_shared<internal::DelegatingExecutor>(
                 std::bind(&internal::Scheduler::AddApplicationThreadTask,
                           &scheduler_, std::placeholders::_1))));
@@ -1472,7 +1472,7 @@ void CalculatorGraph::CleanupAfterRun(absl::Status* status) {
     GetCombinedErrors(status);
     ABSL_CHECK(!status->ok());
   } else {
-    MEDIAPIPE_CHECK_OK(*status);
+    ABSL_CHECK_OK(*status);
   }
 
   for (auto& node : nodes_) {

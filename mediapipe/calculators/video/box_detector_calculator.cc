@@ -402,7 +402,7 @@ absl::Status BoxDetectorCalculator::Process(CalculatorContext* cc) {
 absl::Status BoxDetectorCalculator::Close(CalculatorContext* cc) {
   if (write_index_) {
     BoxDetectorIndex index = box_detector_->ObtainBoxDetectorIndex();
-    MEDIAPIPE_CHECK_OK(mediapipe::file::SetContents(
+    ABSL_CHECK_OK(mediapipe::file::SetContents(
         cc->InputSidePackets().Tag(kOutputIndexFilenameTag).Get<std::string>(),
         index.SerializeAsString()));
   }

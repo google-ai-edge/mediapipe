@@ -154,8 +154,8 @@ class CalculatorNodeTest : public ::testing::Test {
           "  input_side_packet: \"input_a\"\n"  // Input side packet index 3
           "}\n");
     }
-    MEDIAPIPE_CHECK_OK(validated_graph_.Initialize(graph_config));
-    MEDIAPIPE_CHECK_OK(InitializeStreams());
+    ABSL_CHECK_OK(validated_graph_.Initialize(graph_config));
+    ABSL_CHECK_OK(InitializeStreams());
 
     input_side_packets_.emplace("input_a", Adopt(new int(42)));
     input_side_packets_.emplace("input_b", Adopt(new int(42)));

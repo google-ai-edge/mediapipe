@@ -21,6 +21,7 @@
 #include <sstream>
 #include <string>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -86,7 +87,7 @@ TEST(Reporter, ReportAllColumns) {
 // wildcards.
 TEST(Reporter, ReportOneColumn) {
   auto reporter = loadReporter({"profile_opencv_0.binarypb"});
-  MEDIAPIPE_CHECK_OK(reporter->set_columns({"time_mean"}));
+  ABSL_CHECK_OK(reporter->set_columns({"time_mean"}));
   auto report = reporter->Report();
   EXPECT_THAT(report->headers(), ElementsAre("calculator", "time_mean"));
 }
@@ -95,7 +96,7 @@ TEST(Reporter, ReportOneColumn) {
 // Notice the columns are alphabetical except for the first column, 'calendar'.
 TEST(Reporter, ReportColumnsWithWildcards) {
   auto reporter = loadReporter({"profile_opencv_0.binarypb"});
-  MEDIAPIPE_CHECK_OK(reporter->set_columns({"*_m??n", "*l?t*cy*"}));
+  ABSL_CHECK_OK(reporter->set_columns({"*_m??n", "*l?t*cy*"}));
   EXPECT_THAT(reporter->Report()->headers(),
               ElementsAre("calculator", "input_latency_mean", "time_mean",
                           "input_latency_stddev", "input_latency_total"));
@@ -103,7 +104,7 @@ TEST(Reporter, ReportColumnsWithWildcards) {
 
 TEST(Reporter, AggregatesAreRecorded) {
   auto reporter = loadReporter({"profile_opencv_0.binarypb"});
-  MEDIAPIPE_CHECK_OK(reporter->set_columns({"time_*", "*latency*"}));
+  ABSL_CHECK_OK(reporter->set_columns({"time_*", "*latency*"}));
   const auto& report = reporter->Report();
   const auto& lines = report->lines();
   ASSERT_EQ(lines.size(), 3);
@@ -117,7 +118,7 @@ TEST(Reporter, JoinsFiles) {
       "profile_opencv_0.binarypb",
       "profile_opencv_1.binarypb",
   });
-  MEDIAPIPE_CHECK_OK(reporter->set_columns({"time_*", "*latency*"}));
+  ABSL_CHECK_OK(reporter->set_columns({"time_*", "*latency*"}));
   const auto& report = reporter->Report();
   const auto& lines = report->lines();
   ASSERT_EQ(lines.size(), 3);

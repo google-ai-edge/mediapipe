@@ -96,7 +96,7 @@ REGISTER_CALCULATOR(CalculatorRunnerSinkCalculator);
 
 CalculatorRunner::CalculatorRunner(
     const CalculatorGraphConfig::Node& node_config) {
-  MEDIAPIPE_CHECK_OK(InitializeFromNodeConfig(node_config));
+  ABSL_CHECK_OK(InitializeFromNodeConfig(node_config));
 }
 
 absl::Status CalculatorRunner::InitializeFromNodeConfig(
@@ -143,7 +143,7 @@ CalculatorRunner::CalculatorRunner(const std::string& node_config_string) {
   CalculatorGraphConfig::Node node_config;
   ABSL_CHECK(
       proto_ns::TextFormat::ParseFromString(node_config_string, &node_config));
-  MEDIAPIPE_CHECK_OK(InitializeFromNodeConfig(node_config));
+  ABSL_CHECK_OK(InitializeFromNodeConfig(node_config));
 }
 
 CalculatorRunner::CalculatorRunner(const std::string& calculator_type,
@@ -191,7 +191,7 @@ void CalculatorRunner::SetNumInputSidePackets(int n) {
 
 void CalculatorRunner::InitializeInputs(const tool::TagAndNameInfo& info) {
   ABSL_CHECK(graph_ == nullptr);
-  MEDIAPIPE_CHECK_OK(
+  ABSL_CHECK_OK(
       tool::SetFromTagAndNameInfo(info, node_config_.mutable_input_stream()));
   inputs_.reset(new StreamContentsSet(info));
   log_calculator_proto_ = true;
@@ -199,7 +199,7 @@ void CalculatorRunner::InitializeInputs(const tool::TagAndNameInfo& info) {
 
 void CalculatorRunner::InitializeOutputs(const tool::TagAndNameInfo& info) {
   ABSL_CHECK(graph_ == nullptr);
-  MEDIAPIPE_CHECK_OK(
+  ABSL_CHECK_OK(
       tool::SetFromTagAndNameInfo(info, node_config_.mutable_output_stream()));
   outputs_.reset(new StreamContentsSet(info));
   log_calculator_proto_ = true;
@@ -208,7 +208,7 @@ void CalculatorRunner::InitializeOutputs(const tool::TagAndNameInfo& info) {
 void CalculatorRunner::InitializeInputSidePackets(
     const tool::TagAndNameInfo& info) {
   ABSL_CHECK(graph_ == nullptr);
-  MEDIAPIPE_CHECK_OK(tool::SetFromTagAndNameInfo(
+  ABSL_CHECK_OK(tool::SetFromTagAndNameInfo(
       info, node_config_.mutable_input_side_packet()));
   input_side_packets_.reset(new PacketSet(info));
   log_calculator_proto_ = true;

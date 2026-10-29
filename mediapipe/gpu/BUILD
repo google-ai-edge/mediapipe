@@ -797,6 +797,7 @@ cc_library(
         "//mediapipe/framework:port",
         "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/log:absl_check",
     ],
 )
 

@@ -68,7 +68,7 @@ class ImmediateInputStreamHandlerTest : public ::testing::Test {
          id < input_tag_map->EndId(); ++id) {
       const std::string& stream_name = names[id.value()];
       name_to_id_[stream_name] = id;
-      MEDIAPIPE_CHECK_OK(input_stream_managers_[id.value()].Initialize(
+      ABSL_CHECK_OK(input_stream_managers_[id.value()].Initialize(
           stream_name, &packet_type_, /*back_edge=*/false));
     }
     SetupInputStreamHandler(input_tag_map);
