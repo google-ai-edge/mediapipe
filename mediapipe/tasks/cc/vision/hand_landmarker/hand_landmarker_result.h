@@ -30,6 +30,8 @@ namespace hand_landmarker {
 // element represents a single hand detected in the image.
 struct HandLandmarkerResult {
   // Classification of handedness.
+  // Note: Left and Right handedness correspond to the subject's hands, not the
+  // viewer. Passing a horizontally mirrored image will invert these outputs.
   std::vector<components::containers::Classifications> handedness;
   // Detected hand landmarks in normalized image coordinates.
   std::vector<components::containers::NormalizedLandmarks> hand_landmarks;

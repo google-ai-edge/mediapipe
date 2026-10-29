@@ -79,6 +79,9 @@ public abstract class HandLandmarkerResult implements TaskResult {
   /**
    * Handedness of detected hands.
    *
+   * <p>Note: Left and Right handedness correspond to the subject's hands, not the viewer. Passing a
+   * horizontally mirrored image will invert these outputs.
+   *
    * @deprecated Use {@link #handedness()} instead.
    */
   @Deprecated
@@ -86,6 +89,11 @@ public abstract class HandLandmarkerResult implements TaskResult {
     return handedness();
   }
 
-  /** Handedness of detected hands. */
+  /**
+   * Handedness of detected hands.
+   *
+   * <p>Note: Left and Right handedness correspond to the subject's hands, not the viewer. Passing a
+   * horizontally mirrored image will invert these outputs.
+   */
   public abstract List<List<Category>> handedness();
 }

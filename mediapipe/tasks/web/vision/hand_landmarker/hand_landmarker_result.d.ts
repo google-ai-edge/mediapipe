@@ -31,10 +31,16 @@ export declare interface HandLandmarkerResult {
 
   /**
    * Handedness of detected hands.
+   * Note: Left and Right handedness correspond to the subject's hands, not the
+   * viewer. Passing a horizontally mirrored image will invert these outputs.
    * @deprecated Use `.handedness` instead.
    */
   handednesses: Category[][];
 
-  /** Handedness of detected hands. */
+  /**
+   * Handedness of detected hands.
+   * Note: Left and Right handedness correspond to the subject's hands, not the
+   * viewer. Passing a horizontally mirrored image will invert these outputs.
+   */
   handedness: Category[][];
 }

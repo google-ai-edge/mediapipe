@@ -29,6 +29,8 @@ extern "C" {
 // element represents a single hand detected in the image.
 struct MpHandLandmarkerResult {
   // Classification of handedness.
+  // Note: Left and Right handedness correspond to the subject's hands, not the
+  // viewer. Passing a horizontally mirrored image will invert these outputs.
   struct MpCategories* handedness;
 
   // The number of elements in the handedness array.

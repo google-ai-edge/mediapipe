@@ -33,7 +33,9 @@ class GestureRecognizerResult:
     gestures: Recognized hand gestures of detected hands. Note that the index of
       the gesture is always -1, because the raw indices from multiple gesture
       classifiers cannot consolidate to a meaningful index.
-    handedness: Classification of handedness.
+    handedness: Classification of handedness. Left and Right handedness
+      correspond to the subject's hands, not the viewer. Passing a horizontally
+      mirrored image will invert these outputs.
     hand_landmarks: Detected hand landmarks in normalized image coordinates.
     hand_world_landmarks: Detected hand landmarks in world coordinates.
   """

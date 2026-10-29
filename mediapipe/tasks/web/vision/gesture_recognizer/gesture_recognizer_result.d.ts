@@ -29,11 +29,17 @@ export declare interface GestureRecognizerResult {
   /** Hand landmarks in world coordinates of detected hands. */
   worldLandmarks: Landmark[][];
 
-  /** Handedness of detected hands. */
+  /**
+   * Handedness of detected hands.
+   * Note: Left and Right handedness correspond to the subject's hands, not the
+   * viewer. Passing a horizontally mirrored image will invert these outputs.
+   */
   handedness: Category[][];
 
   /**
    * Handedness of detected hands.
+   * Note: Left and Right handedness correspond to the subject's hands, not the
+   * viewer. Passing a horizontally mirrored image will invert these outputs.
    * @deprecated Use `.handedness` instead.
    */
   handednesses: Category[][];

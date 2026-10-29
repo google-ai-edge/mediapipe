@@ -36,6 +36,8 @@ struct MpGestureRecognizerResult {
   uint32_t gestures_count;
 
   // Classification of handedness.
+  // Note: Left and Right handedness correspond to the subject's hands, not the
+  // viewer. Passing a horizontally mirrored image will invert these outputs.
   struct MpCategories* handedness;
 
   // The number of elements in the handedness array.

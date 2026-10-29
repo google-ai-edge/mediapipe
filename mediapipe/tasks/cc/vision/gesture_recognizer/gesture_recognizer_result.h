@@ -31,6 +31,8 @@ struct GestureRecognizerResult {
   // the first item in the list.
   std::vector<mediapipe::ClassificationList> gestures;
   // Classification of handedness.
+  // Note: Left and Right handedness correspond to the subject's hands, not the
+  // viewer. Passing a horizontally mirrored image will invert these outputs.
   std::vector<mediapipe::ClassificationList> handedness;
   // Detected hand landmarks in normalized image coordinates.
   std::vector<mediapipe::NormalizedLandmarkList> hand_landmarks;

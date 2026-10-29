@@ -247,7 +247,9 @@ class HandLandmarkerResult:
   """The hand landmarks result from HandLandmarker, where each vector element represents a single hand detected in the image.
 
   Attributes:
-    handedness: Classification of handedness.
+    handedness: Classification of handedness. Left and Right handedness
+      correspond to the subject's hands, not the viewer. Passing a horizontally
+      mirrored image will invert these outputs.
     hand_landmarks: Detected hand landmarks in normalized image coordinates.
     hand_world_landmarks: Detected hand landmarks in world coordinates.
   """

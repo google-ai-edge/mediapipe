@@ -30,7 +30,11 @@ NS_SWIFT_NAME(HandLandmarkerResult)
 /** Hand landmarks in world coordinates of detected hands. */
 @property(nonatomic, readonly) NSArray<NSArray<MPPLandmark *> *> *worldLandmarks;
 
-/** Handedness of detected hands. */
+/**
+ * Handedness of detected hands.
+ * Note: Left and Right handedness correspond to the subject's hands, not the
+ * viewer. Passing a horizontally mirrored image will invert these outputs.
+ */
 @property(nonatomic, readonly) NSArray<NSArray<MPPCategory *> *> *handedness;
 
 /**
