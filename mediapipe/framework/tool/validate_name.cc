@@ -17,12 +17,12 @@
 
 #include <cstdint>
 
+#include "absl/status/status.h"
 #include "absl/status/status_macros.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"

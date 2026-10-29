@@ -224,6 +224,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:str_format",
     ],
     alwayslink = 1,  # buildozer: disable=alwayslink-with-hdrs

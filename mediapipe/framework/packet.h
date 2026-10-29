@@ -43,7 +43,6 @@
 #include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/deps/registration.h"
 #include "mediapipe/framework/port.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -567,7 +566,7 @@ class Holder : public HolderBase, private HolderPayloadRegistrator<T> {
       typename std::enable_if<!std::is_array<U>::value ||
                               std::extent<U>::value != 0>::type* = 0) {
     if (HasForeignOwner()) {
-      return InternalError(
+      return absl::InternalError(
           "Foreign holder can't release data ptr without ownership.");
     }
     // Casts away constness to make the data mutable after the release.

@@ -711,6 +711,7 @@ cc_library(
         "//mediapipe/framework/formats:image_file_properties_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
         "@easyexif",
     ],
     alwayslink = 1,

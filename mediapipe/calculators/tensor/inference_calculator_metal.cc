@@ -23,6 +23,7 @@
 
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/calculators/tensor/inference_calculator.h"
 #include "mediapipe/calculators/tensor/inference_io_mapper.h"
@@ -318,8 +319,7 @@ absl::Status InferenceCalculatorMetalImpl::CreateConverters(
                                      isFloat16:allow_precision_loss_
                                convertToPBHWC4:true];
   if (converter_to_BPHWC4_ == nil) {
-    return mediapipe::InternalError(
-        "Error initializating input buffer converter");
+    return absl::InternalError("Error initializating input buffer converter");
   }
   // Create converter for GPU output.
   converter_from_BPHWC4_ =

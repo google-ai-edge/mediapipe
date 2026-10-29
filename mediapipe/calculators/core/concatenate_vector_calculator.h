@@ -19,11 +19,11 @@
 #include <type_traits>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "mediapipe/calculators/core/concatenate_vector_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 

@@ -166,6 +166,7 @@ cc_library(
         "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/time",
     ],
     alwayslink = 1,
@@ -1335,6 +1336,7 @@ cc_library(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -1352,6 +1354,7 @@ cc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -1381,6 +1384,7 @@ cc_library(
         "//mediapipe/util:rectangle_util",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )

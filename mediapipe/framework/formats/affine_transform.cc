@@ -20,9 +20,9 @@
 #include <vector>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/substitute.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/point2.h"
 #include "mediapipe/framework/port/ret_check.h"

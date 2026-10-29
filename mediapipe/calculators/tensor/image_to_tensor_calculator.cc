@@ -37,7 +37,6 @@
 #include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/memory_manager_service.h"
 #include "mediapipe/framework/port.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"

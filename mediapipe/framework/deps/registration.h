@@ -31,13 +31,13 @@
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/meta/type_traits.h"
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/deps/registration_token.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/statusor.h"
 
 namespace mediapipe {

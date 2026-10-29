@@ -18,9 +18,9 @@
 #include <type_traits>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "mediapipe/calculators/core/clip_vector_size_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 

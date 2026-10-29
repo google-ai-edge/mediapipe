@@ -16,6 +16,7 @@
 
 // TODO: Move protos in another CL after the C++ code migration.
 #include "absl/container/flat_hash_set.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_context_manager.h"
@@ -26,7 +27,6 @@
 #include "mediapipe/framework/output_stream_shard.h"
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/packet_type.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"

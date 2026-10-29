@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "mediapipe/framework/port/canonical_errors.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status.h"

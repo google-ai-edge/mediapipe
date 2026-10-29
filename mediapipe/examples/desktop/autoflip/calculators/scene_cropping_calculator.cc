@@ -17,6 +17,7 @@
 #include <cmath>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/examples/desktop/autoflip/autoflip_messages.pb.h"
 #include "mediapipe/examples/desktop/autoflip/quality/scene_cropping_viz.h"
@@ -24,7 +25,6 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/parse_text_proto.h"

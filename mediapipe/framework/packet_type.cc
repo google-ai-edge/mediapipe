@@ -25,7 +25,6 @@
 #include "absl/strings/str_join.h"
 #include "absl/types/span.h"
 #include "absl/types/variant.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/source_location.h"

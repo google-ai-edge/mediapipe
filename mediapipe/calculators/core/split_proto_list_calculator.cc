@@ -15,11 +15,11 @@
 #ifndef MEDIAPIPE_CALCULATORS_CORE_SPLIT_PROTO_LIST_CALCULATOR_H_  // NOLINT
 #define MEDIAPIPE_CALCULATORS_CORE_SPLIT_PROTO_LIST_CALCULATOR_H_  // NOLINT
 
+#include "absl/status/status.h"
 #include "mediapipe/calculators/core/split_vector_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/body_rig.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/resource_util.h"
 

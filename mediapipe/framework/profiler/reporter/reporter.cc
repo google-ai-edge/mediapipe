@@ -17,7 +17,6 @@
 #include "map"
 #include "mediapipe/framework/calculator_profile.pb.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/re2.h"
 #include "mediapipe/framework/port/status.h"
 

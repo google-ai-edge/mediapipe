@@ -301,6 +301,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/meta:type_traits",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
@@ -332,7 +333,6 @@ cc_library(
 cc_library(
     name = "status",
     hdrs = [
-        "canonical_errors.h",
         "status_builder.h",
         "status_macros.h",
     ],

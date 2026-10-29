@@ -168,6 +168,7 @@ cc_library(
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -184,6 +185,7 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:validate_type",
+        "@com_google_absl//absl/status",
     ],
 )
 
@@ -325,6 +327,7 @@ cc_library(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -355,6 +358,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:render_data_cc_proto",
+        "@com_google_absl//absl/status",
         "@litert//tflite:framework",
     ] + select({
         ":apple_or_disable_gpu": [],
@@ -388,6 +392,7 @@ cc_library(
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -435,6 +440,7 @@ cc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
         "@litert//tflite:framework",
     ],
     alwayslink = 1,
@@ -462,6 +468,7 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -504,6 +511,7 @@ cc_test(
         "//mediapipe/framework/tool:validate_type",
         "//mediapipe/util:packet_test_util",
         "//mediapipe/util:time_series_test_util",
+        "@com_google_absl//absl/status",
     ],
 )
 
@@ -568,6 +576,7 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:validate_type",
+        "@com_google_absl//absl/status",
     ],
 )
 
@@ -1024,6 +1033,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_util",
+        "@com_google_absl//absl/status",
         "@litert//tflite:framework",
         "@litert//tflite/kernels:builtin_ops",
     ] + select({
@@ -1064,6 +1074,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_util",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -1093,6 +1104,7 @@ cc_library(
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -1118,6 +1130,7 @@ cc_library(
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -1295,6 +1308,7 @@ cc_library(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )

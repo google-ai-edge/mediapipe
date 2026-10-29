@@ -14,11 +14,11 @@
 
 #include "mediapipe/util/tensor_to_detection.h"
 
+#include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/variant.h"
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/location_opencv.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/status.h"
 #include "tensorflow/core/framework/tensor_types.h"
@@ -90,12 +90,12 @@ Status TensorsToDetections(const ::tensorflow::Tensor& num_detections,
       num_boxes = num_detections.scalar<int32_t>()();
     }
     if (boxes.dim_size(0) < num_boxes) {
-      return InvalidArgumentError(
+      return absl::InvalidArgumentError(
           "First dimension of boxes tensor must be at least num_boxes");
     }
 
     if (classes.dim_size(0) != 0 && classes.dim_size(0) < num_boxes) {
-      return InvalidArgumentError(
+      return absl::InvalidArgumentError(
           "First dimension of classes tensor must be at least num_boxes");
     }
 
@@ -103,23 +103,23 @@ Status TensorsToDetections(const ::tensorflow::Tensor& num_detections,
     // If num_detections is not present, the number of boxes is determined by
     // the first dimension of the box tensor.
     if (boxes.dim_size(0) <= 0) {
-      return InvalidArgumentError("Box tensor is empty");
+      return absl::InvalidArgumentError("Box tensor is empty");
     }
     num_boxes = boxes.dim_size(0);
   }
 
   if (scores.dim_size(0) < num_boxes) {
-    return InvalidArgumentError(
+    return absl::InvalidArgumentError(
         "First dimension of scores tensor must be at least num_boxes");
   }
   if (keypoints.dim_size(0) != 0 && keypoints.dim_size(0) < num_boxes) {
-    return InvalidArgumentError(
+    return absl::InvalidArgumentError(
         "First dimension of keypoint tensors must be at least num_boxes");
   }
   int num_keypoints = keypoints.dim_size(1);
 
   if (masks.dim_size(0) != 0 && masks.dim_size(0) < num_boxes) {
-    return InvalidArgumentError(
+    return absl::InvalidArgumentError(
         "First dimension of the masks tensor should be at least num_boxes");
   }
 
@@ -137,7 +137,7 @@ Status TensorsToDetections(const ::tensorflow::Tensor& num_detections,
       // If class tensor is missing, we will sort the scores of all classes for
       // each box and keep the top.
       if (scores.dims() != 2) {
-        return InvalidArgumentError(
+        return absl::InvalidArgumentError(
             "Score tensor must have 2 dimensions where the last dimension has "
             "the scores for each class");
       }
@@ -154,7 +154,8 @@ Status TensorsToDetections(const ::tensorflow::Tensor& num_detections,
       // If class tensor and score tensor are both present, we use the them
       // directly.
       if (scores.dims() != 1) {
-        return InvalidArgumentError("Score tensor has more than 1 dimensions");
+        return absl::InvalidArgumentError(
+            "Score tensor has more than 1 dimensions");
       }
       score = score_vec(i);
       class_id = static_cast<int>(classes_vec(i));
@@ -170,7 +171,7 @@ Status TensorsToDetections(const ::tensorflow::Tensor& num_detections,
                             boxes_mat(i, 3), score, class_id);
     } else {
       if (!mediapipe::ContainsKey(label_map, class_id)) {
-        return InvalidArgumentError(StrFormat(
+        return absl::InvalidArgumentError(StrFormat(
             "Input label_map does not contain entry for integer label: %d",
             class_id));
       }

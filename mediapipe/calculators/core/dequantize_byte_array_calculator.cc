@@ -14,9 +14,9 @@
 
 #include <cfloat>
 
+#include "absl/status/status.h"
 #include "mediapipe/calculators/core/dequantize_byte_array_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/status.h"
 
 // Dequantizes a byte array to a vector of floats.

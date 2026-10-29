@@ -17,6 +17,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "mediapipe/calculators/core/constant_side_packet_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/collection_item_id.h"
@@ -24,7 +25,6 @@
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/matrix_data.pb.h"
 #include "mediapipe/framework/formats/time_series_header.pb.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 

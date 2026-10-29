@@ -27,7 +27,6 @@
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_opencv.h"
 #include "mediapipe/framework/formats/tensor.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 

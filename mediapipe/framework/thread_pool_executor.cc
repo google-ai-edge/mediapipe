@@ -16,7 +16,7 @@
 
 #include <utility>
 
-#include "mediapipe/framework/port/canonical_errors.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/framework/thread_pool_executor.pb.h"

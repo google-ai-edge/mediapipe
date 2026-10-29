@@ -79,6 +79,7 @@ cc_library(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
     ],
 )
 
@@ -382,6 +383,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
@@ -466,6 +468,7 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -500,6 +503,7 @@ cc_library(
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -592,6 +596,7 @@ cc_library(
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
     ],
 )
@@ -609,6 +614,7 @@ cc_library(
         "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/strings",
     ],
@@ -653,6 +659,7 @@ cc_test(
         ":status_util",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
     ],
 )
 
@@ -987,6 +994,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,

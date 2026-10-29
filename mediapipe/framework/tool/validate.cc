@@ -16,9 +16,9 @@
 
 #include <string>
 
+#include "absl/status/status.h"
 #include "absl/status/status_macros.h"
 #include "mediapipe/framework/calculator.pb.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/tool/validate_name.h"
 

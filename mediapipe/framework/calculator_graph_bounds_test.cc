@@ -14,10 +14,10 @@
 
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/str_replace.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/logging.h"

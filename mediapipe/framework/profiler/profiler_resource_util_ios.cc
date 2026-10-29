@@ -15,8 +15,8 @@
 
 #import <Foundation/Foundation.h>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/profiler/profiler_resource_util.h"
 
 namespace mediapipe {

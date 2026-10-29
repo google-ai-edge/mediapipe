@@ -20,11 +20,11 @@
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "absl/strings/substitute.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/port/advanced_proto_lite_inc.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/re2.h"

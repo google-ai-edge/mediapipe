@@ -23,6 +23,7 @@
 #include "Eigen/Core"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/substitute.h"
@@ -183,9 +184,9 @@ absl::Status SendPacket(const AVPacket& packet, AVCodecContext* avcodec_ctx) {
   if (error != 0 && error != AVERROR_EOF) {
     // Not consider AVERROR_EOF as an error because it can happen when more
     // than 1 flush packet is sent.
-    return UnknownError(absl::StrCat("Failed to send packet: error=", error,
-                                     " (", AvErrorToString(error),
-                                     "). Packet size: ", packet.size));
+    return absl::UnknownError(
+        absl::StrCat("Failed to send packet: error=", error, " (",
+                     AvErrorToString(error), "). Packet size: ", packet.size));
   }
   return absl::OkStatus();
 }
@@ -199,8 +200,9 @@ absl::Status ReceiveFrame(AVCodecContext* avcodec_ctx, AVFrame* frame,
     // Not consider AVERROR_EOF as an error because it can happen after a
     // flush, and AVERROR(EAGAIN) because it happens when there's no (more)
     // frame to be received from this packet.
-    return UnknownError(absl::StrCat(" Failed to receive frame: error=", error,
-                                     " (", AvErrorToString(error), ")."));
+    return absl::UnknownError(
+        absl::StrCat(" Failed to receive frame: error=", error, " (",
+                     AvErrorToString(error), ")."));
   }
   return absl::OkStatus();
 }
@@ -378,7 +380,7 @@ absl::Status AudioPacketProcessor::Open(int id, AVStream* stream) {
   avcodec_ctx_ = avcodec_alloc_context3(avcodec_);
   avcodec_parameters_to_context(avcodec_ctx_, stream->codecpar);
   if (avcodec_open2(avcodec_ctx_, avcodec_, &avcodec_opts_) < 0) {
-    return UnknownError("avcodec_open() failed.");
+    return absl::UnknownError("avcodec_open() failed.");
   }
   ABSL_CHECK(avcodec_ctx_->codec);
 
@@ -392,10 +394,10 @@ absl::Status AudioPacketProcessor::Open(int id, AVStream* stream) {
   sample_rate_ = avcodec_ctx_->sample_rate;
 
   if (num_channels_ <= 0) {
-    return UnknownError("num_channels must be strictly positive.");
+    return absl::UnknownError("num_channels must be strictly positive.");
   }
   if (sample_rate_ <= 0) {
-    return UnknownError("sample_rate must be strictly positive.");
+    return absl::UnknownError("sample_rate must be strictly positive.");
   }
 
   sample_time_base_ = {1, static_cast<int>(sample_rate_)};
@@ -444,7 +446,7 @@ int64_t AudioPacketProcessor::SampleNumberToMicroseconds(
 absl::Status AudioPacketProcessor::ProcessPacket(AVPacket* packet) {
   ABSL_CHECK(packet);
   if (flushed_) {
-    return UnknownError(
+    return absl::UnknownError(
         "ProcessPacket was called, but AudioPacketProcessor is already "
         "finished.");
   }
@@ -467,7 +469,7 @@ absl::Status AudioPacketProcessor::ProcessDecodedFrame(const AVPacket& packet) {
           << " decoded:" << buf_size_bytes;
   uint8_t* const* data_ptr = decoded_frame_->data;
   if (!data_ptr[0]) {
-    return UnknownError("No data in audio frame.");
+    return absl::UnknownError("No data in audio frame.");
   }
   if (decoded_frame_->pts != AV_NOPTS_VALUE) {
     int64_t pts = MaybeCorrectPtsForRollover(decoded_frame_->pts);
@@ -514,7 +516,7 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
   }
 
   if (buf_size_bytes % (num_channels_ * bytes_per_sample_) != 0) {
-    return UnknownError("Buffer is not an integral number of samples.");
+    return absl::UnknownError("Buffer is not an integral number of samples.");
   }
 
   const int64_t num_samples =

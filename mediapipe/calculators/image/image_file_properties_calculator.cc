@@ -14,10 +14,10 @@
 
 #include <memory>
 
+#include "absl/status/status.h"
 #include "exif.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_file_properties.pb.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {

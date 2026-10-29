@@ -19,6 +19,7 @@
 #include <memory>
 #include <utility>
 
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/synchronization/mutex.h"
@@ -27,7 +28,6 @@
 #include "mediapipe/framework/packet_generator.h"
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/framework/port.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"

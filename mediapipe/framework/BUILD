@@ -1100,6 +1100,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:status_util",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ],
@@ -1314,6 +1315,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:threadpool",
         "//mediapipe/util:cpu_util",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
     ],
 )
@@ -1466,6 +1468,7 @@ cc_test(
         "//mediapipe/framework/tool:status_util",
         "//mediapipe/framework/tool:tag_map_helper",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/status",
     ],
 )
 
@@ -1520,6 +1523,7 @@ cc_test(
         "//mediapipe/framework/tool:sink",
         "//mediapipe/framework/tool:status_util",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
@@ -1724,6 +1728,7 @@ cc_test(
         "//mediapipe/framework/stream_handler:sync_set_input_stream_handler",
         "//mediapipe/framework/tool:sink",
         "//mediapipe/util:packet_test_util",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1748,6 +1753,7 @@ cc_test(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:sink",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/time",
     ],
 )
@@ -1787,6 +1793,7 @@ cc_test(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:status_matchers",
         "//mediapipe/framework/tool:sink",
+        "@com_google_absl//absl/status",
     ],
 )
 

@@ -19,9 +19,9 @@
 #include <type_traits>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "mediapipe/calculators/core/split_vector_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/resource_util.h"

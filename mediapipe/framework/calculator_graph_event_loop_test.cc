@@ -16,13 +16,13 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_graph.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
