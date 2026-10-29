@@ -39,6 +39,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc/vision/face_geometry/libs:validation_utils",
         "//mediapipe/tasks/cc/vision/face_geometry/proto:environment_cc_proto",
+        "@com_google_absl//absl/status:status_macros",
     ],
     alwayslink = 1,
 )
@@ -73,6 +74,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/face_geometry/proto:geometry_pipeline_metadata_cc_proto",
         "//mediapipe/util:resource_util",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/strings:str_format",
     ],
     alwayslink = 1,

@@ -94,6 +94,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/image_generator/proto:image_generator_graph_options_cc_proto",
         "//mediapipe/util:graph_builder_utils",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
