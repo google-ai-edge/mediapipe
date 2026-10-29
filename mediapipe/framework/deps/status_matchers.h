@@ -26,7 +26,6 @@
 #include "absl/strings/str_cat.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "mediapipe/framework/deps/status_builder.h"
 
 namespace mediapipe {
 
@@ -274,13 +273,6 @@ StatusIsMatcher StatusIs(CodeMatcher code_matcher) {
 #define MP_ASSERT_OK_AND_ASSIGN(lhs, rexpr) \
   MP_ASSERT_OK_AND_ASSIGN_IMPL_(            \
       STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__), lhs, rexpr)
-
-inline void MpInternalAssertAddFatalFailure(
-    absl::string_view expression, const mediapipe::StatusBuilder& builder) {
-  FAIL() << absl::StrCat(expression, " returned error: ",
-                         absl::Status(builder).ToString(
-                             absl::StatusToStringMode::kWithEverything));
-}
 
 inline void MpInternalAssertAddFatalFailure(
     absl::string_view expression, const absl::StatusBuilder& builder) {
