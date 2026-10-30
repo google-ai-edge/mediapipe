@@ -48,7 +48,7 @@ opt-einsum==3.4.0
     # via jax
 packaging==24.1
     # via matplotlib
-pillow==10.4.0
+pillow==13.0.0
     # via matplotlib
 protobuf==4.25.5
     # via -r mediapipe/opensource_only/requirements.txt
