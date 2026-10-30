@@ -68,28 +68,31 @@ class DownloadedFiles:
       print(f'Downloading {self.url} to {absolute_path}')
       r = requests.get(self.url, allow_redirects=True)
       if self.is_folder:
-        # Use tempf to store the downloaded .tar.gz file
-        tempf = tempfile.NamedTemporaryFile(suffix='.tar.gz', mode='wb')
-        tempf.write(r.content)
-        tarf = tarfile.open(tempf.name)
-        # Use tmpdir to store the extracted contents of the .tar.gz file
-        with tempfile.TemporaryDirectory() as tmpdir:
-          tarf.extractall(tmpdir)
-          tarf.close()
-          tempf.close()
-          subdirs = os.listdir(tmpdir)
-          # Make sure tmpdir only has one subdirectory
-          if len(subdirs) > 1 or not os.path.isdir(
-              os.path.join(tmpdir, subdirs[0])
-          ):
-            raise RuntimeError(
-                f"Extracted folder from {self.url} doesn't contain a "
-                f'single root directory: {subdirs}'
-            )
-          # Create the parent dir of absolute_path and copy the contents of the
-          # top level dir in the .tar.gz file into absolute_path.
-          pathlib.Path.mkdir(absolute_path.parent, parents=True, exist_ok=True)
-          shutil.copytree(os.path.join(tmpdir, subdirs[0]), absolute_path)
+        # Use tempf to store the downloaded .tar.gz file. Read from the same
+        # open file object instead of reopening its path, which fails on Windows
+        # while NamedTemporaryFile still owns the file handle.
+        with tempfile.NamedTemporaryFile(suffix='.tar.gz', mode='w+b') as tempf:
+          tempf.write(r.content)
+          tempf.seek(0)
+          with tarfile.open(fileobj=tempf, mode='r:gz') as tarf:
+            # Use tmpdir to store the extracted contents of the .tar.gz file
+            with tempfile.TemporaryDirectory() as tmpdir:
+              tarf.extractall(tmpdir)
+              subdirs = os.listdir(tmpdir)
+              # Make sure tmpdir only has one subdirectory
+              if len(subdirs) > 1 or not os.path.isdir(
+                  os.path.join(tmpdir, subdirs[0])
+              ):
+                raise RuntimeError(
+                    f"Extracted folder from {self.url} doesn't contain a "
+                    f'single root directory: {subdirs}'
+                )
+              # Create the parent dir of absolute_path and copy the contents of
+              # the top level dir in the .tar.gz file into absolute_path.
+              pathlib.Path.mkdir(
+                  absolute_path.parent, parents=True, exist_ok=True
+              )
+              shutil.copytree(os.path.join(tmpdir, subdirs[0]), absolute_path)
       else:
         pathlib.Path.mkdir(absolute_path.parent, parents=True, exist_ok=True)
         with open(absolute_path, 'wb') as f:
