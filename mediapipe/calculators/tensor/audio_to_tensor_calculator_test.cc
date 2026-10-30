@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/substitute.h"
 #include "audio/dsp/resampler_q.h"
 #include "mediapipe/calculators/tensor/audio_to_tensor_calculator.pb.h"

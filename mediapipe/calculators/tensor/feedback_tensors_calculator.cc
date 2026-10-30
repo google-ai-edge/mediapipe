@@ -17,6 +17,7 @@
 #include <utility>
 
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "mediapipe/calculators/tensor/feedback_tensors_calculator.pb.h"
 #include "mediapipe/framework/api2/contract.h"
 #include "mediapipe/framework/api2/node.h"

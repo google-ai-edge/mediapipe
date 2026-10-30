@@ -18,6 +18,7 @@
 #include <array>
 #include <optional>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/types/optional.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
