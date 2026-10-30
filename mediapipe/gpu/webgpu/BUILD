@@ -244,7 +244,6 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":webgpu_headers",
-        "//mediapipe/framework/port:status",
         "//mediapipe/web:jspi_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
@@ -266,7 +265,6 @@ cc_library(
         "//mediapipe/calculators/tensor:image_to_tensor_utils",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:tensor",
-        "//mediapipe/framework/port:status",
         "//mediapipe/gpu:gpu_buffer",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
@@ -298,7 +296,6 @@ cc_library(
         "//mediapipe/framework/api3:node",
         "//mediapipe/framework/deps:re2",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "//mediapipe/gpu:gpu_buffer",
         "//mediapipe/gpu:gpu_buffer_format",
         "@com_google_absl//absl/log:absl_log",

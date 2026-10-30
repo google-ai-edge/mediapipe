@@ -19,7 +19,6 @@
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port.h"  // IWYU pragma: keep (MEDIAPIPE_GPU_BUFFER_USE_AHWB)
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/options_util.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_quad_renderer.h"

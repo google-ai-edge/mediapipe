@@ -17,8 +17,8 @@
 
 #include <utility>  // for declval
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 
 namespace mediapipe {

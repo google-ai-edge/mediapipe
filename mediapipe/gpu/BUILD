@@ -631,7 +631,6 @@ cc_library(
         "//mediapipe/framework/formats:shared_fd",
         "//mediapipe/framework/formats:unique_fd",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "//mediapipe/util:sync_wait",
         "//third_party/GL:EGL_headers",
         "@com_google_absl//absl/base",
@@ -742,7 +741,6 @@ cc_library(
         "//mediapipe/framework:calculator_graph",
         "//mediapipe/framework:executor",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
@@ -771,6 +769,8 @@ cc_library(
         ":gl_base",
         ":gl_context",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -832,7 +832,6 @@ cc_library(
         "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
@@ -875,10 +874,10 @@ cc_library(
     deps = [
         ":multi_pool",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/functional:any_invocable",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
@@ -890,10 +889,10 @@ cc_library(
     name = "multi_pool",
     hdrs = ["multi_pool.h"],
     deps = [
-        "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_cache",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/synchronization",
@@ -983,7 +982,6 @@ cc_library(
         "//mediapipe/framework/formats:shared_fd",
         "//mediapipe/framework/formats:unique_fd",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
@@ -1096,7 +1094,6 @@ cc_library(
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
@@ -1176,7 +1173,8 @@ cc_library(
     deps = [
         ":gl_calculator_helper",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
     ],
 )
 
@@ -1201,7 +1199,6 @@ cc_library(
         "//mediapipe/framework/api3:one_of",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
     ] + select({
@@ -1257,7 +1254,6 @@ cc_library(
         "//mediapipe/framework/api3:node",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
     ] + select({
@@ -1332,7 +1328,6 @@ cc_library(
         "//mediapipe/framework:port",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:options_util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
@@ -1373,7 +1368,6 @@ cc_library(
         "//mediapipe/framework/api3:contract",
         "//mediapipe/framework/api3:node",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_util",
         "//third_party/GL:GLES2_headers",
         "@com_google_absl//absl/log",
@@ -1410,7 +1404,6 @@ cc_test(
         "//mediapipe/framework/api3:stream",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:gtest",
-        "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:test_util",
         "@com_google_absl//absl/functional:function_ref",
         "@com_google_absl//absl/log",
@@ -1440,7 +1433,6 @@ cc_library(
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
@@ -1503,6 +1495,7 @@ objc_library(
         "//third_party/apple_frameworks:Metal",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
     ],
     alwayslink = 1,
 )
@@ -1525,6 +1518,7 @@ objc_library(
         "//third_party/apple_frameworks:Metal",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
     ],
     alwayslink = 1,
 )
@@ -1547,6 +1541,7 @@ objc_library(
         "//third_party/apple_frameworks:Metal",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
     ],
     alwayslink = 1,
 )
@@ -1569,6 +1564,7 @@ objc_library(
         "//third_party/apple_frameworks:Metal",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
     ],
     alwayslink = 1,
 )
@@ -1591,6 +1587,7 @@ objc_library(
         "//third_party/apple_frameworks:MetalPerformanceShaders",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
     ],
     alwayslink = 1,
 )
@@ -1612,6 +1609,7 @@ objc_library(
         "//third_party/apple_frameworks:MetalPerformanceShaders",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
     ],
     alwayslink = 1,
 )
