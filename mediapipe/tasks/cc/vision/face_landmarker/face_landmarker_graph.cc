@@ -19,6 +19,7 @@ limitations under the License.
 #include <vector>
 
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "absl/status/status_macros.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/calculators/core/clip_vector_size_calculator.pb.h"

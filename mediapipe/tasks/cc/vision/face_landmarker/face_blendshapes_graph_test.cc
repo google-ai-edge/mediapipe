@@ -17,6 +17,8 @@ limitations under the License.
 #include <string_view>
 #include <utility>
 
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/deps/file_path.h"

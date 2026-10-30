@@ -19,10 +19,10 @@
 
 #include "Eigen/Dense"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe::tasks::vision::face_geometry {
 namespace {

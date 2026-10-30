@@ -20,6 +20,7 @@ limitations under the License.
 #include <memory>
 
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"

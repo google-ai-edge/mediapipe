@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <cstdlib>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/mesh_3d.pb.h"
 

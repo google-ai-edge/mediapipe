@@ -93,7 +93,6 @@ cc_library(
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",
         "//mediapipe/gpu:gpu_origin_cc_proto",
         "@com_google_absl//absl/log:absl_check",

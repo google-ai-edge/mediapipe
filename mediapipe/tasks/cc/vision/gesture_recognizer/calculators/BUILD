@@ -40,7 +40,6 @@ cc_library(
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc/vision/gesture_recognizer:handedness_util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
@@ -83,6 +82,7 @@ cc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
@@ -144,6 +144,5 @@ cc_test(
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/port:gtest",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:status",
     ],
 )

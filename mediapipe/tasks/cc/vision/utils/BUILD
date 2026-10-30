@@ -29,7 +29,6 @@ cc_library_with_tflite(
     ],
     deps = [
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
         "//mediapipe/tasks/metadata:metadata_schema_cc",

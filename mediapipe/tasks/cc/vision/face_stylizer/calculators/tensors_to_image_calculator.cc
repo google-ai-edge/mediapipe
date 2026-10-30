@@ -34,7 +34,6 @@
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
 #include "mediapipe/gpu/gpu_service.h"
 #include "mediapipe/tasks/cc/vision/face_stylizer/calculators/tensors_to_image_calculator.pb.h"
@@ -377,7 +376,7 @@ absl::Status TensorsToImageCalculator::MetalSetup(CalculatorContext* cc) {
   RET_CHECK(to_buffer_program_ != nil) << "Couldn't create pipeline state " <<
       [[error localizedDescription] UTF8String];
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 #endif  // MEDIAPIPE_METAL_ENABLED
@@ -476,7 +475,7 @@ absl::Status TensorsToImageCalculator::GlSetup(CalculatorContext* cc) {
 
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 absl::Status TensorsToImageCalculator::GlProcess(CalculatorContext* cc) {
@@ -562,7 +561,7 @@ absl::Status TensorsToImageCalculator::GlProcess(CalculatorContext* cc) {
 
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   });
 }
 

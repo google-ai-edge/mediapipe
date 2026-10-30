@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/status/status.h"
 #include "absl/status/status_macros.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/calculators/env_generator_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/libs/validation_utils.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/environment.pb.h"

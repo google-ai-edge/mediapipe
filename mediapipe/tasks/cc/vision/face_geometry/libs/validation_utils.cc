@@ -17,10 +17,10 @@
 #include <cstdint>
 #include <cstdlib>
 
+#include "absl/status/status.h"
 #include "absl/status/status_macros.h"
 #include "mediapipe/framework/formats/matrix_data.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/libs/mesh_3d_utils.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/environment.pb.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/geometry_pipeline_metadata.pb.h"

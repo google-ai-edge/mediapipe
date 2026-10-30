@@ -16,6 +16,8 @@ limitations under the License.
 #include <limits>
 #include <type_traits>
 
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"

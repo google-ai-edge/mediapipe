@@ -17,6 +17,8 @@ limitations under the License.
 
 #include <utility>
 
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/tasks/cc/components/containers/detection_result.h"

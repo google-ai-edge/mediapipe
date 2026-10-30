@@ -1,5 +1,7 @@
 #include "mediapipe/tasks/cc/vision/image_segmenter/calculators/ssbo_to_texture_converter.h"
 
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "tflite/delegates/gpu/gl/converters/util.h"
 #include "tflite/delegates/gpu/gl/gl_shader.h"
 

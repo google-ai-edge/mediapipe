@@ -50,6 +50,7 @@ cc_library(
         "//mediapipe/framework/formats:tensor",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
     ],
     alwayslink = 1,
 )
