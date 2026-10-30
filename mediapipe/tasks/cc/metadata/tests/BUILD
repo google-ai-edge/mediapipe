@@ -16,7 +16,6 @@ cc_test(
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core:utils",
         "//mediapipe/tasks/cc/metadata:metadata_extractor",

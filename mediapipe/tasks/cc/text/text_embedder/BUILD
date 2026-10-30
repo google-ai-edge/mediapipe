@@ -54,6 +54,7 @@ cc_library(
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
         "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_cc_proto",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
@@ -66,7 +67,6 @@ cc_library(
     deps = [
         ":text_embedder_executor",
         "//mediapipe/framework:timestamp",
-        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc/components/containers:embedding_result",
         "//mediapipe/tasks/cc/components/processors:embedder_options",
         "//mediapipe/tasks/cc/core:base_options",
@@ -129,7 +129,6 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",
-        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc/components/calculators:tensors_to_embeddings_calculator_cc_proto",
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
         "//mediapipe/tasks/cc/components/processors:embedding_postprocessing_graph",

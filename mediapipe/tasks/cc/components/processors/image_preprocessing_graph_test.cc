@@ -19,6 +19,8 @@ limitations under the License.
 #include <utility>
 
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"

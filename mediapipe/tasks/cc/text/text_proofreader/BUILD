@@ -33,7 +33,6 @@ cc_library(
     deps = [
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/port:logging",
-        "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:threadpool",
         "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core:running_mode",

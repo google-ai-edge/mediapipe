@@ -13,6 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "mediapipe/tasks/cc/components/processors/proto/detection_postprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/detector_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"

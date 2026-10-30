@@ -40,6 +40,7 @@ cc_library(
         "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_cc_proto",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@litert//tflite/core/api:op_resolver",
@@ -66,6 +67,7 @@ cc_library(
         "//mediapipe/tasks/cc/core/proto:model_resources_calculator_cc_proto",
         "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_cc_proto",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
     ],
     alwayslink = 1,
@@ -103,7 +105,6 @@ cc_library(
     hdrs = ["text_classifier_test_utils.h"],
     visibility = ["//visibility:private"],
     deps = [
-        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",

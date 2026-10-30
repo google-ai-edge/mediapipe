@@ -24,7 +24,6 @@ cc_library(
     srcs = ["audio_tensor_specs.cc"],
     hdrs = ["audio_tensor_specs.h"],
     deps = [
-        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
         "//mediapipe/tasks/metadata:metadata_schema_cc",

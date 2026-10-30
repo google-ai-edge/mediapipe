@@ -18,6 +18,8 @@ limitations under the License.
 #include <memory>
 
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/api2/builder.h"

@@ -26,7 +26,6 @@ cc_library(
     deps = [
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc/components/containers:embedding_result",
         "//mediapipe/tasks/cc/components/utils:cosine_similarity",
         "//mediapipe/tasks/cc/components/utils:tga_utils",

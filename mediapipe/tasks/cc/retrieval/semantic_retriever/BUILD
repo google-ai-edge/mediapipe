@@ -169,7 +169,6 @@ cc_library(
     srcs = ["audio_decoder.cc"],
     hdrs = ["audio_decoder.h"],
     deps = [
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",

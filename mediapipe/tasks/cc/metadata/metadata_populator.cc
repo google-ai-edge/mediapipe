@@ -19,6 +19,7 @@ limitations under the License.
 #include <cstring>
 #include <functional>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "contrib/minizip/ioapi.h"
 #include "contrib/minizip/zip.h"

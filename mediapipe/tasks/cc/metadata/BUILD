@@ -22,7 +22,6 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":metadata_version_utils",
-        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/metadata/utils:zip_utils",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
@@ -62,7 +61,6 @@ cc_library(
     hdrs = ["metadata_populator.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/metadata/utils:zip_writable_mem_file",
         "//mediapipe/tasks/metadata:metadata_schema_cc",

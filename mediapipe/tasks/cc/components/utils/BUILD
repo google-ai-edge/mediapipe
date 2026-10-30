@@ -37,6 +37,7 @@ cc_test(
         ":cosine_similarity",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/tasks/cc/components/containers:embedding_result",
+        "@com_google_absl//absl/status",
     ],
 )
 

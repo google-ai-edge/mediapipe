@@ -27,7 +27,6 @@ cc_library(
     deps = [
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/port:logging",
-        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core:running_mode",
         "//mediapipe/tasks/cc/core:tasks_logging_factory",  # build_cleaner: keep
