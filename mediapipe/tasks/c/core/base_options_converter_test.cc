@@ -132,4 +132,38 @@ TEST(BaseOptionsConverterTest, ConvertsBaseOptionsFileDescriptorZero) {
   EXPECT_EQ(cpp_base_options.model_asset_descriptor_meta.fd, -1);
 }
 
+TEST(BaseOptionsConverterTest, FreesAndResetsBaseOptions) {
+  MpBaseOptions c_base_options = {
+      /* model_asset_buffer= */ strdup("buffer"),
+      /* model_asset_buffer_count= */ 6,
+      /* model_asset_path= */ strdup("model.tflite"),
+      /* file_descriptor= */ 42,
+      /* delegate= */ MP_DELEGATE_GPU,
+      /* host_environment= */ MP_HOST_ENVIRONMENT_IOS,
+      /* host_system= */ MP_HOST_SYSTEM_IOS,
+      /* host_version= */ strdup("17.0"),
+      /* ca_bundle_path= */ strdup("/etc/ssl/cert.pem"),
+      /* app_id= */ strdup("com.example.app"),
+      /* app_version= */ strdup("1.2.3"),
+  };
+
+  MpBaseOptionsFree(&c_base_options);
+
+  EXPECT_EQ(c_base_options.model_asset_buffer, nullptr);
+  EXPECT_EQ(c_base_options.model_asset_buffer_count, 0u);
+  EXPECT_EQ(c_base_options.model_asset_path, nullptr);
+  EXPECT_EQ(c_base_options.file_descriptor, -1);
+  EXPECT_EQ(c_base_options.delegate, MP_DELEGATE_DEFAULT);
+  EXPECT_EQ(c_base_options.host_environment, MP_HOST_ENVIRONMENT_UNKNOWN);
+  EXPECT_EQ(c_base_options.host_system, MP_HOST_SYSTEM_UNKNOWN);
+  EXPECT_EQ(c_base_options.host_version, nullptr);
+  EXPECT_EQ(c_base_options.ca_bundle_path, nullptr);
+  EXPECT_EQ(c_base_options.app_id, nullptr);
+  EXPECT_EQ(c_base_options.app_version, nullptr);
+}
+
+TEST(BaseOptionsConverterTest, FreeHandlesNullptr) {
+  MpBaseOptionsFree(nullptr);
+}
+
 }  // namespace mediapipe::tasks::c::core

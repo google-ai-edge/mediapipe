@@ -16,6 +16,14 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_CORE_BASE_OPTIONS_H_
 #define MEDIAPIPE_TASKS_C_CORE_BASE_OPTIONS_H_
 
+#ifndef MP_EXPORT
+#if defined(_MSC_VER)
+#define MP_EXPORT __declspec(dllexport)
+#else
+#define MP_EXPORT __attribute__((visibility("default")))
+#endif  // _MSC_VER
+#endif  // MP_EXPORT
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -85,6 +93,13 @@ struct MpBaseOptions {
   // The app version of the host environment, e.g., Android version code.
   const char* app_version;
 };
+
+// Frees heap-allocated buffer and string fields (`model_asset_buffer`,
+// `model_asset_path`, `host_version`, `ca_bundle_path`, `app_id`, and
+// `app_version`) in `options` and resets all fields to their default values.
+// Only call this if all non-null pointer fields in `options` were allocated on
+// the heap (e.g., via `malloc` or `strdup`).
+MP_EXPORT void MpBaseOptionsFree(struct MpBaseOptions* options);
 
 #ifdef __cplusplus
 }  // extern C
