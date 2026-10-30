@@ -154,9 +154,9 @@ cc_library(
     hdrs = ["jni_util.h"],
     deps = [
         ":class_registry",
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/synchronization",
     ] + select({
         "//conditions:default": [

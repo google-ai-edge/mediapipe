@@ -18,6 +18,7 @@
 
 #include "absl/container/node_hash_set.h"
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
@@ -26,7 +27,6 @@
 #include "mediapipe/framework/formats/location_data.pb.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/re2.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/modules/objectron/calculators/filter_detection_calculator.pb.h"
 
 namespace mediapipe {

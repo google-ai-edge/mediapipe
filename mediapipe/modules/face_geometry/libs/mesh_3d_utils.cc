@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <cstdlib>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/modules/face_geometry/protos/mesh_3d.pb.h"

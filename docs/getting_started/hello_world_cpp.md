@@ -100,10 +100,10 @@ as the primary developer documentation site for MediaPipe as of April 3, 2023.*
 
     ```c++
     CalculatorGraph graph;
-    MP_RETURN_IF_ERROR(graph.Initialize(config));
-    MP_ASSIGN_OR_RETURN(OutputStreamPoller poller,
+    ABSL_RETURN_IF_ERROR(graph.Initialize(config));
+    ABSL_ASSIGN_OR_RETURN(OutputStreamPoller poller,
                         graph.AddOutputStreamPoller("out"));
-    MP_RETURN_IF_ERROR(graph.StartRun({}));
+    ABSL_RETURN_IF_ERROR(graph.StartRun({}));
     ```
 
 5.  The example then creates 10 packets (each packet contains a string "Hello
@@ -113,10 +113,10 @@ as the primary developer documentation site for MediaPipe as of April 3, 2023.*
 
     ```c++
     for (int i = 0; i < 10; ++i) {
-      MP_RETURN_IF_ERROR(graph.AddPacketToInputStream("in",
+      ABSL_RETURN_IF_ERROR(graph.AddPacketToInputStream("in",
                          MakePacket<std::string>("Hello World!").At(Timestamp(i))));
     }
-    MP_RETURN_IF_ERROR(graph.CloseInputStream("in"));
+    ABSL_RETURN_IF_ERROR(graph.CloseInputStream("in"));
     ```
 
 6.  Through the `OutputStreamPoller` object the example then retrieves all 10

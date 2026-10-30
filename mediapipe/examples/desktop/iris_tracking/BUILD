@@ -36,13 +36,13 @@ cc_binary(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:opencv_video",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
         "//mediapipe/graphs/iris_tracking:iris_depth_cpu_deps",
         "//third_party/gloop/base:init_google",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
     ],
 )
 

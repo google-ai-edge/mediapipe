@@ -14,6 +14,7 @@
 
 #include "mediapipe/examples/desktop/autoflip/quality/visual_scorer.h"
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
@@ -50,7 +51,7 @@ TEST(VisualScorerTest, ScoresSharpness) {
   image_mat.setTo(cv::Scalar(0, 0, 0));
   float score_rect = 0;
   auto status = scorer.CalculateScore(image_mat, region, &score_rect);
-  EXPECT_EQ(status.code(), StatusCode::kInvalidArgument);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
 }
 
 TEST(VisualScorerTest, ScoresColorfulness) {

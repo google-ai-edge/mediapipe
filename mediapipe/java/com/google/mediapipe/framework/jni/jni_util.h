@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
-#include "mediapipe/framework/port/status.h"
+#include "absl/status/status.h"
 
 namespace mediapipe {
 

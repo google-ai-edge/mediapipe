@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "mediapipe/examples/desktop/autoflip/autoflip_messages.pb.h"
 #include "mediapipe/examples/desktop/autoflip/calculators/scene_cropping_calculator.pb.h"
 #include "mediapipe/examples/desktop/autoflip/quality/cropping.pb.h"
@@ -33,7 +34,6 @@
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 namespace autoflip {

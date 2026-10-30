@@ -119,7 +119,6 @@ cc_library(
                "//conditions:default": [
                    "//mediapipe/framework/port:logging",
                    "//mediapipe/framework/port:ret_check",
-                   "//mediapipe/framework/port:status",
                    "@com_google_absl//absl/strings",
                    "@litert//tflite:framework",
                    "@litert//tflite/delegates/gpu:api",
@@ -159,7 +158,6 @@ cc_library_with_tflite(
         "//mediapipe/framework:resources",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_util",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/status",
@@ -204,7 +202,6 @@ cc_library_with_tflite(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
@@ -228,7 +225,6 @@ cc_test(
         "//mediapipe/framework:resources",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:status_matchers",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",

@@ -15,11 +15,11 @@
 #include "mediapipe/examples/desktop/autoflip/quality/polynomial_regression_path_solver.h"
 
 #include "absl/log/absl_check.h"
+#include "absl/status/status.h"
 #include "mediapipe/examples/desktop/autoflip/quality/focus_point.pb.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {

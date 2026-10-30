@@ -18,9 +18,9 @@
 #include <cstdint>
 #include <deque>
 
+#include "absl/status/status.h"
 #include "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 namespace autoflip {

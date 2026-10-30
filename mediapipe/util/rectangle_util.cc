@@ -14,6 +14,8 @@
 
 #include "mediapipe/util/rectangle_util.h"
 
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/rectangle.h"

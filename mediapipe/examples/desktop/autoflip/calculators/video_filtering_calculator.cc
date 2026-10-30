@@ -14,6 +14,7 @@
 
 #include <string>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/examples/desktop/autoflip/calculators/video_filtering_calculator.pb.h"

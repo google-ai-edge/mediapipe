@@ -15,8 +15,8 @@
 #ifndef MEDIAPIPE_UTIL_HEADER_UTIL_H_
 #define MEDIAPIPE_UTIL_HEADER_UTIL_H_
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/packet_set.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 

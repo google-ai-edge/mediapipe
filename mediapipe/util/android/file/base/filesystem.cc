@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/status/status.h"
 #include "absl/strings/str_split.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/android/file/base/file.h"
 
 #ifdef __APPLE__

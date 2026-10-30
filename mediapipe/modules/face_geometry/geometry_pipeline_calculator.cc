@@ -24,7 +24,6 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/modules/face_geometry/geometry_pipeline_calculator.pb.h"
 #include "mediapipe/modules/face_geometry/libs/geometry_pipeline.h"

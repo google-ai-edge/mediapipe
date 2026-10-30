@@ -21,8 +21,8 @@
 
 #include <cstdint>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/port/file_helpers.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 namespace file {

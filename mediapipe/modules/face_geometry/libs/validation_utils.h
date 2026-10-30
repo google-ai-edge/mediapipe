@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_FACE_GEOMETRY_LIBS_VALIDATION_UTILS_H_
 #define MEDIAPIPE_FACE_GEOMETRY_LIBS_VALIDATION_UTILS_H_
 
-#include "mediapipe/framework/port/status.h"
+#include "absl/status/status.h"
 #include "mediapipe/modules/face_geometry/protos/environment.pb.h"
 #include "mediapipe/modules/face_geometry/protos/face_geometry.pb.h"
 #include "mediapipe/modules/face_geometry/protos/geometry_pipeline_metadata.pb.h"

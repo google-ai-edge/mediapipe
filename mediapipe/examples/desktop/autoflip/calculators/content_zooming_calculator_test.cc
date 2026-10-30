@@ -14,6 +14,7 @@
 
 #include <memory>
 
+#include "absl/status/status.h"
 #include "mediapipe/examples/desktop/autoflip/autoflip_messages.pb.h"
 #include "mediapipe/examples/desktop/autoflip/calculators/content_zooming_calculator.pb.h"
 #include "mediapipe/examples/desktop/autoflip/calculators/content_zooming_calculator_state.h"
@@ -31,7 +32,6 @@
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {

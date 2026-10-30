@@ -47,6 +47,8 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
     ],
 )
 
@@ -193,6 +195,7 @@ objc_library(
         ":mediapipe_framework_ios",
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:Foundation",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )

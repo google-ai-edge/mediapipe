@@ -15,8 +15,8 @@
 #ifndef MEDIAPIPE_ANDROID_FILE_BASE_FILESYSTEM_H_
 #define MEDIAPIPE_ANDROID_FILE_BASE_FILESYSTEM_H_
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/android/file/base/file.h"
 
 namespace mediapipe {

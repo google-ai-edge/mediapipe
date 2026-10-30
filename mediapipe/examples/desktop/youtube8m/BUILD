@@ -24,6 +24,8 @@ cc_binary(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/strings",
         "//third_party/gloop/base:init_google",
         "//mediapipe/framework:calculator_framework",
@@ -31,7 +33,6 @@ cc_binary(
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
         "//mediapipe/graphs/youtube8m:yt8m_feature_extraction_calculators",
         # TODO: Figure out the minimum set of the kernels needed by this example.
         "@org_tensorflow//tensorflow/core:all_kernels",

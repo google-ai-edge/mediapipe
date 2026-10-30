@@ -1,10 +1,10 @@
 #ifndef MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_QUALITY_PADDING_EFFECT_GENERATOR_H_
 #define MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_QUALITY_PADDING_EFFECT_GENERATOR_H_
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 namespace autoflip {

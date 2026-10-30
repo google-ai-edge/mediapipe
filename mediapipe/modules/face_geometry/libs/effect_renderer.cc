@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/types/optional.h"
@@ -29,7 +30,6 @@
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/matrix_data.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/shader_util.h"
 #include "mediapipe/modules/face_geometry/libs/mesh_3d_utils.h"

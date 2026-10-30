@@ -17,9 +17,9 @@
 
 #include <map>
 
+#include "absl/status/status.h"
 #include "absl/types/variant.h"
 #include "mediapipe/framework/formats/detection.pb.h"
-#include "mediapipe/framework/port/status.h"
 #include "tensorflow/core/framework/tensor.h"
 
 namespace mediapipe {

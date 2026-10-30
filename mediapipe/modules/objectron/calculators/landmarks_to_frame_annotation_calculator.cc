@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
 
 namespace mediapipe {

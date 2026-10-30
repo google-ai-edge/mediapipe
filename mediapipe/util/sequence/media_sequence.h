@@ -162,10 +162,10 @@
 #include <vector>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/port/proto_ns.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/sequence/media_sequence_util.h"
 #include "tensorflow/core/example/example.pb.h"
 #include "tensorflow/core/example/feature.pb.h"

@@ -17,9 +17,9 @@
 
 #include <vector>
 
+#include "absl/status/status.h"
 #include "mediapipe/examples/desktop/autoflip/autoflip_messages.pb.h"
 #include "mediapipe/examples/desktop/autoflip/quality/cropping.pb.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 namespace autoflip {

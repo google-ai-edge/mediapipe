@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "absl/log/absl_check.h"
-#include "mediapipe/framework/port/status.h"
+#include "absl/status/status.h"
 
 namespace mediapipe {
 namespace autoflip {

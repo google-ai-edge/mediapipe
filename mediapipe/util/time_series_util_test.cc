@@ -15,6 +15,7 @@
 #include "mediapipe/util/time_series_util.h"
 
 #include "Eigen/Core"
+#include "absl/status/status.h"
 #include "mediapipe/calculators/audio/resample_time_series_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/time_series_header.pb.h"

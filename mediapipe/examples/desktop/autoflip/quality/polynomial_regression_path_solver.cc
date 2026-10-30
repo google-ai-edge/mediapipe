@@ -14,6 +14,7 @@
 
 #include "mediapipe/examples/desktop/autoflip/quality/polynomial_regression_path_solver.h"
 
+#include "absl/status/status.h"
 #include "ceres/autodiff_cost_function.h"
 #include "ceres/cost_function.h"
 #include "ceres/loss_function.h"
@@ -21,7 +22,6 @@
 #include "mediapipe/examples/desktop/autoflip/quality/focus_point.pb.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 namespace autoflip {

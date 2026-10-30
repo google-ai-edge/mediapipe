@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/modules/face_geometry/protos/environment.pb.h"

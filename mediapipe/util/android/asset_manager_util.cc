@@ -18,6 +18,8 @@
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"

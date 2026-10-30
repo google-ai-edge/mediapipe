@@ -31,9 +31,9 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/port:file_helpers",
-        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )

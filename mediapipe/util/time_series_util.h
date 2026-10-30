@@ -22,11 +22,11 @@
 #include <typeinfo>
 
 #include "absl/log/absl_check.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/time_series_header.pb.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 namespace time_series_util {

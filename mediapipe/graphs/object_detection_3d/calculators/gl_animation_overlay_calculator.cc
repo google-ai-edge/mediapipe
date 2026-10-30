@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #if defined(__ANDROID__)
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "mediapipe/util/android/asset_manager_util.h"
 #else
 #include <fstream>
@@ -25,7 +27,6 @@
 #include "absl/log/absl_log.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/shader_util.h"
 #include "mediapipe/graphs/object_detection_3d/calculators/gl_animation_overlay_calculator.pb.h"
