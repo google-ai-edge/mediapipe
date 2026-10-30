@@ -1,4 +1,4 @@
-# MediaPipe Tasks Vision Package
+# MediaPipe Tasks Audio Package
 
 This package contains the audio tasks for MediaPipe.
 
@@ -11,26 +11,48 @@ const audio = await FilesetResolver.forAudioTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-audio/wasm"
 );
 const audioClassifier = await AudioClassifier.createFromModelPath(audio,
-    "https://storage.googleapis.com/mediapipe-models/audio_classifier/yamnet/float32/1/yamnet.tflite
+    "https://storage.googleapis.com/mediapipe-models/audio_classifier/yamnet/float32/1/yamnet.tflite"
 );
 const classifications = audioClassifier.classify(audioData);
 ```
 
 For more information, refer to the [Audio Classifier](https://developers.google.com/mediapipe/solutions/audio/audio_classifier/web_js) documentation.
 
-## Audio Embedding
+## Audio Transcriber
 
-The MediaPipe Audio Embedding task extracts embeddings from audio data.
+The MediaPipe Audio Transcriber task transcribes speech in audio data into
+text, either as a complete audio clip or as a continuous stream.
 
 ```
 const audio = await FilesetResolver.forAudioTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-audio/wasm"
 );
-const audioEmbedder = await AudioEmbedder.createFromModelPath(audio,
-    "https://storage.googleapis.com/mediapipe-assets/yamnet_embedding_metadata.tflite?generation=1668295071595506"
+const audioTranscriber = await AudioTranscriber.createFromModelPath(audio,
+    "https://huggingface.co/litert-community/parakeet-tdt-0.6b-v3/resolve/main/parakeet_tdt_0.6b_v3_5s_i8_stateful.litertlm"
 );
-const embeddings = audioEmbedder.embed(audioData);
+const result = await audioTranscriber.transcribe(audioSamples);
+console.log(result.text);
 ```
+
+For more information, refer to the [Audio Transcriber](https://developers.google.com/mediapipe/solutions/audio/audio_transcriber) documentation.
+
+## Text-to-Speech
+
+The MediaPipe Text-to-Speech task synthesizes natural-sounding speech audio
+from text.
+
+```
+const audio = await FilesetResolver.forAudioTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-audio/wasm"
+);
+const textToSpeech = await TextToSpeech.createFromModelPath(audio,
+    "https://huggingface.co/litert-community/Kokoro-82M/resolve/main/kokoro_int8_gpu_fp16.litertlm"
+);
+const result = await textToSpeech.synthesize("Hello from MediaPipe!");
+// result.samples contains 24 kHz mono audio as a Float32Array.
+```
+
+For more information, refer to the [Text-to-Speech](https://developers.google.com/mediapipe/solutions/audio/text_to_speech) documentation.
 
 ### Privacy Notice
 
