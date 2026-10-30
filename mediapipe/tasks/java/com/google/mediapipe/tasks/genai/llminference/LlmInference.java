@@ -29,7 +29,7 @@ public class LlmInference implements AutoCloseable {
     GPU
   }
 
-  private static final String STATS_TAG = LlmInference.class.getSimpleName();
+  private static final String STATS_TAG = "LlmInference";
 
   private static final int NUM_DECODE_STEPS_PER_SYNC = 3;
 

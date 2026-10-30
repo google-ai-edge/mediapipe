@@ -217,7 +217,7 @@ public final class FaceLandmarker extends BaseVisionTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<FaceLandmarkerOptions>builder()
-                .setTaskName(FaceLandmarker.class.getSimpleName())
+                .setTaskName("FaceLandmarker")
                 .setTaskRunningModeName(landmarkerOptions.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)

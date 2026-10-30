@@ -85,7 +85,7 @@ final class ImageEmbedderGraphExecutorImpl extends BaseVisionTaskApi
         TaskRunner.create(
             context,
             TaskInfo.<ImageEmbedderOptions>builder()
-                .setTaskName(ImageEmbedder.class.getSimpleName())
+                .setTaskName("ImageEmbedder")
                 .setTaskRunningModeName(options.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)

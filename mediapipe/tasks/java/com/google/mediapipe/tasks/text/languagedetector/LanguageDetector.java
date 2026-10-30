@@ -170,7 +170,7 @@ public final class LanguageDetector implements AutoCloseable {
         TaskRunner.create(
             context,
             TaskInfo.<LanguageDetectorOptions>builder()
-                .setTaskName(LanguageDetector.class.getSimpleName())
+                .setTaskName("LanguageDetector")
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(inputStreams)
                 .setOutputStreams(outputStreams)

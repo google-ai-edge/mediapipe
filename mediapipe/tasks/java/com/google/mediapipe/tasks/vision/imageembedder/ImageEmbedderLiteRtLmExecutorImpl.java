@@ -59,7 +59,7 @@ public final class ImageEmbedderLiteRtLmExecutorImpl implements ImageEmbedderExe
     this.engine = createLiteRtLmEngine(context, options);
     this.statsLogger =
         TasksStatsLoggerFactory.create(
-            context, ImageEmbedder.class.getSimpleName(), options.runningMode().name());
+            context, "ImageEmbedder", options.runningMode().name());
     this.statsLogger.logSessionStart();
     if (options.runningMode() == RunningMode.LIVE_STREAM) {
       this.executorService =

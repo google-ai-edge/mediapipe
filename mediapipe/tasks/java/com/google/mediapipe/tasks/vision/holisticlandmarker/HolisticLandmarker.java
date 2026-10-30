@@ -252,7 +252,7 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<HolisticLandmarkerOptions>builder()
-                .setTaskName(HolisticLandmarker.class.getSimpleName())
+                .setTaskName("HolisticLandmarker")
                 .setTaskRunningModeName(landmarkerOptions.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)

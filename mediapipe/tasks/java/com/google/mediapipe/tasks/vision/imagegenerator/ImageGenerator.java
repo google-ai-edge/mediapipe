@@ -167,7 +167,7 @@ public final class ImageGenerator extends BaseVisionTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<ImageGeneratorOptions>builder()
-                .setTaskName(ImageGenerator.class.getSimpleName())
+                .setTaskName("ImageGenerator")
                 .setTaskRunningModeName(RunningMode.IMAGE.name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(inputStreams)
@@ -204,7 +204,7 @@ public final class ImageGenerator extends BaseVisionTaskApi {
           TaskRunner.create(
               context,
               TaskInfo.<ImageGeneratorOptions>builder()
-                  .setTaskName(ImageGenerator.class.getSimpleName())
+                  .setTaskName("ImageGenerator")
                   .setTaskRunningModeName(RunningMode.IMAGE.name())
                   .setTaskGraphName(CONDITION_IMAGE_GRAPHS_CONTAINER_NAME)
                   .setInputStreams(inputStreams)

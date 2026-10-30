@@ -78,7 +78,7 @@ final class TextEmbedderGraphExecutorImpl implements TextEmbedderExecutor {
         TaskRunner.create(
             context,
             TaskInfo.<TextEmbedderOptions>builder()
-                .setTaskName(TextEmbedder.class.getSimpleName())
+                .setTaskName("TextEmbedder")
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)
                 .setOutputStreams(OUTPUT_STREAMS)

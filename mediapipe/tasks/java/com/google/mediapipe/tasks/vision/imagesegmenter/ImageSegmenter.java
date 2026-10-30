@@ -222,7 +222,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<ImageSegmenterOptions>builder()
-                .setTaskName(ImageSegmenter.class.getSimpleName())
+                .setTaskName("ImageSegmenter")
                 .setTaskRunningModeName(segmenterOptions.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)

@@ -236,7 +236,9 @@ public final class InteractiveSegmenterLegacy extends BaseVisionTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<InteractiveSegmenterLegacyOptions>builder()
-                .setTaskName(InteractiveSegmenterLegacy.class.getSimpleName())
+                // Logged as TASKS_INTERACTIVESEGMENTER, the usage-logging enum
+                // value of this single-input (legacy) API.
+                .setTaskName("InteractiveSegmenter")
                 .setTaskRunningModeName(RunningMode.IMAGE.name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)

@@ -175,7 +175,7 @@ public final class FaceDetector extends BaseVisionTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<FaceDetectorOptions>builder()
-                .setTaskName(FaceDetector.class.getSimpleName())
+                .setTaskName("FaceDetector")
                 .setTaskRunningModeName(detectorOptions.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)

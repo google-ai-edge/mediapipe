@@ -207,7 +207,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<ObjectDetectorOptions>builder()
-                .setTaskName(ObjectDetector.class.getSimpleName())
+                .setTaskName("ObjectDetector")
                 .setTaskRunningModeName(detectorOptions.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)

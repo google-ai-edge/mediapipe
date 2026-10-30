@@ -198,7 +198,7 @@ public final class ImageClassifier extends BaseVisionTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<ImageClassifierOptions>builder()
-                .setTaskName(ImageClassifier.class.getSimpleName())
+                .setTaskName("ImageClassifier")
                 .setTaskRunningModeName(options.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)

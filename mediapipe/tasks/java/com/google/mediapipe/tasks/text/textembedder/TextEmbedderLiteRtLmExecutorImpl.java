@@ -47,7 +47,7 @@ public final class TextEmbedderLiteRtLmExecutorImpl implements TextEmbedderExecu
     this.options = options;
     this.engine = createLiteRtLmEngine(context, options);
     this.statsLogger =
-        TasksStatsLoggerFactory.create(context, TextEmbedder.class.getSimpleName(), "TEXT");
+        TasksStatsLoggerFactory.create(context, "TextEmbedder", "TEXT");
     this.statsLogger.logSessionStart();
   }
 
