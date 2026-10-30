@@ -15,6 +15,7 @@
 #include <algorithm>
 
 #if !defined(__ANDROID__)
+#include "absl/status/status.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #endif
 #include "absl/log/absl_log.h"
@@ -24,7 +25,6 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "tensorflow/cc/saved_model/constants.h"
 #include "tensorflow/cc/saved_model/loader.h"
 #include "tensorflow/cc/saved_model/tag_constants.h"

@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include "mediapipe/framework/port/status.h"
+#include "absl/status/status.h"
 
 namespace mediapipe {
 namespace scale_image {

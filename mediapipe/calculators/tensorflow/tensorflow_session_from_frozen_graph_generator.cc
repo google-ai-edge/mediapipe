@@ -25,6 +25,7 @@
 #include <string>
 
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session_from_frozen_graph_generator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -32,7 +33,6 @@
 #include "mediapipe/framework/deps/monotonic_clock.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/status_util.h"
 #include "tensorflow/core/framework/graph.pb.h"
 #include "tensorflow/core/framework/node_def.pb.h"

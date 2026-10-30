@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
@@ -24,7 +25,6 @@
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/tool/options_util.h"
 #include "mediapipe/util/packet_test_util.h"

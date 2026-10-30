@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/status/status.h"
 #include "mediapipe/calculators/tensorflow/graph_tensors_packet_generator.pb.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_generator.pb.h"

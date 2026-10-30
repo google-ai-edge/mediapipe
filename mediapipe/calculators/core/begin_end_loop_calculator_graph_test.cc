@@ -20,6 +20,7 @@
 
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/types/span.h"
 #include "mediapipe/calculators/core/begin_loop_calculator.h"
 #include "mediapipe/calculators/core/end_loop_calculator.h"

@@ -1,5 +1,5 @@
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 namespace {
@@ -36,7 +36,7 @@ class ValueOrDefaultCalculator : public mediapipe::CalculatorBase {
   ValueOrDefaultCalculator(const ValueOrDefaultCalculator&) = delete;
   ValueOrDefaultCalculator& operator=(const ValueOrDefaultCalculator&) = delete;
 
-  static mediapipe::Status GetContract(mediapipe::CalculatorContract* cc) {
+  static absl::Status GetContract(mediapipe::CalculatorContract* cc) {
     cc->Inputs().Tag(kInputValueTag).SetAny();
     cc->Inputs().Tag(kTickerTag).SetAny();
     cc->Outputs().Tag(kOutputTag).SetSameAs(&cc->Inputs().Tag(kInputValueTag));
@@ -44,10 +44,10 @@ class ValueOrDefaultCalculator : public mediapipe::CalculatorBase {
     cc->InputSidePackets().Index(0).SetSameAs(
         &cc->Inputs().Tag(kInputValueTag));
 
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Open(mediapipe::CalculatorContext* cc) override {
+  absl::Status Open(mediapipe::CalculatorContext* cc) override {
     if (!cc->Inputs().Tag(kInputValueTag).Header().IsEmpty()) {
       cc->Outputs()
           .Tag(kOutputTag)
@@ -55,13 +55,13 @@ class ValueOrDefaultCalculator : public mediapipe::CalculatorBase {
     }
     default_ = cc->InputSidePackets().Index(0);
     cc->SetOffset(mediapipe::TimestampDiff(0));
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
-  mediapipe::Status Process(mediapipe::CalculatorContext* cc) override {
+  absl::Status Process(mediapipe::CalculatorContext* cc) override {
     // Output according to the TICK signal.
     if (cc->Inputs().Tag(kTickerTag).IsEmpty()) {
-      return mediapipe::OkStatus();
+      return absl::OkStatus();
     }
     if (!cc->Inputs().Tag(kInputValueTag).IsEmpty()) {
       // Output the input as is:
@@ -77,7 +77,7 @@ class ValueOrDefaultCalculator : public mediapipe::CalculatorBase {
           .Tag(kIndicationTag)
           .Add(new bool(true), cc->InputTimestamp());
     }
-    return mediapipe::OkStatus();
+    return absl::OkStatus();
   }
 
  private:

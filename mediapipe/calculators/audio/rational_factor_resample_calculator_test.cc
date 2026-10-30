@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "Eigen/Core"
+#include "absl/status/status.h"
 #include "audio/dsp/signal_vector_util.h"
 #include "mediapipe/calculators/audio/rational_factor_resample_calculator.pb.h"
 #include "mediapipe/framework//tool/validate_type.h"
@@ -30,7 +31,6 @@
 #include "mediapipe/framework/formats/time_series_header.pb.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/time_series_test_util.h"
 
 namespace mediapipe {

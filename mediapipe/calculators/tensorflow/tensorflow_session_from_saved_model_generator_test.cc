@@ -14,6 +14,7 @@
 
 #include <cstdint>
 
+#include "absl/status/status.h"
 #include "absl/strings/str_replace.h"
 #include "google/protobuf/text_format.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session.h"

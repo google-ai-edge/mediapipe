@@ -21,12 +21,12 @@
 #include "absl/log/absl_check.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "mediapipe/calculators/util/association_calculator.pb.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/port/rectangle.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/rectangle_util.h"
 
 namespace mediapipe {

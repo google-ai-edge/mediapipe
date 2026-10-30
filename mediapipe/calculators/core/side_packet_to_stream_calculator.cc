@@ -21,7 +21,6 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 

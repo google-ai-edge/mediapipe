@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_split.h"
 #include "mediapipe/calculators/video/opencv_video_encoder_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -30,7 +31,6 @@
 #include "mediapipe/framework/port/opencv_video_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/source_location.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/framework/tool/status_util.h"
 

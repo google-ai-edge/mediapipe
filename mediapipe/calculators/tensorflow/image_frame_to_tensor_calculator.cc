@@ -14,13 +14,13 @@
 
 #include <memory>
 
+#include "absl/status/status.h"
 #include "absl/status/status_macros.h"
 #include "mediapipe/calculators/tensorflow/image_frame_to_tensor_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/framework/types.h"

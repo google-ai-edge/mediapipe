@@ -15,6 +15,8 @@
 #include <memory>
 
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/util/annotation_overlay_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -27,7 +29,6 @@
 #include "mediapipe/framework/formats/video_stream_header.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/vector.h"
 #include "mediapipe/util/annotation_renderer.h"
 #include "mediapipe/util/color.pb.h"

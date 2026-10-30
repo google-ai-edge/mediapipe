@@ -16,6 +16,8 @@
 #include <string>
 
 #include "absl/log/absl_check.h"
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/strings/str_replace.h"
 #include "mediapipe/calculators/image/bilateral_filter_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -26,7 +28,6 @@
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/vector.h"
 
 #if !MEDIAPIPE_DISABLE_GPU

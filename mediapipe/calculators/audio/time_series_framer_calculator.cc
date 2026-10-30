@@ -19,6 +19,8 @@
 
 #include "Eigen/Core"
 #include "absl/log/absl_check.h"
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "audio/dsp/window_functions.h"
 #include "mediapipe/calculators/audio/time_series_framer_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"

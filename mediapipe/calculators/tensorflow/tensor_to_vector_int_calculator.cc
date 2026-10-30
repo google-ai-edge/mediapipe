@@ -18,9 +18,9 @@
 #include <cstdint>
 #include <memory>
 
+#include "absl/status/status.h"
 #include "mediapipe/calculators/tensorflow/tensor_to_vector_int_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/status.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/framework/types.h"
 

@@ -15,6 +15,8 @@
 #include <memory>
 
 #include "absl/algorithm/container.h"
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "mediapipe/calculators/util/visibility_smoothing_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"

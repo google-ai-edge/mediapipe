@@ -16,9 +16,9 @@
 #include <utility>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "mediapipe/calculators/core/flow_limiter_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/header_util.h"
 
 namespace mediapipe {

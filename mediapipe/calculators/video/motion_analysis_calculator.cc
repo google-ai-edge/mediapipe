@@ -19,6 +19,8 @@
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -29,7 +31,7 @@
 #include "mediapipe/framework/formats/video_stream_header.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/util/tracking/camera_motion.h"
 #include "mediapipe/util/tracking/camera_motion.pb.h"
 #include "mediapipe/util/tracking/frame_selection.pb.h"

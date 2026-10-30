@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "mediapipe/calculators/image/image_transformation_calculator.pb.h"
 #include "mediapipe/calculators/image/rotation_mode.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -23,7 +24,6 @@
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/gpu/scale_mode.pb.h"
 

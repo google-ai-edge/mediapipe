@@ -21,6 +21,7 @@
 
 #include "Eigen/Core"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"
@@ -57,7 +58,7 @@ MEDIAPIPE_REGISTER_NODE(MatrixToVectorCalculator);
 
 absl::Status MatrixToVectorCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(0);
-  return mediapipe::OkStatus();
+  return absl::OkStatus();
 }
 
 absl::Status MatrixToVectorCalculator::Process(CalculatorContext* cc) {

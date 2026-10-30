@@ -14,9 +14,9 @@
 
 #include <memory>
 
+#include "absl/status/status.h"
 #include "mediapipe/calculators/util/logic_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 using mediapipe::LogicCalculatorOptions;

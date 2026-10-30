@@ -19,6 +19,8 @@
 #include <memory>
 
 #include "Eigen/Core"
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/time_series_util.h"

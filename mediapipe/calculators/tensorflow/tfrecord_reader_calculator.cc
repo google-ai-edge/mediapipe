@@ -17,10 +17,10 @@
 #include <string>
 #include <utility>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "tensorflow/core/example/example.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/io/record_reader.h"

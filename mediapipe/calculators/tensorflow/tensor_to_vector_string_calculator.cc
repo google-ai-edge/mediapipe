@@ -16,10 +16,10 @@
 // vector<std::string> OR from (batched) two-dimensional Tensor of DT_STRING to
 // vector<vector<std::string>.
 
+#include "absl/status/status.h"
 #include "mediapipe/calculators/tensorflow/tensor_to_vector_string_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/framework/types.h"
 

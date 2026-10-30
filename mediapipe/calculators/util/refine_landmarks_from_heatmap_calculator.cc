@@ -14,6 +14,8 @@
 
 #include "mediapipe/calculators/util/refine_landmarks_from_heatmap_calculator.h"
 
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "mediapipe/calculators/util/refine_landmarks_from_heatmap_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 

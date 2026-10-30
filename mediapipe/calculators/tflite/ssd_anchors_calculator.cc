@@ -18,6 +18,8 @@
 
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "mediapipe/calculators/tflite/ssd_anchors_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/object_detection/anchor.pb.h"

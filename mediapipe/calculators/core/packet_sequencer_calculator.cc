@@ -15,12 +15,12 @@
 #include <algorithm>
 #include <memory>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/api2/contract.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 namespace api2 {

@@ -23,7 +23,6 @@
 #include "mediapipe/calculators/core/split_vector_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/resource_util.h"
 #include "tflite/error_reporter.h"
 #include "tflite/interpreter.h"

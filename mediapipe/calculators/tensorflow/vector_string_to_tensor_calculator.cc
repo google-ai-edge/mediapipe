@@ -16,10 +16,10 @@
 // tf::Tensor.
 
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "mediapipe/calculators/tensorflow/vector_string_to_tensor_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/framework/types.h"
 

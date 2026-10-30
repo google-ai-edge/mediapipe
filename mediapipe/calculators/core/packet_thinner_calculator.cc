@@ -19,12 +19,12 @@
 #include <memory>
 
 #include "absl/log/absl_check.h"
+#include "absl/status/status.h"
 #include "mediapipe/calculators/core/packet_thinner_calculator.pb.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/video_stream_header.h"
 #include "mediapipe/framework/port/logging.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/options_util.h"
 
 namespace mediapipe {

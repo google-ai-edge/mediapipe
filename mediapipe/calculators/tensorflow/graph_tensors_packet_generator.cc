@@ -20,10 +20,10 @@
 #include <map>
 #include <string>
 
+#include "absl/status/status.h"
 #include "mediapipe/calculators/tensorflow/graph_tensors_packet_generator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/status_util.h"
 #include "tensorflow/core/framework/tensor.h"
 

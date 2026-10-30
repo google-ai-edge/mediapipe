@@ -26,7 +26,6 @@
 #include "mediapipe/framework/formats/matrix_data.pb.h"
 #include "mediapipe/framework/formats/time_series_header.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 

@@ -13,10 +13,10 @@
 // limitations under the License.
 
 #include "absl/log/absl_log.h"
+#include "absl/status/status.h"
 #include "mediapipe/calculators/tensorflow/tensor_squeeze_dimensions_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "tensorflow/core/framework/tensor.h"
 
 namespace mediapipe {

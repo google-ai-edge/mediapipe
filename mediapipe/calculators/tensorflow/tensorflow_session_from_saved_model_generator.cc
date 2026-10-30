@@ -27,7 +27,6 @@
 #include "mediapipe/framework/packet_generator.h"
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/status_util.h"
 #include "tensorflow/cc/saved_model/constants.h"
 #include "tensorflow/cc/saved_model/loader.h"

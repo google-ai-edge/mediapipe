@@ -18,7 +18,6 @@
 #include "mediapipe/calculators/util/packet_frequency_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_options.pb.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/timestamp.h"
 
 namespace {

@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/synchronization/blocking_counter.h"
 #include "mediapipe/calculators/image/feature_detector_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -28,7 +29,6 @@
 #include "mediapipe/framework/port/opencv_features2d_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/threadpool.h"
 #include "mediapipe/framework/tool/options_util.h"
 #include "tflite/interpreter.h"

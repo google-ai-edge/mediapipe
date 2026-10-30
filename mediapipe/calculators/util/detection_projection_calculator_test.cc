@@ -16,6 +16,8 @@
 #include <cmath>
 #include <vector>
 
+#include "absl/status/status.h"
+#include "absl/status/status_macros.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"

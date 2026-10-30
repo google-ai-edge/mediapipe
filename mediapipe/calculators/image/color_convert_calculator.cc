@@ -15,6 +15,7 @@
 #include <cstdint>
 
 #include "absl/log/absl_check.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"

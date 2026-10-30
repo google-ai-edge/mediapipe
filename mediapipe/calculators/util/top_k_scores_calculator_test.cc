@@ -14,11 +14,11 @@
 
 #include <vector>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {

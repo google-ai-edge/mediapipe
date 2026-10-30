@@ -21,7 +21,6 @@
 #include "mediapipe/calculators/core/quantize_float_vector_calculator.pb.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/status.h"
 
 // Quantizes a vector of floats to a string so that each float becomes a byte
 // in the [0, 255] range. Any value above max_quantized_value or below
