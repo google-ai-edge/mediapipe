@@ -18,6 +18,7 @@ import ctypes
 import dataclasses
 import enum
 import os
+from typing import Optional, Union
 
 import numpy as np
 
@@ -191,8 +192,8 @@ class AudioTranscriberOptions:
   sample_rate_hz: int = 16000
   enable_interim_results: bool = False
   model_architecture: ModelArchitecture = ModelArchitecture.AUTO
-  prompt: str | None = None
-  cache_dir: str | None = None
+  prompt: Optional[str] = None
+  cache_dir: Optional[str] = None
 
 
 class AudioTranscriber:
@@ -260,7 +261,7 @@ class AudioTranscriber:
 
   def transcribe(
       self,
-      audio_samples: Sequence[float] | np.ndarray,
+      audio_samples: Union[Sequence[float], np.ndarray],
       end_of_stream: bool = True,
   ) -> AudioTranscriberResult:
     """Transcribes mono PCM float32 audio samples in `[-1.0, 1.0]`.

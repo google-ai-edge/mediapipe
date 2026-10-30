@@ -17,6 +17,7 @@ from typing import Iterator
 import ctypes
 import dataclasses
 import os
+from typing import Optional
 
 import numpy as np
 
@@ -291,7 +292,7 @@ def compute_word_timestamps(
     num_samples: int,
     sample_rate_hz: int,
     time_offset_sec: float = 0.0,
-    samples: np.ndarray | None = None,
+    samples: Optional[np.ndarray] = None,
 ) -> tuple[WordTimestamp, ...]:
   """Computes prosody- and waveform-aligned word timestamps via the C API."""
   if not text or num_samples <= 0 or sample_rate_hz <= 0:
@@ -370,7 +371,7 @@ class TextToSpeechOptions:
   default_locale: str = 'en-US'
   speaking_rate: float = 1.0
   target_bucket: int = 0
-  cache_directory: str | None = None
+  cache_directory: Optional[str] = None
 
 
 class TextToSpeech:
@@ -479,8 +480,8 @@ class TextToSpeech:
   def synthesize(
       self,
       text: str,
-      voice_id: str | None = None,
-      locale: str | None = None,
+      voice_id: Optional[str] = None,
+      locale: Optional[str] = None,
   ) -> TtsAudioResult:
     """Synthesizes `text` synchronously and returns mono float32 PCM audio.
 
@@ -513,8 +514,8 @@ class TextToSpeech:
   def start_stream(
       self,
       initial_text: str = '',
-      voice_id: str | None = None,
-      locale: str | None = None,
+      voice_id: Optional[str] = None,
+      locale: Optional[str] = None,
       finish_input: bool = False,
   ) -> 'TtsStream':
     """Starts an incremental or single-utterance streaming synthesis session.
@@ -550,8 +551,8 @@ class TextToSpeech:
   def synthesize_stream(
       self,
       text: str,
-      voice_id: str | None = None,
-      locale: str | None = None,
+      voice_id: Optional[str] = None,
+      locale: Optional[str] = None,
   ) -> Iterator[TtsAudioResult]:
     """Streams synthesized audio chunk-by-chunk.
 
