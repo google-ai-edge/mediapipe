@@ -17,8 +17,8 @@
 #include <array>
 #include <utility>
 
-#include "Eigen/Core"
-#include "Eigen/Geometry"  // IWYU pragma: keep(for computeInverseWithCheck)
+#include "Eigen/Core"  // from @eigen
+#include "Eigen/Geometry"  // from @eigen  // IWYU pragma: keep(for computeInverseWithCheck)
 #include "absl/status/status.h"
 #include "mediapipe/framework/api3/calculator.h"
 #include "mediapipe/framework/api3/calculator_context.h"

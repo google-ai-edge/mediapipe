@@ -18,8 +18,8 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/tflite/tflite_signature_reader.h"
 #include "mediapipe/util/tflite/utils.h"
-#include "tflite/c/common.h"
-#include "tflite/interpreter.h"
+#include "tflite/c/common.h"     // from @litert
+#include "tflite/interpreter.h"  // from @litert
 
 namespace mediapipe {
 

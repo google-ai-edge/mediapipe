@@ -41,12 +41,12 @@
 #include "mediapipe/gpu/gpu_origin.pb.h"
 #include "mediapipe/gpu/gpu_origin_utils.h"
 #include "mediapipe/gpu/shader_util.h"
-#include "tflite/delegates/gpu/common/data_type.h"
-#include "tflite/delegates/gpu/common/types.h"
-#include "tflite/delegates/gpu/gl/converters/util.h"
-#include "tflite/delegates/gpu/gl/gl_program.h"
-#include "tflite/delegates/gpu/gl/gl_shader.h"
-#include "tflite/delegates/gpu/gl/gl_texture.h"
+#include "tflite/delegates/gpu/common/data_type.h"    // from @litert
+#include "tflite/delegates/gpu/common/types.h"        // from @litert
+#include "tflite/delegates/gpu/gl/converters/util.h"  // from @litert
+#include "tflite/delegates/gpu/gl/gl_program.h"       // from @litert
+#include "tflite/delegates/gpu/gl/gl_shader.h"        // from @litert
+#include "tflite/delegates/gpu/gl/gl_texture.h"       // from @litert
 
 namespace mediapipe {
 namespace {

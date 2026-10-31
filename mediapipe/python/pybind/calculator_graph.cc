@@ -30,9 +30,9 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/tool/calculator_graph_template.pb.h"
 #include "mediapipe/python/pybind/util.h"
-#include "pybind11/embed.h"
-#include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
+#include "pybind11/embed.h"     // from @pybind11
+#include "pybind11/pybind11.h"  // from @pybind11
+#include "pybind11/stl.h"       // from @pybind11
 
 namespace mediapipe {
 namespace python {

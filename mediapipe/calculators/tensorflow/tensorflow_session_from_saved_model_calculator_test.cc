@@ -30,7 +30,7 @@
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/tool/tag_map_helper.h"
 #include "mediapipe/framework/tool/validate_type.h"
-#include "tensorflow/core/framework/device_attributes.pb.h"
+#include "tensorflow/core/framework/device_attributes.pb.h"  // from @org_tensorflow
 #include "testing/base/public/gunit.h"
 
 namespace mediapipe {

@@ -23,8 +23,8 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/status_matchers.h"
-#include "tensorflow/core/example/example.pb.h"
-#include "tensorflow/core/example/feature.pb.h"
+#include "tensorflow/core/example/example.pb.h"  // from @org_tensorflow
+#include "tensorflow/core/example/feature.pb.h"  // from @org_tensorflow
 
 namespace mediapipe {
 namespace mediasequence {

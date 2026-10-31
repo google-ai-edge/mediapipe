@@ -37,8 +37,8 @@
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/framework/tool/sink.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
-#include "tflite/interpreter.h"
-#include "tflite/kernels/register.h"
+#include "tflite/interpreter.h"       // from @litert
+#include "tflite/kernels/register.h"  // from @litert
 
 namespace mediapipe {
 namespace api2 {

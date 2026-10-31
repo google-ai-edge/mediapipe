@@ -15,8 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/metadata/metadata_version.h"
 
-#include "pybind11/pybind11.h"
-#include "tflite/c/common.h"
+#include "pybind11/pybind11.h"  // from @pybind11
+#include "tflite/c/common.h"    // from @litert
 
 namespace mediapipe {
 namespace tasks {

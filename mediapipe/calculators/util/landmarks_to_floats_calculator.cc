@@ -29,7 +29,7 @@
 #include <cmath>
 #include <vector>
 
-#include "Eigen/Core"
+#include "Eigen/Core"  // from @eigen
 #include "mediapipe/calculators/util/landmarks_to_floats_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"

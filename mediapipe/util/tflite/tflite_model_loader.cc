@@ -26,7 +26,7 @@
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/resources.h"
-#include "tflite/model_builder.h"
+#include "tflite/model_builder.h"  // from @litert
 
 namespace mediapipe {
 

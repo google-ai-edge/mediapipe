@@ -25,8 +25,8 @@ limitations under the License.
 #include "absl/strings/string_view.h"
 #include "mediapipe/tasks/cc/text/tokenizers/tokenizer.h"
 #include "mediapipe/tasks/cc/text/utils/vocab_utils.h"
-#include "re2/re2.h"
-#include "tensorflow_text/core/kernels/wordpiece_tokenizer.h"
+#include "re2/re2.h"  // from @com_googlesource_code_re2
+#include "tensorflow_text/core/kernels/wordpiece_tokenizer.h"  // from @org_tensorflow_text
 
 namespace mediapipe {
 namespace tasks {

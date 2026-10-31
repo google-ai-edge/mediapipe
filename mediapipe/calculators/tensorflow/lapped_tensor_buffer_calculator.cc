@@ -22,11 +22,11 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/profiler/circular_buffer.h"
-#include "tensorflow/core/framework/tensor.h"
-#include "tensorflow/core/framework/tensor_shape.h"
-#include "tensorflow/core/framework/tensor_util.h"
-#include "tensorflow/core/framework/types.h"
-#include "tensorflow/core/lib/core/status.h"
+#include "tensorflow/core/framework/tensor.h"        // from @org_tensorflow
+#include "tensorflow/core/framework/tensor_shape.h"  // from @org_tensorflow
+#include "tensorflow/core/framework/tensor_util.h"   // from @org_tensorflow
+#include "tensorflow/core/framework/types.h"         // from @org_tensorflow
+#include "tensorflow/core/lib/core/status.h"         // from @org_tensorflow
 
 namespace mediapipe {
 

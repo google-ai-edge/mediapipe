@@ -18,8 +18,8 @@
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/util/resource_util.h"
-#include "nlohmann/json.hpp"  // from @com_github_nlohmann_json
-#include "nlohmann/json_fwd.hpp"
+#include "nlohmann/json.hpp"            // from @com_github_nlohmann_json
+#include "nlohmann/json_fwd.hpp"        // from @com_github_nlohmann_json
 #include "sentencepiece/src/builder.h"  // from @com_google_sentencepiece
 #include "sentencepiece/src/sentencepiece_model.pb.h"  // from @com_google_sentencepiece
 

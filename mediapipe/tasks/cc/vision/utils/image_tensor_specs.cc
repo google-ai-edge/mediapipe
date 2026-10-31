@@ -28,10 +28,10 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/types/optional.h"
-#include "flatbuffers/flatbuffers.h"
+#include "flatbuffers/flatbuffers.h"  // from @flatbuffers
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
-#include "tflite/schema/schema_generated.h"
+#include "tflite/schema/schema_generated.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

@@ -25,13 +25,13 @@ limitations under the License.
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
-#include "flatbuffers/flatbuffers.h"
+#include "flatbuffers/flatbuffers.h"  // from @flatbuffers
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/metadata/metadata_parser.h"
 #include "mediapipe/tasks/cc/metadata/metadata_version_utils.h"
 #include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
-#include "tflite/schema/schema_generated.h"
+#include "tflite/schema/schema_generated.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

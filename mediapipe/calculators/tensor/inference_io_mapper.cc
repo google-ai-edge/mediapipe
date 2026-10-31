@@ -31,12 +31,12 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/tflite/tflite_signature_reader.h"
-#include "tflite/c/c_api_types.h"
-#include "tflite/core/api/op_resolver.h"
-#include "tflite/interpreter.h"
-#include "tflite/interpreter_builder.h"
-#include "tflite/kernels/register.h"
-#include "tflite/model_builder.h"
+#include "tflite/c/c_api_types.h"         // from @litert
+#include "tflite/core/api/op_resolver.h"  // from @litert
+#include "tflite/interpreter.h"           // from @litert
+#include "tflite/interpreter_builder.h"   // from @litert
+#include "tflite/kernels/register.h"      // from @litert
+#include "tflite/model_builder.h"         // from @litert
 
 namespace mediapipe {
 

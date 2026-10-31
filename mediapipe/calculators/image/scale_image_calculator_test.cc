@@ -7,7 +7,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/types/span.h"
-#include "libyuv/video_common.h"
+#include "libyuv/video_common.h"  // from @libyuv
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/yuv_image.h"

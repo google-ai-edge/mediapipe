@@ -32,10 +32,10 @@
 #include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port.h"  // NOLINT: provides MEDIAPIPE_ANDROID/IOS
 #include "mediapipe/framework/port/ret_check.h"
-#include "tflite/c/common.h"
-#include "tflite/interpreter.h"
-#include "tflite/portable_type_to_tflitetype.h"
-#include "tflite/string_util.h"
+#include "tflite/c/common.h"                     // from @litert
+#include "tflite/interpreter.h"                  // from @litert
+#include "tflite/portable_type_to_tflitetype.h"  // from @litert
+#include "tflite/string_util.h"                  // from @litert
 
 ABSL_FLAG(int, xnnpack_default_num_threads, 0,
           "Default number of xnnpack threads to use. If unset, determines a "

@@ -24,7 +24,7 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "flatbuffers/flatbuffers.h"
+#include "flatbuffers/flatbuffers.h"  // from @flatbuffers
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/text/tokenizers/bert_tokenizer.h"
 #include "mediapipe/tasks/cc/text/tokenizers/sentencepiece_tokenizer.h"

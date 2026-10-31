@@ -30,12 +30,12 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "mediapipe/util/tflite/error_reporter.h"
-#include "tflite/core/api/error_reporter.h"
-#include "tflite/core/api/op_resolver.h"
-#include "tflite/kernels/register.h"
-#include "tflite/model.h"
-#include "tflite/model_builder.h"
-#include "tflite/tools/verifier.h"
+#include "tflite/core/api/error_reporter.h"  // from @litert
+#include "tflite/core/api/op_resolver.h"     // from @litert
+#include "tflite/kernels/register.h"         // from @litert
+#include "tflite/model.h"                    // from @litert
+#include "tflite/model_builder.h"            // from @litert
+#include "tflite/tools/verifier.h"           // from @litert
 
 namespace mediapipe {
 namespace tasks {

@@ -17,7 +17,7 @@
 #include <memory>
 #include <utility>
 
-#include "Eigen/Core"
+#include "Eigen/Core"  // from @eigen
 #include "absl/status/status.h"
 #include "absl/status/status_macros.h"
 #include "audio/linear_filters/two_tap_fir_filter.h"

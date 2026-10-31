@@ -25,7 +25,7 @@ limitations under the License.
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/types/span.h"
-#include "libyuv/video_common.h"
+#include "libyuv/video_common.h"  // from @libyuv
 #include "mediapipe/framework/formats/frame_buffer.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/yuv_image.h"

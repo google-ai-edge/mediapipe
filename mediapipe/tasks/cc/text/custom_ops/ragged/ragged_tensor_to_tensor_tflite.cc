@@ -18,16 +18,16 @@ limitations under the License.
 #include <cstdint>
 #include <memory>
 
-#include "flatbuffers/flexbuffers.h"
-#include "tensorflow/core/util/ragged_to_dense_util_common.h"
-#include "tflite/c/common.h"
-#include "tflite/context.h"
-#include "tflite/kernels/internal/runtime_shape.h"
-#include "tflite/kernels/internal/tensor.h"
-#include "tflite/kernels/internal/tensor_ctypes.h"
-#include "tflite/kernels/internal/types.h"
-#include "tflite/kernels/kernel_util.h"
-#include "tflite/model.h"
+#include "flatbuffers/flexbuffers.h"  // from @flatbuffers
+#include "tensorflow/core/util/ragged_to_dense_util_common.h"  // from @org_tensorflow
+#include "tflite/c/common.h"                                   // from @litert
+#include "tflite/context.h"                                    // from @litert
+#include "tflite/kernels/internal/runtime_shape.h"             // from @litert
+#include "tflite/kernels/internal/tensor.h"                    // from @litert
+#include "tflite/kernels/internal/tensor_ctypes.h"             // from @litert
+#include "tflite/kernels/internal/types.h"                     // from @litert
+#include "tflite/kernels/kernel_util.h"                        // from @litert
+#include "tflite/model.h"                                      // from @litert
 
 namespace mediapipe::tflite_operations {
 namespace ragged::ragged_tensor_to_tensor {

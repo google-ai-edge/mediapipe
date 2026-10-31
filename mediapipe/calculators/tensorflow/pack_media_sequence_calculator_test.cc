@@ -34,8 +34,8 @@
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/util/sequence/media_sequence.h"
 #include "mediapipe/util/sequence/media_sequence_util.h"
-#include "tensorflow/core/example/example.pb.h"
-#include "tensorflow/core/example/feature.pb.h"
+#include "tensorflow/core/example/example.pb.h"  // from @org_tensorflow
+#include "tensorflow/core/example/feature.pb.h"  // from @org_tensorflow
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 

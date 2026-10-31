@@ -20,9 +20,9 @@
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/util/packet_test_util.h"
-#include "tensorflow/core/framework/tensor.h"
-#include "tensorflow/core/framework/types.pb.h"
-#include "tensorflow/core/platform/bfloat16.h"
+#include "tensorflow/core/framework/tensor.h"    // from @org_tensorflow
+#include "tensorflow/core/framework/types.pb.h"  // from @org_tensorflow
+#include "tensorflow/core/platform/bfloat16.h"   // from @org_tensorflow
 
 namespace mediapipe {
 

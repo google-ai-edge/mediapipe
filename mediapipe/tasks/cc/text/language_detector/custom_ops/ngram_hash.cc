@@ -19,11 +19,11 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "flatbuffers/flexbuffers.h"
+#include "flatbuffers/flexbuffers.h"  // from @flatbuffers
 #include "mediapipe/tasks/cc/text/language_detector/custom_ops/utils/hash/murmur.h"
 #include "mediapipe/tasks/cc/text/language_detector/custom_ops/utils/ngram_hash_ops_utils.h"
-#include "tflite/kernels/kernel_util.h"
-#include "tflite/string_util.h"
+#include "tflite/kernels/kernel_util.h"  // from @litert
+#include "tflite/string_util.h"          // from @litert
 
 namespace mediapipe::tflite_operations {
 

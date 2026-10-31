@@ -24,11 +24,11 @@ limitations under the License.
 
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
-#include "flatbuffers/flatbuffers.h"
+#include "flatbuffers/flatbuffers.h"  // from @flatbuffers
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
-#include "tflite/c/common.h"
-#include "tflite/kernels/internal/compatibility.h"
-#include "tflite/tools/logging.h"
+#include "tflite/c/common.h"                        // from @litert
+#include "tflite/kernels/internal/compatibility.h"  // from @litert
+#include "tflite/tools/logging.h"                   // from @litert
 
 namespace mediapipe {
 namespace tasks {

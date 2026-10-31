@@ -18,7 +18,7 @@
 #include <functional>
 #include <memory>
 
-#include "tflite/c/c_api_types.h"
+#include "tflite/c/c_api_types.h"  // from @litert
 
 namespace mediapipe {
 

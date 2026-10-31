@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-#include "Eigen/Core"
+#include "Eigen/Core"  // from @eigen
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/status_macros.h"

@@ -26,7 +26,7 @@
 #include "mediapipe/framework/formats/location_opencv.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "tensorflow/core/framework/tensor.h"
+#include "tensorflow/core/framework/tensor.h"  // from @org_tensorflow
 
 namespace mediapipe {
 

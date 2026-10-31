@@ -41,10 +41,10 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"  // NOLINT
 #include "mediapipe/framework/tool/validate_type.h"
-#include "tflite/error_reporter.h"
-#include "tflite/kernels/register.h"
-#include "tflite/model.h"
-#include "tflite/util.h"
+#include "tflite/error_reporter.h"    // from @litert
+#include "tflite/kernels/register.h"  // from @litert
+#include "tflite/model.h"             // from @litert
+#include "tflite/util.h"              // from @litert
 
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>

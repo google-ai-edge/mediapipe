@@ -28,7 +28,7 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/util/render_data.pb.h"
-#include "tflite/interpreter.h"
+#include "tflite/interpreter.h"  // from @litert
 
 namespace mediapipe {
 

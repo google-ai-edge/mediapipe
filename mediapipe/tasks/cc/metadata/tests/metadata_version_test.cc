@@ -16,7 +16,7 @@ limitations under the License.
 
 #include <vector>
 
-#include "flatbuffers/flatbuffers.h"
+#include "flatbuffers/flatbuffers.h"  // from @flatbuffers
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"

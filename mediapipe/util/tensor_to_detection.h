@@ -20,7 +20,7 @@
 #include "absl/status/status.h"
 #include "absl/types/variant.h"
 #include "mediapipe/framework/formats/detection.pb.h"
-#include "tensorflow/core/framework/tensor.h"
+#include "tensorflow/core/framework/tensor.h"  // from @org_tensorflow
 
 namespace mediapipe {
 

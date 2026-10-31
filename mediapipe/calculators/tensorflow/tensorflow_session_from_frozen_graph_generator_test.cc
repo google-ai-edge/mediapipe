@@ -30,8 +30,8 @@
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/tool/tag_map_helper.h"
 #include "mediapipe/framework/tool/validate_type.h"
-#include "tensorflow/core/framework/tensor.h"
-#include "tensorflow/core/protobuf/config.pb.h"
+#include "tensorflow/core/framework/tensor.h"    // from @org_tensorflow
+#include "tensorflow/core/protobuf/config.pb.h"  // from @org_tensorflow
 #include "testing/base/public/gunit.h"
 
 namespace mediapipe {

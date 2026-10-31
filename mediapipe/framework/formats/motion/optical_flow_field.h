@@ -24,7 +24,7 @@
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/motion/optical_flow_field_data.pb.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
-#include "tensorflow/core/framework/tensor.h"
+#include "tensorflow/core/framework/tensor.h"  // from @org_tensorflow
 
 namespace mediapipe {
 

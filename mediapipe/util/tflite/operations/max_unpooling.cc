@@ -14,9 +14,9 @@
 
 #include "mediapipe/util/tflite/operations/max_unpooling.h"
 
-#include "tflite/kernels/internal/common.h"
-#include "tflite/kernels/internal/tensor.h"
-#include "tflite/kernels/padding.h"
+#include "tflite/kernels/internal/common.h"  // from @litert
+#include "tflite/kernels/internal/tensor.h"  // from @litert
+#include "tflite/kernels/padding.h"          // from @litert
 
 namespace mediapipe {
 namespace tflite_operations {

@@ -34,15 +34,15 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
-#include "tflite/delegates/gpu/common/shape.h"
-#include "tflite/delegates/gpu/common/types.h"
-#include "tflite/delegates/gpu/gl/command_queue.h"
-#include "tflite/delegates/gpu/gl/converters/util.h"
-#include "tflite/delegates/gpu/gl/gl_buffer.h"
-#include "tflite/delegates/gpu/gl/gl_call.h"
-#include "tflite/delegates/gpu/gl/gl_texture.h"
-#include "tflite/delegates/gpu/gl/request_gpu_info.h"
-#include "tflite/delegates/gpu/gl/variable.h"
+#include "tflite/delegates/gpu/common/shape.h"         // from @litert
+#include "tflite/delegates/gpu/common/types.h"         // from @litert
+#include "tflite/delegates/gpu/gl/command_queue.h"     // from @litert
+#include "tflite/delegates/gpu/gl/converters/util.h"   // from @litert
+#include "tflite/delegates/gpu/gl/gl_buffer.h"         // from @litert
+#include "tflite/delegates/gpu/gl/gl_call.h"           // from @litert
+#include "tflite/delegates/gpu/gl/gl_texture.h"        // from @litert
+#include "tflite/delegates/gpu/gl/request_gpu_info.h"  // from @litert
+#include "tflite/delegates/gpu/gl/variable.h"          // from @litert
 
 namespace mediapipe {
 

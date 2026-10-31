@@ -22,16 +22,16 @@ limitations under the License.
 
 #include "absl/log/absl_check.h"
 #include "absl/types/optional.h"
-#include "flatbuffers/flexbuffers.h"
+#include "flatbuffers/flexbuffers.h"  // from @flatbuffers
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/cc/text/language_detector/custom_ops/utils/hash/murmur.h"
-#include "tflite/c/common.h"
-#include "tflite/interpreter.h"
-#include "tflite/kernels/register.h"
-#include "tflite/kernels/test_util.h"
-#include "tflite/model.h"
-#include "tflite/string_util.h"
+#include "tflite/c/common.h"           // from @litert
+#include "tflite/interpreter.h"        // from @litert
+#include "tflite/kernels/register.h"   // from @litert
+#include "tflite/kernels/test_util.h"  // from @litert
+#include "tflite/model.h"              // from @litert
+#include "tflite/string_util.h"        // from @litert
 
 namespace mediapipe::tflite_operations {
 namespace {

@@ -15,7 +15,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "tflite/interpreter.h"
+#include "tflite/interpreter.h"  // from @litert
 
 namespace mediapipe {
 

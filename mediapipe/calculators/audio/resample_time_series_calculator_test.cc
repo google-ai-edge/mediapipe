@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "Eigen/Core"
+#include "Eigen/Core"  // from @eigen
 #include "absl/status/status.h"
 #include "absl/types/span.h"
 #include "audio/dsp/resampler_q.h"

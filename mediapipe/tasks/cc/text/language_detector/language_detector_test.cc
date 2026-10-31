@@ -32,7 +32,7 @@ limitations under the License.
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "tflite/test_util.h"
+#include "tflite/test_util.h"  // from @litert
 
 namespace mediapipe::tasks::text::language_detector {
 namespace {

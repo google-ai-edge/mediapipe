@@ -18,7 +18,7 @@ limitations under the License.
 
 #include <memory>
 
-#include "tflite/mutable_op_resolver.h"
+#include "tflite/mutable_op_resolver.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

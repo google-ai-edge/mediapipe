@@ -15,9 +15,9 @@
 #include "mediapipe/python/pybind/matrix.h"
 
 #include "mediapipe/framework/formats/matrix.h"
-#include "pybind11/eigen.h"
-#include "pybind11/numpy.h"
-#include "pybind11/pybind11.h"
+#include "pybind11/eigen.h"     // from @pybind11
+#include "pybind11/numpy.h"     // from @pybind11
+#include "pybind11/pybind11.h"  // from @pybind11
 
 namespace mediapipe {
 namespace python {

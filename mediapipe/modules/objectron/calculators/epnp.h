@@ -17,7 +17,7 @@
 
 #include <vector>
 
-#include "Eigen/Dense"
+#include "Eigen/Dense"  // from @eigen
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/port/logging.h"

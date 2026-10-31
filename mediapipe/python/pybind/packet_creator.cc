@@ -31,9 +31,9 @@
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/python/pybind/image_frame_util.h"
 #include "mediapipe/python/pybind/util.h"
-#include "pybind11/eigen.h"
-#include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
+#include "pybind11/eigen.h"     // from @pybind11
+#include "pybind11/pybind11.h"  // from @pybind11
+#include "pybind11/stl.h"       // from @pybind11
 
 namespace mediapipe {
 namespace python {

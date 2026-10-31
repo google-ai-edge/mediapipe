@@ -19,7 +19,7 @@
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph_service_jni.h"
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/model_resources_cache.h"
-#include "tflite/kernels/register.h"
+#include "tflite/kernels/register.h"  // from @litert
 
 namespace {
 using ::mediapipe::tasks::core::kModelResourcesCacheService;

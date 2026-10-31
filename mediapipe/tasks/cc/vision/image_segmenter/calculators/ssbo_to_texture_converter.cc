@@ -2,8 +2,8 @@
 
 #include "absl/status/status.h"
 #include "absl/status/status_macros.h"
-#include "tflite/delegates/gpu/gl/converters/util.h"
-#include "tflite/delegates/gpu/gl/gl_shader.h"
+#include "tflite/delegates/gpu/gl/converters/util.h"  // from @litert
+#include "tflite/delegates/gpu/gl/gl_shader.h"        // from @litert
 
 // Quick compile-time warning to ensure usage on the proper platform.
 #if !(MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31)

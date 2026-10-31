@@ -26,7 +26,7 @@ limitations under the License.
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "nlohmann/json.hpp"
+#include "nlohmann/json.hpp"  // from @com_github_nlohmann_json
 
 namespace mediapipe::tasks::text::utils {
 

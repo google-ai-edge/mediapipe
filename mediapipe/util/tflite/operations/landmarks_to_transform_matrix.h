@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_UTIL_TFLITE_OPERATIONS_LANDMARKS_TO_TRANSFORM_MATRIX_H_
 #define MEDIAPIPE_UTIL_TFLITE_OPERATIONS_LANDMARKS_TO_TRANSFORM_MATRIX_H_
 
-#include "tflite/kernels/kernel_util.h"
+#include "tflite/kernels/kernel_util.h"  // from @litert
 
 namespace mediapipe {
 namespace tflite_operations {

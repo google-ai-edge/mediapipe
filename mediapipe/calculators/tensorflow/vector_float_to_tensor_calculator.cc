@@ -23,9 +23,9 @@
 #include "mediapipe/calculators/tensorflow/vector_float_to_tensor_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "tensorflow/core/framework/tensor.h"
-#include "tensorflow/core/framework/tensor_shape.h"
-#include "tensorflow/core/framework/types.pb.h"
+#include "tensorflow/core/framework/tensor.h"        // from @org_tensorflow
+#include "tensorflow/core/framework/tensor_shape.h"  // from @org_tensorflow
+#include "tensorflow/core/framework/types.pb.h"      // from @org_tensorflow
 
 namespace mediapipe {
 

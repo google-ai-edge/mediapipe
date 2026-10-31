@@ -25,7 +25,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_TEXT_LANGUAGE_DETECTOR_CUSTOM_OPS_KMEANS_EMBEDDING_LOOKUP_H_
 #define MEDIAPIPE_TASKS_CC_TEXT_LANGUAGE_DETECTOR_CUSTOM_OPS_KMEANS_EMBEDDING_LOOKUP_H_
 
-#include "tflite/kernels/register.h"
+#include "tflite/kernels/register.h"  // from @litert
 
 namespace mediapipe::tflite_operations {
 

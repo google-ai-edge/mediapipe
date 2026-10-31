@@ -23,7 +23,7 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
-#include "tflite/interpreter.h"
+#include "tflite/interpreter.h"  // from @litert
 
 namespace mediapipe {
 

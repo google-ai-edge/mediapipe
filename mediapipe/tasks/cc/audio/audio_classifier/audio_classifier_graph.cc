@@ -22,7 +22,7 @@ limitations under the License.
 #include "absl/status/status_macros.h"
 #include "absl/status/statusor.h"
 #include "absl/types/optional.h"
-#include "flatbuffers/flatbuffers.h"
+#include "flatbuffers/flatbuffers.h"  // from @flatbuffers
 #include "mediapipe/calculators/core/constant_side_packet_calculator.pb.h"
 #include "mediapipe/calculators/tensor/audio_to_tensor_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
@@ -41,7 +41,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
-#include "tflite/schema/schema_generated.h"
+#include "tflite/schema/schema_generated.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

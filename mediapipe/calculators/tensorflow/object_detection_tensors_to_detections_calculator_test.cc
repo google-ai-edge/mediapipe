@@ -23,8 +23,8 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
-#include "tensorflow/core/framework/tensor.h"
-#include "tensorflow/core/framework/tensor_testutil.h"
+#include "tensorflow/core/framework/tensor.h"           // from @org_tensorflow
+#include "tensorflow/core/framework/tensor_testutil.h"  // from @org_tensorflow
 
 namespace mediapipe {
 

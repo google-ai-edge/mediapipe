@@ -27,7 +27,7 @@
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/resource_util.h"
-#include "tflite/interpreter.h"
+#include "tflite/interpreter.h"  // from @litert
 #if defined(MEDIAPIPE_MOBILE)
 #include "mediapipe/util/android/file/base/file.h"
 #include "mediapipe/util/android/file/base/helpers.h"

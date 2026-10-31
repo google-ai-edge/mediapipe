@@ -17,9 +17,9 @@
 #include <memory>
 #include <optional>
 
-#include "Eigen/Core"
-#include "Eigen/Geometry"
-#include "Eigen/LU"
+#include "Eigen/Core"      // from @eigen
+#include "Eigen/Geometry"  // from @eigen
+#include "Eigen/LU"        // from @eigen
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"

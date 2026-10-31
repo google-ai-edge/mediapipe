@@ -21,11 +21,11 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "tensorflow/core/example/example.pb.h"
-#include "tensorflow/core/lib/core/status.h"
-#include "tensorflow/core/lib/io/record_reader.h"
-#include "tensorflow/core/platform/env.h"
-#include "tensorflow/core/platform/file_system.h"
+#include "tensorflow/core/example/example.pb.h"    // from @org_tensorflow
+#include "tensorflow/core/lib/core/status.h"       // from @org_tensorflow
+#include "tensorflow/core/lib/io/record_reader.h"  // from @org_tensorflow
+#include "tensorflow/core/platform/env.h"          // from @org_tensorflow
+#include "tensorflow/core/platform/file_system.h"  // from @org_tensorflow
 
 namespace mediapipe {
 

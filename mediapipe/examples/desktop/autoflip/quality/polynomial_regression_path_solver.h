@@ -16,7 +16,7 @@
 #define MEDIAPIPE_EXAMPLES_DESKTOP_AUTOFLIP_QUALITY_POLYNOMIAL_REGRESSION_PATH_SOLVER_H_
 
 #include "absl/status/status.h"
-#include "ceres/problem.h"
+#include "ceres/problem.h"  // from @ceres_solver
 #include "mediapipe/examples/desktop/autoflip/quality/focus_point.pb.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 

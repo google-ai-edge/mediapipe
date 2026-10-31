@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-#include "Eigen/Core"
+#include "Eigen/Core"  // from @eigen
 #include "absl/status/status.h"
 #include "audio/dsp/number_util.h"
 #include "mediapipe/calculators/audio/spectrogram_calculator.pb.h"

@@ -36,11 +36,11 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
-#include "tflite/c/common.h"
-#include "tflite/core/api/op_resolver.h"
-#include "tflite/kernels/builtin_op_kernels.h"
-#include "tflite/mutable_op_resolver.h"
-#include "tflite/test_util.h"
+#include "tflite/c/common.h"                    // from @litert
+#include "tflite/core/api/op_resolver.h"        // from @litert
+#include "tflite/kernels/builtin_op_kernels.h"  // from @litert
+#include "tflite/mutable_op_resolver.h"         // from @litert
+#include "tflite/test_util.h"                   // from @litert
 
 namespace tflite {
 namespace ops {

@@ -46,7 +46,7 @@ limitations under the License.
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
 #include "mediapipe/util/label_map.pb.h"
 #include "mediapipe/util/label_map_util.h"
-#include "tflite/schema/schema_generated.h"
+#include "tflite/schema/schema_generated.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

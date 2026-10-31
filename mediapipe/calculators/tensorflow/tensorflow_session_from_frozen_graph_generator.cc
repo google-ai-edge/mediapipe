@@ -34,9 +34,9 @@
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/tool/status_util.h"
-#include "tensorflow/core/framework/graph.pb.h"
-#include "tensorflow/core/framework/node_def.pb.h"
-#include "tensorflow/core/public/session_options.h"
+#include "tensorflow/core/framework/graph.pb.h"      // from @org_tensorflow
+#include "tensorflow/core/framework/node_def.pb.h"   // from @org_tensorflow
+#include "tensorflow/core/public/session_options.h"  // from @org_tensorflow
 
 namespace mediapipe {
 

@@ -17,7 +17,7 @@
 
 #include <array>
 
-#include "Eigen/Geometry"
+#include "Eigen/Geometry"  // from @eigen
 
 namespace mediapipe {
 

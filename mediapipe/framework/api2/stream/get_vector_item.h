@@ -10,7 +10,7 @@
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
-#include "tflite/c/common.h"
+#include "tflite/c/common.h"  // from @litert
 
 namespace mediapipe::api2::builder {
 

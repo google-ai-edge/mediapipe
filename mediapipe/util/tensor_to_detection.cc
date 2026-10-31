@@ -20,7 +20,7 @@
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/location_opencv.h"
 #include "mediapipe/framework/port/map_util.h"
-#include "tensorflow/core/framework/tensor_types.h"
+#include "tensorflow/core/framework/tensor_types.h"  // from @org_tensorflow
 
 namespace mediapipe {
 

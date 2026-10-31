@@ -24,10 +24,10 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/resource_util.h"
-#include "tflite/error_reporter.h"
-#include "tflite/interpreter.h"
-#include "tflite/kernels/register.h"
-#include "tflite/model.h"
+#include "tflite/error_reporter.h"    // from @litert
+#include "tflite/interpreter.h"       // from @litert
+#include "tflite/kernels/register.h"  // from @litert
+#include "tflite/model.h"             // from @litert
 
 namespace mediapipe {
 

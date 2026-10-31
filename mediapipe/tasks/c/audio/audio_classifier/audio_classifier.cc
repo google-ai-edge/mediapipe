@@ -19,7 +19,7 @@ limitations under the License.
 #include <memory>
 #include <utility>
 
-#include "Eigen/Core"
+#include "Eigen/Core"  // from @eigen
 #include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/status_macros.h"

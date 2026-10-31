@@ -15,7 +15,7 @@
 #include "absl/status/status.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "tensorflow/core/example/example.pb.h"
+#include "tensorflow/core/example/example.pb.h"  // from @org_tensorflow
 
 // A calculator to serialize/deserialize tensorflow::SequenceExample protos
 // to and from strings.

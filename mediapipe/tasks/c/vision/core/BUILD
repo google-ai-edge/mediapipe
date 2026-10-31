@@ -28,7 +28,7 @@ cc_library(
 
 IMAGE_DEPS = [
     ":image_frame_util",
-    "@easyexif//:easyexif",
+    "@easyexif",
     "@com_google_absl//absl/strings:string_view",
     "@com_google_absl//absl/log:absl_log",
     "@com_google_absl//absl/status",

@@ -19,9 +19,9 @@
 
 #include "absl/status/status.h"
 #include "absl/types/span.h"
-#include "libyuv/convert.h"
-#include "libyuv/convert_argb.h"
-#include "libyuv/convert_from.h"
+#include "libyuv/convert.h"       // from @libyuv
+#include "libyuv/convert_argb.h"  // from @libyuv
+#include "libyuv/convert_from.h"  // from @libyuv
 
 namespace mediapipe::libyuv_port {
 

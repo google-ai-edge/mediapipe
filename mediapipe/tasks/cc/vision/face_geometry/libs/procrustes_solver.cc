@@ -17,7 +17,7 @@
 #include <cmath>
 #include <memory>
 
-#include "Eigen/Dense"
+#include "Eigen/Dense"  // from @eigen
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/status_macros.h"

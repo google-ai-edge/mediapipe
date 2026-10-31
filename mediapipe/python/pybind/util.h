@@ -23,8 +23,8 @@
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/timestamp.h"
-#include "pybind11/gil.h"
-#include "pybind11/pybind11.h"
+#include "pybind11/gil.h"       // from @pybind11
+#include "pybind11/pybind11.h"  // from @pybind11
 
 namespace mediapipe {
 namespace python {

@@ -40,7 +40,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
 #include "mediapipe/tasks/cc/vision/object_detector/proto/object_detector_options.pb.h"
-#include "tflite/core/api/op_resolver.h"
+#include "tflite/core/api/op_resolver.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

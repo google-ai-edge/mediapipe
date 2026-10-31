@@ -25,7 +25,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "Eigen/Core"
+#include "Eigen/Core"  // from @eigen
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/node_hash_set.h"
 #include "absl/log/absl_check.h"

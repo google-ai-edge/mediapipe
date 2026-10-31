@@ -19,7 +19,7 @@
 #include "absl/strings/str_format.h"
 #include "mediapipe/python/pybind/image_frame_util.h"
 #include "mediapipe/python/pybind/util.h"
-#include "pybind11/stl.h"
+#include "pybind11/stl.h"  // from @pybind11
 #include "stb_image.h"
 
 namespace mediapipe {

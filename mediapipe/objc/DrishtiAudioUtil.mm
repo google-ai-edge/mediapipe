@@ -16,7 +16,7 @@
 
 #include <limits>
 
-#include "third_party/eigen3/Eigen/Core"
+#include "Eigen/Core"  // from @eigen
 
 namespace {
 using Eigen::Index;

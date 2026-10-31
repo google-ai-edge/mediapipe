@@ -38,7 +38,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
-#include "tflite/core/api/op_resolver.h"
+#include "tflite/core/api/op_resolver.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

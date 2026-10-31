@@ -16,7 +16,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Eigen/Dense"
+#include "Eigen/Dense"  // from @eigen
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
@@ -33,7 +33,7 @@
 #include "mediapipe/modules/objectron/calculators/decoder.h"
 #include "mediapipe/modules/objectron/calculators/tensor_util.h"
 #include "mediapipe/modules/objectron/calculators/tflite_tensors_to_objects_calculator.pb.h"
-#include "tflite/interpreter.h"
+#include "tflite/interpreter.h"  // from @litert
 
 namespace {
 constexpr char kInputStreamTag[] = "TENSORS";

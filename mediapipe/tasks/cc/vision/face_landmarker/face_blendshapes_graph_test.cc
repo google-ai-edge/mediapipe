@@ -34,7 +34,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_blendshapes_graph_options.pb.h"
-#include "tflite/test_util.h"
+#include "tflite/test_util.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

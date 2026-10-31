@@ -20,7 +20,7 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "Eigen/Core"
+#include "Eigen/Core"  // from @eigen
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"

@@ -25,10 +25,10 @@
 #include <utility>
 #include <vector>
 
-#include "Eigen/Core"
-#include "Eigen/Dense"
-#include "Eigen/QR"
-#include "Eigen/SVD"
+#include "Eigen/Core"   // from @eigen
+#include "Eigen/Dense"  // from @eigen
+#include "Eigen/QR"     // from @eigen
+#include "Eigen/SVD"    // from @eigen
 #include "absl/container/node_hash_map.h"
 #include "absl/container/node_hash_set.h"
 #include "absl/log/absl_check.h"

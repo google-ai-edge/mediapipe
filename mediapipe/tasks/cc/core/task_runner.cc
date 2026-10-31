@@ -42,7 +42,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/logging/factory/logging_factory.h"
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "mediapipe/tasks/cc/core/model_resources_cache.h"
-#include "tflite/core/api/op_resolver.h"
+#include "tflite/core/api/op_resolver.h"  // from @litert
 
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gpu_shared_data_internal.h"

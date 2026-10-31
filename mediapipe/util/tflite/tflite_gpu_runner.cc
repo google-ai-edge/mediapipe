@@ -26,21 +26,21 @@
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/gpu/gl_base.h"
-#include "tflite/core/api/op_resolver.h"
-#include "tflite/core/interpreter_builder.h"
-#include "tflite/delegates/gpu/api.h"
-#include "tflite/delegates/gpu/common/data_type.h"
-#include "tflite/delegates/gpu/common/model.h"
-#include "tflite/delegates/gpu/common/model_builder.h"
-#include "tflite/delegates/gpu/gl/api2.h"
-#include "tflite/interpreter.h"
-#include "tflite/model.h"
-#include "tflite/model_builder.h"
+#include "tflite/core/api/op_resolver.h"                // from @litert
+#include "tflite/core/interpreter_builder.h"            // from @litert
+#include "tflite/delegates/gpu/api.h"                   // from @litert
+#include "tflite/delegates/gpu/common/data_type.h"      // from @litert
+#include "tflite/delegates/gpu/common/model.h"          // from @litert
+#include "tflite/delegates/gpu/common/model_builder.h"  // from @litert
+#include "tflite/delegates/gpu/gl/api2.h"               // from @litert
+#include "tflite/interpreter.h"                         // from @litert
+#include "tflite/model.h"                               // from @litert
+#include "tflite/model_builder.h"                       // from @litert
 
 // This code should be enabled as soon as TensorFlow version, which mediapipe
 // uses, will include this module.
 #if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
-#include "tflite/delegates/gpu/cl/api.h"
+#include "tflite/delegates/gpu/cl/api.h"  // from @litert
 #endif
 
 namespace tflite {

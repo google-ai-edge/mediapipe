@@ -27,7 +27,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
-#include "exif.h"
+#include "exif.h"  // from @easyexif
 #include "mediapipe/framework/deps/file_helpers.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"

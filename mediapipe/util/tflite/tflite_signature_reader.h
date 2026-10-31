@@ -8,7 +8,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/statusor.h"
-#include "tflite/interpreter.h"
+#include "tflite/interpreter.h"  // from @litert
 
 namespace mediapipe {
 using SignatureName = std::string;

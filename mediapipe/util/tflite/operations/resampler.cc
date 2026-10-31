@@ -3,11 +3,11 @@
 #include <cmath>
 #include <cstring>
 
-#include "tflite/c/c_api_types.h"
-#include "tflite/c/common.h"
-#include "tflite/kernels/internal/tensor_ctypes.h"
-#include "tflite/kernels/kernel_util.h"
-#include "tflite/schema/schema_generated.h"
+#include "tflite/c/c_api_types.h"                   // from @litert
+#include "tflite/c/common.h"                        // from @litert
+#include "tflite/kernels/internal/tensor_ctypes.h"  // from @litert
+#include "tflite/kernels/kernel_util.h"             // from @litert
+#include "tflite/schema/schema_generated.h"         // from @litert
 
 namespace mediapipe {
 namespace tflite_operations {

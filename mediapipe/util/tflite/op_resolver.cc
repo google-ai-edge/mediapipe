@@ -16,10 +16,10 @@
 
 #include <cstddef>
 
-#include "tflite/builtin_ops.h"
-#include "tflite/c/builtin_op_data.h"
-#include "tflite/c/c_api.h"
-#include "tflite/c/c_api_opaque.h"
+#include "tflite/builtin_ops.h"        // from @litert
+#include "tflite/c/builtin_op_data.h"  // from @litert
+#include "tflite/c/c_api.h"            // from @litert
+#include "tflite/c/c_api_opaque.h"     // from @litert
 
 namespace mediapipe {
 namespace {

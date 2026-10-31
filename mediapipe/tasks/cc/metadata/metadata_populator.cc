@@ -23,11 +23,11 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "contrib/minizip/ioapi.h"
 #include "contrib/minizip/zip.h"
-#include "flatbuffers/flatbuffers.h"
+#include "flatbuffers/flatbuffers.h"  // from @flatbuffers
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/metadata/utils/zip_writable_mem_file.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
-#include "tflite/schema/schema_generated.h"
+#include "tflite/schema/schema_generated.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

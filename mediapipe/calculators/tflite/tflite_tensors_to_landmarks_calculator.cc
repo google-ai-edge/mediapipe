@@ -19,7 +19,7 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "tflite/interpreter.h"
+#include "tflite/interpreter.h"  // from @litert
 
 namespace mediapipe {
 

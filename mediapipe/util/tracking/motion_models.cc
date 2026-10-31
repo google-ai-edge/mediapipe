@@ -20,8 +20,8 @@
 #include <string>
 #include <utility>
 
-#include "Eigen/Core"
-#include "Eigen/Dense"
+#include "Eigen/Core"   // from @eigen
+#include "Eigen/Dense"  // from @eigen
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/strings/str_format.h"

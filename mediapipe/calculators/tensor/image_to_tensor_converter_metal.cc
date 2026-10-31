@@ -33,8 +33,8 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/gpu/MPPMetalHelper.h"
-#include "tflite/delegates/gpu/common/shape.h"
-#include "tflite/delegates/gpu/common/types.h"
+#include "tflite/delegates/gpu/common/shape.h"  // from @litert
+#include "tflite/delegates/gpu/common/types.h"  // from @litert
 
 #if MEDIAPIPE_METAL_ENABLED
 #include "mediapipe/framework/formats/tensor_mtl_buffer_view.h"

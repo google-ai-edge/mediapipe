@@ -22,7 +22,7 @@ limitations under the License.
 #include "absl/container/node_hash_map.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/tasks/cc/text/tokenizers/tokenizer.h"
-#include "re2/re2.h"
+#include "re2/re2.h"  // from @com_googlesource_code_re2
 
 namespace mediapipe {
 namespace tasks {

@@ -8,7 +8,7 @@
 #include "absl/status/statusor.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/calculators/tensor/inference_io_mapper.h"
-#include "tflite/interpreter.h"
+#include "tflite/interpreter.h"  // from @litert
 
 namespace mediapipe {
 

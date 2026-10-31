@@ -16,7 +16,7 @@
 
 #include "absl/status/status.h"
 #include "absl/status/status_macros.h"
-#include "exif.h"
+#include "exif.h"  // from @easyexif
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_file_properties.pb.h"
 

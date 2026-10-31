@@ -35,12 +35,12 @@
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
-#include "tflite/c/common.h"
-#include "tflite/interpreter.h"
-#include "tflite/kernels/cast_test_common.h"
-#include "tflite/schema/schema_generated.h"
-#include "tflite/string_util.h"
-#include "tflite/util.h"
+#include "tflite/c/common.h"                  // from @litert
+#include "tflite/interpreter.h"               // from @litert
+#include "tflite/kernels/cast_test_common.h"  // from @litert
+#include "tflite/schema/schema_generated.h"   // from @litert
+#include "tflite/string_util.h"               // from @litert
+#include "tflite/util.h"                      // from @litert
 
 namespace mediapipe {
 namespace {

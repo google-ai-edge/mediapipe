@@ -20,7 +20,7 @@ limitations under the License.
 
 #include <string>
 
-#include "tflite/c/common.h"
+#include "tflite/c/common.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

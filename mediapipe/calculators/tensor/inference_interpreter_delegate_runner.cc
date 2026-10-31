@@ -34,10 +34,10 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "tflite/c/c_api_types.h"
-#include "tflite/c/common.h"
-#include "tflite/interpreter_builder.h"
-#include "tflite/util.h"
+#include "tflite/c/c_api_types.h"        // from @litert
+#include "tflite/c/common.h"             // from @litert
+#include "tflite/interpreter_builder.h"  // from @litert
+#include "tflite/util.h"                 // from @litert
 
 namespace mediapipe {
 

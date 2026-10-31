@@ -19,7 +19,7 @@
 #include <cstring>
 #include <string>
 
-#include "tflite/minimal_logging.h"
+#include "tflite/minimal_logging.h"  // from @litert
 
 namespace mediapipe {
 namespace util {

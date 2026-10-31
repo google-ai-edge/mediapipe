@@ -21,9 +21,9 @@
 #include <random>
 #include <unordered_set>
 
-#include "Eigen/Core"
-#include "Eigen/Dense"
-#include "Eigen/SVD"
+#include "Eigen/Core"   // from @eigen
+#include "Eigen/Dense"  // from @eigen
+#include "Eigen/SVD"    // from @eigen
 #include "absl/algorithm/container.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"

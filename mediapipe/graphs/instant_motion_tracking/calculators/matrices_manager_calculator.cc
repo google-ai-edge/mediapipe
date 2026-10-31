@@ -15,9 +15,9 @@
 #include <cmath>
 #include <memory>
 
-#include "Eigen/Core"
-#include "Eigen/Dense"
-#include "Eigen/Geometry"
+#include "Eigen/Core"      // from @eigen
+#include "Eigen/Dense"     // from @eigen
+#include "Eigen/Geometry"  // from @eigen
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"

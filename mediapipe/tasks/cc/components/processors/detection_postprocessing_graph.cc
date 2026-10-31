@@ -27,7 +27,7 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
-#include "flatbuffers/flexbuffers.h"
+#include "flatbuffers/flexbuffers.h"  // from @flatbuffers
 #include "mediapipe/calculators/core/split_vector_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensors_to_detections_calculator.pb.h"
 #include "mediapipe/calculators/tflite/ssd_anchors_calculator.pb.h"
@@ -52,7 +52,7 @@ limitations under the License.
 #include "mediapipe/tasks/metadata/object_detector_metadata_schema_generated.h"
 #include "mediapipe/util/label_map.pb.h"
 #include "mediapipe/util/label_map_util.h"
-#include "tflite/schema/schema_generated.h"
+#include "tflite/schema/schema_generated.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

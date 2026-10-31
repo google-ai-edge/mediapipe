@@ -17,7 +17,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Eigen/Dense"
+#include "Eigen/Dense"  // from @eigen
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"

@@ -40,8 +40,8 @@
   ((MEDIAPIPE_TFLITE_GL_INFERENCE) || (MEDIAPIPE_TFLITE_METAL_INFERENCE))
 
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
-#include "tflite/delegates/gpu/gl/gl_buffer.h"
-#endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
+#include "tflite/delegates/gpu/gl/gl_buffer.h"  // from @litert
+#endif                                          // MEDIAPIPE_TFLITE_GL_INFERENCE
 
 #if MEDIAPIPE_TFLITE_METAL_INFERENCE
 #import <Metal/Metal.h>

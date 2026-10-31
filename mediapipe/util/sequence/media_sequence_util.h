@@ -98,8 +98,8 @@
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
-#include "tensorflow/core/example/example.pb.h"
-#include "tensorflow/core/example/feature.pb.h"
+#include "tensorflow/core/example/example.pb.h"  // from @org_tensorflow
+#include "tensorflow/core/example/feature.pb.h"  // from @org_tensorflow
 
 namespace mediapipe {
 namespace mediasequence {

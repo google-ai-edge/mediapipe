@@ -30,7 +30,7 @@
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/util/audio_decoder.pb.h"
 #include "mediapipe/util/sequence/media_sequence.h"
-#include "tensorflow/core/example/example.pb.h"
+#include "tensorflow/core/example/example.pb.h"  // from @org_tensorflow
 
 namespace mediapipe {
 namespace {

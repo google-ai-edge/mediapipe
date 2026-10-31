@@ -20,15 +20,15 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "flatbuffers/flexbuffers.h"
+#include "flatbuffers/flexbuffers.h"  // from @flatbuffers
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "tflite/c/common.h"
-#include "tflite/interpreter.h"
-#include "tflite/kernels/internal/tensor.h"
-#include "tflite/kernels/internal/tensor_ctypes.h"
-#include "tflite/kernels/test_util.h"
-#include "tflite/schema/schema_generated.h"
+#include "tflite/c/common.h"                        // from @litert
+#include "tflite/interpreter.h"                     // from @litert
+#include "tflite/kernels/internal/tensor.h"         // from @litert
+#include "tflite/kernels/internal/tensor_ctypes.h"  // from @litert
+#include "tflite/kernels/test_util.h"               // from @litert
+#include "tflite/schema/schema_generated.h"         // from @litert
 
 namespace mediapipe::tflite_operations {
 namespace {

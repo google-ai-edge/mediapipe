@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "Eigen/Core"
+#include "Eigen/Core"  // from @eigen
 #include "absl/status/status.h"
 #include "audio/dsp/signal_vector_util.h"
 #include "mediapipe/calculators/audio/rational_factor_resample_calculator.pb.h"

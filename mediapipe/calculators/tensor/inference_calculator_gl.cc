@@ -38,9 +38,9 @@
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
-#include "tflite/core/interpreter_builder.h"
-#include "tflite/delegates/gpu/gl_delegate.h"
-#include "tflite/interpreter.h"
+#include "tflite/core/interpreter_builder.h"   // from @litert
+#include "tflite/delegates/gpu/gl_delegate.h"  // from @litert
+#include "tflite/interpreter.h"                // from @litert
 
 namespace mediapipe {
 namespace api2 {

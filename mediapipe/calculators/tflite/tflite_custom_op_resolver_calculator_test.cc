@@ -5,7 +5,7 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
-#include "tflite/kernels/register.h"
+#include "tflite/kernels/register.h"  // from @litert
 
 namespace mediapipe {
 

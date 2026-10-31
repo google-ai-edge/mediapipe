@@ -22,10 +22,10 @@
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/util/render_data.pb.h"
-#include "tflite/interpreter.h"
+#include "tflite/interpreter.h"  // from @litert
 
 #if !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
-#include "tflite/delegates/gpu/gl/gl_buffer.h"
+#include "tflite/delegates/gpu/gl/gl_buffer.h"  // from @litert
 #endif  // !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
 
 namespace mediapipe {

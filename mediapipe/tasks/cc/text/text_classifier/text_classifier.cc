@@ -33,7 +33,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/task_api_factory.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/text/text_classifier/proto/text_classifier_graph_options.pb.h"
-#include "tflite/core/api/op_resolver.h"
+#include "tflite/core/api/op_resolver.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

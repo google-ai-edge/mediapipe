@@ -43,9 +43,9 @@ limitations under the License.
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "absl/types/span.h"
-#include "flatbuffers/buffer.h"
-#include "flatbuffers/flatbuffer_builder.h"
-#include "flatbuffers/vector.h"
+#include "flatbuffers/buffer.h"              // from @flatbuffers
+#include "flatbuffers/flatbuffer_builder.h"  // from @flatbuffers
+#include "flatbuffers/vector.h"              // from @flatbuffers
 #include "mediapipe/tasks/cc/audio/audio_transcriber/audio_transcriber.h"
 #include "mediapipe/tasks/cc/audio/audio_transcriber/mediapipe_asr_processor.h"
 #include "mediapipe/tasks/cc/audio/text_to_speech/mediapipe_tts_session.h"
@@ -67,7 +67,7 @@ limitations under the License.
 #include "runtime/proto/text2speech_model_type.pb.h"       // from @litert_lm
 #include "runtime/proto/text2speech_session_config.pb.h"   // from @litert_lm
 #include "schema/core/litertlm_header_schema_generated.h"  // from @litert_lm
-#include "tflite/schema/schema_generated.h"
+#include "tflite/schema/schema_generated.h"                // from @litert
 
 ABSL_FLAG(std::string, cache_dir,
           std::string(mediapipe::tasks::audio::benchmarks::kDefaultCacheDir),

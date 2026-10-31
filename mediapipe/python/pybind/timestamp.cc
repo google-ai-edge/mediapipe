@@ -17,7 +17,7 @@
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/python/pybind/util.h"
-#include "pybind11/pybind11.h"
+#include "pybind11/pybind11.h"  // from @pybind11
 
 namespace mediapipe {
 namespace python {

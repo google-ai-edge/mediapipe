@@ -29,8 +29,8 @@
 #include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/util/audio_decoder.pb.h"
 #include "mediapipe/util/sequence/media_sequence.h"
-#include "tensorflow/core/example/example.pb.h"
-#include "tensorflow/core/example/feature.pb.h"
+#include "tensorflow/core/example/example.pb.h"  // from @org_tensorflow
+#include "tensorflow/core/example/feature.pb.h"  // from @org_tensorflow
 
 namespace mediapipe {
 

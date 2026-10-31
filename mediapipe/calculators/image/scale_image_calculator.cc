@@ -28,8 +28,8 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/substitute.h"
 #include "absl/types/span.h"
-#include "libyuv/scale.h"
-#include "libyuv/video_common.h"
+#include "libyuv/scale.h"         // from @libyuv
+#include "libyuv/video_common.h"  // from @libyuv
 #include "mediapipe/calculators/image/scale_image_calculator.pb.h"
 #include "mediapipe/calculators/image/scale_image_utils.h"
 #include "mediapipe/framework/calculator_framework.h"

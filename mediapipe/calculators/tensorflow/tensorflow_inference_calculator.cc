@@ -38,12 +38,12 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/framework/tool/status_util.h"
-#include "tensorflow/core/framework/tensor.h"
-#include "tensorflow/core/framework/tensor_shape.h"
-#include "tensorflow/core/framework/tensor_util.h"
+#include "tensorflow/core/framework/tensor.h"        // from @org_tensorflow
+#include "tensorflow/core/framework/tensor_shape.h"  // from @org_tensorflow
+#include "tensorflow/core/framework/tensor_util.h"   // from @org_tensorflow
 
 #if !defined(MEDIAPIPE_MOBILE) && !defined(__APPLE__)
-#include "tensorflow/core/profiler/lib/traceme.h"
+#include "tensorflow/core/profiler/lib/traceme.h"  // from @org_tensorflow
 #endif
 
 namespace tf = ::tensorflow;

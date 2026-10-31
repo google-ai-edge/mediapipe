@@ -33,10 +33,10 @@
 #endif  // !__EMSCRIPTEN__ || __EMSCRIPTEN_PTHREADS__
 
 #include "mediapipe/util/tflite/tflite_model_loader.h"
-#include "tflite/error_reporter.h"
-#include "tflite/interpreter.h"
-#include "tflite/kernels/register.h"
-#include "tflite/model.h"
+#include "tflite/error_reporter.h"    // from @litert
+#include "tflite/interpreter.h"       // from @litert
+#include "tflite/kernels/register.h"  // from @litert
+#include "tflite/model.h"             // from @litert
 
 #if defined(MEDIAPIPE_ANDROID)
 #include "mediapipe/util/android/file/base/file.h"
@@ -48,11 +48,11 @@
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/util/tflite/tflite_gpu_runner.h"
-#include "tflite/delegates/gpu/common/shape.h"
-#include "tflite/delegates/gpu/gl/gl_buffer.h"
-#include "tflite/delegates/gpu/gl/gl_program.h"
-#include "tflite/delegates/gpu/gl/gl_shader.h"
-#include "tflite/delegates/gpu/gl_delegate.h"
+#include "tflite/delegates/gpu/common/shape.h"   // from @litert
+#include "tflite/delegates/gpu/gl/gl_buffer.h"   // from @litert
+#include "tflite/delegates/gpu/gl/gl_program.h"  // from @litert
+#include "tflite/delegates/gpu/gl/gl_shader.h"   // from @litert
+#include "tflite/delegates/gpu/gl_delegate.h"    // from @litert
 #endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
 
 #if MEDIAPIPE_TFLITE_METAL_INFERENCE
@@ -63,18 +63,18 @@
 #import "mediapipe/gpu/MPPMetalHelper.h"
 #include "mediapipe/gpu/MPPMetalUtil.h"
 #include "mediapipe/gpu/gpu_buffer.h"
-#include "tflite/delegates/gpu/common/shape.h"
-#include "tflite/delegates/gpu/metal/buffer_convert.h"
-#include "tflite/delegates/gpu/metal_delegate.h"
-#include "tflite/delegates/gpu/metal_delegate_internal.h"
+#include "tflite/delegates/gpu/common/shape.h"             // from @litert
+#include "tflite/delegates/gpu/metal/buffer_convert.h"     // from @litert
+#include "tflite/delegates/gpu/metal_delegate.h"           // from @litert
+#include "tflite/delegates/gpu/metal_delegate_internal.h"  // from @litert
 #endif  // MEDIAPIPE_TFLITE_METAL_INFERENCE
 
 #if !defined(MEDIAPIPE_EDGE_TPU)
-#include "tflite/delegates/xnnpack/xnnpack_delegate.h"
-#endif  // !EDGETPU
+#include "tflite/delegates/xnnpack/xnnpack_delegate.h"  // from @litert
+#endif                                                  // !EDGETPU
 #if defined(MEDIAPIPE_ANDROID)
-#include "tflite/delegates/nnapi/nnapi_delegate.h"
-#endif  // ANDROID
+#include "tflite/delegates/nnapi/nnapi_delegate.h"  // from @litert
+#endif                                              // ANDROID
 
 namespace {
 // Commonly used to compute the number of blocks to launch in a kernel.

@@ -31,9 +31,9 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
 #if defined(MEDIAPIPE_ANDROID)
-#include "tflite/delegates/nnapi/nnapi_delegate.h"
-#endif  // ANDROID
-#include "tflite/delegates/xnnpack/xnnpack_delegate.h"
+#include "tflite/delegates/nnapi/nnapi_delegate.h"      // from @litert
+#endif                                                  // ANDROID
+#include "tflite/delegates/xnnpack/xnnpack_delegate.h"  // from @litert
 
 namespace mediapipe {
 namespace api2 {

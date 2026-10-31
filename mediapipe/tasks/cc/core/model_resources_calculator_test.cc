@@ -29,8 +29,8 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/core/proto/model_resources_calculator.pb.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
-#include "tflite/core/api/op_resolver.h"
-#include "tflite/test_util.h"
+#include "tflite/core/api/op_resolver.h"  // from @litert
+#include "tflite/test_util.h"             // from @litert
 
 namespace mediapipe {
 namespace tasks {

@@ -18,8 +18,8 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
-#include "libyuv/convert_argb.h"
-#include "libyuv/video_common.h"
+#include "libyuv/convert_argb.h"  // from @libyuv
+#include "libyuv/video_common.h"  // from @libyuv
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"

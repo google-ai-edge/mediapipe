@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 
-#include "Eigen/Core"
+#include "Eigen/Core"  // from @eigen
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "mediapipe/framework/api2/node.h"

@@ -26,10 +26,10 @@
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/python/pybind/util.h"
-#include "pybind11/cast.h"
-#include "pybind11/numpy.h"
-#include "pybind11/pybind11.h"
-#include "pybind11/pytypes.h"
+#include "pybind11/cast.h"      // from @pybind11
+#include "pybind11/numpy.h"     // from @pybind11
+#include "pybind11/pybind11.h"  // from @pybind11
+#include "pybind11/pytypes.h"   // from @pybind11
 
 namespace mediapipe {
 namespace python {

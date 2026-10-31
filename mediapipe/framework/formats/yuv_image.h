@@ -24,7 +24,7 @@
 #include "absl/base/attributes.h"
 #include "absl/functional/any_invocable.h"
 #include "absl/types/span.h"
-#include "libyuv/video_common.h"
+#include "libyuv/video_common.h"  // from @libyuv
 
 namespace mediapipe {
 
@@ -232,7 +232,7 @@ class YUVImage {
   // Clear and initialize member variables.
   //
   // First argument is an enum of FourCC (see http://www.fourcc.org/yuv.php)
-  // defined in libyuv/video_common.h
+  // defined in third_party/libyuv/include/libyuv/video_common.h
   //
   // A deallocation function is provided which will be called on the next
   // Clear() or on destruction.

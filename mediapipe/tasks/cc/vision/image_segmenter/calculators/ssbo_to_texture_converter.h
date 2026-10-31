@@ -19,8 +19,8 @@
 
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/gpu/gl_base.h"
-#include "tflite/delegates/gpu/gl/gl_program.h"
-#include "tflite/delegates/gpu/gl/gl_texture.h"
+#include "tflite/delegates/gpu/gl/gl_program.h"  // from @litert
+#include "tflite/delegates/gpu/gl/gl_texture.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

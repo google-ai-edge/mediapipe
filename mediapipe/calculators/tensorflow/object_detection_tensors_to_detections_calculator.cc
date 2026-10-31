@@ -28,8 +28,8 @@
 #include "mediapipe/framework/port/source_location.h"
 #include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/util/tensor_to_detection.h"
-#include "tensorflow/core/framework/tensor.h"
-#include "tensorflow/core/framework/tensor_shape.h"
+#include "tensorflow/core/framework/tensor.h"        // from @org_tensorflow
+#include "tensorflow/core/framework/tensor_shape.h"  // from @org_tensorflow
 
 namespace mediapipe {
 class CalculatorOptions;

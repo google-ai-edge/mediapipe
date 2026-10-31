@@ -23,8 +23,8 @@
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/time_series_header.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "tensorflow/core/framework/tensor.h"
-#include "tensorflow/core/framework/types.h"
+#include "tensorflow/core/framework/tensor.h"  // from @org_tensorflow
+#include "tensorflow/core/framework/types.h"   // from @org_tensorflow
 
 namespace mediapipe {
 

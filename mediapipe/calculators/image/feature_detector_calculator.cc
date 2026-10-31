@@ -31,7 +31,7 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/threadpool.h"
 #include "mediapipe/framework/tool/options_util.h"
-#include "tflite/interpreter.h"
+#include "tflite/interpreter.h"  // from @litert
 
 namespace mediapipe {
 

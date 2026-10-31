@@ -50,7 +50,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/util/label_map.pb.h"
-#include "tflite/test_util.h"
+#include "tflite/test_util.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

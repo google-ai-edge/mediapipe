@@ -35,10 +35,10 @@
 #include "mediapipe/gpu/MPPMetalUtil.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/util/tflite/config.h"
-#include "tflite/delegates/gpu/common/shape.h"
-#include "tflite/delegates/gpu/metal/buffer_convert.h"
-#include "tflite/delegates/gpu/metal_delegate.h"
-#include "tflite/delegates/gpu/metal_delegate_internal.h"
+#include "tflite/delegates/gpu/common/shape.h"             // from @litert
+#include "tflite/delegates/gpu/metal/buffer_convert.h"     // from @litert
+#include "tflite/delegates/gpu/metal_delegate.h"           // from @litert
+#include "tflite/delegates/gpu/metal_delegate_internal.h"  // from @litert
 
 namespace {
 

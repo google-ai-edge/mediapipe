@@ -24,11 +24,11 @@ limitations under the License.
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "tflite/c/common.h"
-#include "tflite/kernels/kernel_util.h"
-#include "tflite/mutable_op_resolver.h"
-#include "tflite/portable_type_to_tflitetype.h"
-#include "tflite/string_util.h"
+#include "tflite/c/common.h"                     // from @litert
+#include "tflite/kernels/kernel_util.h"          // from @litert
+#include "tflite/mutable_op_resolver.h"          // from @litert
+#include "tflite/portable_type_to_tflitetype.h"  // from @litert
+#include "tflite/string_util.h"                  // from @litert
 
 namespace mediapipe {
 namespace tasks {

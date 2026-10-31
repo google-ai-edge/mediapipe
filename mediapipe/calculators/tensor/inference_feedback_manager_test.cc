@@ -34,12 +34,12 @@
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
-#include "tflite/core/api/op_resolver.h"
-#include "tflite/core/interpreter_builder.h"
-#include "tflite/delegates/xnnpack/xnnpack_delegate.h"
-#include "tflite/interpreter.h"
-#include "tflite/kernels/register.h"
-#include "tflite/util.h"
+#include "tflite/core/api/op_resolver.h"                // from @litert
+#include "tflite/core/interpreter_builder.h"            // from @litert
+#include "tflite/delegates/xnnpack/xnnpack_delegate.h"  // from @litert
+#include "tflite/interpreter.h"                         // from @litert
+#include "tflite/kernels/register.h"                    // from @litert
+#include "tflite/util.h"                                // from @litert
 
 namespace mediapipe {
 namespace api2 {

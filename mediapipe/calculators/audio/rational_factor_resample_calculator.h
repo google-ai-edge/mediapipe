@@ -20,7 +20,7 @@
 #include <memory>
 #include <vector>
 
-#include "Eigen/Core"
+#include "Eigen/Core"  // from @eigen
 #include "absl/strings/str_cat.h"
 #include "audio/dsp/resampler.h"
 #include "mediapipe/calculators/audio/rational_factor_resample_calculator.pb.h"

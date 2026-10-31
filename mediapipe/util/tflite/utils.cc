@@ -1,6 +1,6 @@
 #include "mediapipe/util/tflite/utils.h"
 
-#include "tflite/c/common.h"
+#include "tflite/c/common.h"  // from @litert
 
 namespace mediapipe::util::tflite {
 

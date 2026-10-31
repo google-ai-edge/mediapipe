@@ -17,8 +17,8 @@
 #include "mediapipe/tasks/cc/text/utils/vocab_convert_utils.h"
 #include "odml/infra/genai/inference/ml_drift/llm/tensor_loaders/model_ckpt_util.h"  // from @odml
 #include "odml/infra/genai/inference/utils/xnn_utils/model_ckpt_util.h"  // from @odml
-#include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
+#include "pybind11/pybind11.h"               // from @pybind11
+#include "pybind11/stl.h"                    // from @pybind11
 #include "pybind11_abseil/status_casters.h"  // from @pybind11_abseil
 
 namespace mediapipe {

@@ -16,7 +16,7 @@
 #include <string>
 #include <utility>
 
-#include "Eigen/Core"
+#include "Eigen/Core"  // from @eigen
 #include "absl/strings/substitute.h"
 #include "mediapipe/calculators/audio/two_tap_fir_filter_calculator.pb.h"
 #include "mediapipe/framework/calculator.pb.h"

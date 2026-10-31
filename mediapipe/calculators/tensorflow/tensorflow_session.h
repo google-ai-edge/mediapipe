@@ -17,7 +17,7 @@
 
 #include <memory>
 
-#include "tensorflow/core/public/session.h"
+#include "tensorflow/core/public/session.h"  // from @org_tensorflow
 
 namespace mediapipe {
 struct TensorFlowSession {

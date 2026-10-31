@@ -39,7 +39,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/core/embedding_provider.h"
-#include "tflite/test_util.h"
+#include "tflite/test_util.h"  // from @litert
 
 namespace mediapipe::tasks::text::text_embedder {
 namespace {

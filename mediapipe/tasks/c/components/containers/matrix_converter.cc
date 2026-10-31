@@ -17,7 +17,7 @@ limitations under the License.
 
 #include <cstring>
 
-#include "Eigen/Core"
+#include "Eigen/Core"  // from @eigen
 #include "mediapipe/tasks/c/components/containers/matrix.h"
 
 namespace mediapipe::tasks::c::components::containers {

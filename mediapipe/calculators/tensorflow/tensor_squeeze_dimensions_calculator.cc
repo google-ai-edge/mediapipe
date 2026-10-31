@@ -17,7 +17,7 @@
 #include "mediapipe/calculators/tensorflow/tensor_squeeze_dimensions_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "tensorflow/core/framework/tensor.h"
+#include "tensorflow/core/framework/tensor.h"  // from @org_tensorflow
 
 namespace mediapipe {
 

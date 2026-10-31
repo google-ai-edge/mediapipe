@@ -37,8 +37,8 @@
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/framework/tool/subgraph_expansion.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
-#include "tflite/core/api/op_resolver.h"
-#include "tflite/kernels/register.h"
+#include "tflite/core/api/op_resolver.h"  // from @litert
+#include "tflite/kernels/register.h"      // from @litert
 
 namespace mediapipe {
 namespace api2 {

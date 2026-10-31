@@ -27,7 +27,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/host_environment.h"
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
-#include "tflite/core/api/op_resolver.h"
+#include "tflite/core/api/op_resolver.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

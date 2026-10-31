@@ -17,7 +17,7 @@
 
 #include <memory>
 
-#include "Eigen/Dense"
+#include "Eigen/Dense"  // from @eigen
 #include "absl/status/status.h"
 
 namespace mediapipe::tasks::vision::face_geometry {

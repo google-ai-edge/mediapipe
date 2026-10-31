@@ -8,7 +8,7 @@
 
 #include "absl/base/attributes.h"
 #include "absl/types/span.h"
-#include "libyuv/video_common.h"
+#include "libyuv/video_common.h"  // from @libyuv
 #include "mediapipe/framework/port/gtest.h"
 
 namespace mediapipe {

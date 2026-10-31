@@ -23,7 +23,7 @@
 
 #include <string>
 
-#include "Eigen/Core"
+#include "Eigen/Core"  // from @eigen
 #include "mediapipe/framework/formats/matrix_data.pb.h"
 #include "mediapipe/framework/port.h"
 

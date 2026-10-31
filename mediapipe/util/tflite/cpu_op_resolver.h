@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_UTIL_TFLITE_CPU_OP_RESOLVER_H_
 #define MEDIAPIPE_UTIL_TFLITE_CPU_OP_RESOLVER_H_
 
-#include "tflite/kernels/register.h"
+#include "tflite/kernels/register.h"  // from @litert
 
 namespace mediapipe {
 

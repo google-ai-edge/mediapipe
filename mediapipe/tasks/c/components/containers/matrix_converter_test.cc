@@ -15,7 +15,7 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/components/containers/matrix_converter.h"
 
-#include "Eigen/Core"
+#include "Eigen/Core"  // from @eigen
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/matrix.h"
 

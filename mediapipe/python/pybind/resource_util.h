@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_PYTHON_PYBIND_RESOURCE_UTIL_H_
 #define MEDIAPIPE_PYTHON_PYBIND_RESOURCE_UTIL_H_
 
-#include "pybind11/pybind11.h"
+#include "pybind11/pybind11.h"  // from @pybind11
 
 namespace mediapipe {
 namespace python {

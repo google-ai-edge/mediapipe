@@ -20,7 +20,7 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/tool/validate_type.h"
-#include "tensorflow/core/framework/tensor.h"
+#include "tensorflow/core/framework/tensor.h"  // from @org_tensorflow
 
 namespace mediapipe {
 

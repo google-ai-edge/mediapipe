@@ -29,7 +29,7 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "tflite/delegates/xnnpack/xnnpack_delegate.h"
+#include "tflite/delegates/xnnpack/xnnpack_delegate.h"  // from @litert
 
 namespace mediapipe {
 namespace api2 {

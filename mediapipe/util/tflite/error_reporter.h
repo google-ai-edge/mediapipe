@@ -17,8 +17,8 @@
 
 #include <string>
 
-#include "tflite/core/api/error_reporter.h"
-#include "tflite/stateful_error_reporter.h"
+#include "tflite/core/api/error_reporter.h"  // from @litert
+#include "tflite/stateful_error_reporter.h"  // from @litert
 
 namespace mediapipe::util::tflite {
 

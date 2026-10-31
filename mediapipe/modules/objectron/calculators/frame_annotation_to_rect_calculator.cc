@@ -14,7 +14,7 @@
 #include <cmath>
 #include <vector>
 
-#include "Eigen/Dense"
+#include "Eigen/Dense"  // from @eigen
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "mediapipe/framework/calculator_framework.h"
