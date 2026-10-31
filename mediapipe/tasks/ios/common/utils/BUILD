@@ -23,6 +23,8 @@ objc_library(
     srcs = ["sources/MPPCommonUtils.mm"],
     hdrs = ["sources/MPPCommonUtils.h"],
     deps = [
+        "//mediapipe/tasks/c/core:common",
+        "//mediapipe/tasks/c/core:mp_status",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//third_party/apple_frameworks:Foundation",

@@ -14,6 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
+#include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/cc/common.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -59,7 +60,20 @@ extern NSString *const MPPTasksErrorDomain;
  * no error will be saved.
  * @return YES when there is no error, NO otherwise.
  */
-+ (BOOL)checkCppError:(const absl::Status &)status toError:(NSError **)error;
++ (BOOL)checkCppError:(const absl::Status &)status toError:(NSError *_Nullable *)error;
+
+/**
+ * Converts an MpStatus and an error message returned by the C API to an NSError.
+ * Frees errorMessage using MpErrorFree if non-null.
+ *
+ * @param status MpStatus.
+ * @param errorMessage Pointer to dynamically allocated error message or NULL.
+ * @param error Pointer to the memory location where the created error should be saved.
+ * @return YES when there is no error, NO otherwise.
+ */
++ (BOOL)checkCError:(MpStatus)status
+       errorMessage:(nullable char *)errorMessage
+            toError:(NSError *_Nullable *)error;
 
 /**
  * Allocates a block of memory with the specified size and returns a pointer to it. If memory
