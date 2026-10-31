@@ -65,10 +65,19 @@ absl::StatusOr<bool> HasDynamicDimension(
 
 // Creates a tensor with the given LiteRt ranked tensor type. The tensor is
 // allocated using the given memory manager. The memory is aligned to the given
-// alignment.
+// alignment. `quantization_parameters` is attached to the tensor so that
+// downstream calculators (e.g. TensorsDequantizationCalculator) can dequantize
+// quantized outputs.
 absl::StatusOr<Tensor> CreateTensorFromLiteRtRankedTensorType(
     const litert::RankedTensorType& litert_tensor_type,
-    mediapipe::MemoryManager* memory_manager, int memory_allignment);
+    mediapipe::MemoryManager* memory_manager, int memory_allignment,
+    const Tensor::QuantizationParameters& quantization_parameters = {});
+
+// Returns the per-tensor quantization parameters of `litert_tensor`, or the
+// default (scale = 1, zero_point = 0) if the tensor is not per-tensor
+// quantized. Matches what the legacy TFLite runners attach to MP tensors.
+Tensor::QuantizationParameters GetMpQuantizationParameters(
+    const litert::SimpleTensor& litert_tensor);
 
 // Copies the data from a MP tensor to a LiteRT buffer.
 absl::Status CopyMpTensorToLiteRtBuffer(const Tensor& mp_tensor,

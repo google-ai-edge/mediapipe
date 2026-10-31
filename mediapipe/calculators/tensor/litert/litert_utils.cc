@@ -232,7 +232,8 @@ absl::StatusOr<bool> HasDynamicDimension(
 
 absl::StatusOr<Tensor> CreateTensorFromLiteRtRankedTensorType(
     const litert::RankedTensorType& litert_tensor_type,
-    MemoryManager* memory_manager, int memory_allignment) {
+    MemoryManager* memory_manager, int memory_allignment,
+    const Tensor::QuantizationParameters& quantization_parameters) {
   const auto tensor_type = litert_tensor_type.ElementType();
   const auto tensor_dimensions = litert_tensor_type.Layout().Dimensions();
   // Scalar input in TensorFlow is described by an empty shape.
@@ -244,36 +245,46 @@ absl::StatusOr<Tensor> CreateTensorFromLiteRtRankedTensorType(
   switch (tensor_type) {
     case litert::ElementType::Float16:
       return Tensor(Tensor::ElementType::kFloat16,
-                    Tensor::Shape(tensor_shape_vector), memory_manager,
-                    memory_allignment);
+                    Tensor::Shape(tensor_shape_vector), quantization_parameters,
+                    memory_manager, memory_allignment);
     case litert::ElementType::Float32:
       return Tensor(Tensor::ElementType::kFloat32,
-                    Tensor::Shape(tensor_shape_vector), memory_manager,
-                    memory_allignment);
+                    Tensor::Shape(tensor_shape_vector), quantization_parameters,
+                    memory_manager, memory_allignment);
     case litert::ElementType::UInt8:
       return Tensor(Tensor::ElementType::kUInt8,
-                    Tensor::Shape(tensor_shape_vector), memory_manager,
-                    memory_allignment);
+                    Tensor::Shape(tensor_shape_vector), quantization_parameters,
+                    memory_manager, memory_allignment);
     case litert::ElementType::Int8:
       return Tensor(Tensor::ElementType::kInt8,
-                    Tensor::Shape(tensor_shape_vector), memory_manager,
-                    memory_allignment);
+                    Tensor::Shape(tensor_shape_vector), quantization_parameters,
+                    memory_manager, memory_allignment);
     case litert::ElementType::Int32:
       return Tensor(Tensor::ElementType::kInt32,
-                    Tensor::Shape(tensor_shape_vector), memory_manager,
-                    memory_allignment);
+                    Tensor::Shape(tensor_shape_vector), quantization_parameters,
+                    memory_manager, memory_allignment);
     case litert::ElementType::Int64:
       return Tensor(Tensor::ElementType::kInt64,
-                    Tensor::Shape(tensor_shape_vector), memory_manager,
-                    memory_allignment);
+                    Tensor::Shape(tensor_shape_vector), quantization_parameters,
+                    memory_manager, memory_allignment);
     case litert::ElementType::Bool:
       return Tensor(Tensor::ElementType::kBool,
-                    Tensor::Shape(tensor_shape_vector), memory_manager,
-                    memory_allignment);
+                    Tensor::Shape(tensor_shape_vector), quantization_parameters,
+                    memory_manager, memory_allignment);
     default:
       break;
   }
   return absl::InvalidArgumentError("Unsupported tensor type.");
+}
+
+Tensor::QuantizationParameters GetMpQuantizationParameters(
+    const litert::SimpleTensor& litert_tensor) {
+  if (litert_tensor.QTypeId() != litert::QuantizationTypeId::PerTensor) {
+    return Tensor::QuantizationParameters{};
+  }
+  const litert::QuantizationPerTensor q = litert_tensor.PerTensorQuantization();
+  return Tensor::QuantizationParameters{q.scale,
+                                        static_cast<int>(q.zero_point)};
 }
 
 absl::Status CopyMpTensorToLiteRtBuffer(const Tensor& mp_tensor,

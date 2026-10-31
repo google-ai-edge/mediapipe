@@ -168,5 +168,30 @@ TEST(CreateLiteRtEnvironmentTest, MissingRuntimeHandleFails) {
               StatusIs(absl::StatusCode::kInvalidArgument));
 }
 
+TEST(LiteRtUtilsTest, CreateTensorFromLiteRtRankedTensorTypeKeepsQuantization) {
+  litert::RankedTensorType litert_tensor_type(
+      litert::ElementType::UInt8, litert::Layout(litert::Dimensions{1, 4}));
+  MP_ASSERT_OK_AND_ASSIGN(
+      Tensor tensor,
+      CreateTensorFromLiteRtRankedTensorType(
+          litert_tensor_type, /*memory_manager=*/nullptr, /*alignment=*/0,
+          Tensor::QuantizationParameters{0.5f, 3}));
+  EXPECT_EQ(tensor.element_type(), Tensor::ElementType::kUInt8);
+  EXPECT_FLOAT_EQ(tensor.quantization_parameters().scale, 0.5f);
+  EXPECT_EQ(tensor.quantization_parameters().zero_point, 3);
+}
+
+TEST(LiteRtUtilsTest,
+     CreateTensorFromLiteRtRankedTensorTypeDefaultQuantization) {
+  litert::RankedTensorType litert_tensor_type(
+      litert::ElementType::Float32, litert::Layout(litert::Dimensions{1, 4}));
+  MP_ASSERT_OK_AND_ASSIGN(
+      Tensor tensor,
+      CreateTensorFromLiteRtRankedTensorType(
+          litert_tensor_type, /*memory_manager=*/nullptr, /*alignment=*/0));
+  EXPECT_FLOAT_EQ(tensor.quantization_parameters().scale, 1.0f);
+  EXPECT_EQ(tensor.quantization_parameters().zero_point, 0);
+}
+
 }  // namespace
 }  // namespace mediapipe

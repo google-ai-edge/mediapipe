@@ -1632,10 +1632,15 @@ InferenceRunnerLiteRt::CreateMpOutputTensors(
                           CreateOutputRankedTensorType(
                               model_tensor_type, output_tensor_layouts[i]));
 
+    // Attach the model's output quantization so that quantized outputs can be
+    // dequantized downstream, as with the legacy TFLite runners.
+    LITERT_ASSIGN_OR_RETURN(const litert::SimpleTensor& model_tensor,
+                            signature.OutputTensor(static_cast<size_t>(i)));
     ABSL_ASSIGN_OR_RETURN(
         Tensor mp_output_tensor,
         CreateTensorFromLiteRtRankedTensorType(
-            tensor_type, memory_manager_, LITERT_HOST_MEMORY_BUFFER_ALIGNMENT));
+            tensor_type, memory_manager_, LITERT_HOST_MEMORY_BUFFER_ALIGNMENT,
+            GetMpQuantizationParameters(model_tensor)));
     mp_output_tensors.push_back(std::move(mp_output_tensor));
   }
   return mp_output_tensors;
