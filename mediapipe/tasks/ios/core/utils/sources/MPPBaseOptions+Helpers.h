@@ -15,6 +15,8 @@
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #import "mediapipe/tasks/ios/core/sources/MPPBaseOptions.h"
 
+struct MpBaseOptions;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPBaseOptions (Helpers)
@@ -27,6 +29,17 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)copyToProto:(mediapipe::tasks::core::proto::BaseOptions *)baseOptionsProto
     withUseStreamMode:(BOOL)useStreamMode
         withUseLitert:(BOOL)useLitert;
+
+/**
+ * Copies the options to a C `MpBaseOptions` struct.
+ *
+ * This method heap-allocates C strings on `cBaseOptions`. Callers must release
+ * them via `+freeCOptions:` (or `MpBaseOptionsFree`).
+ */
+- (void)copyToCOptions:(struct MpBaseOptions *)cBaseOptions;
+
+/** Frees any memory allocated inside a C `MpBaseOptions` struct. */
++ (void)freeCOptions:(nullable struct MpBaseOptions *)cBaseOptions;
 
 @end
 
