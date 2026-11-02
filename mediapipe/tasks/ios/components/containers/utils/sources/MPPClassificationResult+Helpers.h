@@ -15,6 +15,9 @@
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 #import "mediapipe/tasks/ios/components/containers/sources/MPPClassificationResult.h"
 
+struct MpClassifications;
+struct MpClassificationResult;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPClassifications (Helpers)
@@ -29,6 +32,10 @@ NS_ASSUME_NONNULL_BEGIN
 + (MPPClassifications *)classificationsWithClassificationsProto:
     (const mediapipe::tasks::components::containers::proto::Classifications &)classificationsProto;
 
+/** Creates a new `MPPClassifications` object from the C API `MpClassifications` struct. */
++ (MPPClassifications *)classificationsWithCClassifications:
+    (const struct MpClassifications &)cClassifications;
+
 @end
 
 @interface MPPClassificationResult (Helpers)
@@ -36,6 +43,11 @@ NS_ASSUME_NONNULL_BEGIN
 + (MPPClassificationResult *)classificationResultWithProto:
     (const mediapipe::tasks::components::containers::proto::ClassificationResult &)
         classificationResultProto;
+
+/** Creates a new `MPPClassificationResult` object from the C API `MpClassificationResult` struct.
+ */
++ (MPPClassificationResult *)classificationResultWithCResult:
+    (const struct MpClassificationResult &)cResult;
 
 @end
 

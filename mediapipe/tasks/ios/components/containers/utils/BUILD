@@ -38,6 +38,8 @@ objc_library(
     hdrs = ["sources/MPPClassificationResult+Helpers.h"],
     deps = [
         ":MPPCategoryHelpers",
+        "//mediapipe/tasks/c/components/containers:category",
+        "//mediapipe/tasks/c/components/containers:classification_result",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
