@@ -15,21 +15,22 @@
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPCategory+Helpers.h"
 
-namespace {
-using ClassificationProto = ::mediapipe::Classification;
-}
+#include "mediapipe/tasks/c/components/containers/category.h"
 
 @implementation MPPCategory (Helpers)
 
-+ (MPPCategory *)categoryWithProto:(const ClassificationProto &)classificationProto
++ (MPPCategory *)categoryWithProto:(const ::mediapipe::Classification &)classificationProto {
+  return [MPPCategory categoryWithProto:classificationProto index:classificationProto.index()];
+}
+
++ (MPPCategory *)categoryWithProto:(const ::mediapipe::Classification &)classificationProto
                              index:(NSInteger)index {
   NSString *categoryName;
-  NSString *displayName;
-
   if (classificationProto.has_label()) {
     categoryName = [NSString stringWithCppString:classificationProto.label()];
   }
 
+  NSString *displayName;
   if (classificationProto.has_display_name()) {
     displayName = [NSString stringWithCppString:classificationProto.display_name()];
   }
@@ -40,8 +41,16 @@ using ClassificationProto = ::mediapipe::Classification;
                                 displayName:displayName];
 }
 
-+ (MPPCategory *)categoryWithProto:(const ClassificationProto &)classificationProto {
-  return [MPPCategory categoryWithProto:classificationProto index:classificationProto.index()];
++ (MPPCategory *)categoryWithCCategory:(const struct MpCategory &)cCategory {
+  NSString *categoryName =
+      cCategory.category_name ? [NSString stringWithUTF8String:cCategory.category_name] : nil;
+  NSString *displayName =
+      cCategory.display_name ? [NSString stringWithUTF8String:cCategory.display_name] : nil;
+
+  return [[MPPCategory alloc] initWithIndex:cCategory.index
+                                      score:cCategory.score
+                               categoryName:categoryName
+                                displayName:displayName];
 }
 
 @end

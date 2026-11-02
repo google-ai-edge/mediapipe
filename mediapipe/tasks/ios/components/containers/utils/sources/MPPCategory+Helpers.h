@@ -15,6 +15,8 @@
 #include "mediapipe/framework/formats/classification.pb.h"
 #import "mediapipe/tasks/ios/components/containers/sources/MPPCategory.h"
 
+struct MpCategory;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPCategory (Helpers)
@@ -42,6 +44,14 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (MPPCategory *)categoryWithProto:(const ::mediapipe::Classification &)classificationProto
                              index:(NSInteger)index;
+
+/**
+ * Creates an `MPPCategory` with the given C API `MpCategory` struct.
+ *
+ * @param cCategory A MediaPipe C API `MpCategory` struct.
+ * @return An `MPPCategory` object.
+ */
++ (MPPCategory *)categoryWithCCategory:(const struct MpCategory &)cCategory;
 
 @end
 

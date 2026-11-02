@@ -26,6 +26,7 @@ objc_library(
     hdrs = ["sources/MPPCategory+Helpers.h"],
     deps = [
         "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/tasks/c/components/containers:category",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/components/containers:MPPCategory",
     ],
