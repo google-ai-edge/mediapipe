@@ -257,45 +257,23 @@ describe('TextToSpeech', () => {
     );
   });
 
-  it('streams model buffer into Wasm heap with zero-copy pointers and frees on close', async () => {
-    const fakeHeap = new Uint8Array(1024);
-    let nextPtr = 64;
-    const mallocSpy = jasmine
-      .createSpy('_malloc')
-      .and.callFake((size: number) => {
-        const ptr = nextPtr;
-        nextPtr += size;
-        return ptr;
-      });
-    const freeSpy = jasmine.createSpy('_free');
-    const createFromBufferSpy = jasmine
-      .createSpy('createTextToSpeechFromBuffer')
-      .and.returnValue(Promise.resolve(88888));
-    const deleteSpy = jasmine.createSpy('deleteTextToSpeech');
-    const streamingModule: Record<string, unknown> = {
-      'HEAPU8': fakeHeap,
-      '_malloc': mallocSpy,
-      '_free': freeSpy,
-      'createTextToSpeechFromBuffer': createFromBufferSpy,
-      'deleteTextToSpeech': deleteSpy,
-      '_setAutoRenderToScreen': jasmine.createSpy('_setAutoRenderToScreen'),
-      '_closeGraph': jasmine.createSpy('_closeGraph'),
-    };
-    const streamingTts = new TextToSpeech(
-      streamingModule as unknown as WasmModule,
-      null,
-    );
+  it('writes a model buffer to the Wasm filesystem and loads it by path', async () => {
     const modelBytes = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
-    await streamingTts.setOptions({
-      baseOptions: {
-        modelAssetBuffer: modelBytes,
-      },
+    const bufferTts = await TextToSpeechFake.create({
+      baseOptions: {modelAssetBuffer: modelBytes},
       defaultVoiceId: 'af_heart',
     });
-    expect(mallocSpy).toHaveBeenCalledWith(8);
-    expect(createFromBufferSpy).toHaveBeenCalledWith(
-      64,
-      8,
+    const module = bufferTts.mockModule;
+    expect(module['FS_createDataFile']).toHaveBeenCalledWith(
+      '/',
+      'model.litertlm',
+      modelBytes,
+      true,
+      false,
+      false,
+    );
+    expect(module['createTextToSpeech']).toHaveBeenCalledWith(
+      '/model.litertlm',
       -1,
       'af_heart',
       '',
@@ -303,43 +281,34 @@ describe('TextToSpeech', () => {
       0,
       '',
     );
-    expect(Array.from(fakeHeap.slice(64, 72))).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8,
-    ]);
-
-    streamingTts.close();
-    expect(deleteSpy).toHaveBeenCalledWith(88888);
-    expect(freeSpy).toHaveBeenCalledWith(64);
+    bufferTts.close();
   });
 
-  it('frees model buffer if creation from buffer fails', async () => {
-    const fakeHeap = new Uint8Array(1024);
-    const mallocSpy = jasmine.createSpy('_malloc').and.returnValue(128);
-    const freeSpy = jasmine.createSpy('_free');
-    const failingCreateFromBufferSpy = jasmine
-      .createSpy('createTextToSpeechFromBuffer')
-      .and.rejectWith(new Error('Wasm init error'));
-    const streamingModule: Record<string, unknown> = {
-      'HEAPU8': fakeHeap,
-      '_malloc': mallocSpy,
-      '_free': freeSpy,
-      'createTextToSpeechFromBuffer': failingCreateFromBufferSpy,
-      '_setAutoRenderToScreen': jasmine.createSpy('_setAutoRenderToScreen'),
-      '_closeGraph': jasmine.createSpy('_closeGraph'),
-    };
-    const streamingTts = new TextToSpeech(
-      streamingModule as unknown as WasmModule,
-      null,
+  it('reads a model stream into the Wasm filesystem before creation', async () => {
+    const modelBytes = new Uint8Array([1, 2, 3, 4, 5, 6]);
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(modelBytes.subarray(0, 4));
+        controller.enqueue(modelBytes.subarray(4));
+        controller.close();
+      },
+    });
+    const streamTts = await TextToSpeechFake.create({
+      baseOptions: {modelAssetBuffer: stream.getReader()},
+    });
+    const module = streamTts.mockModule;
+    expect(module['FS_createDataFile']).toHaveBeenCalledWith(
+      '/',
+      'model.litertlm',
+      modelBytes,
+      true,
+      false,
+      false,
     );
-    await expectAsync(
-      streamingTts.setOptions({
-        baseOptions: {
-          modelAssetBuffer: new Uint8Array([1, 2, 3, 4]),
-        },
-      }),
-    ).toBeRejectedWithError('Wasm init error');
-    expect(freeSpy).toHaveBeenCalledWith(128);
-    streamingTts.close();
+    expect(module['FS_createDataFile']).toHaveBeenCalledBefore(
+      module['createTextToSpeech'],
+    );
+    streamTts.close();
   });
 
   it('logs invocations and session lifecycle with TaskLogger', async () => {

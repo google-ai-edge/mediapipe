@@ -43,14 +43,12 @@ export type {
 };
 
 /**
- * `delegate` value passed to `createTextToSpeech` /
- * `createTextToSpeechFromBuffer` to select `MP_DELEGATE_CPU`.
+ * `delegate` value passed to `createTextToSpeech` to select `MP_DELEGATE_CPU`.
  */
 const CPU_DELEGATE_TYPE = -1;
 
 /**
- * `delegate` value passed to `createTextToSpeech` /
- * `createTextToSpeechFromBuffer` to select `MP_DELEGATE_GPU`.
+ * `delegate` value passed to `createTextToSpeech` to select `MP_DELEGATE_GPU`.
  */
 const GPU_DELEGATE_TYPE = 0;
 
@@ -60,17 +58,6 @@ const GPU_DELEGATE_TYPE = 0;
 declare interface TextToSpeechWasmModule {
   createTextToSpeech(
     modelPath: string,
-    delegate: number,
-    defaultVoiceId: string,
-    defaultLocale: string,
-    speakingRate: number,
-    targetBucket: number,
-    cacheDirectory: string,
-  ): Promise<number>;
-
-  createTextToSpeechFromBuffer?(
-    modelPtr: number,
-    modelSize: number,
     delegate: number,
     defaultVoiceId: string,
     defaultLocale: string,
@@ -236,8 +223,6 @@ export class TextToSpeech extends TaskRunner {
   private targetBucket = 0;
   private cacheDirectory = '';
   private ttsPtr = 0;
-  private modelWasmPtr = 0;
-  private modelWasmRawPtr = 0;
   private isClosed = false;
   private loggerTimestamp = 0;
   private invocationQueue: Promise<unknown> = Promise.resolve();
@@ -357,113 +342,6 @@ export class TextToSpeech extends TaskRunner {
       () => {},
     );
     return next;
-  }
-
-  private allocateAlignedWasmBuffer(size: number): {
-    ptr: number;
-    rawPtr: number;
-  } {
-    const rawWasm = this.graphRunner.wasmModule;
-    if (size < 64) {
-      const rawPtr = rawWasm._malloc(size) >>> 0;
-      if (!rawPtr) {
-        throw new Error(`Failed to allocate ${size} bytes on Wasm heap.`);
-      }
-      return {ptr: rawPtr, rawPtr};
-    }
-    const rawPtr = rawWasm._malloc(size + 64) >>> 0;
-    if (!rawPtr) {
-      throw new Error(`Failed to allocate ${size} bytes on Wasm heap.`);
-    }
-    const ptr = ((rawPtr + 63) & ~63) >>> 0;
-    return {ptr, rawPtr};
-  }
-
-  private async streamAssetToWasmHeap(
-    assetPath?: string | string,
-    assetBuffer?: Uint8Array | ReadableStreamDefaultReader,
-    knownSize?: number,
-  ): Promise<{ptr: number; rawPtr: number; size: number}> {
-    const rawWasm = this.graphRunner.wasmModule;
-    if (assetBuffer instanceof Uint8Array) {
-      const size = assetBuffer.byteLength;
-      if (size === 0) return {ptr: 0, rawPtr: 0, size: 0};
-      const {ptr, rawPtr} = this.allocateAlignedWasmBuffer(size);
-      rawWasm.HEAPU8.set(assetBuffer, ptr);
-      return {ptr, rawPtr, size};
-    }
-
-    let reader: ReadableStreamDefaultReader | undefined = assetBuffer;
-    let expectedSize = knownSize && knownSize > 0 ? knownSize : 0;
-
-    if (!reader && assetPath) {
-      const urlStr = assetPath.toString();
-      const response = await fetch(urlStr);
-      if (!response.ok || !response.body) {
-        throw new Error(
-          `Failed to fetch asset: ${urlStr} (${response.status})`,
-        );
-      }
-      const headerLen = Number(response.headers.get('content-length') || 0);
-      if (headerLen > 0) {
-        expectedSize = headerLen;
-      }
-      reader = response.body.getReader();
-    }
-
-    if (!reader) {
-      return {ptr: 0, rawPtr: 0, size: 0};
-    }
-
-    if (expectedSize > 0) {
-      const {ptr, rawPtr} = this.allocateAlignedWasmBuffer(expectedSize);
-      let offset = 0;
-      try {
-        while (true) {
-          const {value, done} = await reader.read();
-          if (done) break;
-          if (value && value.byteLength > 0) {
-            const chunkLen = Number(value.byteLength);
-            if (offset + chunkLen > expectedSize) {
-              throw new Error(
-                `Stream exceeded expected content-length (${expectedSize} bytes).`,
-              );
-            }
-            rawWasm.HEAPU8.set(value, (ptr + offset) >>> 0);
-            offset += chunkLen;
-          }
-        }
-      } catch (e) {
-        rawWasm._free(rawPtr);
-        throw e;
-      }
-      return {ptr, rawPtr, size: offset};
-    }
-
-    const chunks: Array<Uint8Array | undefined> = [];
-    let totalSize = 0;
-    while (true) {
-      const {value, done} = await reader.read();
-      if (done) break;
-      if (value && value.byteLength > 0) {
-        chunks.push(value);
-        totalSize += Number(value.byteLength);
-      }
-    }
-    if (totalSize === 0) {
-      return {ptr: 0, rawPtr: 0, size: 0};
-    }
-    const {ptr, rawPtr} = this.allocateAlignedWasmBuffer(totalSize);
-    let offset = 0;
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
-      if (chunk) {
-        rawWasm.HEAPU8.set(chunk, (ptr + offset) >>> 0);
-        offset += chunk.byteLength;
-        chunks[i] = undefined;
-      }
-    }
-    return {ptr, rawPtr, size: totalSize};
   }
 
   /**
@@ -608,52 +486,15 @@ export class TextToSpeech extends TaskRunner {
 
     const wasmModule = this.graphRunner
       .wasmModule as unknown as TextToSpeechWasmModule;
-    const rawWasm = this.graphRunner.wasmModule;
 
     const loadModel =
       !!options.baseOptions &&
       (!!options.baseOptions.modelAssetPath ||
         !!options.baseOptions.modelAssetBuffer);
 
-    if (
-      loadModel &&
-      typeof wasmModule.createTextToSpeechFromBuffer === 'function' &&
-      typeof rawWasm._malloc === 'function'
-    ) {
-      const modelAlloc = await this.streamAssetToWasmHeap(
-        options.baseOptions?.modelAssetPath,
-        options.baseOptions?.modelAssetBuffer,
-        options.modelAssetSize,
-      );
-      this.modelWasmPtr = modelAlloc.ptr;
-      this.modelWasmRawPtr = modelAlloc.rawPtr;
-
-      try {
-        this.ttsPtr = await wasmModule.createTextToSpeechFromBuffer(
-          this.modelWasmPtr,
-          modelAlloc.size,
-          this.delegateType,
-          this.defaultVoiceId,
-          this.defaultLocale,
-          this.speakingRate,
-          this.targetBucket,
-          this.cacheDirectory,
-        );
-      } catch (e) {
-        const freePtr = this.modelWasmRawPtr || this.modelWasmPtr;
-        if (freePtr !== 0) {
-          try {
-            rawWasm._free(freePtr);
-          } catch {}
-          this.modelWasmPtr = 0;
-          this.modelWasmRawPtr = 0;
-        }
-        throw e;
-      }
-      this.logger?.logSessionStart();
-      return;
-    }
-
+    // The native TextToSpeech only loads models from a file path, so the
+    // model is written to the Wasm virtual filesystem (as for TextSummarizer
+    // and UniversalEmbedder) rather than passed as an in-memory buffer.
     await this.applyOptions(
       options,
       /* loadTfliteModel= */ loadModel,
@@ -785,14 +626,6 @@ export class TextToSpeech extends TaskRunner {
         wasmModule.deleteTextToSpeech(this.ttsPtr);
       } catch {}
       this.ttsPtr = 0;
-    }
-    const modelFreePtr = this.modelWasmRawPtr || this.modelWasmPtr;
-    if (modelFreePtr !== 0) {
-      try {
-        rawWasm._free(modelFreePtr);
-      } catch {}
-      this.modelWasmPtr = 0;
-      this.modelWasmRawPtr = 0;
     }
     super.close();
     if (rawWasm && !recycledWasmModules.includes(rawWasm)) {

@@ -61,8 +61,10 @@ export declare interface TextToSpeechOptions extends TaskRunnerOptions {
 
   /**
    * Optional byte length of `baseOptions.modelAssetBuffer` when provided as a
-   * `ReadableStreamDefaultReader`, enabling single-pass zero-copy streaming
-   * allocation directly in the Wasm heap.
+   * `ReadableStreamDefaultReader`.
+   *
+   * @deprecated Unused: the model is always written to the Wasm virtual
+   *     filesystem, which the native TextToSpeech requires.
    */
   modelAssetSize?: number;
 }
