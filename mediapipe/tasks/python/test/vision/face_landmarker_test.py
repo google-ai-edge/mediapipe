@@ -405,6 +405,22 @@ class FaceLandmarkerTest(parameterized.TestCase):
       ):
         landmarker.detect_for_video(self.test_image, 0)
 
+  def test_reset_allows_new_video_after_reset(self):
+    options = _FaceLandmarkerOptions(
+        base_options=_BaseOptions(model_asset_path=self.model_path),
+        running_mode=_RUNNING_MODE.VIDEO,
+    )
+    with _FaceLandmarker.create_from_options(options) as landmarker:
+      unused_result = landmarker.detect_for_video(self.test_image, 1)
+      with self.assertRaisesRegex(
+          ValueError, r'Input timestamp must be monotonically increasing'
+      ):
+        landmarker.detect_for_video(self.test_image, 0)
+
+      landmarker.reset()
+      reset_result = landmarker.detect_for_video(self.test_image, 0)
+      self.assertIsInstance(reset_result, FaceLandmarkerResult)
+
   @parameterized.parameters(
       (
           _FACE_LANDMARKER_BUNDLE_ASSET_FILE,

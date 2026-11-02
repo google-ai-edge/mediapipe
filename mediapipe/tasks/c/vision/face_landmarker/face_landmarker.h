@@ -173,6 +173,18 @@ MP_EXPORT void MpFaceLandmarkerCloseResult(MpFaceLandmarkerResult* result);
 MP_EXPORT MpStatus MpFaceLandmarkerClose(MpFaceLandmarkerPtr landmarker,
                                          char** error_msg);
 
+// Resets the FaceLandmarker so it can process a new video or live stream
+// starting at any timestamp. Restarts the underlying graph (clearing tracker
+// state and the monotonic timestamp clock) without reloading the model.
+// Only needed in VIDEO or LIVE_STREAM running mode.
+//
+// Returns `kMpOk` on success. To obtain a detailed error, error_msg must be
+// non-null pointer to a char*, which will be populated with a newly-allocated
+// error message upon failure. It's the caller responsibility to free the error
+// message with MpErrorFree().
+MP_EXPORT MpStatus MpFaceLandmarkerReset(MpFaceLandmarkerPtr landmarker,
+                                         char** error_msg);
+
 #ifdef __cplusplus
 }  // extern C
 #endif
