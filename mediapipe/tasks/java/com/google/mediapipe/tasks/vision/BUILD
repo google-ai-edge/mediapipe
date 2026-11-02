@@ -40,13 +40,6 @@ android_library(
     ],
 )
 
-# Expose the java source files for building mediapipe tasks vision per task AAR.
-filegroup(
-    name = "core_java_src",
-    srcs = glob(["core/**/*.java"]),
-    visibility = ["//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:__subpackages__"],
-)
-
 android_library(
     name = "objectdetector",
     manifest = "objectdetector/AndroidManifest.xml",
@@ -221,13 +214,6 @@ android_library(
     ],
 )
 
-# Expose the java source files for building mediapipe tasks vision per task AAR.
-filegroup(
-    name = "image_segmenter_java_src",
-    srcs = glob(["imagesegmenter/**/*.java"]),
-    visibility = ["//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:__subpackages__"],
-)
-
 android_library(
     name = "interactivesegmenterlegacy",
     srcs = [
@@ -364,13 +350,6 @@ android_library(
     ],
 )
 
-# Expose the java source files for building mediapipe tasks vision per task AAR.
-filegroup(
-    name = "face_landmarker_java_src",
-    srcs = glob(["facelandmarker/**/*.java"]),
-    visibility = ["//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:__subpackages__"],
-)
-
 android_library(
     name = "holisticlandmarker",
     srcs = [
@@ -410,9 +389,6 @@ android_library(
     name = "tasks_vision_aar_library",
     srcs = glob(
         ["**/*.java"],
-        exclude = [
-            "imagegenerator/**",
-        ],
     ),
     manifest = "AndroidManifest.xml",
     deps = [
