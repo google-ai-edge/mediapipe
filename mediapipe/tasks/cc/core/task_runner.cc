@@ -26,7 +26,6 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/status_macros.h"
@@ -37,6 +36,8 @@ limitations under the License.
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/executor.h"
+#include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/memory_manager_service.h"
 #include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/logging/factory/logging_factory.h"
@@ -115,7 +116,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> TaskRunner::Create(
       std::move(options.config), std::move(options.op_resolver),
       std::move(options.default_executor),
       std::move(options.input_side_packets), std::move(options.error_fn),
-      options.disable_default_service));
+      options.disable_default_service, std::move(options.memory_manager)));
 
 #if !MEDIAPIPE_DISABLE_GPU
   if (options.resources) {
@@ -133,7 +134,8 @@ absl::Status TaskRunner::Initialize(
     std::unique_ptr<tflite::OpResolver> op_resolver,
     std::shared_ptr<Executor> default_executor,
     std::optional<PacketMap> input_side_packets,
-    std::optional<ErrorFn> error_fn, bool disable_default_service) {
+    std::optional<ErrorFn> error_fn, bool disable_default_service,
+    std::shared_ptr<::mediapipe::MemoryManager> memory_manager) {
   if (initialized_) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
@@ -200,6 +202,13 @@ absl::Status TaskRunner::Initialize(
                                          model_resources_cache),
                  "ModelResourcesCacheService is not set up successfully.",
                  MediaPipeTasksStatus::kRunnerModelResourcesCacheServiceError));
+  if (memory_manager) {
+    ABSL_RETURN_IF_ERROR(
+        AddPayload(graph_.SetServiceObject(kMemoryManagerService,
+                                           std::move(memory_manager)),
+                   "MemoryManagerService is not set up successfully.",
+                   MediaPipeTasksStatus::kRunnerInitializationError));
+  }
   ABSL_RETURN_IF_ERROR(
       AddPayload(graph_.Initialize(std::move(config), *input_side_packets),
                  "MediaPipe CalculatorGraph is not successfully initialized.",

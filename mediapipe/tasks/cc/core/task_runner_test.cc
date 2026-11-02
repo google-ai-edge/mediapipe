@@ -21,11 +21,14 @@ limitations under the License.
 #include <memory>
 #include <string>
 #include <thread>
-#include <utility>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/substitute.h"
+#include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/graph_service.h"
+#include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/memory_manager_service.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
@@ -38,6 +41,16 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace core {
+
+class TaskRunnerTestPeer {
+ public:
+  template <typename T>
+  static std::shared_ptr<T> GetServiceObject(TaskRunner& runner,
+                                             const GraphService<T>& service) {
+    return runner.graph_.GetServiceObject(service);
+  }
+};
+
 namespace {
 
 constexpr char kTaskName[] = "test_task";
@@ -77,6 +90,50 @@ CalculatorGraphConfig GetErrorCalculatorGraphConfig() {
         output_stream: "out"
         node {
           calculator: "ErrorCalculator"
+          input_stream: "in"
+          output_stream: "out"
+        })pb");
+}
+
+// Outputs the MemoryManager* observed from kMemoryManagerService (or nullptr
+// when the service is unavailable).
+class MemoryManagerCheckCalculator : public CalculatorBase {
+ public:
+  static absl::Status GetContract(CalculatorContract* cc) {
+    cc->Inputs().Index(0).SetAny();
+    cc->Outputs().Index(0).Set<const MemoryManager*>();
+    cc->UseService(kMemoryManagerService).Optional();
+    return absl::OkStatus();
+  }
+
+  absl::Status Open(CalculatorContext* cc) final {
+    if (cc->Service(kMemoryManagerService).IsAvailable()) {
+      memory_manager_ = &cc->Service(kMemoryManagerService).GetObject();
+    } else {
+      memory_manager_ = nullptr;
+    }
+    return absl::OkStatus();
+  }
+
+  absl::Status Process(CalculatorContext* cc) final {
+    cc->Outputs().Index(0).AddPacket(
+        MakePacket<const MemoryManager*>(memory_manager_)
+            .At(cc->InputTimestamp()));
+    return absl::OkStatus();
+  }
+
+ private:
+  const MemoryManager* memory_manager_ = nullptr;
+};
+REGISTER_CALCULATOR(MemoryManagerCheckCalculator);
+
+CalculatorGraphConfig GetMemoryManagerCheckGraphConfig() {
+  return ParseTextProtoOrDie<CalculatorGraphConfig>(
+      R"pb(
+        input_stream: "in"
+        output_stream: "out"
+        node {
+          calculator: "MemoryManagerCheckCalculator"
           input_stream: "in"
           output_stream: "out"
         })pb");
@@ -330,6 +387,60 @@ TEST_F(TaskRunnerTest, ReportErrorInAsyncAPICall) {
   ASSERT_FALSE(status.ok());
   ASSERT_THAT(status.message(),
               testing::HasSubstr("An intended error for testing"));
+}
+
+TEST_F(TaskRunnerTest, MemoryManagerServiceUnavailableByDefault) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner,
+      TaskRunner::Create({.config = GetMemoryManagerCheckGraphConfig(),
+                          .task_name = kTaskName,
+                          .task_running_mode = kRunningMode}));
+  EXPECT_EQ(
+      TaskRunnerTestPeer::GetServiceObject(*runner, kMemoryManagerService),
+      nullptr);
+  MP_ASSERT_OK_AND_ASSIGN(auto result,
+                          runner->Process({{"in", MakePacket<int>(0)}}));
+  EXPECT_EQ(result["out"].Get<const MemoryManager*>(), nullptr);
+  MP_ASSERT_OK(runner->Close());
+}
+
+TEST_F(TaskRunnerTest, MemoryManagerServiceRegisteredWhenConfigured) {
+  auto memory_manager = std::make_shared<MemoryManager>();
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner,
+      TaskRunner::Create({.config = GetMemoryManagerCheckGraphConfig(),
+                          .task_name = kTaskName,
+                          .task_running_mode = kRunningMode,
+                          .memory_manager = memory_manager}));
+  EXPECT_EQ(
+      TaskRunnerTestPeer::GetServiceObject(*runner, kMemoryManagerService),
+      memory_manager);
+  MP_ASSERT_OK_AND_ASSIGN(auto result,
+                          runner->Process({{"in", MakePacket<int>(0)}}));
+  EXPECT_EQ(result["out"].Get<const MemoryManager*>(), memory_manager.get());
+
+  MP_ASSERT_OK(runner->Restart());
+  MP_ASSERT_OK_AND_ASSIGN(auto result_after_restart,
+                          runner->Process({{"in", MakePacket<int>(1)}}));
+  EXPECT_EQ(result_after_restart["out"].Get<const MemoryManager*>(),
+            memory_manager.get());
+  MP_ASSERT_OK(runner->Close());
+}
+
+TEST_F(TaskRunnerTest,
+       MemoryManagerServiceAvailableWhenDefaultServicesDisabled) {
+  auto memory_manager = std::make_shared<MemoryManager>();
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner,
+      TaskRunner::Create({.config = GetMemoryManagerCheckGraphConfig(),
+                          .task_name = kTaskName,
+                          .task_running_mode = kRunningMode,
+                          .memory_manager = memory_manager,
+                          .disable_default_service = true}));
+  MP_ASSERT_OK_AND_ASSIGN(auto result,
+                          runner->Process({{"in", MakePacket<int>(0)}}));
+  EXPECT_EQ(result["out"].Get<const MemoryManager*>(), memory_manager.get());
+  MP_ASSERT_OK(runner->Close());
 }
 
 }  // namespace core

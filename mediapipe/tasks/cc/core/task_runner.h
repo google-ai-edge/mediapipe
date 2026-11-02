@@ -36,6 +36,7 @@ limitations under the License.
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/executor.h"
+#include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/tasks/cc/core/host_environment.h"
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "mediapipe/tasks/cc/core/running_mode.h"
@@ -49,6 +50,8 @@ class GpuResources;
 
 namespace tasks {
 namespace core {
+
+class TaskRunnerTestPeer;
 
 using ErrorFn = std::function<void(absl::Status)>;
 
@@ -70,6 +73,15 @@ struct TaskRunnerOptions {
 #if !MEDIAPIPE_DISABLE_GPU
   std::shared_ptr<::mediapipe::GpuResources> resources = nullptr;
 #endif
+  // Optional shared MemoryManager registered as `kMemoryManagerService` on
+  // the underlying CalculatorGraph before initialization (and therefore
+  // inherited by subgraphs and nested CalculatorGraph(CalculatorContext*)
+  // runners). Ownership is shared with the graph; callers may pass the same
+  // instance to multiple TaskRunner instances to share pools. If nullptr,
+  // `kMemoryManagerService` is left unset (no default initialization). On
+  // platforms without Android Hardware Buffer support, MemoryManager is a
+  // lightweight no-op wrapper.
+  std::shared_ptr<::mediapipe::MemoryManager> memory_manager;
   std::optional<ErrorFn> error_fn = std::nullopt;
   bool disable_default_service = false;
   core::HostEnvironment host_environment =
@@ -144,6 +156,8 @@ class TaskRunner {
   const CalculatorGraphConfig& GetGraphConfig() { return graph_.Config(); }
 
  private:
+  friend class ::mediapipe::tasks::core::TaskRunnerTestPeer;
+
   // Constructor.
   // Creates a TaskRunner instance with an optional PacketsCallback method.
   explicit TaskRunner(PacketsCallback packets_callback,
@@ -161,7 +175,8 @@ class TaskRunner {
       std::shared_ptr<Executor> default_executor = nullptr,
       std::optional<PacketMap> input_side_packets = std::nullopt,
       std::optional<ErrorFn> error_fn = std::nullopt,
-      bool disable_default_service = false);
+      bool disable_default_service = false,
+      std::shared_ptr<::mediapipe::MemoryManager> memory_manager = nullptr);
 
   // Starts the task runner. Returns an ok status to indicate that the
   // runner is ready to accept input data. Otherwise, returns an error status to
