@@ -20,7 +20,7 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "absl/strings/string_view.h"
+#include "absl/strings/string_view.h"  // from @com_google_absl
 
 namespace mediapipe {
 namespace tasks {

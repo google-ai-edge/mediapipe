@@ -19,8 +19,8 @@
 #include <string>
 #include <type_traits>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"    // from @com_google_absl
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/internal/contract_fields.h"
 #include "mediapipe/framework/api3/internal/contract_to_tuple.h"

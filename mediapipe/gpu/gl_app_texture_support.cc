@@ -17,9 +17,9 @@
 #include <memory>
 #include <utility>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/status/statusor.h"       // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/port/ret_check.h"

@@ -15,8 +15,8 @@
 #ifndef MEDIAPIPE_RECTANGLE_UTIL_H_
 #define MEDIAPIPE_RECTANGLE_UTIL_H_
 
-#include "absl/status/statusor.h"
-#include "absl/types/span.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
+#include "absl/types/span.h"       // from @com_google_absl
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/rectangle.h"
 

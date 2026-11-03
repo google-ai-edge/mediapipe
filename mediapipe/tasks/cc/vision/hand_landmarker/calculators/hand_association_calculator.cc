@@ -19,9 +19,9 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
+#include "absl/log/absl_check.h"        // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
 #include "mediapipe/framework/api3/calculator.h"
 #include "mediapipe/framework/api3/calculator_context.h"
 #include "mediapipe/framework/formats/rect.pb.h"

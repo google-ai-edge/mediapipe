@@ -15,12 +15,12 @@
 #ifndef MEDIAPIPE_DEPS_RET_CHECK_H_
 #define MEDIAPIPE_DEPS_RET_CHECK_H_
 
-#include "absl/base/optimization.h"
-#include "absl/status/status.h"
-#include "absl/status/status_builder.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
-#include "absl/types/source_location.h"
+#include "absl/base/optimization.h"      // from @com_google_absl
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/status/status_builder.h"  // from @com_google_absl
+#include "absl/status/status_macros.h"   // from @com_google_absl
+#include "absl/status/statusor.h"        // from @com_google_absl
+#include "absl/types/source_location.h"  // from @com_google_absl
 
 namespace mediapipe {
 // Returns a Status given a Status or StatusOr.

@@ -15,8 +15,8 @@
 #ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_CALCULATORS_SCORE_CALIBRATION_UTILS_H_
 #define MEDIAPIPE_TASKS_CC_COMPONENTS_CALCULATORS_SCORE_CALIBRATION_UTILS_H_
 
-#include "absl/status/status.h"
-#include "absl/strings/string_view.h"
+#include "absl/status/status.h"        // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/tasks/cc/components/calculators/score_calibration_calculator.pb.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
 

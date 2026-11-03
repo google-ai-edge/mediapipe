@@ -21,14 +21,14 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/cleanup/cleanup.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_format.h"
-#include "absl/synchronization/notification.h"
-#include "absl/time/clock.h"
-#include "absl/time/time.h"
+#include "absl/cleanup/cleanup.h"               // from @com_google_absl
+#include "absl/status/status.h"                 // from @com_google_absl
+#include "absl/status/status_macros.h"          // from @com_google_absl
+#include "absl/status/statusor.h"               // from @com_google_absl
+#include "absl/strings/str_format.h"            // from @com_google_absl
+#include "absl/synchronization/notification.h"  // from @com_google_absl
+#include "absl/time/clock.h"                    // from @com_google_absl
+#include "absl/time/time.h"                     // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/packet.h"

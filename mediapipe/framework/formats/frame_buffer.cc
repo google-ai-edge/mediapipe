@@ -15,8 +15,8 @@ limitations under the License.
 
 #include "mediapipe/framework/formats/frame_buffer.h"
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
 
 namespace mediapipe {
 

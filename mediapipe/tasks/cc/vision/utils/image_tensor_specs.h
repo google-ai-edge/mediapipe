@@ -18,8 +18,8 @@ limitations under the License.
 
 #include <array>
 
-#include "absl/status/statusor.h"
-#include "absl/types/optional.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
+#include "absl/types/optional.h"   // from @com_google_absl
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"

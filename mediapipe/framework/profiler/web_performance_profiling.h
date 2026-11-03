@@ -4,7 +4,7 @@
 #if MEDIAPIPE_WEB_PROFILING_ENABLED && __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 
-#include "absl/strings/str_cat.h"
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 
 // This records MediaPipe profiling events in the browser's performance trace.
 // To use, build with:

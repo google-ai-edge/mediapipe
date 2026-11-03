@@ -23,9 +23,9 @@
 #include <algorithm>
 #include <utility>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/strings/str_cat.h"
+#include "absl/log/absl_check.h"   // from @com_google_absl
+#include "absl/log/absl_log.h"     // from @com_google_absl
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/port/aligned_malloc_and_free.h"
 #include "mediapipe/framework/port/proto_ns.h"

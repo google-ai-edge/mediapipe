@@ -34,9 +34,9 @@
 #include <utility>
 #include <vector>
 
-#include "absl/base/attributes.h"
-#include "absl/container/flat_hash_map.h"
-#include "absl/status/status.h"
+#include "absl/base/attributes.h"          // from @com_google_absl
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
 #include "mediapipe/framework/calculator_base.h"
 
 namespace mediapipe {

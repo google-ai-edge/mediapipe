@@ -16,15 +16,15 @@
 
 #include <memory>
 
-#include "absl/status/status.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 
 #ifdef __ANDROID__
 #include <android/native_window_jni.h>
 #endif  // __ANDROID__
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"    // from @com_google_absl
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/gpu/egl_surface_holder.h"
 #include "mediapipe/gpu/gl_base.h"

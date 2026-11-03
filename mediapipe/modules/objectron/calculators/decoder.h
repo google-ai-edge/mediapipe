@@ -17,8 +17,8 @@
 
 #include <vector>
 
-#include "Eigen/Dense"  // from @eigen
-#include "absl/status/status.h"
+#include "Eigen/Dense"           // from @eigen
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
 #include "mediapipe/modules/objectron/calculators/belief_decoder_config.pb.h"

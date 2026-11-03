@@ -14,8 +14,8 @@
 
 #include <cstdint>
 
-#include "absl/status/status.h"
-#include "absl/strings/str_replace.h"
+#include "absl/status/status.h"        // from @com_google_absl
+#include "absl/strings/str_replace.h"  // from @com_google_absl
 #include "google/protobuf/text_format.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session_from_saved_model_calculator.pb.h"

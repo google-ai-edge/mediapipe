@@ -17,9 +17,9 @@
 #include <jni.h>
 #include <pthread.h>
 
-#include "absl/container/flat_hash_map.h"
-#include "absl/log/absl_log.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
 #include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
 
 namespace {

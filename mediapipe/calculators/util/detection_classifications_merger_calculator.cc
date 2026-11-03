@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/substitute.h"
+#include "absl/status/status.h"       // from @com_google_absl
+#include "absl/status/statusor.h"     // from @com_google_absl
+#include "absl/strings/substitute.h"  // from @com_google_absl
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/classification.pb.h"

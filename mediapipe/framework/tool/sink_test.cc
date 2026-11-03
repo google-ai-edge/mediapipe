@@ -20,10 +20,10 @@
 #include <utility>
 #include <vector>
 
-#include "absl/functional/bind_front.h"
-#include "absl/log/log.h"
-#include "absl/status/status.h"
-#include "absl/strings/string_view.h"
+#include "absl/functional/bind_front.h"  // from @com_google_absl
+#include "absl/log/log.h"                // from @com_google_absl
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/strings/string_view.h"    // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/port/gmock.h"

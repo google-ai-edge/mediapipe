@@ -17,9 +17,9 @@
 
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/types/span.h"
+#include "absl/status/status.h"                    // from @com_google_absl
+#include "absl/status/statusor.h"                  // from @com_google_absl
+#include "absl/types/span.h"                       // from @com_google_absl
 #include "litert/cc/litert_environment.h"          // from @litert
 #include "litert/cc/litert_environment_options.h"  // from @litert
 #include "litert/cc/litert_model_types.h"          // from @litert

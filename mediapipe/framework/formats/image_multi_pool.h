@@ -26,7 +26,7 @@
 #include <limits>
 #include <unordered_map>
 
-#include "absl/synchronization/mutex.h"
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame_pool.h"
 

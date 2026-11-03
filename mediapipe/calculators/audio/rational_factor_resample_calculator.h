@@ -20,8 +20,8 @@
 #include <memory>
 #include <vector>
 
-#include "Eigen/Core"  // from @eigen
-#include "absl/strings/str_cat.h"
+#include "Eigen/Core"              // from @eigen
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 #include "audio/dsp/resampler.h"
 #include "mediapipe/calculators/audio/rational_factor_resample_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"

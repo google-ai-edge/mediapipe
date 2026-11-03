@@ -15,7 +15,7 @@
 
 #include <algorithm>
 
-#include "absl/log/absl_check.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"

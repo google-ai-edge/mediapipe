@@ -18,11 +18,11 @@
 #include <memory>
 #include <utility>
 
-#include "absl/flags/flag.h"
-#include "absl/flags/parse.h"
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
+#include "absl/flags/flag.h"            // from @com_google_absl
+#include "absl/flags/parse.h"           // from @com_google_absl
+#include "absl/log/absl_log.h"          // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"

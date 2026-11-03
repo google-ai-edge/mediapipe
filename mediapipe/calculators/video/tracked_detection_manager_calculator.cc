@@ -17,8 +17,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "absl/container/node_hash_map.h"
-#include "absl/status/status.h"
+#include "absl/container/node_hash_map.h"  // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
 #include "mediapipe/calculators/video/tracked_detection_manager_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/detection.pb.h"

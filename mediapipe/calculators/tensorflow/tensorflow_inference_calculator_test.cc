@@ -17,9 +17,9 @@
 #include <string>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"    // from @com_google_absl
+#include "absl/status/status.h"   // from @com_google_absl
 #include "mediapipe/calculators/tensorflow/tensorflow_inference_calculator.pb.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session_from_frozen_graph_generator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"

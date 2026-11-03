@@ -18,8 +18,8 @@
 #include <utility>
 #include <vector>
 
-#include "absl/strings/match.h"
-#include "absl/strings/str_cat.h"
+#include "absl/strings/match.h"    // from @com_google_absl
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensors_to_detections_calculator.pb.h"

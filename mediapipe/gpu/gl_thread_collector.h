@@ -22,10 +22,10 @@
 #endif
 
 #if MEDIAPIPE_NEEDS_GL_THREAD_COLLECTOR
-#include "absl/base/thread_annotations.h"
-#include "absl/log/absl_log.h"
-#include "absl/synchronization/mutex.h"
-#include "absl/time/time.h"
+#include "absl/base/thread_annotations.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
+#include "absl/time/time.h"                // from @com_google_absl
 #include "mediapipe/framework/deps/no_destructor.h"
 #endif  // MEDIAPIPE_NEEDS_GL_THREAD_COLLECTOR
 

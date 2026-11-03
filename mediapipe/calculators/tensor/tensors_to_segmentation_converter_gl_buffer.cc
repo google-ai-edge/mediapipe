@@ -21,11 +21,11 @@
 #include <tuple>
 #include <vector>
 
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
+#include "absl/memory/memory.h"         // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/status/statusor.h"       // from @com_google_absl
+#include "absl/strings/str_cat.h"       // from @com_google_absl
 #include "mediapipe/calculators/tensor/tensors_to_segmentation_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensors_to_segmentation_converter.h"
 #include "mediapipe/calculators/tensor/tensors_to_segmentation_converter_gl_buffer.h"

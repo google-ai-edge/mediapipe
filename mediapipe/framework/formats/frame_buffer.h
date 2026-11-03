@@ -19,8 +19,8 @@ limitations under the License.
 #include <cstdint>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/status/statusor.h"
+#include "absl/log/absl_check.h"   // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
 
 namespace mediapipe {
 

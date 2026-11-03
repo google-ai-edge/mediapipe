@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_FRAMEWORK_API3_NODE_H_
 #define MEDIAPIPE_FRAMEWORK_API3_NODE_H_
 
-#include "absl/strings/string_view.h"
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/port/compile_time_string.h"
 
 namespace mediapipe::api3 {

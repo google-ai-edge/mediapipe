@@ -25,12 +25,12 @@
 #include <unordered_map>
 #include <utility>
 
-#include "Eigen/Core"  // from @eigen
-#include "absl/container/flat_hash_map.h"
-#include "absl/container/node_hash_set.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/memory/memory.h"
+#include "Eigen/Core"                      // from @eigen
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/container/node_hash_set.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"           // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
+#include "absl/memory/memory.h"            // from @com_google_absl
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_features2d_inc.h"

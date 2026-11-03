@@ -19,7 +19,7 @@
 
 #include "Eigen/Core"  // from @eigen
 #include "Eigen/Geometry"  // from @eigen  // IWYU pragma: keep(for computeInverseWithCheck)
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/api3/calculator.h"
 #include "mediapipe/framework/api3/calculator_context.h"
 #include "mediapipe/framework/port/ret_check.h"

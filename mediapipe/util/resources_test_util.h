@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
 #include "mediapipe/framework/resources.h"
 
 namespace mediapipe {

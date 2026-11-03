@@ -29,11 +29,11 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/cleanup/cleanup.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
+#include "absl/cleanup/cleanup.h"       // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/status/statusor.h"       // from @com_google_absl
+#include "absl/strings/string_view.h"   // from @com_google_absl
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/components/processors/embedder_options.h"

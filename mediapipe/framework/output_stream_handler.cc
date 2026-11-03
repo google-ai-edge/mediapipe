@@ -17,10 +17,10 @@
 #include <string>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
-#include "absl/strings/str_cat.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/log/absl_check.h"         // from @com_google_absl
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/strings/str_cat.h"        // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/output_stream_shard.h"
 

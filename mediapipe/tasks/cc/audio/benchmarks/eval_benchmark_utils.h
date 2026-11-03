@@ -21,10 +21,10 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "absl/flags/declare.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
-#include "absl/types/span.h"
+#include "absl/flags/declare.h"        // from @com_google_absl
+#include "absl/status/statusor.h"      // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
+#include "absl/types/span.h"           // from @com_google_absl
 #include "mediapipe/tasks/cc/audio/audio_transcriber/audio_transcriber.h"
 #include "mediapipe/tasks/cc/audio/text_to_speech/text_to_speech.h"
 #include "odml/audio/transcription/speech_processor.h"  // from @odml

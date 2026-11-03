@@ -17,8 +17,8 @@
 
 #include <memory>
 
-#include "Eigen/Dense"  // from @eigen
-#include "absl/status/status.h"
+#include "Eigen/Dense"           // from @eigen
+#include "absl/status/status.h"  // from @com_google_absl
 
 namespace mediapipe::face_geometry {
 

@@ -31,7 +31,7 @@ limitations under the License.
 #include <utility>
 #include <variant>
 
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_log.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"

@@ -18,9 +18,9 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "absl/strings/ascii.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
+#include "absl/strings/ascii.h"        // from @com_google_absl
+#include "absl/strings/str_cat.h"      // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/port/gtest.h"
 
 namespace mediapipe::tasks::text::utils {

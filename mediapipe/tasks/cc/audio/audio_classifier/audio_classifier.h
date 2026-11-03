@@ -21,7 +21,7 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/tasks/cc/audio/core/base_audio_task_api.h"
 #include "mediapipe/tasks/cc/audio/core/running_mode.h"

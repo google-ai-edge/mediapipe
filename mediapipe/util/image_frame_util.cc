@@ -18,9 +18,9 @@
 #include <cstdint>
 #include <functional>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/types/span.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"    // from @com_google_absl
+#include "absl/types/span.h"      // from @com_google_absl
 #include "libyuv/video_common.h"  // from @libyuv
 #include "mediapipe/framework/deps/mathutil.h"
 #include "mediapipe/framework/formats/image_frame.h"

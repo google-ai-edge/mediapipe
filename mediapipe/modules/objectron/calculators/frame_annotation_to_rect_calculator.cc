@@ -14,9 +14,9 @@
 #include <cmath>
 #include <vector>
 
-#include "Eigen/Dense"  // from @eigen
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
+#include "Eigen/Dense"           // from @eigen
+#include "absl/memory/memory.h"  // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/ret_check.h"

@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/ret_check.h"

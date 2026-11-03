@@ -16,12 +16,12 @@
 #include <string>
 #include <vector>
 
-#include "absl/container/node_hash_set.h"
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
-#include "absl/strings/strip.h"
+#include "absl/container/node_hash_set.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/strings/str_split.h"        // from @com_google_absl
+#include "absl/strings/string_view.h"      // from @com_google_absl
+#include "absl/strings/strip.h"            // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/location_data.pb.h"

@@ -19,8 +19,8 @@
 #include <memory>
 #include <string>
 
-#include "absl/log/absl_check.h"
-#include "absl/strings/str_cat.h"
+#include "absl/log/absl_check.h"   // from @com_google_absl
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 #include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/resources.h"

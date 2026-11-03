@@ -14,7 +14,7 @@
 
 #include "mediapipe/framework/input_stream_shard.h"
 
-#include "absl/log/absl_check.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
 
 namespace mediapipe {
 

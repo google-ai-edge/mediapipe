@@ -19,8 +19,8 @@ limitations under the License.
 #include <cstring>
 #include <functional>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "contrib/minizip/ioapi.h"
 #include "contrib/minizip/zip.h"
 #include "flatbuffers/flatbuffers.h"  // from @flatbuffers

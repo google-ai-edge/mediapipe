@@ -14,8 +14,8 @@
 
 #include "mediapipe/examples/desktop/autoflip/quality/padding_effect_generator.h"
 
-#include "absl/flags/flag.h"
-#include "absl/strings/str_cat.h"
+#include "absl/flags/flag.h"       // from @com_google_absl
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"

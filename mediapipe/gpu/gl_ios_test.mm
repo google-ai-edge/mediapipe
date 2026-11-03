@@ -21,7 +21,7 @@
 #import "mediapipe/objc/MPPGraphTestBase.h"
 #import "mediapipe/objc/util.h"
 
-#include "absl/memory/memory.h"
+#include "absl/memory/memory.h"  // from @com_google_absl
 #import "mediapipe/framework/calculator_framework.h"
 #import "mediapipe/gpu/gl_calculator_helper.h"
 

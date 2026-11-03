@@ -21,9 +21,9 @@
 #include <utility>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/strings/substitute.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/log/absl_check.h"         // from @com_google_absl
+#include "absl/strings/substitute.h"     // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_context_manager.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/collection_item_id.h"

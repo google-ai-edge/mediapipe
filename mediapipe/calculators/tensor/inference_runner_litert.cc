@@ -20,29 +20,29 @@
 #include <utility>
 #include <vector>
 
-#include "absl/algorithm/container.h"
-#include "absl/base/nullability.h"
-#include "absl/log/absl_log.h"
-#include "absl/log/log.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"  // IWYU pragma: keep
-#include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
-#include "absl/types/span.h"
-#include "litert/cc/litert_buffer_ref.h"                     // from @litert
-#include "litert/cc/litert_common.h"                         // from @litert
-#include "litert/cc/litert_compiled_model.h"                 // from @litert
-#include "litert/cc/litert_environment.h"                    // from @litert
-#include "litert/cc/litert_environment_options.h"            // from @litert
-#include "litert/cc/litert_layout.h"                         // from @litert
-#include "litert/cc/litert_macros.h"                         // from @litert
-#include "litert/cc/litert_model_types.h"                    // from @litert
-#include "litert/cc/litert_options.h"                        // from @litert
-#include "litert/cc/litert_ranked_tensor_type.h"             // from @litert
-#include "litert/cc/litert_tensor_buffer.h"                  // from @litert
+#include "absl/algorithm/container.h"   // from @com_google_absl
+#include "absl/base/nullability.h"      // from @com_google_absl
+#include "absl/log/absl_log.h"          // from @com_google_absl
+#include "absl/log/log.h"               // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/status/statusor.h"       // from @com_google_absl
+#include "absl/strings/str_cat.h"       // from @com_google_absl
+#include "absl/strings/str_format.h"  // from @com_google_absl  // IWYU pragma: keep
+#include "absl/strings/str_join.h"                 // from @com_google_absl
+#include "absl/strings/string_view.h"              // from @com_google_absl
+#include "absl/types/span.h"                       // from @com_google_absl
+#include "litert/cc/litert_buffer_ref.h"           // from @litert
+#include "litert/cc/litert_common.h"               // from @litert
+#include "litert/cc/litert_compiled_model.h"       // from @litert
+#include "litert/cc/litert_environment.h"          // from @litert
+#include "litert/cc/litert_environment_options.h"  // from @litert
+#include "litert/cc/litert_layout.h"               // from @litert
+#include "litert/cc/litert_macros.h"               // from @litert
+#include "litert/cc/litert_model_types.h"          // from @litert
+#include "litert/cc/litert_options.h"              // from @litert
+#include "litert/cc/litert_ranked_tensor_type.h"   // from @litert
+#include "litert/cc/litert_tensor_buffer.h"        // from @litert
 #include "litert/cc/litert_tensor_buffer_requirements.h"     // from @litert
 #include "litert/cc/litert_tensor_buffer_types.h"            // from @litert
 #include "litert/cc/options/litert_cpu_options.h"            // from @litert

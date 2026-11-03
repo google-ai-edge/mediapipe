@@ -19,11 +19,11 @@ limitations under the License.
 #include <cstdlib>
 #include <string>
 
-#include "absl/flags/flag.h"
-#include "absl/strings/string_view.h"
-#include "absl/synchronization/blocking_counter.h"
-#include "absl/time/clock.h"
-#include "absl/time/time.h"
+#include "absl/flags/flag.h"                        // from @com_google_absl
+#include "absl/strings/string_view.h"               // from @com_google_absl
+#include "absl/synchronization/blocking_counter.h"  // from @com_google_absl
+#include "absl/time/clock.h"                        // from @com_google_absl
+#include "absl/time/time.h"                         // from @com_google_absl
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"

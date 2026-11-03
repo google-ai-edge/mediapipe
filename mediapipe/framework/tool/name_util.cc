@@ -17,10 +17,10 @@
 #include <set>
 #include <unordered_map>
 
-#include "absl/container/flat_hash_set.h"
-#include "absl/log/absl_check.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
+#include "absl/container/flat_hash_set.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"           // from @com_google_absl
+#include "absl/strings/str_cat.h"          // from @com_google_absl
+#include "absl/strings/str_format.h"       // from @com_google_absl
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/tool/validate_name.h"
 

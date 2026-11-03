@@ -3,9 +3,9 @@
 #include <memory>
 #include <utility>
 
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
+#include "absl/log/absl_log.h"     // from @com_google_absl
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/gpu/egl_sync.h"
 #include "mediapipe/gpu/gl_context.h"
 

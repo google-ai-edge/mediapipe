@@ -14,9 +14,9 @@
 
 #include "mediapipe/framework/output_stream_shard.h"
 
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
-#include "absl/status/status_builder.h"
+#include "absl/log/absl_check.h"         // from @com_google_absl
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/status/status_builder.h"  // from @com_google_absl
 #include "mediapipe/framework/port/source_location.h"
 #include "mediapipe/framework/port/status_builder.h"
 

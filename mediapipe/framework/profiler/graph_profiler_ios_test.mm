@@ -16,7 +16,7 @@
 #import <UIKit/UIKit.h>
 #import <XCTest/XCTest.h>
 
-#include "absl/memory/memory.h"
+#include "absl/memory/memory.h"  // from @com_google_absl
 #include "mediapipe/framework/profiler/graph_profiler.h"
 #include "mediapipe/framework/profiler/profiler_resource_util.h"
 #include "mediapipe/objc/MPPGraph.h"

@@ -3,10 +3,10 @@
 #include <utility>
 #include <vector>
 
-#include "absl/container/flat_hash_set.h"
-#include "absl/flags/flag.h"
-#include "absl/log/absl_check.h"
-#include "absl/strings/substitute.h"
+#include "absl/container/flat_hash_set.h"  // from @com_google_absl
+#include "absl/flags/flag.h"               // from @com_google_absl
+#include "absl/log/absl_check.h"           // from @com_google_absl
+#include "absl/strings/substitute.h"       // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"

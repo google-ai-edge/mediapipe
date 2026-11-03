@@ -15,10 +15,10 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_METADATA_METADATA_EXTRACTOR_H_
 #define MEDIAPIPE_TASKS_CC_METADATA_METADATA_EXTRACTOR_H_
 
-#include "absl/container/flat_hash_map.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/status/statusor.h"          // from @com_google_absl
+#include "absl/strings/string_view.h"      // from @com_google_absl
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
 #include "tflite/schema/schema_generated.h"  // from @litert
 

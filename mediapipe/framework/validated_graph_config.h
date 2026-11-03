@@ -19,8 +19,8 @@
 #include <string>
 #include <vector>
 
-#include "absl/container/flat_hash_set.h"
-#include "absl/status/status.h"
+#include "absl/container/flat_hash_set.h"  // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
 #include "google/protobuf/repeated_ptr_field.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_contract.h"

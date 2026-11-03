@@ -40,8 +40,8 @@
 #include <memory>
 #include <string>
 
-#include "absl/base/attributes.h"
-#include "absl/types/span.h"
+#include "absl/base/attributes.h"  // from @com_google_absl
+#include "absl/types/span.h"       // from @com_google_absl
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/tool/type_util.h"

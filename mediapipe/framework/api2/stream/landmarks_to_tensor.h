@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-#include "absl/types/span.h"
+#include "absl/types/span.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensor/landmarks_to_tensor_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/formats/landmark.pb.h"

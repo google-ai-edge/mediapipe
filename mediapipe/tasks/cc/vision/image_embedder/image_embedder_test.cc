@@ -21,9 +21,9 @@ limitations under the License.
 #include <memory>
 #include <utility>
 
-#include "absl/flags/flag.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
+#include "absl/flags/flag.h"       // from @com_google_absl
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/gmock.h"

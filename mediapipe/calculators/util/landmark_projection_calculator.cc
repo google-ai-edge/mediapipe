@@ -19,8 +19,8 @@
 #include <functional>
 #include <utility>
 
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
+#include "absl/log/absl_log.h"   // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 #include "mediapipe/calculators/util/landmark_projection_calculator.pb.h"
 #include "mediapipe/framework/api3/calculator.h"

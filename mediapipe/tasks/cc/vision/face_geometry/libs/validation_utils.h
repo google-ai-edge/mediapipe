@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_TASKS_CC_VISION_FACE_GEOMETRY_LIBS_VALIDATION_UTILS_H_
 #define MEDIAPIPE_TASKS_CC_VISION_FACE_GEOMETRY_LIBS_VALIDATION_UTILS_H_
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/environment.pb.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/face_geometry.pb.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/geometry_pipeline_metadata.pb.h"

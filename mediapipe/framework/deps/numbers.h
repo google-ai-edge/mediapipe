@@ -18,8 +18,8 @@
 #include <cstdint>
 #include <string>
 
-#include "absl/strings/numbers.h"
-#include "absl/strings/str_cat.h"
+#include "absl/strings/numbers.h"  // from @com_google_absl
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 
 namespace mediapipe {
 ABSL_MUST_USE_RESULT inline std::string SimpleDtoa(double d) {

@@ -22,8 +22,8 @@
 #include <utility>
 #include <vector>
 
-#include "absl/container/flat_hash_map.h"
-#include "absl/status/statusor.h"
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/status/statusor.h"          // from @com_google_absl
 #include "mediapipe/tasks/cc/retrieval/semantic_retriever/proto/vector_stores.pb.h"
 #include "mediapipe/tasks/cc/retrieval/semantic_retriever/sqlite_memory_store.h"
 #include "mediapipe/tasks/cc/retrieval/semantic_retriever/sqlite_vector_store.h"

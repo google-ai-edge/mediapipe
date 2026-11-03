@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "absl/strings/string_view.h"
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 

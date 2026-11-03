@@ -18,8 +18,8 @@ limitations under the License.
 #include <memory>
 #include <utility>
 
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/status/status.h"   // from @com_google_absl
 #include "mediapipe/tasks/c/components/processors/classifier_options_converter.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
 #include "mediapipe/tasks/c/core/mp_status.h"

@@ -14,8 +14,8 @@
 
 #include "mediapipe/framework/tool/validate_name.h"
 
-#include "absl/strings/str_cat.h"
-#include "absl/strings/substitute.h"
+#include "absl/strings/str_cat.h"     // from @com_google_absl
+#include "absl/strings/substitute.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"

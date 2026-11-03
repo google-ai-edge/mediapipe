@@ -20,8 +20,8 @@
 #include <string>
 #include <vector>
 
-#include "Eigen/Core"  // from @eigen
-#include "absl/status/status.h"
+#include "Eigen/Core"            // from @eigen
+#include "absl/status/status.h"  // from @com_google_absl
 #include "audio/dsp/signal_vector_util.h"
 #include "mediapipe/calculators/audio/rational_factor_resample_calculator.pb.h"
 #include "mediapipe/framework//tool/validate_type.h"

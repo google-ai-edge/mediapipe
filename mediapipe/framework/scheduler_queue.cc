@@ -18,9 +18,9 @@
 #include <queue>
 #include <utility>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/log/absl_check.h"         // from @com_google_absl
+#include "absl/log/absl_log.h"           // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_node.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/port/logging.h"

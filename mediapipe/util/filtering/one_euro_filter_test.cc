@@ -14,8 +14,8 @@
 
 #include "mediapipe/util/filtering/one_euro_filter.h"
 
-#include "absl/status/status.h"
-#include "absl/time/time.h"
+#include "absl/status/status.h"  // from @com_google_absl
+#include "absl/time/time.h"      // from @com_google_absl
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"

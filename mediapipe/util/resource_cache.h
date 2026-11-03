@@ -18,9 +18,9 @@
 #include <cstddef>
 #include <unordered_map>
 
-#include "absl/container/flat_hash_map.h"
-#include "absl/functional/function_ref.h"
-#include "absl/log/absl_check.h"
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/functional/function_ref.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"           // from @com_google_absl
 #include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {

@@ -18,8 +18,8 @@
 
 #include <string>
 
-#include "absl/status/status.h"  // from @com_google_absl
-#include "absl/strings/cord.h"   // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl  // from @com_google_absl
+#include "absl/strings/cord.h"  // from @com_google_absl   // from @com_google_absl
 #include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/cc/common.h"
 

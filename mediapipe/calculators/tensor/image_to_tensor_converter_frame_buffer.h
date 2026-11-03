@@ -17,7 +17,7 @@
 
 #include <memory>
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 #include "mediapipe/framework/calculator_context.h"

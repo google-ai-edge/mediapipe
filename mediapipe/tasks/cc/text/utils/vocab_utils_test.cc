@@ -15,7 +15,7 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/text/utils/vocab_utils.h"
 
-#include "absl/container/node_hash_map.h"
+#include "absl/container/node_hash_map.h"  // from @com_google_absl
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/cc/core/utils.h"

@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 

@@ -14,8 +14,8 @@
 
 #include "mediapipe/tasks/cc/core/host_environment.h"
 
-#include "absl/log/absl_log.h"
-#include "absl/log/log.h"
+#include "absl/log/absl_log.h"  // from @com_google_absl
+#include "absl/log/log.h"       // from @com_google_absl
 
 namespace mediapipe {
 namespace tasks {

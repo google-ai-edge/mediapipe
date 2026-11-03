@@ -1,8 +1,8 @@
 #ifndef MEDIAPIPE_UTIL_STR_UTIL_H_
 #define MEDIAPIPE_UTIL_STR_UTIL_H_
 
-#include "absl/functional/any_invocable.h"
-#include "absl/strings/string_view.h"
+#include "absl/functional/any_invocable.h"  // from @com_google_absl
+#include "absl/strings/string_view.h"       // from @com_google_absl
 
 namespace mediapipe {
 

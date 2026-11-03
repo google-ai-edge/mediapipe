@@ -18,11 +18,11 @@ limitations under the License.
 #include <memory>
 #include <utility>
 
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
+#include "absl/log/absl_check.h"        // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/status/statusor.h"       // from @com_google_absl
+#include "absl/strings/str_cat.h"       // from @com_google_absl
 #include "mediapipe/tasks/c/components/containers/embedding_result.h"
 #include "mediapipe/tasks/c/components/containers/embedding_result_converter.h"
 #include "mediapipe/tasks/c/components/processors/embedder_options_converter.h"

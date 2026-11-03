@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <deque>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
 

@@ -14,7 +14,7 @@
 
 #include "mediapipe/framework/profiler/circular_buffer.h"
 
-#include "absl/time/time.h"
+#include "absl/time/time.h"  // from @com_google_absl
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/threadpool.h"
 

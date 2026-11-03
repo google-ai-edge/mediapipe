@@ -19,9 +19,9 @@
 #include <memory>
 #include <vector>
 
-#include "absl/base/thread_annotations.h"
-#include "absl/status/status.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/base/thread_annotations.h"  // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
 #include "mediapipe/framework/calculator_context_manager.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/input_stream_handler.h"

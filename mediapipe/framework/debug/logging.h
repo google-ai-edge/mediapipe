@@ -16,7 +16,7 @@
 #define MEDIAPIPE_FRAMEWORK_DEBUG_LOGGING_H_
 
 #include "HalideBuffer.h"
-#include "absl/strings/string_view.h"
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/tensor.h"

@@ -18,11 +18,11 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
-#include "absl/types/optional.h"
-#include "flatbuffers/flatbuffers.h"  // from @flatbuffers
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/status/statusor.h"       // from @com_google_absl
+#include "absl/types/optional.h"        // from @com_google_absl
+#include "flatbuffers/flatbuffers.h"    // from @flatbuffers
 #include "mediapipe/calculators/core/constant_side_packet_calculator.pb.h"
 #include "mediapipe/calculators/tensor/audio_to_tensor_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"

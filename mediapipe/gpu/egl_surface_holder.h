@@ -15,8 +15,8 @@
 #ifndef MEDIAPIPE_GPU_EGL_SURFACE_HOLDER_H_
 #define MEDIAPIPE_GPU_EGL_SURFACE_HOLDER_H_
 
-#include "absl/base/thread_annotations.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/base/thread_annotations.h"  // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
 #include "mediapipe/gpu/gl_base.h"
 
 #if HAS_EGL

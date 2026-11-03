@@ -71,9 +71,9 @@
 
 #include <memory>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/log/absl_check.h"         // from @com_google_absl
+#include "absl/log/absl_log.h"           // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 
 #ifdef PARALLEL_INVOKER_ACTIVE
 #include "mediapipe/framework/port/threadpool.h"

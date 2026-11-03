@@ -22,8 +22,8 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "absl/strings/string_view.h"
-#include "flatbuffers/flatbuffers.h"  // from @flatbuffers
+#include "absl/strings/string_view.h"  // from @com_google_absl
+#include "flatbuffers/flatbuffers.h"   // from @flatbuffers
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"

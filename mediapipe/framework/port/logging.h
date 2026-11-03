@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_PORT_LOGGING_H_
 #define MEDIAPIPE_PORT_LOGGING_H_
 
-#include "absl/time/time.h"
+#include "absl/time/time.h"  // from @com_google_absl
 
 #ifdef _WIN32
 #define GLOG_NO_ABBREVIATED_SEVERITIES

@@ -5,7 +5,7 @@
 #include <memory>
 #include <utility>
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/unique_fd.h"
 
 namespace mediapipe {

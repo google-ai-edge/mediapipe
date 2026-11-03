@@ -14,7 +14,7 @@
 
 #include "mediapipe/gpu/gpu_service.h"
 
-#include "absl/base/attributes.h"
+#include "absl/base/attributes.h"  // from @com_google_absl
 
 namespace mediapipe {
 

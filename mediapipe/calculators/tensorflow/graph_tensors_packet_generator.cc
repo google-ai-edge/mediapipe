@@ -20,7 +20,7 @@
 #include <map>
 #include <string>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensorflow/graph_tensors_packet_generator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"

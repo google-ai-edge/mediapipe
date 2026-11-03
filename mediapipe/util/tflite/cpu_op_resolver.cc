@@ -14,7 +14,7 @@
 
 #include "mediapipe/util/tflite/cpu_op_resolver.h"
 
-#include "absl/log/absl_check.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/util/tflite/operations/landmarks_to_transform_matrix.h"
 #include "mediapipe/util/tflite/operations/max_pool_argmax.h"

@@ -20,7 +20,7 @@ limitations under the License.
 #include <optional>
 #include <string>
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/tasks/cc/core/base_options.h"

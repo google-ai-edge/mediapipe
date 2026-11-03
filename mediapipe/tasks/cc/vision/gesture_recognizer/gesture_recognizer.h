@@ -21,7 +21,7 @@ limitations under the License.
 #include <optional>
 #include <vector>
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"

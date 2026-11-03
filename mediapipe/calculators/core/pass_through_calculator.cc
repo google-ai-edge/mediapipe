@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
+#include "absl/log/absl_log.h"   // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/collection_item_id.h"
 

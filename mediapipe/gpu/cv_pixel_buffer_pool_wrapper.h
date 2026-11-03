@@ -26,7 +26,7 @@
 #include <string>
 
 #include "CoreFoundation/CFBase.h"
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/gpu/cv_texture_cache_manager.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/multi_pool.h"

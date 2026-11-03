@@ -15,8 +15,8 @@
 #include <cstdint>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/gmock.h"

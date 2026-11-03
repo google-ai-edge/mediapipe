@@ -17,10 +17,10 @@
 #include <string>
 #include <vector>
 
-#include "absl/container/flat_hash_set.h"
-#include "absl/status/status.h"
-#include "absl/strings/string_view.h"
-#include "absl/strings/substitute.h"
+#include "absl/container/flat_hash_set.h"  // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/strings/string_view.h"      // from @com_google_absl
+#include "absl/strings/substitute.h"       // from @com_google_absl
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_context.h"

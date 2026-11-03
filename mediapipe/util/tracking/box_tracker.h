@@ -21,8 +21,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "absl/strings/str_format.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/strings/str_format.h"     // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 #include "mediapipe/framework/port/threadpool.h"
 #include "mediapipe/util/tracking/box_tracker.pb.h"
 #include "mediapipe/util/tracking/flow_packager.pb.h"

@@ -21,12 +21,12 @@
 #include <random>
 #include <vector>
 
-#include "absl/base/thread_annotations.h"
-#include "absl/log/absl_log.h"
-#include "absl/memory/memory.h"
-#include "absl/synchronization/mutex.h"
-#include "absl/time/clock.h"
-#include "absl/time/time.h"
+#include "absl/base/thread_annotations.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
+#include "absl/memory/memory.h"            // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
+#include "absl/time/clock.h"               // from @com_google_absl
+#include "absl/time/time.h"                // from @com_google_absl
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/threadpool.h"
 #include "mediapipe/framework/tool/simulation_clock.h"

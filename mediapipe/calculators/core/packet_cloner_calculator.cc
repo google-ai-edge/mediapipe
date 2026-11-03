@@ -19,7 +19,7 @@
 #include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/calculators/core/packet_cloner_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 

@@ -22,9 +22,9 @@
 #include <utility>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/status/statusor.h"       // from @com_google_absl
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"

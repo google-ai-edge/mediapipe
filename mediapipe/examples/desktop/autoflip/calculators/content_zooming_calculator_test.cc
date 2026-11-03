@@ -14,7 +14,7 @@
 
 #include <memory>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/examples/desktop/autoflip/autoflip_messages.pb.h"
 #include "mediapipe/examples/desktop/autoflip/calculators/content_zooming_calculator.pb.h"
 #include "mediapipe/examples/desktop/autoflip/calculators/content_zooming_calculator_state.h"

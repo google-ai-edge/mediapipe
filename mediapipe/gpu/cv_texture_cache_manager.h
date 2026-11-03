@@ -17,7 +17,7 @@
 
 #include <vector>
 
-#include "absl/synchronization/mutex.h"
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 #include "mediapipe/gpu/pixel_buffer_pool_util.h"
 #include "mediapipe/objc/CFHolder.h"
 

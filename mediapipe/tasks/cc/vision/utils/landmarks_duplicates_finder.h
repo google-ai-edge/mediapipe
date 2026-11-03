@@ -18,8 +18,8 @@ limitations under the License.
 
 #include <vector>
 
-#include "absl/container/flat_hash_set.h"
-#include "absl/status/statusor.h"
+#include "absl/container/flat_hash_set.h"  // from @com_google_absl
+#include "absl/status/statusor.h"          // from @com_google_absl
 #include "mediapipe/framework/formats/landmark.pb.h"
 
 namespace mediapipe::tasks::vision::utils {

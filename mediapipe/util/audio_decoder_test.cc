@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <string>
 
-#include "absl/strings/str_cat.h"
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/file_helpers.h"

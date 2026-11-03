@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_VISION_GESTURE_RECOGNIZER_CALCULATORS_HANDEDNESS_TO_MATRIX_CALCULATOR_H_
 #define MEDIAPIPE_TASKS_CC_VISION_GESTURE_RECOGNIZER_CALCULATORS_HANDEDNESS_TO_MATRIX_CALCULATOR_H_
 
-#include "absl/strings/string_view.h"
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/node.h"
 #include "mediapipe/framework/formats/classification.pb.h"

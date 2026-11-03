@@ -3,10 +3,10 @@
 #include <memory>
 #include <utility>
 
-#include "absl/functional/bind_front.h"
-#include "absl/log/absl_check.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_join.h"
+#include "absl/functional/bind_front.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"         // from @com_google_absl
+#include "absl/strings/str_cat.h"        // from @com_google_absl
+#include "absl/strings/str_join.h"       // from @com_google_absl
 #include "mediapipe/framework/port/logging.h"
 
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER

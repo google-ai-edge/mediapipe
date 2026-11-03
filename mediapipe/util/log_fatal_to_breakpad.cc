@@ -2,9 +2,9 @@
 
 #import <Foundation/Foundation.h>
 
-#include "absl/log/log_entry.h"
-#include "absl/log/log_sink.h"
-#include "absl/log/log_sink_registry.h"
+#include "absl/log/log_entry.h"          // from @com_google_absl
+#include "absl/log/log_sink.h"           // from @com_google_absl
+#include "absl/log/log_sink_registry.h"  // from @com_google_absl
 #import "googlemac/iPhone/Shared/GoogleIOSBreakpad/Classes/GoogleBreakpadController.h"
 
 namespace mediapipe {

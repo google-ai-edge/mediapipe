@@ -14,8 +14,8 @@
 
 #include "mediapipe/calculators/core/merge_calculator.h"
 
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
+#include "absl/log/absl_log.h"   // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/api3/calculator.h"
 #include "mediapipe/framework/api3/calculator_context.h"
 #include "mediapipe/framework/api3/calculator_contract.h"

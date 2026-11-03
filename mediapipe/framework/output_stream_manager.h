@@ -20,9 +20,9 @@
 #include <string>
 #include <vector>
 
-#include "absl/base/thread_annotations.h"
-#include "absl/status/status.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/base/thread_annotations.h"  // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
 #include "mediapipe/framework/output_stream_shard.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_type.h"

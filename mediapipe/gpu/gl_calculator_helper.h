@@ -21,9 +21,9 @@
 #include <type_traits>
 #include <utility>
 
-#include "absl/base/attributes.h"
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
+#include "absl/base/attributes.h"  // from @com_google_absl
+#include "absl/memory/memory.h"    // from @com_google_absl
+#include "absl/status/status.h"    // from @com_google_absl
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/formats/image.h"

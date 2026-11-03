@@ -20,12 +20,12 @@
 #include <string>
 #include <vector>
 
-#include "absl/base/attributes.h"
-#include "absl/base/thread_annotations.h"
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/strings/substitute.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/base/attributes.h"          // from @com_google_absl
+#include "absl/base/thread_annotations.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/strings/substitute.h"       // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
 #include "mediapipe/framework/input_stream_handler.h"
 #include "mediapipe/framework/input_stream_manager.h"
 #include "mediapipe/framework/output_stream_manager.h"

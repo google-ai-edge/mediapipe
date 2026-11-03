@@ -14,7 +14,7 @@
 
 #include <memory>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/calculators/util/logic_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 

@@ -19,12 +19,12 @@
 #include <memory>
 #include <vector>
 
-#include "absl/base/thread_annotations.h"
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/base/thread_annotations.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/status/status_macros.h"     // from @com_google_absl
+#include "absl/status/statusor.h"          // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
 #include "mediapipe/util/resource_cache.h"
 
 namespace mediapipe {

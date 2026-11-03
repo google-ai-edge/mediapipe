@@ -23,8 +23,8 @@
 #include "mediapipe/gpu/gl_texture_buffer.h"
 #include "mediapipe/gpu/gl_texture_util.h"
 #include "mediapipe/gpu/gpu_test_base.h"
-#include "stb_image.h"
-#include "stb_image_write.h"
+#include "stb_image.h"        // from @stblib
+#include "stb_image_write.h"  // from @stblib
 
 namespace mediapipe {
 namespace {

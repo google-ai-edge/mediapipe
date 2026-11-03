@@ -14,7 +14,7 @@
 
 #include "mediapipe/framework/deps/file_path.h"
 
-#include "absl/strings/str_cat.h"
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 
 namespace mediapipe {
 namespace file {

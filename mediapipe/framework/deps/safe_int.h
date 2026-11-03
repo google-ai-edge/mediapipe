@@ -45,8 +45,8 @@
 #include <limits>
 #include <type_traits>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"    // from @com_google_absl
 #include "mediapipe/framework/deps/strong_int.h"
 
 namespace mediapipe {

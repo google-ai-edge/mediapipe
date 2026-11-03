@@ -26,13 +26,13 @@
 #include "mediapipe/framework/api3/calculator_contract.h"
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/calculators/image/affine_transformation_runner_gl.h"
-#endif  // !MEDIAPIPE_DISABLE_GPU
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
+#endif                             // !MEDIAPIPE_DISABLE_GPU
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
 #if !MEDIAPIPE_DISABLE_OPENCV
 #include "mediapipe/calculators/image/affine_transformation_runner_opencv.h"
-#endif  // !MEDIAPIPE_DISABLE_OPENCV
-#include "absl/status/status_macros.h"
+#endif                                  // !MEDIAPIPE_DISABLE_OPENCV
+#include "absl/status/status_macros.h"  // from @com_google_absl
 #include "mediapipe/calculators/image/warp_affine_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"

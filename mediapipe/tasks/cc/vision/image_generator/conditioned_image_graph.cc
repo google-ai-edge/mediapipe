@@ -16,9 +16,9 @@ limitations under the License.
 #include <optional>
 #include <string>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/strings/string_view.h"
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/strings/string_view.h"   // from @com_google_absl
 #include "mediapipe/calculators/core/get_vector_item_calculator.h"
 #include "mediapipe/calculators/core/get_vector_item_calculator.pb.h"
 #include "mediapipe/calculators/util/flat_color_image_calculator.pb.h"

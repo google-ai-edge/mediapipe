@@ -16,7 +16,7 @@
 
 #include <iostream>
 
-#include "absl/strings/str_split.h"
+#include "absl/strings/str_split.h"  // from @com_google_absl
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"

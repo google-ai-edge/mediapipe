@@ -15,9 +15,9 @@
 #ifndef MEDIAPIPE_PORT_STATUS_BUILDER_H_
 #define MEDIAPIPE_PORT_STATUS_BUILDER_H_
 
-#include "absl/status/status.h"
-#include "absl/status/status_builder.h"
-#include "absl/types/source_location.h"
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/status/status_builder.h"  // from @com_google_absl
+#include "absl/types/source_location.h"  // from @com_google_absl
 #include "mediapipe/framework/port/source_location.h"
 
 namespace mediapipe {

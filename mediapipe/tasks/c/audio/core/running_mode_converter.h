@@ -1,7 +1,7 @@
 #ifndef MEDIAPIPE_TASKS_C_AUDIO_CORE_RUNNING_MODE_CONVERTER_H_
 #define MEDIAPIPE_TASKS_C_AUDIO_CORE_RUNNING_MODE_CONVERTER_H_
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/tasks/c/audio/core/common.h"
 #include "mediapipe/tasks/cc/audio/core/running_mode.h"
 

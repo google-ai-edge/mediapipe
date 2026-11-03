@@ -15,8 +15,8 @@
 #ifndef MEDIAPIPE_PORT_STATUS_H_
 #define MEDIAPIPE_PORT_STATUS_H_
 
-#include "absl/base/attributes.h"
-#include "absl/status/status.h"
+#include "absl/base/attributes.h"  // from @com_google_absl
+#include "absl/status/status.h"    // from @com_google_absl
 
 namespace mediapipe {
 

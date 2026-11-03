@@ -18,7 +18,7 @@ limitations under the License.
 
 #include <string>
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 
 namespace mediapipe::tflite_operations::sentencepiece {
 

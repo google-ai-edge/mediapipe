@@ -24,19 +24,19 @@
 #include <unordered_set>
 #include <utility>
 
-#include "absl/base/macros.h"
-#include "absl/base/thread_annotations.h"
-#include "absl/container/flat_hash_map.h"
-#include "absl/container/flat_hash_set.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/meta/type_traits.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_join.h"
-#include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/base/macros.h"              // from @com_google_absl
+#include "absl/base/thread_annotations.h"  // from @com_google_absl
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/container/flat_hash_set.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"           // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
+#include "absl/meta/type_traits.h"         // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/status/statusor.h"          // from @com_google_absl
+#include "absl/strings/str_join.h"         // from @com_google_absl
+#include "absl/strings/str_split.h"        // from @com_google_absl
+#include "absl/strings/string_view.h"      // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
 #include "mediapipe/framework/deps/registration_token.h"
 
 namespace mediapipe {

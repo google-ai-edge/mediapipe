@@ -26,20 +26,20 @@
 #include <utility>
 #include <vector>
 
-#include "absl/container/fixed_array.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/string_view.h"
-#include "absl/strings/substitute.h"
-#include "absl/synchronization/barrier.h"
-#include "absl/synchronization/notification.h"
-#include "absl/time/clock.h"
-#include "absl/time/time.h"
+#include "absl/container/fixed_array.h"         // from @com_google_absl
+#include "absl/log/absl_check.h"                // from @com_google_absl
+#include "absl/log/absl_log.h"                  // from @com_google_absl
+#include "absl/memory/memory.h"                 // from @com_google_absl
+#include "absl/status/status.h"                 // from @com_google_absl
+#include "absl/status/statusor.h"               // from @com_google_absl
+#include "absl/strings/str_cat.h"               // from @com_google_absl
+#include "absl/strings/str_format.h"            // from @com_google_absl
+#include "absl/strings/string_view.h"           // from @com_google_absl
+#include "absl/strings/substitute.h"            // from @com_google_absl
+#include "absl/synchronization/barrier.h"       // from @com_google_absl
+#include "absl/synchronization/notification.h"  // from @com_google_absl
+#include "absl/time/clock.h"                    // from @com_google_absl
+#include "absl/time/time.h"                     // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/counter_factory.h"

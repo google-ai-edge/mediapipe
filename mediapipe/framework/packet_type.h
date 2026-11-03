@@ -22,13 +22,13 @@
 #include <typeinfo>
 #include <vector>
 
-#include "absl/base/macros.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
-#include "absl/types/span.h"
+#include "absl/base/macros.h"          // from @com_google_absl
+#include "absl/log/absl_check.h"       // from @com_google_absl
+#include "absl/log/absl_log.h"         // from @com_google_absl
+#include "absl/status/status.h"        // from @com_google_absl
+#include "absl/strings/str_split.h"    // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
+#include "absl/types/span.h"           // from @com_google_absl
 #include "mediapipe/framework/collection.h"
 #include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/packet.h"

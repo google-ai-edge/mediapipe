@@ -4,7 +4,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "absl/strings/str_cat.h"
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 

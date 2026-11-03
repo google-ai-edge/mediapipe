@@ -17,7 +17,7 @@ limitations under the License.
 
 #include <fstream>
 
-#include "absl/strings/str_split.h"
+#include "absl/strings/str_split.h"  // from @com_google_absl
 #include "mediapipe/util/resource_util.h"
 
 namespace mediapipe {

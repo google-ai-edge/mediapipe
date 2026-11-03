@@ -17,7 +17,7 @@ limitations under the License.
 
 #include <iostream>
 
-#include "absl/strings/substitute.h"
+#include "absl/strings/substitute.h"  // from @com_google_absl
 #include "mediapipe/tasks/cc/text/utils/vocab_utils.h"
 
 namespace mediapipe {

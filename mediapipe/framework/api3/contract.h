@@ -20,9 +20,9 @@
 #include <memory>
 #include <type_traits>
 
-#include "absl/base/attributes.h"
-#include "absl/container/flat_hash_map.h"
-#include "absl/log/absl_log.h"
+#include "absl/base/attributes.h"          // from @com_google_absl
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
 #include "mediapipe/framework/api3/internal/contract_fields.h"
 #include "mediapipe/framework/api3/internal/port_base.h"
 #include "mediapipe/framework/api3/internal/specializers.h"

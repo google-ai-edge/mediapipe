@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "absl/meta/type_traits.h"
+#include "absl/meta/type_traits.h"  // from @com_google_absl
 
 // This file contains utilities for working with constexpr tuples.
 

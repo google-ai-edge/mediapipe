@@ -3,9 +3,9 @@
 #include <string>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
+#include "absl/status/status.h"        // from @com_google_absl
+#include "absl/strings/str_join.h"     // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"

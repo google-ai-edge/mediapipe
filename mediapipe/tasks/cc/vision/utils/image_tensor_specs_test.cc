@@ -20,13 +20,13 @@ limitations under the License.
 #include <string>
 #include <type_traits>
 
-#include "absl/flags/flag.h"
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/cord.h"
-#include "absl/strings/str_cat.h"
-#include "absl/types/optional.h"
+#include "absl/flags/flag.h"       // from @com_google_absl
+#include "absl/log/absl_check.h"   // from @com_google_absl
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
+#include "absl/strings/cord.h"     // from @com_google_absl
+#include "absl/strings/str_cat.h"  // from @com_google_absl
+#include "absl/types/optional.h"   // from @com_google_absl
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"

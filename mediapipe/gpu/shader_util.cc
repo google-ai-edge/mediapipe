@@ -20,11 +20,11 @@
 #include <string>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_join.h"
-#include "absl/strings/str_split.h"
+#include "absl/log/absl_check.h"      // from @com_google_absl
+#include "absl/log/absl_log.h"        // from @com_google_absl
+#include "absl/strings/str_format.h"  // from @com_google_absl
+#include "absl/strings/str_join.h"    // from @com_google_absl
+#include "absl/strings/str_split.h"   // from @com_google_absl
 #include "mediapipe/framework/port/logging.h"
 
 #if DEBUG

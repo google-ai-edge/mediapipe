@@ -18,8 +18,8 @@
 #include <cstdint>
 #include <memory>
 
-#include "absl/status/statusor.h"
-#include "absl/time/time.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
+#include "absl/time/time.h"        // from @com_google_absl
 #include "mediapipe/util/filtering/low_pass_filter.h"
 
 namespace mediapipe {

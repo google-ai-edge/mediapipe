@@ -15,8 +15,8 @@
 #include <memory>
 #include <string>
 
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
+#include "absl/memory/memory.h"  // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/examples/desktop/autoflip/autoflip_messages.pb.h"
 #include "mediapipe/examples/desktop/autoflip/calculators/localization_to_region_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"

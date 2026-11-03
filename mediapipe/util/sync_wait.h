@@ -1,9 +1,9 @@
 #ifndef MEDIAPIPE_UTIL_SYNC_WAIT_H_
 #define MEDIAPIPE_UTIL_SYNC_WAIT_H_
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/time/time.h"
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
+#include "absl/time/time.h"        // from @com_google_absl
 #include "mediapipe/framework/formats/shared_fd.h"
 #include "mediapipe/framework/formats/unique_fd.h"
 

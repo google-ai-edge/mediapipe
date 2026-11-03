@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_GPU_GPU_SERVICE_H_
 #define MEDIAPIPE_GPU_GPU_SERVICE_H_
 
-#include "absl/base/attributes.h"
+#include "absl/base/attributes.h"  // from @com_google_absl
 #include "mediapipe/framework/graph_service.h"
 
 #if !MEDIAPIPE_DISABLE_GPU

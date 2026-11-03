@@ -18,10 +18,10 @@
 #include <memory>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/strings/str_cat.h"
+#include "absl/log/absl_check.h"        // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/strings/str_cat.h"       // from @com_google_absl
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/legacy_calculator_support.h"
@@ -33,7 +33,7 @@
 #include "mediapipe/framework/tool/status_util.h"
 
 #if !defined(MEDIAPIPE_MOBILE) && !defined(MEDIAPIPE_LITE)
-#include "absl/synchronization/blocking_counter.h"
+#include "absl/synchronization/blocking_counter.h"  // from @com_google_absl
 #include "mediapipe/framework/port/threadpool.h"
 #include "mediapipe/util/cpu_util.h"
 #endif  // !MEDIAPIPE_MOBILE && !MEDIAPIPE_LITE

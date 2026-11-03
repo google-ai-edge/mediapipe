@@ -22,8 +22,8 @@
 #include <string>
 #include <vector>
 
-#include "absl/base/macros.h"
-#include "absl/status/status.h"
+#include "absl/base/macros.h"    // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 
 namespace mediapipe {

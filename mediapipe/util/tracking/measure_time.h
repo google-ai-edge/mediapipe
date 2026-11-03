@@ -32,12 +32,12 @@
 #include <memory>
 #include <sstream>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
-#include "absl/synchronization/mutex.h"
-#include "absl/time/clock.h"
+#include "absl/log/absl_check.h"         // from @com_google_absl
+#include "absl/log/absl_log.h"           // from @com_google_absl
+#include "absl/strings/str_split.h"      // from @com_google_absl
+#include "absl/strings/string_view.h"    // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
+#include "absl/time/clock.h"             // from @com_google_absl
 
 extern bool flags_measure_time;
 

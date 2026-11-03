@@ -50,7 +50,7 @@
 #include <ostream>
 #include <string>
 
-#include "absl/log/absl_check.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
 #include "mediapipe/framework/deps/safe_int.h"
 #include "mediapipe/framework/port/logging.h"
 

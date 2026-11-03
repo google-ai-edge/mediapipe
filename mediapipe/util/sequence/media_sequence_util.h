@@ -93,9 +93,9 @@
 #include <string>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
+#include "absl/log/absl_check.h"       // from @com_google_absl
+#include "absl/strings/str_cat.h"      // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "tensorflow/core/example/example.pb.h"  // from @org_tensorflow

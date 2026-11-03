@@ -39,7 +39,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "absl/base/attributes.h"
+#include "absl/base/attributes.h"  // from @com_google_absl
 
 namespace mediapipe {
 

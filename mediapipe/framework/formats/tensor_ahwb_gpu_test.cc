@@ -6,8 +6,8 @@
 
 #include <cstdint>
 
-#include "absl/algorithm/container.h"
-#include "absl/synchronization/notification.h"
+#include "absl/algorithm/container.h"           // from @com_google_absl
+#include "absl/synchronization/notification.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/formats/tensor/views/data_types.h"
 #include "mediapipe/framework/memory_manager.h"

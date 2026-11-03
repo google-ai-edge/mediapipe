@@ -20,9 +20,9 @@
 #include <string>
 #include <vector>
 
-#include "absl/base/attributes.h"
-#include "absl/base/macros.h"
-#include "absl/status/status.h"
+#include "absl/base/attributes.h"  // from @com_google_absl
+#include "absl/base/macros.h"      // from @com_google_absl
+#include "absl/status/status.h"    // from @com_google_absl
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_generator.pb.h"

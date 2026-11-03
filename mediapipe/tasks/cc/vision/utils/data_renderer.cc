@@ -19,7 +19,7 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/types/span.h"
+#include "absl/types/span.h"  // from @com_google_absl
 #include "mediapipe/calculators/util/landmarks_to_render_data_calculator.pb.h"
 #include "mediapipe/calculators/util/rect_to_render_data_calculator.pb.h"
 #include "mediapipe/calculators/util/rect_to_render_scale_calculator.pb.h"

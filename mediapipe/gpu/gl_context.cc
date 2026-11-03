@@ -27,28 +27,28 @@
 #include <memory>
 #include <utility>
 
-#include "absl/base/attributes.h"
-#include "absl/base/dynamic_annotations.h"
-#include "absl/base/thread_annotations.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/strings/match.h"
-#include "absl/strings/numbers.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
-#include "absl/synchronization/mutex.h"
-#include "mediapipe/framework/port.h"  // IWYU pragma: keep
+#include "absl/base/attributes.h"           // from @com_google_absl
+#include "absl/base/dynamic_annotations.h"  // from @com_google_absl
+#include "absl/base/thread_annotations.h"   // from @com_google_absl
+#include "absl/log/absl_check.h"            // from @com_google_absl
+#include "absl/log/absl_log.h"              // from @com_google_absl
+#include "absl/memory/memory.h"             // from @com_google_absl
+#include "absl/status/status.h"             // from @com_google_absl
+#include "absl/status/status_macros.h"      // from @com_google_absl
+#include "absl/strings/match.h"             // from @com_google_absl
+#include "absl/strings/numbers.h"           // from @com_google_absl
+#include "absl/strings/str_format.h"        // from @com_google_absl
+#include "absl/strings/str_split.h"         // from @com_google_absl
+#include "absl/strings/string_view.h"       // from @com_google_absl
+#include "absl/synchronization/mutex.h"     // from @com_google_absl
+#include "mediapipe/framework/port.h"       // IWYU pragma: keep
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context_internal.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 
 #ifndef __EMSCRIPTEN__
-#include "absl/debugging/leak_check.h"
+#include "absl/debugging/leak_check.h"  // from @com_google_absl
 #include "mediapipe/gpu/gl_thread_collector.h"
 #endif
 

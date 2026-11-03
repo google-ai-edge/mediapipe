@@ -27,11 +27,11 @@ class Database;
 class Statement;
 }  // namespace sqlite_helpers
 
-#include "absl/container/flat_hash_map.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
-#include "absl/types/span.h"
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/status/statusor.h"          // from @com_google_absl
+#include "absl/strings/string_view.h"      // from @com_google_absl
+#include "absl/types/span.h"               // from @com_google_absl
 #include "mediapipe/tasks/cc/retrieval/semantic_retriever/proto/vector_stores.pb.h"
 
 namespace mediapipe {

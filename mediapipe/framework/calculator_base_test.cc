@@ -15,8 +15,8 @@
 #include "mediapipe/framework/calculator_base.h"
 
 // TODO: Move protos in another CL after the C++ code migration.
-#include "absl/container/flat_hash_set.h"
-#include "absl/status/status.h"
+#include "absl/container/flat_hash_set.h"  // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_context_manager.h"

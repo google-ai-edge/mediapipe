@@ -20,7 +20,7 @@
 
 #include <string>
 
-#include "absl/base/macros.h"
+#include "absl/base/macros.h"  // from @com_google_absl
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port.h"
 

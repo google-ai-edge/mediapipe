@@ -18,8 +18,8 @@
 #include <memory>
 #include <vector>
 
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
+#include "absl/log/absl_log.h"   // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensorflow/vector_float_to_tensor_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"

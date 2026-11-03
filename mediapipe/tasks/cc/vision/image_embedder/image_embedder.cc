@@ -22,11 +22,11 @@ limitations under the License.
 #include <variant>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/match.h"
-#include "absl/strings/str_cat.h"
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/status/statusor.h"       // from @com_google_absl
+#include "absl/strings/match.h"         // from @com_google_absl
+#include "absl/strings/str_cat.h"       // from @com_google_absl
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -48,7 +48,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/image_embedder/graph_image_embedder_executor.h"
 #include "mediapipe/tasks/cc/vision/image_embedder/litert_lm_image_embedder_executor.h"
 #include "mediapipe/tasks/cc/vision/image_embedder/proto/image_embedder_graph_options.pb.h"
-#include "stb_image.h"
+#include "stb_image.h"  // from @stblib
 
 namespace mediapipe {
 namespace tasks {

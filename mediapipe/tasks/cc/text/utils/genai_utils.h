@@ -20,8 +20,8 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
+#include "absl/status/statusor.h"      // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 
 namespace mediapipe::tasks::text::utils {
 

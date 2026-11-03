@@ -23,10 +23,10 @@
 #include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/strings/str_cat.h"
+#include "absl/memory/memory.h"         // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/strings/str_cat.h"       // from @com_google_absl
 #include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/packet_generator.pb.h"
 #include "mediapipe/framework/port.h"

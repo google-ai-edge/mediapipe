@@ -5,7 +5,7 @@
 # To run all the test from the command line:
 #   bazel test \
 #       --build_tests_only \
-#       @google_toolbox_for_mac///...
+#       @google_toolbox_for_mac//...
 
 package(default_visibility = ["//visibility:private"])
 

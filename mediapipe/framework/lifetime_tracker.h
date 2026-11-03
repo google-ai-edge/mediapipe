@@ -17,8 +17,8 @@
 
 #include <atomic>
 
-#include "absl/memory/memory.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/memory/memory.h"          // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 
 namespace mediapipe {
 

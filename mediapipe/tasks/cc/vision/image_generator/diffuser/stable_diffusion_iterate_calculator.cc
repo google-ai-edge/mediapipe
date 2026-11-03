@@ -23,9 +23,9 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
+#include "absl/log/absl_log.h"          // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_context.h"

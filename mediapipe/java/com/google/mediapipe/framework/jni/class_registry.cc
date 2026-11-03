@@ -14,7 +14,7 @@
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
 
-#include "absl/strings/str_format.h"
+#include "absl/strings/str_format.h"  // from @com_google_absl
 
 namespace mediapipe {
 namespace android {

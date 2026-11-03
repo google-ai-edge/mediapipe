@@ -2,9 +2,9 @@
 
 #include <unistd.h>
 
-#include "absl/base/attributes.h"
-#include "absl/log/absl_log.h"
-#include "absl/status/statusor.h"
+#include "absl/base/attributes.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"     // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/framework/port/ret_check.h"
 
 #if (__ANDROID_API__ >= 29) && defined(__BIONIC__) && !defined(NDEBUG)

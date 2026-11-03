@@ -18,8 +18,8 @@
 #include <cstdint>
 #include <memory>
 
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/status/status.h"   // from @com_google_absl
 #include "mediapipe/calculators/core/packet_thinner_calculator.pb.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"

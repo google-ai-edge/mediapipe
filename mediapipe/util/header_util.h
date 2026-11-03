@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_UTIL_HEADER_UTIL_H_
 #define MEDIAPIPE_UTIL_HEADER_UTIL_H_
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/packet_set.h"
 
 namespace mediapipe {

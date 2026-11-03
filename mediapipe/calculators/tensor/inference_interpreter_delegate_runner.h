@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensor/inference_runner.h"
 #include "mediapipe/calculators/tensor/tflite_delegate_ptr.h"
 #include "mediapipe/framework/api2/packet.h"

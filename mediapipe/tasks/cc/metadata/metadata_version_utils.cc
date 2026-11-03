@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "absl/strings/str_split.h"
+#include "absl/strings/str_split.h"  // from @com_google_absl
 
 namespace mediapipe {
 namespace tasks {

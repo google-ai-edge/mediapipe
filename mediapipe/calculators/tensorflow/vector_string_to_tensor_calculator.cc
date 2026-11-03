@@ -15,8 +15,8 @@
 // Converts vector<std::string> (or vector<vector<std::string>>) to 1D (or 2D)
 // tf::Tensor.
 
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
+#include "absl/log/absl_log.h"   // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensorflow/vector_string_to_tensor_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"

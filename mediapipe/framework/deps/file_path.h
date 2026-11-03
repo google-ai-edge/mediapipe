@@ -18,7 +18,7 @@
 #include <initializer_list>
 #include <string>
 
-#include "absl/strings/string_view.h"
+#include "absl/strings/string_view.h"  // from @com_google_absl
 
 // A set of file pathname manipulation routines.
 namespace mediapipe {

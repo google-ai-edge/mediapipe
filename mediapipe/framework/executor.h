@@ -20,8 +20,8 @@
 #include <functional>
 
 // TODO: Move protos in another CL after the C++ code migration.
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/framework/deps/registration.h"
 #include "mediapipe/framework/mediapipe_options.pb.h"
 

@@ -14,10 +14,10 @@
 //
 // A simple example to print out "Hello World!" from a MediaPipe graph.
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
+#include "absl/log/absl_check.h"        // from @com_google_absl
+#include "absl/log/absl_log.h"          // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_graph.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 

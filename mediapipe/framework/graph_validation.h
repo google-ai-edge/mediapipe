@@ -18,7 +18,7 @@
 #ifndef MEDIAPIPE_FRAMEWORK_GRAPH_VALIDATION_H_
 #define MEDIAPIPE_FRAMEWORK_GRAPH_VALIDATION_H_
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 
 namespace mediapipe {

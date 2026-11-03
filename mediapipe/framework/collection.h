@@ -23,12 +23,12 @@
 #include <typeinfo>
 #include <vector>
 
-#include "absl/base/macros.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/memory/memory.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
+#include "absl/base/macros.h"          // from @com_google_absl
+#include "absl/log/absl_check.h"       // from @com_google_absl
+#include "absl/log/absl_log.h"         // from @com_google_absl
+#include "absl/memory/memory.h"        // from @com_google_absl
+#include "absl/strings/str_cat.h"      // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/tool/tag_map.h"
 #include "mediapipe/framework/tool/tag_map_helper.h"

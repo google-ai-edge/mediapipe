@@ -21,8 +21,8 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/strings/string_view.h"
+#include "absl/log/absl_check.h"       // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/tasks/cc/text/tokenizers/tokenizer.h"
 #include "sentencepiece/src/sentencepiece_processor.h"  // from @com_google_sentencepiece

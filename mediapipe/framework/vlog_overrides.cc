@@ -10,12 +10,12 @@
 #include <utility>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/log/globals.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
+#include "absl/log/absl_check.h"       // from @com_google_absl
+#include "absl/log/absl_log.h"         // from @com_google_absl
+#include "absl/log/globals.h"          // from @com_google_absl
+#include "absl/strings/str_format.h"   // from @com_google_absl
+#include "absl/strings/str_split.h"    // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/deps/no_destructor.h"
 
 #endif  // defined(MEDIAPIPE_VLOG_V) || defined(MEDIAPIPE_VLOG_VMODULE)

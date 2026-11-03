@@ -28,11 +28,11 @@
 #include <utility>
 #include <vector>
 
-#include "absl/base/thread_annotations.h"
-#include "absl/functional/any_invocable.h"
-#include "absl/status/status.h"
-#include "absl/strings/string_view.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/base/thread_annotations.h"   // from @com_google_absl
+#include "absl/functional/any_invocable.h"  // from @com_google_absl
+#include "absl/status/status.h"             // from @com_google_absl
+#include "absl/strings/string_view.h"       // from @com_google_absl
+#include "absl/synchronization/mutex.h"     // from @com_google_absl
 #include "mediapipe/framework/formats/tensor/internal.h"
 #include "mediapipe/framework/memory_manager.h"
 // Exports MEDIAPIPE_TENSOR_USE_AHWB macro.
@@ -44,7 +44,7 @@
 
 #include <list>
 
-#include "absl/log/absl_check.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/hardware_buffer.h"
 #include "mediapipe/framework/formats/hardware_buffer_pool.h"
 #include "mediapipe/framework/formats/tensor_ahwb_usage.h"

@@ -17,7 +17,7 @@
 
 #include <memory>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/packet.h"
 

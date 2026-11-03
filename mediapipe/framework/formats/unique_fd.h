@@ -3,8 +3,8 @@
 
 #include <utility>
 
-#include "absl/base/attributes.h"
-#include "absl/status/statusor.h"
+#include "absl/base/attributes.h"  // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
 
 namespace mediapipe {
 

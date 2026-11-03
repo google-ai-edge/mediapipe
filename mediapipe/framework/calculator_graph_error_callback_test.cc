@@ -1,10 +1,10 @@
 #include <utility>
 
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
-#include "absl/strings/string_view.h"
-#include "absl/synchronization/mutex.h"
-#include "absl/time/time.h"
+#include "absl/log/absl_check.h"         // from @com_google_absl
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/strings/string_view.h"    // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
+#include "absl/time/time.h"              // from @com_google_absl
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"

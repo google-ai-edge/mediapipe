@@ -6,9 +6,9 @@
 #include <utility>
 #include <vector>
 
-#include "absl/container/flat_hash_map.h"
-#include "absl/status/statusor.h"
-#include "tflite/interpreter.h"  // from @litert
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/status/statusor.h"          // from @com_google_absl
+#include "tflite/interpreter.h"            // from @litert
 
 namespace mediapipe {
 using SignatureName = std::string;

@@ -18,11 +18,11 @@
 #include <cstdint>
 #include <memory>
 
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
-#include "absl/time/time.h"
+#include "absl/log/absl_log.h"     // from @com_google_absl
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
+#include "absl/strings/str_cat.h"  // from @com_google_absl
+#include "absl/time/time.h"        // from @com_google_absl
 #include "mediapipe/util/filtering/low_pass_filter.h"
 
 namespace mediapipe {

@@ -19,7 +19,7 @@
 
 #include <memory>
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/matrix.h"
 
 NS_ASSUME_NONNULL_BEGIN

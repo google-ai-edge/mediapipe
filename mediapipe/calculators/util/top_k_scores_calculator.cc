@@ -21,10 +21,10 @@
 #include <utility>
 #include <vector>
 
-#include "absl/container/node_hash_map.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
+#include "absl/container/node_hash_map.h"  // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/status/status_macros.h"     // from @com_google_absl
+#include "absl/status/statusor.h"          // from @com_google_absl
 #include "mediapipe/calculators/util/top_k_scores_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/classification.pb.h"

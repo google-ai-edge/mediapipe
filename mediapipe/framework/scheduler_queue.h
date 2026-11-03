@@ -21,9 +21,9 @@
 #include <string>
 #include <utility>
 
-#include "absl/base/thread_annotations.h"
-#include "absl/strings/string_view.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/base/thread_annotations.h"  // from @com_google_absl
+#include "absl/strings/string_view.h"      // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/scheduler_shared.h"

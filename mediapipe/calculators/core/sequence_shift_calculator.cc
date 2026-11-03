@@ -14,7 +14,7 @@
 
 #include <deque>
 
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_log.h"  // from @com_google_absl
 #include "mediapipe/calculators/core/sequence_shift_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"

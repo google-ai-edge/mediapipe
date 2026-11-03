@@ -15,9 +15,9 @@
 #include <memory>
 #include <vector>
 
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
-#include "absl/synchronization/blocking_counter.h"
+#include "absl/memory/memory.h"                     // from @com_google_absl
+#include "absl/status/status.h"                     // from @com_google_absl
+#include "absl/synchronization/blocking_counter.h"  // from @com_google_absl
 #include "mediapipe/calculators/image/feature_detector_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"

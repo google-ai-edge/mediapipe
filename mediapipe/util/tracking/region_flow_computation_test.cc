@@ -21,11 +21,11 @@
 #include <random>
 #include <string>
 
-#include "absl/flags/flag.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/time/clock.h"
+#include "absl/flags/flag.h"      // from @com_google_absl
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"    // from @com_google_absl
+#include "absl/status/status.h"   // from @com_google_absl
+#include "absl/time/clock.h"      // from @com_google_absl
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gtest.h"

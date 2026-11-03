@@ -18,10 +18,10 @@
 #include <tuple>
 #include <utility>
 
-#include "absl/functional/overload.h"
-#include "absl/status/status.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
+#include "absl/functional/overload.h"  // from @com_google_absl
+#include "absl/status/status.h"        // from @com_google_absl
+#include "absl/strings/str_cat.h"      // from @com_google_absl
+#include "absl/strings/str_format.h"   // from @com_google_absl
 #include "mediapipe/framework/api3/calculator.h"
 #include "mediapipe/framework/api3/calculator_context.h"
 #include "mediapipe/framework/api3/contract.h"

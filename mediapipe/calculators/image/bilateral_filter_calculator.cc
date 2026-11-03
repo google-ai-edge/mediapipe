@@ -15,10 +15,10 @@
 #include <memory>
 #include <string>
 
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/strings/str_replace.h"
+#include "absl/log/absl_check.h"        // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/strings/str_replace.h"   // from @com_google_absl
 #include "mediapipe/calculators/image/bilateral_filter_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_options.pb.h"

@@ -23,10 +23,10 @@
 #include <utility>
 #include <vector>
 
-#include "absl/flags/flag.h"
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
-#include "absl/strings/string_view.h"
+#include "absl/flags/flag.h"           // from @com_google_absl
+#include "absl/log/absl_check.h"       // from @com_google_absl
+#include "absl/status/status.h"        // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 #include "mediapipe/framework/api3/function_runner.h"

@@ -19,8 +19,8 @@
 #include <cstring>
 #include <memory>
 
-#include "absl/log/absl_log.h"
-#include "absl/memory/memory.h"
+#include "absl/log/absl_log.h"   // from @com_google_absl
+#include "absl/memory/memory.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"

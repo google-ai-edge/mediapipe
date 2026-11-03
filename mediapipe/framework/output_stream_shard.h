@@ -18,7 +18,7 @@
 #include <list>
 #include <string>
 
-#include "absl/log/absl_check.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
 #include "mediapipe/framework/output_stream.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_type.h"

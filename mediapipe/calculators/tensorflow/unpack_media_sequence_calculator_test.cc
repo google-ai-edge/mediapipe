@@ -18,8 +18,8 @@
 #include <utility>
 #include <vector>
 
-#include "absl/log/absl_log.h"
-#include "absl/memory/memory.h"
+#include "absl/log/absl_log.h"   // from @com_google_absl
+#include "absl/memory/memory.h"  // from @com_google_absl
 #include "mediapipe/calculators/core/packet_resampler_calculator.pb.h"
 #include "mediapipe/calculators/tensorflow/unpack_media_sequence_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"

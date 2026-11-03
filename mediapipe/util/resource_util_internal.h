@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 
 namespace mediapipe {
 namespace internal {

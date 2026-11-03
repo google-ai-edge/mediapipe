@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "absl/types/span.h"
+#include "absl/types/span.h"      // from @com_google_absl
 #include "libyuv/video_common.h"  // from @libyuv
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"

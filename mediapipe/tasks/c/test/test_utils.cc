@@ -17,7 +17,7 @@ limitations under the License.
 
 #include <cstdint>
 
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_log.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/image.h"

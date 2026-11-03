@@ -25,14 +25,14 @@
 #include <utility>
 #include <vector>
 
-#include "absl/container/btree_map.h"
-#include "absl/log/absl_check.h"
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
+#include "absl/container/btree_map.h"   // from @com_google_absl
+#include "absl/log/absl_check.h"        // from @com_google_absl
+#include "absl/memory/memory.h"         // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/status/statusor.h"       // from @com_google_absl
+#include "absl/strings/str_cat.h"       // from @com_google_absl
+#include "absl/strings/string_view.h"   // from @com_google_absl
 #include "google/protobuf/message_lite.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_contract.h"

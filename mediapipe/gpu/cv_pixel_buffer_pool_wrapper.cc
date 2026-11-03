@@ -18,9 +18,9 @@
 #include <string>
 
 #include "CoreFoundation/CFBase.h"
-#include "absl/log/absl_check.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_format.h"
+#include "absl/log/absl_check.h"      // from @com_google_absl
+#include "absl/status/statusor.h"     // from @com_google_absl
+#include "absl/strings/str_format.h"  // from @com_google_absl
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/gpu/cv_texture_cache_manager.h"

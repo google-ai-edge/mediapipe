@@ -23,15 +23,15 @@
 #include <memory>
 #include <type_traits>
 
-#include "absl/base/attributes.h"
-#include "absl/base/thread_annotations.h"
-#include "absl/container/flat_hash_map.h"
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
-#include "absl/synchronization/mutex.h"
-#include "absl/types/span.h"
+#include "absl/base/attributes.h"          // from @com_google_absl
+#include "absl/base/thread_annotations.h"  // from @com_google_absl
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"           // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/status/statusor.h"          // from @com_google_absl
+#include "absl/strings/string_view.h"      // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
+#include "absl/types/span.h"               // from @com_google_absl
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/port/threadpool.h"

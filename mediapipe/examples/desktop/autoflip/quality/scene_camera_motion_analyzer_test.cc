@@ -19,10 +19,10 @@
 #include <string>
 #include <vector>
 
-#include "absl/flags/flag.h"
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
-#include "absl/strings/str_split.h"
+#include "absl/flags/flag.h"         // from @com_google_absl
+#include "absl/log/absl_check.h"     // from @com_google_absl
+#include "absl/status/status.h"      // from @com_google_absl
+#include "absl/strings/str_split.h"  // from @com_google_absl
 #include "mediapipe/examples/desktop/autoflip/autoflip_messages.pb.h"
 #include "mediapipe/examples/desktop/autoflip/quality/focus_point.pb.h"
 #include "mediapipe/examples/desktop/autoflip/quality/piecewise_linear_function.h"

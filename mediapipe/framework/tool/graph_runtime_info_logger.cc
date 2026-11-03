@@ -3,12 +3,12 @@
 #include <string>
 #include <utility>
 
-#include "absl/functional/any_invocable.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/time/time.h"
+#include "absl/functional/any_invocable.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"            // from @com_google_absl
+#include "absl/log/absl_log.h"              // from @com_google_absl
+#include "absl/status/status.h"             // from @com_google_absl
+#include "absl/status/statusor.h"           // from @com_google_absl
+#include "absl/time/time.h"                 // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/tool/graph_runtime_info_utils.h"

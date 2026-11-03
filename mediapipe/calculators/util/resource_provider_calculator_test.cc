@@ -20,8 +20,8 @@
 #include <utility>
 #include <vector>
 
-#include "absl/container/flat_hash_map.h"
-#include "absl/strings/str_cat.h"
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/strings/str_cat.h"          // from @com_google_absl
 #include "mediapipe/calculators/util/resource_provider_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/packet.h"

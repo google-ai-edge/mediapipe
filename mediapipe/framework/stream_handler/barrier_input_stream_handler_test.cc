@@ -17,10 +17,10 @@
 #include <memory>
 #include <vector>
 
-#include "absl/base/macros.h"
-#include "absl/log/absl_check.h"
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
+#include "absl/base/macros.h"     // from @com_google_absl
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/memory/memory.h"   // from @com_google_absl
+#include "absl/status/status.h"   // from @com_google_absl
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_context_manager.h"
 #include "mediapipe/framework/calculator_state.h"

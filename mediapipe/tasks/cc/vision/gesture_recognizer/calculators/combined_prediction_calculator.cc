@@ -18,8 +18,8 @@ limitations under the License.
 #include <string>
 #include <utility>
 
-#include "absl/container/btree_map.h"
-#include "absl/status/status.h"
+#include "absl/container/btree_map.h"  // from @com_google_absl
+#include "absl/status/status.h"        // from @com_google_absl
 #include "mediapipe/framework/api3/calculator.h"
 #include "mediapipe/framework/api3/calculator_context.h"
 #include "mediapipe/framework/formats/classification.pb.h"

@@ -16,10 +16,10 @@
 
 #include <list>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/log/absl_check.h"         // from @com_google_absl
+#include "absl/log/absl_log.h"           // from @com_google_absl
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 #include "mediapipe/framework/input_stream_handler.h"
 #include "mediapipe/framework/port/status_builder.h"
 

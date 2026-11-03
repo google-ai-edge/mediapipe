@@ -19,12 +19,12 @@
 #include <unordered_set>
 #include <utility>
 
-#include "absl/status/status.h"
-#include "absl/status/status_builder.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_join.h"
-#include "absl/types/span.h"
-#include "absl/types/variant.h"
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/status/status_builder.h"  // from @com_google_absl
+#include "absl/strings/str_cat.h"        // from @com_google_absl
+#include "absl/strings/str_join.h"       // from @com_google_absl
+#include "absl/types/span.h"             // from @com_google_absl
+#include "absl/types/variant.h"          // from @com_google_absl
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/source_location.h"

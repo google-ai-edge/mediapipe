@@ -14,7 +14,7 @@
 
 #include "mediapipe/gpu/cv_texture_cache_manager.h"
 
-#include "absl/log/absl_check.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
 #include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {

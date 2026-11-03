@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_PORT_STATUSOR_H_
 #define MEDIAPIPE_PORT_STATUSOR_H_
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 
 namespace mediapipe {
 

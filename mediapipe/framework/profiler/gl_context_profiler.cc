@@ -14,12 +14,12 @@
 
 #include <memory>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/memory/memory.h"
-#include "absl/time/clock.h"
-#include "absl/time/time.h"
-#include "absl/types/optional.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"    // from @com_google_absl
+#include "absl/memory/memory.h"   // from @com_google_absl
+#include "absl/time/clock.h"      // from @com_google_absl
+#include "absl/time/time.h"       // from @com_google_absl
+#include "absl/types/optional.h"  // from @com_google_absl
 #include "mediapipe/framework/profiler/graph_profiler.h"
 
 namespace mediapipe {}  // namespace mediapipe

@@ -1,8 +1,8 @@
 #include "mediapipe/gpu/gpu_origin_utils.h"
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_format.h"
+#include "absl/status/status.h"       // from @com_google_absl
+#include "absl/status/statusor.h"     // from @com_google_absl
+#include "absl/strings/str_format.h"  // from @com_google_absl
 
 namespace mediapipe {
 

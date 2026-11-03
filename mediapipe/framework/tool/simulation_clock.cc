@@ -14,8 +14,8 @@
 
 #include "mediapipe/framework/tool/simulation_clock.h"
 
-#include "absl/synchronization/mutex.h"
-#include "absl/time/time.h"
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
+#include "absl/time/time.h"              // from @com_google_absl
 #include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {

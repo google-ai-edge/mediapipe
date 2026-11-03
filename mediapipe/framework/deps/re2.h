@@ -17,7 +17,7 @@
 
 #include <regex>  // NOLINT
 
-#include "absl/base/call_once.h"
+#include "absl/base/call_once.h"  // from @com_google_absl
 
 namespace mediapipe {
 

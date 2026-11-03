@@ -20,7 +20,7 @@
 #include <iostream>
 #include <memory>
 
-#include "absl/strings/escaping.h"
+#include "absl/strings/escaping.h"  // from @com_google_absl
 
 int main(int argc, char** argv) {
   if (argc != 2) {

@@ -1,7 +1,7 @@
 #ifndef MEDIAPIPE_TASKS_CC_METADATA_METADATA_VERSION_UTIL_H_
 #define MEDIAPIPE_TASKS_CC_METADATA_METADATA_VERSION_UTIL_H_
 
-#include "absl/strings/string_view.h"
+#include "absl/strings/string_view.h"  // from @com_google_absl
 
 namespace mediapipe {
 namespace tasks {

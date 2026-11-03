@@ -22,9 +22,9 @@
 #include <queue>
 #include <utility>
 
-#include "absl/base/macros.h"
-#include "absl/status/status.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/base/macros.h"            // from @com_google_absl
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 #include "mediapipe/framework/deps/clock.h"
 #include "mediapipe/framework/deps/monotonic_clock.h"
 

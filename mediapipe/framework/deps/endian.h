@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <cstring>
 
-#include "absl/base/config.h"
+#include "absl/base/config.h"  // from @com_google_absl
 
 namespace mediapipe {
 

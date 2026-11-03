@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "absl/strings/str_replace.h"
+#include "absl/strings/str_replace.h"  // from @com_google_absl
 #include "mediapipe/calculators/tflite/tflite_inference_calculator_test_common.h"
 
 namespace mediapipe {

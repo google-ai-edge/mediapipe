@@ -16,8 +16,8 @@
 
 #include <cmath>
 
-#include "absl/status/status.h"
-#include "absl/types/optional.h"
+#include "absl/status/status.h"   // from @com_google_absl
+#include "absl/types/optional.h"  // from @com_google_absl
 #include "mediapipe/calculators/util/detections_to_rects_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_options.pb.h"

@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/util/tflite/tflite_gpu_runner.h"
 

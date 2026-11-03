@@ -15,7 +15,7 @@
 #import "mediapipe/objc/MPPGraphTestBase.h"
 #import "mediapipe/objc/Weakify.h"
 
-#include "absl/memory/memory.h"
+#include "absl/memory/memory.h"  // from @com_google_absl
 
 static UIImage* UIImageWithPixelBuffer(CVPixelBufferRef pixelBuffer) {
   CFHolder<CGImageRef> cgImage;

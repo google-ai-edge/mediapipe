@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/examples/desktop/autoflip/quality/cropping.pb.h"
 #include "mediapipe/examples/desktop/autoflip/quality/focus_point.pb.h"
 #include "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.h"

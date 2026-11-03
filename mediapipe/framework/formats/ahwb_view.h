@@ -8,8 +8,8 @@
 #include <memory>
 #include <utility>
 
-#include "absl/functional/any_invocable.h"
-#include "absl/status/status.h"
+#include "absl/functional/any_invocable.h"  // from @com_google_absl
+#include "absl/status/status.h"             // from @com_google_absl
 #include "mediapipe/framework/formats/hardware_buffer.h"
 #include "mediapipe/framework/formats/shared_fd.h"
 #include "mediapipe/gpu/gpu_buffer_storage.h"

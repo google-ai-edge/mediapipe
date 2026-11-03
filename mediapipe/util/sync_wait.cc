@@ -6,10 +6,10 @@
 #include <cstdint>
 #include <limits>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_format.h"
-#include "absl/time/time.h"
+#include "absl/status/status.h"       // from @com_google_absl
+#include "absl/status/statusor.h"     // from @com_google_absl
+#include "absl/strings/str_format.h"  // from @com_google_absl
+#include "absl/time/time.h"           // from @com_google_absl
 #include "mediapipe/framework/formats/shared_fd.h"
 #include "mediapipe/framework/formats/unique_fd.h"
 #include "mediapipe/framework/port/ret_check.h"

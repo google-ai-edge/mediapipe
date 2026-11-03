@@ -27,7 +27,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "absl/log/absl_check.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
 #include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {

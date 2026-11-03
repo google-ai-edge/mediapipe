@@ -14,8 +14,8 @@
 
 #include "mediapipe/gpu/gpu_buffer_format.h"
 
-#include "absl/container/flat_hash_map.h"
-#include "absl/log/absl_check.h"
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"           // from @com_google_absl
 #include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/port/logging.h"
 #if !MEDIAPIPE_DISABLE_GPU

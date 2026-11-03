@@ -5,11 +5,11 @@
 #include <string>
 #include <variant>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/strings/ascii.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/strings/ascii.h"         // from @com_google_absl
+#include "absl/strings/str_cat.h"       // from @com_google_absl
+#include "absl/strings/string_view.h"   // from @com_google_absl
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/input_stream_shard.h"
 #include "mediapipe/framework/output_side_packet.h"

@@ -14,9 +14,9 @@
 
 #include <memory>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/types/optional.h"
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/types/optional.h"        // from @com_google_absl
 #include "mediapipe/calculators/core/split_vector_calculator.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/port.h"

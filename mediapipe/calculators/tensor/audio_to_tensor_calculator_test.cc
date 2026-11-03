@@ -16,8 +16,8 @@
 #include <string>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/strings/substitute.h"
+#include "absl/status/status.h"       // from @com_google_absl
+#include "absl/strings/substitute.h"  // from @com_google_absl
 #include "audio/dsp/resampler_q.h"
 #include "mediapipe/calculators/tensor/audio_to_tensor_calculator.pb.h"
 #include "mediapipe/framework/api2/packet.h"

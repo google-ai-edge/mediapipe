@@ -19,9 +19,9 @@
 #include <cstdint>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/memory/memory.h"
-#include "absl/time/time.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/memory/memory.h"   // from @com_google_absl
+#include "absl/time/time.h"       // from @com_google_absl
 #include "mediapipe/framework/port/gtest.h"
 
 namespace mediapipe {

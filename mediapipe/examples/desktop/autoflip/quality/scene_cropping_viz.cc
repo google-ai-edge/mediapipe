@@ -16,8 +16,8 @@
 
 #include <memory>
 
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
+#include "absl/memory/memory.h"  // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/examples/desktop/autoflip/autoflip_messages.pb.h"
 #include "mediapipe/examples/desktop/autoflip/quality/cropping.pb.h"
 #include "mediapipe/examples/desktop/autoflip/quality/focus_point.pb.h"

@@ -14,9 +14,9 @@
 
 #include <memory>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "exif.h"  // from @easyexif
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "exif.h"                       // from @easyexif
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_file_properties.pb.h"
 

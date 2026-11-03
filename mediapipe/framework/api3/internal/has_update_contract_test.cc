@@ -14,7 +14,7 @@
 
 #include "mediapipe/framework/api3/internal/has_update_contract.h"
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/port/gtest.h"
 
 namespace mediapipe::api3 {

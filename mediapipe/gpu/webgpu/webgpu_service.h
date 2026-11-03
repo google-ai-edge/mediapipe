@@ -18,13 +18,13 @@
 #include <memory>
 #include <utility>
 
-#include "absl/base/attributes.h"
-#include "absl/base/thread_annotations.h"
-#include "absl/container/flat_hash_map.h"
-#include "absl/log/log.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/base/attributes.h"          // from @com_google_absl
+#include "absl/base/thread_annotations.h"  // from @com_google_absl
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/log/log.h"                  // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/status/statusor.h"          // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
 #include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/gpu/attachments.h"

@@ -19,9 +19,9 @@
 #include <memory>
 #include <string>
 
-#include "Eigen/Core"  // from @eigen
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
+#include "Eigen/Core"            // from @eigen
+#include "absl/memory/memory.h"  // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"

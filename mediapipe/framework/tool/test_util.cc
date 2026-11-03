@@ -25,21 +25,21 @@
 #include <string>
 #include <vector>
 
-#include "absl/cleanup/cleanup.h"
-#include "absl/container/flat_hash_set.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
-#include "absl/strings/substitute.h"
-#include "absl/time/clock.h"
-#include "absl/time/time.h"
+#include "absl/cleanup/cleanup.h"          // from @com_google_absl
+#include "absl/container/flat_hash_set.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"           // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
+#include "absl/memory/memory.h"            // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/status/status_macros.h"     // from @com_google_absl
+#include "absl/status/statusor.h"          // from @com_google_absl
+#include "absl/strings/str_cat.h"          // from @com_google_absl
+#include "absl/strings/str_format.h"       // from @com_google_absl
+#include "absl/strings/str_join.h"         // from @com_google_absl
+#include "absl/strings/string_view.h"      // from @com_google_absl
+#include "absl/strings/substitute.h"       // from @com_google_absl
+#include "absl/time/clock.h"               // from @com_google_absl
+#include "absl/time/time.h"                // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
@@ -47,8 +47,8 @@
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "stb_image.h"
-#include "stb_image_write.h"
+#include "stb_image.h"        // from @stblib
+#include "stb_image_write.h"  // from @stblib
 
 namespace mediapipe {
 

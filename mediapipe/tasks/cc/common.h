@@ -16,8 +16,8 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_COMMON_H_
 #define MEDIAPIPE_TASKS_CC_COMMON_H_
 
-#include "absl/status/status.h"
-#include "absl/strings/string_view.h"
+#include "absl/status/status.h"        // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 
 namespace mediapipe {
 namespace tasks {

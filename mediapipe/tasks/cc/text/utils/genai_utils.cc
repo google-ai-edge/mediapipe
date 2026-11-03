@@ -21,12 +21,12 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/ascii.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
-#include "nlohmann/json.hpp"  // from @com_github_nlohmann_json
+#include "absl/status/status.h"        // from @com_google_absl
+#include "absl/status/statusor.h"      // from @com_google_absl
+#include "absl/strings/ascii.h"        // from @com_google_absl
+#include "absl/strings/str_cat.h"      // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
+#include "nlohmann/json.hpp"           // from @com_github_nlohmann_json
 
 namespace mediapipe::tasks::text::utils {
 

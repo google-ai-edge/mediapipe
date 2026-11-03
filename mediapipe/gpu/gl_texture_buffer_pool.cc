@@ -14,6 +14,6 @@
 
 #include "mediapipe/gpu/gl_texture_buffer_pool.h"
 
-#include "absl/synchronization/mutex.h"
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 
 namespace mediapipe {}  // namespace mediapipe

@@ -1,6 +1,6 @@
 #include "mediapipe/tasks/cc/vision/hand_detector/utils.h"
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensor/tensors_to_detections_calculator.pb.h"
 #include "mediapipe/calculators/tflite/ssd_anchors_calculator.pb.h"
 #include "mediapipe/framework/deps/file_path.h"

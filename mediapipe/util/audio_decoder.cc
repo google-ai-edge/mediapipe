@@ -20,15 +20,15 @@
 #include <memory>
 #include <string>
 
-#include "Eigen/Core"  // from @eigen
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/strings/numbers.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/substitute.h"
-#include "absl/time/time.h"
+#include "Eigen/Core"                   // from @eigen
+#include "absl/log/absl_check.h"        // from @com_google_absl
+#include "absl/log/absl_log.h"          // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/strings/numbers.h"       // from @com_google_absl
+#include "absl/strings/str_cat.h"       // from @com_google_absl
+#include "absl/strings/substitute.h"    // from @com_google_absl
+#include "absl/time/time.h"             // from @com_google_absl
 #include "mediapipe/framework/deps/cleanup.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/port/map_util.h"

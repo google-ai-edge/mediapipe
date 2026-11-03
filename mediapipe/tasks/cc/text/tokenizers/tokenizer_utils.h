@@ -18,7 +18,7 @@ limitations under the License.
 
 #include <memory>
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "mediapipe/tasks/cc/text/tokenizers/regex_tokenizer.h"
 #include "mediapipe/tasks/cc/text/tokenizers/tokenizer.h"

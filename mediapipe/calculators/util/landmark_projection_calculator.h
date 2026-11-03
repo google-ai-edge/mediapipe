@@ -18,7 +18,7 @@
 #include <array>
 #include <utility>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/calculators/util/landmark_projection_calculator.pb.h"
 #include "mediapipe/framework/api3/calculator_contract.h"
 #include "mediapipe/framework/api3/contract.h"

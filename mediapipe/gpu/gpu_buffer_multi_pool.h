@@ -22,7 +22,7 @@
 #ifndef MEDIAPIPE_GPU_GPU_BUFFER_MULTI_POOL_H_
 #define MEDIAPIPE_GPU_GPU_BUFFER_MULTI_POOL_H_
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/multi_pool.h"

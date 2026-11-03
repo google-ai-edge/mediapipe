@@ -17,8 +17,8 @@
 
 #include <cstdint>
 
-#include "absl/status/status.h"
-#include "absl/types/span.h"
+#include "absl/status/status.h"   // from @com_google_absl
+#include "absl/types/span.h"      // from @com_google_absl
 #include "libyuv/convert.h"       // from @libyuv
 #include "libyuv/convert_argb.h"  // from @libyuv
 #include "libyuv/convert_from.h"  // from @libyuv

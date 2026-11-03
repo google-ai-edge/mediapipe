@@ -17,8 +17,8 @@
 
 #include <cstdint>
 
-#include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
+#include "absl/status/statusor.h"      // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/util/label_map.pb.h"
 

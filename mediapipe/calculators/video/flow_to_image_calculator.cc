@@ -21,8 +21,8 @@
 #include <utility>
 #include <vector>
 
-#include "absl/strings/str_format.h"
-#include "absl/strings/string_view.h"
+#include "absl/strings/str_format.h"   // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/calculators/video/flow_to_image_calculator.pb.h"
 #include "mediapipe/calculators/video/tool/flow_quantizer_model.h"
 #include "mediapipe/framework/calculator_framework.h"

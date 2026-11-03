@@ -2,9 +2,9 @@
 #include <string>
 #include <utility>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/types/optional.h"
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
+#include "absl/types/optional.h"   // from @com_google_absl
 #include "mediapipe/calculators/tensor/tensor_converter_gl30.h"
 #include "mediapipe/calculators/tensor/tensor_converter_gl31.h"
 #include "mediapipe/calculators/tensor/tensor_converter_gpu.h"

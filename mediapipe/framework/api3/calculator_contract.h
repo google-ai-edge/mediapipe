@@ -17,8 +17,8 @@
 
 #include <string>
 
-#include "absl/functional/any_invocable.h"
-#include "absl/status/status.h"
+#include "absl/functional/any_invocable.h"  // from @com_google_absl
+#include "absl/status/status.h"             // from @com_google_absl
 #include "mediapipe/framework/api3/any.h"
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/internal/contract_fields.h"

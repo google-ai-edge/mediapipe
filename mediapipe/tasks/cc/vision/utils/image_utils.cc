@@ -19,13 +19,13 @@ limitations under the License.
 #include <string>
 #include <utility>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_format.h"
+#include "absl/status/status.h"       // from @com_google_absl
+#include "absl/status/statusor.h"     // from @com_google_absl
+#include "absl/strings/str_format.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/tensor.h"
-#include "stb_image.h"
+#include "stb_image.h"  // from @stblib
 
 namespace mediapipe {
 namespace tasks {

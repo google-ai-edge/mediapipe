@@ -15,12 +15,12 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/text/utils/text_model_utils.h"
 
-#include "absl/algorithm/container.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/ascii.h"
-#include "absl/strings/match.h"
-#include "absl/strings/substitute.h"
+#include "absl/algorithm/container.h"  // from @com_google_absl
+#include "absl/status/status.h"        // from @com_google_absl
+#include "absl/status/statusor.h"      // from @com_google_absl
+#include "absl/strings/ascii.h"        // from @com_google_absl
+#include "absl/strings/match.h"        // from @com_google_absl
+#include "absl/strings/substitute.h"   // from @com_google_absl
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/processors/proto/text_model_type.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"

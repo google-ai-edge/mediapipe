@@ -14,9 +14,9 @@
 
 #include "mediapipe/modules/objectron/calculators/frame_annotation_tracker.h"
 
-#include "absl/container/flat_hash_set.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
+#include "absl/container/flat_hash_set.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"           // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
 #include "mediapipe/modules/objectron/calculators/box_util.h"
 #include "mediapipe/util/tracking/box_tracker.pb.h"

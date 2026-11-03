@@ -17,8 +17,8 @@ limitations under the License.
 
 #include <utility>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/image.h"

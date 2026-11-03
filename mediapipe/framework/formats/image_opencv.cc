@@ -14,7 +14,7 @@
 
 #include "mediapipe/framework/formats/image_opencv.h"
 
-#include "absl/log/absl_check.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/port/logging.h"
 

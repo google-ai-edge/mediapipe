@@ -20,8 +20,8 @@ limitations under the License.
 #include <fstream>
 #include <string>
 
-#include "absl/strings/string_view.h"
-#include "flatbuffers/flatbuffers.h"  // from @flatbuffers
+#include "absl/strings/string_view.h"  // from @com_google_absl
+#include "flatbuffers/flatbuffers.h"   // from @flatbuffers
 #include "mediapipe/calculators/core/flow_limiter_calculator.pb.h"
 #include "mediapipe/tasks/cc/core/external_file_handler.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"

@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_DEPS_SINGLETON_H_
 #define MEDIAPIPE_DEPS_SINGLETON_H_
 
-#include "absl/synchronization/mutex.h"
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 
 // The Singleton template class creates a single instance of template parameter
 // |T| when needed in a thread-safe fashion. A pointer to this single instance

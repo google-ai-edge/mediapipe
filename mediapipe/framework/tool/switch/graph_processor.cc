@@ -1,8 +1,8 @@
 #include "mediapipe/framework/tool/switch/graph_processor.h"
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/status/status_macros.h"   // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 
 namespace mediapipe {
 

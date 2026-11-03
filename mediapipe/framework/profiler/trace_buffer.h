@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <string>
 
-#include "absl/time/time.h"
+#include "absl/time/time.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_profile.pb.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/profiler/circular_buffer.h"

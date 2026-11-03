@@ -21,9 +21,9 @@
 #include <string>
 #include <typeinfo>
 
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
-#include "absl/strings/str_cat.h"
+#include "absl/log/absl_check.h"   // from @com_google_absl
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/time_series_header.pb.h"

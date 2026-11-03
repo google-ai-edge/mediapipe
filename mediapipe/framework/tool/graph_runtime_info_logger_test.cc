@@ -14,8 +14,8 @@
 
 #include "mediapipe/framework/tool/graph_runtime_info_logger.h"
 
-#include "absl/synchronization/notification.h"
-#include "absl/time/time.h"
+#include "absl/synchronization/notification.h"  // from @com_google_absl
+#include "absl/time/time.h"                     // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"

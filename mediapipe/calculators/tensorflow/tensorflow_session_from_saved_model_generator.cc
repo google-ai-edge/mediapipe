@@ -14,13 +14,13 @@
 
 #include <algorithm>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 
 #if !defined(__ANDROID__)
 #include "mediapipe/framework/port/file_helpers.h"
 #endif
-#include "absl/log/absl_log.h"
-#include "absl/strings/str_replace.h"
+#include "absl/log/absl_log.h"         // from @com_google_absl
+#include "absl/strings/str_replace.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensorflow/tensorflow_session.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session_from_saved_model_generator.pb.h"
 #include "mediapipe/framework/deps/file_path.h"

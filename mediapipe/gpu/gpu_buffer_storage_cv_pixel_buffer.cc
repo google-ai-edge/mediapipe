@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"    // from @com_google_absl
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"  // IWYU pragma: keep (MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER)
 #include "mediapipe/gpu/gpu_buffer_storage_image_frame.h"

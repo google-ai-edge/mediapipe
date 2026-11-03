@@ -7,9 +7,9 @@
 #include <string>
 #include <vector>
 
-#include "Eigen/Core"  // from @eigen
-#include "absl/status/status.h"
-#include "absl/types/span.h"
+#include "Eigen/Core"            // from @eigen
+#include "absl/status/status.h"  // from @com_google_absl
+#include "absl/types/span.h"     // from @com_google_absl
 #include "audio/dsp/resampler_q.h"
 #include "mediapipe/calculators/audio/resample_time_series_calculator.pb.h"
 #include "mediapipe/framework/formats/matrix.h"

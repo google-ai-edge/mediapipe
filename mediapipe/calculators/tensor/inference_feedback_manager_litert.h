@@ -6,11 +6,11 @@
 #include <string_view>
 #include <vector>
 
-#include "absl/container/flat_hash_map.h"
-#include "absl/container/flat_hash_set.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
+#include "absl/container/flat_hash_map.h"     // from @com_google_absl
+#include "absl/container/flat_hash_set.h"     // from @com_google_absl
+#include "absl/status/status.h"               // from @com_google_absl
+#include "absl/status/statusor.h"             // from @com_google_absl
+#include "absl/strings/string_view.h"         // from @com_google_absl
 #include "litert/cc/litert_common.h"          // from @litert
 #include "litert/cc/litert_compiled_model.h"  // from @litert
 #include "litert/cc/litert_expected.h"        // from @litert

@@ -11,8 +11,8 @@
 #include <sys/mman.h>
 #endif
 
-#include "absl/status/status.h"
-#include "absl/strings/str_cat.h"
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 #include "mediapipe/framework/deps/platform_strings.h"
 
 namespace mediapipe {

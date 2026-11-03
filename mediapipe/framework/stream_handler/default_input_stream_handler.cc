@@ -16,7 +16,7 @@
 
 #include <algorithm>
 
-#include "absl/strings/substitute.h"
+#include "absl/strings/substitute.h"  // from @com_google_absl
 #include "mediapipe/framework/input_stream_handler.h"
 
 namespace mediapipe {

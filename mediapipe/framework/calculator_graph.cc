@@ -24,20 +24,20 @@
 #include <utility>
 #include <vector>
 
-#include "absl/container/flat_hash_set.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/log/check.h"
-#include "absl/log/log.h"
-#include "absl/status/status.h"
-#include "absl/status/status_builder.h"
-#include "absl/status/status_macros.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
-#include "absl/strings/substitute.h"
-#include "absl/synchronization/mutex.h"
-#include "absl/time/time.h"
+#include "absl/container/flat_hash_set.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"           // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
+#include "absl/log/check.h"                // from @com_google_absl
+#include "absl/log/log.h"                  // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/status/status_builder.h"    // from @com_google_absl
+#include "absl/status/status_macros.h"     // from @com_google_absl
+#include "absl/strings/str_cat.h"          // from @com_google_absl
+#include "absl/strings/str_join.h"         // from @com_google_absl
+#include "absl/strings/string_view.h"      // from @com_google_absl
+#include "absl/strings/substitute.h"       // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
+#include "absl/time/time.h"                // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/counter_factory.h"

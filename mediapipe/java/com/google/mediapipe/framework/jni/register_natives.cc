@@ -14,8 +14,8 @@
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/register_natives.h"
 
-#include "absl/log/absl_log.h"
-#include "absl/strings/str_format.h"
+#include "absl/log/absl_log.h"        // from @com_google_absl
+#include "absl/strings/str_format.h"  // from @com_google_absl
 #include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
 
 #if defined(__ANDROID__)

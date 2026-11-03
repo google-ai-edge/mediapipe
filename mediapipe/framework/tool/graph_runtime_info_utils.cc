@@ -5,11 +5,11 @@
 #include <string>
 #include <vector>
 
-#include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_join.h"
-#include "absl/time/time.h"
+#include "absl/status/statusor.h"     // from @com_google_absl
+#include "absl/strings/str_cat.h"     // from @com_google_absl
+#include "absl/strings/str_format.h"  // from @com_google_absl
+#include "absl/strings/str_join.h"    // from @com_google_absl
+#include "absl/time/time.h"           // from @com_google_absl
 #include "mediapipe/framework/timestamp.h"
 
 namespace mediapipe::tool {

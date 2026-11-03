@@ -22,12 +22,12 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/cord.h"
-#include "absl/strings/str_cat.h"
+#include "absl/flags/flag.h"       // from @com_google_absl
+#include "absl/memory/memory.h"    // from @com_google_absl
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
+#include "absl/strings/cord.h"     // from @com_google_absl
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/location_data.pb.h"

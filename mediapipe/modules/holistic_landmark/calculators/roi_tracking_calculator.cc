@@ -16,7 +16,7 @@
 
 #include <cstdlib>
 
-#include "absl/strings/str_format.h"
+#include "absl/strings/str_format.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"

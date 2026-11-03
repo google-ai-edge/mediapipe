@@ -19,8 +19,8 @@
 #include <algorithm>
 #include <utility>
 
-#include "absl/log/absl_log.h"
-#include "absl/memory/memory.h"
+#include "absl/log/absl_log.h"   // from @com_google_absl
+#include "absl/memory/memory.h"  // from @com_google_absl
 #include "mediapipe/examples/desktop/autoflip/quality/math_utils.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/ret_check.h"

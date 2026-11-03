@@ -20,14 +20,14 @@ limitations under the License.
 #include <memory>
 #include <string>
 
-#include "absl/base/thread_annotations.h"
-#include "absl/functional/any_invocable.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
-#include "absl/synchronization/mutex.h"
-#include "c/conversation.h"  // from @litert_lm
-#include "c/engine.h"        // from @litert_lm
+#include "absl/base/thread_annotations.h"   // from @com_google_absl
+#include "absl/functional/any_invocable.h"  // from @com_google_absl
+#include "absl/status/status.h"             // from @com_google_absl
+#include "absl/status/statusor.h"           // from @com_google_absl
+#include "absl/strings/string_view.h"       // from @com_google_absl
+#include "absl/synchronization/mutex.h"     // from @com_google_absl
+#include "c/conversation.h"                 // from @litert_lm
+#include "c/engine.h"                       // from @litert_lm
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 

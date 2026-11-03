@@ -20,9 +20,9 @@
 #include <string>
 #include <vector>
 
-#include "absl/container/node_hash_map.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
+#include "absl/container/node_hash_map.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"           // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/singleton.h"
 #include "mediapipe/framework/port/vector.h"

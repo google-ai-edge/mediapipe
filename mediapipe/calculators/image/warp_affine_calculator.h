@@ -18,7 +18,7 @@
 #include <array>
 #include <utility>
 
-#include "absl/strings/string_view.h"
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/calculators/image/warp_affine_calculator.pb.h"
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/node.h"

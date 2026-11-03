@@ -16,8 +16,8 @@
 
 #include <memory>
 
-#include "absl/memory/memory.h"
-#include "absl/status/statusor.h"
+#include "absl/memory/memory.h"    // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/calculators/image/affine_transformation.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"

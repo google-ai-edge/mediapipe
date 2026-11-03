@@ -14,7 +14,7 @@
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/packet_context_jni.h"
 
-#include "absl/strings/str_format.h"
+#include "absl/strings/str_format.h"  // from @com_google_absl
 #include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph.h"
 

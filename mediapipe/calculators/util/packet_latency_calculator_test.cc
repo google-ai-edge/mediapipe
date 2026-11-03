@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "absl/time/time.h"
+#include "absl/time/time.h"  // from @com_google_absl
 #include "mediapipe/calculators/util/latency.pb.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/deps/clock.h"

@@ -17,8 +17,8 @@ limitations under the License.
 
 #include <algorithm>
 
-#include "absl/status/statusor.h"
-#include "absl/strings/match.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
+#include "absl/strings/match.h"    // from @com_google_absl
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
 

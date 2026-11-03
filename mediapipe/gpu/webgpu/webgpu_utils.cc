@@ -6,10 +6,10 @@
 #include <string>
 #include <utility>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
-#include "absl/time/time.h"
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/status/statusor.h"       // from @com_google_absl
+#include "absl/time/time.h"             // from @com_google_absl
 #include "mediapipe/gpu/webgpu/webgpu_headers.h"
 
 #ifdef __EMSCRIPTEN__

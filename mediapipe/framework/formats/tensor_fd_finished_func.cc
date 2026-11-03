@@ -1,7 +1,7 @@
 #include "mediapipe/framework/formats/tensor_fd_finished_func.h"
 
-#include "absl/log/absl_log.h"
-#include "absl/time/time.h"
+#include "absl/log/absl_log.h"  // from @com_google_absl
+#include "absl/time/time.h"     // from @com_google_absl
 #include "mediapipe/framework/formats/shared_fd.h"
 #include "mediapipe/util/sync_wait.h"
 

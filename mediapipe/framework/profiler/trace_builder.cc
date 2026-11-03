@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-#include "absl/container/node_hash_map.h"
+#include "absl/container/node_hash_map.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_profile.pb.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/timestamp.h"

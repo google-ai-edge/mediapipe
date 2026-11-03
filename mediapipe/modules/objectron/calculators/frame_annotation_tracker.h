@@ -18,8 +18,8 @@
 #include <cstdint>
 #include <functional>
 
-#include "absl/container/btree_map.h"
-#include "absl/container/flat_hash_set.h"
+#include "absl/container/btree_map.h"      // from @com_google_absl
+#include "absl/container/flat_hash_set.h"  // from @com_google_absl
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
 #include "mediapipe/util/tracking/box_tracker.pb.h"
 

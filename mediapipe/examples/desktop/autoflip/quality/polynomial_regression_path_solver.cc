@@ -14,7 +14,7 @@
 
 #include "mediapipe/examples/desktop/autoflip/quality/polynomial_regression_path_solver.h"
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"            // from @com_google_absl
 #include "ceres/autodiff_cost_function.h"  // from @ceres_solver
 #include "ceres/cost_function.h"           // from @ceres_solver
 #include "ceres/loss_function.h"           // from @ceres_solver

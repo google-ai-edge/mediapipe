@@ -14,9 +14,9 @@
 
 #include "mediapipe/framework/deps/ret_check.h"
 
-#include "absl/status/status.h"
-#include "absl/status/status_builder.h"
-#include "absl/types/source_location.h"
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/status/status_builder.h"  // from @com_google_absl
+#include "absl/types/source_location.h"  // from @com_google_absl
 
 namespace mediapipe {
 

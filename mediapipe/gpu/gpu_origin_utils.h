@@ -1,7 +1,7 @@
 #ifndef MEDIAPIPE_GPU_GPU_ORIGIN_UTILS_H_
 #define MEDIAPIPE_GPU_GPU_ORIGIN_UTILS_H_
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/gpu/gpu_origin.pb.h"
 
 namespace mediapipe {

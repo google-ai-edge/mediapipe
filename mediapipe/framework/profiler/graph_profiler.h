@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-#include "absl/time/time.h"
+#include "absl/time/time.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_profile.pb.h"

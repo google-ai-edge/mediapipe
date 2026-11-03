@@ -15,6 +15,6 @@
 #ifndef MEDIAPIPE_PORT_PORT_H_
 #define MEDIAPIPE_PORT_PORT_H_
 
-#include "absl/base/port.h"
+#include "absl/base/port.h"  // from @com_google_absl
 
 #endif  // MEDIAPIPE_PORT_PORT_H_

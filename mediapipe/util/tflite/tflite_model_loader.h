@@ -20,8 +20,8 @@
 #include <optional>
 #include <string>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/resources.h"
 #include "tflite/model_builder.h"  // from @litert

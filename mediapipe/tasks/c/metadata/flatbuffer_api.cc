@@ -19,8 +19,8 @@ limitations under the License.
 #include <cstdlib>
 #include <string>
 
-#include "absl/status/status.h"
-#include "flatbuffers/idl.h"  // from @flatbuffers
+#include "absl/status/status.h"  // from @com_google_absl
+#include "flatbuffers/idl.h"     // from @flatbuffers
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/core/mp_status_converter.h"
 

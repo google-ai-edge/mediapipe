@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <string>
 
-#include "absl/container/node_hash_map.h"
+#include "absl/container/node_hash_map.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/vector.h"
 

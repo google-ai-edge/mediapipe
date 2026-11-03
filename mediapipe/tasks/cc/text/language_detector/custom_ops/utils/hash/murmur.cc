@@ -22,7 +22,7 @@ limitations under the License.
 
 #include <cstdint>
 
-#include "absl/base/optimization.h"
+#include "absl/base/optimization.h"  // from @com_google_absl
 #include "mediapipe/util/endian.h"
 
 namespace mediapipe::tasks::text::language_detector::custom_ops::hash {

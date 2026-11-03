@@ -16,7 +16,7 @@
 
 #include <set>
 
-#include "absl/synchronization/mutex.h"
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 #include "mediapipe/framework/port/gtest.h"
 
 namespace mediapipe {

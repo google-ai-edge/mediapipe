@@ -18,9 +18,9 @@
 #include <map>
 #include <set>
 
-#include "absl/base/thread_annotations.h"
-#include "absl/synchronization/mutex.h"
-#include "absl/time/time.h"
+#include "absl/base/thread_annotations.h"  // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
+#include "absl/time/time.h"                // from @com_google_absl
 #include "mediapipe/framework/deps/clock.h"
 
 namespace mediapipe {

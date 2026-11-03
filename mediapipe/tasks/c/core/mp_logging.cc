@@ -16,11 +16,11 @@ limitations under the License.
 
 #include <string>
 
-#include "absl/base/const_init.h"
-#include "absl/log/log_entry.h"
-#include "absl/log/log_sink.h"
-#include "absl/log/log_sink_registry.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/base/const_init.h"        // from @com_google_absl
+#include "absl/log/log_entry.h"          // from @com_google_absl
+#include "absl/log/log_sink.h"           // from @com_google_absl
+#include "absl/log/log_sink_registry.h"  // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 
 namespace {
 

@@ -19,10 +19,10 @@
 #include <tuple>
 #include <utility>
 
-#include "absl/functional/any_invocable.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
+#include "absl/functional/any_invocable.h"  // from @com_google_absl
+#include "absl/status/status.h"             // from @com_google_absl
+#include "absl/status/statusor.h"           // from @com_google_absl
+#include "absl/strings/string_view.h"       // from @com_google_absl
 #include "mediapipe/calculators/core/pass_through_calculator.h"
 #include "mediapipe/framework/api3/any.h"
 #include "mediapipe/framework/api3/calculator.h"

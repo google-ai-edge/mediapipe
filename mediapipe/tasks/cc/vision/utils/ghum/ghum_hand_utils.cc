@@ -18,7 +18,7 @@ limitations under the License.
 #include <array>
 #include <utility>
 
-#include "absl/log/absl_check.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
 #include "mediapipe/calculators/util/set_joints_visibility_calculator.h"
 #include "mediapipe/calculators/util/set_joints_visibility_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"

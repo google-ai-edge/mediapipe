@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "absl/synchronization/mutex.h"
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 
 // A thread-safe unordered map with locking at the key level.
 template <typename Key, typename T, class Hash = std::hash<Key>>

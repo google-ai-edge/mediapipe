@@ -17,14 +17,14 @@
 #include <tuple>
 #include <vector>
 
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/log/absl_log.h"           // from @com_google_absl
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 // TODO: Move protos in another CL after the C++ code migration.
-#include "absl/base/macros.h"
-#include "absl/memory/memory.h"
-#include "absl/strings/str_cat.h"
+#include "absl/base/macros.h"      // from @com_google_absl
+#include "absl/memory/memory.h"    // from @com_google_absl
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"

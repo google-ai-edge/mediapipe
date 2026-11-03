@@ -21,9 +21,9 @@ limitations under the License.
 #include <optional>
 #include <utility>
 
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
+#include "absl/log/absl_check.h"   // from @com_google_absl
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/tasks/c/components/containers/embedding_result.h"
 #include "mediapipe/tasks/c/components/containers/embedding_result_converter.h"

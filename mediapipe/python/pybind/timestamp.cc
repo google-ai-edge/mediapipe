@@ -14,7 +14,7 @@
 
 #include "mediapipe/python/pybind/timestamp.h"
 
-#include "absl/strings/str_cat.h"
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/python/pybind/util.h"
 #include "pybind11/pybind11.h"  // from @pybind11

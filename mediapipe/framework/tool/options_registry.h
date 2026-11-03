@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
 #include "mediapipe/framework/deps/registration.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/tool/field_data.pb.h"

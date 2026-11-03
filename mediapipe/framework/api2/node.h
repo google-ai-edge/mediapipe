@@ -4,7 +4,7 @@
 #include <memory>
 #include <type_traits>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/api2/contract.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_context.h"

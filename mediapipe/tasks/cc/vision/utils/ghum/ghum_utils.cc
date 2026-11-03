@@ -19,7 +19,7 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/types/span.h"
+#include "absl/types/span.h"  // from @com_google_absl
 #include "mediapipe/calculators/util/combine_joints_calculator.h"
 #include "mediapipe/calculators/util/combine_joints_calculator.pb.h"
 #include "mediapipe/calculators/util/set_joints_visibility_calculator.h"

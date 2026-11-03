@@ -15,8 +15,8 @@
 #include <memory>
 #include <vector>
 
-#include "Eigen/Core"  // from @eigen
-#include "absl/log/absl_check.h"
+#include "Eigen/Core"             // from @eigen
+#include "absl/log/absl_check.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/formats/matrix.h"

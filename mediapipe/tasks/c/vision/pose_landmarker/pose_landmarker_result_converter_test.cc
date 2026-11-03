@@ -17,7 +17,7 @@ limitations under the License.
 
 #include <cstdint>
 
-#include "absl/flags/flag.h"
+#include "absl/flags/flag.h"  // from @com_google_absl
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/gtest.h"

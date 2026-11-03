@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_DEPS_CLOCK_H_
 #define MEDIAPIPE_DEPS_CLOCK_H_
 
-#include "absl/time/time.h"
+#include "absl/time/time.h"  // from @com_google_absl
 
 namespace mediapipe {
 

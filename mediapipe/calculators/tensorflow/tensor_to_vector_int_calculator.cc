@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <memory>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensorflow/tensor_to_vector_int_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "tensorflow/core/framework/tensor.h"  // from @org_tensorflow

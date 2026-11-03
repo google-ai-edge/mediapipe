@@ -18,7 +18,7 @@ limitations under the License.
 #include <algorithm>
 #include <memory>
 
-#include "include/darts.h"
+#include "include/darts.h"  // from @darts_clone
 
 namespace mediapipe::tflite_operations::sentencepiece {
 

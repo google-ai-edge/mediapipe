@@ -16,12 +16,12 @@
 
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/strings/numbers.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/strings/numbers.h"       // from @com_google_absl
+#include "absl/strings/str_format.h"    // from @com_google_absl
+#include "absl/strings/str_split.h"     // from @com_google_absl
+#include "absl/strings/string_view.h"   // from @com_google_absl
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/calculators/score_calibration_calculator.pb.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"

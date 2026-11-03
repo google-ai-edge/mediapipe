@@ -19,7 +19,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "absl/strings/string_view.h"
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/tasks/cc/retrieval/semantic_retriever/audio_decoder.h"
 #import "mediapipe/tasks/ios/audio/core/sources/MPPAudioDataFormat.h"
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"

@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_DEPS_SOURCE_LOCATION_H_
 #define MEDIAPIPE_DEPS_SOURCE_LOCATION_H_
 
-#include "absl/types/source_location.h"
+#include "absl/types/source_location.h"  // from @com_google_absl
 
 namespace mediapipe {
 

@@ -14,8 +14,8 @@
 
 #include "mediapipe/framework/deps/clock.h"
 
-#include "absl/log/absl_log.h"
-#include "absl/time/clock.h"
+#include "absl/log/absl_log.h"  // from @com_google_absl
+#include "absl/time/clock.h"    // from @com_google_absl
 
 namespace mediapipe {
 

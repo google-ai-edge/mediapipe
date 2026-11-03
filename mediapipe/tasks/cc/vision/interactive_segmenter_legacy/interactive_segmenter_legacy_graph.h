@@ -16,8 +16,8 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_VISION_INTERACTIVE_SEGMENTER_LEGACY_INTERACTIVE_SEGMENTER_LEGACY_GRAPH_H_
 #define MEDIAPIPE_TASKS_CC_VISION_INTERACTIVE_SEGMENTER_LEGACY_INTERACTIVE_SEGMENTER_LEGACY_GRAPH_H_
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 

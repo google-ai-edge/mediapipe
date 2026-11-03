@@ -17,7 +17,7 @@
 #include <cstdlib>
 #include <utility>
 
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_log.h"  // from @com_google_absl
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/util/frame_buffer/float_buffer.h"

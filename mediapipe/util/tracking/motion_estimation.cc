@@ -25,15 +25,15 @@
 #include <utility>
 #include <vector>
 
-#include "Eigen/Core"   // from @eigen
-#include "Eigen/Dense"  // from @eigen
-#include "Eigen/QR"     // from @eigen
-#include "Eigen/SVD"    // from @eigen
-#include "absl/container/node_hash_map.h"
-#include "absl/container/node_hash_set.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/strings/str_cat.h"
+#include "Eigen/Core"                      // from @eigen
+#include "Eigen/Dense"                     // from @eigen
+#include "Eigen/QR"                        // from @eigen
+#include "Eigen/SVD"                       // from @eigen
+#include "absl/container/node_hash_map.h"  // from @com_google_absl
+#include "absl/container/node_hash_set.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"           // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
+#include "absl/strings/str_cat.h"          // from @com_google_absl
 #include "mediapipe/util/tracking/camera_motion.h"
 #include "mediapipe/util/tracking/measure_time.h"
 #include "mediapipe/util/tracking/motion_models.h"

@@ -24,11 +24,11 @@
 #include <type_traits>
 #include <utility>
 
-#include "absl/container/flat_hash_map.h"
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/status/statusor.h"          // from @com_google_absl
+#include "absl/strings/str_cat.h"          // from @com_google_absl
 #include "mediapipe/framework/api3/graph.h"
 #include "mediapipe/framework/api3/packet.h"
 #include "mediapipe/framework/api3/stream.h"

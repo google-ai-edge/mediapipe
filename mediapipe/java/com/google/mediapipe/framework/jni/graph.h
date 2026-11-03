@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/graph_service.h"
 
 #ifdef MEDIAPIPE_PROFILER_AVAILABLE
@@ -34,8 +34,8 @@
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
-#endif  // !MEDIAPIPE_DISABLE_GPU
-#include "absl/synchronization/mutex.h"
+#endif                                   // !MEDIAPIPE_DISABLE_GPU
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 
 namespace mediapipe {

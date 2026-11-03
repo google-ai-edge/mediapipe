@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "absl/base/macros.h"
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/base/macros.h"            // from @com_google_absl
+#include "absl/log/absl_check.h"         // from @com_google_absl
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/status/status_macros.h"   // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"

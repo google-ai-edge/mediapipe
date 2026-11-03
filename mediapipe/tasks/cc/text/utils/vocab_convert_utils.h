@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "absl/container/node_hash_map.h"
-#include "absl/status/status.h"
+#include "absl/container/node_hash_map.h"  // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
 
 namespace mediapipe {
 namespace tasks {

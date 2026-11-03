@@ -161,8 +161,8 @@
 #include <string>
 #include <vector>
 
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
+#include "absl/memory/memory.h"  // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/port/proto_ns.h"

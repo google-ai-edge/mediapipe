@@ -15,6 +15,6 @@
 #ifndef MEDIAPIPE_PORT_STATUS_MACROS_H_
 #define MEDIAPIPE_PORT_STATUS_MACROS_H_
 
-#include "absl/status/status_macros.h"
+#include "absl/status/status_macros.h"  // from @com_google_absl
 
 #endif  // MEDIAPIPE_PORT_STATUS_MACROS_H_

@@ -20,11 +20,11 @@
 #include <string>
 #include <utility>
 
-#include "Eigen/Core"   // from @eigen
-#include "Eigen/Dense"  // from @eigen
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/strings/str_format.h"
+#include "Eigen/Core"                 // from @eigen
+#include "Eigen/Dense"                // from @eigen
+#include "absl/log/absl_check.h"      // from @com_google_absl
+#include "absl/log/absl_log.h"        // from @com_google_absl
+#include "absl/strings/str_format.h"  // from @com_google_absl
 
 // Set to true to use catmull rom mixture weights instead of Gaussian weights
 // for homography mixture estimation.

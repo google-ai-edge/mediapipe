@@ -2,7 +2,7 @@
 
 #include <ostream>
 
-#include "absl/types/span.h"
+#include "absl/types/span.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"

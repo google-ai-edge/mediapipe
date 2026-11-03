@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "absl/log/absl_check.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "tflite/c/common.h"           // from @litert

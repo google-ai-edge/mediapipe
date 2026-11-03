@@ -15,10 +15,10 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TOOL_GRAPH_RUNTIME_INFO_LOGGER_H_
 #define MEDIAPIPE_FRAMEWORK_TOOL_GRAPH_RUNTIME_INFO_LOGGER_H_
 
-#include "absl/functional/any_invocable.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/synchronization/notification.h"
+#include "absl/functional/any_invocable.h"      // from @com_google_absl
+#include "absl/status/status.h"                 // from @com_google_absl
+#include "absl/status/statusor.h"               // from @com_google_absl
+#include "absl/synchronization/notification.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/graph_runtime_info.pb.h"
 #include "mediapipe/framework/port/threadpool.h"

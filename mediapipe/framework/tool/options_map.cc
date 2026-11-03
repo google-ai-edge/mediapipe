@@ -1,8 +1,8 @@
 #include "mediapipe/framework/tool/options_map.h"
 
-#include "absl/base/attributes.h"
-#include "absl/base/const_init.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/base/attributes.h"        // from @com_google_absl
+#include "absl/base/const_init.h"        // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 
 namespace mediapipe {
 namespace tool {

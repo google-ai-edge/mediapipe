@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_GPU_GL_CONTEXT_INTERNAL_H_
 #define MEDIAPIPE_GPU_GL_CONTEXT_INTERNAL_H_
 
-#include "absl/synchronization/mutex.h"
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 #ifdef __APPLE__
 #if TARGET_OS_OSX
 #import <AppKit/NSOpenGL.h>

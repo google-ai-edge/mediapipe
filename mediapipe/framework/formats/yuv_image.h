@@ -21,10 +21,10 @@
 #include <memory>
 #include <utility>
 
-#include "absl/base/attributes.h"
-#include "absl/functional/any_invocable.h"
-#include "absl/types/span.h"
-#include "libyuv/video_common.h"  // from @libyuv
+#include "absl/base/attributes.h"           // from @com_google_absl
+#include "absl/functional/any_invocable.h"  // from @com_google_absl
+#include "absl/types/span.h"                // from @com_google_absl
+#include "libyuv/video_common.h"            // from @libyuv
 
 namespace mediapipe {
 

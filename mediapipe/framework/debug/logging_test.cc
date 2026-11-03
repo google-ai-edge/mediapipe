@@ -9,14 +9,14 @@
 #include <vector>
 
 #include "HalideBuffer.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/log_entry.h"
-#include "absl/log/log_sink.h"
-#include "absl/log/log_sink_registry.h"
-#include "absl/strings/match.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
+#include "absl/log/absl_check.h"         // from @com_google_absl
+#include "absl/log/log_entry.h"          // from @com_google_absl
+#include "absl/log/log_sink.h"           // from @com_google_absl
+#include "absl/log/log_sink_registry.h"  // from @com_google_absl
+#include "absl/strings/match.h"          // from @com_google_absl
+#include "absl/strings/str_cat.h"        // from @com_google_absl
+#include "absl/strings/str_split.h"      // from @com_google_absl
+#include "absl/strings/string_view.h"    // from @com_google_absl
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"

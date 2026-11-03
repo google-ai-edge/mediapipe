@@ -24,19 +24,19 @@
 #include <utility>
 #include <vector>
 
-#include "absl/cleanup/cleanup.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
-#include "absl/status/status_builder.h"
-#include "absl/status/status_macros.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
-#include "absl/strings/substitute.h"
-#include "absl/synchronization/mutex.h"
-#include "absl/time/time.h"
+#include "absl/cleanup/cleanup.h"        // from @com_google_absl
+#include "absl/log/absl_check.h"         // from @com_google_absl
+#include "absl/log/absl_log.h"           // from @com_google_absl
+#include "absl/memory/memory.h"          // from @com_google_absl
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/status/status_builder.h"  // from @com_google_absl
+#include "absl/status/status_macros.h"   // from @com_google_absl
+#include "absl/strings/str_cat.h"        // from @com_google_absl
+#include "absl/strings/str_split.h"      // from @com_google_absl
+#include "absl/strings/string_view.h"    // from @com_google_absl
+#include "absl/strings/substitute.h"     // from @com_google_absl
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
+#include "absl/time/time.h"              // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_state.h"

@@ -15,9 +15,9 @@
 #ifndef MEDIAPIPE_FRAMEWORK_DEPS_FILE_HELPERS_H_
 #define MEDIAPIPE_FRAMEWORK_DEPS_FILE_HELPERS_H_
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/match.h"
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/status/statusor.h"  // from @com_google_absl
+#include "absl/strings/match.h"    // from @com_google_absl
 #include "mediapipe/framework/deps/mmapped_file.h"
 
 namespace mediapipe {

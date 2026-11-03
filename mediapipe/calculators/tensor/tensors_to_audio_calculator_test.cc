@@ -17,8 +17,8 @@
 #include <string>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/strings/substitute.h"
+#include "absl/status/status.h"       // from @com_google_absl
+#include "absl/strings/substitute.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensor/audio_to_tensor_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensors_to_audio_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"

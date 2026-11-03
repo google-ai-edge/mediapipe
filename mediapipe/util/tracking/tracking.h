@@ -25,9 +25,9 @@
 #include <unordered_set>
 #include <vector>
 
-#include "absl/container/flat_hash_set.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
+#include "absl/container/flat_hash_set.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"           // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
 #include "mediapipe/framework/port/vector.h"
 #include "mediapipe/util/tracking/flow_packager.pb.h"
 #include "mediapipe/util/tracking/motion_models.h"

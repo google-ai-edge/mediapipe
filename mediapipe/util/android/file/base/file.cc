@@ -18,12 +18,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "absl/base/call_once.h"
-#include "absl/log/absl_log.h"
-#include "absl/strings/match.h"
-#include "absl/strings/str_replace.h"
-#include "absl/strings/string_view.h"
-#include "absl/strings/strip.h"
+#include "absl/base/call_once.h"       // from @com_google_absl
+#include "absl/log/absl_log.h"         // from @com_google_absl
+#include "absl/strings/match.h"        // from @com_google_absl
+#include "absl/strings/str_replace.h"  // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
+#include "absl/strings/strip.h"        // from @com_google_absl
 
 #ifdef __APPLE__
 static_assert(sizeof(off_t) == 8, "Large file support is required");

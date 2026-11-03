@@ -21,7 +21,7 @@
 #include <typeinfo>
 #include <utility>
 
-#include "absl/base/attributes.h"
+#include "absl/base/attributes.h"  // from @com_google_absl
 #include "mediapipe/framework/demangle.h"
 #include "mediapipe/framework/port.h"
 

@@ -14,8 +14,8 @@
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph_texture_frame_jni.h"
 
-#include "absl/log/absl_log.h"
-#include "absl/strings/str_format.h"
+#include "absl/log/absl_log.h"        // from @com_google_absl
+#include "absl/strings/str_format.h"  // from @com_google_absl
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gl_texture_buffer.h"

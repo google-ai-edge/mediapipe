@@ -19,8 +19,8 @@
 #include <memory>
 #include <numeric>
 
-#include "absl/log/absl_check.h"
-#include "absl/strings/str_cat.h"
+#include "absl/log/absl_check.h"   // from @com_google_absl
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 #include "mediapipe/util/tracking/measure_time.h"
 #include "mediapipe/util/tracking/parallel_invoker.h"
 #include "mediapipe/util/tracking/region_flow.h"

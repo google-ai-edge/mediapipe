@@ -14,7 +14,7 @@
 #ifndef MEDIAPIPE_TASKS_C_CORE_MP_STATUS_COVERNTER_H_
 #define MEDIAPIPE_TASKS_C_CORE_MP_STATUS_COVERNTER_H_
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/tasks/c/core/mp_status.h"
 
 namespace mediapipe::tasks::c::core {

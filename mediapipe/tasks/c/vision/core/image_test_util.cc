@@ -14,7 +14,7 @@
 
 #include "mediapipe/tasks/c/vision/core/image_test_util.h"
 
-#include "absl/log/absl_check.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/tasks/c/core/mp_status.h"

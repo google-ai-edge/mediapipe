@@ -15,8 +15,8 @@
 #include <algorithm>
 #include <memory>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
 #include "mediapipe/examples/desktop/autoflip/autoflip_messages.pb.h"
 #include "mediapipe/examples/desktop/autoflip/calculators/face_to_region_calculator.pb.h"
 #include "mediapipe/examples/desktop/autoflip/quality/visual_scorer.h"

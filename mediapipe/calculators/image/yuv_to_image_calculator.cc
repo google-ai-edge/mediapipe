@@ -16,10 +16,10 @@
 #include <string>
 #include <utility>
 
-#include "absl/status/status.h"
-#include "absl/strings/str_format.h"
-#include "libyuv/convert_argb.h"  // from @libyuv
-#include "libyuv/video_common.h"  // from @libyuv
+#include "absl/status/status.h"       // from @com_google_absl
+#include "absl/strings/str_format.h"  // from @com_google_absl
+#include "libyuv/convert_argb.h"      // from @libyuv
+#include "libyuv/video_common.h"      // from @libyuv
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"

@@ -14,9 +14,9 @@
 
 #include "mediapipe/framework/tool/tag_map.h"
 
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/strings/str_join.h"
+#include "absl/log/absl_log.h"      // from @com_google_absl
+#include "absl/status/status.h"     // from @com_google_absl
+#include "absl/strings/str_join.h"  // from @com_google_absl
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/map_util.h"

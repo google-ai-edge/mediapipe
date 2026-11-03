@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include "absl/strings/string_view.h"
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/util/tracking/flow_packager.pb.h"
 #include "mediapipe/util/tracking/motion_estimation.pb.h"
 #include "mediapipe/util/tracking/region_flow.pb.h"

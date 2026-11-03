@@ -14,8 +14,8 @@
 
 #include "mediapipe/python/pybind/resource_util.h"
 
-#include "absl/flags/declare.h"
-#include "absl/flags/flag.h"
+#include "absl/flags/declare.h"  // from @com_google_absl
+#include "absl/flags/flag.h"     // from @com_google_absl
 
 ABSL_DECLARE_FLAG(std::string, resource_root_dir);
 

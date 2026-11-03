@@ -22,9 +22,9 @@
 #include <string>
 #include <vector>
 
-#include "Eigen/Core"  // from @eigen
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
+#include "Eigen/Core"            // from @eigen
+#include "absl/log/absl_log.h"   // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl
 #include "audio/dsp/number_util.h"
 #include "mediapipe/calculators/audio/spectrogram_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"

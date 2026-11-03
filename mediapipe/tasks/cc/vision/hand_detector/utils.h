@@ -1,7 +1,7 @@
 #ifndef MEDIAPIPE_TASKS_CC_VISION_HAND_DETECTOR_UTILS_H_
 #define MEDIAPIPE_TASKS_CC_VISION_HAND_DETECTOR_UTILS_H_
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensor/tensors_to_detections_calculator.pb.h"
 #include "mediapipe/calculators/tflite/ssd_anchors_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.pb.h"

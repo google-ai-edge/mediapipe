@@ -17,9 +17,9 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "absl/base/log_severity.h"
-#include "absl/cleanup/cleanup.h"
-#include "absl/log/absl_log.h"
+#include "absl/base/log_severity.h"  // from @com_google_absl
+#include "absl/cleanup/cleanup.h"    // from @com_google_absl
+#include "absl/log/absl_log.h"       // from @com_google_absl
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 

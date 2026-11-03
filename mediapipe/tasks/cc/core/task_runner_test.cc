@@ -22,9 +22,9 @@ limitations under the License.
 #include <string>
 #include <thread>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/substitute.h"
+#include "absl/status/status.h"       // from @com_google_absl
+#include "absl/status/statusor.h"     // from @com_google_absl
+#include "absl/strings/substitute.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/framework/memory_manager.h"

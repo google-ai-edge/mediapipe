@@ -22,19 +22,19 @@
 #include <utility>
 #include <vector>
 
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/string_view.h"
-#include "exif.h"  // from @easyexif
+#include "absl/log/absl_log.h"         // from @com_google_absl
+#include "absl/status/status.h"        // from @com_google_absl
+#include "absl/status/statusor.h"      // from @com_google_absl
+#include "absl/strings/str_format.h"   // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
+#include "exif.h"                      // from @easyexif
 #include "mediapipe/framework/deps/file_helpers.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/core/mp_status_converter.h"
 #include "mediapipe/tasks/c/vision/core/image_frame_util.h"
-#include "stb_image.h"
+#include "stb_image.h"  // from @stblib
 
 namespace {
 

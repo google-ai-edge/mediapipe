@@ -18,7 +18,7 @@
 #include <utility>
 #include <vector>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"                   // from @com_google_absl
 #include "litert/c/litert_tensor_buffer_types.h"  // from @litert
 #include "litert/cc/litert_element_type.h"        // from @litert
 #include "litert/cc/litert_layout.h"              // from @litert

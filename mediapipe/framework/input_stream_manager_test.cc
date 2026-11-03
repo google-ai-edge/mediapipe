@@ -16,8 +16,8 @@
 
 #include <memory>
 
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
+#include "absl/memory/memory.h"  // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/input_stream_shard.h"
 #include "mediapipe/framework/lifetime_tracker.h"
 #include "mediapipe/framework/packet.h"

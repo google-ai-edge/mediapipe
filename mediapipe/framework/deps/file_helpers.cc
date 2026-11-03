@@ -32,19 +32,19 @@
 #include <string>
 #include <utility>
 
-#include "absl/base/config.h"
-#include "absl/cleanup/cleanup.h"  // IWYU pragma: keep
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
+#include "absl/base/config.h"      // from @com_google_absl
+#include "absl/cleanup/cleanup.h"  // from @com_google_absl  // IWYU pragma: keep
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/status/statusor.h"      // from @com_google_absl
+#include "absl/strings/str_cat.h"      // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/deps/mmapped_file.h"
 #include "mediapipe/framework/deps/platform_strings.h"  // IWYU pragma: keep
 #ifndef _WIN32
 #include "mediapipe/framework/formats/unique_fd.h"
-#endif  // !_WIN32
-#include "absl/status/status_macros.h"
+#endif                                  // !_WIN32
+#include "absl/status/status_macros.h"  // from @com_google_absl
 
 namespace mediapipe {
 namespace file {

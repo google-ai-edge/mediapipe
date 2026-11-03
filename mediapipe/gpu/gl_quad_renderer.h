@@ -17,7 +17,7 @@
 
 #include <optional>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/scale_mode.pb.h"
 

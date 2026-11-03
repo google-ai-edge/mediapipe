@@ -22,7 +22,7 @@
 #include <memory>
 #include <optional>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensor/tensor_converter_gpu.h"
 #include "mediapipe/framework/memory_manager.h"
 #import "mediapipe/gpu/MPPMetalHelper.h"

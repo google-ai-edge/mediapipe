@@ -16,7 +16,7 @@
 
 #include <string>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/api3/contract.h"
 #include "mediapipe/framework/api3/testing/foo.pb.h"
 #include "mediapipe/framework/port/gmock.h"

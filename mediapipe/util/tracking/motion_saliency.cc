@@ -24,8 +24,8 @@
 #include <memory>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"    // from @com_google_absl
 #include "mediapipe/util/tracking/camera_motion.h"
 #include "mediapipe/util/tracking/measure_time.h"
 #include "mediapipe/util/tracking/region_flow.h"

@@ -22,7 +22,7 @@ limitations under the License.
 #include <variant>
 #include <vector>
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 
 namespace mediapipe::tasks::core {
 

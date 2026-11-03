@@ -18,8 +18,8 @@
 #include <iostream>
 #include <sstream>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/tool/template_expander.h"
 

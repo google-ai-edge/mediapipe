@@ -17,8 +17,8 @@
 #include <memory>
 #include <utility>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"  // IWYU pragma: keep
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl  // IWYU pragma: keep
 #include "mediapipe/framework/api3/calculator.h"
 #include "mediapipe/framework/api3/calculator_context.h"
 #include "mediapipe/framework/api3/calculator_contract.h"

@@ -15,8 +15,8 @@
 #ifndef MEDIAPIPE_UTIL_TRACKING_BOX_DETECTOR_H_
 #define MEDIAPIPE_UTIL_TRACKING_BOX_DETECTOR_H_
 
-#include "absl/container/flat_hash_map.h"
-#include "absl/synchronization/mutex.h"
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_features2d_inc.h"
 #include "mediapipe/util/tracking/box_detector.pb.h"

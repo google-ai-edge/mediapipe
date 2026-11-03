@@ -18,7 +18,7 @@
 #include <tuple>
 #include <utility>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/api3/function_runner.h"
 #include "mediapipe/framework/api3/graph.h"
 #include "mediapipe/framework/api3/packet.h"

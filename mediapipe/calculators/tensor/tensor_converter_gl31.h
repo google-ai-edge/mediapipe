@@ -20,7 +20,7 @@
 
 #include "mediapipe/framework/port.h"
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensor/tensor_converter_gpu.h"
 #include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"

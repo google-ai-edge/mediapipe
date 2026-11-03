@@ -15,7 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/calculators/util/visibility_copy_calculator.pb.h"
 #include "mediapipe/framework/api3/calculator_contract.h"
 #include "mediapipe/framework/api3/contract.h"

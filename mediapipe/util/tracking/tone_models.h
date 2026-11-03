@@ -24,8 +24,8 @@
 #include <string>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"    // from @com_google_absl
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/vector.h"
 #include "mediapipe/util/tracking/tone_models.pb.h"

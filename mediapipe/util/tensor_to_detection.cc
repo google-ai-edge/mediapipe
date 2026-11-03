@@ -14,9 +14,9 @@
 
 #include "mediapipe/util/tensor_to_detection.h"
 
-#include "absl/status/status.h"
-#include "absl/strings/str_format.h"
-#include "absl/types/variant.h"
+#include "absl/status/status.h"       // from @com_google_absl
+#include "absl/strings/str_format.h"  // from @com_google_absl
+#include "absl/types/variant.h"       // from @com_google_absl
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/location_opencv.h"
 #include "mediapipe/framework/port/map_util.h"

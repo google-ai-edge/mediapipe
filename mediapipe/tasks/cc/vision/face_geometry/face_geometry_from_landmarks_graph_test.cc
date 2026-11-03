@@ -16,11 +16,11 @@ limitations under the License.
 #include <string>
 #include <utility>
 
-#include "absl/flags/flag.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/string_view.h"
-#include "absl/strings/substitute.h"
+#include "absl/flags/flag.h"           // from @com_google_absl
+#include "absl/status/statusor.h"      // from @com_google_absl
+#include "absl/strings/str_format.h"   // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
+#include "absl/strings/substitute.h"   // from @com_google_absl
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"

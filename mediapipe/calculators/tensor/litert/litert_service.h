@@ -19,7 +19,7 @@
 #include <string>
 #include <utility>
 
-#include "absl/base/attributes.h"
+#include "absl/base/attributes.h"  // from @com_google_absl
 #include "mediapipe/framework/graph_service.h"
 
 namespace mediapipe {

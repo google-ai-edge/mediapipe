@@ -14,7 +14,7 @@
 
 #include "mediapipe/framework/formats/image_frame_pool.h"
 
-#include "absl/synchronization/mutex.h"
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 
 namespace mediapipe {
 

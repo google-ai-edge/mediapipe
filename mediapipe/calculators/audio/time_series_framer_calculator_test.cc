@@ -19,9 +19,9 @@
 #include <string>
 #include <vector>
 
-#include "Eigen/Core"  // from @eigen
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
+#include "Eigen/Core"            // from @eigen
+#include "absl/log/absl_log.h"   // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl
 #include "audio/dsp/window_functions.h"
 #include "mediapipe/calculators/audio/time_series_framer_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"

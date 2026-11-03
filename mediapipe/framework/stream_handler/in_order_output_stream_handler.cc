@@ -14,7 +14,7 @@
 
 #include "mediapipe/framework/stream_handler/in_order_output_stream_handler.h"
 
-#include "absl/log/absl_check.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
 #include "mediapipe/framework/collection.h"
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/output_stream_shard.h"

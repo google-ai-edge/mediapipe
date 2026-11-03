@@ -17,9 +17,9 @@
 #include <string>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/strings/str_cat.h"
-#include "absl/time/time.h"
+#include "absl/status/status.h"    // from @com_google_absl
+#include "absl/strings/str_cat.h"  // from @com_google_absl
+#include "absl/time/time.h"        // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_profile.pb.h"

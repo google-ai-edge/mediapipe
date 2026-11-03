@@ -2,12 +2,12 @@
 #include <iostream>
 #include <string>
 
-#include "absl/flags/flag.h"
-#include "absl/flags/parse.h"
-#include "absl/log/absl_check.h"
-#include "absl/strings/ascii.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_replace.h"
+#include "absl/flags/flag.h"           // from @com_google_absl
+#include "absl/flags/parse.h"          // from @com_google_absl
+#include "absl/log/absl_check.h"       // from @com_google_absl
+#include "absl/strings/ascii.h"        // from @com_google_absl
+#include "absl/strings/str_cat.h"      // from @com_google_absl
+#include "absl/strings/str_replace.h"  // from @com_google_absl
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/logging.h"

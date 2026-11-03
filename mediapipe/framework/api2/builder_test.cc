@@ -3,8 +3,8 @@
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
-#include "absl/strings/substitute.h"
+#include "absl/strings/string_view.h"  // from @com_google_absl
+#include "absl/strings/substitute.h"   // from @com_google_absl
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"

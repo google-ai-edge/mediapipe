@@ -19,7 +19,7 @@
 
 #include <string>
 
-#include "absl/container/node_hash_map.h"
+#include "absl/container/node_hash_map.h"  // from @com_google_absl
 
 namespace mediapipe {
 namespace android {

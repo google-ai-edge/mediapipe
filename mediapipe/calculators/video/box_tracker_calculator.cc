@@ -20,13 +20,13 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "absl/container/flat_hash_set.h"
-#include "absl/container/node_hash_map.h"
-#include "absl/container/node_hash_set.h"
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/strings/numbers.h"
+#include "absl/container/flat_hash_set.h"  // from @com_google_absl
+#include "absl/container/node_hash_map.h"  // from @com_google_absl
+#include "absl/container/node_hash_set.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"           // from @com_google_absl
+#include "absl/log/absl_log.h"             // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/strings/numbers.h"          // from @com_google_absl
 #include "mediapipe/calculators/video/box_tracker_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"

@@ -14,8 +14,8 @@
 
 #include "mediapipe/framework/formats/image_frame_pool.h"
 
-#include "absl/memory/memory.h"
-#include "absl/status/status.h"
+#include "absl/memory/memory.h"  // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 

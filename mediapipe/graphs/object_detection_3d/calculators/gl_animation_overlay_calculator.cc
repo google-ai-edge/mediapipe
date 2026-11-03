@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #if defined(__ANDROID__)
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
 #include "mediapipe/util/android/asset_manager_util.h"
 #else
 #include <fstream>
@@ -23,8 +23,8 @@
 
 #include <cstdint>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"    // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"

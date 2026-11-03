@@ -20,8 +20,8 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/types/optional.h"
+#include "absl/log/absl_check.h"      // from @com_google_absl
+#include "absl/types/optional.h"      // from @com_google_absl
 #include "flatbuffers/flexbuffers.h"  // from @flatbuffers
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"

@@ -27,11 +27,11 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "absl/base/macros.h"
-#include "absl/base/thread_annotations.h"
-#include "absl/status/status.h"
-#include "absl/synchronization/mutex.h"
-#include "absl/time/time.h"
+#include "absl/base/macros.h"              // from @com_google_absl
+#include "absl/base/thread_annotations.h"  // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
+#include "absl/time/time.h"                // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_context.h"

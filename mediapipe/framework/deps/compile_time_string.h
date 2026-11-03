@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <cstdlib>
 
-#include "absl/strings/string_view.h"
+#include "absl/strings/string_view.h"  // from @com_google_absl
 
 namespace mediapipe {
 namespace internal {

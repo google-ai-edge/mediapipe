@@ -16,10 +16,10 @@ limitations under the License.
 
 #include <string>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/substitute.h"
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/status/statusor.h"       // from @com_google_absl
+#include "absl/strings/substitute.h"    // from @com_google_absl
 #include "mediapipe/calculators/tensor/bert_preprocessor_calculator.pb.h"
 #include "mediapipe/calculators/tensor/regex_preprocessor_calculator.pb.h"
 #include "mediapipe/calculators/tensor/sentencepiece_preprocessor_calculator.pb.h"

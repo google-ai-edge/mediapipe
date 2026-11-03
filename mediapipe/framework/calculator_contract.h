@@ -21,9 +21,9 @@
 #include <typeindex>
 
 // TODO: Move protos in another CL after the C++ code migration.
-#include "absl/container/flat_hash_map.h"
-#include "absl/status/status.h"
-#include "absl/strings/string_view.h"
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
+#include "absl/status/status.h"            // from @com_google_absl
+#include "absl/strings/string_view.h"      // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/framework/mediapipe_options.pb.h"

@@ -20,14 +20,14 @@ limitations under the License.
 #include <string>
 #include <type_traits>
 
-#include "absl/algorithm/container.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
-#include "absl/types/optional.h"
-#include "flatbuffers/flatbuffers.h"  // from @flatbuffers
+#include "absl/algorithm/container.h"   // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/status/statusor.h"       // from @com_google_absl
+#include "absl/strings/str_cat.h"       // from @com_google_absl
+#include "absl/strings/str_format.h"    // from @com_google_absl
+#include "absl/types/optional.h"        // from @com_google_absl
+#include "flatbuffers/flatbuffers.h"    // from @flatbuffers
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "tflite/schema/schema_generated.h"  // from @litert

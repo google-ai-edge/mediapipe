@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_CALCULATORS_INTERNAL_CALLBACK_PACKET_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_INTERNAL_CALLBACK_PACKET_CALCULATOR_H_
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_base.h"
 
 namespace mediapipe {

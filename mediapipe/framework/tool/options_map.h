@@ -5,7 +5,7 @@
 #include <memory>
 #include <type_traits>
 
-#include "absl/synchronization/mutex.h"
+#include "absl/synchronization/mutex.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/port/any_proto.h"
 #include "mediapipe/framework/tool/type_util.h"

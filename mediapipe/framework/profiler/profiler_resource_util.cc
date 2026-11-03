@@ -14,7 +14,7 @@
 
 #include "mediapipe/framework/profiler/profiler_resource_util.h"
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 
 namespace mediapipe {
 

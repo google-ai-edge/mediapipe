@@ -22,8 +22,8 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "absl/strings/str_join.h"
-#include "absl/strings/str_split.h"
+#include "absl/strings/str_join.h"    // from @com_google_absl
+#include "absl/strings/str_split.h"   // from @com_google_absl
 #include "flatbuffers/flatbuffers.h"  // from @flatbuffers
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
 #include "tflite/c/common.h"                        // from @litert

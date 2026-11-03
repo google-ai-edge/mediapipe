@@ -21,14 +21,14 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
-#include "absl/time/clock.h"
-#include "absl/time/time.h"
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/strings/str_cat.h"       // from @com_google_absl
+#include "absl/strings/str_format.h"    // from @com_google_absl
+#include "absl/strings/str_join.h"      // from @com_google_absl
+#include "absl/strings/string_view.h"   // from @com_google_absl
+#include "absl/time/clock.h"            // from @com_google_absl
+#include "absl/time/time.h"             // from @com_google_absl
 #include "mediapipe/tasks/cc/audio/audio_transcriber/audio_transcriber.h"
 #include "mediapipe/tasks/cc/audio/benchmarks/eval_benchmark_utils.h"
 #include "mediapipe/tasks/cc/audio/text_to_speech/text_to_speech.h"

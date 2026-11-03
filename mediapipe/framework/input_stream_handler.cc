@@ -20,12 +20,12 @@
 #include <tuple>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/log/log.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_join.h"
-#include "absl/strings/substitute.h"
+#include "absl/log/absl_check.h"      // from @com_google_absl
+#include "absl/log/absl_log.h"        // from @com_google_absl
+#include "absl/log/log.h"             // from @com_google_absl
+#include "absl/strings/str_cat.h"     // from @com_google_absl
+#include "absl/strings/str_join.h"    // from @com_google_absl
+#include "absl/strings/substitute.h"  // from @com_google_absl
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/port/ret_check.h"

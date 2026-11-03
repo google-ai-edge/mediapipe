@@ -17,7 +17,7 @@
 
 #include <string>
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/framework/graph_runtime_info.pb.h"
 
 namespace mediapipe::tool {

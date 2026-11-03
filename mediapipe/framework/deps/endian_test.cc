@@ -16,7 +16,7 @@
 
 #include <cstdint>
 
-#include "absl/base/config.h"
+#include "absl/base/config.h"  // from @com_google_absl
 #include "mediapipe/framework/port/gtest.h"
 
 namespace mediapipe {

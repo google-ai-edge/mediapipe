@@ -103,8 +103,8 @@
 #include <ostream>
 #include <type_traits>
 
-#include "absl/base/macros.h"
-#include "absl/log/absl_log.h"
+#include "absl/base/macros.h"   // from @com_google_absl
+#include "absl/log/absl_log.h"  // from @com_google_absl
 #include "mediapipe/framework/port/port.h"
 
 namespace mediapipe {

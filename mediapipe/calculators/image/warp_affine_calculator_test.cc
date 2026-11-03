@@ -17,9 +17,9 @@
 #include <optional>
 #include <vector>
 
-#include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
-#include "absl/strings/substitute.h"
+#include "absl/flags/flag.h"          // from @com_google_absl
+#include "absl/memory/memory.h"       // from @com_google_absl
+#include "absl/strings/substitute.h"  // from @com_google_absl
 #include "mediapipe/calculators/image/affine_transformation.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"

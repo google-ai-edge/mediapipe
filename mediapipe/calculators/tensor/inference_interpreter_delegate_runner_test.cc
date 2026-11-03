@@ -6,9 +6,9 @@
 #include <utility>
 #include <vector>
 
-#include "absl/functional/any_invocable.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
+#include "absl/functional/any_invocable.h"  // from @com_google_absl
+#include "absl/status/status.h"             // from @com_google_absl
+#include "absl/status/status_macros.h"      // from @com_google_absl
 #include "mediapipe/calculators/tensor/tensor_span.h"
 #include "mediapipe/calculators/tensor/tflite_delegate_ptr.h"
 #include "mediapipe/framework/api2/builder.h"

@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "absl/status/statusor.h"
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/gpu/egl_sync.h"
 #include "mediapipe/gpu/gl_context.h"
 

@@ -19,11 +19,11 @@
 #include <algorithm>
 #include <fstream>
 
-#include "absl/container/btree_map.h"
-#include "absl/flags/flag.h"
-#include "absl/flags/parse.h"
-#include "absl/flags/usage.h"
-#include "absl/status/status.h"
+#include "absl/container/btree_map.h"  // from @com_google_absl
+#include "absl/flags/flag.h"           // from @com_google_absl
+#include "absl/flags/parse.h"          // from @com_google_absl
+#include "absl/flags/usage.h"          // from @com_google_absl
+#include "absl/status/status.h"        // from @com_google_absl
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/profiler/reporter/reporter.h"

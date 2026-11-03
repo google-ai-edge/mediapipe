@@ -16,10 +16,10 @@
 
 #include "mediapipe/calculators/audio/rational_factor_resample_calculator.h"
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
+#include "absl/log/absl_check.h"        // from @com_google_absl
+#include "absl/log/absl_log.h"          // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
 #include "audio/dsp/resampler_q.h"
 
 using audio_dsp::Resampler;

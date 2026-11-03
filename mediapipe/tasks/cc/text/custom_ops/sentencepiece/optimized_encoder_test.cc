@@ -17,9 +17,9 @@ limitations under the License.
 
 #include <fstream>
 
-#include "absl/flags/flag.h"
-#include "absl/status/status.h"
-#include "absl/strings/str_format.h"
+#include "absl/flags/flag.h"          // from @com_google_absl
+#include "absl/status/status.h"       // from @com_google_absl
+#include "absl/strings/str_format.h"  // from @com_google_absl
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"

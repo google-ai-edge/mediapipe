@@ -19,9 +19,9 @@
 #include <memory>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
+#include "absl/log/absl_check.h"        // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
 #include "audio/dsp/resampler_q.h"
 #include "mediapipe/calculators/audio/resample_time_series_calculator.pb.h"
 #include "mediapipe/framework/api2/packet.h"

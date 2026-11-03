@@ -21,8 +21,8 @@
 #include <numeric>
 #include <vector>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/log/absl_log.h"    // from @com_google_absl
 #include "mediapipe/util/tracking/motion_models.pb.h"
 #include "mediapipe/util/tracking/tone_models.pb.h"
 

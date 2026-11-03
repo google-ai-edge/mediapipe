@@ -1,7 +1,7 @@
 #ifndef MEDIAPIPE_UTIL_LOG_FATAL_TO_BREAKPAD_H_
 #define MEDIAPIPE_UTIL_LOG_FATAL_TO_BREAKPAD_H_
 
-#include "absl/log/log_sink.h"
+#include "absl/log/log_sink.h"  // from @com_google_absl
 
 namespace mediapipe {
 

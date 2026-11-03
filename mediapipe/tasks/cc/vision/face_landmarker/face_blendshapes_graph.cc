@@ -16,8 +16,8 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
 #include "mediapipe/calculators/core/split_vector_calculator.pb.h"
 #include "mediapipe/calculators/tensor/landmarks_to_tensor_calculator.h"
 #include "mediapipe/calculators/tensor/landmarks_to_tensor_calculator.pb.h"

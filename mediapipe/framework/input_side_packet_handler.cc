@@ -14,10 +14,10 @@
 
 #include "mediapipe/framework/input_side_packet_handler.h"
 
-#include "absl/log/absl_check.h"
-#include "absl/status/status.h"
-#include "absl/status/status_builder.h"
-#include "absl/status/status_macros.h"
+#include "absl/log/absl_check.h"         // from @com_google_absl
+#include "absl/status/status.h"          // from @com_google_absl
+#include "absl/status/status_builder.h"  // from @com_google_absl
+#include "absl/status/status_macros.h"   // from @com_google_absl
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_builder.h"

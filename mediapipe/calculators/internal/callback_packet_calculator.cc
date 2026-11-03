@@ -16,7 +16,7 @@
 #include <functional>
 #include <string>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/calculators/internal/callback_packet_calculator.pb.h"  // NOLINT
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_registry.h"

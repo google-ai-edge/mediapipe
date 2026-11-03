@@ -13,9 +13,9 @@
 // limitations under the License.
 #include "mediapipe/calculators/util/landmarks_to_render_data_calculator.h"
 
-#include "absl/memory/memory.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_join.h"
+#include "absl/memory/memory.h"     // from @com_google_absl
+#include "absl/strings/str_cat.h"   // from @com_google_absl
+#include "absl/strings/str_join.h"  // from @com_google_absl
 #include "mediapipe/calculators/util/landmarks_to_render_data_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_options.pb.h"

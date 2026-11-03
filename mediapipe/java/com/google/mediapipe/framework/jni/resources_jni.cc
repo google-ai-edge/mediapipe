@@ -20,7 +20,7 @@
 #include <string>
 #include <utility>
 
-#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_map.h"  // from @com_google_absl
 #include "mediapipe/framework/resources.h"
 #include "mediapipe/framework/resources_service.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph_service_jni.h"

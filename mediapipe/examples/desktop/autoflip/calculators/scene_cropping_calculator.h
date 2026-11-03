@@ -19,7 +19,7 @@
 #include <memory>
 #include <vector>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/examples/desktop/autoflip/autoflip_messages.pb.h"
 #include "mediapipe/examples/desktop/autoflip/calculators/scene_cropping_calculator.pb.h"
 #include "mediapipe/examples/desktop/autoflip/quality/cropping.pb.h"

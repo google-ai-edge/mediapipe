@@ -1,7 +1,7 @@
 #include "mediapipe/framework/tool/packet_generator_wrapper_calculator.h"
 
-#include "absl/status/status.h"
-#include "absl/status/status_macros.h"
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_registry.h"
 #include "mediapipe/framework/output_side_packet.h"

@@ -5,7 +5,7 @@
 #include <ostream>
 #include <set>
 
-#include "absl/status/status.h"
+#include "absl/status/status.h"  // from @com_google_absl
 #include "map"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_profile.pb.h"

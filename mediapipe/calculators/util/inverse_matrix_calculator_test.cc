@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-#include "absl/types/span.h"
+#include "absl/types/span.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/port/gmock.h"

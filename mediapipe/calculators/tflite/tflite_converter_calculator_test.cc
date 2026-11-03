@@ -16,8 +16,8 @@
 #include <random>
 #include <vector>
 
-#include "absl/memory/memory.h"
-#include "absl/strings/substitute.h"
+#include "absl/memory/memory.h"       // from @com_google_absl
+#include "absl/strings/substitute.h"  // from @com_google_absl
 #include "mediapipe/calculators/tflite/tflite_converter_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"

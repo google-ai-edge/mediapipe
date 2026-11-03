@@ -19,8 +19,8 @@ limitations under the License.
 #include <cstdlib>
 #include <string>
 
-#include "absl/flags/flag.h"
-#include "absl/strings/string_view.h"
+#include "absl/flags/flag.h"           // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"

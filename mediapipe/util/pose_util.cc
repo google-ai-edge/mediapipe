@@ -1,6 +1,6 @@
 #include "mediapipe/util/pose_util.h"
 
-#include "absl/log/absl_log.h"
+#include "absl/log/absl_log.h"  // from @com_google_absl
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 
 namespace {

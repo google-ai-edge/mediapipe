@@ -16,9 +16,9 @@
 
 #include <string>
 
-#include "absl/log/absl_check.h"
-#include "absl/log/absl_log.h"
-#include "absl/strings/str_cat.h"
+#include "absl/log/absl_check.h"   // from @com_google_absl
+#include "absl/log/absl_log.h"     // from @com_google_absl
+#include "absl/strings/str_cat.h"  // from @com_google_absl
 
 namespace mediapipe {
 
