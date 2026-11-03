@@ -94,7 +94,7 @@ objc_library(
     hdrs = ["sources/MPPLandmark+Helpers.h"],
     deps = [
         "//mediapipe/framework/formats:landmark_cc_proto",
-        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/c/components/containers:landmark",
         "//mediapipe/tasks/ios/components/containers:MPPLandmark",
     ],
 )
