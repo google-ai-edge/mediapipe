@@ -1399,7 +1399,16 @@ InferenceRunnerLiteRt::CreateCpuOutputTensorBufferFromMpTensor(
                           litert::TensorBuffer::CreateFromHostMemory(
                               *environment_, tensor_type, output_tensor_data,
                               output_tensor_size_bytes));
-  mp_output_tensor_views.push_back(std::move(output_tensor_view));
+  if (mp_output_tensor.ready_as_ahwb()) {
+    // An AHardwareBuffer is mapped to the CPU only while its view is alive, so
+    // keep the view until inference completes.
+    mp_output_tensor_views.push_back(std::move(output_tensor_view));
+  }
+  // Otherwise the tensor's CPU buffer stays valid without the view. Releasing
+  // the view here avoids holding the locks of all outputs at once, which
+  // records a lock order that downstream calculators may violate. AHWB-backed
+  // outputs (e.g. when a downstream calculator reads the tensor as a GPU
+  // buffer) still keep their views above and thus still record that order.
   return output_buffer;
 }
 
