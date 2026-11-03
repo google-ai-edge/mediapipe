@@ -78,7 +78,12 @@ objc_library(
     deps = [
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/tasks/c/components/containers:category",
+        "//mediapipe/tasks/c/components/containers:detection_result",
+        "//mediapipe/tasks/c/components/containers:keypoint",
+        "//mediapipe/tasks/c/components/containers:rect",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/components/containers:MPPCategory",
         "//mediapipe/tasks/ios/components/containers:MPPDetection",
     ],
 )

@@ -15,11 +15,23 @@
 #include "mediapipe/framework/formats/detection.pb.h"
 #import "mediapipe/tasks/ios/components/containers/sources/MPPDetection.h"
 
+struct MpNormalizedKeypoint;
+struct MpDetection;
+struct MpDetectionResult;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPDetection (Helpers)
 
 + (MPPDetection *)detectionWithProto:(const mediapipe::Detection &)detectionProto;
+
++ (MPPNormalizedKeypoint *)normalizedKeypointWithCKeypoint:
+    (const struct MpNormalizedKeypoint &)cKeypoint;
+
++ (MPPDetection *)detectionWithCDetection:(const struct MpDetection &)cDetection;
+
++ (NSArray<MPPDetection *> *)detectionsWithCDetectionResult:
+    (const struct MpDetectionResult &)cResult;
 
 @end
 
