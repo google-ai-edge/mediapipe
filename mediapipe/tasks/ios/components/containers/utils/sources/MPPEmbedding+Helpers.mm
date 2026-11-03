@@ -15,16 +15,15 @@
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPEmbedding+Helpers.h"
 
-#include <memory>
+#include "mediapipe/tasks/c/components/containers/embedding_result.h"
 
 namespace {
 using EmbeddingProto = ::mediapipe::tasks::components::containers::proto::Embedding;
-}
+}  // namespace
 
 @implementation MPPEmbedding (Helpers)
 
 + (MPPEmbedding *)embeddingWithProto:(const EmbeddingProto &)embeddingProto {
-
   NSMutableArray<NSNumber *> *floatEmbedding;
   NSMutableArray<NSNumber *> *quantizedEmbedding;
   NSString *headName;
@@ -54,6 +53,32 @@ using EmbeddingProto = ::mediapipe::tasks::components::containers::proto::Embedd
   return [[MPPEmbedding alloc] initWithFloatEmbedding:floatEmbedding
                                    quantizedEmbedding:quantizedEmbedding
                                             headIndex:embeddingProto.head_index()
+                                             headName:headName];
+}
+
++ (MPPEmbedding *)embeddingWithCEmbedding:(const MpEmbedding &)cEmbedding {
+  NSMutableArray<NSNumber *> *floatEmbedding = nil;
+  NSMutableArray<NSNumber *> *quantizedEmbedding = nil;
+  NSString *headName =
+      cEmbedding.head_name ? [NSString stringWithUTF8String:cEmbedding.head_name] : nil;
+
+  if (cEmbedding.float_embedding && cEmbedding.values_count > 0) {
+    floatEmbedding = [NSMutableArray arrayWithCapacity:cEmbedding.values_count];
+    for (uint32_t i = 0; i < cEmbedding.values_count; ++i) {
+      [floatEmbedding addObject:@(cEmbedding.float_embedding[i])];
+    }
+  }
+
+  if (cEmbedding.quantized_embedding && cEmbedding.values_count > 0) {
+    quantizedEmbedding = [NSMutableArray arrayWithCapacity:cEmbedding.values_count];
+    for (uint32_t i = 0; i < cEmbedding.values_count; ++i) {
+      [quantizedEmbedding addObject:@(cEmbedding.quantized_embedding[i])];
+    }
+  }
+
+  return [[MPPEmbedding alloc] initWithFloatEmbedding:floatEmbedding
+                                   quantizedEmbedding:quantizedEmbedding
+                                            headIndex:cEmbedding.head_index
                                              headName:headName];
 }
 

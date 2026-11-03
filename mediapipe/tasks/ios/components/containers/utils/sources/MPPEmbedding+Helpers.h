@@ -15,12 +15,16 @@
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
 #import "mediapipe/tasks/ios/components/containers/sources/MPPEmbedding.h"
 
+struct MpEmbedding;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPEmbedding (Helpers)
 
 + (MPPEmbedding *)embeddingWithProto:
     (const ::mediapipe::tasks::components::containers::proto::Embedding &)embeddingProto;
+
++ (MPPEmbedding *)embeddingWithCEmbedding:(const struct MpEmbedding &)cEmbedding;
 
 @end
 
