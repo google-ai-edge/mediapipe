@@ -53,15 +53,15 @@ class TextSummarizerOptions:
       set, the summarization will be truncated if the input and output exceed
       this value. If not set, then the default max_num_tokens is roughly 8k
       tokens due to the model's capacity.
-    cache_dir: Cache directory for the model weight cache and program cache.
-      Defaults to ":nocache" to disable caching in read-only environments.
+    cache_dir: Cache directory for the model weight cache and program cache. To
+      disable caching, set this to ":nocache".
     min_log_severity: Minimum logging severity (default 4 = ERROR).
   """
 
   base_options: base_options_module.BaseOptions
   mode: Mode = Mode.KEYPOINTS
   max_num_tokens: Optional[int] = None
-  cache_dir: Optional[str] = ":nocache"
+  cache_dir: Optional[str] = None
   min_log_severity: Optional[int] = 4
 
   def to_ctypes(self) -> _MpTextSummarizerOptionsC:

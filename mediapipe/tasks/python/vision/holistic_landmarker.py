@@ -260,10 +260,10 @@ class HolisticLandmarkerOptions:
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
   min_face_detection_confidence: float = 0.5
-  min_face_suppression_threshold: float = 0.5
+  min_face_suppression_threshold: float = 0.3
   min_face_landmarks_confidence: float = 0.5
   min_pose_detection_confidence: float = 0.5
-  min_pose_suppression_threshold: float = 0.5
+  min_pose_suppression_threshold: float = 0.3
   min_pose_landmarks_confidence: float = 0.5
   min_hand_landmarks_confidence: float = 0.5
   output_face_blendshapes: bool = False

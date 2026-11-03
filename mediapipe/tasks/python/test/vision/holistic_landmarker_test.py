@@ -207,6 +207,8 @@ class HolisticLandmarkerTest(parameterized.TestCase):
     # Creates with options containing model file successfully.
     base_options = _BaseOptions(model_asset_path=self.model_path)
     options = _HolisticLandmarkerOptions(base_options=base_options)
+    self.assertEqual(options.min_face_suppression_threshold, 0.3)
+    self.assertEqual(options.min_pose_suppression_threshold, 0.3)
     with _HolisticLandmarker.create_from_options(options) as landmarker:
       self.assertIsInstance(landmarker, _HolisticLandmarker)
 

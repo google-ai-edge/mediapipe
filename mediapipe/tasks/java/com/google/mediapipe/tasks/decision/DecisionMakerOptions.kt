@@ -38,15 +38,15 @@ data class DecisionMakerOptions(
   /** Builder for [DecisionMakerOptions]. */
   class Builder {
     /** Filesystem path or Android asset path to the `.task`, `.tflite`, or `.litertlm` model. */
-    var modelPath: String = ""
+    @set:JvmSynthetic var modelPath: String = ""
     /** Open [ParcelFileDescriptor] pointing to the model file. */
-    var modelAssetFileDescriptor: ParcelFileDescriptor? = null
+    @set:JvmSynthetic var modelAssetFileDescriptor: ParcelFileDescriptor? = null
     /** Direct [ByteBuffer] containing the model bytes in memory. */
-    var modelAssetBuffer: ByteBuffer? = null
+    @set:JvmSynthetic var modelAssetBuffer: ByteBuffer? = null
     /** Maximum token sequence capacity (defaults to 4096). */
-    var maxNumTokens: Int = 4096
+    @set:JvmSynthetic var maxNumTokens: Int = 4096
     /** Hardware acceleration delegate (defaults to [DecisionMakerDelegate.CPU]). */
-    var delegate: DecisionMakerDelegate = DecisionMakerDelegate.CPU
+    @set:JvmSynthetic var delegate: DecisionMakerDelegate = DecisionMakerDelegate.CPU
 
     /**
      * Sets the filesystem path or Android asset path to the `.task`, `.tflite`, or `.litertlm`

@@ -358,7 +358,8 @@ class TextToSpeechOptions:
   Attributes:
     base_options: Base options for the MediaPipe task (model path and delegate).
     default_voice_id: Default speaker voice ID when not overridden per call.
-    default_locale: Default BCP-47 locale tag when not overridden per call.
+    default_locale: Default BCP-47 locale tag when not overridden per call; when
+      `None`, the language is inferred from the selected voice.
     speaking_rate: Playback speaking rate multiplier (`1.0` is normal speed).
     target_bucket: Fixed phoneme token bucket length (`0` selects adaptive
       bucketing).
@@ -368,7 +369,7 @@ class TextToSpeechOptions:
 
   base_options: _BaseOptions
   default_voice_id: str = ''
-  default_locale: str = 'en-US'
+  default_locale: Optional[str] = None
   speaking_rate: float = 1.0
   target_bucket: int = 0
   cache_directory: Optional[str] = None
