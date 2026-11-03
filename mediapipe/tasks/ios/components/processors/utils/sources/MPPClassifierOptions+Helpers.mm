@@ -16,6 +16,11 @@
 
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 
+#include <cstdlib>
+#include <cstring>
+
+#include "mediapipe/tasks/c/components/processors/classifier_options.h"
+
 namespace {
 using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto::ClassifierOptions;
 }
@@ -39,6 +44,41 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
   for (NSString *category in self.categoryDenylist) {
     classifierOptionsProto->add_category_denylist(category.cppString);
   }
+}
+
+- (void)copyToCOptions:(MpClassifierOptions *)cClassifierOptions {
+  cClassifierOptions->display_names_locale =
+      self.displayNamesLocale ? strdup(self.displayNamesLocale.UTF8String) : nullptr;
+  cClassifierOptions->max_results = static_cast<int>(self.maxResults);
+  cClassifierOptions->score_threshold = self.scoreThreshold;
+  cClassifierOptions->category_allowlist = nullptr;
+  cClassifierOptions->category_allowlist_count = 0;
+  cClassifierOptions->category_denylist = nullptr;
+  cClassifierOptions->category_denylist_count = 0;
+
+  if (self.categoryAllowlist.count > 0) {
+    cClassifierOptions->category_allowlist_count =
+        static_cast<uint32_t>(self.categoryAllowlist.count);
+    cClassifierOptions->category_allowlist = static_cast<const char **>(
+        calloc(cClassifierOptions->category_allowlist_count, sizeof(const char *)));
+    for (uint32_t i = 0; i < cClassifierOptions->category_allowlist_count; ++i) {
+      cClassifierOptions->category_allowlist[i] = strdup(self.categoryAllowlist[i].UTF8String);
+    }
+  }
+
+  if (self.categoryDenylist.count > 0) {
+    cClassifierOptions->category_denylist_count =
+        static_cast<uint32_t>(self.categoryDenylist.count);
+    cClassifierOptions->category_denylist = static_cast<const char **>(
+        calloc(cClassifierOptions->category_denylist_count, sizeof(const char *)));
+    for (uint32_t i = 0; i < cClassifierOptions->category_denylist_count; ++i) {
+      cClassifierOptions->category_denylist[i] = strdup(self.categoryDenylist[i].UTF8String);
+    }
+  }
+}
+
++ (void)freeCOptions:(nullable MpClassifierOptions *)cClassifierOptions {
+  MpClassifierOptionsFree(cClassifierOptions);
 }
 
 @end

@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/components/processors/classifier_options_converter.h"
 
+#include <cstdlib>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -78,6 +80,37 @@ TEST(ClassifierOptionsConverterTest, ConvertsClassifierOptionsDefaultValues) {
             std::vector<std::string>{});
   EXPECT_EQ(cpp_classifier_options.category_denylist,
             std::vector<std::string>{});
+}
+
+TEST(ClassifierOptionsConverterTest, FreesAndResetsClassifierOptions) {
+  auto** allowlist = static_cast<const char**>(calloc(1, sizeof(const char*)));
+  allowlist[0] = strdup(kCategoryAllowlist);
+  auto** denylist = static_cast<const char**>(calloc(1, sizeof(const char*)));
+  denylist[0] = strdup(kCategoryDenylist);
+
+  MpClassifierOptions c_classifier_options = {
+      /* display_names_locale= */ strdup(kDisplayNamesLocaleGerman),
+      /* max_results= */ 5,
+      /* score_threshold= */ 0.5f,
+      /* category_allowlist= */ allowlist,
+      /* category_allowlist_count= */ 1,
+      /* category_denylist= */ denylist,
+      /* category_denylist_count= */ 1,
+  };
+
+  MpClassifierOptionsFree(&c_classifier_options);
+
+  EXPECT_EQ(c_classifier_options.display_names_locale, nullptr);
+  EXPECT_EQ(c_classifier_options.max_results, -1);
+  EXPECT_FLOAT_EQ(c_classifier_options.score_threshold, 0.0f);
+  EXPECT_EQ(c_classifier_options.category_allowlist, nullptr);
+  EXPECT_EQ(c_classifier_options.category_allowlist_count, 0u);
+  EXPECT_EQ(c_classifier_options.category_denylist, nullptr);
+  EXPECT_EQ(c_classifier_options.category_denylist_count, 0u);
+}
+
+TEST(ClassifierOptionsConverterTest, FreeHandlesNullptr) {
+  MpClassifierOptionsFree(nullptr);
 }
 
 }  // namespace mediapipe::tasks::c::components::processors

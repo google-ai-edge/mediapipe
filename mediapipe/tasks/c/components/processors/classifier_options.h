@@ -18,6 +18,14 @@ limitations under the License.
 
 #include <stdint.h>
 
+#ifndef MP_EXPORT
+#if defined(_MSC_VER)
+#define MP_EXPORT __declspec(dllexport)
+#else
+#define MP_EXPORT __attribute__((visibility("default")))
+#endif  // _MSC_VER
+#endif  // MP_EXPORT
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -51,6 +59,14 @@ struct MpClassifierOptions {
   // The number of elements in the category denylist.
   uint32_t category_denylist_count;
 };
+
+// Frees heap-allocated string and string-array fields (`display_names_locale`,
+// `category_allowlist`, and `category_denylist`) in `options` and resets all
+// fields to their default values. Only call this if all non-null pointer fields
+// in `options` (including each element of `category_allowlist` and
+// `category_denylist`, and the arrays themselves) were allocated on the heap
+// (e.g., via `malloc`, `calloc`, or `strdup`).
+MP_EXPORT void MpClassifierOptionsFree(struct MpClassifierOptions* options);
 
 #ifdef __cplusplus
 }  // extern C

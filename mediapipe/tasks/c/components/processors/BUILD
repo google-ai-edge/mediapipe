@@ -21,7 +21,9 @@ licenses(["notice"])
 
 cc_library(
     name = "classifier_options",
+    srcs = ["classifier_options.cc"],
     hdrs = ["classifier_options.h"],
+    alwayslink = 1,
 )
 
 cc_library(
