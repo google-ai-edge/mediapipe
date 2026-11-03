@@ -15,6 +15,8 @@
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
 #import "mediapipe/tasks/ios/components/containers/sources/MPPEmbeddingResult.h"
 
+struct MpEmbeddingResult;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPEmbeddingResult (Helpers)
@@ -22,6 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (MPPEmbeddingResult *)embeddingResultWithProto:
     (const ::mediapipe::tasks::components::containers::proto::EmbeddingResult &)
         embeddingResultProto;
+
++ (MPPEmbeddingResult *)embeddingResultWithCResult:(const struct MpEmbeddingResult &)cResult;
 
 @end
 

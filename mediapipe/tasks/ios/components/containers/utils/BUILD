@@ -64,6 +64,7 @@ objc_library(
     hdrs = ["sources/MPPEmbeddingResult+Helpers.h"],
     deps = [
         ":MPPEmbeddingHelpers",
+        "//mediapipe/tasks/c/components/containers:embedding_result",
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/components/containers:MPPEmbeddingResult",
