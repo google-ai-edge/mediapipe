@@ -48,7 +48,7 @@ class MpRegionOfInterestC(ctypes.Structure):
 
   _fields_ = [
       ('format', ctypes.c_int),
-      ('keypoint', ctypes.POINTER(keypoint_c_module.MpNormalizedKeypointC)),
+      ('keypoint', keypoint_c_module.MpNormalizedKeypointC),
       ('scribble', ctypes.POINTER(keypoint_c_module.MpNormalizedKeypointC)),
       ('scribble_count', ctypes.c_uint32),
   ]
@@ -168,12 +168,12 @@ class RegionOfInterest:
       if self.format == RegionOfInterest.Format.UNSPECIFIED:
         raise ValueError('RegionOfInterest format not specified.')
       elif self.format == RegionOfInterest.Format.KEYPOINT:
-        c_roi = MpRegionOfInterestC(format=self.format.value)
         c_keypoint = keypoint_c_module.MpNormalizedKeypointC(
             x=self.keypoint.x, y=self.keypoint.y
         )
-        c_roi.keypoint = ctypes.pointer(c_keypoint)
-        return c_roi
+        return MpRegionOfInterestC(
+            format=self.format.value, keypoint=c_keypoint
+        )
       else:
         raise ValueError(
             'Please specify the Region-of-interest for segmentation.'

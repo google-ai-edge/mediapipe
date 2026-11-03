@@ -18,6 +18,8 @@
 
 #include "mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto/region_of_interest.pb.h"
 
+struct MpRegionOfInterest;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPRegionOfInterest (Helpers)
@@ -32,6 +34,16 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (std::optional<mediapipe::tasks::vision::interactive_segmenter_legacy::proto::RegionOfInterest>)
     getRegionOfInteresProtoWithError:(NSError **)error;
+
+/**
+ * Copies the region of interest to a C MpRegionOfInterest struct.
+ * The caller is responsible for freeing allocated scribble memory by calling
+ * +[MPPRegionOfInterest freeCRegionOfInterest:].
+ */
+- (BOOL)copyToCRegionOfInterest:(struct MpRegionOfInterest *)cRoi error:(NSError **)error;
+
+/** Frees any memory allocated inside MpRegionOfInterest. */
++ (void)freeCRegionOfInterest:(nullable struct MpRegionOfInterest *)cRoi;
 
 @end
 

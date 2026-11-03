@@ -85,7 +85,7 @@ TEST(InteractiveSegmenterLegacyTest,
 
   // Initialize the ROI using brace initialization
   MpRegionOfInterest roi = {.format = MP_REGION_OF_INTEREST_FORMAT_KEYPOINT,
-                            .keypoint = &keypoint,
+                            .keypoint = keypoint,
                             .scribble = nullptr,
                             .scribble_count = 0};
 
@@ -137,7 +137,6 @@ TEST(InteractiveSegmenterLegacyTest,
 
   // Initialize RegionOfInterestC
   MpRegionOfInterest roi = {.format = MP_REGION_OF_INTEREST_FORMAT_SCRIBBLE,
-                            .keypoint = nullptr,
                             .scribble = keypoints,
                             .scribble_count = 3};
 
@@ -186,7 +185,7 @@ TEST(InteractiveSegmenterLegacyTest, ImageModeTestWithRotation) {
 
   // Initialize the ROI using brace initialization
   MpRegionOfInterest roi = {.format = MP_REGION_OF_INTEREST_FORMAT_KEYPOINT,
-                            .keypoint = &keypoint,
+                            .keypoint = keypoint,
                             .scribble = nullptr,
                             .scribble_count = 0};
 
@@ -255,7 +254,7 @@ TEST(InteractiveSegmenterLegacyTest, FailedRecognitionHandling) {
   MpNormalizedKeypoint keypoint = {.x = 0.0f, .y = 0.0f};
 
   MpRegionOfInterest roi = {.format = MP_REGION_OF_INTEREST_FORMAT_KEYPOINT,
-                            .keypoint = &keypoint,
+                            .keypoint = keypoint,
                             .scribble = nullptr,
                             .scribble_count = 0};
 

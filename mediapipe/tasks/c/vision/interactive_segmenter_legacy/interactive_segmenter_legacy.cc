@@ -92,7 +92,7 @@ void CppConvertToRegionOfInterest(
 
   // Convert keypoint
   if (in->format == MP_REGION_OF_INTEREST_FORMAT_KEYPOINT) {
-    out->keypoint = CppNormalizedKeypoint{in->keypoint->x, in->keypoint->y};
+    out->keypoint = CppNormalizedKeypoint{in->keypoint.x, in->keypoint.y};
   }
 
   // Convert scribble

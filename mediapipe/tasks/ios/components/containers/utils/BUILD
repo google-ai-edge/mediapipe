@@ -104,9 +104,12 @@ objc_library(
     srcs = ["sources/MPPRegionOfInterest+Helpers.mm"],
     hdrs = ["sources/MPPRegionOfInterest+Helpers.h"],
     deps = [
+        "//mediapipe/tasks/c/components/containers:keypoint",
+        "//mediapipe/tasks/c/vision/interactive_segmenter_legacy:interactive_segmenter_legacy_lib",
         "//mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto:region_of_interest_cc_proto",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/components/containers:MPPDetection",
         "//mediapipe/tasks/ios/components/containers:MPPRegionOfInterest",
         "//mediapipe/util:color_cc_proto",
         "//mediapipe/util:render_data_cc_proto",

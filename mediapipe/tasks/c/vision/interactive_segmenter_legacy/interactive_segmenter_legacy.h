@@ -71,13 +71,13 @@ struct MpRegionOfInterest {
 
   // Represents the ROI in keypoint format, this should have a valid keypoint
   // with coordinates `x` and `y` if `format` is
-  // `MP_REGION_OF_INTEREST_FORMAT_KEYPOINT`; `nullptr` if not present
-  MpNormalizedKeypoint* keypoint;
+  // `MP_REGION_OF_INTEREST_FORMAT_KEYPOINT`.
+  struct MpNormalizedKeypoint keypoint;
 
   // Represents the ROI in scribble format, this should be not a `nullptr` if
   // `format` is `MP_REGION_OF_INTEREST_FORMAT_SCRIBBLE`; `nullptr` if not
   // present
-  MpNormalizedKeypoint* scribble;
+  struct MpNormalizedKeypoint* scribble;
 
   // Number of keypoints in scribble; 0 if not present
   uint32_t scribble_count;
