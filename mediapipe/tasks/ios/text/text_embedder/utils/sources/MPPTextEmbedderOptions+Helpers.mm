@@ -14,31 +14,20 @@
 
 #import "mediapipe/tasks/ios/text/text_embedder/utils/sources/MPPTextEmbedderOptions+Helpers.h"
 
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
-
-#include "mediapipe/tasks/cc/components/processors/proto/embedder_options.pb.h"
-#include "mediapipe/tasks/cc/text/text_embedder/proto/text_embedder_graph_options.pb.h"
-
-namespace {
-using CalculatorOptionsProto = ::mediapipe::CalculatorOptions;
-using TextEmbedderGraphOptionsProto =
-    ::mediapipe::tasks::text::text_embedder::proto::TextEmbedderGraphOptions;
-using EmbedderOptionsProto = ::mediapipe::tasks::components::processors::proto::EmbedderOptions;
-}  // namespace
 
 @implementation MPPTextEmbedderOptions (Helpers)
 
-- (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
-  TextEmbedderGraphOptionsProto *graphOptions =
-      optionsProto->MutableExtension(TextEmbedderGraphOptionsProto::ext);
-  [self.baseOptions copyToProto:graphOptions->mutable_base_options()];
+- (void)copyToCOptions:(MpTextEmbedderOptions *)cOptions {
+  [self.baseOptions copyToCOptions:&(cOptions->base_options)];
+  cOptions->embedder_options.l2_normalize = self.l2Normalize ? true : false;
+  cOptions->embedder_options.quantize = self.quantize ? true : false;
+}
 
-  EmbedderOptionsProto *embedderOptionsProto = graphOptions->mutable_embedder_options();
-  embedderOptionsProto->Clear();
-
-  embedderOptionsProto->set_l2_normalize(self.l2Normalize ? true : false);
-  embedderOptionsProto->set_quantize(self.quantize ? true : false);
++ (void)freeCOptions:(MpTextEmbedderOptions *)cOptions {
+  if (cOptions) {
+    [MPPBaseOptions freeCOptions:&(cOptions->base_options)];
+  }
 }
 
 @end

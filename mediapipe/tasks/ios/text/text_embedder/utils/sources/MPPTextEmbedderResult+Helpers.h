@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/text/text_embedder/sources/MPPTextEmbedderResult.h"
+#import <Foundation/Foundation.h>
 
-#include "mediapipe/framework/packet.h"
+#import "mediapipe/tasks/c/text/text_embedder/text_embedder.h"
+#import "mediapipe/tasks/ios/text/text_embedder/sources/MPPTextEmbedderResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPTextEmbedderResult (Helpers)
 
-+ (MPPTextEmbedderResult *)textEmbedderResultWithOutputPacket:(const mediapipe::Packet &)packet;
++ (MPPTextEmbedderResult *)textEmbedderResultWithCResult:(const MpTextEmbedderResult &)cResult;
 
 @end
 

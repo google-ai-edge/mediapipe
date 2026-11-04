@@ -23,11 +23,7 @@ objc_library(
     srcs = ["sources/MPPTextEmbedderOptions+Helpers.mm"],
     hdrs = ["sources/MPPTextEmbedderOptions+Helpers.h"],
     deps = [
-        "//mediapipe/framework:calculator_options_cc_proto",
-        "//mediapipe/tasks/cc/components/processors/proto:embedder_options_cc_proto",
-        "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_cc_proto",
-        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
-        "//mediapipe/tasks/ios/core:MPPTaskOptionsProtocol",
+        "//mediapipe/tasks/c/text/text_embedder:text_embedder_lib",
         "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
         "//mediapipe/tasks/ios/text/text_embedder:MPPTextEmbedderOptions",
     ],
@@ -38,8 +34,7 @@ objc_library(
     srcs = ["sources/MPPTextEmbedderResult+Helpers.mm"],
     hdrs = ["sources/MPPTextEmbedderResult+Helpers.h"],
     deps = [
-        "//mediapipe/framework:packet",
-        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
+        "//mediapipe/tasks/c/text/text_embedder:text_embedder_lib",
         "//mediapipe/tasks/ios/components/containers/utils:MPPEmbeddingResultHelpers",
         "//mediapipe/tasks/ios/text/text_embedder:MPPTextEmbedderResult",
     ],

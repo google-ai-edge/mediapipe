@@ -12,30 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPEmbeddingResult+Helpers.h"
 #import "mediapipe/tasks/ios/text/text_embedder/utils/sources/MPPTextEmbedderResult+Helpers.h"
 
-#include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
-
-static const int kMicrosecondsPerMillisecond = 1000;
-
-namespace {
-using EmbeddingResultProto = ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
-using ::mediapipe::Packet;
-}  // namespace
-
-#define int kMicrosecondsPerMillisecond = 1000;
+#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPEmbeddingResult+Helpers.h"
 
 @implementation MPPTextEmbedderResult (Helpers)
 
-+ (MPPTextEmbedderResult *)textEmbedderResultWithOutputPacket:(const Packet &)packet {
-  MPPEmbeddingResult *embeddingResult =
-      [MPPEmbeddingResult embeddingResultWithProto:packet.Get<EmbeddingResultProto>()];
++ (MPPTextEmbedderResult *)textEmbedderResultWithCResult:(const MpTextEmbedderResult &)cResult {
+  MPPEmbeddingResult *embeddingResult = [MPPEmbeddingResult embeddingResultWithCResult:cResult];
 
   return [[MPPTextEmbedderResult alloc]
       initWithEmbeddingResult:embeddingResult
-      timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
-                                          kMicrosecondsPerMillisecond)];
+      timestampInMilliseconds:(NSInteger)(cResult.has_timestamp_ms ? cResult.timestamp_ms : 0)];
 }
 
 @end
