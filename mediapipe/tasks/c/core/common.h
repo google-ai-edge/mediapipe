@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_CORE_COMMON_H_
 #define MEDIAPIPE_TASKS_C_CORE_COMMON_H_
 
-#include <cstdint>
+#include <stdint.h>
 
 #ifndef MP_EXPORT
 #if defined(_MSC_VER)
