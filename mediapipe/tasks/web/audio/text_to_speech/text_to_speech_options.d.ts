@@ -54,12 +54,6 @@ export declare interface TextToSpeechOptions extends TaskRunnerOptions {
   targetBucket?: number;
 
   /**
-   * Optional directory path in the Wasm virtual filesystem for caching unpacked
-   * `.litertlm` assets and compiled weights.
-   */
-  cacheDirectory?: string;
-
-  /**
    * Optional byte length of `baseOptions.modelAssetBuffer` when provided as a
    * `ReadableStreamDefaultReader`.
    *

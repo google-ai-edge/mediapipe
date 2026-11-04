@@ -48,12 +48,6 @@ export declare interface AudioTranscriberOptions extends TaskRunnerOptions {
   prompt?: string;
 
   /**
-   * Optional directory path in the Wasm virtual filesystem for caching
-   * compiled model artifacts.
-   */
-  cacheDir?: string;
-
-  /**
    * Optional byte length of `baseOptions.modelAssetBuffer` when provided as a
    * `ReadableStreamDefaultReader`.
    *

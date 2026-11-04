@@ -151,7 +151,6 @@ describe('TextToSpeech', () => {
       '',
       1.0,
       0,
-      '',
     );
   });
 
@@ -162,7 +161,6 @@ describe('TextToSpeech', () => {
       defaultLocale: 'en-US',
       speakingRate: 1.25,
       targetBucket: 128,
-      cacheDirectory: '/tts_cache',
     });
     expect(customTts.mockModule['createTextToSpeech']).toHaveBeenCalledWith(
       '/model.litertlm',
@@ -171,7 +169,6 @@ describe('TextToSpeech', () => {
       'en-US',
       1.25,
       128,
-      '/tts_cache',
     );
     customTts.close();
   });
@@ -279,7 +276,6 @@ describe('TextToSpeech', () => {
       '',
       1.0,
       0,
-      '',
     );
     bufferTts.close();
   });

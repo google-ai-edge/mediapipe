@@ -63,7 +63,6 @@ declare interface TextToSpeechWasmModule {
     defaultLocale: string,
     speakingRate: number,
     targetBucket: number,
-    cacheDirectory: string,
   ): Promise<number>;
 
   deleteTextToSpeech(ttsPtr: number): void;
@@ -221,7 +220,6 @@ export class TextToSpeech extends TaskRunner {
   private defaultLocale = '';
   private speakingRate = 1.0;
   private targetBucket = 0;
-  private cacheDirectory = '';
   private ttsPtr = 0;
   private isClosed = false;
   private loggerTimestamp = 0;
@@ -374,9 +372,6 @@ export class TextToSpeech extends TaskRunner {
     if (options.targetBucket !== undefined) {
       this.targetBucket = options.targetBucket;
     }
-    if (options.cacheDirectory !== undefined) {
-      this.cacheDirectory = options.cacheDirectory;
-    }
 
     if (this.delegateType === CPU_DELEGATE_TYPE) {
       const wasmModule = this.graphRunner.wasmModule as unknown as Record<
@@ -509,7 +504,6 @@ export class TextToSpeech extends TaskRunner {
       this.defaultLocale,
       this.speakingRate,
       this.targetBucket,
-      this.cacheDirectory,
     );
     this.logger?.logSessionStart();
   }

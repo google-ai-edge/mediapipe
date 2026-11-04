@@ -115,7 +115,6 @@ describe('AudioTranscriber', () => {
       false,
       0,
       '',
-      '',
     );
   });
 
@@ -126,7 +125,6 @@ describe('AudioTranscriber', () => {
       enableInterimResults: true,
       modelArchitecture: 'OMNI',
       prompt: 'Transcribe English audio:',
-      cacheDir: '/cache',
     });
     expect(
       customTranscriber.mockModule['createAudioTranscriber'],
@@ -137,7 +135,6 @@ describe('AudioTranscriber', () => {
       true,
       1,
       'Transcribe English audio:',
-      '/cache',
     );
     customTranscriber.close();
   });
@@ -208,7 +205,6 @@ describe('AudioTranscriber', () => {
       16000,
       false,
       0,
-      '',
       '',
     );
     bufferTranscriber.close();

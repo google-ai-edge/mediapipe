@@ -61,7 +61,6 @@ declare interface AudioTranscriberWasmModule {
     enableInterimResults: boolean,
     modelArchitecture: number,
     prompt: string,
-    cacheDir: string,
   ): Promise<number>;
 
   deleteAudioTranscriber(transcriberPtr: number): void;
@@ -111,7 +110,6 @@ export class AudioTranscriber extends TaskRunner {
   private enableInterimResults = false;
   private modelArchitecture = 0;
   private prompt = '';
-  private cacheDir = '';
   private transcriberPtr = 0;
   private isClosed = false;
   private loggerTimestamp = 0;
@@ -267,9 +265,6 @@ export class AudioTranscriber extends TaskRunner {
     if (options.prompt !== undefined) {
       this.prompt = options.prompt;
     }
-    if (options.cacheDir !== undefined) {
-      this.cacheDir = options.cacheDir;
-    }
 
     if (this.delegateType === CPU_DELEGATE_TYPE) {
       const wasmModule = this.graphRunner.wasmModule as unknown as Record<
@@ -402,7 +397,6 @@ export class AudioTranscriber extends TaskRunner {
       this.enableInterimResults,
       this.modelArchitecture,
       this.prompt,
-      this.cacheDir,
     );
     this.logger?.logSessionStart();
   }
