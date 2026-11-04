@@ -18,6 +18,8 @@ limitations under the License.
 
 #include <stdint.h>
 
+#include "mediapipe/tasks/c/components/containers/category.h"
+#include "mediapipe/tasks/c/components/containers/keypoint.h"
 #include "mediapipe/tasks/c/components/containers/rect.h"
 
 #ifdef __cplusplus

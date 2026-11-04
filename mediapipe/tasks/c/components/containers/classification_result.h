@@ -19,6 +19,8 @@ limitations under the License.
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "mediapipe/tasks/c/components/containers/category.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

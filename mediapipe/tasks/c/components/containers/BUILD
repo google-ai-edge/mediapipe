@@ -157,6 +157,7 @@ cc_test(
 cc_library(
     name = "classification_result",
     hdrs = ["classification_result.h"],
+    deps = [":category"],
 )
 
 cc_library(
@@ -186,7 +187,11 @@ cc_test(
 cc_library(
     name = "detection_result",
     hdrs = ["detection_result.h"],
-    deps = [":rect"],
+    deps = [
+        ":category",
+        ":keypoint",
+        ":rect",
+    ],
 )
 
 cc_library(
