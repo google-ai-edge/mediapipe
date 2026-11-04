@@ -12,15 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/framework/calculator_options.pb.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
+#import <Foundation/Foundation.h>
+
+#import "mediapipe/tasks/c/text/language_detector/language_detector.h"
 #import "mediapipe/tasks/ios/text/language_detector/sources/MPPLanguageDetectorOptions.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MPPLanguageDetectorOptions (Helpers) <MPPTaskOptionsProtocol>
+@interface MPPLanguageDetectorOptions (Helpers)
 
-- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
+- (void)copyToCOptions:(MpLanguageDetectorOptions *)cOptions;
++ (void)freeCOptions:(MpLanguageDetectorOptions *)cOptions;
 
 @end
 

@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/text/language_detector/sources/MPPLanguageDetectorResult.h"
+#import <Foundation/Foundation.h>
 
-#include "mediapipe/framework/packet.h"
+#import "mediapipe/tasks/c/text/language_detector/language_detector.h"
+#import "mediapipe/tasks/ios/text/language_detector/sources/MPPLanguageDetectorResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPLanguageDetectorResult (Helpers)
 
-+ (MPPLanguageDetectorResult *)languageDetectorResultWithClassificationsPacket:
-    (const mediapipe::Packet &)packet;
++ (MPPLanguageDetectorResult *)languageDetectorResultWithCResult:
+    (const MpLanguageDetectorResult &)cResult;
 
 @end
 

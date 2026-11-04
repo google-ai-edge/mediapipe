@@ -14,55 +14,34 @@
 
 #import "mediapipe/tasks/ios/text/language_detector/sources/MPPLanguageDetector.h"
 
+#import "mediapipe/tasks/c/text/language_detector/language_detector.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTextPacketCreator.h"
-#import "mediapipe/tasks/ios/text/core/sources/MPPTextTaskRunner.h"
 #import "mediapipe/tasks/ios/text/language_detector/utils/sources/MPPLanguageDetectorOptions+Helpers.h"
 #import "mediapipe/tasks/ios/text/language_detector/utils/sources/MPPLanguageDetectorResult+Helpers.h"
 
-namespace {
-using ::mediapipe::Packet;
-using ::mediapipe::tasks::core::PacketMap;
-}  // namespace
-
-static NSString *const kClassificationsStreamName = @"classifications_out";
-static NSString *const kClassificationsTag = @"CLASSIFICATIONS";
-static NSString *const kTextInStreamName = @"text_in";
-static NSString *const kTextTag = @"TEXT";
-static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.TextClassifierGraph";
-static NSString *const kTaskName = @"languageDetector";
-
 @interface MPPLanguageDetector () {
-  /** iOS Text Task Runner */
-  MPPTextTaskRunner *_textTaskRunner;
+  MpLanguageDetectorPtr _detector;
 }
 @end
 
 @implementation MPPLanguageDetector
 
+- (void)dealloc {
+  if (_detector) {
+    MpLanguageDetectorClose(_detector, nullptr);
+    _detector = nullptr;
+  }
+}
+
 - (instancetype)initWithOptions:(MPPLanguageDetectorOptions *)options error:(NSError **)error {
   self = [super init];
   if (self) {
-    MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
-          initWithTaskName:kTaskName
-             taskGraphName:kTaskGraphName
-              inputStreams:@[ [NSString stringWithFormat:@"%@:%@", kTextTag, kTextInStreamName] ]
-             outputStreams:@[ [NSString stringWithFormat:@"%@:%@", kClassificationsTag,
-                                                         kClassificationsStreamName] ]
-               taskOptions:options
-        enableFlowLimiting:NO
-               runningMode:MPPCoreRunningModeUnspecified
-                     error:error];
-
-    if (!taskInfo) {
-      return nil;
-    }
-
-    _textTaskRunner = [[MPPTextTaskRunner alloc] initWithTaskInfo:taskInfo error:error];
-
-    if (!_textTaskRunner) {
+    MpLanguageDetectorOptions cOptions = {};
+    [options copyToCOptions:&cOptions];
+    char *cError = nullptr;
+    MpStatus status = MpLanguageDetectorCreate(&cOptions, &_detector, &cError);
+    [MPPLanguageDetectorOptions freeCOptions:&cOptions];
+    if (![MPPCommonUtils checkCError:status errorMessage:cError toError:error]) {
       return nil;
     }
   }
@@ -71,26 +50,22 @@ static NSString *const kTaskName = @"languageDetector";
 
 - (instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error {
   MPPLanguageDetectorOptions *options = [[MPPLanguageDetectorOptions alloc] init];
-
   options.baseOptions.modelAssetPath = modelPath;
-
   return [self initWithOptions:options error:error];
 }
 
 - (nullable MPPLanguageDetectorResult *)detectText:(NSString *)text error:(NSError **)error {
-  Packet packet = [MPPTextPacketCreator createWithText:text];
-
-  std::map<std::string, Packet> packetMap = {{kTextInStreamName.cppString, packet}};
-  std::optional<PacketMap> outputPacketMap = [_textTaskRunner processPacketMap:packetMap
-                                                                         error:error];
-
-  if (!outputPacketMap.has_value()) {
+  MpLanguageDetectorResult cResult = {};
+  char *cError = nullptr;
+  MpStatus status =
+      MpLanguageDetectorDetect(_detector, text ? text.UTF8String : "", &cResult, &cError);
+  if (![MPPCommonUtils checkCError:status errorMessage:cError toError:error]) {
     return nil;
   }
-
-  return
-      [MPPLanguageDetectorResult languageDetectorResultWithClassificationsPacket:
-                                     outputPacketMap.value()[kClassificationsStreamName.cppString]];
+  MPPLanguageDetectorResult *result =
+      [MPPLanguageDetectorResult languageDetectorResultWithCResult:cResult];
+  MpLanguageDetectorCloseResult(&cResult);
+  return result;
 }
 
 @end

@@ -12,50 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
 #import "mediapipe/tasks/ios/text/language_detector/utils/sources/MPPLanguageDetectorResult+Helpers.h"
-
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
-
-static const int kMicrosecondsPerMillisecond = 1000;
-
-namespace {
-using ClassificationResultProto =
-    ::mediapipe::tasks::components::containers::proto::ClassificationResult;
-}  // namespace
-
-#define int kMicrosecondsPerMillisecond = 1000;
 
 @implementation MPPLanguageDetectorResult (Helpers)
 
-+ (MPPLanguageDetectorResult *)languageDetectorResultWithClassificationsPacket:
-    (const mediapipe::Packet &)packet {
-  MPPClassificationResult *classificationResult = [MPPClassificationResult
-      classificationResultWithProto:packet.Get<ClassificationResultProto>()];
-
-  return [MPPLanguageDetectorResult
-      languageDetectorResultWithClassificationResult:classificationResult
-                             timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
-                                                                 kMicrosecondsPerMillisecond)];
-}
-
-+ (MPPLanguageDetectorResult *)
-    languageDetectorResultWithClassificationResult:(MPPClassificationResult *)classificationResult
-                           timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
++ (MPPLanguageDetectorResult *)languageDetectorResultWithCResult:
+    (const MpLanguageDetectorResult &)cResult {
   NSMutableArray<MPPLanguagePrediction *> *languagePredictions =
-      [NSMutableArray arrayWithCapacity:classificationResult.classifications.count];
+      [NSMutableArray arrayWithCapacity:cResult.predictions_count];
 
-  if (classificationResult.classifications.count > 0) {
-    for (MPPCategory *category in classificationResult.classifications[0].categories) {
-      MPPLanguagePrediction *languagePrediction =
-          [[MPPLanguagePrediction alloc] initWithLanguageCode:category.categoryName
-                                                  probability:category.score];
-      [languagePredictions addObject:languagePrediction];
-    }
+  for (uint32_t i = 0; i < cResult.predictions_count; ++i) {
+    const auto &cPrediction = cResult.predictions[i];
+    NSString *languageCode =
+        cPrediction.language_code ? [NSString stringWithUTF8String:cPrediction.language_code] : @"";
+    MPPLanguagePrediction *languagePrediction =
+        [[MPPLanguagePrediction alloc] initWithLanguageCode:languageCode
+                                                probability:cPrediction.probability];
+    [languagePredictions addObject:languagePrediction];
   }
 
   return [[MPPLanguageDetectorResult alloc] initWithLanguagePredictions:languagePredictions
-                                                timestampInMilliseconds:timestampInMilliseconds];
+                                                timestampInMilliseconds:0];
 }
 
 @end

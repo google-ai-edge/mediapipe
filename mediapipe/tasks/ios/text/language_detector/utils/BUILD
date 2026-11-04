@@ -23,11 +23,9 @@ objc_library(
     srcs = ["sources/MPPLanguageDetectorOptions+Helpers.mm"],
     hdrs = ["sources/MPPLanguageDetectorOptions+Helpers.h"],
     deps = [
-        "//mediapipe/framework:calculator_options_cc_proto",
-        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
-        "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_cc_proto",
-        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
-        "//mediapipe/tasks/ios/core:MPPTaskOptionsProtocol",
+        "//mediapipe/tasks/c/text/language_detector:language_detector_lib",
+        "//mediapipe/tasks/ios/components/processors:MPPClassifierOptions",
+        "//mediapipe/tasks/ios/components/processors/utils:MPPClassifierOptionsHelpers",
         "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
         "//mediapipe/tasks/ios/text/language_detector:MPPLanguageDetectorOptions",
     ],
@@ -38,9 +36,7 @@ objc_library(
     srcs = ["sources/MPPLanguageDetectorResult+Helpers.mm"],
     hdrs = ["sources/MPPLanguageDetectorResult+Helpers.h"],
     deps = [
-        "//mediapipe/framework:packet",
-        "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
-        "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
+        "//mediapipe/tasks/c/text/language_detector:language_detector_lib",
         "//mediapipe/tasks/ios/text/language_detector:MPPLanguageDetectorResult",
     ],
 )

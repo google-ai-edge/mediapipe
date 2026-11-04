@@ -14,45 +14,28 @@
 
 #import "mediapipe/tasks/ios/text/language_detector/utils/sources/MPPLanguageDetectorOptions+Helpers.h"
 
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
+#import "mediapipe/tasks/ios/components/processors/sources/MPPClassifierOptions.h"
+#import "mediapipe/tasks/ios/components/processors/utils/sources/MPPClassifierOptions+Helpers.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
-
-#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
-#include "mediapipe/tasks/cc/text/text_classifier/proto/text_classifier_graph_options.pb.h"
-
-namespace {
-using CalculatorOptionsProto = ::mediapipe::CalculatorOptions;
-using TextClassifierGraphOptionsProto =
-    ::mediapipe::tasks::text::text_classifier::proto::TextClassifierGraphOptions;
-using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto::ClassifierOptions;
-}  // namespace
 
 @implementation MPPLanguageDetectorOptions (Helpers)
 
-- (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
-  TextClassifierGraphOptionsProto *graphOptions =
-      optionsProto->MutableExtension(TextClassifierGraphOptionsProto::ext);
-  [self.baseOptions copyToProto:graphOptions->mutable_base_options()];
+- (void)copyToCOptions:(MpLanguageDetectorOptions *)cOptions {
+  [self.baseOptions copyToCOptions:&(cOptions->base_options)];
 
-  ClassifierOptionsProto *classifierOptionsProto = graphOptions->mutable_classifier_options();
-  classifierOptionsProto->Clear();
+  MPPClassifierOptions *classifierOptions = [[MPPClassifierOptions alloc] init];
+  classifierOptions.displayNamesLocale = self.displayNamesLocale;
+  classifierOptions.maxResults = self.maxResults;
+  classifierOptions.scoreThreshold = self.scoreThreshold;
+  classifierOptions.categoryAllowlist = self.categoryAllowlist;
+  classifierOptions.categoryDenylist = self.categoryDenylist;
+  [classifierOptions copyToCOptions:&(cOptions->classifier_options)];
+}
 
-  if (self.displayNamesLocale) {
-    classifierOptionsProto->set_display_names_locale(self.displayNamesLocale.cppString);
-  }
-
-  classifierOptionsProto->set_max_results((int)self.maxResults);
-
-  if (self.scoreThreshold >= 0) {
-    classifierOptionsProto->set_score_threshold(self.scoreThreshold);
-  }
-
-  for (NSString *category in self.categoryAllowlist) {
-    classifierOptionsProto->add_category_allowlist(category.cppString);
-  }
-
-  for (NSString *category in self.categoryDenylist) {
-    classifierOptionsProto->add_category_denylist(category.cppString);
++ (void)freeCOptions:(MpLanguageDetectorOptions *)cOptions {
+  if (cOptions) {
+    [MPPBaseOptions freeCOptions:&(cOptions->base_options)];
+    [MPPClassifierOptions freeCOptions:&(cOptions->classifier_options)];
   }
 }
 
