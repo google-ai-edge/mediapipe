@@ -114,6 +114,21 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
     pose_detector_graph_options->mutable_base_options()
         ->mutable_acceleration()
         ->CopyFrom(options->base_options().acceleration());
+    if (options->base_options().acceleration().has_litert() &&
+        options->base_options().acceleration().litert().has_gpu()) {
+      // PoseDetector model contains sparse tensors (DENSIFY ops) which are not
+      // supported by the LiteRT GPU (ML Drift) accelerator. Fall back to
+      // LiteRT CPU (XNNPACK) for PoseDetectorGraph while keeping
+      // PoseLandmarksDetectorGraph on LiteRT GPU.
+      pose_detector_graph_options->mutable_base_options()
+          ->mutable_acceleration()
+          ->mutable_litert()
+          ->clear_gpu();
+      pose_detector_graph_options->mutable_base_options()
+          ->mutable_acceleration()
+          ->mutable_litert()
+          ->mutable_cpu();
+    }
   }
   pose_detector_graph_options->mutable_base_options()->set_use_stream_mode(
       options->base_options().use_stream_mode());

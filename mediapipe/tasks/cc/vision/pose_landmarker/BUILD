@@ -69,6 +69,7 @@ cc_library(
         "//mediapipe/calculators/image:warp_affine_calculator_cc_proto",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator_cc_proto",
         "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_litert",  # buildcleaner: keep
         "//mediapipe/calculators/tensor:tensors_to_floats_calculator",
         "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
         "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator_cc_proto",

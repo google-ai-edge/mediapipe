@@ -37,7 +37,8 @@ using PoseLandmarkerGraphOptionsProto =
   poseLandmarkerGraphOptions->Clear();
 
   [self.baseOptions copyToProto:poseLandmarkerGraphOptions->mutable_base_options()
-              withUseStreamMode:self.runningMode != MPPRunningModeImage];
+              withUseStreamMode:self.runningMode != MPPRunningModeImage
+                  withUseLitert:YES];
   poseLandmarkerGraphOptions->set_min_tracking_confidence(self.minTrackingConfidence);
 
   PoseLandmarksDetectorGraphOptionsProto *poseLandmarksDetectorGraphOptions =
