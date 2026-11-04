@@ -18,6 +18,8 @@ objc_library(
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/tasks/c/vision/core:image",
+        "//mediapipe/tasks/c/vision/core:image_frame_util",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/vision/core:MPPImage",

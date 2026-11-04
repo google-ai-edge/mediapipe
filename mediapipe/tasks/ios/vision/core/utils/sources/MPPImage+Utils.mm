@@ -26,6 +26,8 @@
 #include <memory>
 
 #include "mediapipe/framework/formats/image_format.pb.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 
 namespace {
 using ::mediapipe::ImageFormat;
@@ -759,6 +761,31 @@ static void FreeCGDataProviderReleaseCallback(void *info, const void *data, size
   }
 
   return uiImage;
+}
+
+- (nullable MpImagePtr)mpImageWithError:(NSError **)error {
+  std::unique_ptr<ImageFrame> imageFrame = [self imageFrameWithError:error];
+  if (!imageFrame) {
+    return nullptr;
+  }
+  return new MpImageInternal{
+      .image = mediapipe::Image(std::shared_ptr<mediapipe::ImageFrame>(std::move(imageFrame)))};
+}
+
+- (nullable instancetype)initWithMpImage:(MpImagePtr)image
+          cloningPropertiesOfSourceImage:(MPPImage *)sourceImage
+                     shouldCopyPixelData:(BOOL)shouldCopyPixelData
+                                   error:(NSError **)error {
+  if (image == nullptr) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:@"MpImagePtr is null."];
+    return nil;
+  }
+  return [self initWithCppImage:image->image
+      cloningPropertiesOfSourceImage:sourceImage
+                 shouldCopyPixelData:shouldCopyPixelData
+                               error:error];
 }
 
 @end
