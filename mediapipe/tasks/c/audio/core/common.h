@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_ADUIO_CORE_COMMON_H_
 #define MEDIAPIPE_TASKS_C_ADUIO_CORE_COMMON_H_
 
-#include <cstddef>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
