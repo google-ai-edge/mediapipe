@@ -62,12 +62,6 @@ cc_library(
 )
 
 cc_library(
-    name = "cleanup",
-    hdrs = ["cleanup.h"],
-    deps = ["@com_google_absl//absl/base:core_headers"],
-)
-
-cc_library(
     name = "clock",
     srcs = [
         "clock.cc",

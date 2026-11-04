@@ -19,8 +19,10 @@
 #include <cstdlib>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "Eigen/Core"                   // from @eigen
+#include "absl/cleanup/cleanup.h"       // from @com_google_absl
 #include "absl/log/absl_check.h"        // from @com_google_absl
 #include "absl/log/absl_log.h"          // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
@@ -29,7 +31,6 @@
 #include "absl/strings/str_cat.h"       // from @com_google_absl
 #include "absl/strings/substitute.h"    // from @com_google_absl
 #include "absl/time/time.h"             // from @com_google_absl
-#include "mediapipe/framework/deps/cleanup.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -651,13 +652,13 @@ absl::Status AudioDecoder::Initialize(
     ++options_index;
   }
 
-  Cleanup<std::function<void()>> decoder_closer([this]() {
+  absl::Cleanup decoder_closer = [this]() {
     absl::Status status = Close();
     if (!status.ok()) {
       ABSL_LOG(ERROR) << "Encountered error while closing media file: "
                       << status.message();
     }
-  });
+  };
 
   avformat_ctx_ = avformat_alloc_context();
   if (avformat_open_input(&avformat_ctx_, input_file.c_str(), NULL, NULL) < 0) {
@@ -726,7 +727,7 @@ absl::Status AudioDecoder::Initialize(
   }
   is_first_packet_.resize(avformat_ctx_->nb_streams, true);
 
-  decoder_closer.release();
+  std::move(decoder_closer).Cancel();
   return absl::OkStatus();
 }
 
