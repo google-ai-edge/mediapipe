@@ -492,7 +492,7 @@ public final class HandLandmarker extends BaseVisionTaskApi {
               .setBaseOptions(
                   BaseOptionsProto.BaseOptions.newBuilder()
                       .setUseStreamMode(runningMode() != RunningMode.IMAGE)
-                      .mergeFrom(convertBaseOptionsToProto(baseOptions()))
+                      .mergeFrom(convertBaseOptionsToProto(baseOptions(), /* useLiteRt= */ true))
                       .build());
 
       // Setup HandDetectorGraphOptions.

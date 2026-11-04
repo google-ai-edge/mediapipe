@@ -39,20 +39,23 @@ using HandLandmarksDetectorGraphOptionsProto =
           ->MutableExtension(HandLandmarkerGraphOptionsProto::ext);
               handLandmarkerGraphOptionsProto->Clear();
 
-  [self.baseOptions copyToProto:handLandmarkerGraphOptionsProto->mutable_base_options()
-              withUseStreamMode:self.runningMode != MPPRunningModeImage];
+              [self.baseOptions copyToProto:handLandmarkerGraphOptionsProto->mutable_base_options()
+                          withUseStreamMode:self.runningMode != MPPRunningModeImage
+                              withUseLitert:YES];
 
-  handLandmarkerGraphOptionsProto->set_min_tracking_confidence(self.minTrackingConfidence);
+              handLandmarkerGraphOptionsProto->set_min_tracking_confidence(
+                  self.minTrackingConfidence);
 
-  HandDetectorGraphOptionsProto *handDetectorGraphOptionsProto =
-      handLandmarkerGraphOptionsProto->mutable_hand_detector_graph_options();
-  handDetectorGraphOptionsProto->set_num_hands(self.numHands);
-  handDetectorGraphOptionsProto->set_min_detection_confidence(self.minHandDetectionConfidence);
+              HandDetectorGraphOptionsProto *handDetectorGraphOptionsProto =
+                  handLandmarkerGraphOptionsProto->mutable_hand_detector_graph_options();
+              handDetectorGraphOptionsProto->set_num_hands(self.numHands);
+              handDetectorGraphOptionsProto->set_min_detection_confidence(
+                  self.minHandDetectionConfidence);
 
-  HandLandmarksDetectorGraphOptionsProto *handLandmarksDetectorGraphOptionsProto =
-      handLandmarkerGraphOptionsProto->mutable_hand_landmarks_detector_graph_options();
-  handLandmarksDetectorGraphOptionsProto->set_min_detection_confidence(
-      self.minHandPresenceConfidence);
+              HandLandmarksDetectorGraphOptionsProto *handLandmarksDetectorGraphOptionsProto =
+                  handLandmarkerGraphOptionsProto->mutable_hand_landmarks_detector_graph_options();
+              handLandmarksDetectorGraphOptionsProto->set_min_detection_confidence(
+                  self.minHandPresenceConfidence);
 }
 
 @end
