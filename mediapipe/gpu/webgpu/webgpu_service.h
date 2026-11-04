@@ -19,13 +19,13 @@
 #include <utility>
 
 #include "absl/base/attributes.h"          // from @com_google_absl
+#include "absl/base/no_destructor.h"       // from @com_google_absl
 #include "absl/base/thread_annotations.h"  // from @com_google_absl
 #include "absl/container/flat_hash_map.h"  // from @com_google_absl
 #include "absl/log/log.h"                  // from @com_google_absl
 #include "absl/status/status.h"            // from @com_google_absl
 #include "absl/status/statusor.h"          // from @com_google_absl
 #include "absl/synchronization/mutex.h"    // from @com_google_absl
-#include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/gpu/attachments.h"
 #include "mediapipe/gpu/webgpu/webgpu_check.h"
@@ -98,14 +98,14 @@ inline wgpu::Instance CreateEmscriptenInstance() {
 }
 
 static WebGpuContextAttachmentManager& GetEmscriptenContextAttachmentManager() {
-  static mediapipe::NoDestructor<WebGpuContextAttachmentManager> manager(
+  static absl::NoDestructor<WebGpuContextAttachmentManager> manager(
       CreateEmscriptenInstance(),
       wgpu::Device::Acquire(emscripten_webgpu_get_device()));
   return *manager;
 }
 #else
 static WebGpuContextAttachmentManager& GetNativeContextAttachmentManager() {
-  static mediapipe::NoDestructor<WebGpuContextAttachmentManager> manager(
+  static absl::NoDestructor<WebGpuContextAttachmentManager> manager(
       wgpu::Instance(
           WebGpuDeviceRegistration::GetInstance().GetWebGpuInstance()),
       wgpu::Device(WebGpuDeviceRegistration::GetInstance().GetWebGpuDevice()));

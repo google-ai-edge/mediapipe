@@ -22,11 +22,11 @@
 #endif
 
 #if MEDIAPIPE_NEEDS_GL_THREAD_COLLECTOR
+#include "absl/base/no_destructor.h"       // from @com_google_absl
 #include "absl/base/thread_annotations.h"  // from @com_google_absl
 #include "absl/log/absl_log.h"             // from @com_google_absl
 #include "absl/synchronization/mutex.h"    // from @com_google_absl
 #include "absl/time/time.h"                // from @com_google_absl
-#include "mediapipe/framework/deps/no_destructor.h"
 #endif  // MEDIAPIPE_NEEDS_GL_THREAD_COLLECTOR
 
 namespace mediapipe {
@@ -43,7 +43,7 @@ class GlThreadCollector {
   GlThreadCollector() { std::atexit(WaitForThreadsToTerminate); }
 
   static GlThreadCollector& Collector() {
-    static NoDestructor<GlThreadCollector> collector;
+    static absl::NoDestructor<GlThreadCollector> collector;
     return *collector;
   }
 
@@ -69,7 +69,7 @@ class GlThreadCollector {
 
   absl::Mutex mutex_;
   int active_threads_ ABSL_GUARDED_BY(mutex_) = 0;
-  friend NoDestructor<GlThreadCollector>;
+  friend class absl::NoDestructor<GlThreadCollector>;
 };
 #else
 class GlThreadCollector {

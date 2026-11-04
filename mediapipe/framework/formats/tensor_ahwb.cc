@@ -13,11 +13,11 @@
 
 #include "absl/base/const_init.h"           // from @com_google_absl
 #include "absl/base/log_severity.h"         // from @com_google_absl
+#include "absl/base/no_destructor.h"        // from @com_google_absl
 #include "absl/functional/any_invocable.h"  // from @com_google_absl
 #include "absl/log/absl_check.h"            // from @com_google_absl
 #include "absl/log/absl_log.h"              // from @com_google_absl
 #include "absl/synchronization/mutex.h"     // from @com_google_absl
-#include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/formats/ahwb_gpu_releaser.h"
 #include "mediapipe/framework/formats/hardware_buffer.h"
 #include "mediapipe/gpu/gl_base.h"
@@ -107,12 +107,13 @@ class AhwbUsageTrack {
 
   // TODO: Tracks all unique tensors. Can grow to a large number. LRU
   // (Least Recently Used) can be more predicted.
-  static NoDestructor<absl::flat_hash_set<uint64_t>> ahwb_usage_track_
+  static absl::NoDestructor<absl::flat_hash_set<uint64_t>> ahwb_usage_track_
       ABSL_GUARDED_BY(mutex_);
 };
 
 ABSL_CONST_INIT absl::Mutex AhwbUsageTrack::mutex_(absl::kConstInit);
-NoDestructor<absl::flat_hash_set<uint64_t>> AhwbUsageTrack::ahwb_usage_track_;
+absl::NoDestructor<absl::flat_hash_set<uint64_t>>
+    AhwbUsageTrack::ahwb_usage_track_;
 
 }  // namespace
 

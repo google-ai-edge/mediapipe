@@ -10,13 +10,13 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/no_destructor.h"   // from @com_google_absl
 #include "absl/log/absl_check.h"       // from @com_google_absl
 #include "absl/log/absl_log.h"         // from @com_google_absl
 #include "absl/log/globals.h"          // from @com_google_absl
 #include "absl/strings/str_format.h"   // from @com_google_absl
 #include "absl/strings/str_split.h"    // from @com_google_absl
 #include "absl/strings/string_view.h"  // from @com_google_absl
-#include "mediapipe/framework/deps/no_destructor.h"
 
 #endif  // defined(MEDIAPIPE_VLOG_V) || defined(MEDIAPIPE_VLOG_VMODULE)
 
@@ -30,8 +30,8 @@ void SetVLogOverrides() {
 #endif  // defined(MEDIAPIPE_VLOG_V)
 
 #if defined(MEDIAPIPE_VLOG_VMODULE)
-  static NoDestructor<std::vector<std::pair<std::string, int>>> kVModuleMapping(
-      []() {
+  static absl::NoDestructor<std::vector<std::pair<std::string, int>>>
+      kVModuleMapping([]() {
         constexpr absl::string_view kVModule = MEDIAPIPE_VLOG_VMODULE;
         std::vector<std::string> parts =
             absl::StrSplit(kVModule, absl::ByAnyChar(",="));

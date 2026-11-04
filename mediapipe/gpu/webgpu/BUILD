@@ -47,8 +47,8 @@ cc_library(
     deps = select({
         "//mediapipe:emscripten": [],
         "//conditions:default": [
-            "//mediapipe/framework/deps:no_destructor",
             "//third_party/dawn:dawncpp_headers",
+            "@com_google_absl//absl/base:no_destructor",
         ],
     }),
 )
@@ -91,11 +91,11 @@ cc_library(
         ":webgpu_check",
         ":webgpu_headers",
         "//mediapipe/framework:graph_service",
-        "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/gpu:attachments",
         "//mediapipe/web:jspi_check",
         "//third_party/dawn:webgpu_headers",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:no_destructor",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:absl_check",

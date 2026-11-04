@@ -17,14 +17,14 @@
 #include <memory>
 #include <utility>
 
-#include "mediapipe/framework/deps/no_destructor.h"
+#include "absl/base/no_destructor.h"  // from @com_google_absl
 #include "third_party/dawn/include/webgpu/webgpu_cpp.h"
 
 namespace mediapipe {
 
 // static
 WebGpuDeviceRegistration& WebGpuDeviceRegistration::GetInstance() {
-  static NoDestructor<WebGpuDeviceRegistration> instance;
+  static absl::NoDestructor<WebGpuDeviceRegistration> instance;
   return *instance;
 }
 

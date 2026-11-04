@@ -22,6 +22,7 @@
 #include <utility>
 
 #include "absl/base/attributes.h"        // from @com_google_absl
+#include "absl/base/no_destructor.h"     // from @com_google_absl
 #include "absl/log/absl_check.h"         // from @com_google_absl
 #include "absl/log/absl_log.h"           // from @com_google_absl
 #include "absl/status/status.h"          // from @com_google_absl
@@ -30,7 +31,6 @@
 #include "absl/strings/str_cat.h"        // from @com_google_absl
 #include "absl/synchronization/mutex.h"  // from @com_google_absl
 #include "absl/types/span.h"             // from @com_google_absl
-#include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/framework/port/map_util.h"
@@ -97,7 +97,7 @@ class GlContextExecutor : public Executor {
 };
 
 static const std::string& SharedContextKey() {
-  static const mediapipe::NoDestructor<std::string> kSharedContextKey("");
+  static const absl::NoDestructor<std::string> kSharedContextKey("");
   return *kSharedContextKey;
 }
 

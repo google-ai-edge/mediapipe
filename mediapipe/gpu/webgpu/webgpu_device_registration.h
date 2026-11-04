@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_GPU_WEBGPU_WEBGPU_DEVICE_REGISTRATION_H_
 #define MEDIAPIPE_GPU_WEBGPU_WEBGPU_DEVICE_REGISTRATION_H_
 
-#include "mediapipe/framework/deps/no_destructor.h"
+#include "absl/base/no_destructor.h"  // from @com_google_absl
 #include "third_party/dawn/include/webgpu/webgpu_cpp.h"
 
 namespace mediapipe {
@@ -37,7 +37,7 @@ class WebGpuDeviceRegistration {
   wgpu::Instance GetWebGpuInstance() const { return instance_; }
 
  private:
-  friend class NoDestructor<WebGpuDeviceRegistration>;
+  friend class absl::NoDestructor<WebGpuDeviceRegistration>;
 
   WebGpuDeviceRegistration();
   ~WebGpuDeviceRegistration();

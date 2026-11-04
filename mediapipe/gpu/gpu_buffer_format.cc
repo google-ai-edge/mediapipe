@@ -14,9 +14,9 @@
 
 #include "mediapipe/gpu/gpu_buffer_format.h"
 
+#include "absl/base/no_destructor.h"       // from @com_google_absl
 #include "absl/container/flat_hash_map.h"  // from @com_google_absl
 #include "absl/log/absl_check.h"           // from @com_google_absl
-#include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/port/logging.h"
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_base.h"
@@ -79,7 +79,7 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
                                                      GlVersion gl_version) {
   // TODO: check/add more cases using info from
   // CVPixelFormatDescriptionCreateWithPixelFormatType.
-  static const mediapipe::NoDestructor<
+  static const absl::NoDestructor<
       absl::flat_hash_map<GpuBufferFormat, std::vector<GlTextureInfo>>>
       gles3_format_info{{
           {GpuBufferFormat::kRGBA32,

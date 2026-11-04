@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "absl/base/macros.h"          // from @com_google_absl
+#include "absl/base/no_destructor.h"   // from @com_google_absl
 #include "absl/log/absl_check.h"       // from @com_google_absl
 #include "absl/log/absl_log.h"         // from @com_google_absl
 #include "absl/status/status.h"        // from @com_google_absl
@@ -30,7 +31,6 @@
 #include "absl/strings/string_view.h"  // from @com_google_absl
 #include "absl/types/span.h"           // from @com_google_absl
 #include "mediapipe/framework/collection.h"
-#include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/tool/type_util.h"
@@ -266,8 +266,8 @@ PacketType& PacketType::Set() {
 
 template <typename... T>
 PacketType& PacketType::SetOneOf() {
-  static const NoDestructor<std::vector<TypeId>> types{{kTypeId<T>...}};
-  static const NoDestructor<std::string> name{TypeNameForOneOf(*types)};
+  static const absl::NoDestructor<std::vector<TypeId>> types{{kTypeId<T>...}};
+  static const absl::NoDestructor<std::string> name{TypeNameForOneOf(*types)};
   type_spec_ = MultiType{*types, &*name};
   return *this;
 }

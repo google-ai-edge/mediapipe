@@ -16,11 +16,11 @@
 
 #include <vector>
 
+#include "absl/base/no_destructor.h"   // from @com_google_absl
 #include "absl/log/absl_check.h"       // from @com_google_absl
 #include "absl/strings/str_cat.h"      // from @com_google_absl
 #include "absl/strings/str_join.h"     // from @com_google_absl
 #include "absl/strings/string_view.h"  // from @com_google_absl
-#include "mediapipe/framework/deps/no_destructor.h"
 
 namespace mediapipe {
 namespace tool {
@@ -34,7 +34,7 @@ absl::Status StatusFail(absl::string_view message) {
 }
 
 const absl::Status& StatusStop() {
-  static const NoDestructor<absl::Status> kStatusStop(
+  static const absl::NoDestructor<absl::Status> kStatusStop(
       absl::StatusCode::kOutOfRange, "mediapipe::tool::StatusStop()");
   return *kStatusStop;
 }

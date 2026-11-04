@@ -231,11 +231,6 @@ cc_library(
 )
 
 cc_library(
-    name = "no_destructor",
-    hdrs = ["no_destructor.h"],
-)
-
-cc_library(
     name = "point",
     hdrs = ["point2.h"],
 
@@ -286,6 +281,7 @@ cc_library(
     deps = [
         ":registration_token",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:no_destructor",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/log:absl_check",

@@ -25,6 +25,7 @@
 #include <utility>
 
 #include "absl/base/macros.h"              // from @com_google_absl
+#include "absl/base/no_destructor.h"       // from @com_google_absl
 #include "absl/base/thread_annotations.h"  // from @com_google_absl
 #include "absl/container/flat_hash_map.h"  // from @com_google_absl
 #include "absl/container/flat_hash_set.h"  // from @com_google_absl
@@ -480,7 +481,7 @@ static_assert(false,
                                               names, ...)                     \
   template <typename T>                                                       \
   struct Internal##RegistratorName {                                          \
-    static NoDestructor<mediapipe::RegistrationToken> registration;           \
+    static absl::NoDestructor<mediapipe::RegistrationToken> registration;     \
                                                                               \
     static mediapipe::RegistrationToken Make() {                              \
       ABSL_RAW_LOG(WARNING, "Registration Dry Run: %s",                       \
@@ -496,7 +497,7 @@ static_assert(false,
   };                                                                          \
   /* Static members of template classes can be defined in the header. */      \
   template <typename T>                                                       \
-  NoDestructor<mediapipe::RegistrationToken>                                  \
+  absl::NoDestructor<mediapipe::RegistrationToken>                            \
       Internal##RegistratorName<T>::registration(                             \
           Internal##RegistratorName<T>::Make());                              \
                                                                               \
@@ -551,7 +552,7 @@ static_assert(false,
                                               name, ...)                      \
   template <typename T>                                                       \
   struct Internal##RegistratorName {                                          \
-    static NoDestructor<mediapipe::RegistrationToken> registration;           \
+    static absl::NoDestructor<mediapipe::RegistrationToken> registration;     \
                                                                               \
     static mediapipe::RegistrationToken Make() {                              \
       return RegistryType::Register(name, __VA_ARGS__);                       \
@@ -562,7 +563,7 @@ static_assert(false,
   };                                                                          \
   /* Static members of template classes can be defined in the header. */      \
   template <typename T>                                                       \
-  NoDestructor<mediapipe::RegistrationToken>                                  \
+  absl::NoDestructor<mediapipe::RegistrationToken>                            \
       Internal##RegistratorName<T>::registration(                             \
           Internal##RegistratorName<T>::Make());                              \
                                                                               \

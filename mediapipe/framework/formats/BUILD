@@ -626,11 +626,11 @@ cc_library(
     deps = [
         "//mediapipe/framework:memory_manager",
         "//mediapipe/framework:port",
-        "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/port:aligned_malloc_and_free",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/gpu/webgpu:webgpu_check",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:no_destructor",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/functional:any_invocable",

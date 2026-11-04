@@ -7,8 +7,8 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/no_destructor.h"       // from @com_google_absl
 #include "absl/container/flat_hash_map.h"  // from @com_google_absl
-#include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/tool/type_util.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 
@@ -103,7 +103,7 @@ class GpuBufferStorageRegistry {
       std::shared_ptr<GpuBufferStorage>)>;
 
   static GpuBufferStorageRegistry& Get() {
-    static NoDestructor<GpuBufferStorageRegistry> registry;
+    static absl::NoDestructor<GpuBufferStorageRegistry> registry;
     return *registry;
   }
 

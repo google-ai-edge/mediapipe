@@ -18,10 +18,10 @@
 #include <string>
 
 // TODO: Move protos in another CL after the C++ code migration.
+#include "absl/base/no_destructor.h"   // from @com_google_absl
 #include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_state.h"
-#include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
@@ -36,7 +36,7 @@ namespace mediapipe {
 namespace test_ns {
 
 const std::string& Proto3GraphStr() {
-  static NoDestructor<std::string> kProto3GraphStr(R"(
+  static absl::NoDestructor<std::string> kProto3GraphStr(R"(
       node {
         calculator: "NightLightCalculator"
         input_side_packet: "input_value"

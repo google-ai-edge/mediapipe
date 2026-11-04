@@ -483,8 +483,8 @@ cc_library(
     hdrs = ["status_util.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework/deps:no_destructor",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:no_destructor",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
@@ -830,12 +830,12 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/deps:file_path",
-        "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:advanced_proto",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/base:no_destructor",
         "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/log:absl_check",

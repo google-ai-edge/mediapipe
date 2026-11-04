@@ -5,13 +5,13 @@
 #include <cstring>
 #include <utility>
 
+#include "absl/base/no_destructor.h"    // from @com_google_absl
 #include "absl/cleanup/cleanup.h"       // from @com_google_absl
 #include "absl/log/absl_log.h"          // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "absl/status/statusor.h"       // from @com_google_absl
 #include "absl/strings/str_cat.h"       // from @com_google_absl
-#include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/formats/shared_fd.h"
 #include "mediapipe/framework/formats/unique_fd.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -60,7 +60,7 @@ absl::Status CheckEglAndroidNativeSyncSupported(EGLDisplay display) {
 }
 
 absl::Status CheckEglSyncSupported(EGLDisplay egl_display) {
-  static NoDestructor<absl::Status> support_status([&]() -> absl::Status {
+  static absl::NoDestructor<absl::Status> support_status([&]() -> absl::Status {
     ABSL_RETURN_IF_ERROR(CheckEglFenceSyncSupported(egl_display));
     ABSL_RETURN_IF_ERROR(CheckEglWaitSyncSupported(egl_display));
 
@@ -82,7 +82,7 @@ absl::Status CheckEglSyncSupported(EGLDisplay egl_display) {
 }
 
 absl::Status CheckEglNativeSyncSupported(EGLDisplay egl_display) {
-  static NoDestructor<absl::Status> support_status([&]() -> absl::Status {
+  static absl::NoDestructor<absl::Status> support_status([&]() -> absl::Status {
     ABSL_RETURN_IF_ERROR(CheckEglAndroidNativeSyncSupported(egl_display));
     RET_CHECK(eglDupNativeFenceFDANDROID =
                   reinterpret_cast<PFNEGLDUPNATIVEFENCEFDANDROIDPROC>(

@@ -423,9 +423,9 @@ cc_library(
     hdrs = ["gpu_buffer_format.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/base:no_destructor",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:absl_check",
     ] + select({
@@ -453,9 +453,9 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":gpu_buffer_format",
-        "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/tool:type_util",
+        "@com_google_absl//absl/base:no_destructor",
         "@com_google_absl//absl/container:flat_hash_map",
     ],
 )
@@ -794,8 +794,8 @@ cc_library(
         "//mediapipe/framework:calculator_node",
         "//mediapipe/framework:executor",
         "//mediapipe/framework:port",
-        "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/base:no_destructor",
         "@com_google_absl//absl/log:absl_check",
     ],
 )
@@ -829,10 +829,10 @@ cc_library(
         "//mediapipe/framework:calculator_node",
         "//mediapipe/framework:executor",
         "//mediapipe/framework:graph_service",
-        "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:no_destructor",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
@@ -978,10 +978,10 @@ cc_library(
     deps = [
         ":egl_base",
         ":egl_errors",
-        "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/formats:shared_fd",
         "//mediapipe/framework/formats:unique_fd",
         "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/base:no_destructor",
         "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",

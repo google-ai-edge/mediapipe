@@ -40,7 +40,6 @@
 #include "absl/synchronization/mutex.h"     // from @com_google_absl
 #include "google/protobuf/message.h"
 #include "google/protobuf/message_lite.h"
-#include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/deps/registration.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/logging.h"
