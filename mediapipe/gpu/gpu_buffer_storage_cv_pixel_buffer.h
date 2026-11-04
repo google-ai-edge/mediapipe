@@ -2,6 +2,9 @@
 #define MEDIAPIPE_GPU_GPU_BUFFER_STORAGE_CV_PIXEL_BUFFER_H_
 
 #include <CoreVideo/CoreVideo.h>
+#include <TargetConditionals.h>
+
+#include <memory>
 
 #include "mediapipe/gpu/gl_texture_view.h"
 #include "mediapipe/gpu/gpu_buffer_storage.h"
@@ -63,6 +66,15 @@ class GpuBufferStorageCvPixelBuffer
  private:
   GlTextureView GetTexture(int plane,
                            GlTextureView::DoneWritingFn done_writing) const;
+#if TARGET_OS_SIMULATOR
+  static constexpr int kMaxSimulatorPlanes = 4;
+  GlTextureView GetTextureSimulator(
+      const std::shared_ptr<GlContext>& gl_context, int plane,
+      GlTextureView::DoneWritingFn done_writing) const;
+  mutable CFHolder<CVPixelBufferRef>
+      sim_temp_pixel_buffers_[kMaxSimulatorPlanes];
+  mutable CFHolder<CVOpenGLESTextureRef> sim_cv_textures_[kMaxSimulatorPlanes];
+#endif  // TARGET_OS_SIMULATOR
 };
 
 inline CFHolder<CVPixelBufferRef> GpuBufferStorageCvPixelBuffer::GetReadView(

@@ -33,6 +33,12 @@ CVPixelBufferPoolRef CreateCVPixelBufferPool(int width, int height,
       [(__bridge NSDictionary*)GetCVPixelBufferAttributesForGlCompatibility()
           mutableCopy];
   [sourcePixelBufferOptions addEntriesFromDictionary:@{
+    // GetCVPixelBufferAttributesForGlCompatibility() omits
+    // kCVPixelBufferIOSurfacePropertiesKey on the iOS Simulator because raw
+    // CVOpenGLESTextureCache rejects IOSurface-backed buffers. Pooled
+    // GpuBuffers still require IOSurface backing for CVMetalTextureCache, and
+    // GpuBufferStorageCvPixelBuffer bridges them for OpenGL ES on Simulator.
+    (id)kCVPixelBufferIOSurfacePropertiesKey : @{},
     (id)kCVPixelBufferPixelFormatTypeKey : @(pixelFormat),
     (id)kCVPixelBufferWidthKey : @(width),
     (id)kCVPixelBufferHeightKey : @(height),

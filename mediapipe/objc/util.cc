@@ -18,11 +18,17 @@
 
 #if defined(__APPLE__)
 
-#import <Accelerate/Accelerate.h>          // IWYU pragma: keep
-#import <CoreFoundation/CoreFoundation.h>  // IWYU pragma: keep
-#import <CoreGraphics/CGImage.h>           // IWYU pragma: keep
-#import <CoreGraphics/CoreGraphics.h>      // IWYU pragma: keep
-#import <CoreVideo/CoreVideo.h>            // IWYU pragma: keep
+#import <Accelerate/Accelerate.h>                // IWYU pragma: keep
+#include <CoreFoundation/CFBase.h>               // IWYU pragma: keep
+#include <CoreFoundation/CFDictionary.h>         // IWYU pragma: keep
+#include <CoreFoundation/CFNumber.h>             // IWYU pragma: keep
+#import <CoreFoundation/CoreFoundation.h>        // IWYU pragma: keep
+#import <CoreGraphics/CGImage.h>                 // IWYU pragma: keep
+#import <CoreGraphics/CoreGraphics.h>            // IWYU pragma: keep
+#include <CoreVideo/CVPixelBuffer.h>             // IWYU pragma: keep
+#include <CoreVideo/CVPixelFormatDescription.h>  // IWYU pragma: keep
+#import <CoreVideo/CoreVideo.h>                  // IWYU pragma: keep
+#include <TargetConditionals.h>                  // IWYU pragma: keep
 
 #include "mediapipe/objc/CFHolder.h"  // IWYU pragma: keep
 
@@ -269,46 +275,41 @@ vImage_Error vImageConvertCVPixelBuffers(CVPixelBufferRef src,
   return error;
 }
 
-#if TARGET_IPHONE_SIMULATOR
-static void FreeRefConReleaseCallback(void* refCon, const void* baseAddress) {
-  free(refCon);
+static CFDictionaryRef GetCVPixelBufferAttributesForGpuBuffer() {
+  static CFDictionaryRef attrs = nullptr;
+  if (!attrs) {
+    CFDictionaryRef empty_dict = CFDictionaryCreate(
+        kCFAllocatorDefault, nullptr, nullptr, 0,
+        &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+
+    // MediaPipe GpuBuffers require kCVPixelBufferIOSurfacePropertiesKey on all
+    // platforms (including the iOS Simulator) so CVMetalTextureCache can create
+    // Metal textures from them, while GpuBufferStorageCvPixelBuffer bridges
+    // IOSurface-backed pixel buffers for CVOpenGLESTextureCache on Simulator.
+    const void* keys[] = {
+        kCVPixelBufferIOSurfacePropertiesKey,
+#if TARGET_OS_OSX
+        kCVPixelFormatOpenGLCompatibility,
+#else
+        kCVPixelFormatOpenGLESCompatibility,
+#endif  // TARGET_OS_OSX
+    };
+
+    const void* values[] = {empty_dict, kCFBooleanTrue};
+
+    attrs = CFDictionaryCreate(
+        kCFAllocatorDefault, keys, values, std::size(values),
+        &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    CFRelease(empty_dict);
+  }
+  return attrs;
 }
-#endif
 
 CVReturn CreateCVPixelBufferWithoutPool(int width, int height, OSType cv_format,
                                         CVPixelBufferRef* out_buffer) {
-#if TARGET_IPHONE_SIMULATOR
-  // On the simulator, syncing the texture with the pixelbuffer does not work,
-  // and we have to use glReadPixels. Since GL_UNPACK_ROW_LENGTH is not
-  // available in OpenGL ES 2, we should create the buffer so the pixels are
-  // contiguous.
-  //
-  // TODO: verify if we can use kIOSurfaceBytesPerRow to force
-  // CoreVideo to give us contiguous data.
-  size_t bytes_per_pixel = 4;
-  switch (cv_format) {
-    case kCVPixelFormatType_64RGBAHalf:
-    case kCVPixelFormatType_TwoComponent32Float:
-      bytes_per_pixel = 8;
-      break;
-    case kCVPixelFormatType_128RGBAFloat:
-      bytes_per_pixel = 16;
-      break;
-    default:
-      bytes_per_pixel = 4;
-      break;
-  }
-  size_t bytes_per_row = width * bytes_per_pixel;
-  void* data = malloc(bytes_per_row * height);
-  return CVPixelBufferCreateWithBytes(
-      kCFAllocatorDefault, width, height, cv_format, data, bytes_per_row,
-      FreeRefConReleaseCallback, data,
-      GetCVPixelBufferAttributesForGlCompatibility(), out_buffer);
-#else
   return CVPixelBufferCreate(kCFAllocatorDefault, width, height, cv_format,
-                             GetCVPixelBufferAttributesForGlCompatibility(),
+                             GetCVPixelBufferAttributesForGpuBuffer(),
                              out_buffer);
-#endif
 }
 
 absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferWithoutPool(
@@ -320,6 +321,7 @@ absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferWithoutPool(
   return MakeCFHolderAdopting(buffer);
 }
 
+#if !TARGET_OS_SIMULATOR
 /// When storing a shared_ptr in a CVPixelBuffer's refcon, this can be
 /// used as a CVPixelBufferReleaseBytesCallback. This keeps the data
 /// alive while the CVPixelBuffer is in use.
@@ -327,6 +329,7 @@ static void ReleaseSharedPtr(void* refcon, const void* base_address) {
   auto ptr = (std::shared_ptr<void>*)refcon;
   delete ptr;
 }
+#endif  // !TARGET_OS_SIMULATOR
 
 CVPixelBufferRef CreateCVPixelBufferForImageFramePacket(
     const mediapipe::Packet& image_frame_packet) {
@@ -361,6 +364,12 @@ absl::Status CreateCVPixelBufferForImageFramePacket(
 
 absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferForImageFrame(
     std::shared_ptr<mediapipe::ImageFrame> image_frame, bool can_overwrite) {
+  if (!image_frame) {
+    return absl::InvalidArgumentError("image_frame cannot be nullptr");
+  }
+#if TARGET_OS_SIMULATOR
+  return CreateCVPixelBufferCopyingImageFrame(*image_frame);
+#else
   CFHolder<CVPixelBufferRef> pixel_buffer;
   const auto& frame = *image_frame;
   void* frame_data =
@@ -452,6 +461,7 @@ absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferForImageFrame(
   }
 
   return pixel_buffer;
+#endif  // TARGET_OS_SIMULATOR
 }
 
 absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferCopyingImageFrame(

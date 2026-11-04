@@ -19,6 +19,7 @@
 #import <CoreVideo/CoreVideo.h>
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
+#include <TargetConditionals.h>
 
 #include <memory>
 #include <tuple>
@@ -278,6 +279,12 @@ TensorsToSegmentationMetalConverter::Convert(const Tensor& input_tensor,
                       threadsPerThreadgroup:threads_per_group];
       [command_encoder endEncoding];
       [command_buffer commit];
+#if TARGET_OS_SIMULATOR
+      // On Simulator, OpenGL ES cannot bind IOSurface-backed CVPixelBuffers
+      // directly and instead reads from the CPU-mapped base address in
+      // CreateSourceTexture, so wait for Metal to finish writing first.
+      [command_buffer waitUntilCompleted];
+#endif
 
       small_mask_texture = gpu_helper_.CreateSourceTexture(small_mask_buffer);
     }
