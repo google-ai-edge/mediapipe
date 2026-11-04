@@ -93,6 +93,7 @@ cc_library(
         "//mediapipe/calculators/core:concatenate_vector_calculator",
         "//mediapipe/calculators/core:end_loop_calculator",
         "//mediapipe/calculators/core:get_vector_item_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_litert",  # buildcleaner: keep
         "//mediapipe/calculators/tensor:tensor_converter_calculator",
         "//mediapipe/calculators/tensor:tensors_to_classification_calculator",
         "//mediapipe/calculators/tensor:tensors_to_classification_calculator_cc_proto",

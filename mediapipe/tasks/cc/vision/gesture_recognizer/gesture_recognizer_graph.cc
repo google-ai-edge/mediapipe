@@ -118,17 +118,34 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   hand_gesture_recognizer_graph_options->mutable_base_options()
       ->mutable_acceleration()
       ->CopyFrom(options->base_options().acceleration());
-  if (!hand_gesture_recognizer_graph_options->base_options()
-           .acceleration()
-           .has_xnnpack() &&
-      !hand_gesture_recognizer_graph_options->base_options()
-           .acceleration()
-           .has_tflite()) {
+  if (options->base_options().acceleration().has_litert()) {
+    auto* litert = hand_gesture_recognizer_graph_options->mutable_base_options()
+                       ->mutable_acceleration()
+                       ->mutable_litert();
+    // CPU-only ops: drop GPU and NPU, since LiteRT would also try to delegate
+    // to any accelerator that stays set.
+    if (litert->has_gpu() || litert->has_npu() || !litert->has_cpu()) {
+      litert->clear_gpu();
+      litert->clear_npu();
+      litert->mutable_cpu();
+      ABSL_LOG(WARNING)
+          << "HandGestureRecognizerGraph contains CPU only ops, so only this "
+          << "subgraph runs on LiteRT CPU; HandLandmarkerGraph keeps the "
+          << "requested acceleration.";
+    }
+  } else if (!hand_gesture_recognizer_graph_options->base_options()
+                  .acceleration()
+                  .has_xnnpack() &&
+             !hand_gesture_recognizer_graph_options->base_options()
+                  .acceleration()
+                  .has_tflite()) {
     hand_gesture_recognizer_graph_options->mutable_base_options()
         ->mutable_acceleration()
         ->mutable_xnnpack();
-    ABSL_LOG(WARNING) << "Hand Gesture Recognizer contains CPU only ops. Sets "
-                      << "HandGestureRecognizerGraph acceleration to Xnnpack.";
+    ABSL_LOG(WARNING)
+        << "HandGestureRecognizerGraph contains CPU only ops, so only this "
+        << "subgraph runs on XNNPACK; HandLandmarkerGraph keeps the requested "
+        << "acceleration.";
   }
   hand_gesture_recognizer_graph_options->mutable_base_options()
       ->set_use_stream_mode(options->base_options().use_stream_mode());

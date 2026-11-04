@@ -50,7 +50,8 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
   gestureRecognizerGraphOptionsProto->Clear();
 
   [self.baseOptions copyToProto:gestureRecognizerGraphOptionsProto->mutable_base_options()
-              withUseStreamMode:self.runningMode != MPPRunningModeImage];
+              withUseStreamMode:self.runningMode != MPPRunningModeImage
+                  withUseLitert:YES];
 
   HandLandmarkerGraphOptionsProto *handLandmarkerGraphOptionsProto =
       gestureRecognizerGraphOptionsProto->mutable_hand_landmarker_graph_options();

@@ -33,6 +33,7 @@ limitations under the License.
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
+#include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/base_task_api.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
@@ -116,7 +117,8 @@ std::unique_ptr<GestureRecognizerGraphOptionsProto>
 ConvertGestureRecognizerGraphOptionsProto(GestureRecognizerOptions* options) {
   auto options_proto = std::make_unique<GestureRecognizerGraphOptionsProto>();
   auto base_options_proto = std::make_unique<tasks::core::proto::BaseOptions>(
-      tasks::core::ConvertBaseOptionsToProto(&(options->base_options)));
+      tasks::core::ConvertBaseOptionsToProto(&(options->base_options),
+                                             /*use_litert=*/true));
   options_proto->mutable_base_options()->Swap(base_options_proto.get());
   options_proto->mutable_base_options()->set_use_stream_mode(
       options->running_mode != core::RunningMode::IMAGE);
