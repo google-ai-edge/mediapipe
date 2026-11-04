@@ -14,26 +14,62 @@
 
 #import "mediapipe/tasks/ios/text/text_summarizer/sources/MPPTextSummarizer.h"
 
+#import "mediapipe/tasks/c/core/base_options.h"
+#import "mediapipe/tasks/c/text/text_summarizer/text_summarizer.h"
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
-
-#include "absl/status/status.h"  // from @com_google_absl
-#include "absl/status/statusor.h"  // from @com_google_absl
-#include "absl/strings/string_view.h"  // from @com_google_absl
-#include "mediapipe/tasks/cc/text/text_summarizer/text_summarizer.h"
+#import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
 namespace {
-using TextSummarizerCpp = ::mediapipe::tasks::text::text_summarizer::TextSummarizer;
-using TextSummarizerOptionsCpp = ::mediapipe::tasks::text::text_summarizer::TextSummarizerOptions;
+
+struct SummarizerStreamContext {
+  void (^completionHandler)(MPPTextSummarizerStreamResult *_Nullable result,
+                            NSError *_Nullable error);
+};
+
+void SummarizerStreamingCallback(void *userData,
+                                 const struct MpTextSummarizerStreamResult *cStreamResult,
+                                 const char *errorMsg) {
+  @autoreleasepool {
+    auto *context = static_cast<SummarizerStreamContext *>(userData);
+    if (errorMsg) {
+      NSError *error = [NSError
+          errorWithDomain:MPPTasksErrorDomain
+                     code:MPPTasksErrorCodeInternalError
+                 userInfo:@{NSLocalizedDescriptionKey : [NSString stringWithUTF8String:errorMsg]}];
+      context->completionHandler(nil, error);
+      delete context;
+      return;
+    }
+    if (cStreamResult) {
+      NSString *chunk =
+          cStreamResult->chunk ? [NSString stringWithUTF8String:cStreamResult->chunk] : @"";
+      MPPTextSummarizerStreamResult *result =
+          [[MPPTextSummarizerStreamResult alloc] initWithChunk:chunk done:cStreamResult->done];
+      bool isDone = cStreamResult->done;
+      context->completionHandler(result, nil);
+      if (isDone) {
+        delete context;
+      }
+    }
+  }
+}
+
 }  // namespace
 
 @interface MPPTextSummarizer () {
-  std::unique_ptr<TextSummarizerCpp> _textSummarizer;
+  MpTextSummarizerPtr _summarizer;
 }
 @end
 
 @implementation MPPTextSummarizer
+
+- (void)dealloc {
+  if (_summarizer) {
+    MpTextSummarizerClose(_summarizer, nullptr);
+    _summarizer = nullptr;
+  }
+}
 
 - (nullable instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error {
   MPPTextSummarizerOptions *options = [[MPPTextSummarizerOptions alloc] init];
@@ -45,21 +81,6 @@ using TextSummarizerOptionsCpp = ::mediapipe::tasks::text::text_summarizer::Text
                                    error:(NSError **)error {
   self = [super init];
   if (self) {
-    auto cppOptions = std::make_unique<TextSummarizerOptionsCpp>();
-    NSString *appId = [MPPCommonUtils appID];
-    NSString *appVersion = [MPPCommonUtils appVersion];
-    NSString *iosVersion = [MPPCommonUtils osVersion];
-    cppOptions->base_options.host_environment =
-        mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_IOS;
-    cppOptions->base_options.host_system = mediapipe::tasks::core::HostSystem::HOST_SYSTEM_IOS;
-    cppOptions->base_options.host_version = iosVersion ? iosVersion.UTF8String : "";
-    cppOptions->base_options.app_id = appId ? appId.UTF8String : "";
-    cppOptions->base_options.app_version = appVersion ? appVersion.UTF8String : "";
-
-    if (options.baseOptions.modelAssetPath) {
-      cppOptions->base_options.model_asset_path = options.baseOptions.modelAssetPath.cppString;
-    }
-
     if (options.baseOptions.delegate != MPPDelegateCPU) {
       [MPPCommonUtils
           createCustomError:error
@@ -67,14 +88,14 @@ using TextSummarizerOptionsCpp = ::mediapipe::tasks::text::text_summarizer::Text
                 description:@"INVALID_ARGUMENT: TextSummarizer::The delegate must be CPU."];
       return nil;
     }
-    cppOptions->base_options.delegate = ::mediapipe::tasks::core::BaseOptions::Delegate::CPU;
 
+    MpTextSummarizerMode mode;
     switch (options.mode) {
       case MPPTextSummarizerModeTLDR:
-        cppOptions->mode = TextSummarizerOptionsCpp::Mode::TLDR;
+        mode = MP_TEXT_SUMMARIZER_MODE_TLDR;
         break;
       case MPPTextSummarizerModeKeyPoints:
-        cppOptions->mode = TextSummarizerOptionsCpp::Mode::KEYPOINTS;
+        mode = MP_TEXT_SUMMARIZER_MODE_KEYPOINTS;
         break;
       default:
         [MPPCommonUtils createCustomError:error
@@ -84,27 +105,34 @@ using TextSummarizerOptionsCpp = ::mediapipe::tasks::text::text_summarizer::Text
         return nil;
     }
 
-    cppOptions->max_num_tokens = (int)options.maxNumTokens;
-    if (options.cacheDir) {
-      cppOptions->cache_dir = options.cacheDir.cppString;
-    }
+    MpTextSummarizerOptions cOptions = {};
+    [options.baseOptions copyToCOptions:&cOptions.base_options];
+    cOptions.mode = mode;
+    cOptions.max_num_tokens = (int)options.maxNumTokens;
+    cOptions.cache_dir =
+        options.cacheDir ? const_cast<char *>(options.cacheDir.UTF8String) : nullptr;
+    cOptions.min_log_severity = 4;
 
-    auto textSummarizerOr = TextSummarizerCpp::Create(std::move(cppOptions));
-    if (![MPPCommonUtils checkCppError:textSummarizerOr.status() toError:error]) {
+    char *cError = nullptr;
+    MpStatus status = MpTextSummarizerCreate(&cOptions, &_summarizer, &cError);
+    [MPPBaseOptions freeCOptions:&cOptions.base_options];
+    if (![MPPCommonUtils checkCError:status errorMessage:cError toError:error]) {
       return nil;
     }
-    _textSummarizer = std::move(*textSummarizerOr);
   }
   return self;
 }
 
 - (nullable MPPTextSummarizerResult *)summarizeText:(NSString *)text error:(NSError **)error {
-  auto resultOr = _textSummarizer->Summarize(text.cppString);
-  if (![MPPCommonUtils checkCppError:resultOr.status() toError:error]) {
+  MpTextSummarizerResult cResult = {};
+  char *cError = nullptr;
+  MpStatus status =
+      MpTextSummarizerSummarize(_summarizer, text ? text.UTF8String : "", &cResult, &cError);
+  if (![MPPCommonUtils checkCError:status errorMessage:cError toError:error]) {
     return nil;
   }
-  NSString *summary = [NSString stringWithCString:resultOr->summary.c_str()
-                                         encoding:NSUTF8StringEncoding];
+  NSString *summary = cResult.summary ? [NSString stringWithUTF8String:cResult.summary] : @"";
+  MpTextSummarizerCloseResult(&cResult);
   return [[MPPTextSummarizerResult alloc] initWithSummary:summary];
 }
 
@@ -112,30 +140,25 @@ using TextSummarizerOptionsCpp = ::mediapipe::tasks::text::text_summarizer::Text
                  completionHandler:(void (^)(MPPTextSummarizerStreamResult *_Nullable result,
                                              NSError *_Nullable error))completionHandler
                              error:(NSError **)error {
-  auto cppCallback =
-      [completionHandler](
-          absl::StatusOr<mediapipe::tasks::text::text_summarizer::TextSummarizerStreamResult>
-              streamResultOr) {
-        NSError *callbackError = nil;
-        if (![MPPCommonUtils checkCppError:streamResultOr.status() toError:&callbackError]) {
-          completionHandler(nil, callbackError);
-          return;
-        }
-
-        NSString *chunk = [NSString stringWithCString:streamResultOr->chunk.c_str()
-                                             encoding:NSUTF8StringEncoding];
-        MPPTextSummarizerStreamResult *result =
-            [[MPPTextSummarizerStreamResult alloc] initWithChunk:chunk done:streamResultOr->done];
-        completionHandler(result, nil);
-      };
-
-  absl::Status status = _textSummarizer->SummarizeStreaming(text.cppString, std::move(cppCallback));
-  return [MPPCommonUtils checkCppError:status toError:error];
+  auto *context = new SummarizerStreamContext{[completionHandler copy]};
+  char *cError = nullptr;
+  MpStatus status = MpTextSummarizerSummarizeStreaming(
+      _summarizer, text ? text.UTF8String : "", SummarizerStreamingCallback, context, &cError);
+  if (![MPPCommonUtils checkCError:status errorMessage:cError toError:error]) {
+    delete context;
+    return NO;
+  }
+  return YES;
 }
 
 - (BOOL)closeWithError:(NSError **)error {
-  absl::Status status = _textSummarizer->Close();
-  return [MPPCommonUtils checkCppError:status toError:error];
+  if (!_summarizer) {
+    return YES;
+  }
+  char *cError = nullptr;
+  MpStatus status = MpTextSummarizerClose(_summarizer, &cError);
+  _summarizer = nullptr;
+  return [MPPCommonUtils checkCError:status errorMessage:cError toError:error];
 }
 
 @end

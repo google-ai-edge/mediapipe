@@ -55,13 +55,11 @@ objc_library(
     deps = [
         ":MPPTextSummarizerOptions",
         ":MPPTextSummarizerResult",
-        "//mediapipe/tasks/cc/text/text_summarizer",
+        "//mediapipe/tasks/c/core:base_options",
+        "//mediapipe/tasks/c/text/text_summarizer:text_summarizer_lib",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
         "//third_party/apple_frameworks:Foundation",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
