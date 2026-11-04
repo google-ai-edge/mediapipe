@@ -19,9 +19,13 @@
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionPacketCreator.h"
+#import "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+Utils.h"
 
 #include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/rect.pb.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 
 #include <optional>
 
@@ -44,14 +48,181 @@ static const NSInteger kMPPOrientationDegreesLeft = -90;
 static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
 
 @interface MPPVisionTaskRunner () {
+  MPPTaskRunner *_taskRunner;
   MPPRunningMode _runningMode;
   BOOL _roiAllowed;
+  BOOL _normRectAllowed;
   NSString *_imageInputStreamName;
   NSString *_normRectInputStreamName;
 }
 @end
 
 @implementation MPPVisionTaskRunner
+
+- (const mediapipe::CalculatorGraphConfig &)graphConfig {
+  if (!_taskRunner) {
+    static const mediapipe::CalculatorGraphConfig *const kEmptyConfig =
+        new mediapipe::CalculatorGraphConfig();
+    return *kEmptyConfig;
+  }
+  return _taskRunner.graphConfig;
+}
+
+- (std::optional<PacketMap>)processPacketMap:(const PacketMap &)packetMap error:(NSError **)error {
+  return [_taskRunner processPacketMap:packetMap error:error];
+}
+
+- (BOOL)sendPacketMap:(const PacketMap &)packetMap error:(NSError **)error {
+  return [_taskRunner sendPacketMap:packetMap error:error];
+}
+
+- (BOOL)closeWithError:(NSError **)error {
+  return [_taskRunner closeWithError:error];
+}
+
+- (nullable instancetype)initWithRunningMode:(MPPRunningMode)runningMode
+                                  roiAllowed:(BOOL)roiAllowed
+                             normRectAllowed:(BOOL)normRectAllowed
+                                 hasDelegate:(BOOL)hasDelegate
+                                       error:(NSError **)error {
+  switch (runningMode) {
+    case MPPRunningModeImage:
+    case MPPRunningModeVideo: {
+      if (hasDelegate) {
+        [MPPCommonUtils createCustomError:error
+                                 withCode:MPPTasksErrorCodeInvalidArgumentError
+                              description:@"The vision task is in image or video mode. The "
+                                          @"delegate must not be set in the task's options."];
+        return nil;
+      }
+      break;
+    }
+    case MPPRunningModeLiveStream: {
+      if (!hasDelegate) {
+        [MPPCommonUtils
+            createCustomError:error
+                     withCode:MPPTasksErrorCodeInvalidArgumentError
+                  description:
+                      @"The vision task is in live stream mode. An object must be set as the "
+                      @"delegate of the task in its options to ensure asynchronous delivery of "
+                      @"results."];
+        return nil;
+      }
+      break;
+    }
+    default: {
+      [MPPCommonUtils createCustomError:error
+                               withCode:MPPTasksErrorCodeInvalidArgumentError
+                            description:@"Unrecognized running mode"];
+      return nil;
+    }
+  }
+
+  self = [super init];
+  if (self) {
+    _runningMode = runningMode;
+    _roiAllowed = roiAllowed;
+    _normRectAllowed = normRectAllowed;
+  }
+  return self;
+}
+
+- (BOOL)validateRunningMode:(MPPRunningMode)expectedMode error:(NSError **)error {
+  if (_runningMode != expectedMode) {
+    NSString *expectedModeName = @"";
+    switch (expectedMode) {
+      case MPPRunningModeImage:
+        expectedModeName = @"image";
+        break;
+      case MPPRunningModeVideo:
+        expectedModeName = @"video";
+        break;
+      case MPPRunningModeLiveStream:
+        expectedModeName = @"live stream";
+        break;
+    }
+    [MPPCommonUtils
+        createCustomError:error
+                 withCode:MPPTasksErrorCodeInvalidArgumentError
+              description:[NSString stringWithFormat:@"The vision task is not initialized with "
+                                                     @"%@ mode. Current Running Mode: %@",
+                                                     expectedModeName,
+                                                     MPPRunningModeDisplayName(_runningMode)]];
+    return NO;
+  }
+  return YES;
+}
+
+- (nullable MpImagePtr)createMpImageWithMPPImage:(MPPImage *)image
+                                regionOfInterest:(CGRect)roi
+                          imageProcessingOptions:(struct MpImageProcessingOptions *)outOptions
+                                           error:(NSError **)error {
+  if (!image) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:@"`image` cannot be `nil`."];
+    return nullptr;
+  }
+
+  if (!_normRectAllowed && image.orientation != UIImageOrientationUp) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:@"Unsupported UIImageOrientation. This task only supports "
+                                      @"images with `imageOrientation = UIImageOrientationUp`"];
+    return nullptr;
+  }
+
+  if ((!_normRectAllowed || !_roiAllowed) && !CGRectEqualToRect(roi, CGRectZero)) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInternalError
+                          description:@"This task doesn't support region-of-interest."];
+    return nullptr;
+  }
+
+  int rotationDegrees = 0;
+  switch (image.orientation) {
+    case UIImageOrientationUp:
+      rotationDegrees = 0;
+      break;
+    case UIImageOrientationRight:
+      rotationDegrees = kMPPOrientationDegreesRight;
+      break;
+    case UIImageOrientationDown:
+      rotationDegrees = kMPPOrientationDegreesDown;
+      break;
+    case UIImageOrientationLeft:
+      rotationDegrees = kMPPOrientationDegreesLeft;
+      break;
+    default:
+      [MPPCommonUtils
+          createCustomError:error
+                   withCode:MPPTasksErrorCodeInvalidArgumentError
+                description:
+                    @"Unsupported UIImageOrientation. `imageOrientation` cannot be equal to "
+                    @"any of the mirrored orientations "
+                    @"(`UIImageOrientationUpMirrored`,`UIImageOrientationDownMirrored`,`"
+                    @"UIImageOrientationLeftMirrored`,`UIImageOrientationRightMirrored`)"];
+      return nullptr;
+  }
+
+  if (outOptions) {
+    outOptions->rotation_degrees = rotationDegrees;
+    if (!CGRectEqualToRect(roi, CGRectZero)) {
+      outOptions->has_region_of_interest = 1;
+      outOptions->region_of_interest = {
+          .left = static_cast<float>(roi.origin.x),
+          .top = static_cast<float>(roi.origin.y),
+          .bottom = static_cast<float>(roi.origin.y + roi.size.height),
+          .right = static_cast<float>(roi.origin.x + roi.size.width),
+      };
+    } else {
+      outOptions->has_region_of_interest = 0;
+      outOptions->region_of_interest = {};
+    }
+  }
+
+  return [image mpImageWithError:error];
+}
 
 - (nullable instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
                               runningMode:(MPPRunningMode)runningMode
@@ -73,10 +244,6 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
                           description:@"`imageInputStreamName` cannot be `nil.`"];
     return nil;
   }
-
-  _roiAllowed = roiAllowed;
-  _imageInputStreamName = imageInputStreamName;
-  _normRectInputStreamName = normRectInputStreamName;
 
   switch (runningMode) {
     case MPPRunningModeImage:
@@ -111,9 +278,19 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
     }
   }
 
-  _runningMode = runningMode;
-
-  self = [super initWithTaskInfo:taskInfo packetsCallback:packetsCallback error:error];
+  self = [super init];
+  if (self) {
+    _roiAllowed = roiAllowed;
+    _imageInputStreamName = imageInputStreamName;
+    _normRectInputStreamName = normRectInputStreamName;
+    _runningMode = runningMode;
+    _taskRunner = [[MPPTaskRunner alloc] initWithTaskInfo:taskInfo
+                                          packetsCallback:packetsCallback
+                                                    error:error];
+    if (!_taskRunner) {
+      return nil;
+    }
+  }
   return self;
 }
 

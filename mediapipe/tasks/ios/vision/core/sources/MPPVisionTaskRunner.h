@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
@@ -21,13 +22,26 @@
 
 #include "mediapipe/framework/packet.h"
 
+#ifndef MP_IMAGE_PTR_DEFINED
+#define MP_IMAGE_PTR_DEFINED
+typedef struct MpImageInternal *MpImagePtr;
+#endif
+
+struct MpImageProcessingOptions;
+
 NS_ASSUME_NONNULL_BEGIN
 
 /**
  * This class is used to create and call appropriate methods on the C++ Task Runner to initialize,
  * execute and terminate any MediaPipe vision task.
  */
-@interface MPPVisionTaskRunner : MPPTaskRunner
+@interface MPPVisionTaskRunner : NSObject
+
+/**
+ * The canonicalized `CalculatorGraphConfig` of the underlying graph managed by the C++ task
+ * runner.
+ */
+@property(nonatomic, readonly) const mediapipe::CalculatorGraphConfig &graphConfig;
 
 /**
  * Initializes a new `MPPVisionTaskRunner` with the given task info, running mode, whether task
@@ -55,14 +69,52 @@ NS_ASSUME_NONNULL_BEGIN
  * whether task supports region of interest, packets callback, image and norm rect input stream
  * names.
  */
-
 - (nullable instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
                               runningMode:(MPPRunningMode)runningMode
                                roiAllowed:(BOOL)roiAllowed
                           packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
                      imageInputStreamName:(NSString *)imageInputStreamName
                   normRectInputStreamName:(nullable NSString *)normRectInputStreamName
-                                    error:(NSError **)error NS_DESIGNATED_INITIALIZER;
+                                    error:(NSError **)error;
+
+/**
+ * Initializes a new `MPPVisionTaskRunner` with running mode, capability flags, and delegate status
+ * for C API vision tasks.
+ *
+ * @param runningMode The task's running mode (image, video, or live stream).
+ * @param roiAllowed Whether region-of-interest is supported by this task.
+ * @param normRectAllowed Whether normalized rects / rotation are supported by this task.
+ * @param hasDelegate Whether a result callback delegate is set on task options.
+ * @param error Pointer to save error if validation fails.
+ */
+- (nullable instancetype)initWithRunningMode:(MPPRunningMode)runningMode
+                                  roiAllowed:(BOOL)roiAllowed
+                             normRectAllowed:(BOOL)normRectAllowed
+                                 hasDelegate:(BOOL)hasDelegate
+                                       error:(NSError **)error;
+
+/**
+ * Validates that the current running mode matches the expected running mode.
+ *
+ * @param expectedMode The expected running mode for the operation.
+ * @param error Pointer to save error if validation fails.
+ * @return YES if valid, NO otherwise.
+ */
+- (BOOL)validateRunningMode:(MPPRunningMode)expectedMode error:(NSError **)error;
+
+/**
+ * Prepares image processing options and extracts `MpImagePtr` from `MPPImage`.
+ *
+ * @param image The input `MPPImage`.
+ * @param roi The region of interest (`CGRectZero` if not specified).
+ * @param outOptions Pointer to `MpImageProcessingOptions` struct to populate.
+ * @param error Pointer to save error if preparation fails.
+ * @return An `MpImagePtr` handle, or `nullptr` on error.
+ */
+- (nullable MpImagePtr)createMpImageWithMPPImage:(MPPImage *)image
+                                regionOfInterest:(CGRect)roi
+                          imageProcessingOptions:(struct MpImageProcessingOptions *)outOptions
+                                           error:(NSError **)error;
 
 /**
  * A synchronous method to invoke the C++ task runner to process single image inputs. The call
@@ -212,6 +264,24 @@ NS_ASSUME_NONNULL_BEGIN
                          error:(NSError **)error;
 
 /**
+ * A synchronous method for invoking the C++ task runner for processing batch data or offline
+ * streaming data.
+ */
+- (std::optional<mediapipe::tasks::core::PacketMap>)
+    processPacketMap:(const mediapipe::tasks::core::PacketMap &)packetMap
+               error:(NSError **)error;
+
+/**
+ * An asynchronous method that is designed for handling live streaming data such as live camera.
+ */
+- (BOOL)sendPacketMap:(const mediapipe::tasks::core::PacketMap &)packetMap error:(NSError **)error;
+
+/**
+ * Shuts down the C++ task runner.
+ */
+- (BOOL)closeWithError:(NSError **)error;
+
+/**
  * This method returns a unique dispatch queue name by adding the given suffix and a `UUID` to the
  * pre-defined queue name prefix for vision tasks. The vision tasks can use this method to get
  * unique dispatch queue names which are consistent with other vision tasks.
@@ -225,10 +295,6 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (const char *)uniqueDispatchQueueNameWithSuffix:(NSString *)suffix;
 
-- (instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
-                 packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
-                           error:(NSError **)error NS_UNAVAILABLE;
-
 - (instancetype)init NS_UNAVAILABLE;
 
 + (instancetype)new NS_UNAVAILABLE;
@@ -236,3 +302,108 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 NS_ASSUME_NONNULL_END
+
+#ifdef __cplusplus
+#include <array>
+#include <cstdint>
+#include <mutex>
+#include <utility>
+#import "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+Utils.h"
+
+#include "mediapipe/tasks/c/core/mp_status.h"
+
+namespace mediapipe::tasks::ios::vision::core {
+
+/**
+ * Thread-safe pool of static C function-pointer trampolines for MediaPipe vision C API
+ * live-stream callbacks.
+ *
+ * Because the MediaPipe vision C API live-stream `result_callback` signatures do not accept a
+ * `void *user_data` context pointer, each live-stream task instance allocates a slot in this pool
+ * on initialization (`AllocateSlot`), passes the slot's generated static trampoline (`GetCallback`)
+ * to the C API, and releases the slot on teardown (`FreeSlot`). Each slot holds a `__weak`
+ * reference to the Objective-C task instance to avoid retain cycles and safely route C callbacks
+ * back to the corresponding task instance.
+ */
+template <typename TaskType, typename ResultType, typename CallbackFnType>
+class VisionCallbackPool {
+ public:
+  static constexpr size_t kMaxSlots = 64;
+
+  struct Slot {
+    __weak TaskType *task = nil;
+    void (*handler)(TaskType *task, MpStatus status, const ResultType *result, MpImagePtr image,
+                    int64_t timestamp_ms) = nullptr;
+  };
+
+  static int AllocateSlot(TaskType *task, void (*handler)(TaskType *, MpStatus, const ResultType *,
+                                                          MpImagePtr, int64_t)) {
+    if (task == nil || handler == nullptr) {
+      return -1;
+    }
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (size_t i = 0; i < kMaxSlots; ++i) {
+      if (slots_[i].handler == nullptr && slots_[i].task == nil) {
+        slots_[i].task = task;
+        slots_[i].handler = handler;
+        return static_cast<int>(i);
+      }
+    }
+    return -1;
+  }
+
+  static void FreeSlot(int slot) {
+    if (slot < 0 || slot >= static_cast<int>(kMaxSlots)) {
+      return;
+    }
+    std::lock_guard<std::mutex> lock(mutex_);
+    slots_[slot].task = nil;
+    slots_[slot].handler = nullptr;
+  }
+
+  static CallbackFnType GetCallback(int slot) {
+    if (slot < 0 || slot >= static_cast<int>(kMaxSlots)) {
+      return nullptr;
+    }
+    return trampolines_[slot];
+  }
+
+ private:
+  static void Dispatch(size_t slot_index, MpStatus status, const ResultType *result,
+                       MpImagePtr image, int64_t timestamp_ms) {
+    @autoreleasepool {
+      TaskType *task = nil;
+      void (*handler)(TaskType *, MpStatus, const ResultType *, MpImagePtr, int64_t) = nullptr;
+      {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (slot_index < kMaxSlots) {
+          task = slots_[slot_index].task;
+          handler = slots_[slot_index].handler;
+        }
+      }
+      if (task && handler) {
+        handler(task, status, result, image, timestamp_ms);
+      }
+    }
+  }
+
+  template <size_t N>
+  struct Trampoline {
+    static void Callback(MpStatus status, const ResultType *result, MpImagePtr image,
+                         int64_t timestamp_ms) {
+      Dispatch(N, status, result, image, timestamp_ms);
+    }
+  };
+
+  template <size_t... Is>
+  static constexpr auto MakeTrampolines(std::index_sequence<Is...>) {
+    return std::array<CallbackFnType, sizeof...(Is)>{(&Trampoline<Is>::Callback)...};
+  }
+
+  static inline std::mutex mutex_;
+  static inline std::array<Slot, kMaxSlots> slots_;
+  static inline const auto trampolines_ = MakeTrampolines(std::make_index_sequence<kMaxSlots>{});
+};
+
+}  // namespace mediapipe::tasks::ios::vision::core
+#endif
