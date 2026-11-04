@@ -13,6 +13,12 @@ config_setting(
 )
 
 cc_library(
+    name = "pffft_hdr",
+    hdrs = ["pffft.h"],
+    include_prefix = "pffft",
+)
+
+cc_library(
     name = "pffft",
     srcs = ["pffft.c"],
     hdrs = ["pffft.h"],
@@ -30,4 +36,5 @@ cc_library(
         "//conditions:default": [],
     }),
     visibility = ["//visibility:public"],
+    deps = [":pffft_hdr"],
 )

@@ -438,10 +438,13 @@ http_archive(
     patch_args = ["-p1"],
     # TODO: Fix this in AudioTools directly
     patches = ["@//third_party:com_google_audio_tools_fixes.diff"],
-    repo_mapping = {"@com_github_glog_glog": "@com_github_glog_glog_no_gflags"},
-    sha256 = "7d7227cc6bb1f8917a9c9013e8f3578ec681c49e20fe2fc38ba90965394de60c",
-    strip_prefix = "multichannel-audio-tools-bbf15de4b7cd825d650296d21917afc07e8fe18b",
-    urls = ["https://github.com/google/multichannel-audio-tools/archive/bbf15de4b7cd825d650296d21917afc07e8fe18b.tar.gz"],
+    repo_mapping = {
+        "@com_github_glog_glog": "@com_github_glog_glog_no_gflags",
+        "@pffft_archive": "@pffft",
+    },
+    sha256 = "17d2b2805bb12db446988d102dbfb3f05b27836e669901915df5ab692b4ad0e2",
+    strip_prefix = "multichannel-audio-tools-e7d26a79405983039bc84760a202b80d6ab16ca8",
+    urls = ["https://github.com/google/multichannel-audio-tools/archive/e7d26a79405983039bc84760a202b80d6ab16ca8.tar.gz"],
 )
 
 http_archive(
