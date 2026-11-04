@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifierResult.h"
+#import <Foundation/Foundation.h>
 
-#include "mediapipe/framework/packet.h"
+#import "mediapipe/tasks/c/text/text_classifier/text_classifier.h"
+#import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifierResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPTextClassifierResult (Helpers)
 
-+ (MPPTextClassifierResult *)textClassifierResultWithClassificationsPacket:
-    (const mediapipe::Packet &)packet;
++ (MPPTextClassifierResult *)textClassifierResultWithCResult:
+    (const MpTextClassifierResult &)cResult;
 
 @end
 

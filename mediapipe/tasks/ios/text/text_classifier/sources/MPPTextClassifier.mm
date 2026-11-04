@@ -14,57 +14,34 @@
 
 #import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifier.h"
 
+#import "mediapipe/tasks/c/text/text_classifier/text_classifier.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTextPacketCreator.h"
-#import "mediapipe/tasks/ios/text/core/sources/MPPTextTaskRunner.h"
 #import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierOptions+Helpers.h"
 #import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierResult+Helpers.h"
 
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
-
-namespace {
-using ::mediapipe::Packet;
-using ::mediapipe::tasks::core::PacketMap;
-}  // namespace
-
-static NSString *const kClassificationsStreamName = @"classifications_out";
-static NSString *const kClassificationsTag = @"CLASSIFICATIONS";
-static NSString *const kTextInStreamName = @"text_in";
-static NSString *const kTextTag = @"TEXT";
-static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.TextClassifierGraph";
-static NSString *const kTaskName = @"textClassifier";
-
 @interface MPPTextClassifier () {
-  /** iOS Text Task Runner */
-  MPPTextTaskRunner *_textTaskRunner;
+  MpTextClassifierPtr _classifier;
 }
 @end
 
 @implementation MPPTextClassifier
 
+- (void)dealloc {
+  if (_classifier) {
+    MpTextClassifierClose(_classifier, nullptr);
+    _classifier = nullptr;
+  }
+}
+
 - (instancetype)initWithOptions:(MPPTextClassifierOptions *)options error:(NSError **)error {
   self = [super init];
   if (self) {
-    MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
-          initWithTaskName:kTaskName
-             taskGraphName:kTaskGraphName
-              inputStreams:@[ [NSString stringWithFormat:@"%@:%@", kTextTag, kTextInStreamName] ]
-             outputStreams:@[ [NSString stringWithFormat:@"%@:%@", kClassificationsTag,
-                                                         kClassificationsStreamName] ]
-               taskOptions:options
-        enableFlowLimiting:NO
-               runningMode:MPPCoreRunningModeUnspecified
-                     error:error];
-
-    if (!taskInfo) {
-      return nil;
-    }
-
-    _textTaskRunner = [[MPPTextTaskRunner alloc] initWithTaskInfo:taskInfo error:error];
-
-    if (!_textTaskRunner) {
+    MpTextClassifierOptions cOptions = {};
+    [options copyToCOptions:&cOptions];
+    char *cError = nullptr;
+    MpStatus status = MpTextClassifierCreate(&cOptions, &_classifier, &cError);
+    [MPPTextClassifierOptions freeCOptions:&cOptions];
+    if (![MPPCommonUtils checkCError:status errorMessage:cError toError:error]) {
       return nil;
     }
   }
@@ -73,26 +50,22 @@ static NSString *const kTaskName = @"textClassifier";
 
 - (instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error {
   MPPTextClassifierOptions *options = [[MPPTextClassifierOptions alloc] init];
-
   options.baseOptions.modelAssetPath = modelPath;
-
   return [self initWithOptions:options error:error];
 }
 
 - (nullable MPPTextClassifierResult *)classifyText:(NSString *)text error:(NSError **)error {
-  Packet packet = [MPPTextPacketCreator createWithText:text];
-
-  std::map<std::string, Packet> packetMap = {{kTextInStreamName.cppString, packet}};
-  std::optional<PacketMap> outputPacketMap = [_textTaskRunner processPacketMap:packetMap
-                                                                         error:error];
-
-  if (!outputPacketMap.has_value()) {
+  MpTextClassifierResult cResult = {};
+  char *cError = nullptr;
+  MpStatus status =
+      MpTextClassifierClassify(_classifier, text ? text.UTF8String : "", &cResult, &cError);
+  if (![MPPCommonUtils checkCError:status errorMessage:cError toError:error]) {
     return nil;
   }
-
-  return
-      [MPPTextClassifierResult textClassifierResultWithClassificationsPacket:
-                                   outputPacketMap.value()[kClassificationsStreamName.cppString]];
+  MPPTextClassifierResult *result =
+      [MPPTextClassifierResult textClassifierResultWithCResult:cResult];
+  MpTextClassifierCloseResult(&cResult);
+  return result;
 }
 
 @end

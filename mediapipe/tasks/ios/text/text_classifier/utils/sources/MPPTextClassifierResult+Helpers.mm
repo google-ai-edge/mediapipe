@@ -12,31 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
 #import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierResult+Helpers.h"
 
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
-
-static const int kMicrosecondsPerMillisecond = 1000;
-
-namespace {
-using ClassificationResultProto =
-    ::mediapipe::tasks::components::containers::proto::ClassificationResult;
-using ::mediapipe::Packet;
-}  // namespace
-
-#define int kMicrosecondsPerMillisecond = 1000;
+#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
 
 @implementation MPPTextClassifierResult (Helpers)
 
-+ (MPPTextClassifierResult *)textClassifierResultWithClassificationsPacket:(const Packet &)packet {
-  MPPClassificationResult *classificationResult = [MPPClassificationResult
-      classificationResultWithProto:packet.Get<ClassificationResultProto>()];
++ (MPPTextClassifierResult *)textClassifierResultWithCResult:
+    (const MpTextClassifierResult &)cResult {
+  MPPClassificationResult *classificationResult =
+      [MPPClassificationResult classificationResultWithCResult:cResult];
 
   return [[MPPTextClassifierResult alloc]
       initWithClassificationResult:classificationResult
-           timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
-                                               kMicrosecondsPerMillisecond)];
+           timestampInMilliseconds:(NSInteger)(cResult.has_timestamp_ms ? cResult.timestamp_ms
+                                                                        : 0)];
 }
 
 @end
