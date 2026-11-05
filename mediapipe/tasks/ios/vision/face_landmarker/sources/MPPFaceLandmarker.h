@@ -210,6 +210,18 @@ NS_SWIFT_NAME(FaceLandmarker)
  */
 + (NSArray<MPPConnection *> *)faceConnections;
 
+/**
+ * Closes and releases the underlying MediaPipe graph of the face landmarker.
+ *
+ * Call this before releasing the task, once no more inference requests are in flight. It stops
+ * accepting input, waits for pending work to finish and runs the calculators' `Close()`, so that
+ * GPU delegates and interpreters are torn down in a well-defined order. Once closed, you cannot send
+ * any inference requests to it; create a new instance instead.
+ *
+ * @return `true` if the task was closed successfully, otherwise `false`.
+ */
+- (BOOL)closeWithError:(NSError **)error;
+
 - (instancetype)init NS_UNAVAILABLE;
 
 + (instancetype)new NS_UNAVAILABLE;

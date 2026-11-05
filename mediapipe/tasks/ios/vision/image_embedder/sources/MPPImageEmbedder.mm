@@ -195,6 +195,10 @@ static const int kMicrosecondsPerMillisecond = 1000;
                                                  error:error];
 }
 
+- (BOOL)closeWithError:(NSError **)error {
+  return [_visionTaskRunner closeWithError:error];
+}
+
 #pragma mark - Private
 
 - (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
