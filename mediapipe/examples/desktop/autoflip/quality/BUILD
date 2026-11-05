@@ -141,6 +141,7 @@ cc_library(
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:ret_check",
         "@ceres_solver//:ceres",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
     ],
 )
