@@ -135,6 +135,8 @@ data class ScoreQuestion(
  * @property imageBytes Encoded PNG/JPEG image bytes.
  * @property audioSamples Mono float32 PCM audio samples in `[-1.0, 1.0]`.
  * @property audioSampleRate Sample rate in Hz for [audioSamples] (defaults to 16000).
+ * @property embedding Optional precomputed context embedding vector (supported only by
+ *   embedding-based models such as EmbeddingGemma).
  */
 data class DecisionContext(
   val text: String = "",
@@ -145,4 +147,5 @@ data class DecisionContext(
   val imageBytes: ByteArray? = null,
   val audioSamples: FloatArray? = null,
   val audioSampleRate: Int = 16000,
+  val embedding: FloatArray? = null,
 )

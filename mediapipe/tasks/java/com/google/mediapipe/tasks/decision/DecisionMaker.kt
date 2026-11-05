@@ -172,6 +172,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
       context.imageBytes,
       context.audioSamples,
       context.audioSampleRate,
+      context.embedding,
       jsonQuestions,
     )
   }
@@ -281,6 +282,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
     imageBytes: ByteArray?,
     audioSamples: FloatArray?,
     audioSampleRate: Int,
+    embedding: FloatArray?,
     jsonQuestions: String,
   ): String
 

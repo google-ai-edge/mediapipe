@@ -48,6 +48,12 @@ struct MpDecisionContext {
   const float* audio_samples;
   // Number of float samples in `audio_samples`.
   int audio_samples_length;
+  // Optional precomputed embedding vector for the context (may be null).
+  // Supported only by embedding-based DecisionMaker models (e.g.
+  // EmbeddingGemma).
+  const float* embedding;
+  // Number of float elements in `embedding`.
+  int embedding_length;
 };
 
 // Configuration for a Boolean question.
