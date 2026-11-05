@@ -12,20 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/framework/calculator_options.pb.h"
 #import "mediapipe/tasks/ios/audio/audio_classifier/sources/MPPAudioClassifierOptions.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
+
+struct MpAudioClassifierOptions;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MPPAudioClassifierOptions (Helpers) <MPPTaskOptionsProtocol>
+@interface MPPAudioClassifierOptions (Helpers)
 
 /**
- * Populates the provided `CalculatorOptions` proto container with the current settings.
+ * Copies the audio classifier options to a C MpAudioClassifierOptions struct.
+ * The caller is responsible for freeing allocated memory by calling
+ * +[MPPAudioClassifierOptions freeCOptions:].
  *
- * @param optionsProto The `CalculatorOptions` proto object to copy the settings to.
+ * @param cOptions The C options struct to copy settings to.
  */
-- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
+- (void)copyToCOptions:(struct MpAudioClassifierOptions *)cOptions;
+
+/** Frees any memory allocated inside MpAudioClassifierOptions. */
++ (void)freeCOptions:(struct MpAudioClassifierOptions *)cOptions;
 
 @end
 

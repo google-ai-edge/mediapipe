@@ -30,12 +30,10 @@ objc_library(
         "-Xclang=-fno-cxx-modules",
     ],
     deps = [
-        "//mediapipe/framework:calculator_options_cc_proto",
-        "//mediapipe/tasks/cc/audio/audio_classifier/proto:audio_classifier_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
+        "//mediapipe/tasks/c/audio/audio_classifier:audio_classifier_lib",
         "//mediapipe/tasks/ios/audio/audio_classifier:MPPAudioClassifierOptions",
-        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
-        "//mediapipe/tasks/ios/core:MPPTaskOptionsProtocol",
+        "//mediapipe/tasks/ios/components/processors:MPPClassifierOptions",
+        "//mediapipe/tasks/ios/components/processors/utils:MPPClassifierOptionsHelpers",
         "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
     ],
 )
@@ -50,8 +48,7 @@ objc_library(
         "-Xclang=-fno-cxx-modules",
     ],
     deps = [
-        "//mediapipe/framework:packet",
-        "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
+        "//mediapipe/tasks/c/audio/audio_classifier:audio_classifier_lib",
         "//mediapipe/tasks/ios/audio/audio_classifier:MPPAudioClassifierResult",
         "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
     ],

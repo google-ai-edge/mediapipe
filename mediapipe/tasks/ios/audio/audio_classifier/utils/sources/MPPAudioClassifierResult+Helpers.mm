@@ -13,48 +13,25 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/audio/audio_classifier/utils/sources/MPPAudioClassifierResult+Helpers.h"
+
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
 
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
-
-static const int kMicrosecondsPerMillisecond = 1000;
-
-namespace {
-using ClassificationResultProto =
-    ::mediapipe::tasks::components::containers::proto::ClassificationResult;
-using ::mediapipe::Packet;
-}  // namespace
+#include "mediapipe/tasks/c/audio/audio_classifier/audio_classifier.h"
 
 @implementation MPPAudioClassifierResult (Helpers)
 
-+ (nullable MPPAudioClassifierResult *)audioClassifierResultWithClassificationsPacket:
-    (const Packet &)packet {
-  // Even if packet does not validate as the expected type, you can safely access the timestamp.
-  NSInteger timestampInMilliseconds =
-      (NSInteger)(packet.Timestamp().Value() / kMicrosecondsPerMillisecond);
-
-  std::vector<ClassificationResultProto> cppClassificationResults;
-  if (packet.ValidateAsType<ClassificationResultProto>().ok()) {
-    // If `runningMode = .audioStream`, only a single `ClassificationResult` will be returned in the
-    // result packet.
-    cppClassificationResults.emplace_back(packet.Get<ClassificationResultProto>());
-  } else if (packet.ValidateAsType<std::vector<ClassificationResultProto>>().ok()) {
-    // If `runningMode = .audioStream`, a vector of timestamped `ClassificationResult`s will be
-    // returned in the result packet.
-    cppClassificationResults = packet.Get<std::vector<ClassificationResultProto>>();
-  } else {
-    // If packet does not contain protobuf of a type expected by the audio classifier.
-    return [[MPPAudioClassifierResult alloc] initWithClassificationResults:@[]
-                                                   timestampInMilliseconds:timestampInMilliseconds];
-  }
-
++ (nullable MPPAudioClassifierResult *)
+    audioClassifierResultWithCResult:(const MpAudioClassifierResult &)cResult
+             timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   NSMutableArray<MPPClassificationResult *> *classificationResults =
-      [NSMutableArray arrayWithCapacity:cppClassificationResults.size()];
+      [NSMutableArray arrayWithCapacity:cResult.results_count];
 
-  for (const auto &cppClassificationResult : cppClassificationResults) {
+  for (int i = 0; i < cResult.results_count; ++i) {
     MPPClassificationResult *classificationResult =
-        [MPPClassificationResult classificationResultWithProto:cppClassificationResult];
-    [classificationResults addObject:classificationResult];
+        [MPPClassificationResult classificationResultWithCResult:cResult.results[i]];
+    if (classificationResult) {
+      [classificationResults addObject:classificationResult];
+    }
   }
 
   return [[MPPAudioClassifierResult alloc] initWithClassificationResults:classificationResults
