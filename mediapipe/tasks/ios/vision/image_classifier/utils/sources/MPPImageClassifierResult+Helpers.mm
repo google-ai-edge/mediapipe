@@ -12,43 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
 #import "mediapipe/tasks/ios/vision/image_classifier/utils/sources/MPPImageClassifierResult+Helpers.h"
 
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
 
-static const int kMicrosecondsPerMillisecond = 1000;
-
-namespace {
-using ClassificationResultProto =
-    ::mediapipe::tasks::components::containers::proto::ClassificationResult;
-using ::mediapipe::Packet;
-}  // namespace
+#include "mediapipe/tasks/c/components/containers/classification_result.h"
+#include "mediapipe/tasks/c/vision/image_classifier/image_classifier.h"
 
 @implementation MPPImageClassifierResult (Helpers)
 
-+ (nullable MPPImageClassifierResult *)imageClassifierResultWithClassificationsPacket:
-    (const Packet &)packet {
-  // Even if packet does not validate as the expected type, you can safely access the timestamp.
-  NSInteger timestampInMilliSeconds =
-      (NSInteger)(packet.Timestamp().Value() / kMicrosecondsPerMillisecond);
-
-  if (!packet.ValidateAsType<ClassificationResultProto>().ok()) {
-    // MPPClassificationResult's timestamp is populated from timestamp `ClassificationResultProto`'s
-    // timestamp_ms(). It is 0 since the packet can't be validated as a `ClassificationResultProto`.
-    return [[MPPImageClassifierResult alloc]
-        initWithClassificationResult:[[MPPClassificationResult alloc] initWithClassifications:@[]
-                                                                      timestampInMilliseconds:0]
-             timestampInMilliseconds:timestampInMilliSeconds];
++ (nullable MPPImageClassifierResult *)
+    imageClassifierResultWithCResult:(const MpImageClassifierResult &)cResult
+             timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
+  MPPClassificationResult *classificationResult =
+      [MPPClassificationResult classificationResultWithCResult:cResult];
+  if (!classificationResult) {
+    return nil;
   }
-
-  MPPClassificationResult *classificationResult = [MPPClassificationResult
-      classificationResultWithProto:packet.Get<ClassificationResultProto>()];
-
-  return [[MPPImageClassifierResult alloc]
-      initWithClassificationResult:classificationResult
-           timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
-                                               kMicrosecondsPerMillisecond)];
+  return [[MPPImageClassifierResult alloc] initWithClassificationResult:classificationResult
+                                                timestampInMilliseconds:timestampInMilliseconds];
 }
 
 @end

@@ -14,45 +14,45 @@
 
 #import "mediapipe/tasks/ios/vision/image_classifier/utils/sources/MPPImageClassifierOptions+Helpers.h"
 
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
+#import "mediapipe/tasks/ios/components/processors/sources/MPPClassifierOptions.h"
+#import "mediapipe/tasks/ios/components/processors/utils/sources/MPPClassifierOptions+Helpers.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
-#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
-#include "mediapipe/tasks/cc/vision/image_classifier/proto/image_classifier_graph_options.pb.h"
-
-namespace {
-using CalculatorOptionsProto = mediapipe::CalculatorOptions;
-using ImageClassifierGraphOptionsProto =
-    ::mediapipe::tasks::vision::image_classifier::proto::ImageClassifierGraphOptions;
-using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto::ClassifierOptions;
-}  // namespace
+#include "mediapipe/tasks/c/vision/image_classifier/image_classifier.h"
 
 @implementation MPPImageClassifierOptions (Helpers)
 
-- (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
-  ImageClassifierGraphOptionsProto *graphOptions =
-      optionsProto->MutableExtension(ImageClassifierGraphOptionsProto::ext);
-
-  [self.baseOptions copyToProto:graphOptions->mutable_base_options()
-              withUseStreamMode:self.runningMode != MPPRunningModeImage];
-
-  ClassifierOptionsProto *classifierOptionsProto = graphOptions->mutable_classifier_options();
-  classifierOptionsProto->Clear();
-
-  if (self.displayNamesLocale) {
-    classifierOptionsProto->set_display_names_locale(self.displayNamesLocale.cppString);
+- (void)copyToCOptions:(struct MpImageClassifierOptions *)cOptions {
+  [self.baseOptions copyToCOptions:&cOptions->base_options];
+  switch (self.runningMode) {
+    case MPPRunningModeImage:
+      cOptions->running_mode = MP_RUNNING_MODE_IMAGE;
+      break;
+    case MPPRunningModeVideo:
+      cOptions->running_mode = MP_RUNNING_MODE_VIDEO;
+      break;
+    case MPPRunningModeLiveStream:
+      cOptions->running_mode = MP_RUNNING_MODE_LIVE_STREAM;
+      break;
   }
 
-  classifierOptionsProto->set_max_results((int)self.maxResults);
-  classifierOptionsProto->set_score_threshold(self.scoreThreshold);
+  MPPClassifierOptions *classifierOptions = [[MPPClassifierOptions alloc] init];
+  classifierOptions.displayNamesLocale = self.displayNamesLocale;
+  classifierOptions.maxResults = self.maxResults;
+  classifierOptions.scoreThreshold = self.scoreThreshold;
+  classifierOptions.categoryAllowlist = self.categoryAllowlist;
+  classifierOptions.categoryDenylist = self.categoryDenylist;
+  [classifierOptions copyToCOptions:&cOptions->classifier_options];
 
-  for (NSString *category in self.categoryAllowlist) {
-    classifierOptionsProto->add_category_allowlist(category.cppString);
-  }
+  cOptions->result_callback = nullptr;
+}
 
-  for (NSString *category in self.categoryDenylist) {
-    classifierOptionsProto->add_category_denylist(category.cppString);
++ (void)freeCOptions:(struct MpImageClassifierOptions *)cOptions {
+  if (!cOptions) {
+    return;
   }
+  [MPPBaseOptions freeCOptions:&cOptions->base_options];
+  [MPPClassifierOptions freeCOptions:&cOptions->classifier_options];
 }
 
 @end

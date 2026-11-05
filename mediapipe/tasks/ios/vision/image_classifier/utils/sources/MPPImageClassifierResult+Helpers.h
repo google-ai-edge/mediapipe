@@ -12,24 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#import <Foundation/Foundation.h>
+
 #import "mediapipe/tasks/ios/vision/image_classifier/sources/MPPImageClassifierResult.h"
 
-#include "mediapipe/framework/packet.h"
+struct MpClassificationResult;
+typedef struct MpClassificationResult MpImageClassifierResult;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPImageClassifierResult (Helpers)
 
-/**
- * Creates an `MPPImageClassifierResult` from a MediaPipe packet containing an
- * `ClassificationResultProto`.
- *
- * @param packet a MediaPipe packet wrapping a ClassificationResultProto.
- *
- * @return  An `MPPImageClassifierResult` object that contains a list of image classifications.
- */
-+ (nullable MPPImageClassifierResult *)imageClassifierResultWithClassificationsPacket:
-    (const mediapipe::Packet &)packet;
++ (nullable MPPImageClassifierResult *)
+    imageClassifierResultWithCResult:(const MpImageClassifierResult &)cResult
+             timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 
 @end
 

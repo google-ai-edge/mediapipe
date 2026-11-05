@@ -12,20 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/framework/calculator_options.pb.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
+#import <Foundation/Foundation.h>
+
 #import "mediapipe/tasks/ios/vision/image_classifier/sources/MPPImageClassifierOptions.h"
+
+struct MpImageClassifierOptions;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MPPImageClassifierOptions (Helpers) <MPPTaskOptionsProtocol>
+@interface MPPImageClassifierOptions (Helpers)
 
-/**
- * Populates the provided `CalculatorOptions` proto container with the current settings.
- *
- * @param optionsProto The `CalculatorOptions` proto object to copy the settings to.
- */
-- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
+- (void)copyToCOptions:(struct MpImageClassifierOptions *)cOptions;
+
++ (void)freeCOptions:(struct MpImageClassifierOptions *)cOptions;
 
 @end
 
