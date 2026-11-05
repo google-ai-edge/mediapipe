@@ -20,6 +20,7 @@ limitations under the License.
 #include <vector>
 
 #include "absl/container/node_hash_map.h"  // from @com_google_absl
+#include "absl/strings/string_view.h"      // from @com_google_absl
 
 namespace mediapipe {
 namespace tasks {
@@ -27,7 +28,7 @@ namespace text {
 
 // Read a vocab file with one vocabulary on each line, create a vector of
 // strings.
-std::vector<std::string> LoadVocabFromFile(const std::string& path_to_vocab);
+std::vector<std::string> LoadVocabFromFile(absl::string_view path_to_vocab);
 
 // read a vocab buffer with one vocab one each line, create a vector of strings
 std::vector<std::string> LoadVocabFromBuffer(const char* vocab_buffer_data,

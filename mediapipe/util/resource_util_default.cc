@@ -38,10 +38,10 @@ absl::Status DefaultGetResourceContents(const std::string& path,
 }
 }  // namespace internal
 
-absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path,
+absl::StatusOr<std::string> PathToResourceAsFile(absl::string_view path,
                                                  bool /*shadow_copy*/) {
   if (absl::StartsWith(path, "/")) {
-    return path;
+    return std::string(path);
   }
 
   // Try to load the file from bazel-bin. If it does not exist, fall back to the

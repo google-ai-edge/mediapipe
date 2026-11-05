@@ -98,7 +98,7 @@ class BertTokenizer : public mediapipe::tasks::text::tokenizers::Tokenizer {
         include_delim_re_{options.include_delim_str} {}
 
   // Initialize the tokenizer from file path to vocab and tokenizer configs.
-  explicit BertTokenizer(const std::string& path_to_vocab,
+  explicit BertTokenizer(absl::string_view path_to_vocab,
                          const BertTokenizerOptions& options = {})
       : BertTokenizer(mediapipe::tasks::text::LoadVocabFromFile(path_to_vocab),
                       options) {}

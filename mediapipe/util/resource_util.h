@@ -17,9 +17,10 @@
 
 #include <string>
 
-#include "absl/base/attributes.h"  // from @com_google_absl
-#include "absl/status/status.h"    // from @com_google_absl
-#include "absl/status/statusor.h"  // from @com_google_absl
+#include "absl/base/attributes.h"      // from @com_google_absl
+#include "absl/status/status.h"        // from @com_google_absl
+#include "absl/status/statusor.h"      // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 
 namespace mediapipe {
 
@@ -39,7 +40,7 @@ namespace mediapipe {
 // accessible as a normal file, usually to call an existing API that only
 // accepts file paths. Code that can access data as a stream or as a buffer
 // should use the Resources API (see below).
-absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path,
+absl::StatusOr<std::string> PathToResourceAsFile(absl::string_view path,
                                                  bool shadow_copy = true);
 
 // DEPRECATED: use `CalculatorContext::GetResources` and

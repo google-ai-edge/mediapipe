@@ -65,7 +65,7 @@ std::vector<std::string> ReadIStreamByLine(std::istream* istream) {
 
 }  // namespace
 
-std::vector<std::string> LoadVocabFromFile(const std::string& path_to_vocab) {
+std::vector<std::string> LoadVocabFromFile(absl::string_view path_to_vocab) {
   std::vector<std::string> vocab_from_file;
   std::string file_name = *PathToResourceAsFile(path_to_vocab);
   std::ifstream in(file_name.c_str());

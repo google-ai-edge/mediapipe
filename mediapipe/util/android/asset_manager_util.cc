@@ -15,12 +15,14 @@
 #include "mediapipe/util/android/asset_manager_util.h"
 
 #include <fstream>
+#include <string>
 
 #include "absl/log/absl_check.h"        // from @com_google_absl
 #include "absl/log/absl_log.h"          // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "absl/strings/str_cat.h"       // from @com_google_absl
+#include "absl/strings/string_view.h"   // from @com_google_absl
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 #include "mediapipe/util/android/file/base/file.h"
@@ -99,7 +101,7 @@ bool AssetManager::InitializeFromActivity(JNIEnv* env, jobject activity,
   return InitializeFromContext(env, activity, cache_dir_path);
 }
 
-bool AssetManager::FileExists(const std::string& filename, bool* is_dir) {
+bool AssetManager::FileExists(absl::string_view filename, bool* is_dir) {
   if (!asset_manager_) {
     ABSL_LOG(ERROR) << "Asset manager was not initialized from JNI";
     return false;
@@ -111,8 +113,9 @@ bool AssetManager::FileExists(const std::string& filename, bool* is_dir) {
     }
   };
 
-  AAsset* asset =
-      AAssetManager_open(asset_manager_, filename.c_str(), AASSET_MODE_RANDOM);
+  std::string filename_str(filename);
+  AAsset* asset = AAssetManager_open(asset_manager_, filename_str.c_str(),
+                                     AASSET_MODE_RANDOM);
   if (asset != nullptr) {
     AAsset_close(asset);
     safe_set_is_dir(false);
@@ -121,7 +124,7 @@ bool AssetManager::FileExists(const std::string& filename, bool* is_dir) {
 
   // Check if it is a directory.
   AAssetDir* asset_dir =
-      AAssetManager_openDir(asset_manager_, filename.c_str());
+      AAssetManager_openDir(asset_manager_, filename_str.c_str());
   if (asset_dir != nullptr) {
     // openDir always succeeds, so check if there are files in it. This won't
     // work if it's empty, but an empty assets manager directory is essentially
@@ -135,15 +138,15 @@ bool AssetManager::FileExists(const std::string& filename, bool* is_dir) {
   return false;
 }
 
-bool AssetManager::ReadFile(const std::string& filename, std::string* output) {
+bool AssetManager::ReadFile(absl::string_view filename, std::string* output) {
   ABSL_CHECK(output);
   if (!asset_manager_) {
     ABSL_LOG(ERROR) << "Asset manager was not initialized from JNI";
     return false;
   }
 
-  AAsset* asset =
-      AAssetManager_open(asset_manager_, filename.c_str(), AASSET_MODE_RANDOM);
+  AAsset* asset = AAssetManager_open(
+      asset_manager_, std::string(filename).c_str(), AASSET_MODE_RANDOM);
   if (asset == nullptr) {
     return false;
   } else {
@@ -156,7 +159,7 @@ bool AssetManager::ReadFile(const std::string& filename, std::string* output) {
 }
 
 absl::StatusOr<std::string> AssetManager::CachedFileFromAsset(
-    const std::string& asset_path) {
+    absl::string_view asset_path) {
   RET_CHECK(cache_dir_path_.size()) << "asset manager not initialized";
 
   std::string file_path =

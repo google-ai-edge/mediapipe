@@ -22,8 +22,9 @@
 
 #include <string>
 
-#include "absl/status/status.h"    // from @com_google_absl
-#include "absl/status/statusor.h"  // from @com_google_absl
+#include "absl/status/status.h"        // from @com_google_absl
+#include "absl/status/statusor.h"      // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/port/singleton.h"
 
 namespace mediapipe {
@@ -75,10 +76,10 @@ class AssetManager {
   // Checks if a file exists. Returns true on success, false otherwise. If it
   // does exist, then 'is_dir' will be set to indicate whether the file is a
   // directory.
-  bool FileExists(const std::string& filename, bool* is_dir = nullptr);
+  bool FileExists(absl::string_view filename, bool* is_dir = nullptr);
 
   // Reads a file into output. Returns true on success, false otherwise.
-  bool ReadFile(const std::string& filename, std::string* output);
+  bool ReadFile(absl::string_view filename, std::string* output);
 
   // Reads the raw bytes referred to by the supplied content URI. Returns true
   // on success, false otherwise.
@@ -94,8 +95,7 @@ class AssetManager {
   // to a filesystem file.
   // NOTE: this is _not_ thread-safe, e.g. if two threads are requesting the
   // same file
-  absl::StatusOr<std::string> CachedFileFromAsset(
-      const std::string& asset_path);
+  absl::StatusOr<std::string> CachedFileFromAsset(absl::string_view asset_path);
 
  private:
   // Private constructor since this class is meant to be a singleton.

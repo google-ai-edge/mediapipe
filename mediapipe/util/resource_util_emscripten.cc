@@ -26,10 +26,10 @@
 
 namespace mediapipe {
 
-absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path,
+absl::StatusOr<std::string> PathToResourceAsFile(absl::string_view path,
                                                  bool /*shadow_copy*/) {
   if (absl::StartsWith(path, "/")) {
-    return path;
+    return std::string(path);
   }
 
   // Try the test environment.
@@ -41,7 +41,7 @@ absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path,
     return test_path;
   }
 
-  return path;
+  return std::string(path);
 }
 
 namespace internal {
