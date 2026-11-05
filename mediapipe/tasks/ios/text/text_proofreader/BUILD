@@ -55,13 +55,11 @@ objc_library(
     deps = [
         ":MPPTextProofreaderOptions",
         ":MPPTextProofreaderResult",
-        "//mediapipe/tasks/cc/text/text_proofreader",
+        "//mediapipe/tasks/c/core:base_options",
+        "//mediapipe/tasks/c/text/text_proofreader:text_proofreader_lib",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
         "//third_party/apple_frameworks:Foundation",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
