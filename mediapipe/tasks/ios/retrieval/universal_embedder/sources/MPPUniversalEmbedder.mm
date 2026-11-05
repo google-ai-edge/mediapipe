@@ -18,47 +18,56 @@
 #import <CoreVideo/CoreVideo.h>
 #import <UIKit/UIKit.h>
 
+#import "mediapipe/tasks/ios/audio/core/sources/MPPAudioData.h"
+#import "mediapipe/tasks/ios/audio/core/sources/MPPFloatBuffer.h"
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
+#import "mediapipe/tasks/ios/components/containers/sources/MPPEmbeddingResult.h"
+#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPEmbeddingResult+Helpers.h"
 #import "mediapipe/tasks/ios/components/utils/sources/MPPCosineSimilarity.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskPart.h"
+#import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 #import "mediapipe/tasks/ios/retrieval/semantic_retriever/sources/MPPAudioLoader.h"
 #import "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+Utils.h"
 
-#include <atomic>
-#include <memory>
-#include <string>
-#include <utility>
 #include <vector>
 
-#include "absl/status/status.h"  // from @com_google_absl
-#include "absl/status/statusor.h"  // from @com_google_absl
-#include "absl/strings/string_view.h"  // from @com_google_absl
-#include "mediapipe/framework/timestamp.h"
-#include "mediapipe/tasks/cc/components/containers/embedding_result.h"
-#include "mediapipe/tasks/cc/core/base_options.h"
-#include "mediapipe/tasks/cc/core/logging/factory/logging_factory.h"
-#include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
-#include "mediapipe/tasks/cc/retrieval/universal_embedder/universal_embedder.h"
+#include "mediapipe/tasks/c/retrieval/universal_embedder/universal_embedder.h"
 
 namespace {
 
-// Maps an `MPPDelegate` to its C++ `BaseOptions::Delegate` counterpart.
-mediapipe::tasks::core::BaseOptions::Delegate CppDelegateFromMPPDelegate(MPPDelegate delegate) {
-  return delegate == MPPDelegateGPU ? mediapipe::tasks::core::BaseOptions::GPU
-                                    : mediapipe::tasks::core::BaseOptions::CPU;
+MpDelegate CDelegateFromMPPDelegate(MPPDelegate delegate) {
+  switch (delegate) {
+    case MPPDelegateGPU:
+      return MP_DELEGATE_GPU;
+    case MPPDelegateCPU:
+      return MP_DELEGATE_CPU;
+    default:
+      return MP_DELEGATE_DEFAULT;
+  }
+}
+
+MpActivationDataType CActivationFromMPPActivation(MPPActivationDataType activation) {
+  switch (activation) {
+    case MPPActivationDataTypeFloat32:
+      return kMpActivationDataTypeFloat32;
+    case MPPActivationDataTypeFloat16:
+      return kMpActivationDataTypeFloat16;
+    case MPPActivationDataTypeInt16:
+      return kMpActivationDataTypeInt16;
+    case MPPActivationDataTypeInt8:
+      return kMpActivationDataTypeInt8;
+    case MPPActivationDataTypeDefault:
+    default:
+      return kMpActivationDataTypeDefault;
+  }
 }
 
 }  // namespace
 
 @interface MPPUniversalEmbedder () {
-  std::unique_ptr<mediapipe::tasks::retrieval::universal_embedder::UniversalEmbedder>
-      _universalEmbedder;
-  std::unique_ptr<mediapipe::tasks::core::logging::TasksLogger> _statsLogger;
-  std::atomic<int64_t> _syntheticTimestamp;
+  MpUniversalEmbedderPtr _universalEmbedder;
 }
-
-+ (MPPEmbeddingResult *)embeddingResultWithCppEmbeddingResult:
-    (const mediapipe::tasks::components::containers::EmbeddingResult &)cppResult;
 
 - (nullable NSData *)uncompressedTGADataFromPixelBuffer:(CVPixelBufferRef)pixelBuffer
                                                   error:(NSError **)error;
@@ -78,81 +87,37 @@ mediapipe::tasks::core::BaseOptions::Delegate CppDelegateFromMPPDelegate(MPPDele
                                    error:(NSError **)error {
   self = [super init];
   if (self) {
-    auto cppOptions = std::make_unique<
-        mediapipe::tasks::retrieval::universal_embedder::UniversalEmbedderOptions>();
-    cppOptions->base_options.model_asset_path = options.baseOptions.modelAssetPath.UTF8String;
-    cppOptions->base_options.delegate = CppDelegateFromMPPDelegate(options.baseOptions.delegate);
-    cppOptions->text_delegate = CppDelegateFromMPPDelegate(
-        options.textDelegate == MPPDelegateDefault ? options.baseOptions.delegate
-                                                   : options.textDelegate);
-    cppOptions->vision_delegate = CppDelegateFromMPPDelegate(
-        options.visionDelegate == MPPDelegateDefault ? options.baseOptions.delegate
-                                                     : options.visionDelegate);
-    cppOptions->audio_delegate = CppDelegateFromMPPDelegate(
-        options.audioDelegate == MPPDelegateDefault ? options.baseOptions.delegate
-                                                    : options.audioDelegate);
-    cppOptions->l2_normalize = options.l2Normalize;
-    if (options.maxInputLength > 0) {
-      cppOptions->max_input_length = (int)options.maxInputLength;
-    }
-    if (options.visionTokensPerImage > 0) {
-      cppOptions->vision_tokens_per_image = (int)options.visionTokensPerImage;
-    }
-    switch (options.activationDataType) {
-      case MPPActivationDataTypeFloat32:
-        cppOptions->activation_data_type =
-            mediapipe::tasks::retrieval::universal_embedder::ActivationDataType::FLOAT32;
-        break;
-      case MPPActivationDataTypeFloat16:
-        cppOptions->activation_data_type =
-            mediapipe::tasks::retrieval::universal_embedder::ActivationDataType::FLOAT16;
-        break;
-      case MPPActivationDataTypeInt16:
-        cppOptions->activation_data_type =
-            mediapipe::tasks::retrieval::universal_embedder::ActivationDataType::INT16;
-        break;
-      case MPPActivationDataTypeInt8:
-        cppOptions->activation_data_type =
-            mediapipe::tasks::retrieval::universal_embedder::ActivationDataType::INT8;
-        break;
-      case MPPActivationDataTypeDefault:
-        break;
-    }
-    if (options.cacheDir.length > 0) {
-      cppOptions->cache_dir = std::string(options.cacheDir.UTF8String);
-    }
+    MpUniversalEmbedderOptions cOptions = {};
+    [options.baseOptions copyToCOptions:&cOptions.base_options];
+    cOptions.l2_normalize = options.l2Normalize;
+    cOptions.max_input_length = static_cast<int>(options.maxInputLength);
+    cOptions.vision_tokens_per_image = static_cast<int>(options.visionTokensPerImage);
+    cOptions.activation_data_type = CActivationFromMPPActivation(options.activationDataType);
+    cOptions.cache_dir = options.cacheDir.length > 0 ? options.cacheDir.UTF8String : nullptr;
+    cOptions.text_delegate = CDelegateFromMPPDelegate(options.textDelegate == MPPDelegateDefault
+                                                          ? options.baseOptions.delegate
+                                                          : options.textDelegate);
+    cOptions.vision_delegate = CDelegateFromMPPDelegate(options.visionDelegate == MPPDelegateDefault
+                                                            ? options.baseOptions.delegate
+                                                            : options.visionDelegate);
+    cOptions.audio_delegate = CDelegateFromMPPDelegate(options.audioDelegate == MPPDelegateDefault
+                                                           ? options.baseOptions.delegate
+                                                           : options.audioDelegate);
 
-    auto cppEmbedderStatus =
-        mediapipe::tasks::retrieval::universal_embedder::UniversalEmbedder::Create(
-            std::move(cppOptions));
-    if (![MPPCommonUtils checkCppError:cppEmbedderStatus.status() toError:error]) {
+    char *cError = nullptr;
+    MpStatus status = MpUniversalEmbedderCreate(&cOptions, &_universalEmbedder, &cError);
+    [MPPBaseOptions freeCOptions:&cOptions.base_options];
+    if (![MPPCommonUtils checkCError:status errorMessage:cError toError:error]) {
       return nil;
     }
-    _universalEmbedder = std::move(*cppEmbedderStatus);
-
-    NSString *appId = [MPPCommonUtils appID];
-    NSString *appVersion = [MPPCommonUtils appVersion];
-    NSString *iosVersion = [MPPCommonUtils osVersion];
-
-    mediapipe::tasks::core::logging::LoggingOptions loggingOptions = {
-        .task_name = "UniversalEmbedder",
-        .task_running_mode = mediapipe::tasks::core::RunningMode::kUnspecified,
-        .host_environment = mediapipe::tasks::core::HostEnvironment::HOST_ENVIRONMENT_IOS,
-        .host_system = mediapipe::tasks::core::HostSystem::HOST_SYSTEM_IOS,
-        .host_version = iosVersion ? iosVersion.UTF8String : "",
-        .app_id = appId ? appId.UTF8String : "",
-        .app_version = appVersion ? appVersion.UTF8String : ""};
-
-    _statsLogger = mediapipe::tasks::core::logging::CreateTasksLogger(loggingOptions);
-    _statsLogger->LogSessionStart();
-    _syntheticTimestamp = 0;
   }
   return self;
 }
 
 - (void)dealloc {
-  if (_statsLogger) {
-    _statsLogger->LogSessionEnd();
+  if (_universalEmbedder) {
+    MpUniversalEmbedderClose(_universalEmbedder, nullptr);
+    _universalEmbedder = nullptr;
   }
 }
 
@@ -163,18 +128,18 @@ mediapipe::tasks::core::BaseOptions::Delegate CppDelegateFromMPPDelegate(MPPDele
                           description:@"Text cannot be nil."];
     return nil;
   }
-  int64_t timestampVal = _syntheticTimestamp++;
-  mediapipe::Timestamp timestamp(timestampVal);
-  _statsLogger->RecordCpuInputArrival(timestamp);
 
-  auto cppResultStatus = _universalEmbedder->EmbedText(std::string(text.UTF8String));
-  if (![MPPCommonUtils checkCppError:cppResultStatus.status() toError:error]) {
-    _statsLogger->RecordInvocationEnd(timestamp);
+  MpUniversalEmbedderResult cResult = {};
+  char *cError = nullptr;
+  MpStatus status =
+      MpUniversalEmbedderEmbedText(_universalEmbedder, text.UTF8String, &cResult, &cError);
+  if (![MPPCommonUtils checkCError:status errorMessage:cError toError:error]) {
     return nil;
   }
 
-  _statsLogger->RecordInvocationEnd(timestamp);
-  return [MPPUniversalEmbedder embeddingResultWithCppEmbeddingResult:*cppResultStatus];
+  MPPEmbeddingResult *result = [MPPEmbeddingResult embeddingResultWithCResult:cResult];
+  MpUniversalEmbedderCloseResult(&cResult);
+  return result;
 }
 
 - (nullable MPPEmbeddingResult *)embedImageBytes:(NSData *)imageBytes error:(NSError **)error {
@@ -184,19 +149,19 @@ mediapipe::tasks::core::BaseOptions::Delegate CppDelegateFromMPPDelegate(MPPDele
                           description:@"Image bytes cannot be nil."];
     return nil;
   }
-  int64_t timestampVal = _syntheticTimestamp++;
-  mediapipe::Timestamp timestamp(timestampVal);
-  _statsLogger->RecordCpuInputArrival(timestamp);
 
-  absl::string_view bytesView((const char *)imageBytes.bytes, imageBytes.length);
-  auto cppResultStatus = _universalEmbedder->EmbedImage(bytesView);
-  if (![MPPCommonUtils checkCppError:cppResultStatus.status() toError:error]) {
-    _statsLogger->RecordInvocationEnd(timestamp);
+  MpUniversalEmbedderResult cResult = {};
+  char *cError = nullptr;
+  MpStatus status =
+      MpUniversalEmbedderEmbedImage(_universalEmbedder, (const char *)imageBytes.bytes,
+                                    (int)imageBytes.length, &cResult, &cError);
+  if (![MPPCommonUtils checkCError:status errorMessage:cError toError:error]) {
     return nil;
   }
 
-  _statsLogger->RecordInvocationEnd(timestamp);
-  return [MPPUniversalEmbedder embeddingResultWithCppEmbeddingResult:*cppResultStatus];
+  MPPEmbeddingResult *result = [MPPEmbeddingResult embeddingResultWithCResult:cResult];
+  MpUniversalEmbedderCloseResult(&cResult);
+  return result;
 }
 
 - (nullable NSData *)uncompressedTGADataFromPixelBuffer:(CVPixelBufferRef)pixelBuffer
@@ -229,10 +194,8 @@ mediapipe::tasks::core::BaseOptions::Delegate CppDelegateFromMPPDelegate(MPPDele
 
   // Fast Contiguous Copy Check
   if (bytesPerRow == rowSize) {
-    // Copy the entire pixel array in a single, lightning-fast memcpy block
     memcpy(dstBytes + 18, baseAddress, pixelSize);
   } else {
-    // Fallback if the pixel buffer has alignment padding bytes at the end of each row
     uint8_t *dstPixels = dstBytes + 18;
     for (size_t y = 0; y < height; y++) {
       memcpy(dstPixels + y * rowSize, baseAddress + y * bytesPerRow, rowSize);
@@ -253,7 +216,6 @@ mediapipe::tasks::core::BaseOptions::Delegate CppDelegateFromMPPDelegate(MPPDele
     }
   }
 
-  // Fallback to UIImage compression
   UIImage *uiImage = [image toUIImageWithError:error];
   if (uiImage == nil) {
     return nil;
@@ -293,19 +255,18 @@ mediapipe::tasks::core::BaseOptions::Delegate CppDelegateFromMPPDelegate(MPPDele
                           description:@"Audio data cannot be nil."];
     return nil;
   }
-  int64_t timestampVal = _syntheticTimestamp++;
-  mediapipe::Timestamp timestamp(timestampVal);
-  _statsLogger->RecordCpuInputArrival(timestamp);
 
-  std::vector<float> cppAudio(audioData.data, audioData.data + audioData.length);
-  auto cppResultStatus = _universalEmbedder->EmbedAudio(cppAudio);
-  if (![MPPCommonUtils checkCppError:cppResultStatus.status() toError:error]) {
-    _statsLogger->RecordInvocationEnd(timestamp);
+  MpUniversalEmbedderResult cResult = {};
+  char *cError = nullptr;
+  MpStatus status = MpUniversalEmbedderEmbedAudio(
+      _universalEmbedder, audioData.data, static_cast<int>(audioData.length), &cResult, &cError);
+  if (![MPPCommonUtils checkCError:status errorMessage:cError toError:error]) {
     return nil;
   }
 
-  _statsLogger->RecordInvocationEnd(timestamp);
-  return [MPPUniversalEmbedder embeddingResultWithCppEmbeddingResult:*cppResultStatus];
+  MPPEmbeddingResult *result = [MPPEmbeddingResult embeddingResultWithCResult:cResult];
+  MpUniversalEmbedderCloseResult(&cResult);
+  return result;
 }
 
 - (nullable MPPEmbeddingResult *)embedAudio:(MPPAudioData *)audioData error:(NSError **)error {
@@ -325,32 +286,39 @@ mediapipe::tasks::core::BaseOptions::Delegate CppDelegateFromMPPDelegate(MPPDele
                           description:@"Content cannot be nil."];
     return nil;
   }
-  int64_t timestampVal = _syntheticTimestamp++;
-  mediapipe::Timestamp timestamp(timestampVal);
-  _statsLogger->RecordCpuInputArrival(timestamp);
 
-  std::vector<mediapipe::tasks::retrieval::universal_embedder::UniversalEmbedder::Part> cppParts;
+  std::vector<MpUniversalEmbedderPart> cParts;
+  cParts.reserve(content.count);
+  NS_VALID_UNTIL_END_OF_SCOPE NSMutableArray<id> *retainedData = [NSMutableArray array];
+
   for (id part in content) {
+    MpUniversalEmbedderPart cPart = {};
     if ([part isKindOfClass:[NSString class]]) {
       NSString *text = (NSString *)part;
-      cppParts.push_back(
-          mediapipe::tasks::retrieval::universal_embedder::UniversalEmbedder::TextPart{
-              .text = text.UTF8String});
+      [retainedData addObject:text];
+      cPart.type = kMpUniversalEmbedderPartTypeText;
+      cPart.value.text = text.UTF8String;
     } else if ([part isKindOfClass:[MPPTextPart class]]) {
       NSString *text = ((MPPTextPart *)part).text;
-      cppParts.push_back(
-          mediapipe::tasks::retrieval::universal_embedder::UniversalEmbedder::TextPart{
-              .text = text.UTF8String});
+      if (text == nil) {
+        [MPPCommonUtils createCustomError:error
+                                 withCode:MPPTasksErrorCodeInvalidArgumentError
+                              description:@"Text part cannot be nil."];
+        return nil;
+      }
+      [retainedData addObject:text];
+      cPart.type = kMpUniversalEmbedderPartTypeText;
+      cPart.value.text = text.UTF8String;
     } else if ([part isKindOfClass:[MPPImage class]]) {
       MPPImage *image = (MPPImage *)part;
       NSData *imageData = [self imageDataFromMPPImage:image error:error];
       if (imageData == nil) {
-        _statsLogger->RecordInvocationEnd(timestamp);
         return nil;
       }
-      cppParts.push_back(
-          mediapipe::tasks::retrieval::universal_embedder::UniversalEmbedder::ImagePart{
-              .image_bytes = std::string((const char *)imageData.bytes, imageData.length)});
+      [retainedData addObject:imageData];
+      cPart.type = kMpUniversalEmbedderPartTypeImage;
+      cPart.value.image.bytes = (const char *)imageData.bytes;
+      cPart.value.image.size = (int)imageData.length;
     } else if ([part isKindOfClass:[MPPImagePart class]]) {
       MPPImagePart *imagePart = (MPPImagePart *)part;
       NSData *imageData = imagePart.data;
@@ -362,20 +330,26 @@ mediapipe::tasks::core::BaseOptions::Delegate CppDelegateFromMPPDelegate(MPPDele
           if (error) {
             *error = loadError;
           }
-          _statsLogger->RecordInvocationEnd(timestamp);
           return nil;
         }
       }
-      cppParts.push_back(
-          mediapipe::tasks::retrieval::universal_embedder::UniversalEmbedder::ImagePart{
-              .image_bytes = std::string((const char *)imageData.bytes, imageData.length)});
+      [retainedData addObject:imageData];
+      cPart.type = kMpUniversalEmbedderPartTypeImage;
+      cPart.value.image.bytes = (const char *)imageData.bytes;
+      cPart.value.image.size = (int)imageData.length;
     } else if ([part isKindOfClass:[MPPAudioData class]]) {
       MPPAudioData *audioData = (MPPAudioData *)part;
       MPPFloatBuffer *floatBuffer = audioData.buffer;
-      std::vector<float> audioSamples(floatBuffer.data, floatBuffer.data + floatBuffer.length);
-      cppParts.push_back(
-          mediapipe::tasks::retrieval::universal_embedder::UniversalEmbedder::AudioPart{
-              .audio_data = std::move(audioSamples)});
+      if (floatBuffer == nil) {
+        [MPPCommonUtils createCustomError:error
+                                 withCode:MPPTasksErrorCodeInvalidArgumentError
+                              description:@"Audio data buffer cannot be nil."];
+        return nil;
+      }
+      [retainedData addObject:floatBuffer];
+      cPart.type = kMpUniversalEmbedderPartTypeAudio;
+      cPart.value.audio.samples = floatBuffer.data;
+      cPart.value.audio.size = (int)floatBuffer.length;
     } else if ([part isKindOfClass:[MPPAudioPart class]]) {
       MPPAudioPart *audioPart = (MPPAudioPart *)part;
       MPPAudioData *audioData = nil;
@@ -385,31 +359,39 @@ mediapipe::tasks::core::BaseOptions::Delegate CppDelegateFromMPPDelegate(MPPDele
         audioData = [MPPAudioLoader loadAudioFromFilePath:audioPart.filePath error:error];
       }
       if (audioData == nil) {
-        _statsLogger->RecordInvocationEnd(timestamp);
         return nil;
       }
       MPPFloatBuffer *floatBuffer = audioData.buffer;
-      std::vector<float> audioSamples(floatBuffer.data, floatBuffer.data + floatBuffer.length);
-      cppParts.push_back(
-          mediapipe::tasks::retrieval::universal_embedder::UniversalEmbedder::AudioPart{
-              .audio_data = std::move(audioSamples)});
+      if (floatBuffer == nil) {
+        [MPPCommonUtils createCustomError:error
+                                 withCode:MPPTasksErrorCodeInvalidArgumentError
+                              description:@"Audio data buffer cannot be nil."];
+        return nil;
+      }
+      [retainedData addObject:floatBuffer];
+      cPart.type = kMpUniversalEmbedderPartTypeAudio;
+      cPart.value.audio.samples = floatBuffer.data;
+      cPart.value.audio.size = (int)floatBuffer.length;
     } else {
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInvalidArgumentError
                             description:@"Unsupported part type in content list."];
-      _statsLogger->RecordInvocationEnd(timestamp);
       return nil;
     }
+    cParts.push_back(cPart);
   }
 
-  auto cppResultStatus = _universalEmbedder->EmbedContent(cppParts);
-  if (![MPPCommonUtils checkCppError:cppResultStatus.status() toError:error]) {
-    _statsLogger->RecordInvocationEnd(timestamp);
+  MpUniversalEmbedderResult cResult = {};
+  char *cError = nullptr;
+  MpStatus status = MpUniversalEmbedderEmbedContent(_universalEmbedder, cParts.data(),
+                                                    (int)cParts.size(), &cResult, &cError);
+  if (![MPPCommonUtils checkCError:status errorMessage:cError toError:error]) {
     return nil;
   }
 
-  _statsLogger->RecordInvocationEnd(timestamp);
-  return [MPPUniversalEmbedder embeddingResultWithCppEmbeddingResult:*cppResultStatus];
+  MPPEmbeddingResult *result = [MPPEmbeddingResult embeddingResultWithCResult:cResult];
+  MpUniversalEmbedderCloseResult(&cResult);
+  return result;
 }
 
 + (nullable NSNumber *)cosineSimilarityBetweenEmbedding1:(MPPEmbedding *)embedding1
@@ -418,41 +400,6 @@ mediapipe::tasks::core::BaseOptions::Delegate CppDelegateFromMPPDelegate(MPPDele
   return [MPPCosineSimilarity computeBetweenEmbedding1:embedding1
                                          andEmbedding2:embedding2
                                                  error:error];
-}
-
-+ (MPPEmbeddingResult *)embeddingResultWithCppEmbeddingResult:
-    (const mediapipe::tasks::components::containers::EmbeddingResult &)cppResult {
-  NSMutableArray<MPPEmbedding *> *embeddings =
-      [NSMutableArray arrayWithCapacity:cppResult.embeddings.size()];
-  for (const auto &cppEmbedding : cppResult.embeddings) {
-    NSMutableArray<NSNumber *> *floatEmbedding = nil;
-    if (!cppEmbedding.float_embedding.empty()) {
-      floatEmbedding = [NSMutableArray arrayWithCapacity:cppEmbedding.float_embedding.size()];
-      for (float val : cppEmbedding.float_embedding) {
-        [floatEmbedding addObject:@(val)];
-      }
-    }
-    NSMutableArray<NSNumber *> *quantizedEmbedding = nil;
-    if (!cppEmbedding.quantized_embedding.empty()) {
-      quantizedEmbedding =
-          [NSMutableArray arrayWithCapacity:cppEmbedding.quantized_embedding.size()];
-      for (size_t i = 0; i < cppEmbedding.quantized_embedding.size(); ++i) {
-        [quantizedEmbedding addObject:@((uint8_t)cppEmbedding.quantized_embedding[i])];
-      }
-    }
-    NSString *headName = cppEmbedding.head_name.has_value()
-                             ? [NSString stringWithUTF8String:cppEmbedding.head_name->c_str()]
-                             : nil;
-    MPPEmbedding *embedding = [[MPPEmbedding alloc] initWithFloatEmbedding:floatEmbedding
-                                                        quantizedEmbedding:quantizedEmbedding
-                                                                 headIndex:cppEmbedding.head_index
-                                                                  headName:headName];
-    [embeddings addObject:embedding];
-  }
-  NSInteger timestampMs =
-      cppResult.timestamp_ms.has_value() ? (NSInteger)*cppResult.timestamp_ms : 0;
-  return [[MPPEmbeddingResult alloc] initWithEmbeddings:embeddings
-                                timestampInMilliseconds:timestampMs];
 }
 
 @end
