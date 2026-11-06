@@ -12,7 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import gc
 import os
+import sys
+import threading
+from unittest import mock
+import weakref
 
 from absl.testing import absltest
 from absl.testing import parameterized
@@ -119,6 +124,143 @@ class ImageTest(parameterized.TestCase):
     img = image.Image(image.ImageFormat.SRGB48, pixel_data)
     self.assertFalse(img.is_contiguous())
     np.testing.assert_array_equal(img.numpy_view(), pixel_data)
+
+  def test_numpy_view_is_unwritable(self):
+    img = image.Image(image.ImageFormat.SRGB, np.zeros((3, 4, 3), np.uint8))
+    self.assertFalse(img.numpy_view().flags.writeable)
+
+  @parameterized.named_parameters(
+      ('contiguous', (4, 16, 3), True),
+      ('non_contiguous', (3, 5, 3), False),
+  )
+  def test_numpy_view_keeps_image_alive(self, shape, is_contiguous):
+    pixel_data = np.arange(np.prod(shape), dtype=np.uint8).reshape(shape)
+    img = image.Image(image.ImageFormat.SRGB, pixel_data)
+    self.assertEqual(img.is_contiguous(), is_contiguous)
+    img_ref = weakref.ref(img)
+    sub_view = img.numpy_view()[1:, ::2]
+    del img
+    gc.collect()
+
+    # The array points into the pixel data owned by the Image, so the Image
+    # must not be freed while the array (or a view of it) is in use.
+    self.assertIsNotNone(img_ref())
+    # Allocate more images to overwrite the memory of a freed Image.
+    unused_images = [
+        image.Image(
+            image.ImageFormat.SRGB, np.full(shape, 255, dtype=np.uint8)
+        )
+        for _ in range(50)
+    ]
+    np.testing.assert_array_equal(sub_view, pixel_data[1:, ::2])
+
+    # The Image is released together with the last array that uses its data.
+    del sub_view, unused_images
+    gc.collect()
+    self.assertIsNone(img_ref())
+
+  @parameterized.named_parameters(
+      (
+          'uint8_flipped_columns',
+          image.ImageFormat.SRGB,
+          np.uint8,
+          3,
+          lambda a: a[:, ::-1],
+      ),
+      (
+          'uint8_reversed_channels',
+          image.ImageFormat.SRGB,
+          np.uint8,
+          3,
+          lambda a: a[..., ::-1],
+      ),
+      (
+          'uint8_strided_slice',
+          image.ImageFormat.SRGB,
+          np.uint8,
+          3,
+          lambda a: a[::2, 1::2],
+      ),
+      (
+          'uint8_transposed',
+          image.ImageFormat.SRGB,
+          np.uint8,
+          3,
+          lambda a: a.transpose(1, 0, 2),
+      ),
+      (
+          'uint16_flipped_rows',
+          image.ImageFormat.SRGB48,
+          np.uint16,
+          3,
+          lambda a: a[::-1],
+      ),
+      (
+          'float32_flipped_columns',
+          image.ImageFormat.VEC32F2,
+          np.float32,
+          2,
+          lambda a: a[:, ::-1],
+      ),
+  )
+  def test_create_from_non_contiguous_numpy(
+      self, image_format, dtype, channels, make_view
+  ):
+    base = np.arange(4 * 8 * channels, dtype=dtype).reshape(4, 8, channels)
+    pixel_data = make_view(base)
+    self.assertFalse(pixel_data.flags.c_contiguous)
+    expected = np.array(pixel_data)  # A C-contiguous copy.
+
+    img = image.Image(image_format, pixel_data)
+
+    self.assertEqual((img.height, img.width), expected.shape[:2])
+    np.testing.assert_array_equal(img.numpy_view(), expected)
+    self.assertEqual(img[1, 2, 0], expected[1, 2, 0])
+    # The Image holds a copy, so it doesn't depend on the input afterwards.
+    base[...] = 0
+    np.testing.assert_array_equal(img.numpy_view(), expected)
+
+  def test_create_from_non_contiguous_two_dimensional_numpy(self):
+    pixel_data = np.arange(3 * 5, dtype=np.uint8).reshape(3, 5).T
+    self.assertFalse(pixel_data.flags.c_contiguous)
+
+    img = image.Image(image.ImageFormat.GRAY8, pixel_data)
+
+    self.assertEqual((img.height, img.width), (5, 3))
+    np.testing.assert_array_equal(img.numpy_view()[..., 0], pixel_data)
+
+  def test_numpy_view_is_thread_safe(self):
+    pixel_data = np.arange(5 * 7 * 3, dtype=np.uint8).reshape(5, 7, 3)
+    num_threads = 4
+    for _ in range(300):
+      # The pixel data of a new non-contiguous Image is copied into a cache by
+      # the first numpy_view() call.
+      img = image.Image(image.ImageFormat.SRGB, pixel_data)
+      self.assertFalse(img.is_contiguous())
+      start = threading.Barrier(num_threads)
+      views = []
+
+      def get_view():
+        start.wait()
+        views.append(img.numpy_view())  # pylint: disable=cell-var-from-loop
+
+      threads = [threading.Thread(target=get_view) for _ in range(num_threads)]
+      for thread in threads:
+        thread.start()
+      for thread in threads:
+        thread.join()
+
+      self.assertLen(views, num_threads)
+      for view in views:
+        np.testing.assert_array_equal(view, pixel_data)
+
+  def test_failed_creation_does_not_raise_when_garbage_collected(self):
+    unraisable = []
+    with mock.patch.object(sys, 'unraisablehook', unraisable.append):
+      with self.assertRaisesRegex(ValueError, 'Unsupported number of dim'):
+        image.Image(image.ImageFormat.SRGB, np.zeros(5, dtype=np.uint8))
+      gc.collect()
+    self.assertEmpty(unraisable)
 
 
 if __name__ == '__main__':
