@@ -267,7 +267,7 @@ describe('TextToSpeech', () => {
       modelBytes,
       true,
       false,
-      false,
+      true,
     );
     expect(module['createTextToSpeech']).toHaveBeenCalledWith(
       '/model.litertlm',
@@ -299,7 +299,7 @@ describe('TextToSpeech', () => {
       modelBytes,
       true,
       false,
-      false,
+      true,
     );
     expect(module['FS_createDataFile']).toHaveBeenCalledBefore(
       module['createTextToSpeech'],

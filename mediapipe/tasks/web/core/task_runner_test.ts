@@ -336,7 +336,14 @@ describe('TaskRunner', () => {
     });
 
     expect(fetchSpy).toHaveBeenCalled();
-    expect(taskRunner.wasmModule.FS_createDataFile).toHaveBeenCalled();
+    expect(taskRunner.wasmModule.FS_createDataFile).toHaveBeenCalledOnceWith(
+      '/',
+      'model.dat',
+      mockBytes,
+      /* canRead= */ true,
+      /* canWrite= */ false,
+      /* canOwn= */ true,
+    );
     expect(taskRunner.baseOptions.toObject()).toEqual(mockFileResult);
   });
 

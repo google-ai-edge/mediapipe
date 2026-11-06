@@ -197,7 +197,7 @@ describe('AudioTranscriber', () => {
       modelBytes,
       true,
       false,
-      false,
+      true,
     );
     expect(module['createAudioTranscriber']).toHaveBeenCalledWith(
       '/model.litertlm',
@@ -229,7 +229,7 @@ describe('AudioTranscriber', () => {
       modelBytes,
       true,
       false,
-      false,
+      true,
     );
     expect(module['FS_createDataFile']).toHaveBeenCalledBefore(
       module['createAudioTranscriber'],

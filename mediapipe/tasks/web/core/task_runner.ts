@@ -246,7 +246,7 @@ export abstract class TaskRunner {
       buffer,
       /* canRead= */ true,
       /* canWrite= */ false,
-      /* canOwn= */ false,
+      /* canOwn= */ true,
     );
     this.setExternalFile(`/${modelPath}`);
   }
