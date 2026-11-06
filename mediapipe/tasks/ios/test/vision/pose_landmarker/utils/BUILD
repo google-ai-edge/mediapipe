@@ -29,11 +29,12 @@ objc_library(
         "-x objective-c++",
     ],
     deps = [
+        "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_cc_proto",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/components/containers:MPPLandmark",
         "//mediapipe/tasks/ios/test/vision/utils:parse_proto_utils",
         "//mediapipe/tasks/ios/vision/pose_landmarker:MPPPoseLandmarkerResult",
-        "//mediapipe/tasks/ios/vision/pose_landmarker/utils:MPPPoseLandmarkerResultHelpers",
         "//third_party/apple_frameworks:Foundation",
     ],
 )

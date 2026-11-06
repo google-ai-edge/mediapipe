@@ -14,114 +14,56 @@
 
 #import "mediapipe/tasks/ios/vision/pose_landmarker/utils/sources/MPPPoseLandmarkerResult+Helpers.h"
 
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/pose_landmarker/pose_landmarker_result.h"
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPLandmark+Helpers.h"
-
-namespace {
-using LandmarkListProto = ::mediapipe::LandmarkList;
-using NormalizedLandmarkListProto = ::mediapipe::NormalizedLandmarkList;
-using ::mediapipe::Image;
-using ::mediapipe::Packet;
-}  // namespace
 
 @implementation MPPPoseLandmarkerResult (Helpers)
 
-+ (MPPPoseLandmarkerResult *)emptyPoseLandmarkerResultWithTimestampInMilliseconds:
-    (NSInteger)timestampInMilliseconds {
-  return [[MPPPoseLandmarkerResult alloc] initWithLandmarks:@[]
-                                             worldLandmarks:@[]
-                                          segmentationMasks:@[]
-                                    timestampInMilliseconds:timestampInMilliseconds];
-}
-
-+ (MPPPoseLandmarkerResult *)
-    poseLandmarkerResultWithLandmarksProto:
-        (const std::vector<NormalizedLandmarkListProto> &)landmarksProto
-                       worldLandmarksProto:
-                           (const std::vector<LandmarkListProto> &)worldLandmarksProto
-                         segmentationMasks:(nullable const std::vector<Image> *)segmentationMasks
-                   timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
-  NSMutableArray<NSMutableArray<MPPNormalizedLandmark *> *> *multiplePoseLandmarks =
-      [NSMutableArray arrayWithCapacity:(NSUInteger)landmarksProto.size()];
-
-  for (const auto &landmarkListProto : landmarksProto) {
-    NSMutableArray<MPPNormalizedLandmark *> *landmarks =
-        [NSMutableArray arrayWithCapacity:(NSUInteger)landmarkListProto.landmark().size()];
-    for (const auto &normalizedLandmarkProto : landmarkListProto.landmark()) {
-      MPPNormalizedLandmark *normalizedLandmark =
-          [MPPNormalizedLandmark normalizedLandmarkWithProto:normalizedLandmarkProto];
-      [landmarks addObject:normalizedLandmark];
-    }
-    [multiplePoseLandmarks addObject:landmarks];
++ (MPPPoseLandmarkerResult *)poseLandmarkerResultWithCResult:(const MpPoseLandmarkerResult &)cResult
+                                     timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
+  NSMutableArray<NSArray<MPPNormalizedLandmark *> *> *multiPoseLandmarks =
+      [NSMutableArray arrayWithCapacity:cResult.pose_landmarks_count];
+  for (uint32_t i = 0; i < cResult.pose_landmarks_count; ++i) {
+    NSArray<MPPNormalizedLandmark *> *landmarks = [MPPNormalizedLandmark
+        normalizedLandmarksWithCNormalizedLandmarks:cResult.pose_landmarks[i]];
+    [multiPoseLandmarks addObject:landmarks ?: @[]];
   }
 
-  NSMutableArray<NSMutableArray<MPPLandmark *> *> *multiplePoseWorldLandmarks =
-      [NSMutableArray arrayWithCapacity:(NSUInteger)worldLandmarksProto.size()];
-
-  for (const auto &worldLandmarkListProto : worldLandmarksProto) {
-    NSMutableArray<MPPLandmark *> *worldLandmarks =
-        [NSMutableArray arrayWithCapacity:(NSUInteger)worldLandmarkListProto.landmark().size()];
-    for (const auto &landmarkProto : worldLandmarkListProto.landmark()) {
-      MPPLandmark *landmark = [MPPLandmark landmarkWithProto:landmarkProto];
-      [worldLandmarks addObject:landmark];
-    }
-    [multiplePoseWorldLandmarks addObject:worldLandmarks];
+  NSMutableArray<NSArray<MPPLandmark *> *> *multiPoseWorldLandmarks =
+      [NSMutableArray arrayWithCapacity:cResult.pose_world_landmarks_count];
+  for (uint32_t i = 0; i < cResult.pose_world_landmarks_count; ++i) {
+    NSArray<MPPLandmark *> *worldLandmarks =
+        [MPPLandmark landmarksWithCLandmarks:cResult.pose_world_landmarks[i]];
+    [multiPoseWorldLandmarks addObject:worldLandmarks ?: @[]];
   }
 
-  if (!segmentationMasks) {
-    return [[MPPPoseLandmarkerResult alloc] initWithLandmarks:multiplePoseLandmarks
-                                               worldLandmarks:multiplePoseWorldLandmarks
-                                            segmentationMasks:nil
-                                      timestampInMilliseconds:timestampInMilliseconds];
-  }
   NSMutableArray<MPPMask *> *confidenceMasks =
-      [NSMutableArray arrayWithCapacity:(NSUInteger)segmentationMasks->size()];
-
-  for (const auto &segmentationMask : *segmentationMasks) {
-    [confidenceMasks addObject:[[MPPMask alloc] initWithFloat32Data:(float *)segmentationMask
-                                                                        .GetImageFrameSharedPtr()
-                                                                        .get()
-                                                                        ->PixelData()
-                                                              width:segmentationMask.width()
-                                                             height:segmentationMask.height()
-                                                         /** Always deep copy */
-                                                         shouldCopy:YES]];
+      [NSMutableArray arrayWithCapacity:cResult.segmentation_masks_count];
+  if (cResult.segmentation_masks) {
+    for (uint32_t i = 0; i < cResult.segmentation_masks_count; ++i) {
+      MpImagePtr maskImage = cResult.segmentation_masks[i];
+      if (maskImage) {
+        const float *pixelData = nullptr;
+        if (MpImageDataFloat32(maskImage, &pixelData, nullptr) == kMpOk && pixelData) {
+          int width = MpImageGetWidth(maskImage);
+          int height = MpImageGetHeight(maskImage);
+          MPPMask *mask = [[MPPMask alloc] initWithFloat32Data:pixelData
+                                                         width:width
+                                                        height:height
+                                                    shouldCopy:YES];
+          if (mask) {
+            [confidenceMasks addObject:mask];
+          }
+        }
+      }
+    }
   }
 
-  return [[MPPPoseLandmarkerResult alloc] initWithLandmarks:multiplePoseLandmarks
-                                             worldLandmarks:multiplePoseWorldLandmarks
+  return [[MPPPoseLandmarkerResult alloc] initWithLandmarks:multiPoseLandmarks
+                                             worldLandmarks:multiPoseWorldLandmarks
                                           segmentationMasks:confidenceMasks
                                     timestampInMilliseconds:timestampInMilliseconds];
-  ;
-}
-
-+ (MPPPoseLandmarkerResult *)
-    poseLandmarkerResultWithLandmarksPacket:(const Packet &)landmarksPacket
-                       worldLandmarksPacket:(const Packet &)worldLandmarksPacket
-                    segmentationMasksPacket:(const Packet *)segmentationMasksPacket {
-  NSInteger timestampInMilliseconds =
-      (NSInteger)(landmarksPacket.Timestamp().Value() / kMicrosecondsPerMillisecond);
-
-  if (landmarksPacket.IsEmpty()) {
-    return [MPPPoseLandmarkerResult
-        emptyPoseLandmarkerResultWithTimestampInMilliseconds:timestampInMilliseconds];
-  }
-
-  if (!landmarksPacket.ValidateAsType<std::vector<NormalizedLandmarkListProto>>().ok() ||
-      !worldLandmarksPacket.ValidateAsType<std::vector<LandmarkListProto>>().ok()) {
-    return [MPPPoseLandmarkerResult
-        emptyPoseLandmarkerResultWithTimestampInMilliseconds:timestampInMilliseconds];
-  }
-
-  const std::vector<Image> *segmentationMasks =
-      segmentationMasksPacket ? &(segmentationMasksPacket->Get<std::vector<Image>>()) : nullptr;
-
-  return [MPPPoseLandmarkerResult
-      poseLandmarkerResultWithLandmarksProto:landmarksPacket
-                                                 .Get<std::vector<NormalizedLandmarkListProto>>()
-                         worldLandmarksProto:worldLandmarksPacket
-                                                 .Get<std::vector<LandmarkListProto>>()
-                           segmentationMasks:segmentationMasks
-                     timestampInMilliseconds:timestampInMilliseconds];
 }
 
 @end

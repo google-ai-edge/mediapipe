@@ -14,41 +14,43 @@
 
 #import "mediapipe/tasks/ios/vision/pose_landmarker/utils/sources/MPPPoseLandmarkerOptions+Helpers.h"
 
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
-#include "mediapipe/tasks/cc/vision/pose_landmarker/proto/pose_landmarker_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/pose_landmarker/proto/pose_landmarks_detector_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/pose_detector/proto/pose_detector_graph_options.pb.h"
-
-using CalculatorOptionsProto = ::mediapipe::CalculatorOptions;
-using PoseDetectorGraphOptionsProto =
-    ::mediapipe::tasks::vision::pose_detector::proto::PoseDetectorGraphOptions;
-using PoseLandmarksDetectorGraphOptionsProto =
-    ::mediapipe::tasks::vision::pose_landmarker::proto::PoseLandmarksDetectorGraphOptions;
-using PoseLandmarkerGraphOptionsProto =
-    ::mediapipe::tasks::vision::pose_landmarker::proto::PoseLandmarkerGraphOptions;
+#include "mediapipe/tasks/c/vision/pose_landmarker/pose_landmarker.h"
 
 @implementation MPPPoseLandmarkerOptions (Helpers)
 
-- (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
-  PoseLandmarkerGraphOptionsProto *poseLandmarkerGraphOptions =
-      optionsProto->MutableExtension(PoseLandmarkerGraphOptionsProto::ext);
-  poseLandmarkerGraphOptions->Clear();
+- (void)copyToCOptions:(MpPoseLandmarkerOptions *)cOptions {
+  if (!cOptions) {
+    return;
+  }
+  [self.baseOptions copyToCOptions:&cOptions->base_options];
 
-  [self.baseOptions copyToProto:poseLandmarkerGraphOptions->mutable_base_options()
-              withUseStreamMode:self.runningMode != MPPRunningModeImage
-                  withUseLitert:YES];
-  poseLandmarkerGraphOptions->set_min_tracking_confidence(self.minTrackingConfidence);
+  switch (self.runningMode) {
+    case MPPRunningModeImage:
+      cOptions->running_mode = MP_RUNNING_MODE_IMAGE;
+      break;
+    case MPPRunningModeVideo:
+      cOptions->running_mode = MP_RUNNING_MODE_VIDEO;
+      break;
+    case MPPRunningModeLiveStream:
+      cOptions->running_mode = MP_RUNNING_MODE_LIVE_STREAM;
+      break;
+  }
 
-  PoseLandmarksDetectorGraphOptionsProto *poseLandmarksDetectorGraphOptions =
-      poseLandmarkerGraphOptions->mutable_pose_landmarks_detector_graph_options();
-  poseLandmarksDetectorGraphOptions->set_min_detection_confidence(self.minPosePresenceConfidence);
+  cOptions->num_poses = static_cast<int>(self.numPoses);
+  cOptions->min_pose_detection_confidence = self.minPoseDetectionConfidence;
+  cOptions->min_pose_presence_confidence = self.minPosePresenceConfidence;
+  cOptions->min_tracking_confidence = self.minTrackingConfidence;
+  cOptions->output_segmentation_masks = self.shouldOutputSegmentationMasks;
+  cOptions->result_callback = nullptr;
+}
 
-  PoseDetectorGraphOptionsProto *poseDetectorGraphOptions =
-      poseLandmarkerGraphOptions->mutable_pose_detector_graph_options();
-  poseDetectorGraphOptions->set_num_poses(self.numPoses);
-  poseDetectorGraphOptions->set_min_detection_confidence(self.minPoseDetectionConfidence);
++ (void)freeCOptions:(MpPoseLandmarkerOptions *)cOptions {
+  if (!cOptions) {
+    return;
+  }
+  [MPPBaseOptions freeCOptions:&cOptions->base_options];
 }
 
 @end

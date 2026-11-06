@@ -12,24 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef __cplusplus
-#error "This file requires Objective-C++."
-#endif  // __cplusplus
-
-#include "mediapipe/framework/calculator_options.pb.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
 #import "mediapipe/tasks/ios/vision/pose_landmarker/sources/MPPPoseLandmarkerOptions.h"
+
+struct MpPoseLandmarkerOptions;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MPPPoseLandmarkerOptions (Helpers) <MPPTaskOptionsProtocol>
+@interface MPPPoseLandmarkerOptions (Helpers)
 
-/**
- * Populates the provided `CalculatorOptions` proto container with the current settings.
- *
- * @param optionsProto The `CalculatorOptions` proto object to copy the settings to.
- */
-- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
+/** Copies the options to a MediaPipe C API `MpPoseLandmarkerOptions` struct. */
+- (void)copyToCOptions:(struct MpPoseLandmarkerOptions *)cOptions;
+
+/** Frees any memory allocated inside a MediaPipe C API `MpPoseLandmarkerOptions` struct. */
++ (void)freeCOptions:(struct MpPoseLandmarkerOptions *)cOptions;
 
 @end
 

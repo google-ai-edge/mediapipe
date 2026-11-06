@@ -14,52 +14,23 @@
 
 #import "mediapipe/tasks/ios/vision/pose_landmarker/sources/MPPPoseLandmarkerResult.h"
 
-#include "mediapipe/framework/formats/image.h"
-#include "mediapipe/framework/formats/landmark.pb.h"
-#include "mediapipe/framework/packet.h"
+struct MpPoseLandmarkerResult;
 
 NS_ASSUME_NONNULL_BEGIN
-
-static const int kMicrosecondsPerMillisecond = 1000;
 
 @interface MPPPoseLandmarkerResult (Helpers)
 
 /**
- * Creates an `MPPPoseLandmarkerResult` from landmarks, world landmarks and segmentation mask
- * packets.
+ * Creates an `MPPPoseLandmarkerResult` from a MediaPipe C API `MpPoseLandmarkerResult` struct.
  *
- * @param landmarksPacket A MediaPipe packet wrapping a `std::vector<NormalizedlandmarkListProto>`.
- * @param worldLandmarksPacket A MediaPipe packet wrapping a `std::vector<LandmarkListProto>`.
- * @param segmentationMasksPacket a MediaPipe packet wrapping a `std::vector<Image>`.
+ * @param cResult The C API pose landmarker result struct.
+ * @param timestampInMilliseconds The timestamp in milliseconds.
  *
- * @return  An `MPPPoseLandmarkerResult` object that contains the hand landmark detection
- * results.
+ * @return An `MPPPoseLandmarkerResult` object.
  */
-+ (MPPPoseLandmarkerResult *)
-    poseLandmarkerResultWithLandmarksPacket:(const mediapipe::Packet &)landmarksPacket
-                       worldLandmarksPacket:(const mediapipe::Packet &)worldLandmarksPacket
-                    segmentationMasksPacket:(const mediapipe::Packet *)segmentationMasksPacket;
-
-/**
- * Creates an `MPPPoseLandmarkerResult` from landmarks, world landmarks and segmentation mask
- * images.
- *
- * @param landmarksProto A vector of protos of type `std::vector<NormalizedlandmarkListProto>`.
- * @param worldLandmarksProto A vector of protos of type `std::vector<LandmarkListProto>`.
- * @param segmentationMasks A vector of type `std::vector<Image>`.
- * @param timestampInMilliSeconds The timestamp of the Packet that contained the result.
- *
- * @return  An `MPPPoseLandmarkerResult` object that contains the pose landmark detection
- * results.
- */
-+ (MPPPoseLandmarkerResult *)
-    poseLandmarkerResultWithLandmarksProto:
-        (const std::vector<::mediapipe::NormalizedLandmarkList> &)landmarksProto
-                       worldLandmarksProto:
-                           (const std::vector<::mediapipe::LandmarkList> &)worldLandmarksProto
-                         segmentationMasks:
-                             (nullable const std::vector<mediapipe::Image> *)segmentationMasks
-                   timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
++ (MPPPoseLandmarkerResult *)poseLandmarkerResultWithCResult:
+                                 (const struct MpPoseLandmarkerResult &)cResult
+                                     timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 
 @end
 

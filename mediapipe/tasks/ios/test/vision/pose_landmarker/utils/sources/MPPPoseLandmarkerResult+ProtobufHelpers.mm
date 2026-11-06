@@ -15,8 +15,9 @@
 #import "mediapipe/tasks/ios/test/vision/pose_landmarker/utils/sources/MPPPoseLandmarkerResult+ProtobufHelpers.h"
 
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
-#import "mediapipe/tasks/ios/vision/pose_landmarker/utils/sources/MPPPoseLandmarkerResult+Helpers.h"
+#import "mediapipe/tasks/ios/components/containers/sources/MPPLandmark.h"
 
+#include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/tasks/cc/components/containers/proto/landmarks_detection_result.pb.h"
 #include "mediapipe/tasks/ios/test/vision/utils/sources/parse_proto_utils.h"
 
@@ -45,11 +46,32 @@ using ::mediapipe::tasks::ios::test::vision::utils::get_proto_from_pbtxt;
     }
   }
 
-  return [MPPPoseLandmarkerResult
-      poseLandmarkerResultWithLandmarksProto:{landmarkDetectionResultProto.landmarks()}
-                         worldLandmarksProto:{landmarkDetectionResultProto.world_landmarks()}
-                           segmentationMasks:nullptr
-                     timestampInMilliseconds:0];
+  NSMutableArray<MPPNormalizedLandmark *> *landmarks = [NSMutableArray array];
+  for (const auto &landmark : landmarkDetectionResultProto.landmarks().landmark()) {
+    NSNumber *visibility = landmark.has_visibility() ? @(landmark.visibility()) : nil;
+    NSNumber *presence = landmark.has_presence() ? @(landmark.presence()) : nil;
+    [landmarks addObject:[[MPPNormalizedLandmark alloc] initWithX:landmark.x()
+                                                                y:landmark.y()
+                                                                z:landmark.z()
+                                                       visibility:visibility
+                                                         presence:presence]];
+  }
+
+  NSMutableArray<MPPLandmark *> *worldLandmarks = [NSMutableArray array];
+  for (const auto &landmark : landmarkDetectionResultProto.world_landmarks().landmark()) {
+    NSNumber *visibility = landmark.has_visibility() ? @(landmark.visibility()) : nil;
+    NSNumber *presence = landmark.has_presence() ? @(landmark.presence()) : nil;
+    [worldLandmarks addObject:[[MPPLandmark alloc] initWithX:landmark.x()
+                                                           y:landmark.y()
+                                                           z:landmark.z()
+                                                  visibility:visibility
+                                                    presence:presence]];
+  }
+
+  return [[MPPPoseLandmarkerResult alloc] initWithLandmarks:@[ landmarks ]
+                                             worldLandmarks:@[ worldLandmarks ]
+                                          segmentationMasks:nil
+                                    timestampInMilliseconds:0];
 }
 
 @end
