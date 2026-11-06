@@ -20,6 +20,7 @@ import 'jasmine';
 import {
   BooleanResult,
   ChoiceResult,
+  ClassifierQuestion,
   DecisionMaker,
   ScoreResult,
 } from './decision_maker';
@@ -319,6 +320,398 @@ describe('DecisionMaker', () => {
     );
     expect(batchResults.length).toBe(2);
     expect(batchResults[0].selectedKey).toBe('device');
+  });
+
+  describe('with normalizePrior', () => {
+    const booleanDecision = {
+      label: 'false',
+      probability: 0.19,
+      probabilities: [
+        {label: 'true', probability: 0.19},
+        {label: 'false', probability: 0.81},
+      ],
+      confidence: 0.61,
+    };
+    const choiceDecision = {
+      label: 'search',
+      probabilities: [
+        {label: 'cloud', probability: 0.2},
+        {label: 'search', probability: 0.8},
+      ],
+      confidence: 0.6,
+      predictionSet: ['search', 'cloud'],
+    };
+
+    // Answers a schema call with `decision`, under the id of its only question.
+    function answerWith(spy: jasmine.Spy, decision: object) {
+      spy.and.callFake(
+        (
+          _ptr: number,
+          _text: string,
+          _context: string,
+          questions: ClassifierQuestion[],
+        ) =>
+          Promise.resolve({
+            [questions[0].id]: {id: questions[0].id, ...decision},
+          }),
+      );
+    }
+
+    it('sends a boolean question through the schema entry point', async () => {
+      answerWith(mockModule['evaluateSchema'], booleanDecision);
+
+      const result = await decisionMaker.evaluateBoolean('Play jazz music', {
+        condition: 'The user wants to play media',
+        context: 'Smart speaker',
+        threshold: 0.6,
+        temperature: 0.8,
+        normalizePrior: true,
+      });
+
+      expect(mockModule['evaluateBoolean']).not.toHaveBeenCalled();
+      expect(mockModule['evaluateSchema']).toHaveBeenCalledWith(
+        54321,
+        'Play jazz music',
+        '',
+        [
+          {
+            id: 'q',
+            type: 'binary',
+            prompt: 'Smart speaker\nThe user wants to play media',
+            threshold: 0.6,
+            temperature: 0.8,
+            normalizePrior: true,
+          },
+        ],
+      );
+      expect(result).toEqual({
+        value: false,
+        probabilityTrue: 0.19,
+        confidence: 0.61,
+      });
+    });
+
+    it('returns true when the schema decision is true', async () => {
+      answerWith(mockModule['evaluateSchema'], {
+        ...booleanDecision,
+        label: 'true',
+      });
+
+      const result = await decisionMaker.evaluateBoolean('Play jazz music', {
+        condition: 'The user wants to play media',
+        threshold: 0.1,
+        normalizePrior: true,
+      });
+
+      expect(result).toEqual({
+        value: true,
+        probabilityTrue: 0.19,
+        confidence: 0.61,
+      });
+    });
+
+    it('sends the default threshold and temperature', async () => {
+      answerWith(mockModule['evaluateSchema'], booleanDecision);
+
+      await decisionMaker.evaluateBoolean('Play jazz music', {
+        condition: 'The user wants to play media',
+        normalizePrior: true,
+      });
+
+      expect(mockModule['evaluateSchema']).toHaveBeenCalledWith(
+        54321,
+        'Play jazz music',
+        '',
+        [jasmine.objectContaining({threshold: 0.5, temperature: 0})],
+      );
+    });
+
+    it('ignores a threshold that is not positive', async () => {
+      answerWith(mockModule['evaluateSchema'], booleanDecision);
+
+      for (const threshold of [0, -1, NaN, 0.001, 1, 2]) {
+        await decisionMaker.evaluateBoolean('Play jazz music', {
+          condition: 'The user wants to play media',
+          threshold,
+          normalizePrior: true,
+        });
+      }
+
+      expect(
+        mockModule['evaluateSchema'].calls
+          .allArgs()
+          .map((args) => args[3][0].threshold),
+      ).toEqual([0.5, 0.5, 0.5, 0.001, 1, 2]);
+    });
+
+    it('sends a choice question through the schema entry point', async () => {
+      answerWith(mockModule['evaluateSchema'], choiceDecision);
+
+      const result = await decisionMaker.evaluateChoice('Turn off the lights', {
+        criteria: {'cloud': 'Complex cloud query'},
+        options: [{label: 'search', description: 'Live web search'}],
+        context: 'Smart speaker',
+        instructions: 'Route query',
+        temperature: 0.7,
+        normalizePrior: true,
+      });
+
+      expect(mockModule['evaluateChoice']).not.toHaveBeenCalled();
+      expect(mockModule['evaluateSchema']).toHaveBeenCalledWith(
+        54321,
+        'Turn off the lights',
+        '',
+        [
+          {
+            id: 'q',
+            type: 'categorical',
+            prompt: 'Smart speaker\nRoute query',
+            options: [
+              {label: 'cloud', description: 'Complex cloud query'},
+              {label: 'search', description: 'Live web search'},
+            ],
+            temperature: 0.7,
+            normalizePrior: true,
+          },
+        ],
+      );
+      expect(result).toEqual({
+        selectedKey: 'search',
+        probabilities: {'cloud': 0.2, 'search': 0.8},
+        confidence: 0.6,
+        predictionSet: ['search', 'cloud'],
+      });
+    });
+
+    it('sends the default temperature of a choice question', async () => {
+      answerWith(mockModule['evaluateSchema'], choiceDecision);
+
+      await decisionMaker.evaluateChoice('Turn off the lights', {
+        criteria: {'cloud': 'Complex cloud query'},
+        normalizePrior: true,
+      });
+
+      expect(mockModule['evaluateSchema']).toHaveBeenCalledWith(
+        54321,
+        'Turn off the lights',
+        '',
+        [jasmine.objectContaining({temperature: 0})],
+      );
+    });
+
+    it('keeps the media of the input and of a boolean question', async () => {
+      answerWith(mockModule['evaluateContextSchema'], booleanDecision);
+      const imageBytes = new Uint8Array([1, 2, 3]);
+      const audioSamples = new Float32Array([0.1, 0.2]);
+
+      await decisionMaker.evaluateBoolean(
+        {text: 'Is this a cat?', audioSamples},
+        {condition: 'This is a cat', imageBytes, normalizePrior: true},
+      );
+
+      expect(mockModule['evaluateContextBoolean']).not.toHaveBeenCalled();
+      expect(mockModule['evaluateContextSchema']).toHaveBeenCalledWith(
+        54321,
+        'Is this a cat?',
+        '',
+        [jasmine.objectContaining({normalizePrior: true})],
+        {imageBytes, audioSamples},
+      );
+    });
+
+    it('keeps the media of a choice input, question and options', async () => {
+      answerWith(mockModule['evaluateContextSchema'], choiceDecision);
+      const imageBytes = new Uint8Array([1, 2, 3]);
+      const audioSamples = new Float32Array([0.1, 0.2]);
+      const cloud = {
+        label: 'cloud',
+        description: 'Complex cloud query',
+        imageBytes: new Uint8Array([4, 5]),
+        audioSamples: new Float32Array([0.3]),
+      };
+
+      await decisionMaker.evaluateChoice(
+        {text: 'Which one is it?', audioSamples},
+        {options: [cloud, {label: 'search'}], imageBytes, normalizePrior: true},
+      );
+
+      expect(mockModule['evaluateContextChoice']).not.toHaveBeenCalled();
+      expect(mockModule['evaluateContextSchema']).toHaveBeenCalledWith(
+        54321,
+        'Which one is it?',
+        '',
+        [
+          jasmine.objectContaining({
+            options: [cloud, {label: 'search', description: ''}],
+          }),
+        ],
+        {imageBytes, audioSamples},
+      );
+    });
+
+    it('sends the same choices as the direct entry point', async () => {
+      answerWith(mockModule['evaluateSchema'], choiceDecision);
+
+      await decisionMaker.evaluateChoice('Turn off the lights', {
+        criteria: {
+          'search': 'Replaced',
+          'device': 'On-device task',
+          'timer': 'Replaced too',
+        },
+        options: [
+          {label: 'search', description: 'First'},
+          {label: 'search', description: 'Live web search'},
+          {label: 'cloud', description: 'Cloud query'},
+          {label: 'timer'},
+        ],
+        normalizePrior: true,
+      });
+
+      expect(mockModule['evaluateSchema']).toHaveBeenCalledWith(
+        54321,
+        'Turn off the lights',
+        '',
+        [
+          jasmine.objectContaining({
+            options: [
+              {label: 'search', description: 'Live web search'},
+              {label: 'device', description: 'On-device task'},
+              {label: 'timer', description: ''},
+              {label: 'cloud', description: 'Cloud query'},
+            ],
+          }),
+        ],
+      );
+    });
+
+    it('keeps the order of options with numeric labels', async () => {
+      answerWith(mockModule['evaluateSchema'], choiceDecision);
+
+      await decisionMaker.evaluateChoice('Rate this', {
+        options: [{label: '3'}, {label: '1'}, {label: '2'}],
+        normalizePrior: true,
+      });
+
+      expect(mockModule['evaluateSchema']).toHaveBeenCalledWith(
+        54321,
+        'Rate this',
+        '',
+        [
+          jasmine.objectContaining({
+            options: [
+              {label: '3', description: ''},
+              {label: '1', description: ''},
+              {label: '2', description: ''},
+            ],
+          }),
+        ],
+      );
+    });
+
+    it('evaluates a boolean batch one input at a time', async () => {
+      mockModule['evaluateSchema'].and.returnValues(
+        Promise.resolve({'q': {...booleanDecision, confidence: 0.9}}),
+        Promise.resolve({'q': {...booleanDecision, confidence: 0.1}}),
+      );
+
+      const results = await decisionMaker.evaluateBooleanBatch(
+        ['Play jazz', 'Stop the music'],
+        {condition: 'The user wants to play media', normalizePrior: true},
+        'Smart speaker',
+      );
+
+      expect(mockModule['evaluateBooleanBatch']).not.toHaveBeenCalled();
+      expect(
+        mockModule['evaluateSchema'].calls.allArgs().map((args) => args[1]),
+      ).toEqual(['Smart speaker\nPlay jazz', 'Smart speaker\nStop the music']);
+      expect(results.map((result) => result.confidence)).toEqual([0.9, 0.1]);
+    });
+
+    it('evaluates a choice batch one input at a time', async () => {
+      mockModule['evaluateSchema'].and.returnValues(
+        Promise.resolve({'q': {...choiceDecision, confidence: 0.9}}),
+        Promise.resolve({
+          'q': {...choiceDecision, confidence: 0.1, predictionSet: undefined},
+        }),
+      );
+
+      const results = await decisionMaker.evaluateChoiceBatch(
+        ['Set a timer', 'Explain quantum mechanics'],
+        {criteria: {'cloud': 'Complex cloud query'}, normalizePrior: true},
+        'Smart speaker',
+      );
+
+      expect(mockModule['evaluateChoiceBatch']).not.toHaveBeenCalled();
+      expect(
+        mockModule['evaluateSchema'].calls.allArgs().map((args) => args[1]),
+      ).toEqual([
+        'Smart speaker\nSet a timer',
+        'Smart speaker\nExplain quantum mechanics',
+      ]);
+      expect(results.map((result) => result.confidence)).toEqual([0.9, 0.1]);
+      expect(results[1].predictionSet).toBeUndefined();
+    });
+
+    it('leaves a batch input alone without a shared prefix', async () => {
+      answerWith(mockModule['evaluateSchema'], booleanDecision);
+      await decisionMaker.evaluateBooleanBatch([' Play jazz ', '  '], {
+        condition: 'The user wants to play media',
+        normalizePrior: true,
+      });
+      answerWith(mockModule['evaluateSchema'], choiceDecision);
+      await decisionMaker.evaluateChoiceBatch([' Set a timer ', '  '], {
+        criteria: {'cloud': 'Complex cloud query'},
+        normalizePrior: true,
+      });
+
+      expect(
+        mockModule['evaluateSchema'].calls.allArgs().map((args) => args[1]),
+      ).toEqual([' Play jazz ', '  ', ' Set a timer ', '  ']);
+    });
+
+    it('sends only the shared prefix for an empty batch input', async () => {
+      answerWith(mockModule['evaluateSchema'], booleanDecision);
+      await decisionMaker.evaluateBooleanBatch(
+        [''],
+        {condition: 'The user wants to play media', normalizePrior: true},
+        'Smart speaker',
+      );
+      answerWith(mockModule['evaluateSchema'], choiceDecision);
+      await decisionMaker.evaluateChoiceBatch(
+        [''],
+        {criteria: {'cloud': 'Complex cloud query'}, normalizePrior: true},
+        'Smart speaker',
+      );
+
+      expect(
+        mockModule['evaluateSchema'].calls.allArgs().map((args) => args[1]),
+      ).toEqual(['Smart speaker', 'Smart speaker']);
+    });
+
+    it('keeps the direct entry points when it is false', async () => {
+      await decisionMaker.evaluateBoolean('Play jazz music', {
+        condition: 'The user wants to play media',
+        normalizePrior: false,
+      });
+      await decisionMaker.evaluateChoice('Turn off the lights', {
+        criteria: {'cloud': 'Complex cloud query'},
+        normalizePrior: false,
+      });
+      await decisionMaker.evaluateBooleanBatch(['Play jazz'], {
+        condition: 'The user wants to play media',
+        normalizePrior: false,
+      });
+      await decisionMaker.evaluateChoiceBatch(['Set a timer'], {
+        criteria: {'cloud': 'Complex cloud query'},
+        normalizePrior: false,
+      });
+
+      expect(mockModule['evaluateBoolean']).toHaveBeenCalledTimes(1);
+      expect(mockModule['evaluateChoice']).toHaveBeenCalledTimes(1);
+      expect(mockModule['evaluateBooleanBatch']).toHaveBeenCalledTimes(1);
+      expect(mockModule['evaluateChoiceBatch']).toHaveBeenCalledTimes(1);
+      expect(mockModule['evaluateSchema']).not.toHaveBeenCalled();
+    });
   });
 
   it('evaluates unified multi-question ClassifierSchema and numeric ordinal levels', async () => {
