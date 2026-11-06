@@ -16,7 +16,7 @@
 // This wrapper provides two functionalities:
 //  1. Factory methods for creation of Location objects and thus LocationData
 //     protocol buffers. These methods guarantee a valid location data and are
-//     the prefer way of creating such.
+//     the preferred way of creating such.
 //  2. Accessors which allow for extracting location information in various
 //     formats. If necessary, the location information is converted.
 
@@ -79,10 +79,10 @@ class Location {
   // NOTE: it does not handle masks.
   Location& Scale(float scale);
 
-  // Resizes the location such that it is the tighest square location containing
-  // centered the original location. It supports locations of type GLOBAL,
-  // BOUNDING_BOX and RELATIVE_BOUNDING_BOX, otherwise it CHECK-fails. The user
-  // must specify the image dimensions. Returns *this.
+  // Resizes the location such that it is the tightest square location
+  // containing centered the original location. It supports locations of type
+  // GLOBAL, BOUNDING_BOX and RELATIVE_BOUNDING_BOX, otherwise it CHECK-fails.
+  // The user must specify the image dimensions. Returns *this.
   Location& Square(int image_width, int image_height);
 
   // If the location is larger than the image, then in some cases it is
@@ -94,7 +94,7 @@ class Location {
   // Replaces the location with the intersection of the current location the
   // specified crop rectangle. Locations of type GLOBAL remain
   // unmodified. The image size is used for locations of type
-  // BOUNDARY_BOX and MASK. Using this override for locations of type
+  // BOUNDING_BOX and MASK. Using this override for locations of type
   // RELATIVE_BOUNDING_BOX is an error. Use the Rectangle_f override of this
   // function instead.
   // This operation is useful when one needs to make sure that the location is
@@ -115,7 +115,7 @@ class Location {
   // format is consistent with the location data type. E.g. if one requests a
   // rectangle, then the wrapped location data should be of type BOUNDING_BOX.
   // Accessor for location data type BOUNDING_BOX with two possible return types
-  // Rectangle_i and mediapipe.::mediapipe::BoundingBox.
+  // Rectangle_i and ::mediapipe::BoundingBox.
   template <typename T>
   T GetBBox() const;
   // Accessor for location data type RELATIVE_BOUNDING_BOX.
@@ -138,7 +138,7 @@ class Location {
   //      foreground. Thus, the equivalent rectangle and mask are a rectangle
   //      covering the full image.
   // The supported output types are the same as for GetBBox() above: Rectangle_i
-  // and mediapipe.::mediapipe::BoundingBox.
+  // and ::mediapipe::BoundingBox.
   template <typename T>
   T ConvertToBBox(int image_width, int image_height) const;
   Rectangle_f ConvertToRelativeBBox(int image_width, int image_height) const;
