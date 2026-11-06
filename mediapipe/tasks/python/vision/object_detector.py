@@ -62,6 +62,7 @@ class MpObjectDetectorOptionsC(ctypes.Structure):
       ('category_denylist', ctypes.POINTER(ctypes.c_char_p)),
       ('category_denylist_count', ctypes.c_int),
       ('result_callback', _C_TYPES_RESULT_CALLBACK),
+      ('multiclass_nms', ctypes.c_bool),
   ]
 
   @classmethod
@@ -76,6 +77,7 @@ class MpObjectDetectorOptionsC(ctypes.Structure):
       category_allowlist: Optional[List[str]],
       category_denylist: Optional[List[str]],
       result_callback: _C_TYPES_RESULT_CALLBACK,
+      multiclass_nms: Optional[bool] = None,
   ) -> 'MpObjectDetectorOptionsC':
     """Creates an MpObjectDetectorOptionsC object from the given options."""
     category_allowlist_c = (
@@ -107,6 +109,7 @@ class MpObjectDetectorOptionsC(ctypes.Structure):
         category_denylist=category_denylist_c,
         category_denylist_count=category_denylist_count_c,
         result_callback=result_callback,
+        multiclass_nms=bool(multiclass_nms),
     )
 
 
@@ -181,6 +184,8 @@ class ObjectDetectorOptions:
       return.
     score_threshold: Overrides the ones provided in the model metadata. Results
       below this value are rejected.
+    multiclass_nms: Whether to use multiclass NMS. That is, each category processes
+      non-maximum-suppression separately.
     category_allowlist: Allowlist of category names. If non-empty, detection
       results whose category name is not in this set will be filtered out.
       Duplicate or unknown category names are ignored. Mutually exclusive with
@@ -199,6 +204,7 @@ class ObjectDetectorOptions:
   display_names_locale: Optional[str] = None
   max_results: Optional[int] = -1
   score_threshold: Optional[float] = 0.0
+  multiclass_nms: Optional[bool] = None
   category_allowlist: Optional[List[str]] = None
   category_denylist: Optional[List[str]] = None
   result_callback: Optional[
@@ -206,7 +212,6 @@ class ObjectDetectorOptions:
           [detections_module.DetectionResult, image_module.Image, int], None
       ]
   ] = None
-
 
 class ObjectDetector:
   """Class that performs object detection on images.
@@ -350,6 +355,7 @@ class ObjectDetector:
         category_allowlist=options.category_allowlist,
         category_denylist=options.category_denylist,
         result_callback=c_callback,
+        multiclass_nms=options.multiclass_nms,
     )
 
     detector_handle = ctypes.c_void_p()

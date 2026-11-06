@@ -96,6 +96,10 @@ struct MpObjectDetectorOptions {
                                      const MpImagePtr image,
                                      int64_t timestamp_ms);
   result_callback_fn result_callback;
+
+  // Whether to suppress detections independently for each category.
+  // Defaults to false. Rebuild C API consumers when changing this structure.
+  bool multiclass_nms = false;
 };
 
 // Creates an ObjectDetector from the provided `options`.
