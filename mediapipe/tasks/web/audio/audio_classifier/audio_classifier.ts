@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import {TensorsToClassificationCalculatorOptions} from '../../../../calculators/tensor/tensors_to_classification_calculator_pb';
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {AudioClassifierGraphOptions} from '../../../../tasks/cc/audio/audio_classifier/proto/audio_classifier_graph_options_pb';
@@ -22,6 +23,10 @@ import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/b
 import {AudioTaskRunner} from '../../../../tasks/web/audio/core/audio_task_runner';
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
 import {convertFromClassificationResultProto} from '../../../../tasks/web/components/processors/classifier_result';
+import {
+  categoryLabelMapFromItems,
+  findUniqueCalculatorNode,
+} from '../../../../tasks/web/components/processors/label_map';
 import {CachedGraphRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
@@ -39,6 +44,8 @@ const MEDIAPIPE_GRAPH =
 const AUDIO_STREAM = 'audio_in';
 const SAMPLE_RATE_STREAM = 'sample_rate';
 const TIMESTAMPED_CLASSIFICATIONS_STREAM = 'timestamped_classifications';
+const TENSORS_TO_CLASSIFICATION_CALCULATOR_NAME =
+  'TensorsToClassificationCalculator';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -46,6 +53,8 @@ const TIMESTAMPED_CLASSIFICATIONS_STREAM = 'timestamped_classifications';
 /** Performs audio classification. */
 export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
   private classificationResults: AudioClassifierResult[] = [];
+  private labels: string[] = [];
+  private displayNames: string[] = [];
   private readonly options = new AudioClassifierGraphOptions();
 
   /**
@@ -146,6 +155,64 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
       ),
     );
     return this.applyOptions(options);
+  }
+
+  protected override onGraphRefreshed(): void {
+    this.populateLabels();
+  }
+
+  /**
+   * Populate labels from TensorsToClassificationCalculator in the expanded
+   * graph. The calculator is configured from TFLite Model Metadata when the
+   * AudioClassifier graph is built.
+   */
+  private populateLabels(): void {
+    this.labels = [];
+    this.displayNames = [];
+    const node = findUniqueCalculatorNode(
+      this.getCalculatorGraphConfig(),
+      TENSORS_TO_CLASSIFICATION_CALCULATOR_NAME,
+    );
+    if (!node) {
+      return;
+    }
+    const labelItems =
+      node
+        .getOptions()
+        ?.getExtension(TensorsToClassificationCalculatorOptions.ext)
+        ?.getLabelItemsMap() ?? new Map();
+    const labelMap = categoryLabelMapFromItems(labelItems);
+    this.labels = labelMap.labels;
+    this.displayNames = labelMap.displayNames;
+  }
+
+  /**
+   * Get the category label list the AudioClassifier can recognize. The index
+   * in the returned array corresponds to the category index in the model
+   * label map.
+   *
+   * If there is no labelmap provided in the model file, an empty array is
+   * returned.
+   *
+   * @export
+   * @return The labels used by the current model.
+   */
+  getLabels(): string[] {
+    return this.labels;
+  }
+
+  /**
+   * Get the locale display-name list for the current model.
+   *
+   * When the model includes a display-name associated file, the returned list
+   * is the same length as {@link getLabels} and index-aligned with it. When
+   * the model has no display names, an empty array is returned.
+   *
+   * @export
+   * @return The display names used by the current model, or `[]` if none.
+   */
+  getDisplayNames(): string[] {
+    return this.displayNames;
   }
 
   // TODO: Add a classifyStream() that takes a timestamp
