@@ -3,6 +3,7 @@
     (__ANDROID_API__ >= 26 ||     \
      defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__))
 #include <android/hardware_buffer.h>
+#include <unistd.h>
 
 #include <cstdint>
 
@@ -448,8 +449,9 @@ TEST_F(TensorAhwbGpuTest, TestGetOpenGlBufferReadViewAhwbFromGpu) {
   }
 
   RunInGlContext([&] {
-    FillGpuBuffer(tensor.GetOpenGlBufferWriteView().name(),
-                  tensor.shape().num_elements(), tensor.element_type());
+    auto write_view = tensor.GetOpenGlBufferWriteView();
+    FillGpuBuffer(write_view.name(), tensor.shape().num_elements(),
+                  tensor.element_type());
   });
 
   RunInGlContext([&] {
@@ -648,15 +650,7 @@ TEST_F(TensorAhwbGpuTest,
     ASSERT_NE(view.handle(), nullptr);
   }
 
-  bool ssbo_deleted_before_ahwb_release = false;
   GLuint ssbo_name = 0;
-  {
-    auto view = tensor->GetAHardwareBufferReadView();
-    view.AddHardwareBufferReleaseCallback([&]() {
-      ssbo_deleted_before_ahwb_release = (glIsBuffer(ssbo_name) == GL_FALSE);
-    });
-  }
-
   RunInGlContext([&] {
     auto ssbo_view = tensor->GetOpenGlBufferReadView();
     ssbo_name = ssbo_view.name();
@@ -665,8 +659,147 @@ TEST_F(TensorAhwbGpuTest,
     glFinish();
   });
 
+  bool ssbo_deleted_before_ahwb_release = false;
+  {
+    auto view = tensor->GetAHardwareBufferReadView();
+    view.AddHardwareBufferReleaseCallback([&]() {
+      ssbo_deleted_before_ahwb_release = (glIsBuffer(ssbo_name) == GL_FALSE);
+    });
+  }
+
   tensor.reset();
+  RunInGlContext([&] { EXPECT_EQ(glIsBuffer(ssbo_name), GL_FALSE); });
   EXPECT_TRUE(ssbo_deleted_before_ahwb_release);
+}
+
+TEST_F(TensorAhwbGpuTest,
+       TestGlWriteViewCreatesAndFlushesFenceBeforeAhwbReadOnBlockedGlThread) {
+  constexpr size_t kNumElements = 20;
+  std::vector<float> reference = CreateReferenceData(kNumElements);
+
+  auto tensor = std::make_unique<Tensor>(Tensor::ElementType::kFloat32,
+                                         Tensor::Shape({kNumElements}));
+  {
+    auto ahwb_write = tensor->GetAHardwareBufferWriteView();
+    ASSERT_NE(ahwb_write.handle(), nullptr);
+  }
+
+  // 1. Write to `tensor` on the GL context thread. ~OpenGlBufferView() creates
+  // and flushes `write_complete_fence_fd_` inline when `ssbo_write` closes.
+  RunInGlContext([&]() {
+    auto ssbo_write = tensor->GetOpenGlBufferWriteView();
+    ASSERT_GT(ssbo_write.name(), 0u);
+    FillGpuBuffer(ssbo_write.name(), kNumElements, tensor->element_type());
+  });
+
+  // 2. Block the GL context thread so any subsequent `gl_context_->Run(...)`
+  // hop from another thread cannot execute while blocked.
+  absl::Notification gl_thread_blocked;
+  absl::Notification unblock_gl_thread;
+  helper_.GetGlContext().RunWithoutWaiting([&]() {
+    gl_thread_blocked.Notify();
+    unblock_gl_thread.WaitForNotification();
+  });
+  gl_thread_blocked.WaitForNotification();
+
+  // 3. On the non-GL consumer thread, acquire AHardwareBufferReadView and
+  // destroy `tensor` while the GL thread is blocked. Because
+  // ~OpenGlBufferView() already created and flushed the write-completion fence
+  // inline on the GL thread, and ~Tensor() does not block on the GL thread,
+  // neither reading nor destroying `tensor` may block on `gl_context_->Run()`.
+  {
+    auto ahwb_read = tensor->GetAHardwareBufferReadView();
+    ASSERT_NE(ahwb_read.handle(), nullptr);
+    const int write_fence_fd = ahwb_read.GetWriteCompleteFenceFd();
+    ASSERT_GE(write_fence_fd, 0);
+
+    if (__builtin_available(android 26, *)) {
+      void* ptr = nullptr;
+      ASSERT_EQ(AHardwareBuffer_lock(ahwb_read.handle(),
+                                     AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN,
+                                     dup(write_fence_fd), nullptr, &ptr),
+                0);
+      std::vector<float> output(kNumElements);
+      std::memcpy(output.data(), ptr, kNumElements * sizeof(float));
+      ASSERT_EQ(AHardwareBuffer_unlock(ahwb_read.handle(), nullptr), 0);
+      EXPECT_THAT(output, testing::Pointwise(testing::FloatEq(), reference));
+    }
+  }
+  tensor.reset();
+  unblock_gl_thread.Notify();
+  // Drain the GL context thread before tearing down the test fixture.
+  RunInGlContext([]() {});
+}
+
+TEST_F(TensorAhwbGpuTest,
+       TestGlWriteViewCreatesAndFlushesFenceBeforeCpuReadOnBlockedGlThread) {
+  constexpr size_t kNumElements = 20;
+  std::vector<float> reference = CreateReferenceData(kNumElements);
+
+  auto tensor = std::make_unique<Tensor>(Tensor::ElementType::kFloat32,
+                                         Tensor::Shape({kNumElements}));
+  {
+    auto ahwb_write = tensor->GetAHardwareBufferWriteView();
+    ASSERT_NE(ahwb_write.handle(), nullptr);
+  }
+
+  RunInGlContext([&]() {
+    auto ssbo_write = tensor->GetOpenGlBufferWriteView();
+    ASSERT_GT(ssbo_write.name(), 0u);
+    FillGpuBuffer(ssbo_write.name(), kNumElements, tensor->element_type());
+  });
+
+  absl::Notification gl_thread_blocked;
+  absl::Notification unblock_gl_thread;
+  helper_.GetGlContext().RunWithoutWaiting([&]() {
+    gl_thread_blocked.Notify();
+    unblock_gl_thread.WaitForNotification();
+  });
+  gl_thread_blocked.WaitForNotification();
+
+  // MapAhwbToCpuRead() synchronizes via `write_complete_fence_fd_` in
+  // AHardwareBuffer_lock without calling `gl_context_->Run([] { glFinish(); })`
+  // on the blocked GL thread.
+  {
+    auto cpu_read = tensor->GetCpuReadView();
+    const float* ptr = cpu_read.buffer<float>();
+    ASSERT_NE(ptr, nullptr);
+    std::vector<float> output(ptr, ptr + kNumElements);
+    EXPECT_THAT(output, testing::Pointwise(testing::FloatEq(), reference));
+  }
+  tensor.reset();
+  unblock_gl_thread.Notify();
+  RunInGlContext([]() {});
+}
+
+TEST_F(TensorAhwbGpuTest,
+       TestGlWriteViewSynchronizesCrossContextGlBufferReadOnAhwbTensor) {
+  constexpr size_t kNumElements = 20;
+  std::vector<float> reference = CreateReferenceData(kNumElements);
+
+  MP_ASSERT_OK_AND_ASSIGN(
+      std::shared_ptr<GlContext> read_context,
+      GlContext::Create(helper_.GetGlContext(), /*create_thread=*/true));
+
+  Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape({kNumElements}));
+  {
+    auto ahwb_write = tensor.GetAHardwareBufferWriteView();
+    ASSERT_NE(ahwb_write.handle(), nullptr);
+  }
+
+  RunInGlContext([&]() {
+    auto ssbo_write = tensor.GetOpenGlBufferWriteView();
+    ASSERT_GT(ssbo_write.name(), 0u);
+    FillGpuBuffer(ssbo_write.name(), kNumElements, tensor.element_type());
+  });
+
+  std::vector<float> output;
+  read_context->Run([&]() {
+    auto ssbo_read = tensor.GetOpenGlBufferReadView();
+    ASSERT_NE(ssbo_read.name(), 0u);
+    output = ReadGlBufferView(ssbo_read, kNumElements);
+  });
+  EXPECT_THAT(output, testing::Pointwise(testing::FloatEq(), reference));
 }
 
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31

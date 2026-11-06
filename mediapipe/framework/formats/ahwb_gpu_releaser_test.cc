@@ -78,6 +78,7 @@ TEST(AhwbGpuReleaserTest,
   });
 
   tensor.reset();
+  gpu_resources_holder->gl_context->Run([] {});
   // Buffer is not released yet event though the tensor is destroyed.
   EXPECT_FALSE(weak_to_be_released.expired());
   // Now we can allow the release.
@@ -124,6 +125,7 @@ TEST(AhwbGpuReleaserTest,
   });
 
   tensor.reset();
+  gpu_resources_holder->gl_context->Run([] {});
   // Buffer is not released yet event though the tensor is destroyed.
   EXPECT_FALSE(weak_to_be_released.expired());
   // Now we can allow the release.
@@ -151,6 +153,7 @@ TEST(AhwbGpuReleaserTest,
       ASSERT_GT(ssbo_name, 0);
     });
   }
+  gpu_resources_holder->gl_context->Run([] {});
 
   EXPECT_TRUE(weak_to_be_released.expired());
 }
@@ -187,6 +190,7 @@ TEST(AhwbGpuReleaserTest,
   });
 
   tensor.reset();
+  gpu_resources_holder->gl_context->Run([] {});
   // Buffer is not released yet.
   EXPECT_FALSE(weak_to_be_released.expired());
 
@@ -212,14 +216,16 @@ TEST(AhwbGpuReleaserTest, ShouldInvokeReleaseCallbacksDuringForcedTeardown) {
     Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape({123}));
     auto view = tensor.GetAHardwareBufferWriteView();
     // Register a release callback.
-    view.ahwb_usage()->release_callbacks.push_back(
-        [&callback_invoked]() { callback_invoked = true; });
+    view.SetReleaseCallback([&callback_invoked]() { callback_invoked = true; });
 
     // Use GPU to trigger delayed release path.
-    gpu_resources_holder->gl_context->Run(
-        [&] { (void)tensor.GetOpenGlBufferWriteView().name(); });
+    gpu_resources_holder->gl_context->Run([&] {
+      auto write_view = tensor.GetOpenGlBufferWriteView();
+      (void)write_view.name();
+    });
     // Tensor goes out of scope here.
   }
+  gpu_resources_holder->gl_context->Run([] {});
 
   EXPECT_FALSE(callback_invoked);
 

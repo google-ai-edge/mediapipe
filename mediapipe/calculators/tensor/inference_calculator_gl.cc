@@ -87,15 +87,17 @@ class InferenceCalculatorGlImpl
      public:
       explicit ReadWriteGlBuffer(std::vector<int> dims)
           : tensor_(Tensor::ElementType::kFloat32,
-                    Tensor::Shape{std::move(dims)}),
-            // Getting the write view and destroying it immediately
-            // intentionally - the underlying GL buffer will be reused across
-            // multiple runs in multiple read/write manner directly - not
-            // through Tensor, so synchronization provided by Tensor is not
-            // required.
-            // NOTE: tensor is an implementation detail here which is used as a
-            // convenient method to create GlBuffer.
-            name_(tensor_.GetOpenGlBufferWriteView().name()) {}
+                    Tensor::Shape{std::move(dims)}) {
+        // Getting the write view and destroying it immediately
+        // intentionally - the underlying GL buffer will be reused across
+        // multiple runs in multiple read/write manner directly - not
+        // through Tensor, so synchronization provided by Tensor is not
+        // required.
+        // NOTE: tensor is an implementation detail here which is used as a
+        // convenient method to create GlBuffer.
+        auto write_view = tensor_.GetOpenGlBufferWriteView();
+        name_ = write_view.name();
+      }
 
       ReadWriteGlBuffer(const ReadWriteGlBuffer&) = delete;
       ReadWriteGlBuffer& operator=(const ReadWriteGlBuffer&) = delete;

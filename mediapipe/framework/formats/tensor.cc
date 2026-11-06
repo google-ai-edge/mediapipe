@@ -378,19 +378,6 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
       }
     }
     valid_ |= kValidOpenGlBuffer;
-  } else {
-#ifdef MEDIAPIPE_TENSOR_USE_AHWB
-    // When the OpenGL buffer (`opengl_buffer_`) is backed by an external
-    // Android AHardwareBuffer (`ready_as_ahwb()` == true) mapped via
-    // glBufferStorageExternalEXT, compute shader writes on native mobile GPU
-    // drivers (e.g., Qualcomm Adreno) reside in GPU caches (GMEM/L2). We must
-    // create a native EGL fence (`EGL_SYNC_NATIVE_FENCE_ANDROID`) to ensure
-    // these writes are flushed to external system memory before subsequent CPU
-    // or GPU reads.
-    if (ready_as_ahwb()) {
-      CreateEglSyncAndFd();
-    }
-#endif  // MEDIAPIPE_TENSOR_USE_AHWB
   }
 
   return {/*is_write_view=*/false, opengl_buffer_, std::move(lock),
@@ -428,10 +415,25 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferWriteView(
            "behavior due to lack of synchronization.";
   }
   valid_ = kValidOpenGlBuffer;
-  return {/*is_write_view=*/true, opengl_buffer_,
-          std::move(lock),
-          /*ssbo_read=*/nullptr,  gl_context_.get(),
-          &gl_write_read_sync_};
+  absl::AnyInvocable<void()> on_write_completed = nullptr;
+#ifdef MEDIAPIPE_TENSOR_USE_AHWB
+  // When the OpenGL buffer (`opengl_buffer_`) is backed by an external Android
+  // AHardwareBuffer (`ready_as_ahwb()` == true) mapped via
+  // glBufferStorageExternalEXT, compute shader writes on native mobile GPU
+  // drivers (e.g., Qualcomm Adreno) reside in GPU caches (GMEM/L2). Create a
+  // native EGL fence (`EGL_SYNC_NATIVE_FENCE_ANDROID`) as soon as the write
+  // view closes so these writes are flushed to external system memory before
+  // subsequent CPU, GPU, or AHWB reads, without capturing commands queued by
+  // later frames on a shared GL context.
+  if (ready_as_ahwb()) {
+    on_write_completed = [this]() { CreateEglSyncAndFd(); };
+  }
+#endif  // MEDIAPIPE_TENSOR_USE_AHWB
+  return {
+      /*is_write_view=*/true, opengl_buffer_,
+      std::move(lock),
+      /*ssbo_read=*/nullptr,  gl_context_.get(),
+      &gl_write_read_sync_,   std::move(on_write_completed)};
 }
 
 void Tensor::AllocateOpenGlBuffer() const {

@@ -15,13 +15,16 @@ namespace mediapipe {
 
 namespace {
 
+PFNEGLCLIENTWAITSYNCKHRPROC eglClientWaitSyncKHR;
 PFNEGLDESTROYSYNCKHRPROC eglDestroySyncKHR;
 
 bool IsGlSupported() {
   static const bool extensions_allowed = [] {
+    eglClientWaitSyncKHR = reinterpret_cast<PFNEGLCLIENTWAITSYNCKHRPROC>(
+        eglGetProcAddress("eglClientWaitSyncKHR"));
     eglDestroySyncKHR = reinterpret_cast<PFNEGLDESTROYSYNCKHRPROC>(
         eglGetProcAddress("eglDestroySyncKHR"));
-    return eglDestroySyncKHR;
+    return eglClientWaitSyncKHR && eglDestroySyncKHR;
   }();
   return extensions_allowed;
 }
@@ -175,6 +178,11 @@ bool AhwbGpuReleaser::AhwbGpuResources::IsSignalled() {
   if (fence_sync_ != EGL_NO_SYNC_KHR && IsGlSupported()) {
     auto egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if (egl_display != EGL_NO_DISPLAY) {
+      EGLint status = eglClientWaitSyncKHR(egl_display, fence_sync_, 0,
+                                           /* timeout ns = */ 0);
+      if (status == EGL_TIMEOUT_EXPIRED_KHR) {
+        return false;
+      }
       eglDestroySyncKHR(egl_display, fence_sync_);
     }
     fence_sync_ = EGL_NO_SYNC_KHR;
