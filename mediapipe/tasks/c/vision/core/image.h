@@ -14,6 +14,7 @@
 #ifndef MEDIAPIPE_TASKS_C_VISION_CORE_IMAGE_H_
 #define MEDIAPIPE_TASKS_C_VISION_CORE_IMAGE_H_
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "mediapipe/tasks/c/core/mp_status.h"

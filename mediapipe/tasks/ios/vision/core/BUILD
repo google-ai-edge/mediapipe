@@ -14,11 +14,14 @@
 
 load("@rules_cc//cc:objc_library.bzl", "objc_library")
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
-exports_files(glob(["sources/*.h"]))
+exports_files(glob([
+    "sources/*.h",
+    "sources/*.swift",
+]))
 
 objc_library(
     name = "MPPImage",
