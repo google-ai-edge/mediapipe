@@ -14,26 +14,34 @@
 
 #import "mediapipe/tasks/ios/vision/face_detector/utils/sources/MPPFaceDetectorOptions+Helpers.h"
 
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
-#include "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.pb.h"
-
-using CalculatorOptionsProto = ::mediapipe::CalculatorOptions;
-using FaceDetectorGraphOptionsProto =
-    ::mediapipe::tasks::vision::face_detector::proto::FaceDetectorGraphOptions;
+#include "mediapipe/tasks/c/vision/face_detector/face_detector.h"
 
 @implementation MPPFaceDetectorOptions (Helpers)
 
-- (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
-  FaceDetectorGraphOptionsProto *graphOptions =
-      optionsProto->MutableExtension(FaceDetectorGraphOptionsProto::ext);
+- (void)copyToCOptions:(struct MpFaceDetectorOptions *)cOptions {
+  [self.baseOptions copyToCOptions:&cOptions->base_options];
+  switch (self.runningMode) {
+    case MPPRunningModeImage:
+      cOptions->running_mode = MP_RUNNING_MODE_IMAGE;
+      break;
+    case MPPRunningModeVideo:
+      cOptions->running_mode = MP_RUNNING_MODE_VIDEO;
+      break;
+    case MPPRunningModeLiveStream:
+      cOptions->running_mode = MP_RUNNING_MODE_LIVE_STREAM;
+      break;
+  }
+  cOptions->min_detection_confidence = self.minDetectionConfidence;
+  cOptions->min_suppression_threshold = self.minSuppressionThreshold;
+  cOptions->result_callback = nullptr;
+}
 
-  graphOptions->Clear();
-
-  [self.baseOptions copyToProto:graphOptions->mutable_base_options() withUseLitert:YES];
-  graphOptions->set_min_detection_confidence(self.minDetectionConfidence);
-  graphOptions->set_min_suppression_threshold(self.minSuppressionThreshold);
++ (void)freeCOptions:(struct MpFaceDetectorOptions *)cOptions {
+  if (cOptions) {
+    [MPPBaseOptions freeCOptions:&cOptions->base_options];
+  }
 }
 
 @end

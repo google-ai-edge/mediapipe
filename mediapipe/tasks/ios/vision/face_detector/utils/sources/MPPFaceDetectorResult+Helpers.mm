@@ -16,30 +16,16 @@
 
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPDetection+Helpers.h"
 
-using DetectionProto = ::mediapipe::Detection;
-using ::mediapipe::Packet;
-
-static constexpr int kMicrosecondsPerMillisecond = 1000;
+#include "mediapipe/tasks/c/components/containers/detection_result.h"
 
 @implementation MPPFaceDetectorResult (Helpers)
 
-+ (nullable MPPFaceDetectorResult *)faceDetectorResultWithDetectionsPacket:(const Packet &)packet {
-  NSMutableArray<MPPDetection *> *detections;
-
-  if (packet.ValidateAsType<std::vector<DetectionProto>>().ok()) {
-    const std::vector<DetectionProto> &detectionProtos = packet.Get<std::vector<DetectionProto>>();
-    detections = [NSMutableArray arrayWithCapacity:(NSUInteger)detectionProtos.size()];
-    for (const auto &detectionProto : detectionProtos) {
-      [detections addObject:[MPPDetection detectionWithProto:detectionProto]];
-    }
-  } else {
-    detections = [NSMutableArray arrayWithCapacity:0];
-  }
-
-  return
-      [[MPPFaceDetectorResult alloc] initWithDetections:detections
-                                timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
-                                                                    kMicrosecondsPerMillisecond)];
++ (nullable MPPFaceDetectorResult *)
+    faceDetectorResultWithCResult:(const struct MpDetectionResult &)cResult
+          timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
+  NSArray<MPPDetection *> *detections = [MPPDetection detectionsWithCDetectionResult:cResult];
+  return [[MPPFaceDetectorResult alloc] initWithDetections:detections
+                                   timestampInMilliseconds:timestampInMilliseconds];
 }
 
 @end

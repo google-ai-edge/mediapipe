@@ -14,191 +14,234 @@
 
 #import "mediapipe/tasks/ios/vision/face_detector/sources/MPPFaceDetector.h"
 
+#import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
-#import "mediapipe/tasks/ios/vision/core/sources/MPPVisionPacketCreator.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionTaskRunner.h"
 #import "mediapipe/tasks/ios/vision/face_detector/utils/sources/MPPFaceDetectorOptions+Helpers.h"
 #import "mediapipe/tasks/ios/vision/face_detector/utils/sources/MPPFaceDetectorResult+Helpers.h"
 
-using ::mediapipe::Timestamp;
-using ::mediapipe::tasks::core::PacketMap;
-using ::mediapipe::tasks::core::PacketsCallback;
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/c/vision/face_detector/face_detector.h"
 
-static constexpr int kMicrosecondsPerMillisecond = 1000;
-
-// Constants for the underlying MP Tasks Graph. See
-// https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/tasks/cc/vision/face_detector/face_detector_graph.cc
-static NSString *const kDetectionsStreamName = @"detections_out";
-static NSString *const kDetectionsTag = @"DETECTIONS";
-static NSString *const kImageInStreamName = @"image_in";
-static NSString *const kImageOutStreamName = @"image_out";
-static NSString *const kImageTag = @"IMAGE";
-static NSString *const kNormRectStreamName = @"norm_rect_in";
-static NSString *const kNormRectTag = @"NORM_RECT";
-static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.face_detector.FaceDetectorGraph";
 static NSString *const kTaskName = @"faceDetector";
 
-#define InputPacketMap(imagePacket, normalizedRectPacket) \
-  {                                                       \
-    {kImageInStreamName.cppString, imagePacket}, {        \
-      kNormRectStreamName.cppString, normalizedRectPacket \
-    }                                                     \
-  }
-
-#define FaceDetectorResultWithOutputPacketMap(outputPacketMap)                                   \
-  (                                                                                              \
-    [MPPFaceDetectorResult                                                                       \
-        faceDetectorResultWithDetectionsPacket:outputPacketMap[kDetectionsStreamName.cppString]] \
-  )
-
 @interface MPPFaceDetector () {
-  /** iOS Vision Task Runner */
-  MPPVisionTaskRunner *_visionTaskRunner;
+  MpFaceDetectorPtr _detector;
+  MPPVisionTaskRunner *_taskRunner;
   dispatch_queue_t _callbackQueue;
+  int _callbackSlot;
 }
 @property(nonatomic, weak) id<MPPFaceDetectorLiveStreamDelegate> faceDetectorLiveStreamDelegate;
 
-- (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult;
+- (void)handleLiveStreamResult:(const MpFaceDetectorResult *)cResult
+                        status:(MpStatus)status
+                     timestamp:(int64_t)timestampInMilliseconds;
 @end
+
+namespace {
+using mediapipe::tasks::ios::vision::core::VisionCallbackPool;
+using CallbackPool = VisionCallbackPool<MPPFaceDetector, MpFaceDetectorResult,
+                                        MpFaceDetectorOptions::result_callback_fn>;
+
+static void OnLiveStreamResult(MPPFaceDetector *task, MpStatus status,
+                               const MpFaceDetectorResult *result, MpImagePtr image,
+                               int64_t timestamp_ms) {
+  if (task) {
+    [task handleLiveStreamResult:result status:status timestamp:timestamp_ms];
+  }
+}
+}  // namespace
 
 @implementation MPPFaceDetector
 
 - (instancetype)initWithOptions:(MPPFaceDetectorOptions *)options error:(NSError **)error {
   self = [super init];
   if (self) {
-    MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
-          initWithTaskName:kTaskName
-             taskGraphName:kTaskGraphName
-              inputStreams:@[
-                [NSString stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
-                [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectStreamName]
-              ]
-             outputStreams:@[
-               [NSString stringWithFormat:@"%@:%@", kDetectionsTag, kDetectionsStreamName],
-               [NSString stringWithFormat:@"%@:%@", kImageTag, kImageOutStreamName]
-             ]
-               taskOptions:options
-        enableFlowLimiting:options.runningMode == MPPRunningModeLiveStream
-               runningMode:MPPCoreRunningModeFromVisionRunningMode(options.runningMode)
-                     error:error];
-
-    if (!taskInfo) {
+    _callbackSlot = -1;
+    _taskRunner = [[MPPVisionTaskRunner alloc]
+        initWithRunningMode:options.runningMode
+                 roiAllowed:NO
+            normRectAllowed:YES
+                hasDelegate:(options.faceDetectorLiveStreamDelegate != nil)
+                      error:error];
+    if (!_taskRunner) {
       return nil;
     }
-
-    PacketsCallback packetsCallback = nullptr;
 
     if (options.faceDetectorLiveStreamDelegate) {
       _faceDetectorLiveStreamDelegate = options.faceDetectorLiveStreamDelegate;
-
-      // Create a private serial dispatch queue in which the delegate method will be called
-      // asynchronously. This is to ensure that if the client performs a long running operation in
-      // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
-      // freed up to continue with its operations.
       _callbackQueue = dispatch_queue_create(
-          [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], NULL);
-
-      // Capturing `self` as weak in order to avoid `self` being kept in memory
-      // and cause a retain cycle, after self is set to `nil`.
-      MPPFaceDetector *__weak weakSelf = self;
-      packetsCallback = [=](absl::StatusOr<PacketMap> liveStreamResult) {
-        [weakSelf processLiveStreamResult:liveStreamResult];
-      };
+          [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], nullptr);
+      _callbackSlot = CallbackPool::AllocateSlot(self, &OnLiveStreamResult);
+      if (_callbackSlot < 0) {
+        [MPPCommonUtils createCustomError:error
+                                 withCode:MPPTasksErrorCodeInternalError
+                              description:@"Failed to allocate callback slot."];
+        return nil;
+      }
     }
 
-    _visionTaskRunner = [[MPPVisionTaskRunner alloc] initWithTaskInfo:taskInfo
-                                                          runningMode:options.runningMode
-                                                           roiAllowed:NO
-                                                      packetsCallback:std::move(packetsCallback)
-                                                 imageInputStreamName:kImageInStreamName
-                                              normRectInputStreamName:kNormRectStreamName
-                                                                error:error];
+    MpFaceDetectorOptions cOptions = {};
+    [options copyToCOptions:&cOptions];
+    if (_callbackSlot >= 0) {
+      cOptions.result_callback = CallbackPool::GetCallback(_callbackSlot);
+    }
 
-    if (!_visionTaskRunner) {
+    char *errorMsg = nullptr;
+    MpStatus status = MpFaceDetectorCreate(&cOptions, &_detector, &errorMsg);
+    [MPPFaceDetectorOptions freeCOptions:&cOptions];
+
+    if (![MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error]) {
+      if (_callbackSlot >= 0) {
+        CallbackPool::FreeSlot(_callbackSlot);
+        _callbackSlot = -1;
+      }
       return nil;
     }
   }
-
   return self;
 }
 
 - (instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error {
   MPPFaceDetectorOptions *options = [[MPPFaceDetectorOptions alloc] init];
-
   options.baseOptions.modelAssetPath = modelPath;
-
   return [self initWithOptions:options error:error];
 }
 
 - (nullable MPPFaceDetectorResult *)detectImage:(MPPImage *)image error:(NSError **)error {
-  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:error];
-
-  return [MPPFaceDetector faceDetectorResultWithOptionalOutputPacketMap:outputPacketMap];
+  if (![_taskRunner validateRunningMode:MPPRunningModeImage error:error]) {
+    return nil;
+  }
+  struct MpImageProcessingOptions imageProcessingOptions = {};
+  ScopedMpImage mpImage = [_taskRunner createMpImageWithMPPImage:image
+                                                regionOfInterest:CGRectZero
+                                          imageProcessingOptions:&imageProcessingOptions
+                                                           error:error];
+  if (!mpImage) {
+    return nil;
+  }
+  MpFaceDetectorResult cResult = {};
+  char *errorMsg = nullptr;
+  MpStatus status =
+      MpFaceDetectorDetectImage(_detector, mpImage, &imageProcessingOptions, &cResult, &errorMsg);
+  if (![MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error]) {
+    return nil;
+  }
+  MPPFaceDetectorResult *result = [MPPFaceDetectorResult faceDetectorResultWithCResult:cResult
+                                                               timestampInMilliseconds:0];
+  MpFaceDetectorCloseResult(&cResult);
+  return result;
 }
 
 - (nullable MPPFaceDetectorResult *)detectVideoFrame:(MPPImage *)image
-                               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                                 error:(NSError **)error {
-  std::optional<PacketMap> outputPacketMap =
-      [_visionTaskRunner processVideoFrame:image
-                   timestampInMilliseconds:timestampInMilliseconds
-                                     error:error];
-
-  return [MPPFaceDetector faceDetectorResultWithOptionalOutputPacketMap:outputPacketMap];
+                             timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                               error:(NSError **)error {
+  if (![_taskRunner validateRunningMode:MPPRunningModeVideo error:error]) {
+    return nil;
+  }
+  struct MpImageProcessingOptions imageProcessingOptions = {};
+  ScopedMpImage mpImage = [_taskRunner createMpImageWithMPPImage:image
+                                                regionOfInterest:CGRectZero
+                                          imageProcessingOptions:&imageProcessingOptions
+                                                           error:error];
+  if (!mpImage) {
+    return nil;
+  }
+  MpFaceDetectorResult cResult = {};
+  char *errorMsg = nullptr;
+  MpStatus status = MpFaceDetectorDetectForVideo(_detector, mpImage, &imageProcessingOptions,
+                                                 static_cast<int64_t>(timestampInMilliseconds),
+                                                 &cResult, &errorMsg);
+  if (![MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error]) {
+    return nil;
+  }
+  MPPFaceDetectorResult *result =
+      [MPPFaceDetectorResult faceDetectorResultWithCResult:cResult
+                                   timestampInMilliseconds:timestampInMilliseconds];
+  MpFaceDetectorCloseResult(&cResult);
+  return result;
 }
 
 - (BOOL)detectAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error {
-  return [_visionTaskRunner processLiveStreamImage:image
-                           timestampInMilliseconds:timestampInMilliseconds
-                                             error:error];
+  if (![_taskRunner validateRunningMode:MPPRunningModeLiveStream error:error]) {
+    return NO;
+  }
+  struct MpImageProcessingOptions imageProcessingOptions = {};
+  ScopedMpImage mpImage = [_taskRunner createMpImageWithMPPImage:image
+                                                regionOfInterest:CGRectZero
+                                          imageProcessingOptions:&imageProcessingOptions
+                                                           error:error];
+  if (!mpImage) {
+    return NO;
+  }
+  char *errorMsg = nullptr;
+  MpStatus status =
+      MpFaceDetectorDetectAsync(_detector, mpImage, &imageProcessingOptions,
+                                static_cast<int64_t>(timestampInMilliseconds), &errorMsg);
+  return [MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error];
 }
 
-- (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
-  if (![self.faceDetectorLiveStreamDelegate
-          respondsToSelector:@selector(faceDetector:
-                                 didFinishDetectionWithResult:timestampInMilliseconds:error:)]) {
-    return;
-  }
-  NSError *callbackError = nil;
-  if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
-    dispatch_async(_callbackQueue, ^{
-      [self.faceDetectorLiveStreamDelegate faceDetector:self
-                           didFinishDetectionWithResult:nil
-                                timestampInMilliseconds:Timestamp::Unset().Value()
-                                                  error:callbackError];
+- (void)dealloc {
+  MpFaceDetectorPtr detector = _detector;
+  _detector = nullptr;
+  int callbackSlot = _callbackSlot;
+  _callbackSlot = -1;
+  dispatch_queue_t callbackQueue = _callbackQueue;
+  _callbackQueue = nil;
+
+  if (callbackSlot >= 0) {
+    dispatch_queue_t cleanupQueue =
+        callbackQueue ?: dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0);
+    dispatch_async(cleanupQueue, ^{
+      if (detector) {
+        MpFaceDetectorClose(detector, nullptr);
+      }
+      CallbackPool::FreeSlot(callbackSlot);
     });
-    return;
+  } else if (detector) {
+    MpFaceDetectorClose(detector, nullptr);
   }
-
-  PacketMap &outputPacketMap = liveStreamResult.value();
-  if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
-    return;
-  }
-
-  MPPFaceDetectorResult *result = FaceDetectorResultWithOutputPacketMap(liveStreamResult.value());
-
-  NSInteger timestampInMilliseconds =
-      outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
-      kMicrosecondsPerMillisecond;
-  dispatch_async(_callbackQueue, ^{
-    [self.faceDetectorLiveStreamDelegate faceDetector:self
-                         didFinishDetectionWithResult:result
-                              timestampInMilliseconds:timestampInMilliseconds
-                                                error:callbackError];
-  });
 }
 
-+ (nullable MPPFaceDetectorResult *)faceDetectorResultWithOptionalOutputPacketMap:
-    (std::optional<PacketMap>)outputPacketMap {
-  if (!outputPacketMap.has_value()) {
-    return nil;
+#pragma mark - Private
+
+- (void)handleLiveStreamResult:(const MpFaceDetectorResult *)cResult
+                        status:(MpStatus)status
+                     timestamp:(int64_t)timestampInMilliseconds {
+  if (![self.faceDetectorLiveStreamDelegate
+          respondsToSelector:@selector(faceDetector:didFinishDetectionWithResult:
+                                       timestampInMilliseconds:error:)]) {
+    return;
   }
 
-  return FaceDetectorResultWithOutputPacketMap(outputPacketMap.value());
+  NSError *callbackError = nil;
+  MPPFaceDetectorResult *result = nil;
+
+  if (status != kMpOk) {
+    [MPPCommonUtils checkCError:status errorMessage:nullptr toError:&callbackError];
+  } else if (cResult) {
+    result = [MPPFaceDetectorResult faceDetectorResultWithCResult:*cResult
+                                          timestampInMilliseconds:timestampInMilliseconds];
+  }
+
+  dispatch_queue_t callbackQueue = _callbackQueue;
+  if (!callbackQueue) {
+    return;
+  }
+  __weak id<MPPFaceDetectorLiveStreamDelegate> delegate = self.faceDetectorLiveStreamDelegate;
+  MPPFaceDetector *__weak weakSelf = self;
+
+  dispatch_async(callbackQueue, ^{
+    MPPFaceDetector *strongSelf = weakSelf;
+    if (strongSelf) {
+      [delegate faceDetector:strongSelf
+          didFinishDetectionWithResult:result
+               timestampInMilliseconds:timestampInMilliseconds
+                                 error:callbackError];
+    }
+  });
 }
 
 @end

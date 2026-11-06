@@ -12,24 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef __cplusplus
-#error "This file requires Objective-C++."
-#endif  // __cplusplus
+#import <Foundation/Foundation.h>
 
-#include "mediapipe/framework/calculator_options.pb.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
 #import "mediapipe/tasks/ios/vision/face_detector/sources/MPPFaceDetectorOptions.h"
+
+struct MpFaceDetectorOptions;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MPPFaceDetectorOptions (Helpers) <MPPTaskOptionsProtocol>
+@interface MPPFaceDetectorOptions (Helpers)
 
-/**
- * Populates the provided `CalculatorOptions` proto container with the current settings.
- *
- * @param optionsProto The `CalculatorOptions` proto object to copy the settings to.
- */
-- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
+- (void)copyToCOptions:(struct MpFaceDetectorOptions *)cOptions;
+
++ (void)freeCOptions:(struct MpFaceDetectorOptions *)cOptions;
 
 @end
 

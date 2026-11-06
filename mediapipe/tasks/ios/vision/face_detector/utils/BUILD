@@ -22,13 +22,17 @@ objc_library(
     name = "MPPFaceDetectorOptionsHelpers",
     srcs = ["sources/MPPFaceDetectorOptions+Helpers.mm"],
     hdrs = ["sources/MPPFaceDetectorOptions+Helpers.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++20",
+        "-Xclang=-fno-cxx-modules",
+        "-x objective-c++",
+    ],
     deps = [
-        "//mediapipe/framework:calculator_options_cc_proto",
-        "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_cc_proto",
-        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
-        "//mediapipe/tasks/ios/core:MPPTaskOptionsProtocol",
+        "//mediapipe/tasks/c/vision/face_detector:face_detector_lib",
         "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
         "//mediapipe/tasks/ios/vision/face_detector:MPPFaceDetectorOptions",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -36,9 +40,16 @@ objc_library(
     name = "MPPFaceDetectorResultHelpers",
     srcs = ["sources/MPPFaceDetectorResult+Helpers.mm"],
     hdrs = ["sources/MPPFaceDetectorResult+Helpers.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++20",
+        "-Xclang=-fno-cxx-modules",
+        "-x objective-c++",
+    ],
     deps = [
-        "//mediapipe/framework:packet",
+        "//mediapipe/tasks/c/components/containers:detection_result",
         "//mediapipe/tasks/ios/components/containers/utils:MPPDetectionHelpers",
         "//mediapipe/tasks/ios/vision/face_detector:MPPFaceDetectorResult",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

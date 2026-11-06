@@ -12,27 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef __cplusplus
-#error "This file requires Objective-C++."
-#endif  // __cplusplus
+#import <Foundation/Foundation.h>
 
-#include "mediapipe/framework/packet.h"
 #import "mediapipe/tasks/ios/vision/face_detector/sources/MPPFaceDetectorResult.h"
+
+struct MpDetectionResult;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPFaceDetectorResult (Helpers)
 
 /**
- * Creates an `MPPFaceDetectorResult` from a MediaPipe packet containing a
- * `std::vector<DetectionProto>`.
+ * Creates an `MPPFaceDetectorResult` from a C `MpDetectionResult` struct.
  *
- * @param packet a MediaPipe packet wrapping a `std::vector<DetectionProto>`.
+ * @param cResult a C `MpDetectionResult` struct.
+ * @param timestampInMilliseconds timestamp of the result.
  *
  * @return  An `MPPFaceDetectorResult` object that contains a list of detections.
  */
-+ (nullable MPPFaceDetectorResult *)faceDetectorResultWithDetectionsPacket:
-    (const ::mediapipe::Packet &)packet;
++ (nullable MPPFaceDetectorResult *)
+    faceDetectorResultWithCResult:(const struct MpDetectionResult &)cResult
+          timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 
 @end
 
