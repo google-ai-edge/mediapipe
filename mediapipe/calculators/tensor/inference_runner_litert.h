@@ -300,7 +300,7 @@ class InferenceRunnerLiteRt : public InferenceRunner {
   // backed by MP tensor memory (zero-copy).
   absl::StatusOr<litert::TensorBuffer> CreateCpuInputTensorBufferFromMpTensor(
       const Tensor& mp_input_tensor,
-      const litert::RankedTensorType& tensor_type,
+      const litert::RankedTensorType& tensor_type, size_t alignment,
       std::vector<InferenceRunnerLiteRt::MpTensorReadView>&
           mp_input_tensor_views,
       std::vector<std::unique_ptr<Tensor>>& mp_aligned_input_tensors);
@@ -354,7 +354,8 @@ class InferenceRunnerLiteRt : public InferenceRunner {
   // Creates an input tensor buffer for the given buffer type.
   absl::StatusOr<litert::TensorBuffer> CreateInputTensorBufferFromMpTensor(
       litert::TensorBufferType buffer_type, const Tensor& tensor,
-      const litert::RankedTensorType& tensor_type, InferenceRunContext& ctx);
+      const litert::RankedTensorType& tensor_type, size_t alignment,
+      InferenceRunContext& ctx);
 
   // Creates an output tensor buffer for the given buffer type.
   absl::StatusOr<litert::TensorBuffer> CreateOutputTensorBufferFromMpTensor(

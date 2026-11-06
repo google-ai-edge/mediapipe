@@ -1348,9 +1348,10 @@ InferenceRunnerLiteRt::CreateAhwbOutputTensorBufferFromMpTensor(
 absl::StatusOr<litert::TensorBuffer>
 InferenceRunnerLiteRt::CreateCpuInputTensorBufferFromMpTensor(
     const Tensor& tensor, const litert::RankedTensorType& tensor_type,
+    size_t alignment,
     std::vector<InferenceRunnerLiteRt::MpTensorReadView>& mp_input_tensor_views,
     std::vector<std::unique_ptr<Tensor>>& mp_aligned_input_tensors) {
-  if (IsTensorAligned(tensor, LITERT_HOST_MEMORY_BUFFER_ALIGNMENT)) {
+  if (IsTensorAligned(tensor, alignment)) {
     // Alignment requirement met, create with zero-copy.
     auto input_tensor_view = tensor.GetCpuReadView();
     const void* input_tensor_data = input_tensor_view.buffer<void>();
@@ -1367,10 +1368,9 @@ InferenceRunnerLiteRt::CreateCpuInputTensorBufferFromMpTensor(
       << "Input tensor memory is not aligned according to LiteRt's "
          "memory "
          "alignment requirements. Reallocating memory and copying data.";
-  ABSL_ASSIGN_OR_RETURN(
-      Tensor aligned_mp_input_tensor,
-      CreateTensorFromLiteRtRankedTensorType(
-          tensor_type, memory_manager_, LITERT_HOST_MEMORY_BUFFER_ALIGNMENT));
+  ABSL_ASSIGN_OR_RETURN(Tensor aligned_mp_input_tensor,
+                        CreateTensorFromLiteRtRankedTensorType(
+                            tensor_type, memory_manager_, alignment));
   auto aligned_mp_input_tensor_ptr =
       std::make_unique<Tensor>(std::move(aligned_mp_input_tensor));
   ABSL_RETURN_IF_ERROR(
@@ -1415,11 +1415,13 @@ InferenceRunnerLiteRt::CreateCpuOutputTensorBufferFromMpTensor(
 absl::StatusOr<litert::TensorBuffer>
 InferenceRunnerLiteRt::CreateInputTensorBufferFromMpTensor(
     litert::TensorBufferType buffer_type, const Tensor& tensor,
-    const litert::RankedTensorType& tensor_type, InferenceRunContext& ctx) {
+    const litert::RankedTensorType& tensor_type, size_t alignment,
+    InferenceRunContext& ctx) {
   switch (buffer_type) {
     case litert::TensorBufferType::kHostMemory:
       return CreateCpuInputTensorBufferFromMpTensor(
-          tensor, tensor_type, ctx.active_input_views, ctx.temporary_tensors);
+          tensor, tensor_type, alignment, ctx.active_input_views,
+          ctx.temporary_tensors);
 #if MEDIAPIPE_TENSOR_USE_AHWB
     case litert::TensorBufferType::kAhwb:
       return CreateAhwbInputTensorBufferFromMpTensor(tensor, tensor_type, ctx);
@@ -1568,6 +1570,10 @@ absl::Status InferenceRunnerLiteRt::PrepareInputBuffers(
 
     LITERT_ASSIGN_OR_RETURN(size_t buffer_size,
                             cached_input_buffer_requirements_[i].BufferSize());
+    LITERT_ASSIGN_OR_RETURN(size_t req_alignment,
+                            cached_input_buffer_requirements_[i].Alignment());
+    const size_t alignment =
+        std::max<size_t>(LITERT_HOST_MEMORY_BUFFER_ALIGNMENT, req_alignment);
     const bool size_mismatch = (buffer_size != tensor_to_use->bytes());
     if (size_mismatch) {
       // Accelerators (e.g. NPU hardware alignment or GPU vec4/PHWC4 padding)
@@ -1605,9 +1611,10 @@ absl::Status InferenceRunnerLiteRt::PrepareInputBuffers(
       LITERT_ASSIGN_OR_RETURN(litert_inputs[i],
                               managed_input_buffers_[i]->Duplicate());
     } else {
-      ABSL_ASSIGN_OR_RETURN(litert_inputs[i],
-                            CreateInputTensorBufferFromMpTensor(
-                                buffer_type, *tensor_to_use, tensor_type, ctx));
+      ABSL_ASSIGN_OR_RETURN(
+          litert_inputs[i],
+          CreateInputTensorBufferFromMpTensor(buffer_type, *tensor_to_use,
+                                              tensor_type, alignment, ctx));
     }
   }
 
@@ -1645,11 +1652,19 @@ InferenceRunnerLiteRt::CreateMpOutputTensors(
     // dequantized downstream, as with the legacy TFLite runners.
     LITERT_ASSIGN_OR_RETURN(const litert::SimpleTensor& model_tensor,
                             signature.OutputTensor(static_cast<size_t>(i)));
-    ABSL_ASSIGN_OR_RETURN(
-        Tensor mp_output_tensor,
-        CreateTensorFromLiteRtRankedTensorType(
-            tensor_type, memory_manager_, LITERT_HOST_MEMORY_BUFFER_ALIGNMENT,
-            GetMpQuantizationParameters(model_tensor)));
+    LITERT_ASSIGN_OR_RETURN(
+        const auto output_buffer_requirements,
+        compiled_model_->GetOutputBufferRequirements(signature_index_, i),
+        _ << "Failed to get output buffer requirements for output " << i);
+    LITERT_ASSIGN_OR_RETURN(size_t req_alignment,
+                            output_buffer_requirements.Alignment());
+    const size_t alignment =
+        std::max<size_t>(LITERT_HOST_MEMORY_BUFFER_ALIGNMENT, req_alignment);
+
+    ABSL_ASSIGN_OR_RETURN(Tensor mp_output_tensor,
+                          CreateTensorFromLiteRtRankedTensorType(
+                              tensor_type, memory_manager_, alignment,
+                              GetMpQuantizationParameters(model_tensor)));
     mp_output_tensors.push_back(std::move(mp_output_tensor));
   }
   return mp_output_tensors;
