@@ -78,6 +78,14 @@ const ENCODER_BACKEND_TYPE = 1;
 const CPU_DELEGATE_BACKEND_TYPE = -1;
 
 /**
+ * `ClassifierQuestion.id` for a question that `evaluateBoolean()` or
+ * `evaluateChoice()` sends through `evaluate()`. On GLiNER2.5-Decide the id can
+ * change the score, and this one gives the same scores as the direct calls in
+ * the C API.
+ */
+const SINGLE_QUESTION_ID = 'q';
+
+/**
  * The Wasm module for Decision with custom C++ bindings.
  */
 declare interface DecisionMakerWasmModule {
@@ -243,6 +251,21 @@ function resolveChoiceCriteria(
   return criteria;
 }
 
+function resolveChoiceOptions(question: ChoiceQuestion): ClassifierOption[] {
+  // A `Map`, because a `Record` puts labels like '3' and '1' in numeric order.
+  const options = new Map<string, ClassifierOption>();
+  for (const [label, description] of Object.entries(question.criteria ?? {})) {
+    options.set(label, {label, description});
+  }
+  for (const option of question.options ?? []) {
+    options.set(option.label, {
+      ...option,
+      description: option.description ?? '',
+    });
+  }
+  return Array.from(options.values());
+}
+
 function resolveScoreRubric(question: ScoreQuestion): {
   rubric: string[];
   labels: string[];
@@ -294,6 +317,27 @@ function enrichOrdinalResult(
       bestIdx < labels.length
         ? labels[bestIdx]
         : (raw.selectedKey ?? String(bestIdx)),
+  };
+}
+
+function toBooleanResult(decision: ClassifierDecision): BooleanResult {
+  return {
+    value: decision.label === 'true',
+    probabilityTrue: decision.probability ?? 0,
+    confidence: decision.confidence,
+  };
+}
+
+function toChoiceResult(decision: ClassifierDecision): ChoiceResult {
+  const probabilities: Record<string, number> = {};
+  for (const {label, probability} of decision.probabilities) {
+    probabilities[label] = probability;
+  }
+  return {
+    selectedKey: decision.label,
+    probabilities,
+    confidence: decision.confidence,
+    predictionSet: decision.predictionSet,
   };
 }
 
@@ -945,6 +989,21 @@ export class DecisionMaker extends TaskRunner {
     // Initialization is performed asynchronously in setOptions().
   }
 
+  // TODO: Remove this path once the Wasm calls accept `normalizePrior`.
+
+  /**
+   * Evaluates a single question through `evaluate()`. The Wasm calls behind
+   * `evaluateBoolean()` and `evaluateChoice()` have no `normalizePrior`
+   * parameter, so questions that set it take this path.
+   */
+  private async evaluateQuestion(
+    input: DecisionContextInput,
+    question: ClassifierQuestion,
+  ): Promise<ClassifierDecision> {
+    const result = await this.evaluate(input, {questions: [question]});
+    return result[question.id];
+  }
+
   /**
    * Evaluates a Boolean Predicate condition against input text or multimodal context.
    *
@@ -966,6 +1025,18 @@ export class DecisionMaker extends TaskRunner {
       ? `${question.context}\n${question.condition}`
       : question.condition;
     const norm = normalizeContextInput(text, question);
+    if (question.normalizePrior) {
+      const threshold = question.threshold ?? 0.5;
+      return this.evaluateQuestion(norm, {
+        id: SINGLE_QUESTION_ID,
+        type: 'binary',
+        prompt: condition,
+        // The direct call ignores a threshold that isn't positive.
+        threshold: threshold > 0 ? threshold : 0.5,
+        temperature: question.temperature ?? 0,
+        normalizePrior: true,
+      }).then(toBooleanResult);
+    }
     if (norm.hasMedia) {
       return this.logInvocation(() =>
         wasmModule.evaluateContextBoolean(
@@ -1014,6 +1085,16 @@ export class DecisionMaker extends TaskRunner {
         : question.context
       : baseInstructions;
     const norm = normalizeContextInput(text, question);
+    if (question.normalizePrior) {
+      return this.evaluateQuestion(norm, {
+        id: SINGLE_QUESTION_ID,
+        type: 'categorical',
+        prompt: instructions,
+        options: resolveChoiceOptions(question),
+        temperature: question.temperature ?? 0,
+        normalizePrior: true,
+      }).then(toChoiceResult);
+    }
     const hasOptionMedia = (question.options ?? []).some(
       (o) =>
         (o.imageBytes && o.imageBytes.byteLength > 0) ||
@@ -1234,7 +1315,12 @@ export class DecisionMaker extends TaskRunner {
     const condition = question.context
       ? `${question.context}\n${question.condition}`
       : question.condition;
-    if (typeof wasmModule.evaluateBooleanBatch === 'function') {
+    // The Wasm batch call has no `normalizePrior` parameter, so questions that
+    // set it go through the loop below.
+    if (
+      typeof wasmModule.evaluateBooleanBatch === 'function' &&
+      !question.normalizePrior
+    ) {
       return this.logInvocation(() =>
         wasmModule.evaluateBooleanBatch!(
           this.makerPtr,
@@ -1248,7 +1334,7 @@ export class DecisionMaker extends TaskRunner {
     }
     const results: BooleanResult[] = [];
     for (const t of texts) {
-      const merged = sharedPrefix ? `${sharedPrefix}\n${t}` : t;
+      const merged = [sharedPrefix, t].filter(Boolean).join('\n');
       results.push(await this.evaluateBoolean(merged, question));
     }
     return results;
@@ -1284,7 +1370,12 @@ export class DecisionMaker extends TaskRunner {
         ? `${question.context}\n${baseInstructions}`
         : question.context
       : baseInstructions;
-    if (typeof wasmModule.evaluateChoiceBatch === 'function') {
+    // The Wasm batch call has no `normalizePrior` parameter, so questions that
+    // set it go through the loop below.
+    if (
+      typeof wasmModule.evaluateChoiceBatch === 'function' &&
+      !question.normalizePrior
+    ) {
       return this.logInvocation(() =>
         wasmModule.evaluateChoiceBatch!(
           this.makerPtr,
@@ -1298,7 +1389,7 @@ export class DecisionMaker extends TaskRunner {
     }
     const results: ChoiceResult[] = [];
     for (const t of texts) {
-      const merged = sharedPrefix ? `${sharedPrefix}\n${t}` : t;
+      const merged = [sharedPrefix, t].filter(Boolean).join('\n');
       results.push(await this.evaluateChoice(merged, question));
     }
     return results;
