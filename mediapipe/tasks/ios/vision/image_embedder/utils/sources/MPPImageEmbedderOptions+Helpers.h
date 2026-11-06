@@ -12,15 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/framework/calculator_options.pb.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
+#import <Foundation/Foundation.h>
+
 #import "mediapipe/tasks/ios/vision/image_embedder/sources/MPPImageEmbedderOptions.h"
+
+struct ImageEmbedderOptions;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MPPImageEmbedderOptions (Helpers) <MPPTaskOptionsProtocol>
+@interface MPPImageEmbedderOptions (Helpers)
 
-- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
+- (void)copyToCOptions:(struct ImageEmbedderOptions *)cOptions;
+
++ (void)freeCOptions:(struct ImageEmbedderOptions *)cOptions;
 
 @end
 

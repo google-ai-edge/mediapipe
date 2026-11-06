@@ -14,53 +14,47 @@
 
 #import "mediapipe/tasks/ios/vision/image_embedder/sources/MPPImageEmbedder.h"
 
+#import <UIKit/UIKit.h>
+
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/components/utils/sources/MPPCosineSimilarity.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
-#import "mediapipe/tasks/ios/vision/core/sources/MPPVisionPacketCreator.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskPart.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionTaskRunner.h"
 #import "mediapipe/tasks/ios/vision/image_embedder/utils/sources/MPPImageEmbedderOptions+Helpers.h"
 #import "mediapipe/tasks/ios/vision/image_embedder/utils/sources/MPPImageEmbedderResult+Helpers.h"
 
-namespace {
-using ::mediapipe::Timestamp;
-using ::mediapipe::tasks::core::PacketMap;
-using ::mediapipe::tasks::core::PacketsCallback;
-}  // namespace
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/c/vision/image_embedder/image_embedder.h"
 
-static NSString *const kEmbeddingsOutStreamName = @"embeddings_out";
-static NSString *const kEmbeddingsTag = @"EMBEDDINGS";
-static NSString *const kImageInStreamName = @"image_in";
-static NSString *const kImageOutStreamName = @"image_out";
-static NSString *const kImageTag = @"IMAGE";
-static NSString *const kNormRectStreamName = @"norm_rect_in";
-static NSString *const kNormRectTag = @"NORM_RECT";
-static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.image_embedder.ImageEmbedderGraph";
 static NSString *const kTaskName = @"imageEmbedder";
 
-static const int kMicrosecondsPerMillisecond = 1000;
-
-#define InputPacketMap(imagePacket, normalizedRectPacket) \
-  {                                                       \
-    {kImageInStreamName.cppString, imagePacket}, {        \
-      kNormRectStreamName.cppString, normalizedRectPacket \
-    }                                                     \
-  }
-
-#define ImageEmbedderResultWithOutputPacketMap(outputPacketMap)                             \
-  ([MPPImageEmbedderResult                                                                  \
-      imageEmbedderResultWithEmbeddingResultPacket:outputPacketMap[kEmbeddingsOutStreamName \
-                                                                       .cppString]])
-
 @interface MPPImageEmbedder () {
-  /** iOS Vision Task Runner */
-  MPPVisionTaskRunner *_visionTaskRunner;
+  MpImageEmbedderPtr _embedder;
+  MPPVisionTaskRunner *_taskRunner;
   dispatch_queue_t _callbackQueue;
+  int _callbackSlot;
 }
 @property(nonatomic, weak) id<MPPImageEmbedderLiveStreamDelegate> imageEmbedderLiveStreamDelegate;
+
+- (void)handleLiveStreamResult:(const ImageEmbedderResult *)cResult
+                        status:(MpStatus)status
+                     timestamp:(int64_t)timestampInMilliseconds;
 @end
+
+namespace {
+using mediapipe::tasks::ios::vision::core::VisionCallbackPool;
+using CallbackPool = VisionCallbackPool<MPPImageEmbedder, ImageEmbedderResult,
+                                        ImageEmbedderOptions::result_callback_fn>;
+
+static void OnLiveStreamResult(MPPImageEmbedder *task, MpStatus status,
+                               const ImageEmbedderResult *result, MpImagePtr image,
+                               int64_t timestamp_ms) {
+  if (task) {
+    [task handleLiveStreamResult:result status:status timestamp:timestamp_ms];
+  }
+}
+}  // namespace
 
 @implementation MPPImageEmbedder
 
@@ -69,55 +63,45 @@ static const int kMicrosecondsPerMillisecond = 1000;
 - (instancetype)initWithOptions:(MPPImageEmbedderOptions *)options error:(NSError **)error {
   self = [super init];
   if (self) {
-    MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
-          initWithTaskName:kTaskName
-             taskGraphName:kTaskGraphName
-              inputStreams:@[
-                [NSString stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
-                [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectStreamName]
-              ]
-             outputStreams:@[
-               [NSString stringWithFormat:@"%@:%@", kEmbeddingsTag, kEmbeddingsOutStreamName],
-               [NSString stringWithFormat:@"%@:%@", kImageTag, kImageOutStreamName]
-             ]
-               taskOptions:options
-        enableFlowLimiting:options.runningMode == MPPRunningModeLiveStream
-               runningMode:MPPCoreRunningModeFromVisionRunningMode(options.runningMode)
-                     error:error];
-
-    if (!taskInfo) {
+    _callbackSlot = -1;
+    _taskRunner = [[MPPVisionTaskRunner alloc]
+        initWithRunningMode:options.runningMode
+                 roiAllowed:YES
+            normRectAllowed:YES
+                hasDelegate:(options.imageEmbedderLiveStreamDelegate != nil)
+                      error:error];
+    if (!_taskRunner) {
       return nil;
     }
 
-    PacketsCallback packetsCallback = nullptr;
-
     if (options.imageEmbedderLiveStreamDelegate) {
       _imageEmbedderLiveStreamDelegate = options.imageEmbedderLiveStreamDelegate;
-
-      // Create a private serial dispatch queue in which the deleagte method will be called
-      // asynchronously. This is to ensure that if the client performs a long running operation in
-      // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
-      // freed up to continue with its operations.
       _callbackQueue = dispatch_queue_create(
           [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], nullptr);
-
-      // Capturing `self` as weak in order to avoid `self` being kept in memory
-      // and cause a retain cycle, after self is set to `nil`.
-      MPPImageEmbedder *__weak weakSelf = self;
-      packetsCallback = [=](absl::StatusOr<PacketMap> liveStreamResult) {
-        [weakSelf processLiveStreamResult:liveStreamResult];
-      };
+      _callbackSlot = CallbackPool::AllocateSlot(self, &OnLiveStreamResult);
+      if (_callbackSlot < 0) {
+        [MPPCommonUtils createCustomError:error
+                                 withCode:MPPTasksErrorCodeInternalError
+                              description:@"Failed to allocate callback slot."];
+        return nil;
+      }
     }
 
-    _visionTaskRunner = [[MPPVisionTaskRunner alloc] initWithTaskInfo:taskInfo
-                                                          runningMode:options.runningMode
-                                                           roiAllowed:YES
-                                                      packetsCallback:std::move(packetsCallback)
-                                                 imageInputStreamName:kImageInStreamName
-                                              normRectInputStreamName:kNormRectStreamName
-                                                                error:error];
+    ImageEmbedderOptions cOptions = {};
+    [options copyToCOptions:&cOptions];
+    if (_callbackSlot >= 0) {
+      cOptions.result_callback = CallbackPool::GetCallback(_callbackSlot);
+    }
 
-    if (!_visionTaskRunner) {
+    char *errorMsg = nullptr;
+    MpStatus status = MpImageEmbedderCreate(&cOptions, &_embedder, &errorMsg);
+    [MPPImageEmbedderOptions freeCOptions:&cOptions];
+
+    if (![MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error]) {
+      if (_callbackSlot >= 0) {
+        CallbackPool::FreeSlot(_callbackSlot);
+        _callbackSlot = -1;
+      }
       return nil;
     }
   }
@@ -126,20 +110,35 @@ static const int kMicrosecondsPerMillisecond = 1000;
 
 - (instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error {
   MPPImageEmbedderOptions *options = [[MPPImageEmbedderOptions alloc] init];
-
   options.baseOptions.modelAssetPath = modelPath;
-
   return [self initWithOptions:options error:error];
 }
 
 - (nullable MPPImageEmbedderResult *)embedImage:(MPPImage *)image
                                regionOfInterest:(CGRect)roi
                                           error:(NSError **)error {
-  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image
-                                                            regionOfInterest:roi
-                                                                       error:error];
-
-  return [MPPImageEmbedder imageEmbedderResultWithOptionalOutputPacketMap:outputPacketMap];
+  if (![_taskRunner validateRunningMode:MPPRunningModeImage error:error]) {
+    return nil;
+  }
+  struct MpImageProcessingOptions imageProcessingOptions = {};
+  ScopedMpImage mpImage = [_taskRunner createMpImageWithMPPImage:image
+                                                regionOfInterest:roi
+                                          imageProcessingOptions:&imageProcessingOptions
+                                                           error:error];
+  if (!mpImage) {
+    return nil;
+  }
+  ImageEmbedderResult cResult = {};
+  char *errorMsg = nullptr;
+  MpStatus status =
+      MpImageEmbedderEmbedImage(_embedder, mpImage, &imageProcessingOptions, &cResult, &errorMsg);
+  if (![MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error]) {
+    return nil;
+  }
+  MPPImageEmbedderResult *result = [MPPImageEmbedderResult imageEmbedderResultWithCResult:cResult
+                                                                  timestampInMilliseconds:0];
+  MpImageEmbedderCloseResult(&cResult);
+  return result;
 }
 
 - (nullable MPPImageEmbedderResult *)embedImage:(MPPImage *)image error:(NSError **)error {
@@ -150,13 +149,30 @@ static const int kMicrosecondsPerMillisecond = 1000;
                              timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                     regionOfInterest:(CGRect)roi
                                                error:(NSError **)error {
-  std::optional<PacketMap> outputPacketMap =
-      [_visionTaskRunner processVideoFrame:image
-                          regionOfInterest:roi
-                   timestampInMilliseconds:timestampInMilliseconds
-                                     error:error];
-
-  return [MPPImageEmbedder imageEmbedderResultWithOptionalOutputPacketMap:outputPacketMap];
+  if (![_taskRunner validateRunningMode:MPPRunningModeVideo error:error]) {
+    return nil;
+  }
+  struct MpImageProcessingOptions imageProcessingOptions = {};
+  ScopedMpImage mpImage = [_taskRunner createMpImageWithMPPImage:image
+                                                regionOfInterest:roi
+                                          imageProcessingOptions:&imageProcessingOptions
+                                                           error:error];
+  if (!mpImage) {
+    return nil;
+  }
+  ImageEmbedderResult cResult = {};
+  char *errorMsg = nullptr;
+  MpStatus status = MpImageEmbedderEmbedForVideo(_embedder, mpImage, &imageProcessingOptions,
+                                                 static_cast<int64_t>(timestampInMilliseconds),
+                                                 &cResult, &errorMsg);
+  if (![MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error]) {
+    return nil;
+  }
+  MPPImageEmbedderResult *result =
+      [MPPImageEmbedderResult imageEmbedderResultWithCResult:cResult
+                                     timestampInMilliseconds:timestampInMilliseconds];
+  MpImageEmbedderCloseResult(&cResult);
+  return result;
 }
 
 - (nullable MPPImageEmbedderResult *)embedVideoFrame:(MPPImage *)image
@@ -172,10 +188,22 @@ static const int kMicrosecondsPerMillisecond = 1000;
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
            regionOfInterest:(CGRect)roi
                       error:(NSError **)error {
-  return [_visionTaskRunner processLiveStreamImage:image
-                                  regionOfInterest:roi
-                           timestampInMilliseconds:timestampInMilliseconds
-                                             error:error];
+  if (![_taskRunner validateRunningMode:MPPRunningModeLiveStream error:error]) {
+    return NO;
+  }
+  struct MpImageProcessingOptions imageProcessingOptions = {};
+  ScopedMpImage mpImage = [_taskRunner createMpImageWithMPPImage:image
+                                                regionOfInterest:roi
+                                          imageProcessingOptions:&imageProcessingOptions
+                                                           error:error];
+  if (!mpImage) {
+    return NO;
+  }
+  char *errorMsg = nullptr;
+  MpStatus status =
+      MpImageEmbedderEmbedAsync(_embedder, mpImage, &imageProcessingOptions,
+                                static_cast<int64_t>(timestampInMilliseconds), &errorMsg);
+  return [MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error];
 }
 
 - (BOOL)embedAsyncImage:(MPPImage *)image
@@ -187,59 +215,34 @@ static const int kMicrosecondsPerMillisecond = 1000;
                          error:error];
 }
 
+- (void)dealloc {
+  MpImageEmbedderPtr embedder = _embedder;
+  _embedder = nullptr;
+  int callbackSlot = _callbackSlot;
+  _callbackSlot = -1;
+  dispatch_queue_t callbackQueue = _callbackQueue;
+  _callbackQueue = nil;
+
+  if (callbackSlot >= 0) {
+    dispatch_queue_t cleanupQueue =
+        callbackQueue ?: dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0);
+    dispatch_async(cleanupQueue, ^{
+      if (embedder) {
+        MpImageEmbedderClose(embedder, nullptr);
+      }
+      CallbackPool::FreeSlot(callbackSlot);
+    });
+  } else if (embedder) {
+    MpImageEmbedderClose(embedder, nullptr);
+  }
+}
+
 + (nullable NSNumber *)cosineSimilarityBetweenEmbedding1:(MPPEmbedding *)embedding1
                                            andEmbedding2:(MPPEmbedding *)embedding2
                                                    error:(NSError **)error {
   return [MPPCosineSimilarity computeBetweenEmbedding1:embedding1
                                          andEmbedding2:embedding2
                                                  error:error];
-}
-
-#pragma mark - Private
-
-- (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
-  if (![self.imageEmbedderLiveStreamDelegate
-          respondsToSelector:@selector(imageEmbedder:
-                                 didFinishEmbeddingWithResult:timestampInMilliseconds:error:)]) {
-    return;
-  }
-
-  NSError *callbackError = nil;
-  if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
-    dispatch_async(_callbackQueue, ^{
-      [self.imageEmbedderLiveStreamDelegate imageEmbedder:self
-                             didFinishEmbeddingWithResult:nil
-                                  timestampInMilliseconds:Timestamp::Unset().Value()
-                                                    error:callbackError];
-    });
-    return;
-  }
-
-  PacketMap &outputPacketMap = liveStreamResult.value();
-  if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
-    return;
-  }
-
-  MPPImageEmbedderResult *result = ImageEmbedderResultWithOutputPacketMap(outputPacketMap);
-
-  NSInteger timestampInMilliseconds =
-      outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
-      kMicrosecondsPerMillisecond;
-  dispatch_async(_callbackQueue, ^{
-    [self.imageEmbedderLiveStreamDelegate imageEmbedder:self
-                           didFinishEmbeddingWithResult:result
-                                timestampInMilliseconds:timestampInMilliseconds
-                                                  error:callbackError];
-  });
-}
-
-+ (nullable MPPImageEmbedderResult *)imageEmbedderResultWithOptionalOutputPacketMap:
-    (std::optional<PacketMap>)outputPacketMap {
-  if (!outputPacketMap.has_value()) {
-    return nil;
-  }
-
-  return ImageEmbedderResultWithOutputPacketMap(outputPacketMap.value());
 }
 
 - (nullable MPPEmbeddingResult *)embedContent:(NSArray<id> *)content error:(NSError **)error {
@@ -286,6 +289,45 @@ static const int kMicrosecondsPerMillisecond = 1000;
                withCode:MPPTasksErrorCodeInvalidArgumentError
             description:@"Content is empty or does not contain any supported image elements."];
   return nil;
+}
+
+#pragma mark - Private
+
+- (void)handleLiveStreamResult:(const ImageEmbedderResult *)cResult
+                        status:(MpStatus)status
+                     timestamp:(int64_t)timestampInMilliseconds {
+  if (![self.imageEmbedderLiveStreamDelegate
+          respondsToSelector:@selector(imageEmbedder:didFinishEmbeddingWithResult:
+                                       timestampInMilliseconds:error:)]) {
+    return;
+  }
+
+  NSError *callbackError = nil;
+  MPPImageEmbedderResult *result = nil;
+
+  if (status != kMpOk) {
+    [MPPCommonUtils checkCError:status errorMessage:nullptr toError:&callbackError];
+  } else if (cResult) {
+    result = [MPPImageEmbedderResult imageEmbedderResultWithCResult:*cResult
+                                            timestampInMilliseconds:timestampInMilliseconds];
+  }
+
+  dispatch_queue_t callbackQueue = _callbackQueue;
+  if (!callbackQueue) {
+    return;
+  }
+  __weak id<MPPImageEmbedderLiveStreamDelegate> delegate = self.imageEmbedderLiveStreamDelegate;
+  MPPImageEmbedder *__weak weakSelf = self;
+
+  dispatch_async(callbackQueue, ^{
+    MPPImageEmbedder *strongSelf = weakSelf;
+    if (strongSelf) {
+      [delegate imageEmbedder:strongSelf
+          didFinishEmbeddingWithResult:result
+               timestampInMilliseconds:timestampInMilliseconds
+                                 error:callbackError];
+    }
+  });
 }
 
 @end

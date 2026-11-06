@@ -12,16 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#import <Foundation/Foundation.h>
+
 #import "mediapipe/tasks/ios/vision/image_embedder/sources/MPPImageEmbedderResult.h"
 
-#include "mediapipe/framework/packet.h"
+struct MpEmbeddingResult;
+typedef struct MpEmbeddingResult ImageEmbedderResult;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPImageEmbedderResult (Helpers)
 
-+ (MPPImageEmbedderResult *)imageEmbedderResultWithEmbeddingResultPacket:
-    (const mediapipe::Packet &)packet;
++ (nullable MPPImageEmbedderResult *)
+    imageEmbedderResultWithCResult:(const ImageEmbedderResult &)cResult
+           timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 
 @end
 

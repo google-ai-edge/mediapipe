@@ -12,36 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPEmbeddingResult+Helpers.h"
 #import "mediapipe/tasks/ios/vision/image_embedder/utils/sources/MPPImageEmbedderResult+Helpers.h"
 
-#include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
+#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPEmbeddingResult+Helpers.h"
 
-static const int kMicrosecondsPerMillisecond = 1000;
-
-namespace {
-using EmbeddingResultProto = ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
-using ::mediapipe::Packet;
-}  // namespace
-
-#define int kMicrosecondsPerMillisecond = 1000;
+#include "mediapipe/tasks/c/components/containers/embedding_result.h"
+#include "mediapipe/tasks/c/vision/image_embedder/image_embedder.h"
 
 @implementation MPPImageEmbedderResult (Helpers)
 
-+ (MPPImageEmbedderResult *)imageEmbedderResultWithEmbeddingResultPacket:(const Packet &)packet {
-  if (!packet.ValidateAsType<EmbeddingResultProto>().ok()) {
-    // MPPImageEmbedderResult's timestamp is populated from timestamp `EmbeddingResultProto`'s
-    // timestamp_ms(). It is 0 since the packet can't be validated as a `EmbeddingResultProto`.
-    return [[MPPImageEmbedderResult alloc] initWithEmbeddingResult:nil timestampInMilliseconds:0];
++ (nullable MPPImageEmbedderResult *)
+    imageEmbedderResultWithCResult:(const ImageEmbedderResult &)cResult
+           timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
+  MPPEmbeddingResult *embeddingResult = [MPPEmbeddingResult embeddingResultWithCResult:cResult];
+  if (!embeddingResult) {
+    return nil;
   }
-
-  MPPEmbeddingResult *embeddingResult =
-      [MPPEmbeddingResult embeddingResultWithProto:packet.Get<EmbeddingResultProto>()];
-
-  return [[MPPImageEmbedderResult alloc]
-      initWithEmbeddingResult:embeddingResult
-      timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
-                                          kMicrosecondsPerMillisecond)];
+  return [[MPPImageEmbedderResult alloc] initWithEmbeddingResult:embeddingResult
+                                         timestampInMilliseconds:timestampInMilliseconds];
 }
 
 @end
