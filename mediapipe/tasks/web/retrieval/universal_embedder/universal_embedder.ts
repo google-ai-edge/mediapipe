@@ -32,6 +32,7 @@ import {
 import type {
   ActivationDataType,
   ContentPart,
+  UniversalEmbedderDelegate as Delegate,
   EmbeddingProvider,
   UniversalEmbedderOptions,
 } from './universal_embedder_options';
@@ -44,6 +45,7 @@ export type {
   EmbeddingProvider,
   ImagePart,
   TextPart,
+  UniversalEmbedderDelegate,
   UniversalEmbedderOptions,
 } from './universal_embedder_options';
 export type {
@@ -74,6 +76,66 @@ function parseActivationDataType(type?: ActivationDataType): number {
 }
 
 /**
+ * Numeric delegate codes expected by the C++ `CreateUniversalEmbedder` API.
+ * They match `mediapipe::tasks::core::BaseOptions::Delegate` and must stay in
+ * sync with `universal_embedder_api.cc`.
+ */
+const DELEGATE_CPU = 0;
+const DELEGATE_GPU = 1;
+
+/** Backend for each encoder after applying `baseOptions.delegate` defaults. */
+interface ResolvedDelegates {
+  text: Delegate;
+  vision: Delegate;
+  audio: Delegate;
+}
+
+/** Validates a delegate value, which may come from untyped JS callers. */
+function parseDelegate(delegate: Delegate): Delegate {
+  if (delegate !== 'CPU' && delegate !== 'GPU') {
+    throw new Error(`Unsupported delegate: ${delegate}`);
+  }
+  return delegate;
+}
+
+/**
+ * Resolves the per-encoder delegates: each of `textDelegate`,
+ * `visionDelegate`, and `audioDelegate` falls back to `baseOptions.delegate`,
+ * which itself defaults to 'GPU'.
+ */
+function resolveDelegates(
+  options: UniversalEmbedderOptions,
+): ResolvedDelegates {
+  const base = parseDelegate(options.baseOptions.delegate ?? 'GPU');
+  return {
+    text: parseDelegate(options.textDelegate ?? base),
+    vision: parseDelegate(options.visionDelegate ?? base),
+    audio: parseDelegate(options.audioDelegate ?? base),
+  };
+}
+
+/** Returns true if any encoder runs on GPU and thus needs a WebGPU device. */
+function usesGpu(delegates: ResolvedDelegates): boolean {
+  return (
+    delegates.text === 'GPU' ||
+    delegates.vision === 'GPU' ||
+    delegates.audio === 'GPU'
+  );
+}
+
+/** Maps a delegate to the numeric code expected by the C++ API. */
+function toDelegateCode(delegate: Delegate): number {
+  switch (delegate) {
+    case 'CPU':
+      return DELEGATE_CPU;
+    case 'GPU':
+      return DELEGATE_GPU;
+    default:
+      throw new Error(`Unsupported delegate: ${delegate}`);
+  }
+}
+
+/**
  * Declarations for the native UniversalEmbedder WebAssembly module.
  *
  * Using `declare interface` instructs Tsickle to generate Closure Compiler
@@ -90,6 +152,9 @@ export declare interface UniversalEmbedderWasmModule extends WasmModule {
     maxInputLength: number,
     visionTokensPerImage: number,
     activationDataType: number,
+    textDelegate: number,
+    visionDelegate: number,
+    audioDelegate: number,
   ): Promise<number>;
   universalEmbedder_embedText(
     handle: number,
@@ -131,6 +196,11 @@ export class UniversalEmbedder {
   private static instanceCounter = 0;
   private isClosed = false;
   private nativeHandle = 0;
+  private delegates: ResolvedDelegates = {
+    text: 'GPU',
+    vision: 'GPU',
+    audio: 'GPU',
+  };
   private readonly mutex = new AsyncMutex();
   private logger?: TaskLogger;
   private loggerTimestamp = 0;
@@ -143,9 +213,11 @@ export class UniversalEmbedder {
     wasmFileset: WasmFileset,
     options: UniversalEmbedderOptions,
   ): Promise<UniversalEmbedder> {
+    // Create the WebGPU device up front only when an encoder runs on GPU and
+    // the caller did not provide one; `initialize()` owns the final
+    // device/delegate resolution.
     let device = options.baseOptions.device;
-
-    if (!device) {
+    if (!device && usesGpu(resolveDelegates(options))) {
       device = await UniversalEmbedder.createWebGpuDevice();
     }
 
@@ -165,10 +237,6 @@ export class UniversalEmbedder {
       /* glCanvas= */ null,
       fileLocator,
     );
-
-    if (device) {
-      instance.wasmModule.preinitializedWebGPUDevice = device;
-    }
 
     await instance.initialize(options, device);
     return instance;
@@ -249,6 +317,21 @@ export class UniversalEmbedder {
     this.wasmModule = wasmModule as UniversalEmbedderWasmModule;
   }
 
+  private recordInputArrival(
+    timestamp: number,
+    ...modalityDelegates: Delegate[]
+  ): void {
+    // Every embedding call executes the main/text encoder to produce the final
+    // embedding in addition to any modality-specific encoder(s).
+    const touchesGpu =
+      this.delegates.text === 'GPU' || modalityDelegates.includes('GPU');
+    if (touchesGpu) {
+      this.logger!.recordGpuInputArrival(timestamp);
+    } else {
+      this.logger!.recordCpuInputArrival(timestamp);
+    }
+  }
+
   private async initialize(
     options: UniversalEmbedderOptions,
     injectedDevice?: GPUDevice,
@@ -264,14 +347,19 @@ export class UniversalEmbedder {
       ? options.baseOptions.modelAssetPath.toString()
       : '';
 
-    let device =
-      injectedDevice ||
-      options.baseOptions.device ||
-      this.wasmModule.preinitializedWebGPUDevice;
-    if (!device) {
-      device = await UniversalEmbedder.createWebGpuDevice();
+    this.delegates = resolveDelegates(options);
+    if (usesGpu(this.delegates)) {
+      let device =
+        injectedDevice ||
+        options.baseOptions.device ||
+        this.wasmModule.preinitializedWebGPUDevice;
+      if (!device) {
+        device = await UniversalEmbedder.createWebGpuDevice();
+      }
+      this.wasmModule.preinitializedWebGPUDevice = device;
+    } else {
+      this.wasmModule.preinitializedWebGPUDevice = undefined;
     }
-    this.wasmModule.preinitializedWebGPUDevice = device;
 
     if (options.baseOptions.modelAssetBuffer) {
       const buffer =
@@ -304,6 +392,9 @@ export class UniversalEmbedder {
         maxInputLength,
         visionTokensPerImage,
         activationDataType,
+        toDelegateCode(this.delegates.text),
+        toDelegateCode(this.delegates.vision),
+        toDelegateCode(this.delegates.audio),
       );
       this.logger.logSessionStart();
     } catch (e) {
@@ -320,7 +411,7 @@ export class UniversalEmbedder {
     return this.mutex.runExclusive(async () => {
       this.ensureNotClosed();
       const timestamp = this.loggerTimestamp++;
-      this.logger!.recordGpuInputArrival(timestamp);
+      this.recordInputArrival(timestamp, this.delegates.text);
       const floatArray = await this.wasmModule.universalEmbedder_embedText(
         this.nativeHandle,
         text,
@@ -346,7 +437,7 @@ export class UniversalEmbedder {
     return this.mutex.runExclusive(async () => {
       this.ensureNotClosed();
       const timestamp = this.loggerTimestamp++;
-      this.logger!.recordGpuInputArrival(timestamp);
+      this.recordInputArrival(timestamp, this.delegates.vision);
       const floatArray = await this.wasmModule.universalEmbedder_embedImage(
         this.nativeHandle,
         imageBytes,
@@ -372,7 +463,7 @@ export class UniversalEmbedder {
     return this.mutex.runExclusive(async () => {
       this.ensureNotClosed();
       const timestamp = this.loggerTimestamp++;
-      this.logger!.recordGpuInputArrival(timestamp);
+      this.recordInputArrival(timestamp, this.delegates.audio);
       const floatArray = await this.wasmModule.universalEmbedder_embedAudio(
         this.nativeHandle,
         audioData,
@@ -407,8 +498,12 @@ export class UniversalEmbedder {
       const builderHandle =
         this.wasmModule.universalEmbedder_createContentBuilder();
       try {
+        // Every embedding call runs the main/text encoder to produce the final
+        // embedding, plus any modality-specific encoders used by `content`.
+        let touchesGpu = this.delegates.text === 'GPU';
         for (const part of content) {
           if ('text' in part && typeof part.text === 'string') {
+            touchesGpu ||= this.delegates.text === 'GPU';
             this.wasmModule.universalEmbedder_builderAddText(
               builderHandle,
               part.text,
@@ -418,6 +513,7 @@ export class UniversalEmbedder {
             (part.imageBytes instanceof Uint8Array ||
               typeof part.imageBytes === 'string')
           ) {
+            touchesGpu ||= this.delegates.vision === 'GPU';
             this.wasmModule.universalEmbedder_builderAddImage(
               builderHandle,
               part.imageBytes,
@@ -427,6 +523,7 @@ export class UniversalEmbedder {
             (part.audioData instanceof Float32Array ||
               Array.isArray(part.audioData))
           ) {
+            touchesGpu ||= this.delegates.audio === 'GPU';
             this.wasmModule.universalEmbedder_builderAddAudio(
               builderHandle,
               part.audioData,
@@ -439,7 +536,7 @@ export class UniversalEmbedder {
         }
 
         const timestamp = this.loggerTimestamp++;
-        this.logger!.recordGpuInputArrival(timestamp);
+        this.recordInputArrival(timestamp, touchesGpu ? 'GPU' : 'CPU');
         const floatArray =
           await this.wasmModule.universalEmbedder_executeEmbedContent(
             this.nativeHandle,

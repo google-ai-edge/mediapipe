@@ -53,6 +53,13 @@ void DisableLiteRtLmLogging() {
 #endif
 }
 
+// Throws a JavaScript Error carrying the full status (code + message), since
+// some LiteRT-LM failures have an empty message.
+[[noreturn]] void ReportAndThrowStatus(const absl::Status& status) {
+  ReportAndThrowError(
+      status.ToString(absl::StatusToStringMode::kWithNoExtraData));
+}
+
 // Validates the opaque handle and casts it back to the UniversalEmbedder
 // pointer.
 UniversalEmbedder* GetEmbedderFromHandleOrThrow(intptr_t handle) {
@@ -117,6 +124,26 @@ std::vector<float> ExtractFloatArrayFromJs(emscripten::val float_array_val) {
   return float_samples;
 }
 
+// Numeric delegate codes passed from `universal_embedder.ts`; they match
+// `BaseOptions::Delegate` and must stay in sync with `DELEGATE_CPU` /
+// `DELEGATE_GPU` there.
+constexpr int kDelegateCpu = tasks::core::BaseOptions::CPU;
+constexpr int kDelegateGpu = tasks::core::BaseOptions::GPU;
+
+// Converts a numeric delegate code from JavaScript to a BaseOptions delegate.
+tasks::core::BaseOptions::Delegate ParseDelegateOrThrow(
+    int delegate, absl::string_view encoder_name) {
+  switch (delegate) {
+    case kDelegateCpu:
+      return tasks::core::BaseOptions::CPU;
+    case kDelegateGpu:
+      return tasks::core::BaseOptions::GPU;
+    default:
+      ReportAndThrowError(
+          absl::StrCat("Unsupported ", encoder_name, " delegate: ", delegate));
+  }
+}
+
 }  // namespace
 
 // Creates the native UniversalEmbedder instance and returns its pointer as an
@@ -124,11 +151,18 @@ std::vector<float> ExtractFloatArrayFromJs(emscripten::val float_array_val) {
 intptr_t CreateUniversalEmbedder(const std::string& model_path,
                                  bool l2_normalize, int max_input_length,
                                  int vision_tokens_per_image,
-                                 int activation_data_type) {
+                                 int activation_data_type, int text_delegate,
+                                 int vision_delegate, int audio_delegate) {
   DisableLiteRtLmLogging();
   auto options = std::make_unique<UniversalEmbedderOptions>();
   options->base_options.model_asset_path = model_path;
-  options->base_options.delegate = tasks::core::BaseOptions::GPU;
+  // JavaScript resolves `baseOptions.delegate` into one delegate per encoder,
+  // so all three are set explicitly; `base_options.delegate` is only the
+  // fallback for unset per-encoder delegates.
+  options->text_delegate = ParseDelegateOrThrow(text_delegate, "text");
+  options->vision_delegate = ParseDelegateOrThrow(vision_delegate, "vision");
+  options->audio_delegate = ParseDelegateOrThrow(audio_delegate, "audio");
+  options->base_options.delegate = *options->text_delegate;
   options->l2_normalize = l2_normalize;
   if (max_input_length > 0) {
     options->max_input_length = max_input_length;
@@ -158,7 +192,7 @@ intptr_t CreateUniversalEmbedder(const std::string& model_path,
 
   auto embedder_or = UniversalEmbedder::Create(std::move(options));
   if (!embedder_or.ok()) {
-    ReportAndThrowError(embedder_or.status().message());
+    ReportAndThrowStatus(embedder_or.status());
   }
   return reinterpret_cast<intptr_t>(embedder_or.value().release());
 }
@@ -169,7 +203,7 @@ emscripten::val UniversalEmbedderEmbedText(intptr_t handle,
   auto* embedder = GetEmbedderFromHandleOrThrow(handle);
   auto res_or = embedder->EmbedText(text);
   if (!res_or.ok()) {
-    ReportAndThrowError(res_or.status().message());
+    ReportAndThrowStatus(res_or.status());
   }
   return EmbeddingResultToJs(*res_or);
 }
@@ -180,7 +214,7 @@ emscripten::val UniversalEmbedderEmbedImage(intptr_t handle,
   auto* embedder = GetEmbedderFromHandleOrThrow(handle);
   auto res_or = embedder->EmbedImage(ExtractBytesFromJs(image_val));
   if (!res_or.ok()) {
-    ReportAndThrowError(res_or.status().message());
+    ReportAndThrowStatus(res_or.status());
   }
   return EmbeddingResultToJs(*res_or);
 }
@@ -192,7 +226,7 @@ emscripten::val UniversalEmbedderEmbedAudio(intptr_t handle,
   auto res_or =
       embedder->EmbedAudio(ExtractFloatArrayFromJs(audio_samples_val));
   if (!res_or.ok()) {
-    ReportAndThrowError(res_or.status().message());
+    ReportAndThrowStatus(res_or.status());
   }
   return EmbeddingResultToJs(*res_or);
 }
@@ -238,7 +272,7 @@ emscripten::val UniversalEmbedderExecuteEmbedContent(intptr_t handle,
 
   auto res_or = embedder->EmbedContent(*parts);
   if (!res_or.ok()) {
-    ReportAndThrowError(res_or.status().message());
+    ReportAndThrowStatus(res_or.status());
   }
   return EmbeddingResultToJs(*res_or);
 }
