@@ -14,22 +14,9 @@
 
 #import <XCTest/XCTest.h>
 
-#include "mediapipe/framework/formats/classification.pb.h"
-#include "mediapipe/framework/formats/landmark.pb.h"
-#include "mediapipe/framework/formats/matrix_data.pb.h"
-#include "mediapipe/framework/packet.h"
-#include "mediapipe/tasks/cc/vision/face_geometry/proto/face_geometry.pb.h"
+#include "mediapipe/tasks/c/vision/face_landmarker/face_landmarker_result.h"
 #import "mediapipe/tasks/ios/vision/face_landmarker/sources/MPPFaceLandmarkerResult.h"
 #import "mediapipe/tasks/ios/vision/face_landmarker/utils/sources/MPPFaceLandmarkerResult+Helpers.h"
-
-using ::mediapipe::MakePacket;
-using ::mediapipe::Packet;
-using ::mediapipe::Timestamp;
-using NormalizedLandmarkListProto = ::mediapipe::NormalizedLandmarkList;
-using ClassificationListProto = ::mediapipe::ClassificationList;
-using FaceGeometryProto = ::mediapipe::tasks::vision::face_geometry::proto::FaceGeometry;
-
-static constexpr int kMicrosecondsPerMillisecond = 1000;
 
 @interface MPPLandmarkerResultHelpersTests : XCTestCase {
 }
@@ -37,50 +24,70 @@ static constexpr int kMicrosecondsPerMillisecond = 1000;
 
 @implementation MPPLandmarkerResultHelpersTests
 
-- (void)testCreatesResultFromLandmarkerPackets {
-  const std::vector<NormalizedLandmarkListProto> normalizedLandmarkProtos({{}});
-  const std::vector<ClassificationListProto> classificationProtos({{}});
-  const std::vector<FaceGeometryProto> faceGeometryProto({{}});
+- (void)testCreatesResultFromCResult {
+  MpNormalizedLandmark landmarks[1] = {{.x = 0.1f, .y = 0.2f, .z = 0.3f}};
+  MpNormalizedLandmarks landmarkList = {.landmarks = landmarks, .landmarks_count = 1};
 
-  const auto landmarksPacket =
-      MakePacket<std::vector<NormalizedLandmarkListProto>>(normalizedLandmarkProtos)
-          .At(Timestamp(42 * kMicrosecondsPerMillisecond));
-  const auto classificationsPacket =
-      MakePacket<std::vector<ClassificationListProto>>(classificationProtos)
-          .At(Timestamp(42 * kMicrosecondsPerMillisecond));
-  const auto faceGeometryPacket = MakePacket<std::vector<FaceGeometryProto>>(faceGeometryProto)
-                                      .At(Timestamp(42 * kMicrosecondsPerMillisecond));
+  char categoryName[] = "brow";
+  char displayName[] = "";
+  MpCategory category = {
+      .index = 0, .score = 0.9f, .category_name = categoryName, .display_name = displayName};
+  MpCategories categories = {.categories = &category, .categories_count = 1};
+
+  float matrixData[16] = {0};
+  MpMatrix matrix = {.rows = 4, .cols = 4, .data = matrixData};
+
+  MpFaceLandmarkerResult cResult = {
+      .face_landmarks = &landmarkList,
+      .face_landmarks_count = 1,
+      .face_blendshapes = &categories,
+      .face_blendshapes_count = 1,
+      .facial_transformation_matrixes = &matrix,
+      .facial_transformation_matrixes_count = 1,
+  };
 
   MPPFaceLandmarkerResult *results =
-      [MPPFaceLandmarkerResult faceLandmarkerResultWithLandmarksPacket:landmarksPacket
-                                                     blendshapesPacket:classificationsPacket
-                                          transformationMatrixesPacket:faceGeometryPacket];
+      [MPPFaceLandmarkerResult faceLandmarkerResultWithCResult:cResult timestampInMilliseconds:42];
 
   XCTAssertEqual(results.faceLandmarks.count, 1);
+  XCTAssertEqual(results.faceLandmarks[0].count, 1);
+  XCTAssertEqualWithAccuracy(results.faceLandmarks[0][0].x, 0.1f, 1e-4f);
+  XCTAssertEqualWithAccuracy(results.faceLandmarks[0][0].y, 0.2f, 1e-4f);
+  XCTAssertEqualWithAccuracy(results.faceLandmarks[0][0].z, 0.3f, 1e-4f);
+
   XCTAssertEqual(results.faceBlendshapes.count, 1);
+  XCTAssertEqual(results.faceBlendshapes[0].headIndex, 0);
+  XCTAssertEqualObjects(results.faceBlendshapes[0].headName, @"");
+  XCTAssertEqual(results.faceBlendshapes[0].categories.count, 1);
+  XCTAssertEqual(results.faceBlendshapes[0].categories[0].index, 0);
+  XCTAssertEqualWithAccuracy(results.faceBlendshapes[0].categories[0].score, 0.9f, 1e-4f);
+  XCTAssertEqualObjects(results.faceBlendshapes[0].categories[0].categoryName, @"brow");
+  XCTAssertEqualObjects(results.faceBlendshapes[0].categories[0].displayName, @"");
+
   XCTAssertEqual(results.facialTransformationMatrixes.count, 1);
   XCTAssertEqual(results.timestampInMilliseconds, 42);
 }
 
-- (void)testCreatesCreatesCopyOfFacialTransformationMatrix {
-  MPPFaceLandmarkerResult *results;
+- (void)testCreatesCopyOfFacialTransformationMatrix {
+  float matrixData[16];
+  for (size_t i = 0; i < 16; ++i) {
+    matrixData[i] = 0.1f * i;
+  }
+  MpMatrix matrix = {.rows = 4, .cols = 4, .data = matrixData};
 
-  {
-    // Create scope so that FaceGeometryProto gets deallocated before we access the
-    // MPPFaceLandmarkerResult.
-    FaceGeometryProto faceGeometryProto{};
-    auto *matrixData = faceGeometryProto.mutable_pose_transform_matrix();
-    matrixData->set_cols(4);
-    matrixData->set_rows(4);
-    for (size_t i = 0; i < 4 * 4; ++i) {
-      matrixData->add_packed_data(0.1f * i);
-    }
+  MpFaceLandmarkerResult cResult = {
+      .face_landmarks = nullptr,
+      .face_landmarks_count = 0,
+      .face_blendshapes = nullptr,
+      .face_blendshapes_count = 0,
+      .facial_transformation_matrixes = &matrix,
+      .facial_transformation_matrixes_count = 1,
+  };
 
-    const std::vector<FaceGeometryProto> faceGeometryProtos({faceGeometryProto});
-    const auto faceGeometryPacket = MakePacket<std::vector<FaceGeometryProto>>(faceGeometryProtos);
-    results = [MPPFaceLandmarkerResult faceLandmarkerResultWithLandmarksPacket:{}
-        blendshapesPacket:{}
-        transformationMatrixesPacket:faceGeometryPacket];
+  MPPFaceLandmarkerResult *results =
+      [MPPFaceLandmarkerResult faceLandmarkerResultWithCResult:cResult timestampInMilliseconds:0];
+  for (float &value : matrixData) {
+    value = 0.0f;
   }
 
   XCTAssertEqual(results.facialTransformationMatrixes.count, 1);
@@ -95,12 +102,11 @@ static constexpr int kMicrosecondsPerMillisecond = 1000;
   }
 }
 
-- (void)testCreatesResultFromEmptyPackets {
-  const Packet emptyPacket = Packet{}.At(Timestamp(0));
+- (void)testCreatesResultFromEmptyCResult {
+  MpFaceLandmarkerResult emptyResult = {};
   MPPFaceLandmarkerResult *results =
-      [MPPFaceLandmarkerResult faceLandmarkerResultWithLandmarksPacket:emptyPacket
-                                                     blendshapesPacket:emptyPacket
-                                          transformationMatrixesPacket:emptyPacket];
+      [MPPFaceLandmarkerResult faceLandmarkerResultWithCResult:emptyResult
+                                       timestampInMilliseconds:0];
 
   NSArray *emptyArray = [NSArray array];
   XCTAssertEqualObjects(results.faceLandmarks, emptyArray);

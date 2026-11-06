@@ -21,9 +21,9 @@
 #include "mediapipe/framework/formats/matrix_data.pb.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/face_geometry.pb.h"
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
-#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
-#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPDetection+Helpers.h"
-#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPLandmark+Helpers.h"
+#import "mediapipe/tasks/ios/components/containers/sources/MPPCategory.h"
+#import "mediapipe/tasks/ios/components/containers/sources/MPPClassificationResult.h"
+#import "mediapipe/tasks/ios/components/containers/sources/MPPLandmark.h"
 #import "mediapipe/tasks/ios/test/vision/utils/sources/MPPImage+TestUtils.h"
 #include "mediapipe/tasks/ios/test/vision/utils/sources/parse_proto_utils.h"
 #import "mediapipe/tasks/ios/vision/face_landmarker/sources/MPPFaceLandmarker.h"
@@ -426,7 +426,13 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
   NSMutableArray<MPPNormalizedLandmark *> *landmarks =
       [NSMutableArray arrayWithCapacity:(NSUInteger)proto.landmark_size()];
   for (const auto &landmarkProto : proto.landmark()) {
-    [landmarks addObject:[MPPNormalizedLandmark normalizedLandmarkWithProto:landmarkProto]];
+    NSNumber *visibility = landmarkProto.has_visibility() ? @(landmarkProto.visibility()) : nil;
+    NSNumber *presence = landmarkProto.has_presence() ? @(landmarkProto.presence()) : nil;
+    [landmarks addObject:[[MPPNormalizedLandmark alloc] initWithX:landmarkProto.x()
+                                                                y:landmarkProto.y()
+                                                                z:landmarkProto.z()
+                                                       visibility:visibility
+                                                         presence:presence]];
   }
   return landmarks;
 }
@@ -437,9 +443,22 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
   if (!get_proto_from_pbtxt([filePath UTF8String], proto).ok()) {
     return nil;
   }
-  return [MPPClassifications classificationsWithClassificationListProto:proto
-                                                              headIndex:0
-                                                               headName:[NSString string]];
+  NSMutableArray<MPPCategory *> *categories =
+      [NSMutableArray arrayWithCapacity:(NSUInteger)proto.classification_size()];
+  for (const auto &classification : proto.classification()) {
+    NSString *categoryName = classification.has_label()
+                                 ? [NSString stringWithUTF8String:classification.label().c_str()]
+                                 : nil;
+    NSString *displayName =
+        classification.has_display_name()
+            ? [NSString stringWithUTF8String:classification.display_name().c_str()]
+            : nil;
+    [categories addObject:[[MPPCategory alloc] initWithIndex:classification.index()
+                                                       score:classification.score()
+                                                categoryName:categoryName
+                                                 displayName:displayName]];
+  }
+  return [[MPPClassifications alloc] initWithHeadIndex:0 headName:@"" categories:categories];
 }
 
 + (MPPTransformMatrix *)expectedTransformationMatrixFromFileInfo:(NSDictionary *)fileInfo {

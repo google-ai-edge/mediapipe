@@ -12,33 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef __cplusplus
-#error "This file requires Objective-C++."
-#endif  // __cplusplus
-
-#include "mediapipe/framework/packet.h"
 #import "mediapipe/tasks/ios/vision/face_landmarker/sources/MPPFaceLandmarkerResult.h"
+
+struct MpFaceLandmarkerResult;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPFaceLandmarkerResult (Helpers)
 
 /**
- * Creates an `MPPFaceLandmarkerResult` from the MediaPipe packets containing the results of the
- * FaceLandmarker.
+ * Creates an `MPPFaceLandmarkerResult` from a MediaPipe C API `MpFaceLandmarkerResult` struct.
  *
- * @param landmarksPacket a MediaPipe packet wrapping a `std::vector<NormalizedLandmarkProto>`.
- * @param blendshapesPacket a MediaPipe packet wrapping a `std::vector<ClassificationProto>`.
- * @param transformationMatrixesPacket a MediaPipe packet wrapping a
- * `std::vector<FaceGeometryProto>`.
+ * @param cResult The C API face landmarker result struct.
+ * @param timestampInMilliseconds The timestamp in milliseconds.
  *
- * @return An `MPPFaceLandmarkerResult` object that contains the contents of the provided packets.
+ * @return An `MPPFaceLandmarkerResult` object.
  */
-+ (MPPFaceLandmarkerResult *)
-    faceLandmarkerResultWithLandmarksPacket:(const ::mediapipe::Packet &)landmarksPacket
-                          blendshapesPacket:(const ::mediapipe::Packet &)blendshapesPacket
-               transformationMatrixesPacket:
-                   (const ::mediapipe::Packet &)transformationMatrixesPacket;
++ (MPPFaceLandmarkerResult *)faceLandmarkerResultWithCResult:
+                                 (const struct MpFaceLandmarkerResult &)cResult
+                                     timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
+
 @end
 
 NS_ASSUME_NONNULL_END

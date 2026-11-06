@@ -13,68 +13,46 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/vision/face_landmarker/sources/MPPFaceLandmarker.h"
-#import <Foundation/Foundation.h>
 
+#import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
-#import "mediapipe/tasks/ios/vision/core/sources/MPPVisionPacketCreator.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionTaskRunner.h"
+#import "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+Utils.h"
 #import "mediapipe/tasks/ios/vision/face_landmarker/sources/MPPFaceLandmarksConnections.h"
 #import "mediapipe/tasks/ios/vision/face_landmarker/utils/sources/MPPFaceLandmarkerOptions+Helpers.h"
 #import "mediapipe/tasks/ios/vision/face_landmarker/utils/sources/MPPFaceLandmarkerResult+Helpers.h"
 
-using ::mediapipe::NormalizedRect;
-using ::mediapipe::Packet;
-using ::mediapipe::Timestamp;
-using ::mediapipe::tasks::core::PacketMap;
-using ::mediapipe::tasks::core::PacketsCallback;
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/c/vision/face_landmarker/face_landmarker.h"
 
-static constexpr int kMicrosecondsPerMillisecond = 1000;
-
-// Constants for the underlying MP Tasks Graph. See
-// https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/tasks/cc/vision/face_landmarker/face_landmarker_graph.cc
-static NSString *const kLandmarksOutStreamName = @"landmarks_out";
-static NSString *const kLandmarksOutTag = @"NORM_LANDMARKS";
-static NSString *const kBlendshapesOutStreamName = @"blendshapes_out";
-static NSString *const kBlendshapesOutTag = @"BLENDSHAPES";
-static NSString *const kFaceGeometryOutStreamName = @"face_geometry_out";
-static NSString *const kFaceGeometryOutTag = @"FACE_GEOMETRY";
-static NSString *const kNormRectStreamName = @"norm_rect_in";
-static NSString *const kNormRectTag = @"NORM_RECT";
-static NSString *const kImageInStreamName = @"image_in";
-static NSString *const kImageOutStreamName = @"image_out";
-static NSString *const kImageTag = @"IMAGE";
-static NSString *const kTaskGraphName =
-    @"mediapipe.tasks.vision.face_landmarker.FaceLandmarkerGraph";
 static NSString *const kTaskName = @"faceLandmarker";
 
-#define InputPacketMap(imagePacket, normalizedRectPacket) \
-  {                                                       \
-    {kImageInStreamName.cppString, imagePacket}, {        \
-      kNormRectStreamName.cppString, normalizedRectPacket \
-    }                                                     \
-  }
-
-#define FaceLandmarkerResultWithOutputPacketMap(outputPacketMap)                                   \
-  ([MPPFaceLandmarkerResult                                                                        \
-      faceLandmarkerResultWithLandmarksPacket:outputPacketMap[kLandmarksOutStreamName.cppString]   \
-                            blendshapesPacket:outputPacketMap[kBlendshapesOutStreamName.cppString] \
-                 transformationMatrixesPacket:outputPacketMap[kFaceGeometryOutStreamName           \
-                                                                  .cppString]])
-
 @interface MPPFaceLandmarker () {
-  /** iOS Vision Task Runner */
-  MPPVisionTaskRunner *_visionTaskRunner;
-  /**
-   * The callback queue for the live stream delegate. This is only set if the user provides a live
-   * stream delegate.
-   */
+  MpFaceLandmarkerPtr _landmarker;
+  MPPVisionTaskRunner *_taskRunner;
   dispatch_queue_t _callbackQueue;
-  /** The user-provided live stream delegate if set. */
   __weak id<MPPFaceLandmarkerLiveStreamDelegate> _faceLandmarkerLiveStreamDelegate;
+  int _callbackSlot;
 }
+
+- (void)handleLiveStreamResult:(const MpFaceLandmarkerResult *)cResult
+                        status:(MpStatus)status
+                     timestamp:(int64_t)timestampInMilliseconds;
+
 @end
+
+namespace {
+using CallbackPool = mediapipe::tasks::ios::vision::core::VisionCallbackPool<
+    MPPFaceLandmarker, MpFaceLandmarkerResult, MpFaceLandmarkerOptions::result_callback_fn>;
+
+static void OnLiveStreamResult(MPPFaceLandmarker *task, MpStatus status,
+                               const MpFaceLandmarkerResult *result, MpImagePtr image,
+                               int64_t timestamp_ms) {
+  if (task) {
+    [task handleLiveStreamResult:result status:status timestamp:timestamp_ms];
+  }
+}
+}  // namespace
 
 @implementation MPPFaceLandmarker
 
@@ -83,70 +61,48 @@ static NSString *const kTaskName = @"faceLandmarker";
 - (instancetype)initWithOptions:(MPPFaceLandmarkerOptions *)options error:(NSError **)error {
   self = [super init];
   if (self) {
-    NSArray<NSString *> *inputStreams = @[
-      [NSString stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
-      [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectStreamName]
-    ];
-
-    NSMutableArray<NSString *> *outputStreams = [NSMutableArray
-        arrayWithObjects:[NSString
-                             stringWithFormat:@"%@:%@", kLandmarksOutTag, kLandmarksOutStreamName],
-                         [NSString stringWithFormat:@"%@:%@", kImageTag, kImageOutStreamName], nil];
-    if (options.outputFaceBlendshapes) {
-      [outputStreams addObject:[NSString stringWithFormat:@"%@:%@", kBlendshapesOutTag,
-                                                          kBlendshapesOutStreamName]];
-    }
-    if (options.outputFacialTransformationMatrixes) {
-      [outputStreams addObject:[NSString stringWithFormat:@"%@:%@", kFaceGeometryOutTag,
-                                                          kFaceGeometryOutStreamName]];
-    }
-
-    MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
-          initWithTaskName:kTaskName
-             taskGraphName:kTaskGraphName
-              inputStreams:inputStreams
-             outputStreams:outputStreams
-               taskOptions:options
-        enableFlowLimiting:options.runningMode == MPPRunningModeLiveStream
-               runningMode:MPPCoreRunningModeFromVisionRunningMode(options.runningMode)
-                     error:error];
-
-    if (!taskInfo) {
+    _callbackSlot = -1;
+    _taskRunner = [[MPPVisionTaskRunner alloc]
+        initWithRunningMode:options.runningMode
+                 roiAllowed:NO
+            normRectAllowed:YES
+                hasDelegate:(options.faceLandmarkerLiveStreamDelegate != nil)
+                      error:error];
+    if (!_taskRunner) {
       return nil;
     }
-
-    PacketsCallback packetsCallback = nullptr;
 
     if (options.faceLandmarkerLiveStreamDelegate) {
       _faceLandmarkerLiveStreamDelegate = options.faceLandmarkerLiveStreamDelegate;
-
-      // Create a private serial dispatch queue in which the delegate method will be called
-      // asynchronously. This is to ensure that if the client performs a long running operation in
-      // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
-      // freed up to continue with its operations.
       _callbackQueue = dispatch_queue_create(
-          [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], NULL);
-
-      // Capturing `self` as weak in order to avoid `self` being kept in memory
-      // and cause a retain cycle, after self is set to `nil`.
-      MPPFaceLandmarker *__weak weakSelf = self;
-      packetsCallback = [weakSelf](absl::StatusOr<PacketMap> liveStreamResult) {
-        [weakSelf processLiveStreamResult:liveStreamResult];
-      };
+          [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], nullptr);
+      _callbackSlot = CallbackPool::AllocateSlot(self, &OnLiveStreamResult);
+      if (_callbackSlot < 0) {
+        [MPPCommonUtils createCustomError:error
+                                 withCode:MPPTasksErrorCodeInternalError
+                              description:@"Failed to allocate callback slot."];
+        return nil;
+      }
     }
 
-    _visionTaskRunner = [[MPPVisionTaskRunner alloc] initWithTaskInfo:taskInfo
-                                                          runningMode:options.runningMode
-                                                           roiAllowed:NO
-                                                      packetsCallback:std::move(packetsCallback)
-                                                 imageInputStreamName:kImageInStreamName
-                                              normRectInputStreamName:kNormRectStreamName
-                                                                error:error];
-    if (!_visionTaskRunner) {
+    MpFaceLandmarkerOptions cOptions = {};
+    [options copyToCOptions:&cOptions];
+    if (_callbackSlot >= 0) {
+      cOptions.result_callback = CallbackPool::GetCallback(_callbackSlot);
+    }
+
+    char *errorMsg = nullptr;
+    MpStatus status = MpFaceLandmarkerCreate(&cOptions, &_landmarker, &errorMsg);
+    [MPPFaceLandmarkerOptions freeCOptions:&cOptions];
+
+    if (![MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error]) {
+      if (_callbackSlot >= 0) {
+        CallbackPool::FreeSlot(_callbackSlot);
+        _callbackSlot = -1;
+      }
       return nil;
     }
   }
-
   return self;
 }
 
@@ -157,28 +113,81 @@ static NSString *const kTaskName = @"faceLandmarker";
 }
 
 - (nullable MPPFaceLandmarkerResult *)detectImage:(MPPImage *)image error:(NSError **)error {
-  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:error];
+  if (![_taskRunner validateRunningMode:MPPRunningModeImage error:error]) {
+    return nil;
+  }
+  struct MpImageProcessingOptions imageProcessingOptions = {};
+  ScopedMpImage cImage = [_taskRunner createMpImageWithMPPImage:image
+                                               regionOfInterest:CGRectZero
+                                         imageProcessingOptions:&imageProcessingOptions
+                                                          error:error];
+  if (!cImage) {
+    return nil;
+  }
 
-  return [MPPFaceLandmarker faceLandmarkerResultWithOptionalOutputPacketMap:outputPacketMap];
+  MpFaceLandmarkerResult cResult = {};
+  char *errorMsg = nullptr;
+  MpStatus status = MpFaceLandmarkerDetectImage(_landmarker, cImage, &imageProcessingOptions,
+                                                &cResult, &errorMsg);
+  if (![MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error]) {
+    return nil;
+  }
+
+  MPPFaceLandmarkerResult *result = [MPPFaceLandmarkerResult faceLandmarkerResultWithCResult:cResult
+                                                                     timestampInMilliseconds:0];
+  MpFaceLandmarkerCloseResult(&cResult);
+  return result;
 }
 
 - (nullable MPPFaceLandmarkerResult *)detectVideoFrame:(MPPImage *)image
                                timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                  error:(NSError **)error {
-  std::optional<PacketMap> outputPacketMap =
-      [_visionTaskRunner processVideoFrame:image
-                   timestampInMilliseconds:timestampInMilliseconds
-                                     error:error];
+  if (![_taskRunner validateRunningMode:MPPRunningModeVideo error:error]) {
+    return nil;
+  }
+  struct MpImageProcessingOptions imageProcessingOptions = {};
+  ScopedMpImage cImage = [_taskRunner createMpImageWithMPPImage:image
+                                               regionOfInterest:CGRectZero
+                                         imageProcessingOptions:&imageProcessingOptions
+                                                          error:error];
+  if (!cImage) {
+    return nil;
+  }
 
-  return [MPPFaceLandmarker faceLandmarkerResultWithOptionalOutputPacketMap:outputPacketMap];
+  MpFaceLandmarkerResult cResult = {};
+  char *errorMsg = nullptr;
+  MpStatus status = MpFaceLandmarkerDetectForVideo(_landmarker, cImage, &imageProcessingOptions,
+                                                   timestampInMilliseconds, &cResult, &errorMsg);
+  if (![MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error]) {
+    return nil;
+  }
+
+  MPPFaceLandmarkerResult *result =
+      [MPPFaceLandmarkerResult faceLandmarkerResultWithCResult:cResult
+                                       timestampInMilliseconds:timestampInMilliseconds];
+  MpFaceLandmarkerCloseResult(&cResult);
+  return result;
 }
 
 - (BOOL)detectAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error {
-  return [_visionTaskRunner processLiveStreamImage:image
-                           timestampInMilliseconds:timestampInMilliseconds
-                                             error:error];
+  if (![_taskRunner validateRunningMode:MPPRunningModeLiveStream error:error]) {
+    return NO;
+  }
+  struct MpImageProcessingOptions imageProcessingOptions = {};
+  ScopedMpImage cImage = [_taskRunner createMpImageWithMPPImage:image
+                                               regionOfInterest:CGRectZero
+                                         imageProcessingOptions:&imageProcessingOptions
+                                                          error:error];
+  if (!cImage) {
+    return NO;
+  }
+
+  char *errorMsg = nullptr;
+  MpStatus status = MpFaceLandmarkerDetectAsync(_landmarker, cImage, &imageProcessingOptions,
+                                                timestampInMilliseconds, &errorMsg);
+  return [MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error];
 }
 
 + (NSArray<MPPConnection *> *)lipsConnections {
@@ -225,47 +234,64 @@ static NSString *const kTaskName = @"faceLandmarker";
   return MPPFaceConnections;
 }
 
-#pragma mark - Private
+- (void)dealloc {
+  MpFaceLandmarkerPtr landmarker = _landmarker;
+  _landmarker = nullptr;
+  int callbackSlot = _callbackSlot;
+  _callbackSlot = -1;
+  dispatch_queue_t callbackQueue = _callbackQueue;
+  _callbackQueue = nil;
 
-+ (nullable MPPFaceLandmarkerResult *)faceLandmarkerResultWithOptionalOutputPacketMap:
-    (std::optional<PacketMap>)outputPacketMap {
-  if (!outputPacketMap.has_value()) {
-    return nil;
+  if (callbackSlot >= 0) {
+    dispatch_queue_t cleanupQueue =
+        callbackQueue ?: dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0);
+    dispatch_async(cleanupQueue, ^{
+      if (landmarker) {
+        MpFaceLandmarkerClose(landmarker, nullptr);
+      }
+      CallbackPool::FreeSlot(callbackSlot);
+    });
+  } else if (landmarker) {
+    MpFaceLandmarkerClose(landmarker, nullptr);
   }
-
-  return FaceLandmarkerResultWithOutputPacketMap(outputPacketMap.value());
 }
 
-- (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
-  NSError *callbackError;
-  if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
-    dispatch_async(_callbackQueue, ^{
-      [_faceLandmarkerLiveStreamDelegate faceLandmarker:self
-                           didFinishDetectionWithResult:nil
-                                timestampInMilliseconds:Timestamp::Unset().Value()
-                                                  error:callbackError];
-    });
+#pragma mark - Private
+
+- (void)handleLiveStreamResult:(const MpFaceLandmarkerResult *)cResult
+                        status:(MpStatus)status
+                     timestamp:(int64_t)timestampInMilliseconds {
+  if (![_faceLandmarkerLiveStreamDelegate
+          respondsToSelector:@selector(faceLandmarker:didFinishDetectionWithResult:
+                                       timestampInMilliseconds:error:)]) {
     return;
   }
 
-  PacketMap &outputPacketMap = *liveStreamResult;
-  if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
-    // The graph did not return a result. We therefore do not raise the user callback. This mirrors
-    // returning `nil` in the other methods and is acceptable for the live stream delegate since
-    // it is expected that we drop frames and don't return results for every input.
-    return;
+  NSError *callbackError = nil;
+  MPPFaceLandmarkerResult *result = nil;
+
+  if (status != kMpOk) {
+    [MPPCommonUtils checkCError:status errorMessage:nullptr toError:&callbackError];
+  } else if (cResult) {
+    result = [MPPFaceLandmarkerResult faceLandmarkerResultWithCResult:*cResult
+                                              timestampInMilliseconds:timestampInMilliseconds];
   }
 
-  MPPFaceLandmarkerResult *result = FaceLandmarkerResultWithOutputPacketMap(outputPacketMap);
+  dispatch_queue_t callbackQueue = _callbackQueue;
+  if (!callbackQueue) {
+    return;
+  }
+  __weak id<MPPFaceLandmarkerLiveStreamDelegate> delegate = _faceLandmarkerLiveStreamDelegate;
+  MPPFaceLandmarker *__weak weakSelf = self;
 
-  NSInteger timestampInMilliseconds =
-      outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
-      kMicrosecondsPerMillisecond;
-  dispatch_async(_callbackQueue, ^{
-    [_faceLandmarkerLiveStreamDelegate faceLandmarker:self
-                         didFinishDetectionWithResult:result
-                              timestampInMilliseconds:timestampInMilliseconds
-                                                error:callbackError];
+  dispatch_async(callbackQueue, ^{
+    MPPFaceLandmarker *strongSelf = weakSelf;
+    if (strongSelf) {
+      [delegate faceLandmarker:strongSelf
+          didFinishDetectionWithResult:result
+               timestampInMilliseconds:timestampInMilliseconds
+                                 error:callbackError];
+    }
   });
 }
 

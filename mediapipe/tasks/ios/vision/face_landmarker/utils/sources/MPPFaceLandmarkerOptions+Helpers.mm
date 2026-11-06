@@ -14,40 +14,44 @@
 
 #import "mediapipe/tasks/ios/vision/face_landmarker/utils/sources/MPPFaceLandmarkerOptions+Helpers.h"
 
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
-#include "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarker_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options.pb.h"
-
-using CalculatorOptionsProto = ::mediapipe::CalculatorOptions;
-using FaceDetectorGraphOptionsProto =
-    ::mediapipe::tasks::vision::face_detector::proto::FaceDetectorGraphOptions;
-using FaceLandmarkerGraphOptionsProto =
-    ::mediapipe::tasks::vision::face_landmarker::proto::FaceLandmarkerGraphOptions;
-using FaceLandmarksDetectorGraphOptionsProto =
-    ::mediapipe::tasks::vision::face_landmarker::proto::FaceLandmarksDetectorGraphOptions;
+#include "mediapipe/tasks/c/vision/face_landmarker/face_landmarker.h"
 
 @implementation MPPFaceLandmarkerOptions (Helpers)
 
-- (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
-  FaceLandmarkerGraphOptionsProto *faceLandmarkerGraphOptions =
-      optionsProto->MutableExtension(FaceLandmarkerGraphOptionsProto::ext);
+- (void)copyToCOptions:(MpFaceLandmarkerOptions *)cOptions {
+  if (!cOptions) {
+    return;
+  }
+  [self.baseOptions copyToCOptions:&cOptions->base_options];
 
-  faceLandmarkerGraphOptions->Clear();
+  switch (self.runningMode) {
+    case MPPRunningModeImage:
+      cOptions->running_mode = MP_RUNNING_MODE_IMAGE;
+      break;
+    case MPPRunningModeVideo:
+      cOptions->running_mode = MP_RUNNING_MODE_VIDEO;
+      break;
+    case MPPRunningModeLiveStream:
+      cOptions->running_mode = MP_RUNNING_MODE_LIVE_STREAM;
+      break;
+  }
 
-  [self.baseOptions copyToProto:faceLandmarkerGraphOptions->mutable_base_options()];
-  faceLandmarkerGraphOptions->set_min_tracking_confidence(self.minTrackingConfidence);
+  cOptions->num_faces = static_cast<int>(self.numFaces);
+  cOptions->min_face_detection_confidence = self.minFaceDetectionConfidence;
+  cOptions->min_face_presence_confidence = self.minFacePresenceConfidence;
+  cOptions->min_tracking_confidence = self.minTrackingConfidence;
+  cOptions->output_face_blendshapes = self.outputFaceBlendshapes;
+  cOptions->output_facial_transformation_matrixes = self.outputFacialTransformationMatrixes;
+  cOptions->result_callback = nullptr;
+}
 
-  FaceLandmarksDetectorGraphOptionsProto *faceLandmarkerDetectorGraphOptions =
-      faceLandmarkerGraphOptions->mutable_face_landmarks_detector_graph_options();
-  faceLandmarkerDetectorGraphOptions->set_min_detection_confidence(self.minFacePresenceConfidence);
-
-  FaceDetectorGraphOptionsProto *faceDetctorGraphOptions =
-      faceLandmarkerGraphOptions->mutable_face_detector_graph_options();
-  faceDetctorGraphOptions->set_num_faces(self.numFaces);
-  faceDetctorGraphOptions->set_min_detection_confidence(self.minFaceDetectionConfidence);
++ (void)freeCOptions:(MpFaceLandmarkerOptions *)cOptions {
+  if (!cOptions) {
+    return;
+  }
+  [MPPBaseOptions freeCOptions:&cOptions->base_options];
 }
 
 @end

@@ -34,11 +34,7 @@ objc_library(
         "-x objective-c++",
     ],
     deps = [
-        "//mediapipe/framework:packet",
-        "//mediapipe/framework/formats:classification_cc_proto",
-        "//mediapipe/framework/formats:landmark_cc_proto",
-        "//mediapipe/framework/formats:matrix_data_cc_proto",
-        "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_cc_proto",
+        "//mediapipe/tasks/c/vision/face_landmarker:face_landmarker_result",
         "//mediapipe/tasks/ios/vision/face_landmarker:MPPFaceLandmarkerResult",
         "//mediapipe/tasks/ios/vision/face_landmarker/utils:MPPFaceLandmarkerResultHelpers",
         "//third_party/apple_frameworks:XCTest",
