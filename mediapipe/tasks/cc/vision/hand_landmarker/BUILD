@@ -28,6 +28,7 @@ cc_library(
     deps = [
         ":hand_landmarker_graph",
         ":hand_landmarker_result",
+        "//mediapipe/calculators/tensor:inference_calculator_litert",  # buildcleaner: keep
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:classification_cc_proto",
@@ -68,7 +69,6 @@ cc_library(
         "//mediapipe/calculators/core:split_vector_calculator_cc_proto",
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/tensor:inference_calculator",
-        "//mediapipe/calculators/tensor:inference_calculator_litert",  # buildcleaner: keep
         "//mediapipe/calculators/tensor:tensors_to_classification_calculator",
         "//mediapipe/calculators/tensor:tensors_to_classification_calculator_cc_proto",
         "//mediapipe/calculators/tensor:tensors_to_floats_calculator",

@@ -29,6 +29,7 @@ cc_library(
         ":gesture_recognizer_graph",
         ":gesture_recognizer_result",
         ":hand_gesture_recognizer_graph",
+        "//mediapipe/calculators/tensor:inference_calculator_litert",  # buildcleaner: keep
         "//mediapipe/framework:packet",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",
@@ -93,7 +94,6 @@ cc_library(
         "//mediapipe/calculators/core:concatenate_vector_calculator",
         "//mediapipe/calculators/core:end_loop_calculator",
         "//mediapipe/calculators/core:get_vector_item_calculator",
-        "//mediapipe/calculators/tensor:inference_calculator_litert",  # buildcleaner: keep
         "//mediapipe/calculators/tensor:tensor_converter_calculator",
         "//mediapipe/calculators/tensor:tensors_to_classification_calculator",
         "//mediapipe/calculators/tensor:tensors_to_classification_calculator_cc_proto",
