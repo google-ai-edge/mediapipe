@@ -15,15 +15,15 @@
 #import "mediapipe/tasks/ios/test/vision/hand_landmarker/utils/sources/MPPHandLandmarkerResult+ProtobufHelpers.h"
 
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
-#import "mediapipe/tasks/ios/vision/hand_landmarker/utils/sources/MPPHandLandmarkerResult+Helpers.h"
+#import "mediapipe/tasks/ios/components/containers/sources/MPPCategory.h"
+#import "mediapipe/tasks/ios/components/containers/sources/MPPLandmark.h"
 
 #include "mediapipe/framework/formats/classification.pb.h"
+#include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/tasks/cc/components/containers/proto/landmarks_detection_result.pb.h"
 #include "mediapipe/tasks/ios/test/vision/utils/sources/parse_proto_utils.h"
 
 namespace {
-using ClassificationListProto = ::mediapipe::ClassificationList;
-using ClassificationProto = ::mediapipe::Classification;
 using LandmarksDetectionResultProto =
     ::mediapipe::tasks::containers::proto::LandmarksDetectionResult;
 using ::mediapipe::tasks::ios::test::vision::utils::get_proto_from_pbtxt;
@@ -48,11 +48,48 @@ using ::mediapipe::tasks::ios::test::vision::utils::get_proto_from_pbtxt;
     }
   }
 
-  return [MPPHandLandmarkerResult
-      handLandmarkerResultWithLandmarksProto:{landmarkDetectionResultProto.landmarks()}
-                         worldLandmarksProto:{landmarkDetectionResultProto.world_landmarks()}
-                             handednessProto:{landmarkDetectionResultProto.classifications()}
-                     timestampInMilliSeconds:0];
+  NSMutableArray<MPPNormalizedLandmark *> *landmarks = [NSMutableArray array];
+  for (const auto &landmark : landmarkDetectionResultProto.landmarks().landmark()) {
+    NSNumber *visibility = landmark.has_visibility() ? @(landmark.visibility()) : nil;
+    NSNumber *presence = landmark.has_presence() ? @(landmark.presence()) : nil;
+    [landmarks addObject:[[MPPNormalizedLandmark alloc] initWithX:landmark.x()
+                                                                y:landmark.y()
+                                                                z:landmark.z()
+                                                       visibility:visibility
+                                                         presence:presence]];
+  }
+
+  NSMutableArray<MPPLandmark *> *worldLandmarks = [NSMutableArray array];
+  for (const auto &landmark : landmarkDetectionResultProto.world_landmarks().landmark()) {
+    NSNumber *visibility = landmark.has_visibility() ? @(landmark.visibility()) : nil;
+    NSNumber *presence = landmark.has_presence() ? @(landmark.presence()) : nil;
+    [worldLandmarks addObject:[[MPPLandmark alloc] initWithX:landmark.x()
+                                                           y:landmark.y()
+                                                           z:landmark.z()
+                                                  visibility:visibility
+                                                    presence:presence]];
+  }
+
+  NSMutableArray<MPPCategory *> *handedness = [NSMutableArray array];
+  for (const auto &classification :
+       landmarkDetectionResultProto.classifications().classification()) {
+    NSString *categoryName = classification.has_label()
+                                 ? [NSString stringWithUTF8String:classification.label().c_str()]
+                                 : nil;
+    NSString *displayName =
+        classification.has_display_name()
+            ? [NSString stringWithUTF8String:classification.display_name().c_str()]
+            : nil;
+    [handedness addObject:[[MPPCategory alloc] initWithIndex:classification.index()
+                                                       score:classification.score()
+                                                categoryName:categoryName
+                                                 displayName:displayName]];
+  }
+
+  return [[MPPHandLandmarkerResult alloc] initWithLandmarks:@[ landmarks ]
+                                             worldLandmarks:@[ worldLandmarks ]
+                                                 handedness:@[ handedness ]
+                                    timestampInMilliseconds:0];
 }
 
 @end

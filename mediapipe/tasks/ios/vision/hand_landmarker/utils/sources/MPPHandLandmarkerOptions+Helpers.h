@@ -12,20 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/framework/calculator_options.pb.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
 #import "mediapipe/tasks/ios/vision/hand_landmarker/sources/MPPHandLandmarkerOptions.h"
+
+struct MpHandLandmarkerOptions;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MPPHandLandmarkerOptions (Helpers) <MPPTaskOptionsProtocol>
+@interface MPPHandLandmarkerOptions (Helpers)
 
-/**
- * Populates the provided `CalculatorOptions` proto container with the current settings.
- *
- * @param optionsProto The `CalculatorOptions` proto object to copy the settings to.
- */
-- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
+/** Copies the options to a MediaPipe C API `MpHandLandmarkerOptions` struct. */
+- (void)copyToCOptions:(struct MpHandLandmarkerOptions *)cOptions;
+
+/** Frees any memory allocated inside a MediaPipe C API `MpHandLandmarkerOptions` struct. */
++ (void)freeCOptions:(struct MpHandLandmarkerOptions *)cOptions;
 
 @end
 

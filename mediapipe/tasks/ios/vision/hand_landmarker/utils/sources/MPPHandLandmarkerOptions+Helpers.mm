@@ -14,48 +14,42 @@
 
 #import "mediapipe/tasks/ios/vision/hand_landmarker/utils/sources/MPPHandLandmarkerOptions+Helpers.h"
 
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
-#include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.pb.h"
-
-namespace {
-using CalculatorOptionsProto = mediapipe::CalculatorOptions;
-using HandLandmarkerGraphOptionsProto =
-    ::mediapipe::tasks::vision::hand_landmarker::proto::HandLandmarkerGraphOptions;
-using HandDetectorGraphOptionsProto =
-    ::mediapipe::tasks::vision::hand_detector::proto::HandDetectorGraphOptions;
-using HandLandmarksDetectorGraphOptionsProto =
-    ::mediapipe::tasks::vision::hand_landmarker::proto::HandLandmarksDetectorGraphOptions;
-}  // namespace
+#include "mediapipe/tasks/c/vision/hand_landmarker/hand_landmarker.h"
 
 @implementation MPPHandLandmarkerOptions (Helpers)
 
-- (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
-  HandLandmarkerGraphOptionsProto *handLandmarkerGraphOptionsProto =
-      optionsProto
-          ->MutableExtension(HandLandmarkerGraphOptionsProto::ext);
-              handLandmarkerGraphOptionsProto->Clear();
+- (void)copyToCOptions:(MpHandLandmarkerOptions *)cOptions {
+  if (!cOptions) {
+    return;
+  }
+  [self.baseOptions copyToCOptions:&cOptions->base_options];
 
-              [self.baseOptions copyToProto:handLandmarkerGraphOptionsProto->mutable_base_options()
-                          withUseStreamMode:self.runningMode != MPPRunningModeImage
-                              withUseLitert:YES];
+  switch (self.runningMode) {
+    case MPPRunningModeImage:
+      cOptions->running_mode = MP_RUNNING_MODE_IMAGE;
+      break;
+    case MPPRunningModeVideo:
+      cOptions->running_mode = MP_RUNNING_MODE_VIDEO;
+      break;
+    case MPPRunningModeLiveStream:
+      cOptions->running_mode = MP_RUNNING_MODE_LIVE_STREAM;
+      break;
+  }
 
-              handLandmarkerGraphOptionsProto->set_min_tracking_confidence(
-                  self.minTrackingConfidence);
+  cOptions->num_hands = static_cast<int>(self.numHands);
+  cOptions->min_hand_detection_confidence = self.minHandDetectionConfidence;
+  cOptions->min_hand_presence_confidence = self.minHandPresenceConfidence;
+  cOptions->min_tracking_confidence = self.minTrackingConfidence;
+  cOptions->result_callback = nullptr;
+}
 
-              HandDetectorGraphOptionsProto *handDetectorGraphOptionsProto =
-                  handLandmarkerGraphOptionsProto->mutable_hand_detector_graph_options();
-              handDetectorGraphOptionsProto->set_num_hands(self.numHands);
-              handDetectorGraphOptionsProto->set_min_detection_confidence(
-                  self.minHandDetectionConfidence);
-
-              HandLandmarksDetectorGraphOptionsProto *handLandmarksDetectorGraphOptionsProto =
-                  handLandmarkerGraphOptionsProto->mutable_hand_landmarks_detector_graph_options();
-              handLandmarksDetectorGraphOptionsProto->set_min_detection_confidence(
-                  self.minHandPresenceConfidence);
++ (void)freeCOptions:(MpHandLandmarkerOptions *)cOptions {
+  if (!cOptions) {
+    return;
+  }
+  [MPPBaseOptions freeCOptions:&cOptions->base_options];
 }
 
 @end

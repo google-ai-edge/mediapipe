@@ -14,51 +14,23 @@
 
 #import "mediapipe/tasks/ios/vision/hand_landmarker/sources/MPPHandLandmarkerResult.h"
 
-#include "mediapipe/framework/formats/classification.pb.h"
-#include "mediapipe/framework/formats/landmark.pb.h"
-#include "mediapipe/framework/packet.h"
+struct MpHandLandmarkerResult;
 
 NS_ASSUME_NONNULL_BEGIN
-
-static const int kMicrosecondsPerMillisecond = 1000;
 
 @interface MPPHandLandmarkerResult (Helpers)
 
 /**
- * Creates an `MPPHandLandmarkerResult` from landmarks, world landmarks and handedness packets.
+ * Creates an `MPPHandLandmarkerResult` from a MediaPipe C API `MpHandLandmarkerResult` struct.
  *
- * @param landmarksPacket A MediaPipe packet wrapping a `std::vector<NormalizedlandmarkListProto>`.
- * @param worldLandmarksPacket A MediaPipe packet wrapping a `std::vector<LandmarkListProto>`.
- * @param handednessPacket a MediaPipe packet wrapping a `std::vector<ClassificationListProto>`.
+ * @param cResult The C API hand landmarker result struct.
+ * @param timestampInMilliseconds The timestamp in milliseconds.
  *
- * @return  An `MPPHandLandmarkerResult` object that contains the hand landmark detection
- * results.
+ * @return An `MPPHandLandmarkerResult` object.
  */
-+ (MPPHandLandmarkerResult *)
-    handLandmarkerResultWithLandmarksPacket:(const mediapipe::Packet &)handLandmarksPacket
-                       worldLandmarksPacket:(const mediapipe::Packet &)worldLandmarksPacket
-                           handednessPacket:(const mediapipe::Packet &)handednessPacket;
-
-/**
- * Creates an `MPPHandLandmarkerResult` from landmarks, world landmarks and handedness proto
- * vectors.
- *
- * @param landmarksProto A vector of protos of type `std::vector<NormalizedlandmarkListProto>`.
- * @param worldLandmarksPacket A vector of protos of type `std::vector<LandmarkListProto>`.
- * @param handednessPacket A vector of protos of type `std::vector<ClassificationListProto>`.
- * @param timestampInMilliSeconds The timestamp of the Packet that contained the result.
- *
- * @return  An `MPPHandLandmarkerResult` object that contains the hand landmark detection
- * results.
- */
-+ (MPPHandLandmarkerResult *)
-    handLandmarkerResultWithLandmarksProto:
-        (const std::vector<::mediapipe::NormalizedLandmarkList> &)landmarksProto
-                       worldLandmarksProto:
-                           (const std::vector<::mediapipe::LandmarkList> &)worldLandmarksProto
-                           handednessProto:
-                               (const std::vector<::mediapipe::ClassificationList> &)handednessProto
-                   timestampInMilliSeconds:(NSInteger)timestampInMilliseconds;
++ (MPPHandLandmarkerResult *)handLandmarkerResultWithCResult:
+                                 (const struct MpHandLandmarkerResult &)cResult
+                                     timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 
 @end
 
