@@ -14,192 +14,234 @@
 
 #import "mediapipe/tasks/ios/vision/object_detector/sources/MPPObjectDetector.h"
 
+#import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
-#import "mediapipe/tasks/ios/vision/core/sources/MPPVisionPacketCreator.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionTaskRunner.h"
 #import "mediapipe/tasks/ios/vision/object_detector/utils/sources/MPPObjectDetectorOptions+Helpers.h"
 #import "mediapipe/tasks/ios/vision/object_detector/utils/sources/MPPObjectDetectorResult+Helpers.h"
 
-namespace {
-using ::mediapipe::NormalizedRect;
-using ::mediapipe::Packet;
-using ::mediapipe::Timestamp;
-using ::mediapipe::tasks::core::PacketMap;
-using ::mediapipe::tasks::core::PacketsCallback;
-}  // namespace
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/c/vision/object_detector/object_detector.h"
 
-static NSString *const kDetectionsStreamName = @"detections_out";
-static NSString *const kDetectionsTag = @"DETECTIONS";
-static NSString *const kImageInStreamName = @"image_in";
-static NSString *const kImageOutStreamName = @"image_out";
-static NSString *const kImageTag = @"IMAGE";
-static NSString *const kNormRectStreamName = @"norm_rect_in";
-static NSString *const kNormRectTag = @"NORM_RECT";
-static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorGraph";
 static NSString *const kTaskName = @"objectDetector";
 
-#define InputPacketMap(imagePacket, normalizedRectPacket) \
-  {                                                       \
-    {kImageInStreamName.cppString, imagePacket}, {        \
-      kNormRectStreamName.cppString, normalizedRectPacket \
-    }                                                     \
-  }
-
-#define ObjectDetectorResultWithOutputPacketMap(outputPacketMap) \
-  ([MPPObjectDetectorResult                                      \
-      objectDetectorResultWithDetectionsPacket:outputPacketMap[kDetectionsStreamName.cppString]])
-
 @interface MPPObjectDetector () {
-  /** iOS Vision Task Runner */
-  MPPVisionTaskRunner *_visionTaskRunner;
+  MpObjectDetectorPtr _detector;
+  MPPVisionTaskRunner *_taskRunner;
   dispatch_queue_t _callbackQueue;
+  int _callbackSlot;
 }
 @property(nonatomic, weak) id<MPPObjectDetectorLiveStreamDelegate> objectDetectorLiveStreamDelegate;
+
+- (void)handleLiveStreamResult:(const MpObjectDetectorResult *)cResult
+                        status:(MpStatus)status
+                     timestamp:(int64_t)timestampInMilliseconds;
 @end
 
-@implementation MPPObjectDetector
+namespace {
+using mediapipe::tasks::ios::vision::core::VisionCallbackPool;
+using CallbackPool = VisionCallbackPool<MPPObjectDetector, MpObjectDetectorResult,
+                                        MpObjectDetectorOptions::result_callback_fn>;
 
-#pragma mark - Public
+static void OnLiveStreamResult(MPPObjectDetector *task, MpStatus status,
+                               const MpObjectDetectorResult *result, MpImagePtr image,
+                               int64_t timestamp_ms) {
+  if (task) {
+    [task handleLiveStreamResult:result status:status timestamp:timestamp_ms];
+  }
+}
+}  // namespace
+
+@implementation MPPObjectDetector
 
 - (instancetype)initWithOptions:(MPPObjectDetectorOptions *)options error:(NSError **)error {
   self = [super init];
   if (self) {
-    MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
-          initWithTaskName:kTaskName
-             taskGraphName:kTaskGraphName
-              inputStreams:@[
-                [NSString stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
-                [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectStreamName]
-              ]
-             outputStreams:@[
-               [NSString stringWithFormat:@"%@:%@", kDetectionsTag, kDetectionsStreamName],
-               [NSString stringWithFormat:@"%@:%@", kImageTag, kImageOutStreamName]
-             ]
-               taskOptions:options
-        enableFlowLimiting:options.runningMode == MPPRunningModeLiveStream
-               runningMode:MPPCoreRunningModeFromVisionRunningMode(options.runningMode)
-                     error:error];
-
-    if (!taskInfo) {
+    _callbackSlot = -1;
+    _taskRunner = [[MPPVisionTaskRunner alloc]
+        initWithRunningMode:options.runningMode
+                 roiAllowed:NO
+            normRectAllowed:YES
+                hasDelegate:(options.objectDetectorLiveStreamDelegate != nil)
+                      error:error];
+    if (!_taskRunner) {
       return nil;
     }
-
-    PacketsCallback packetsCallback = nullptr;
 
     if (options.objectDetectorLiveStreamDelegate) {
       _objectDetectorLiveStreamDelegate = options.objectDetectorLiveStreamDelegate;
-
-      // Create a private serial dispatch queue in which the delegate method will be called
-      // asynchronously. This is to ensure that if the client performs a long running operation in
-      // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
-      // freed up to continue with its operations.
       _callbackQueue = dispatch_queue_create(
-          [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], NULL);
-
-      // Capturing `self` as weak in order to avoid `self` being kept in memory
-      // and cause a retain cycle, after self is set to `nil`.
-      MPPObjectDetector *__weak weakSelf = self;
-      packetsCallback = [=](absl::StatusOr<PacketMap> liveStreamResult) {
-        [weakSelf processLiveStreamResult:liveStreamResult];
-      };
+          [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], nullptr);
+      _callbackSlot = CallbackPool::AllocateSlot(self, &OnLiveStreamResult);
+      if (_callbackSlot < 0) {
+        [MPPCommonUtils createCustomError:error
+                                 withCode:MPPTasksErrorCodeInternalError
+                              description:@"Failed to allocate callback slot."];
+        return nil;
+      }
     }
 
-    _visionTaskRunner = [[MPPVisionTaskRunner alloc] initWithTaskInfo:taskInfo
-                                                          runningMode:options.runningMode
-                                                           roiAllowed:NO
-                                                      packetsCallback:std::move(packetsCallback)
-                                                 imageInputStreamName:kImageInStreamName
-                                              normRectInputStreamName:kNormRectStreamName
-                                                                error:error];
+    MpObjectDetectorOptions cOptions = {};
+    [options copyToCOptions:&cOptions];
+    if (_callbackSlot >= 0) {
+      cOptions.result_callback = CallbackPool::GetCallback(_callbackSlot);
+    }
 
-    if (!_visionTaskRunner) {
+    char *errorMsg = nullptr;
+    MpStatus status = MpObjectDetectorCreate(&cOptions, &_detector, &errorMsg);
+    [MPPObjectDetectorOptions freeCOptions:&cOptions];
+
+    if (![MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error]) {
+      if (_callbackSlot >= 0) {
+        CallbackPool::FreeSlot(_callbackSlot);
+        _callbackSlot = -1;
+      }
       return nil;
     }
   }
-
   return self;
 }
 
 - (instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error {
   MPPObjectDetectorOptions *options = [[MPPObjectDetectorOptions alloc] init];
-
   options.baseOptions.modelAssetPath = modelPath;
-
   return [self initWithOptions:options error:error];
 }
 
 - (nullable MPPObjectDetectorResult *)detectImage:(MPPImage *)image error:(NSError **)error {
-  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:error];
-
-  return [MPPObjectDetector objectDetectorResultWithOptionalOutputPacketMap:outputPacketMap];
+  if (![_taskRunner validateRunningMode:MPPRunningModeImage error:error]) {
+    return nil;
+  }
+  struct MpImageProcessingOptions imageProcessingOptions = {};
+  ScopedMpImage mpImage = [_taskRunner createMpImageWithMPPImage:image
+                                                regionOfInterest:CGRectZero
+                                          imageProcessingOptions:&imageProcessingOptions
+                                                           error:error];
+  if (!mpImage) {
+    return nil;
+  }
+  MpObjectDetectorResult cResult = {};
+  char *errorMsg = nullptr;
+  MpStatus status =
+      MpObjectDetectorDetectImage(_detector, mpImage, &imageProcessingOptions, &cResult, &errorMsg);
+  if (![MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error]) {
+    return nil;
+  }
+  MPPObjectDetectorResult *result = [MPPObjectDetectorResult objectDetectorResultWithCResult:cResult
+                                                                     timestampInMilliseconds:0];
+  MpObjectDetectorCloseResult(&cResult);
+  return result;
 }
 
 - (nullable MPPObjectDetectorResult *)detectVideoFrame:(MPPImage *)image
-                                 timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                                   error:(NSError **)error {
-  std::optional<PacketMap> outputPacketMap =
-      [_visionTaskRunner processVideoFrame:image
-                   timestampInMilliseconds:timestampInMilliseconds
-                                     error:error];
-
-  return [MPPObjectDetector objectDetectorResultWithOptionalOutputPacketMap:outputPacketMap];
+                               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                                 error:(NSError **)error {
+  if (![_taskRunner validateRunningMode:MPPRunningModeVideo error:error]) {
+    return nil;
+  }
+  struct MpImageProcessingOptions imageProcessingOptions = {};
+  ScopedMpImage mpImage = [_taskRunner createMpImageWithMPPImage:image
+                                                regionOfInterest:CGRectZero
+                                          imageProcessingOptions:&imageProcessingOptions
+                                                           error:error];
+  if (!mpImage) {
+    return nil;
+  }
+  MpObjectDetectorResult cResult = {};
+  char *errorMsg = nullptr;
+  MpStatus status = MpObjectDetectorDetectForVideo(_detector, mpImage, &imageProcessingOptions,
+                                                   static_cast<int64_t>(timestampInMilliseconds),
+                                                   &cResult, &errorMsg);
+  if (![MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error]) {
+    return nil;
+  }
+  MPPObjectDetectorResult *result =
+      [MPPObjectDetectorResult objectDetectorResultWithCResult:cResult
+                                       timestampInMilliseconds:timestampInMilliseconds];
+  MpObjectDetectorCloseResult(&cResult);
+  return result;
 }
 
 - (BOOL)detectAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error {
-  return [_visionTaskRunner processLiveStreamImage:image
-                           timestampInMilliseconds:timestampInMilliseconds
-                                             error:error];
+  if (![_taskRunner validateRunningMode:MPPRunningModeLiveStream error:error]) {
+    return NO;
+  }
+  struct MpImageProcessingOptions imageProcessingOptions = {};
+  ScopedMpImage mpImage = [_taskRunner createMpImageWithMPPImage:image
+                                                regionOfInterest:CGRectZero
+                                          imageProcessingOptions:&imageProcessingOptions
+                                                           error:error];
+  if (!mpImage) {
+    return NO;
+  }
+  char *errorMsg = nullptr;
+  MpStatus status =
+      MpObjectDetectorDetectAsync(_detector, mpImage, &imageProcessingOptions,
+                                  static_cast<int64_t>(timestampInMilliseconds), &errorMsg);
+  return [MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error];
+}
+
+- (void)dealloc {
+  MpObjectDetectorPtr detector = _detector;
+  _detector = nullptr;
+  int callbackSlot = _callbackSlot;
+  _callbackSlot = -1;
+  dispatch_queue_t callbackQueue = _callbackQueue;
+  _callbackQueue = nil;
+
+  if (callbackSlot >= 0) {
+    dispatch_queue_t cleanupQueue =
+        callbackQueue ?: dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0);
+    dispatch_async(cleanupQueue, ^{
+      if (detector) {
+        MpObjectDetectorClose(detector, nullptr);
+      }
+      CallbackPool::FreeSlot(callbackSlot);
+    });
+  } else if (detector) {
+    MpObjectDetectorClose(detector, nullptr);
+  }
 }
 
 #pragma mark - Private
 
-- (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
+- (void)handleLiveStreamResult:(const MpObjectDetectorResult *)cResult
+                        status:(MpStatus)status
+                     timestamp:(int64_t)timestampInMilliseconds {
   if (![self.objectDetectorLiveStreamDelegate
-          respondsToSelector:@selector(objectDetector:
-                                 didFinishDetectionWithResult:timestampInMilliseconds:error:)]) {
+          respondsToSelector:@selector(objectDetector:didFinishDetectionWithResult:
+                                       timestampInMilliseconds:error:)]) {
     return;
   }
 
   NSError *callbackError = nil;
-  if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
-    dispatch_async(_callbackQueue, ^{
-      [self.objectDetectorLiveStreamDelegate objectDetector:self
-                               didFinishDetectionWithResult:nil
-                                    timestampInMilliseconds:Timestamp::Unset().Value()
-                                                      error:callbackError];
-    });
-    return;
+  MPPObjectDetectorResult *result = nil;
+
+  if (status != kMpOk) {
+    [MPPCommonUtils checkCError:status errorMessage:nullptr toError:&callbackError];
+  } else if (cResult) {
+    result = [MPPObjectDetectorResult objectDetectorResultWithCResult:*cResult
+                                              timestampInMilliseconds:timestampInMilliseconds];
   }
 
-  PacketMap &outputPacketMap = liveStreamResult.value();
-  if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
+  dispatch_queue_t callbackQueue = _callbackQueue;
+  if (!callbackQueue) {
     return;
   }
+  __weak id<MPPObjectDetectorLiveStreamDelegate> delegate = self.objectDetectorLiveStreamDelegate;
+  MPPObjectDetector *__weak weakSelf = self;
 
-  MPPObjectDetectorResult *result = ObjectDetectorResultWithOutputPacketMap(outputPacketMap);
-
-  NSInteger timestampInMilliseconds =
-      outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
-      kMicrosecondsPerMillisecond;
-  dispatch_async(_callbackQueue, ^{
-    [self.objectDetectorLiveStreamDelegate objectDetector:self
-                             didFinishDetectionWithResult:result
-                                  timestampInMilliseconds:timestampInMilliseconds
-                                                    error:callbackError];
+  dispatch_async(callbackQueue, ^{
+    MPPObjectDetector *strongSelf = weakSelf;
+    if (strongSelf) {
+      [delegate objectDetector:strongSelf
+          didFinishDetectionWithResult:result
+               timestampInMilliseconds:timestampInMilliseconds
+                                 error:callbackError];
+    }
   });
-}
-
-+ (nullable MPPObjectDetectorResult *)objectDetectorResultWithOptionalOutputPacketMap:
-    (std::optional<PacketMap> &)outputPacketMap {
-  if (!outputPacketMap.has_value()) {
-    return nil;
-  }
-
-  return ObjectDetectorResultWithOutputPacketMap(outputPacketMap.value());
 }
 
 @end

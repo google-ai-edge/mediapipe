@@ -14,41 +14,80 @@
 
 #import "mediapipe/tasks/ios/vision/object_detector/utils/sources/MPPObjectDetectorOptions+Helpers.h"
 
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
-#include "mediapipe/tasks/cc/vision/object_detector/proto/object_detector_options.pb.h"
+#include <cstdlib>
+#include <cstring>
 
-namespace {
-using CalculatorOptionsProto = ::mediapipe::CalculatorOptions;
-using ObjectDetectorOptionsProto =
-    ::mediapipe::tasks::vision::object_detector::proto::ObjectDetectorOptions;
-}  // namespace
+#include "mediapipe/tasks/c/vision/object_detector/object_detector.h"
 
 @implementation MPPObjectDetectorOptions (Helpers)
 
-- (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
-  ObjectDetectorOptionsProto *graphOptions =
-      optionsProto->MutableExtension(ObjectDetectorOptionsProto::ext);
+- (void)copyToCOptions:(struct MpObjectDetectorOptions *)cOptions {
+  [self.baseOptions copyToCOptions:&cOptions->base_options];
+  switch (self.runningMode) {
+    case MPPRunningModeImage:
+      cOptions->running_mode = MP_RUNNING_MODE_IMAGE;
+      break;
+    case MPPRunningModeVideo:
+      cOptions->running_mode = MP_RUNNING_MODE_VIDEO;
+      break;
+    case MPPRunningModeLiveStream:
+      cOptions->running_mode = MP_RUNNING_MODE_LIVE_STREAM;
+      break;
+  }
+  cOptions->display_names_locale =
+      self.displayNamesLocale ? strdup(self.displayNamesLocale.UTF8String) : nullptr;
+  cOptions->max_results = static_cast<int>(self.maxResults);
+  cOptions->score_threshold = self.scoreThreshold;
+  cOptions->category_allowlist = nullptr;
+  cOptions->category_allowlist_count = 0;
+  cOptions->category_denylist = nullptr;
+  cOptions->category_denylist_count = 0;
+  cOptions->result_callback = nullptr;
 
-  graphOptions->Clear();
-
-  [self.baseOptions copyToProto:graphOptions->mutable_base_options()];
-
-  if (self.displayNamesLocale) {
-    graphOptions->set_display_names_locale(self.displayNamesLocale.cppString);
+  if (self.categoryAllowlist.count > 0) {
+    cOptions->category_allowlist_count = static_cast<uint32_t>(self.categoryAllowlist.count);
+    cOptions->category_allowlist = new const char *[cOptions->category_allowlist_count];
+    for (uint32_t i = 0; i < cOptions->category_allowlist_count; ++i) {
+      cOptions->category_allowlist[i] = strdup(self.categoryAllowlist[i].UTF8String);
+    }
   }
 
-  graphOptions->set_max_results((int)self.maxResults);
-  graphOptions->set_score_threshold(self.scoreThreshold);
-
-  for (NSString *category in self.categoryAllowlist) {
-    graphOptions->add_category_allowlist(category.cppString);
+  if (self.categoryDenylist.count > 0) {
+    cOptions->category_denylist_count = static_cast<uint32_t>(self.categoryDenylist.count);
+    cOptions->category_denylist = new const char *[cOptions->category_denylist_count];
+    for (uint32_t i = 0; i < cOptions->category_denylist_count; ++i) {
+      cOptions->category_denylist[i] = strdup(self.categoryDenylist[i].UTF8String);
+    }
   }
+}
 
-  for (NSString *category in self.categoryDenylist) {
-    graphOptions->add_category_denylist(category.cppString);
++ (void)freeCOptions:(struct MpObjectDetectorOptions *)cOptions {
+  if (!cOptions) {
+    return;
   }
+  [MPPBaseOptions freeCOptions:&cOptions->base_options];
+  if (cOptions->display_names_locale) {
+    free(const_cast<char *>(cOptions->display_names_locale));
+    cOptions->display_names_locale = nullptr;
+  }
+  if (cOptions->category_allowlist) {
+    for (uint32_t i = 0; i < cOptions->category_allowlist_count; ++i) {
+      free(const_cast<char *>(cOptions->category_allowlist[i]));
+    }
+    delete[] cOptions->category_allowlist;
+    cOptions->category_allowlist = nullptr;
+  }
+  cOptions->category_allowlist_count = 0;
+  if (cOptions->category_denylist) {
+    for (uint32_t i = 0; i < cOptions->category_denylist_count; ++i) {
+      free(const_cast<char *>(cOptions->category_denylist[i]));
+    }
+    delete[] cOptions->category_denylist;
+    cOptions->category_denylist = nullptr;
+  }
+  cOptions->category_denylist_count = 0;
 }
 
 @end
