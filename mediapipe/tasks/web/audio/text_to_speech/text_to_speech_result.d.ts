@@ -36,9 +36,15 @@ export declare interface VoiceInfo {
 export declare interface WordTimestamp {
   /** Original surface word token from the input text. */
   word: string;
-  /** Zero-based byte offset of the start of `word` in the input text. */
+  /**
+   * Zero-based UTF-16 code unit index of the start of `word` in the input text
+   * (compatible with `String.prototype.slice(startChar, endChar)`).
+   */
   startChar: number;
-  /** Zero-based byte offset of the end of `word` (exclusive) in the input text. */
+  /**
+   * Zero-based UTF-16 code unit index of the end of `word` (exclusive) in the
+   * input text (compatible with `String.prototype.slice(startChar, endChar)`).
+   */
   endChar: number;
   /** Estimated start time in seconds within the synthesized audio waveform. */
   startSec: number;
