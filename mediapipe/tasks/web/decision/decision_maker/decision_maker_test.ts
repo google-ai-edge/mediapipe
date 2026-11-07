@@ -47,7 +47,7 @@ class DecisionMakerFake extends DecisionMaker {
       confidence: 0.95,
     };
 
-    const mockChoiceResult: ChoiceResult = {
+    const mockChoiceResult: Omit<ChoiceResult, 'predictionSet'> = {
       selectedKey: 'device',
       probabilities: {'cloud': 0.1, 'device': 0.85, 'search': 0.05},
       confidence: 0.91,
@@ -99,45 +99,43 @@ class DecisionMakerFake extends DecisionMaker {
       'evaluateContextScore': jasmine
         .createSpy('evaluateContextScore')
         .and.returnValue(Promise.resolve(mockScoreResult)),
-      'evaluateSchema': jasmine
-        .createSpy('evaluateSchema')
-        .and.returnValue(
-          Promise.resolve({
-            'is_urgent': {
-              id: 'is_urgent',
-              label: 'true',
-              probability: 0.88,
-              probabilities: [
-                {label: 'false', probability: 0.12},
-                {label: 'true', probability: 0.88},
-              ],
-              confidence: 0.95,
-            },
-            'route': {
-              id: 'route',
-              label: 'device',
-              probabilities: [
-                {label: 'cloud', probability: 0.1},
-                {label: 'device', probability: 0.85},
-                {label: 'search', probability: 0.05},
-              ],
-              confidence: 0.91,
-            },
-            'severity': {
-              id: 'severity',
-              label: '4',
-              probabilities: [
-                {label: '1', probability: 0.01},
-                {label: '2', probability: 0.04},
-                {label: '3', probability: 0.15},
-                {label: '4', probability: 0.7},
-                {label: '5', probability: 0.1},
-              ],
-              confidence: 0.85,
-              expectedScore: 3.84,
-            },
-          }),
-        ),
+      'evaluateSchema': jasmine.createSpy('evaluateSchema').and.returnValue(
+        Promise.resolve({
+          'is_urgent': {
+            id: 'is_urgent',
+            label: 'true',
+            probability: 0.88,
+            probabilities: [
+              {label: 'false', probability: 0.12},
+              {label: 'true', probability: 0.88},
+            ],
+            confidence: 0.95,
+          },
+          'route': {
+            id: 'route',
+            label: 'device',
+            probabilities: [
+              {label: 'cloud', probability: 0.1},
+              {label: 'device', probability: 0.85},
+              {label: 'search', probability: 0.05},
+            ],
+            confidence: 0.91,
+          },
+          'severity': {
+            id: 'severity',
+            label: '4',
+            probabilities: [
+              {label: '1', probability: 0.01},
+              {label: '2', probability: 0.04},
+              {label: '3', probability: 0.15},
+              {label: '4', probability: 0.7},
+              {label: '5', probability: 0.1},
+            ],
+            confidence: 0.85,
+            expectedScore: 3.84,
+          },
+        }),
+      ),
       'evaluateContextSchema': jasmine
         .createSpy('evaluateContextSchema')
         .and.returnValue(
@@ -235,12 +233,13 @@ describe('DecisionMaker', () => {
       'The user wants to play media',
       0.6,
       0.8,
+      false,
     );
     expect(result.value).toBeTrue();
     expect(result.probabilityTrue).toBe(0.88);
   });
 
-  it('evaluates categorical choice', async () => {
+  it('evaluates categorical choice and populates conformal predictionSet', async () => {
     const criteria: Record<string, string> = {
       'cloud': 'Complex cloud query',
       'device': 'Fast on-device task',
@@ -256,9 +255,171 @@ describe('DecisionMaker', () => {
       criteria,
       0.7,
       '',
+      false,
     );
     expect(result.selectedKey).toBe('device');
     expect(result.probabilities['device']).toBe(0.85);
+    expect(result.predictionSet).toEqual(['device', 'cloud']);
+  });
+
+  it('forwards normalizePrior and supports prewarmChoice and custom boolean options', async () => {
+    mockModule['prewarmChoice'] = jasmine
+      .createSpy('prewarmChoice')
+      .and.returnValue(Promise.resolve(true));
+
+    await decisionMaker.prewarmChoice({
+      instructions: 'Categorize support ticket',
+      criteria: {
+        'refund': 'Refunds, invoice updates, billing issues',
+        'bug': 'Software errors, crashes, broken UI',
+      },
+      normalizePrior: true,
+    });
+    expect(mockModule['prewarmChoice']).toHaveBeenCalledWith(
+      54321,
+      {
+        'refund': 'Refunds, invoice updates, billing issues',
+        'bug': 'Software errors, crashes, broken UI',
+      },
+      [],
+      0,
+      'Categorize support ticket',
+      true,
+    );
+
+    await decisionMaker.evaluateBoolean(
+      'Please cancel my subscription immediately.',
+      {
+        condition: 'The user wants to cancel their subscription.',
+        threshold: 0.5,
+        normalizePrior: true,
+      },
+    );
+    expect(mockModule['evaluateBoolean']).toHaveBeenCalledWith(
+      54321,
+      'Please cancel my subscription immediately.',
+      'The user wants to cancel their subscription.',
+      0.5,
+      0,
+      true,
+    );
+
+    mockModule['evaluateChoice'].and.returnValue(
+      Promise.resolve({
+        selectedKey: 'true',
+        probabilities: {'false': 0.15, 'true': 0.85},
+        confidence: 0.82,
+      }),
+    );
+    const customBool = await decisionMaker.evaluateBoolean(
+      'Cancel my monthly plan.',
+      {
+        condition: 'The user wants to cancel their subscription.',
+        normalizePrior: true,
+        options: [
+          {label: 'false', description: 'Keep subscription active'},
+          {label: 'true', description: 'Cancel subscription'},
+        ],
+      },
+    );
+    expect(customBool.value).toBeTrue();
+    expect(customBool.probabilityTrue).toBeCloseTo(0.85, 5);
+
+    mockModule['evaluateChoice'].and.returnValue(
+      Promise.resolve({
+        selectedKey: 'allow',
+        probabilities: {'allow': 0.8, 'no': 0.2},
+        confidence: 0.78,
+      }),
+    );
+    const affirmFirstBool = await decisionMaker.evaluateBoolean(
+      'Approve safe request.',
+      {
+        condition: 'Should the request be allowed?',
+        threshold: 0,
+        options: [
+          {label: 'allow', description: 'Safe request'},
+          {label: 'no', description: 'Unsafe request'},
+        ],
+      },
+    );
+    expect(affirmFirstBool.value).toBeTrue();
+    expect(affirmFirstBool.probabilityTrue).toBeCloseTo(0.8, 5);
+    expect(affirmFirstBool.confidence).toBeCloseTo((0.8 - 0.5) / 0.5, 5);
+
+    (mockModule['prewarmChoice'] as jasmine.Spy).calls.reset();
+    await decisionMaker.prewarmBoolean({
+      condition: 'Numeric options',
+      normalizePrior: true,
+      options: [
+        {label: '1', description: 'Satisfied'},
+        {label: '0', description: 'Unsatisfied'},
+      ],
+    });
+    expect(mockModule['prewarmChoice']).toHaveBeenCalledWith(
+      54321,
+      {'0': 'Unsatisfied', '1': 'Satisfied'},
+      [
+        {label: '1', description: 'Satisfied'},
+        {label: '0', description: 'Unsatisfied'},
+      ],
+      0,
+      'Numeric options',
+      true,
+    );
+
+    mockModule['prewarmSchema'] = jasmine
+      .createSpy('prewarmSchema')
+      .and.returnValue(Promise.resolve(true));
+    await decisionMaker.prewarmScore({
+      instructions: 'Rate severity',
+      options: [
+        {label: '1', description: 'Low'},
+        {label: '2', description: 'High'},
+      ],
+      temperature: 0.7,
+    });
+    expect(mockModule['prewarmSchema']).toHaveBeenCalledWith(54321, '', [
+      {
+        id: '__score__',
+        type: 'score',
+        prompt: 'Rate severity',
+        options: [
+          {label: '', description: '1: Low'},
+          {label: '', description: '2: High'},
+        ],
+        temperature: 0.7,
+      },
+    ]);
+
+    // Fallback when `wasmModule.prewarmChoice` is absent: numeric labels must
+    // follow `Object.keys(criteria)` order (`'0'`, `'1'`) while preserving
+    // attached option media so cache fingerprints match `evaluateChoice`.
+    delete mockModule['prewarmChoice'];
+    (mockModule['prewarmSchema'] as jasmine.Spy).calls.reset();
+    const imgOne = new Uint8Array([1, 2]);
+    const imgZero = new Uint8Array([3, 4]);
+    await decisionMaker.prewarmChoice({
+      instructions: 'Numeric multimodal fallback',
+      options: [
+        {label: '1', description: 'Satisfied', imageBytes: imgOne},
+        {label: '0', description: 'Unsatisfied', imageBytes: imgZero},
+      ],
+      normalizePrior: true,
+    });
+    expect(mockModule['prewarmSchema']).toHaveBeenCalledWith(54321, '', [
+      {
+        id: '__choice__',
+        type: 'choice',
+        prompt: 'Numeric multimodal fallback',
+        options: [
+          {label: '0', description: 'Unsatisfied', imageBytes: imgZero},
+          {label: '1', description: 'Satisfied', imageBytes: imgOne},
+        ],
+        temperature: undefined,
+        normalizePrior: true,
+      },
+    ]);
   });
 
   it('evaluates ordinal score', async () => {
@@ -316,9 +477,11 @@ describe('DecisionMaker', () => {
       0.9,
       'Route query',
       'Shared System Context',
+      false,
     );
     expect(batchResults.length).toBe(2);
     expect(batchResults[0].selectedKey).toBe('device');
+    expect(batchResults[0].predictionSet).toEqual(['device', 'cloud']);
   });
 
   it('evaluates unified multi-question ClassifierSchema and numeric ordinal levels', async () => {
@@ -360,6 +523,7 @@ describe('DecisionMaker', () => {
     expect(result['is_urgent'].label).toBe('true');
     expect(result['is_urgent'].probability).toBe(0.88);
     expect(result['route'].label).toBe('device');
+    expect(result['route'].predictionSet).toEqual(['device', 'cloud']);
     expect(result['severity'].label).toBe('4');
     // 1*0.01 + 2*0.04 + 3*0.15 + 4*0.70 + 5*0.10 = 3.84
     expect(result['severity'].expectedScore).toBeCloseTo(3.84, 2);
@@ -390,6 +554,7 @@ describe('DecisionMaker', () => {
         imageBytes: sampleImage,
         audioSamples: undefined,
       },
+      false,
     );
     expect(boolResult.value).toBeTrue();
 
@@ -422,6 +587,7 @@ describe('DecisionMaker', () => {
         imageBytes: sampleImage,
         audioSamples: sampleAudio,
       },
+      false,
     );
     expect(choiceResult.selectedKey).toBe('device');
 
@@ -802,5 +968,60 @@ describe('DecisionMaker', () => {
       });
       maker.close();
     }
+  });
+
+  it('routes multimodal batch questions through context-aware single-item evaluation', async () => {
+    const imgA = new Uint8Array([9, 8]);
+    const imgB = new Uint8Array([7, 6]);
+    const mockModule = decisionMaker.mockModule as unknown as Record<
+      string,
+      jasmine.Spy
+    >;
+    mockModule['evaluateChoiceBatch'].calls.reset();
+    mockModule['evaluateContextChoice'].calls.reset();
+
+    const choiceResults = await decisionMaker.evaluateChoiceBatch(
+      ['first item', 'second item'],
+      {
+        instructions: 'Match prototype',
+        options: [
+          {label: 'a', description: 'Option A', imageBytes: imgA},
+          {label: 'b', description: 'Option B', imageBytes: imgB},
+        ],
+      },
+      'Shared header',
+    );
+    expect(choiceResults.length).toBe(2);
+    expect(mockModule['evaluateChoiceBatch']).not.toHaveBeenCalled();
+    expect(mockModule['evaluateContextChoice']).toHaveBeenCalledTimes(2);
+    expect(mockModule['evaluateContextChoice'].calls.argsFor(0)[1]).toBe(
+      'Shared header\nfirst item',
+    );
+
+    mockModule['evaluateBooleanBatch'].calls.reset();
+    mockModule['evaluateContextBoolean'].calls.reset();
+    const boolResults = await decisionMaker.evaluateBooleanBatch(
+      ['alpha', 'beta'],
+      {
+        condition: 'Matches attached image',
+        imageBytes: imgA,
+      },
+    );
+    expect(boolResults.length).toBe(2);
+    expect(mockModule['evaluateBooleanBatch']).not.toHaveBeenCalled();
+    expect(mockModule['evaluateContextBoolean']).toHaveBeenCalledTimes(2);
+
+    mockModule['evaluateScoreBatch'].calls.reset();
+    mockModule['evaluateContextScore'].calls.reset();
+    const scoreResults = await decisionMaker.evaluateScoreBatch(
+      ['alpha', 'beta'],
+      {
+        rubric: ['Low', 'High'],
+        imageBytes: imgB,
+      },
+    );
+    expect(scoreResults.length).toBe(2);
+    expect(mockModule['evaluateScoreBatch']).not.toHaveBeenCalled();
+    expect(mockModule['evaluateContextScore']).toHaveBeenCalledTimes(2);
   });
 });

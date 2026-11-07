@@ -13,9 +13,11 @@
 # limitations under the License.
 """MediaPipe semantic decision maker task."""
 
+from __future__ import annotations
+
 import ctypes
 import dataclasses
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from mediapipe.tasks.python.core import (
     base_options as base_options_module,
@@ -87,6 +89,30 @@ class _MpScoreResultC(ctypes.Structure):
       ("probabilities", ctypes.POINTER(ctypes.c_float)),
       ("count", ctypes.c_int),
       ("confidence", ctypes.c_float),
+  ]
+
+
+_MP_QUESTION_TYPE_BOOLEAN = 0
+_MP_QUESTION_TYPE_CHOICE = 1
+_MP_QUESTION_TYPE_SCORE = 2
+
+
+class _MpSchemaQuestionC(ctypes.Structure):
+  _fields_ = [
+      ("name", ctypes.c_char_p),
+      ("question_type", ctypes.c_int),
+      ("boolean_question", _MpBooleanQuestionC),
+      ("choice_question", _MpChoiceQuestionC),
+      ("score_question", _MpScoreQuestionC),
+  ]
+
+
+class _MpSchemaQuestionResultC(ctypes.Structure):
+  _fields_ = [
+      ("question_type", ctypes.c_int),
+      ("boolean_result", _MpBooleanResultC),
+      ("choice_result", _MpChoiceResultC),
+      ("score_result", _MpScoreResultC),
   ]
 
 
@@ -163,15 +189,14 @@ def _compute_prediction_set(
     probabilities: Dict[str, float], coverage: float = 0.90
 ) -> List[str]:
   """Computes the conformal prediction set covering `coverage` mass."""
-  sorted_items = sorted(
-      probabilities.items(), key=lambda kv: kv[1], reverse=True
-  )
+  sorted_items = sorted(probabilities.items(), key=lambda kv: (-kv[1], kv[0]))
   pred_set: List[str] = []
   cum = 0.0
+  clamped_coverage = min(1.0, max(0.0, coverage))
   for k, p in sorted_items:
     pred_set.append(k)
     cum += p
-    if cum >= coverage:
+    if cum >= clamped_coverage:
       break
   return pred_set
 
@@ -179,6 +204,75 @@ def _compute_prediction_set(
 QuestionType = Union[BooleanQuestion, ChoiceQuestion, ScoreQuestion]
 QuestionResultType = Union[BooleanResult, ChoiceResult, ScoreResult]
 DecisionResult = Dict[str, QuestionResultType]
+
+
+def _build_schema_questions_c(
+    questions: Mapping[str, QuestionType],
+) -> Tuple[ctypes.Array[_MpSchemaQuestionC], List[str], List[object]]:
+  """Builds a ctypes array of `_MpSchemaQuestionC` and a GC keepalive list."""
+  names = list(questions.keys())
+  n = len(names)
+  q_arr = (_MpSchemaQuestionC * n)()
+  keepalive: List[object] = []
+  for i, name in enumerate(names):
+    if not name:
+      raise ValueError("Schema question name must not be empty.")
+    name_bytes = name.encode("utf-8")
+    keepalive.append(name_bytes)
+    q_arr[i].name = name_bytes
+    question = questions[name]
+    if isinstance(question, BooleanQuestion):
+      cond_bytes = question.condition.encode("utf-8")
+      keepalive.append(cond_bytes)
+      q_arr[i].question_type = _MP_QUESTION_TYPE_BOOLEAN
+      q_arr[i].boolean_question = _MpBooleanQuestionC(
+          condition=cond_bytes,
+          threshold=question.threshold,
+          temperature=question.temperature,
+          normalize_prior=question.normalize_prior,
+      )
+    elif isinstance(question, ChoiceQuestion):
+      keys = list(question.criteria.keys())
+      descs = [question.criteria[k] for k in keys]
+      key_bytes = [k.encode("utf-8") for k in keys]
+      desc_bytes = [d.encode("utf-8") for d in descs]
+      c_keys = (ctypes.c_char_p * len(keys))(*key_bytes)
+      c_descs = (ctypes.c_char_p * len(descs))(*desc_bytes)
+      inst_bytes = (
+          question.instructions.encode("utf-8")
+          if question.instructions
+          else None
+      )
+      keepalive.extend([key_bytes, desc_bytes, c_keys, c_descs, inst_bytes])
+      q_arr[i].question_type = _MP_QUESTION_TYPE_CHOICE
+      q_arr[i].choice_question = _MpChoiceQuestionC(
+          keys=c_keys,
+          descriptions=c_descs,
+          count=len(keys),
+          temperature=question.temperature,
+          instructions=inst_bytes,
+          scoring_mode=question.scoring_mode,
+          normalize_prior=question.normalize_prior,
+      )
+    elif isinstance(question, ScoreQuestion):
+      rubric_bytes = [r.encode("utf-8") for r in question.rubric]
+      c_rubric = (ctypes.c_char_p * len(question.rubric))(*rubric_bytes)
+      inst_bytes = (
+          question.instructions.encode("utf-8")
+          if question.instructions
+          else None
+      )
+      keepalive.extend([rubric_bytes, c_rubric, inst_bytes])
+      q_arr[i].question_type = _MP_QUESTION_TYPE_SCORE
+      q_arr[i].score_question = _MpScoreQuestionC(
+          rubric=c_rubric,
+          count=len(question.rubric),
+          temperature=question.temperature,
+          instructions=inst_bytes,
+      )
+    else:
+      raise TypeError(f"Unsupported question type: {type(question)}")
+  return q_arr, names, keepalive
 
 
 @dataclasses.dataclass
@@ -237,6 +331,16 @@ _CTYPES_SIGNATURES = (
         ],
     ),
     mediapipe_c_utils.CStatusFunction(
+        "MpDecisionMakerEvaluateSchema",
+        [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.POINTER(_MpSchemaQuestionC),
+            ctypes.c_int,
+            ctypes.POINTER(_MpSchemaQuestionResultC),
+        ],
+    ),
+    mediapipe_c_utils.CStatusFunction(
         "MpDecisionMakerEvaluateBooleanBatch",
         [
             ctypes.c_void_p,
@@ -289,11 +393,24 @@ _CTYPES_SIGNATURES = (
         [ctypes.POINTER(_MpScoreResultC), ctypes.c_int],
         None,
     ),
+    mediapipe_c_utils.CFunction(
+        "MpDecisionMakerCloseSchemaResult",
+        [ctypes.POINTER(_MpSchemaQuestionResultC), ctypes.c_int],
+        None,
+    ),
     mediapipe_c_utils.CStatusFunction(
         "MpDecisionMakerPrewarmChoice",
         [
             ctypes.c_void_p,
             ctypes.POINTER(_MpChoiceQuestionC),
+        ],
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        "MpDecisionMakerPrewarmSchema",
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(_MpSchemaQuestionC),
+            ctypes.c_int,
         ],
     ),
     mediapipe_c_utils.CStatusFunction(
@@ -365,6 +482,86 @@ class DecisionMaker:
     )
     # pyrefly: ignore[missing-attribute]
     self._lib.MpDecisionMakerPrewarmChoice(self._handle, ctypes.byref(q_c))
+
+  def prewarm_schema(self, questions: Mapping[str, QuestionType]) -> None:
+    """Prewarms the prompt prefix and caches for a multi-question schema."""
+    if not self._handle:
+      raise RuntimeError("DecisionMaker is closed.")
+    if not questions:
+      return
+    q_arr, _, keepalive = _build_schema_questions_c(questions)
+    # pyrefly: ignore[missing-attribute]
+    self._lib.MpDecisionMakerPrewarmSchema(self._handle, q_arr, len(questions))
+    del keepalive
+
+  def evaluate_schema(
+      self,
+      text: Union[str, DecisionContext],
+      questions: Mapping[str, QuestionType],
+  ) -> DecisionResult:
+    """Evaluates a multi-question schema simultaneously against input text."""
+    if not self._handle:
+      raise RuntimeError("DecisionMaker is closed.")
+    if not questions:
+      return {}
+    text_str = text.text if isinstance(text, DecisionContext) else text
+    text_bytes = text_str.encode("utf-8")
+    q_arr, names, keepalive = _build_schema_questions_c(questions)
+    n = len(names)
+    res_arr = (_MpSchemaQuestionResultC * n)()
+
+    # pyrefly: ignore[missing-attribute]
+    self._lib.MpDecisionMakerEvaluateSchema(
+        self._handle,
+        text_bytes,
+        q_arr,
+        n,
+        res_arr,
+    )
+    del keepalive
+
+    try:
+      out: DecisionResult = {}
+      for i, name in enumerate(names):
+        q_type = res_arr[i].question_type
+        if q_type == _MP_QUESTION_TYPE_BOOLEAN:
+          b_res = res_arr[i].boolean_result
+          out[name] = BooleanResult(
+              value=b_res.value,
+              probability_true=b_res.probability_true,
+              confidence=b_res.confidence,
+          )
+        elif q_type == _MP_QUESTION_TYPE_CHOICE:
+          c_res = res_arr[i].choice_result
+          probs = {
+              c_res.keys[j].decode("utf-8"): c_res.probabilities[j]
+              for j in range(c_res.count)
+          }
+          selected = (
+              c_res.selected_key.decode("utf-8") if c_res.selected_key else ""
+          )
+          out[name] = ChoiceResult(
+              selected_key=selected,
+              probabilities=probs,
+              confidence=c_res.confidence,
+              prediction_set=_compute_prediction_set(probs),
+          )
+        elif q_type == _MP_QUESTION_TYPE_SCORE:
+          s_res = res_arr[i].score_result
+          probs = [s_res.probabilities[j] for j in range(s_res.count)]
+          selected = (
+              s_res.selected_key.decode("utf-8") if s_res.selected_key else ""
+          )
+          out[name] = ScoreResult(
+              expected_score=s_res.expected_score,
+              probabilities=probs,
+              confidence=s_res.confidence,
+              selected_key=selected,
+          )
+      return out
+    finally:
+      # pyrefly: ignore[missing-attribute]
+      self._lib.MpDecisionMakerCloseSchemaResult(res_arr, n)
 
   def evaluate_boolean(
       self, text: str, question: BooleanQuestion

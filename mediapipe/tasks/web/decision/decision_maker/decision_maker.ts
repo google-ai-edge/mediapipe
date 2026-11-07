@@ -77,6 +77,10 @@ const ENCODER_BACKEND_TYPE = 1;
  */
 const CPU_DELEGATE_BACKEND_TYPE = -1;
 
+type RawWasmChoiceResult = Omit<ChoiceResult, 'predictionSet'> & {
+  predictionSet?: string[];
+};
+
 /**
  * The Wasm module for Decision with custom C++ bindings.
  */
@@ -104,6 +108,7 @@ declare interface DecisionMakerWasmModule {
     condition: string,
     threshold: number,
     temperature: number,
+    normalizePrior: boolean,
   ): Promise<BooleanResult>;
 
   evaluateContextBoolean(
@@ -113,6 +118,7 @@ declare interface DecisionMakerWasmModule {
     threshold: number,
     temperature: number,
     media: {imageBytes?: Uint8Array; audioSamples?: Float32Array},
+    normalizePrior: boolean,
   ): Promise<BooleanResult>;
 
   evaluateChoice(
@@ -121,7 +127,8 @@ declare interface DecisionMakerWasmModule {
     criteria: Record<string, string>,
     temperature: number,
     instructions: string,
-  ): Promise<ChoiceResult>;
+    normalizePrior: boolean,
+  ): Promise<RawWasmChoiceResult>;
 
   evaluateContextChoice(
     makerPtr: number,
@@ -131,7 +138,8 @@ declare interface DecisionMakerWasmModule {
     temperature: number,
     instructions: string,
     media: {imageBytes?: Uint8Array; audioSamples?: Float32Array},
-  ): Promise<ChoiceResult>;
+    normalizePrior: boolean,
+  ): Promise<RawWasmChoiceResult>;
 
   evaluateScore(
     makerPtr: number,
@@ -157,6 +165,7 @@ declare interface DecisionMakerWasmModule {
     threshold: number,
     temperature: number,
     sharedPrefix: string,
+    normalizePrior: boolean,
   ): Promise<BooleanResult[]>;
 
   evaluateChoiceBatch?(
@@ -166,7 +175,8 @@ declare interface DecisionMakerWasmModule {
     temperature: number,
     instructions: string,
     sharedPrefix: string,
-  ): Promise<ChoiceResult[]>;
+    normalizePrior: boolean,
+  ): Promise<RawWasmChoiceResult[]>;
 
   evaluateScoreBatch?(
     makerPtr: number,
@@ -176,6 +186,15 @@ declare interface DecisionMakerWasmModule {
     instructions: string,
     sharedPrefix: string,
   ): Promise<ScoreResult[]>;
+
+  prewarmChoice?(
+    makerPtr: number,
+    criteria: Record<string, string>,
+    options: ClassifierOption[],
+    temperature: number,
+    instructions: string,
+    normalizePrior: boolean,
+  ): Promise<boolean>;
 
   prewarmSchema?(
     makerPtr: number,
@@ -197,6 +216,16 @@ declare interface DecisionMakerWasmModule {
     questions: ClassifierQuestion[],
     media: {imageBytes?: Uint8Array; audioSamples?: Float32Array},
   ): Promise<ClassifierResult>;
+}
+
+function hasQuestionMedia(question?: {
+  imageBytes?: Uint8Array;
+  audioSamples?: Float32Array;
+}): boolean {
+  return (
+    Boolean(question?.imageBytes && question.imageBytes.byteLength > 0) ||
+    Boolean(question?.audioSamples && question.audioSamples.length > 0)
+  );
 }
 
 function normalizeContextInput(
@@ -265,6 +294,66 @@ function resolveScoreRubric(question: ScoreQuestion): {
   const labels = rubric.map((_, i) => String(i));
   const levels = rubric.map((_, i) => i);
   return {rubric, labels, levels, hasCustomLevels: false};
+}
+
+const DEFAULT_CONFORMAL_COVERAGE = 0.9;
+
+function computePredictionSetFromPairs(
+  items: Array<{key: string; probability: number}>,
+  coverage = DEFAULT_CONFORMAL_COVERAGE,
+): string[] {
+  if (items.length === 0) return [];
+  const sorted = [...items].sort((a, b) => {
+    if (a.probability !== b.probability) return b.probability - a.probability;
+    return a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
+  });
+  const clampedCoverage = Math.min(1, Math.max(0, coverage));
+  const predictionSet: string[] = [];
+  let cumulative = 0;
+  for (const item of sorted) {
+    predictionSet.push(item.key);
+    cumulative += item.probability;
+    if (cumulative >= clampedCoverage) {
+      break;
+    }
+  }
+  return predictionSet;
+}
+
+function enrichChoiceResult(raw: RawWasmChoiceResult): ChoiceResult {
+  if (raw.predictionSet !== undefined) {
+    return {...raw, predictionSet: raw.predictionSet};
+  }
+  const items = Object.entries(raw.probabilities ?? {}).map(
+    ([key, probability]) => ({key, probability}),
+  );
+  return {
+    ...raw,
+    predictionSet: computePredictionSetFromPairs(items),
+  };
+}
+
+function enrichClassifierResult(
+  raw: ClassifierResult,
+  questions: ClassifierQuestion[],
+): ClassifierResult {
+  const out: ClassifierResult = {...raw};
+  for (const q of questions) {
+    if (q.type !== 'categorical' && q.type !== 'choice') continue;
+    const dec = out[q.id];
+    if (dec && dec.predictionSet === undefined) {
+      out[q.id] = {
+        ...dec,
+        predictionSet: computePredictionSetFromPairs(
+          (dec.probabilities ?? []).map((p) => ({
+            key: p.label,
+            probability: p.probability,
+          })),
+        ),
+      };
+    }
+  }
+  return out;
 }
 
 function enrichOrdinalResult(
@@ -517,6 +606,122 @@ export class DecisionMaker extends TaskRunner {
         ),
       );
     }
+  }
+
+  /**
+   * Prewarms candidate choice options in Wasm memory before evaluation.
+   *
+   * @export
+   * @param question The categorical choice question whose options should be
+   *     prewarmed.
+   */
+  async prewarmChoice(question: ChoiceQuestion): Promise<void> {
+    if (this.makerPtr === 0) return;
+    const criteria = resolveChoiceCriteria(question);
+    if (Object.keys(criteria).length === 0) return;
+    const baseInstructions = question.instructions ?? '';
+    const instructions = question.context
+      ? baseInstructions
+        ? `${question.context}\n${baseInstructions}`
+        : question.context
+      : baseInstructions;
+    const wasmModule = this.graphRunner
+      .wasmModule as unknown as DecisionMakerWasmModule;
+    if (typeof wasmModule.prewarmChoice === 'function') {
+      await this.logInvocation(() =>
+        wasmModule.prewarmChoice!(
+          this.makerPtr,
+          criteria,
+          question.options ?? [],
+          question.temperature ?? 0,
+          instructions,
+          question.normalizePrior ?? false,
+        ),
+      );
+      return;
+    }
+    const optionsByLabel = new Map<string, ClassifierOption>();
+    for (const opt of question.options ?? []) {
+      optionsByLabel.set(opt.label, opt);
+    }
+    const options: ClassifierOption[] = Object.entries(criteria).map(
+      ([label, description]) => {
+        const existing = optionsByLabel.get(label);
+        return existing
+          ? {...existing, label, description}
+          : {label, description};
+      },
+    );
+    await this.prewarm({
+      context: question.context,
+      questions: [
+        {
+          id: '__choice__',
+          type: 'choice',
+          prompt: baseInstructions,
+          options,
+          temperature: question.temperature,
+          normalizePrior: question.normalizePrior,
+        },
+      ],
+    });
+  }
+
+  /**
+   * Prewarms a boolean predicate question in Wasm memory before evaluation.
+   *
+   * @export
+   * @param question The boolean question to prewarm.
+   */
+  async prewarmBoolean(question: BooleanQuestion): Promise<void> {
+    if (this.makerPtr === 0) return;
+    if (question.options && question.options.length >= 2) {
+      await this.prewarmChoice({
+        options: question.options,
+        instructions: question.condition,
+        context: question.context,
+        temperature: question.temperature,
+        normalizePrior: question.normalizePrior,
+      });
+      return;
+    }
+    await this.prewarm({
+      context: question.context,
+      questions: [
+        {
+          id: '__boolean__',
+          type: 'boolean',
+          prompt: question.condition,
+          threshold: question.threshold,
+          temperature: question.temperature,
+          normalizePrior: question.normalizePrior,
+        },
+      ],
+    });
+  }
+
+  /**
+   * Prewarms an ordinal score rubric question in Wasm memory before evaluation.
+   *
+   * @export
+   * @param question The score question to prewarm.
+   */
+  async prewarmScore(question: ScoreQuestion): Promise<void> {
+    if (this.makerPtr === 0) return;
+    const {rubric} = resolveScoreRubric(question);
+    if (rubric.length === 0) return;
+    await this.prewarm({
+      context: question.context,
+      questions: [
+        {
+          id: '__score__',
+          type: 'score',
+          prompt: question.instructions ?? '',
+          options: rubric.map((desc) => ({label: '', description: desc})),
+          temperature: question.temperature,
+        },
+      ],
+    });
   }
 
   private computeSchemaTokens(schema?: ClassifierSchema): number {
@@ -960,11 +1165,55 @@ export class DecisionMaker extends TaskRunner {
     if (this.makerPtr === 0) {
       throw new Error('Decision is already closed.');
     }
+    if (question.options && question.options.length >= 2) {
+      const threshold =
+        question.threshold !== undefined && question.threshold > 0
+          ? question.threshold
+          : 0.5;
+      return this.evaluateChoice(text, {
+        options: question.options,
+        instructions: question.condition,
+        context: question.context,
+        temperature: question.temperature,
+        normalizePrior: question.normalizePrior,
+        imageBytes: question.imageBytes,
+        audioSamples: question.audioSamples,
+      }).then((choiceRes) => {
+        const opts = question.options!;
+        const affirmRe = /^(true|yes|1|allow|allowed|entailment|supported)$/i;
+        const negRe =
+          /^(false|no|0|deny|denied|reject|rejected|contradiction|contradicted|refuted)$/i;
+        let affirmOpt = opts.find((o) => affirmRe.test(o.label.trim()));
+        if (!affirmOpt) {
+          affirmOpt =
+            negRe.test(opts[1].label.trim()) &&
+            !negRe.test(opts[0].label.trim())
+              ? opts[0]
+              : opts[1];
+        }
+        const probabilityTrue = choiceRes.probabilities[affirmOpt.label] ?? 0;
+        const value = probabilityTrue >= threshold;
+        const confidence =
+          threshold > 0 && threshold < 1
+            ? Math.min(
+                1,
+                Math.max(
+                  0,
+                  value
+                    ? (probabilityTrue - threshold) / (1 - threshold)
+                    : (threshold - probabilityTrue) / threshold,
+                ),
+              )
+            : choiceRes.confidence;
+        return {value, probabilityTrue, confidence};
+      });
+    }
     const wasmModule = this.graphRunner
       .wasmModule as unknown as DecisionMakerWasmModule;
     const condition = question.context
       ? `${question.context}\n${question.condition}`
       : question.condition;
+    const normalizePrior = question.normalizePrior ?? false;
     const norm = normalizeContextInput(text, question);
     if (norm.hasMedia) {
       return this.logInvocation(() =>
@@ -975,6 +1224,7 @@ export class DecisionMaker extends TaskRunner {
           question.threshold ?? 0.5,
           question.temperature ?? 0,
           {imageBytes: norm.imageBytes, audioSamples: norm.audioSamples},
+          normalizePrior,
         ),
       );
     }
@@ -985,6 +1235,7 @@ export class DecisionMaker extends TaskRunner {
         condition,
         question.threshold ?? 0.5,
         question.temperature ?? 0,
+        normalizePrior,
       ),
     );
   }
@@ -1013,34 +1264,38 @@ export class DecisionMaker extends TaskRunner {
         ? `${question.context}\n${baseInstructions}`
         : question.context
       : baseInstructions;
+    const normalizePrior = question.normalizePrior ?? false;
     const norm = normalizeContextInput(text, question);
     const hasOptionMedia = (question.options ?? []).some(
       (o) =>
         (o.imageBytes && o.imageBytes.byteLength > 0) ||
         (o.audioSamples && o.audioSamples.length > 0),
     );
-    if (norm.hasMedia || hasOptionMedia) {
-      return this.logInvocation(() =>
-        wasmModule.evaluateContextChoice(
-          this.makerPtr,
-          norm.text,
-          criteria,
-          question.options ?? [],
-          question.temperature ?? 0,
-          instructions,
-          {imageBytes: norm.imageBytes, audioSamples: norm.audioSamples},
-        ),
-      );
-    }
-    return this.logInvocation(() =>
-      wasmModule.evaluateChoice(
-        this.makerPtr,
-        norm.text,
-        criteria,
-        question.temperature ?? 0,
-        instructions,
-      ),
-    );
+    const evalPromise =
+      norm.hasMedia || hasOptionMedia
+        ? this.logInvocation(() =>
+            wasmModule.evaluateContextChoice(
+              this.makerPtr,
+              norm.text,
+              criteria,
+              question.options ?? [],
+              question.temperature ?? 0,
+              instructions,
+              {imageBytes: norm.imageBytes, audioSamples: norm.audioSamples},
+              normalizePrior,
+            ),
+          )
+        : this.logInvocation(() =>
+            wasmModule.evaluateChoice(
+              this.makerPtr,
+              norm.text,
+              criteria,
+              question.temperature ?? 0,
+              instructions,
+              normalizePrior,
+            ),
+          );
+    return evalPromise.then(enrichChoiceResult);
   }
 
   /**
@@ -1144,25 +1399,26 @@ export class DecisionMaker extends TaskRunner {
           (o.audioSamples && o.audioSamples.length > 0),
       ),
     );
-    if (norm.hasMedia || hasOptionMedia) {
-      return this.logInvocation(() =>
-        wasmModule.evaluateContextSchema(
-          this.makerPtr,
-          stateText,
-          schemaContext ?? '',
-          questions,
-          {imageBytes: norm.imageBytes, audioSamples: norm.audioSamples},
-        ),
-      );
-    }
-    return this.logInvocation(() =>
-      wasmModule.evaluateSchema(
-        this.makerPtr,
-        stateText,
-        schemaContext ?? '',
-        questions,
-      ),
-    );
+    const raw =
+      norm.hasMedia || hasOptionMedia
+        ? await this.logInvocation(() =>
+            wasmModule.evaluateContextSchema(
+              this.makerPtr,
+              stateText,
+              schemaContext ?? '',
+              questions,
+              {imageBytes: norm.imageBytes, audioSamples: norm.audioSamples},
+            ),
+          )
+        : await this.logInvocation(() =>
+            wasmModule.evaluateSchema(
+              this.makerPtr,
+              stateText,
+              schemaContext ?? '',
+              questions,
+            ),
+          );
+    return enrichClassifierResult(raw, questions);
   }
 
   /**
@@ -1234,7 +1490,11 @@ export class DecisionMaker extends TaskRunner {
     const condition = question.context
       ? `${question.context}\n${question.condition}`
       : question.condition;
-    if (typeof wasmModule.evaluateBooleanBatch === 'function') {
+    if (
+      !hasQuestionMedia(question) &&
+      !(question.options && question.options.length >= 2) &&
+      typeof wasmModule.evaluateBooleanBatch === 'function'
+    ) {
       return this.logInvocation(() =>
         wasmModule.evaluateBooleanBatch!(
           this.makerPtr,
@@ -1243,6 +1503,7 @@ export class DecisionMaker extends TaskRunner {
           question.threshold ?? 0.5,
           question.temperature ?? 0,
           sharedPrefix,
+          question.normalizePrior ?? false,
         ),
       );
     }
@@ -1284,8 +1545,17 @@ export class DecisionMaker extends TaskRunner {
         ? `${question.context}\n${baseInstructions}`
         : question.context
       : baseInstructions;
-    if (typeof wasmModule.evaluateChoiceBatch === 'function') {
-      return this.logInvocation(() =>
+    const hasOptionMedia = (question.options ?? []).some(
+      (o) =>
+        (o.imageBytes && o.imageBytes.byteLength > 0) ||
+        (o.audioSamples && o.audioSamples.length > 0),
+    );
+    if (
+      !hasQuestionMedia(question) &&
+      !hasOptionMedia &&
+      typeof wasmModule.evaluateChoiceBatch === 'function'
+    ) {
+      const rawBatch = await this.logInvocation(() =>
         wasmModule.evaluateChoiceBatch!(
           this.makerPtr,
           texts,
@@ -1293,8 +1563,10 @@ export class DecisionMaker extends TaskRunner {
           question.temperature ?? 0,
           instructions,
           sharedPrefix,
+          question.normalizePrior ?? false,
         ),
       );
+      return rawBatch.map(enrichChoiceResult);
     }
     const results: ChoiceResult[] = [];
     for (const t of texts) {
@@ -1335,7 +1607,10 @@ export class DecisionMaker extends TaskRunner {
         ? `${question.context}\n${baseInstructions}`
         : question.context
       : baseInstructions;
-    if (typeof wasmModule.evaluateScoreBatch === 'function') {
+    if (
+      !hasQuestionMedia(question) &&
+      typeof wasmModule.evaluateScoreBatch === 'function'
+    ) {
       const rawBatch = await this.logInvocation(() =>
         wasmModule.evaluateScoreBatch!(
           this.makerPtr,

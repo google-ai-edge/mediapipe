@@ -17,7 +17,7 @@ const decision = await FilesetResolver.forDecisionTasks("https://cdn.jsdelivr.ne
 
 const decisionMaker = await DecisionMaker.createFromOptions(decision, {
   baseOptions: {
-    modelAssetPath: "https://storage.googleapis.com/mediapipe-models/decision_maker/decision_maker.task"
+    modelAssetPath: "https://huggingface.co/litert-community/embeddinggemma-2-text-270m-litert-lm/resolve/main/embeddinggemma-2-text-270m.litertlm"
   }
 });
 

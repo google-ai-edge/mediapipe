@@ -106,9 +106,9 @@ data class ChoiceQuestion(
 
 /**
  * Evaluates an ordered rubric of levels and computes both the most likely rubric level and a
- * continuous expected score in `[0.0, 1.0]`.
+ * continuous expected score in `[0.0, K - 1]` across the `K` rubric levels.
  *
- * @property rubric Ordered list of rubric levels from lowest (`0.0`) to highest (`1.0`).
+ * @property rubric Ordered list of `K` rubric levels from lowest (`0`) to highest (`K - 1`).
  * @property temperature Softmax temperature override (`0f` uses the model's calibrated default).
  * @property instructions Optional task instructions prepended to the rubric prompt.
  */

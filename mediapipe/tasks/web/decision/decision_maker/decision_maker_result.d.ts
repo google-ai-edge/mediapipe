@@ -41,7 +41,7 @@ export declare interface ChoiceResult {
    * probability mass (size == 1 to execute immediately; size > 1 to escalate
    * or disambiguate).
    */
-  predictionSet?: string[];
+  predictionSet: string[];
 }
 
 /**
