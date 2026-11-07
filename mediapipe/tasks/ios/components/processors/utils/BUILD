@@ -14,11 +14,12 @@
 
 load("@rules_cc//cc:objc_library.bzl", "objc_library")
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = [
+    "//mediapipe/tasks:internal",
+    "//mediapipe/tasks:users",
+])
 
 licenses(["notice"])
-
-exports_files(glob(["sources/*.h"]))
 
 objc_library(
     name = "MPPClassifierOptionsHelpers",
@@ -26,8 +27,6 @@ objc_library(
     hdrs = ["sources/MPPClassifierOptions+Helpers.h"],
     deps = [
         "//mediapipe/tasks/c/components/processors:classifier_options",
-        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
-        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/components/processors:MPPClassifierOptions",
     ],
 )

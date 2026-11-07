@@ -13,33 +13,12 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPEmbeddingResult+Helpers.h"
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
+
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPEmbedding+Helpers.h"
 
 #include "mediapipe/tasks/c/components/containers/embedding_result.h"
 
-namespace {
-using EmbeddingResultProto = ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
-}  // namespace
-
 @implementation MPPEmbeddingResult (Helpers)
-
-+ (MPPEmbeddingResult *)embeddingResultWithProto:
-    (const EmbeddingResultProto &)embeddingResultProto {
-  NSMutableArray *embeddings =
-      [NSMutableArray arrayWithCapacity:(NSUInteger)embeddingResultProto.embeddings_size()];
-  for (const auto &embeddingProto : embeddingResultProto.embeddings()) {
-    [embeddings addObject:[MPPEmbedding embeddingWithProto:embeddingProto]];
-  }
-
-  NSInteger timestampInMilliseconds = 0;
-  if (embeddingResultProto.has_timestamp_ms()) {
-    timestampInMilliseconds = (NSInteger)embeddingResultProto.timestamp_ms();
-  }
-
-  return [[MPPEmbeddingResult alloc] initWithEmbeddings:embeddings
-                                timestampInMilliseconds:timestampInMilliseconds];
-}
 
 + (MPPEmbeddingResult *)embeddingResultWithCResult:(const MpEmbeddingResult &)cResult {
   NSMutableArray<MPPEmbedding *> *embeddings =

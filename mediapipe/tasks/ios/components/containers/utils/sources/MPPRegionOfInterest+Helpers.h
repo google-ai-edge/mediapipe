@@ -12,28 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/util/render_data.pb.h"
-
 #import "mediapipe/tasks/ios/components/containers/sources/MPPRegionOfInterest.h"
-
-#include "mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto/region_of_interest.pb.h"
 
 struct MpRegionOfInterest;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPRegionOfInterest (Helpers)
-
-/**
- * Creates a `RegionOfInterest` proto from the region of interest.
- *
- * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
- * error will be saved.
- *
- * @return A `RegionOfInterest` proto created from the region of interest.
- */
-- (std::optional<mediapipe::tasks::vision::interactive_segmenter_legacy::proto::RegionOfInterest>)
-    getRegionOfInteresProtoWithError:(NSError **)error;
 
 /**
  * Copies the region of interest to a C MpRegionOfInterest struct.

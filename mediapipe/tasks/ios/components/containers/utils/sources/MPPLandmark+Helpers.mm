@@ -18,15 +18,6 @@
 
 @implementation MPPLandmark (Helpers)
 
-+ (MPPLandmark *)landmarkWithProto:(const ::mediapipe::Landmark &)landmarkProto {
-  return [[MPPLandmark alloc]
-       initWithX:landmarkProto.x()
-               y:landmarkProto.y()
-               z:landmarkProto.z()
-      visibility:landmarkProto.has_visibility() ? @(landmarkProto.visibility()) : nil
-        presence:landmarkProto.has_presence() ? @(landmarkProto.presence()) : nil];
-}
-
 + (MPPLandmark *)landmarkWithCLandmark:(const MpLandmark &)cLandmark {
   NSNumber *visibility = cLandmark.has_visibility ? @(cLandmark.visibility) : nil;
   NSNumber *presence = cLandmark.has_presence ? @(cLandmark.presence) : nil;
@@ -49,18 +40,6 @@
 @end
 
 @implementation MPPNormalizedLandmark (Helpers)
-
-+ (MPPNormalizedLandmark *)normalizedLandmarkWithProto:
-    (const ::mediapipe::NormalizedLandmark &)normalizedLandmarkProto {
-  return [[MPPNormalizedLandmark alloc]
-       initWithX:normalizedLandmarkProto.x()
-               y:normalizedLandmarkProto.y()
-               z:normalizedLandmarkProto.z()
-      visibility:normalizedLandmarkProto.has_visibility() ? @(normalizedLandmarkProto.visibility())
-                                                          : nil
-        presence:normalizedLandmarkProto.has_presence() ? @(normalizedLandmarkProto.presence())
-                                                        : nil];
-}
 
 + (MPPNormalizedLandmark *)normalizedLandmarkWithCNormalizedLandmark:
     (const MpNormalizedLandmark &)cNormalizedLandmark {

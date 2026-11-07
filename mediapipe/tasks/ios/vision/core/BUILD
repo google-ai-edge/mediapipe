@@ -54,29 +54,6 @@ objc_library(
 )
 
 objc_library(
-    name = "MPPVisionPacketCreator",
-    srcs = ["sources/MPPVisionPacketCreator.mm"],
-    hdrs = ["sources/MPPVisionPacketCreator.h"],
-    copts = [
-        "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
-    ],
-    deps = [
-        ":MPPImage",
-        "//mediapipe/framework:packet",
-        "//mediapipe/framework:timestamp",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:rect_cc_proto",
-        "//mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto:region_of_interest_cc_proto",
-        "//mediapipe/tasks/ios/components/containers:MPPRegionOfInterest",
-        "//mediapipe/tasks/ios/components/containers/utils:MPPRegionOfInterestHelpers",
-        "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
-
-objc_library(
     name = "MPPVisionTaskRunner",
     srcs = ["sources/MPPVisionTaskRunner.mm"],
     hdrs = ["sources/MPPVisionTaskRunner.h"],
@@ -88,23 +65,16 @@ objc_library(
     deps = [
         ":MPPImage",
         ":MPPRunningMode",
-        ":MPPVisionPacketCreator",
-        "//mediapipe/calculators/core:flow_limiter_calculator",
-        "//mediapipe/framework:packet",
-        "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/tasks/c/core:mp_status",
         "//mediapipe/tasks/c/vision/core:image",
         "//mediapipe/tasks/c/vision/core:image_processing_options",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
-        "//mediapipe/tasks/ios/core:MPPTaskInfo",
-        "//mediapipe/tasks/ios/core:MPPTaskRunner",
         "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",
         "//third_party/apple_frameworks:CoreGraphics",
         "//third_party/apple_frameworks:Foundation",
         "//third_party/apple_frameworks:UIKit",
-        "@com_google_absl//absl/status:statusor",
     ],
 )
 

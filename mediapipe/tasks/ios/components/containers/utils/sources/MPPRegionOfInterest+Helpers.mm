@@ -23,43 +23,8 @@
 
 #include "mediapipe/tasks/c/components/containers/keypoint.h"
 #include "mediapipe/tasks/c/vision/interactive_segmenter_legacy/interactive_segmenter_legacy.h"
-#include "mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto/region_of_interest.pb.h"
-#include "mediapipe/util/color.pb.h"
-
-namespace {
-using RenderData = ::mediapipe::RenderData;
-using RenderAnnotation = ::mediapipe::RenderAnnotation;
-using RegionOfInterest =
-    ::mediapipe::tasks::vision::interactive_segmenter_legacy::proto::RegionOfInterest;
-}  // namespace
 
 @implementation MPPRegionOfInterest (Helpers)
-
-- (std::optional<RegionOfInterest>)getRegionOfInteresProtoWithError:(NSError**)error {
-  RegionOfInterest result;
-  if (self.keypoint) {
-    auto* point = result.mutable_keypoint();
-    point->set_normalized(true);
-    point->set_x(self.keypoint.location.x);
-    point->set_y(self.keypoint.location.y);
-    return result;
-  } else if (self.scribbles) {
-    auto* scribble = result.mutable_scribble();
-    for (MPPNormalizedKeypoint* keypoint in self.scribbles) {
-      auto* point = scribble->add_point();
-      point->set_normalized(true);
-      point->set_x(keypoint.location.x);
-      point->set_y(keypoint.location.y);
-    }
-    return result;
-  }
-
-  [MPPCommonUtils createCustomError:error
-                           withCode:MPPTasksErrorCodeInvalidArgumentError
-                        description:@"RegionOfInterest does not include a valid user interaction."];
-
-  return std::nullopt;
-}
 
 - (BOOL)copyToCRegionOfInterest:(MpRegionOfInterest *)cRoi error:(NSError **)error {
   std::memset(cRoi, 0, sizeof(MpRegionOfInterest));

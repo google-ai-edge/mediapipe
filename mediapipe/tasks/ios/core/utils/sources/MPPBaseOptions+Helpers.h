@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #import "mediapipe/tasks/ios/core/sources/MPPBaseOptions.h"
 
 struct MpBaseOptions;
@@ -20,15 +19,6 @@ struct MpBaseOptions;
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPBaseOptions (Helpers)
-
-- (void)copyToProto:(mediapipe::tasks::core::proto::BaseOptions *)baseOptionsProto;
-- (void)copyToProto:(mediapipe::tasks::core::proto::BaseOptions *)baseOptionsProto
-      withUseLitert:(BOOL)useLitert;
-- (void)copyToProto:(mediapipe::tasks::core::proto::BaseOptions *)baseOptionsProto
-    withUseStreamMode:(BOOL)useStreamMode;
-- (void)copyToProto:(mediapipe::tasks::core::proto::BaseOptions *)baseOptionsProto
-    withUseStreamMode:(BOOL)useStreamMode
-        withUseLitert:(BOOL)useLitert;
 
 /**
  * Copies the options to a C `MpBaseOptions` struct.

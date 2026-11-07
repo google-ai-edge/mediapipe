@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 #import "mediapipe/tasks/ios/components/containers/sources/MPPClassificationResult.h"
 
 struct MpClassifications;
@@ -22,16 +21,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPClassifications (Helpers)
 
-/** Creates a new `MPPClassifications` object from the given proto, head index and head name. */
-+ (MPPClassifications *)classificationsWithClassificationListProto:
-                            (const ::mediapipe::ClassificationList &)proto
-                                                         headIndex:(NSInteger)headIndex
-                                                          headName:(NSString *)headName;
-
-/** Creates a new `MPPClassifications` object from the given classifications proto. */
-+ (MPPClassifications *)classificationsWithClassificationsProto:
-    (const mediapipe::tasks::components::containers::proto::Classifications &)classificationsProto;
-
 /** Creates a new `MPPClassifications` object from the C API `MpClassifications` struct. */
 + (MPPClassifications *)classificationsWithCClassifications:
     (const struct MpClassifications &)cClassifications;
@@ -39,10 +28,6 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface MPPClassificationResult (Helpers)
-
-+ (MPPClassificationResult *)classificationResultWithProto:
-    (const mediapipe::tasks::components::containers::proto::ClassificationResult &)
-        classificationResultProto;
 
 /** Creates a new `MPPClassificationResult` object from the C API `MpClassificationResult` struct.
  */

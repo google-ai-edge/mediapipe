@@ -14,13 +14,9 @@
 
 #import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
 
-#import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPRunningMode.h"
-
-#include "mediapipe/framework/packet.h"
 
 #ifndef MP_IMAGE_PTR_DEFINED
 #define MP_IMAGE_PTR_DEFINED
@@ -32,54 +28,12 @@ struct MpImageProcessingOptions;
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * This class is used to create and call appropriate methods on the C++ Task Runner to initialize,
- * execute and terminate any MediaPipe vision task.
+ * Shared helper for initializing and preparing inputs for MediaPipe vision C tasks.
  */
 @interface MPPVisionTaskRunner : NSObject
 
 /**
- * The canonicalized `CalculatorGraphConfig` of the underlying graph managed by the C++ task
- * runner.
- */
-@property(nonatomic, readonly) const mediapipe::CalculatorGraphConfig &graphConfig;
-
-/**
- * Initializes a new `MPPVisionTaskRunner` with the given task info, running mode, whether task
- * supports region of interest, packets callback, image and norm rect input stream names. Make sure
- * that the packets callback is set properly based on the vision task's running mode. In case of
- * live stream running mode, a C++ packets callback that is intended to deliver inference results
- * must be provided. In case of image or video running mode, packets callback must be set to nil.
- *
- * @param taskInfo A `MPPTaskInfo` initialized by the task.
- * @param runningMode MediaPipe vision task running mode.
- * @param roiAllowed A `BOOL` indicating if the task supports region of interest.
- * @param packetsCallback An optional C++ callback function that takes a list of output packets as
- * the input argument. If provided, the callback must in turn call the block provided by the user in
- * the appropriate task options. Make sure that the packets callback is set properly based on the
- * vision task's running mode. In case of live stream running mode, a C++ packets callback that is
- * intended to deliver inference results must be provided. In case of image or video running mode,
- * packets callback must be set to nil.
- * @param imageInputStreamName Name of the image input stream of the task.
- * @param normRectInputStreamName Name of the norm rect input stream of the task.
- *
- * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
- * error will be saved.
- *
- * @return An instance of `MPPVisionTaskRunner` initialized with the given task info, running mode,
- * whether task supports region of interest, packets callback, image and norm rect input stream
- * names.
- */
-- (nullable instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
-                              runningMode:(MPPRunningMode)runningMode
-                               roiAllowed:(BOOL)roiAllowed
-                          packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
-                     imageInputStreamName:(NSString *)imageInputStreamName
-                  normRectInputStreamName:(nullable NSString *)normRectInputStreamName
-                                    error:(NSError **)error;
-
-/**
- * Initializes a new `MPPVisionTaskRunner` with running mode, capability flags, and delegate status
- * for C API vision tasks.
+ * Initializes a new `MPPVisionTaskRunner` with running mode, capability flags, and delegate status.
  *
  * @param runningMode The task's running mode (image, video, or live stream).
  * @param roiAllowed Whether region-of-interest is supported by this task.
@@ -91,7 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
                                   roiAllowed:(BOOL)roiAllowed
                              normRectAllowed:(BOOL)normRectAllowed
                                  hasDelegate:(BOOL)hasDelegate
-                                       error:(NSError **)error;
+                                       error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
  * Validates that the current running mode matches the expected running mode.
@@ -117,171 +71,6 @@ NS_ASSUME_NONNULL_BEGIN
                                            error:(NSError **)error;
 
 /**
- * A synchronous method to invoke the C++ task runner to process single image inputs. The call
- * blocks the current thread until a failure status or a successful result is returned.
- *
- * This method must be used by tasks when region of interest must not be factored in for inference.
- *
- * @param image An `MPPImage` input to the task.
- * @param error Pointer to the memory location where errors if any should be
- * saved. If @c NULL, no error will be saved.
- *
- * @return An optional `PacketMap` containing pairs of output stream name and data packet.
- */
-- (std::optional<mediapipe::tasks::core::PacketMap>)processImage:(MPPImage *)image
-                                                           error:(NSError **)error;
-
-/**
- * A synchronous method to invoke the C++ task runner to process single image inputs. The call
- * blocks the current thread until a failure status or a successful result is returned.
- *
- * This method must be used by tasks when region of interest must be factored in for inference.
- * When tasks which do not support region of interest calls this method in combination with any roi
- * other than `CGRectZero` an error is returned.
- *
- * @param image An `MPPImage` input to the task.
- * @param regionOfInterest A `CGRect` specifying the region of interest within the given image data
- * of type `MPPImage`, on which inference should be performed.
- * @param error Pointer to the memory location where errors if any should be
- * saved. If @c NULL, no error will be saved.
- *
- * @return An optional `PacketMap` containing pairs of output stream name and data packet.
- */
-- (std::optional<mediapipe::tasks::core::PacketMap>)processImage:(MPPImage *)image
-                                                regionOfInterest:(CGRect)regionOfInterest
-                                                           error:(NSError **)error;
-
-/**
- * A synchronous method to invoke the C++ task runner to process continuous video frames. The call
- * blocks the current thread until a failure status or a successful result is returned.
- *
- * This method must be used by tasks when region of interest must not be factored in for inference.
- *
- * @param videoFrame An `MPPImage` input to the task.
- * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
- * timestamps must be monotonically increasing.
- * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
- * error will be saved.
- *
- * @return An optional `PacketMap` containing pairs of output stream name and data packet.
- */
-- (std::optional<mediapipe::tasks::core::PacketMap>)processVideoFrame:(MPPImage *)videoFrame
-                                              timestampInMilliseconds:
-                                                  (NSInteger)timeStampInMilliseconds
-                                                                error:(NSError **)error;
-
-/**
- * A synchronous method to invoke the C++ task runner to process continuous video frames. The call
- * blocks the current thread until a failure status or a successful result is returned.
- *
- * This method must be used by tasks when region of interest must be factored in for inference.
- * When tasks which do not support region of interest calls this method in combination with any roi
- * other than `CGRectZero` an error is returned.
- *
- * @param videoFrame An `MPPImage` input to the task.
- * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
- * timestamps must be monotonically increasing.
- * @param regionOfInterest A `CGRect` specifying the region of interest within the given image data
- * of type `MPPImage`, on which inference should be performed.
- * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
- * error will be saved.
- *
- * @return An optional `PacketMap` containing pairs of output stream name and data packet.
- */
-- (std::optional<mediapipe::tasks::core::PacketMap>)processVideoFrame:(MPPImage *)videoFrame
-                                                     regionOfInterest:(CGRect)regionOfInterest
-                                              timestampInMilliseconds:
-                                                  (NSInteger)timeStampInMilliseconds
-                                                                error:(NSError **)error;
-
-/**
- * An asynchronous method to send live stream data to the C++ task runner. The call blocks the
- * current thread until a failure status or a successful result is returned. The results will be
- * available in the user-defined `packetsCallback` that was provided during initialization of the
- * `MPPVisionTaskRunner`.
- *
- * This method must be used by tasks when region of interest must not be factored in for inference.
- *
- * @param image An `MPPImage` input to the task.
- * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
- * timestamps must be monotonically increasing.
- * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
- * error will be saved.
- *
- * @return A `BOOL` indicating if the live stream data was sent to the C++ task runner successfully.
- * Please note that any errors during processing of the live stream packet map will only be
- * available in the user-defined `packetsCallback` that was provided during initialization of the
- * `MPPVisionTaskRunner`.
- */
-- (BOOL)processLiveStreamImage:(MPPImage *)image
-       timestampInMilliseconds:(NSInteger)timeStampInMilliseconds
-                         error:(NSError **)error;
-
-/**
- * An asynchronous method to send live stream data to the C++ task runner. The call blocks the
- * current thread until a failure status or a successful result is returned. The results will be
- * available in the user-defined `packetsCallback` that was provided during initialization of the
- * `MPPVisionTaskRunner`.
- *
- * This method must be used by tasks when region of interest must not be factored in for inference.
- *
- * @param image An `MPPImage` input to the task.
- * @param regionOfInterest A `CGRect` specifying the region of interest within the given image data
- * of type `MPPImage`, on which inference should be performed.
- * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
- * timestamps must be monotonically increasing.
- * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
- * error will be saved.
- *
- * @return A `BOOL` indicating if the live stream data was sent to the C++ task runner successfully.
- * Please note that any errors during processing of the live stream packet map will only be
- * available in the user-defined `packetsCallback` that was provided during initialization of the
- * `MPPVisionTaskRunner`.
- */
-- (BOOL)processLiveStreamImage:(MPPImage *)image
-              regionOfInterest:(CGRect)regionOfInterest
-       timestampInMilliseconds:(NSInteger)timeStampInMilliseconds
-                         error:(NSError **)error;
-
-/**
- * This method creates an input packet map to the C++ task runner with the image and normalized rect
- * calculated from the region of interest specified within the bounds of an image. Tasks which need
- * to add more entries to the input packet map and build their own custom logic for processing
- * images can use this method.
- *
- * @param image An `MPPImage` input to the task.
- * @param regionOfInterest A `CGRect` specifying the region of interest within the given image data
- * of type `MPPImage`, on which inference should be performed.
- * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
- * error will be saved.
- *
- * @return A `BOOL` indicating if the creation of the input packet map with the image and the
- * normalized rect calculated from the region of interest was successful.
- */
-- (std::optional<std::map<std::string, mediapipe::Packet>>)
-    inputPacketMapWithMPPImage:(MPPImage *)image
-              regionOfInterest:(CGRect)roi
-                         error:(NSError **)error;
-
-/**
- * A synchronous method for invoking the C++ task runner for processing batch data or offline
- * streaming data.
- */
-- (std::optional<mediapipe::tasks::core::PacketMap>)
-    processPacketMap:(const mediapipe::tasks::core::PacketMap &)packetMap
-               error:(NSError **)error;
-
-/**
- * An asynchronous method that is designed for handling live streaming data such as live camera.
- */
-- (BOOL)sendPacketMap:(const mediapipe::tasks::core::PacketMap &)packetMap error:(NSError **)error;
-
-/**
- * Shuts down the C++ task runner.
- */
-- (BOOL)closeWithError:(NSError **)error;
-
-/**
  * This method returns a unique dispatch queue name by adding the given suffix and a `UUID` to the
  * pre-defined queue name prefix for vision tasks. The vision tasks can use this method to get
  * unique dispatch queue names which are consistent with other vision tasks.
@@ -296,7 +85,6 @@ NS_ASSUME_NONNULL_BEGIN
 + (const char *)uniqueDispatchQueueNameWithSuffix:(NSString *)suffix;
 
 - (instancetype)init NS_UNAVAILABLE;
-
 + (instancetype)new NS_UNAVAILABLE;
 
 @end

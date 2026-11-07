@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/framework/formats/landmark.pb.h"
 #import "mediapipe/tasks/ios/components/containers/sources/MPPLandmark.h"
 
 struct MpLandmark;
@@ -24,8 +23,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPLandmark (Helpers)
 
-+ (MPPLandmark *)landmarkWithProto:(const ::mediapipe::Landmark &)landmarkProto;
-
 + (MPPLandmark *)landmarkWithCLandmark:(const struct MpLandmark &)cLandmark;
 
 + (NSArray<MPPLandmark *> *)landmarksWithCLandmarks:(const struct MpLandmarks &)cLandmarks;
@@ -33,9 +30,6 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface MPPNormalizedLandmark (Helpers)
-
-+ (MPPNormalizedLandmark *)normalizedLandmarkWithProto:
-    (const ::mediapipe::NormalizedLandmark &)normalizedLandmarkProto;
 
 + (MPPNormalizedLandmark *)normalizedLandmarkWithCNormalizedLandmark:
     (const struct MpNormalizedLandmark &)cNormalizedLandmark;

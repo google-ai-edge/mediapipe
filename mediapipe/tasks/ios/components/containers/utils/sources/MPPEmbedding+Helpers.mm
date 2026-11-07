@@ -12,49 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPEmbedding+Helpers.h"
 
 #include "mediapipe/tasks/c/components/containers/embedding_result.h"
 
-namespace {
-using EmbeddingProto = ::mediapipe::tasks::components::containers::proto::Embedding;
-}  // namespace
-
 @implementation MPPEmbedding (Helpers)
-
-+ (MPPEmbedding *)embeddingWithProto:(const EmbeddingProto &)embeddingProto {
-  NSMutableArray<NSNumber *> *floatEmbedding;
-  NSMutableArray<NSNumber *> *quantizedEmbedding;
-  NSString *headName;
-
-  if (embeddingProto.has_float_embedding()) {
-    floatEmbedding =
-        [NSMutableArray arrayWithCapacity:embeddingProto.float_embedding().values_size()];
-
-    for (const auto value : embeddingProto.float_embedding().values()) {
-      [floatEmbedding addObject:[NSNumber numberWithFloat:value]];
-    }
-  }
-
-  if (embeddingProto.has_quantized_embedding()) {
-    const std::string &cppQuantizedEmbedding = embeddingProto.quantized_embedding().values();
-    quantizedEmbedding = [NSMutableArray arrayWithCapacity:cppQuantizedEmbedding.length()];
-
-    for (char ch : cppQuantizedEmbedding) {
-      [quantizedEmbedding addObject:[NSNumber numberWithChar:ch]];
-    }
-  }
-
-  if (embeddingProto.has_head_name()) {
-    headName = [NSString stringWithCppString:embeddingProto.head_name()];
-  }
-
-  return [[MPPEmbedding alloc] initWithFloatEmbedding:floatEmbedding
-                                   quantizedEmbedding:quantizedEmbedding
-                                            headIndex:embeddingProto.head_index()
-                                             headName:headName];
-}
 
 + (MPPEmbedding *)embeddingWithCEmbedding:(const MpEmbedding &)cEmbedding {
   NSMutableArray<NSNumber *> *floatEmbedding = nil;
