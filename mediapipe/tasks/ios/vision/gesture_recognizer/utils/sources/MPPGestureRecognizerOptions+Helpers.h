@@ -12,20 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/framework/calculator_options.pb.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
 #import "mediapipe/tasks/ios/vision/gesture_recognizer/sources/MPPGestureRecognizerOptions.h"
+
+struct MpGestureRecognizerOptions;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MPPGestureRecognizerOptions (Helpers) <MPPTaskOptionsProtocol>
+@interface MPPGestureRecognizerOptions (Helpers)
 
-/**
- * Populates the provided `CalculatorOptions` proto container with the current settings.
- *
- * @param optionsProto The `CalculatorOptions` proto object to copy the settings to.
- */
-- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
+/** Copies the options to a MediaPipe C API `MpGestureRecognizerOptions` struct. */
+- (void)copyToCOptions:(struct MpGestureRecognizerOptions *)cOptions;
+
+/** Frees any memory allocated inside a MediaPipe C API `MpGestureRecognizerOptions` struct. */
++ (void)freeCOptions:(struct MpGestureRecognizerOptions *)cOptions;
 
 @end
 

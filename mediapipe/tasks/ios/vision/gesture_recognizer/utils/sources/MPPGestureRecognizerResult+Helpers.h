@@ -14,60 +14,25 @@
 
 #import "mediapipe/tasks/ios/vision/gesture_recognizer/sources/MPPGestureRecognizerResult.h"
 
-#include "mediapipe/framework/formats/classification.pb.h"
-#include "mediapipe/framework/formats/landmark.pb.h"
-#include "mediapipe/framework/packet.h"
+struct MpGestureRecognizerResult;
 
 NS_ASSUME_NONNULL_BEGIN
-
-static const int kMicrosecondsPerMillisecond = 1000;
 
 @interface MPPGestureRecognizerResult (Helpers)
 
 /**
- * Creates an `MPPGestureRecognizerResult` from  hand gestures, handedness, hand landmarks and world
- * landmarks packets.
+ * Creates an `MPPGestureRecognizerResult` from a MediaPipe C API `MpGestureRecognizerResult`
+ * struct.
  *
- * @param handGesturesPacket A MediaPipe packet wrapping a`std::vector<ClassificationListProto>`.
- * @param handednessPacket A MediaPipe packet wrapping a`std::vector<ClassificationListProto>`.
- * @param handLandmarksPacket A MediaPipe packet wrapping
- * a`std::vector<NormalizedlandmarkListProto>`.
- * @param worldLandmarksPacket A MediaPipe packet wrapping a`std::vector<LandmarkListProto>`.
+ * @param cResult The C API gesture recognizer result struct.
+ * @param timestampInMilliseconds The timestamp in milliseconds.
  *
- * @return  An `MPPGestureRecognizerResult` object that contains the hand gesture recognition
- * results.
+ * @return An `MPPGestureRecognizerResult` object.
  */
 + (MPPGestureRecognizerResult *)
-    gestureRecognizerResultWithHandGesturesPacket:(const mediapipe::Packet &)handGesturesPacket
-                                 handednessPacket:(const mediapipe::Packet &)handednessPacket
-                              handLandmarksPacket:(const mediapipe::Packet &)handLandmarksPacket
-                             worldLandmarksPacket:(const mediapipe::Packet &)worldLandmarksPacket;
+    gestureRecognizerResultWithCResult:(const struct MpGestureRecognizerResult &)cResult
+               timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 
-/**
- * Creates an `MPPGestureRecognizerResult` from hand gestures, handedness, hand landmarks and world
- * landmarks proto vectors.
- *
- * @param handGesturesProto A vector of protos of type `std::vector<ClassificationListProto>`.
- * @param handednessPacket A vector of protos of type  `std::vector<ClassificationListProto>`.
- * @param handLandmarksPacket A vector of protos of type `std::vector<NormalizedlandmarkListProto>`.
- * @param handLandmarksPacket A vector of protos of type `std::vector<LandmarkListProto>`.
- * @param timestampInMilliSeconds The timestamp of the result.
- *
- * @return  An `MPPGestureRecognizerResult` object that contains the hand gesture recognition
- * results.
- */
-+ (MPPGestureRecognizerResult *)
-    gestureRecognizerResultWithHandGesturesProto:
-        (const std::vector<::mediapipe::ClassificationList> &)handGesturesProto
-                                 handednessProto:
-                                     (const std::vector<::mediapipe::ClassificationList> &)
-                                         handednessProto
-                              handLandmarksProto:
-                                  (const std::vector<::mediapipe::NormalizedLandmarkList> &)
-                                      handLandmarksProto
-                             worldLandmarksProto:
-                                 (const std::vector<::mediapipe::LandmarkList> &)worldLandmarksProto
-                         timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 @end
 
 NS_ASSUME_NONNULL_END
