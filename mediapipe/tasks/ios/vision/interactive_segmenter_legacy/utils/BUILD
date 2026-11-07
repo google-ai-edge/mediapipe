@@ -22,13 +22,17 @@ objc_library(
     name = "MPPInteractiveSegmenterLegacyOptionsHelpers",
     srcs = ["sources/MPPInteractiveSegmenterLegacyOptions+Helpers.mm"],
     hdrs = ["sources/MPPInteractiveSegmenterLegacyOptions+Helpers.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++20",
+        "-Xclang=-fno-cxx-modules",
+        "-x objective-c++",
+    ],
     deps = [
-        "//mediapipe/framework:calculator_options_cc_proto",
-        "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_cc_proto",
-        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
-        "//mediapipe/tasks/ios/core:MPPTaskOptionsProtocol",
+        "//mediapipe/tasks/c/vision/interactive_segmenter_legacy:interactive_segmenter_legacy_lib",
         "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
         "//mediapipe/tasks/ios/vision/interactive_segmenter_legacy:MPPInteractiveSegmenterLegacyOptions",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -36,9 +40,17 @@ objc_library(
     name = "MPPInteractiveSegmenterLegacyResultHelpers",
     srcs = ["sources/MPPInteractiveSegmenterLegacyResult+Helpers.mm"],
     hdrs = ["sources/MPPInteractiveSegmenterLegacyResult+Helpers.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++20",
+        "-Xclang=-fno-cxx-modules",
+        "-x objective-c++",
+    ],
     deps = [
-        "//mediapipe/framework:packet",
-        "//mediapipe/framework/formats:image",
+        "//mediapipe/tasks/c/core:mp_status",
+        "//mediapipe/tasks/c/vision/core:image",
+        "//mediapipe/tasks/c/vision/image_segmenter:image_segmenter_result",
         "//mediapipe/tasks/ios/vision/interactive_segmenter_legacy:MPPInteractiveSegmenterLegacyResult",
+        "//third_party/apple_frameworks:Foundation",
     ],
 )

@@ -16,6 +16,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/interactive_segmenter_legacy/interactive_segmenter_legacy.h"
 
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -23,6 +24,7 @@ limitations under the License.
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "absl/status/statusor.h"       // from @com_google_absl
 #include "absl/strings/str_cat.h"       // from @com_google_absl
+#include "absl/strings/str_format.h"    // from @com_google_absl
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -34,11 +36,13 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_result.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/segmenter_options.pb.h"
 #include "mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto/region_of_interest.pb.h"
 #include "mediapipe/util/color.pb.h"
+#include "mediapipe/util/label_map.pb.h"
 #include "mediapipe/util/render_data.pb.h"
 
 namespace mediapipe {
@@ -116,7 +120,41 @@ ConvertImageSegmenterOptionsToProto(
   auto base_options_proto = std::make_unique<tasks::core::proto::BaseOptions>(
       tasks::core::ConvertBaseOptionsToProto(&(options->base_options)));
   options_proto->mutable_base_options()->Swap(base_options_proto.get());
+  options_proto->set_display_names_locale(options->display_names_locale);
   return options_proto;
+}
+
+absl::StatusOr<std::vector<std::string>> GetLabelsFromGraphConfig(
+    const CalculatorGraphConfig& graph_config) {
+  bool found_tensor_to_segmentation_calculator = false;
+  std::vector<std::string> labels;
+  for (const auto& node : graph_config.node()) {
+    if (node.calculator() ==
+        "mediapipe.tasks.TensorsToSegmentationCalculator") {
+      if (!found_tensor_to_segmentation_calculator) {
+        found_tensor_to_segmentation_calculator = true;
+      } else {
+        return absl::Status(CreateStatusWithPayload(
+            absl::StatusCode::kFailedPrecondition,
+            "The graph has more than one "
+            "mediapipe.tasks.TensorsToSegmentationCalculator."));
+      }
+      TensorsToSegmentationCalculatorOptions options =
+          node.options().GetExtension(
+              TensorsToSegmentationCalculatorOptions::ext);
+      if (!options.label_items().empty()) {
+        for (int i = 0; i < options.label_items_size(); ++i) {
+          if (!options.label_items().contains(i)) {
+            return absl::Status(CreateStatusWithPayload(
+                absl::StatusCode::kFailedPrecondition,
+                absl::StrFormat("The labelmap has no expected key: %d.", i)));
+          }
+          labels.push_back(options.label_items().at(i).name());
+        }
+      }
+    }
+  }
+  return labels;
 }
 
 // Converts the user-facing RegionOfInterest struct to the RegionOfInterest
@@ -181,6 +219,9 @@ InteractiveSegmenterLegacy::Create(
            .ca_bundle_path = options->base_options.ca_bundle_path})));
   segmenter->output_category_mask_ = options->output_category_mask;
   segmenter->output_confidence_masks_ = options->output_confidence_masks;
+  ABSL_ASSIGN_OR_RETURN(
+      segmenter->labels_,
+      GetLabelsFromGraphConfig(segmenter->runner_->GetGraphConfig()));
   return segmenter;
 }
 

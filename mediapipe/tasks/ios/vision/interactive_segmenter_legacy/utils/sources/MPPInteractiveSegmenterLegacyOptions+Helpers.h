@@ -12,20 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/framework/calculator_options.pb.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
+#import <Foundation/Foundation.h>
+
 #import "mediapipe/tasks/ios/vision/interactive_segmenter_legacy/sources/MPPInteractiveSegmenterLegacyOptions.h"
+
+struct MpInteractiveSegmenterLegacyOptions;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MPPInteractiveSegmenterLegacyOptions (Helpers) <MPPTaskOptionsProtocol>
+@interface MPPInteractiveSegmenterLegacyOptions (Helpers)
 
-/**
- * Populates the provided `CalculatorOptions` proto container with the current settings.
- *
- * @param optionsProto The `CalculatorOptions` proto object to copy the settings to.
- */
-- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
+- (void)copyToCOptions:(struct MpInteractiveSegmenterLegacyOptions *)cOptions;
+
++ (void)freeCOptions:(struct MpInteractiveSegmenterLegacyOptions *)cOptions;
 
 @end
 

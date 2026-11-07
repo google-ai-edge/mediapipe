@@ -14,57 +14,56 @@
 
 #import "mediapipe/tasks/ios/vision/interactive_segmenter_legacy/utils/sources/MPPInteractiveSegmenterLegacyResult+Helpers.h"
 
-#include "mediapipe/framework/formats/image.h"
-#include "mediapipe/framework/packet.h"
-
-namespace {
-using ::mediapipe::Image;
-using ::mediapipe::ImageFrameSharedPtr;
-using ::mediapipe::Packet;
-}  // namespace
+#include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter_result.h"
 
 @implementation MPPInteractiveSegmenterLegacyResult (Helpers)
 
-+ (MPPInteractiveSegmenterLegacyResult *)
-    interactiveSegmenterLegacyResultWithConfidenceMasksPacket:(const Packet &)confidenceMasksPacket
-                                           categoryMaskPacket:(const Packet &)categoryMaskPacket
-                                          qualityScoresPacket:(const Packet &)qualityScoresPacket
-                                      timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                     shouldCopyMaskPacketData:(BOOL)shouldCopyMaskPacketData {
-  NSMutableArray<MPPMask *> *confidenceMasks;
-  MPPMask *categoryMask;
-  NSMutableArray<NSNumber *> *qualityScores;
-
-  if (confidenceMasksPacket.ValidateAsType<std::vector<Image>>().ok()) {
-    std::vector<Image> cppConfidenceMasks = confidenceMasksPacket.Get<std::vector<Image>>();
-    confidenceMasks = [NSMutableArray arrayWithCapacity:(NSUInteger)cppConfidenceMasks.size()];
-
-    for (const auto &confidenceMask : cppConfidenceMasks) {
-      [confidenceMasks addObject:[[MPPMask alloc] initWithFloat32Data:(float *)confidenceMask
-                                                                          .GetImageFrameSharedPtr()
-                                                                          .get()
-                                                                          ->PixelData()
-                                                                width:confidenceMask.width()
-                                                               height:confidenceMask.height()
-                                                           shouldCopy:shouldCopyMaskPacketData]];
++ (nullable MPPInteractiveSegmenterLegacyResult *)
+    interactiveSegmenterLegacyResultWithCResult:(const struct MpImageSegmenterResult &)cResult
+                        timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                       shouldCopyMaskPacketData:(BOOL)shouldCopyMaskPacketData {
+  NSMutableArray<MPPMask *> *confidenceMasks = nil;
+  if (cResult.confidence_masks && cResult.confidence_masks_count > 0) {
+    confidenceMasks = [NSMutableArray arrayWithCapacity:cResult.confidence_masks_count];
+    for (uint32_t i = 0; i < cResult.confidence_masks_count; ++i) {
+      MpImagePtr maskImage = cResult.confidence_masks[i];
+      if (maskImage) {
+        const float *pixelData = nullptr;
+        if (MpImageDataFloat32(maskImage, &pixelData, nullptr) == kMpOk && pixelData) {
+          int width = MpImageGetWidth(maskImage);
+          int height = MpImageGetHeight(maskImage);
+          MPPMask *mask = [[MPPMask alloc] initWithFloat32Data:pixelData
+                                                         width:width
+                                                        height:height
+                                                    shouldCopy:shouldCopyMaskPacketData];
+          if (mask) {
+            [confidenceMasks addObject:mask];
+          }
+        }
+      }
     }
   }
 
-  if (categoryMaskPacket.ValidateAsType<Image>().ok()) {
-    const Image &cppCategoryMask = categoryMaskPacket.Get<Image>();
-    categoryMask = [[MPPMask alloc]
-        initWithUInt8Data:(UInt8 *)cppCategoryMask.GetImageFrameSharedPtr().get()->PixelData()
-                    width:cppCategoryMask.width()
-                   height:cppCategoryMask.height()
-               shouldCopy:shouldCopyMaskPacketData];
+  MPPMask *categoryMask = nil;
+  if (cResult.has_category_mask && cResult.category_mask) {
+    const uint8_t *pixelData = nullptr;
+    if (MpImageDataUint8(cResult.category_mask, &pixelData, nullptr) == kMpOk && pixelData) {
+      int width = MpImageGetWidth(cResult.category_mask);
+      int height = MpImageGetHeight(cResult.category_mask);
+      categoryMask = [[MPPMask alloc] initWithUInt8Data:pixelData
+                                                  width:width
+                                                 height:height
+                                             shouldCopy:shouldCopyMaskPacketData];
+    }
   }
 
-  if (qualityScoresPacket.ValidateAsType<std::vector<float>>().ok()) {
-    std::vector<float> cppQualityScores = qualityScoresPacket.Get<std::vector<float>>();
-    qualityScores = [NSMutableArray arrayWithCapacity:(NSUInteger)cppQualityScores.size()];
-
-    for (const auto &qualityScore : cppQualityScores) {
-      [qualityScores addObject:[NSNumber numberWithFloat:qualityScore]];
+  NSMutableArray<NSNumber *> *qualityScores = nil;
+  if (cResult.quality_scores && cResult.quality_scores_count > 0) {
+    qualityScores = [NSMutableArray arrayWithCapacity:cResult.quality_scores_count];
+    for (uint32_t i = 0; i < cResult.quality_scores_count; ++i) {
+      [qualityScores addObject:@(cResult.quality_scores[i])];
     }
   }
 

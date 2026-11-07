@@ -59,6 +59,7 @@ class MpInteractiveSegmenterLegacyOptionsC(ctypes.Structure):
 
   _fields_ = [
       ('base_options', base_options_c_module.MpBaseOptionsC),
+      ('display_names_locale', ctypes.c_char_p),
       ('output_confidence_masks', ctypes.c_bool),
       ('output_category_mask', ctypes.c_bool),
   ]

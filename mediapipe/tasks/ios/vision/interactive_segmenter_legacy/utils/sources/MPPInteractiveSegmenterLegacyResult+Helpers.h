@@ -12,40 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#import <Foundation/Foundation.h>
+
 #import "mediapipe/tasks/ios/vision/interactive_segmenter_legacy/sources/MPPInteractiveSegmenterLegacyResult.h"
 
-#include "mediapipe/framework/packet.h"
+struct MpImageSegmenterResult;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPInteractiveSegmenterLegacyResult (Helpers)
 
 /**
- * Creates an `MPPInteractiveSegmenterLegacyResult` from confidence masks, category mask and quality
- * scores packets.
+ * Creates an `MPPInteractiveSegmenterLegacyResult` from a C `MpImageSegmenterResult` struct.
  *
- * If `shouldCopyMaskPacketData` is set to `YES`, the confidence and catergory masks of the newly
- * created `MPPInteractiveSegmenterLegacyResult` holds references to deep copied pixel data of the
- * output respective masks.
- *
- * @param confidenceMasksPacket A MediaPipe packet wrapping a `std::vector<mediapipe::Image>`.
- * @param categoryMaskPacket A MediaPipe packet wrapping a `<mediapipe::Image>`.
- * @param qualityScoresPacket A MediaPipe packet wrapping a `std::vector<float>`.
- * @param shouldCopyMaskPacketData A `BOOL` which indicates if the pixel data of the output masks
- * must be deep copied to the newly created `MPPInteractiveSegmenterLegacyResult`.
- *
- * @return  An `MPPInteractiveSegmenterLegacyResult` object that contains the image segmentation
- * results.
+ * If `shouldCopyMaskPacketData` is set to `YES`, the confidence and category masks of the newly
+ * created `MPPInteractiveSegmenterLegacyResult` hold references to deep copied pixel data of the
+ * output masks.
  */
-+ (MPPInteractiveSegmenterLegacyResult *)
-    interactiveSegmenterLegacyResultWithConfidenceMasksPacket:
-        (const mediapipe::Packet &)confidenceMasksPacket
-                                           categoryMaskPacket:
-                                               (const mediapipe::Packet &)categoryMaskPacket
-                                          qualityScoresPacket:
-                                              (const mediapipe::Packet &)qualityScoresPacket
-                                      timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                     shouldCopyMaskPacketData:(BOOL)shouldCopyMaskPacketData;
++ (nullable MPPInteractiveSegmenterLegacyResult *)
+    interactiveSegmenterLegacyResultWithCResult:(const struct MpImageSegmenterResult &)cResult
+                        timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                       shouldCopyMaskPacketData:(BOOL)shouldCopyMaskPacketData;
 
 @end
 

@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/vision/interactive_segmenter_legacy/interactive_segmenter_legacy.h"
 
+#include <cstdlib>
+#include <cstring>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -109,6 +111,9 @@ void CppConvertToInteractiveSegmenterLegacyOptions(
     const MpInteractiveSegmenterLegacyOptions& in,
     mediapipe::tasks::vision::interactive_segmenter_legacy::
         InteractiveSegmenterLegacyOptions* out) {
+  if (in.display_names_locale) {
+    out->display_names_locale = in.display_names_locale;
+  }
   out->output_confidence_masks = in.output_confidence_masks;
   out->output_category_mask = in.output_category_mask;
 }
@@ -172,6 +177,27 @@ absl::Status CppInteractiveSegmenterLegacyClose(
   return absl::OkStatus();
 }
 
+absl::Status CppInteractiveSegmenterLegacyGetLabels(
+    MpInteractiveSegmenterLegacyPtr segmenter, MpStringList* label_list) {
+  if (!label_list) {
+    return absl::InvalidArgumentError("label_list cannot be null.");
+  }
+  const auto& cpp_labels = GetCppSegmenter(segmenter)->GetLabels();
+  if (cpp_labels.empty()) {
+    label_list->strings = nullptr;
+    label_list->num_strings = 0;
+    return absl::OkStatus();
+  }
+
+  label_list->num_strings = cpp_labels.size();
+  label_list->strings =
+      static_cast<char**>(malloc(sizeof(char*) * label_list->num_strings));
+  for (int i = 0; i < label_list->num_strings; ++i) {
+    label_list->strings[i] = strdup(cpp_labels[i].c_str());
+  }
+  return absl::OkStatus();
+}
+
 }  // namespace mediapipe::tasks::c::vision::interactive_segmenter_legacy
 
 extern "C" {
@@ -207,6 +233,15 @@ MP_EXPORT MpStatus MpInteractiveSegmenterLegacyClose(
   absl::Status status =
       mediapipe::tasks::c::vision::interactive_segmenter_legacy::
           CppInteractiveSegmenterLegacyClose(segmenter);
+  return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
+}
+
+MP_EXPORT MpStatus MpInteractiveSegmenterLegacyGetLabels(
+    MpInteractiveSegmenterLegacyPtr segmenter, MpStringList* label_list,
+    char** error_msg) {
+  absl::Status status =
+      mediapipe::tasks::c::vision::interactive_segmenter_legacy::
+          CppInteractiveSegmenterLegacyGetLabels(segmenter, label_list);
   return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 

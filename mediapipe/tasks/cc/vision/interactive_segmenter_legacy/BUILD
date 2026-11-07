@@ -38,15 +38,18 @@ cc_library(
         "//mediapipe/tasks/cc/vision/core:image_processing_options",
         "//mediapipe/tasks/cc/vision/core:vision_task_api_factory",
         "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_result",
+        "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_cc_proto",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_cc_proto",
         "//mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto:region_of_interest_cc_proto",
         "//mediapipe/util:color_cc_proto",
+        "//mediapipe/util:label_map_cc_proto",
         "//mediapipe/util:render_data_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

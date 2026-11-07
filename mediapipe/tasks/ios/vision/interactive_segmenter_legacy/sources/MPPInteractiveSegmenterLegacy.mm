@@ -16,128 +16,85 @@
 
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
-#import "mediapipe/tasks/ios/vision/core/sources/MPPVisionPacketCreator.h"
+#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPRegionOfInterest+Helpers.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionTaskRunner.h"
 #import "mediapipe/tasks/ios/vision/interactive_segmenter_legacy/utils/sources/MPPInteractiveSegmenterLegacyOptions+Helpers.h"
 #import "mediapipe/tasks/ios/vision/interactive_segmenter_legacy/utils/sources/MPPInteractiveSegmenterLegacyResult+Helpers.h"
 
-#include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.pb.h"
-#include "mediapipe/util/label_map.pb.h"
-
-static constexpr int kMicrosecondsPerMillisecond = 1000;
-
-// Constants for the underlying MP Tasks Graph. See
-// https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_graph.cc
-static NSString *const kConfidenceMasksStreamName = @"confidence_masks";
-static NSString *const kConfidenceMasksTag = @"CONFIDENCE_MASKS";
-static NSString *const kCategoryMaskStreamName = @"category_mask";
-static NSString *const kCategoryMaskTag = @"CATEGORY_MASK";
-static NSString *const kQualityScoresStreamName = @"quality_scores";
-static NSString *const kQualityScoresTag = @"QUALITY_SCORES";
-static NSString *const kImageInStreamName = @"image_in";
-static NSString *const kImageOutStreamName = @"image_out";
-static NSString *const kImageTag = @"IMAGE";
-static NSString *const kNormRectStreamName = @"norm_rect_in";
-static NSString *const kNormRectTag = @"NORM_RECT";
-static NSString *const kRoiInStreamName = @"roi_in";
-static NSString *const kRoiTag = @"ROI";
-static NSString *const kTaskGraphName =
-    @"mediapipe.tasks.vision.interactive_segmenter_legacy.InteractiveSegmenterLegacyGraph";
-static NSString *const kTaskName = @"interactiveSegmenterLegacy";
-
-#define InputPacketMap(imagePacket, normalizedRectPacket) \
-  {                                                       \
-    {kImageInStreamName.cppString, imagePacket}, {        \
-      kNormRectStreamName.cppString, normalizedRectPacket \
-    }                                                     \
-  }
-
-namespace {
-using ::mediapipe::CalculatorGraphConfig;
-using ::mediapipe::Packet;
-using ::mediapipe::tasks::TensorsToSegmentationCalculatorOptions;
-using ::mediapipe::tasks::core::PacketMap;
-using ::mediapipe::tasks::core::PacketsCallback;
-}  // anonymous namespace
+#include "mediapipe/tasks/c/core/common.h"
+#include "mediapipe/tasks/c/core/mp_status.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/c/vision/interactive_segmenter_legacy/interactive_segmenter_legacy.h"
 
 @interface MPPInteractiveSegmenterLegacy () {
-  /** iOS Vision Task Runner */
-  MPPVisionTaskRunner *_visionTaskRunner;
+  MpInteractiveSegmenterLegacyPtr _segmenter;
+  MPPVisionTaskRunner *_taskRunner;
+  NSArray<NSString *> *_labels;
 }
 
+- (BOOL)populateCResult:(MpImageSegmenterResult *)cResult
+              withImage:(MPPImage *)image
+       regionOfInterest:(MPPRegionOfInterest *)regionOfInterest
+                  error:(NSError **)error;
 @end
 
 @implementation MPPInteractiveSegmenterLegacy
-
-#pragma mark - Public
 
 - (instancetype)initWithOptions:(MPPInteractiveSegmenterLegacyOptions *)options
                           error:(NSError **)error {
   self = [super init];
   if (self) {
-    NSMutableArray<NSString *> *outputStreams = [NSMutableArray
-        arrayWithObjects:[NSString stringWithFormat:@"%@:%@", kQualityScoresTag,
-                                                    kQualityScoresStreamName],
-                         [NSString stringWithFormat:@"%@:%@", kImageTag, kImageOutStreamName], nil];
-    if (options.shouldOutputConfidenceMasks) {
-      [outputStreams addObject:[NSString stringWithFormat:@"%@:%@", kConfidenceMasksTag,
-                                                          kConfidenceMasksStreamName]];
+    if (!options) {
+      [MPPCommonUtils createCustomError:error
+                               withCode:MPPTasksErrorCodeInvalidArgumentError
+                            description:@"options cannot be nil."];
+      return nil;
     }
-    if (options.shouldOutputCategoryMask) {
-      [outputStreams addObject:[NSString stringWithFormat:@"%@:%@", kCategoryMaskTag,
-                                                          kCategoryMaskStreamName]];
-    }
-
-    MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
-          initWithTaskName:kTaskName
-             taskGraphName:kTaskGraphName
-              inputStreams:@[
-                [NSString stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
-                [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectStreamName],
-                [NSString stringWithFormat:@"%@:%@", kRoiTag, kRoiInStreamName],
-              ]
-             outputStreams:outputStreams
-               taskOptions:options
-        enableFlowLimiting:NO
-               runningMode:MPPCoreRunningModeFromVisionRunningMode(MPPRunningModeImage)
-                     error:error];
-
-    if (!taskInfo) {
+    _taskRunner = [[MPPVisionTaskRunner alloc] initWithRunningMode:MPPRunningModeImage
+                                                        roiAllowed:YES
+                                                   normRectAllowed:YES
+                                                       hasDelegate:NO
+                                                             error:error];
+    if (!_taskRunner) {
       return nil;
     }
 
-    PacketsCallback packetsCallback = nullptr;
+    MpInteractiveSegmenterLegacyOptions cOptions = {};
+    [options copyToCOptions:&cOptions];
 
-    _visionTaskRunner = [[MPPVisionTaskRunner alloc] initWithTaskInfo:taskInfo
-                                                          runningMode:MPPRunningModeImage
-                                                           roiAllowed:YES
-                                                      packetsCallback:std::move(packetsCallback)
-                                                 imageInputStreamName:kImageInStreamName
-                                              normRectInputStreamName:kNormRectStreamName
-                                                                error:error];
-    if (!_visionTaskRunner) {
+    char *errorMsg = nullptr;
+    MpStatus status = MpInteractiveSegmenterLegacyCreate(&cOptions, &_segmenter, &errorMsg);
+    [MPPInteractiveSegmenterLegacyOptions freeCOptions:&cOptions];
+    if (![MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error]) {
       return nil;
     }
 
-    _labels =
-        [MPPInteractiveSegmenterLegacy populateLabelsWithGraphConfig:_visionTaskRunner.graphConfig
-                                                               error:error];
-    if (!_labels) {
+    MpStringList labelList = {};
+    errorMsg = nullptr;
+    status = MpInteractiveSegmenterLegacyGetLabels(_segmenter, &labelList, &errorMsg);
+    if (![MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error]) {
+      MpInteractiveSegmenterLegacyClose(_segmenter, nullptr);
+      _segmenter = nullptr;
       return nil;
     }
+    NSMutableArray<NSString *> *labels =
+        [NSMutableArray arrayWithCapacity:labelList.num_strings];
+    for (int i = 0; i < labelList.num_strings; ++i) {
+      NSString *label = (labelList.strings && labelList.strings[i])
+                            ? [NSString stringWithUTF8String:labelList.strings[i]]
+                            : nil;
+      [labels addObject:label ?: @""];
+    }
+    _labels = [labels copy];
+    MpStringListFree(&labelList);
   }
-
   return self;
 }
 
 - (instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error {
   MPPInteractiveSegmenterLegacyOptions *options =
       [[MPPInteractiveSegmenterLegacyOptions alloc] init];
-
   options.baseOptions.modelAssetPath = modelPath;
-
   return [self initWithOptions:options error:error];
 }
 
@@ -145,119 +102,85 @@ using ::mediapipe::tasks::core::PacketsCallback;
                                               regionOfInterest:
                                                   (MPPRegionOfInterest *)regionOfInterest
                                                          error:(NSError **)error {
-  return [self segmentImage:image
-                    regionOfInterest:regionOfInterest
-      shouldCopyOutputMaskPacketData:YES
-                               error:error];
+  MpImageSegmenterResult cResult = {};
+  if (![self populateCResult:&cResult
+                   withImage:image
+            regionOfInterest:regionOfInterest
+                       error:error]) {
+    return nil;
+  }
+  MPPInteractiveSegmenterLegacyResult *result = [MPPInteractiveSegmenterLegacyResult
+      interactiveSegmenterLegacyResultWithCResult:cResult
+                          timestampInMilliseconds:0
+                         shouldCopyMaskPacketData:YES];
+  MpInteractiveSegmenterLegacyCloseResult(&cResult);
+  return result;
 }
 
 - (void)segmentImage:(MPPImage *)image
          regionOfInterest:(MPPRegionOfInterest *)regionOfInterest
     withCompletionHandler:(void (^)(MPPInteractiveSegmenterLegacyResult *_Nullable result,
                                     NSError *_Nullable error))completionHandler {
+  if (!completionHandler) {
+    return;
+  }
   NSError *error = nil;
-  MPPInteractiveSegmenterLegacyResult *result = [self segmentImage:image
-                                                  regionOfInterest:regionOfInterest
-                                    shouldCopyOutputMaskPacketData:NO
-                                                             error:&error];
-  completionHandler(result, error);
+  MpImageSegmenterResult cResult = {};
+  if (![self populateCResult:&cResult
+                   withImage:image
+            regionOfInterest:regionOfInterest
+                       error:&error]) {
+    completionHandler(nil, error);
+    return;
+  }
+  MPPInteractiveSegmenterLegacyResult *result = [MPPInteractiveSegmenterLegacyResult
+      interactiveSegmenterLegacyResultWithCResult:cResult
+                          timestampInMilliseconds:0
+                         shouldCopyMaskPacketData:NO];
+  completionHandler(result, nil);
+  MpInteractiveSegmenterLegacyCloseResult(&cResult);
+}
+
+- (void)dealloc {
+  if (_segmenter) {
+    MpInteractiveSegmenterLegacyClose(_segmenter, nullptr);
+    _segmenter = nullptr;
+  }
 }
 
 #pragma mark - Private
 
-+ (NSArray<NSString *> *)populateLabelsWithGraphConfig:(const CalculatorGraphConfig &)graphConfig
-                                                 error:(NSError **)error {
-  bool found_tensor_to_segmentation_calculator = false;
-
-  NSMutableArray<NSString *> *labels =
-      [NSMutableArray arrayWithCapacity:(NSUInteger)graphConfig.node_size()];
-  for (const auto &node : graphConfig.node()) {
-    if (node.calculator() == "mediapipe.tasks.TensorsToSegmentationCalculator") {
-      if (!found_tensor_to_segmentation_calculator) {
-        found_tensor_to_segmentation_calculator = true;
-      } else {
-        [MPPCommonUtils createCustomError:error
-                                 withCode:MPPTasksErrorCodeFailedPreconditionError
-                              description:@"The graph has more than one "
-                                          @"`mediapipe.tasks.TensorsToSegmentationCalculator`."];
-        return nil;
-      }
-      TensorsToSegmentationCalculatorOptions options =
-          node.options().GetExtension(TensorsToSegmentationCalculatorOptions::ext);
-      if (!options.label_items().empty()) {
-        for (int i = 0; i < options.label_items_size(); ++i) {
-          if (!options.label_items().contains(i)) {
-            [MPPCommonUtils
-                createCustomError:error
-                         withCode:MPPTasksErrorCodeFailedPreconditionError
-                      description:[NSString
-                                      stringWithFormat:@"The lablemap has no expected key %d.", i]];
-
-            return nil;
-          }
-          [labels addObject:[NSString stringWithCppString:options.label_items().at(i).name()]];
-        }
-      }
-    }
-  }
-  return labels;
-}
-
-- (nullable MPPInteractiveSegmenterLegacyResult *)segmentImage:(MPPImage *)image
-                                              regionOfInterest:
-                                                  (MPPRegionOfInterest *)regionOfInterest
-                                shouldCopyOutputMaskPacketData:(BOOL)shouldCopyMaskPacketData
-                                                         error:(NSError **)error {
-  std::optional<PacketMap> inputPacketMap = [_visionTaskRunner inputPacketMapWithMPPImage:image
-                                                                         regionOfInterest:CGRectZero
-                                                                                    error:error];
-
-  if (!inputPacketMap.has_value()) {
-    return nil;
-  }
-  std::optional<Packet> renderDataPacket =
-      [MPPVisionPacketCreator createRegionOfInterestProtoPacketWithRegionOfInterest:regionOfInterest
-                                                                              error:error];
-
-  if (!renderDataPacket.has_value()) {
-    return nil;
+- (BOOL)populateCResult:(MpImageSegmenterResult *)cResult
+              withImage:(MPPImage *)image
+       regionOfInterest:(MPPRegionOfInterest *)regionOfInterest
+                  error:(NSError **)error {
+  if (!regionOfInterest) {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeInvalidArgumentError
+                          description:@"`regionOfInterest` cannot be `nil`."];
+    return NO;
   }
 
-  inputPacketMap->insert({kRoiInStreamName.cppString, renderDataPacket.value()});
-
-  std::optional<PacketMap> outputPacketMap =
-      [_visionTaskRunner processPacketMap:inputPacketMap.value() error:error];
-
-  return [MPPInteractiveSegmenterLegacy
-      interactiveSegmenterLegacyResultWithOptionalOutputPacketMap:outputPacketMap
-                                         shouldCopyMaskPacketData:shouldCopyMaskPacketData];
-}
-
-+ (nullable MPPInteractiveSegmenterLegacyResult *)
-    interactiveSegmenterLegacyResultWithOptionalOutputPacketMap:
-        (std::optional<PacketMap> &)outputPacketMap
-                                       shouldCopyMaskPacketData:(BOOL)shouldCopyMaskPacketData {
-  if (!outputPacketMap.has_value()) {
-    return nil;
+  struct MpImageProcessingOptions imageProcessingOptions = {};
+  ScopedMpImage mpImage = [_taskRunner createMpImageWithMPPImage:image
+                                                regionOfInterest:CGRectZero
+                                          imageProcessingOptions:&imageProcessingOptions
+                                                           error:error];
+  if (!mpImage) {
+    return NO;
   }
 
-  PacketMap &outputPacketMapValue = outputPacketMap.value();
+  MpRegionOfInterest cRoi = {};
+  if (![regionOfInterest copyToCRegionOfInterest:&cRoi error:error]) {
+    return NO;
+  }
 
-  return [MPPInteractiveSegmenterLegacyResult
-      interactiveSegmenterLegacyResultWithConfidenceMasksPacket:
-          outputPacketMapValue[kConfidenceMasksStreamName.cppString]
-                                             categoryMaskPacket:outputPacketMapValue
-                                                                    [kCategoryMaskStreamName
-                                                                         .cppString]
-                                            qualityScoresPacket:outputPacketMapValue
-                                                                    [kQualityScoresStreamName
-                                                                         .cppString]
-                                        timestampInMilliseconds:outputPacketMapValue
-                                                                    [kImageOutStreamName.cppString]
-                                                                        .Timestamp()
-                                                                        .Value() /
-                                                                kMicrosecondsPerMillisecond
-                                       shouldCopyMaskPacketData:shouldCopyMaskPacketData];
+  char *errorMsg = nullptr;
+  MpStatus status = MpInteractiveSegmenterLegacySegmentImage(
+      _segmenter, mpImage, &cRoi, &imageProcessingOptions, cResult, &errorMsg);
+  [MPPRegionOfInterest freeCRegionOfInterest:&cRoi];
+
+  return [MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error];
 }
 
 @end

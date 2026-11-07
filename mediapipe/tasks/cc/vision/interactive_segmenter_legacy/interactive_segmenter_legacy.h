@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <memory>
 #include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -40,6 +41,10 @@ struct InteractiveSegmenterLegacyOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
   tasks::core::BaseOptions base_options;
+
+  // The locale to use for display names specified through the TFLite Model
+  // Metadata, if any. Defaults to English.
+  std::string display_names_locale = "en";
 
   // Whether to output confidence masks.
   bool output_confidence_masks = true;
@@ -122,7 +127,17 @@ class InteractiveSegmenterLegacy : tasks::vision::core::BaseVisionTaskApi {
   // Shuts down the InteractiveSegmenterLegacy when all works are done.
   absl::Status Close() { return runner_->Close(); }
 
+  // Get the category label list that the InteractiveSegmenterLegacy can
+  // recognize. For CATEGORY_MASK, the index in the category mask corresponds to
+  // the category in the label list. For CONFIDENCE_MASK, the output mask list
+  // at index corresponds to the category in the label list.
+  //
+  // If there is no labelmap provided in the model file, empty label list is
+  // returned.
+  const std::vector<std::string>& GetLabels() const { return labels_; }
+
  private:
+  std::vector<std::string> labels_;
   bool output_confidence_masks_;
   bool output_category_mask_;
 };

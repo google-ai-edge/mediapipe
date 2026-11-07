@@ -14,28 +14,36 @@
 
 #import "mediapipe/tasks/ios/vision/interactive_segmenter_legacy/utils/sources/MPPInteractiveSegmenterLegacyOptions+Helpers.h"
 
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
-#include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
+#include <cstdlib>
+#include <cstring>
 
-namespace {
-using CalculatorOptionsProto = mediapipe::CalculatorOptions;
-using ImageSegmenterGraphOptionsProto =
-    ::mediapipe::tasks::vision::image_segmenter::proto::ImageSegmenterGraphOptions;
-using SegmenterOptionsProto = ::mediapipe::tasks::vision::image_segmenter::proto::SegmenterOptions;
-}  // namespace
+#include "mediapipe/tasks/c/vision/interactive_segmenter_legacy/interactive_segmenter_legacy.h"
 
 @implementation MPPInteractiveSegmenterLegacyOptions (Helpers)
 
-- (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
-  ImageSegmenterGraphOptionsProto *imageSegmenterGraphOptionsProto =
-      optionsProto->MutableExtension(ImageSegmenterGraphOptionsProto::ext);
-  imageSegmenterGraphOptionsProto->Clear();
+- (void)copyToCOptions:(struct MpInteractiveSegmenterLegacyOptions *)cOptions {
+  if (!cOptions) {
+    return;
+  }
+  *cOptions = {};
+  [self.baseOptions copyToCOptions:&cOptions->base_options];
+  const char *locale = self.displayNamesLocale.UTF8String;
+  cOptions->display_names_locale = locale ? strdup(locale) : nullptr;
+  cOptions->output_confidence_masks = self.shouldOutputConfidenceMasks ? true : false;
+  cOptions->output_category_mask = self.shouldOutputCategoryMask ? true : false;
+}
 
-  [self.baseOptions copyToProto:imageSegmenterGraphOptionsProto->mutable_base_options()
-              withUseStreamMode:NO];
-  imageSegmenterGraphOptionsProto->set_display_names_locale(self.displayNamesLocale.cppString);
++ (void)freeCOptions:(struct MpInteractiveSegmenterLegacyOptions *)cOptions {
+  if (!cOptions) {
+    return;
+  }
+  [MPPBaseOptions freeCOptions:&cOptions->base_options];
+  if (cOptions->display_names_locale) {
+    free(const_cast<char *>(cOptions->display_names_locale));
+    cOptions->display_names_locale = nullptr;
+  }
 }
 
 @end
