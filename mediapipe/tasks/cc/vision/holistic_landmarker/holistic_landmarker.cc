@@ -179,6 +179,7 @@ HolisticLandmarkerResult ConvertToHolisticLandmarkerResult(
 // added to limit the number of frames in flight.
 CalculatorGraphConfig CreateGraphConfig(
     std::unique_ptr<HolisticLandmarkerGraphOptionsProto> options,
+    bool output_face_blendshapes, bool output_pose_segmentation_masks,
     bool enable_flow_limiting) {
   api2::builder::Graph graph;
   auto& subgraph = graph.AddNode(kHolisticLandmarkerGraphTypeName);
@@ -201,11 +202,15 @@ CalculatorGraphConfig CreateGraphConfig(
   subgraph.Out(kRightHandWorldLandmarksTag)
           .SetName(kRightHandWorldLandmarksStreamName) >>
       graph.Out(kRightHandWorldLandmarksTag);
-  subgraph.Out(kPoseSegmentationMaskTag)
-          .SetName(kPoseSegmentationMaskStreamName) >>
-      graph.Out(kPoseSegmentationMaskTag);
-  subgraph.Out(kFaceBlendshapesTag).SetName(kFaceBlendshapesStreamName) >>
-      graph.Out(kFaceBlendshapesTag);
+  if (output_pose_segmentation_masks) {
+    subgraph.Out(kPoseSegmentationMaskTag)
+            .SetName(kPoseSegmentationMaskStreamName) >>
+        graph.Out(kPoseSegmentationMaskTag);
+  }
+  if (output_face_blendshapes) {
+    subgraph.Out(kFaceBlendshapesTag).SetName(kFaceBlendshapesStreamName) >>
+        graph.Out(kFaceBlendshapesTag);
+  }
   subgraph.Out(kImageTag).SetName(kImageOutStreamName) >> graph.Out(kImageTag);
   if (enable_flow_limiting) {
     return tasks::core::AddFlowLimiterCalculator(graph, subgraph, {kImageTag},
@@ -286,7 +291,8 @@ absl::StatusOr<std::unique_ptr<HolisticLandmarker>> HolisticLandmarker::Create(
       (core::VisionTaskApiFactory::Create<HolisticLandmarker,
                                           HolisticLandmarkerGraphOptionsProto>(
           {.config = CreateGraphConfig(
-               std::move(options_proto),
+               std::move(options_proto), options->output_face_blendshapes,
+               options->output_pose_segmentation_masks,
                options->running_mode == core::RunningMode::LIVE_STREAM),
            .task_name = kTaskName,
            .task_running_mode = core::GetCoreRunningMode(options->running_mode),

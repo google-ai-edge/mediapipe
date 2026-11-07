@@ -29,11 +29,15 @@ objc_library(
         "-x objective-c++",
     ],
     deps = [
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/tasks/cc/vision/holistic_landmarker/proto:holistic_result_cc_proto",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/components/containers:MPPCategory",
+        "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
+        "//mediapipe/tasks/ios/components/containers:MPPLandmark",
         "//mediapipe/tasks/ios/test/vision/utils:parse_proto_utils",
         "//mediapipe/tasks/ios/vision/holistic_landmarker:MPPHolisticLandmarkerResult",
-        "//mediapipe/tasks/ios/vision/holistic_landmarker/utils:MPPHolisticLandmarkerResultHelpers",
         "//third_party/apple_frameworks:Foundation",
     ],
 )

@@ -14,63 +14,48 @@
 
 #import "mediapipe/tasks/ios/vision/holistic_landmarker/utils/sources/MPPHolisticLandmarkerOptions+Helpers.h"
 
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
-#include "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/holistic_landmarker/proto/holistic_landmarker_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/pose_detector/proto/pose_detector_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/pose_landmarker/proto/pose_landmarks_detector_graph_options.pb.h"
-
-namespace {
-using ::google::protobuf::Any;
-using FaceDetectorGraphOptionsProto =
-    ::mediapipe::tasks::vision::face_detector::proto::FaceDetectorGraphOptions;
-using FaceLandmarksDetectorGraphOptionsProto =
-    ::mediapipe::tasks::vision::face_landmarker::proto::FaceLandmarksDetectorGraphOptions;
-using HandLandmarksDetectorGraphOptionsProto =
-    ::mediapipe::tasks::vision::hand_landmarker::proto::HandLandmarksDetectorGraphOptions;
-using HolisticLandmarkerGraphOptionsProto =
-    ::mediapipe::tasks::vision::holistic_landmarker::proto::HolisticLandmarkerGraphOptions;
-using PoseDetectorGraphOptionsProto =
-    ::mediapipe::tasks::vision::pose_detector::proto::PoseDetectorGraphOptions;
-using PoseLandmarksDetectorGraphOptionsProto =
-    ::mediapipe::tasks::vision::pose_landmarker::proto::PoseLandmarksDetectorGraphOptions;
-}  // namespace
+#include "mediapipe/tasks/c/vision/holistic_landmarker/holistic_landmarker.h"
 
 @implementation MPPHolisticLandmarkerOptions (Helpers)
 
-- (void)copyToAnyProto:(Any *)optionsProto {
-  HolisticLandmarkerGraphOptionsProto holisticLandmarkerGraphOptions;
+- (void)copyToCOptions:(MpHolisticLandmarkerOptions *)cOptions {
+  if (!cOptions) {
+    return;
+  }
+  *cOptions = {};
+  [self.baseOptions copyToCOptions:&cOptions->base_options];
 
-  [self.baseOptions copyToProto:holisticLandmarkerGraphOptions.mutable_base_options()
-              withUseStreamMode:self.runningMode != MPPRunningModeImage];
+  switch (self.runningMode) {
+    case MPPRunningModeImage:
+      cOptions->running_mode = MP_RUNNING_MODE_IMAGE;
+      break;
+    case MPPRunningModeVideo:
+      cOptions->running_mode = MP_RUNNING_MODE_VIDEO;
+      break;
+    case MPPRunningModeLiveStream:
+      cOptions->running_mode = MP_RUNNING_MODE_LIVE_STREAM;
+      break;
+  }
 
-  FaceLandmarksDetectorGraphOptionsProto *faceLandmarksDetectorGraphOptions =
-      holisticLandmarkerGraphOptions.mutable_face_landmarks_detector_graph_options();
-  faceLandmarksDetectorGraphOptions->set_min_detection_confidence(self.minFacePresenceConfidence);
+  cOptions->min_face_detection_confidence = self.minFaceDetectionConfidence;
+  cOptions->min_face_suppression_threshold = self.minFaceSuppressionThreshold;
+  cOptions->min_face_presence_confidence = self.minFacePresenceConfidence;
+  cOptions->min_hand_landmarks_confidence = self.minHandLandmarksConfidence;
+  cOptions->min_pose_detection_confidence = self.minPoseDetectionConfidence;
+  cOptions->min_pose_suppression_threshold = self.minPoseSuppressionThreshold;
+  cOptions->min_pose_presence_confidence = self.minPosePresenceConfidence;
+  cOptions->output_face_blendshapes = self.outputFaceBlendshapes;
+  cOptions->output_pose_segmentation_masks = self.outputPoseSegmentationMasks;
+  cOptions->result_callback = nullptr;
+}
 
-  FaceDetectorGraphOptionsProto *faceDetectorGraphOptions =
-      holisticLandmarkerGraphOptions.mutable_face_detector_graph_options();
-  faceDetectorGraphOptions->set_min_detection_confidence(self.minFaceDetectionConfidence);
-  faceDetectorGraphOptions->set_min_suppression_threshold(self.minFaceSuppressionThreshold);
-
-  PoseLandmarksDetectorGraphOptionsProto *poseLandmarksDetectorGraphOptions =
-      holisticLandmarkerGraphOptions.mutable_pose_landmarks_detector_graph_options();
-  poseLandmarksDetectorGraphOptions->set_min_detection_confidence(self.minPosePresenceConfidence);
-
-  PoseDetectorGraphOptionsProto *poseDetectorGraphOptions =
-      holisticLandmarkerGraphOptions.mutable_pose_detector_graph_options();
-  poseDetectorGraphOptions->set_min_detection_confidence(self.minPoseDetectionConfidence);
-  poseDetectorGraphOptions->set_min_suppression_threshold(self.minPoseSuppressionThreshold);
-
-  HandLandmarksDetectorGraphOptionsProto *handLandmarsDetectorGraphOptions =
-      holisticLandmarkerGraphOptions.mutable_hand_landmarks_detector_graph_options();
-  handLandmarsDetectorGraphOptions->set_min_detection_confidence(self.minHandLandmarksConfidence);
-
-  optionsProto->PackFrom(holisticLandmarkerGraphOptions);
++ (void)freeCOptions:(MpHolisticLandmarkerOptions *)cOptions {
+  if (!cOptions) {
+    return;
+  }
+  [MPPBaseOptions freeCOptions:&cOptions->base_options];
 }
 
 @end

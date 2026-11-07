@@ -22,18 +22,16 @@ objc_library(
     name = "MPPHolisticLandmarkerOptionsHelpers",
     srcs = ["sources/MPPHolisticLandmarkerOptions+Helpers.mm"],
     hdrs = ["sources/MPPHolisticLandmarkerOptions+Helpers.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++20",
+        "-Xclang=-fno-cxx-modules",
+        "-x objective-c++",
+    ],
     deps = [
-        "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarks_detector_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/vision/holistic_landmarker/proto:holistic_landmarker_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/vision/pose_detector/proto:pose_detector_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/vision/pose_landmarker/proto:pose_landmarks_detector_graph_options_cc_proto",
-        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
-        "//mediapipe/tasks/ios/core:MPPTaskOptionsProtocol",
+        "//mediapipe/tasks/c/vision/holistic_landmarker:holistic_landmarker_lib",
         "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
         "//mediapipe/tasks/ios/vision/holistic_landmarker:MPPHolisticLandmarkerOptions",
-        "@com_google_protobuf//:protobuf",
     ],
 )
 
@@ -48,12 +46,12 @@ objc_library(
         "-x objective-c++",
     ],
     deps = [
-        "//mediapipe/framework:packet",
-        "//mediapipe/framework/formats:classification_cc_proto",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:landmark_cc_proto",
-        "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
+        "//mediapipe/tasks/c/core:mp_status",
+        "//mediapipe/tasks/c/vision/core:image",
+        "//mediapipe/tasks/c/vision/holistic_landmarker:holistic_landmarker_result",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPCategoryHelpers",
         "//mediapipe/tasks/ios/components/containers/utils:MPPLandmarkHelpers",
+        "//mediapipe/tasks/ios/vision/core:MPPMask",
         "//mediapipe/tasks/ios/vision/holistic_landmarker:MPPHolisticLandmarkerResult",
     ],
 )

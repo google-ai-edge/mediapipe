@@ -12,25 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef __cplusplus
-#error "This file requires Objective-C++."
-#endif  // __cplusplus
-
-#include "google/protobuf/any.pb.h"
-
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
 #import "mediapipe/tasks/ios/vision/holistic_landmarker/sources/MPPHolisticLandmarkerOptions.h"
+
+struct MpHolisticLandmarkerOptions;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MPPHolisticLandmarkerOptions (Helpers) <MPPTaskOptionsProtocol>
+@interface MPPHolisticLandmarkerOptions (Helpers)
 
-/**
- * Populates the provided `google::protobuf::Any` proto  with the current settings.
- *
- * @param optionsProto The `::google::protobuf::Any` proto object to copy the settings to.
- */
-- (void)copyToAnyProto:(::google::protobuf::Any *)optionsProto;
+/** Copies the options to a MediaPipe C API `MpHolisticLandmarkerOptions` struct. */
+- (void)copyToCOptions:(struct MpHolisticLandmarkerOptions *)cOptions;
+
+/** Frees any memory allocated inside a MediaPipe C API `MpHolisticLandmarkerOptions` struct. */
++ (void)freeCOptions:(struct MpHolisticLandmarkerOptions *)cOptions;
 
 @end
 
