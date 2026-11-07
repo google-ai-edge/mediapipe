@@ -14,28 +14,48 @@
 
 #import "mediapipe/tasks/ios/vision/image_segmenter/utils/sources/MPPImageSegmenterOptions+Helpers.h"
 
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
-#include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
+#include <cstdlib>
+#include <cstring>
 
-namespace {
-using CalculatorOptionsProto = ::mediapipe::CalculatorOptions;
-using ImageSegmenterGraphOptionsProto =
-    ::mediapipe::tasks::vision::image_segmenter::proto::ImageSegmenterGraphOptions;
-using SegmenterOptionsProto = ::mediapipe::tasks::vision::image_segmenter::proto::SegmenterOptions;
-}  // namespace
+#include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter.h"
 
 @implementation MPPImageSegmenterOptions (Helpers)
 
-- (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
-  ImageSegmenterGraphOptionsProto *imageSegmenterGraphOptionsProto =
-      optionsProto->MutableExtension(ImageSegmenterGraphOptionsProto::ext);
-  imageSegmenterGraphOptionsProto->Clear();
+- (void)copyToCOptions:(struct MpImageSegmenterOptions *)cOptions {
+  if (!cOptions) {
+    return;
+  }
+  *cOptions = {};
+  [self.baseOptions copyToCOptions:&cOptions->base_options];
+  switch (self.runningMode) {
+    case MPPRunningModeImage:
+      cOptions->running_mode = MP_RUNNING_MODE_IMAGE;
+      break;
+    case MPPRunningModeVideo:
+      cOptions->running_mode = MP_RUNNING_MODE_VIDEO;
+      break;
+    case MPPRunningModeLiveStream:
+      cOptions->running_mode = MP_RUNNING_MODE_LIVE_STREAM;
+      break;
+  }
+  const char *locale = self.displayNamesLocale.UTF8String;
+  cOptions->display_names_locale = strdup(locale ? locale : "");
+  cOptions->output_confidence_masks = self.shouldOutputConfidenceMasks ? true : false;
+  cOptions->output_category_mask = self.shouldOutputCategoryMask ? true : false;
+  cOptions->result_callback = nullptr;
+}
 
-  [self.baseOptions copyToProto:imageSegmenterGraphOptionsProto->mutable_base_options()
-              withUseStreamMode:self.runningMode != MPPRunningModeImage];
-  imageSegmenterGraphOptionsProto->set_display_names_locale(self.displayNamesLocale.cppString);
++ (void)freeCOptions:(struct MpImageSegmenterOptions *)cOptions {
+  if (!cOptions) {
+    return;
+  }
+  [MPPBaseOptions freeCOptions:&cOptions->base_options];
+  if (cOptions->display_names_locale) {
+    free(const_cast<char *>(cOptions->display_names_locale));
+    cOptions->display_names_locale = nullptr;
+  }
 }
 
 @end

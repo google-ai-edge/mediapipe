@@ -12,36 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#import <Foundation/Foundation.h>
+
 #import "mediapipe/tasks/ios/vision/image_segmenter/sources/MPPImageSegmenterResult.h"
 
-#include "mediapipe/framework/packet.h"
+struct MpImageSegmenterResult;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPImageSegmenterResult (Helpers)
 
 /**
- * Creates an `MPPImageSegmenterResult` from confidence masks, category mask and quality scores
- * packets.
+ * Creates an `MPPImageSegmenterResult` from a C `MpImageSegmenterResult` struct.
  *
  * If `shouldCopyMaskPacketData` is set to `YES`, the confidence and category masks of the newly
- * created `MPPImageSegmenterResult` holds references to deep copied pixel data of the output
- * respective masks.
- *
- * @param confidenceMasksPacket A MediaPipe packet wrapping a `std::vector<mediapipe::Image>`.
- * @param categoryMaskPacket A MediaPipe packet wrapping a `<mediapipe::Image>`.
- * @param qualityScoresPacket A MediaPipe packet wrapping a `std::vector<float>`.
- * @param shouldCopyMaskPacketData A `BOOL` which indicates if the pixel data of the output masks
- * must be deep copied to the newly created `MPPImageSegmenterResult`.
- *
- * @return  An `MPPImageSegmenterResult` object that contains the image segmentation results.
+ * created `MPPImageSegmenterResult` hold references to deep copied pixel data of the output masks.
  */
-+ (MPPImageSegmenterResult *)
-    imageSegmenterResultWithConfidenceMasksPacket:(const mediapipe::Packet &)confidenceMasksPacket
-                               categoryMaskPacket:(const mediapipe::Packet &)categoryMaskPacket
-                              qualityScoresPacket:(const mediapipe::Packet &)qualityScoresPacket
-                          timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                         shouldCopyMaskPacketData:(BOOL)shouldCopyMaskPacketData;
++ (nullable MPPImageSegmenterResult *)
+    imageSegmenterResultWithCResult:(const struct MpImageSegmenterResult &)cResult
+            timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+           shouldCopyMaskPacketData:(BOOL)shouldCopyMaskPacketData;
 
 @end
 

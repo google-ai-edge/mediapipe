@@ -16,300 +16,327 @@
 
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionTaskRunner.h"
 #import "mediapipe/tasks/ios/vision/image_segmenter/utils/sources/MPPImageSegmenterOptions+Helpers.h"
 #import "mediapipe/tasks/ios/vision/image_segmenter/utils/sources/MPPImageSegmenterResult+Helpers.h"
 
-#include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.pb.h"
-#include "mediapipe/util/label_map.pb.h"
+#include "mediapipe/tasks/c/core/common.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/c/vision/image_segmenter/image_segmenter.h"
 
-static constexpr int kMicrosecondsPerMillisecond = 1000;
-
-// Constants for the underlying MP Tasks Graph. See
-// https://github.com/google-ai-edge/mediapipe/tree/master/mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_graph.cc
-static NSString *const kConfidenceMasksStreamName = @"confidence_masks";
-static NSString *const kConfidenceMasksTag = @"CONFIDENCE_MASKS";
-static NSString *const kCategoryMaskStreamName = @"category_mask";
-static NSString *const kCategoryMaskTag = @"CATEGORY_MASK";
-static NSString *const kQualityScoresStreamName = @"quality_scores";
-static NSString *const kQualityScoresTag = @"QUALITY_SCORES";
-static NSString *const kImageInStreamName = @"image_in";
-static NSString *const kImageOutStreamName = @"image_out";
-static NSString *const kImageTag = @"IMAGE";
-static NSString *const kNormRectStreamName = @"norm_rect_in";
-static NSString *const kNormRectTag = @"NORM_RECT";
-static NSString *const kTaskGraphName =
-    @"mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph";
 static NSString *const kTaskName = @"imageSegmenter";
 
-#define InputPacketMap(imagePacket, normalizedRectPacket) \
-  {                                                       \
-    {kImageInStreamName.cppString, imagePacket}, {        \
-      kNormRectStreamName.cppString, normalizedRectPacket \
-    }                                                     \
-  }
-
-namespace {
-using ::mediapipe::CalculatorGraphConfig;
-using ::mediapipe::Timestamp;
-using ::mediapipe::tasks::TensorsToSegmentationCalculatorOptions;
-using ::mediapipe::tasks::core::PacketMap;
-using ::mediapipe::tasks::core::PacketsCallback;
-}  // anonymous namespace
-
 @interface MPPImageSegmenter () {
-  /** iOS Vision Task Runner */
-  MPPVisionTaskRunner *_visionTaskRunner;
+  MpImageSegmenterPtr _segmenter;
+  MPPVisionTaskRunner *_taskRunner;
   dispatch_queue_t _callbackQueue;
+  int _callbackSlot;
+  NSArray<NSString *> *_labels;
 }
 @property(nonatomic, weak) id<MPPImageSegmenterLiveStreamDelegate> imageSegmenterLiveStreamDelegate;
 
-- (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult;
+- (BOOL)populateCResult:(MpImageSegmenterResult *)cResult
+              withImage:(MPPImage *)image
+                  error:(NSError **)error;
+- (BOOL)populateCResult:(MpImageSegmenterResult *)cResult
+             withVideoFrame:(MPPImage *)image
+    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                      error:(NSError **)error;
+- (void)handleLiveStreamResult:(const MpImageSegmenterResult *)cResult
+                         status:(MpStatus)status
+                      timestamp:(int64_t)timestampInMilliseconds;
 @end
 
-@implementation MPPImageSegmenter
+namespace {
+using mediapipe::tasks::ios::vision::core::VisionCallbackPool;
+using CallbackPool = VisionCallbackPool<MPPImageSegmenter, MpImageSegmenterResult,
+                                        MpImageSegmenterOptions::result_callback_fn>;
 
-#pragma mark - Public
+static void OnLiveStreamResult(MPPImageSegmenter *task, MpStatus status,
+                               const MpImageSegmenterResult *result, MpImagePtr image,
+                               int64_t timestamp_ms) {
+  if (task) {
+    [task handleLiveStreamResult:result status:status timestamp:timestamp_ms];
+  }
+}
+}  // namespace
+
+@implementation MPPImageSegmenter
 
 - (instancetype)initWithOptions:(MPPImageSegmenterOptions *)options error:(NSError **)error {
   self = [super init];
   if (self) {
-    NSMutableArray<NSString *> *outputStreams = [NSMutableArray
-        arrayWithObjects:[NSString stringWithFormat:@"%@:%@", kQualityScoresTag,
-                                                    kQualityScoresStreamName],
-                         [NSString stringWithFormat:@"%@:%@", kImageTag, kImageOutStreamName], nil];
-    if (options.shouldOutputConfidenceMasks) {
-      [outputStreams addObject:[NSString stringWithFormat:@"%@:%@", kConfidenceMasksTag,
-                                                          kConfidenceMasksStreamName]];
-    }
-    if (options.shouldOutputCategoryMask) {
-      [outputStreams addObject:[NSString stringWithFormat:@"%@:%@", kCategoryMaskTag,
-                                                          kCategoryMaskStreamName]];
-    }
-
-    MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
-          initWithTaskName:kTaskName
-             taskGraphName:kTaskGraphName
-              inputStreams:@[
-                [NSString stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
-                [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectStreamName]
-              ]
-             outputStreams:outputStreams
-               taskOptions:options
-        enableFlowLimiting:options.runningMode == MPPRunningModeLiveStream
-               runningMode:MPPCoreRunningModeFromVisionRunningMode(options.runningMode)
-                     error:error];
-
-    if (!taskInfo) {
+    _callbackSlot = -1;
+    if (!options) {
+      [MPPCommonUtils createCustomError:error
+                               withCode:MPPTasksErrorCodeInvalidArgumentError
+                            description:@"options cannot be nil."];
       return nil;
     }
-
-    PacketsCallback packetsCallback = nullptr;
+    _taskRunner = [[MPPVisionTaskRunner alloc]
+        initWithRunningMode:options.runningMode
+                 roiAllowed:NO
+            normRectAllowed:YES
+                hasDelegate:(options.imageSegmenterLiveStreamDelegate != nil)
+                      error:error];
+    if (!_taskRunner) {
+      return nil;
+    }
 
     if (options.imageSegmenterLiveStreamDelegate) {
       _imageSegmenterLiveStreamDelegate = options.imageSegmenterLiveStreamDelegate;
-
-      // Create a private serial dispatch queue in which the delegate method will be called
-      // asynchronously. This is to ensure that if the client performs a long running operation in
-      // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
-      // freed up to continue with its operations.
       _callbackQueue = dispatch_queue_create(
           [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], nullptr);
-
-      // Capturing `self` as weak in order to avoid `self` being kept in memory
-      // and cause a retain cycle, after self is set to `nil`.
-      MPPImageSegmenter *__weak weakSelf = self;
-      packetsCallback = [=](absl::StatusOr<PacketMap> liveStreamResult) {
-        [weakSelf processLiveStreamResult:liveStreamResult];
-      };
+      _callbackSlot = CallbackPool::AllocateSlot(self, &OnLiveStreamResult);
+      if (_callbackSlot < 0) {
+        [MPPCommonUtils createCustomError:error
+                                 withCode:MPPTasksErrorCodeInternalError
+                              description:@"Failed to allocate callback slot."];
+        return nil;
+      }
     }
 
-    _visionTaskRunner = [[MPPVisionTaskRunner alloc] initWithTaskInfo:taskInfo
-                                                          runningMode:options.runningMode
-                                                           roiAllowed:NO
-                                                      packetsCallback:std::move(packetsCallback)
-                                                 imageInputStreamName:kImageInStreamName
-                                              normRectInputStreamName:kNormRectStreamName
-                                                                error:error];
-    if (!_visionTaskRunner) {
+    MpImageSegmenterOptions cOptions = {};
+    [options copyToCOptions:&cOptions];
+    if (_callbackSlot >= 0) {
+      cOptions.result_callback = CallbackPool::GetCallback(_callbackSlot);
+    }
+
+    char *errorMsg = nullptr;
+    MpStatus status = MpImageSegmenterCreate(&cOptions, &_segmenter, &errorMsg);
+    [MPPImageSegmenterOptions freeCOptions:&cOptions];
+
+    if (![MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error]) {
+      if (_callbackSlot >= 0) {
+        CallbackPool::FreeSlot(_callbackSlot);
+        _callbackSlot = -1;
+      }
       return nil;
     }
 
-    _labels = [MPPImageSegmenter populateLabelsWithGraphConfig:_visionTaskRunner.graphConfig
-                                                         error:error];
-    if (!_labels) {
+    MpStringList labelList = {};
+    errorMsg = nullptr;
+    status = MpImageSegmenterGetLabels(_segmenter, &labelList, &errorMsg);
+    if (![MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error]) {
       return nil;
     }
+    NSMutableArray<NSString *> *labels =
+        [NSMutableArray arrayWithCapacity:labelList.num_strings];
+    for (int i = 0; i < labelList.num_strings; ++i) {
+      NSString *label = (labelList.strings && labelList.strings[i])
+                            ? [NSString stringWithUTF8String:labelList.strings[i]]
+                            : nil;
+      [labels addObject:label ?: @""];
+    }
+    _labels = [labels copy];
+    MpStringListFree(&labelList);
   }
-
   return self;
 }
 
 - (instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error {
   MPPImageSegmenterOptions *options = [[MPPImageSegmenterOptions alloc] init];
-
   options.baseOptions.modelAssetPath = modelPath;
-
   return [self initWithOptions:options error:error];
 }
 
 - (nullable MPPImageSegmenterResult *)segmentImage:(MPPImage *)image error:(NSError **)error {
-  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:error];
-  return [MPPImageSegmenter imageSegmenterResultWithOptionalOutputPacketMap:outputPacketMap
-                                                   shouldCopyMaskPacketData:YES];
+  MpImageSegmenterResult cResult = {};
+  if (![self populateCResult:&cResult withImage:image error:error]) {
+    return nil;
+  }
+  MPPImageSegmenterResult *result =
+      [MPPImageSegmenterResult imageSegmenterResultWithCResult:cResult
+                                       timestampInMilliseconds:0
+                                      shouldCopyMaskPacketData:YES];
+  MpImageSegmenterCloseResult(&cResult);
+  return result;
 }
 
 - (void)segmentImage:(MPPImage *)image
     withCompletionHandler:(void (^)(MPPImageSegmenterResult *_Nullable result,
                                     NSError *_Nullable error))completionHandler {
+  if (!completionHandler) {
+    return;
+  }
   NSError *error = nil;
-  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:&error];
-
+  MpImageSegmenterResult cResult = {};
+  if (![self populateCResult:&cResult withImage:image error:&error]) {
+    completionHandler(nil, error);
+    return;
+  }
   MPPImageSegmenterResult *result =
-      [MPPImageSegmenter imageSegmenterResultWithOptionalOutputPacketMap:outputPacketMap
-                                                shouldCopyMaskPacketData:NO];
-  completionHandler(result, error);
+      [MPPImageSegmenterResult imageSegmenterResultWithCResult:cResult
+                                       timestampInMilliseconds:0
+                                      shouldCopyMaskPacketData:NO];
+  completionHandler(result, nil);
+  MpImageSegmenterCloseResult(&cResult);
 }
 
 - (nullable MPPImageSegmenterResult *)segmentVideoFrame:(MPPImage *)image
                                 timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                   error:(NSError **)error {
-  std::optional<PacketMap> outputPacketMap =
-      [_visionTaskRunner processVideoFrame:image
-                   timestampInMilliseconds:timestampInMilliseconds
-                                     error:error];
-
-  return [MPPImageSegmenter imageSegmenterResultWithOptionalOutputPacketMap:outputPacketMap
-                                                   shouldCopyMaskPacketData:YES];
+  MpImageSegmenterResult cResult = {};
+  if (![self populateCResult:&cResult
+              withVideoFrame:image
+     timestampInMilliseconds:timestampInMilliseconds
+                       error:error]) {
+    return nil;
+  }
+  MPPImageSegmenterResult *result =
+      [MPPImageSegmenterResult imageSegmenterResultWithCResult:cResult
+                                       timestampInMilliseconds:timestampInMilliseconds
+                                      shouldCopyMaskPacketData:YES];
+  MpImageSegmenterCloseResult(&cResult);
+  return result;
 }
 
 - (void)segmentVideoFrame:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
       withCompletionHandler:(void (^)(MPPImageSegmenterResult *_Nullable result,
                                       NSError *_Nullable error))completionHandler {
+  if (!completionHandler) {
+    return;
+  }
   NSError *error = nil;
-  std::optional<PacketMap> outputPacketMap =
-      [_visionTaskRunner processVideoFrame:image
-                   timestampInMilliseconds:timestampInMilliseconds
-                                     error:&error];
-
+  MpImageSegmenterResult cResult = {};
+  if (![self populateCResult:&cResult
+              withVideoFrame:image
+     timestampInMilliseconds:timestampInMilliseconds
+                       error:&error]) {
+    completionHandler(nil, error);
+    return;
+  }
   MPPImageSegmenterResult *result =
-      [MPPImageSegmenter imageSegmenterResultWithOptionalOutputPacketMap:outputPacketMap
-                                                shouldCopyMaskPacketData:NO];
-  completionHandler(result, error);
+      [MPPImageSegmenterResult imageSegmenterResultWithCResult:cResult
+                                       timestampInMilliseconds:timestampInMilliseconds
+                                      shouldCopyMaskPacketData:NO];
+  completionHandler(result, nil);
+  MpImageSegmenterCloseResult(&cResult);
 }
+
 - (BOOL)segmentAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error {
-  return [_visionTaskRunner processLiveStreamImage:image
-                           timestampInMilliseconds:timestampInMilliseconds
-                                             error:error];
+  if (![_taskRunner validateRunningMode:MPPRunningModeLiveStream error:error]) {
+    return NO;
+  }
+  struct MpImageProcessingOptions imageProcessingOptions = {};
+  ScopedMpImage mpImage = [_taskRunner createMpImageWithMPPImage:image
+                                                regionOfInterest:CGRectZero
+                                          imageProcessingOptions:&imageProcessingOptions
+                                                           error:error];
+  if (!mpImage) {
+    return NO;
+  }
+  char *errorMsg = nullptr;
+  MpStatus status =
+      MpImageSegmenterSegmentAsync(_segmenter, mpImage, &imageProcessingOptions,
+                                   static_cast<int64_t>(timestampInMilliseconds), &errorMsg);
+  return [MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error];
+}
+
+- (void)dealloc {
+  MpImageSegmenterPtr segmenter = _segmenter;
+  _segmenter = nullptr;
+  int callbackSlot = _callbackSlot;
+  _callbackSlot = -1;
+  dispatch_queue_t callbackQueue = _callbackQueue;
+  _callbackQueue = nil;
+
+  if (callbackSlot >= 0) {
+    dispatch_queue_t cleanupQueue =
+        callbackQueue ?: dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0);
+    dispatch_async(cleanupQueue, ^{
+      if (segmenter) {
+        MpImageSegmenterClose(segmenter, nullptr);
+      }
+      CallbackPool::FreeSlot(callbackSlot);
+    });
+  } else if (segmenter) {
+    MpImageSegmenterClose(segmenter, nullptr);
+  }
 }
 
 #pragma mark - Private
 
-+ (NSArray<NSString *> *)populateLabelsWithGraphConfig:(const CalculatorGraphConfig &)graphConfig
-                                                 error:(NSError **)error {
-  bool found_tensor_to_segmentation_calculator = false;
-
-  NSMutableArray<NSString *> *labels = [NSMutableArray arrayWithCapacity:(NSUInteger)graphConfig.node_size()];
-  for (const auto &node : graphConfig.node()) {
-    if (node.calculator() == "mediapipe.tasks.TensorsToSegmentationCalculator") {
-      if (!found_tensor_to_segmentation_calculator) {
-        found_tensor_to_segmentation_calculator = true;
-      } else {
-        [MPPCommonUtils createCustomError:error
-                                 withCode:MPPTasksErrorCodeFailedPreconditionError
-                              description:@"The graph has more than one "
-                                          @"`mediapipe.tasks.TensorsToSegmentationCalculator`."];
-        return nil;
-      }
-      TensorsToSegmentationCalculatorOptions options =
-          node.options().GetExtension(TensorsToSegmentationCalculatorOptions::ext);
-      if (!options.label_items().empty()) {
-        for (int i = 0; i < options.label_items_size(); ++i) {
-          if (!options.label_items().contains(i)) {
-            [MPPCommonUtils
-                createCustomError:error
-                         withCode:MPPTasksErrorCodeFailedPreconditionError
-                      description:[NSString
-                                      stringWithFormat:@"The lablemap has no expected key %d.", i]];
-
-            return nil;
-          }
-          [labels addObject:[NSString stringWithCppString:options.label_items().at(i).name()]];
-        }
-      }
-    }
+- (BOOL)populateCResult:(MpImageSegmenterResult *)cResult
+              withImage:(MPPImage *)image
+                  error:(NSError **)error {
+  if (![_taskRunner validateRunningMode:MPPRunningModeImage error:error]) {
+    return NO;
   }
-  return labels;
-}
-
-+ (nullable MPPImageSegmenterResult *)
-    imageSegmenterResultWithOptionalOutputPacketMap:(std::optional<PacketMap> &)outputPacketMap
-                           shouldCopyMaskPacketData:(BOOL)shouldCopyMaskPacketData {
-  if (!outputPacketMap.has_value()) {
-    return nil;
+  struct MpImageProcessingOptions imageProcessingOptions = {};
+  ScopedMpImage mpImage = [_taskRunner createMpImageWithMPPImage:image
+                                                regionOfInterest:CGRectZero
+                                          imageProcessingOptions:&imageProcessingOptions
+                                                           error:error];
+  if (!mpImage) {
+    return NO;
   }
-  MPPImageSegmenterResult *result =
-      [self imageSegmenterResultWithOutputPacketMap:outputPacketMap.value()
-                           shouldCopyMaskPacketData:shouldCopyMaskPacketData];
-  return result;
+  char *errorMsg = nullptr;
+  MpStatus status = MpImageSegmenterSegmentImage(_segmenter, mpImage, &imageProcessingOptions,
+                                                 cResult, &errorMsg);
+  return [MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error];
 }
 
-+ (nullable MPPImageSegmenterResult *)
-    imageSegmenterResultWithOutputPacketMap:(PacketMap &)outputPacketMap
-                   shouldCopyMaskPacketData:(BOOL)shouldCopyMaskPacketData {
-  return [MPPImageSegmenterResult
-      imageSegmenterResultWithConfidenceMasksPacket:outputPacketMap[kConfidenceMasksStreamName
-                                                                        .cppString]
-                                 categoryMaskPacket:outputPacketMap[kCategoryMaskStreamName
-                                                                        .cppString]
-                                qualityScoresPacket:outputPacketMap[kQualityScoresStreamName
-                                                                        .cppString]
-                            timestampInMilliseconds:outputPacketMap[kImageOutStreamName.cppString]
-                                                        .Timestamp()
-                                                        .Value() /
-                                                    kMicrosecondsPerMillisecond
-                           shouldCopyMaskPacketData:shouldCopyMaskPacketData];
+- (BOOL)populateCResult:(MpImageSegmenterResult *)cResult
+             withVideoFrame:(MPPImage *)image
+    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                      error:(NSError **)error {
+  if (![_taskRunner validateRunningMode:MPPRunningModeVideo error:error]) {
+    return NO;
+  }
+  struct MpImageProcessingOptions imageProcessingOptions = {};
+  ScopedMpImage mpImage = [_taskRunner createMpImageWithMPPImage:image
+                                                regionOfInterest:CGRectZero
+                                          imageProcessingOptions:&imageProcessingOptions
+                                                           error:error];
+  if (!mpImage) {
+    return NO;
+  }
+  char *errorMsg = nullptr;
+  MpStatus status = MpImageSegmenterSegmentForVideo(_segmenter, mpImage, &imageProcessingOptions,
+                                                    static_cast<int64_t>(timestampInMilliseconds),
+                                                    cResult, &errorMsg);
+  return [MPPCommonUtils checkCError:status errorMessage:errorMsg toError:error];
 }
 
-- (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
+- (void)handleLiveStreamResult:(const MpImageSegmenterResult *)cResult
+                        status:(MpStatus)status
+                     timestamp:(int64_t)timestampInMilliseconds {
   if (![self.imageSegmenterLiveStreamDelegate
-          respondsToSelector:@selector(imageSegmenter:
-                                 didFinishSegmentationWithResult:timestampInMilliseconds:error:)]) {
+          respondsToSelector:@selector(imageSegmenter:didFinishSegmentationWithResult:
+                                       timestampInMilliseconds:error:)]) {
     return;
   }
+
   NSError *callbackError = nil;
-  if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
-    dispatch_async(_callbackQueue, ^{
-      [self.imageSegmenterLiveStreamDelegate imageSegmenter:self
-                            didFinishSegmentationWithResult:nil
-                                    timestampInMilliseconds:Timestamp::Unset().Value()
-                                                      error:callbackError];
-    });
-    return;
+  MPPImageSegmenterResult *result = nil;
+
+  if (status != kMpOk) {
+    [MPPCommonUtils checkCError:status errorMessage:nullptr toError:&callbackError];
+  } else if (cResult) {
+    result = [MPPImageSegmenterResult imageSegmenterResultWithCResult:*cResult
+                                              timestampInMilliseconds:timestampInMilliseconds
+                                             shouldCopyMaskPacketData:YES];
   }
 
-  // Output packet map is moved to a block variable that will not be deallocated for the lifetime of
-  // the `dispatch_async` call. Since masks are not copied, this ensures that they are only
-  // deallocated after the delegate call completes.
-  __block PacketMap outputPacketMap = std::move(liveStreamResult.value());
-  if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
+  dispatch_queue_t callbackQueue = _callbackQueue;
+  if (!callbackQueue) {
     return;
   }
+  __weak id<MPPImageSegmenterLiveStreamDelegate> delegate = self.imageSegmenterLiveStreamDelegate;
+  MPPImageSegmenter *__weak weakSelf = self;
 
-  dispatch_async(_callbackQueue, ^{
-    MPPImageSegmenterResult *result =
-        [MPPImageSegmenter imageSegmenterResultWithOutputPacketMap:outputPacketMap
-                                          shouldCopyMaskPacketData:NO];
-
-    [self.imageSegmenterLiveStreamDelegate imageSegmenter:self
-                          didFinishSegmentationWithResult:result
-                                  timestampInMilliseconds:result.timestampInMilliseconds
-                                                    error:callbackError];
+  dispatch_async(callbackQueue, ^{
+    MPPImageSegmenter *strongSelf = weakSelf;
+    if (strongSelf) {
+      [delegate imageSegmenter:strongSelf
+          didFinishSegmentationWithResult:result
+                  timestampInMilliseconds:timestampInMilliseconds
+                                    error:callbackError];
+    }
   });
 }
 
