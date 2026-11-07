@@ -1,0 +1,15 @@
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message HandRoiFromPoseNetCalculatorOptions {
+  extend CalculatorOptions {
+    optional HandRoiFromPoseNetCalculatorOptions ext = 515678901;
+  }
+
+  // Set true for the left hand: inputs are mirrored to the right-hand frame the
+  // network was trained on, and the predicted ROI is mirrored back.
+  optional bool is_left = 1 [default = false];
+}
