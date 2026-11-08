@@ -3165,6 +3165,21 @@ void MotionBox::TrackStepImplDeNormalized(
   next_pos->set_track_status(MotionBoxState::BOX_TRACKED);
 }
 
+namespace {
+
+// Returns true if every col_starts entry lies in [0, num_rows]. col_starts is
+// used to index the per-row fields of MotionData (row_indices, vector_data,
+// track_id, feature_descriptors), but nothing in the proto ties it to their
+// sizes, so a malformed or corrupted TrackingData can point past them.
+bool ColStartsInRange(const TrackingData::MotionData& motion_data,
+                      int num_rows) {
+  return absl::c_all_of(motion_data.col_starts(), [num_rows](int col_start) {
+    return col_start >= 0 && col_start <= num_rows;
+  });
+}
+
+}  // namespace
+
 void MotionVectorFrameFromTrackingData(const TrackingData& tracking_data,
                                        MotionVectorFrame* motion_vector_frame) {
   ABSL_CHECK(motion_vector_frame != nullptr);
@@ -3210,6 +3225,16 @@ void MotionVectorFrameFromTrackingData(const TrackingData& tracking_data,
 
   motion_vector_frame->motion_vectors.clear();
   const bool long_tracks = motion_data.track_id_size() > 0;
+
+  int num_rows = std::min(motion_data.row_indices_size(),
+                          motion_data.vector_data_size() / 2);
+  if (long_tracks) {
+    num_rows = std::min(num_rows, motion_data.track_id_size());
+  }
+  if (!ColStartsInRange(motion_data, num_rows)) {
+    ABSL_LOG(ERROR) << "Malformed TrackingData: col_starts out of range.";
+    return;
+  }
 
   for (int c = 0; c < motion_data.col_starts_size() - 1; ++c) {
     const float x = c;
@@ -3270,6 +3295,13 @@ void FeatureAndDescriptorFromTrackingData(
 
   features->clear();
   descriptors->clear();
+
+  if (!ColStartsInRange(motion_data,
+                        std::min(motion_data.row_indices_size(),
+                                 motion_data.feature_descriptors_size()))) {
+    ABSL_LOG(ERROR) << "Malformed TrackingData: col_starts out of range.";
+    return;
+  }
 
   for (int c = 0; c < motion_data.col_starts_size() - 1; ++c) {
     const float x = c;

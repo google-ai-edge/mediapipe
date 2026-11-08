@@ -14,8 +14,13 @@
 
 #include "mediapipe/util/tracking/box_tracker.h"
 
+#include <string>
+#include <vector>
+
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/util/tracking/flow_packager.pb.h"
+#include "mediapipe/util/tracking/tracking.h"
 
 namespace mediapipe {
 namespace {
@@ -110,6 +115,61 @@ TEST(BoxTrackerTest, MovingBoxTest) {
     gt_box.bottom = gt_box.top + overlay_sz.y();
     EXPECT_TRUE(boxes_equal(gt_box, box));
   }
+}
+
+// Returns TrackingData with num_rows motion vectors and the given col_starts.
+TrackingData MakeTrackingData(const std::vector<int>& col_starts,
+                              int num_rows) {
+  TrackingData data;
+  data.set_domain_width(static_cast<int>(col_starts.size()) - 1);
+  data.set_domain_height(16);
+  auto* motion_data = data.mutable_motion_data();
+  motion_data->set_num_elements(num_rows);
+  for (int col_start : col_starts) motion_data->add_col_starts(col_start);
+  for (int r = 0; r < num_rows; ++r) {
+    motion_data->add_row_indices(r);
+    motion_data->add_vector_data(1.0f);
+    motion_data->add_vector_data(-1.0f);
+    motion_data->add_track_id(r);
+    motion_data->add_feature_descriptors()->set_data("\x01");
+  }
+  return data;
+}
+
+// col_starts must not index past the per-row fields of MotionData.
+TEST(TrackingDataTest, MotionVectorFrameRejectsOutOfRangeColStarts) {
+  MotionVectorFrame mvf;
+  MotionVectorFrameFromTrackingData(MakeTrackingData({0, 2, 3}, 3), &mvf);
+  EXPECT_EQ(mvf.motion_vectors.size(), 3u);
+
+  MotionVectorFrameFromTrackingData(MakeTrackingData({0, 2, 1000}, 3), &mvf);
+  EXPECT_TRUE(mvf.motion_vectors.empty());
+
+  MotionVectorFrameFromTrackingData(MakeTrackingData({-5, 3}, 3), &mvf);
+  EXPECT_TRUE(mvf.motion_vectors.empty());
+
+  TrackingData short_track_ids = MakeTrackingData({0, 2, 3}, 3);
+  short_track_ids.mutable_motion_data()->mutable_track_id()->RemoveLast();
+  MotionVectorFrameFromTrackingData(short_track_ids, &mvf);
+  EXPECT_TRUE(mvf.motion_vectors.empty());
+}
+
+TEST(TrackingDataTest, FeatureAndDescriptorRejectsOutOfRangeColStarts) {
+  std::vector<Vector2_f> features;
+  std::vector<std::string> descriptors;
+  FeatureAndDescriptorFromTrackingData(MakeTrackingData({0, 2, 3}, 3),
+                                       &features, &descriptors);
+  EXPECT_EQ(features.size(), 3u);
+  EXPECT_EQ(descriptors.size(), 3u);
+
+  TrackingData short_descriptors = MakeTrackingData({0, 2, 3}, 3);
+  short_descriptors.mutable_motion_data()
+      ->mutable_feature_descriptors()
+      ->RemoveLast();
+  FeatureAndDescriptorFromTrackingData(short_descriptors, &features,
+                                       &descriptors);
+  EXPECT_TRUE(features.empty());
+  EXPECT_TRUE(descriptors.empty());
 }
 
 }  // namespace
