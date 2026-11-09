@@ -1,12 +1,3 @@
----
-layout: forward
-target: https://developers.google.com/edge/mediapipe
-title: Home
-nav_order: 1
----
-
-----
-
 **Attention:** *See [https://developers.google.com/edge/mediapipe](https://developers.google.com/edge/mediapipe/solutions/)
 for the primary developer documentation site for MediaPipe.*
 
@@ -116,7 +107,7 @@ described in our [Privacy Policy](https://policies.google.com/privacy).
 **You are responsible for obtaining informed consent from your app users about
 Google's processing of MediaPipe metrics data as required by applicable law.**
 
-###Publications
+### Publications
 
 *   [Bring multimodal semantic search to the edge with EmbeddingGemma 2](https://developers.googleblog.com/google-ai-edge-with-embeddinggemma-2/)
     in Google Developers Blog
