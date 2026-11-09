@@ -329,8 +329,11 @@ absl::StatusOr<std::vector<MemoryRecord>> SemanticRetriever::Retrieve(
     tasks_logger_->RecordInvocationEnd(task_logger_ts);
   };
 
+  ABSL_ASSIGN_OR_RETURN(std::vector<core::TaskPart> resolved_query,
+                        FillTaskParts(query_content));
+
   ABSL_ASSIGN_OR_RETURN(auto embedding_opt,
-                        embedding_provider_->EmbedContent(query_content));
+                        embedding_provider_->EmbedContent(resolved_query));
   if (!embedding_opt.has_value() || embedding_opt->empty()) {
     return absl::InternalError("Failed to extract query embedding.");
   }
