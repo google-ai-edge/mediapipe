@@ -316,6 +316,20 @@ absl::StatusOr<litert::Environment> InitializeLiteRtEnvironment(
     }
   }
 
+  // By default, creating a LiteRT environment registers every accelerator it
+  // can find. When only the CPU accelerator requested, register just the CPU
+  // accelerator.
+  bool cpu_only = options.has_cpu() && !options.has_gpu() && !options.has_npu();
+#if defined(__EMSCRIPTEN__)
+  cpu_only = cpu_only && !options.has_webnn();
+#endif  // __EMSCRIPTEN__
+  if (cpu_only) {
+    environment_options.push_back(litert::EnvironmentOptions::Option{
+        /*.tag=*/litert::EnvironmentOptions::Tag::kAutoRegisterAccelerators,
+        /*.value=*/static_cast<int64_t>(litert::HwAccelerators::kCpu),
+    });
+  }
+
 #if defined(__EMSCRIPTEN__)
   if (webgpu_service != nullptr) {
     const wgpu::Device& device = webgpu_service->device();
