@@ -153,12 +153,15 @@ class InferenceRunnerLiteRt : public InferenceRunner {
 
   // Context for holding tensors and views for a single inference run.
   struct InferenceRunContext {
+    // Temporary tensors used for alignment or channel conversion.
+    // Declared before `active_input_views` and `active_output_views` so views
+    // referencing `temporary_tensors` release their `view_mutex_` locks before
+    // the temporary `Tensor`s are destroyed.
+    std::vector<std::unique_ptr<Tensor>> temporary_tensors;
     // Active views for the input and output tensors. Should be kept alive
     // during the inference run.
     std::vector<InferenceRunnerLiteRt::MpTensorReadView> active_input_views;
     std::vector<InferenceRunnerLiteRt::MpTensorWriteView> active_output_views;
-    // Temporary tensors used for alignment or channel conversion.
-    std::vector<std::unique_ptr<Tensor>> temporary_tensors;
     // LiteRT tensor buffers for the input and output tensors.
     std::vector<litert::TensorBuffer> litert_inputs;
     std::vector<litert::TensorBuffer> litert_outputs;

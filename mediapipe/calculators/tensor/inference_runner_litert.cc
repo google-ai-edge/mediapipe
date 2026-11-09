@@ -1820,6 +1820,10 @@ absl::Status InferenceRunnerLiteRt::CleanAsyncRunStates(bool wait_for_all) {
 
 absl::StatusOr<std::vector<Tensor>> InferenceRunnerLiteRt::Run(
     CalculatorContext* cc, const TensorSpan& tensor_span) {
+  // Declare `mp_output_tensors` before `ctx` so `ctx.active_output_views`
+  // (which holds locks on `mp_output_tensors`'s `view_mutex_`) is destroyed
+  // first on any error return.
+  std::vector<Tensor> mp_output_tensors;
   InferenceRunContext ctx;
 
 #if MEDIAPIPE_TENSOR_USE_AHWB
@@ -1863,7 +1867,7 @@ absl::StatusOr<std::vector<Tensor>> InferenceRunnerLiteRt::Run(
           signature_index_, /*update_allocation=*/has_dynamic_dimension_));
 
   ABSL_ASSIGN_OR_RETURN(
-      std::vector<Tensor> mp_output_tensors,
+      mp_output_tensors,
       CreateMpOutputTensors(signature_, output_tensor_layouts));
 
   ABSL_RETURN_IF_ERROR(PrepareOutputBuffers(signature_, output_tensor_layouts,
