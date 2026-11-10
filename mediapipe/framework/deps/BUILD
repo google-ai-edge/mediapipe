@@ -306,17 +306,6 @@ cc_library(
 )
 
 cc_library(
-    name = "source_location",
-    hdrs = ["source_location.h"],
-
-    # Use this library through "mediapipe/framework/port:source_location".
-    visibility = ["//mediapipe/framework/port:__pkg__"],
-    deps = [
-        "@com_google_absl//absl/types:source_location",
-    ],
-)
-
-cc_library(
     name = "re2",
     hdrs = [
         "re2.h",

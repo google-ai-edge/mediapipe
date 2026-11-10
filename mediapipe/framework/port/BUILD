@@ -401,7 +401,6 @@ cc_library(
     ],
     deps = [
         "//mediapipe/framework:port",
-        "//mediapipe/framework/deps:source_location",
         "@com_google_absl//absl/types:source_location",
     ],
 )

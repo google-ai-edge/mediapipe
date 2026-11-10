@@ -15,6 +15,15 @@
 #ifndef MEDIAPIPE_PORT_SOURCE_LOCATION_H_
 #define MEDIAPIPE_PORT_SOURCE_LOCATION_H_
 
-#include "mediapipe/framework/deps/source_location.h"
+#include "absl/types/source_location.h"  // from @com_google_absl
+
+namespace mediapipe {
+
+using source_location = ::absl::SourceLocation;
+
+}  // namespace mediapipe
+
+// If a function takes a source_location parameter, pass this as the argument.
+#define MEDIAPIPE_LOC ::absl::SourceLocation::current()
 
 #endif  // MEDIAPIPE_PORT_SOURCE_LOCATION_H_
