@@ -310,6 +310,20 @@ cc_library_with_tflite(
     ],
 )
 
+cc_library_with_tflite(
+    name = "task_runner_test_peer",
+    testonly = True,
+    hdrs = ["task_runner_test_peer.h"],
+    tflite_deps = [
+        ":task_runner",
+    ],
+    visibility = ["//mediapipe/tasks:__subpackages__"],
+    deps = [
+        "//mediapipe/framework:graph_service",
+        "//mediapipe/tasks/cc/core/logging:tasks_logger",
+    ],
+)
+
 cc_test_with_tflite(
     name = "task_runner_test",
     srcs = ["task_runner_test.cc"],
@@ -317,23 +331,25 @@ cc_test_with_tflite(
         "//mediapipe/tasks/testdata/core:test_models",
     ],
     tflite_deps = [
-        ":task_runner",
         ":model_resources",
         ":model_resources_cache",
+        ":task_runner",
+        ":task_runner_test_peer",
         "@litert//tflite:test_util",
     ],
     deps = [
+        ":host_environment",
         ":running_mode",
         "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/calculators/core:side_packet_to_stream_calculator",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:graph_service",
         "//mediapipe/framework:memory_manager",
         "//mediapipe/framework:memory_manager_service",
         "//mediapipe/framework:packet",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/tasks/cc/core/logging:tasks_logger",
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

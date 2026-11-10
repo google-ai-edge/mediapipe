@@ -26,6 +26,8 @@ namespace mediapipe {
 namespace tasks {
 namespace core {
 
+class TaskRunnerTestPeer;
+
 // The base class of the user-facing mediapipe tasks api classes.
 class BaseTaskApi {
  public:
@@ -39,6 +41,9 @@ class BaseTaskApi {
  protected:
   // The task runner of the task api.
   std::unique_ptr<TaskRunner> runner_;
+
+ private:
+  friend class ::mediapipe::tasks::core::TaskRunnerTestPeer;
 };
 
 }  // namespace core

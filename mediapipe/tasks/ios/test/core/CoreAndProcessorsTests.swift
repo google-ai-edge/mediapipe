@@ -125,7 +125,19 @@ struct CoreAndProcessorsTests {
       #expect(bridgedData == modelBytes)
       #expect(cOptions.delegate == MP_DELEGATE_GPU)
       #expect(cOptions.file_descriptor == -1)
-      #expect(cOptions.host_version != nil)
+      #if os(iOS)
+        #expect(cOptions.host_environment == MP_HOST_ENVIRONMENT_IOS)
+        #expect(cOptions.host_system == MP_HOST_SYSTEM_IOS)
+      #elseif os(macOS)
+        #expect(cOptions.host_environment == MP_HOST_ENVIRONMENT_IOS)
+        #expect(cOptions.host_system == MP_HOST_SYSTEM_MAC)
+      #endif
+      let hostVersion = try #require(cOptions.host_version.map { String(cString: $0) })
+      #expect(hostVersion.split(separator: ".").count == 3)
+      let infoAppVersion =
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+      #expect(cOptions.app_id.map { String(cString: $0) } == Bundle.main.bundleIdentifier ?? "")
+      #expect(cOptions.app_version.map { String(cString: $0) } == infoAppVersion ?? "")
     }
   }
 

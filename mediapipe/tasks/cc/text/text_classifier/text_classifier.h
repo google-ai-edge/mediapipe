@@ -89,6 +89,9 @@ class TextClassifier : core::BaseTaskApi {
 
   // Shuts down the TextClassifier when all the work is done.
   absl::Status Close() { return runner_->Close(); }
+
+ private:
+  friend class ::mediapipe::tasks::core::TaskRunnerTestPeer;
 };
 
 }  // namespace text_classifier

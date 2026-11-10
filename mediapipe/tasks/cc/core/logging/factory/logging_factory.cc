@@ -22,8 +22,8 @@
 namespace mediapipe::tasks::core::logging {
 
 std::unique_ptr<TasksLogger> CreateTasksLogger(
-    const LoggingOptions& /*logging_options*/) {
-  return TasksDummyLogger::Create();
+    const LoggingOptions& logging_options) {
+  return TasksDummyLogger::Create(logging_options);
 }
 
 }  // namespace mediapipe::tasks::core::logging

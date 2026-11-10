@@ -26,30 +26,23 @@ limitations under the License.
 #include "absl/status/statusor.h"     // from @com_google_absl
 #include "absl/strings/substitute.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/graph_service.h"
 #include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/memory_manager_service.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/tasks/cc/core/host_environment.h"
+#include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/core/running_mode.h"
+#include "mediapipe/tasks/cc/core/task_runner_test_peer.h"
 #include "tflite/test_util.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {
 namespace core {
-
-class TaskRunnerTestPeer {
- public:
-  template <typename T>
-  static std::shared_ptr<T> GetServiceObject(TaskRunner& runner,
-                                             const GraphService<T>& service) {
-    return runner.graph_.GetServiceObject(service);
-  }
-};
 
 namespace {
 
@@ -440,6 +433,35 @@ TEST_F(TaskRunnerTest,
   MP_ASSERT_OK_AND_ASSIGN(auto result,
                           runner->Process({{"in", MakePacket<int>(0)}}));
   EXPECT_EQ(result["out"].Get<const MemoryManager*>(), memory_manager.get());
+  MP_ASSERT_OK(runner->Close());
+}
+
+TEST_F(TaskRunnerTest, ForwardsLoggingOptionsToTasksLogger) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto runner,
+      TaskRunner::Create(
+          {.config = GetPassThroughGraphConfig(),
+           .task_name = "TaskRunnerTestTask",
+           .task_running_mode = RunningMode::kImage,
+           .host_environment = HostEnvironment::HOST_ENVIRONMENT_IOS,
+           .host_system = HostSystem::HOST_SYSTEM_IOS,
+           .host_version = "17.4.1",
+           .app_id = "com.example.app",
+           .app_version = "1.2.3",
+           .ca_bundle_path = "/etc/ssl/certs/ca-certificates.crt"}));
+  const logging::LoggingOptions* logging_options =
+      TaskRunnerTestPeer::GetLoggingOptions(*runner);
+  ASSERT_NE(logging_options, nullptr);
+  EXPECT_EQ(logging_options->task_name, "TaskRunnerTestTask");
+  EXPECT_EQ(logging_options->task_running_mode, RunningMode::kImage);
+  EXPECT_EQ(logging_options->host_environment,
+            HostEnvironment::HOST_ENVIRONMENT_IOS);
+  EXPECT_EQ(logging_options->host_system, HostSystem::HOST_SYSTEM_IOS);
+  EXPECT_EQ(logging_options->host_version, "17.4.1");
+  EXPECT_EQ(logging_options->app_id, "com.example.app");
+  EXPECT_EQ(logging_options->app_version, "1.2.3");
+  EXPECT_EQ(logging_options->ca_bundle_path,
+            "/etc/ssl/certs/ca-certificates.crt");
   MP_ASSERT_OK(runner->Close());
 }
 

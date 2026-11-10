@@ -170,6 +170,9 @@ class AudioClassifier : tasks::audio::core::BaseAudioTaskApi {
 
   // Shuts down the AudioClassifier when all works are done.
   absl::Status Close() { return runner_->Close(); }
+
+ private:
+  friend class ::mediapipe::tasks::core::TaskRunnerTestPeer;
 };
 
 }  // namespace audio_classifier

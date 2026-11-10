@@ -118,6 +118,8 @@ absl::StatusOr<std::unique_ptr<LanguageDetector>> LanguageDetector::Create(
           .host_environment = options->base_options.host_environment,
           .host_system = options->base_options.host_system,
           .host_version = options->base_options.host_version,
+          .app_id = options->base_options.app_id,
+          .app_version = options->base_options.app_version,
           .ca_bundle_path = options->base_options.ca_bundle_path});
 }
 

@@ -216,6 +216,8 @@ InteractiveSegmenterLegacy::Create(
            .host_environment = options->base_options.host_environment,
            .host_system = options->base_options.host_system,
            .host_version = options->base_options.host_version,
+           .app_id = options->base_options.app_id,
+           .app_version = options->base_options.app_version,
            .ca_bundle_path = options->base_options.ca_bundle_path})));
   segmenter->output_category_mask_ = options->output_category_mask;
   segmenter->output_confidence_masks_ = options->output_confidence_masks;

@@ -77,6 +77,10 @@ class TasksLogger {
 
   // Logs the MediaPipe Tasks API initialization error.
   virtual void LogInitError() = 0;
+
+  // Returns the logging options used to configure this logger, or nullptr if
+  // unavailable.
+  virtual const LoggingOptions* logging_options() const { return nullptr; }
 };
 
 }  // namespace logging

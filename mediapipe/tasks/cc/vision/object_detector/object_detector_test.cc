@@ -37,6 +37,10 @@ limitations under the License.
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/components/containers/detection_result.h"
 #include "mediapipe/tasks/cc/components/containers/rect.h"
+#include "mediapipe/tasks/cc/core/host_environment.h"
+#include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
+#include "mediapipe/tasks/cc/core/running_mode.h"
+#include "mediapipe/tasks/cc/core/task_runner_test_peer.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
@@ -175,6 +179,37 @@ TEST_F(CreateFromOptionsTest, SucceedsWithSelectiveOpResolver) {
   options->base_options.op_resolver =
       std::make_unique<MobileSsdQuantizedOpResolver>();
   MP_ASSERT_OK(ObjectDetector::Create(std::move(options)));
+}
+
+TEST_F(CreateFromOptionsTest, ForwardsBaseOptionsTelemetryToTasksLogger) {
+  auto options = std::make_unique<ObjectDetectorOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kMobileSsdWithMetadata);
+  options->base_options.host_environment =
+      tasks::core::HostEnvironment::HOST_ENVIRONMENT_IOS;
+  options->base_options.host_system = tasks::core::HostSystem::HOST_SYSTEM_IOS;
+  options->base_options.host_version = "17.4.1";
+  options->base_options.app_id = "com.example.app";
+  options->base_options.app_version = "1.2.3";
+  options->base_options.ca_bundle_path = "/etc/ssl/certs/ca-certificates.crt";
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ObjectDetector> object_detector,
+                          ObjectDetector::Create(std::move(options)));
+  const tasks::core::logging::LoggingOptions* logging_options =
+      tasks::core::TaskRunnerTestPeer::GetLoggingOptions(*object_detector);
+  ASSERT_NE(logging_options, nullptr);
+  EXPECT_EQ(logging_options->task_name, "ObjectDetector");
+  EXPECT_EQ(logging_options->task_running_mode,
+            tasks::core::RunningMode::kImage);
+  EXPECT_EQ(logging_options->host_environment,
+            tasks::core::HostEnvironment::HOST_ENVIRONMENT_IOS);
+  EXPECT_EQ(logging_options->host_system,
+            tasks::core::HostSystem::HOST_SYSTEM_IOS);
+  EXPECT_EQ(logging_options->host_version, "17.4.1");
+  EXPECT_EQ(logging_options->app_id, "com.example.app");
+  EXPECT_EQ(logging_options->app_version, "1.2.3");
+  EXPECT_EQ(logging_options->ca_bundle_path,
+            "/etc/ssl/certs/ca-certificates.crt");
+  MP_ASSERT_OK(object_detector->Close());
 }
 
 // OpResolver missing the Detection_PostProcess op.

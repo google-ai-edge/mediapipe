@@ -16,6 +16,7 @@
 #define MEDIAPIPE_TASKS_CC_CORE_LOGGING_TASKS_DUMMY_LOGGER_H_
 
 #include <memory>
+#include <utility>
 
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
@@ -29,8 +30,9 @@ namespace logging {
 class TasksDummyLogger : public TasksLogger {
  public:
   // Creates the MediaPipe Tasks stats dummy logger.
-  static std::unique_ptr<TasksDummyLogger> Create() {
-    return std::unique_ptr<TasksDummyLogger>(new TasksDummyLogger());
+  static std::unique_ptr<TasksDummyLogger> Create(LoggingOptions options = {}) {
+    return std::unique_ptr<TasksDummyLogger>(
+        new TasksDummyLogger(std::move(options)));
   }
 
   void LogSessionStart() override {}
@@ -49,8 +51,13 @@ class TasksDummyLogger : public TasksLogger {
 
   void LogInitError() override {}
 
+  const LoggingOptions* logging_options() const override { return &options_; }
+
  private:
-  TasksDummyLogger() = default;
+  explicit TasksDummyLogger(LoggingOptions options)
+      : options_(std::move(options)) {}
+
+  LoggingOptions options_;
 };
 
 }  // namespace logging
