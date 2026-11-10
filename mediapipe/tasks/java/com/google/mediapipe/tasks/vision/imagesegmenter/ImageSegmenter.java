@@ -436,10 +436,6 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @param segmentationOptions the {@link SegmentationOptions} used to configure the runtime
    *     behavior of the {@link ImageSegmenter}.
-   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
-   *     input image before running inference. Note that region-of-interest is <b>not</b> supported
-   *     by this task: specifying {@link ImageProcessingOptions#regionOfInterest()} will result in
-   *     this method throwing an IllegalArgumentException.
    * @throws MediaPipeException if there is an internal error. Or if {@link ImageSegmenter} is not
    *     created with {@link ResultListener} set in {@link ImageSegmenterOptions}.
    */

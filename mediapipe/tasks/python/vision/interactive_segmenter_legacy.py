@@ -130,11 +130,8 @@ class InteractiveSegmenterLegacyOptions:
 
   Attributes:
     base_options: Base options for the interactive segmenter task.
-    running_mode: The running mode of the task.
     output_confidence_masks: Whether to output confidence masks.
     output_category_mask: Whether to output category mask.
-    result_callback: The callback function that is invoked synchronously when
-      the current thread is idle.
   """
 
   base_options: _BaseOptions
