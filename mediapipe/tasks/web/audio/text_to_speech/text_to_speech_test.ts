@@ -230,6 +230,84 @@ describe('TextToSpeech', () => {
     expect(mockModule['deleteTextToSpeechStream']).toHaveBeenCalledWith(98765);
   });
 
+  it('waits for more input when an incremental stream needs it', async () => {
+    let pushed = 0;
+    let finished = false;
+    const chunk: TextToSpeechAudioChunk = {
+      samples: new Float32Array([0.1, 0.2]),
+      sampleRateHz: 24000,
+      chunkIndex: 0,
+      isFinal: false,
+    };
+    let delivered = 0;
+    // The native stream reports `undefined` (needs input) until text arrives,
+    // then returns one chunk per pushed sentence, and `null` once input is
+    // finished and all chunks are delivered.
+    mockModule['readNextTextToSpeechChunk'].and.callFake(() => {
+      if (delivered < pushed) {
+        ++delivered;
+        return Promise.resolve(chunk);
+      }
+      return Promise.resolve(finished ? null : undefined);
+    });
+    mockModule['pushTextToSpeechStream'].and.callFake(() => {
+      ++pushed;
+      return Promise.resolve(true);
+    });
+    mockModule['finishTextToSpeechStreamInput'].and.callFake(() => {
+      finished = true;
+      return Promise.resolve(true);
+    });
+
+    const stream = await tts.synthesizeStream(
+      '',
+      {voiceId: 'af_heart'},
+      /* finishInput= */ false,
+    );
+    const first: {done: boolean; chunk?: TextToSpeechAudioChunk | null} = {
+      done: false,
+    };
+    const firstRead = stream.readNext().then((c) => {
+      first.done = true;
+      first.chunk = c;
+    });
+    // Let the read reach the native stream and start waiting for input.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(first.done).toBeFalse();
+
+    await stream.pushText('Tokens arrive one by one.');
+    await firstRead;
+    expect(first.chunk).toEqual(chunk);
+
+    const rest: TextToSpeechAudioChunk[] = [];
+    const reading = (async () => {
+      for await (const c of stream) {
+        rest.push(c);
+      }
+    })();
+    await stream.pushText(' Then we finish.');
+    await stream.finishInput();
+    await reading;
+    expect(rest.length).toBe(1);
+    expect(mockModule['deleteTextToSpeechStream']).toHaveBeenCalledWith(98765);
+  });
+
+  it('wakes a stream that waits for input when the task is cancelled', async () => {
+    mockModule['readNextTextToSpeechChunk'].and.returnValue(
+      Promise.resolve(undefined),
+    );
+    const stream = await tts.synthesizeStream('', {}, /* finishInput= */ false);
+    const read = stream.readNext();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    // A cancelled native stream throws on the next read.
+    mockModule['readNextTextToSpeechChunk'].and.callFake(() =>
+      Promise.reject(new Error('Synthesis cancelled.')),
+    );
+    tts.cancel();
+    await expectAsync(read).toBeRejectedWithError('Synthesis cancelled.');
+    stream.close();
+  });
+
   it('cancels active synthesis and stream handles', async () => {
     const stream = await tts.synthesizeStream('Hello world.');
     stream.cancel();
@@ -252,6 +330,36 @@ describe('TextToSpeech', () => {
     await expectAsync(tts.synthesizeStream('test')).toBeRejectedWithError(
       'TextToSpeech is already closed.',
     );
+  });
+
+  it('closes active streams before deleting the engine on close', async () => {
+    const deletions: string[] = [];
+    mockModule['deleteTextToSpeechStream'].and.callFake(() => {
+      deletions.push('stream');
+    });
+    mockModule['deleteTextToSpeech'].and.callFake(() => {
+      deletions.push('engine');
+    });
+    mockModule['readNextTextToSpeechChunk'].and.returnValue(
+      Promise.resolve(undefined),
+    );
+    const stream = await tts.synthesizeStream('', {}, /* finishInput= */ false);
+    const read = stream.readNext();
+    // Let the read reach the native stream and start waiting for input.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    tts.close();
+
+    expect(mockModule['deleteTextToSpeechStream']).toHaveBeenCalledWith(98765);
+    expect(deletions).toEqual(['stream', 'engine']);
+    // The pending read wakes up and observes the closed stream.
+    await expectAsync(read).toBeResolvedTo(null);
+    await expectAsync(stream.pushText('late')).toBeRejectedWithError(
+      'TextToSpeechStream is already closed.',
+    );
+    // Closing the stream again must not touch the recycled Wasm module.
+    stream.close();
+    expect(mockModule['deleteTextToSpeechStream']).toHaveBeenCalledTimes(1);
   });
 
   it('writes a model buffer to the Wasm filesystem and loads it by path', async () => {

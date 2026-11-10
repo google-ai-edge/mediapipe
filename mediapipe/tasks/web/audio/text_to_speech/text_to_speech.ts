@@ -84,9 +84,13 @@ declare interface TextToSpeechWasmModule {
     finishInput: boolean,
   ): Promise<number>;
 
+  /**
+   * Resolves to the next chunk, to `null` at end-of-stream, or to `undefined`
+   * when the stream needs more input before it can produce audio.
+   */
   readNextTextToSpeechChunk(
     streamPtr: number,
-  ): Promise<TextToSpeechAudioChunk | null>;
+  ): Promise<TextToSpeechAudioChunk | null | undefined>;
 
   pushTextToSpeechStream(
     streamPtr: number,
@@ -112,30 +116,70 @@ export class TextToSpeechStream
   implements AsyncIterable<TextToSpeechAudioChunk>
 {
   private isClosed = false;
+  /** Incremented whenever new input arrives or the stream state changes. */
+  private inputVersion = 0;
+  private inputWaiters: Array<() => void> = [];
 
   /** @hideconstructor */
   constructor(
     private streamPtr: number,
     private readonly wasmModule: TextToSpeechWasmModule,
-    private readonly runSerialized: <T>(fn: () => Promise<T>) => Promise<T>,
+    // Both callbacks run `fn` after all queued Wasm calls of the owning
+    // `TextToSpeech`: a JSPI call can suspend inside Wasm, so other calls must
+    // not re-enter the module. Only the first logs a telemetry invocation.
+    private readonly queueLoggedWasmCall: <T>(
+      fn: () => Promise<T>,
+    ) => Promise<T>,
+    private readonly queueWasmCall: <T>(fn: () => Promise<T>) => Promise<T>,
+    private inputFinished = true,
+    private readonly onClose?: () => void,
   ) {}
 
   /**
    * Pulls the next synthesized PCM audio chunk, or returns `null` when the
-   * stream reaches end-of-stream.
+   * stream reaches end-of-stream. On a stream created with
+   * `finishInput = false`, waits for more text from `pushText()` or for
+   * `finishInput()` when the pushed text doesn't yet form a complete clause.
    *
    * @export
    */
   async readNext(): Promise<TextToSpeechAudioChunk | null> {
-    if (this.isClosed || this.streamPtr === 0) {
-      return null;
-    }
-    return this.runSerialized(() => {
+    while (true) {
       if (this.isClosed || this.streamPtr === 0) {
-        return Promise.resolve(null);
+        return null;
       }
-      return this.wasmModule.readNextTextToSpeechChunk(this.streamPtr);
-    });
+      const version = this.inputVersion;
+      const chunk = await this.queueLoggedWasmCall(() => {
+        if (this.isClosed || this.streamPtr === 0) {
+          return Promise.resolve(null);
+        }
+        return this.wasmModule.readNextTextToSpeechChunk(this.streamPtr);
+      });
+      if (chunk !== undefined) {
+        return chunk;
+      }
+      // The stream needs more input. The single-threaded Wasm runtime can't
+      // block for it, so wait here until the caller pushes text, finishes the
+      // input, or cancels or closes the stream.
+      if (this.inputFinished && version === this.inputVersion) {
+        return null; // Shouldn't happen; avoids waiting forever.
+      }
+      if (version === this.inputVersion) {
+        await new Promise<void>((resolve) => {
+          this.inputWaiters.push(resolve);
+        });
+      }
+    }
+  }
+
+  /** Wakes `readNext()` calls that wait for input so that they read again. */
+  private notifyInput(): void {
+    ++this.inputVersion;
+    const waiters = this.inputWaiters;
+    this.inputWaiters = [];
+    for (const resolve of waiters) {
+      resolve();
+    }
   }
 
   /**
@@ -149,7 +193,11 @@ export class TextToSpeechStream
     if (this.isClosed || this.streamPtr === 0) {
       throw new Error('TextToSpeechStream is already closed.');
     }
-    await this.wasmModule.pushTextToSpeechStream(this.streamPtr, textDelta);
+    const streamPtr = this.streamPtr;
+    await this.queueWasmCall(() =>
+      this.wasmModule.pushTextToSpeechStream(streamPtr, textDelta),
+    );
+    this.notifyInput();
   }
 
   /**
@@ -162,7 +210,12 @@ export class TextToSpeechStream
     if (this.isClosed || this.streamPtr === 0) {
       throw new Error('TextToSpeechStream is already closed.');
     }
-    await this.wasmModule.finishTextToSpeechStreamInput(this.streamPtr);
+    const streamPtr = this.streamPtr;
+    await this.queueWasmCall(() =>
+      this.wasmModule.finishTextToSpeechStreamInput(streamPtr),
+    );
+    this.inputFinished = true;
+    this.notifyInput();
   }
 
   /**
@@ -174,6 +227,7 @@ export class TextToSpeechStream
     if (!this.isClosed && this.streamPtr !== 0) {
       this.wasmModule.cancelTextToSpeechStream(this.streamPtr);
     }
+    this.notifyInput();
   }
 
   /**
@@ -190,6 +244,8 @@ export class TextToSpeechStream
       } catch {}
       this.streamPtr = 0;
     }
+    this.notifyInput();
+    this.onClose?.();
   }
 
   async *[Symbol.asyncIterator](): AsyncIterator<TextToSpeechAudioChunk> {
@@ -220,6 +276,7 @@ export class TextToSpeech extends TaskRunner {
   private defaultLocale = '';
   private speakingRate = 1.0;
   private targetBucket = 0;
+  private readonly openStreams = new Set<TextToSpeechStream>();
   private ttsPtr = 0;
   private isClosed = false;
   private loggerTimestamp = 0;
@@ -312,8 +369,22 @@ export class TextToSpeech extends TaskRunner {
     return 'TextToSpeech';
   }
 
+  /**
+   * Runs `run` after all queued Wasm calls, so that calls never overlap: a JSPI
+   * call can suspend inside Wasm, and other calls must not re-enter the module.
+   */
+  private queueWasmCall<T>(run: () => Promise<T>): Promise<T> {
+    const next = this.invocationQueue.then(run);
+    this.invocationQueue = next.then(
+      () => {},
+      () => {},
+    );
+    return next;
+  }
+
+  /** Like `queueWasmCall()`, and also logs a telemetry invocation. */
   private logInvocation<T>(run: () => Promise<T>): Promise<T> {
-    const next = this.invocationQueue.then(() => {
+    return this.queueWasmCall(() => {
       const timestamp = this.loggerTimestamp++;
       if (this.logger) {
         if (this.delegateType === CPU_DELEGATE_TYPE) {
@@ -335,11 +406,6 @@ export class TextToSpeech extends TaskRunner {
           },
         );
     });
-    this.invocationQueue = next.then(
-      () => {},
-      () => {},
-    );
-    return next;
   }
 
   /**
@@ -585,9 +651,18 @@ export class TextToSpeech extends TaskRunner {
         finishInput,
       ),
     );
-    return new TextToSpeechStream(streamPtr, wasmModule, (fn) =>
-      this.logInvocation(fn),
+    const stream: TextToSpeechStream = new TextToSpeechStream(
+      streamPtr,
+      wasmModule,
+      (fn) => this.logInvocation(fn),
+      (fn) => this.queueWasmCall(fn),
+      finishInput,
+      () => {
+        this.openStreams.delete(stream);
+      },
     );
+    this.openStreams.add(stream);
+    return stream;
   }
 
   /**
@@ -602,6 +677,12 @@ export class TextToSpeech extends TaskRunner {
         .wasmModule as unknown as TextToSpeechWasmModule;
       wasmModule.cancelTextToSpeech(this.ttsPtr);
     }
+    // Also cancel each open stream, which wakes reads that wait for input so
+    // that they observe the cancellation. (The native cancel above already
+    // cancelled the streams' synthesis.)
+    for (const stream of this.openStreams) {
+      stream.cancel();
+    }
   }
 
   /**
@@ -613,6 +694,12 @@ export class TextToSpeech extends TaskRunner {
   override close(): void {
     if (this.isClosed) return;
     this.isClosed = true;
+    // Close remaining streams first so that pending `readNext()` calls wake up
+    // and no stream touches the engine after it is deleted. `stream.close()`
+    // removes the stream from `openStreams`, so iterate over a copy.
+    for (const stream of Array.from(this.openStreams)) {
+      stream.close();
+    }
     const rawWasm = this.graphRunner.wasmModule;
     const wasmModule = rawWasm as unknown as TextToSpeechWasmModule;
     if (this.ttsPtr !== 0) {

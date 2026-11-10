@@ -204,6 +204,10 @@ MP_EXPORT MpStatus MpTextToSpeechStartStream(
 // - Returns `kMpOutOfRange` (`*num_samples == 0`) when the stream reaches EOS.
 // - Returns `kMpCancelled` if cancelled via `MpTextToSpeechStreamCancel()` or
 //   `MpTextToSpeechCancel()`.
+// - In single-threaded web (Emscripten) builds, returns `kMpUnavailable`
+//   instead of blocking when the stream needs more input. Push more text with
+//   `MpTextToSpeechStreamPushText()` or call
+//   `MpTextToSpeechStreamFinishInput()`, and then read again.
 MP_EXPORT MpStatus MpTextToSpeechStreamReadNext(
     MpTextToSpeechStreamPtr stream, MpTextToSpeechAudioResult* chunk_out,
     int32_t* chunk_index_out, bool* is_final_out, char** error_msg);
