@@ -119,6 +119,9 @@ let package = Package(
                 .linkedFramework("CoreImage"),
                 .linkedFramework("CoreVideo"),
                 .linkedFramework("QuartzCore"),
+                // Required by usage logging's transitive networking stack (GTMSessionFetcher).
+                .linkedFramework("Security"),
+                .linkedFramework("UIKit"),
             ]
         ),
     ]

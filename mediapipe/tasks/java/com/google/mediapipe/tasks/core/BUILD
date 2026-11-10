@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//mediapipe:version.bzl", "MEDIAPIPE_FULL_VERSION")
 load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_jni_binary", "mediapipe_tasks_core_aar")
 
 package(default_visibility = ["//visibility:public"])
@@ -146,12 +147,28 @@ public final class TasksStatsLoggerFactory {
 EOF""",
 )
 
+genrule(
+    name = "tasks_version",
+    outs = ["logging/TasksVersion.java"],
+    cmd = """
+cat <<EOF > $@
+package com.google.mediapipe.tasks.core.logging;
+
+final class TasksVersion {
+  static final String MEDIAPIPE_VERSION = "%s";
+
+  private TasksVersion() {}
+}
+EOF""" % MEDIAPIPE_FULL_VERSION,
+)
+
 filegroup(
     name = "logging_java_src",
     srcs = [
         "logging/TasksStatsDummyLogger.java",
         "logging/TasksStatsLogger.java",
         "logging/TasksStatsLoggerFactory.java",
+        "logging/TasksVersion.java",
     ],
 )
 
