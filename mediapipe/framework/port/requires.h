@@ -15,6 +15,47 @@
 #ifndef MEDIAPIPE_FRAMEWORK_PORT_REQUIRES_H_
 #define MEDIAPIPE_FRAMEWORK_PORT_REQUIRES_H_
 
-#include "mediapipe/framework/deps/requires.h"
+#include <type_traits>
+
+namespace mediapipe {
+
+// C++17 port of the C++20 `requires` expressions.
+// It allows easy inline test of properties of types in template code.
+// https://en.cppreference.com/w/cpp/language/constraints#Requires_expressions
+//
+// Example usage:
+//
+// if constexpr (Requires<T>([](auto&& x) -> decltype(x.foo()) {})) {
+//   // T has foo()
+//   return t.foo();
+// } else if constexpr (Requires<T>([](auto&& x) -> decltype(Bar(x)) {})) {
+//   // Can call Bar with T
+//   return Bar(t);
+// } else if constexpr (Requires<T, U>(
+//     // Can test expression with multiple inputs
+//     [](auto&& x, auto&& y) -> decltype(x + y) {})) {
+//   return t + t2;
+// }
+//
+// The `Requires` function takes a list of types and a generic lambda where all
+// arguments are of type `auto&&`. The lambda is never actually invoked and the
+// body must be empty.
+// When used this way, `Requires` returns whether the expression inside
+// `decltype` is well-formed, when the lambda parameters have the types that
+// are specified by the corresponding template arguments.
+//
+// NOTE: C++17 does not allow lambdas in template parameters, which means that
+// code like the following is _not_ valid in C++17:
+//
+//  template <typename T,
+//            typename = std::enable_if_t<Requires<T>(
+//              [] (auto&& v) -> decltype(<expr>) {})>>
+//
+template <typename... T, typename F>
+constexpr bool Requires(F) {
+  return std::is_invocable_v<F, T...>;
+}
+
+}  // namespace mediapipe
 
 #endif  // MEDIAPIPE_FRAMEWORK_PORT_REQUIRES_H_

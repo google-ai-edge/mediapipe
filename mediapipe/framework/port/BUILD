@@ -492,7 +492,7 @@ cc_library(
 cc_library(
     name = "requires",
     hdrs = ["requires.h"],
-    deps = ["//mediapipe/framework/deps:requires"],
+    visibility = ["//mediapipe:__subpackages__"],
 )
 
 cc_library(
