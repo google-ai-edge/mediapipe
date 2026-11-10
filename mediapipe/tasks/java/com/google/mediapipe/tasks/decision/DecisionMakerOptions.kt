@@ -21,6 +21,7 @@ import java.nio.ByteBuffer
 enum class DecisionMakerDelegate(val value: Int) {
   CPU(0),
   GPU(1),
+  NPU(2),
 }
 
 /**

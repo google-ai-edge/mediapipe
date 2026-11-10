@@ -362,6 +362,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
         }
       }
 
+      val npuDispatchDir = context.applicationInfo?.nativeLibraryDir.orEmpty()
       val handle =
         nativeCreateHandle(
           fd,
@@ -369,6 +370,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
           options.modelAssetBuffer,
           options.maxNumTokens,
           options.delegate.value,
+          npuDispatchDir,
           appId,
           appVersion,
           BaseOptionsUtils.HOST_ENVIRONMENT_ANDROID,
@@ -384,6 +386,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
       modelBuffer: ByteBuffer?,
       maxNumTokens: Int,
       delegate: Int,
+      npuDispatchLibraryDir: String,
       appId: String,
       appVersion: String,
       hostEnvironment: Int,
