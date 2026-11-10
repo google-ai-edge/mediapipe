@@ -92,11 +92,19 @@ struct MpBaseOptions {
 
   // The app version of the host environment, e.g., Android version code.
   const char* app_version;
+
+  // Optional directory containing the LiteRT NPU dispatch shared libraries.
+  // On Android, this is typically the app's `nativeLibraryDir`. The shared
+  // converter maps it to the C++ `NpuOptions` only when `delegate` is
+  // `MP_DELEGATE_NPU`; tasks with per-modality delegates may additionally
+  // forward it for other `delegate` values.
+  const char* npu_dispatch_library_dir;
 };
 
 // Frees heap-allocated buffer and string fields (`model_asset_buffer`,
-// `model_asset_path`, `host_version`, `ca_bundle_path`, `app_id`, and
-// `app_version`) in `options` and resets all fields to their default values.
+// `model_asset_path`, `host_version`, `ca_bundle_path`, `app_id`,
+// `app_version`, and `npu_dispatch_library_dir`) in `options` and resets all
+// fields to their default values.
 // Only call this if all non-null pointer fields in `options` were allocated on
 // the heap (e.g., via `malloc` or `strdup`).
 MP_EXPORT void MpBaseOptionsFree(struct MpBaseOptions* options);

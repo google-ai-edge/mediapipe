@@ -46,6 +46,9 @@ void MpBaseOptionsFree(struct MpBaseOptions* options) {
 
   free(const_cast<char*>(options->app_version));
   options->app_version = nullptr;
+
+  free(const_cast<char*>(options->npu_dispatch_library_dir));
+  options->npu_dispatch_library_dir = nullptr;
 }
 
 }  // extern "C"

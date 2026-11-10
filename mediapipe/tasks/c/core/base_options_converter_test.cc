@@ -73,6 +73,49 @@ TEST(BaseOptionsConverterTest, ConvertsBaseOptionsDelegate) {
   EXPECT_FALSE(cpp_base_options.disable_default_service);
 }
 
+TEST(BaseOptionsConverterTest, ConvertsNpuDispatchLibraryDir) {
+  MpBaseOptions c_base_options = {};
+  c_base_options.delegate = MP_DELEGATE_NPU;
+  c_base_options.npu_dispatch_library_dir = "/data/app/lib/arm64";
+
+  mediapipe::tasks::core::BaseOptions cpp_base_options = {};
+
+  CppConvertToBaseOptions(c_base_options, &cpp_base_options);
+  EXPECT_EQ(cpp_base_options.delegate,
+            mediapipe::tasks::core::BaseOptions::NPU);
+  ASSERT_TRUE(cpp_base_options.delegate_options.has_value());
+  ASSERT_TRUE(
+      std::holds_alternative<mediapipe::tasks::core::BaseOptions::NpuOptions>(
+          *cpp_base_options.delegate_options));
+  EXPECT_EQ(std::get<mediapipe::tasks::core::BaseOptions::NpuOptions>(
+                *cpp_base_options.delegate_options)
+                .dispatch_library_directory,
+            "/data/app/lib/arm64");
+}
+
+TEST(BaseOptionsConverterTest, LeavesNpuDelegateOptionsUnsetWithoutDir) {
+  MpBaseOptions c_base_options = {};
+  c_base_options.delegate = MP_DELEGATE_NPU;
+
+  mediapipe::tasks::core::BaseOptions cpp_base_options = {};
+
+  CppConvertToBaseOptions(c_base_options, &cpp_base_options);
+  EXPECT_EQ(cpp_base_options.delegate,
+            mediapipe::tasks::core::BaseOptions::NPU);
+  EXPECT_FALSE(cpp_base_options.delegate_options.has_value());
+}
+
+TEST(BaseOptionsConverterTest, IgnoresNpuDispatchLibraryDirForNonNpuDelegate) {
+  MpBaseOptions c_base_options = {};
+  c_base_options.delegate = MP_DELEGATE_GPU;
+  c_base_options.npu_dispatch_library_dir = "/data/app/lib/arm64";
+
+  mediapipe::tasks::core::BaseOptions cpp_base_options = {};
+
+  CppConvertToBaseOptions(c_base_options, &cpp_base_options);
+  EXPECT_FALSE(cpp_base_options.delegate_options.has_value());
+}
+
 TEST(BaseOptionsConverterTest, ConvertsBaseOptionsAppId) {
   MpBaseOptions c_base_options = {};
   c_base_options.app_id = "test_app_id";
@@ -145,6 +188,7 @@ TEST(BaseOptionsConverterTest, FreesAndResetsBaseOptions) {
       /* ca_bundle_path= */ strdup("/etc/ssl/cert.pem"),
       /* app_id= */ strdup("com.example.app"),
       /* app_version= */ strdup("1.2.3"),
+      /* npu_dispatch_library_dir= */ strdup("/data/app/lib/arm64"),
   };
 
   MpBaseOptionsFree(&c_base_options);
@@ -160,6 +204,7 @@ TEST(BaseOptionsConverterTest, FreesAndResetsBaseOptions) {
   EXPECT_EQ(c_base_options.ca_bundle_path, nullptr);
   EXPECT_EQ(c_base_options.app_id, nullptr);
   EXPECT_EQ(c_base_options.app_version, nullptr);
+  EXPECT_EQ(c_base_options.npu_dispatch_library_dir, nullptr);
 }
 
 TEST(BaseOptionsConverterTest, FreeHandlesNullptr) {

@@ -53,6 +53,8 @@
   cBaseOptions->ca_bundle_path = nullptr;
   cBaseOptions->app_id = appID ? strdup(appID.UTF8String) : nullptr;
   cBaseOptions->app_version = appVersion ? strdup(appVersion.UTF8String) : nullptr;
+  // NPU is not exposed on iOS MPPBaseOptions.
+  cBaseOptions->npu_dispatch_library_dir = nullptr;
 }
 
 + (void)freeCOptions:(nullable MpBaseOptions *)cBaseOptions {

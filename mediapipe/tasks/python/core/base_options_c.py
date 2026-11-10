@@ -32,6 +32,8 @@ class MpBaseOptionsC(ctypes.Structure):
     ca_bundle_path: `bytes`, the path to the CA bundle file as a UTF-8 string.
     app_id: `bytes`, optional application id as a UTF-8 string.
     app_version: `bytes`, optional application version as a UTF-8 string.
+    npu_dispatch_library_dir: `bytes`, optional directory containing the LiteRT
+      NPU dispatch libraries as a UTF-8 string.
   """
 
   _fields_ = [
@@ -46,4 +48,5 @@ class MpBaseOptionsC(ctypes.Structure):
       ("ca_bundle_path", ctypes.c_char_p),
       ("app_id", ctypes.c_char_p),
       ("app_version", ctypes.c_char_p),
+      ("npu_dispatch_library_dir", ctypes.c_char_p),
   ]

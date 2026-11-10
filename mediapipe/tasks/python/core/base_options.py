@@ -110,6 +110,7 @@ class BaseOptions:
     options.ca_bundle_path = ca_bundle_path.encode('utf-8')
     options.app_id = None
     options.app_version = None
+    options.npu_dispatch_library_dir = None
     options.file_descriptor = -1
     return options
 

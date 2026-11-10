@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "absl/log/absl_log.h"  // from @com_google_absl
 #include "mediapipe/tasks/c/core/base_options.h"
@@ -101,6 +102,14 @@ void CppConvertToBaseOptions(const MpBaseOptions& in,
   out->app_version = in.app_version ? std::string(in.app_version) : "";
   out->model_asset_descriptor_meta.fd =
       in.file_descriptor != 0 ? in.file_descriptor : -1;
+
+  if (in.delegate == MP_DELEGATE_NPU &&
+      in.npu_dispatch_library_dir != nullptr &&
+      in.npu_dispatch_library_dir[0] != '\0') {
+    mediapipe::tasks::core::BaseOptions::NpuOptions npu_options;
+    npu_options.dispatch_library_directory = in.npu_dispatch_library_dir;
+    out->delegate_options = std::move(npu_options);
+  }
 
   // Don't load GPU service unless delegate is GPU.
   out->disable_default_service = (in.delegate != MP_DELEGATE_GPU);
