@@ -14,11 +14,13 @@
 
 #include "mediapipe/framework/tool/status_util.h"
 
-#include <memory>
 #include <string>
+#include <tuple>
 #include <vector>
 
-#include "absl/status/status.h"  // from @com_google_absl
+#include "absl/status/status.h"        // from @com_google_absl
+#include "absl/strings/cord.h"         // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"

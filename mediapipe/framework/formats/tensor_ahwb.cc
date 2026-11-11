@@ -1,12 +1,13 @@
-#include "absl/status/status.h"         // from @com_google_absl
-#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/tensor.h"
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <list>
 #include <memory>
 #include <utility>
@@ -15,9 +16,12 @@
 #include "absl/base/const_init.h"           // from @com_google_absl
 #include "absl/base/log_severity.h"         // from @com_google_absl
 #include "absl/base/no_destructor.h"        // from @com_google_absl
+#include "absl/base/thread_annotations.h"   // from @com_google_absl
+#include "absl/container/flat_hash_set.h"   // from @com_google_absl
 #include "absl/functional/any_invocable.h"  // from @com_google_absl
 #include "absl/log/absl_check.h"            // from @com_google_absl
 #include "absl/log/absl_log.h"              // from @com_google_absl
+#include "absl/status/status_macros.h"      // from @com_google_absl
 #include "absl/synchronization/mutex.h"     // from @com_google_absl
 #include "mediapipe/framework/formats/ahwb_gpu_releaser.h"
 #include "mediapipe/framework/formats/hardware_buffer.h"

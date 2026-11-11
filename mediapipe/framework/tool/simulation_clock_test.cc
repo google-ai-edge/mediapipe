@@ -14,19 +14,16 @@
 
 #include "mediapipe/framework/tool/simulation_clock.h"
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"  // from @com_google_absl
 #include "absl/status/status.h"  // from @com_google_absl
+#include "absl/time/time.h"      // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/executor.h"
-#include "mediapipe/framework/input_stream.h"
-#include "mediapipe/framework/output_stream.h"
-#include "mediapipe/framework/port/core_proto_inc.h"
+#include "mediapipe/framework/deps/clock.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/logging.h"

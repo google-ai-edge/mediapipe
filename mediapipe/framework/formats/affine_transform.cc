@@ -14,19 +14,10 @@
 
 #include "mediapipe/framework/formats/affine_transform.h"
 
-#include <algorithm>
 #include <cmath>
-#include <memory>
 #include <vector>
 
-#include "absl/memory/memory.h"       // from @com_google_absl
-#include "absl/status/status.h"       // from @com_google_absl
-#include "absl/status/statusor.h"     // from @com_google_absl
-#include "absl/strings/substitute.h"  // from @com_google_absl
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/point2.h"
-#include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/tool/status_util.h"
 #include "mediapipe/framework/type_map.h"
 
 namespace mediapipe {

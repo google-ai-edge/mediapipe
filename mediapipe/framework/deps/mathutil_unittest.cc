@@ -20,11 +20,10 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iomanip>
-#include <ostream>
+#include <cstdint>
+#include <limits>
 
 #include "mediapipe/framework/port/benchmark.h"
-#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 
 namespace {

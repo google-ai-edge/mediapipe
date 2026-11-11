@@ -18,6 +18,8 @@
 
 #include "mediapipe/framework/deps/safe_int.h"
 
+#include <climits>
+#include <cstdint>
 #include <limits>
 
 #include "mediapipe/framework/port/gtest.h"

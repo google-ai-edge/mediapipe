@@ -17,6 +17,8 @@
 
 #include <stdlib.h>  // for free(), aligned_alloc(),
 
+#include <cstddef>
+
 #if defined(__ANDROID__) || defined(_WIN32)
 #include <malloc.h>  // for memalign() on Android, _aligned_alloc() on Windows
 #endif

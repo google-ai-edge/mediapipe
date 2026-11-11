@@ -16,6 +16,8 @@
 #define MEDIAPIPE_DEPS_MESSAGE_MATCHERS_H_
 
 #include <memory>
+#include <ostream>
+#include <string>
 
 #include "gmock/gmock.h"
 #include "mediapipe/framework/port/core_proto_inc.h"

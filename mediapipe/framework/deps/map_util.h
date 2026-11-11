@@ -19,16 +19,7 @@
 #ifndef MEDIAPIPE_DEPS_MAP_UTIL_H_
 #define MEDIAPIPE_DEPS_MAP_UTIL_H_
 
-#include <stddef.h>
-
-#include <iterator>
-#include <memory>
-#include <string>
-#include <type_traits>
-#include <utility>
-
 #include "absl/log/absl_check.h"  // from @com_google_absl
-#include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {
 

@@ -145,17 +145,7 @@ cc_library(
         ":affine_transform_data_cc_proto",
         "//mediapipe/framework:port",
         "//mediapipe/framework:type_map",
-        "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:point",
-        "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/tool:status_util",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
-        "@com_google_protobuf//:protobuf",
     ],
 )
 
@@ -337,9 +327,11 @@ cc_test(
     name = "location_opencv_test",
     srcs = ["location_opencv_test.cc"],
     deps = [
+        ":location",
         ":location_opencv",
         "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
         "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:rectangle",
     ],
 )

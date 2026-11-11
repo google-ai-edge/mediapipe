@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 
-#include "absl/base/macros.h"          // from @com_google_absl
 #include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 

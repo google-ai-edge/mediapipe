@@ -14,8 +14,13 @@
 
 #include "mediapipe/framework/formats/location_opencv.h"
 
+#include <cstdint>
+#include <vector>
+
 #include "mediapipe/framework/formats/annotation/rasterization.pb.h"
+#include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/rectangle.h"
 
 namespace mediapipe {

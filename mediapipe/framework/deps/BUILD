@@ -164,9 +164,6 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework/port",
-        "//mediapipe/framework/port:integral_types",
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
     ],
@@ -186,10 +183,7 @@ cc_library(
 
     # Use this library through "mediapipe/framework/port:map_util".
     visibility = ["//mediapipe/framework/port:__pkg__"],
-    deps = [
-        "//mediapipe/framework/port:logging",
-        "@com_google_absl//absl/log:absl_check",
-    ],
+    deps = ["@com_google_absl//absl/log:absl_check"],
 )
 
 cc_library(
@@ -285,6 +279,7 @@ cc_library(
     # Use this library through "mediapipe/framework/port:singleton".
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -416,7 +411,6 @@ cc_test(
     deps = [
         ":intops",
         "//mediapipe/framework/port:gtest_main",
-        "@com_google_absl//absl/base:core_headers",
     ],
 )
 
@@ -453,6 +447,7 @@ cc_test(
     srcs = ["threadpool_test.cc"],
     linkstatic = 1,
     deps = [
+        ":thread_options",
         ":threadpool",
         "//mediapipe/framework/port:gtest_main",
         "@com_google_absl//absl/synchronization",

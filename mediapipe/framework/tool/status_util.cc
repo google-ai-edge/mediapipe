@@ -14,13 +14,16 @@
 
 #include "mediapipe/framework/tool/status_util.h"
 
+#include <string>
 #include <vector>
 
 #include "absl/base/no_destructor.h"   // from @com_google_absl
 #include "absl/log/absl_check.h"       // from @com_google_absl
+#include "absl/status/status.h"        // from @com_google_absl
 #include "absl/strings/str_cat.h"      // from @com_google_absl
 #include "absl/strings/str_join.h"     // from @com_google_absl
 #include "absl/strings/string_view.h"  // from @com_google_absl
+#include "absl/types/span.h"           // from @com_google_absl
 
 namespace mediapipe {
 namespace tool {

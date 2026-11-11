@@ -178,7 +178,6 @@ cc_test(
         ":executor_util",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
-        "@com_google_absl//absl/log:absl_check",
     ],
 )
 
@@ -237,6 +236,7 @@ cc_library(
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:cord",
     ],
 )
 
@@ -488,6 +488,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -565,7 +566,6 @@ cc_library(
         "//mediapipe/framework/port:advanced_proto",
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:ret_check",
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
@@ -661,6 +661,8 @@ cc_test(
         ":status_util",
         "//mediapipe/framework/port:gtest_main",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:cord",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -741,19 +743,14 @@ cc_test(
         "//mediapipe/calculators/core:immediate_mux_calculator",
         "//mediapipe/calculators/core:round_robin_demux_calculator",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:executor",
-        "//mediapipe/framework:input_stream",
-        "//mediapipe/framework:output_stream",
         "//mediapipe/framework:test_calculators",
-        "//mediapipe/framework/port:core_proto",
+        "//mediapipe/framework/deps:clock",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
     ],
 )
 
