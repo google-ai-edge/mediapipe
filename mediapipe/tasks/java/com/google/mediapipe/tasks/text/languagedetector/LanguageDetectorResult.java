@@ -61,11 +61,23 @@ public abstract class LanguageDetectorResult implements TaskResult {
     return create(ClassificationResult.createFromProto(proto), timestampMs);
   }
 
-  /** A list of predictions from the LanguageDetector. */
+  /**
+   * A list of language predictions from the LanguageDetector, ordered by descending probability.
+   */
   // For backwards-compatibility reasons in OSS we want to avoid dependencies on libraries like
   // Guava, so we don't use ImmutableList.
   @SuppressWarnings("AutoValueImmutableFields")
-  public abstract List<LanguagePrediction> languagesAndScores();
+  public abstract List<LanguagePrediction> languages();
+
+  /**
+   * Returns the list of language predictions.
+   *
+   * @deprecated Use {@link #languages()} instead.
+   */
+  @Deprecated
+  public List<LanguagePrediction> languagesAndScores() {
+    return languages();
+  }
 
   @Override
   public abstract long timestampMs();

@@ -100,7 +100,10 @@ NS_SWIFT_NAME(PoseLandmarkerOptions)
 /**
  * Whether to output segmentation masks. Defaults to `false`.
  */
-@property(nonatomic) BOOL shouldOutputSegmentationMasks;
+@property(nonatomic) BOOL outputSegmentationMasks;
+
+@property(nonatomic) BOOL shouldOutputSegmentationMasks
+    __attribute__((deprecated("Use outputSegmentationMasks instead.")));
 
 @end
 

@@ -318,6 +318,27 @@ describe('TextToSpeech', () => {
     expect(mockModule['cancelTextToSpeech']).toHaveBeenCalledWith(54321);
   });
 
+  it('opens an incremental stream via openStream with finishInput=false by default', async () => {
+    const stream = await tts.openStream('', {voiceId: 'af_heart'});
+    expect(mockModule['startTextToSpeechStream']).toHaveBeenCalledWith(
+      54321,
+      '',
+      'af_heart',
+      '',
+      false,
+    );
+    await stream.pushText('Hello ');
+    expect(mockModule['pushTextToSpeechStream']).toHaveBeenCalledWith(
+      98765,
+      'Hello ',
+    );
+    await stream.finishInput();
+    expect(mockModule['finishTextToSpeechStreamInput']).toHaveBeenCalledWith(
+      98765,
+    );
+    stream.close();
+  });
+
   it('deletes native pointer on close and throws when called after close', async () => {
     tts.close();
     expect(mockModule['deleteTextToSpeech']).toHaveBeenCalledWith(54321);

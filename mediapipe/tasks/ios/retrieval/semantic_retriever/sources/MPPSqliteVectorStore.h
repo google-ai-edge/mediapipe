@@ -40,23 +40,39 @@ NS_SWIFT_NAME(SqliteVectorStore)
                 error:(NSError **)error NS_SWIFT_NAME(upsertRecords(_:));
 
 /**
- * Retrieves the topK nearest records from the vector store matching the query embedding.
+ * Retrieves up to `limit` nearest records from the vector store matching the query embedding.
  */
 - (nullable NSArray<MPPRetrievalRecord *> *)searchWithEmbedding:
                                                 (NSArray<NSNumber *> *)queryEmbedding
-                                                           topK:(NSInteger)topK
+                                                          limit:(NSInteger)limit
                                                           error:(NSError **)error
-    NS_SWIFT_NAME(search(withEmbedding:topK:));
+    NS_SWIFT_NAME(search(withEmbedding:limit:));
 
 /**
- * Retrieves the topK nearest records from the vector store matching the query embedding with
+ * Retrieves up to `limit` nearest records from the vector store matching the query embedding with
  * metadata filtering.
  */
 - (nullable NSArray<MPPRetrievalRecord *> *)
     searchWithEmbedding:(NSArray<NSNumber *> *)queryEmbedding
+                  limit:(NSInteger)limit
+         metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
+                  error:(NSError **)error
+    NS_SWIFT_NAME(search(withEmbedding:limit:metadataFilter:));
+
+- (nullable NSArray<MPPRetrievalRecord *> *)searchWithEmbedding:
+                                                (NSArray<NSNumber *> *)queryEmbedding
+                                                           topK:(NSInteger)topK
+                                                          error:(NSError **)error
+    NS_SWIFT_NAME(search(withEmbedding:topK:))
+        __attribute__((deprecated("Use searchWithEmbedding:limit:error: instead.")));
+
+- (nullable NSArray<MPPRetrievalRecord *> *)
+    searchWithEmbedding:(NSArray<NSNumber *> *)queryEmbedding
                    topK:(NSInteger)topK
          metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
-                  error:(NSError **)error NS_SWIFT_NAME(search(withEmbedding:topK:metadataFilter:));
+                  error:(NSError **)error
+    NS_SWIFT_NAME(search(withEmbedding:topK:metadataFilter:))
+        __attribute__((deprecated("Use searchWithEmbedding:limit:metadataFilter:error: instead.")));
 
 /**
  * Deletes records from the vector store matching the metadata filter.

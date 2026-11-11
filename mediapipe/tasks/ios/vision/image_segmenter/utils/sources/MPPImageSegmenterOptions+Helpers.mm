@@ -42,8 +42,8 @@
   }
   const char *locale = self.displayNamesLocale.UTF8String;
   cOptions->display_names_locale = strdup(locale ? locale : "");
-  cOptions->output_confidence_masks = self.shouldOutputConfidenceMasks ? true : false;
-  cOptions->output_category_mask = self.shouldOutputCategoryMask ? true : false;
+  cOptions->output_confidence_masks = self.outputConfidenceMasks ? true : false;
+  cOptions->output_category_mask = self.outputCategoryMask ? true : false;
   cOptions->result_callback = nullptr;
 }
 

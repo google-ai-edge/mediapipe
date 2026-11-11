@@ -85,16 +85,20 @@ constructor(
  *
  * @property selectedKey Key of the highest-probability rubric level.
  * @property expectedScore Continuous expected rubric level index in `[0.0, K - 1]` across the `K`
- *   ordered rubric levels (`sum_i(i * levelProbabilities[i])`).
- * @property levelProbabilities Probability distribution across each ordered rubric level.
+ *   ordered rubric levels (`sum_i(i * probabilities[i])`).
+ * @property probabilities Probability distribution across each ordered rubric level.
  * @property confidence Calibrated confidence score in `[0.0, 1.0]`.
  */
 data class ScoreResult(
   val selectedKey: String,
   val expectedScore: Float,
-  val levelProbabilities: List<Float>,
+  val probabilities: List<Float>,
   val confidence: Float,
 ) {
+  @Deprecated("Use probabilities instead.", ReplaceWith("probabilities"))
+  val levelProbabilities: List<Float>
+    get() = probabilities
+
   /** Secondary constructor invoked from JNI with a primitive [FloatArray]. */
   constructor(
     selectedKey: String,
@@ -104,7 +108,7 @@ data class ScoreResult(
   ) : this(
     selectedKey = selectedKey,
     expectedScore = expectedScore,
-    levelProbabilities = probabilities.toList(),
+    probabilities = probabilities.toList(),
     confidence = confidence,
   )
 }

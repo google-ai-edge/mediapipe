@@ -31,8 +31,8 @@
     [languagePredictions addObject:languagePrediction];
   }
 
-  return [[MPPLanguageDetectorResult alloc] initWithLanguagePredictions:languagePredictions
-                                                timestampInMilliseconds:0];
+  return [[MPPLanguageDetectorResult alloc] initWithLanguages:languagePredictions
+                                      timestampInMilliseconds:0];
 }
 
 @end

@@ -29,13 +29,26 @@
 
 @implementation MPPLanguageDetectorResult
 
-- (instancetype)initWithLanguagePredictions:(NSArray<MPPLanguagePrediction *> *)languagePredictions
-                    timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
+- (instancetype)initWithLanguages:(NSArray<MPPLanguagePrediction *> *)languages
+          timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   self = [super initWithTimestampInMilliseconds:timestampInMilliseconds];
   if (self) {
-    _languagePredictions = languagePredictions;
+    _languages = [languages copy];
   }
   return self;
 }
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-implementations"
+- (NSArray<MPPLanguagePrediction *> *)languagePredictions {
+  return self.languages;
+}
+
+- (instancetype)initWithLanguagePredictions:(NSArray<MPPLanguagePrediction *> *)languagePredictions
+                    timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
+  return [self initWithLanguages:languagePredictions
+         timestampInMilliseconds:timestampInMilliseconds];
+}
+#pragma clang diagnostic pop
 
 @end

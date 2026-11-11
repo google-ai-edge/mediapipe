@@ -666,6 +666,26 @@ export class TextToSpeech extends TaskRunner {
   }
 
   /**
+   * Opens an incremental streaming synthesis session returning a
+   * `TextToSpeechStream` with `finishInput` defaulting to `false` so callers
+   * can push LLM text deltas via `stream.pushText()` and finish with
+   * `stream.finishInput()`.
+   *
+   * @export
+   * @param initialText Optional initial text fragment to enqueue immediately.
+   * @param options Optional per-utterance voice or locale overrides.
+   * @param finishInput Pass `false` (default) to keep the input stream open for
+   *     `stream.pushText()`, or `true` for a single-utterance stream.
+   */
+  async openStream(
+    initialText = '',
+    options?: SynthesisOptions,
+    finishInput = false,
+  ): Promise<TextToSpeechStream> {
+    return this.synthesizeStream(initialText, options, finishInput);
+  }
+
+  /**
    * Cancels any in-flight unary or streaming synthesis on this `TextToSpeech`
    * instance.
    *

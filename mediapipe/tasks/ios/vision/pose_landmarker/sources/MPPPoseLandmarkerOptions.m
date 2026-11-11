@@ -23,7 +23,7 @@
     _minPoseDetectionConfidence = 0.5f;
     _minPosePresenceConfidence = 0.5f;
     _minTrackingConfidence = 0.5f;
-    _shouldOutputSegmentationMasks = NO;
+    _outputSegmentationMasks = NO;
   }
   return self;
 }
@@ -36,10 +36,21 @@
   poseLandmarkerOptions.minPoseDetectionConfidence = self.minPoseDetectionConfidence;
   poseLandmarkerOptions.minPosePresenceConfidence = self.minPosePresenceConfidence;
   poseLandmarkerOptions.minTrackingConfidence = self.minTrackingConfidence;
-  poseLandmarkerOptions.shouldOutputSegmentationMasks = self.shouldOutputSegmentationMasks;
+  poseLandmarkerOptions.outputSegmentationMasks = self.outputSegmentationMasks;
   poseLandmarkerOptions.poseLandmarkerLiveStreamDelegate = self.poseLandmarkerLiveStreamDelegate;
 
   return poseLandmarkerOptions;
 }
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-implementations"
+- (BOOL)shouldOutputSegmentationMasks {
+  return self.outputSegmentationMasks;
+}
+
+- (void)setShouldOutputSegmentationMasks:(BOOL)shouldOutputSegmentationMasks {
+  self.outputSegmentationMasks = shouldOutputSegmentationMasks;
+}
+#pragma clang diagnostic pop
 
 @end

@@ -40,7 +40,7 @@ final class PoseLandmarkerSmokeTests: XCTestCase {
     options.minPoseDetectionConfidence = 0.6
     options.minPosePresenceConfidence = 0.6
     options.minTrackingConfidence = 0.6
-    options.shouldOutputSegmentationMasks = true
+    options.outputSegmentationMasks = true
 
     let delegate = MockLiveStreamDelegate()
     options.poseLandmarkerLiveStreamDelegate = delegate
@@ -50,7 +50,7 @@ final class PoseLandmarkerSmokeTests: XCTestCase {
     XCTAssertEqual(options.minPoseDetectionConfidence, 0.6, accuracy: 1e-3)
     XCTAssertEqual(options.minPosePresenceConfidence, 0.6, accuracy: 1e-3)
     XCTAssertEqual(options.minTrackingConfidence, 0.6, accuracy: 1e-3)
-    XCTAssertTrue(options.shouldOutputSegmentationMasks)
+    XCTAssertTrue(options.outputSegmentationMasks)
   }
 
   func testRuntimeRegistrationAndInitialization() {

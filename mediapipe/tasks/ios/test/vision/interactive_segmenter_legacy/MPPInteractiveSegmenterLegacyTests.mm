@@ -105,8 +105,8 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
 - (void)testSegmentWithNormalizedKeyPointRoiAndCategoryMaskSucceeds {
   MPPInteractiveSegmenterLegacyOptions *options =
       [self interactiveSegmenterLegacyOptionsWithModelFileInfo:kDeepLabModelFileInfo];
-  options.shouldOutputConfidenceMasks = NO;
-  options.shouldOutputCategoryMask = YES;
+  options.outputConfidenceMasks = NO;
+  options.outputCategoryMask = YES;
 
   MPPInteractiveSegmenterLegacy *interactiveSegmenterLegacy =
       [self createInteractiveSegmenterLegacyWithOptionsSucceeds:options];
@@ -214,8 +214,8 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
 - (void)testSegmentWithScribblesRoiAndCategoryMaskSucceeds {
   MPPInteractiveSegmenterLegacyOptions *options =
       [self interactiveSegmenterLegacyOptionsWithModelFileInfo:kDeepLabModelFileInfo];
-  options.shouldOutputConfidenceMasks = NO;
-  options.shouldOutputCategoryMask = YES;
+  options.outputConfidenceMasks = NO;
+  options.outputCategoryMask = YES;
 
   MPPInteractiveSegmenterLegacy *interactiveSegmenterLegacy =
       [self createInteractiveSegmenterLegacyWithOptionsSucceeds:options];

@@ -31,10 +31,16 @@ NS_SWIFT_NAME(InteractiveSegmenterLegacyOptions)
 @property(nonatomic, copy) NSString *displayNamesLocale;
 
 /** Represents whether to output confidence masks. */
-@property(nonatomic) BOOL shouldOutputConfidenceMasks;
+@property(nonatomic) BOOL outputConfidenceMasks;
 
 /** Represents whether to output category mask. */
-@property(nonatomic) BOOL shouldOutputCategoryMask;
+@property(nonatomic) BOOL outputCategoryMask;
+
+@property(nonatomic) BOOL shouldOutputConfidenceMasks
+    __attribute__((deprecated("Use outputConfidenceMasks instead.")));
+
+@property(nonatomic) BOOL shouldOutputCategoryMask
+    __attribute__((deprecated("Use outputCategoryMask instead.")));
 
 @end
 

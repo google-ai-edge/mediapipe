@@ -80,14 +80,14 @@ public final class AppSearchVectorStore implements VectorStore {
   }
 
   @Override
-  public List<RetrievalRecord> search(float[] queryEmbedding, int topK) {
-    return impl.search(queryEmbedding, topK);
+  public List<RetrievalRecord> search(float[] queryEmbedding, int limit) {
+    return impl.search(queryEmbedding, limit);
   }
 
   @Override
   public List<RetrievalRecord> search(
-      float[] queryEmbedding, int topK, Map<String, String> metadataFilter) {
-    return impl.search(queryEmbedding, topK, metadataFilter);
+      float[] queryEmbedding, int limit, Map<String, String> metadataFilter) {
+    return impl.search(queryEmbedding, limit, metadataFilter);
   }
 
   @Override

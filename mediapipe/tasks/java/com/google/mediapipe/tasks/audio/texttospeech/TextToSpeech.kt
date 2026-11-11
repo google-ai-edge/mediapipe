@@ -167,8 +167,34 @@ data class TextToSpeechOptions(
   val defaultLocale: String? = null,
   val speakingRate: Float = 1.0f,
   val targetBucket: Int = 0,
-  val cacheDirectory: String = "",
-)
+  val cacheDir: String = "",
+) {
+  @Deprecated("Use cacheDir instead.", ReplaceWith("cacheDir"))
+  val cacheDirectory: String
+    get() = cacheDir
+
+  @Deprecated(
+    "Use cacheDir instead.",
+    ReplaceWith(
+      "TextToSpeechOptions(baseOptions, defaultVoiceId, defaultLocale, speakingRate, targetBucket, cacheDirectory.toString())"
+    ),
+  )
+  constructor(
+    baseOptions: BaseOptions,
+    defaultVoiceId: String? = null,
+    defaultLocale: String? = null,
+    speakingRate: Float = 1.0f,
+    targetBucket: Int = 0,
+    cacheDirectory: CharSequence,
+  ) : this(
+    baseOptions = baseOptions,
+    defaultVoiceId = defaultVoiceId,
+    defaultLocale = defaultLocale,
+    speakingRate = speakingRate,
+    targetBucket = targetBucket,
+    cacheDir = cacheDirectory.toString(),
+  )
+}
 
 /**
  * Per-utterance synthesis overrides passed to [TextToSpeech.synthesize] and
@@ -207,7 +233,7 @@ class TextToSpeech private constructor(@Volatile private var nativeHandle: Long)
           targetBucket = options.targetBucket,
           defaultVoiceId = options.defaultVoiceId,
           defaultLocale = options.defaultLocale,
-          cacheDirectory = options.cacheDirectory,
+          cacheDir = options.cacheDir,
         )
       return TextToSpeech(handle)
     }

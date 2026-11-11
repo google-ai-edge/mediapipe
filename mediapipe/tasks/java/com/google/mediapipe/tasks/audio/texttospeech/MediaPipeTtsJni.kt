@@ -31,7 +31,7 @@ internal object MediaPipeTtsJni {
     targetBucket: Int,
     defaultVoiceId: String?,
     defaultLocale: String?,
-    cacheDirectory: String,
+    cacheDir: String,
   ): Long
 
   external fun nativeListVoices(handle: Long): Array<VoiceInfo>

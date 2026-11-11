@@ -55,7 +55,7 @@ data class BooleanQuestion(
  * Evaluates a mutually exclusive categorical choice menu and returns a calibrated probability
  * distribution over [choices].
  *
- * @property choices Ordered list of option keys (or key-description pairs via [ChoiceOption]).
+ * @property choices Ordered list of option keys.
  * @property descriptions Optional descriptions corresponding 1:1 with [choices].
  * @property temperature Softmax temperature override (`0f` uses the model's calibrated default).
  * @property instructions Optional task instructions prepended to the choice prompt.
@@ -63,7 +63,9 @@ data class BooleanQuestion(
  * @property normalizePrior Whether to normalize option log-probabilities against the empty-context
  *   prior.
  */
-data class ChoiceQuestion(
+data class ChoiceQuestion
+@JvmOverloads
+constructor(
   val choices: List<String>,
   val descriptions: List<String> = emptyList(),
   val temperature: Float = 0.0f,
@@ -71,6 +73,43 @@ data class ChoiceQuestion(
   val scoringMode: ScoringMode = ScoringMode.LENGTH_NORMALIZED_LOG_PROB,
   val normalizePrior: Boolean = false,
 ) : DecisionQuestion {
+  /**
+   * Ordered map of choice keys to semantic descriptions (empty strings when constructed from
+   * [choices] without descriptions).
+   */
+  val criteria: Map<String, String> by lazy {
+    buildMap(choices.size) {
+      for (i in choices.indices) {
+        put(choices[i], descriptions.getOrElse(i) { "" })
+      }
+    }
+  }
+
+  /**
+   * Creates a [ChoiceQuestion] from ordered key-description [criteria] pairs (iteration order of
+   * [criteria] is preserved, e.g. from `mapOf` or `LinkedHashMap`).
+   */
+  @JvmOverloads
+  constructor(
+    criteria: Map<String, String>,
+    temperature: Float = 0.0f,
+    instructions: String = "",
+    scoringMode: ScoringMode = ScoringMode.LENGTH_NORMALIZED_LOG_PROB,
+    normalizePrior: Boolean = false,
+  ) : this(
+    choices = criteria.keys.toList(),
+    descriptions =
+      if (criteria.values.all { it.isEmpty() }) {
+        emptyList()
+      } else {
+        criteria.values.toList()
+      },
+    temperature = temperature,
+    instructions = instructions,
+    scoringMode = scoringMode,
+    normalizePrior = normalizePrior,
+  )
+
   init {
     require(choices.isNotEmpty()) { "ChoiceQuestion.choices must not be empty." }
     if (descriptions.isNotEmpty()) {
@@ -81,26 +120,26 @@ data class ChoiceQuestion(
   }
 
   companion object {
-    /** Creates a [ChoiceQuestion] from key-description pairs. */
+    @Deprecated(
+      "Use ChoiceQuestion(criteria = ...) constructor instead.",
+      ReplaceWith("ChoiceQuestion(options, temperature, instructions, scoringMode, normalizePrior)"),
+    )
     @JvmStatic
+    @JvmOverloads
     fun withDescriptions(
       options: Map<String, String>,
       temperature: Float = 0.0f,
       instructions: String = "",
       scoringMode: ScoringMode = ScoringMode.LENGTH_NORMALIZED_LOG_PROB,
       normalizePrior: Boolean = false,
-    ): ChoiceQuestion {
-      val keys = options.keys.toList()
-      val descs = keys.map { options.getValue(it) }
-      return ChoiceQuestion(
-        choices = keys,
-        descriptions = descs,
+    ): ChoiceQuestion =
+      ChoiceQuestion(
+        criteria = options,
         temperature = temperature,
         instructions = instructions,
         scoringMode = scoringMode,
         normalizePrior = normalizePrior,
       )
-    }
   }
 }
 

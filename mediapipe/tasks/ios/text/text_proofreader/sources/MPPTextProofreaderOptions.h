@@ -32,7 +32,10 @@ NS_SWIFT_NAME(TextProofreaderOptions)
  *
  * Default is 0.
  */
-@property(nonatomic, assign) NSInteger maxNumTokens NS_SWIFT_NAME(maxTokens);
+@property(nonatomic, assign) NSInteger maxNumTokens;
+
+@property(nonatomic, assign) NSInteger maxTokens
+    __attribute__((deprecated("Use maxNumTokens instead.")));
 
 /**
  * Cache directory for the model weight cache and program cache. By default, it will be set by

@@ -17,12 +17,17 @@
 import mediapipe.tasks.python.retrieval.semantic_retriever
 import mediapipe.tasks.python.retrieval.universal_embedder
 
+ActivationDataType = universal_embedder.ActivationDataType
+AudioPart = universal_embedder.AudioPart
 ChunkingMode = semantic_retriever.ChunkingMode
+ContentPart = universal_embedder.ContentPart
+ImagePart = universal_embedder.ImagePart
 RetrievalRecord = semantic_retriever.RetrievalRecord
 RetrievalResult = semantic_retriever.RetrievalResult
 SemanticRetriever = semantic_retriever.SemanticRetriever
 SemanticRetrieverOptions = semantic_retriever.SemanticRetrieverOptions
 TaskPartKind = semantic_retriever.TaskPartKind
+TextPart = universal_embedder.TextPart
 UniversalEmbedder = universal_embedder.UniversalEmbedder
 UniversalEmbedderOptions = universal_embedder.UniversalEmbedderOptions
 UniversalEmbedderResult = universal_embedder.UniversalEmbedderResult

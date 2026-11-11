@@ -37,16 +37,16 @@ final class ImageSegmenterSmokeTests: XCTestCase {
     let options = ImageSegmenterOptions()
     options.runningMode = .liveStream
     options.displayNamesLocale = "en"
-    options.shouldOutputConfidenceMasks = true
-    options.shouldOutputCategoryMask = true
+    options.outputConfidenceMasks = true
+    options.outputCategoryMask = true
 
     let delegate = MockLiveStreamDelegate()
     options.imageSegmenterLiveStreamDelegate = delegate
     XCTAssertNotNil(options.imageSegmenterLiveStreamDelegate)
     XCTAssertEqual(options.runningMode, .liveStream)
     XCTAssertEqual(options.displayNamesLocale, "en")
-    XCTAssertTrue(options.shouldOutputConfidenceMasks)
-    XCTAssertTrue(options.shouldOutputCategoryMask)
+    XCTAssertTrue(options.outputConfidenceMasks)
+    XCTAssertTrue(options.outputCategoryMask)
   }
 
   func testRuntimeRegistrationAndInitialization() {

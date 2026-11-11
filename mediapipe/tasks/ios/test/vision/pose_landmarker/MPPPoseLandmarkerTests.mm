@@ -478,4 +478,15 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   }
 }
 
+- (void)testDeprecatedOutputSegmentationMasksAlias {
+  MPPPoseLandmarkerOptions *options = [[MPPPoseLandmarkerOptions alloc] init];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  options.shouldOutputSegmentationMasks = YES;
+  XCTAssertTrue(options.outputSegmentationMasks);
+  options.outputSegmentationMasks = NO;
+  XCTAssertFalse(options.shouldOutputSegmentationMasks);
+#pragma clang diagnostic pop
+}
+
 @end

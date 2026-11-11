@@ -40,23 +40,43 @@ NS_SWIFT_NAME(VectorStore)
  */
 - (BOOL)deleteAllRecords:(NSError **)error NS_SWIFT_NAME(deleteAllRecords());
 
+@optional
+
 /**
- * Searches the top-K nearest records to the query embedding.
+ * Searches up to `limit` nearest records to the query embedding.
  */
+- (nullable NSArray<MPPRetrievalRecord *> *)searchWithEmbedding:
+                                                (NSArray<NSNumber *> *)queryEmbedding
+                                                          limit:(NSInteger)limit
+                                                          error:(NSError **)error
+    NS_SWIFT_NAME(search(withEmbedding:limit:));
+
+/**
+ * Searches up to `limit` nearest records to the query embedding with optional metadata filtering.
+ */
+- (nullable NSArray<MPPRetrievalRecord *> *)
+    searchWithEmbedding:(NSArray<NSNumber *> *)queryEmbedding
+                  limit:(NSInteger)limit
+         metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
+                  error:(NSError **)error
+    NS_SWIFT_NAME(search(withEmbedding:limit:metadataFilter:));
+
 - (nullable NSArray<MPPRetrievalRecord *> *)searchWithEmbedding:
                                                 (NSArray<NSNumber *> *)queryEmbedding
                                                            topK:(NSInteger)topK
                                                           error:(NSError **)error
-    NS_SWIFT_NAME(search(withEmbedding:topK:));
+    NS_SWIFT_NAME(search(withEmbedding:topK:))
+        __attribute__((deprecated("Use searchWithEmbedding:limit:error: instead.")));
 
-/**
- * Searches the top-K nearest records to the query embedding with optional metadata filtering.
- */
 - (nullable NSArray<MPPRetrievalRecord *> *)
     searchWithEmbedding:(NSArray<NSNumber *> *)queryEmbedding
                    topK:(NSInteger)topK
          metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
-                  error:(NSError **)error NS_SWIFT_NAME(search(withEmbedding:topK:metadataFilter:));
+                  error:(NSError **)error
+    NS_SWIFT_NAME(search(withEmbedding:topK:metadataFilter:))
+        __attribute__((deprecated("Use searchWithEmbedding:limit:metadataFilter:error: instead.")));
+
+@required
 
 /**
  * Deletes records matching the specified metadata filter.

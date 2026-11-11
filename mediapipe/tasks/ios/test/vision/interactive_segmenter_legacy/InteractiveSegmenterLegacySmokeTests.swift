@@ -24,12 +24,12 @@ final class InteractiveSegmenterLegacySmokeTests: XCTestCase {
 
   func testOptionsCoverage() {
     let options = InteractiveSegmenterLegacyOptions()
-    options.shouldOutputConfidenceMasks = true
-    options.shouldOutputCategoryMask = true
+    options.outputConfidenceMasks = true
+    options.outputCategoryMask = true
     options.displayNamesLocale = "en"
 
-    XCTAssertTrue(options.shouldOutputConfidenceMasks)
-    XCTAssertTrue(options.shouldOutputCategoryMask)
+    XCTAssertTrue(options.outputConfidenceMasks)
+    XCTAssertTrue(options.outputCategoryMask)
     XCTAssertEqual(options.displayNamesLocale, "en")
   }
 

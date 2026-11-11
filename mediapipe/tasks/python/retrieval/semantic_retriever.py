@@ -16,7 +16,7 @@
 
 import ctypes
 import dataclasses
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import base_options_c as base_options_c_module
@@ -26,6 +26,10 @@ from mediapipe.tasks.python.core import serial_dispatcher
 from mediapipe.tasks.python.retrieval import universal_embedder
 
 _UniversalEmbedder = universal_embedder.UniversalEmbedder
+TextPart = universal_embedder.TextPart
+ImagePart = universal_embedder.ImagePart
+AudioPart = universal_embedder.AudioPart
+ContentPart = universal_embedder.ContentPart
 
 
 _DEFAULT_EMBEDDING_DIMENSION = 768
@@ -130,21 +134,54 @@ class _MpTaskPartC(ctypes.Structure):
   ]
 
 
-@dataclasses.dataclass
-class RetrievalRecord:
-  """Retrieval record representing a single matched database document."""
+@dataclasses.dataclass(init=False)
+class RetrievalResult:
+  """Retrieval result representing a single matched record."""
 
   id: str
-  text: str
+  content: str
   score: float
   metadata: Dict[str, str] = dataclasses.field(default_factory=dict)
 
+  def __init__(
+      self,
+      id: str,  # pylint: disable=redefined-builtin
+      content: Optional[str] = None,
+      score: float = 0.0,
+      metadata: Optional[Dict[str, str]] = None,
+      *,
+      text: Optional[str] = None,
+  ):
+    """Initializes a `RetrievalResult` instance."""
+    if content is not None and text is not None:
+      raise ValueError(
+          'Specify either `content` or deprecated `text`, not both.'
+      )
+    self.id = id
+    self.content = (
+        content if content is not None else (text if text is not None else '')
+    )
+    self.score = score
+    self.metadata = metadata if metadata is not None else {}
 
-@dataclasses.dataclass
-class RetrievalResult:
-  """Retrieval result containing matching documents."""
+  @property
+  def text(self) -> str:
+    """Deprecated alias for `content`."""
+    return self.content
 
-  records: List[RetrievalRecord]
+  @text.setter
+  def text(self, value: str) -> None:
+    self.content = value
+
+
+RetrievalRecord = RetrievalResult
+
+
+class _RetrievalResultList(list):
+
+  @property
+  def records(self) -> List[RetrievalResult]:
+    return self
 
 
 _CTYPES_SIGNATURES = (
@@ -337,19 +374,113 @@ class SemanticRetriever:
       arr[i].value = value.encode('utf-8')
     return arr
 
-  def _to_retrieval_record(self, rec_c: _MpRetrievalRecordC) -> RetrievalRecord:
-    """Converts a ctypes _MpRetrievalRecordC to a Python RetrievalRecord."""
+  def _to_retrieval_result(self, rec_c: _MpRetrievalRecordC) -> RetrievalResult:
+    """Converts a ctypes _MpRetrievalRecordC to a Python RetrievalResult."""
     meta_dict = {}
     if rec_c.metadata and rec_c.metadata_count > 0:
       for j in range(rec_c.metadata_count):
         kv = rec_c.metadata[j]
         meta_dict[kv.key.decode('utf-8')] = kv.value.decode('utf-8')
-    return RetrievalRecord(
+    return RetrievalResult(
         id=rec_c.id.decode('utf-8'),
-        text=rec_c.text.decode('utf-8'),
+        content=rec_c.text.decode('utf-8'),
         score=rec_c.score,
         metadata=meta_dict,
     )
+
+  def _convert_parts(
+      self, parts: Sequence[Union[ContentPart, Dict[str, Any]]]
+  ) -> Tuple[Any, List[Any]]:
+    """Converts Python ContentPart or dict items into `_MpTaskPartC` array."""
+    parts_arr_type = _MpTaskPartC * len(parts)
+    parts_arr = parts_arr_type()
+    parts_ptr = ctypes.cast(parts_arr, ctypes.POINTER(_MpTaskPartC))
+    refs: List[Any] = [parts_arr]
+
+    for i, part in enumerate(parts):
+      if isinstance(part, TextPart):
+        parts_arr[i].kind = TaskPartKind.TEXT
+        encoded_text = part.text.encode('utf-8')
+        refs.append(encoded_text)
+        parts_arr[i].text_part.text = encoded_text
+      elif isinstance(part, ImagePart):
+        parts_arr[i].kind = TaskPartKind.IMAGE
+        if part.image_bytes is not None:
+          bytes_arr = ctypes.cast(
+              part.image_bytes, ctypes.POINTER(ctypes.c_uint8)
+          )
+          refs.append(part.image_bytes)
+          parts_arr[i].image_part.image_bytes = bytes_arr
+          parts_arr[i].image_part.image_bytes_size = len(part.image_bytes)
+        else:
+          parts_arr[i].image_part.image_bytes = None
+          parts_arr[i].image_part.image_bytes_size = 0
+        encoded_path = (
+            part.file_path.encode('utf-8') if part.file_path else None
+        )
+        refs.append(encoded_path)
+        parts_arr[i].image_part.file_path = encoded_path
+      elif isinstance(part, AudioPart):
+        parts_arr[i].kind = TaskPartKind.AUDIO
+        if part.audio_data is not None:
+          audio_arr = (ctypes.c_float * len(part.audio_data))()
+          audio_arr[:] = part.audio_data
+          refs.append(audio_arr)
+          parts_arr[i].audio_part.audio_data = ctypes.cast(
+              audio_arr, ctypes.POINTER(ctypes.c_float)
+          )
+          parts_arr[i].audio_part.audio_data_size = len(part.audio_data)
+        else:
+          parts_arr[i].audio_part.audio_data = None
+          parts_arr[i].audio_part.audio_data_size = 0
+        encoded_path = (
+            part.audio_path.encode('utf-8') if part.audio_path else None
+        )
+        refs.append(encoded_path)
+        parts_arr[i].audio_part.audio_path = encoded_path
+      elif isinstance(part, dict):
+        kind = part.get('kind', TaskPartKind.TEXT)
+        parts_arr[i].kind = kind
+        if kind == TaskPartKind.TEXT:
+          text = part.get('text', '')
+          encoded_text = text.encode('utf-8')
+          refs.append(encoded_text)
+          parts_arr[i].text_part.text = encoded_text
+        elif kind == TaskPartKind.IMAGE:
+          img_bytes = part.get('image_bytes')
+          file_path = part.get('file_path', '')
+          if img_bytes is not None:
+            bytes_arr = ctypes.cast(img_bytes, ctypes.POINTER(ctypes.c_uint8))
+            refs.append(img_bytes)
+            parts_arr[i].image_part.image_bytes = bytes_arr
+            parts_arr[i].image_part.image_bytes_size = len(img_bytes)
+          else:
+            parts_arr[i].image_part.image_bytes = None
+            parts_arr[i].image_part.image_bytes_size = 0
+          encoded_path = file_path.encode('utf-8') if file_path else None
+          refs.append(encoded_path)
+          parts_arr[i].image_part.file_path = encoded_path
+        elif kind == TaskPartKind.AUDIO:
+          audio_data = part.get('audio_data')
+          audio_path = part.get('audio_path', '')
+          if audio_data is not None:
+            audio_arr = (ctypes.c_float * len(audio_data))()
+            audio_arr[:] = audio_data
+            refs.append(audio_arr)
+            parts_arr[i].audio_part.audio_data = ctypes.cast(
+                audio_arr, ctypes.POINTER(ctypes.c_float)
+            )
+            parts_arr[i].audio_part.audio_data_size = len(audio_data)
+          else:
+            parts_arr[i].audio_part.audio_data = None
+            parts_arr[i].audio_part.audio_data_size = 0
+          encoded_path = audio_path.encode('utf-8') if audio_path else None
+          refs.append(encoded_path)
+          parts_arr[i].audio_part.audio_path = encoded_path
+      else:
+        raise TypeError(f'Unsupported content part: {type(part)!r}')
+
+    return parts_ptr, refs
 
   def insert_document(
       self,
@@ -464,16 +595,15 @@ class SemanticRetriever:
   def insert_content(
       self,
       record_id: str,
-      parts: List[Dict[str, Any]],
+      parts: Sequence[Union[ContentPart, Dict[str, Any]]],
       metadata: Optional[Dict[str, str]] = None,
   ) -> None:
     """Inserts multi-modal parts with optional metadata.
 
     Args:
       record_id: The unique identifier for the content record.
-      parts: A list of part dictionaries. Each part dictionary should match the
-        structure `{'kind': TaskPartKind, 'text': ..., 'image_bytes': ...,
-        'file_path': ..., 'audio_data': ..., 'audio_path': ...}`.
+      parts: A sequence of `TextPart`, `ImagePart`, or `AudioPart` instances (or
+        legacy part dictionaries).
       metadata: Optional dictionary of key-value metadata to associate.
     """
     metadata_arr = self._convert_metadata(metadata) if metadata else None
@@ -483,52 +613,7 @@ class SemanticRetriever:
         else None
     )
 
-    parts_arr_type = _MpTaskPartC * len(parts)
-    parts_arr = parts_arr_type()
-    parts_ptr = ctypes.cast(parts_arr, ctypes.POINTER(_MpTaskPartC))
-
-    # Keep references to byte arrays to prevent garbage collection
-    refs = []
-
-    for i, part in enumerate(parts):
-      kind = part.get('kind', TaskPartKind.TEXT)
-      parts_arr[i].kind = kind
-      if kind == TaskPartKind.TEXT:
-        text = part.get('text', '')
-        encoded_text = text.encode('utf-8')
-        refs.append(encoded_text)
-        parts_arr[i].text_part.text = encoded_text
-      elif kind == TaskPartKind.IMAGE:
-        img_bytes = part.get('image_bytes')
-        file_path = part.get('file_path', '')
-        if img_bytes is not None:
-          bytes_arr = ctypes.cast(img_bytes, ctypes.POINTER(ctypes.c_uint8))
-          refs.append(img_bytes)
-          parts_arr[i].image_part.image_bytes = bytes_arr
-          parts_arr[i].image_part.image_bytes_size = len(img_bytes)
-        else:
-          parts_arr[i].image_part.image_bytes = None
-          parts_arr[i].image_part.image_bytes_size = 0
-        encoded_path = file_path.encode('utf-8') if file_path else None
-        refs.append(encoded_path)
-        parts_arr[i].image_part.file_path = encoded_path
-      elif kind == TaskPartKind.AUDIO:
-        audio_data = part.get('audio_data')
-        audio_path = part.get('audio_path', '')
-        if audio_data is not None:
-          audio_arr = (ctypes.c_float * len(audio_data))()
-          audio_arr[:] = audio_data
-          refs.append(audio_arr)
-          parts_arr[i].audio_part.audio_data = ctypes.cast(
-              audio_arr, ctypes.POINTER(ctypes.c_float)
-          )
-          parts_arr[i].audio_part.audio_data_size = len(audio_data)
-        else:
-          parts_arr[i].audio_part.audio_data = None
-          parts_arr[i].audio_part.audio_data_size = 0
-        encoded_path = audio_path.encode('utf-8') if audio_path else None
-        refs.append(encoded_path)
-        parts_arr[i].audio_part.audio_path = encoded_path
+    parts_ptr, keepalive = self._convert_parts(parts)
 
     self._lib.MpSemanticRetrieverInsertContent(
         self._retriever_handle,
@@ -538,79 +623,37 @@ class SemanticRetriever:
         metadata_ptr,
         len(metadata) if metadata else 0,
     )
+    del keepalive
 
   def retrieve(
       self,
-      query: Union[str, List[Dict[str, Any]]],
+      query: Union[str, Sequence[Union[ContentPart, Dict[str, Any]]]],
       limit: int,
       min_similarity: float = 0.5,
       metadata_filter: Optional[Dict[str, str]] = None,
-  ) -> RetrievalResult:
+  ) -> List[RetrievalResult]:
     """Retrieves nearest matching documents from the vector store.
 
     Args:
-      query: Either a plain text query string, or a list of query part
-        dictionaries for multimodal retrieval. Each part dictionary should match
-        the structure `{'kind': TaskPartKind, 'text': ..., 'image_bytes': ...,
-        'file_path': ..., 'audio_data': ..., 'audio_path': ...}`.
+      query: Either a plain text query string, or a sequence of `TextPart`,
+        `ImagePart`, or `AudioPart` instances (or legacy part dictionaries) for
+        multimodal retrieval.
       limit: The maximum number of nearest records to return.
       min_similarity: The minimum similarity score threshold.
       metadata_filter: Optional dictionary of key-value pairs used to filter
         candidate records.
 
     Returns:
-      A `RetrievalResult` containing matching documents.
+      A list of `RetrievalResult` items ordered by similarity score.
     """
     result_c = _MpRetrievalResultC()
+    query_parts: Sequence[Union[ContentPart, Dict[str, Any]]]
     if isinstance(query, str):
-      query = [{'kind': TaskPartKind.TEXT, 'text': query}]
+      query_parts = [TextPart(text=query)]
+    else:
+      query_parts = query
 
-    parts_arr_type = _MpTaskPartC * len(query)
-    parts_arr = parts_arr_type()
-    parts_ptr = ctypes.cast(parts_arr, ctypes.POINTER(_MpTaskPartC))
-
-    # Keep references to byte arrays to prevent garbage collection
-    refs = []
-
-    for i, part in enumerate(query):
-      kind = part.get('kind', TaskPartKind.TEXT)
-      parts_arr[i].kind = kind
-      if kind == TaskPartKind.TEXT:
-        text = part.get('text', '')
-        encoded_text = text.encode('utf-8')
-        refs.append(encoded_text)
-        parts_arr[i].text_part.text = encoded_text
-      elif kind == TaskPartKind.IMAGE:
-        img_bytes = part.get('image_bytes')
-        file_path = part.get('file_path', '')
-        if img_bytes is not None:
-          bytes_arr = ctypes.cast(img_bytes, ctypes.POINTER(ctypes.c_uint8))
-          refs.append(img_bytes)
-          parts_arr[i].image_part.image_bytes = bytes_arr
-          parts_arr[i].image_part.image_bytes_size = len(img_bytes)
-        else:
-          parts_arr[i].image_part.image_bytes = None
-          parts_arr[i].image_part.image_bytes_size = 0
-        encoded_path = file_path.encode('utf-8') if file_path else None
-        refs.append(encoded_path)
-        parts_arr[i].image_part.file_path = encoded_path
-      elif kind == TaskPartKind.AUDIO:
-        audio_data = part.get('audio_data')
-        audio_path = part.get('audio_path', '')
-        if audio_data is not None:
-          audio_arr = (ctypes.c_float * len(audio_data))()
-          audio_arr[:] = audio_data
-          refs.append(audio_arr)
-          parts_arr[i].audio_part.audio_data = ctypes.cast(
-              audio_arr, ctypes.POINTER(ctypes.c_float)
-          )
-          parts_arr[i].audio_part.audio_data_size = len(audio_data)
-        else:
-          parts_arr[i].audio_part.audio_data = None
-          parts_arr[i].audio_part.audio_data_size = 0
-        encoded_path = audio_path.encode('utf-8') if audio_path else None
-        refs.append(encoded_path)
-        parts_arr[i].audio_part.audio_path = encoded_path
+    parts_ptr, keepalive = self._convert_parts(query_parts)
 
     if metadata_filter:
       filter_arr = self._convert_metadata(metadata_filter)
@@ -618,7 +661,7 @@ class SemanticRetriever:
       self._lib.MpSemanticRetrieverRetrieveWithMetadataFilter(
           self._retriever_handle,
           parts_ptr,
-          len(query),
+          len(query_parts),
           limit,
           filter_ptr,
           len(metadata_filter),
@@ -629,18 +672,19 @@ class SemanticRetriever:
       self._lib.MpSemanticRetrieverRetrieve(
           self._retriever_handle,
           parts_ptr,
-          len(query),
+          len(query_parts),
           limit,
           min_similarity,
           ctypes.byref(result_c),
       )
+    del keepalive
 
-    records = []
+    results = []
     for i in range(result_c.records_count):
-      records.append(self._to_retrieval_record(result_c.records[i]))
+      results.append(self._to_retrieval_result(result_c.records[i]))
 
     self._lib.MpSemanticRetrieverCloseResult(ctypes.byref(result_c))
-    return RetrievalResult(records=records)
+    return _RetrievalResultList(results)
 
   def delete_record(self, record_id: str) -> None:
     """Deletes record with the specified ID."""

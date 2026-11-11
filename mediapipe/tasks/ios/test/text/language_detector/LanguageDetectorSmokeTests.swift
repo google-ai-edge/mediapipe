@@ -81,11 +81,11 @@ final class LanguageDetectorSmokeTests: XCTestCase {
     XCTAssertEqual(prediction.probability, 0.95, accuracy: 1e-3)
 
     let result = LanguageDetectorResult(
-      languagePredictions: [prediction],
+      languages: [prediction],
       timestampInMilliseconds: 1000
     )
-    XCTAssertEqual(result.languagePredictions.count, 1)
-    XCTAssertEqual(result.languagePredictions[0].languageCode, "en")
+    XCTAssertEqual(result.languages.count, 1)
+    XCTAssertEqual(result.languages[0].languageCode, "en")
     XCTAssertEqual(result.timestampInMilliseconds, 1000)
   }
 }

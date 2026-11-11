@@ -27,7 +27,7 @@ from mediapipe.tasks.python.text import language_detector
 
 LanguageDetectorResult = language_detector.LanguageDetectorResult
 LanguageDetectorPrediction = (
-    language_detector.LanguageDetectorResult.Detection
+    language_detector.LanguageDetectorResult.LanguagePrediction
 )
 _BaseOptions = base_options_module.BaseOptions
 _Category = category.Category
@@ -79,8 +79,8 @@ class LanguageDetectorTest(parameterized.TestCase):
       actual_result: LanguageDetectorResult,
       expect_result: LanguageDetectorResult,
   ):
-    for i, prediction in enumerate(actual_result.detections):
-      expected_prediction = expect_result.detections[i]
+    for i, prediction in enumerate(actual_result.languages):
+      expected_prediction = expect_result.languages[i]
       self.assertEqual(
           prediction.language_code,
           expected_prediction.language_code,

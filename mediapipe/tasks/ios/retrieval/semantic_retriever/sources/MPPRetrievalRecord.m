@@ -51,4 +51,41 @@
                        childIds:childIds];
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-implementations"
+- (NSString *)deprecatedRecordId {
+  return self.recordId;
+}
+
+- (instancetype)initWithDeprecatedRecordId:(NSString *)recordId
+                                   content:(NSArray<MPPTaskPart *> *)content
+                                embeddings:(NSArray<NSNumber *> *)embeddings
+                           similarityScore:(nullable NSNumber *)similarityScore
+                                  metadata:(NSDictionary<NSString *, NSString *> *)metadata
+                                  parentId:(nullable NSString *)parentId
+                                  childIds:(nullable NSArray<NSString *> *)childIds {
+  return [self initWithRecordId:recordId
+                        content:content
+                     embeddings:embeddings
+                similarityScore:similarityScore
+                       metadata:metadata
+                       parentId:parentId
+                       childIds:childIds];
+}
+
+- (instancetype)initWithDeprecatedRecordId:(NSString *)recordId
+                                   content:(NSArray<MPPTaskPart *> *)content
+                                embeddings:(NSArray<NSNumber *> *)embeddings
+                                  metadata:(NSDictionary<NSString *, NSString *> *)metadata
+                                  parentId:(nullable NSString *)parentId
+                                  childIds:(nullable NSArray<NSString *> *)childIds {
+  return [self initWithRecordId:recordId
+                        content:content
+                     embeddings:embeddings
+                       metadata:metadata
+                       parentId:parentId
+                       childIds:childIds];
+}
+#pragma clang diagnostic pop
+
 @end

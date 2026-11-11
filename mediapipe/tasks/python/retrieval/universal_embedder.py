@@ -17,7 +17,9 @@
 import ctypes
 import dataclasses
 import enum
-from typing import List, Optional
+import struct
+from typing import List, Optional, Sequence, Union
+import wave
 
 from mediapipe.tasks.python.components.containers import embedding_result as embedding_result_module
 from mediapipe.tasks.python.components.containers import embedding_result_c as embedding_result_c_module
@@ -39,6 +41,91 @@ class ActivationDataType(enum.IntEnum):
   FLOAT16 = 2
   INT16 = 3
   INT8 = 4
+
+
+@dataclasses.dataclass
+class TextPart:
+  """A text part in a multimodal content block."""
+
+  text: str
+
+
+@dataclasses.dataclass
+class ImagePart:
+  """An image part in a multimodal content block."""
+
+  image_bytes: Optional[bytes] = None
+  file_path: Optional[str] = None
+
+
+@dataclasses.dataclass
+class AudioPart:
+  """An audio part in a multimodal content block."""
+
+  audio_data: Optional[List[float]] = None
+  audio_path: Optional[str] = None
+
+
+ContentPart = Union[TextPart, ImagePart, AudioPart]
+
+
+def _read_wav_mono_float(audio_path: str) -> List[float]:
+  """Reads a mono 16-bit PCM WAV file into normalized float samples."""
+  with wave.open(audio_path, 'rb') as wf:
+    channels = wf.getnchannels()
+    if channels != 1:
+      raise ValueError(
+          f'Only mono (1 channel) WAV audio is supported, got {channels}.'
+      )
+    sample_width = wf.getsampwidth()
+    if sample_width != 2:
+      raise ValueError(
+          f'Only 16-bit PCM WAV audio is supported, got {sample_width * 8}-bit.'
+      )
+    comptype = wf.getcomptype()
+    if comptype != 'NONE':
+      raise ValueError(
+          f'Only uncompressed PCM WAV audio is supported, got {comptype!r}.'
+      )
+    raw_frames = wf.readframes(wf.getnframes())
+  sample_count = len(raw_frames) // 2
+  samples_int16 = struct.unpack_from(f'<{sample_count}h', raw_frames)
+  return [s / 32768.0 for s in samples_int16]
+
+
+class _PartType(enum.IntEnum):
+  TEXT = 1
+  IMAGE = 2
+  AUDIO = 3
+
+
+class _MpUniversalEmbedderImageSliceC(ctypes.Structure):
+  _fields_ = [
+      ('bytes', ctypes.c_void_p),
+      ('size', ctypes.c_int),
+  ]
+
+
+class _MpUniversalEmbedderAudioSliceC(ctypes.Structure):
+  _fields_ = [
+      ('samples', ctypes.POINTER(ctypes.c_float)),
+      ('size', ctypes.c_int),
+  ]
+
+
+class _MpUniversalEmbedderPartValueC(ctypes.Union):
+  _fields_ = [
+      ('text', ctypes.c_char_p),
+      ('image', _MpUniversalEmbedderImageSliceC),
+      ('audio', _MpUniversalEmbedderAudioSliceC),
+  ]
+
+
+class _MpUniversalEmbedderPartC(ctypes.Structure):
+  _fields_ = [
+      ('type', ctypes.c_int),
+      ('value', _MpUniversalEmbedderPartValueC),
+  ]
 
 
 class _MpUniversalEmbedderOptionsC(ctypes.Structure):
@@ -92,6 +179,15 @@ _CTYPES_SIGNATURES = (
         ],
     ),
     mediapipe_c_utils.CStatusFunction(
+        'MpUniversalEmbedderEmbedContent',
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(_MpUniversalEmbedderPartC),
+            ctypes.c_int,
+            ctypes.POINTER(embedding_result_c_module.MpEmbeddingResultC),
+        ],
+    ),
+    mediapipe_c_utils.CStatusFunction(
         'MpUniversalEmbedderClose',
         [
             ctypes.c_void_p,
@@ -110,19 +206,22 @@ class UniversalEmbedderOptions:
   """Options for the universal embedder task."""
 
   base_options: base_options_module.BaseOptions
-  l2_normalize: Optional[bool] = None
+  l2_normalize: bool = True
   max_input_length: Optional[int] = None
   vision_tokens_per_image: Optional[int] = None
   activation_data_type: Optional[ActivationDataType] = None
   cache_dir: Optional[str] = None
+  text_delegate: Optional[base_options_module.BaseOptions.Delegate] = None
+  vision_delegate: Optional[base_options_module.BaseOptions.Delegate] = None
+  audio_delegate: Optional[base_options_module.BaseOptions.Delegate] = None
 
   def to_ctypes(self) -> _MpUniversalEmbedderOptionsC:
     """Generates a ctypes MpUniversalEmbedderOptionsC object."""
     return _MpUniversalEmbedderOptionsC(
         base_options=self.base_options.to_ctypes(),
-        l2_normalize=self.l2_normalize
+        l2_normalize=bool(self.l2_normalize)
         if self.l2_normalize is not None
-        else False,
+        else True,
         max_input_length=self.max_input_length
         if self.max_input_length is not None
         else 0,
@@ -133,6 +232,15 @@ class UniversalEmbedderOptions:
         if self.activation_data_type is not None
         else ActivationDataType.DEFAULT.value,
         cache_dir=self.cache_dir.encode('utf-8') if self.cache_dir else None,
+        text_delegate=self.text_delegate.value
+        if self.text_delegate is not None
+        else 0,
+        vision_delegate=self.vision_delegate.value
+        if self.vision_delegate is not None
+        else 0,
+        audio_delegate=self.audio_delegate.value
+        if self.audio_delegate is not None
+        else 0,
     )
 
 
@@ -196,6 +304,62 @@ class UniversalEmbedder:
         self._embedder_handle,
         audio_arr,
         len(audio_data),
+        ctypes.byref(result_c),
+    )
+    result = embedding_result_module.EmbeddingResult.from_ctypes(result_c)
+    self._lib.MpUniversalEmbedderCloseResult(ctypes.byref(result_c))
+    return result
+
+  def embed_content(
+      self, parts: Sequence[ContentPart]
+  ) -> UniversalEmbedderResult:
+    """Extracts a joint embedding from multimodal content parts.
+
+    Args:
+      parts: Sequence of multimodal content parts to embed together.
+
+    Returns:
+      An `EmbeddingResult` representing the joint embedding.
+    """
+    parts_arr = (_MpUniversalEmbedderPartC * len(parts))()
+    refs = []
+    for i, part in enumerate(parts):
+      if isinstance(part, TextPart):
+        encoded = part.text.encode('utf-8')
+        refs.append(encoded)
+        parts_arr[i].type = _PartType.TEXT.value
+        parts_arr[i].value.text = encoded
+      elif isinstance(part, ImagePart):
+        img_bytes = part.image_bytes
+        if img_bytes is None and part.file_path:
+          with open(part.file_path, 'rb') as f:
+            img_bytes = f.read()
+        if img_bytes is None:
+          raise ValueError('ImagePart requires `image_bytes` or `file_path`.')
+        buf = ctypes.create_string_buffer(img_bytes, len(img_bytes))
+        refs.append(buf)
+        parts_arr[i].type = _PartType.IMAGE.value
+        parts_arr[i].value.image.bytes = ctypes.cast(buf, ctypes.c_void_p)
+        parts_arr[i].value.image.size = len(img_bytes)
+      elif isinstance(part, AudioPart):
+        samples = part.audio_data
+        if samples is None and part.audio_path:
+          samples = _read_wav_mono_float(part.audio_path)
+        if samples is None:
+          raise ValueError('AudioPart requires `audio_data` or `audio_path`.')
+        audio_arr = (ctypes.c_float * len(samples))(*samples)
+        refs.append(audio_arr)
+        parts_arr[i].type = _PartType.AUDIO.value
+        parts_arr[i].value.audio.samples = audio_arr
+        parts_arr[i].value.audio.size = len(samples)
+      else:
+        raise TypeError(f'Unsupported content part: {type(part)!r}')
+
+    result_c = embedding_result_c_module.MpEmbeddingResultC()
+    self._lib.MpUniversalEmbedderEmbedContent(
+        self._embedder_handle,
+        parts_arr,
+        len(parts),
         ctypes.byref(result_c),
     )
     result = embedding_result_module.EmbeddingResult.from_ctypes(result_c)

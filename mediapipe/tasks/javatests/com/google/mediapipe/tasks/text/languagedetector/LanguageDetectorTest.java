@@ -104,12 +104,22 @@ public class LanguageDetectorTest {
 
   private void assertPredictions(
       LanguageDetectorResult result, LanguagePrediction... expectedPredictions) {
-    assertThat(result.languagesAndScores()).hasSize(expectedPredictions.length);
-    for (int i = 0; i < result.languagesAndScores().size(); i++) {
-      LanguagePrediction actual = result.languagesAndScores().get(i);
+    assertThat(result.languages()).hasSize(expectedPredictions.length);
+    for (int i = 0; i < result.languages().size(); i++) {
+      LanguagePrediction actual = result.languages().get(i);
       LanguagePrediction expected = expectedPredictions[i];
       assertThat(actual.languageCode()).isEqualTo(expected.languageCode());
       assertThat(actual.probability()).isWithin(SCORE_THRESHOLD).of(expected.probability());
     }
+  }
+
+  @Test
+  @SuppressWarnings("deprecation")
+  public void detect_deprecatedLanguagesAndScores_matchesLanguages() throws Exception {
+    LanguageDetector languageDetector =
+        LanguageDetector.createFromFile(ApplicationProvider.getApplicationContext(), MODEL_FILE);
+    LanguageDetectorResult result =
+        languageDetector.detect("To be, or not to be, that is the question");
+    assertThat(result.languagesAndScores()).isEqualTo(result.languages());
   }
 }

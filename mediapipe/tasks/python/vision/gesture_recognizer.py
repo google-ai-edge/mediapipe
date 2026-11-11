@@ -163,7 +163,7 @@ _CTYPES_SIGNATURES = (
 )
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(init=False)
 class GestureRecognizerOptions:
   """Options for the gesture recognizer task.
 
@@ -182,12 +182,12 @@ class GestureRecognizerOptions:
       score in the hand landmark detection.
     min_tracking_confidence: The minimum confidence score for the hand tracking
       to be considered successful.
-    canned_gesture_classifier_options: Options for configuring the canned
+    canned_gestures_classifier_options: Options for configuring the canned
       gestures classifier, such as score threshold, allow list and deny list of
       gestures. The categories for canned gesture classifiers are: ["None",
       "Closed_Fist", "Open_Palm", "Pointing_Up", "Thumb_Down", "Thumb_Up",
       "Victory", "ILoveYou"]. Note this option is subject to change.
-    custom_gesture_classifier_options: Options for configuring the custom
+    custom_gestures_classifier_options: Options for configuring the custom
       gestures classifier, such as score threshold, allow list and deny list of
       gestures. Note this option is subject to change.
     result_callback: The user-defined result callback for processing live stream
@@ -201,15 +201,95 @@ class GestureRecognizerOptions:
   min_hand_detection_confidence: float = 0.5
   min_hand_presence_confidence: float = 0.5
   min_tracking_confidence: float = 0.5
-  canned_gesture_classifier_options: _ClassifierOptions = dataclasses.field(
+  canned_gestures_classifier_options: _ClassifierOptions = dataclasses.field(
       default_factory=_ClassifierOptions
   )
-  custom_gesture_classifier_options: _ClassifierOptions = dataclasses.field(
+  custom_gestures_classifier_options: _ClassifierOptions = dataclasses.field(
       default_factory=_ClassifierOptions
   )
   result_callback: Optional[
       Callable[[GestureRecognizerResult, image_lib.Image, int], None]
   ] = None
+
+  def __init__(
+      self,
+      base_options: _BaseOptions,
+      running_mode: _RunningMode = _RunningMode.IMAGE,
+      num_hands: int = 1,
+      min_hand_detection_confidence: float = 0.5,
+      min_hand_presence_confidence: float = 0.5,
+      min_tracking_confidence: float = 0.5,
+      canned_gestures_classifier_options: Optional[_ClassifierOptions] = None,
+      custom_gestures_classifier_options: Optional[_ClassifierOptions] = None,
+      result_callback: Optional[
+          Callable[[GestureRecognizerResult, image_lib.Image, int], None]
+      ] = None,
+      *,
+      canned_gesture_classifier_options: Optional[_ClassifierOptions] = None,
+      custom_gesture_classifier_options: Optional[_ClassifierOptions] = None,
+  ):
+    """Initializes a `GestureRecognizerOptions` instance."""
+    if (
+        canned_gestures_classifier_options is not None
+        and canned_gesture_classifier_options is not None
+    ):
+      raise ValueError(
+          'Specify either `canned_gestures_classifier_options` or deprecated'
+          ' `canned_gesture_classifier_options`, not both.'
+      )
+    if (
+        custom_gestures_classifier_options is not None
+        and custom_gesture_classifier_options is not None
+    ):
+      raise ValueError(
+          'Specify either `custom_gestures_classifier_options` or deprecated'
+          ' `custom_gesture_classifier_options`, not both.'
+      )
+    self.base_options = base_options
+    self.running_mode = running_mode
+    self.num_hands = num_hands
+    self.min_hand_detection_confidence = min_hand_detection_confidence
+    self.min_hand_presence_confidence = min_hand_presence_confidence
+    self.min_tracking_confidence = min_tracking_confidence
+    resolved_canned = (
+        canned_gestures_classifier_options
+        if canned_gestures_classifier_options is not None
+        else canned_gesture_classifier_options
+    )
+    self.canned_gestures_classifier_options = (
+        resolved_canned if resolved_canned is not None else _ClassifierOptions()
+    )
+    resolved_custom = (
+        custom_gestures_classifier_options
+        if custom_gestures_classifier_options is not None
+        else custom_gesture_classifier_options
+    )
+    self.custom_gestures_classifier_options = (
+        resolved_custom if resolved_custom is not None else _ClassifierOptions()
+    )
+    self.result_callback = result_callback
+
+  @property
+  def canned_gesture_classifier_options(self) -> _ClassifierOptions:
+    """Deprecated alias for `canned_gestures_classifier_options`."""
+    return self.canned_gestures_classifier_options
+
+  @canned_gesture_classifier_options.setter
+  def canned_gesture_classifier_options(
+      self, value: _ClassifierOptions
+  ) -> None:
+    self.canned_gestures_classifier_options = value
+
+  @property
+  def custom_gesture_classifier_options(self) -> _ClassifierOptions:
+    """Deprecated alias for `custom_gestures_classifier_options`."""
+    return self.custom_gestures_classifier_options
+
+  @custom_gesture_classifier_options.setter
+  def custom_gesture_classifier_options(
+      self, value: _ClassifierOptions
+  ) -> None:
+    self.custom_gestures_classifier_options = value
 
 
 class GestureRecognizer:
@@ -314,10 +394,10 @@ class GestureRecognizer:
         min_hand_presence_confidence=options.min_hand_presence_confidence,
         min_tracking_confidence=options.min_tracking_confidence,
         canned_gestures_classifier_options=classifier_options_c.convert_to_classifier_options_c(
-            options.canned_gesture_classifier_options
+            options.canned_gestures_classifier_options
         ),
         custom_gestures_classifier_options=classifier_options_c.convert_to_classifier_options_c(
-            options.custom_gesture_classifier_options
+            options.custom_gestures_classifier_options
         ),
         result_callback=c_callback,
     )

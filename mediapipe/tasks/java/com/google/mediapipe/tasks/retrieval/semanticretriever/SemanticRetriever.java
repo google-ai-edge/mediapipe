@@ -254,53 +254,55 @@ public final class SemanticRetriever implements AutoCloseable {
   }
 
   /**
-   * Retrieves the topK records from the vector store for the given query text.
+   * Retrieves up to {@code limit} records from the vector store for the given query text.
    *
    * @param queryText the query text to retrieve records for.
-   * @param topK the number of records to retrieve.
-   * @return the topK records from the vector store for the given query text.
+   * @param limit the maximum number of records to retrieve.
+   * @return up to {@code limit} records from the vector store for the given query text.
    */
-  public List<RetrievalResult> retrieve(String queryText, int topK) {
-    return retrieve(queryText, topK, /* metadataFilter= */ null);
+  public List<RetrievalResult> retrieve(String queryText, int limit) {
+    return retrieve(queryText, limit, /* metadataFilter= */ null);
   }
 
   /**
-   * Retrieves the topK records from the vector store for the given query text and metadata filter.
+   * Retrieves up to {@code limit} records from the vector store for the given query text and
+   * metadata filter.
    *
    * @param queryText the query text to retrieve records for.
-   * @param topK the number of records to retrieve.
+   * @param limit the maximum number of records to retrieve.
    * @param metadataFilter key-value pairs that candidate records must match.
-   * @return the topK records from the vector store.
+   * @return up to {@code limit} records from the vector store.
    */
   public List<RetrievalResult> retrieve(
-      String queryText, int topK, Map<String, String> metadataFilter) {
-    return retrieve(ImmutableList.of(new TextPart(queryText)), topK, metadataFilter);
+      String queryText, int limit, Map<String, String> metadataFilter) {
+    return retrieve(ImmutableList.of(new TextPart(queryText)), limit, metadataFilter);
   }
 
   /**
-   * Retrieves the topK records from the vector store for the given query parts.
+   * Retrieves up to {@code limit} records from the vector store for the given query parts.
    *
    * @param queryParts the query parts to retrieve records for.
-   * @param topK the number of records to retrieve.
-   * @return the topK records from the vector store for the given query parts.
+   * @param limit the maximum number of records to retrieve.
+   * @return up to {@code limit} records from the vector store for the given query parts.
    */
-  public List<RetrievalResult> retrieve(List<Part> queryParts, int topK) {
-    return retrieve(queryParts, topK, /* metadataFilter= */ null);
+  public List<RetrievalResult> retrieve(List<Part> queryParts, int limit) {
+    return retrieve(queryParts, limit, /* metadataFilter= */ null);
   }
 
   /**
-   * Retrieves the topK records from the vector store for the given query parts and metadata filter.
+   * Retrieves up to {@code limit} records from the vector store for the given query parts and
+   * metadata filter.
    *
    * @param queryParts the query parts to retrieve records for.
-   * @param topK the number of records to retrieve.
+   * @param limit the maximum number of records to retrieve.
    * @param metadataFilter key-value pairs that candidate records must match.
-   * @return the topK records from the vector store.
+   * @return up to {@code limit} records from the vector store.
    */
   public List<RetrievalResult> retrieve(
-      List<Part> queryParts, int topK, Map<String, String> metadataFilter) {
+      List<Part> queryParts, int limit, Map<String, String> metadataFilter) {
     long timestamp = syntheticTimestamp.getAndIncrement();
     statsLogger.recordCpuInputArrival(timestamp);
-    if (topK <= 0) {
+    if (limit <= 0) {
       statsLogger.recordInvocationEnd(timestamp);
       return new ArrayList<>();
     }
@@ -308,7 +310,7 @@ public final class SemanticRetriever implements AutoCloseable {
     // Oversample candidates to avoid under-fetching during parent deduplication. Keep in sync with
     // SemanticRetriever::Retrieve in
     // mediapipe/tasks/cc/retrieval/semantic_retriever/semantic_retriever.cc.
-    int queryLimit = (int) Math.min((long) topK * 3, Integer.MAX_VALUE);
+    int queryLimit = (int) Math.min((long) limit * 3, Integer.MAX_VALUE);
     List<RetrievalRecord> searchResults =
         components.vectorStore().search(queryEmbedding, queryLimit, metadataFilter);
 
@@ -332,7 +334,7 @@ public final class SemanticRetriever implements AutoCloseable {
 
     Set<String> seenParents = new HashSet<>();
     for (RetrievalRecord record : searchResults) {
-      if (results.size() >= topK) {
+      if (results.size() >= limit) {
         break;
       }
       String parentId = record.getParentId();

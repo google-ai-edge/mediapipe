@@ -129,8 +129,8 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
 - (void)testSegmentWithCategoryMaskSucceeds {
   MPPImageSegmenterOptions *options =
       [self imageSegmenterOptionsWithModelFileInfo:kImageSegmenterModelFileInfo];
-  options.shouldOutputConfidenceMasks = NO;
-  options.shouldOutputCategoryMask = YES;
+  options.outputConfidenceMasks = NO;
+  options.outputCategoryMask = YES;
 
   MPPImageSegmenter *imageSegmenter = [self createImageSegmenterWithOptionsSucceeds:options];
 
@@ -665,6 +665,21 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
   XCTAssertGreaterThan(
       softIOU(confidenceMask.float32Data, expectedConfidenceMask.float32Data, maskSize),
       kSimilarityThreshold);
+}
+
+- (void)testDeprecatedOutputMaskOptionAliases {
+  MPPImageSegmenterOptions *options = [[MPPImageSegmenterOptions alloc] init];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  options.shouldOutputConfidenceMasks = NO;
+  options.shouldOutputCategoryMask = YES;
+  XCTAssertFalse(options.outputConfidenceMasks);
+  XCTAssertTrue(options.outputCategoryMask);
+  options.outputConfidenceMasks = YES;
+  options.outputCategoryMask = NO;
+  XCTAssertTrue(options.shouldOutputConfidenceMasks);
+  XCTAssertFalse(options.shouldOutputCategoryMask);
+#pragma clang diagnostic pop
 }
 
 @end

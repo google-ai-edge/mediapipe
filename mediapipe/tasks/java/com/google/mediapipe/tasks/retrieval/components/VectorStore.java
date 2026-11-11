@@ -30,12 +30,14 @@ public interface VectorStore extends AutoCloseable {
   /** Deletes the records matching the specified metadata filter. */
   void delete(Map<String, String> metadataFilter);
 
-  /** Searches the top-K nearest records to the query embedding. */
-  List<RetrievalRecord> search(float[] queryEmbedding, int topK);
+  /** Searches up to {@code limit} nearest records to the query embedding. */
+  List<RetrievalRecord> search(float[] queryEmbedding, int limit);
 
-  /** Searches the top-K nearest records matching the query embedding and metadata filter. */
+  /**
+   * Searches up to {@code limit} nearest records matching the query embedding and metadata filter.
+   */
   List<RetrievalRecord> search(
-      float[] queryEmbedding, int topK, Map<String, String> metadataFilter);
+      float[] queryEmbedding, int limit, Map<String, String> metadataFilter);
 
   /** Retrieves the records matching the specified IDs (Key-Value lookup). */
   List<RetrievalRecord> get(List<String> ids);

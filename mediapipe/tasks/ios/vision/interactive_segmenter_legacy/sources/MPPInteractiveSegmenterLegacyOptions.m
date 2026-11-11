@@ -20,7 +20,7 @@
   self = [super init];
   if (self) {
     _displayNamesLocale = @"en";
-    _shouldOutputConfidenceMasks = YES;
+    _outputConfidenceMasks = YES;
   }
   return self;
 }
@@ -29,11 +29,30 @@
   MPPInteractiveSegmenterLegacyOptions *interactiveSegmenterLegacyOptions =
       [super copyWithZone:zone];
 
-  interactiveSegmenterLegacyOptions.shouldOutputConfidenceMasks = self.shouldOutputConfidenceMasks;
-  interactiveSegmenterLegacyOptions.shouldOutputCategoryMask = self.shouldOutputCategoryMask;
+  interactiveSegmenterLegacyOptions.outputConfidenceMasks = self.outputConfidenceMasks;
+  interactiveSegmenterLegacyOptions.outputCategoryMask = self.outputCategoryMask;
   interactiveSegmenterLegacyOptions.displayNamesLocale = self.displayNamesLocale;
 
   return interactiveSegmenterLegacyOptions;
 }
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-implementations"
+- (BOOL)shouldOutputConfidenceMasks {
+  return self.outputConfidenceMasks;
+}
+
+- (void)setShouldOutputConfidenceMasks:(BOOL)shouldOutputConfidenceMasks {
+  self.outputConfidenceMasks = shouldOutputConfidenceMasks;
+}
+
+- (BOOL)shouldOutputCategoryMask {
+  return self.outputCategoryMask;
+}
+
+- (void)setShouldOutputCategoryMask:(BOOL)shouldOutputCategoryMask {
+  self.outputCategoryMask = shouldOutputCategoryMask;
+}
+#pragma clang diagnostic pop
 
 @end

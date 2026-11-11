@@ -141,13 +141,13 @@ public final class SqliteVectorStore implements VectorStore {
   }
 
   @Override
-  public List<RetrievalRecord> search(float[] queryEmbedding, int topK) {
-    return search(queryEmbedding, topK, /* metadataFilter= */ null);
+  public List<RetrievalRecord> search(float[] queryEmbedding, int limit) {
+    return search(queryEmbedding, limit, /* metadataFilter= */ null);
   }
 
   @Override
   public List<RetrievalRecord> search(
-      float[] queryEmbedding, int topK, Map<String, String> metadataFilter) {
+      float[] queryEmbedding, int limit, Map<String, String> metadataFilter) {
     validateMetadataFilter(metadataFilter);
     if (queryEmbedding.length <= 0) {
       throw new IllegalArgumentException("Query embedding dimension must be greater than 0");
@@ -155,7 +155,7 @@ public final class SqliteVectorStore implements VectorStore {
     float[] resizedQuery = resizeVector(queryEmbedding, this.dimension);
 
     if (metadataFilter == null || metadataFilter.isEmpty()) {
-      List<byte[]> results = nativeGetNearestRecords(jniHandle, resizedQuery, topK, 0.0f);
+      List<byte[]> results = nativeGetNearestRecords(jniHandle, resizedQuery, limit, 0.0f);
       List<RetrievalRecord> records = new ArrayList<>();
       for (byte[] storeRecordBytes : results) {
         records.add(toRetrievalRecord(storeRecordBytes));
@@ -174,7 +174,7 @@ public final class SqliteVectorStore implements VectorStore {
 
     List<byte[]> results =
         nativeGetNearestRecordsWithFilter(
-            jniHandle, resizedQuery, topK, 0.0f, filterKeys, filterValues);
+            jniHandle, resizedQuery, limit, 0.0f, filterKeys, filterValues);
     List<RetrievalRecord> records = new ArrayList<>();
     for (byte[] storeRecordBytes : results) {
       records.add(toRetrievalRecord(storeRecordBytes));

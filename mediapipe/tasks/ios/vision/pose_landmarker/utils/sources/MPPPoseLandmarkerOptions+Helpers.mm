@@ -42,7 +42,7 @@
   cOptions->min_pose_detection_confidence = self.minPoseDetectionConfidence;
   cOptions->min_pose_presence_confidence = self.minPosePresenceConfidence;
   cOptions->min_tracking_confidence = self.minTrackingConfidence;
-  cOptions->output_segmentation_masks = self.shouldOutputSegmentationMasks;
+  cOptions->output_segmentation_masks = self.outputSegmentationMasks;
   cOptions->result_callback = nullptr;
 }
 

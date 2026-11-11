@@ -244,14 +244,14 @@ final class AppSearchVectorStoreImpl implements VectorStore {
   }
 
   @Override
-  public List<RetrievalRecord> search(float[] queryEmbedding, int topK) {
+  public List<RetrievalRecord> search(float[] queryEmbedding, int limit) {
     try {
       SearchSpec searchSpec =
           new SearchSpec.Builder()
               .setListFilterQueryLanguageEnabled(true)
               .addFilterNamespaces(NAMESPACE)
               .addFilterSchemas(SCHEMA_TYPE)
-              .setResultCountPerPage(topK)
+              .setResultCountPerPage(limit)
               .addEmbeddingParameters(new EmbeddingVector(queryEmbedding, MODEL_SIGNATURE))
               .setDefaultEmbeddingSearchMetricType(SearchSpec.EMBEDDING_SEARCH_METRIC_TYPE_COSINE)
               .setRankingStrategy(
@@ -283,12 +283,12 @@ final class AppSearchVectorStoreImpl implements VectorStore {
 
   @Override
   public List<RetrievalRecord> search(
-      float[] queryEmbedding, int topK, Map<String, String> metadataFilter) {
+      float[] queryEmbedding, int limit, Map<String, String> metadataFilter) {
     if (metadataFilter == null || metadataFilter.isEmpty()) {
-      return search(queryEmbedding, topK);
+      return search(queryEmbedding, limit);
     }
     try {
-      int pageSize = Math.max(topK, 50);
+      int pageSize = Math.max(limit, 50);
       SearchSpec searchSpec =
           new SearchSpec.Builder()
               .setListFilterQueryLanguageEnabled(true)
@@ -306,17 +306,17 @@ final class AppSearchVectorStoreImpl implements VectorStore {
       List<SearchResult> page = searchResults.getNextPageAsync().get();
 
       List<RetrievalRecord> records = new ArrayList<>();
-      while (page != null && !page.isEmpty() && records.size() < topK) {
+      while (page != null && !page.isEmpty() && records.size() < limit) {
         for (SearchResult result : page) {
           RetrievalRecord record = toRetrievalRecord(result.getGenericDocument());
           if (matchesMetadataFilter(record, metadataFilter)) {
             records.add(record);
-            if (records.size() == topK) {
+            if (records.size() == limit) {
               break;
             }
           }
         }
-        if (records.size() < topK) {
+        if (records.size() < limit) {
           page = searchResults.getNextPageAsync().get();
         }
       }

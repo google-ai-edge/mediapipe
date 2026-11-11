@@ -178,13 +178,13 @@ class MpHolisticLandmarkerOptionsC(ctypes.Structure):
       ('running_mode', ctypes.c_int),
       ('min_face_detection_confidence', ctypes.c_float),
       ('min_face_suppression_threshold', ctypes.c_float),
-      ('min_face_landmarks_confidence', ctypes.c_float),
+      ('min_face_presence_confidence', ctypes.c_float),
+      ('min_hand_landmarks_confidence', ctypes.c_float),
       ('min_pose_detection_confidence', ctypes.c_float),
       ('min_pose_suppression_threshold', ctypes.c_float),
-      ('min_pose_landmarks_confidence', ctypes.c_float),
-      ('min_hand_landmarks_confidence', ctypes.c_float),
+      ('min_pose_presence_confidence', ctypes.c_float),
       ('output_face_blendshapes', ctypes.c_bool),
-      ('output_segmentation_masks', ctypes.c_bool),
+      ('output_pose_segmentation_masks', ctypes.c_bool),
       ('result_callback', _C_TYPES_RESULT_CALLBACK),
   ]
 
@@ -196,13 +196,13 @@ class MpHolisticLandmarkerOptionsC(ctypes.Structure):
       running_mode: _RunningMode,
       min_face_detection_confidence: float,
       min_face_suppression_threshold: float,
-      min_face_landmarks_confidence: float,
+      min_face_presence_confidence: float,
+      min_hand_landmarks_confidence: float,
       min_pose_detection_confidence: float,
       min_pose_suppression_threshold: float,
-      min_pose_landmarks_confidence: float,
-      min_hand_landmarks_confidence: float,
+      min_pose_presence_confidence: float,
       output_face_blendshapes: bool,
-      output_segmentation_masks: bool,
+      output_pose_segmentation_masks: bool,
       result_callback: _C_TYPES_RESULT_CALLBACK,
   ) -> 'MpHolisticLandmarkerOptionsC':
     """Creates a MpHolisticLandmarkerOptionsC object from the given options."""
@@ -211,18 +211,18 @@ class MpHolisticLandmarkerOptionsC(ctypes.Structure):
         running_mode=running_mode.ctype,
         min_face_detection_confidence=min_face_detection_confidence,
         min_face_suppression_threshold=min_face_suppression_threshold,
-        min_face_landmarks_confidence=min_face_landmarks_confidence,
+        min_face_presence_confidence=min_face_presence_confidence,
+        min_hand_landmarks_confidence=min_hand_landmarks_confidence,
         min_pose_detection_confidence=min_pose_detection_confidence,
         min_pose_suppression_threshold=min_pose_suppression_threshold,
-        min_pose_landmarks_confidence=min_pose_landmarks_confidence,
-        min_hand_landmarks_confidence=min_hand_landmarks_confidence,
+        min_pose_presence_confidence=min_pose_presence_confidence,
         output_face_blendshapes=output_face_blendshapes,
-        output_segmentation_masks=output_segmentation_masks,
+        output_pose_segmentation_masks=output_pose_segmentation_masks,
         result_callback=result_callback,
     )
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(init=False)
 class HolisticLandmarkerOptions:
   """Options for the holistic landmarker task.
 
@@ -239,19 +239,19 @@ class HolisticLandmarkerOptions:
       detection to be considered successful.
     min_face_suppression_threshold: The minimum non-maximum-suppression
       threshold for face detection to be considered overlapped.
-    min_face_landmarks_confidence: The minimum confidence score for the face
+    min_face_presence_confidence: The minimum confidence score for the face
       landmark detection to be considered successful.
     min_pose_detection_confidence: The minimum confidence score for the pose
       detection to be considered successful.
     min_pose_suppression_threshold: The minimum non-maximum-suppression
       threshold for pose detection to be considered overlapped.
-    min_pose_landmarks_confidence: The minimum confidence score for the pose
+    min_pose_presence_confidence: The minimum confidence score for the pose
       landmark detection to be considered successful.
     min_hand_landmarks_confidence: The minimum confidence score for the hand
       landmark detection to be considered successful.
     output_face_blendshapes: Whether HolisticLandmarker outputs face blendshapes
       classification. Face blendshapes are used for rendering the 3D face model.
-    output_segmentation_mask: whether to output segmentation masks.
+    output_pose_segmentation_masks: Whether to output pose segmentation masks.
     result_callback: The user-defined result callback for processing live stream
       data. The result callback should only be specified when the running mode
       is set to the live stream mode.
@@ -261,16 +261,122 @@ class HolisticLandmarkerOptions:
   running_mode: _RunningMode = _RunningMode.IMAGE
   min_face_detection_confidence: float = 0.5
   min_face_suppression_threshold: float = 0.3
-  min_face_landmarks_confidence: float = 0.5
+  min_face_presence_confidence: float = 0.5
   min_pose_detection_confidence: float = 0.5
   min_pose_suppression_threshold: float = 0.3
-  min_pose_landmarks_confidence: float = 0.5
+  min_pose_presence_confidence: float = 0.5
   min_hand_landmarks_confidence: float = 0.5
   output_face_blendshapes: bool = False
-  output_segmentation_mask: bool = False
+  output_pose_segmentation_masks: bool = False
   result_callback: Optional[
       Callable[[HolisticLandmarkerResult, image_lib.Image, int], None]
   ] = None
+
+  def __init__(
+      self,
+      base_options: _BaseOptions,
+      running_mode: _RunningMode = _RunningMode.IMAGE,
+      min_face_detection_confidence: float = 0.5,
+      min_face_suppression_threshold: float = 0.3,
+      min_face_presence_confidence: Optional[float] = None,
+      min_pose_detection_confidence: float = 0.5,
+      min_pose_suppression_threshold: float = 0.3,
+      min_pose_presence_confidence: Optional[float] = None,
+      min_hand_landmarks_confidence: float = 0.5,
+      output_face_blendshapes: bool = False,
+      output_pose_segmentation_masks: Optional[bool] = None,
+      result_callback: Optional[
+          Callable[[HolisticLandmarkerResult, image_lib.Image, int], None]
+      ] = None,
+      *,
+      min_face_landmarks_confidence: Optional[float] = None,
+      min_pose_landmarks_confidence: Optional[float] = None,
+      output_segmentation_mask: Optional[bool] = None,
+  ):
+    """Initializes a `HolisticLandmarkerOptions` instance."""
+    if (
+        min_face_presence_confidence is not None
+        and min_face_landmarks_confidence is not None
+    ):
+      raise ValueError(
+          'Specify either `min_face_presence_confidence` or'
+          ' `min_face_landmarks_confidence`, not both.'
+      )
+    if (
+        min_pose_presence_confidence is not None
+        and min_pose_landmarks_confidence is not None
+    ):
+      raise ValueError(
+          'Specify either `min_pose_presence_confidence` or'
+          ' `min_pose_landmarks_confidence`, not both.'
+      )
+    if (
+        output_pose_segmentation_masks is not None
+        and output_segmentation_mask is not None
+    ):
+      raise ValueError(
+          'Specify either `output_pose_segmentation_masks` or'
+          ' `output_segmentation_mask`, not both.'
+      )
+
+    if min_face_presence_confidence is None:
+      min_face_presence_confidence = (
+          min_face_landmarks_confidence
+          if min_face_landmarks_confidence is not None
+          else 0.5
+      )
+    if min_pose_presence_confidence is None:
+      min_pose_presence_confidence = (
+          min_pose_landmarks_confidence
+          if min_pose_landmarks_confidence is not None
+          else 0.5
+      )
+    if output_pose_segmentation_masks is None:
+      output_pose_segmentation_masks = (
+          output_segmentation_mask
+          if output_segmentation_mask is not None
+          else False
+      )
+
+    self.base_options = base_options
+    self.running_mode = running_mode
+    self.min_face_detection_confidence = min_face_detection_confidence
+    self.min_face_suppression_threshold = min_face_suppression_threshold
+    self.min_face_presence_confidence = min_face_presence_confidence
+    self.min_pose_detection_confidence = min_pose_detection_confidence
+    self.min_pose_suppression_threshold = min_pose_suppression_threshold
+    self.min_pose_presence_confidence = min_pose_presence_confidence
+    self.min_hand_landmarks_confidence = min_hand_landmarks_confidence
+    self.output_face_blendshapes = output_face_blendshapes
+    self.output_pose_segmentation_masks = output_pose_segmentation_masks
+    self.result_callback = result_callback
+
+  @property
+  def min_face_landmarks_confidence(self) -> float:
+    """Deprecated alias for `min_face_presence_confidence`."""
+    return self.min_face_presence_confidence
+
+  @min_face_landmarks_confidence.setter
+  def min_face_landmarks_confidence(self, value: float) -> None:
+    self.min_face_presence_confidence = value
+
+  @property
+  def min_pose_landmarks_confidence(self) -> float:
+    """Deprecated alias for `min_pose_presence_confidence`."""
+    return self.min_pose_presence_confidence
+
+  @min_pose_landmarks_confidence.setter
+  def min_pose_landmarks_confidence(self, value: float) -> None:
+    self.min_pose_presence_confidence = value
+
+  @property
+  def output_segmentation_mask(self) -> bool:
+    """Deprecated alias for `output_pose_segmentation_masks`."""
+    return self.output_pose_segmentation_masks
+
+  @output_segmentation_mask.setter
+  def output_segmentation_mask(self, value: bool) -> None:
+    self.output_pose_segmentation_masks = value
 
 
 _CTYPES_SIGNATURES = (
@@ -421,13 +527,13 @@ class HolisticLandmarker:
         running_mode=options.running_mode,
         min_face_detection_confidence=options.min_face_detection_confidence,
         min_face_suppression_threshold=options.min_face_suppression_threshold,
-        min_face_landmarks_confidence=options.min_face_landmarks_confidence,
+        min_face_presence_confidence=options.min_face_presence_confidence,
+        min_hand_landmarks_confidence=options.min_hand_landmarks_confidence,
         min_pose_detection_confidence=options.min_pose_detection_confidence,
         min_pose_suppression_threshold=options.min_pose_suppression_threshold,
-        min_pose_landmarks_confidence=options.min_pose_landmarks_confidence,
-        min_hand_landmarks_confidence=options.min_hand_landmarks_confidence,
+        min_pose_presence_confidence=options.min_pose_presence_confidence,
         output_face_blendshapes=options.output_face_blendshapes,
-        output_segmentation_masks=options.output_segmentation_mask,
+        output_pose_segmentation_masks=options.output_pose_segmentation_masks,
         result_callback=c_callback,
     )
     landmarker = ctypes.c_void_p()

@@ -111,57 +111,101 @@ NS_SWIFT_NAME(SemanticRetriever)
                       error:(NSError **)error NS_SWIFT_NAME(insertContent(withId:parts:metadata:));
 
 /**
- * Retrieves the topK nearest records matching the query string.
+ * Retrieves up to `limit` nearest records matching the query string.
  */
+- (nullable NSArray<MPPRetrievalResult *> *)retrieveWithText:(NSString *)queryText
+                                                       limit:(NSInteger)limit
+                                                       error:(NSError **)error
+    NS_SWIFT_NAME(retrieve(withText:limit:));
+
+/**
+ * Retrieves up to `limit` nearest records matching the query string and metadata filter.
+ */
+- (nullable NSArray<MPPRetrievalResult *> *)
+    retrieveWithText:(NSString *)queryText
+               limit:(NSInteger)limit
+      metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
+               error:(NSError **)error NS_SWIFT_NAME(retrieve(withText:limit:metadataFilter:));
+
+/**
+ * Retrieves up to `limit` nearest records matching the multi-modal query parts.
+ */
+- (nullable NSArray<MPPRetrievalResult *> *)retrieveWithParts:(NSArray<MPPTaskPart *> *)queryParts
+                                                        limit:(NSInteger)limit
+                                                        error:(NSError **)error
+    NS_SWIFT_NAME(retrieve(withParts:limit:));
+
+/**
+ * Retrieves up to `limit` nearest records matching the multi-modal query parts and metadata filter.
+ */
+- (nullable NSArray<MPPRetrievalResult *> *)
+    retrieveWithParts:(NSArray<MPPTaskPart *> *)queryParts
+                limit:(NSInteger)limit
+       metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
+                error:(NSError **)error NS_SWIFT_NAME(retrieve(withParts:limit:metadataFilter:));
+
+/**
+ * Retrieves up to `limit` nearest records matching the precomputed query embedding.
+ */
+- (nullable NSArray<MPPRetrievalResult *> *)retrieveWithEmbedding:
+                                                (NSArray<NSNumber *> *)queryEmbedding
+                                                            limit:(NSInteger)limit
+                                                            error:(NSError **)error
+    NS_SWIFT_NAME(retrieve(withEmbedding:limit:));
+
+/**
+ * Retrieves up to `limit` nearest records matching the precomputed query embedding and metadata
+ * filter.
+ */
+- (nullable NSArray<MPPRetrievalResult *> *)
+    retrieveWithEmbedding:(NSArray<NSNumber *> *)queryEmbedding
+                    limit:(NSInteger)limit
+           metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
+                    error:(NSError **)error
+    NS_SWIFT_NAME(retrieve(withEmbedding:limit:metadataFilter:));
+
 - (nullable NSArray<MPPRetrievalResult *> *)retrieveWithText:(NSString *)queryText
                                                         topK:(NSInteger)topK
                                                        error:(NSError **)error
-    NS_SWIFT_NAME(retrieve(withText:topK:));
+    NS_SWIFT_NAME(retrieve(withText:topK:))
+        __attribute__((deprecated("Use retrieveWithText:limit:error: instead.")));
 
-/**
- * Retrieves the topK nearest records matching the query string and metadata filter.
- */
 - (nullable NSArray<MPPRetrievalResult *> *)
     retrieveWithText:(NSString *)queryText
                 topK:(NSInteger)topK
       metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
-               error:(NSError **)error NS_SWIFT_NAME(retrieve(withText:topK:metadataFilter:));
+               error:(NSError **)error
+    NS_SWIFT_NAME(retrieve(withText:topK:metadataFilter:))
+        __attribute__((deprecated("Use retrieveWithText:limit:metadataFilter:error: instead.")));
 
-/**
- * Retrieves the topK nearest records matching the multi-modal query parts.
- */
 - (nullable NSArray<MPPRetrievalResult *> *)retrieveWithParts:(NSArray<MPPTaskPart *> *)queryParts
                                                          topK:(NSInteger)topK
                                                         error:(NSError **)error
-    NS_SWIFT_NAME(retrieve(withParts:topK:));
+    NS_SWIFT_NAME(retrieve(withParts:topK:))
+        __attribute__((deprecated("Use retrieveWithParts:limit:error: instead.")));
 
-/**
- * Retrieves the topK nearest records matching the multi-modal query parts and metadata filter.
- */
 - (nullable NSArray<MPPRetrievalResult *> *)
     retrieveWithParts:(NSArray<MPPTaskPart *> *)queryParts
                  topK:(NSInteger)topK
        metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
-                error:(NSError **)error NS_SWIFT_NAME(retrieve(withParts:topK:metadataFilter:));
+                error:(NSError **)error
+    NS_SWIFT_NAME(retrieve(withParts:topK:metadataFilter:))
+        __attribute__((deprecated("Use retrieveWithParts:limit:metadataFilter:error: instead.")));
 
-/**
- * Retrieves the topK nearest records matching the precomputed query embedding.
- */
 - (nullable NSArray<MPPRetrievalResult *> *)retrieveWithEmbedding:
                                                 (NSArray<NSNumber *> *)queryEmbedding
                                                              topK:(NSInteger)topK
                                                             error:(NSError **)error
-    NS_SWIFT_NAME(retrieve(withEmbedding:topK:));
+    NS_SWIFT_NAME(retrieve(withEmbedding:topK:))
+        __attribute__((deprecated("Use retrieveWithEmbedding:limit:error: instead.")));
 
-/**
- * Retrieves the topK nearest records matching the precomputed query embedding and metadata filter.
- */
 - (nullable NSArray<MPPRetrievalResult *> *)
     retrieveWithEmbedding:(NSArray<NSNumber *> *)queryEmbedding
                      topK:(NSInteger)topK
            metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
                     error:(NSError **)error
-    NS_SWIFT_NAME(retrieve(withEmbedding:topK:metadataFilter:));
+    NS_SWIFT_NAME(retrieve(withEmbedding:topK:metadataFilter:)) __attribute__((
+        deprecated("Use retrieveWithEmbedding:limit:metadataFilter:error: instead.")));
 
 /**
  * Deletes records from the vector store for the given list of IDs.

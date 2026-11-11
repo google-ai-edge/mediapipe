@@ -457,7 +457,7 @@ class DecisionMaker:
     )
     return cls(lib, handle)
 
-  def prewarm_choice(self, question: ChoiceQuestion) -> None:
+  def prewarm(self, question: ChoiceQuestion) -> None:
     """Prewarms the static prompt prefix and KV cache for a choice question."""
     if not self._handle:
       raise RuntimeError("DecisionMaker is closed.")
@@ -482,6 +482,10 @@ class DecisionMaker:
     )
     # pyrefly: ignore[missing-attribute]
     self._lib.MpDecisionMakerPrewarmChoice(self._handle, ctypes.byref(q_c))
+
+  def prewarm_choice(self, question: ChoiceQuestion) -> None:
+    """Deprecated alias for `prewarm`."""
+    self.prewarm(question)
 
   def prewarm_schema(self, questions: Mapping[str, QuestionType]) -> None:
     """Prewarms the prompt prefix and caches for a multi-question schema."""

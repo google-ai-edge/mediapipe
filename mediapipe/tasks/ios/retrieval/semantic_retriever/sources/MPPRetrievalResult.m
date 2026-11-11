@@ -43,4 +43,30 @@
                           score:score];
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-implementations"
+- (NSString *)deprecatedRecordId {
+  return self.recordId;
+}
+
+- (instancetype)initWithDeprecatedRecordId:(NSString *)recordId
+                                   content:(NSArray<MPPTaskPart *> *)content
+                                embeddings:(nullable NSArray<NSNumber *> *)embeddings
+                                  metadata:(NSDictionary<NSString *, NSString *> *)metadata
+                                     score:(double)score {
+  return [self initWithRecordId:recordId
+                        content:content
+                     embeddings:embeddings
+                       metadata:metadata
+                          score:score];
+}
+
+- (instancetype)initWithDeprecatedRecordId:(NSString *)recordId
+                                   content:(NSArray<MPPTaskPart *> *)content
+                                  metadata:(NSDictionary<NSString *, NSString *> *)metadata
+                                     score:(double)score {
+  return [self initWithRecordId:recordId content:content metadata:metadata score:score];
+}
+#pragma clang diagnostic pop
+
 @end

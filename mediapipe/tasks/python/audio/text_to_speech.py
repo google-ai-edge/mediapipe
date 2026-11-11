@@ -54,7 +54,7 @@ class _MpTextToSpeechOptionsC(ctypes.Structure):
       ('default_locale', ctypes.c_char_p),
       ('speaking_rate', ctypes.c_float),
       ('target_bucket', ctypes.c_int32),
-      ('cache_directory', ctypes.c_char_p),
+      ('cache_dir', ctypes.c_char_p),
   ]
 
 
@@ -351,7 +351,7 @@ class TtsAudioResult:
     )
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(init=False)
 class TextToSpeechOptions:
   """Options for MediaPipe TextToSpeech task.
 
@@ -363,7 +363,7 @@ class TextToSpeechOptions:
     speaking_rate: Playback speaking rate multiplier (`1.0` is normal speed).
     target_bucket: Fixed phoneme token bucket length (`0` selects adaptive
       bucketing).
-    cache_directory: Optional directory path for compiled weight/program caches;
+    cache_dir: Optional directory path for compiled weight/program caches;
       `None` disables disk caching.
   """
 
@@ -372,7 +372,40 @@ class TextToSpeechOptions:
   default_locale: Optional[str] = None
   speaking_rate: float = 1.0
   target_bucket: int = 0
-  cache_directory: Optional[str] = None
+  cache_dir: Optional[str] = None
+
+  def __init__(
+      self,
+      base_options: _BaseOptions,
+      default_voice_id: str = '',
+      default_locale: Optional[str] = None,
+      speaking_rate: float = 1.0,
+      target_bucket: int = 0,
+      cache_dir: Optional[str] = None,
+      *,
+      cache_directory: Optional[str] = None,
+  ):
+    """Initializes a `TextToSpeechOptions` instance."""
+    if cache_dir is not None and cache_directory is not None:
+      raise ValueError(
+          'Specify either `cache_dir` or deprecated `cache_directory`, not'
+          ' both.'
+      )
+    self.base_options = base_options
+    self.default_voice_id = default_voice_id
+    self.default_locale = default_locale
+    self.speaking_rate = speaking_rate
+    self.target_bucket = target_bucket
+    self.cache_dir = cache_dir if cache_dir is not None else cache_directory
+
+  @property
+  def cache_directory(self) -> Optional[str]:
+    """Deprecated alias for `cache_dir`."""
+    return self.cache_dir
+
+  @cache_directory.setter
+  def cache_directory(self, value: Optional[str]) -> None:
+    self.cache_dir = value
 
 
 class TextToSpeech:
@@ -403,9 +436,7 @@ class TextToSpeech:
         else None
     )
     cache_bytes = (
-        options.cache_directory.encode('utf-8')
-        if options.cache_directory
-        else None
+        options.cache_dir.encode('utf-8') if options.cache_dir else None
     )
     c_opts = _MpTextToSpeechOptionsC(
         base_options=c_base,
@@ -413,7 +444,7 @@ class TextToSpeech:
         default_locale=locale_bytes,
         speaking_rate=float(options.speaking_rate),
         target_bucket=int(options.target_bucket),
-        cache_directory=cache_bytes,
+        cache_dir=cache_bytes,
     )
     handle = ctypes.c_void_p()
     err = ctypes.c_char_p()
@@ -512,14 +543,14 @@ class TextToSpeech:
     _check_status(self._lib, status, err)
     return self._extract_audio_result(c_res)
 
-  def start_stream(
+  def open_stream(
       self,
       initial_text: str = '',
       voice_id: Optional[str] = None,
       locale: Optional[str] = None,
       finish_input: bool = False,
   ) -> 'TtsStream':
-    """Starts an incremental or single-utterance streaming synthesis session.
+    """Opens an incremental or single-utterance streaming synthesis session.
 
     Args:
       initial_text: Optional initial text fragment to enqueue immediately.
@@ -549,6 +580,21 @@ class TextToSpeech:
     _check_status(self._lib, status, err)
     return TtsStream(self, stream_handle)
 
+  def start_stream(
+      self,
+      initial_text: str = '',
+      voice_id: Optional[str] = None,
+      locale: Optional[str] = None,
+      finish_input: bool = False,
+  ) -> 'TtsStream':
+    """Deprecated alias for `open_stream`."""
+    return self.open_stream(
+        initial_text=initial_text,
+        voice_id=voice_id,
+        locale=locale,
+        finish_input=finish_input,
+    )
+
   def synthesize_stream(
       self,
       text: str,
@@ -568,7 +614,7 @@ class TextToSpeech:
       `TtsAudioResult` chunks as each clause finishes acoustic + vocoder
       synthesis.
     """
-    with self.start_stream(
+    with self.open_stream(
         initial_text=text,
         voice_id=voice_id,
         locale=locale,

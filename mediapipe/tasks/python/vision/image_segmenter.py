@@ -80,16 +80,16 @@ class MpImageSegmenterOptionsC(ctypes.Structure):
       cls,
       base_options: base_options_c.MpBaseOptionsC,
       running_mode: _RunningMode,
+      display_names_locale: str,
       output_confidence_masks: bool,
       output_category_mask: bool,
       result_callback: _C_TYPES_RESULT_CALLBACK,
   ) -> 'MpImageSegmenterOptionsC':
     """Creates an MpImageSegmenterOptionsC object from the given options."""
-    empty_string = ctypes.c_char_p(b'')
     return cls(
         base_options=base_options,
         running_mode=running_mode.ctype,
-        display_names_locale=empty_string,
+        display_names_locale=display_names_locale.encode('utf-8'),
         output_confidence_masks=output_confidence_masks,
         output_category_mask=output_category_mask,
         result_callback=result_callback,
@@ -213,6 +213,8 @@ class ImageSegmenterOptions:
       objects on single image inputs. 2) The video mode for segmenting objects
       on the decoded frames of a video. 3) The live stream mode for segmenting
       objects on a live stream of input data, such as from camera.
+    display_names_locale: The locale to use for display names specified through
+      the TFLite Model Metadata.
     output_confidence_masks: Whether to output confidence masks.
     output_category_mask: Whether to output category mask.
     result_callback: The user-defined result callback for processing live stream
@@ -222,6 +224,7 @@ class ImageSegmenterOptions:
 
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
+  display_names_locale: str = 'en'
   output_confidence_masks: bool = True
   output_category_mask: bool = False
   result_callback: Optional[
@@ -347,6 +350,7 @@ class ImageSegmenter:
     c_options = MpImageSegmenterOptionsC.from_c_options(
         base_options=options.base_options.to_ctypes(),
         running_mode=options.running_mode,
+        display_names_locale=options.display_names_locale,
         output_confidence_masks=options.output_confidence_masks,
         output_category_mask=options.output_category_mask,
         result_callback=c_callback,

@@ -31,8 +31,8 @@
   [self.baseOptions copyToCOptions:&cOptions->base_options];
   const char *locale = self.displayNamesLocale.UTF8String;
   cOptions->display_names_locale = locale ? strdup(locale) : nullptr;
-  cOptions->output_confidence_masks = self.shouldOutputConfidenceMasks ? true : false;
-  cOptions->output_category_mask = self.shouldOutputCategoryMask ? true : false;
+  cOptions->output_confidence_masks = self.outputConfidenceMasks ? true : false;
+  cOptions->output_category_mask = self.outputCategoryMask ? true : false;
 }
 
 + (void)freeCOptions:(struct MpInteractiveSegmenterLegacyOptions *)cOptions {

@@ -202,10 +202,10 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   MPPLanguageDetectorResult *result = [languageDetector detectText:text error:nil];
   XCTAssertNotNil(result);
 
-  XCTAssertEqual(result.languagePredictions.count, expectedLanguagePredictions.count);
-  XCTAssertEqualWithAccuracy(result.languagePredictions[0].probability,
+  XCTAssertEqual(result.languages.count, expectedLanguagePredictions.count);
+  XCTAssertEqualWithAccuracy(result.languages[0].probability,
                              expectedLanguagePredictions[0].probability, 1e-3);
-  XCTAssertEqualObjects(result.languagePredictions[0].languageCode,
+  XCTAssertEqualObjects(result.languages[0].languageCode,
                         expectedLanguagePredictions[0].languageCode);
 }
 
@@ -235,6 +235,19 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                                                                                  error:&error];
   XCTAssertNil(languageDetector);
   AssertEqualErrors(error, expectedError);
+}
+
+- (void)testDeprecatedLanguagePredictionsResultAlias {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  MPPLanguageDetectorResult *result =
+      [[MPPLanguageDetectorResult alloc] initWithLanguagePredictions:@[]
+                                             timestampInMilliseconds:42];
+  XCTAssertNotNil(result);
+  XCTAssertEqual(result.languagePredictions.count, 0U);
+  XCTAssertEqual(result.languages.count, 0U);
+  XCTAssertEqual(result.timestampInMilliseconds, 42);
+#pragma clang diagnostic pop
 }
 
 @end

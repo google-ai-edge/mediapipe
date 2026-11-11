@@ -23,7 +23,9 @@ NS_ASSUME_NONNULL_BEGIN
 NS_SWIFT_NAME(RetrievalRecord)
 @interface MPPRetrievalRecord : NSObject
 
-@property(nonatomic, readonly, copy) NSString *recordId;
+@property(nonatomic, readonly, copy) NSString *recordId NS_SWIFT_NAME(id);
+@property(nonatomic, readonly, copy) NSString *deprecatedRecordId NS_SWIFT_NAME(recordId)
+    __attribute__((deprecated("Use id in Swift or recordId in Objective-C instead.")));
 @property(nonatomic, readonly, copy) NSArray<MPPTaskPart *> *content;
 @property(nonatomic, readonly, copy) NSArray<NSNumber *> *embeddings;
 @property(nonatomic, readonly, nullable) NSNumber *similarityScore;
@@ -37,14 +39,37 @@ NS_SWIFT_NAME(RetrievalRecord)
                  similarityScore:(nullable NSNumber *)similarityScore
                         metadata:(NSDictionary<NSString *, NSString *> *)metadata
                         parentId:(nullable NSString *)parentId
-                        childIds:(nullable NSArray<NSString *> *)childIds NS_DESIGNATED_INITIALIZER;
+                        childIds:(nullable NSArray<NSString *> *)childIds NS_DESIGNATED_INITIALIZER
+    NS_SWIFT_NAME(init(id:content:embeddings:similarityScore:metadata:parentId:childIds:));
 
 - (instancetype)initWithRecordId:(NSString *)recordId
                          content:(NSArray<MPPTaskPart *> *)content
                       embeddings:(NSArray<NSNumber *> *)embeddings
                         metadata:(NSDictionary<NSString *, NSString *> *)metadata
                         parentId:(nullable NSString *)parentId
-                        childIds:(nullable NSArray<NSString *> *)childIds;
+                        childIds:(nullable NSArray<NSString *> *)childIds
+    NS_SWIFT_NAME(init(id:content:embeddings:metadata:parentId:childIds:));
+
+- (instancetype)initWithDeprecatedRecordId:(NSString *)recordId
+                                   content:(NSArray<MPPTaskPart *> *)content
+                                embeddings:(NSArray<NSNumber *> *)embeddings
+                           similarityScore:(nullable NSNumber *)similarityScore
+                                  metadata:(NSDictionary<NSString *, NSString *> *)metadata
+                                  parentId:(nullable NSString *)parentId
+                                  childIds:(nullable NSArray<NSString *> *)childIds
+    NS_SWIFT_NAME(init(recordId:content:embeddings:similarityScore:metadata:parentId:childIds:))
+        __attribute__((deprecated("Use init(id:...) in Swift or initWithRecordId:... in "
+                                  "Objective-C instead.")));
+
+- (instancetype)initWithDeprecatedRecordId:(NSString *)recordId
+                                   content:(NSArray<MPPTaskPart *> *)content
+                                embeddings:(NSArray<NSNumber *> *)embeddings
+                                  metadata:(NSDictionary<NSString *, NSString *> *)metadata
+                                  parentId:(nullable NSString *)parentId
+                                  childIds:(nullable NSArray<NSString *> *)childIds
+    NS_SWIFT_NAME(init(recordId:content:embeddings:metadata:parentId:childIds:))
+        __attribute__((deprecated("Use init(id:...) in Swift or initWithRecordId:... in "
+                                  "Objective-C instead.")));
 
 - (instancetype)init NS_UNAVAILABLE;
 + (instancetype)new NS_UNAVAILABLE;

@@ -81,7 +81,7 @@ typedef struct MpTextToSpeechOptions {
 
   // Optional directory for caching unpacked .litertlm assets and compiled
   // XNNPACK/GPU delegate weights.
-  const char* cache_directory;
+  const char* cache_dir;
 } MpTextToSpeechOptions;
 
 // Per-utterance synthesis overrides passed to MpTextToSpeechSynthesize().

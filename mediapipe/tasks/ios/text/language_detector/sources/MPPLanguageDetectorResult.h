@@ -44,20 +44,27 @@ NS_SWIFT_NAME(LanguageDetectorResult)
 @interface MPPLanguageDetectorResult : MPPTaskResult
 
 /** A list of language predictions. */
-@property(nonatomic, readonly) NSArray<MPPLanguagePrediction *> *languagePredictions;
+@property(nonatomic, readonly, copy) NSArray<MPPLanguagePrediction *> *languages;
+
+@property(nonatomic, readonly, copy) NSArray<MPPLanguagePrediction *> *languagePredictions
+    __attribute__((deprecated("Use languages instead.")));
 
 /**
  * Initializes a new `LanguageDetectorResult` with the given array of language predictions and
  * timestamp (in milliseconds).
  *
- * @param languagePrediction The array of language predictions in this result.
+ * @param languages The array of language predictions in this result.
  * @param timestampInMilliseconds The timestamp (in milliseconds) for this result.
  *
  * @return An instance of `LanguageDetectorResult` initialized with the given array of language
  * predictions and timestamp (in milliseconds).
  */
+- (instancetype)initWithLanguages:(NSArray<MPPLanguagePrediction *> *)languages
+          timestampInMilliseconds:(NSInteger)timestampInMilliseconds NS_DESIGNATED_INITIALIZER;
+
 - (instancetype)initWithLanguagePredictions:(NSArray<MPPLanguagePrediction *> *)languagePredictions
-                    timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
+                    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+    __attribute__((deprecated("Use initWithLanguages:timestampInMilliseconds: instead.")));
 
 - (instancetype)initWithTimestampInMilliseconds:(NSInteger)timestampInMilliseconds NS_UNAVAILABLE;
 

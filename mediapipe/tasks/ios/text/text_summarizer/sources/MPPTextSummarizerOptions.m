@@ -36,4 +36,15 @@
   return options;
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-implementations"
+- (NSInteger)maxTokens {
+  return self.maxNumTokens;
+}
+
+- (void)setMaxTokens:(NSInteger)maxTokens {
+  self.maxNumTokens = maxTokens;
+}
+#pragma clang diagnostic pop
+
 @end

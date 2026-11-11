@@ -123,7 +123,7 @@
   return YES;
 }
 
-// Required by searchWithEmbedding:topK:error: because vector similarity search delegates to
+// Required by searchWithEmbedding:limit:error: because vector similarity search delegates to
 // SqliteMemoryStore::GetNearestRecords(), which returns mediapipe::tasks::retrieval::MemoryRecord
 // rather than raw database column values.
 - (MPPRetrievalRecord *)recordFromCppRecord:
@@ -306,9 +306,18 @@
 
 - (nullable NSArray<MPPRetrievalRecord *> *)searchWithEmbedding:
                                                 (NSArray<NSNumber *> *)queryEmbedding
+                                                          limit:(NSInteger)limit
+                                                          error:(NSError **)error {
+  return [self searchWithEmbedding:queryEmbedding limit:limit metadataFilter:nil error:error];
+}
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-implementations"
+- (nullable NSArray<MPPRetrievalRecord *> *)searchWithEmbedding:
+                                                (NSArray<NSNumber *> *)queryEmbedding
                                                            topK:(NSInteger)topK
                                                           error:(NSError **)error {
-  return [self searchWithEmbedding:queryEmbedding topK:topK metadataFilter:nil error:error];
+  return [self searchWithEmbedding:queryEmbedding limit:topK error:error];
 }
 
 - (nullable NSArray<MPPRetrievalRecord *> *)
@@ -316,15 +325,27 @@
                    topK:(NSInteger)topK
          metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
                   error:(NSError **)error {
+  return [self searchWithEmbedding:queryEmbedding
+                             limit:topK
+                    metadataFilter:metadataFilter
+                             error:error];
+}
+#pragma clang diagnostic pop
+
+- (nullable NSArray<MPPRetrievalRecord *> *)
+    searchWithEmbedding:(NSArray<NSNumber *> *)queryEmbedding
+                  limit:(NSInteger)limit
+         metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
+                  error:(NSError **)error {
   if (![self ensureDelegateWithError:error]) {
     return nil;
   }
 
-  if (queryEmbedding.count == 0 || topK <= 0) {
+  if (queryEmbedding.count == 0 || limit <= 0) {
     [MPPCommonUtils
         createCustomError:error
                  withCode:MPPTasksErrorCodeInvalidArgumentError
-              description:@"queryEmbedding must be non-empty and topK must be positive."];
+              description:@"queryEmbedding must be non-empty and limit must be positive."];
     return nil;
   }
 
@@ -350,7 +371,7 @@
   }
 
   auto cppRecordsStatus =
-      _sqliteMemoryStore->GetNearestRecords(cppEmbeddings, (int)topK, 0.0f, cppFilter);
+      _sqliteMemoryStore->GetNearestRecords(cppEmbeddings, (int)limit, 0.0f, cppFilter);
   if (![MPPCommonUtils checkCppError:cppRecordsStatus.status() toError:error]) {
     return nil;
   }

@@ -381,29 +381,32 @@ const NSInteger MPPSemanticRetrieverDefaultEmbeddingDimension = 768;
 }
 
 - (nullable NSArray<MPPRetrievalResult *> *)retrieveWithText:(NSString *)queryText
-                                                        topK:(NSInteger)topK
+                                                       limit:(NSInteger)limit
                                                        error:(NSError **)error {
-  return [self retrieveWithText:queryText topK:topK metadataFilter:nil error:error];
+  return [self retrieveWithText:queryText limit:limit metadataFilter:nil error:error];
 }
 
 - (nullable NSArray<MPPRetrievalResult *> *)
     retrieveWithText:(NSString *)queryText
-                topK:(NSInteger)topK
+               limit:(NSInteger)limit
       metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
                error:(NSError **)error {
   MPPTextPart *textPart = [[MPPTextPart alloc] initWithText:queryText];
-  return [self retrieveWithParts:@[ textPart ] topK:topK metadataFilter:metadataFilter error:error];
+  return [self retrieveWithParts:@[ textPart ]
+                           limit:limit
+                  metadataFilter:metadataFilter
+                           error:error];
 }
 
 - (nullable NSArray<MPPRetrievalResult *> *)retrieveWithParts:(NSArray<MPPTaskPart *> *)queryParts
-                                                         topK:(NSInteger)topK
+                                                        limit:(NSInteger)limit
                                                         error:(NSError **)error {
-  return [self retrieveWithParts:queryParts topK:topK metadataFilter:nil error:error];
+  return [self retrieveWithParts:queryParts limit:limit metadataFilter:nil error:error];
 }
 
 - (nullable NSArray<MPPRetrievalResult *> *)
     retrieveWithParts:(NSArray<MPPTaskPart *> *)queryParts
-                 topK:(NSInteger)topK
+                limit:(NSInteger)limit
        metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
                 error:(NSError **)error {
   int64_t timestampVal = _syntheticTimestamp++;
@@ -417,7 +420,7 @@ const NSInteger MPPSemanticRetrieverDefaultEmbeddingDimension = 768;
   }
 
   return [self retrieveRecordsForEmbedding:queryEmbedding
-                                      topK:topK
+                                     limit:limit
                             metadataFilter:metadataFilter
                                  timestamp:timestamp
                                      error:error];
@@ -425,14 +428,14 @@ const NSInteger MPPSemanticRetrieverDefaultEmbeddingDimension = 768;
 
 - (nullable NSArray<MPPRetrievalResult *> *)retrieveWithEmbedding:
                                                 (NSArray<NSNumber *> *)queryEmbedding
-                                                             topK:(NSInteger)topK
+                                                            limit:(NSInteger)limit
                                                             error:(NSError **)error {
-  return [self retrieveWithEmbedding:queryEmbedding topK:topK metadataFilter:nil error:error];
+  return [self retrieveWithEmbedding:queryEmbedding limit:limit metadataFilter:nil error:error];
 }
 
 - (nullable NSArray<MPPRetrievalResult *> *)
     retrieveWithEmbedding:(NSArray<NSNumber *> *)queryEmbedding
-                     topK:(NSInteger)topK
+                    limit:(NSInteger)limit
            metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
                     error:(NSError **)error {
   int64_t timestampVal = _syntheticTimestamp++;
@@ -440,22 +443,100 @@ const NSInteger MPPSemanticRetrieverDefaultEmbeddingDimension = 768;
   _statsLogger->RecordCpuInputArrival(timestamp);
 
   return [self retrieveRecordsForEmbedding:queryEmbedding
-                                      topK:topK
+                                     limit:limit
                             metadataFilter:metadataFilter
                                  timestamp:timestamp
                                      error:error];
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-implementations"
+- (nullable NSArray<MPPRetrievalResult *> *)retrieveWithText:(NSString *)queryText
+                                                        topK:(NSInteger)topK
+                                                       error:(NSError **)error {
+  return [self retrieveWithText:queryText limit:topK error:error];
+}
+
+- (nullable NSArray<MPPRetrievalResult *> *)
+    retrieveWithText:(NSString *)queryText
+                topK:(NSInteger)topK
+      metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
+               error:(NSError **)error {
+  return [self retrieveWithText:queryText limit:topK metadataFilter:metadataFilter error:error];
+}
+
+- (nullable NSArray<MPPRetrievalResult *> *)retrieveWithParts:(NSArray<MPPTaskPart *> *)queryParts
+                                                         topK:(NSInteger)topK
+                                                        error:(NSError **)error {
+  return [self retrieveWithParts:queryParts limit:topK error:error];
+}
+
+- (nullable NSArray<MPPRetrievalResult *> *)
+    retrieveWithParts:(NSArray<MPPTaskPart *> *)queryParts
+                 topK:(NSInteger)topK
+       metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
+                error:(NSError **)error {
+  return [self retrieveWithParts:queryParts limit:topK metadataFilter:metadataFilter error:error];
+}
+
+- (nullable NSArray<MPPRetrievalResult *> *)retrieveWithEmbedding:
+                                                (NSArray<NSNumber *> *)queryEmbedding
+                                                             topK:(NSInteger)topK
+                                                            error:(NSError **)error {
+  return [self retrieveWithEmbedding:queryEmbedding limit:topK error:error];
+}
+
+- (nullable NSArray<MPPRetrievalResult *> *)
+    retrieveWithEmbedding:(NSArray<NSNumber *> *)queryEmbedding
+                     topK:(NSInteger)topK
+           metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
+                    error:(NSError **)error {
+  return [self retrieveWithEmbedding:queryEmbedding
+                               limit:topK
+                      metadataFilter:metadataFilter
+                               error:error];
+}
+#pragma clang diagnostic pop
+
 - (nullable NSArray<MPPRetrievalResult *> *)
     retrieveRecordsForEmbedding:(NSArray<NSNumber *> *)queryEmbedding
-                           topK:(NSInteger)topK
+                          limit:(NSInteger)limit
                  metadataFilter:(nullable NSDictionary<NSString *, NSString *> *)metadataFilter
                       timestamp:(mediapipe::Timestamp)timestamp
                           error:(NSError **)error {
-  NSArray<MPPRetrievalRecord *> *searchResults = [_vectorStore searchWithEmbedding:queryEmbedding
-                                                                              topK:(int)topK
-                                                                    metadataFilter:metadataFilter
-                                                                             error:error];
+  NSArray<MPPRetrievalRecord *> *searchResults = nil;
+  if ([_vectorStore
+          respondsToSelector:@selector(searchWithEmbedding:limit:metadataFilter:error:)]) {
+    searchResults = [_vectorStore searchWithEmbedding:queryEmbedding
+                                                limit:(int)limit
+                                       metadataFilter:metadataFilter
+                                                error:error];
+  } else if (metadataFilter == nil &&
+             [_vectorStore respondsToSelector:@selector(searchWithEmbedding:limit:error:)]) {
+    searchResults = [_vectorStore searchWithEmbedding:queryEmbedding limit:(int)limit error:error];
+  } else if ([_vectorStore
+                 respondsToSelector:@selector(searchWithEmbedding:topK:metadataFilter:error:)]) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    searchResults = [_vectorStore searchWithEmbedding:queryEmbedding
+                                                 topK:(int)limit
+                                       metadataFilter:metadataFilter
+                                                error:error];
+#pragma clang diagnostic pop
+  } else if (metadataFilter == nil &&
+             [_vectorStore respondsToSelector:@selector(searchWithEmbedding:topK:error:)]) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    searchResults = [_vectorStore searchWithEmbedding:queryEmbedding topK:(int)limit error:error];
+#pragma clang diagnostic pop
+  } else {
+    [MPPCommonUtils createCustomError:error
+                             withCode:MPPTasksErrorCodeUnimplementedError
+                          description:@"VectorStore must implement "
+                                      @"searchWithEmbedding:limit:metadataFilter:error:."];
+    _statsLogger->RecordInvocationEnd(timestamp);
+    return nil;
+  }
   if (!searchResults) {
     _statsLogger->RecordInvocationEnd(timestamp);
     return nil;
