@@ -14,6 +14,8 @@
 
 #import "mediapipe/gpu/MPPMetalUtil.h"
 
+#include <cstddef>
+
 #include "absl/time/clock.h"  // from @com_google_absl
 #include "absl/time/time.h"   // from @com_google_absl
 

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "absl/status/statusor.h"       // from @com_google_absl
@@ -27,7 +29,6 @@
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/gpu_buffer_storage_ahwb.h"  // IWYU pragma: keep (GpuBufferStorageAhwb)
-#include "mediapipe/gpu/shader_util.h"
 
 #ifdef __ANDROID__
 // The size of Java arrays is dynamic, which makes it difficult to

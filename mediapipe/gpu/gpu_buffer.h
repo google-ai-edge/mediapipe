@@ -15,14 +15,17 @@
 #ifndef MEDIAPIPE_GPU_GPU_BUFFER_H_
 #define MEDIAPIPE_GPU_GPU_BUFFER_H_
 
-#include <algorithm>
-#include <functional>
+#include <cstddef>
 #include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
-#include "absl/log/absl_check.h"         // from @com_google_absl
-#include "absl/synchronization/mutex.h"  // from @com_google_absl
+#include "absl/base/thread_annotations.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"           // from @com_google_absl
+#include "absl/synchronization/mutex.h"    // from @com_google_absl
 #include "mediapipe/framework/formats/image_frame.h"
+#include "mediapipe/framework/tool/type_util.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/gpu_buffer_storage.h"
 

@@ -244,14 +244,12 @@ cc_library(
         ":gl_base",
         ":gl_thread_collector",
         ":gpu_buffer_format",
-        "//mediapipe/framework:executor",
         "//mediapipe/framework:mediapipe_profiling",
         "//mediapipe/framework:port",
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:threadpool",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/base:dynamic_annotations",
         "@com_google_absl//absl/base:no_destructor",
@@ -388,6 +386,8 @@ cc_library(
         ":gpu_buffer_storage_image_frame",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/tool:type_util",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/functional:bind_front",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/strings",
@@ -698,10 +698,9 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/port:ret_check",
-        "@google_toolbox_for_mac//:GTM_Defines",
-    ] + [
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:Metal",
+        "@google_toolbox_for_mac//:GTM_Defines",
     ],
     alwayslink = 1,
 )
@@ -853,7 +852,6 @@ cc_library(
 
 cc_library(
     name = "gl_texture_buffer_pool",
-    srcs = ["gl_texture_buffer_pool.cc"],
     hdrs = ["gl_texture_buffer_pool.h"],
     visibility = ["//visibility:public"],
     deps = [
@@ -864,7 +862,6 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -1071,6 +1068,7 @@ cc_library(
         ":gl_base",
         ":gl_context",
         ":gl_texture_buffer_pool",
+        ":gl_texture_view",
         ":gpu_buffer",
         ":gpu_buffer_format",
         ":gpu_buffer_multi_pool",
@@ -1085,7 +1083,6 @@ cc_library(
         "//mediapipe/framework:calculator_node",
         "//mediapipe/framework:demangle",
         "//mediapipe/framework:legacy_calculator_support",
-        "//mediapipe/framework:packet",
         "//mediapipe/framework:packet_set",
         "//mediapipe/framework:packet_type",
         "//mediapipe/framework:timestamp",
@@ -1097,7 +1094,6 @@ cc_library(
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/synchronization",
@@ -1172,6 +1168,8 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_calculator_helper",
+        ":gpu_buffer",
+        ":gpu_buffer_format",
         "//mediapipe/framework:calculator_framework",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
@@ -1323,7 +1321,6 @@ cc_library(
         ":gpu_buffer",
         ":gpu_buffer_format",
         ":gpu_buffer_storage_ahwb",
-        ":shader_util",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:port",
         "//mediapipe/framework/formats:image",

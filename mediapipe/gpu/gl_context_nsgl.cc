@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <utility>
 
 #include "absl/log/absl_log.h"          // from @com_google_absl

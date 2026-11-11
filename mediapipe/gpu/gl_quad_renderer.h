@@ -16,6 +16,7 @@
 #define MEDIAPIPE_GPU_GL_QUAD_RENDERER_H_
 
 #include <optional>
+#include <vector>
 
 #include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/gpu/gl_base.h"

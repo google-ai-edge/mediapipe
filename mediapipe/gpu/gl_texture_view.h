@@ -16,7 +16,6 @@
 #define MEDIAPIPE_GPU_GL_TEXTURE_VIEW_H_
 
 #include <functional>
-#include <memory>
 #include <utility>
 
 #include "mediapipe/gpu/gl_base.h"

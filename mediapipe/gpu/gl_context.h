@@ -18,10 +18,13 @@
 #include <pthread.h>
 
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <set>
 #include <type_traits>
+#include <vector>
 
 #include "absl/base/attributes.h"          // from @com_google_absl
 #include "absl/base/thread_annotations.h"  // from @com_google_absl
@@ -32,9 +35,7 @@
 #include "absl/strings/string_view.h"      // from @com_google_absl
 #include "absl/synchronization/mutex.h"    // from @com_google_absl
 #include "absl/types/span.h"               // from @com_google_absl
-#include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
-#include "mediapipe/framework/port/threadpool.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/gpu/attachments.h"
 #include "mediapipe/gpu/gl_base.h"

@@ -14,6 +14,12 @@
 
 #include "mediapipe/gpu/gl_quad_renderer.h"
 
+#include <algorithm>
+#include <optional>
+#include <utility>
+#include <vector>
+
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/shader_util.h"

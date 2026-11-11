@@ -22,18 +22,18 @@
 #include <utility>
 
 #include "absl/base/attributes.h"  // from @com_google_absl
-#include "absl/memory/memory.h"    // from @com_google_absl
 #include "absl/status/status.h"    // from @com_google_absl
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_set.h"
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context.h"
+#include "mediapipe/gpu/gl_texture_view.h"
 #include "mediapipe/gpu/gpu_buffer.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/graph_support.h"
 
 namespace mediapipe {
