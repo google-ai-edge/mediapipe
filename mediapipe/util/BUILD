@@ -451,8 +451,16 @@ cc_library(
     name = "endian",
     hdrs = ["endian.h"],
     visibility = ["//mediapipe:__subpackages__"],
+    deps = ["@com_google_absl//absl/numeric:bits"],
+)
+
+cc_test(
+    name = "endian_test",
+    srcs = ["endian_test.cc"],
     deps = [
-        "//mediapipe/framework/deps:endian",
+        ":endian",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/numeric:bits",
     ],
 )
 

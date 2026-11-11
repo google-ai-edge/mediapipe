@@ -16,7 +16,38 @@
 #define MEDIAPIPE_UTIL_ENDIAN_H_
 
 #include <cstdint>
+#include <cstring>
 
-#include "mediapipe/framework/deps/endian.h"
+#include "absl/numeric/bits.h"  // from @com_google_absl
+
+namespace mediapipe {
+
+constexpr bool IsLittleEndian() {
+  return absl::endian::native == absl::endian::little;
+}
+
+namespace little_endian {
+
+template <typename T>
+inline T InternalLoadUnaligned(const void* p) {
+  T t;
+  std::memcpy(&t, p, sizeof(T));
+  return IsLittleEndian() ? t : absl::byteswap(t);
+}
+
+inline uint16_t Load16(const void* p) {
+  return InternalLoadUnaligned<uint16_t>(p);
+}
+
+inline uint32_t Load32(const void* p) {
+  return InternalLoadUnaligned<uint32_t>(p);
+}
+
+inline uint64_t Load64(const void* p) {
+  return InternalLoadUnaligned<uint64_t>(p);
+}
+
+}  // namespace little_endian
+}  // namespace mediapipe
 
 #endif  // MEDIAPIPE_UTIL_ENDIAN_H_
