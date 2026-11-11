@@ -20,6 +20,7 @@ BooleanResult = _decision_maker.BooleanResult
 ChoiceQuestion = _decision_maker.ChoiceQuestion
 ChoiceResult = _decision_maker.ChoiceResult
 DecisionContext = _decision_maker.DecisionContext
+InputPrompt = _decision_maker.InputPrompt
 ScoreQuestion = _decision_maker.ScoreQuestion
 ScoreResult = _decision_maker.ScoreResult
 ScoringMode = _decision_maker.ScoringMode
@@ -32,6 +33,7 @@ __all__ = [
     "ChoiceQuestion",
     "ChoiceResult",
     "DecisionContext",
+    "InputPrompt",
     "ScoreQuestion",
     "ScoreResult",
     "ScoringMode",

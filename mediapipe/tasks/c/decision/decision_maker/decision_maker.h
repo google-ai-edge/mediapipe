@@ -66,6 +66,22 @@ struct MpBooleanQuestion {
   float temperature;
   // Whether to subtract the empty-context prior log-odds before thresholding.
   bool normalize_prior;
+  // Optional array of `positive_examples_count` example inputs for which the
+  // answer is true (may be null when the count is 0). When both example lists
+  // are non-empty, embedding models fit a classifier on them and `condition`
+  // becomes optional; setting only one list, or an empty string, is an error.
+  const char* const* positive_examples;
+  // Number of entries in `positive_examples`.
+  int positive_examples_count;
+  // Optional array of `negative_examples_count` example inputs for which the
+  // answer is false (may be null when the count is 0).
+  const char* const* negative_examples;
+  // Number of entries in `negative_examples`.
+  int negative_examples_count;
+  // With examples, how examples and inputs are embedded: 0 = "task:
+  // classification | query: <text>" (default), 1 = the raw text
+  // (`proto::DecisionInputPrompt`). Ignored without examples.
+  int input_prompt;
 };
 
 // Configuration for a Choice question.
@@ -94,6 +110,21 @@ struct MpChoiceQuestion {
   const float* const* audio_samples;
   // Optional array of `count` sample counts corresponding to `audio_samples`.
   const int* audio_samples_lengths;
+  // Optional array of `count` example lists (may be null): `examples[i][j]` is
+  // example j of choice i. If any choice has examples, every choice needs at
+  // least one (none an empty string), and embedding models fit a classifier on
+  // them.
+  const char* const* const* examples;
+  // Array of `count` example counts for `examples` (required if `examples` is
+  // non-null).
+  const int* example_counts;
+  // With examples, how examples and inputs are embedded: 0 = "task:
+  // classification | query: <text>" (default), 1 = the raw text
+  // (`proto::DecisionInputPrompt`). Ignored without examples.
+  int input_prompt;
+  // With examples, choices are weighted by N / (K * N_c) unless this is true.
+  // Negated so that a zero-initialized struct keeps the default.
+  bool omit_balanced_class_weights;
 };
 
 // Configuration for a Score question.
@@ -303,6 +334,11 @@ MP_EXPORT void MpDecisionMakerCloseScoreResultBatch(
 // array of length `num_questions`.
 MP_EXPORT void MpDecisionMakerCloseSchemaResult(
     struct MpSchemaQuestionResult* results, int num_questions);
+
+// Prewarms a Boolean question (for example, fits its examples).
+MP_EXPORT MpStatus MpDecisionMakerPrewarmBoolean(
+    MpDecisionMakerPtr maker, const struct MpBooleanQuestion* question,
+    char** error_msg);
 
 // Prewarms the prompt prefix and KV cache for a Choice question.
 MP_EXPORT MpStatus MpDecisionMakerPrewarmChoice(

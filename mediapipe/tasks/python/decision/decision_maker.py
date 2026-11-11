@@ -15,8 +15,10 @@
 
 from __future__ import annotations
 
+import collections.abc
 import ctypes
 import dataclasses
+import enum
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from mediapipe.tasks.python.core import (
@@ -36,6 +38,11 @@ class _MpBooleanQuestionC(ctypes.Structure):
       ("threshold", ctypes.c_float),
       ("temperature", ctypes.c_float),
       ("normalize_prior", ctypes.c_bool),
+      ("positive_examples", ctypes.POINTER(ctypes.c_char_p)),
+      ("positive_examples_count", ctypes.c_int),
+      ("negative_examples", ctypes.POINTER(ctypes.c_char_p)),
+      ("negative_examples_count", ctypes.c_int),
+      ("input_prompt", ctypes.c_int),
   ]
 
 
@@ -52,6 +59,10 @@ class _MpChoiceQuestionC(ctypes.Structure):
       ("image_bytes_lengths", ctypes.POINTER(ctypes.c_int)),
       ("audio_samples", ctypes.POINTER(ctypes.POINTER(ctypes.c_float))),
       ("audio_samples_lengths", ctypes.POINTER(ctypes.c_int)),
+      ("examples", ctypes.POINTER(ctypes.POINTER(ctypes.c_char_p))),
+      ("example_counts", ctypes.POINTER(ctypes.c_int)),
+      ("input_prompt", ctypes.c_int),
+      ("omit_balanced_class_weights", ctypes.c_bool),
   ]
 
 
@@ -129,6 +140,15 @@ class ScoringMode:
   SCORING_FULL_OPTION = 2
 
 
+class InputPrompt(enum.IntEnum):
+  """How examples and inputs are embedded. Only used with examples."""
+
+  # "task: classification | query: <text>". Best for sentences.
+  CLASSIFICATION = 0
+  # The raw text. Best for single words and short phrases.
+  NONE = 1
+
+
 @dataclasses.dataclass
 class DecisionContext:
   text: str = ""
@@ -138,21 +158,103 @@ class DecisionContext:
 # calibrated temperature; a positive value overrides it.
 
 
+def _check_example_list(name: str, examples: Sequence[str]) -> None:
+  # A one-shot iterable would be used up here, before the question is built.
+  if not isinstance(examples, collections.abc.Sequence) or isinstance(
+      examples, (str, bytes)
+  ):
+    raise TypeError(f"{name} must be a sequence of strings.")
+  for example in examples:
+    if not isinstance(example, str):
+      raise TypeError(
+          f"{name} must contain only strings, not {type(example).__name__}."
+      )
+
+
 @dataclasses.dataclass
 class BooleanQuestion:
-  condition: str
+  """A yes/no question.
+
+  With both `positive_examples` and `negative_examples` (inputs for which the
+  answer is true / false), embedding models fit a classifier on them and
+  `condition` becomes optional. `input_prompt` is only used with examples.
+  """
+
+  condition: str = ""
   threshold: float = 0.5
   temperature: float = 0.0
   normalize_prior: bool = False
+  positive_examples: Sequence[str] = ()
+  negative_examples: Sequence[str] = ()
+  input_prompt: InputPrompt = InputPrompt.CLASSIFICATION
+
+  def __post_init__(self):
+    _check_example_list("positive_examples", self.positive_examples)
+    _check_example_list("negative_examples", self.negative_examples)
+    if bool(self.positive_examples) != bool(self.negative_examples):
+      raise ValueError(
+          "A BooleanQuestion with examples needs both positive_examples and"
+          " negative_examples."
+      )
 
 
 @dataclasses.dataclass
 class ChoiceQuestion:
-  criteria: Dict[str, str]
+  """A question with one answer out of several choices.
+
+  `criteria` maps each choice key to its description. With `examples` (choice
+  key to example inputs), embedding models fit a classifier on them; then every
+  choice needs at least one example, and `criteria` may be left out.
+  `input_prompt` and `balance_class_weights` are only used with examples.
+  """
+
+  criteria: Dict[str, str] = dataclasses.field(default_factory=dict)
   temperature: float = 0.0
   scoring_mode: int = ScoringMode.SCORING_AUTO
   normalize_prior: bool = False
   instructions: str = ""
+  examples: Optional[Dict[str, Sequence[str]]] = None
+  input_prompt: InputPrompt = InputPrompt.CLASSIFICATION
+  # With examples, weights each choice by N / (K * N_c), so that choices with
+  # fewer examples aren't penalized.
+  balance_class_weights: bool = True
+
+  def __post_init__(self):
+    if not isinstance(self.criteria, Mapping):
+      raise TypeError("criteria must be a mapping from choice key to text.")
+    if self.examples is None:
+      return
+    if not isinstance(self.examples, Mapping):
+      raise TypeError("examples must be a mapping from choice key to inputs.")
+    for key, examples in self.examples.items():
+      _check_example_list(f"examples['{key}']", examples)
+    if not self.has_examples():
+      # As in the C API, no example at all means a question without examples.
+      return
+    keys = self.criteria.keys() or self.examples.keys()
+    if len(keys) < 2:
+      raise ValueError(
+          "A ChoiceQuestion with examples needs at least 2 choices."
+      )
+    if set(self.examples.keys()) != set(keys):
+      raise ValueError("examples and criteria must list the same choices.")
+    for key in keys:
+      if not self.examples[key]:
+        raise ValueError(f"Choice '{key}' needs at least one example.")
+
+  def has_examples(self) -> bool:
+    """Returns whether any choice has an example."""
+    return any(self.examples.values()) if self.examples else False
+
+  def choice_keys(self) -> List[str]:
+    """Returns the choice keys, from `criteria` or else from `examples`.
+
+    Without examples (`examples` empty or all lists empty), only `criteria`
+    gives choices.
+    """
+    if self.criteria or not self.has_examples():
+      return list(self.criteria.keys())
+    return list((self.examples or {}).keys())
 
 
 @dataclasses.dataclass
@@ -206,6 +308,82 @@ QuestionResultType = Union[BooleanResult, ChoiceResult, ScoreResult]
 DecisionResult = Dict[str, QuestionResultType]
 
 
+def _encode_string_array(
+    strings: Sequence[str],
+) -> Tuple[Optional[ctypes.Array[ctypes.c_char_p]], List[bytes]]:
+  """Returns a `char*` array of UTF-8 `strings` (or None) and its buffers."""
+  encoded = [s.encode("utf-8") for s in strings]
+  if not encoded:
+    return None, encoded
+  return (ctypes.c_char_p * len(encoded))(*encoded), encoded
+
+
+def _build_boolean_question_c(
+    question: BooleanQuestion,
+) -> Tuple[_MpBooleanQuestionC, List[object]]:
+  """Builds `_MpBooleanQuestionC` and the objects it points into."""
+  cond_bytes = question.condition.encode("utf-8")
+  c_pos, pos_bytes = _encode_string_array(question.positive_examples)
+  c_neg, neg_bytes = _encode_string_array(question.negative_examples)
+  q_c = _MpBooleanQuestionC(
+      condition=cond_bytes,
+      threshold=question.threshold,
+      temperature=question.temperature,
+      normalize_prior=question.normalize_prior,
+      positive_examples=c_pos,
+      positive_examples_count=len(pos_bytes),
+      negative_examples=c_neg,
+      negative_examples_count=len(neg_bytes),
+      input_prompt=int(question.input_prompt),
+  )
+  return q_c, [cond_bytes, c_pos, pos_bytes, c_neg, neg_bytes]
+
+
+def _build_choice_question_c(
+    question: ChoiceQuestion,
+) -> Tuple[_MpChoiceQuestionC, List[object]]:
+  """Builds `_MpChoiceQuestionC` and the objects it points into."""
+  keys = question.choice_keys()
+  c_keys, key_bytes = _encode_string_array(keys)
+  c_descs, desc_bytes = _encode_string_array(
+      [question.criteria.get(k, "") for k in keys]
+  )
+  inst_bytes = (
+      question.instructions.encode("utf-8") if question.instructions else None
+  )
+  keepalive: List[object] = [c_keys, key_bytes, c_descs, desc_bytes, inst_bytes]
+  c_examples = None
+  c_counts = None
+  examples = question.examples
+  if examples is not None and question.has_examples() and keys:
+    per_choice = [_encode_string_array(examples[k]) for k in keys]
+    keepalive.append(per_choice)
+    c_examples = (ctypes.POINTER(ctypes.c_char_p) * len(keys))(*[
+        ctypes.cast(arr, ctypes.POINTER(ctypes.c_char_p))
+        if arr is not None
+        else ctypes.POINTER(ctypes.c_char_p)()
+        for arr, _ in per_choice
+    ])
+    c_counts = (ctypes.c_int * len(keys))(
+        *[len(encoded) for _, encoded in per_choice]
+    )
+    keepalive.extend([c_examples, c_counts])
+  q_c = _MpChoiceQuestionC(
+      keys=c_keys,
+      descriptions=c_descs,
+      count=len(keys),
+      temperature=question.temperature,
+      instructions=inst_bytes,
+      scoring_mode=question.scoring_mode,
+      normalize_prior=question.normalize_prior,
+      examples=c_examples,
+      example_counts=c_counts,
+      input_prompt=int(question.input_prompt),
+      omit_balanced_class_weights=not question.balance_class_weights,
+  )
+  return q_c, keepalive
+
+
 def _build_schema_questions_c(
     questions: Mapping[str, QuestionType],
 ) -> Tuple[ctypes.Array[_MpSchemaQuestionC], List[str], List[object]]:
@@ -222,38 +400,15 @@ def _build_schema_questions_c(
     q_arr[i].name = name_bytes
     question = questions[name]
     if isinstance(question, BooleanQuestion):
-      cond_bytes = question.condition.encode("utf-8")
-      keepalive.append(cond_bytes)
+      q_c, q_keepalive = _build_boolean_question_c(question)
+      keepalive.append(q_keepalive)
       q_arr[i].question_type = _MP_QUESTION_TYPE_BOOLEAN
-      q_arr[i].boolean_question = _MpBooleanQuestionC(
-          condition=cond_bytes,
-          threshold=question.threshold,
-          temperature=question.temperature,
-          normalize_prior=question.normalize_prior,
-      )
+      q_arr[i].boolean_question = q_c
     elif isinstance(question, ChoiceQuestion):
-      keys = list(question.criteria.keys())
-      descs = [question.criteria[k] for k in keys]
-      key_bytes = [k.encode("utf-8") for k in keys]
-      desc_bytes = [d.encode("utf-8") for d in descs]
-      c_keys = (ctypes.c_char_p * len(keys))(*key_bytes)
-      c_descs = (ctypes.c_char_p * len(descs))(*desc_bytes)
-      inst_bytes = (
-          question.instructions.encode("utf-8")
-          if question.instructions
-          else None
-      )
-      keepalive.extend([key_bytes, desc_bytes, c_keys, c_descs, inst_bytes])
+      q_c, q_keepalive = _build_choice_question_c(question)
+      keepalive.append(q_keepalive)
       q_arr[i].question_type = _MP_QUESTION_TYPE_CHOICE
-      q_arr[i].choice_question = _MpChoiceQuestionC(
-          keys=c_keys,
-          descriptions=c_descs,
-          count=len(keys),
-          temperature=question.temperature,
-          instructions=inst_bytes,
-          scoring_mode=question.scoring_mode,
-          normalize_prior=question.normalize_prior,
-      )
+      q_arr[i].choice_question = q_c
     elif isinstance(question, ScoreQuestion):
       rubric_bytes = [r.encode("utf-8") for r in question.rubric]
       c_rubric = (ctypes.c_char_p * len(question.rubric))(*rubric_bytes)
@@ -399,6 +554,13 @@ _CTYPES_SIGNATURES = (
         None,
     ),
     mediapipe_c_utils.CStatusFunction(
+        "MpDecisionMakerPrewarmBoolean",
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(_MpBooleanQuestionC),
+        ],
+    ),
+    mediapipe_c_utils.CStatusFunction(
         "MpDecisionMakerPrewarmChoice",
         [
             ctypes.c_void_p,
@@ -457,31 +619,23 @@ class DecisionMaker:
     )
     return cls(lib, handle)
 
+  def prewarm_boolean(self, question: BooleanQuestion) -> None:
+    """Prewarms a boolean question (for example, fits its examples)."""
+    if not self._handle:
+      raise RuntimeError("DecisionMaker is closed.")
+    q_c, keepalive = _build_boolean_question_c(question)
+    # pyrefly: ignore[missing-attribute]
+    self._lib.MpDecisionMakerPrewarmBoolean(self._handle, ctypes.byref(q_c))
+    del keepalive
+
   def prewarm(self, question: ChoiceQuestion) -> None:
     """Prewarms the static prompt prefix and KV cache for a choice question."""
     if not self._handle:
       raise RuntimeError("DecisionMaker is closed.")
-    keys = list(question.criteria.keys())
-    descs = [question.criteria[k] for k in keys]
-    c_keys = (ctypes.c_char_p * len(keys))(*(k.encode("utf-8") for k in keys))
-    c_descs = (ctypes.c_char_p * len(descs))(
-        *(d.encode("utf-8") for d in descs)
-    )
-    q_c = _MpChoiceQuestionC(
-        keys=c_keys,
-        descriptions=c_descs,
-        count=len(keys),
-        temperature=question.temperature,
-        instructions=(
-            question.instructions.encode("utf-8")
-            if question.instructions
-            else None
-        ),
-        scoring_mode=question.scoring_mode,
-        normalize_prior=question.normalize_prior,
-    )
+    q_c, keepalive = _build_choice_question_c(question)
     # pyrefly: ignore[missing-attribute]
     self._lib.MpDecisionMakerPrewarmChoice(self._handle, ctypes.byref(q_c))
+    del keepalive
 
   def prewarm_choice(self, question: ChoiceQuestion) -> None:
     """Deprecated alias for `prewarm`."""
@@ -574,12 +728,7 @@ class DecisionMaker:
     if not self._handle:
       raise RuntimeError("DecisionMaker is closed.")
 
-    q_c = _MpBooleanQuestionC(
-        condition=question.condition.encode("utf-8"),
-        threshold=question.threshold,
-        temperature=question.temperature,
-        normalize_prior=question.normalize_prior,
-    )
+    q_c, keepalive = _build_boolean_question_c(question)
     res_c = _MpBooleanResultC()
     # pyrefly: ignore[missing-attribute]
     self._lib.MpDecisionMakerEvaluateBoolean(
@@ -588,6 +737,7 @@ class DecisionMaker:
         ctypes.byref(q_c),
         ctypes.byref(res_c),
     )
+    del keepalive
 
     return BooleanResult(
         value=res_c.value,
@@ -602,27 +752,7 @@ class DecisionMaker:
     if not self._handle:
       raise RuntimeError("DecisionMaker is closed.")
 
-    keys = list(question.criteria.keys())
-    descs = [question.criteria[k] for k in keys]
-
-    c_keys = (ctypes.c_char_p * len(keys))(*(k.encode("utf-8") for k in keys))
-    c_descs = (ctypes.c_char_p * len(descs))(
-        *(d.encode("utf-8") for d in descs)
-    )
-
-    q_c = _MpChoiceQuestionC(
-        keys=c_keys,
-        descriptions=c_descs,
-        count=len(keys),
-        temperature=question.temperature,
-        instructions=(
-            question.instructions.encode("utf-8")
-            if question.instructions
-            else None
-        ),
-        scoring_mode=question.scoring_mode,
-        normalize_prior=question.normalize_prior,
-    )
+    q_c, keepalive = _build_choice_question_c(question)
     res_c = _MpChoiceResultC()
 
     # pyrefly: ignore[missing-attribute]
@@ -632,6 +762,7 @@ class DecisionMaker:
         ctypes.byref(q_c),
         ctypes.byref(res_c),
     )
+    del keepalive
 
     try:
       probs = {}
@@ -716,12 +847,7 @@ class DecisionMaker:
 
     str_texts = [t.text if isinstance(t, DecisionContext) else t for t in texts]
     c_texts = (ctypes.c_char_p * n)(*(t.encode("utf-8") for t in str_texts))
-    q_c = _MpBooleanQuestionC(
-        condition=question.condition.encode("utf-8"),
-        threshold=question.threshold,
-        temperature=question.temperature,
-        normalize_prior=question.normalize_prior,
-    )
+    q_c, keepalive = _build_boolean_question_c(question)
     res_arr = (_MpBooleanResultC * n)()
     prefix_c = shared_prefix.encode("utf-8") if shared_prefix else None
 
@@ -734,6 +860,7 @@ class DecisionMaker:
         ctypes.byref(q_c),
         res_arr,
     )
+    del keepalive
     return [
         BooleanResult(
             value=res_arr[i].value,
@@ -758,26 +885,7 @@ class DecisionMaker:
 
     str_texts = [t.text if isinstance(t, DecisionContext) else t for t in texts]
     c_texts = (ctypes.c_char_p * n)(*(t.encode("utf-8") for t in str_texts))
-    keys = list(question.criteria.keys())
-    descs = [question.criteria[k] for k in keys]
-    c_keys = (ctypes.c_char_p * len(keys))(*(k.encode("utf-8") for k in keys))
-    c_descs = (ctypes.c_char_p * len(descs))(
-        *(d.encode("utf-8") for d in descs)
-    )
-
-    q_c = _MpChoiceQuestionC(
-        keys=c_keys,
-        descriptions=c_descs,
-        count=len(keys),
-        temperature=question.temperature,
-        instructions=(
-            question.instructions.encode("utf-8")
-            if question.instructions
-            else None
-        ),
-        scoring_mode=question.scoring_mode,
-        normalize_prior=question.normalize_prior,
-    )
+    q_c, keepalive = _build_choice_question_c(question)
     res_arr = (_MpChoiceResultC * n)()
     prefix_c = shared_prefix.encode("utf-8") if shared_prefix else None
 
@@ -790,6 +898,7 @@ class DecisionMaker:
         ctypes.byref(q_c),
         res_arr,
     )
+    del keepalive
 
     try:
       results = []
