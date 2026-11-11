@@ -45,13 +45,16 @@ cc_library(
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/types:span",
+        "@litert//litert/cc:litert_api_types",
         "@litert//litert/cc:litert_element_type",
         "@litert//litert/cc:litert_environment_api",
         "@litert//litert/cc:litert_environment_options",
+        "@litert//litert/cc:litert_layout",
         "@litert//litert/cc:litert_macros",
         "@litert//litert/cc:litert_model_types",
         "@litert//litert/cc:litert_ranked_tensor_type",
         "@litert//litert/cc:litert_tensor_buffer",
+        "@litert//litert/cc:litert_tensor_buffer_types",
     ],
 )
 
@@ -64,6 +67,7 @@ cc_test(
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:gtest_main",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:string_view",
         "@litert//litert/c:litert_environment",
         "@litert//litert/c:litert_tensor_buffer",
         "@litert//litert/c:litert_tensor_buffer_types",
@@ -71,6 +75,8 @@ cc_test(
         "@litert//litert/cc:litert_environment",
         "@litert//litert/cc:litert_layout",
         "@litert//litert/cc:litert_ranked_tensor_type",
+        "@litert//litert/cc:litert_string_util",
+        "@litert//litert/cc:litert_tensor_buffer",
     ],
 )
 

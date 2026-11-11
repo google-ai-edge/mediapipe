@@ -890,6 +890,7 @@ cc_library(
         "@litert//litert/cc:litert_buffer_ref",
         "@litert//litert/cc:litert_common",
         "@litert//litert/cc:litert_compiled_model",
+        "@litert//litert/cc:litert_element_type",
         "@litert//litert/cc:litert_environment",
         "@litert//litert/cc:litert_environment_options",
         "@litert//litert/cc:litert_layout",

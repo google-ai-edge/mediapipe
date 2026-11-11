@@ -15,7 +15,9 @@
 #include "mediapipe/calculators/tensor/litert/litert_utils.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -27,13 +29,16 @@
 #include "absl/strings/str_join.h"                 // from @com_google_absl
 #include "absl/strings/string_view.h"              // from @com_google_absl
 #include "absl/types/span.h"                       // from @com_google_absl
+#include "litert/cc/litert_api_types.h"            // from @litert
 #include "litert/cc/litert_element_type.h"         // from @litert
 #include "litert/cc/litert_environment.h"          // from @litert
 #include "litert/cc/litert_environment_options.h"  // from @litert
+#include "litert/cc/litert_layout.h"               // from @litert
 #include "litert/cc/litert_macros.h"               // from @litert
 #include "litert/cc/litert_model_types.h"          // from @litert
 #include "litert/cc/litert_ranked_tensor_type.h"   // from @litert
 #include "litert/cc/litert_tensor_buffer.h"        // from @litert
+#include "litert/cc/litert_tensor_buffer_types.h"  // from @litert
 #include "mediapipe/calculators/tensor/litert/litert_service.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/memory_manager.h"
@@ -321,6 +326,54 @@ absl::Status CopyLiteRtBufferToMpTensor(
   void* mp_tensor_data = mp_tensor_view.buffer<void>();
   std::memcpy(mp_tensor_data, lock_and_addr.second, tensor_size_bytes);
   return absl::OkStatus();
+}
+
+absl::StatusOr<litert::TensorBuffer> CreateStringInputTensorBuffer(
+    const litert::Environment& environment,
+    const litert::RankedTensorType& model_tensor_type,
+    const Tensor& mp_tensor) {
+  RET_CHECK(model_tensor_type.ElementType() == litert::ElementType::TfString)
+          .SetCode(absl::StatusCode::kInvalidArgument)
+      << "LiteRt input tensor type is not TfString.";
+  RET_CHECK(mp_tensor.element_type() == Tensor::ElementType::kChar)
+          .SetCode(absl::StatusCode::kInvalidArgument)
+      << "LiteRt input tensor type is TfString while MediaPipe tensor type is "
+         "not kChar.";
+  std::string str;
+  if (mp_tensor.bytes() > 0) {
+    auto read_view = mp_tensor.GetCpuReadView();
+    const char* buffer = read_view.buffer<char>();
+    RET_CHECK(buffer) << "Char-typed input tensor buffer is null.";
+    str.assign(buffer, mp_tensor.shape().num_elements());
+  }
+  // The buffer holds exactly one string. Use the model's layout unless it is
+  // dynamic, in which case use [1].
+  const absl::Span<const int> model_dims =
+      model_tensor_type.Layout().Dimensions();
+  const litert::RankedTensorType tensor_type =
+      absl::c_linear_search(model_dims, -1)
+          ? litert::RankedTensorType(litert::ElementType::TfString,
+                                     litert::Layout(litert::Dimensions({1})))
+          : model_tensor_type;
+  // TFLite string tensor layout for one string: int32 string count, int32
+  // offsets of the string start and end, then the string bytes. Written here
+  // rather than through litert::util::CreateTensorBufferFromStrings, whose
+  // target links the static LiteRT runtime (litert_environment) that
+  // litert_utils users built against litert_environment_api must not depend on.
+  constexpr int32_t kHeaderSize = 3 * sizeof(int32_t);
+  const int32_t header[3] = {1, kHeaderSize,
+                             kHeaderSize + static_cast<int32_t>(str.size())};
+  std::vector<uint8_t> serialized(kHeaderSize + str.size());
+  std::memcpy(serialized.data(), header, kHeaderSize);
+  std::memcpy(serialized.data() + kHeaderSize, str.data(), str.size());
+  LITERT_ASSIGN_OR_RETURN(
+      litert::TensorBuffer buffer,
+      litert::TensorBuffer::CreateManaged(environment,
+                                          litert::TensorBufferType::kHostMemory,
+                                          tensor_type, serialized.size()));
+  LITERT_RETURN_IF_ERROR(
+      buffer.Write<uint8_t>(litert::Span<const uint8_t>(serialized)));
+  return buffer;
 }
 
 absl::StatusOr<litert::Environment> CreateLiteRtEnvironment(

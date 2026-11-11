@@ -35,6 +35,7 @@
 #include "litert/cc/litert_buffer_ref.h"           // from @litert
 #include "litert/cc/litert_common.h"               // from @litert
 #include "litert/cc/litert_compiled_model.h"       // from @litert
+#include "litert/cc/litert_element_type.h"         // from @litert
 #include "litert/cc/litert_environment.h"          // from @litert
 #include "litert/cc/litert_environment_options.h"  // from @litert
 #include "litert/cc/litert_layout.h"               // from @litert
@@ -1560,13 +1561,20 @@ absl::Status InferenceRunnerLiteRt::PrepareInputBuffers(
     int i = info.idx;
     const Tensor* tensor_to_use = info.tensor;
 
+    LITERT_ASSIGN_OR_RETURN(const litert::RankedTensorType model_tensor_type,
+                            signature.InputTensorType(i));
+    if (model_tensor_type.ElementType() == litert::ElementType::TfString) {
+      ABSL_ASSIGN_OR_RETURN(
+          litert_inputs[i],
+          CreateStringInputTensorBuffer(*environment_, model_tensor_type,
+                                        *tensor_to_use));
+      continue;
+    }
+
     ABSL_ASSIGN_OR_RETURN(
         litert::TensorBufferType buffer_type,
         ChooseBestBufferType(cached_input_buffer_requirements_[i],
                              tensor_to_use));
-
-    LITERT_ASSIGN_OR_RETURN(const litert::RankedTensorType model_tensor_type,
-                            signature.InputTensorType(i));
 
 #if MEDIAPIPE_METAL_ENABLED
     if (buffer_type == litert::TensorBufferType::kMetalBufferPacked) {

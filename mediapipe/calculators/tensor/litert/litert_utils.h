@@ -87,6 +87,14 @@ absl::Status CopyMpTensorToLiteRtBuffer(const Tensor& mp_tensor,
 absl::Status CopyLiteRtBufferToMpTensor(
     const litert::TensorBuffer& litert_buffer, Tensor& mp_tensor);
 
+// Creates a host memory TfString input buffer holding the contents of a kChar
+// MP tensor as a single string, like the legacy TFLite runners do (see
+// CopyTensorToTfLiteTensor<char>). An empty MP tensor (shape [0]) becomes one
+// empty string.
+absl::StatusOr<litert::TensorBuffer> CreateStringInputTensorBuffer(
+    const litert::Environment& environment,
+    const litert::RankedTensorType& model_tensor_type, const Tensor& mp_tensor);
+
 // Creates a LiteRT environment that uses the LiteRT handles provided by the
 // system, e.g. those acquired through the Google Play Services API.
 //
