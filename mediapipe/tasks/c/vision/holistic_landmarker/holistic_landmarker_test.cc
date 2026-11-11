@@ -18,11 +18,10 @@ limitations under the License.
 #include <cstdint>
 #include <string>
 
-#include "absl/flags/flag.h"                        // from @com_google_absl
-#include "absl/strings/string_view.h"               // from @com_google_absl
-#include "absl/synchronization/blocking_counter.h"  // from @com_google_absl
-#include "absl/time/clock.h"                        // from @com_google_absl
-#include "absl/time/time.h"                         // from @com_google_absl
+#include "absl/flags/flag.h"           // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
+#include "absl/time/clock.h"           // from @com_google_absl
+#include "absl/time/time.h"            // from @com_google_absl
 #include "file/base/helpers.h"
 #include "file/base/options.h"
 #include "mediapipe/framework/deps/file_path.h"
@@ -38,6 +37,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/vision/holistic_landmarker/holistic_landmarker_result.h"
 #include "mediapipe/tasks/cc/vision/holistic_landmarker/proto/holistic_result.pb.h"
 #include "testing/base/public/gmock.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 using ::file::Defaults;
@@ -253,7 +253,6 @@ TEST(HolisticLandmarkerTest, ReturnsEmptyResultsWithHighThresholds) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static absl::BlockingCounter* blocking_counter;
   static void LiveStreamCallback(MpStatus status_code,
                                  const MpHolisticLandmarkerResult* result,
                                  MpImagePtr image, int64_t timestamp) {
@@ -263,15 +262,10 @@ struct LiveStreamModeCallback {
     AssertHolisticLandmarkerResult(result, expected_result);
     EXPECT_GT(timestamp, last_timestamp);
     ++last_timestamp;
-
-    if (blocking_counter) {
-      blocking_counter->DecrementCount();
-    }
   }
 };
 
 int64_t LiveStreamModeCallback::last_timestamp = -1;
-absl::BlockingCounter* LiveStreamModeCallback::blocking_counter = nullptr;
 
 TEST(HolisticLandmarkerTest, LiveStreamModeSucceeds) {
   const auto image = GetImage(GetFullPath(kTestImageFile));
@@ -291,9 +285,6 @@ TEST(HolisticLandmarkerTest, LiveStreamModeSucceeds) {
   ASSERT_EQ(status, kMpOk);
   ASSERT_EQ(error_msg, nullptr);
 
-  absl::BlockingCounter counter(kIterations);
-  LiveStreamModeCallback::blocking_counter = &counter;
-
   for (int i = 0; i < kIterations; ++i) {
     ASSERT_EQ(MpHolisticLandmarkerDetectAsync(
                   landmarker_ptr, image.get(),
@@ -303,10 +294,6 @@ TEST(HolisticLandmarkerTest, LiveStreamModeSucceeds) {
     // Short sleep so that MediaPipe does not drop frames.
     absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
-
-  // Wait for all callbacks to be invoked.
-  counter.Wait();
-  LiveStreamModeCallback::blocking_counter = nullptr;
 
   EXPECT_EQ(MpHolisticLandmarkerClose(landmarker_ptr, /* error_msg= */ nullptr),
             kMpOk);
