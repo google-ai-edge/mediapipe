@@ -30,6 +30,14 @@ export declare interface DecisionContextInput {
 }
 
 /**
+ * How examples and inputs are embedded, for questions with examples (ignored
+ * otherwise). `'CLASSIFICATION'` (the default) embeds
+ * `task: classification | query: <text>` and suits sentences; `'NONE'` embeds
+ * the raw text and suits single words and short phrases.
+ */
+export type InputPrompt = 'CLASSIFICATION' | 'NONE';
+
+/**
  * A single candidate option for binary, categorical, or ordinal questions.
  */
 export declare interface ClassifierOption {
@@ -41,6 +49,12 @@ export declare interface ClassifierOption {
   imageBytes?: Uint8Array;
   /** Optional mono 16kHz PCM audio samples in [-1.0, 1.0] for multimodal options. */
   audioSamples?: Float32Array;
+  /**
+   * Optional example inputs that belong to this option (choice questions with
+   * an embedding model). If any option has examples, every option needs at
+   * least one.
+   */
+  examples?: string[];
 }
 
 /**
@@ -75,6 +89,19 @@ export declare interface ClassifierQuestion {
   temperature?: number;
   /** Whether to normalize against the empty-context ("[None]") prior. */
   normalizePrior?: boolean;
+  /**
+   * Example inputs for which a binary question is true / false. With both,
+   * embedding models fit a classifier on them and `prompt` may be empty.
+   */
+  positiveExamples?: string[];
+  negativeExamples?: string[];
+  /** How examples and inputs are embedded. Only used with examples. */
+  inputPrompt?: InputPrompt;
+  /**
+   * With option examples, weights each option by N / (K * N_c), so that
+   * options with fewer examples aren't penalized. Defaults to true.
+   */
+  balanceClassWeights?: boolean;
 }
 
 /**
@@ -115,8 +142,19 @@ export declare interface ClassifierEvaluateOptions {
  * Question configuration for a Boolean Predicate evaluation.
  */
 export declare interface BooleanQuestion {
-  /** The natural language boolean condition to evaluate. */
-  condition: string;
+  /**
+   * The natural language boolean condition to evaluate. Optional when both
+   * `positiveExamples` and `negativeExamples` are given.
+   */
+  condition?: string;
+  /**
+   * Example inputs for which the answer is true / false. With both, embedding
+   * models fit a classifier on them.
+   */
+  positiveExamples?: string[];
+  negativeExamples?: string[];
+  /** How examples and inputs are embedded. Only used with examples. */
+  inputPrompt?: InputPrompt;
   /** Probability threshold for true. Defaults to 0.5. */
   threshold?: number;
   /**
@@ -149,6 +187,19 @@ export declare interface BooleanQuestion {
 export declare interface ChoiceQuestion {
   /** Map of choice keys to descriptive phrases or criteria. */
   criteria?: Record<string, string>;
+  /**
+   * Map of choice keys to example inputs (embedding models). If any choice
+   * has examples, every choice needs at least one; the keys must match
+   * `criteria` / `options` when those are given, and can replace them.
+   */
+  examples?: Record<string, string[]>;
+  /** How examples and inputs are embedded. Only used with examples. */
+  inputPrompt?: InputPrompt;
+  /**
+   * With examples, weights each choice by N / (K * N_c), so that choices with
+   * fewer examples aren't penalized. Defaults to true.
+   */
+  balanceClassWeights?: boolean;
   /**
    * Ordered list of candidate options with `{ label, description }`.
    * Can be provided instead of or alongside `criteria`.

@@ -24,6 +24,18 @@ import {
   ScoreResult,
 } from './decision_maker';
 
+// Example arguments that the Wasm functions get for questions without examples.
+const NO_BOOLEAN_EXAMPLES = {
+  positiveExamples: [],
+  negativeExamples: [],
+  inputPrompt: 'CLASSIFICATION',
+};
+const NO_CHOICE_EXAMPLES = {
+  examples: {},
+  inputPrompt: 'CLASSIFICATION',
+  balanceClassWeights: true,
+};
+
 interface DecisionMakerInternals {
   logger?: TaskLogger;
 }
@@ -234,6 +246,7 @@ describe('DecisionMaker', () => {
       0.6,
       0.8,
       false,
+      NO_BOOLEAN_EXAMPLES,
     );
     expect(result.value).toBeTrue();
     expect(result.probabilityTrue).toBe(0.88);
@@ -256,6 +269,7 @@ describe('DecisionMaker', () => {
       0.7,
       '',
       false,
+      NO_CHOICE_EXAMPLES,
     );
     expect(result.selectedKey).toBe('device');
     expect(result.probabilities['device']).toBe(0.85);
@@ -285,6 +299,7 @@ describe('DecisionMaker', () => {
       0,
       'Categorize support ticket',
       true,
+      NO_CHOICE_EXAMPLES,
     );
 
     await decisionMaker.evaluateBoolean(
@@ -302,6 +317,7 @@ describe('DecisionMaker', () => {
       0.5,
       0,
       true,
+      NO_BOOLEAN_EXAMPLES,
     );
 
     mockModule['evaluateChoice'].and.returnValue(
@@ -366,6 +382,7 @@ describe('DecisionMaker', () => {
       0,
       'Numeric options',
       true,
+      NO_CHOICE_EXAMPLES,
     );
 
     mockModule['prewarmSchema'] = jasmine
@@ -478,6 +495,7 @@ describe('DecisionMaker', () => {
       'Route query',
       'Shared System Context',
       false,
+      NO_CHOICE_EXAMPLES,
     );
     expect(batchResults.length).toBe(2);
     expect(batchResults[0].selectedKey).toBe('device');
@@ -555,6 +573,7 @@ describe('DecisionMaker', () => {
         audioSamples: undefined,
       },
       false,
+      NO_BOOLEAN_EXAMPLES,
     );
     expect(boolResult.value).toBeTrue();
 
@@ -588,6 +607,7 @@ describe('DecisionMaker', () => {
         audioSamples: sampleAudio,
       },
       false,
+      NO_CHOICE_EXAMPLES,
     );
     expect(choiceResult.selectedKey).toBe('device');
 
@@ -1023,5 +1043,245 @@ describe('DecisionMaker', () => {
     expect(scoreResults.length).toBe(2);
     expect(mockModule['evaluateScoreBatch']).not.toHaveBeenCalled();
     expect(mockModule['evaluateContextScore']).toHaveBeenCalledTimes(2);
+  });
+
+  it('passes choice examples to Wasm', async () => {
+    const examples = {
+      'person_name': ['Kavita Ramachandran', 'Marek Kowalczyk'],
+      'acronym': ['GEMM'],
+    };
+    await decisionMaker.evaluateChoice('VAD', {
+      examples,
+      inputPrompt: 'NONE',
+      balanceClassWeights: false,
+    });
+    expect(mockModule['evaluateChoice']).toHaveBeenCalledWith(
+      54321,
+      'VAD',
+      {'person_name': '', 'acronym': ''},
+      0,
+      '',
+      false,
+      {examples, inputPrompt: 'NONE', balanceClassWeights: false},
+    );
+
+    await decisionMaker.evaluateChoice('VAD', {
+      options: [
+        {label: 'a', description: 'Option A', examples: ['x1', 'x2']},
+        {label: 'b', examples: ['y1']},
+      ],
+    });
+    expect(mockModule['evaluateChoice']).toHaveBeenCalledWith(
+      54321,
+      'VAD',
+      {'a': 'Option A', 'b': ''},
+      0,
+      '',
+      false,
+      {
+        examples: {'a': ['x1', 'x2'], 'b': ['y1']},
+        inputPrompt: 'CLASSIFICATION',
+        balanceClassWeights: true,
+      },
+    );
+
+    await decisionMaker.evaluateChoiceBatch(['GEMM', 'Ana'], {examples});
+    expect(mockModule['evaluateChoiceBatch']).toHaveBeenCalledWith(
+      54321,
+      ['GEMM', 'Ana'],
+      {'person_name': '', 'acronym': ''},
+      0,
+      '',
+      '',
+      false,
+      {examples, inputPrompt: 'CLASSIFICATION', balanceClassWeights: true},
+    );
+
+    mockModule['prewarmChoice'] = jasmine
+      .createSpy('prewarmChoice')
+      .and.resolveTo(true);
+    await decisionMaker.prewarmChoice({examples, inputPrompt: 'NONE'});
+    expect(mockModule['prewarmChoice']).toHaveBeenCalledWith(
+      54321,
+      {'person_name': '', 'acronym': ''},
+      [],
+      0,
+      '',
+      false,
+      {examples, inputPrompt: 'NONE', balanceClassWeights: true},
+    );
+  });
+
+  it('rejects choice questions that mix choices with and without examples', async () => {
+    expect(() =>
+      decisionMaker.evaluateChoice('x', {
+        criteria: {'a': 'A', 'b': 'B'},
+        examples: {'a': ['x']},
+      }),
+    ).toThrowError(/same choices/);
+    expect(() =>
+      decisionMaker.evaluateChoice('x', {examples: {'a': ['x'], 'b': []}}),
+    ).toThrowError(/Choice 'b' needs at least one example/);
+    expect(() =>
+      decisionMaker.evaluateChoice('x', {examples: {'a': ['x']}}),
+    ).toThrowError(/at least 2 choices/);
+    expect(() =>
+      decisionMaker.evaluateChoice('x', {
+        options: [{label: 'a', examples: ['x']}, {label: 'b'}],
+      }),
+    ).toThrowError(/Choice 'b' needs at least one example/);
+    await expectAsync(
+      decisionMaker.evaluateChoiceBatch(['x'], {examples: {'a': ['x']}}),
+    ).toBeRejectedWithError(/at least 2 choices/);
+    expect(() =>
+      decisionMaker.evaluateChoice('x', {examples: {'a': [], 'b': []}}),
+    ).toThrowError(/at least 1 choice/);
+    await expectAsync(
+      decisionMaker.evaluateChoiceBatch(['x'], {examples: {'a': [], 'b': []}}),
+    ).toBeRejectedWithError(/at least 1 choice/);
+    expect(mockModule['evaluateChoice']).not.toHaveBeenCalled();
+    expect(mockModule['evaluateChoiceBatch']).not.toHaveBeenCalled();
+  });
+
+  it('passes boolean examples to Wasm and checks both lists are given', async () => {
+    const question = {
+      positiveExamples: ['Zurich', 'Kubernetes'],
+      negativeExamples: ['table', 'running'],
+      inputPrompt: 'NONE' as const,
+    };
+    await decisionMaker.evaluateBoolean('Geneva', question);
+    expect(mockModule['evaluateBoolean']).toHaveBeenCalledWith(
+      54321,
+      'Geneva',
+      '',
+      0.5,
+      0,
+      false,
+      question,
+    );
+
+    // With examples, custom options don't turn the question into a choice.
+    await decisionMaker.evaluateBoolean('Geneva', {
+      ...question,
+      condition: 'The input is a proper noun.',
+      options: [
+        {label: 'false', description: 'Common word'},
+        {label: 'true', description: 'Proper noun'},
+      ],
+    });
+    expect(mockModule['evaluateChoice']).not.toHaveBeenCalled();
+    expect(mockModule['evaluateBoolean']).toHaveBeenCalledTimes(2);
+
+    await decisionMaker.evaluateBooleanBatch(['Bern'], question);
+    expect(mockModule['evaluateBooleanBatch']).toHaveBeenCalledWith(
+      54321,
+      ['Bern'],
+      '',
+      0.5,
+      0,
+      '',
+      false,
+      question,
+    );
+
+    expect(() =>
+      decisionMaker.evaluateBoolean('Geneva', {positiveExamples: ['Zurich']}),
+    ).toThrowError(/both positiveExamples and negativeExamples/);
+
+    // With a context and no condition, the condition is the context alone, as
+    // in the schema path that prewarmBoolean uses.
+    await decisionMaker.evaluateBoolean('Geneva', {
+      ...question,
+      context: 'Word types.',
+    });
+    expect(mockModule['evaluateBoolean']).toHaveBeenCalledWith(
+      54321,
+      'Geneva',
+      'Word types.',
+      0.5,
+      0,
+      false,
+      question,
+    );
+    await decisionMaker.evaluateBooleanBatch(['Bern'], {
+      ...question,
+      context: 'Word types.',
+    });
+    expect(mockModule['evaluateBooleanBatch']).toHaveBeenCalledWith(
+      54321,
+      ['Bern'],
+      'Word types.',
+      0.5,
+      0,
+      '',
+      false,
+      question,
+    );
+  });
+
+  it('ignores inherited properties as choice keys', async () => {
+    const criteria = {'constructor': 'A', 'toString': 'B'};
+    await decisionMaker.evaluateChoice('x', {criteria});
+    expect(mockModule['evaluateChoice']).toHaveBeenCalledWith(
+      54321,
+      'x',
+      criteria,
+      0,
+      '',
+      false,
+      {examples: {}, inputPrompt: 'CLASSIFICATION', balanceClassWeights: true},
+    );
+    // `toString` is inherited by `examples`, not one of its own keys.
+    expect(() =>
+      decisionMaker.evaluateChoice('x', {
+        criteria,
+        examples: {'constructor': ['a'], 'other': ['b']},
+      }),
+    ).toThrowError(/same choices/);
+  });
+
+  it('checks and forwards examples in schemas', async () => {
+    const questions = [
+      {
+        id: 'word_type',
+        type: 'choice' as const,
+        prompt: '',
+        options: [
+          {label: 'name', examples: ['Marek']},
+          {label: 'acronym', examples: ['GEMM']},
+        ],
+        inputPrompt: 'NONE' as const,
+      },
+      {
+        id: 'is_term',
+        type: 'boolean' as const,
+        prompt: '',
+        positiveExamples: ['Zurich'],
+        negativeExamples: ['table'],
+      },
+    ];
+    await decisionMaker.evaluate('VAD', {questions});
+    expect(mockModule['evaluateSchema']).toHaveBeenCalledWith(
+      54321,
+      'VAD',
+      '',
+      questions,
+    );
+
+    await expectAsync(
+      decisionMaker.evaluate('VAD', {
+        questions: [
+          {
+            id: 'mixed',
+            type: 'choice',
+            prompt: '',
+            options: [{label: 'name', examples: ['Marek']}, {label: 'other'}],
+          },
+        ],
+      }),
+    ).toBeRejectedWithError(/Choice 'other' needs at least one example/);
+    await expectAsync(
+      decisionMaker.prewarmBoolean({positiveExamples: ['Zurich']}),
+    ).toBeRejectedWithError(/both positiveExamples and negativeExamples/);
   });
 });

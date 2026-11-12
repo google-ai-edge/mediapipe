@@ -33,6 +33,7 @@ import type {
   ClassifierSchema,
   DecisionContextInput,
   DecisionMakerOptions,
+  InputPrompt,
   ScoreQuestion,
 } from './decision_maker_options';
 import type {
@@ -60,6 +61,7 @@ export type {
   ClassifierSchema,
   DecisionContextInput,
   DecisionMakerOptions,
+  InputPrompt,
   ScoreQuestion,
   ScoreResult,
 };
@@ -109,6 +111,7 @@ declare interface DecisionMakerWasmModule {
     threshold: number,
     temperature: number,
     normalizePrior: boolean,
+    examples: WasmBooleanExamples,
   ): Promise<BooleanResult>;
 
   evaluateContextBoolean(
@@ -119,6 +122,7 @@ declare interface DecisionMakerWasmModule {
     temperature: number,
     media: {imageBytes?: Uint8Array; audioSamples?: Float32Array},
     normalizePrior: boolean,
+    examples: WasmBooleanExamples,
   ): Promise<BooleanResult>;
 
   evaluateChoice(
@@ -128,6 +132,7 @@ declare interface DecisionMakerWasmModule {
     temperature: number,
     instructions: string,
     normalizePrior: boolean,
+    examples: WasmChoiceExamples,
   ): Promise<RawWasmChoiceResult>;
 
   evaluateContextChoice(
@@ -139,6 +144,7 @@ declare interface DecisionMakerWasmModule {
     instructions: string,
     media: {imageBytes?: Uint8Array; audioSamples?: Float32Array},
     normalizePrior: boolean,
+    examples: WasmChoiceExamples,
   ): Promise<RawWasmChoiceResult>;
 
   evaluateScore(
@@ -166,6 +172,7 @@ declare interface DecisionMakerWasmModule {
     temperature: number,
     sharedPrefix: string,
     normalizePrior: boolean,
+    examples: WasmBooleanExamples,
   ): Promise<BooleanResult[]>;
 
   evaluateChoiceBatch?(
@@ -176,6 +183,7 @@ declare interface DecisionMakerWasmModule {
     instructions: string,
     sharedPrefix: string,
     normalizePrior: boolean,
+    examples: WasmChoiceExamples,
   ): Promise<RawWasmChoiceResult[]>;
 
   evaluateScoreBatch?(
@@ -194,6 +202,7 @@ declare interface DecisionMakerWasmModule {
     temperature: number,
     instructions: string,
     normalizePrior: boolean,
+    examples: WasmChoiceExamples,
   ): Promise<boolean>;
 
   prewarmSchema?(
@@ -216,6 +225,138 @@ declare interface DecisionMakerWasmModule {
     questions: ClassifierQuestion[],
     media: {imageBytes?: Uint8Array; audioSamples?: Float32Array},
   ): Promise<ClassifierResult>;
+}
+
+/** Example fields passed to the Wasm Boolean functions. */
+declare interface WasmBooleanExamples {
+  positiveExamples: string[];
+  negativeExamples: string[];
+  inputPrompt: InputPrompt;
+}
+
+/** Example fields passed to the Wasm Choice functions. */
+declare interface WasmChoiceExamples {
+  /** Choice key to examples; empty when the question has no examples. */
+  examples: Record<string, string[]>;
+  inputPrompt: InputPrompt;
+  balanceClassWeights: boolean;
+}
+
+function hasBooleanExamples(question: {
+  positiveExamples?: string[];
+  negativeExamples?: string[];
+}): boolean {
+  return (
+    (question.positiveExamples?.length ?? 0) > 0 ||
+    (question.negativeExamples?.length ?? 0) > 0
+  );
+}
+
+/**
+ * Checks the example lists of a Boolean question (both or neither) and returns
+ * them for Wasm.
+ */
+function resolveBooleanExamples(question: {
+  positiveExamples?: string[];
+  negativeExamples?: string[];
+  inputPrompt?: InputPrompt;
+}): WasmBooleanExamples {
+  const positiveExamples = question.positiveExamples ?? [];
+  const negativeExamples = question.negativeExamples ?? [];
+  if (positiveExamples.length > 0 !== negativeExamples.length > 0) {
+    throw new Error(
+      'A BooleanQuestion with examples needs both positiveExamples and ' +
+        'negativeExamples.',
+    );
+  }
+  return {
+    positiveExamples,
+    negativeExamples,
+    inputPrompt: question.inputPrompt ?? 'CLASSIFICATION',
+  };
+}
+
+/** Whether `record` has `key` as an own (not inherited) property. */
+function hasOwn(record: object, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(record, key);
+}
+
+/** Returns `record[key]` if `record` has `key` as an own property. */
+function getOwn<T>(record: Record<string, T>, key: string): T | undefined {
+  return hasOwn(record, key) ? record[key] : undefined;
+}
+
+/**
+ * Checks the all-or-nothing rule for choice examples: either no choice has
+ * examples, or there are at least 2 choices and every one has at least one.
+ */
+function validateChoiceExamples(
+  keys: string[],
+  examples: Record<string, string[] | undefined>,
+): void {
+  const exampleKeys = Object.keys(examples);
+  if (!exampleKeys.some((k) => (examples[k]?.length ?? 0) > 0)) return;
+  if (keys.length < 2) {
+    throw new Error('A ChoiceQuestion with examples needs at least 2 choices.');
+  }
+  if (
+    exampleKeys.length !== keys.length ||
+    !keys.every((k) => hasOwn(examples, k))
+  ) {
+    throw new Error('examples and criteria must list the same choices.');
+  }
+  for (const k of keys) {
+    if ((getOwn(examples, k)?.length ?? 0) === 0) {
+      throw new Error(`Choice '${k}' needs at least one example.`);
+    }
+  }
+}
+
+/**
+ * Collects a choice question's examples (from `examples` and from
+ * `options[].examples`), checks them, and returns them for Wasm.
+ */
+function resolveChoiceExamples(
+  question: ChoiceQuestion,
+  criteria: Record<string, string>,
+): WasmChoiceExamples {
+  const keys = Object.keys(criteria);
+  if (keys.length === 0) {
+    throw new Error('ChoiceQuestion must contain at least 1 choice.');
+  }
+  const examples: Record<string, string[]> = {};
+  const options = question.options ?? [];
+  if (options.some((o) => (o.examples?.length ?? 0) > 0)) {
+    for (const opt of options) examples[opt.label] = opt.examples ?? [];
+  }
+  for (const [k, v] of Object.entries(question.examples ?? {})) {
+    examples[k] = v;
+  }
+  validateChoiceExamples(keys, examples);
+  return {
+    examples,
+    inputPrompt: question.inputPrompt ?? 'CLASSIFICATION',
+    balanceClassWeights: question.balanceClassWeights ?? true,
+  };
+}
+
+/** Checks the example rules of every question in a schema. */
+function validateSchemaExamples(questions: ClassifierQuestion[]): void {
+  for (const q of questions) {
+    if (q.type === 'binary' || q.type === 'boolean') {
+      resolveBooleanExamples(q);
+    } else if (q.type === 'categorical' || q.type === 'choice') {
+      const options = q.options ?? [];
+      const examples: Record<string, string[] | undefined> = {};
+      if (options.some((o) => (o.examples?.length ?? 0) > 0)) {
+        for (const o of options) examples[o.label] = o.examples;
+      }
+      validateChoiceExamples(
+        options.map((o) => o.label),
+        examples,
+      );
+    }
+  }
 }
 
 function hasQuestionMedia(question?: {
@@ -267,6 +408,16 @@ function resolveChoiceCriteria(
   if (question.options) {
     for (const opt of question.options) {
       criteria[opt.label] = opt.description ?? '';
+    }
+  }
+  // A question with only examples takes its choice keys from them.
+  const examples = question.examples;
+  if (Object.keys(criteria).length === 0 && examples) {
+    const exampleKeys = Object.keys(examples);
+    if (exampleKeys.some((k) => (getOwn(examples, k)?.length ?? 0) > 0)) {
+      for (const k of exampleKeys) {
+        criteria[k] = '';
+      }
     }
   }
   return criteria;
@@ -586,6 +737,7 @@ export class DecisionMaker extends TaskRunner {
     if (this.makerPtr === 0) return;
     const questions = schema.questions ?? [];
     if (questions.length === 0) return;
+    validateSchemaExamples(questions);
     const wasmModule = this.graphRunner
       .wasmModule as unknown as DecisionMakerWasmModule;
     if (typeof wasmModule.prewarmSchema === 'function') {
@@ -619,6 +771,7 @@ export class DecisionMaker extends TaskRunner {
     if (this.makerPtr === 0) return;
     const criteria = resolveChoiceCriteria(question);
     if (Object.keys(criteria).length === 0) return;
+    const examples = resolveChoiceExamples(question, criteria);
     const baseInstructions = question.instructions ?? '';
     const instructions = question.context
       ? baseInstructions
@@ -636,6 +789,7 @@ export class DecisionMaker extends TaskRunner {
           question.temperature ?? 0,
           instructions,
           question.normalizePrior ?? false,
+          examples,
         ),
       );
       return;
@@ -647,9 +801,11 @@ export class DecisionMaker extends TaskRunner {
     const options: ClassifierOption[] = Object.entries(criteria).map(
       ([label, description]) => {
         const existing = optionsByLabel.get(label);
-        return existing
+        const option = existing
           ? {...existing, label, description}
           : {label, description};
+        const choiceExamples = getOwn(examples.examples, label);
+        return choiceExamples ? {...option, examples: choiceExamples} : option;
       },
     );
     await this.prewarm({
@@ -662,6 +818,12 @@ export class DecisionMaker extends TaskRunner {
           options,
           temperature: question.temperature,
           normalizePrior: question.normalizePrior,
+          ...(question.inputPrompt !== undefined
+            ? {inputPrompt: question.inputPrompt}
+            : {}),
+          ...(question.balanceClassWeights !== undefined
+            ? {balanceClassWeights: question.balanceClassWeights}
+            : {}),
         },
       ],
     });
@@ -675,7 +837,12 @@ export class DecisionMaker extends TaskRunner {
    */
   async prewarmBoolean(question: BooleanQuestion): Promise<void> {
     if (this.makerPtr === 0) return;
-    if (question.options && question.options.length >= 2) {
+    const examples = resolveBooleanExamples(question);
+    if (
+      question.options &&
+      question.options.length >= 2 &&
+      !hasBooleanExamples(question)
+    ) {
       await this.prewarmChoice({
         options: question.options,
         instructions: question.condition,
@@ -691,10 +858,19 @@ export class DecisionMaker extends TaskRunner {
         {
           id: '__boolean__',
           type: 'boolean',
-          prompt: question.condition,
+          prompt: question.condition ?? '',
           threshold: question.threshold,
           temperature: question.temperature,
           normalizePrior: question.normalizePrior,
+          ...(hasBooleanExamples(question)
+            ? {
+                positiveExamples: examples.positiveExamples,
+                negativeExamples: examples.negativeExamples,
+              }
+            : {}),
+          ...(question.inputPrompt !== undefined
+            ? {inputPrompt: question.inputPrompt}
+            : {}),
         },
       ],
     });
@@ -1165,7 +1341,14 @@ export class DecisionMaker extends TaskRunner {
     if (this.makerPtr === 0) {
       throw new Error('Decision is already closed.');
     }
-    if (question.options && question.options.length >= 2) {
+    const examples = resolveBooleanExamples(question);
+    // With examples, custom options are ignored and the question stays a
+    // Boolean.
+    if (
+      question.options &&
+      question.options.length >= 2 &&
+      !hasBooleanExamples(question)
+    ) {
       const threshold =
         question.threshold !== undefined && question.threshold > 0
           ? question.threshold
@@ -1210,9 +1393,13 @@ export class DecisionMaker extends TaskRunner {
     }
     const wasmModule = this.graphRunner
       .wasmModule as unknown as DecisionMakerWasmModule;
+    // Matches the schema path (used by prewarmBoolean), which drops the
+    // newline when there is no condition, so both share one fingerprint.
     const condition = question.context
-      ? `${question.context}\n${question.condition}`
-      : question.condition;
+      ? question.condition
+        ? `${question.context}\n${question.condition}`
+        : question.context
+      : (question.condition ?? '');
     const normalizePrior = question.normalizePrior ?? false;
     const norm = normalizeContextInput(text, question);
     if (norm.hasMedia) {
@@ -1225,6 +1412,7 @@ export class DecisionMaker extends TaskRunner {
           question.temperature ?? 0,
           {imageBytes: norm.imageBytes, audioSamples: norm.audioSamples},
           normalizePrior,
+          examples,
         ),
       );
     }
@@ -1236,6 +1424,7 @@ export class DecisionMaker extends TaskRunner {
         question.threshold ?? 0.5,
         question.temperature ?? 0,
         normalizePrior,
+        examples,
       ),
     );
   }
@@ -1258,6 +1447,7 @@ export class DecisionMaker extends TaskRunner {
     const wasmModule = this.graphRunner
       .wasmModule as unknown as DecisionMakerWasmModule;
     const criteria = resolveChoiceCriteria(question);
+    const examples = resolveChoiceExamples(question, criteria);
     const baseInstructions = question.instructions ?? '';
     const instructions = question.context
       ? baseInstructions
@@ -1283,6 +1473,7 @@ export class DecisionMaker extends TaskRunner {
               instructions,
               {imageBytes: norm.imageBytes, audioSamples: norm.audioSamples},
               normalizePrior,
+              examples,
             ),
           )
         : this.logInvocation(() =>
@@ -1293,6 +1484,7 @@ export class DecisionMaker extends TaskRunner {
               question.temperature ?? 0,
               instructions,
               normalizePrior,
+              examples,
             ),
           );
     return evalPromise.then(enrichChoiceResult);
@@ -1392,6 +1584,7 @@ export class DecisionMaker extends TaskRunner {
     if (questions.length === 0) {
       return {};
     }
+    validateSchemaExamples(questions);
     const hasOptionMedia = questions.some((q) =>
       (q.options ?? []).some(
         (o) =>
@@ -1487,12 +1680,21 @@ export class DecisionMaker extends TaskRunner {
     }
     const wasmModule = this.graphRunner
       .wasmModule as unknown as DecisionMakerWasmModule;
+    // Matches the schema path (used by prewarmBoolean), which drops the
+    // newline when there is no condition, so both share one fingerprint.
     const condition = question.context
-      ? `${question.context}\n${question.condition}`
-      : question.condition;
+      ? question.condition
+        ? `${question.context}\n${question.condition}`
+        : question.context
+      : (question.condition ?? '');
+    const examples = resolveBooleanExamples(question);
     if (
       !hasQuestionMedia(question) &&
-      !(question.options && question.options.length >= 2) &&
+      !(
+        question.options &&
+        question.options.length >= 2 &&
+        !hasBooleanExamples(question)
+      ) &&
       typeof wasmModule.evaluateBooleanBatch === 'function'
     ) {
       return this.logInvocation(() =>
@@ -1504,6 +1706,7 @@ export class DecisionMaker extends TaskRunner {
           question.temperature ?? 0,
           sharedPrefix,
           question.normalizePrior ?? false,
+          examples,
         ),
       );
     }
@@ -1539,6 +1742,7 @@ export class DecisionMaker extends TaskRunner {
     const wasmModule = this.graphRunner
       .wasmModule as unknown as DecisionMakerWasmModule;
     const criteria = resolveChoiceCriteria(question);
+    const examples = resolveChoiceExamples(question, criteria);
     const baseInstructions = question.instructions ?? '';
     const instructions = question.context
       ? baseInstructions
@@ -1564,6 +1768,7 @@ export class DecisionMaker extends TaskRunner {
           instructions,
           sharedPrefix,
           question.normalizePrior ?? false,
+          examples,
         ),
       );
       return rawBatch.map(enrichChoiceResult);
