@@ -24,6 +24,14 @@ enum class ScoringMode(val value: Int) {
   FIRST_TOKEN_ONLY(2),
 }
 
+/** How examples and inputs are embedded by embedding models, for questions with examples. */
+enum class InputPrompt(val value: Int) {
+  /** `"task: classification | query: <text>"`. Best for sentences (default). */
+  CLASSIFICATION(0),
+  /** The raw text. Best for single words and short phrases. */
+  NONE(1),
+}
+
 /** Sealed hierarchy of structured questions evaluated by [Decision]. */
 sealed interface DecisionQuestion
 
@@ -36,15 +44,29 @@ sealed interface DecisionQuestion
  * @property temperature Softmax temperature override (`0f` uses the model's calibrated default).
  * @property normalizePrior Whether to subtract the empty-context prior log-odds before
  *   thresholding.
+ * @property positiveExamples Example inputs for which the answer is true. With [negativeExamples],
+ *   embedding models fit a classifier on them and [condition] may be blank.
+ * @property negativeExamples Example inputs for which the answer is false.
+ * @property inputPrompt How examples and inputs are embedded. Only used with examples.
  */
-data class BooleanQuestion(
-  val condition: String,
+data class BooleanQuestion
+@JvmOverloads
+constructor(
+  val condition: String = "",
   val threshold: Float = 0.5f,
   val temperature: Float = 0.0f,
   val normalizePrior: Boolean = false,
+  val positiveExamples: List<String> = emptyList(),
+  val negativeExamples: List<String> = emptyList(),
+  val inputPrompt: InputPrompt = InputPrompt.CLASSIFICATION,
 ) : DecisionQuestion {
   init {
-    require(condition.isNotBlank()) { "BooleanQuestion.condition must not be blank." }
+    require(positiveExamples.isEmpty() == negativeExamples.isEmpty()) {
+      "A BooleanQuestion with examples needs both positiveExamples and negativeExamples."
+    }
+    require(condition.isNotBlank() || positiveExamples.isNotEmpty()) {
+      "BooleanQuestion.condition must not be blank."
+    }
     require(threshold in 0.0f..1.0f) {
       "BooleanQuestion.threshold must be in [0.0, 1.0], got $threshold."
     }
@@ -62,6 +84,12 @@ data class BooleanQuestion(
  * @property scoringMode Multi-token log-probability aggregation strategy.
  * @property normalizePrior Whether to normalize option log-probabilities against the empty-context
  *   prior.
+ * @property examples Optional example inputs, one list per choice in the order of [choices]. If any
+ *   choice has examples, every choice needs at least one, and embedding models fit a classifier on
+ *   them; all-empty lists mean no examples.
+ * @property inputPrompt How examples and inputs are embedded. Only used with examples.
+ * @property balanceClassWeights With [examples], weights each choice by `N / (K * N_c)`, so that
+ *   choices with fewer examples aren't penalized.
  */
 data class ChoiceQuestion
 @JvmOverloads
@@ -72,6 +100,9 @@ constructor(
   val instructions: String = "",
   val scoringMode: ScoringMode = ScoringMode.LENGTH_NORMALIZED_LOG_PROB,
   val normalizePrior: Boolean = false,
+  val examples: List<List<String>> = emptyList(),
+  val inputPrompt: InputPrompt = InputPrompt.CLASSIFICATION,
+  val balanceClassWeights: Boolean = true,
 ) : DecisionQuestion {
   /**
    * Ordered map of choice keys to semantic descriptions (empty strings when constructed from
@@ -117,7 +148,17 @@ constructor(
         "ChoiceQuestion.descriptions size (${descriptions.size}) must match choices size (${choices.size})."
       }
     }
+    if (hasExamples) {
+      require(choices.size >= 2) { "A ChoiceQuestion with examples needs at least 2 choices." }
+      require(examples.size == choices.size && examples.all { it.isNotEmpty() }) {
+        "Every choice needs at least one example."
+      }
+    }
   }
+
+  /** Whether any choice has an example. As in the C API, all-empty lists mean no examples. */
+  internal val hasExamples: Boolean
+    get() = examples.any { it.isNotEmpty() }
 
   companion object {
     @Deprecated(
@@ -140,6 +181,36 @@ constructor(
         scoringMode = scoringMode,
         normalizePrior = normalizePrior,
       )
+
+    /**
+     * Creates a [ChoiceQuestion] from choice keys mapped to example inputs, with optional
+     * [descriptions] (choice key to description) for some or all keys. Requires at least 2 keys,
+     * each with at least one example.
+     */
+    @JvmStatic
+    fun withExamples(
+      examples: Map<String, List<String>>,
+      descriptions: Map<String, String> = emptyMap(),
+      inputPrompt: InputPrompt = InputPrompt.CLASSIFICATION,
+      balanceClassWeights: Boolean = true,
+      temperature: Float = 0.0f,
+      instructions: String = "",
+    ): ChoiceQuestion {
+      require(examples.size >= 2 && examples.values.all { it.isNotEmpty() }) {
+        "withExamples needs at least 2 choices, each with at least one example."
+      }
+      val keys = examples.keys.toList()
+      return ChoiceQuestion(
+        choices = keys,
+        descriptions =
+          if (descriptions.isEmpty()) emptyList() else keys.map { descriptions[it] ?: "" },
+        temperature = temperature,
+        instructions = instructions,
+        examples = keys.map { examples.getValue(it) },
+        inputPrompt = inputPrompt,
+        balanceClassWeights = balanceClassWeights,
+      )
+    }
   }
 }
 
