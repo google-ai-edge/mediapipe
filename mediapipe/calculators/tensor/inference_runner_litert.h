@@ -115,6 +115,11 @@ class InferenceRunnerLiteRt : public InferenceRunner {
 
   absl::Status Close();
 
+  // Drops all cached AHWB TensorBuffers (and their NPU registrations), so the
+  // underlying AHWBs are not pinned while the runner is idle, e.g. due to
+  // runner caching. Must not be called concurrently with Run().
+  absl::Status ReleaseAhwbBufferCache();
+
  private:
   // Explicitly clear the model packet to save peak memory.
   void ClearModelPacket() { model_packet_ = api2::Packet<TfLiteModelPtr>(); }

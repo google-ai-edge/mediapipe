@@ -722,11 +722,10 @@ InferenceRunnerLiteRt::Create(
             auto& google_tensor_options,
             jit_compilation_options
                 .GetOptions<litert::google_tensor::GoogleTensorOptions>());
-        // Default performance mode is kBalanced; this can be updated if
-        // required.
+        // Preserve any caller-supplied PerformanceMode; GetPerformanceMode()
+        // defaults to kBalanced when unset.
         google_tensor_options.SetPerformanceMode(
-            litert::google_tensor::GoogleTensorOptions::PerformanceMode::
-                kBalanced);
+            google_tensor_options.GetPerformanceMode());
       }
     } else if (options.npu().has_qualcomm()) {
       LITERT_ASSIGN_OR_RETURN(
@@ -949,11 +948,28 @@ InferenceRunnerLiteRt::~InferenceRunnerLiteRt() {
 #endif  // MEDIAPIPE_METAL_ENABLED
 }
 
-absl::Status InferenceRunnerLiteRt::Close() {
+absl::Status InferenceRunnerLiteRt::Close() { return ReleaseAhwbBufferCache(); }
+
+absl::Status InferenceRunnerLiteRt::ReleaseAhwbBufferCache() {
 #if MEDIAPIPE_TENSOR_USE_AHWB
   ABSL_RETURN_IF_ERROR(CleanAsyncRunStates(/*wait_for_all=*/true));
-#endif  // MEDIAPIPE_TENSOR_USE_AHWB
+  auto release = [this]() -> absl::Status {
+    {
+      absl::MutexLock lock(&ahwb_buffer_cache_->mutex);
+      ahwb_buffer_cache_->entries.clear();
+    }
+    return absl::OkStatus();
+  };
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+  // TensorBuffers may hold GL/CL interop resources, see destructor.
+  if (gl_context_) {
+    return gl_context_->Run(release);
+  }
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+  return release();
+#else
   return absl::OkStatus();
+#endif  // MEDIAPIPE_TENSOR_USE_AHWB
 }
 
 // Creates a ranked tensor type for the given input tensor.
@@ -1287,7 +1303,8 @@ InferenceRunnerLiteRt::GetOrCreateAhwbTensorBuffer(
          ahwb]() {
           if (auto cache = weak_cache.lock()) {
             absl::MutexLock lock(&cache->mutex);
-            cache->entries.erase(ahwb);
+            auto node = cache->entries.extract(ahwb);
+            (void)node;
           }
         });
   }
