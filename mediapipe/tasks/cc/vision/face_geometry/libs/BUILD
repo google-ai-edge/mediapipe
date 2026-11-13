@@ -36,7 +36,6 @@ cc_library(
         "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_cc_proto",
         "//mediapipe/tasks/cc/vision/face_geometry/proto:geometry_pipeline_metadata_cc_proto",
         "//mediapipe/tasks/cc/vision/face_geometry/proto:mesh_3d_cc_proto",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
@@ -62,7 +61,6 @@ cc_library(
     hdrs = ["procrustes_solver.h"],
     deps = [
         "//mediapipe/framework/port:ret_check",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",

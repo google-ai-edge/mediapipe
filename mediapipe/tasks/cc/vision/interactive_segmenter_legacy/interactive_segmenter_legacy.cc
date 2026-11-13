@@ -16,6 +16,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/interactive_segmenter_legacy/interactive_segmenter_legacy.h"
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -25,11 +26,13 @@ limitations under the License.
 #include "absl/status/statusor.h"       // from @com_google_absl
 #include "absl/strings/str_cat.h"       // from @com_google_absl
 #include "absl/strings/str_format.h"    // from @com_google_absl
+#include "absl/strings/string_view.h"   // from @com_google_absl
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
+#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/containers/keypoint.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
@@ -39,11 +42,8 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_result.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/image_segmenter/proto/segmenter_options.pb.h"
 #include "mediapipe/tasks/cc/vision/interactive_segmenter_legacy/proto/region_of_interest.pb.h"
-#include "mediapipe/util/color.pb.h"
 #include "mediapipe/util/label_map.pb.h"
-#include "mediapipe/util/render_data.pb.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -72,7 +72,6 @@ constexpr absl::string_view kSubgraphTypeName{
     "InteractiveSegmenterLegacyGraph"};
 
 using components::containers::NormalizedKeypoint;
-
 using ::mediapipe::CalculatorGraphConfig;
 using ::mediapipe::Image;
 using ::mediapipe::NormalizedRect;

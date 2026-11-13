@@ -17,8 +17,8 @@
 #include <cmath>
 #include <memory>
 
-#include "Eigen/Dense"                  // from @eigen
-#include "absl/memory/memory.h"         // from @com_google_absl
+#include "Eigen/Core"                   // from @eigen
+#include "Eigen/SVD"                    // from @eigen
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "absl/status/statusor.h"       // from @com_google_absl

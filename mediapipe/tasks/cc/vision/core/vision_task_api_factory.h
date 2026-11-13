@@ -16,24 +16,20 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_VISION_CORE_BASE_VISION_TASK_API_FACTORY_H_
 #define MEDIAPIPE_TASKS_CC_VISION_CORE_BASE_VISION_TASK_API_FACTORY_H_
 
-#include <functional>
 #include <memory>
-#include <optional>
-#include <string>
 #include <type_traits>
 #include <utility>
 
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "absl/status/statusor.h"       // from @com_google_absl
-#include "absl/strings/str_cat.h"       // from @com_google_absl
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/task_api_factory.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
-#include "tflite/core/api/op_resolver.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

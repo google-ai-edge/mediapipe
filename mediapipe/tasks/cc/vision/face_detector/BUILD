@@ -57,7 +57,6 @@ cc_library(
         "//mediapipe/tasks/cc/components/processors:image_preprocessing_graph",
         "//mediapipe/tasks/cc/core:model_resources",
         "//mediapipe/tasks/cc/core:model_task_graph",
-        "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
         "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/utils:image_tensor_specs",

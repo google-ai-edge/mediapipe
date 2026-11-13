@@ -26,6 +26,7 @@ limitations under the License.
 #include "mediapipe/calculators/util/non_max_suppression_calculator.pb.h"
 #include "mediapipe/calculators/util/rect_transformation_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
+#include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/image.h"
@@ -33,6 +34,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/subgraph.h"
 #include "mediapipe/tasks/cc/components/processors/image_preprocessing_graph.h"
+#include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/vision/pose_detector/proto/pose_detector_graph_options.pb.h"
 

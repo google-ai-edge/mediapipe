@@ -15,9 +15,11 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/vision/object_detector/object_detector.h"
 
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -27,20 +29,22 @@ limitations under the License.
 #include "absl/status/statusor.h"       // from @com_google_absl
 #include "absl/strings/str_cat.h"       // from @com_google_absl
 #include "mediapipe/framework/api2/builder.h"
+#include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
+#include "mediapipe/framework/packet.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/containers/detection_result.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
-#include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
+#include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
 #include "mediapipe/tasks/cc/vision/object_detector/proto/object_detector_options.pb.h"
-#include "tflite/core/api/op_resolver.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

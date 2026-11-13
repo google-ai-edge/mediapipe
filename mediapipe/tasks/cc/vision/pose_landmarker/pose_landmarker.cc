@@ -15,25 +15,25 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/vision/pose_landmarker/pose_landmarker.h"
 
+#include <cstdint>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "mediapipe/framework/api2/builder.h"
-#include "mediapipe/framework/api2/port.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
+#include "mediapipe/framework/packet.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
-#include "mediapipe/tasks/cc/core/base_task_api.h"
-#include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/core/utils.h"
-#include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
@@ -251,7 +251,7 @@ absl::StatusOr<PoseLandmarkerResult> PoseLandmarker::DetectForVideo(
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
-        absl::StrCat("GPU input images are currently not supported."),
+        "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
   ABSL_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
@@ -291,7 +291,7 @@ absl::Status PoseLandmarker::DetectAsync(
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
-        absl::StrCat("GPU input images are currently not supported."),
+        "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
   ABSL_ASSIGN_OR_RETURN(NormalizedRect norm_rect,

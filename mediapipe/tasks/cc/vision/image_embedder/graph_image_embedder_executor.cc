@@ -25,6 +25,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/packet.h"
+#include "mediapipe/framework/timestamp.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"

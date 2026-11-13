@@ -14,9 +14,9 @@ limitations under the License.
 ==============================================================================*/
 
 #include <cstdint>
-#include <memory>
 #include <optional>
-#include <type_traits>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/absl_log.h"          // from @com_google_absl
@@ -24,21 +24,26 @@ limitations under the License.
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "absl/status/statusor.h"       // from @com_google_absl
 #include "absl/strings/str_format.h"    // from @com_google_absl
+#include "absl/strings/string_view.h"   // from @com_google_absl
 #include "mediapipe/calculators/image/image_clone_calculator.pb.h"
 #include "mediapipe/calculators/image/image_transformation_calculator.pb.h"
 #include "mediapipe/calculators/image/set_alpha_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensor_converter_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
+#include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
+#include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/subgraph.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/processors/image_preprocessing_graph.h"
 #include "mediapipe/tasks/cc/components/processors/proto/image_preprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
-#include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"

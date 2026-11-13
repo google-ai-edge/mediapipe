@@ -13,14 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/flags/flag.h"           // from @com_google_absl
 #include "absl/status/statusor.h"      // from @com_google_absl
-#include "absl/strings/str_format.h"   // from @com_google_absl
 #include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
@@ -30,18 +29,17 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
-#include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/core/running_mode.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
+#include "tflite/kernels/register.h"  // from @litert
 
 namespace mediapipe {
 namespace tasks {

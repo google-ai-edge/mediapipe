@@ -15,34 +15,33 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/gesture_recognizer.h"
 
+#include <cstdint>
 #include <memory>
-#include <type_traits>
+#include <optional>
 #include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"         // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "absl/status/statusor.h"       // from @com_google_absl
+#include "absl/strings/str_cat.h"       // from @com_google_absl
 #include "mediapipe/framework/api2/builder.h"
-#include "mediapipe/framework/api2/port.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/tasks/cc/components/processors/classifier_options.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
-#include "mediapipe/tasks/cc/core/base_task_api.h"
-#include "mediapipe/tasks/cc/core/model_resources.h"
-#include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/core/utils.h"
-#include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/gesture_recognizer_result.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_classifier_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_recognizer_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/hand_gesture_recognizer_graph_options.pb.h"

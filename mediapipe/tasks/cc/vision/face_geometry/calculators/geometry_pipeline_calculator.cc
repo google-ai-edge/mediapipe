@@ -13,11 +13,9 @@
 // limitations under the License.
 
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"         // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "absl/status/statusor.h"       // from @com_google_absl
@@ -34,7 +32,6 @@
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/environment.pb.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/face_geometry.pb.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/geometry_pipeline_metadata.pb.h"
-#include "mediapipe/util/resource_util.h"
 
 namespace mediapipe::tasks::vision::face_geometry {
 namespace {

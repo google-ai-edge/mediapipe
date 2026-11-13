@@ -74,10 +74,9 @@ cc_library_with_tflite(
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/tasks/cc:common",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
-        "@litert//tflite/core/api:op_resolver",
     ],
 )

@@ -14,11 +14,9 @@ limitations under the License.
 ==============================================================================*/
 
 #include <array>
-#include <memory>
-#include <string>
-#include <utility>
 #include <vector>
 
+#include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/calculators/core/split_vector_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensors_to_landmarks_calculator.pb.h"
 #include "mediapipe/calculators/util/landmarks_refinement_calculator.pb.h"

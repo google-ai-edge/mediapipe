@@ -13,15 +13,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <map>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/flags/flag.h"           // from @com_google_absl
-#include "absl/status/statusor.h"      // from @com_google_absl
-#include "absl/strings/str_format.h"   // from @com_google_absl
 #include "absl/strings/string_view.h"  // from @com_google_absl
 #include "absl/strings/substitute.h"   // from @com_google_absl
-#include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/deps/file_path.h"

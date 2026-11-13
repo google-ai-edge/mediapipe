@@ -23,16 +23,17 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/log/absl_log.h"          // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "mediapipe/framework/api2/node.h"
+#include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/deps/file_helpers.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/tasks/cc/vision/image_generator/diffuser/diffuser_gpu.h"
 #include "mediapipe/tasks/cc/vision/image_generator/diffuser/stable_diffusion_iterate_calculator.pb.h"
 

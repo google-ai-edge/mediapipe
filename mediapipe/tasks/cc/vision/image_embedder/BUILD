@@ -38,6 +38,7 @@ cc_library(
     deps = [
         ":image_embedder_executor",
         "//mediapipe/framework:packet",
+        "//mediapipe/framework:timestamp",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/tasks/cc/components/containers:embedding_result",

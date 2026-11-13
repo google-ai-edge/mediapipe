@@ -13,9 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include <memory>
-#include <optional>
-#include <type_traits>
 #include <vector>
 
 #include "absl/status/status.h"         // from @com_google_absl
@@ -31,16 +28,15 @@ limitations under the License.
 #include "mediapipe/calculators/util/rect_transformation_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
+#include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
-#include "mediapipe/framework/formats/tensor.h"
-#include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/framework/subgraph.h"
 #include "mediapipe/tasks/cc/components/processors/image_preprocessing_graph.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
-#include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
-#include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
 

@@ -29,6 +29,9 @@ cc_library(
         ":object_detector_graph",
         "//mediapipe/calculators/core:concatenate_vector_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:packet",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:image",
@@ -37,9 +40,9 @@ cc_library(
         "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator",
         "//mediapipe/tasks/cc/components/containers:detection_result",
         "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/cc/core:utils",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
-        "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
         "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
         "//mediapipe/tasks/cc/vision/core:image_processing_options",
         "//mediapipe/tasks/cc/vision/core:running_mode",
@@ -49,7 +52,6 @@ cc_library(
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@litert//tflite/core/api:op_resolver",
     ],
 )
 

@@ -9,13 +9,18 @@
 #include "absl/log/absl_log.h"          // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/strings/str_cat.h"       // from @com_google_absl
 #include "absl/strings/str_format.h"    // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/shader_util.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/segmenter_options.pb.h"
+#include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 namespace mediapipe {
 namespace tasks {
