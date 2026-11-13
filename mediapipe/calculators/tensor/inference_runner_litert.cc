@@ -1821,6 +1821,42 @@ absl::Status InferenceRunnerLiteRt::PrepareOutputBuffers(
               tensor_type, ctx));
       ctx.litert_outputs.push_back(std::move(output_tensor));
     }
+
+    LITERT_ASSIGN_OR_RETURN(const litert::SimpleTensor& output_model_tensor,
+                            signature.OutputTensor(static_cast<size_t>(i)));
+    for (size_t j = 0; j < ctx.litert_inputs.size(); ++j) {
+      LITERT_ASSIGN_OR_RETURN(const litert::SimpleTensor& input_model_tensor,
+                              signature.InputTensor(j));
+      if (input_model_tensor.TensorIndex() ==
+          output_model_tensor.TensorIndex()) {
+        // When a model output aliases a model input directly (passthrough
+        // tensor with no producing operator), registering the output custom
+        // allocation overwrites the input custom allocation on the shared
+        // subgraph tensor. Pre-populate the output buffer from the input
+        // buffer so both in-graph consumers and the returned output tensor see
+        // the input data.
+        LITERT_ASSIGN_OR_RETURN(size_t src_bytes,
+                                ctx.litert_inputs[j].PackedSize());
+        LITERT_ASSIGN_OR_RETURN(size_t dst_bytes,
+                                ctx.litert_outputs.back().PackedSize());
+        RET_CHECK_EQ(src_bytes, dst_bytes)
+            << "Packed size mismatch between aliased input " << j << " ("
+            << src_bytes << " bytes) and output " << i << " (" << dst_bytes
+            << " bytes).";
+        LITERT_ASSIGN_OR_RETURN(
+            auto src_lock,
+            litert::TensorBufferScopedLock::Create(
+                ctx.litert_inputs[j], litert::TensorBuffer::LockMode::kRead));
+        LITERT_ASSIGN_OR_RETURN(auto dst_lock,
+                                litert::TensorBufferScopedLock::Create(
+                                    ctx.litert_outputs.back(),
+                                    litert::TensorBuffer::LockMode::kWrite));
+        if (src_bytes > 0 && dst_lock.second != src_lock.second) {
+          std::memcpy(dst_lock.second, src_lock.second, src_bytes);
+        }
+        break;
+      }
+    }
   }
   return absl::OkStatus();
 }
