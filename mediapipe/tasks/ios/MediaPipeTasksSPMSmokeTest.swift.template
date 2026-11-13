@@ -67,7 +67,15 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
 
   private func verifyVisionRegistration() {}
 
-  private func verifyTextRegistration() {}
+  private func verifyTextRegistration() {
+    let dummyPath = "/nonexistent/text.task"
+
+    verifyTaskInit(name: "LanguageDetector", domain: "Text") {
+      var options = LanguageDetectorOptions()
+      options.baseOptions.modelAssetPath = dummyPath
+      return try LanguageDetector(options: options)
+    }
+  }
 
   private func verifyAudioRegistration() {
     let dummyPath = "/nonexistent/audio.task"

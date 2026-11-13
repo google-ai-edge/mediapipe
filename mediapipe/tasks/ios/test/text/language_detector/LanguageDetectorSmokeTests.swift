@@ -12,25 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPCommon
-import MPPLanguageDetector
+import Foundation
+import MediaPipeTasksLanguageDetector
 import XCTest
-
-extension TasksErrorCode {
-  fileprivate static let errorDomain = "com.google.mediapipe.tasks"
-}
 
 final class LanguageDetectorSmokeTests: XCTestCase {
 
   func testOptionsCoverage() {
-    let options = LanguageDetectorOptions()
-    options.displayNamesLocale = "en"
+    var options = LanguageDetectorOptions()
+    options.displayNamesLocale = "fr"
     options.maxResults = 3
     options.scoreThreshold = 0.5
     options.categoryAllowlist = ["en", "fr"]
     options.categoryDenylist = ["de"]
 
-    XCTAssertEqual(options.displayNamesLocale, "en")
+    XCTAssertEqual(options.displayNamesLocale, "fr")
     XCTAssertEqual(options.maxResults, 3)
     XCTAssertEqual(options.scoreThreshold, 0.5, accuracy: 1e-3)
     XCTAssertEqual(options.categoryAllowlist, ["en", "fr"])
@@ -38,34 +34,38 @@ final class LanguageDetectorSmokeTests: XCTestCase {
   }
 
   func testRuntimeRegistrationAndInitialization() {
-    let options = LanguageDetectorOptions()
+    var options = LanguageDetectorOptions()
     options.baseOptions.modelAssetPath = "/nonexistent/language_detector.tflite"
 
     XCTAssertThrowsError(try LanguageDetector(options: options)) { error in
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertTrue(tasksError.code == .invalidArgument || tasksError.code == .notFound)
       let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      XCTAssertEqual(nsError.domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
-      )
-      XCTAssertFalse(
-        nsError.localizedDescription.contains("No registered object with name"),
-        "LanguageDetector subgraph not linked"
+        nsError.code == TasksErrorCode.invalidArgument.rawValue
+          || nsError.code == TasksErrorCode.notFound.rawValue
       )
       XCTAssertTrue(
-        nsError.localizedDescription.contains("Unable to open file"),
-        "Unexpected error: \(nsError.localizedDescription)"
+        error.localizedDescription.contains("Unable to open file"),
+        "Unexpected error: \(error.localizedDescription)"
       )
     }
 
     XCTAssertThrowsError(
       try LanguageDetector(modelPath: "/nonexistent/language_detector.tflite")
     ) { error in
-      let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertTrue(tasksError.code == .invalidArgument || tasksError.code == .notFound)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
+        error.localizedDescription.contains("Unable to open file"),
+        "Unexpected error: \(error.localizedDescription)"
       )
     }
   }
@@ -75,7 +75,7 @@ final class LanguageDetectorSmokeTests: XCTestCase {
       LanguageDetector.detect(text:)
   }
 
-  func testResultContainerTypes() {
+  func testResultContainerTypes() throws {
     let prediction = LanguagePrediction(languageCode: "en", probability: 0.95)
     XCTAssertEqual(prediction.languageCode, "en")
     XCTAssertEqual(prediction.probability, 0.95, accuracy: 1e-3)
@@ -85,7 +85,7 @@ final class LanguageDetectorSmokeTests: XCTestCase {
       timestampInMilliseconds: 1000
     )
     XCTAssertEqual(result.languages.count, 1)
-    XCTAssertEqual(result.languages[0].languageCode, "en")
+    XCTAssertEqual(try XCTUnwrap(result.languages.first).languageCode, "en")
     XCTAssertEqual(result.timestampInMilliseconds, 1000)
   }
 }
