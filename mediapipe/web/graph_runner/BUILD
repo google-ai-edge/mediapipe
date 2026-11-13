@@ -120,6 +120,18 @@ ts_library(
     srcs = ["run_script_helper.ts"],
 )
 
+ts_library(
+    name = "run_script_helper_test_lib",
+    testonly = True,
+    srcs = ["run_script_helper.test.ts"],
+    deps = [":run_script_helper"],
+)
+
+jasmine_node_test(
+    name = "run_script_helper_test",
+    srcs = [":run_script_helper_test_lib"],
+)
+
 jasmine_node_test(
     name = "platform_utils_test",
     srcs = [
