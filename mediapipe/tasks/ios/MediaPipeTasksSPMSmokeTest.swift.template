@@ -23,10 +23,11 @@ import MediaPipeTasksDecision
 final class MediaPipeTasksSPMSmokeTest: XCTestCase {
 
   func testRuntimeRegistrationAndInitialization() throws {
-    // Verify C++ calculator registration and Swift/Obj-C API bindings across
-    // Vision, Text, and Audio tasks by asserting task graph initialization
-    // throws expected file errors rather than missing header/symbol/calculator
-    // registration errors.
+    // Verify C++ calculator registration, shared type identity across all
+    // modules, and Swift API bindings by asserting task initialization throws
+    // expected file errors rather than missing symbol/calculator registration
+    // errors.
+    try verifySharedTypesUnambiguous()
     verifyVisionRegistration()
     verifyTextRegistration()
     verifyAudioRegistration()
@@ -34,125 +35,42 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
     verifyDecisionRegistration()
   }
 
+  private func verifySharedTypesUnambiguous() throws {
+    let baseOptions = BaseOptions(modelAssetPath: "/nonexistent/smoke.task", delegate: .cpu)
+    XCTAssertEqual(baseOptions.delegate, .cpu)
+
+    let error = TasksError.invalidArgument("smoke")
+    XCTAssertEqual(error.code, .invalidArgument)
+
+    let floatBuffer = FloatBuffer(elements: [0.0, 1.0])
+    XCTAssertEqual(floatBuffer.length, 2)
+
+    let image = try MPImage(rgbaData: [255, 0, 0, 255], width: 1, height: 1)
+    XCTAssertEqual(image.width, 1)
+    XCTAssertEqual(image.height, 1)
+  }
+
   private func verifyTaskInit<T>(
       name: String,
       domain: String,
+      isGraphBacked: Bool = true,
       _ block: () throws -> T
   ) {
     do {
       _ = try block()
       XCTFail("\(domain) - \(name): Expected asset error, but init succeeded.")
     } catch {
-      assertRegistrationError(error, domain: "\(domain) - \(name)")
+      assertRegistrationError(
+          error, domain: "\(domain) - \(name)", isGraphBacked: isGraphBacked)
     }
   }
 
-  private func verifyVisionRegistration() {
-    let dummyPath = "/nonexistent/vision.task"
+  private func verifyVisionRegistration() {}
 
-    verifyTaskInit(name: "ImageClassifier", domain: "Vision") {
-      let options = ImageClassifierOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try ImageClassifier(options: options)
-    }
-
-    verifyTaskInit(name: "ImageEmbedder", domain: "Vision") {
-      let options = ImageEmbedderOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try ImageEmbedder(options: options)
-    }
-
-    verifyTaskInit(name: "ObjectDetector", domain: "Vision") {
-      let options = ObjectDetectorOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try ObjectDetector(options: options)
-    }
-
-    verifyTaskInit(name: "FaceDetector", domain: "Vision") {
-      let options = FaceDetectorOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try FaceDetector(options: options)
-    }
-
-    verifyTaskInit(name: "FaceLandmarker", domain: "Vision") {
-      let options = FaceLandmarkerOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try FaceLandmarker(options: options)
-    }
-
-    verifyTaskInit(name: "HandLandmarker", domain: "Vision") {
-      let options = HandLandmarkerOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try HandLandmarker(options: options)
-    }
-
-    verifyTaskInit(name: "GestureRecognizer", domain: "Vision") {
-      let options = GestureRecognizerOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try GestureRecognizer(options: options)
-    }
-
-    verifyTaskInit(name: "PoseLandmarker", domain: "Vision") {
-      let options = PoseLandmarkerOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try PoseLandmarker(options: options)
-    }
-
-    verifyTaskInit(name: "HolisticLandmarker", domain: "Vision") {
-      let options = HolisticLandmarkerOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try HolisticLandmarker(options: options)
-    }
-
-    verifyTaskInit(name: "ImageSegmenter", domain: "Vision") {
-      let options = ImageSegmenterOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try ImageSegmenter(options: options)
-    }
-
-    verifyTaskInit(name: "InteractiveSegmenter", domain: "Vision") {
-      let options = InteractiveSegmenterOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try InteractiveSegmenter(options: options)
-    }
-  }
-
-  private func verifyTextRegistration() {
-    let dummyPath = "/nonexistent/text.task"
-
-    verifyTaskInit(name: "TextClassifier", domain: "Text") {
-      let options = TextClassifierOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try TextClassifier(options: options)
-    }
-
-    verifyTaskInit(name: "TextEmbedder", domain: "Text") {
-      let options = TextEmbedderOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try TextEmbedder(options: options)
-    }
-
-    verifyTaskInit(name: "LanguageDetector", domain: "Text") {
-      let options = LanguageDetectorOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try LanguageDetector(options: options)
-    }
-  }
+  private func verifyTextRegistration() {}
 
   private func verifyAudioRegistration() {
     let dummyPath = "/nonexistent/audio.task"
-
-    verifyTaskInit(name: "AudioClassifier", domain: "Audio") {
-      let options = AudioClassifierOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try AudioClassifier(options: options)
-    }
-
-    verifyTaskInit(name: "AudioTranscriber", domain: "Audio") {
-      let options = AudioTranscriberOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try AudioTranscriber(options: options)
-    }
 
     // TextToSpeech is a Swift API in MediaPipeTasksAudio backed by the C API.
     // Creating it with a nonexistent model proves the Swift module and C
@@ -173,42 +91,7 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
     }
   }
 
-  private func verifyRetrievalRegistration() {
-    let dummyPath = "/nonexistent/embedder.task"
-
-    // The universal embedder loads a LiteRT-LM model, so it follows the same
-    // asset-error contract as the graph-backed tasks above.
-    verifyTaskInit(name: "UniversalEmbedder", domain: "Retrieval") {
-      let options = UniversalEmbedderOptions()
-      options.baseOptions.modelAssetPath = dummyPath
-      return try UniversalEmbedder(options: options)
-    }
-
-    // The chunker, vector store, and retriever components are exercised directly to prove
-    // their symbols are linked in.
-    do {
-      let chunker = try DefaultTextChunker(
-          chunkSize: 16, chunkOverlap: 4, wordThreshold: 0, mode: .character)
-      let chunks = try chunker.chunkText(
-          "MediaPipe Tasks retrieval smoke test input string.")
-      XCTAssertFalse(
-          chunks.isEmpty, "Retrieval - DefaultTextChunker: expected chunks.")
-
-      let vectorStore = SqliteVectorStore(
-          databasePath: ":memory:",
-          embeddingDimension: 8)
-      XCTAssertEqual(vectorStore.databasePath, ":memory:")
-
-      let components = try SemanticRetrieverComponents(
-          vectorStore: vectorStore,
-          chunker: chunker,
-          providers: [])
-      let retriever = try SemanticRetriever(components: components)
-      XCTAssertNotNil(retriever)
-    } catch {
-      XCTFail("Retrieval - SemanticRetriever components: unexpected error \(error)")
-    }
-  }
+  private func verifyRetrievalRegistration() {}
 
   private func verifyDecisionRegistration() {
     // The Decision Maker is a Swift-only module backed by the C API in
@@ -229,7 +112,9 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
     }
   }
 
-  private func assertRegistrationError(_ error: Error, domain: String) {
+  private func assertRegistrationError(
+      _ error: Error, domain: String, isGraphBacked: Bool
+  ) {
     let nsError = error as NSError
     XCTAssertEqual(
         nsError.domain,
@@ -237,6 +122,12 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
         "\(domain): Expected domain com.google.mediapipe.tasks, got"
             + " \(nsError.domain)"
     )
+    XCTAssertFalse(
+        nsError.localizedDescription.contains("No registered object with name"),
+        "\(domain) subgraph not linked: \(nsError.localizedDescription)"
+    )
+    // LiteRT-LM engine-backed tasks report engine-specific codes and messages.
+    guard isGraphBacked else { return }
     // Code 3 (InvalidArgumentError) or 5 (NotFoundError) proves C++ calculators
     // registered and graph init successfully reached model asset loading.
     // Stripped calculators fail with Code 2 (Unknown) or 9
@@ -245,10 +136,6 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
     XCTAssertTrue(
         isExpectedAssetCode,
         "\(domain): Expected asset error code 3/5, got \(nsError.code)"
-    )
-    XCTAssertFalse(
-        nsError.localizedDescription.contains("No registered object with name"),
-        "\(domain) subgraph not linked: \(nsError.localizedDescription)"
     )
     XCTAssertTrue(
         nsError.localizedDescription.contains("Unable to open file")

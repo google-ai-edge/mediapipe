@@ -10,41 +10,49 @@ let package = Package(
     products: [
         .library(
             name: "MediaPipeTasksCommon",
-            targets: ["MediaPipeTasksCommon"]
+            targets: [
+                "MediaPipeTasksCommonBinary",
+                "MediaPipeTasksLinker",
+            ]
         ),
         .library(
             name: "MediaPipeTasksVision",
             targets: [
                 "MediaPipeTasksVision",
-                "MediaPipeTasksCommon",
+                "MediaPipeTasksCommonBinary",
+                "MediaPipeTasksLinker",
             ]
         ),
         .library(
             name: "MediaPipeTasksText",
             targets: [
                 "MediaPipeTasksText",
-                "MediaPipeTasksCommon",
+                "MediaPipeTasksCommonBinary",
+                "MediaPipeTasksLinker",
             ]
         ),
         .library(
             name: "MediaPipeTasksAudio",
             targets: [
                 "MediaPipeTasksAudio",
-                "MediaPipeTasksCommon",
+                "MediaPipeTasksCommonBinary",
+                "MediaPipeTasksLinker",
             ]
         ),
         .library(
             name: "MediaPipeTasksRetrieval",
             targets: [
                 "MediaPipeTasksRetrieval",
-                "MediaPipeTasksCommon",
+                "MediaPipeTasksCommonBinary",
+                "MediaPipeTasksLinker",
             ]
         ),
         .library(
             name: "MediaPipeTasksDecision",
             targets: [
                 "MediaPipeTasksDecision",
-                "MediaPipeTasksCommon",
+                "MediaPipeTasksCommonBinary",
+                "MediaPipeTasksLinker",
             ]
         ),
     ],
@@ -79,7 +87,7 @@ let package = Package(
             ${MPP_DECISION_TARGET_ARG}
         ),
         .target(
-            name: "MediaPipeTasksCommon",
+            name: "MediaPipeTasksLinker",
             dependencies: [
                 "MediaPipeTasksCommonBinary",
                 "MediaPipeTaskGraphsBinary",
@@ -89,6 +97,7 @@ let package = Package(
                 "MediaPipeTasksRetrieval",
                 "MediaPipeTasksDecision",
             ],
+            path: "Sources/MediaPipeTasksCommon",
             resources: [
                 .copy("PrivacyInfo.xcprivacy"),
             ],
@@ -102,7 +111,7 @@ let package = Package(
                 // .unsafeFlags restriction.
                 .unsafeFlags(["-Xlinker", "-all_load"]),
                 .linkedLibrary("c++"),
-                // Required by MPPSqliteVectorStore in MediaPipeTasksRetrieval.
+                // Required by the SQLite vector store behind SemanticRetriever.
                 .linkedLibrary("sqlite3"),
                 .linkedFramework("Accelerate"),
                 .linkedFramework("AVFoundation"),
