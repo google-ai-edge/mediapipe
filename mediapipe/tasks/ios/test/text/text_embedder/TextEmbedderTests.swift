@@ -12,17 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPCommon
+import Foundation
+import MediaPipeTasksTextEmbedder
 import XCTest
 
-@testable import MPPTextEmbedder
-
-/// These tests are only for validating the Swift function signatures of the TextEmbedder.
-/// Objective C tests of the TextEmbedder provide more coverage with unit tests for
-/// different models and text embedder options. They can be found here:
-/// /mediapipe/tasks/ios/test/text/text_embedder/MPPTextEmbedderTests.m
-
-class TextEmbedderTests: XCTestCase {
+/// Unit tests for `TextEmbedder` across MobileBERT, Gecko, and EmbeddingGemma models.
+final class TextEmbedderTests: XCTestCase {
 
   static let bundle = Bundle(for: TextEmbedderTests.self)
 
@@ -62,13 +57,13 @@ class TextEmbedderTests: XCTestCase {
   }
 
   func assertEmbedding(
-    _ floatEmbedding: [NSNumber],
+    _ floatEmbedding: [Float],
     hasCount embeddingCount: Int,
     hasFirstValue firstValue: Float
   ) {
     XCTAssertEqual(floatEmbedding.count, embeddingCount)
     XCTAssertEqual(
-      floatEmbedding[0].floatValue,
+      floatEmbedding[0],
       firstValue,
       accuracy:
         TextEmbedderTests.floatDiffTolerance)
@@ -80,13 +75,13 @@ class TextEmbedderTests: XCTestCase {
     hasCount embeddingCount: Int,
     hasFirstValue firstValue: Float
   ) throws -> Embedding {
-    let textEmbedderResult =
-      try XCTUnwrap(
-        textEmbedder.embed(text: text))
+    let textEmbedderResult = try textEmbedder.embed(text: text)
     assertTextEmbedderResultHasOneEmbedding(textEmbedderResult)
     assertEmbeddingIsFloat(textEmbedderResult.embeddingResult.embeddings[0])
+    let floatEmbedding = try XCTUnwrap(
+      textEmbedderResult.embeddingResult.embeddings[0].floatEmbedding)
     assertEmbedding(
-      textEmbedderResult.embeddingResult.embeddings[0].floatEmbedding!,
+      floatEmbedding,
       hasCount: embeddingCount,
       hasFirstValue: firstValue)
 
@@ -96,7 +91,7 @@ class TextEmbedderTests: XCTestCase {
   func testEmbedWithBertSucceeds() throws {
 
     let modelPath = try XCTUnwrap(TextEmbedderTests.bertModelPath)
-    let textEmbedder = try XCTUnwrap(TextEmbedder(modelPath: modelPath))
+    let textEmbedder = try TextEmbedder(modelPath: modelPath)
 
     let embedding1 = try assertFloatEmbeddingResultsForEmbed(
       text: TextEmbedderTests.text1,
@@ -110,28 +105,26 @@ class TextEmbedderTests: XCTestCase {
       hasCount: 512,
     hasFirstValue: 19.684338)
 
-    let cosineSimilarity = try XCTUnwrap(
-      TextEmbedder.cosineSimilarity(
-        embedding1: embedding1,
-        embedding2: embedding2))
+    let cosineSimilarity = try TextEmbedder.cosineSimilarity(
+      embedding1: embedding1,
+      embedding2: embedding2)
 
     XCTAssertGreaterThanOrEqual(
-      cosineSimilarity.doubleValue, TextEmbedderTests.cosineSimilarityThreshold)
+      cosineSimilarity, TextEmbedderTests.cosineSimilarityThreshold)
   }
 
   func testEmbedWithGeckoSucceeds() throws {
     let modelPath = try XCTUnwrap(
       TextEmbedderTests.bundle.path(forResource: "gecko", ofType: "task"))
-    let textEmbedder = try XCTUnwrap(TextEmbedder(modelPath: modelPath))
+    let textEmbedder = try TextEmbedder(modelPath: modelPath)
 
-    let textFormatContext = TextFormatContext()
+    var textFormatContext = TextFormatContext()
     textFormatContext.embeddingType = .retrievalQuery
     textFormatContext.textRole = .query
 
-    let result = try XCTUnwrap(
-      textEmbedder.embed(
-        text: TextEmbedderTests.text1,
-        textFormatContext: textFormatContext))
+    let result = try textEmbedder.embed(
+      text: TextEmbedderTests.text1,
+      textFormatContext: textFormatContext)
 
     assertTextEmbedderResultHasOneEmbedding(result)
     XCTAssertEqual(result.embeddingResult.embeddings[0].floatEmbedding?.count, 768)
@@ -140,33 +133,52 @@ class TextEmbedderTests: XCTestCase {
   func testEmbedWithEmbeddingGemmaSucceeds() throws {
     let modelPath = try XCTUnwrap(
       TextEmbedderTests.bundle.path(forResource: "embedding_gemma", ofType: "task"))
-    let textEmbedder = try XCTUnwrap(TextEmbedder(modelPath: modelPath))
+    let textEmbedder = try TextEmbedder(modelPath: modelPath)
 
-    let textFormatContext = TextFormatContext()
+    var textFormatContext = TextFormatContext()
     textFormatContext.embeddingType = .retrievalQuery
     textFormatContext.textRole = .query
 
-    let result1 = try XCTUnwrap(
-      textEmbedder.embed(
-        text: TextEmbedderTests.text1,
-        textFormatContext: textFormatContext))
+    let result1 = try textEmbedder.embed(
+      text: TextEmbedderTests.text1,
+      textFormatContext: textFormatContext)
 
     assertTextEmbedderResultHasOneEmbedding(result1)
     XCTAssertEqual(result1.embeddingResult.embeddings[0].floatEmbedding?.count, 768)
 
-    let result2 = try XCTUnwrap(
-      textEmbedder.embed(
-        text: TextEmbedderTests.text2,
-        textFormatContext: textFormatContext))
+    let result2 = try textEmbedder.embed(
+      text: TextEmbedderTests.text2,
+      textFormatContext: textFormatContext)
 
     assertTextEmbedderResultHasOneEmbedding(result2)
     XCTAssertEqual(result2.embeddingResult.embeddings[0].floatEmbedding?.count, 768)
 
-    let cosineSimilarity = try XCTUnwrap(
-      TextEmbedder.cosineSimilarity(
-        embedding1: result1.embeddingResult.embeddings[0],
-        embedding2: result2.embeddingResult.embeddings[0]))
+    let cosineSimilarity = try TextEmbedder.cosineSimilarity(
+      embedding1: result1.embeddingResult.embeddings[0],
+      embedding2: result2.embeddingResult.embeddings[0])
 
-    XCTAssertEqual(cosineSimilarity.doubleValue, 0.52, accuracy: 0.05)
+    XCTAssertEqual(cosineSimilarity, 0.52, accuracy: 0.05)
+  }
+
+  func testEmbedWithL2NormalizeAndQuantizeOptionsSucceeds() throws {
+    let modelPath = try XCTUnwrap(TextEmbedderTests.bertModelPath)
+
+    var normalizedOptions = TextEmbedderOptions()
+    normalizedOptions.baseOptions.modelAssetPath = modelPath
+    normalizedOptions.l2Normalize = true
+    let normalizedEmbedder = try TextEmbedder(options: normalizedOptions)
+    let normalizedResult = try normalizedEmbedder.embed(text: TextEmbedderTests.text1)
+    let normalizedValues = try XCTUnwrap(
+      normalizedResult.embeddingResult.embeddings.first?.floatEmbedding)
+    let normSquared = normalizedValues.reduce(Float.zero) { $0 + $1 * $1 }
+    XCTAssertEqual(normSquared, 1.0, accuracy: TextEmbedderTests.floatDiffTolerance)
+
+    var quantizedOptions = normalizedOptions
+    quantizedOptions.quantize = true
+    let quantizedEmbedder = try TextEmbedder(options: quantizedOptions)
+    let quantizedResult = try quantizedEmbedder.embed(text: TextEmbedderTests.text1)
+    let quantizedEmbedding = try XCTUnwrap(quantizedResult.embeddingResult.embeddings.first)
+    XCTAssertNil(quantizedEmbedding.floatEmbedding)
+    XCTAssertEqual(quantizedEmbedding.quantizedEmbedding?.count, 512)
   }
 }

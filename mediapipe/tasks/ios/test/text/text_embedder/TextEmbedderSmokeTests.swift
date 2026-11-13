@@ -12,25 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPCommon
-import MPPTextEmbedder
+import Foundation
+import MediaPipeTasksTextEmbedder
 import XCTest
-
-extension TasksErrorCode {
-  fileprivate static let errorDomain = "com.google.mediapipe.tasks"
-}
 
 final class TextEmbedderSmokeTests: XCTestCase {
 
   func testOptionsCoverage() {
-    let options = TextEmbedderOptions()
+    var options = TextEmbedderOptions()
     options.l2Normalize = true
     options.quantize = false
 
     XCTAssertTrue(options.l2Normalize)
     XCTAssertFalse(options.quantize)
 
-    let context = TextFormatContext()
+    var context = TextFormatContext()
     context.embeddingType = .retrievalQuery
     context.title = "Doc Title"
     context.textRole = .document
@@ -40,44 +36,49 @@ final class TextEmbedderSmokeTests: XCTestCase {
   }
 
   func testRuntimeRegistrationAndInitialization() {
-    let options = TextEmbedderOptions()
+    var options = TextEmbedderOptions()
     options.baseOptions.modelAssetPath = "/nonexistent/text_embedder.task"
 
     XCTAssertThrowsError(try TextEmbedder(options: options)) { error in
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertTrue(tasksError.code == .invalidArgument || tasksError.code == .notFound)
       let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      XCTAssertEqual(nsError.domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
-      )
-      XCTAssertFalse(
-        nsError.localizedDescription.contains("No registered object with name"),
-        "TextEmbedder subgraph not linked"
+        nsError.code == TasksErrorCode.invalidArgument.rawValue
+          || nsError.code == TasksErrorCode.notFound.rawValue
       )
       XCTAssertTrue(
-        nsError.localizedDescription.contains("Unable to open file"),
-        "Unexpected error: \(nsError.localizedDescription)"
+        error.localizedDescription.contains("Unable to open file"),
+        "Unexpected error: \(error.localizedDescription)"
       )
     }
 
     XCTAssertThrowsError(
       try TextEmbedder(modelPath: "/nonexistent/text_embedder.task")
     ) { error in
-      let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertTrue(tasksError.code == .invalidArgument || tasksError.code == .notFound)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
+        error.localizedDescription.contains("Unable to open file"),
+        "Unexpected error: \(error.localizedDescription)"
       )
     }
   }
 
   func testExecutionMethodSignaturesCompile() {
-    let _: (TextEmbedder) -> (String) throws -> TextEmbedderResult =
-      TextEmbedder.embed(text:)
+    let _: (TextEmbedder, String) throws -> TextEmbedderResult = { embedder, text in
+      try embedder.embed(text: text)
+    }
     let _: (TextEmbedder) -> (String, TextFormatContext?) throws -> TextEmbedderResult =
       TextEmbedder.embed(text:textFormatContext:)
-    let _: (Embedding, Embedding) throws -> NSNumber =
+    let _: (Embedding, Embedding) throws -> Double =
       TextEmbedder.cosineSimilarity(embedding1:embedding2:)
   }
 
@@ -85,7 +86,7 @@ final class TextEmbedderSmokeTests: XCTestCase {
     let embedding = Embedding(
       floatEmbedding: [1.0, 0.0],
       quantizedEmbedding: nil,
-      head: 0,
+      headIndex: 0,
       headName: "head"
     )
     XCTAssertEqual(embedding.floatEmbedding, [1.0, 0.0])
@@ -112,13 +113,13 @@ final class TextEmbedderSmokeTests: XCTestCase {
     let embedding1 = Embedding(
       floatEmbedding: [1.0, 0.0],
       quantizedEmbedding: nil,
-      head: 0,
+      headIndex: 0,
       headName: "head"
     )
     let embedding2 = Embedding(
       floatEmbedding: [1.0, 0.0],
       quantizedEmbedding: nil,
-      head: 0,
+      headIndex: 0,
       headName: "head"
     )
 
@@ -126,6 +127,6 @@ final class TextEmbedderSmokeTests: XCTestCase {
       embedding1: embedding1,
       embedding2: embedding2
     )
-    XCTAssertEqual(similarity.doubleValue, 1.0, accuracy: 1e-3)
+    XCTAssertEqual(similarity, 1.0, accuracy: 1e-3)
   }
 }

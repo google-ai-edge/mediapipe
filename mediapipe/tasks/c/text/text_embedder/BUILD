@@ -39,6 +39,19 @@ TEXT_EMBEDDER_DEPS = [
 ]
 
 cc_library(
+    name = "text_embedder",
+    hdrs = ["text_embedder.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":text_embedder_c_lib",
+        "//mediapipe/tasks/c/components/containers:embedding_result",
+        "//mediapipe/tasks/c/components/processors:embedder_options",
+        "//mediapipe/tasks/c/core:base_options",
+        "//mediapipe/tasks/c/core:mp_status",
+    ],
+)
+
+cc_library(
     name = "text_embedder_lib",
     srcs = ["text_embedder.cc"],
     hdrs = [

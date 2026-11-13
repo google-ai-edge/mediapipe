@@ -76,6 +76,12 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
       return try TextClassifier(options: options)
     }
 
+    verifyTaskInit(name: "TextEmbedder", domain: "Text") {
+      var options = TextEmbedderOptions()
+      options.baseOptions.modelAssetPath = dummyPath
+      return try TextEmbedder(options: options)
+    }
+
     verifyTaskInit(name: "LanguageDetector", domain: "Text") {
       var options = LanguageDetectorOptions()
       options.baseOptions.modelAssetPath = dummyPath
