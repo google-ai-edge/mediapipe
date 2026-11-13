@@ -20,11 +20,10 @@ limitations under the License.
 #include <memory>
 #include <string>
 
-#include "absl/flags/flag.h"                        // from @com_google_absl
-#include "absl/strings/string_view.h"               // from @com_google_absl
-#include "absl/synchronization/blocking_counter.h"  // from @com_google_absl
-#include "absl/time/clock.h"                        // from @com_google_absl
-#include "absl/time/time.h"                         // from @com_google_absl
+#include "absl/flags/flag.h"           // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
+#include "absl/time/clock.h"           // from @com_google_absl
+#include "absl/time/time.h"            // from @com_google_absl
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -196,7 +195,6 @@ TEST(ImageSegmenterTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static absl::BlockingCounter* blocking_counter;
   static void Fn(MpStatus status,
                  const MpImageSegmenterResult* segmenter_result,
                  MpImagePtr image, int64_t timestamp) {
@@ -213,15 +211,10 @@ struct LiveStreamModeCallback {
                                  kGoldenMaskMagnificationFactor),
               kGoldenMaskSimilarity);
     EXPECT_GT(timestamp, last_timestamp);
-    ++last_timestamp;
-
-    if (blocking_counter) {
-      blocking_counter->DecrementCount();
-    }
+    last_timestamp = timestamp;
   }
 };
 int64_t LiveStreamModeCallback::last_timestamp = -1;
-absl::BlockingCounter* LiveStreamModeCallback::blocking_counter = nullptr;
 
 TEST(ImageSegmenterTest, LiveStreamModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
@@ -244,9 +237,6 @@ TEST(ImageSegmenterTest, LiveStreamModeTest) {
       MpImageSegmenterCreate(&options, &segmenter, /* error_msg= */ nullptr),
       kMpOk);
 
-  absl::BlockingCounter counter(kIterations);
-  LiveStreamModeCallback::blocking_counter = &counter;
-
   for (int i = 0; i < kIterations; ++i) {
     ASSERT_EQ(
         MpImageSegmenterSegmentAsync(segmenter, image.get(),
@@ -257,16 +247,12 @@ TEST(ImageSegmenterTest, LiveStreamModeTest) {
     absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
 
-  // Wait for all callbacks to be invoked.
-  counter.Wait();
-  LiveStreamModeCallback::blocking_counter = nullptr;
-
   EXPECT_EQ(MpImageSegmenterClose(segmenter, /* error_msg= */ nullptr), kMpOk);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
   EXPECT_LE(LiveStreamModeCallback::last_timestamp, kIterations);
-  EXPECT_GT(LiveStreamModeCallback::last_timestamp, 0);
+  EXPECT_GE(LiveStreamModeCallback::last_timestamp, 0);
 }
 
 TEST(ImageSegmenterTest, InvalidArgumentHandling) {

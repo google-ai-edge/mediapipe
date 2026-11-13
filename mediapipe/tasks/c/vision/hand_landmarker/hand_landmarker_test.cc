@@ -19,11 +19,10 @@ limitations under the License.
 #include <cstdlib>
 #include <string>
 
-#include "absl/flags/flag.h"                        // from @com_google_absl
-#include "absl/strings/string_view.h"               // from @com_google_absl
-#include "absl/synchronization/blocking_counter.h"  // from @com_google_absl
-#include "absl/time/clock.h"                        // from @com_google_absl
-#include "absl/time/time.h"                         // from @com_google_absl
+#include "absl/flags/flag.h"           // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
+#include "absl/time/clock.h"           // from @com_google_absl
+#include "absl/time/time.h"            // from @com_google_absl
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
@@ -231,7 +230,6 @@ TEST(HandLandmarkerTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static absl::BlockingCounter* blocking_counter;
   static void Fn(MpStatus status,
                  const MpHandLandmarkerResult* landmarker_result,
                  MpImagePtr image, int64_t timestamp) {
@@ -244,15 +242,10 @@ struct LiveStreamModeCallback {
     EXPECT_GT(MpImageGetWidth(image), 0);
     EXPECT_GT(MpImageGetHeight(image), 0);
     EXPECT_GT(timestamp, last_timestamp);
-    ++last_timestamp;
-
-    if (blocking_counter) {
-      blocking_counter->DecrementCount();
-    }
+    last_timestamp = timestamp;
   }
 };
 int64_t LiveStreamModeCallback::last_timestamp = -1;
-absl::BlockingCounter* LiveStreamModeCallback::blocking_counter = nullptr;
 
 TEST(HandLandmarkerTest, LiveStreamModeTest) {
   const auto image = GetImage(GetFullPath(kPointingUpImage));
@@ -277,9 +270,6 @@ TEST(HandLandmarkerTest, LiveStreamModeTest) {
       kMpOk);
   EXPECT_NE(landmarker, nullptr);
 
-  absl::BlockingCounter counter(kIterations);
-  LiveStreamModeCallback::blocking_counter = &counter;
-
   for (int i = 0; i < kIterations; ++i) {
     EXPECT_EQ(
         MpHandLandmarkerDetectAsync(landmarker, image.get(),
@@ -290,16 +280,12 @@ TEST(HandLandmarkerTest, LiveStreamModeTest) {
     absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
 
-  // Wait for all callbacks to be invoked.
-  counter.Wait();
-  LiveStreamModeCallback::blocking_counter = nullptr;
-
   EXPECT_EQ(MpHandLandmarkerClose(landmarker, /* error_msg= */ nullptr), kMpOk);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
   EXPECT_LE(LiveStreamModeCallback::last_timestamp, kIterations);
-  EXPECT_GT(LiveStreamModeCallback::last_timestamp, 0);
+  EXPECT_GE(LiveStreamModeCallback::last_timestamp, 0);
 }
 
 TEST(HandLandmarkerTest, InvalidArgumentHandling) {

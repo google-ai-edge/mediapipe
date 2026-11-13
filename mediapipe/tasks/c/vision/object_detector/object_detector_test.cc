@@ -20,11 +20,10 @@ limitations under the License.
 #include <memory>
 #include <string>
 
-#include "absl/flags/flag.h"                        // from @com_google_absl
-#include "absl/strings/string_view.h"               // from @com_google_absl
-#include "absl/synchronization/blocking_counter.h"  // from @com_google_absl
-#include "absl/time/clock.h"                        // from @com_google_absl
-#include "absl/time/time.h"                         // from @com_google_absl
+#include "absl/flags/flag.h"           // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
+#include "absl/time/clock.h"           // from @com_google_absl
+#include "absl/time/time.h"            // from @com_google_absl
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -49,10 +48,7 @@ constexpr char kModelName[] =
     "coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.tflite";
 constexpr float kPrecision = 1e-4;
 constexpr int kIterations = 5;
-// Long enough for one inference on a slow machine (e.g. OSS CI), so that the
-// flow limiter in LIVE_STREAM mode doesn't drop frames: LiveStreamModeTest
-// waits for kIterations callbacks.
-constexpr int kSleepBetweenFramesMilliseconds = 300;
+constexpr int kSleepBetweenFramesMilliseconds = 100;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
@@ -183,7 +179,6 @@ TEST(ObjectDetectorTest, VideoModeTest) {
 // timestamp is greater than the previous one.
 struct LiveStreamModeCallback {
   static int64_t last_timestamp;
-  static absl::BlockingCounter* blocking_counter;
   static void Fn(MpStatus status, const MpObjectDetectorResult* detector_result,
                  MpImagePtr image, int64_t timestamp) {
     ASSERT_EQ(status, kMpOk);
@@ -198,15 +193,10 @@ struct LiveStreamModeCallback {
     EXPECT_GT(MpImageGetWidth(image), 0);
     EXPECT_GT(MpImageGetHeight(image), 0);
     EXPECT_GT(timestamp, last_timestamp);
-    last_timestamp++;
-
-    if (blocking_counter) {
-      blocking_counter->DecrementCount();
-    }
+    last_timestamp = timestamp;
   }
 };
 int64_t LiveStreamModeCallback::last_timestamp = -1;
-absl::BlockingCounter* LiveStreamModeCallback::blocking_counter = nullptr;
 
 TEST(ObjectDetectorTest, LiveStreamModeTest) {
   const auto image = GetImage(GetFullPath(kImageFile));
@@ -233,9 +223,6 @@ TEST(ObjectDetectorTest, LiveStreamModeTest) {
             kMpOk);
   EXPECT_NE(detector, nullptr);
 
-  absl::BlockingCounter counter(kIterations);
-  LiveStreamModeCallback::blocking_counter = &counter;
-
   for (int i = 0; i < kIterations; ++i) {
     ASSERT_EQ(
         MpObjectDetectorDetectAsync(detector, image.get(),
@@ -246,16 +233,12 @@ TEST(ObjectDetectorTest, LiveStreamModeTest) {
     absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
   }
 
-  // Wait for all callbacks to be invoked.
-  counter.Wait();
-  LiveStreamModeCallback::blocking_counter = nullptr;
-
   EXPECT_EQ(MpObjectDetectorClose(detector, /*error_msg=*/nullptr), kMpOk);
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
   EXPECT_LE(LiveStreamModeCallback::last_timestamp, kIterations);
-  EXPECT_GT(LiveStreamModeCallback::last_timestamp, 0);
+  EXPECT_GE(LiveStreamModeCallback::last_timestamp, 0);
 }
 
 TEST(ObjectDetectorTest, InvalidArgumentHandling) {

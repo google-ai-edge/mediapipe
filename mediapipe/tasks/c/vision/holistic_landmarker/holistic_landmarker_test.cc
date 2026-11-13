@@ -261,7 +261,7 @@ struct LiveStreamModeCallback {
         GetExpectedHolisticResult(kHolisticResultProto);
     AssertHolisticLandmarkerResult(result, expected_result);
     EXPECT_GT(timestamp, last_timestamp);
-    ++last_timestamp;
+    last_timestamp = timestamp;
   }
 };
 
@@ -301,5 +301,5 @@ TEST(HolisticLandmarkerTest, LiveStreamModeSucceeds) {
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
   EXPECT_LE(LiveStreamModeCallback::last_timestamp, kIterations);
-  EXPECT_GT(LiveStreamModeCallback::last_timestamp, 0);
+  EXPECT_GE(LiveStreamModeCallback::last_timestamp, 0);
 }

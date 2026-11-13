@@ -124,7 +124,7 @@ cc_test(
         "//mediapipe/tasks/c/vision/core:image_test_util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
     ],
 )
