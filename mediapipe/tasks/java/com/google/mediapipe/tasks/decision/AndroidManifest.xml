@@ -2,6 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.google.mediapipe.tasks.decision" >
 
-    <uses-sdk android:minSdkVersion="24" />
+    <uses-sdk android:minSdkVersion="28" />
 
 </manifest>

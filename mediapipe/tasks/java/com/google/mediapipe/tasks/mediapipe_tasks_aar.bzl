@@ -368,7 +368,7 @@ cat > $(OUTS) <<EOF
 <manifest
   xmlns:android="http://schemas.android.com/apk/res/android"
   package="dummy.package.for.so">
-  <uses-sdk android:minSdkVersion="24"/>
+  <uses-sdk android:minSdkVersion="28"/>
 </manifest>
 EOF
 """,
@@ -380,7 +380,7 @@ EOF
         name = name + "_dummy_app",
         manifest = name + "_generated_AndroidManifest.xml",
         custom_package = "dummy.package.for.so",
-        dexopts = ["--min-api", "24"],
+        dexopts = ["--min-api", "28"],
         deps = [android_library],
     )
 
