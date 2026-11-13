@@ -15,7 +15,6 @@
 #include "mediapipe/util/tflite/cpu_op_resolver.h"
 
 #include "absl/log/absl_check.h"  // from @com_google_absl
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/util/tflite/operations/landmarks_to_transform_matrix.h"
 #include "mediapipe/util/tflite/operations/max_pool_argmax.h"
 #include "mediapipe/util/tflite/operations/max_unpooling.h"
@@ -23,7 +22,6 @@
 #include "mediapipe/util/tflite/operations/transform_landmarks.h"
 #include "mediapipe/util/tflite/operations/transform_tensor_bilinear.h"
 #include "mediapipe/util/tflite/operations/transpose_conv_bias.h"
-#include "tflite/builtin_op_data.h"      // from @litert
 #include "tflite/mutable_op_resolver.h"  // from @litert
 
 namespace mediapipe {

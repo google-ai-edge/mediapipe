@@ -14,12 +14,22 @@
 
 #include "mediapipe/util/tensor_to_detection.h"
 
+#include <cstdint>
+#include <limits>
+#include <map>
+#include <string>
+#include <variant>
+#include <vector>
+
 #include "absl/status/status.h"       // from @com_google_absl
 #include "absl/strings/str_format.h"  // from @com_google_absl
 #include "absl/types/variant.h"       // from @com_google_absl
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/location_opencv.h"
 #include "mediapipe/framework/port/map_util.h"
+#include "mediapipe/framework/port/opencv_core_inc.h"
+#include "tensorflow/core/framework/tensor.h"        // from @org_tensorflow
+#include "tensorflow/core/framework/tensor_shape.h"  // from @org_tensorflow
 #include "tensorflow/core/framework/tensor_types.h"  // from @org_tensorflow
 
 namespace mediapipe {

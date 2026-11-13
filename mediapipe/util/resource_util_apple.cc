@@ -14,8 +14,10 @@
 
 #import <Foundation/Foundation.h>
 
+#include <cstddef>
 #include <fstream>
 #include <sstream>
+#include <string>
 
 #include "absl/log/absl_log.h"          // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl

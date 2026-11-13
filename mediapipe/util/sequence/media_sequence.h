@@ -158,10 +158,12 @@
 #ifndef MEDIAPIPE_TENSORFLOW_SEQUENCE_MEDIA_SEQUENCE_H_
 #define MEDIAPIPE_TENSORFLOW_SEQUENCE_MEDIA_SEQUENCE_H_
 
+#include <memory>
 #include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"  // from @com_google_absl
 #include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/matrix.h"

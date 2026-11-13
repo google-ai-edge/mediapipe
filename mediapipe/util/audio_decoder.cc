@@ -15,23 +15,29 @@
 #include "mediapipe/util/audio_decoder.h"
 
 #include <algorithm>
+#include <cerrno>
+#include <cmath>
 #include <cstdint>  // required by avutil.h
 #include <cstdlib>
+#include <cstring>
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "Eigen/Core"                   // from @eigen
 #include "absl/cleanup/cleanup.h"       // from @com_google_absl
+#include "absl/flags/flag.h"            // from @com_google_absl
 #include "absl/log/absl_check.h"        // from @com_google_absl
 #include "absl/log/absl_log.h"          // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
-#include "absl/strings/numbers.h"       // from @com_google_absl
 #include "absl/strings/str_cat.h"       // from @com_google_absl
 #include "absl/strings/substitute.h"    // from @com_google_absl
 #include "absl/time/time.h"             // from @com_google_absl
 #include "mediapipe/framework/formats/matrix.h"
+#include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/tool/status_util.h"
@@ -145,9 +151,7 @@ std::string AvErrorToString(int error) {
     case AVERROR_OUTPUT_CHANGED:
       return "AVERROR_OUTPUT_CHANGED - Output changed between calls.";
     default:
-      // FALLTHRU
-      {
-      }
+      break;  // Fall back to av_strerror() below.
   }
 
   char buf[AV_ERROR_MAX_STRING_SIZE];

@@ -12,8 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "absl/status/status.h"      // from @com_google_absl
-#include "absl/strings/str_split.h"  // from @com_google_absl
+#include "mediapipe/util/android/file/base/filesystem.h"
+
+#include <string>
+#include <vector>
+
+#include "absl/status/status.h"        // from @com_google_absl
+#include "absl/strings/str_split.h"    // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/util/android/file/base/file.h"
 
 #ifdef __APPLE__

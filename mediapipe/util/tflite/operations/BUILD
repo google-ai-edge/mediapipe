@@ -48,11 +48,15 @@ cc_library(
     srcs = ["max_pool_argmax.cc"],
     hdrs = ["max_pool_argmax.h"],
     deps = [
+        "@litert//tflite/c:c_api_types",
+        "@litert//tflite/c:common",
         "@litert//tflite/kernels:kernel_util",
         "@litert//tflite/kernels:padding",
         "@litert//tflite/kernels/internal:common",
+        "@litert//tflite/kernels/internal:compatibility",
+        "@litert//tflite/kernels/internal:runtime_shape",
         "@litert//tflite/kernels/internal:tensor",
-        "@litert//tflite/kernels/internal:tensor_utils",
+        "@litert//tflite/kernels/internal:types",
     ],
 )
 
@@ -61,11 +65,14 @@ cc_library(
     srcs = ["max_unpooling.cc"],
     hdrs = ["max_unpooling.h"],
     deps = [
+        "@litert//tflite/c:c_api_types",
+        "@litert//tflite/c:common",
         "@litert//tflite/kernels:kernel_util",
         "@litert//tflite/kernels:padding",
-        "@litert//tflite/kernels/internal:common",
+        "@litert//tflite/kernels/internal:compatibility",
+        "@litert//tflite/kernels/internal:runtime_shape",
         "@litert//tflite/kernels/internal:tensor",
-        "@litert//tflite/kernels/internal:tensor_utils",
+        "@litert//tflite/kernels/internal:types",
     ],
 )
 
@@ -106,10 +113,12 @@ cc_library(
     srcs = ["transpose_conv_bias.cc"],
     hdrs = ["transpose_conv_bias.h"],
     deps = [
+        "@litert//tflite/c:c_api_types",
+        "@litert//tflite/c:common",
         "@litert//tflite/kernels:kernel_util",
         "@litert//tflite/kernels:padding",
+        "@litert//tflite/kernels/internal:compatibility",
         "@litert//tflite/kernels/internal:tensor",
-        "@litert//tflite/kernels/internal:tensor_utils",
         "@litert//tflite/kernels/internal:types",
     ],
 )

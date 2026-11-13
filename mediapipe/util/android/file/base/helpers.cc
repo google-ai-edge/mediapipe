@@ -19,10 +19,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <cstddef>
 #include <cstdint>
+#include <string>
 
-#include "absl/status/status.h"  // from @com_google_absl
+#include "absl/status/status.h"        // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/framework/port/file_helpers.h"
+#include "mediapipe/util/android/file/base/file.h"
 
 namespace mediapipe {
 namespace file {

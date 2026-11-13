@@ -16,6 +16,10 @@
 
 #include <cmath>
 #include <cstdint>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
 #ifdef __ANDROID__
 #include "ndk/sources/android/cpufeatures/cpu-features.h"

@@ -14,11 +14,23 @@
 
 #include "mediapipe/util/sequence/media_sequence.h"
 
+#include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <cstdlib>
 #include <limits>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
-#include "absl/log/absl_check.h"     // from @com_google_absl
-#include "absl/strings/str_split.h"  // from @com_google_absl
+#include "absl/log/absl_check.h"  // from @com_google_absl
+#include "absl/status/status.h"   // from @com_google_absl
+#include "absl/strings/match.h"   // from @com_google_absl
+#include "mediapipe/framework/formats/location.h"
+#include "mediapipe/framework/formats/matrix.h"
+#include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/sequence/media_sequence_util.h"
@@ -296,14 +308,13 @@ absl::Status ReconcileMetadataBoxAnnotations(
       // leave unannotated boxes at -1.
       if (!box_is_annotated[box_index]) {
         box_index += 1;
-        // annotated boxes should updated their closest index.
       } else if (image_index >= num_frames - 1 ||
                  llabs(image_timestamps[image_index] -
                        box_timestamps[box_index]) <
                      llabs(image_timestamps[image_index + 1] -
                            box_timestamps[box_index])) {
-        // Only overwrite with a new value if no value is present or this is
-        // closer in time.
+        // Annotated boxes update their closest index. Only overwrite with a new
+        // value if no value is present or this is closer in time.
         if (bbox_index_if_annotated[image_index] == -1 ||
             llabs(image_timestamps[image_index] -
                   box_timestamps[bbox_index_if_annotated[image_index]]) >

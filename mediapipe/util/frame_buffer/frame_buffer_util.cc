@@ -14,7 +14,9 @@
 
 #include "mediapipe/util/frame_buffer/frame_buffer_util.h"
 
+#include <algorithm>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <vector>
 

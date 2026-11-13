@@ -14,6 +14,10 @@
 
 #include "mediapipe/util/sequence/media_sequence_util.h"
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
