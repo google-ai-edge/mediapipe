@@ -1,3 +1,7 @@
+#include <map>
+#include <memory>
+#include <string>
+
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/framework/calculator_runner.h"

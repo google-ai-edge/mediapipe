@@ -14,10 +14,12 @@
 
 #include "mediapipe/modules/objectron/calculators/box_util.h"
 
-#include <math.h>
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <vector>
 
 #include "absl/log/absl_check.h"  // from @com_google_absl
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/util/tracking/box_tracker.pb.h"

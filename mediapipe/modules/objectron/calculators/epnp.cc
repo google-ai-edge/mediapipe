@@ -14,7 +14,13 @@
 
 #include "mediapipe/modules/objectron/calculators/epnp.h"
 
-#include "absl/log/absl_check.h"  // from @com_google_absl
+#include <vector>
+
+#include "Eigen/Core"                 // from @eigen
+#include "Eigen/Eigenvalues"          // from @eigen
+#include "absl/log/absl_check.h"      // from @com_google_absl
+#include "absl/status/status.h"       // from @com_google_absl
+#include "absl/strings/str_format.h"  // from @com_google_absl
 
 namespace mediapipe {
 

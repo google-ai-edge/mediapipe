@@ -14,10 +14,12 @@
 
 #include "mediapipe/modules/face_geometry/libs/effect_renderer.h"
 
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 

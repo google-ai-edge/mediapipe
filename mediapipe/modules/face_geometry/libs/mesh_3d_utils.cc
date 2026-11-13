@@ -14,6 +14,7 @@
 
 #include "mediapipe/modules/face_geometry/libs/mesh_3d_utils.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 

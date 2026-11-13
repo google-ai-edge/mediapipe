@@ -15,9 +15,13 @@
 #ifndef MEDIAPIPE_MODULES_OBJECTRON_CALCULATORS_MODEL_H_
 #define MEDIAPIPE_MODULES_OBJECTRON_CALCULATORS_MODEL_H_
 
+#include <cstddef>
+#include <string>
+#include <vector>
+
+#include "Eigen/Core"  // from @eigen
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
 #include "mediapipe/modules/objectron/calculators/object.pb.h"
-#include "mediapipe/modules/objectron/calculators/types.h"
 
 namespace mediapipe {
 

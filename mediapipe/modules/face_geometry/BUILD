@@ -134,10 +134,10 @@ cc_library(
         "//mediapipe/modules/face_geometry/protos:face_geometry_cc_proto",
         "//mediapipe/modules/face_geometry/protos:geometry_pipeline_metadata_cc_proto",
         "//mediapipe/util:resource_util",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )

@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+
 #include "absl/container/flat_hash_set.h"  // from @com_google_absl
-#include "absl/memory/memory.h"            // from @com_google_absl
 #include "absl/status/status.h"            // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"

@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include <memory>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/status/status.h"  // from @com_google_absl
@@ -22,12 +24,13 @@
 #include "mediapipe/calculators/tflite/ssd_anchors_calculator.pb.h"
 #include "mediapipe/calculators/util/non_max_suppression_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/detection.pb.h"
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/rect.pb.h"
-#include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/tool/options_map.h"
 #include "mediapipe/framework/tool/options_util.h"
 #include "mediapipe/framework/tool/test_util.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
@@ -36,6 +39,7 @@
 #if !defined(__APPLE__) && !__ANDROID__
 #include "mediapipe/gpu/gl_app_texture_support.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
+#include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/gpu_test_base.h"
 #endif  // !defined(__APPLE__) && !__ANDROID__
 

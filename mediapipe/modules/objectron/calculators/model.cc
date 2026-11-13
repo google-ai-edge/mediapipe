@@ -14,8 +14,13 @@
 
 #include "mediapipe/modules/objectron/calculators/model.h"
 
+#include <string>
+
+#include "Eigen/Core"             // from @eigen
+#include "Eigen/Geometry"         // from @eigen
 #include "absl/log/absl_check.h"  // from @com_google_absl
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/modules/objectron/calculators/types.h"
 
 namespace mediapipe {
 

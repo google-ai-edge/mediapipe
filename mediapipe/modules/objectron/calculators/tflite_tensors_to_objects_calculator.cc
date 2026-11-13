@@ -12,20 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <memory>
-#include <unordered_map>
 #include <vector>
 
-#include "Eigen/Dense"                  // from @eigen
+#include "Eigen/Core"                   // from @eigen
 #include "absl/log/absl_check.h"        // from @com_google_absl
 #include "absl/log/absl_log.h"          // from @com_google_absl
-#include "absl/memory/memory.h"         // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
-#include "absl/strings/str_format.h"    // from @com_google_absl
-#include "absl/types/span.h"            // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"

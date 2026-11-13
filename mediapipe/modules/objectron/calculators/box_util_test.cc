@@ -14,7 +14,9 @@
 
 #include "mediapipe/modules/objectron/calculators/box_util.h"
 
-#include "mediapipe/framework/port/gmock.h"
+#include <cmath>
+#include <vector>
+
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/util/tracking/box_tracker.pb.h"

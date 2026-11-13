@@ -14,8 +14,14 @@
 
 #include "mediapipe/modules/objectron/calculators/tensor_util.h"
 
+#include <cstddef>
+
 #include "absl/log/absl_check.h"  // from @com_google_absl
+#include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/port/opencv_core_inc.h"
+#include "tflite/c/c_api_types.h"  // from @litert
+#include "tflite/c/common.h"       // from @litert
 
 namespace mediapipe {
 

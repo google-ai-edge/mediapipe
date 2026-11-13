@@ -15,6 +15,8 @@
 #ifndef MEDIAPIPE_MODULES_OBJECTRON_CALCULATORS_BOX_UTIL_H_
 #define MEDIAPIPE_MODULES_OBJECTRON_CALCULATORS_BOX_UTIL_H_
 
+#include <vector>
+
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/util/tracking/box_tracker.pb.h"
 

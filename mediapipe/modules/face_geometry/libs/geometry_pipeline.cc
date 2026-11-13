@@ -14,6 +14,7 @@
 
 #include "mediapipe/modules/face_geometry/libs/geometry_pipeline.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <memory>
@@ -21,7 +22,6 @@
 #include <vector>
 
 #include "Eigen/Core"                   // from @eigen
-#include "absl/memory/memory.h"         // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "absl/status/statusor.h"       // from @com_google_absl

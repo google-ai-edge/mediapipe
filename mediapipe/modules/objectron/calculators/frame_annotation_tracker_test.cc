@@ -14,9 +14,10 @@
 
 #include "mediapipe/modules/objectron/calculators/frame_annotation_tracker.h"
 
+#include <vector>
+
 #include "absl/container/flat_hash_set.h"  // from @com_google_absl
 #include "absl/log/absl_check.h"           // from @com_google_absl
-#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"

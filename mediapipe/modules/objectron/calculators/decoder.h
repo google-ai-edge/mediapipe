@@ -15,9 +15,10 @@
 #ifndef MEDIAPIPE_MODULES_OBJECTRON_CALCULATORS_DECODER_H_
 #define MEDIAPIPE_MODULES_OBJECTRON_CALCULATORS_DECODER_H_
 
+#include <utility>
 #include <vector>
 
-#include "Eigen/Dense"           // from @eigen
+#include "Eigen/Core"            // from @eigen
 #include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
@@ -33,10 +34,14 @@ class Decoder {
   static const int kNumOffsetmaps;
 
   explicit Decoder(const BeliefDecoderConfig& config) : config_(config) {
-    epnp_alpha_ << 4.0f, -1.0f, -1.0f, -1.0f, 2.0f, -1.0f, -1.0f, 1.0f, 2.0f,
-        -1.0f, 1.0f, -1.0f, 0.0f, -1.0f, 1.0f, 1.0f, 2.0f, 1.0f, -1.0f, -1.0f,
-        0.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -2.0f, 1.0f, 1.0f,
-        1.0f;
+    epnp_alpha_ << 4.0f, -1.0f, -1.0f, -1.0f,  //
+        2.0f, -1.0f, -1.0f, 1.0f,              //
+        2.0f, -1.0f, 1.0f, -1.0f,              //
+        0.0f, -1.0f, 1.0f, 1.0f,               //
+        2.0f, 1.0f, -1.0f, -1.0f,              //
+        0.0f, 1.0f, -1.0f, 1.0f,               //
+        0.0f, 1.0f, 1.0f, -1.0f,               //
+        -2.0f, 1.0f, 1.0f, 1.0f;
   }
 
   // Decodes bounding boxes from predicted heatmap and offset maps.

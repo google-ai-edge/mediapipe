@@ -17,9 +17,8 @@
 
 #include <vector>
 
-#include "Eigen/Dense"                // from @eigen
-#include "absl/status/status.h"       // from @com_google_absl
-#include "absl/strings/str_format.h"  // from @com_google_absl
+#include "Eigen/Core"            // from @eigen
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {

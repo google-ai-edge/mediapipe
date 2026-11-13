@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_FACE_GEOMETRY_LIBS_MESH_3D_UTILS_H_
 #define MEDIAPIPE_FACE_GEOMETRY_LIBS_MESH_3D_UTILS_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 

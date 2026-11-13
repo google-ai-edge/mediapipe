@@ -14,6 +14,10 @@
 
 #include "mediapipe/modules/objectron/calculators/frame_annotation_tracker.h"
 
+#include <cmath>
+#include <cstdint>
+#include <vector>
+
 #include "absl/container/flat_hash_set.h"  // from @com_google_absl
 #include "absl/log/absl_check.h"           // from @com_google_absl
 #include "absl/log/absl_log.h"             // from @com_google_absl

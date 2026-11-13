@@ -14,6 +14,7 @@
 
 #include "mediapipe/modules/face_geometry/libs/validation_utils.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 
