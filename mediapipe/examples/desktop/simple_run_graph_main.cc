@@ -15,7 +15,6 @@
 // A simple main function to run a MediaPipe graph.
 #include <cstdlib>
 #include <fstream>
-#include <iostream>
 #include <map>
 #include <string>
 #include <vector>
@@ -25,11 +24,11 @@
 #include "absl/log/absl_log.h"          // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
-#include "absl/status/statusor.h"       // from @com_google_absl
 #include "absl/strings/str_cat.h"       // from @com_google_absl
 #include "absl/strings/str_split.h"     // from @com_google_absl
 #include "absl/strings/string_view.h"   // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/output_stream_poller.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/parse_text_proto.h"

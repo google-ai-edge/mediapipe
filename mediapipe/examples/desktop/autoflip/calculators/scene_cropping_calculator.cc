@@ -14,13 +14,24 @@
 
 #include "mediapipe/examples/desktop/autoflip/calculators/scene_cropping_calculator.h"
 
+#include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include "absl/memory/memory.h"         // from @com_google_absl
+#include "absl/log/absl_log.h"          // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/strings/numbers.h"       // from @com_google_absl
 #include "absl/strings/str_format.h"    // from @com_google_absl
 #include "mediapipe/examples/desktop/autoflip/autoflip_messages.pb.h"
+#include "mediapipe/examples/desktop/autoflip/quality/frame_crop_region_computer.h"
+#include "mediapipe/examples/desktop/autoflip/quality/padding_effect_generator.h"
+#include "mediapipe/examples/desktop/autoflip/quality/scene_camera_motion_analyzer.h"
+#include "mediapipe/examples/desktop/autoflip/quality/scene_cropper.h"
 #include "mediapipe/examples/desktop/autoflip/quality/scene_cropping_viz.h"
 #include "mediapipe/examples/desktop/autoflip/quality/utils.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -28,8 +39,8 @@
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
-#include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/port/source_location.h"
 #include "mediapipe/framework/port/status_builder.h"
 #include "mediapipe/framework/timestamp.h"
 

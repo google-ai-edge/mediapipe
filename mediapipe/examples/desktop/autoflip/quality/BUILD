@@ -155,7 +155,6 @@ cc_library(
     ],
     deps = [
         ":kinematic_path_solver_cc_proto",
-        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/status",
     ],
@@ -357,7 +356,6 @@ cc_test(
         ":visual_scorer",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:opencv_core",
-        "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:parse_text_proto",
         "@com_google_absl//absl/status",
     ],

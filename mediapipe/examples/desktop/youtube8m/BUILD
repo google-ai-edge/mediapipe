@@ -31,8 +31,8 @@ cc_binary(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:file_helpers",
-        "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/graphs/youtube8m:yt8m_feature_extraction_calculators",
         # TODO: Figure out the minimum set of the kernels needed by this example.
         "@org_tensorflow//tensorflow/core:all_kernels",

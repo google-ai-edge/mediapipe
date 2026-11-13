@@ -14,20 +14,15 @@
 
 #include <memory>
 
-#include "Eigen/Core"               // from @eigen
-#include "Eigen/Dense"              // from @eigen
-#include "Eigen/Geometry"           // from @eigen
-#include "absl/memory/memory.h"     // from @com_google_absl
-#include "absl/status/status.h"     // from @com_google_absl
-#include "absl/strings/str_cat.h"   // from @com_google_absl
-#include "absl/strings/str_join.h"  // from @com_google_absl
+#include "Eigen/Core"            // from @eigen
+#include "Eigen/Geometry"        // from @eigen
+#include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/graphs/object_detection_3d/calculators/annotations_to_model_matrices_calculator.pb.h"
 #include "mediapipe/graphs/object_detection_3d/calculators/model_matrix.pb.h"
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
-#include "mediapipe/modules/objectron/calculators/box.h"
 #include "mediapipe/util/color.pb.h"
 
 namespace mediapipe {

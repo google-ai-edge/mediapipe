@@ -13,23 +13,32 @@
 // limitations under the License.
 
 #if defined(__ANDROID__)
-#include "absl/status/status.h"         // from @com_google_absl
-#include "absl/status/status_macros.h"  // from @com_google_absl
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/util/android/asset_manager_util.h"
 #else
 #include <fstream>
-#include <iostream>
 #endif
 
+#include <cmath>
 #include <cstdint>
+#include <memory>
+#include <ostream>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include "absl/log/absl_check.h"  // from @com_google_absl
-#include "absl/log/absl_log.h"    // from @com_google_absl
+#include "absl/log/absl_check.h"        // from @com_google_absl
+#include "absl/log/absl_log.h"          // from @com_google_absl
+#include "absl/status/status.h"         // from @com_google_absl
+#include "absl/status/status_macros.h"  // from @com_google_absl
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/gpu/gl_animation_overlay_calculator.pb.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
+#include "mediapipe/gpu/gl_texture_buffer.h"
+#include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/shader_util.h"
-#include "mediapipe/graphs/object_detection_3d/calculators/gl_animation_overlay_calculator.pb.h"
 #include "mediapipe/graphs/object_detection_3d/calculators/model_matrix.pb.h"
 #include "mediapipe/modules/objectron/calculators/camera_parameters.pb.h"
 

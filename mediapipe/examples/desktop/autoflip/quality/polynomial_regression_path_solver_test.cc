@@ -14,6 +14,8 @@
 
 #include "mediapipe/examples/desktop/autoflip/quality/polynomial_regression_path_solver.h"
 
+#include <vector>
+
 #include "absl/log/absl_check.h"  // from @com_google_absl
 #include "absl/status/status.h"   // from @com_google_absl
 #include "mediapipe/examples/desktop/autoflip/quality/focus_point.pb.h"

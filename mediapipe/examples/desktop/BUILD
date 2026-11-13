@@ -26,6 +26,7 @@ cc_library(
     srcs = ["simple_run_graph_main.cc"],
     deps = [
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:output_stream_poller",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:parse_text_proto",
@@ -35,7 +36,6 @@ cc_library(
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
-        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )

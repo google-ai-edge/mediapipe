@@ -25,8 +25,8 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:file_helpers",
-        "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:ret_check",
         "//third_party/gloop/base:init_google",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",

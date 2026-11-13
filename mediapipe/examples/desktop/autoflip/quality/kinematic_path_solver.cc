@@ -1,5 +1,16 @@
 #include "mediapipe/examples/desktop/autoflip/quality/kinematic_path_solver.h"
 
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <deque>
+#include <utility>
+
+#include "absl/status/status.h"  // from @com_google_absl
+#include "mediapipe/framework/port/ret_check.h"
+
 constexpr float kMinVelocity = 0.5;
 
 namespace mediapipe {
