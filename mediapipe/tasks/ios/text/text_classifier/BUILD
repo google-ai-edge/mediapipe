@@ -12,56 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:objc_library.bzl", "objc_library")
-
 package(default_visibility = [
     "//mediapipe/tasks:internal",
 ])
 
 licenses(["notice"])
-
-exports_files(glob(["sources/*.h"]))
-
-objc_library(
-    name = "MPPTextClassifierOptions",
-    srcs = ["sources/MPPTextClassifierOptions.m"],
-    hdrs = ["sources/MPPTextClassifierOptions.h"],
-    deps = [
-        "//mediapipe/tasks/ios/core:MPPTaskOptions",
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
-
-objc_library(
-    name = "MPPTextClassifierResult",
-    srcs = ["sources/MPPTextClassifierResult.m"],
-    hdrs = ["sources/MPPTextClassifierResult.h"],
-    deps = [
-        "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
-        "//mediapipe/tasks/ios/core:MPPTaskResult",
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
-
-objc_library(
-    name = "MPPTextClassifier",
-    srcs = ["sources/MPPTextClassifier.mm"],
-    hdrs = ["sources/MPPTextClassifier.h"],
-    copts = [
-        "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
-        "-x objective-c++",
-    ],
-    module_name = "MPPTextClassifier",
-    deps = [
-        ":MPPTextClassifierOptions",
-        ":MPPTextClassifierResult",
-        "//mediapipe/tasks/c/text/text_classifier:text_classifier_lib",
-        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//mediapipe/tasks/ios/core:MPPTaskOptions",
-        "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierOptionsHelpers",
-        "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierResultHelpers",
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)

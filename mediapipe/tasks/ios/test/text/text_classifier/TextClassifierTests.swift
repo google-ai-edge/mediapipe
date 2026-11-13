@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPCommon
+import Foundation
+import MediaPipeTasksTextClassifier
 import XCTest
 
-@testable import MPPTextClassifier
-
-class TextClassifierTests: XCTestCase {
+final class TextClassifierTests: XCTestCase {
 
   static let bundle = Bundle(for: TextClassifierTests.self)
 
@@ -126,7 +125,7 @@ class TextClassifierTests: XCTestCase {
   ) throws -> TextClassifierOptions {
     let modelPath = try XCTUnwrap(modelPath)
 
-    let textClassifierOptions = TextClassifierOptions()
+    var textClassifierOptions = TextClassifierOptions()
     textClassifierOptions.baseOptions.modelAssetPath = modelPath
 
     return textClassifierOptions
@@ -136,10 +135,7 @@ class TextClassifierTests: XCTestCase {
     textClassifierOptions: TextClassifierOptions,
     expectedErrorDescription: String
   ) {
-    do {
-      let textClassifier = try TextClassifier(options: textClassifierOptions)
-      XCTAssertNil(textClassifier)
-    } catch {
+    XCTAssertThrowsError(try TextClassifier(options: textClassifierOptions)) { error in
       assertEqualErrorDescriptions(
         error,
         expectedLocalizedDescription: expectedErrorDescription)
@@ -151,9 +147,7 @@ class TextClassifierTests: XCTestCase {
     using textClassifier: TextClassifier,
     equals expectedCategories: [ResultCategory]
   ) throws {
-    let textClassifierResult =
-      try XCTUnwrap(
-        textClassifier.classify(text: text))
+    let textClassifierResult = try textClassifier.classify(text: text)
     assertTextClassifierResultHasOneHead(textClassifierResult)
     assertEqualCategoryArrays(
       categoryArray:
@@ -162,30 +156,28 @@ class TextClassifierTests: XCTestCase {
   }
 
   func testCreateTextClassifierWithInvalidMaxResultsFails() throws {
-    let textClassifierOptions =
-      try XCTUnwrap(
-        textClassifierOptionsWithModelPath(TextClassifierTests.bertModelPath))
+    var textClassifierOptions =
+      try textClassifierOptionsWithModelPath(TextClassifierTests.bertModelPath)
     textClassifierOptions.maxResults = 0
 
     assertCreateTextClassifierThrowsError(
       textClassifierOptions: textClassifierOptions,
       expectedErrorDescription: """
-        INVALID_ARGUMENT: Invalid `max_results` option: value must be != 0.
+        Invalid `max_results` option: value must be != 0.
         """)
   }
 
   func testCreateTextClassifierWithCategoryAllowlistAndDenylistFails() throws {
 
-    let textClassifierOptions =
-      try XCTUnwrap(
-        textClassifierOptionsWithModelPath(TextClassifierTests.bertModelPath))
+    var textClassifierOptions =
+      try textClassifierOptionsWithModelPath(TextClassifierTests.bertModelPath)
     textClassifierOptions.categoryAllowlist = ["positive"]
     textClassifierOptions.categoryDenylist = ["positive"]
 
     assertCreateTextClassifierThrowsError(
       textClassifierOptions: textClassifierOptions,
       expectedErrorDescription: """
-        INVALID_ARGUMENT: `category_allowlist` and `category_denylist` are \
+        `category_allowlist` and `category_denylist` are \
         mutually exclusive options.
         """)
   }
@@ -193,7 +185,7 @@ class TextClassifierTests: XCTestCase {
   func testClassifyWithBertSucceeds() throws {
 
     let modelPath = try XCTUnwrap(TextClassifierTests.bertModelPath)
-    let textClassifier = try XCTUnwrap(TextClassifier(modelPath: modelPath))
+    let textClassifier = try TextClassifier(modelPath: modelPath)
 
     try assertResultsForClassify(
       text: TextClassifierTests.negativeText,
@@ -202,13 +194,11 @@ class TextClassifierTests: XCTestCase {
   }
 
   func testClassifyWithMaxResultsSucceeds() throws {
-    let textClassifierOptions =
-      try XCTUnwrap(
-        textClassifierOptionsWithModelPath(TextClassifierTests.bertModelPath))
+    var textClassifierOptions =
+      try textClassifierOptionsWithModelPath(TextClassifierTests.bertModelPath)
     textClassifierOptions.maxResults = 1
 
-    let textClassifier =
-      try XCTUnwrap(TextClassifier(options: textClassifierOptions))
+    let textClassifier = try TextClassifier(options: textClassifierOptions)
 
     try assertResultsForClassify(
       text: TextClassifierTests.negativeText,
@@ -217,13 +207,11 @@ class TextClassifierTests: XCTestCase {
   }
 
   func testClassifyWithCategoryAllowlistSucceeds() throws {
-    let textClassifierOptions =
-      try XCTUnwrap(
-        textClassifierOptionsWithModelPath(TextClassifierTests.bertModelPath))
+    var textClassifierOptions =
+      try textClassifierOptionsWithModelPath(TextClassifierTests.bertModelPath)
     textClassifierOptions.categoryAllowlist = ["negative"]
 
-    let textClassifier =
-      try XCTUnwrap(TextClassifier(options: textClassifierOptions))
+    let textClassifier = try TextClassifier(options: textClassifierOptions)
 
     try assertResultsForClassify(
       text: TextClassifierTests.negativeText,
@@ -232,13 +220,11 @@ class TextClassifierTests: XCTestCase {
   }
 
   func testClassifyWithCategoryDenylistSucceeds() throws {
-    let textClassifierOptions =
-      try XCTUnwrap(
-        textClassifierOptionsWithModelPath(TextClassifierTests.bertModelPath))
+    var textClassifierOptions =
+      try textClassifierOptionsWithModelPath(TextClassifierTests.bertModelPath)
     textClassifierOptions.categoryDenylist = ["positive"]
 
-    let textClassifier =
-      try XCTUnwrap(TextClassifier(options: textClassifierOptions))
+    let textClassifier = try TextClassifier(options: textClassifierOptions)
 
     try assertResultsForClassify(
       text: TextClassifierTests.negativeText,
@@ -247,13 +233,11 @@ class TextClassifierTests: XCTestCase {
   }
 
   func testClassifyWithScoreThresholdSucceeds() throws {
-    let textClassifierOptions =
-      try XCTUnwrap(
-        textClassifierOptionsWithModelPath(TextClassifierTests.bertModelPath))
+    var textClassifierOptions =
+      try textClassifierOptionsWithModelPath(TextClassifierTests.bertModelPath)
     textClassifierOptions.scoreThreshold = 0.5
 
-    let textClassifier =
-      try XCTUnwrap(TextClassifier(options: textClassifierOptions))
+    let textClassifier = try TextClassifier(options: textClassifierOptions)
 
     try assertResultsForClassify(
       text: TextClassifierTests.negativeText,

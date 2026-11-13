@@ -12,60 +12,60 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPCommon
-import MPPTextClassifier
+import Foundation
+import MediaPipeTasksTextClassifier
 import XCTest
-
-extension TasksErrorCode {
-  fileprivate static let errorDomain = "com.google.mediapipe.tasks"
-}
 
 final class TextClassifierSmokeTests: XCTestCase {
 
   func testOptionsCoverage() {
-    let options = TextClassifierOptions()
+    var options = TextClassifierOptions()
     options.scoreThreshold = 0.5
     options.maxResults = 3
-    options.displayNamesLocale = "en"
+    options.displayNamesLocale = "de"
     options.categoryAllowlist = ["positive"]
     options.categoryDenylist = ["negative"]
 
     XCTAssertEqual(options.scoreThreshold, 0.5, accuracy: 1e-3)
     XCTAssertEqual(options.maxResults, 3)
-    XCTAssertEqual(options.displayNamesLocale, "en")
+    XCTAssertEqual(options.displayNamesLocale, "de")
     XCTAssertEqual(options.categoryAllowlist, ["positive"])
     XCTAssertEqual(options.categoryDenylist, ["negative"])
   }
 
   func testRuntimeRegistrationAndInitialization() {
-    let options = TextClassifierOptions()
+    var options = TextClassifierOptions()
     options.baseOptions.modelAssetPath = "/nonexistent/text_classifier.task"
 
     XCTAssertThrowsError(try TextClassifier(options: options)) { error in
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertTrue(tasksError.code == .invalidArgument || tasksError.code == .notFound)
       let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      XCTAssertEqual(nsError.domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
-      )
-      XCTAssertFalse(
-        nsError.localizedDescription.contains("No registered object with name"),
-        "TextClassifier subgraph not linked"
+        nsError.code == TasksErrorCode.invalidArgument.rawValue
+          || nsError.code == TasksErrorCode.notFound.rawValue
       )
       XCTAssertTrue(
-        nsError.localizedDescription.contains("Unable to open file"),
-        "Unexpected error: \(nsError.localizedDescription)"
+        error.localizedDescription.contains("Unable to open file"),
+        "Unexpected error: \(error.localizedDescription)"
       )
     }
 
     XCTAssertThrowsError(
       try TextClassifier(modelPath: "/nonexistent/text_classifier.task")
     ) { error in
-      let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertTrue(tasksError.code == .invalidArgument || tasksError.code == .notFound)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
+        error.localizedDescription.contains("Unable to open file"),
+        "Unexpected error: \(error.localizedDescription)"
       )
     }
   }
@@ -88,7 +88,7 @@ final class TextClassifierSmokeTests: XCTestCase {
     XCTAssertEqual(category.displayName, "Positive")
 
     let classifications = Classifications(
-      head: 0,
+      headIndex: 0,
       headName: "head",
       categories: [category]
     )
@@ -107,10 +107,7 @@ final class TextClassifierSmokeTests: XCTestCase {
       classificationResult: classificationResult,
       timestampInMilliseconds: 1000
     )
-    XCTAssertEqual(
-      result.classificationResult.classifications.count,
-      1
-    )
+    XCTAssertEqual(result.classificationResult.classifications.count, 1)
     XCTAssertEqual(result.timestampInMilliseconds, 1000)
   }
 }
