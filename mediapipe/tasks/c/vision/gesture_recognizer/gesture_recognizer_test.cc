@@ -16,15 +16,12 @@ limitations under the License.
 #include "mediapipe/tasks/c/vision/gesture_recognizer/gesture_recognizer.h"
 
 #include <cstdint>
-#include <cstdlib>
 #include <memory>
 #include <string>
 
 #include "absl/flags/flag.h"                        // from @com_google_absl
 #include "absl/strings/string_view.h"               // from @com_google_absl
 #include "absl/synchronization/blocking_counter.h"  // from @com_google_absl
-#include "absl/time/clock.h"                        // from @com_google_absl
-#include "absl/time/time.h"                         // from @com_google_absl
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -49,7 +46,6 @@ constexpr char kImageFile[] = "fist.jpg";
 constexpr float kScorePrecision = 2e-2;
 constexpr float kLandmarkPrecision = 1e-1;
 constexpr int kIterations = 5;
-constexpr int kSleepBetweenFramesMilliseconds = 100;
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
@@ -256,22 +252,19 @@ TEST(GestureRecognizerTest, LiveStreamModeTest) {
             kMpOk);
   ASSERT_NE(recognizer, nullptr);
 
-  absl::BlockingCounter counter(kIterations);
-  LiveStreamModeCallback::blocking_counter = &counter;
-
   for (int i = 0; i < kIterations; ++i) {
+    absl::BlockingCounter counter(1);
+    LiveStreamModeCallback::blocking_counter = &counter;
     ASSERT_EQ(
         MpGestureRecognizerRecognizeAsync(
             recognizer, image.get(), /* image_processing_options */ nullptr, i,
             /* &error_msg= */ nullptr),
         kMpOk);
-    // Short sleep so that MediaPipe does not drop frames.
-    absl::SleepFor(absl::Milliseconds(kSleepBetweenFramesMilliseconds));
+    // Wait for the callback to be invoked so that MediaPipe does not drop
+    // frames.
+    counter.Wait();
+    LiveStreamModeCallback::blocking_counter = nullptr;
   }
-
-  // Wait for all callbacks to be invoked.
-  counter.Wait();
-  LiveStreamModeCallback::blocking_counter = nullptr;
 
   EXPECT_EQ(MpGestureRecognizerClose(recognizer, /* &error_msg= */ nullptr),
             kMpOk);
