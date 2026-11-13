@@ -15,15 +15,6 @@
 import threading
 import numpy as np
 
-try:
-  import sounddevice as sd
-except OSError as oe:
-  sd = None
-  sd_error = oe
-except ImportError as ie:
-  sd = None
-  sd_error = ie
-
 
 class AudioRecord(object):
   """A class to record audio in a streaming basis."""
@@ -39,12 +30,14 @@ class AudioRecord(object):
       buffer_size: Size of the ring buffer in number of samples.
 
     Raises:
-      ValueError: if any of the arguments is non-positive.
       ImportError: if failed to import `sounddevice`.
       OSError: if failed to load `PortAudio`.
+      ValueError: if any of the arguments is non-positive.
     """
-    if sd is None:
-      raise sd_error
+    try:
+      import sounddevice as sd
+    except (ImportError, OSError):
+      raise
 
     if channels <= 0:
       raise ValueError('channels must be positive.')
