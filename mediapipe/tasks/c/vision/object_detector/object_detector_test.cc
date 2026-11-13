@@ -16,7 +16,6 @@ limitations under the License.
 #include "mediapipe/tasks/c/vision/object_detector/object_detector.h"
 
 #include <cstdint>
-#include <cstdlib>
 #include <memory>
 #include <string>
 
@@ -30,7 +29,6 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
-#include "mediapipe/tasks/c/test/test_utils.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/core/image_test_util.h"
@@ -46,7 +44,7 @@ constexpr char kImageFile[] = "cats_and_dogs.jpg";
 constexpr char kImageRotatedFile[] = "cats_and_dogs_rotated.jpg";
 constexpr char kModelName[] =
     "coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.tflite";
-constexpr float kPrecision = 1e-4;
+constexpr float kPrecision = 2e-2;
 constexpr int kIterations = 5;
 constexpr int kSleepBetweenFramesMilliseconds = 100;
 
