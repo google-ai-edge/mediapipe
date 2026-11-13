@@ -34,7 +34,7 @@ import uuid
 # This script is meant to be located in the MediaPipe iOS examples directory
 # root. The logic below will have to be changed if the directory structure is
 # reorganized.
-examples_ios = os.path.dirname(os.path.realpath(__file__))
+examples_ios = os.path.dirname(os.path.abspath(__file__))
 example_names = {
     f for f in os.listdir(examples_ios)
     if os.path.isdir(os.path.join(examples_ios, f))
