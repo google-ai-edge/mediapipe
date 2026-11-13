@@ -404,8 +404,9 @@ http_archive(
 http_archive(
     name = "easyexif",
     build_file = "@//third_party:easyexif.BUILD",
-    strip_prefix = "easyexif-master",
-    url = "https://github.com/mayanklahiri/easyexif/archive/master.zip",
+    strip_prefix = "easyexif-cd994a3b6009bc3c1f84062e96bd7f5ad16e85f6",
+    url = "https://github.com/mayanklahiri/easyexif/archive/cd994a3b6009bc3c1f84062e96bd7f5ad16e85f6.zip",
+    sha256 = "8ed19239fd60c7c58395b70cff855537f5ed5337f06ba5dcbf7593989aedef45",
 )
 
 # libyuv
