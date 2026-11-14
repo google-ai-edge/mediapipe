@@ -58,6 +58,7 @@ cc_library(
         "//mediapipe/calculators/tensor:audio_to_tensor_calculator",
         "//mediapipe/calculators/tensor:audio_to_tensor_calculator_cc_proto",
         "//mediapipe/calculators/tensor:inference_calculator_cpu",
+        "//mediapipe/calculators/tensor:inference_calculator_litert",  # buildcleaner: keep
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:builder",

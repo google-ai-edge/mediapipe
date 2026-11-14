@@ -32,6 +32,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 #include "mediapipe/tasks/cc/components/processors/classifier_options.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
+#include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "tflite/core/api/op_resolver.h"  // from @litert
@@ -86,7 +87,8 @@ std::unique_ptr<proto::AudioClassifierGraphOptions>
 ConvertAudioClassifierOptionsToProto(AudioClassifierOptions* options) {
   auto options_proto = std::make_unique<proto::AudioClassifierGraphOptions>();
   auto base_options_proto = std::make_unique<tasks::core::proto::BaseOptions>(
-      tasks::core::ConvertBaseOptionsToProto(&(options->base_options)));
+      tasks::core::ConvertBaseOptionsToProto(&(options->base_options),
+                                             /*use_litert=*/true));
   options_proto->mutable_base_options()->Swap(base_options_proto.get());
   options_proto->mutable_base_options()->set_use_stream_mode(
       options->running_mode == core::RunningMode::AUDIO_STREAM);

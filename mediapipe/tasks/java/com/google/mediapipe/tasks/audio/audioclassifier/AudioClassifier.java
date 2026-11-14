@@ -177,7 +177,7 @@ public final class AudioClassifier extends BaseAudioTaskApi {
               }
             } catch (IOException e) {
               throw new MediaPipeException(
-                  MediaPipeException.StatusCode.INTERNAL.ordinal(), e.getMessage());
+                  MediaPipeException.StatusCode.INTERNAL, e.getMessage(), e);
             }
           }
 
@@ -226,7 +226,7 @@ public final class AudioClassifier extends BaseAudioTaskApi {
     super(taskRunner, runningMode, AUDIO_IN_STREAM_NAME, SAMPLE_RATE_IN_STREAM_NAME);
   }
 
-  /*
+  /**
    * Performs audio classification on the provided audio clip. Only use this method when the
    * AudioClassifier is created with the audio clips mode.
    *
@@ -266,7 +266,7 @@ public final class AudioClassifier extends BaseAudioTaskApi {
     return (AudioClassifierResult) processAudioClip(audioClip);
   }
 
-  /*
+  /**
    * Sends audio data (a block in a continuous audio stream) to perform audio classification, and
    * the results will be available via the {@link ResultListener} provided in the
    * {@link AudioClassifierOptions}. Only use this method when the AudioClassifier is created with
@@ -433,7 +433,7 @@ public final class AudioClassifier extends BaseAudioTaskApi {
       BaseOptionsProto.BaseOptions.Builder baseOptionsBuilder =
           BaseOptionsProto.BaseOptions.newBuilder();
       baseOptionsBuilder.setUseStreamMode(runningMode() == RunningMode.AUDIO_STREAM);
-      baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions()));
+      baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions(), /* useLiteRt= */ true));
       ClassifierOptionsProto.ClassifierOptions.Builder classifierOptionsBuilder =
           ClassifierOptionsProto.ClassifierOptions.newBuilder();
       displayNamesLocale().ifPresent(classifierOptionsBuilder::setDisplayNamesLocale);
