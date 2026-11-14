@@ -219,7 +219,6 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
       options.baseOptions.modelAssetPath = dummyPath
       return try UniversalEmbedder(options: options)
     }
-
     let _: (UniversalEmbedder, MPImage, FloatBuffer) throws -> EmbeddingResult = {
       embedder, image, floatBuffer in
       _ = try embedder.embed(image: image)
@@ -230,6 +229,34 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
               .image(ImagePart(filePath: dummyPath)),
               .audio(AudioPart(samples: [0.0, 1.0])),
           ])
+    }
+
+    // Exercise the chunker, SQLite vector store, and component-wired retriever
+    // directly to prove their C symbols link and execute cleanly, and verify
+    // `SemanticRetrieverOptions` / `RetrievalResult` signatures compile.
+    do {
+      let chunker = try DefaultTextChunker(chunkSize: 16, chunkOverlap: 4, mode: .character)
+      let chunks = try chunker.chunk(text: "MediaPipe Tasks retrieval smoke test input string.")
+      XCTAssertFalse(chunks.isEmpty, "Retrieval - DefaultTextChunker: expected chunks.")
+
+      let vectorStore = SqliteVectorStore(databasePath: ":memory:", embeddingDimension: 8)
+      XCTAssertEqual(vectorStore.databasePath, ":memory:")
+      XCTAssertEqual(try vectorStore.recordIdentifiers(), [])
+
+      let components = try SemanticRetrieverComponents(
+          vectorStore: vectorStore, chunker: chunker, providers: [])
+      let retriever = try SemanticRetriever(components: components)
+      XCTAssertEqual(try retriever.allRecordIds(), [])
+
+      let result = RetrievalResult(id: "id", content: [.text("text")], score: 1.0)
+      XCTAssertEqual(result.id, "id")
+    } catch {
+      XCTFail("Retrieval - SemanticRetriever components: unexpected error \(error)")
+    }
+
+    let _: (UniversalEmbedder) throws -> [RetrievalResult] = { embedder in
+      let options = SemanticRetrieverOptions(embedder: embedder, chunkingMode: .word)
+      return try SemanticRetriever(options: options).retrieve(text: "query", limit: 1)
     }
   }
 

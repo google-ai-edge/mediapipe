@@ -24,6 +24,7 @@ SEMANTIC_RETRIEVER_DEPS = [
     "@com_google_absl//absl/status:status_macros",
     "@com_google_absl//absl/status:statusor",
     "@com_google_absl//absl/strings",
+    "@com_google_absl//absl/types:span",
     "//mediapipe/tasks/c/core:base_options",
     "//mediapipe/tasks/c/core:base_options_converter",
     "//mediapipe/tasks/c/core:mp_status",
@@ -31,17 +32,33 @@ SEMANTIC_RETRIEVER_DEPS = [
     "//mediapipe/tasks/c/core:common",
     "//mediapipe/tasks/c/retrieval/universal_embedder:universal_embedder_lib",
     "//mediapipe/tasks/c/text/text_embedder:text_embedder_c_lib",
-    "//mediapipe/tasks/c/vision/core:image",
     "//mediapipe/tasks/c/vision/image_embedder:image_embedder_c_lib",
     "//mediapipe/tasks/cc/text/text_embedder",
+    "//mediapipe/tasks/cc/text/utils:genai_utils",
     "//mediapipe/tasks/cc/vision/image_embedder",
     "//mediapipe/tasks/cc/core:embedding_provider",
     "//mediapipe/tasks/cc/retrieval/semantic_retriever",
     "//mediapipe/tasks/cc/retrieval/semantic_retriever:memory_store",
     "//mediapipe/tasks/cc/retrieval/semantic_retriever:sqlite_memory_store",
     "//mediapipe/tasks/cc/retrieval/semantic_retriever:text_chunker",
+    "//mediapipe/tasks/cc/retrieval/semantic_retriever/proto:memory_cc_proto",
     "//mediapipe/tasks/cc/retrieval/universal_embedder",
 ]
+
+# C-only target exposing `semantic_retriever.h` as a Clang module.
+cc_library(
+    name = "semantic_retriever",
+    hdrs = ["semantic_retriever.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":semantic_retriever_lib",
+        "//mediapipe/tasks/c/core:base_options",
+        "//mediapipe/tasks/c/core:mp_status",
+        "//mediapipe/tasks/c/retrieval/universal_embedder",
+        "//mediapipe/tasks/c/text/text_embedder:text_embedder_c_lib",
+        "//mediapipe/tasks/c/vision/image_embedder:image_embedder_c_lib",
+    ],
+)
 
 cc_library(
     name = "semantic_retriever_lib",
