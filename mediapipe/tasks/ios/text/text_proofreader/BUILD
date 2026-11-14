@@ -12,54 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:objc_library.bzl", "objc_library")
-
 package(default_visibility = [
     "//mediapipe/tasks:internal",
 ])
 
 licenses(["notice"])
-
-exports_files(glob(["sources/*.h"]))
-
-objc_library(
-    name = "MPPTextProofreaderOptions",
-    srcs = ["sources/MPPTextProofreaderOptions.m"],
-    hdrs = ["sources/MPPTextProofreaderOptions.h"],
-    deps = [
-        "//mediapipe/tasks/ios/core:MPPTaskOptions",
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
-
-objc_library(
-    name = "MPPTextProofreaderResult",
-    srcs = ["sources/MPPTextProofreaderResult.m"],
-    hdrs = ["sources/MPPTextProofreaderResult.h"],
-    deps = [
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
-
-objc_library(
-    name = "MPPTextProofreader",
-    srcs = ["sources/MPPTextProofreader.mm"],
-    hdrs = ["sources/MPPTextProofreader.h"],
-    copts = [
-        "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
-        "-x objective-c++",
-    ],
-    module_name = "MPPTextProofreader",
-    deps = [
-        ":MPPTextProofreaderOptions",
-        ":MPPTextProofreaderResult",
-        "//mediapipe/tasks/c/core:base_options",
-        "//mediapipe/tasks/c/text/text_proofreader:text_proofreader_lib",
-        "//mediapipe/tasks/ios/common:MPPCommon",
-        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
