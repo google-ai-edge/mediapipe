@@ -115,6 +115,12 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
       options.baseOptions.modelAssetPath = dummyPath
       return try GestureRecognizer(options: options)
     }
+
+    verifyTaskInit(name: "PoseLandmarker", domain: "Vision") {
+      var options = PoseLandmarkerOptions()
+      options.baseOptions.modelAssetPath = dummyPath
+      return try PoseLandmarker(options: options)
+    }
   }
 
   private func verifyTextRegistration() {

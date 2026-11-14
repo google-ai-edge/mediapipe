@@ -17,8 +17,7 @@ limitations under the License.
 #define MEDIAPIPE_TASKS_C_VISION_POSE_LANDMARKER_POSE_LANDMARKER_H_
 
 #include <stdbool.h>
-
-#include <cstdint>
+#include <stdint.h>
 
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/core/common.h"
@@ -41,8 +40,14 @@ extern "C" {
 
 typedef struct MpPoseLandmarkerInternal* MpPoseLandmarkerPtr;
 
+// User-defined callback for processing live stream pose landmarker results.
+// Arguments are valid only for the lifetime of the callback invocation.
+typedef void (*MpPoseLandmarkerResultCallback)(
+    MpStatus status, const MpPoseLandmarkerResult* result,
+    const MpImagePtr image, int64_t timestamp_ms);
+
 // The options for configuring a MediaPipe pose landmarker task.
-struct MpPoseLandmarkerOptions {
+typedef struct MpPoseLandmarkerOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
   struct MpBaseOptions base_options;
@@ -55,8 +60,9 @@ struct MpPoseLandmarkerOptions {
   // 3) The live stream mode for recognizing pose landmarks on the live stream
   //    of input data, such as from camera. In this mode, the "result_callback"
   //    below must be specified to receive the detection results asynchronously.
-  MpRunningMode running_mode;
+  enum MpRunningMode running_mode;
 
+#ifdef __cplusplus
   // The maximum number of poses can be detected by the PoseLandmarker.
   int num_poses = 1;
 
@@ -75,21 +81,20 @@ struct MpPoseLandmarkerOptions {
   // Whether to output segmentation masks.
   bool output_segmentation_masks = false;
 
+  using result_callback_fn = MpPoseLandmarkerResultCallback;
+#else
+  int num_poses;
+  float min_pose_detection_confidence;
+  float min_pose_presence_confidence;
+  float min_tracking_confidence;
+  bool output_segmentation_masks;
+#endif
+
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
-  // to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
-  // function include: the pointer to recognition result, the image that result
-  // was obtained on, the timestamp relevant to recognition results and pointer
-  // to error message in case of any failure. The validity of the passed
-  // arguments is true for the lifetime of the callback function.
-  //
-  // The passed arguments are only valid for the lifetime of the callback.
-  typedef void (*result_callback_fn)(MpStatus status,
-                                     const MpPoseLandmarkerResult* result,
-                                     const MpImagePtr image,
-                                     int64_t timestamp_ms);
-  result_callback_fn result_callback;
-};
+  // to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM.
+  MpPoseLandmarkerResultCallback result_callback;
+} MpPoseLandmarkerOptions;
 
 // Creates an PoseLandmarker from the provided `options`.
 // Returns a pointer to the pose landmarker on success.

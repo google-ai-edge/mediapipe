@@ -12,39 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPCommon
-import MPPPoseLandmarker
+import Foundation
+import MediaPipeTasksPoseLandmarker
 import XCTest
-
-extension TasksErrorCode {
-  fileprivate static let errorDomain = "com.google.mediapipe.tasks"
-}
 
 final class PoseLandmarkerSmokeTests: XCTestCase {
 
-  private final class MockLiveStreamDelegate: NSObject,
-    PoseLandmarkerLiveStreamDelegate
-  {
-    func poseLandmarker(
-      _ poseLandmarker: PoseLandmarker,
-      didFinishDetection result: PoseLandmarkerResult?,
-      timestampInMilliseconds: Int,
-      error: (any Error)?
-    ) {}
-  }
-
-  func testOptionsAndDelegateCoverage() {
-    let options = PoseLandmarkerOptions()
+  func testOptionsAndHandlerCoverage() {
+    var options = PoseLandmarkerOptions()
     options.runningMode = .liveStream
     options.numPoses = 2
     options.minPoseDetectionConfidence = 0.6
     options.minPosePresenceConfidence = 0.6
     options.minTrackingConfidence = 0.6
     options.outputSegmentationMasks = true
+    options.liveStreamResultHandler = { _, _ in }
 
-    let delegate = MockLiveStreamDelegate()
-    options.poseLandmarkerLiveStreamDelegate = delegate
-    XCTAssertNotNil(options.poseLandmarkerLiveStreamDelegate)
+    XCTAssertNotNil(options.liveStreamResultHandler)
     XCTAssertEqual(options.runningMode, .liveStream)
     XCTAssertEqual(options.numPoses, 2)
     XCTAssertEqual(options.minPoseDetectionConfidence, 0.6, accuracy: 1e-3)
@@ -54,45 +38,64 @@ final class PoseLandmarkerSmokeTests: XCTestCase {
   }
 
   func testRuntimeRegistrationAndInitialization() {
-    let options = PoseLandmarkerOptions()
+    var options = PoseLandmarkerOptions()
     options.baseOptions.modelAssetPath = "/nonexistent/pose_landmarker.task"
 
     XCTAssertThrowsError(try PoseLandmarker(options: options)) { error in
-      let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertEqual((error as NSError).domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
-      )
-      XCTAssertFalse(
-        nsError.localizedDescription.contains("No registered object with name"),
-        "PoseLandmarker subgraph not linked"
+        tasksError.code == .invalidArgument || tasksError.code == .notFound
       )
       XCTAssertTrue(
-        nsError.localizedDescription.contains("Unable to open file"),
-        "Unexpected error: \(nsError.localizedDescription)"
+        error.localizedDescription.contains("Unable to open file"),
+        "Unexpected error: \(error.localizedDescription)"
       )
     }
 
     XCTAssertThrowsError(
       try PoseLandmarker(modelPath: "/nonexistent/pose_landmarker.task")
     ) { error in
-      let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertEqual((error as NSError).domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
+        tasksError.code == .invalidArgument || tasksError.code == .notFound
       )
     }
   }
 
   func testExecutionMethodSignaturesCompile() {
-    let _: (PoseLandmarker) -> (MPImage) throws -> PoseLandmarkerResult =
-      PoseLandmarker.detect(image:)
-    let _: (PoseLandmarker) -> (MPImage, Int) throws -> PoseLandmarkerResult =
-      PoseLandmarker.detect(videoFrame:timestampInMilliseconds:)
-    let _: (PoseLandmarker) -> (MPImage, Int) throws -> Void =
-      PoseLandmarker.detectAsync(image:timestampInMilliseconds:)
+    let _:
+      (PoseLandmarker) -> (MPImage, ImageProcessingOptions?) throws ->
+        PoseLandmarkerResult =
+        PoseLandmarker.detect(image:imageProcessingOptions:)
+    let _:
+      (PoseLandmarker) -> (MPImage, Int, ImageProcessingOptions?) throws ->
+        PoseLandmarkerResult =
+        PoseLandmarker.detect(
+          videoFrame:timestampInMilliseconds:imageProcessingOptions:
+        )
+    let _:
+      (PoseLandmarker) -> (MPImage, Int, ImageProcessingOptions?) throws ->
+        Void =
+        PoseLandmarker.detectAsync(
+          image:timestampInMilliseconds:imageProcessingOptions:
+        )
+    let _: (PoseLandmarker, MPImage) throws -> PoseLandmarkerResult = {
+      try $0.detect(image: $1)
+    }
+    let _: (PoseLandmarker, MPImage, Int) throws -> PoseLandmarkerResult = {
+      try $0.detect(videoFrame: $1, timestampInMilliseconds: $2)
+    }
+    let _: (PoseLandmarker, MPImage, Int) throws -> Void = {
+      try $0.detectAsync(image: $1, timestampInMilliseconds: $2)
+    }
   }
 
   func testResultContainerTypes() throws {
@@ -107,9 +110,9 @@ final class PoseLandmarkerSmokeTests: XCTestCase {
     XCTAssertEqual(landmark.y, 0.2, accuracy: 1e-3)
     XCTAssertEqual(landmark.z, 0.3, accuracy: 1e-3)
     let visibility = try XCTUnwrap(landmark.visibility)
-    XCTAssertEqual(visibility.floatValue, 0.9, accuracy: 1e-3)
+    XCTAssertEqual(visibility, 0.9, accuracy: 1e-3)
     let presence = try XCTUnwrap(landmark.presence)
-    XCTAssertEqual(presence.floatValue, 0.8, accuracy: 1e-3)
+    XCTAssertEqual(presence, 0.8, accuracy: 1e-3)
 
     let worldLandmark = Landmark(
       x: 1.0,
@@ -122,9 +125,9 @@ final class PoseLandmarkerSmokeTests: XCTestCase {
     XCTAssertEqual(worldLandmark.y, 2.0, accuracy: 1e-3)
     XCTAssertEqual(worldLandmark.z, 3.0, accuracy: 1e-3)
     let worldVisibility = try XCTUnwrap(worldLandmark.visibility)
-    XCTAssertEqual(worldVisibility.floatValue, 0.9, accuracy: 1e-3)
+    XCTAssertEqual(worldVisibility, 0.9, accuracy: 1e-3)
     let worldPresence = try XCTUnwrap(worldLandmark.presence)
-    XCTAssertEqual(worldPresence.floatValue, 0.8, accuracy: 1e-3)
+    XCTAssertEqual(worldPresence, 0.8, accuracy: 1e-3)
 
     let result = PoseLandmarkerResult(
       landmarks: [[landmark]],
@@ -134,7 +137,7 @@ final class PoseLandmarkerSmokeTests: XCTestCase {
     )
     XCTAssertEqual(result.landmarks.count, 1)
     XCTAssertEqual(result.worldLandmarks.count, 1)
-    XCTAssertTrue(result.segmentationMasks.isEmpty)
+    XCTAssertNil(result.segmentationMasks)
     XCTAssertEqual(result.timestampInMilliseconds, 1000)
   }
 

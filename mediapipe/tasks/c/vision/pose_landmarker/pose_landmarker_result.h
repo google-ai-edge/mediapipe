@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_VISION_POSE_LANDMARKER_RESULT_POSE_LANDMARKER_RESULT_H_
 #define MEDIAPIPE_TASKS_C_VISION_POSE_LANDMARKER_RESULT_POSE_LANDMARKER_RESULT_H_
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "mediapipe/tasks/c/components/containers/landmark.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
@@ -33,27 +33,27 @@ limitations under the License.
 extern "C" {
 #endif
 
-// The hand landmarker result from PoseLandmarker, where each vector
-// element represents a single hand detected in the image.
-struct MpPoseLandmarkerResult {
+// The pose landmarker result from PoseLandmarker, where each vector
+// element represents a single pose detected in the image.
+typedef struct MpPoseLandmarkerResult {
   // Segmentation masks for pose.
   MpImagePtr* segmentation_masks;
 
   // The number of elements in the segmentation_masks array.
   uint32_t segmentation_masks_count;
 
-  // Detected hand landmarks in normalized image coordinates.
+  // Detected pose landmarks in normalized image coordinates.
   struct MpNormalizedLandmarks* pose_landmarks;
 
   // The number of elements in the pose_landmarks array.
   uint32_t pose_landmarks_count;
 
-  // Detected hand landmarks in world coordinates.
+  // Detected pose landmarks in world coordinates.
   struct MpLandmarks* pose_world_landmarks;
 
   // The number of elements in the pose_world_landmarks array.
   uint32_t pose_world_landmarks_count;
-};
+} MpPoseLandmarkerResult;
 
 #ifdef __cplusplus
 }  // extern C
