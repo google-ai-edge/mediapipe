@@ -12,39 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPCommon
-import MPPObjectDetector
+import CoreGraphics
+import Foundation
+import MediaPipeTasksObjectDetector
 import XCTest
-
-extension TasksErrorCode {
-  fileprivate static let errorDomain = "com.google.mediapipe.tasks"
-}
 
 final class ObjectDetectorSmokeTests: XCTestCase {
 
-  private final class MockLiveStreamDelegate: NSObject,
-    ObjectDetectorLiveStreamDelegate
-  {
-    func objectDetector(
-      _ objectDetector: ObjectDetector,
-      didFinishDetection result: ObjectDetectorResult?,
-      timestampInMilliseconds: Int,
-      error: (any Error)?
-    ) {}
-  }
-
   func testOptionsAndDelegateCoverage() {
-    let options = ObjectDetectorOptions()
+    var options = ObjectDetectorOptions()
     options.runningMode = .liveStream
     options.scoreThreshold = 0.5
     options.maxResults = 3
     options.displayNamesLocale = "en"
     options.categoryAllowlist = ["cat", "dog"]
     options.categoryDenylist = ["bird"]
+    options.liveStreamResultHandler = { _, _ in }
 
-    let delegate = MockLiveStreamDelegate()
-    options.objectDetectorLiveStreamDelegate = delegate
-    XCTAssertNotNil(options.objectDetectorLiveStreamDelegate)
+    XCTAssertNotNil(options.liveStreamResultHandler)
     XCTAssertEqual(options.runningMode, .liveStream)
     XCTAssertEqual(options.scoreThreshold, 0.5, accuracy: 1e-3)
     XCTAssertEqual(options.maxResults, 3)
@@ -54,19 +39,15 @@ final class ObjectDetectorSmokeTests: XCTestCase {
   }
 
   func testRuntimeRegistrationAndInitialization() {
-    let options = ObjectDetectorOptions()
+    var options = ObjectDetectorOptions()
     options.baseOptions.modelAssetPath = "/nonexistent/object_detector.task"
 
     XCTAssertThrowsError(try ObjectDetector(options: options)) { error in
       let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      XCTAssertEqual(nsError.domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
-      )
-      XCTAssertFalse(
-        nsError.localizedDescription.contains("No registered object with name"),
-        "ObjectDetector subgraph not linked"
+        nsError.code == TasksErrorCode.invalidArgument.rawValue
+          || nsError.code == TasksErrorCode.notFound.rawValue
       )
       XCTAssertTrue(
         nsError.localizedDescription.contains("Unable to open file"),
@@ -78,21 +59,25 @@ final class ObjectDetectorSmokeTests: XCTestCase {
       try ObjectDetector(modelPath: "/nonexistent/object_detector.task")
     ) { error in
       let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      XCTAssertEqual(nsError.domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
+        nsError.code == TasksErrorCode.invalidArgument.rawValue
+          || nsError.code == TasksErrorCode.notFound.rawValue
       )
     }
   }
 
   func testExecutionMethodSignaturesCompile() {
-    let _: (ObjectDetector) -> (MPImage) throws -> ObjectDetectorResult =
-      ObjectDetector.detect(image:)
-    let _: (ObjectDetector) -> (MPImage, Int) throws -> ObjectDetectorResult =
-      ObjectDetector.detect(videoFrame:timestampInMilliseconds:)
-    let _: (ObjectDetector) -> (MPImage, Int) throws -> Void =
-      ObjectDetector.detectAsync(image:timestampInMilliseconds:)
+    let _:
+      (ObjectDetector) -> (MPImage, ImageProcessingOptions?) throws ->
+        ObjectDetectorResult =
+        ObjectDetector.detect(image:imageProcessingOptions:)
+    let _:
+      (ObjectDetector) -> (MPImage, Int, ImageProcessingOptions?) throws ->
+        ObjectDetectorResult =
+        ObjectDetector.detect(videoFrame:timestampInMilliseconds:imageProcessingOptions:)
+    let _: (ObjectDetector) -> (MPImage, Int, ImageProcessingOptions?) throws -> Void =
+      ObjectDetector.detectAsync(image:timestampInMilliseconds:imageProcessingOptions:)
   }
 
   func testResultContainerTypes() {

@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_VISION_OBJECT_DETECTOR_OBJECT_DETECTOR_H_
 #define MEDIAPIPE_TASKS_C_VISION_OBJECT_DETECTOR_OBJECT_DETECTOR_H_
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "mediapipe/tasks/c/components/containers/detection_result.h"
 #include "mediapipe/tasks/c/core/base_options.h"
@@ -38,7 +38,12 @@ extern "C" {
 #endif
 
 typedef struct MpObjectDetectorInternal* MpObjectDetectorPtr;
-typedef MpDetectionResult MpObjectDetectorResult;
+typedef struct MpDetectionResult MpObjectDetectorResult;
+
+// The user-defined result callback for processing live stream data.
+typedef void (*MpObjectDetectorResultCallback)(
+    MpStatus status, const MpObjectDetectorResult* result,
+    const MpImagePtr image, int64_t timestamp_ms);
 
 // The options for configuring a MediaPipe object detector task.
 struct MpObjectDetectorOptions {
@@ -53,7 +58,7 @@ struct MpObjectDetectorOptions {
   // 3) The live stream mode for detecting objects on the live stream of input
   // data, such as from camera. In this mode, the "result_callback" below must
   // be specified to receive the detection results asynchronously.
-  MpRunningMode running_mode;
+  enum MpRunningMode running_mode;
 
   // The locale to use for display names specified through the TFLite Model
   // Metadata, if any. Defaults to English.
@@ -91,11 +96,10 @@ struct MpObjectDetectorOptions {
   // is true for the lifetime of the callback function.
   //
   // The passed arguments are only valid for the lifetime of the callback.
-  typedef void (*result_callback_fn)(MpStatus status,
-                                     const MpObjectDetectorResult* result,
-                                     const MpImagePtr image,
-                                     int64_t timestamp_ms);
-  result_callback_fn result_callback;
+#ifdef __cplusplus
+  using result_callback_fn = MpObjectDetectorResultCallback;
+#endif
+  MpObjectDetectorResultCallback result_callback;
 };
 
 // Creates an ObjectDetector from the provided `options`.

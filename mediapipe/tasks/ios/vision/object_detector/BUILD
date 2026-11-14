@@ -12,59 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:objc_library.bzl", "objc_library")
-
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
-
-exports_files(glob(["sources/*.h"]))
-
-objc_library(
-    name = "MPPObjectDetectorResult",
-    srcs = ["sources/MPPObjectDetectorResult.m"],
-    hdrs = ["sources/MPPObjectDetectorResult.h"],
-    deps = [
-        "//mediapipe/tasks/ios/components/containers:MPPDetection",
-        "//mediapipe/tasks/ios/core:MPPTaskResult",
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
-
-objc_library(
-    name = "MPPObjectDetectorOptions",
-    srcs = ["sources/MPPObjectDetectorOptions.m"],
-    hdrs = ["sources/MPPObjectDetectorOptions.h"],
-    deps = [
-        ":MPPObjectDetectorResult",
-        "//mediapipe/tasks/ios/core:MPPTaskOptions",
-        "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
-
-objc_library(
-    name = "MPPObjectDetector",
-    srcs = ["sources/MPPObjectDetector.mm"],
-    hdrs = ["sources/MPPObjectDetector.h"],
-    copts = [
-        "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
-        "-x objective-c++",
-    ],
-    module_name = "MPPObjectDetector",
-    deps = [
-        ":MPPObjectDetectorOptions",
-        ":MPPObjectDetectorResult",
-        "//mediapipe/tasks/c/vision/core:image_processing_options",
-        "//mediapipe/tasks/c/vision/object_detector:object_detector_lib",
-        "//mediapipe/tasks/ios/common:MPPCommon",
-        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//mediapipe/tasks/ios/vision/core:MPPImage",
-        "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
-        "//mediapipe/tasks/ios/vision/object_detector/utils:MPPObjectDetectorOptionsHelpers",
-        "//mediapipe/tasks/ios/vision/object_detector/utils:MPPObjectDetectorResultHelpers",
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
