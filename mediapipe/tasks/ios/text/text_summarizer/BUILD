@@ -12,54 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:objc_library.bzl", "objc_library")
-
 package(default_visibility = [
     "//mediapipe/tasks:internal",
 ])
 
 licenses(["notice"])
-
-exports_files(glob(["sources/*.h"]))
-
-objc_library(
-    name = "MPPTextSummarizerOptions",
-    srcs = ["sources/MPPTextSummarizerOptions.m"],
-    hdrs = ["sources/MPPTextSummarizerOptions.h"],
-    deps = [
-        "//mediapipe/tasks/ios/core:MPPTaskOptions",
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
-
-objc_library(
-    name = "MPPTextSummarizerResult",
-    srcs = ["sources/MPPTextSummarizerResult.m"],
-    hdrs = ["sources/MPPTextSummarizerResult.h"],
-    deps = [
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
-
-objc_library(
-    name = "MPPTextSummarizer",
-    srcs = ["sources/MPPTextSummarizer.mm"],
-    hdrs = ["sources/MPPTextSummarizer.h"],
-    copts = [
-        "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
-        "-x objective-c++",
-    ],
-    module_name = "MPPTextSummarizer",
-    deps = [
-        ":MPPTextSummarizerOptions",
-        ":MPPTextSummarizerResult",
-        "//mediapipe/tasks/c/core:base_options",
-        "//mediapipe/tasks/c/text/text_summarizer:text_summarizer_lib",
-        "//mediapipe/tasks/ios/common:MPPCommon",
-        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
