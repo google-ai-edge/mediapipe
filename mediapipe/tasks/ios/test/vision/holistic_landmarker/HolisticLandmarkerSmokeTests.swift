@@ -12,29 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPCommon
-import MPPHolisticLandmarker
+import Foundation
+import MediaPipeTasksHolisticLandmarker
 import XCTest
-
-extension TasksErrorCode {
-  fileprivate static let errorDomain = "com.google.mediapipe.tasks"
-}
 
 final class HolisticLandmarkerSmokeTests: XCTestCase {
 
-  private final class MockLiveStreamDelegate: NSObject,
-    HolisticLandmarkerLiveStreamDelegate
-  {
-    func holisticLandmarker(
-      _ holisticLandmarker: HolisticLandmarker,
-      didFinishDetection result: HolisticLandmarkerResult?,
-      timestampInMilliseconds: Int,
-      error: (any Error)?
-    ) {}
-  }
-
-  func testOptionsAndDelegateCoverage() {
-    let options = HolisticLandmarkerOptions()
+  func testOptionsAndHandlerCoverage() {
+    var options = HolisticLandmarkerOptions()
     options.runningMode = .liveStream
     options.minFaceDetectionConfidence = 0.6
     options.minFaceSuppressionThreshold = 0.4
@@ -45,10 +30,9 @@ final class HolisticLandmarkerSmokeTests: XCTestCase {
     options.outputFaceBlendshapes = true
     options.outputPoseSegmentationMasks = true
     options.minHandLandmarksConfidence = 0.6
+    options.liveStreamResultHandler = { _, _ in }
 
-    let delegate = MockLiveStreamDelegate()
-    options.holisticLandmarkerLiveStreamDelegate = delegate
-    XCTAssertNotNil(options.holisticLandmarkerLiveStreamDelegate)
+    XCTAssertNotNil(options.liveStreamResultHandler)
     XCTAssertEqual(options.runningMode, .liveStream)
     XCTAssertEqual(options.minFaceDetectionConfidence, 0.6, accuracy: 1e-3)
     XCTAssertEqual(options.minFaceSuppressionThreshold, 0.4, accuracy: 1e-3)
@@ -62,46 +46,65 @@ final class HolisticLandmarkerSmokeTests: XCTestCase {
   }
 
   func testRuntimeRegistrationAndInitialization() {
-    let options = HolisticLandmarkerOptions()
+    var options = HolisticLandmarkerOptions()
     options.baseOptions.modelAssetPath =
       "/nonexistent/holistic_landmarker.task"
 
     XCTAssertThrowsError(try HolisticLandmarker(options: options)) { error in
-      let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertEqual((error as NSError).domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
-      )
-      XCTAssertFalse(
-        nsError.localizedDescription.contains("No registered object with name"),
-        "HolisticLandmarker subgraph not linked"
+        tasksError.code == .invalidArgument || tasksError.code == .notFound
       )
       XCTAssertTrue(
-        nsError.localizedDescription.contains("Unable to open file"),
-        "Unexpected error: \(nsError.localizedDescription)"
+        error.localizedDescription.contains("Unable to open file"),
+        "Unexpected error: \(error.localizedDescription)"
       )
     }
 
     XCTAssertThrowsError(
       try HolisticLandmarker(modelPath: "/nonexistent/holistic_landmarker.task")
     ) { error in
-      let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertEqual((error as NSError).domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
+        tasksError.code == .invalidArgument || tasksError.code == .notFound
       )
     }
   }
 
   func testExecutionMethodSignaturesCompile() {
-    let _: (HolisticLandmarker) -> (MPImage) throws -> HolisticLandmarkerResult =
-      HolisticLandmarker.detect(image:)
-    let _: (HolisticLandmarker) -> (MPImage, Int) throws -> HolisticLandmarkerResult =
-      HolisticLandmarker.detect(videoFrame:timestampInMilliseconds:)
-    let _: (HolisticLandmarker) -> (MPImage, Int) throws -> Void =
-      HolisticLandmarker.detectAsync(image:timestampInMilliseconds:)
+    let _:
+      (HolisticLandmarker) -> (MPImage, ImageProcessingOptions?) throws ->
+        HolisticLandmarkerResult =
+        HolisticLandmarker.detect(image:imageProcessingOptions:)
+    let _:
+      (HolisticLandmarker) -> (MPImage, Int, ImageProcessingOptions?) throws ->
+        HolisticLandmarkerResult =
+        HolisticLandmarker.detect(
+          videoFrame:timestampInMilliseconds:imageProcessingOptions:
+        )
+    let _:
+      (HolisticLandmarker) -> (MPImage, Int, ImageProcessingOptions?) throws ->
+        Void =
+        HolisticLandmarker.detectAsync(
+          image:timestampInMilliseconds:imageProcessingOptions:
+        )
+    let _: (HolisticLandmarker, MPImage) throws -> HolisticLandmarkerResult = {
+      try $0.detect(image: $1)
+    }
+    let _: (HolisticLandmarker, MPImage, Int) throws -> HolisticLandmarkerResult = {
+      try $0.detect(videoFrame: $1, timestampInMilliseconds: $2)
+    }
+    let _: (HolisticLandmarker, MPImage, Int) throws -> Void = {
+      try $0.detectAsync(image: $1, timestampInMilliseconds: $2)
+    }
   }
 
   func testResultContainerTypes() throws {
@@ -116,9 +119,9 @@ final class HolisticLandmarkerSmokeTests: XCTestCase {
     XCTAssertEqual(normalizedLandmark.y, 0.2, accuracy: 1e-3)
     XCTAssertEqual(normalizedLandmark.z, 0.3, accuracy: 1e-3)
     let normalizedVisibility = try XCTUnwrap(normalizedLandmark.visibility)
-    XCTAssertEqual(normalizedVisibility.floatValue, 0.9, accuracy: 1e-3)
+    XCTAssertEqual(normalizedVisibility, 0.9, accuracy: 1e-3)
     let normalizedPresence = try XCTUnwrap(normalizedLandmark.presence)
-    XCTAssertEqual(normalizedPresence.floatValue, 0.8, accuracy: 1e-3)
+    XCTAssertEqual(normalizedPresence, 0.8, accuracy: 1e-3)
 
     let worldLandmark = Landmark(
       x: 1.0,
@@ -131,19 +134,19 @@ final class HolisticLandmarkerSmokeTests: XCTestCase {
     XCTAssertEqual(worldLandmark.y, 2.0, accuracy: 1e-3)
     XCTAssertEqual(worldLandmark.z, 3.0, accuracy: 1e-3)
     let worldVisibility = try XCTUnwrap(worldLandmark.visibility)
-    XCTAssertEqual(worldVisibility.floatValue, 0.9, accuracy: 1e-3)
+    XCTAssertEqual(worldVisibility, 0.9, accuracy: 1e-3)
     let worldPresence = try XCTUnwrap(worldLandmark.presence)
-    XCTAssertEqual(worldPresence.floatValue, 0.8, accuracy: 1e-3)
+    XCTAssertEqual(worldPresence, 0.8, accuracy: 1e-3)
 
     let result = HolisticLandmarkerResult(
-      face: [normalizedLandmark],
+      faceLandmarks: [normalizedLandmark],
       faceBlendshapes: nil,
       poseLandmarks: [normalizedLandmark],
       poseWorldLandmarks: [worldLandmark],
       poseSegmentationMask: nil,
-      leftHand: [normalizedLandmark],
+      leftHandLandmarks: [normalizedLandmark],
       leftHandWorldLandmarks: [worldLandmark],
-      rightHand: [normalizedLandmark],
+      rightHandLandmarks: [normalizedLandmark],
       rightHandWorldLandmarks: [worldLandmark],
       timestampInMilliseconds: 1000
     )

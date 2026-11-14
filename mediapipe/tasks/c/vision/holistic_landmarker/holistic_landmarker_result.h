@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 // The holistic landmarks detection result from HolisticLandmarker.
-struct MpHolisticLandmarkerResult {
+typedef struct MpHolisticLandmarkerResult {
   // Detected face landmarks in normalized image coordinates.
   struct MpNormalizedLandmarks face_landmarks;
 
@@ -52,7 +52,7 @@ struct MpHolisticLandmarkerResult {
 
   // Optional pose segmentation mask.
   MpImagePtr pose_segmentation_mask;
-};
+} MpHolisticLandmarkerResult;
 
 #ifdef __cplusplus
 }  // extern C
