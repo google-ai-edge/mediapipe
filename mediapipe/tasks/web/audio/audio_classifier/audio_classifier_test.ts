@@ -16,10 +16,17 @@
 
 import 'jasmine';
 
+import {TensorsToClassificationCalculatorOptions} from '../../../../calculators/tensor/tensors_to_classification_calculator_pb';
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
+import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {Classification, ClassificationList} from '../../../../framework/formats/classification_pb';
 import {ClassificationResult, Classifications} from '../../../../tasks/cc/components/containers/proto/classifications_pb';
-import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, MediapipeTasksFake, verifyGraph, verifyListenersRegistered} from '../../../../tasks/web/core/task_runner_test_utils';
+import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, MediapipeTasksFake, SpyWasmModule, verifyGraph, verifyListenersRegistered} from '../../../../tasks/web/core/task_runner_test_utils';
+import {LabelMapItem} from '../../../../util/label_map_pb';
+import {
+  CALCULATOR_GRAPH_CONFIG_LISTENER_NAME,
+  SimpleListener,
+} from '../../../../web/graph_runner/graph_runner';
 
 import {AudioClassifier} from './audio_classifier';
 
@@ -33,6 +40,7 @@ class AudioClassifierFake extends AudioClassifier implements
       'mediapipe.tasks.audio.audio_classifier.AudioClassifierGraph';
   attachListenerSpies: jasmine.Spy[] = [];
   graph: CalculatorGraphConfig|undefined;
+  fakeWasmModule: SpyWasmModule;
 
   private protoVectorListener:
       ((binaryProtos: Uint8Array[], timestamp: number) => void)|undefined;
@@ -40,6 +48,8 @@ class AudioClassifierFake extends AudioClassifier implements
 
   constructor() {
     super(createSpyWasmModule(), /* glCanvas= */ null);
+    this.fakeWasmModule =
+        this.graphRunner.wasmModule as unknown as SpyWasmModule;
 
     this.attachListenerSpies[0] =
         spyOn(this.graphRunner, 'attachProtoVectorListener')
@@ -212,5 +222,58 @@ describe('AudioClassifier', () => {
     // Verify that gestures2 is not a concatenation of all previously returned
     // gestures.
     expect(classifications1).toEqual(classifications2);
+  });
+
+  describe('getLabels() and getDisplayNames()', () => {
+    function graphConfigWithLabels(
+        entries: Array<{name: string; displayName?: string}>): Uint8Array {
+      const graph = new CalculatorGraphConfig();
+      const node = new CalculatorGraphConfig.Node();
+      node.setName('TensorsToClassificationCalculator');
+      node.setCalculator('TensorsToClassificationCalculator');
+
+      const labelOptions = new TensorsToClassificationCalculatorOptions();
+      entries.forEach((entry, index) => {
+        const item = new LabelMapItem();
+        item.setName(entry.name);
+        if (entry.displayName !== undefined) {
+          item.setDisplayName(entry.displayName);
+        }
+        labelOptions.getLabelItemsMap().set(index, item);
+      });
+
+      const calculatorOptions = new CalculatorOptions();
+      calculatorOptions.setExtension(
+          TensorsToClassificationCalculatorOptions.ext, labelOptions);
+      node.setOptions(calculatorOptions);
+      graph.addNode(node);
+      return graph.serializeBinary();
+    }
+
+    async function loadLabelMap(
+        entries: Array<{name: string; displayName?: string}>): Promise<void> {
+      audioClassifier.fakeWasmModule._getGraphConfig.and.callFake(() => {
+        (audioClassifier.fakeWasmModule.simpleListeners![
+           CALCULATOR_GRAPH_CONFIG_LISTENER_NAME
+         ] as SimpleListener<Uint8Array>)(graphConfigWithLabels(entries), 0);
+      });
+      await audioClassifier.setOptions(
+          {baseOptions: {modelAssetBuffer: new Uint8Array([1])}});
+    }
+
+    it('returns empty lists when the model has no labelmap', () => {
+      expect(audioClassifier.getLabels()).toEqual([]);
+      expect(audioClassifier.getDisplayNames()).toEqual([]);
+    });
+
+    it('returns labels and display names from the model metadata', async () => {
+      await loadLabelMap([
+        {name: 'Speech', displayName: 'Habla'},
+        {name: 'Music', displayName: 'Música'},
+      ]);
+
+      expect(audioClassifier.getLabels()).toEqual(['Speech', 'Music']);
+      expect(audioClassifier.getDisplayNames()).toEqual(['Habla', 'Música']);
+    });
   });
 });
