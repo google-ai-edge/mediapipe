@@ -16,12 +16,11 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_VISION_IMAGE_EMBEDDER_IMAGE_EMBEDDER_H_
 #define MEDIAPIPE_TASKS_C_VISION_IMAGE_EMBEDDER_IMAGE_EMBEDDER_H_
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "mediapipe/tasks/c/components/containers/embedding_result.h"
 #include "mediapipe/tasks/c/components/processors/embedder_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
-#include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
@@ -39,10 +38,16 @@ extern "C" {
 #endif
 
 typedef struct MpImageEmbedderInternal* MpImageEmbedderPtr;
-typedef MpEmbeddingResult ImageEmbedderResult;
+typedef struct MpEmbeddingResult ImageEmbedderResult;
+typedef struct MpEmbeddingResult MpImageEmbedderResult;
+
+// The user-defined result callback for processing live stream data.
+typedef void (*MpImageEmbedderResultCallbackFn)(
+    MpStatus status, const ImageEmbedderResult* result, MpImagePtr image,
+    int64_t timestamp_ms);
 
 // The options for configuring a MediaPipe image embedder task.
-struct ImageEmbedderOptions {
+typedef struct MpImageEmbedderOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
   struct MpBaseOptions base_options;
@@ -54,7 +59,7 @@ struct ImageEmbedderOptions {
   // 3) The live stream mode for embedding image on the live stream of input
   // data, such as from camera. In this mode, the "result_callback" below must
   // be specified to receive the embedding results asynchronously.
-  MpRunningMode running_mode;
+  enum MpRunningMode running_mode;
 
   // Options for configuring the embedder behavior, such as l2_normalize and
   // quantize.
@@ -69,11 +74,11 @@ struct ImageEmbedderOptions {
   // arguments is true for the lifetime of the callback function.
   //
   // The passed arguments are only valid for the lifetime of the callback.
-  typedef void (*result_callback_fn)(MpStatus status,
-                                     const ImageEmbedderResult* result,
-                                     MpImagePtr image, int64_t timestamp_ms);
-  result_callback_fn result_callback;
-};
+#ifdef __cplusplus
+  using result_callback_fn = MpImageEmbedderResultCallbackFn;
+#endif
+  MpImageEmbedderResultCallbackFn result_callback;
+} MpImageEmbedderOptions;
 
 // Creates an ImageEmbedder from the provided `options`.
 // Returns kMpOk on success and sets `embedder` to the new ImageEmbedder.
@@ -82,7 +87,7 @@ struct ImageEmbedderOptions {
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
 // `MpErrorFree()`.
-MP_EXPORT MpStatus MpImageEmbedderCreate(struct ImageEmbedderOptions* options,
+MP_EXPORT MpStatus MpImageEmbedderCreate(struct MpImageEmbedderOptions* options,
                                          MpImageEmbedderPtr* embedder,
                                          char** error_msg);
 
@@ -163,8 +168,8 @@ MP_EXPORT MpStatus MpImageEmbedderClose(MpImageEmbedderPtr embedder,
 // `char*`, which will be populated with a newly-allocated error message upon
 // failure. It's the caller responsibility to free the error message with
 // `MpErrorFree()`.
-MP_EXPORT MpStatus MpImageEmbedderCosineSimilarity(const MpEmbedding& u,
-                                                   const MpEmbedding& v,
+MP_EXPORT MpStatus MpImageEmbedderCosineSimilarity(const struct MpEmbedding* u,
+                                                   const struct MpEmbedding* v,
                                                    double* similarity,
                                                    char** error_msg);
 

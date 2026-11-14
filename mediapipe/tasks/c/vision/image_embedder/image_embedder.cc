@@ -72,7 +72,7 @@ ImageEmbedder* GetCppEmbedder(MpImageEmbedderPtr embedder) {
 
 }  // namespace
 
-absl::Status CppImageEmbedderCreate(const ImageEmbedderOptions& options,
+absl::Status CppImageEmbedderCreate(const MpImageEmbedderOptions& options,
                                     MpImageEmbedderPtr* embedder) {
   auto cpp_options = std::make_unique<
       ::mediapipe::tasks::vision::image_embedder::ImageEmbedderOptions>();
@@ -90,7 +90,7 @@ absl::Status CppImageEmbedderCreate(const ImageEmbedderOptions& options,
           "Provided null pointer to callback function.");
     }
 
-    ImageEmbedderOptions::result_callback_fn result_callback =
+    MpImageEmbedderOptions::result_callback_fn result_callback =
         options.result_callback;
     cpp_options->result_callback =
         [result_callback](absl::StatusOr<CppImageEmbedderResult> cpp_result,
@@ -185,13 +185,17 @@ absl::Status CppImageEmbedderClose(MpImageEmbedderPtr embedder) {
   return absl::OkStatus();
 }
 
-absl::Status CppImageEmbedderCosineSimilarity(const MpEmbedding& u,
-                                              const MpEmbedding& v,
+absl::Status CppImageEmbedderCosineSimilarity(const MpEmbedding* u,
+                                              const MpEmbedding* v,
                                               double* similarity) {
+  if (u == nullptr || v == nullptr || similarity == nullptr) {
+    return absl::InvalidArgumentError(
+        "Provided null pointer to embedding or similarity output.");
+  }
   CppEmbedding cpp_u;
-  CppConvertToCppEmbedding(u, &cpp_u);
+  CppConvertToCppEmbedding(*u, &cpp_u);
   CppEmbedding cpp_v;
-  CppConvertToCppEmbedding(v, &cpp_v);
+  CppConvertToCppEmbedding(*v, &cpp_v);
   auto status_or_similarity =
       mediapipe::tasks::vision::image_embedder::ImageEmbedder::CosineSimilarity(
           cpp_u, cpp_v);
@@ -206,7 +210,7 @@ absl::Status CppImageEmbedderCosineSimilarity(const MpEmbedding& u,
 
 extern "C" {
 
-MP_EXPORT MpStatus MpImageEmbedderCreate(struct ImageEmbedderOptions* options,
+MP_EXPORT MpStatus MpImageEmbedderCreate(struct MpImageEmbedderOptions* options,
                                          MpImageEmbedderPtr* embedder_out,
                                          char** error_msg) {
   absl::Status status =
@@ -258,8 +262,8 @@ MP_EXPORT MpStatus MpImageEmbedderClose(MpImageEmbedderPtr embedder,
   return mediapipe::tasks::c::core::HandleStatus(status, error_msg);
 }
 
-MP_EXPORT MpStatus MpImageEmbedderCosineSimilarity(const MpEmbedding& u,
-                                                   const MpEmbedding& v,
+MP_EXPORT MpStatus MpImageEmbedderCosineSimilarity(const struct MpEmbedding* u,
+                                                   const struct MpEmbedding* v,
                                                    double* similarity_out,
                                                    char** error_msg) {
   absl::Status status = mediapipe::tasks::c::vision::image_embedder::

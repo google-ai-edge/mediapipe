@@ -66,7 +66,7 @@ TEST(ImageEmbedderTest, ImageModeTest) {
   const ScopedMpImage image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  ImageEmbedderOptions options = {
+  MpImageEmbedderOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
@@ -94,7 +94,7 @@ TEST(ImageEmbedderTest, ImageModeTestWithQuantization) {
   const ScopedMpImage image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  ImageEmbedderOptions options = {
+  MpImageEmbedderOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
@@ -123,7 +123,7 @@ TEST(ImageEmbedderTest, ImageModeTestWithRotation) {
   ASSERT_NE(image, nullptr);
 
   const std::string model_path = GetFullPath(kModelName);
-  ImageEmbedderOptions options = {
+  MpImageEmbedderOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
@@ -156,7 +156,7 @@ TEST(ImageEmbedderTest, SucceedsWithCosineSimilarity) {
   const ScopedMpImage crop = GetImage(GetFullPath("burger_crop.jpg"));
 
   const std::string model_path = GetFullPath(kModelName);
-  ImageEmbedderOptions options = {
+  MpImageEmbedderOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
@@ -187,7 +187,7 @@ TEST(ImageEmbedderTest, SucceedsWithCosineSimilarity) {
   // Check cosine similarity.
   double similarity;
   ASSERT_EQ(MpImageEmbedderCosineSimilarity(
-                image_result.embeddings[0], crop_result.embeddings[0],
+                &image_result.embeddings[0], &crop_result.embeddings[0],
                 &similarity, /* error_msg= */ nullptr),
             kMpOk);
   double expected_similarity = 0.925519;
@@ -201,7 +201,7 @@ TEST(ImageEmbedderTest, VideoModeTest) {
   const ScopedMpImage image = GetImage(GetFullPath(kImageFile));
 
   const std::string model_path = GetFullPath(kModelName);
-  ImageEmbedderOptions options = {
+  MpImageEmbedderOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
@@ -256,7 +256,7 @@ TEST(ImageEmbedderTest, LiveStreamModeTest) {
 
   const std::string model_path = GetFullPath(kModelName);
 
-  ImageEmbedderOptions options = {
+  MpImageEmbedderOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
@@ -290,7 +290,7 @@ TEST(ImageEmbedderTest, LiveStreamModeTest) {
 
 TEST(ImageEmbedderTest, InvalidArgumentHandling) {
   // It is an error to set neither the asset buffer nor the path.
-  ImageEmbedderOptions options = {
+  MpImageEmbedderOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = nullptr},
@@ -311,7 +311,7 @@ TEST(ImageEmbedderTest, InvalidArgumentHandling) {
 
 TEST(ImageEmbedderTest, FailedEmbeddingHandling) {
   const std::string model_path = GetFullPath(kModelName);
-  ImageEmbedderOptions options = {
+  MpImageEmbedderOptions options = {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},

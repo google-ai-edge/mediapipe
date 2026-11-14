@@ -12,55 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPCommon
-import MPPImageEmbedder
+import Foundation
+import MediaPipeTasksImageEmbedder
 import XCTest
-
-extension TasksErrorCode {
-  fileprivate static let errorDomain = "com.google.mediapipe.tasks"
-}
 
 final class ImageEmbedderSmokeTests: XCTestCase {
 
-  private final class MockLiveStreamDelegate: NSObject,
-    ImageEmbedderLiveStreamDelegate
-  {
-    func imageEmbedder(
-      _ imageEmbedder: ImageEmbedder,
-      didFinishEmbedding result: ImageEmbedderResult?,
-      timestampInMilliseconds: Int,
-      error: (any Error)?
-    ) {}
-  }
-
   func testOptionsAndDelegateCoverage() {
-    let options = ImageEmbedderOptions()
+    var options = ImageEmbedderOptions()
     options.runningMode = .liveStream
     options.l2Normalize = true
-    options.quantize = false
+    options.quantize = true
+    options.liveStreamResultHandler = { _, _ in }
 
-    let delegate = MockLiveStreamDelegate()
-    options.imageEmbedderLiveStreamDelegate = delegate
-    XCTAssertNotNil(options.imageEmbedderLiveStreamDelegate)
+    XCTAssertNotNil(options.liveStreamResultHandler)
     XCTAssertEqual(options.runningMode, .liveStream)
     XCTAssertTrue(options.l2Normalize)
-    XCTAssertFalse(options.quantize)
+    XCTAssertTrue(options.quantize)
   }
 
   func testRuntimeRegistrationAndInitialization() {
-    let options = ImageEmbedderOptions()
+    var options = ImageEmbedderOptions()
     options.baseOptions.modelAssetPath = "/nonexistent/embedder.task"
 
     XCTAssertThrowsError(try ImageEmbedder(options: options)) { error in
       let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      XCTAssertEqual(nsError.domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
-      )
-      XCTAssertFalse(
-        nsError.localizedDescription.contains("No registered object with name"),
-        "ImageEmbedder subgraph not linked"
+        nsError.code == TasksErrorCode.invalidArgument.rawValue
+          || nsError.code == TasksErrorCode.notFound.rawValue
       )
       XCTAssertTrue(
         nsError.localizedDescription.contains("Unable to open file"),
@@ -72,28 +52,26 @@ final class ImageEmbedderSmokeTests: XCTestCase {
       try ImageEmbedder(modelPath: "/nonexistent/embedder.task")
     ) { error in
       let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      XCTAssertEqual(nsError.domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
+        nsError.code == TasksErrorCode.invalidArgument.rawValue
+          || nsError.code == TasksErrorCode.notFound.rawValue
       )
     }
   }
 
   func testExecutionMethodSignaturesCompile() {
-    let _: (ImageEmbedder) -> (MPImage) throws -> ImageEmbedderResult =
-      ImageEmbedder.embed(image:)
-    let _: (ImageEmbedder) -> (MPImage, CGRect) throws -> ImageEmbedderResult =
-      ImageEmbedder.embed(image:regionOfInterest:)
-    let _: (ImageEmbedder) -> (MPImage, Int) throws -> ImageEmbedderResult =
-      ImageEmbedder.embed(videoFrame:timestampInMilliseconds:)
-    let _: (ImageEmbedder) -> (MPImage, Int, CGRect) throws -> ImageEmbedderResult =
-      ImageEmbedder.embed(videoFrame:timestampInMilliseconds:regionOfInterest:)
-    let _: (ImageEmbedder) -> (MPImage, Int) throws -> Void =
-      ImageEmbedder.embedAsync(image:timestampInMilliseconds:)
-    let _: (ImageEmbedder) -> (MPImage, Int, CGRect) throws -> Void =
-      ImageEmbedder.embedAsync(image:timestampInMilliseconds:regionOfInterest:)
-    let _: (Embedding, Embedding) throws -> NSNumber =
+    let _:
+      (ImageEmbedder) -> (MPImage, ImageProcessingOptions?) throws ->
+        ImageEmbedderResult =
+        ImageEmbedder.embed(image:imageProcessingOptions:)
+    let _:
+      (ImageEmbedder) -> (MPImage, Int, ImageProcessingOptions?) throws ->
+        ImageEmbedderResult =
+        ImageEmbedder.embed(videoFrame:timestampInMilliseconds:imageProcessingOptions:)
+    let _: (ImageEmbedder) -> (MPImage, Int, ImageProcessingOptions?) throws -> Void =
+      ImageEmbedder.embedAsync(image:timestampInMilliseconds:imageProcessingOptions:)
+    let _: (Embedding, Embedding) throws -> Double =
       ImageEmbedder.cosineSimilarity(embedding1:embedding2:)
   }
 
@@ -101,7 +79,7 @@ final class ImageEmbedderSmokeTests: XCTestCase {
     let embedding = Embedding(
       floatEmbedding: [0.1, 0.2, 0.3],
       quantizedEmbedding: nil,
-      head: 0,
+      headIndex: 0,
       headName: "head"
     )
     XCTAssertEqual(embedding.floatEmbedding, [0.1, 0.2, 0.3])
@@ -128,13 +106,13 @@ final class ImageEmbedderSmokeTests: XCTestCase {
     let embedding1 = Embedding(
       floatEmbedding: [1.0, 0.0],
       quantizedEmbedding: nil,
-      head: 0,
+      headIndex: 0,
       headName: "head"
     )
     let embedding2 = Embedding(
       floatEmbedding: [1.0, 0.0],
       quantizedEmbedding: nil,
-      head: 0,
+      headIndex: 0,
       headName: "head"
     )
 
@@ -142,6 +120,6 @@ final class ImageEmbedderSmokeTests: XCTestCase {
       embedding1: embedding1,
       embedding2: embedding2
     )
-    XCTAssertEqual(similarity.doubleValue, 1.0, accuracy: 1e-3)
+    XCTAssertEqual(similarity, 1.0, accuracy: 1e-3)
   }
 }
