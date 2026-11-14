@@ -41,6 +41,20 @@ UNIVERSAL_EMBEDDER_DEPS = [
 ]
 
 cc_library(
+    name = "universal_embedder",
+    hdrs = ["universal_embedder.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":universal_embedder_lib",
+        "//mediapipe/tasks/c/audio/core:common",
+        "//mediapipe/tasks/c/components/containers:embedding_result",
+        "//mediapipe/tasks/c/core:base_options",
+        "//mediapipe/tasks/c/core:mp_status",
+        "//mediapipe/tasks/c/vision/core:image",
+    ],
+)
+
+cc_library(
     name = "universal_embedder_lib",
     srcs = ["universal_embedder.cc"],
     hdrs = [

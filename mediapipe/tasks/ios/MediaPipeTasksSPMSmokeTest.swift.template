@@ -209,7 +209,29 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
     }
   }
 
-  private func verifyRetrievalRegistration() {}
+  private func verifyRetrievalRegistration() {
+    let dummyPath = "/nonexistent/retrieval.litertlm"
+
+    // The universal embedder loads a LiteRT-LM model, so it follows the same
+    // asset-error contract as the graph-backed tasks above.
+    verifyTaskInit(name: "UniversalEmbedder", domain: "Retrieval") {
+      var options = UniversalEmbedderOptions()
+      options.baseOptions.modelAssetPath = dummyPath
+      return try UniversalEmbedder(options: options)
+    }
+
+    let _: (UniversalEmbedder, MPImage, FloatBuffer) throws -> EmbeddingResult = {
+      embedder, image, floatBuffer in
+      _ = try embedder.embed(image: image)
+      _ = try embedder.embed(audioFloatBuffer: floatBuffer)
+      let provider: any EmbeddingProvider = embedder
+      return try provider.embed(
+          content: [
+              .image(ImagePart(filePath: dummyPath)),
+              .audio(AudioPart(samples: [0.0, 1.0])),
+          ])
+    }
+  }
 
   private func verifyDecisionRegistration() {
     // The Decision Maker is a Swift-only module backed by the C API in
