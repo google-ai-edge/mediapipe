@@ -20,6 +20,32 @@ import {isIOS} from '../../../../web/graph_runner/platform_utils';
 /** Number of instances a user can keep alive before we raise a warning. */
 const INSTANCE_COUNT_WARNING_THRESHOLD = 250;
 
+/**
+ * Samples the single-channel mask and writes grayscale RGBA (`vec4(m)`) so
+ * the ImageBitmap can be used as a VideoFrame / compositing mask without a
+ * GPU→CPU readback.
+ */
+const MASK_TO_BITMAP_FRAGMENT_SHADER = `
+  precision mediump float;
+  varying vec2 vTex;
+  uniform sampler2D inputTexture;
+  void main() {
+    float m = texture2D(inputTexture, vTex).r;
+    gl_FragColor = vec4(m, m, m, m);
+  }
+ `;
+
+/** Shader used only for `MPMask.getAsImageBitmap()`. */
+class MPMaskBitmapShaderContext extends MPImageShaderContext {
+  protected override getFragmentShader(): string {
+    return MASK_TO_BITMAP_FRAGMENT_SHADER;
+  }
+}
+
+/** Bitmap shaders keyed by GL context so video pipelines compile once. */
+const bitmapShaderContexts =
+    new WeakMap<WebGL2RenderingContext, MPMaskBitmapShaderContext>();
+
 /** The underlying type of the image. */
 enum MPMaskType {
   /** Represents the native `UInt8Array` type. */
@@ -27,28 +53,36 @@ enum MPMaskType {
   /** Represents the native `Float32Array` type.  */
   FLOAT32_ARRAY,
   /** Represents the native `WebGLTexture` type. */
-  WEBGL_TEXTURE
+  WEBGL_TEXTURE,
+  /** Represents the native `ImageBitmap` type. */
+  IMAGE_BITMAP,
 }
 
 /** The supported mask formats. For internal usage. */
-export type MPMaskContainer = Uint8Array|Float32Array|WebGLTexture;
+export type MPMaskContainer =
+    Uint8Array|Float32Array|WebGLTexture|ImageBitmap;
 
 
 
 /**
  * The wrapper class for MediaPipe segmentation masks.
  *
- * Masks are stored as `Uint8Array`, `Float32Array` or `WebGLTexture` objects.
- * You can convert the underlying type to any other type by passing the desired
- * type to `getAs...()`. As type conversions can be expensive, it is recommended
- * to limit these conversions. You can verify what underlying types are already
- * available by invoking `has...()`.
+ * Masks are stored as `Uint8Array`, `Float32Array`, `WebGLTexture` or
+ * `ImageBitmap` objects. You can convert the underlying type to any other type
+ * by passing the desired type to `getAs...()`. As type conversions can be
+ * expensive, it is recommended to limit these conversions. You can verify what
+ * underlying types are already available by invoking `has...()`.
  *
  * Masks that are returned from a MediaPipe Tasks are owned by by the
  * underlying C++ Task. If you need to extend the lifetime of these objects,
  * you can invoke the `clone()` method. To free up the resources obtained
  * during any clone or type conversion operation, it is important to invoke
  * `close()` on the `MPMask` instance.
+ *
+ * Converting to `ImageBitmap` requires that the MediaPipe task is initialized
+ * with an `OffscreenCanvas`. As we require WebGL2 support, this places some
+ * limitations on Browser support as outlined here:
+ * https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas/getContext
  */
 export class MPMask {
   private gl?: WebGL2RenderingContext;
@@ -76,6 +110,8 @@ export class MPMask {
    *     a single task.
    * @param width The width of the mask.
    * @param height The height of the mask.
+   * @param ownsImageBitmap Whether the MPMask should take ownership of an
+   *     `ImageBitmap` and free it when closed.
    * @hideconstructor
    */
   constructor(
@@ -89,8 +125,9 @@ export class MPMask {
       readonly width: number,
       /** Returns the height of the mask. */
       readonly height: number,
+      private ownsImageBitmap = false,
   ) {
-    if (this.ownsWebGLTexture) {
+    if (this.ownsWebGLTexture || this.ownsImageBitmap) {
       --MPMask.instancesBeforeWarning;
       if (MPMask.instancesBeforeWarning === 0) {
         console.error(
@@ -122,6 +159,14 @@ export class MPMask {
    */
   hasWebGLTexture(): boolean {
     return !!this.getContainer(MPMaskType.WEBGL_TEXTURE);
+  }
+
+  /**
+   * Returns whether this `MPMask` contains a mask of type `ImageBitmap`.
+   * @export
+   */
+  hasImageBitmap(): boolean {
+    return !!this.getContainer(MPMaskType.IMAGE_BITMAP);
   }
 
   /**
@@ -162,6 +207,23 @@ export class MPMask {
   }
 
   /**
+   * Returns the underlying mask as an `ImageBitmap`. The bitmap is grayscale
+   * RGBA (`vec4(m)`) so it can be passed to `VideoFrame`, Insertable Streams,
+   * or canvas compositing without a GPU→CPU `readPixels` of the float mask.
+   *
+   * Conversion requires that the MediaPipe Task was initialized with an
+   * `OffscreenCanvas` with WebGL2 support. See
+   * https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas/getContext
+   * for a list of supported platforms.
+   *
+   * @export
+   * @return The current mask as an ImageBitmap object.
+   */
+  getAsImageBitmap(): ImageBitmap {
+    return this.convertToImageBitmap();
+  }
+
+  /**
    * Returns the texture format used for writing float textures on this
    * platform.
    */
@@ -187,6 +249,7 @@ export class MPMask {
   private getContainer(type: MPMaskType.UINT8_ARRAY): Uint8Array|undefined;
   private getContainer(type: MPMaskType.FLOAT32_ARRAY): Float32Array|undefined;
   private getContainer(type: MPMaskType.WEBGL_TEXTURE): WebGLTexture|undefined;
+  private getContainer(type: MPMaskType.IMAGE_BITMAP): ImageBitmap|undefined;
   private getContainer(type: MPMaskType): MPMaskContainer|undefined;
   /** Returns the container for the requested storage type iff it exists. */
   private getContainer(type: MPMaskType): MPMaskContainer|undefined {
@@ -199,6 +262,10 @@ export class MPMask {
         return this.containers.find(
             img => typeof WebGLTexture !== 'undefined' &&
                 img instanceof WebGLTexture);
+      case MPMaskType.IMAGE_BITMAP:
+        return this.containers.find(
+            img => typeof ImageBitmap !== 'undefined' &&
+                img instanceof ImageBitmap);
       default:
         throw new Error(`Type is not supported: ${type}`);
     }
@@ -251,6 +318,13 @@ export class MPMask {
         shaderContext.unbindFramebuffer();
 
         this.unbindTexture();
+      } else if (
+          typeof ImageBitmap !== 'undefined' &&
+          container instanceof ImageBitmap) {
+        this.convertToWebGLTexture();
+        this.bindTexture();
+        destinationContainer = this.copyTextureToBitmap();
+        this.unbindTexture();
       } else {
         throw new Error(`Type is not supported: ${container}`);
       }
@@ -260,7 +334,17 @@ export class MPMask {
 
     return new MPMask(
         destinationContainers, this.interpolateValues, this.hasWebGLTexture(),
-        this.canvas, this.shaderContext, this.width, this.height);
+        this.canvas, this.shaderContext, this.width, this.height,
+        this.hasImageBitmap());
+  }
+
+  private getOffscreenCanvas(): OffscreenCanvas {
+    if (!(this.canvas instanceof OffscreenCanvas)) {
+      throw new Error(
+          'Conversion to ImageBitmap requires that the MediaPipe Tasks is ' +
+          'initialized with an OffscreenCanvas');
+    }
+    return this.canvas;
   }
 
   private getGL(): WebGL2RenderingContext {
@@ -283,6 +367,16 @@ export class MPMask {
       this.shaderContext = new MPImageShaderContext();
     }
     return this.shaderContext;
+  }
+
+  private getBitmapShaderContext(): MPMaskBitmapShaderContext {
+    const gl = this.getGL();
+    let context = bitmapShaderContexts.get(gl);
+    if (!context) {
+      context = new MPMaskBitmapShaderContext();
+      bitmapShaderContexts.set(gl, context);
+    }
+    return context;
   }
 
   private convertToFloat32Array(): Float32Array {
@@ -354,6 +448,17 @@ export class MPMask {
     return webGLTexture;
   }
 
+  private convertToImageBitmap(): ImageBitmap {
+    let imageBitmap = this.getContainer(MPMaskType.IMAGE_BITMAP);
+    if (!imageBitmap) {
+      this.convertToWebGLTexture();
+      imageBitmap = this.convertWebGLTextureToImageBitmap();
+      this.containers.push(imageBitmap);
+      this.ownsImageBitmap = true;
+    }
+    return imageBitmap;
+  }
+
   /**
    * Binds the backing texture to the canvas. If the texture does not yet
    * exist, creates it first.
@@ -382,6 +487,63 @@ export class MPMask {
   }
 
   /**
+   * Invokes a shader to render the current mask texture as grayscale RGBA and
+   * return it as an ImageBitmap.
+   */
+  private copyTextureToBitmap(): ImageBitmap {
+    const gl = this.getGL();
+    const shaderContext = this.getBitmapShaderContext();
+
+    return shaderContext.run(gl, /* flipVertically= */ true, () => {
+      return this.runWithResizedCanvas(() => {
+        // Unbind any framebuffer that may be bound since
+        // `transferToImageBitmap()` requires rendering into the display (null)
+        // framebuffer.
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+        return this.getOffscreenCanvas().transferToImageBitmap();
+      });
+    });
+  }
+
+  private convertWebGLTextureToImageBitmap(): ImageBitmap {
+    this.bindTexture();
+    const result = this.copyTextureToBitmap();
+    this.unbindTexture();
+    return result;
+  }
+
+  /**
+   * Temporarily resizes the underlying canvas to match the dimensions of the
+   * mask. Runs the provided callback on the resized canvas.
+   *
+   * Note that while resizing is an expensive operation, it allows us to use
+   * the synchronous `transferToImageBitmap()` API.
+   */
+  private runWithResizedCanvas<T>(callback: () => T): T {
+    const canvas = this.canvas!;
+
+    if (canvas.width === this.width && canvas.height === this.height) {
+      return callback();
+    }
+
+    const originalWidth = canvas.width;
+    const originalHeight = canvas.height;
+    canvas.width = this.width;
+    canvas.height = this.height;
+
+    const result = callback();
+
+    canvas.width = originalWidth;
+    canvas.height = originalHeight;
+
+    return result;
+  }
+
+  /**
    * Frees up any resources owned by this `MPMask` instance.
    *
    * Note that this method does not free masks that are owned by the C++
@@ -392,6 +554,10 @@ export class MPMask {
    * @export
    */
   close(): void {
+    if (this.ownsImageBitmap) {
+      this.getContainer(MPMaskType.IMAGE_BITMAP)!.close();
+    }
+
     if (this.ownsWebGLTexture) {
       const gl = this.getGL();
       gl.deleteTexture(this.getContainer(MPMaskType.WEBGL_TEXTURE)!);
@@ -401,5 +567,3 @@ export class MPMask {
     MPMask.instancesBeforeWarning = -1;
   }
 }
-
-
