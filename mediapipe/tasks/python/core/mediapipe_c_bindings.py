@@ -16,6 +16,7 @@
 import ctypes
 import os
 import platform
+import threading
 from typing import Any, List, Optional, Sequence
 
 from importlib import resources
@@ -24,6 +25,7 @@ from mediapipe.tasks.python.core import serial_dispatcher
 
 _BASE_LIB_PATH = 'mediapipe/tasks/c/'
 _shared_lib = None
+_shared_lib_lock = threading.Lock()
 _CFunction = mediapipe_c_utils.CFunction
 
 
@@ -44,28 +46,35 @@ def load_raw_library(
     The ctypes shared library.
   """
   global _shared_lib
+  # Double-checked locking: concurrent first calls must all end up with the
+  # same ctypes.CDLL object (each CDLL caches its own function objects, and the
+  # signatures below are registered on those).
   if _shared_lib is None:
-    if os.name == 'posix':
-      if platform.system() == 'Darwin':  # macOS
-        lib_filename = f'lib{lib_name}.dylib'
-      else:  # Linux
-        lib_filename = f'lib{lib_name}.so'
-    else:  # Windows
-      lib_filename = f'lib{lib_name}.dll'
-    lib_path_context = resources.files('mediapipe.tasks.c')
-    absolute_lib_path = str(lib_path_context / lib_filename)
-    _shared_lib = ctypes.CDLL(absolute_lib_path)
+    with _shared_lib_lock:
+      if _shared_lib is None:
+        if os.name == 'posix':
+          if platform.system() == 'Darwin':  # macOS
+            lib_filename = f'lib{lib_name}.dylib'
+          else:  # Linux
+            lib_filename = f'lib{lib_name}.so'
+        else:  # Windows
+          lib_filename = f'lib{lib_name}.dll'
+        lib_path_context = resources.files('mediapipe.tasks.c')
+        absolute_lib_path = str(lib_path_context / lib_filename)
+        _shared_lib = ctypes.CDLL(absolute_lib_path)
+
+  shared_lib = _shared_lib
 
   for signature in signatures:
-    c_func = getattr(_shared_lib, signature.func_name)
+    c_func = getattr(shared_lib, signature.func_name)
     c_func.argtypes = signature.argtypes
     c_func.restype = signature.restype
 
   # Register "MpErrorFree()"
-  _shared_lib.MpErrorFree.argtypes = [ctypes.c_void_p]
-  _shared_lib.MpErrorFree.restype = None
+  shared_lib.MpErrorFree.argtypes = [ctypes.c_void_p]
+  shared_lib.MpErrorFree.restype = None
 
-  return _shared_lib
+  return shared_lib
 
 
 def load_shared_library(
