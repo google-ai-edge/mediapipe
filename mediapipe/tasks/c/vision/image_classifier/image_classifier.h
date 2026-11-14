@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_VISION_IMAGE_CLASSIFIER_IMAGE_CLASSIFIER_H_
 #define MEDIAPIPE_TASKS_C_VISION_IMAGE_CLASSIFIER_IMAGE_CLASSIFIER_H_
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "mediapipe/tasks/c/components/containers/classification_result.h"
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
@@ -39,7 +39,13 @@ extern "C" {
 #endif
 
 typedef struct MpImageClassifierInternal* MpImageClassifierPtr;
-typedef MpClassificationResult MpImageClassifierResult;
+typedef struct MpClassificationResult MpImageClassifierResult;
+
+// User-defined callback function for processing live-stream classification
+// data.
+typedef void (*MpImageClassifierResultCallback)(
+    MpStatus status, const MpImageClassifierResult* result, MpImagePtr image,
+    int64_t timestamp_ms);
 
 // The options for configuring a MediaPipe image classifier task.
 struct MpImageClassifierOptions {
@@ -54,7 +60,7 @@ struct MpImageClassifierOptions {
   // 3) The live stream mode for classifying image on the live stream of input
   // data, such as from camera. In this mode, the "result_callback" below must
   // be specified to receive the segmentation results asynchronously.
-  MpRunningMode running_mode;
+  enum MpRunningMode running_mode;
 
   // Options for configuring the classifier behavior, such as score threshold,
   // number of results, etc.
@@ -69,10 +75,10 @@ struct MpImageClassifierOptions {
   // passed arguments is true for the lifetime of the callback function.
   //
   // The passed arguments are only valid for the lifetime of the callback.
-  typedef void (*result_callback_fn)(MpStatus status,
-                                     const MpImageClassifierResult* result,
-                                     MpImagePtr image, int64_t timestamp_ms);
-  result_callback_fn result_callback;
+#ifdef __cplusplus
+  typedef MpImageClassifierResultCallback result_callback_fn;
+#endif
+  MpImageClassifierResultCallback result_callback;
 };
 
 // Creates an ImageClassifier from the provided `options`.

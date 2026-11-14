@@ -12,61 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPCommon
-import MPPImageClassifier
+import Foundation
+import MediaPipeTasksImageClassifier
 import XCTest
-
-extension TasksErrorCode {
-  fileprivate static let errorDomain = "com.google.mediapipe.tasks"
-}
 
 final class ImageClassifierSmokeTests: XCTestCase {
 
-  private final class MockLiveStreamDelegate: NSObject,
-    ImageClassifierLiveStreamDelegate
-  {
-    func imageClassifier(
-      _ imageClassifier: ImageClassifier,
-      didFinishClassification result: ImageClassifierResult?,
-      timestampInMilliseconds: Int,
-      error: (any Error)?
-    ) {}
-  }
-
   func testOptionsAndDelegateCoverage() {
-    let options = ImageClassifierOptions()
+    var options = ImageClassifierOptions()
     options.runningMode = .liveStream
     options.scoreThreshold = 0.5
     options.maxResults = 3
-    options.displayNamesLocale = "en"
+    options.displayNamesLocale = "fr"
     options.categoryAllowlist = ["cat", "dog"]
     options.categoryDenylist = ["bird"]
+    options.liveStreamResultHandler = { _, _ in }
 
-    let delegate = MockLiveStreamDelegate()
-    options.imageClassifierLiveStreamDelegate = delegate
-    XCTAssertNotNil(options.imageClassifierLiveStreamDelegate)
+    XCTAssertNotNil(options.liveStreamResultHandler)
     XCTAssertEqual(options.runningMode, .liveStream)
     XCTAssertEqual(options.scoreThreshold, 0.5, accuracy: 1e-3)
     XCTAssertEqual(options.maxResults, 3)
-    XCTAssertEqual(options.displayNamesLocale, "en")
+    XCTAssertEqual(options.displayNamesLocale, "fr")
     XCTAssertEqual(options.categoryAllowlist, ["cat", "dog"])
     XCTAssertEqual(options.categoryDenylist, ["bird"])
   }
 
   func testRuntimeRegistrationAndInitialization() {
-    let options = ImageClassifierOptions()
+    var options = ImageClassifierOptions()
     options.baseOptions.modelAssetPath = "/nonexistent/classifier.task"
 
     XCTAssertThrowsError(try ImageClassifier(options: options)) { error in
       let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      XCTAssertEqual(nsError.domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
-      )
-      XCTAssertFalse(
-        nsError.localizedDescription.contains("No registered object with name"),
-        "ImageClassifier subgraph not linked"
+        nsError.code == TasksErrorCode.invalidArgument.rawValue
+          || nsError.code == TasksErrorCode.notFound.rawValue
       )
       XCTAssertTrue(
         nsError.localizedDescription.contains("Unable to open file"),
@@ -78,27 +58,25 @@ final class ImageClassifierSmokeTests: XCTestCase {
       try ImageClassifier(modelPath: "/nonexistent/classifier.task")
     ) { error in
       let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      XCTAssertEqual(nsError.domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
+        nsError.code == TasksErrorCode.invalidArgument.rawValue
+          || nsError.code == TasksErrorCode.notFound.rawValue
       )
     }
   }
 
   func testExecutionMethodSignaturesCompile() {
-    let _: (ImageClassifier) -> (MPImage) throws -> ImageClassifierResult =
-      ImageClassifier.classify(image:)
-    let _: (ImageClassifier) -> (MPImage, CGRect) throws -> ImageClassifierResult =
-      ImageClassifier.classify(image:regionOfInterest:)
-    let _: (ImageClassifier) -> (MPImage, Int) throws -> ImageClassifierResult =
-      ImageClassifier.classify(videoFrame:timestampInMilliseconds:)
-    let _: (ImageClassifier) -> (MPImage, Int, CGRect) throws -> ImageClassifierResult =
-      ImageClassifier.classify(videoFrame:timestampInMilliseconds:regionOfInterest:)
-    let _: (ImageClassifier) -> (MPImage, Int) throws -> Void =
-      ImageClassifier.classifyAsync(image:timestampInMilliseconds:)
-    let _: (ImageClassifier) -> (MPImage, Int, CGRect) throws -> Void =
-      ImageClassifier.classifyAsync(image:timestampInMilliseconds:regionOfInterest:)
+    let _:
+      (ImageClassifier) -> (MPImage, ImageProcessingOptions?) throws ->
+        ImageClassifierResult =
+        ImageClassifier.classify(image:imageProcessingOptions:)
+    let _:
+      (ImageClassifier) -> (MPImage, Int, ImageProcessingOptions?) throws ->
+        ImageClassifierResult =
+        ImageClassifier.classify(videoFrame:timestampInMilliseconds:imageProcessingOptions:)
+    let _: (ImageClassifier) -> (MPImage, Int, ImageProcessingOptions?) throws -> Void =
+      ImageClassifier.classifyAsync(image:timestampInMilliseconds:imageProcessingOptions:)
   }
 
   func testResultContainerTypes() {
@@ -114,7 +92,7 @@ final class ImageClassifierSmokeTests: XCTestCase {
     XCTAssertEqual(category.displayName, "Cat")
 
     let classifications = Classifications(
-      head: 0,
+      headIndex: 0,
       headName: "head",
       categories: [category]
     )

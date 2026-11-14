@@ -68,6 +68,12 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
   private func verifyVisionRegistration() {
     let dummyPath = "/nonexistent/vision.task"
 
+    verifyTaskInit(name: "ImageClassifier", domain: "Vision") {
+      var options = ImageClassifierOptions()
+      options.baseOptions.modelAssetPath = dummyPath
+      return try ImageClassifier(options: options)
+    }
+
     verifyTaskInit(name: "InteractiveSegmenter", domain: "Vision") {
       var options = InteractiveSegmenterOptions()
       options.baseOptions.modelAssetPath = dummyPath
