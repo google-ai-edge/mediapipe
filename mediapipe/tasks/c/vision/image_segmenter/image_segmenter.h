@@ -17,8 +17,7 @@ limitations under the License.
 #define MEDIAPIPE_TASKS_C_VISION_IMAGE_SEGMENTER_IMAGE_SEGMENTER_H_
 
 #include <stdbool.h>
-
-#include <cstdint>
+#include <stdint.h>
 
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/core/common.h"
@@ -41,6 +40,19 @@ extern "C" {
 
 typedef struct MpImageSegmenterInternal* MpImageSegmenterPtr;
 
+// The user-defined result callback for processing live stream data.
+// The result callback should only be specified when the running mode is set
+// to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
+// function include: the pointer to recognition result, the image that result
+// was obtained on, the timestamp relevant to recognition results and pointer
+// to error message in case of any failure. The validity of the passed
+// arguments is true for the lifetime of the callback function.
+//
+// The passed arguments are only valid for the lifetime of the callback.
+typedef void (*MpImageSegmenterResultCallback)(
+    MpStatus status, const MpImageSegmenterResult* result, MpImagePtr image,
+    int64_t timestamp_ms);
+
 // The options for configuring a mediapipe image segmenter task.
 struct MpImageSegmenterOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
@@ -54,31 +66,32 @@ struct MpImageSegmenterOptions {
   // 3) The live stream mode for segmenting image on the live stream of input
   // data, such as from camera. In this mode, the "result_callback" below must
   // be specified to receive the segmentation results asynchronously.
-  MpRunningMode running_mode;
+  enum MpRunningMode running_mode;
 
   // The locale to use for display names specified through the TFLite Model
   // Metadata, if any. Defaults to English.
   const char* display_names_locale;
 
   // Whether to output confidence masks.
+#ifdef __cplusplus
   bool output_confidence_masks = true;
+#else
+  bool output_confidence_masks;
+#endif
 
   // Whether to output category mask.
+#ifdef __cplusplus
   bool output_category_mask = false;
+#else
+  bool output_category_mask;
+#endif
 
-  // The user-defined result callback for processing live stream data.
-  // The result callback should only be specified when the running mode is set
-  // to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
-  // function include: the pointer to recognition result, the image that result
-  // was obtained on, the timestamp relevant to recognition results and pointer
-  // to error message in case of any failure. The validity of the passed
-  // arguments is true for the lifetime of the callback function.
-  //
-  // The passed arguments are only valid for the lifetime of the callback.
-  typedef void (*result_callback_fn)(MpStatus status,
-                                     const MpImageSegmenterResult* result,
-                                     MpImagePtr image, int64_t timestamp_ms);
-  result_callback_fn result_callback;
+  // The user-defined result callback for processing live stream data. See
+  // `MpImageSegmenterResultCallback` for details.
+#ifdef __cplusplus
+  using result_callback_fn = MpImageSegmenterResultCallback;
+#endif
+  MpImageSegmenterResultCallback result_callback;
 };
 
 // Options for configuring runtime behavior of ImageSegmenter.

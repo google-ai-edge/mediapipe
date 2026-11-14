@@ -12,58 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPCommon
-import MPPImageSegmenter
+import Foundation
+import MediaPipeTasksImageSegmenter
 import XCTest
-
-extension TasksErrorCode {
-  fileprivate static let errorDomain = "com.google.mediapipe.tasks"
-}
 
 final class ImageSegmenterSmokeTests: XCTestCase {
 
-  private final class MockLiveStreamDelegate: NSObject,
-    ImageSegmenterLiveStreamDelegate
-  {
-    func imageSegmenter(
-      _ imageSegmenter: ImageSegmenter,
-      didFinishSegmentation result: ImageSegmenterResult?,
-      timestampInMilliseconds: Int,
-      error: (any Error)?
-    ) {}
-  }
-
   func testOptionsAndDelegateCoverage() {
-    let options = ImageSegmenterOptions()
+    var options = ImageSegmenterOptions()
+    XCTAssertTrue(options.outputConfidenceMasks)
+    XCTAssertFalse(options.outputCategoryMask)
+
     options.runningMode = .liveStream
     options.displayNamesLocale = "en"
-    options.outputConfidenceMasks = true
+    options.outputConfidenceMasks = false
     options.outputCategoryMask = true
+    options.liveStreamResultHandler = { _, _ in }
 
-    let delegate = MockLiveStreamDelegate()
-    options.imageSegmenterLiveStreamDelegate = delegate
-    XCTAssertNotNil(options.imageSegmenterLiveStreamDelegate)
+    XCTAssertNotNil(options.liveStreamResultHandler)
     XCTAssertEqual(options.runningMode, .liveStream)
     XCTAssertEqual(options.displayNamesLocale, "en")
-    XCTAssertTrue(options.outputConfidenceMasks)
+    XCTAssertFalse(options.outputConfidenceMasks)
     XCTAssertTrue(options.outputCategoryMask)
   }
 
   func testRuntimeRegistrationAndInitialization() {
-    let options = ImageSegmenterOptions()
+    var options = ImageSegmenterOptions()
     options.baseOptions.modelAssetPath =
       "/nonexistent/image_segmenter.task"
 
     XCTAssertThrowsError(try ImageSegmenter(options: options)) { error in
       let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      XCTAssertEqual(nsError.domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
-      )
-      XCTAssertFalse(
-        nsError.localizedDescription.contains("No registered object with name"),
-        "ImageSegmenter subgraph not linked"
+        nsError.code == TasksErrorCode.invalidArgument.rawValue
+          || nsError.code == TasksErrorCode.notFound.rawValue
       )
       XCTAssertTrue(
         nsError.localizedDescription.contains("Unable to open file"),
@@ -75,76 +58,65 @@ final class ImageSegmenterSmokeTests: XCTestCase {
       try ImageSegmenter(modelPath: "/nonexistent/image_segmenter.task")
     ) { error in
       let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      XCTAssertEqual(nsError.domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
+        nsError.code == TasksErrorCode.invalidArgument.rawValue
+          || nsError.code == TasksErrorCode.notFound.rawValue
+      )
+      XCTAssertTrue(
+        nsError.localizedDescription.contains("Unable to open file"),
+        "Unexpected error: \(nsError.localizedDescription)"
       )
     }
   }
 
   func testExecutionMethodSignaturesCompile() {
-    let _: (ImageSegmenter) -> (MPImage) throws -> ImageSegmenterResult =
-      ImageSegmenter.segment(image:)
     let _:
-      (ImageSegmenter) -> (
-        MPImage,
-        @escaping (ImageSegmenterResult?, (any Error)?) -> Void
-      ) -> Void =
-        ImageSegmenter.segment(image:completion:)
-    let _: (ImageSegmenter) -> (MPImage, Int) throws -> ImageSegmenterResult =
-      ImageSegmenter.segment(videoFrame:timestampInMilliseconds:)
+      (ImageSegmenter) -> (MPImage, ImageProcessingOptions?) throws ->
+        ImageSegmenterResult =
+        ImageSegmenter.segment(image:imageProcessingOptions:)
     let _:
-      (ImageSegmenter) -> (
-        MPImage,
-        Int,
-        @escaping (ImageSegmenterResult?, (any Error)?) -> Void
-      ) -> Void =
-        ImageSegmenter.segment(videoFrame:timestampInMilliseconds:completion:)
-    let _: (ImageSegmenter) -> (MPImage, Int) throws -> Void =
-      ImageSegmenter.segmentAsync(image:timestampInMilliseconds:)
+      (ImageSegmenter) -> (MPImage, Int, ImageProcessingOptions?) throws ->
+        ImageSegmenterResult =
+        ImageSegmenter.segment(videoFrame:timestampInMilliseconds:imageProcessingOptions:)
+    let _: (ImageSegmenter) -> (MPImage, Int, ImageProcessingOptions?) throws -> Void =
+      ImageSegmenter.segmentAsync(image:timestampInMilliseconds:imageProcessingOptions:)
     let _: KeyPath<ImageSegmenter, [String]> = \ImageSegmenter.labels
   }
 
   func testResultContainerTypes() throws {
     var uint8Pixel: UInt8 = 128
     let mask = Mask(
-      uInt8Data: &uint8Pixel,
+      uint8Data: &uint8Pixel,
       width: 1,
-      height: 1,
-      shouldCopy: true
+      height: 1
     )
-    let unwrappedMask = try XCTUnwrap(mask)
-    XCTAssertEqual(unwrappedMask.width, 1)
-    XCTAssertEqual(unwrappedMask.height, 1)
-    XCTAssertEqual(unwrappedMask.dataType, .uInt8)
+    XCTAssertEqual(mask.width, 1)
+    XCTAssertEqual(mask.height, 1)
+    XCTAssertEqual(mask.dataType, .uInt8)
 
     var float32Pixel: Float = 0.5
     let floatMask = Mask(
       float32Data: &float32Pixel,
       width: 1,
-      height: 1,
-      shouldCopy: true
+      height: 1
     )
-    let unwrappedFloatMask = try XCTUnwrap(floatMask)
-    XCTAssertEqual(unwrappedFloatMask.width, 1)
-    XCTAssertEqual(unwrappedFloatMask.height, 1)
-    XCTAssertEqual(unwrappedFloatMask.dataType, .float32)
+    XCTAssertEqual(floatMask.width, 1)
+    XCTAssertEqual(floatMask.height, 1)
+    XCTAssertEqual(floatMask.dataType, .float32)
 
-    let qualityScores: [NSNumber] = [NSNumber(value: 0.95)]
     let result = ImageSegmenterResult(
-      confidenceMasks: [unwrappedFloatMask],
-      categoryMask: unwrappedMask,
-      qualityScores: qualityScores,
+      confidenceMasks: [floatMask],
+      categoryMask: mask,
+      qualityScores: [0.95],
       timestampInMilliseconds: 1000
     )
     let unwrappedConfidenceMasks = try XCTUnwrap(result.confidenceMasks)
     XCTAssertEqual(unwrappedConfidenceMasks.count, 1)
     XCTAssertNotNil(result.categoryMask)
-    let scores = try XCTUnwrap(result.qualityScores)
-    XCTAssertEqual(scores.count, 1)
-    let firstScore = try XCTUnwrap(scores.first)
-    XCTAssertEqual(firstScore.floatValue, 0.95, accuracy: 1e-3)
+    XCTAssertEqual(result.qualityScores.count, 1)
+    let firstScore = try XCTUnwrap(result.qualityScores.first)
+    XCTAssertEqual(firstScore, 0.95, accuracy: 1e-3)
     XCTAssertEqual(result.timestampInMilliseconds, 1000)
   }
 }

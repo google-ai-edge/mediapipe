@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_VISION_IMAGE_SEGMENTER_RESULT_IMAGE_SEGMENTER_RESULT_H_
 #define MEDIAPIPE_TASKS_C_VISION_IMAGE_SEGMENTER_RESULT_IMAGE_SEGMENTER_RESULT_H_
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "mediapipe/tasks/c/vision/core/image.h"
 
@@ -24,7 +24,7 @@ limitations under the License.
 extern "C" {
 #endif
 
-struct MpImageSegmenterResult {
+typedef struct MpImageSegmenterResult {
   // Multiple masks of float image in VEC32F1 format where, for each mask, each
   // pixel represents the prediction confidence, usually in the [0, 1] range.
   MpImagePtr* confidence_masks;
@@ -46,7 +46,7 @@ struct MpImageSegmenterResult {
 
   // Number of elements in the array `quality_scores`.
   uint32_t quality_scores_count;
-};
+} MpImageSegmenterResult;
 
 #ifdef __cplusplus
 }  // extern C
