@@ -12,42 +12,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPCommon
-import MPPInteractiveSegmenterLegacy
+import CoreGraphics
+import Foundation
+import MediaPipeTasksInteractiveSegmenterLegacy
 import XCTest
-
-extension TasksErrorCode {
-  fileprivate static let errorDomain = "com.google.mediapipe.tasks"
-}
 
 final class InteractiveSegmenterLegacySmokeTests: XCTestCase {
 
   func testOptionsCoverage() {
-    let options = InteractiveSegmenterLegacyOptions()
-    options.outputConfidenceMasks = true
-    options.outputCategoryMask = true
-    options.displayNamesLocale = "en"
-
+    var options = InteractiveSegmenterLegacyOptions()
     XCTAssertTrue(options.outputConfidenceMasks)
-    XCTAssertTrue(options.outputCategoryMask)
+    XCTAssertFalse(options.outputCategoryMask)
     XCTAssertEqual(options.displayNamesLocale, "en")
+
+    options.outputConfidenceMasks = false
+    options.outputCategoryMask = true
+    options.displayNamesLocale = "fr"
+
+    XCTAssertFalse(options.outputConfidenceMasks)
+    XCTAssertTrue(options.outputCategoryMask)
+    XCTAssertEqual(options.displayNamesLocale, "fr")
   }
 
   func testRuntimeRegistrationAndInitialization() {
-    let options = InteractiveSegmenterLegacyOptions()
+    var options = InteractiveSegmenterLegacyOptions()
     options.baseOptions.modelAssetPath =
       "/nonexistent/interactive_segmenter.task"
 
     XCTAssertThrowsError(try InteractiveSegmenterLegacy(options: options)) { error in
       let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      XCTAssertEqual(nsError.domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
-      )
-      XCTAssertFalse(
-        nsError.localizedDescription.contains("No registered object with name"),
-        "InteractiveSegmenterLegacy subgraph not linked"
+        nsError.code == TasksErrorCode.invalidArgument.rawValue
+          || nsError.code == TasksErrorCode.notFound.rawValue
       )
       XCTAssertTrue(
         nsError.localizedDescription.contains("Unable to open file"),
@@ -59,26 +56,26 @@ final class InteractiveSegmenterLegacySmokeTests: XCTestCase {
       try InteractiveSegmenterLegacy(modelPath: "/nonexistent/interactive_segmenter.task")
     ) { error in
       let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      XCTAssertEqual(nsError.domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
+        nsError.code == TasksErrorCode.invalidArgument.rawValue
+          || nsError.code == TasksErrorCode.notFound.rawValue
+      )
+      XCTAssertTrue(
+        nsError.localizedDescription.contains("Unable to open file"),
+        "Unexpected error: \(nsError.localizedDescription)"
       )
     }
   }
 
   func testExecutionMethodSignaturesCompile() {
     let _:
-      (InteractiveSegmenterLegacy) -> (MPImage, RegionOfInterest) throws ->
-        InteractiveSegmenterLegacyResult =
-        InteractiveSegmenterLegacy.segment(image:regionOfInterest:)
-    let _:
       (InteractiveSegmenterLegacy) -> (
         MPImage,
         RegionOfInterest,
-        @escaping (InteractiveSegmenterLegacyResult?, (any Error)?) -> Void
-      ) -> Void =
-        InteractiveSegmenterLegacy.segment(image:regionOfInterest:completion:)
+        ImageProcessingOptions?
+      ) throws -> InteractiveSegmenterLegacyResult =
+        InteractiveSegmenterLegacy.segment(image:regionOfInterest:imageProcessingOptions:)
     let _: KeyPath<InteractiveSegmenterLegacy, [String]> = \InteractiveSegmenterLegacy.labels
   }
 
@@ -88,35 +85,32 @@ final class InteractiveSegmenterLegacySmokeTests: XCTestCase {
       label: "point",
       score: 1.0
     )
-    let roiPoint = RegionOfInterest(normalizedKeyPoint: keypoint)
+    let roiPoint = RegionOfInterest(keypoint: keypoint)
     XCTAssertNotNil(roiPoint.keypoint)
     XCTAssertNil(roiPoint.scribbles)
 
-    let roiScribble = RegionOfInterest(scribbles: [keypoint])
-    XCTAssertNil(roiScribble.keypoint)
-    XCTAssertNotNil(roiScribble.scribbles)
+    let roiScribbles = RegionOfInterest(scribbles: [keypoint])
+    XCTAssertNotNil(roiScribbles.scribbles)
+    XCTAssertNil(roiScribbles.keypoint)
 
     var uint8Pixel: UInt8 = 128
     let mask = Mask(
-      uInt8Data: &uint8Pixel,
+      uint8Data: &uint8Pixel,
       width: 1,
-      height: 1,
-      shouldCopy: true
+      height: 1
     )
-    let unwrappedMask = try XCTUnwrap(mask)
 
     let result = InteractiveSegmenterLegacyResult(
       confidenceMasks: nil,
-      categoryMask: unwrappedMask,
-      qualityScores: [NSNumber(value: 0.9)],
+      categoryMask: mask,
+      qualityScores: [0.9],
       timestampInMilliseconds: 1000
     )
     XCTAssertNil(result.confidenceMasks)
     XCTAssertNotNil(result.categoryMask)
-    let scores = try XCTUnwrap(result.qualityScores)
-    XCTAssertEqual(scores.count, 1)
-    let firstScore = try XCTUnwrap(scores.first)
-    XCTAssertEqual(firstScore.floatValue, 0.9, accuracy: 1e-3)
+    XCTAssertEqual(result.qualityScores.count, 1)
+    let firstScore = try XCTUnwrap(result.qualityScores.first)
+    XCTAssertEqual(firstScore, 0.9, accuracy: 1e-3)
     XCTAssertEqual(result.timestampInMilliseconds, 1000)
   }
 }

@@ -19,8 +19,6 @@ limitations under the License.
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <cstdint>
-
 #include "mediapipe/tasks/c/components/containers/keypoint.h"
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/core/common.h"
@@ -51,13 +49,25 @@ struct MpInteractiveSegmenterLegacyOptions {
 
   // The locale to use for display names specified through the TFLite Model
   // Metadata, if any. Defaults to English.
+#ifdef __cplusplus
   const char* display_names_locale = nullptr;
+#else
+  const char* display_names_locale;
+#endif
 
   // Whether to output confidence masks.
+#ifdef __cplusplus
   bool output_confidence_masks = true;
+#else
+  bool output_confidence_masks;
+#endif
 
   // Whether to output category mask.
+#ifdef __cplusplus
   bool output_category_mask = false;
+#else
+  bool output_category_mask;
+#endif
 };
 
 // The format used to specify the region-of-interest.
@@ -110,7 +120,7 @@ MP_EXPORT MpStatus MpInteractiveSegmenterLegacyCreate(
 // `MpErrorFree()`.
 MP_EXPORT MpStatus MpInteractiveSegmenterLegacySegmentImage(
     MpInteractiveSegmenterLegacyPtr segmenter, MpImagePtr image,
-    const MpRegionOfInterest* roi,
+    const struct MpRegionOfInterest* roi,
     const MpImageProcessingOptions* image_processing_options,
     MpImageSegmenterResult* result, char** error_msg);
 

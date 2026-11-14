@@ -103,6 +103,12 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
       options.baseOptions.modelAssetPath = dummyPath
       return try InteractiveSegmenter(options: options)
     }
+
+    verifyTaskInit(name: "InteractiveSegmenterLegacy", domain: "Vision") {
+      var options = InteractiveSegmenterLegacyOptions()
+      options.baseOptions.modelAssetPath = dummyPath
+      return try InteractiveSegmenterLegacy(options: options)
+    }
   }
 
   private func verifyTextRegistration() {

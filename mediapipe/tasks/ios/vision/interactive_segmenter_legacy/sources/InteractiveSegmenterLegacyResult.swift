@@ -1,4 +1,4 @@
-// Copyright 2023 The MediaPipe Authors.
+// Copyright 2026 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import <Foundation/Foundation.h>
+#if !MEDIAPIPE_SINGLE_MODULE
+  @_exported import MediaPipeTasksImageSegmenter
+#endif
 
-#import "mediapipe/tasks/ios/vision/interactive_segmenter_legacy/sources/MPPInteractiveSegmenterLegacyOptions.h"
-
-struct MpInteractiveSegmenterLegacyOptions;
-
-NS_ASSUME_NONNULL_BEGIN
-
-@interface MPPInteractiveSegmenterLegacyOptions (Helpers)
-
-- (void)copyToCOptions:(struct MpInteractiveSegmenterLegacyOptions *)cOptions;
-
-+ (void)freeCOptions:(struct MpInteractiveSegmenterLegacyOptions *)cOptions;
-
-@end
-
-NS_ASSUME_NONNULL_END
+/// Segmentation masks and quality scores produced by `InteractiveSegmenterLegacy`.
+///
+/// Shares `ImageSegmenterResult` because both tasks emit the same C `MpImageSegmenterResult`;
+/// `timestampInMilliseconds` is always `0` since the legacy task only supports single images.
+public typealias InteractiveSegmenterLegacyResult = ImageSegmenterResult
