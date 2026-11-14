@@ -144,8 +144,22 @@ absl::Status ModelMetadataExtractor::InitFromModelBuffer(
       continue;
     }
     const auto buffer_index = metadata->buffer();
-    const auto metadata_buffer =
-        model_->buffers()->Get(buffer_index)->data()->data();
+    if (model_->buffers() == nullptr ||
+        buffer_index >= model_->buffers()->size()) {
+      return CreateStatusWithPayload(
+          StatusCode::kInvalidArgument,
+          "Metadata refers to an out-of-range buffer index.",
+          MediaPipeTasksStatus::kMetadataInvalidSchemaVersionError);
+    }
+    const auto* metadata_buffer_table = model_->buffers()->Get(buffer_index);
+    if (metadata_buffer_table == nullptr ||
+        metadata_buffer_table->data() == nullptr) {
+      return CreateStatusWithPayload(
+          StatusCode::kInvalidArgument,
+          "Metadata buffer has no data.",
+          MediaPipeTasksStatus::kMetadataInvalidSchemaVersionError);
+    }
+    const auto metadata_buffer = metadata_buffer_table->data()->data();
     if (!tflite::ModelMetadataBufferHasIdentifier(metadata_buffer)) {
       return CreateStatusWithPayload(
           StatusCode::kInvalidArgument,
@@ -228,7 +242,8 @@ absl::StatusOr<std::string> ModelMetadataExtractor::GetModelVersion() const {
 const flatbuffers::Vector<flatbuffers::Offset<tflite::TensorMetadata>>*
 ModelMetadataExtractor::GetInputTensorMetadata() const {
   if (model_metadata_ == nullptr ||
-      model_metadata_->subgraph_metadata() == nullptr) {
+      model_metadata_->subgraph_metadata() == nullptr ||
+      model_metadata_->subgraph_metadata()->size() <= kDefaultSubgraphIndex) {
     return nullptr;
   }
   return model_metadata_->subgraph_metadata()
@@ -251,7 +266,8 @@ int ModelMetadataExtractor::GetInputTensorCount() const {
 const Vector<Offset<TensorMetadata>>*
 ModelMetadataExtractor::GetOutputTensorMetadata() const {
   if (model_metadata_ == nullptr ||
-      model_metadata_->subgraph_metadata() == nullptr) {
+      model_metadata_->subgraph_metadata() == nullptr ||
+      model_metadata_->subgraph_metadata()->size() <= kDefaultSubgraphIndex) {
     return nullptr;
   }
   return model_metadata_->subgraph_metadata()
@@ -274,7 +290,8 @@ int ModelMetadataExtractor::GetOutputTensorCount() const {
 const Vector<flatbuffers::Offset<tflite::ProcessUnit>>*
 ModelMetadataExtractor::GetInputProcessUnits() const {
   if (model_metadata_ == nullptr ||
-      model_metadata_->subgraph_metadata() == nullptr) {
+      model_metadata_->subgraph_metadata() == nullptr ||
+      model_metadata_->subgraph_metadata()->size() <= kDefaultSubgraphIndex) {
     return nullptr;
   }
   return model_metadata_->subgraph_metadata()
@@ -296,7 +313,8 @@ int ModelMetadataExtractor::GetInputProcessUnitsCount() const {
 const Vector<flatbuffers::Offset<tflite::ProcessUnit>>*
 ModelMetadataExtractor::GetOutputProcessUnits() const {
   if (model_metadata_ == nullptr ||
-      model_metadata_->subgraph_metadata() == nullptr) {
+      model_metadata_->subgraph_metadata() == nullptr ||
+      model_metadata_->subgraph_metadata()->size() <= kDefaultSubgraphIndex) {
     return nullptr;
   }
   return model_metadata_->subgraph_metadata()
@@ -318,7 +336,8 @@ int ModelMetadataExtractor::GetOutputProcessUnitsCount() const {
 const flatbuffers::Vector<flatbuffers::Offset<tflite::CustomMetadata>>*
 ModelMetadataExtractor::GetCustomMetadataList() const {
   if (model_metadata_ == nullptr ||
-      model_metadata_->subgraph_metadata() == nullptr) {
+      model_metadata_->subgraph_metadata() == nullptr ||
+      model_metadata_->subgraph_metadata()->size() <= kDefaultSubgraphIndex) {
     return nullptr;
   }
   return model_metadata_->subgraph_metadata()
