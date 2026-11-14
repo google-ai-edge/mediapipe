@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_VISION_HAND_LANDMARKER_RESULT_HAND_LANDMARKER_RESULT_H_
 #define MEDIAPIPE_TASKS_C_VISION_HAND_LANDMARKER_RESULT_HAND_LANDMARKER_RESULT_H_
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
@@ -27,7 +27,7 @@ extern "C" {
 
 // The hand landmarker result from HandLandmarker, where each vector
 // element represents a single hand detected in the image.
-struct MpHandLandmarkerResult {
+typedef struct MpHandLandmarkerResult {
   // Classification of handedness.
   // Note: Left and Right handedness correspond to the subject's hands, not the
   // viewer. Passing a horizontally mirrored image will invert these outputs.
@@ -47,7 +47,7 @@ struct MpHandLandmarkerResult {
 
   // The number of elements in the hand_world_landmarks array.
   uint32_t hand_world_landmarks_count;
-};
+} MpHandLandmarkerResult;
 
 #ifdef __cplusplus
 }  // extern C

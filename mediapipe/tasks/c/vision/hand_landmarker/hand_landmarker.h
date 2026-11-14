@@ -16,12 +16,13 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_VISION_HAND_LANDMARKER_HAND_LANDMARKER_H_
 #define MEDIAPIPE_TASKS_C_VISION_HAND_LANDMARKER_HAND_LANDMARKER_H_
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/hand_landmarker/hand_landmarker_result.h"
 
 #ifndef MP_EXPORT
@@ -38,8 +39,13 @@ extern "C" {
 
 typedef struct MpHandLandmarkerInternal* MpHandLandmarkerPtr;
 
+// The user-defined result callback for processing live stream data.
+typedef void (*MpHandLandmarkerResultCallback)(
+    MpStatus status, const MpHandLandmarkerResult* result, MpImagePtr image,
+    int64_t timestamp_ms);
+
 // The options for configuring a MediaPipe hand landmarker task.
-struct MpHandLandmarkerOptions {
+typedef struct MpHandLandmarkerOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
   struct MpBaseOptions base_options;
@@ -52,8 +58,9 @@ struct MpHandLandmarkerOptions {
   // 3) The live stream mode for recognizing hand landmarks on the live stream
   //    of input data, such as from camera. In this mode, the "result_callback"
   //    below must be specified to receive the detection results asynchronously.
-  MpRunningMode running_mode;
+  enum MpRunningMode running_mode;
 
+#ifdef __cplusplus
   // The maximum number of hands can be detected by the HandLandmarker.
   int num_hands = 1;
 
@@ -68,6 +75,12 @@ struct MpHandLandmarkerOptions {
   // The minimum confidence score for the hand tracking to be considered
   // successful.
   float min_tracking_confidence = 0.5;
+#else
+  int num_hands;
+  float min_hand_detection_confidence;
+  float min_hand_presence_confidence;
+  float min_tracking_confidence;
+#endif
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
@@ -78,11 +91,11 @@ struct MpHandLandmarkerOptions {
   // arguments is true for the lifetime of the callback function.
   //
   // The passed arguments are only valid for the lifetime of the callback.
-  typedef void (*result_callback_fn)(MpStatus status,
-                                     const MpHandLandmarkerResult* result,
-                                     MpImagePtr image, int64_t timestamp_ms);
-  result_callback_fn result_callback;
-};
+  MpHandLandmarkerResultCallback result_callback;
+#ifdef __cplusplus
+  using result_callback_fn = MpHandLandmarkerResultCallback;
+#endif
+} MpHandLandmarkerOptions;
 
 // Creates an HandLandmarker from the provided `options`.
 // If successful, returns `kMpOk` and sets `*landmarker` to the new

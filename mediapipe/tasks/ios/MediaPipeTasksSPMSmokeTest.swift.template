@@ -127,6 +127,12 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
       options.baseOptions.modelAssetPath = dummyPath
       return try FaceLandmarker(options: options)
     }
+
+    verifyTaskInit(name: "HandLandmarker", domain: "Vision") {
+      var options = HandLandmarkerOptions()
+      options.baseOptions.modelAssetPath = dummyPath
+      return try HandLandmarker(options: options)
+    }
   }
 
   private func verifyTextRegistration() {

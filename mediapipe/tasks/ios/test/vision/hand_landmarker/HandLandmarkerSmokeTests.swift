@@ -12,38 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPCommon
-import MPPHandLandmarker
+import Foundation
+import MediaPipeTasksHandLandmarker
 import XCTest
-
-extension TasksErrorCode {
-  fileprivate static let errorDomain = "com.google.mediapipe.tasks"
-}
 
 final class HandLandmarkerSmokeTests: XCTestCase {
 
-  private final class MockLiveStreamDelegate: NSObject,
-    HandLandmarkerLiveStreamDelegate
-  {
-    func handLandmarker(
-      _ handLandmarker: HandLandmarker,
-      didFinishDetection result: HandLandmarkerResult?,
-      timestampInMilliseconds: Int,
-      error: (any Error)?
-    ) {}
-  }
-
-  func testOptionsAndDelegateCoverage() {
-    let options = HandLandmarkerOptions()
+  func testOptionsAndHandlerCoverage() {
+    var options = HandLandmarkerOptions()
     options.runningMode = .liveStream
     options.numHands = 2
     options.minHandDetectionConfidence = 0.6
     options.minHandPresenceConfidence = 0.6
     options.minTrackingConfidence = 0.6
+    options.liveStreamResultHandler = { _, _ in }
 
-    let delegate = MockLiveStreamDelegate()
-    options.handLandmarkerLiveStreamDelegate = delegate
-    XCTAssertNotNil(options.handLandmarkerLiveStreamDelegate)
+    XCTAssertNotNil(options.liveStreamResultHandler)
     XCTAssertEqual(options.runningMode, .liveStream)
     XCTAssertEqual(options.numHands, 2)
     XCTAssertEqual(options.minHandDetectionConfidence, 0.6, accuracy: 1e-3)
@@ -52,45 +36,64 @@ final class HandLandmarkerSmokeTests: XCTestCase {
   }
 
   func testRuntimeRegistrationAndInitialization() {
-    let options = HandLandmarkerOptions()
+    var options = HandLandmarkerOptions()
     options.baseOptions.modelAssetPath = "/nonexistent/hand_landmarker.task"
 
     XCTAssertThrowsError(try HandLandmarker(options: options)) { error in
-      let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertEqual((error as NSError).domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
-      )
-      XCTAssertFalse(
-        nsError.localizedDescription.contains("No registered object with name"),
-        "HandLandmarker subgraph not linked"
+        tasksError.code == .invalidArgument || tasksError.code == .notFound
       )
       XCTAssertTrue(
-        nsError.localizedDescription.contains("Unable to open file"),
-        "Unexpected error: \(nsError.localizedDescription)"
+        error.localizedDescription.contains("Unable to open file"),
+        "Unexpected error: \(error.localizedDescription)"
       )
     }
 
     XCTAssertThrowsError(
       try HandLandmarker(modelPath: "/nonexistent/hand_landmarker.task")
     ) { error in
-      let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertEqual((error as NSError).domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
+        tasksError.code == .invalidArgument || tasksError.code == .notFound
       )
     }
   }
 
   func testExecutionMethodSignaturesCompile() {
-    let _: (HandLandmarker) -> (MPImage) throws -> HandLandmarkerResult =
-      HandLandmarker.detect(image:)
-    let _: (HandLandmarker) -> (MPImage, Int) throws -> HandLandmarkerResult =
-      HandLandmarker.detect(videoFrame:timestampInMilliseconds:)
-    let _: (HandLandmarker) -> (MPImage, Int) throws -> Void =
-      HandLandmarker.detectAsync(image:timestampInMilliseconds:)
+    let _:
+      (HandLandmarker) -> (MPImage, ImageProcessingOptions?) throws ->
+        HandLandmarkerResult =
+        HandLandmarker.detect(image:imageProcessingOptions:)
+    let _:
+      (HandLandmarker) -> (MPImage, Int, ImageProcessingOptions?) throws ->
+        HandLandmarkerResult =
+        HandLandmarker.detect(
+          videoFrame:timestampInMilliseconds:imageProcessingOptions:
+        )
+    let _:
+      (HandLandmarker) -> (MPImage, Int, ImageProcessingOptions?) throws ->
+        Void =
+        HandLandmarker.detectAsync(
+          image:timestampInMilliseconds:imageProcessingOptions:
+        )
+    let _: (HandLandmarker, MPImage) throws -> HandLandmarkerResult = {
+      try $0.detect(image: $1)
+    }
+    let _: (HandLandmarker, MPImage, Int) throws -> HandLandmarkerResult = {
+      try $0.detect(videoFrame: $1, timestampInMilliseconds: $2)
+    }
+    let _: (HandLandmarker, MPImage, Int) throws -> Void = {
+      try $0.detectAsync(image: $1, timestampInMilliseconds: $2)
+    }
   }
 
   func testResultContainerTypes() throws {
@@ -105,9 +108,9 @@ final class HandLandmarkerSmokeTests: XCTestCase {
     XCTAssertEqual(landmark.y, 0.2, accuracy: 1e-3)
     XCTAssertEqual(landmark.z, 0.3, accuracy: 1e-3)
     let landmarkVisibility = try XCTUnwrap(landmark.visibility)
-    XCTAssertEqual(landmarkVisibility.floatValue, 0.9, accuracy: 1e-3)
+    XCTAssertEqual(landmarkVisibility, 0.9, accuracy: 1e-3)
     let landmarkPresence = try XCTUnwrap(landmark.presence)
-    XCTAssertEqual(landmarkPresence.floatValue, 0.8, accuracy: 1e-3)
+    XCTAssertEqual(landmarkPresence, 0.8, accuracy: 1e-3)
 
     let worldLandmark = Landmark(
       x: 1.0,
@@ -120,9 +123,9 @@ final class HandLandmarkerSmokeTests: XCTestCase {
     XCTAssertEqual(worldLandmark.y, 2.0, accuracy: 1e-3)
     XCTAssertEqual(worldLandmark.z, 3.0, accuracy: 1e-3)
     let worldVisibility = try XCTUnwrap(worldLandmark.visibility)
-    XCTAssertEqual(worldVisibility.floatValue, 0.9, accuracy: 1e-3)
+    XCTAssertEqual(worldVisibility, 0.9, accuracy: 1e-3)
     let worldPresence = try XCTUnwrap(worldLandmark.presence)
-    XCTAssertEqual(worldPresence.floatValue, 0.8, accuracy: 1e-3)
+    XCTAssertEqual(worldPresence, 0.8, accuracy: 1e-3)
 
     let handedness = ResultCategory(
       index: 0,
