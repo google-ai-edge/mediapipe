@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_VISION_GESTURE_RECOGNIZER_GESTURE_RECOGNIZER_H_
 #define MEDIAPIPE_TASKS_C_VISION_GESTURE_RECOGNIZER_GESTURE_RECOGNIZER_H_
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
@@ -39,6 +39,12 @@ extern "C" {
 
 typedef struct MpGestureRecognizerInternal* MpGestureRecognizerPtr;
 
+// User-defined callback function for processing live-stream gesture recognition
+// results.
+typedef void (*MpGestureRecognizerResultCallback)(
+    MpStatus status, const MpGestureRecognizerResult* result,
+    const MpImagePtr image, int64_t timestamp_ms);
+
 // The options for configuring a MediaPipe gesture recognizer task.
 struct MpGestureRecognizerOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
@@ -53,8 +59,9 @@ struct MpGestureRecognizerOptions {
   // 3) The live stream mode for recognizing hand gestures on the live stream of
   //    input data, such as from camera. In this mode, the "result_callback"
   //    below must be specified to receive the detection results asynchronously.
-  MpRunningMode running_mode;
+  enum MpRunningMode running_mode;
 
+#ifdef __cplusplus
   // The maximum number of hands can be detected by the GestureRecognizer.
   int num_hands = 1;
 
@@ -69,6 +76,12 @@ struct MpGestureRecognizerOptions {
   // The minimum confidence score for the hand tracking to be considered
   // successful.
   float min_tracking_confidence = 0.5;
+#else
+  int num_hands;
+  float min_hand_detection_confidence;
+  float min_hand_presence_confidence;
+  float min_tracking_confidence;
+#endif
 
   // Options for configuring the canned gestures classifier, such as score
   // threshold, allow list and deny list of gestures. The categories for canned
@@ -89,11 +102,10 @@ struct MpGestureRecognizerOptions {
   // arguments is true for the lifetime of the callback function.
   //
   // The passed arguments are only valid for the lifetime of the callback.
-  typedef void (*result_callback_fn)(MpStatus status,
-                                     const MpGestureRecognizerResult* result,
-                                     const MpImagePtr image,
-                                     int64_t timestamp_ms);
-  result_callback_fn result_callback;
+#ifdef __cplusplus
+  typedef MpGestureRecognizerResultCallback result_callback_fn;
+#endif
+  MpGestureRecognizerResultCallback result_callback;
 };
 
 // Creates an GestureRecognizer from the provided `options`.

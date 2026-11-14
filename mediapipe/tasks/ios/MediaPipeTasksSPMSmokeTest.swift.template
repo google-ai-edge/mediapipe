@@ -109,6 +109,12 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
       options.baseOptions.modelAssetPath = dummyPath
       return try InteractiveSegmenterLegacy(options: options)
     }
+
+    verifyTaskInit(name: "GestureRecognizer", domain: "Vision") {
+      var options = GestureRecognizerOptions()
+      options.baseOptions.modelAssetPath = dummyPath
+      return try GestureRecognizer(options: options)
+    }
   }
 
   private func verifyTextRegistration() {

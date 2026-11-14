@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_VISION_GESTURE_RECOGNIZER_RESULT_GESTURE_RECOGNIZER_RESULT_H_
 #define MEDIAPIPE_TASKS_C_VISION_GESTURE_RECOGNIZER_RESULT_GESTURE_RECOGNIZER_RESULT_H_
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
@@ -27,7 +27,7 @@ extern "C" {
 
 // The gesture recognition result from GestureRecognizer, where each vector
 // element represents a single hand detected in the image.
-struct MpGestureRecognizerResult {
+typedef struct MpGestureRecognizerResult {
   // Recognized hand gestures with sorted order such that the winning label is
   // the first item in the list.
   struct MpCategories* gestures;
@@ -54,7 +54,7 @@ struct MpGestureRecognizerResult {
 
   // The number of elements in the hand_world_landmarks array.
   uint32_t hand_world_landmarks_count;
-};
+} MpGestureRecognizerResult;
 
 #ifdef __cplusplus
 }  // extern C

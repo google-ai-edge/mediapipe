@@ -12,96 +12,107 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPCommon
-import MPPGestureRecognizer
+import Foundation
+import MediaPipeTasksGestureRecognizer
 import XCTest
-
-extension TasksErrorCode {
-  fileprivate static let errorDomain = "com.google.mediapipe.tasks"
-}
 
 final class GestureRecognizerSmokeTests: XCTestCase {
 
-  private final class MockLiveStreamDelegate: NSObject,
-    GestureRecognizerLiveStreamDelegate
-  {
-    func gestureRecognizer(
-      _ gestureRecognizer: GestureRecognizer,
-      didFinishGestureRecognition result: GestureRecognizerResult?,
-      timestampInMilliseconds: Int,
-      error: (any Error)?
-    ) {}
-  }
-
-  func testOptionsAndDelegateCoverage() {
-    let options = GestureRecognizerOptions()
+  func testOptionsAndHandlerCoverage() {
+    var options = GestureRecognizerOptions()
     options.runningMode = .liveStream
     options.numHands = 2
     options.minHandDetectionConfidence = 0.6
     options.minHandPresenceConfidence = 0.6
     options.minTrackingConfidence = 0.6
 
-    let cannedOptions = ClassifierOptions()
+    var cannedOptions = ClassifierOptions()
     cannedOptions.scoreThreshold = 0.5
     options.cannedGesturesClassifierOptions = cannedOptions
 
-    let customOptions = ClassifierOptions()
+    var customOptions = ClassifierOptions()
     customOptions.scoreThreshold = 0.5
     options.customGesturesClassifierOptions = customOptions
 
-    let delegate = MockLiveStreamDelegate()
-    options.gestureRecognizerLiveStreamDelegate = delegate
-    XCTAssertNotNil(options.gestureRecognizerLiveStreamDelegate)
+    options.liveStreamResultHandler = { _, _ in }
+    XCTAssertNotNil(options.liveStreamResultHandler)
     XCTAssertEqual(options.runningMode, .liveStream)
     XCTAssertEqual(options.numHands, 2)
     XCTAssertEqual(options.minHandDetectionConfidence, 0.6, accuracy: 1e-3)
     XCTAssertEqual(options.minHandPresenceConfidence, 0.6, accuracy: 1e-3)
     XCTAssertEqual(options.minTrackingConfidence, 0.6, accuracy: 1e-3)
-    XCTAssertNotNil(options.cannedGesturesClassifierOptions)
-    XCTAssertNotNil(options.customGesturesClassifierOptions)
+    XCTAssertEqual(
+      options.cannedGesturesClassifierOptions.scoreThreshold,
+      0.5,
+      accuracy: 1e-3
+    )
+    XCTAssertEqual(
+      options.customGesturesClassifierOptions.scoreThreshold,
+      0.5,
+      accuracy: 1e-3
+    )
   }
 
   func testRuntimeRegistrationAndInitialization() {
-    let options = GestureRecognizerOptions()
+    var options = GestureRecognizerOptions()
     options.baseOptions.modelAssetPath =
       "/nonexistent/gesture_recognizer.task"
 
     XCTAssertThrowsError(try GestureRecognizer(options: options)) { error in
-      let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertEqual((error as NSError).domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
-      )
-      XCTAssertFalse(
-        nsError.localizedDescription.contains("No registered object with name"),
-        "GestureRecognizer subgraph not linked"
+        tasksError.code == .invalidArgument || tasksError.code == .notFound
       )
       XCTAssertTrue(
-        nsError.localizedDescription.contains("Unable to open file"),
-        "Unexpected error: \(nsError.localizedDescription)"
+        error.localizedDescription.contains("Unable to open file"),
+        "Unexpected error: \(error.localizedDescription)"
       )
     }
 
     XCTAssertThrowsError(
       try GestureRecognizer(modelPath: "/nonexistent/gesture_recognizer.task")
     ) { error in
-      let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertEqual((error as NSError).domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
+        tasksError.code == .invalidArgument || tasksError.code == .notFound
       )
     }
   }
 
   func testExecutionMethodSignaturesCompile() {
-    let _: (GestureRecognizer) -> (MPImage) throws -> GestureRecognizerResult =
-      GestureRecognizer.recognize(image:)
-    let _: (GestureRecognizer) -> (MPImage, Int) throws -> GestureRecognizerResult =
-      GestureRecognizer.recognize(videoFrame:timestampInMilliseconds:)
-    let _: (GestureRecognizer) -> (MPImage, Int) throws -> Void =
-      GestureRecognizer.recognizeAsync(image:timestampInMilliseconds:)
+    let _:
+      (GestureRecognizer) -> (MPImage, ImageProcessingOptions?) throws ->
+        GestureRecognizerResult =
+        GestureRecognizer.recognize(image:imageProcessingOptions:)
+    let _:
+      (GestureRecognizer) -> (MPImage, Int, ImageProcessingOptions?) throws ->
+        GestureRecognizerResult =
+        GestureRecognizer.recognize(
+          videoFrame:timestampInMilliseconds:imageProcessingOptions:
+        )
+    let _:
+      (GestureRecognizer) -> (MPImage, Int, ImageProcessingOptions?) throws ->
+        Void =
+        GestureRecognizer.recognizeAsync(
+          image:timestampInMilliseconds:imageProcessingOptions:
+        )
+    let _: (GestureRecognizer, MPImage) throws -> GestureRecognizerResult = {
+      try $0.recognize(image: $1)
+    }
+    let _: (GestureRecognizer, MPImage, Int) throws -> GestureRecognizerResult = {
+      try $0.recognize(videoFrame: $1, timestampInMilliseconds: $2)
+    }
+    let _: (GestureRecognizer, MPImage, Int) throws -> Void = {
+      try $0.recognizeAsync(image: $1, timestampInMilliseconds: $2)
+    }
   }
 
   func testResultContainerTypes() throws {
@@ -116,9 +127,9 @@ final class GestureRecognizerSmokeTests: XCTestCase {
     XCTAssertEqual(landmark.y, 0.2, accuracy: 1e-3)
     XCTAssertEqual(landmark.z, 0.3, accuracy: 1e-3)
     let landmarkVisibility = try XCTUnwrap(landmark.visibility)
-    XCTAssertEqual(landmarkVisibility.floatValue, 0.9, accuracy: 1e-3)
+    XCTAssertEqual(landmarkVisibility, 0.9, accuracy: 1e-3)
     let landmarkPresence = try XCTUnwrap(landmark.presence)
-    XCTAssertEqual(landmarkPresence.floatValue, 0.8, accuracy: 1e-3)
+    XCTAssertEqual(landmarkPresence, 0.8, accuracy: 1e-3)
 
     let worldLandmark = Landmark(
       x: 1.0,
@@ -131,9 +142,9 @@ final class GestureRecognizerSmokeTests: XCTestCase {
     XCTAssertEqual(worldLandmark.y, 2.0, accuracy: 1e-3)
     XCTAssertEqual(worldLandmark.z, 3.0, accuracy: 1e-3)
     let worldVisibility = try XCTUnwrap(worldLandmark.visibility)
-    XCTAssertEqual(worldVisibility.floatValue, 0.9, accuracy: 1e-3)
+    XCTAssertEqual(worldVisibility, 0.9, accuracy: 1e-3)
     let worldPresence = try XCTUnwrap(worldLandmark.presence)
-    XCTAssertEqual(worldPresence.floatValue, 0.8, accuracy: 1e-3)
+    XCTAssertEqual(worldPresence, 0.8, accuracy: 1e-3)
 
     let gesture = ResultCategory(
       index: -1,

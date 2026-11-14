@@ -12,62 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:objc_library.bzl", "objc_library")
-
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
-
-exports_files(glob(["sources/*.h"]))
-
-objc_library(
-    name = "MPPGestureRecognizerResult",
-    srcs = ["sources/MPPGestureRecognizerResult.m"],
-    hdrs = ["sources/MPPGestureRecognizerResult.h"],
-    deps = [
-        "//mediapipe/tasks/ios/components/containers:MPPCategory",
-        "//mediapipe/tasks/ios/components/containers:MPPLandmark",
-        "//mediapipe/tasks/ios/core:MPPTaskResult",
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
-
-objc_library(
-    name = "MPPGestureRecognizerOptions",
-    srcs = ["sources/MPPGestureRecognizerOptions.m"],
-    hdrs = ["sources/MPPGestureRecognizerOptions.h"],
-    deps = [
-        ":MPPGestureRecognizerResult",
-        "//mediapipe/tasks/ios/components/processors:MPPClassifierOptions",
-        "//mediapipe/tasks/ios/core:MPPTaskOptions",
-        "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
-
-objc_library(
-    name = "MPPGestureRecognizer",
-    srcs = ["sources/MPPGestureRecognizer.mm"],
-    hdrs = ["sources/MPPGestureRecognizer.h"],
-    copts = [
-        "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
-        "-x objective-c++",
-    ],
-    module_name = "MPPGestureRecognizer",
-    deps = [
-        ":MPPGestureRecognizerOptions",
-        ":MPPGestureRecognizerResult",
-        "//mediapipe/tasks/c/vision/core:image_processing_options",
-        "//mediapipe/tasks/c/vision/gesture_recognizer:gesture_recognizer_lib",
-        "//mediapipe/tasks/ios/common:MPPCommon",
-        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//mediapipe/tasks/ios/vision/core:MPPImage",
-        "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
-        "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",
-        "//mediapipe/tasks/ios/vision/gesture_recognizer/utils:MPPGestureRecognizerOptionsHelpers",
-        "//mediapipe/tasks/ios/vision/gesture_recognizer/utils:MPPGestureRecognizerResultHelpers",
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
