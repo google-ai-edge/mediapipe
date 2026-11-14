@@ -12,82 +12,64 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPAudioClassifier
-import MPPCommon
+import Foundation
+import MediaPipeTasksAudioClassifier
 import XCTest
-
-extension TasksErrorCode {
-  fileprivate static let errorDomain = "com.google.mediapipe.tasks"
-}
 
 final class AudioClassifierSmokeTests: XCTestCase {
 
-  private final class MockAudioClassifierStreamDelegate: NSObject,
-    AudioClassifierStreamDelegate
-  {
-    func audioClassifier(
-      _ audioClassifier: AudioClassifier,
-      didFinishClassification result: AudioClassifierResult?,
-      timestampInMilliseconds: Int,
-      error: (any Error)?
-    ) {}
-
-    func audioClassifier(
-      _ audioClassifier: AudioClassifier,
-      didFinishClassification result: AudioClassifierResult,
-      timestampInMilliseconds: Int
-    ) {}
-  }
-
-  func testOptionsAndDelegateCoverage() {
-    let options = AudioClassifierOptions()
+  func testOptionsAndCallbackCoverage() {
+    var options = AudioClassifierOptions()
     options.runningMode = .audioStream
     options.scoreThreshold = 0.5
     options.maxResults = 3
-    options.displayNamesLocale = "en"
+    options.displayNamesLocale = "fr"
     options.categoryAllowlist = ["speech", "music"]
     options.categoryDenylist = ["noise"]
+    options.audioStreamResultHandler = { _ in }
 
-    let delegate = MockAudioClassifierStreamDelegate()
-    options.audioClassifierStreamDelegate = delegate
-    XCTAssertNotNil(options.audioClassifierStreamDelegate)
+    XCTAssertNotNil(options.audioStreamResultHandler)
     XCTAssertEqual(options.runningMode, .audioStream)
     XCTAssertEqual(options.scoreThreshold, 0.5, accuracy: 1e-3)
     XCTAssertEqual(options.maxResults, 3)
-    XCTAssertEqual(options.displayNamesLocale, "en")
+    XCTAssertEqual(options.displayNamesLocale, "fr")
     XCTAssertEqual(options.categoryAllowlist, ["speech", "music"])
     XCTAssertEqual(options.categoryDenylist, ["noise"])
   }
 
   func testRuntimeRegistrationAndInitialization() {
-    let options = AudioClassifierOptions()
+    var options = AudioClassifierOptions()
     options.baseOptions.modelAssetPath = "/nonexistent/audio_classifier.task"
 
     XCTAssertThrowsError(try AudioClassifier(options: options)) { error in
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertTrue(tasksError.code == .invalidArgument || tasksError.code == .notFound)
       let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      XCTAssertEqual(nsError.domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
-      )
-      XCTAssertFalse(
-        nsError.localizedDescription.contains("No registered object with name"),
-        "AudioClassifier subgraph not linked"
+        nsError.code == TasksErrorCode.invalidArgument.rawValue
+          || nsError.code == TasksErrorCode.notFound.rawValue
       )
       XCTAssertTrue(
-        nsError.localizedDescription.contains("Unable to open file"),
-        "Unexpected error: \(nsError.localizedDescription)"
+        error.localizedDescription.contains("Unable to open file"),
+        "Unexpected error: \(error.localizedDescription)"
       )
     }
 
     XCTAssertThrowsError(
       try AudioClassifier(modelPath: "/nonexistent/audio_classifier.task")
     ) { error in
-      let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertTrue(tasksError.code == .invalidArgument || tasksError.code == .notFound)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
+        error.localizedDescription.contains("Unable to open file"),
+        "Unexpected error: \(error.localizedDescription)"
       )
     }
   }
@@ -98,9 +80,11 @@ final class AudioClassifierSmokeTests: XCTestCase {
     let _: (AudioClassifier) -> (AudioData, Int) throws -> Void =
       AudioClassifier.classifyAsync(audioBlock:timestampInMilliseconds:)
     let _: (AudioClassifier) -> () throws -> Void = AudioClassifier.close
+    let _: (Int, Double, Int) throws -> AudioRecord =
+      AudioClassifier.createAudioRecord(channelCount:sampleRate:bufferLength:)
     let _: (AudioRecord) -> () throws -> Void = AudioRecord.startRecording
     let _: (AudioRecord) -> () throws -> Void = AudioRecord.stop
-    let _: (AudioRecord) -> (UInt, UInt) throws -> MPPFloatBuffer =
+    let _: (AudioRecord) -> (Int, Int) throws -> FloatBuffer =
       AudioRecord.read(offset:length:)
   }
 
@@ -117,7 +101,7 @@ final class AudioClassifierSmokeTests: XCTestCase {
     XCTAssertEqual(category.displayName, "Speech")
 
     let classifications = Classifications(
-      head: 0,
+      headIndex: 0,
       headName: "head",
       categories: [category]
     )
@@ -139,7 +123,7 @@ final class AudioClassifierSmokeTests: XCTestCase {
     XCTAssertEqual(result.classificationResults.count, 1)
     XCTAssertEqual(result.timestampInMilliseconds, 1000)
 
-    let format = AudioDataFormat(channelCount: 1, sampleRate: 16000)
+    let format = AudioDataFormat(sampleRate: 16000, channelCount: 1)
     XCTAssertEqual(format.channelCount, 1)
     XCTAssertEqual(format.sampleRate, 16000, accuracy: 1e-3)
 
@@ -151,12 +135,10 @@ final class AudioClassifierSmokeTests: XCTestCase {
     XCTAssertEqual(audioData.format.channelCount, 1)
     XCTAssertEqual(audioData.bufferLength, 100)
 
-    let buffer = MPPFloatBuffer(length: 10)
+    let buffer = FloatBuffer(length: 10)
     XCTAssertNoThrow(try audioData.load(buffer: buffer, offset: 0, length: 10))
 
-    let audioRecord = try XCTUnwrap(
-      AudioRecord(audioDataFormat: formatMono, bufferLength: 100)
-    )
+    let audioRecord = try AudioRecord(audioDataFormat: formatMono, bufferLength: 100)
     XCTAssertEqual(audioRecord.bufferLength, 100)
     XCTAssertEqual(audioRecord.audioDataFormat.channelCount, 1)
     XCTAssertThrowsError(try audioData.load(audioRecord: audioRecord))

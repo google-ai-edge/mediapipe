@@ -16,6 +16,8 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_AUDIO_AUDIO_CLASSIFIER_AUDIO_CLASSIFIER_H_
 #define MEDIAPIPE_TASKS_C_AUDIO_AUDIO_CLASSIFIER_AUDIO_CLASSIFIER_H_
 
+#include <stdint.h>
+
 #include "mediapipe/tasks/c/audio/core/common.h"
 #include "mediapipe/tasks/c/components/containers/classification_result.h"
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
@@ -43,6 +45,10 @@ typedef struct MpAudioClassifierResult {
   int results_count;
 } MpAudioClassifierResult;
 
+// User-defined result callback for processing audio stream data.
+typedef void (*MpAudioClassifierResultCallbackFn)(
+    MpStatus status, MpAudioClassifierResult* result);
+
 // The options for configuring a MediaPipe AudioClassifier task.
 struct MpAudioClassifierOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
@@ -60,14 +66,17 @@ struct MpAudioClassifierOptions {
   // 2) The audio stream mode for running classification on the audio stream,
   //    such as from microphone. In this mode, the "result_callback" below must
   //    be specified to receive the classification results asynchronously.
+#ifdef __cplusplus
   MpAudioRunningMode running_mode = kMpAudioRunningModeAudioClips;
+  using result_callback_fn = MpAudioClassifierResultCallbackFn;
+#else
+  enum MpAudioRunningMode running_mode;
+#endif
 
   // The user-defined result callback for processing audio stream data.
   // The result callback should only be specified when the running mode is set
   // to kMpAudioRunningModeAudioStream.
-  typedef void (*result_callback_fn)(MpStatus status,
-                                     MpAudioClassifierResult* result);
-  result_callback_fn result_callback;
+  MpAudioClassifierResultCallbackFn result_callback;
 };
 
 // Creates an AudioClassifier from the provided `options`.
@@ -101,7 +110,7 @@ MpAudioClassifierCreate(struct MpAudioClassifierOptions* options,
 //     error message with `MpErrorFree()`.
 // @return An `MpStatus` indicating success or failure.
 MP_EXPORT MpStatus MpAudioClassifierClassify(
-    MpAudioClassifierPtr classifier, const MpAudioData* audio_data,
+    MpAudioClassifierPtr classifier, const struct MpAudioData* audio_data,
     MpAudioClassifierResult* result_out, char** error_msg);
 
 // Sends audio data (a block in a continuous audio stream) to perform audio
@@ -118,7 +127,7 @@ MP_EXPORT MpStatus MpAudioClassifierClassify(
 // @return An `MpStatus` indicating whether the audio data was successfully sent
 //     for classification.
 MP_EXPORT MpStatus MpAudioClassifierClassifyAsync(
-    MpAudioClassifierPtr classifier, const MpAudioData* audio_data,
+    MpAudioClassifierPtr classifier, const struct MpAudioData* audio_data,
     int64_t timestamp_ms, char** error_msg);
 
 // Frees the memory allocated inside a MpAudioClassifierResult result. Does not

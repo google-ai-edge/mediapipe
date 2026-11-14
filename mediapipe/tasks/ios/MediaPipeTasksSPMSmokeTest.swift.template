@@ -104,6 +104,12 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
   private func verifyAudioRegistration() {
     let dummyPath = "/nonexistent/audio.task"
 
+    verifyTaskInit(name: "AudioClassifier", domain: "Audio") {
+      var options = AudioClassifierOptions()
+      options.baseOptions.modelAssetPath = dummyPath
+      return try AudioClassifier(options: options)
+    }
+
     // TextToSpeech is a Swift API in MediaPipeTasksAudio backed by the C API.
     // Creating it with a nonexistent model proves the Swift module and C
     // symbols (MpTextToSpeechCreate) are linked in.
