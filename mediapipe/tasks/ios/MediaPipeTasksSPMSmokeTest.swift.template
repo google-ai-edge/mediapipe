@@ -86,6 +86,12 @@ final class MediaPipeTasksSPMSmokeTest: XCTestCase {
       return try ObjectDetector(options: options)
     }
 
+    verifyTaskInit(name: "FaceDetector", domain: "Vision") {
+      var options = FaceDetectorOptions()
+      options.baseOptions.modelAssetPath = dummyPath
+      return try FaceDetector(options: options)
+    }
+
     verifyTaskInit(name: "InteractiveSegmenter", domain: "Vision") {
       var options = InteractiveSegmenterOptions()
       options.baseOptions.modelAssetPath = dummyPath

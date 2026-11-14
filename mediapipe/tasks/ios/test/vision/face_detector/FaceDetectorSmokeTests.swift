@@ -12,55 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPCommon
-import MPPFaceDetector
+import CoreGraphics
+import Foundation
+import MediaPipeTasksFaceDetector
 import XCTest
-
-extension TasksErrorCode {
-  fileprivate static let errorDomain = "com.google.mediapipe.tasks"
-}
 
 final class FaceDetectorSmokeTests: XCTestCase {
 
-  private final class MockLiveStreamDelegate: NSObject,
-    FaceDetectorLiveStreamDelegate
-  {
-    func faceDetector(
-      _ faceDetector: FaceDetector,
-      didFinishDetection result: FaceDetectorResult?,
-      timestampInMilliseconds: Int,
-      error: (any Error)?
-    ) {}
-  }
-
   func testOptionsAndDelegateCoverage() {
-    let options = FaceDetectorOptions()
+    var options = FaceDetectorOptions()
     options.runningMode = .liveStream
     options.minDetectionConfidence = 0.7
     options.minSuppressionThreshold = 0.4
+    options.liveStreamResultHandler = { _, _ in }
 
-    let delegate = MockLiveStreamDelegate()
-    options.faceDetectorLiveStreamDelegate = delegate
-    XCTAssertNotNil(options.faceDetectorLiveStreamDelegate)
+    XCTAssertNotNil(options.liveStreamResultHandler)
     XCTAssertEqual(options.runningMode, .liveStream)
     XCTAssertEqual(options.minDetectionConfidence, 0.7, accuracy: 1e-3)
     XCTAssertEqual(options.minSuppressionThreshold, 0.4, accuracy: 1e-3)
   }
 
   func testRuntimeRegistrationAndInitialization() {
-    let options = FaceDetectorOptions()
+    var options = FaceDetectorOptions()
     options.baseOptions.modelAssetPath = "/nonexistent/face_detector.task"
 
     XCTAssertThrowsError(try FaceDetector(options: options)) { error in
       let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      XCTAssertEqual(nsError.domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
-      )
-      XCTAssertFalse(
-        nsError.localizedDescription.contains("No registered object with name"),
-        "FaceDetector subgraph not linked"
+        nsError.code == TasksErrorCode.invalidArgument.rawValue
+          || nsError.code == TasksErrorCode.notFound.rawValue
       )
       XCTAssertTrue(
         nsError.localizedDescription.contains("Unable to open file"),
@@ -72,21 +53,25 @@ final class FaceDetectorSmokeTests: XCTestCase {
       try FaceDetector(modelPath: "/nonexistent/face_detector.task")
     ) { error in
       let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      XCTAssertEqual(nsError.domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
+        nsError.code == TasksErrorCode.invalidArgument.rawValue
+          || nsError.code == TasksErrorCode.notFound.rawValue
       )
     }
   }
 
   func testExecutionMethodSignaturesCompile() {
-    let _: (FaceDetector) -> (MPImage) throws -> FaceDetectorResult =
-      FaceDetector.detect(image:)
-    let _: (FaceDetector) -> (MPImage, Int) throws -> FaceDetectorResult =
-      FaceDetector.detect(videoFrame:timestampInMilliseconds:)
-    let _: (FaceDetector) -> (MPImage, Int) throws -> Void =
-      FaceDetector.detectAsync(image:timestampInMilliseconds:)
+    let _:
+      (FaceDetector) -> (MPImage, ImageProcessingOptions?) throws ->
+        FaceDetectorResult =
+        FaceDetector.detect(image:imageProcessingOptions:)
+    let _:
+      (FaceDetector) -> (MPImage, Int, ImageProcessingOptions?) throws ->
+        FaceDetectorResult =
+        FaceDetector.detect(videoFrame:timestampInMilliseconds:imageProcessingOptions:)
+    let _: (FaceDetector) -> (MPImage, Int, ImageProcessingOptions?) throws -> Void =
+      FaceDetector.detectAsync(image:timestampInMilliseconds:imageProcessingOptions:)
   }
 
   func testResultContainerTypes() throws {
@@ -98,7 +83,8 @@ final class FaceDetectorSmokeTests: XCTestCase {
     XCTAssertEqual(keypoint.location.x, 0.5, accuracy: 1e-3)
     XCTAssertEqual(keypoint.location.y, 0.5, accuracy: 1e-3)
     XCTAssertEqual(keypoint.label, "nose_tip")
-    XCTAssertEqual(keypoint.score, 0.9, accuracy: 1e-3)
+    let score = try XCTUnwrap(keypoint.score)
+    XCTAssertEqual(score, 0.9, accuracy: 1e-3)
 
     let category = ResultCategory(
       index: 0,

@@ -16,13 +16,14 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_VISION_FACE_DETECTOR_FACE_DETECTOR_H_
 #define MEDIAPIPE_TASKS_C_VISION_FACE_DETECTOR_FACE_DETECTOR_H_
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "mediapipe/tasks/c/components/containers/detection_result.h"
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 
 #ifndef MP_EXPORT
 #if defined(_MSC_VER)
@@ -37,7 +38,19 @@ extern "C" {
 #endif
 
 typedef struct MpFaceDetectorInternal* MpFaceDetectorPtr;
-typedef MpDetectionResult MpFaceDetectorResult;
+typedef struct MpDetectionResult MpFaceDetectorResult;
+
+// The user-defined result callback for processing live stream data.
+// The result callback should only be specified when the running mode is set
+// to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
+// function include: the status code, the pointer to detection result, the image
+// that result was obtained on, and the timestamp relevant to detection results.
+//
+// The passed arguments are only valid for the lifetime of the callback.
+typedef void (*MpFaceDetectorResultCallback)(MpStatus status,
+                                             const MpFaceDetectorResult* result,
+                                             const MpImagePtr image,
+                                             int64_t timestamp_ms);
 
 // The options for configuring a MediaPipe face detector task.
 struct MpFaceDetectorOptions {
@@ -52,30 +65,29 @@ struct MpFaceDetectorOptions {
   // 3) The live stream mode for detecting faces on the live stream of input
   // data, such as from camera. In this mode, the "result_callback" below must
   // be specified to receive the detection results asynchronously.
-  MpRunningMode running_mode;
+  enum MpRunningMode running_mode;
 
   // The minimum confidence score for the face detection to be considered
   // successful.
+#ifdef __cplusplus
   float min_detection_confidence = 0.5;
+#else
+  float min_detection_confidence;
+#endif
 
   // The minimum non-maximum-suppression threshold for face detection to be
   // considered overlapped.
+#ifdef __cplusplus
   float min_suppression_threshold = 0.5;
+#else
+  float min_suppression_threshold;
+#endif
 
-  // The user-defined result callback for processing live stream data.
-  // The result callback should only be specified when the running mode is set
-  // to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
-  // function include: the pointer to recognition result, the image that result
-  // was obtained on, the timestamp relevant to recognition results and pointer
-  // to error message in case of any failure. The validity of the passed
-  // arguments is true for the lifetime of the callback function.
-  //
-  // The passed arguments are only valid for the lifetime of the callback.
-  typedef void (*result_callback_fn)(MpStatus status,
-                                     const MpFaceDetectorResult* result,
-                                     const MpImagePtr image,
-                                     int64_t timestamp_ms);
-  result_callback_fn result_callback;
+  // Callback invoked asynchronously in live stream mode.
+#ifdef __cplusplus
+  using result_callback_fn = MpFaceDetectorResultCallback;
+#endif
+  MpFaceDetectorResultCallback result_callback;
 };
 
 // Creates an FaceDetector from the provided `options`.
