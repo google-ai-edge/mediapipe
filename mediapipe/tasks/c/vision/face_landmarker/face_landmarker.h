@@ -17,13 +17,13 @@ limitations under the License.
 #define MEDIAPIPE_TASKS_C_VISION_FACE_LANDMARKER_FACE_LANDMARKER_H_
 
 #include <stdbool.h>
-
-#include <cstdint>
+#include <stdint.h>
 
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
+#include "mediapipe/tasks/c/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/c/vision/face_landmarker/face_landmarker_result.h"
 
 #ifndef MP_EXPORT
@@ -40,6 +40,19 @@ extern "C" {
 
 typedef struct MpFaceLandmarkerInternal* MpFaceLandmarkerPtr;
 
+// The user-defined result callback for processing live stream data.
+// The result callback should only be specified when the running mode is set
+// to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
+// function include: the pointer to recognition result, the image that result
+// was obtained on, the timestamp relevant to recognition results and pointer
+// to error message in case of any failure. The validity of the passed
+// arguments is true for the lifetime of the callback function.
+//
+// The passed arguments are only valid for the lifetime of the callback.
+typedef void (*MpFaceLandmarkerResultCallback)(
+    MpStatus status, const MpFaceLandmarkerResult* result, MpImagePtr image,
+    int64_t timestamp_ms);
+
 // The options for configuring a MediaPipe face landmarker task.
 struct MpFaceLandmarkerOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
@@ -54,46 +67,63 @@ struct MpFaceLandmarkerOptions {
   // 3) The live stream mode for recognizing face landmarks on the live stream
   //    of input data, such as from camera. In this mode, the "result_callback"
   //    below must be specified to receive the detection results asynchronously.
-  MpRunningMode running_mode;
+  enum MpRunningMode running_mode;
 
   // The maximum number of faces can be detected by the FaceLandmarker.
+#ifdef __cplusplus
   int num_faces = 1;
+#else
+  int num_faces;
+#endif
 
   // The minimum confidence score for the face detection to be considered
   // successful.
+#ifdef __cplusplus
   float min_face_detection_confidence = 0.5;
+#else
+  float min_face_detection_confidence;
+#endif
 
   // The minimum confidence score of face presence score in the face landmark
   // detection.
+#ifdef __cplusplus
   float min_face_presence_confidence = 0.5;
+#else
+  float min_face_presence_confidence;
+#endif
 
   // The minimum confidence score for the face tracking to be considered
   // successful.
+#ifdef __cplusplus
   float min_tracking_confidence = 0.5;
+#else
+  float min_tracking_confidence;
+#endif
 
   // Whether FaceLandmarker outputs face blendshapes classification. Face
   // blendshapes are used for rendering the 3D face model.
+#ifdef __cplusplus
   bool output_face_blendshapes = false;
+#else
+  bool output_face_blendshapes;
+#endif
 
   // Whether FaceLandmarker outputs facial transformation_matrix. Facial
   // transformation matrix is used to transform the face landmarks in canonical
   // face to the detected face, so that users can apply face effects on the
   // detected landmarks.
+#ifdef __cplusplus
   bool output_facial_transformation_matrixes = false;
+#else
+  bool output_facial_transformation_matrixes;
+#endif
 
-  // The user-defined result callback for processing live stream data.
-  // The result callback should only be specified when the running mode is set
-  // to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
-  // function include: the pointer to recognition result, the image that result
-  // was obtained on, the timestamp relevant to recognition results and pointer
-  // to error message in case of any failure. The validity of the passed
-  // arguments is true for the lifetime of the callback function.
-  //
-  // The passed arguments are only valid for the lifetime of the callback.
-  typedef void (*result_callback_fn)(MpStatus status,
-                                     const MpFaceLandmarkerResult* result,
-                                     MpImagePtr image, int64_t timestamp_ms);
-  result_callback_fn result_callback;
+  // The user-defined result callback for processing live stream data. See
+  // `MpFaceLandmarkerResultCallback` for details.
+#ifdef __cplusplus
+  using result_callback_fn = MpFaceLandmarkerResultCallback;
+#endif
+  MpFaceLandmarkerResultCallback result_callback;
 };
 
 // Creates an FaceLandmarker from the provided `options`.

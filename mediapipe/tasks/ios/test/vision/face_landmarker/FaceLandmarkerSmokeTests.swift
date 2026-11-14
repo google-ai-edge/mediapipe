@@ -12,29 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import MPPCommon
-import MPPFaceLandmarker
+import Foundation
+import MediaPipeTasksFaceLandmarker
 import XCTest
-
-extension TasksErrorCode {
-  fileprivate static let errorDomain = "com.google.mediapipe.tasks"
-}
 
 final class FaceLandmarkerSmokeTests: XCTestCase {
 
-  private final class MockLiveStreamDelegate: NSObject,
-    FaceLandmarkerLiveStreamDelegate
-  {
-    func faceLandmarker(
-      _ faceLandmarker: FaceLandmarker,
-      didFinishDetection result: FaceLandmarkerResult?,
-      timestampInMilliseconds: Int,
-      error: (any Error)?
-    ) {}
-  }
-
-  func testOptionsAndDelegateCoverage() {
-    let options = FaceLandmarkerOptions()
+  func testOptionsAndHandlerCoverage() {
+    var options = FaceLandmarkerOptions()
     options.runningMode = .liveStream
     options.numFaces = 2
     options.minFaceDetectionConfidence = 0.6
@@ -42,10 +27,9 @@ final class FaceLandmarkerSmokeTests: XCTestCase {
     options.minTrackingConfidence = 0.6
     options.outputFaceBlendshapes = true
     options.outputFacialTransformationMatrixes = true
+    options.liveStreamResultHandler = { _, _ in }
 
-    let delegate = MockLiveStreamDelegate()
-    options.faceLandmarkerLiveStreamDelegate = delegate
-    XCTAssertNotNil(options.faceLandmarkerLiveStreamDelegate)
+    XCTAssertNotNil(options.liveStreamResultHandler)
     XCTAssertEqual(options.runningMode, .liveStream)
     XCTAssertEqual(options.numFaces, 2)
     XCTAssertEqual(options.minFaceDetectionConfidence, 0.6, accuracy: 1e-3)
@@ -56,45 +40,64 @@ final class FaceLandmarkerSmokeTests: XCTestCase {
   }
 
   func testRuntimeRegistrationAndInitialization() {
-    let options = FaceLandmarkerOptions()
+    var options = FaceLandmarkerOptions()
     options.baseOptions.modelAssetPath = "/nonexistent/face_landmarker.task"
 
     XCTAssertThrowsError(try FaceLandmarker(options: options)) { error in
-      let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertEqual((error as NSError).domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
-      )
-      XCTAssertFalse(
-        nsError.localizedDescription.contains("No registered object with name"),
-        "FaceLandmarker subgraph not linked"
+        tasksError.code == .invalidArgument || tasksError.code == .notFound
       )
       XCTAssertTrue(
-        nsError.localizedDescription.contains("Unable to open file"),
-        "Unexpected error: \(nsError.localizedDescription)"
+        error.localizedDescription.contains("Unable to open file"),
+        "Unexpected error: \(error.localizedDescription)"
       )
     }
 
     XCTAssertThrowsError(
       try FaceLandmarker(modelPath: "/nonexistent/face_landmarker.task")
     ) { error in
-      let nsError = error as NSError
-      XCTAssertEqual(nsError.domain, TasksErrorCode.errorDomain)
+      guard let tasksError = error as? TasksError else {
+        XCTFail("Expected TasksError, got \(error)")
+        return
+      }
+      XCTAssertEqual((error as NSError).domain, TasksError.errorDomain)
       XCTAssertTrue(
-        nsError.code == TasksErrorCode.invalidArgumentError.rawValue
-          || nsError.code == TasksErrorCode.notFoundError.rawValue
+        tasksError.code == .invalidArgument || tasksError.code == .notFound
       )
     }
   }
 
   func testExecutionMethodSignaturesCompile() {
-    let _: (FaceLandmarker) -> (MPImage) throws -> FaceLandmarkerResult =
-      FaceLandmarker.detect(image:)
-    let _: (FaceLandmarker) -> (MPImage, Int) throws -> FaceLandmarkerResult =
-      FaceLandmarker.detect(videoFrame:timestampInMilliseconds:)
-    let _: (FaceLandmarker) -> (MPImage, Int) throws -> Void =
-      FaceLandmarker.detectAsync(image:timestampInMilliseconds:)
+    let _:
+      (FaceLandmarker) -> (MPImage, ImageProcessingOptions?) throws ->
+        FaceLandmarkerResult =
+        FaceLandmarker.detect(image:imageProcessingOptions:)
+    let _:
+      (FaceLandmarker) -> (MPImage, Int, ImageProcessingOptions?) throws ->
+        FaceLandmarkerResult =
+        FaceLandmarker.detect(
+          videoFrame:timestampInMilliseconds:imageProcessingOptions:
+        )
+    let _:
+      (FaceLandmarker) -> (MPImage, Int, ImageProcessingOptions?) throws ->
+        Void =
+        FaceLandmarker.detectAsync(
+          image:timestampInMilliseconds:imageProcessingOptions:
+        )
+    let _: (FaceLandmarker, MPImage) throws -> FaceLandmarkerResult = {
+      try $0.detect(image: $1)
+    }
+    let _: (FaceLandmarker, MPImage, Int) throws -> FaceLandmarkerResult = {
+      try $0.detect(videoFrame: $1, timestampInMilliseconds: $2)
+    }
+    let _: (FaceLandmarker, MPImage, Int) throws -> Void = {
+      try $0.detectAsync(image: $1, timestampInMilliseconds: $2)
+    }
   }
 
   func testResultContainerTypes() throws {
@@ -109,9 +112,9 @@ final class FaceLandmarkerSmokeTests: XCTestCase {
     XCTAssertEqual(landmark.y, 0.2, accuracy: 1e-3)
     XCTAssertEqual(landmark.z, 0.3, accuracy: 1e-3)
     let visibility = try XCTUnwrap(landmark.visibility)
-    XCTAssertEqual(visibility.floatValue, 0.9, accuracy: 1e-3)
+    XCTAssertEqual(visibility, 0.9, accuracy: 1e-3)
     let presence = try XCTUnwrap(landmark.presence)
-    XCTAssertEqual(presence.floatValue, 0.8, accuracy: 1e-3)
+    XCTAssertEqual(presence, 0.8, accuracy: 1e-3)
 
     let category = ResultCategory(
       index: 0,
@@ -120,18 +123,18 @@ final class FaceLandmarkerSmokeTests: XCTestCase {
       displayName: "Neutral"
     )
     let blendshapes = Classifications(
-      head: 0,
+      headIndex: 0,
       headName: "blendshapes",
       categories: [category]
     )
 
-    var matrixData: [Float] = [
+    let matrixData: [Float] = [
       1.0, 0.0, 0.0, 0.0,
       0.0, 1.0, 0.0, 0.0,
       0.0, 0.0, 1.0, 0.0,
       0.0, 0.0, 0.0, 1.0,
     ]
-    let matrix = TransformMatrix(data: &matrixData, rows: 4, columns: 4)
+    let matrix = try TransformMatrix(data: matrixData, rows: 4, columns: 4)
     XCTAssertEqual(matrix.rows, 4)
     XCTAssertEqual(matrix.columns, 4)
     XCTAssertEqual(matrix.value(atRow: 0, column: 0), 1.0, accuracy: 1e-3)
@@ -150,16 +153,16 @@ final class FaceLandmarkerSmokeTests: XCTestCase {
   }
 
   func testTopologyConnections() {
-    XCTAssertFalse(FaceLandmarker.lipsConnections().isEmpty)
-    XCTAssertFalse(FaceLandmarker.leftEyeConnections().isEmpty)
-    XCTAssertFalse(FaceLandmarker.leftEyebrowConnections().isEmpty)
-    XCTAssertFalse(FaceLandmarker.leftIrisConnections().isEmpty)
-    XCTAssertFalse(FaceLandmarker.rightEyeConnections().isEmpty)
-    XCTAssertFalse(FaceLandmarker.rightEyebrowConnections().isEmpty)
-    XCTAssertFalse(FaceLandmarker.rightIrisConnections().isEmpty)
-    XCTAssertFalse(FaceLandmarker.faceOvalConnections().isEmpty)
-    XCTAssertFalse(FaceLandmarker.contoursConnections().isEmpty)
-    XCTAssertFalse(FaceLandmarker.tesselationConnections().isEmpty)
-    XCTAssertFalse(FaceLandmarker.faceConnections().isEmpty)
+    XCTAssertFalse(FaceLandmarker.lipsConnections.isEmpty)
+    XCTAssertFalse(FaceLandmarker.leftEyeConnections.isEmpty)
+    XCTAssertFalse(FaceLandmarker.leftEyebrowConnections.isEmpty)
+    XCTAssertFalse(FaceLandmarker.leftIrisConnections.isEmpty)
+    XCTAssertFalse(FaceLandmarker.rightEyeConnections.isEmpty)
+    XCTAssertFalse(FaceLandmarker.rightEyebrowConnections.isEmpty)
+    XCTAssertFalse(FaceLandmarker.rightIrisConnections.isEmpty)
+    XCTAssertFalse(FaceLandmarker.faceOvalConnections.isEmpty)
+    XCTAssertFalse(FaceLandmarker.contoursConnections.isEmpty)
+    XCTAssertFalse(FaceLandmarker.tesselationConnections.isEmpty)
+    XCTAssertFalse(FaceLandmarker.faceConnections.isEmpty)
   }
 }

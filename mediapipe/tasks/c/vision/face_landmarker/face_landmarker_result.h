@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_VISION_FACE_LANDMARKER_RESULT_FACE_LANDMARKER_RESULT_H_
 #define MEDIAPIPE_TASKS_C_VISION_FACE_LANDMARKER_RESULT_FACE_LANDMARKER_RESULT_H_
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/components/containers/landmark.h"
@@ -28,7 +28,7 @@ extern "C" {
 
 // The hand landmarker result from HandLandmarker, where each vector
 // element represents a single hand detected in the image.
-struct MpFaceLandmarkerResult {
+typedef struct MpFaceLandmarkerResult {
   // Detected face landmarks in normalized image coordinates.
   struct MpNormalizedLandmarks* face_landmarks;
 
@@ -46,7 +46,7 @@ struct MpFaceLandmarkerResult {
 
   // The number of elements in the facial_transformation_matrixes array.
   uint32_t facial_transformation_matrixes_count;
-};
+} MpFaceLandmarkerResult;
 
 #ifdef __cplusplus
 }  // extern C
