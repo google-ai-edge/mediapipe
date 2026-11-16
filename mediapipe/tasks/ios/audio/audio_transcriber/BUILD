@@ -17,5 +17,3 @@ package(default_visibility = [
 ])
 
 licenses(["notice"])
-
-exports_files(glob(["sources/*.h"]))

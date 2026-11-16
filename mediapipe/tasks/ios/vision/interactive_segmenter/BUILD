@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2026 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,18 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:objc_library.bzl", "objc_library")
-
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
-
-objc_library(
-    name = "MPPFileInfo",
-    srcs = ["sources/MPPFileInfo.m"],
-    hdrs = ["sources/MPPFileInfo.h"],
-    module_name = "MPPFileInfo",
-    deps = [
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)

@@ -12,23 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:objc_library.bzl", "objc_library")
-
 package(default_visibility = [
     "//mediapipe/tasks:internal",
     "//mediapipe/tasks:users",
 ])
 
 licenses(["notice"])
-
-exports_files(glob([
-    "sources/*.h",
-    "sources/*.swift",
-]))
-
-objc_library(
-    name = "MPPClassifierOptions",
-    srcs = ["sources/MPPClassifierOptions.m"],
-    hdrs = ["sources/MPPClassifierOptions.h"],
-    deps = ["//third_party/apple_frameworks:Foundation"],
-)

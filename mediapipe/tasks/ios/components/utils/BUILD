@@ -12,31 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:objc_library.bzl", "objc_library")
-
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
-
-exports_files(glob([
-    "sources/*.h",
-    "sources/*.swift",
-]))
-
-objc_library(
-    name = "MPPCosineSimilarity",
-    srcs = ["sources/MPPCosineSimilarity.mm"],
-    hdrs = ["sources/MPPCosineSimilarity.h"],
-    copts = [
-        "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
-        "-x objective-c++",
-    ],
-    deps = [
-        "//mediapipe/tasks/ios/common:MPPCommon",
-        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//mediapipe/tasks/ios/components/containers:MPPEmbedding",
-        "//third_party/apple_frameworks:Foundation",
-    ],
-)
