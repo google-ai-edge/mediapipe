@@ -35,6 +35,7 @@ data class DecisionMakerOptions(
   val modelAssetBuffer: ByteBuffer? = null,
   val maxNumTokens: Int = 4096,
   val delegate: DecisionMakerDelegate = DecisionMakerDelegate.CPU,
+  val skipHeadCompatibilityCheck: Boolean = false,
 ) {
   /** Builder for [DecisionMakerOptions]. */
   class Builder {
@@ -48,6 +49,8 @@ data class DecisionMakerOptions(
     @set:JvmSynthetic var maxNumTokens: Int = 4096
     /** Hardware acceleration delegate (defaults to [DecisionMakerDelegate.CPU]). */
     @set:JvmSynthetic var delegate: DecisionMakerDelegate = DecisionMakerDelegate.CPU
+    /** When true, skips checking the fitted head canary vector on load. */
+    @set:JvmSynthetic var skipHeadCompatibilityCheck: Boolean = false
 
     /**
      * Sets the filesystem path or Android asset path to the `.task`, `.tflite`, or `.litertlm`
@@ -82,6 +85,12 @@ data class DecisionMakerOptions(
       return this
     }
 
+    /** Sets whether to skip checking the fitted head canary vector on load. */
+    fun setSkipHeadCompatibilityCheck(skip: Boolean): Builder {
+      this.skipHeadCompatibilityCheck = skip
+      return this
+    }
+
     /** Builds a validated [DecisionMakerOptions] instance. */
     fun build(): DecisionMakerOptions {
       require(maxNumTokens > 0) { "maxNumTokens must be positive, got $maxNumTokens." }
@@ -95,6 +104,7 @@ data class DecisionMakerOptions(
         modelAssetBuffer = buffer,
         maxNumTokens = maxNumTokens,
         delegate = delegate,
+        skipHeadCompatibilityCheck = skipHeadCompatibilityCheck,
       )
     }
   }

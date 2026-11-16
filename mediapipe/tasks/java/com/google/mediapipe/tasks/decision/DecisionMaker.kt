@@ -49,6 +49,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
       question.positiveExamples.toTypedArray(),
       question.negativeExamples.toTypedArray(),
       question.inputPrompt.value,
+      question.fittedHead,
     )
   }
 
@@ -67,6 +68,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
       question.examplesArray(),
       question.inputPrompt.value,
       question.balanceClassWeights,
+      question.fittedHead,
     )
   }
 
@@ -104,6 +106,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
         question.positiveExamples.toTypedArray(),
         question.negativeExamples.toTypedArray(),
         question.inputPrompt.value,
+        question.fittedHead,
       )
       .toList()
   }
@@ -132,6 +135,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
         question.examplesArray(),
         question.inputPrompt.value,
         question.balanceClassWeights,
+        question.fittedHead,
       )
       .toList()
   }
@@ -203,10 +207,14 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
       question.examplesArray(),
       question.inputPrompt.value,
       question.balanceClassWeights,
+      question.fittedHead,
     )
   }
 
-  /** Prewarms a [BooleanQuestion] (for example, fits its examples on embedding models). */
+  /**
+   * Prewarms a [BooleanQuestion] (for example, fits its examples or loads its `FittedHead` on
+   * embedding models).
+   */
   fun prewarm(question: BooleanQuestion) {
     checkNotClosed()
     nativePrewarmBoolean(
@@ -218,6 +226,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
       question.positiveExamples.toTypedArray(),
       question.negativeExamples.toTypedArray(),
       question.inputPrompt.value,
+      question.fittedHead,
     )
   }
 
@@ -245,6 +254,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
     check(!closed.get() && handle != 0L) { "DecisionMaker instance has already been closed." }
   }
 
+  @Suppress("KotlinArray") // JNI takes the fittedHead payload as a jbyteArray.
   private external fun nativeEvaluateBoolean(
     handle: Long,
     text: String,
@@ -255,8 +265,10 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
     positiveExamples: Array<String>,
     negativeExamples: Array<String>,
     inputPrompt: Int,
+    fittedHead: ByteArray?,
   ): BooleanResult
 
+  @Suppress("KotlinArray") // JNI takes the fittedHead payload as a jbyteArray.
   private external fun nativeEvaluateChoice(
     handle: Long,
     text: String,
@@ -269,6 +281,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
     examples: Array<Array<String>>?,
     inputPrompt: Int,
     balanceClassWeights: Boolean,
+    fittedHead: ByteArray?,
   ): ChoiceResult
 
   private external fun nativeEvaluateScore(
@@ -279,6 +292,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
     instructions: String,
   ): ScoreResult
 
+  @Suppress("KotlinArray") // JNI takes the fittedHead payload as a jbyteArray.
   private external fun nativeEvaluateBooleanBatch(
     handle: Long,
     sharedPrefixText: String?,
@@ -290,8 +304,10 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
     positiveExamples: Array<String>,
     negativeExamples: Array<String>,
     inputPrompt: Int,
+    fittedHead: ByteArray?,
   ): Array<BooleanResult>
 
+  @Suppress("KotlinArray") // JNI takes the fittedHead payload as a jbyteArray.
   private external fun nativeEvaluateChoiceBatch(
     handle: Long,
     sharedPrefixText: String?,
@@ -305,6 +321,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
     examples: Array<Array<String>>?,
     inputPrompt: Int,
     balanceClassWeights: Boolean,
+    fittedHead: ByteArray?,
   ): Array<ChoiceResult>
 
   private external fun nativeEvaluateScoreBatch(
@@ -332,6 +349,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
     jsonQuestions: String,
   ): String
 
+  @Suppress("KotlinArray") // JNI takes the fittedHead payload as a jbyteArray.
   private external fun nativePrewarmChoice(
     handle: Long,
     keys: Array<String>,
@@ -343,8 +361,10 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
     examples: Array<Array<String>>?,
     inputPrompt: Int,
     balanceClassWeights: Boolean,
+    fittedHead: ByteArray?,
   )
 
+  @Suppress("KotlinArray") // JNI takes the fittedHead payload as a jbyteArray.
   private external fun nativePrewarmBoolean(
     handle: Long,
     condition: String,
@@ -354,6 +374,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
     positiveExamples: Array<String>,
     negativeExamples: Array<String>,
     inputPrompt: Int,
+    fittedHead: ByteArray?,
   )
 
   private external fun nativePrewarmJson(handle: Long, jsonSchema: String)
@@ -435,6 +456,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
           appVersion,
           BaseOptionsUtils.HOST_ENVIRONMENT_ANDROID,
           BaseOptionsUtils.HOST_SYSTEM_ANDROID,
+          options.skipHeadCompatibilityCheck,
         )
       return DecisionMaker(handle)
     }
@@ -451,6 +473,7 @@ class DecisionMaker private constructor(private var handle: Long) : Closeable, A
       appVersion: String,
       hostEnvironment: Int,
       hostSystem: Int,
+      skipHeadCompatibilityCheck: Boolean,
     ): Long
   }
 }
