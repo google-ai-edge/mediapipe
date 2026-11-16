@@ -250,10 +250,12 @@ objc_library(
         "CFHolderTests.mm",
         "MPPDisplayLinkWeakTargetTests.mm",
         "MPPGraphTests.mm",
+        "MPPPlayerInputSourceTests.mm",
         "MediaPipeAudioUtilTests.mm",
     ],
     data = [
         "testdata/googlelogo_color_272x92dp.png",
+        "//mediapipe/calculators/video:test_videos",
     ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [

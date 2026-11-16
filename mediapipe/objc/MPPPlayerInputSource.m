@@ -21,6 +21,15 @@
 #endif
 #import "mediapipe/objc/MPPInputSource.h"
 
+// Audio tap callbacks can run after `stop` or `dealloc`, so they reach the source through a weak
+// reference that `stop` clears.
+@interface MPPPlayerInputSourceAudioTapContext : NSObject
+@property(atomic, weak) MPPPlayerInputSource* source;
+@end
+
+@implementation MPPPlayerInputSourceAudioTapContext
+@end
+
 @implementation MPPPlayerInputSource {
   AVAsset* _video;
   AVPlayerItem* _videoItem;
@@ -32,32 +41,37 @@
 #else
   CVDisplayLinkRef _videoDisplayLink;
 #endif  // TARGET_OS_OSX
+  MPPPlayerInputSourceAudioTapContext* _audioTapContext;
   id _videoEndObserver;
   id _audioInterruptedObserver;
+  BOOL _audioProcessingEnabled;
   BOOL _playing;
 }
 
-void InitAudio(MTAudioProcessingTapRef tap, void* clientInfo, void** tapStorageOut) {
-  // `clientInfo` comes as a user-defined argument through
-  // `MTAudioProcessingTapCallbacks`; we pass our `MPPPlayerInputSource`
-  // there. Tap processing functions allow for user-defined "storage" - we just
-  // treat our input source as such.
-  *tapStorageOut = clientInfo;
+static void InitAudio(MTAudioProcessingTapRef tap, void* clientInfo, void** tapStorageOut) {
+  // `clientInfo` is our `MPPPlayerInputSourceAudioTapContext`; the tap retains it as its
+  // storage until `FinalizeAudio`.
+  *tapStorageOut = (void*)CFBridgingRetain((__bridge id)clientInfo);
 }
 
-void PrepareAudio(MTAudioProcessingTapRef tap, CMItemCount maxFrames,
-                  const AudioStreamBasicDescription* audioFormat) {
-  // See `InitAudio`.
+static void FinalizeAudio(MTAudioProcessingTapRef tap) {
+  CFBridgingRelease(MTAudioProcessingTapGetStorage(tap));
+}
+
+static void PrepareAudio(MTAudioProcessingTapRef tap, CMItemCount maxFrames,
+                         const AudioStreamBasicDescription* audioFormat) {
   MPPPlayerInputSource* source =
-      (__bridge MPPPlayerInputSource*)MTAudioProcessingTapGetStorage(tap);
-  if ([source.delegate respondsToSelector:@selector(willStartPlayingAudioWithFormat:fromSource:)]) {
-    [source.delegate willStartPlayingAudioWithFormat:audioFormat fromSource:source];
+      ((__bridge MPPPlayerInputSourceAudioTapContext*)MTAudioProcessingTapGetStorage(tap))
+          .source;
+  id<MPPInputSourceDelegate> delegate = source.delegate;
+  if ([delegate respondsToSelector:@selector(willStartPlayingAudioWithFormat:fromSource:)]) {
+    [delegate willStartPlayingAudioWithFormat:audioFormat fromSource:source];
   }
 }
 
-void ProcessAudio(MTAudioProcessingTapRef tap, CMItemCount numberFrames,
-                  MTAudioProcessingTapFlags flags, AudioBufferList* bufferListInOut,
-                  CMItemCount* numberFramesOut, MTAudioProcessingTapFlags* flagsOut) {
+static void ProcessAudio(MTAudioProcessingTapRef tap, CMItemCount numberFrames,
+                         MTAudioProcessingTapFlags flags, AudioBufferList* bufferListInOut,
+                         CMItemCount* numberFramesOut, MTAudioProcessingTapFlags* flagsOut) {
   CMTimeRange timeRange;
   OSStatus status = MTAudioProcessingTapGetSourceAudio(tap, numberFrames, bufferListInOut, flagsOut,
                                                        &timeRange, numberFramesOut);
@@ -66,15 +80,15 @@ void ProcessAudio(MTAudioProcessingTapRef tap, CMItemCount numberFrames,
     return;
   }
 
-  // See `InitAudio`.
   MPPPlayerInputSource* source =
-      (__bridge MPPPlayerInputSource*)MTAudioProcessingTapGetStorage(tap);
-  if ([source.delegate respondsToSelector:@selector(processAudioPacket:
-                                                             numFrames:timestamp:fromSource:)]) {
-    [source.delegate processAudioPacket:bufferListInOut
-                              numFrames:numberFrames
-                              timestamp:timeRange.start
-                             fromSource:source];
+      ((__bridge MPPPlayerInputSourceAudioTapContext*)MTAudioProcessingTapGetStorage(tap))
+          .source;
+  id<MPPInputSourceDelegate> delegate = source.delegate;
+  if ([delegate respondsToSelector:@selector(processAudioPacket:numFrames:timestamp:fromSource:)]) {
+    [delegate processAudioPacket:bufferListInOut
+                       numFrames:numberFrames
+                       timestamp:timeRange.start
+                      fromSource:source];
   }
 }
 
@@ -87,6 +101,7 @@ void ProcessAudio(MTAudioProcessingTapRef tap, CMItemCount numberFrames,
   self = [super init];
   if (self) {
     _video = video;
+    _audioProcessingEnabled = audioProcessingEnabled;
     _videoItem = [AVPlayerItem playerItemWithAsset:_video];
     // Necessary to ensure the video's preferred transform is respected.
     _videoItem.videoComposition = [AVVideoComposition videoCompositionWithPropertiesOfAsset:_video];
@@ -149,14 +164,16 @@ void ProcessAudio(MTAudioProcessingTapRef tap, CMItemCount numberFrames,
     // We always limit ourselves to the first audio track if there are
     // multiple (which is a rarity) - note that it can still be e.g. stereo.
     AVAssetTrack* audioTrack = audioTracks[0];
+    _audioTapContext = [[MPPPlayerInputSourceAudioTapContext alloc] init];
+    _audioTapContext.source = self;
     MTAudioProcessingTapCallbacks audioCallbacks;
     audioCallbacks.version = kMTAudioProcessingTapCallbacksVersion_0;
-    audioCallbacks.clientInfo = (__bridge void*)(self);
+    audioCallbacks.clientInfo = (__bridge void*)_audioTapContext;
     audioCallbacks.init = InitAudio;
     audioCallbacks.prepare = PrepareAudio;
     audioCallbacks.process = ProcessAudio;
     audioCallbacks.unprepare = NULL;
-    audioCallbacks.finalize = NULL;
+    audioCallbacks.finalize = FinalizeAudio;
 
     MTAudioProcessingTapRef audioTap;
     OSStatus status =
@@ -175,6 +192,7 @@ void ProcessAudio(MTAudioProcessingTapRef tap, CMItemCount numberFrames,
       have_audio = true;
     } else {
       NSLog(@"Error %ld when trying to create the audio processing tap", (long)status);
+      _audioTapContext = nil;
     }
   }
   if (!have_audio && [self.delegate respondsToSelector:@selector(noAudioAvailableFromSource:)]) {
@@ -183,6 +201,9 @@ void ProcessAudio(MTAudioProcessingTapRef tap, CMItemCount numberFrames,
 }
 
 - (void)start {
+  if (_audioProcessingEnabled && _videoItem.audioMix == nil) {
+    [self setupAudioPlayback];
+  }
   [_videoPlayer play];
   _playing = YES;
 #if !TARGET_OS_OSX
@@ -199,6 +220,9 @@ void ProcessAudio(MTAudioProcessingTapRef tap, CMItemCount numberFrames,
   CVDisplayLinkStop(_videoDisplayLink);
 #endif
   [_videoPlayer pause];
+  _audioTapContext.source = nil;
+  _audioTapContext = nil;
+  _videoItem.audioMix = nil;
   _playing = NO;
 }
 
@@ -254,6 +278,7 @@ static CVReturn renderCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* 
 #else
   CVDisplayLinkRelease(_videoDisplayLink);
 #endif
+  _videoItem.audioMix = nil;
   _videoPlayer = nil;
 }
 
