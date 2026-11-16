@@ -76,9 +76,15 @@ export declare interface ClassifierQuestion {
   id: string;
   /** Question evaluation type. */
   type: ClassifierQuestionType;
-  /** Task instruction or natural language condition prompt. */
-  prompt: string;
-  /** Candidate options (required for categorical and ordinal; optional for binary). */
+  /**
+   * Task instruction or natural language condition prompt (optional when
+   * examples or `fittedHead` are set).
+   */
+  prompt?: string;
+  /**
+   * Candidate options (required for ordinal, and for categorical unless
+   * `fittedHead` is set).
+   */
   options?: ClassifierOption[];
   /** Decision threshold in [0.0, 1.0] for binary questions. Defaults to 0.5. */
   threshold?: number;
@@ -102,6 +108,11 @@ export declare interface ClassifierQuestion {
    * options with fewer examples aren't penalized. Defaults to true.
    */
   balanceClassWeights?: boolean;
+  /**
+   * Optional pre-fitted `FittedHead` binary payload for boolean or choice
+   * questions on embedding models. Cannot be combined with examples.
+   */
+  fittedHead?: Uint8Array;
 }
 
 /**
@@ -144,7 +155,8 @@ export declare interface ClassifierEvaluateOptions {
 export declare interface BooleanQuestion {
   /**
    * The natural language boolean condition to evaluate. Optional when both
-   * `positiveExamples` and `negativeExamples` are given.
+   * `positiveExamples` and `negativeExamples` are given, or when `fittedHead`
+   * is provided.
    */
   condition?: string;
   /**
@@ -179,6 +191,11 @@ export declare interface BooleanQuestion {
   imageBytes?: Uint8Array;
   /** Optional mono 16kHz PCM audio samples in [-1.0, 1.0] for the context. */
   audioSamples?: Float32Array;
+  /**
+   * Optional pre-fitted `FittedHead` binary payload. Cannot be combined with
+   * two or more custom `options`.
+   */
+  fittedHead?: Uint8Array;
 }
 
 /**
@@ -228,6 +245,11 @@ export declare interface ChoiceQuestion {
   imageBytes?: Uint8Array;
   /** Optional mono 16kHz PCM audio samples in [-1.0, 1.0] for the context. */
   audioSamples?: Float32Array;
+  /**
+   * Optional pre-fitted `FittedHead` binary payload. When set, `criteria`
+   * and `options` may be omitted to use the fittedHead's choice keys.
+   */
+  fittedHead?: Uint8Array;
 }
 
 /**
@@ -300,4 +322,8 @@ export declare interface DecisionMakerOptions extends TaskRunnerOptions {
    * `ReadableStreamDefaultReader`.
    */
   companionPleAssetSize?: number;
+  /**
+   * When true, skips checking the fitted head canary vector on load.
+   */
+  skipHeadCompatibilityCheck?: boolean;
 }

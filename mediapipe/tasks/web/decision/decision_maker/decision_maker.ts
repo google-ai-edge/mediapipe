@@ -91,6 +91,7 @@ declare interface DecisionMakerWasmModule {
     modelPath: string,
     backendType: number,
     maxNumTokens: number,
+    skipHeadCompatibilityCheck?: boolean,
   ): Promise<number>;
 
   createDecisionFromBuffers?(
@@ -100,6 +101,7 @@ declare interface DecisionMakerWasmModule {
     pleSize: number,
     backendType: number,
     maxNumTokens: number,
+    skipHeadCompatibilityCheck?: boolean,
   ): Promise<number>;
 
   deleteDecision(makerPtr: number): void;
@@ -112,6 +114,7 @@ declare interface DecisionMakerWasmModule {
     temperature: number,
     normalizePrior: boolean,
     examples: WasmBooleanExamples,
+    fittedHead?: Uint8Array,
   ): Promise<BooleanResult>;
 
   evaluateContextBoolean(
@@ -123,6 +126,7 @@ declare interface DecisionMakerWasmModule {
     media: {imageBytes?: Uint8Array; audioSamples?: Float32Array},
     normalizePrior: boolean,
     examples: WasmBooleanExamples,
+    fittedHead?: Uint8Array,
   ): Promise<BooleanResult>;
 
   evaluateChoice(
@@ -133,6 +137,7 @@ declare interface DecisionMakerWasmModule {
     instructions: string,
     normalizePrior: boolean,
     examples: WasmChoiceExamples,
+    fittedHead?: Uint8Array,
   ): Promise<RawWasmChoiceResult>;
 
   evaluateContextChoice(
@@ -145,6 +150,7 @@ declare interface DecisionMakerWasmModule {
     media: {imageBytes?: Uint8Array; audioSamples?: Float32Array},
     normalizePrior: boolean,
     examples: WasmChoiceExamples,
+    fittedHead?: Uint8Array,
   ): Promise<RawWasmChoiceResult>;
 
   evaluateScore(
@@ -173,6 +179,7 @@ declare interface DecisionMakerWasmModule {
     sharedPrefix: string,
     normalizePrior: boolean,
     examples: WasmBooleanExamples,
+    fittedHead?: Uint8Array,
   ): Promise<BooleanResult[]>;
 
   evaluateChoiceBatch?(
@@ -184,6 +191,7 @@ declare interface DecisionMakerWasmModule {
     sharedPrefix: string,
     normalizePrior: boolean,
     examples: WasmChoiceExamples,
+    fittedHead?: Uint8Array,
   ): Promise<RawWasmChoiceResult[]>;
 
   evaluateScoreBatch?(
@@ -203,6 +211,7 @@ declare interface DecisionMakerWasmModule {
     instructions: string,
     normalizePrior: boolean,
     examples: WasmChoiceExamples,
+    fittedHead?: Uint8Array,
   ): Promise<boolean>;
 
   prewarmSchema?(
@@ -322,10 +331,6 @@ function resolveChoiceExamples(
   question: ChoiceQuestion,
   criteria: Record<string, string>,
 ): WasmChoiceExamples {
-  const keys = Object.keys(criteria);
-  if (keys.length === 0) {
-    throw new Error('ChoiceQuestion must contain at least 1 choice.');
-  }
   const examples: Record<string, string[]> = {};
   const options = question.options ?? [];
   if (options.some((o) => (o.examples?.length ?? 0) > 0)) {
@@ -333,6 +338,18 @@ function resolveChoiceExamples(
   }
   for (const [k, v] of Object.entries(question.examples ?? {})) {
     examples[k] = v;
+  }
+  if (
+    question.fittedHead != null &&
+    Object.keys(examples).some((k) => (getOwn(examples, k)?.length ?? 0) > 0)
+  ) {
+    throw new Error(
+      'A ChoiceQuestion cannot specify both fittedHead and examples.',
+    );
+  }
+  const keys = Object.keys(criteria);
+  if (keys.length === 0 && !question.fittedHead) {
+    throw new Error('ChoiceQuestion must contain at least 1 choice.');
   }
   validateChoiceExamples(keys, examples);
   return {
@@ -423,6 +440,95 @@ function resolveChoiceCriteria(
     }
   }
   return criteria;
+}
+
+/**
+ * Returns a single-element tuple when `value` is set, or an empty tuple
+ * otherwise, so optional Embind overload arguments are omitted when unset.
+ */
+function optionalArg<T>(value: T | undefined): [T] | [] {
+  return value != null ? [value] : [];
+}
+
+/**
+ * Returns `schema` with each question's `fittedHead` copied, so that later
+ * caller mutations of those arrays do not change a stored session schema.
+ */
+function copySchemaFittedHeads(schema: ClassifierSchema): ClassifierSchema {
+  const questions = schema.questions;
+  if (!questions?.some((q) => q.fittedHead)) return schema;
+  return {
+    ...schema,
+    questions: questions.map((q) =>
+      q.fittedHead ? {...q, fittedHead: q.fittedHead.slice()} : q,
+    ),
+  };
+}
+
+/**
+ * Rejects an empty `fittedHead` payload (`byteLength === 0`), which would
+ * otherwise be treated as "no head" by the Wasm layer.
+ */
+function checkFittedHeadNotEmpty(
+  fittedHead: Uint8Array | undefined,
+  questionType: string,
+): void {
+  if (fittedHead != null && fittedHead.byteLength === 0) {
+    throw new Error(`${questionType}.fittedHead must not be empty.`);
+  }
+}
+
+/**
+ * Rejects any question in `schema` whose `fittedHead` is set to an empty
+ * `Uint8Array`, attached to an `ordinal` / `score` question, combined with
+ * examples, or combined with two or more `options` on a boolean question.
+ */
+function checkSchemaFittedHeads(schema: ClassifierSchema): void {
+  for (const q of schema.questions ?? []) {
+    const label = q.id ? `ClassifierQuestion "${q.id}"` : 'ClassifierQuestion';
+    checkFittedHeadNotEmpty(q.fittedHead, label);
+    if (q.fittedHead == null) continue;
+    if (q.type === 'ordinal' || q.type === 'score') {
+      throw new Error(
+        `${label} of type "${q.type}" does not support fittedHead.`,
+      );
+    }
+    if (
+      ((q.type === 'binary' || q.type === 'boolean') &&
+        hasBooleanExamples(q)) ||
+      ((q.type === 'categorical' || q.type === 'choice') &&
+        (q.options ?? []).some((o) => (o.examples?.length ?? 0) > 0))
+    ) {
+      throw new Error(`${label} cannot specify both fittedHead and examples.`);
+    }
+    if (
+      (q.type === 'binary' || q.type === 'boolean') &&
+      (q.options?.length ?? 0) >= 2
+    ) {
+      throw new Error(
+        `${label} cannot set both fittedHead and two or more options.`,
+      );
+    }
+  }
+}
+
+/**
+ * Rejects a boolean question that sets an empty `fittedHead`, combines
+ * `fittedHead` with examples, or sets both custom `options` (two or more, which
+ * route it to the choice path) and a `fittedHead`.
+ */
+function checkBooleanQuestionFittedHead(question: BooleanQuestion): void {
+  checkFittedHeadNotEmpty(question.fittedHead, 'BooleanQuestion');
+  if (question.fittedHead != null && hasBooleanExamples(question)) {
+    throw new Error(
+      'A BooleanQuestion cannot specify both fittedHead and examples.',
+    );
+  }
+  if (question.options && question.options.length >= 2 && question.fittedHead) {
+    throw new Error(
+      'BooleanQuestion cannot set both fittedHead and two or more options.',
+    );
+  }
 }
 
 function resolveScoreRubric(question: ScoreQuestion): {
@@ -548,6 +654,7 @@ export class DecisionMaker extends TaskRunner {
   protected override baseOptions: BaseOptionsProto = new BaseOptionsProto();
   private backendType = 0;
   private maxNumTokens = 0;
+  private skipHeadCompatibilityCheck = false;
   private makerPtr = 0;
   private modelWasmPtr = 0;
   private modelWasmRawPtr = 0;
@@ -725,7 +832,7 @@ export class DecisionMaker extends TaskRunner {
    * @param schema The schema to bind to this session.
    */
   setSchema(schema: ClassifierSchema): void {
-    this.sessionSchema = schema;
+    this.sessionSchema = copySchemaFittedHeads(schema);
     this.lastContextUsage = this.computeSchemaTokens(schema);
   }
 
@@ -737,6 +844,7 @@ export class DecisionMaker extends TaskRunner {
    */
   async prewarm(schema: ClassifierSchema): Promise<void> {
     if (this.makerPtr === 0) return;
+    checkSchemaFittedHeads(schema);
     const questions = schema.questions ?? [];
     if (questions.length === 0) return;
     validateSchemaExamples(questions);
@@ -771,8 +879,10 @@ export class DecisionMaker extends TaskRunner {
    */
   async prewarmChoice(question: ChoiceQuestion): Promise<void> {
     if (this.makerPtr === 0) return;
+    checkFittedHeadNotEmpty(question.fittedHead, 'ChoiceQuestion');
     const criteria = resolveChoiceCriteria(question);
-    if (Object.keys(criteria).length === 0) return;
+    const hasFittedHead = Boolean(question.fittedHead);
+    if (Object.keys(criteria).length === 0 && !hasFittedHead) return;
     const examples = resolveChoiceExamples(question, criteria);
     const baseInstructions = question.instructions ?? '';
     const instructions = question.context
@@ -792,6 +902,7 @@ export class DecisionMaker extends TaskRunner {
           instructions,
           question.normalizePrior ?? false,
           examples,
+          ...optionalArg(question.fittedHead),
         ),
       );
       return;
@@ -826,6 +937,7 @@ export class DecisionMaker extends TaskRunner {
           ...(question.balanceClassWeights !== undefined
             ? {balanceClassWeights: question.balanceClassWeights}
             : {}),
+          ...(hasFittedHead ? {fittedHead: question.fittedHead} : {}),
         },
       ],
     });
@@ -839,7 +951,9 @@ export class DecisionMaker extends TaskRunner {
    */
   async prewarmBoolean(question: BooleanQuestion): Promise<void> {
     if (this.makerPtr === 0) return;
+    checkBooleanQuestionFittedHead(question);
     const examples = resolveBooleanExamples(question);
+    const conditionText = question.condition ?? '';
     if (
       question.options &&
       question.options.length >= 2 &&
@@ -847,20 +961,21 @@ export class DecisionMaker extends TaskRunner {
     ) {
       await this.prewarmChoice({
         options: question.options,
-        instructions: question.condition,
+        instructions: conditionText,
         context: question.context,
         temperature: question.temperature,
         normalizePrior: question.normalizePrior,
       });
       return;
     }
+    const hasFittedHead = Boolean(question.fittedHead);
     await this.prewarm({
       context: question.context,
       questions: [
         {
           id: '__boolean__',
           type: 'boolean',
-          prompt: question.condition ?? '',
+          prompt: conditionText,
           threshold: question.threshold,
           temperature: question.temperature,
           normalizePrior: question.normalizePrior,
@@ -873,6 +988,7 @@ export class DecisionMaker extends TaskRunner {
           ...(question.inputPrompt !== undefined
             ? {inputPrompt: question.inputPrompt}
             : {}),
+          ...(hasFittedHead ? {fittedHead: question.fittedHead} : {}),
         },
       ],
     });
@@ -906,7 +1022,7 @@ export class DecisionMaker extends TaskRunner {
     if (!schema) return 0;
     let total = schema.context ? estimateTokens(schema.context) : 0;
     for (const q of schema.questions ?? []) {
-      total += estimateTokens(q.prompt) + 4;
+      total += estimateTokens(q.prompt ?? '') + 4;
       for (const opt of q.options ?? []) {
         total +=
           estimateTokens(
@@ -1140,6 +1256,9 @@ export class DecisionMaker extends TaskRunner {
     if (options.maxNumTokens !== undefined) {
       this.maxNumTokens = options.maxNumTokens;
     }
+    this.skipHeadCompatibilityCheck = Boolean(
+      options.skipHeadCompatibilityCheck,
+    );
     if (options.schema) {
       this.setSchema(options.schema);
     } else if (options.questions || options.context || options.expectedInputs) {
@@ -1303,6 +1422,7 @@ export class DecisionMaker extends TaskRunner {
         pleSize,
         this.backendType,
         this.maxNumTokens,
+        ...optionalArg(this.skipHeadCompatibilityCheck ? true : undefined),
       );
       this.logger?.logSessionStart();
       return;
@@ -1320,6 +1440,7 @@ export class DecisionMaker extends TaskRunner {
       modelPath,
       this.backendType,
       this.maxNumTokens,
+      ...optionalArg(this.skipHeadCompatibilityCheck ? true : undefined),
     );
     this.logger?.logSessionStart();
   }
@@ -1343,7 +1464,9 @@ export class DecisionMaker extends TaskRunner {
     if (this.makerPtr === 0) {
       throw new Error('Decision is already closed.');
     }
+    checkBooleanQuestionFittedHead(question);
     const examples = resolveBooleanExamples(question);
+    const conditionText = question.condition ?? '';
     // With examples, custom options are ignored and the question stays a
     // Boolean.
     if (
@@ -1357,7 +1480,7 @@ export class DecisionMaker extends TaskRunner {
           : 0.5;
       return this.evaluateChoice(text, {
         options: question.options,
-        instructions: question.condition,
+        instructions: conditionText,
         context: question.context,
         temperature: question.temperature,
         normalizePrior: question.normalizePrior,
@@ -1398,10 +1521,10 @@ export class DecisionMaker extends TaskRunner {
     // Matches the schema path (used by prewarmBoolean), which drops the
     // newline when there is no condition, so both share one fingerprint.
     const condition = question.context
-      ? question.condition
-        ? `${question.context}\n${question.condition}`
+      ? conditionText
+        ? `${question.context}\n${conditionText}`
         : question.context
-      : (question.condition ?? '');
+      : conditionText;
     const normalizePrior = question.normalizePrior ?? false;
     const norm = normalizeContextInput(text, question);
     if (norm.hasMedia) {
@@ -1415,6 +1538,7 @@ export class DecisionMaker extends TaskRunner {
           {imageBytes: norm.imageBytes, audioSamples: norm.audioSamples},
           normalizePrior,
           examples,
+          ...optionalArg(question.fittedHead),
         ),
       );
     }
@@ -1427,6 +1551,7 @@ export class DecisionMaker extends TaskRunner {
         question.temperature ?? 0,
         normalizePrior,
         examples,
+        ...optionalArg(question.fittedHead),
       ),
     );
   }
@@ -1446,6 +1571,7 @@ export class DecisionMaker extends TaskRunner {
     if (this.makerPtr === 0) {
       throw new Error('Decision is already closed.');
     }
+    checkFittedHeadNotEmpty(question.fittedHead, 'ChoiceQuestion');
     const wasmModule = this.graphRunner
       .wasmModule as unknown as DecisionMakerWasmModule;
     const criteria = resolveChoiceCriteria(question);
@@ -1473,9 +1599,13 @@ export class DecisionMaker extends TaskRunner {
               question.options ?? [],
               question.temperature ?? 0,
               instructions,
-              {imageBytes: norm.imageBytes, audioSamples: norm.audioSamples},
+              {
+                imageBytes: norm.imageBytes,
+                audioSamples: norm.audioSamples,
+              },
               normalizePrior,
               examples,
+              ...optionalArg(question.fittedHead),
             ),
           )
         : this.logInvocation(() =>
@@ -1487,6 +1617,7 @@ export class DecisionMaker extends TaskRunner {
               instructions,
               normalizePrior,
               examples,
+              ...optionalArg(question.fittedHead),
             ),
           );
     return evalPromise.then(enrichChoiceResult);
@@ -1563,6 +1694,7 @@ export class DecisionMaker extends TaskRunner {
     if (options?.signal?.aborted) {
       throw new DOMException('The operation was aborted.', 'AbortError');
     }
+    checkSchemaFittedHeads(schema);
     const norm = normalizeContextInput(input, options);
     const stateText = options?.context
       ? norm.text
@@ -1630,6 +1762,10 @@ export class DecisionMaker extends TaskRunner {
     schema: ClassifierSchema,
     options?: ClassifierEvaluateOptions,
   ): Promise<ClassifierResult[]> {
+    if (this.makerPtr === 0) {
+      throw new Error('Decision is already closed.');
+    }
+    checkSchemaFittedHeads(schema);
     const results: ClassifierResult[] = [];
     for (const input of inputs) {
       results.push(await this.evaluate(input, schema, options));
@@ -1677,18 +1813,20 @@ export class DecisionMaker extends TaskRunner {
     if (this.makerPtr === 0) {
       throw new Error('Decision is already closed.');
     }
+    checkBooleanQuestionFittedHead(question);
     if (texts.length === 0) {
       return [];
     }
     const wasmModule = this.graphRunner
       .wasmModule as unknown as DecisionMakerWasmModule;
+    const conditionText = question.condition ?? '';
     // Matches the schema path (used by prewarmBoolean), which drops the
     // newline when there is no condition, so both share one fingerprint.
     const condition = question.context
-      ? question.condition
-        ? `${question.context}\n${question.condition}`
+      ? conditionText
+        ? `${question.context}\n${conditionText}`
         : question.context
-      : (question.condition ?? '');
+      : conditionText;
     const examples = resolveBooleanExamples(question);
     if (
       !hasQuestionMedia(question) &&
@@ -1709,6 +1847,7 @@ export class DecisionMaker extends TaskRunner {
           sharedPrefix,
           question.normalizePrior ?? false,
           examples,
+          ...optionalArg(question.fittedHead),
         ),
       );
     }
@@ -1738,6 +1877,7 @@ export class DecisionMaker extends TaskRunner {
     if (this.makerPtr === 0) {
       throw new Error('Decision is already closed.');
     }
+    checkFittedHeadNotEmpty(question.fittedHead, 'ChoiceQuestion');
     if (texts.length === 0) {
       return [];
     }
@@ -1771,6 +1911,7 @@ export class DecisionMaker extends TaskRunner {
           sharedPrefix,
           question.normalizePrior ?? false,
           examples,
+          ...optionalArg(question.fittedHead),
         ),
       );
       return rawBatch.map(enrichChoiceResult);

@@ -1044,7 +1044,6 @@ describe('DecisionMaker', () => {
     expect(mockModule['evaluateScoreBatch']).not.toHaveBeenCalled();
     expect(mockModule['evaluateContextScore']).toHaveBeenCalledTimes(2);
   });
-
   it('passes choice examples to Wasm', async () => {
     const examples = {
       'person_name': ['Kavita Ramachandran', 'Marek Kowalczyk'],
@@ -1283,5 +1282,388 @@ describe('DecisionMaker', () => {
     await expectAsync(
       decisionMaker.prewarmBoolean({positiveExamples: ['Zurich']}),
     ).toBeRejectedWithError(/both positiveExamples and negativeExamples/);
+  });
+
+  it('forwards fittedHead bytes and skipHeadCompatibilityCheck across Web APIs', async () => {
+    const uncheckedMaker = new DecisionMakerFake();
+    await uncheckedMaker.setOptions({
+      backendType: 3,
+      maxNumTokens: 1024,
+      skipHeadCompatibilityCheck: true,
+    });
+    expect(uncheckedMaker.mockModule['createDecision']).toHaveBeenCalledWith(
+      '/model.litertlm',
+      3,
+      1024,
+      true,
+    );
+    uncheckedMaker.close();
+
+    const boolFittedHead = new Uint8Array([8, 1, 16, 1]);
+    const choiceFittedHead = new Uint8Array([8, 1, 24, 3]);
+    mockModule['prewarmChoice'] = jasmine
+      .createSpy('prewarmChoice')
+      .and.resolveTo(true);
+    mockModule['prewarmSchema'] = jasmine
+      .createSpy('prewarmSchema')
+      .and.resolveTo(true);
+
+    await decisionMaker.prewarmChoice({fittedHead: choiceFittedHead});
+    expect(mockModule['prewarmChoice']).toHaveBeenCalledWith(
+      54321,
+      {},
+      [],
+      0,
+      '',
+      false,
+      NO_CHOICE_EXAMPLES,
+      choiceFittedHead,
+    );
+
+    await decisionMaker.prewarmBoolean({fittedHead: boolFittedHead});
+    expect(mockModule['prewarmSchema']).toHaveBeenCalledWith(54321, '', [
+      {
+        id: '__boolean__',
+        type: 'boolean',
+        prompt: '',
+        threshold: undefined,
+        temperature: undefined,
+        normalizePrior: undefined,
+        fittedHead: boolFittedHead,
+      },
+    ]);
+
+    await decisionMaker.evaluateBoolean('Geneva', {fittedHead: boolFittedHead});
+    expect(mockModule['evaluateBoolean']).toHaveBeenCalledWith(
+      54321,
+      'Geneva',
+      '',
+      0.5,
+      0,
+      false,
+      NO_BOOLEAN_EXAMPLES,
+      boolFittedHead,
+    );
+
+    const choiceRes = await decisionMaker.evaluateChoice('DelegateFactory', {
+      fittedHead: choiceFittedHead,
+    });
+    expect(mockModule['evaluateChoice']).toHaveBeenCalledWith(
+      54321,
+      'DelegateFactory',
+      {},
+      0,
+      '',
+      false,
+      NO_CHOICE_EXAMPLES,
+      choiceFittedHead,
+    );
+    expect(choiceRes.selectedKey).toBe('device');
+
+    await decisionMaker.evaluateChoiceBatch(['GEMM', 'DelegateFactory'], {
+      fittedHead: choiceFittedHead,
+    });
+    expect(mockModule['evaluateChoiceBatch']).toHaveBeenCalledWith(
+      54321,
+      ['GEMM', 'DelegateFactory'],
+      {},
+      0,
+      '',
+      '',
+      false,
+      NO_CHOICE_EXAMPLES,
+      choiceFittedHead,
+    );
+
+    await decisionMaker.evaluate('DelegateFactory', {
+      questions: [
+        {id: 'route', type: 'choice', fittedHead: choiceFittedHead},
+        {id: 'is_urgent', type: 'boolean', fittedHead: boolFittedHead},
+      ],
+    });
+    expect(mockModule['evaluateSchema']).toHaveBeenCalledWith(
+      54321,
+      'DelegateFactory',
+      '',
+      [
+        {id: 'route', type: 'choice', fittedHead: choiceFittedHead},
+        {id: 'is_urgent', type: 'boolean', fittedHead: boolFittedHead},
+      ],
+    );
+  });
+
+  it('copies fittedHead bytes stored by setSchema', async () => {
+    const head = new Uint8Array([8, 1, 16, 1]);
+    decisionMaker.setSchema({
+      questions: [{id: 'route', type: 'choice', fittedHead: head}],
+    });
+    head.fill(0);
+
+    await decisionMaker.classify('DelegateFactory');
+    expect(mockModule['evaluateSchema']).toHaveBeenCalledWith(
+      54321,
+      'DelegateFactory',
+      '',
+      [
+        {
+          id: 'route',
+          type: 'choice',
+          fittedHead: new Uint8Array([8, 1, 16, 1]),
+        },
+      ],
+    );
+  });
+
+  it('rejects a boolean question with both fittedHead and options', async () => {
+    mockModule['prewarmChoice'] = jasmine
+      .createSpy('prewarmChoice')
+      .and.resolveTo(true);
+    mockModule['prewarmSchema'] = jasmine
+      .createSpy('prewarmSchema')
+      .and.resolveTo(true);
+    const question = {
+      fittedHead: new Uint8Array([8, 1, 16, 1]),
+      options: [{label: 'no'}, {label: 'yes'}],
+    };
+    const expectedError =
+      'BooleanQuestion cannot set both fittedHead and two or more options.';
+
+    expect(() =>
+      decisionMaker.evaluateBoolean('Geneva', question),
+    ).toThrowError(expectedError);
+    await expectAsync(
+      decisionMaker.evaluateBooleanBatch(['Geneva', 'Paris'], question),
+    ).toBeRejectedWithError(expectedError);
+    await expectAsync(
+      decisionMaker.prewarmBoolean(question),
+    ).toBeRejectedWithError(expectedError);
+
+    expect(mockModule['evaluateBoolean']).not.toHaveBeenCalled();
+    expect(mockModule['evaluateChoice']).not.toHaveBeenCalled();
+    expect(mockModule['evaluateBooleanBatch']).not.toHaveBeenCalled();
+    expect(mockModule['prewarmChoice']).not.toHaveBeenCalled();
+    expect(mockModule['prewarmSchema']).not.toHaveBeenCalled();
+  });
+
+  it('rejects combining fittedHead and examples across boolean, choice, and schema', async () => {
+    const head = new Uint8Array([8, 1, 16, 1]);
+    mockModule['prewarmChoice'] = jasmine
+      .createSpy('prewarmChoice')
+      .and.resolveTo(true);
+    mockModule['prewarmSchema'] = jasmine
+      .createSpy('prewarmSchema')
+      .and.resolveTo(true);
+
+    const boolQuestion = {
+      fittedHead: head,
+      positiveExamples: ['Zurich'],
+      negativeExamples: ['table'],
+    };
+    const expectedBoolError =
+      'A BooleanQuestion cannot specify both fittedHead and examples.';
+    expect(() =>
+      decisionMaker.evaluateBoolean('Geneva', boolQuestion),
+    ).toThrowError(expectedBoolError);
+    await expectAsync(
+      decisionMaker.evaluateBooleanBatch(['Geneva'], boolQuestion),
+    ).toBeRejectedWithError(expectedBoolError);
+    await expectAsync(
+      decisionMaker.prewarmBoolean(boolQuestion),
+    ).toBeRejectedWithError(expectedBoolError);
+
+    const choiceQuestion = {
+      fittedHead: head,
+      examples: {'a': ['x'], 'b': ['y']},
+    };
+    const expectedChoiceError =
+      'A ChoiceQuestion cannot specify both fittedHead and examples.';
+    expect(() =>
+      decisionMaker.evaluateChoice('Geneva', choiceQuestion),
+    ).toThrowError(expectedChoiceError);
+    await expectAsync(
+      decisionMaker.evaluateChoiceBatch(['Geneva'], choiceQuestion),
+    ).toBeRejectedWithError(expectedChoiceError);
+    await expectAsync(
+      decisionMaker.prewarmChoice(choiceQuestion),
+    ).toBeRejectedWithError(expectedChoiceError);
+
+    await expectAsync(
+      decisionMaker.evaluate('Geneva', {
+        questions: [
+          {
+            id: 'q_bool',
+            type: 'boolean',
+            fittedHead: head,
+            positiveExamples: ['Zurich'],
+            negativeExamples: ['table'],
+          },
+        ],
+      }),
+    ).toBeRejectedWithError(
+      'ClassifierQuestion "q_bool" cannot specify both fittedHead and examples.',
+    );
+    await expectAsync(
+      decisionMaker.evaluate('Geneva', {
+        questions: [
+          {
+            id: 'q_choice',
+            type: 'choice',
+            fittedHead: head,
+            options: [
+              {label: 'a', examples: ['x']},
+              {label: 'b', examples: ['y']},
+            ],
+          },
+        ],
+      }),
+    ).toBeRejectedWithError(
+      'ClassifierQuestion "q_choice" cannot specify both fittedHead and examples.',
+    );
+  });
+
+  it('rejects empty Uint8Array fittedHead across boolean, choice, and schema entry points', async () => {
+    const emptyHead = new Uint8Array(0);
+    mockModule['prewarmChoice'] = jasmine
+      .createSpy('prewarmChoice')
+      .and.resolveTo(true);
+    mockModule['prewarmSchema'] = jasmine
+      .createSpy('prewarmSchema')
+      .and.resolveTo(true);
+
+    const expectedBooleanError =
+      'BooleanQuestion.fittedHead must not be empty.';
+    expect(() =>
+      decisionMaker.evaluateBoolean('Geneva', {fittedHead: emptyHead}),
+    ).toThrowError(expectedBooleanError);
+    await expectAsync(
+      decisionMaker.evaluateBooleanBatch(['Geneva', 'Paris'], {
+        fittedHead: emptyHead,
+      }),
+    ).toBeRejectedWithError(expectedBooleanError);
+    await expectAsync(
+      decisionMaker.prewarmBoolean({fittedHead: emptyHead}),
+    ).toBeRejectedWithError(expectedBooleanError);
+
+    const expectedChoiceError = 'ChoiceQuestion.fittedHead must not be empty.';
+    expect(() =>
+      decisionMaker.evaluateChoice('DelegateFactory', {fittedHead: emptyHead}),
+    ).toThrowError(expectedChoiceError);
+    await expectAsync(
+      decisionMaker.evaluateChoiceBatch(['GEMM', 'DelegateFactory'], {
+        fittedHead: emptyHead,
+      }),
+    ).toBeRejectedWithError(expectedChoiceError);
+    await expectAsync(
+      decisionMaker.prewarmChoice({fittedHead: emptyHead}),
+    ).toBeRejectedWithError(expectedChoiceError);
+
+    const expectedBoolSchemaError =
+      'ClassifierQuestion "q_bool".fittedHead must not be empty.';
+    await expectAsync(
+      decisionMaker.evaluate('Geneva', {
+        questions: [{id: 'q_bool', type: 'boolean', fittedHead: emptyHead}],
+      }),
+    ).toBeRejectedWithError(expectedBoolSchemaError);
+    await expectAsync(
+      decisionMaker.evaluateBatch(['Geneva'], {
+        questions: [{id: 'q_bool', type: 'boolean', fittedHead: emptyHead}],
+      }),
+    ).toBeRejectedWithError(expectedBoolSchemaError);
+    await expectAsync(
+      decisionMaker.prewarm({
+        questions: [{id: 'q_bool', type: 'boolean', fittedHead: emptyHead}],
+      }),
+    ).toBeRejectedWithError(expectedBoolSchemaError);
+
+    const expectedChoiceSchemaError =
+      'ClassifierQuestion "q_choice".fittedHead must not be empty.';
+    await expectAsync(
+      decisionMaker.evaluate('DelegateFactory', {
+        questions: [{id: 'q_choice', type: 'choice', fittedHead: emptyHead}],
+      }),
+    ).toBeRejectedWithError(expectedChoiceSchemaError);
+    await expectAsync(
+      decisionMaker.evaluateBatch([], {
+        questions: [{id: 'q_choice', type: 'choice', fittedHead: emptyHead}],
+      }),
+    ).toBeRejectedWithError(expectedChoiceSchemaError);
+    await expectAsync(
+      decisionMaker.prewarm({
+        questions: [{id: 'q_choice', type: 'choice', fittedHead: emptyHead}],
+      }),
+    ).toBeRejectedWithError(expectedChoiceSchemaError);
+
+    expect(mockModule['evaluateBoolean']).not.toHaveBeenCalled();
+    expect(mockModule['evaluateChoice']).not.toHaveBeenCalled();
+    expect(mockModule['evaluateBooleanBatch']).not.toHaveBeenCalled();
+    expect(mockModule['evaluateChoiceBatch']).not.toHaveBeenCalled();
+    expect(mockModule['evaluateSchema']).not.toHaveBeenCalled();
+    expect(mockModule['prewarmChoice']).not.toHaveBeenCalled();
+    expect(mockModule['prewarmSchema']).not.toHaveBeenCalled();
+  });
+
+  it('rejects fittedHead on ordinal and score schema questions', async () => {
+    const head = new Uint8Array([8, 1, 16, 1]);
+    mockModule['prewarmSchema'] = jasmine
+      .createSpy('prewarmSchema')
+      .and.resolveTo(true);
+
+    for (const type of ['ordinal', 'score'] as const) {
+      const schema = {
+        questions: [
+          {
+            id: 'q_score',
+            type,
+            options: [{label: '1'}, {label: '2'}],
+            fittedHead: head,
+          },
+        ],
+      };
+      const expectedError = `ClassifierQuestion "q_score" of type "${type}" does not support fittedHead.`;
+      await expectAsync(
+        decisionMaker.evaluate('DelegateFactory', schema),
+      ).toBeRejectedWithError(expectedError);
+      await expectAsync(
+        decisionMaker.evaluateBatch(['DelegateFactory'], schema),
+      ).toBeRejectedWithError(expectedError);
+      await expectAsync(decisionMaker.prewarm(schema)).toBeRejectedWithError(
+        expectedError,
+      );
+      decisionMaker.setSchema(schema);
+      await expectAsync(
+        decisionMaker.classify('DelegateFactory'),
+      ).toBeRejectedWithError(expectedError);
+    }
+
+    for (const type of ['binary', 'boolean'] as const) {
+      const schema = {
+        questions: [
+          {
+            id: 'q_bool_opts',
+            type,
+            options: [{label: 'no'}, {label: 'yes'}],
+            fittedHead: head,
+          },
+        ],
+      };
+      const expectedError =
+        'ClassifierQuestion "q_bool_opts" cannot set both fittedHead and two or more options.';
+      await expectAsync(
+        decisionMaker.evaluate('Geneva', schema),
+      ).toBeRejectedWithError(expectedError);
+      await expectAsync(
+        decisionMaker.evaluateBatch(['Geneva'], schema),
+      ).toBeRejectedWithError(expectedError);
+      await expectAsync(decisionMaker.prewarm(schema)).toBeRejectedWithError(
+        expectedError,
+      );
+      decisionMaker.setSchema(schema);
+      await expectAsync(decisionMaker.classify('Geneva')).toBeRejectedWithError(
+        expectedError,
+      );
+    }
+
+    expect(mockModule['evaluateSchema']).not.toHaveBeenCalled();
+    expect(mockModule['prewarmSchema']).not.toHaveBeenCalled();
   });
 });
