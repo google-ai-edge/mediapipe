@@ -16,7 +16,7 @@ const audioClassifier = await AudioClassifier.createFromModelPath(audio,
 const classifications = audioClassifier.classify(audioData);
 ```
 
-For more information, refer to the [Audio Classifier](https://developers.google.com/mediapipe/solutions/audio/audio_classifier/web_js) documentation.
+For more information, refer to the [Audio Classifier](https://developers.google.com/edge/mediapipe/solutions/audio/audio_classifier?tab=Web) documentation.
 
 ## Audio Transcriber
 
@@ -34,7 +34,7 @@ const result = await audioTranscriber.transcribe(audioSamples);
 console.log(result.text);
 ```
 
-For more information, refer to the [Audio Transcriber](https://developers.google.com/mediapipe/solutions/audio/audio_transcriber) documentation.
+For more information, refer to the [Audio Transcriber](https://developers.google.com/edge/mediapipe/solutions/audio/audio_transcriber) documentation.
 
 ## Text-to-Speech
 
@@ -52,7 +52,7 @@ const result = await textToSpeech.synthesize("Hello from MediaPipe!");
 // result.samples contains 24 kHz mono audio as a Float32Array.
 ```
 
-For more information, refer to the [Text-to-Speech](https://developers.google.com/mediapipe/solutions/audio/text_to_speech) documentation.
+For more information, refer to the [Text-to-Speech](https://developers.google.com/edge/mediapipe/solutions/audio/text_to_speech) documentation.
 
 ### Privacy Notice
 
