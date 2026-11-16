@@ -43,6 +43,8 @@ class _MpBooleanQuestionC(ctypes.Structure):
       ("negative_examples", ctypes.POINTER(ctypes.c_char_p)),
       ("negative_examples_count", ctypes.c_int),
       ("input_prompt", ctypes.c_int),
+      ("fitted_head", ctypes.POINTER(ctypes.c_ubyte)),
+      ("fitted_head_length", ctypes.c_int),
   ]
 
 
@@ -63,6 +65,8 @@ class _MpChoiceQuestionC(ctypes.Structure):
       ("example_counts", ctypes.POINTER(ctypes.c_int)),
       ("input_prompt", ctypes.c_int),
       ("omit_balanced_class_weights", ctypes.c_bool),
+      ("fitted_head", ctypes.POINTER(ctypes.c_ubyte)),
+      ("fitted_head_length", ctypes.c_int),
   ]
 
 
@@ -131,6 +135,7 @@ class _MpDecisionMakerOptionsC(ctypes.Structure):
   _fields_ = [
       ("base_options", base_options_c_module.MpBaseOptionsC),
       ("max_num_tokens", ctypes.c_int),
+      ("skip_head_compatibility_check", ctypes.c_bool),
   ]
 
 
@@ -173,6 +178,16 @@ def _check_example_list(name: str, examples: Sequence[str]) -> None:
       )
 
 
+def _normalize_fitted_head_bytes(fitted_head: object) -> bytes:
+  if isinstance(fitted_head, (bytearray, memoryview)):
+    fitted_head = bytes(fitted_head)
+  if not isinstance(fitted_head, bytes):
+    raise TypeError("fitted_head must be bytes.")
+  if not fitted_head:
+    raise ValueError("fitted_head must be non-empty bytes.")
+  return fitted_head
+
+
 @dataclasses.dataclass
 class BooleanQuestion:
   """A yes/no question.
@@ -180,6 +195,8 @@ class BooleanQuestion:
   With both `positive_examples` and `negative_examples` (inputs for which the
   answer is true / false), embedding models fit a classifier on them and
   `condition` becomes optional. `input_prompt` is only used with examples.
+  Alternatively, `fitted_head` loads a pre-fitted classifier exported via
+  `DecisionMaker.export_fitted_head`.
   """
 
   condition: str = ""
@@ -189,6 +206,7 @@ class BooleanQuestion:
   positive_examples: Sequence[str] = ()
   negative_examples: Sequence[str] = ()
   input_prompt: InputPrompt = InputPrompt.UNSPECIFIED
+  fitted_head: bytes | None = None
 
   def __post_init__(self):
     _check_example_list("positive_examples", self.positive_examples)
@@ -198,6 +216,12 @@ class BooleanQuestion:
           "A BooleanQuestion with examples needs both positive_examples and"
           " negative_examples."
       )
+    if self.fitted_head is not None:
+      self.fitted_head = _normalize_fitted_head_bytes(self.fitted_head)
+      if self.positive_examples or self.negative_examples:
+        raise ValueError(
+            "A BooleanQuestion cannot specify both fitted_head and examples."
+        )
 
 
 @dataclasses.dataclass
@@ -208,6 +232,8 @@ class ChoiceQuestion:
   key to example inputs), embedding models fit a classifier on them; then every
   choice needs at least one example, and `criteria` may be left out.
   `input_prompt` and `balance_class_weights` are only used with examples.
+  Alternatively, `fitted_head` loads a pre-fitted classifier exported via
+  `DecisionMaker.export_fitted_head`, and `criteria` may also be left out.
   """
 
   criteria: Dict[str, str] = dataclasses.field(default_factory=dict)
@@ -220,10 +246,13 @@ class ChoiceQuestion:
   # With examples, weights each choice by N / (K * N_c), so that choices with
   # fewer examples aren't penalized.
   balance_class_weights: bool = True
+  fitted_head: bytes | None = None
 
   def __post_init__(self):
     if not isinstance(self.criteria, Mapping):
       raise TypeError("criteria must be a mapping from choice key to text.")
+    if self.fitted_head is not None:
+      self.fitted_head = _normalize_fitted_head_bytes(self.fitted_head)
     if self.examples is None:
       return
     if not isinstance(self.examples, Mapping):
@@ -233,6 +262,10 @@ class ChoiceQuestion:
     if not self.has_examples():
       # As in the C API, no example at all means a question without examples.
       return
+    if self.fitted_head is not None:
+      raise ValueError(
+          "A ChoiceQuestion cannot specify both fitted_head and examples."
+      )
     keys = self.criteria.keys() or self.examples.keys()
     if len(keys) < 2:
       raise ValueError(
@@ -249,10 +282,11 @@ class ChoiceQuestion:
     return any(self.examples.values()) if self.examples else False
 
   def choice_keys(self) -> List[str]:
-    """Returns the choice keys, from `criteria` or else from `examples`.
+    """Returns the choice keys declared on `criteria` or `examples`.
 
     Without examples (`examples` empty or all lists empty), only `criteria`
-    gives choices.
+    gives choices; returns `[]` when `criteria` is omitted for a `fitted_head`
+    (use `fitted_head.FittedHead.parse` to inspect keys stored in the blob).
     """
     if self.criteria or not self.has_examples():
       return list(self.criteria.keys())
@@ -320,6 +354,16 @@ def _encode_string_array(
   return (ctypes.c_char_p * len(encoded))(*encoded), encoded
 
 
+def _encode_fitted_head_bytes(
+    fitted_head: Optional[bytes],
+) -> Tuple[Optional[ctypes.Array[ctypes.c_ubyte]], int]:
+  if not fitted_head:
+    return None, 0
+  return (ctypes.c_ubyte * len(fitted_head)).from_buffer_copy(fitted_head), len(
+      fitted_head
+  )
+
+
 def _build_boolean_question_c(
     question: BooleanQuestion,
 ) -> Tuple[_MpBooleanQuestionC, List[object]]:
@@ -327,6 +371,9 @@ def _build_boolean_question_c(
   cond_bytes = question.condition.encode("utf-8")
   c_pos, pos_bytes = _encode_string_array(question.positive_examples)
   c_neg, neg_bytes = _encode_string_array(question.negative_examples)
+  c_fitted_head, fitted_head_len = _encode_fitted_head_bytes(
+      question.fitted_head
+  )
   q_c = _MpBooleanQuestionC(
       condition=cond_bytes,
       threshold=question.threshold,
@@ -337,8 +384,10 @@ def _build_boolean_question_c(
       negative_examples=c_neg,
       negative_examples_count=len(neg_bytes),
       input_prompt=int(question.input_prompt),
+      fitted_head=c_fitted_head,
+      fitted_head_length=fitted_head_len,
   )
-  return q_c, [cond_bytes, c_pos, pos_bytes, c_neg, neg_bytes]
+  return q_c, [cond_bytes, c_pos, pos_bytes, c_neg, neg_bytes, c_fitted_head]
 
 
 def _build_choice_question_c(
@@ -353,7 +402,17 @@ def _build_choice_question_c(
   inst_bytes = (
       question.instructions.encode("utf-8") if question.instructions else None
   )
-  keepalive: List[object] = [c_keys, key_bytes, c_descs, desc_bytes, inst_bytes]
+  c_fitted_head, fitted_head_len = _encode_fitted_head_bytes(
+      question.fitted_head
+  )
+  keepalive: List[object] = [
+      c_keys,
+      key_bytes,
+      c_descs,
+      desc_bytes,
+      inst_bytes,
+      c_fitted_head,
+  ]
   c_examples = None
   c_counts = None
   examples = question.examples
@@ -382,6 +441,8 @@ def _build_choice_question_c(
       example_counts=c_counts,
       input_prompt=int(question.input_prompt),
       omit_balanced_class_weights=not question.balance_class_weights,
+      fitted_head=c_fitted_head,
+      fitted_head_length=fitted_head_len,
   )
   return q_c, keepalive
 
@@ -438,6 +499,7 @@ class DecisionMakerOptions:
 
   base_options: Optional[base_options_module.BaseOptions] = None
   max_num_tokens: int = 4096
+  skip_head_compatibility_check: bool = False
 
   def to_ctypes(self) -> _MpDecisionMakerOptionsC:
     """Converts the options to a ctypes struct."""
@@ -449,6 +511,7 @@ class DecisionMakerOptions:
     return _MpDecisionMakerOptionsC(
         base_options=base_options_c,
         max_num_tokens=self.max_num_tokens,
+        skip_head_compatibility_check=self.skip_head_compatibility_check,
     )
 
 
@@ -578,6 +641,29 @@ _CTYPES_SIGNATURES = (
         ],
     ),
     mediapipe_c_utils.CStatusFunction(
+        "MpDecisionMakerExportFittedHeadBoolean",
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(_MpBooleanQuestionC),
+            ctypes.POINTER(ctypes.POINTER(ctypes.c_ubyte)),
+            ctypes.POINTER(ctypes.c_int),
+        ],
+    ),
+    mediapipe_c_utils.CStatusFunction(
+        "MpDecisionMakerExportFittedHeadChoice",
+        [
+            ctypes.c_void_p,
+            ctypes.POINTER(_MpChoiceQuestionC),
+            ctypes.POINTER(ctypes.POINTER(ctypes.c_ubyte)),
+            ctypes.POINTER(ctypes.c_int),
+        ],
+    ),
+    mediapipe_c_utils.CFunction(
+        "MpDecisionMakerFreeFittedHead",
+        [ctypes.POINTER(ctypes.c_ubyte)],
+        None,
+    ),
+    mediapipe_c_utils.CStatusFunction(
         "MpDecisionMakerClose",
         [
             ctypes.c_void_p,
@@ -653,6 +739,57 @@ class DecisionMaker:
     # pyrefly: ignore[missing-attribute]
     self._lib.MpDecisionMakerPrewarmSchema(self._handle, q_arr, len(questions))
     del keepalive
+
+  def export_fitted_head(
+      self, question: BooleanQuestion | ChoiceQuestion
+  ) -> bytes:
+    """Fits `question`'s examples and returns a `FittedHead` byte blob."""
+    if not self._handle:
+      raise RuntimeError("DecisionMaker is closed.")
+    out_ptr = ctypes.POINTER(ctypes.c_ubyte)()
+    out_len = ctypes.c_int(0)
+    if isinstance(question, BooleanQuestion):
+      q_c, keepalive = _build_boolean_question_c(question)
+      # pyrefly: ignore[missing-attribute]
+      self._lib.MpDecisionMakerExportFittedHeadBoolean(
+          self._handle,
+          ctypes.byref(q_c),
+          ctypes.byref(out_ptr),
+          ctypes.byref(out_len),
+      )
+      del keepalive
+    elif isinstance(question, ChoiceQuestion):
+      q_c, keepalive = _build_choice_question_c(question)
+      # pyrefly: ignore[missing-attribute]
+      self._lib.MpDecisionMakerExportFittedHeadChoice(
+          self._handle,
+          ctypes.byref(q_c),
+          ctypes.byref(out_ptr),
+          ctypes.byref(out_len),
+      )
+      del keepalive
+    else:
+      raise TypeError(
+          "export_fitted_head requires a BooleanQuestion or ChoiceQuestion, got"
+          f" {type(question)}."
+      )
+    try:
+      return ctypes.string_at(out_ptr, out_len.value)
+    finally:
+      if out_ptr:
+        # pyrefly: ignore[missing-attribute]
+        self._lib.MpDecisionMakerFreeFittedHead(out_ptr)
+
+  def export_fitted_heads(
+      self, questions: Mapping[str, BooleanQuestion | ChoiceQuestion]
+  ) -> dict[str, bytes]:
+    """Exports `FittedHead` byte blobs for each named example question."""
+    if not self._handle:
+      raise RuntimeError("DecisionMaker is closed.")
+    return {
+        name: self.export_fitted_head(question)
+        for name, question in questions.items()
+    }
 
   def evaluate_schema(
       self,

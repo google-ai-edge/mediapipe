@@ -83,6 +83,11 @@ struct MpBooleanQuestion {
   // 1 = "task: classification | query: <text>", 2 = the raw text. Ignored
   // without examples.
   int input_prompt;
+  // Optional serialized `FittedHead` bytes (may be null when
+  // `fitted_head_length` is 0). Mutually exclusive with examples.
+  const unsigned char* fitted_head;
+  // Number of bytes in `fitted_head`.
+  int fitted_head_length;
 };
 
 // Configuration for a Choice question.
@@ -127,6 +132,12 @@ struct MpChoiceQuestion {
   // With examples, choices are weighted by N / (K * N_c) unless this is true.
   // Negated so that a zero-initialized struct keeps the default.
   bool omit_balanced_class_weights;
+  // Optional serialized `FittedHead` bytes (may be null when
+  // `fitted_head_length` is 0). Mutually exclusive with examples; when set,
+  // `keys` may be omitted (`count == 0`).
+  const unsigned char* fitted_head;
+  // Number of bytes in `fitted_head`.
+  int fitted_head_length;
 };
 
 // Configuration for a Score question.
@@ -217,6 +228,8 @@ struct MpDecisionMakerOptions {
   struct MpBaseOptions base_options;
   // Maximum token budget for sequence construction (0 uses model default).
   int max_num_tokens;
+  // When true, skips checking the fitted head canary vector on load.
+  bool skip_head_compatibility_check;
 };
 
 // Creates a Decision task from options.
@@ -356,6 +369,27 @@ MP_EXPORT MpStatus MpDecisionMakerPrewarmSchema(
 MP_EXPORT MpStatus MpDecisionMakerPrewarmJson(MpDecisionMakerPtr maker,
                                               const char* json_schema,
                                               char** error_msg);
+
+// Fits `question`'s examples and returns a heap-allocated `FittedHead`
+// byte buffer in `*fitted_head_out` of length `*fitted_head_length_out` (free
+// with `MpDecisionMakerFreeFittedHead`).
+MP_EXPORT MpStatus MpDecisionMakerExportFittedHeadBoolean(
+    MpDecisionMakerPtr maker, const struct MpBooleanQuestion* question,
+    unsigned char** fitted_head_out, int* fitted_head_length_out,
+    char** error_msg);
+
+// Fits `question`'s examples and returns a heap-allocated `FittedHead`
+// byte buffer in `*fitted_head_out` of length `*fitted_head_length_out` (free
+// with `MpDecisionMakerFreeFittedHead`).
+MP_EXPORT MpStatus MpDecisionMakerExportFittedHeadChoice(
+    MpDecisionMakerPtr maker, const struct MpChoiceQuestion* question,
+    unsigned char** fitted_head_out, int* fitted_head_length_out,
+    char** error_msg);
+
+// Frees a heap-allocated fitted head byte buffer returned by
+// `MpDecisionMakerExportFittedHeadBoolean` or
+// `MpDecisionMakerExportFittedHeadChoice`.
+MP_EXPORT void MpDecisionMakerFreeFittedHead(unsigned char* fitted_head);
 
 // Closes and releases the Decision task instance.
 MP_EXPORT MpStatus MpDecisionMakerClose(MpDecisionMakerPtr maker,
