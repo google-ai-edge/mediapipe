@@ -109,8 +109,9 @@ export declare interface ClassifierQuestion {
    */
   balanceClassWeights?: boolean;
   /**
-   * Optional pre-fitted `FittedHead` binary payload for boolean or choice
-   * questions on embedding models. Cannot be combined with examples.
+   * Optional pre-fitted `FittedHead` binary payload (e.g. from
+   * `exportFittedHeads()`) for boolean or choice questions on embedding models.
+   * Cannot be combined with examples.
    */
   fittedHead?: Uint8Array;
 }
@@ -192,8 +193,9 @@ export declare interface BooleanQuestion {
   /** Optional mono 16kHz PCM audio samples in [-1.0, 1.0] for the context. */
   audioSamples?: Float32Array;
   /**
-   * Optional pre-fitted `FittedHead` binary payload. Cannot be combined with
-   * two or more custom `options`.
+   * Optional pre-fitted `FittedHead` binary payload (e.g. from
+   * `exportFittedHeadBoolean()`). Cannot be combined with two or more custom
+   * `options`.
    */
   fittedHead?: Uint8Array;
 }
@@ -246,8 +248,9 @@ export declare interface ChoiceQuestion {
   /** Optional mono 16kHz PCM audio samples in [-1.0, 1.0] for the context. */
   audioSamples?: Float32Array;
   /**
-   * Optional pre-fitted `FittedHead` binary payload. When set, `criteria`
-   * and `options` may be omitted to use the fittedHead's choice keys.
+   * Optional pre-fitted `FittedHead` binary payload (e.g. from
+   * `exportFittedHeadChoice()`). When set, `criteria` and `options` may be
+   * omitted to use the fittedHead's choice keys.
    */
   fittedHead?: Uint8Array;
 }

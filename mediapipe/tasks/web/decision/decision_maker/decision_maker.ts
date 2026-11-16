@@ -220,6 +220,31 @@ declare interface DecisionMakerWasmModule {
     questions: ClassifierQuestion[],
   ): Promise<boolean>;
 
+  exportFittedHeadBoolean?(
+    makerPtr: number,
+    condition: string,
+    threshold: number,
+    temperature: number,
+    normalizePrior: boolean,
+    examples: WasmBooleanExamples,
+  ): Promise<Uint8Array>;
+
+  exportFittedHeadChoice?(
+    makerPtr: number,
+    criteria: Record<string, string>,
+    options: ClassifierOption[],
+    temperature: number,
+    instructions: string,
+    normalizePrior: boolean,
+    examples: WasmChoiceExamples,
+  ): Promise<Uint8Array>;
+
+  exportFittedHeads?(
+    makerPtr: number,
+    schemaContext: string,
+    questions: ClassifierQuestion[],
+  ): Promise<Record<string, Uint8Array>>;
+
   evaluateSchema(
     makerPtr: number,
     text: string,
@@ -528,6 +553,24 @@ function checkBooleanQuestionFittedHead(question: BooleanQuestion): void {
     throw new Error(
       'BooleanQuestion cannot set both fittedHead and two or more options.',
     );
+  }
+}
+
+function validateUniqueOptionLabels(
+  options: ClassifierOption[] | undefined,
+  questionLabel?: string,
+): void {
+  if (!options || options.length === 0) return;
+  const seen = new Set<string>();
+  for (const opt of options) {
+    if (seen.has(opt.label)) {
+      throw new Error(
+        questionLabel
+          ? `Duplicate choice option label "${opt.label}" in ${questionLabel}.`
+          : `Duplicate choice option label "${opt.label}".`,
+      );
+    }
+    seen.add(opt.label);
   }
 }
 
@@ -1015,6 +1058,256 @@ export class DecisionMaker extends TaskRunner {
           temperature: question.temperature,
         },
       ],
+    });
+  }
+
+  /**
+   * Fits `question`'s examples on an embedding model and exports the resulting
+   * `FittedHead` binary payload.
+   *
+   * @export
+   * @param question The boolean question with `positiveExamples` and
+   *     `negativeExamples` to fit.
+   * @return The serialized `FittedHead` bytes.
+   */
+  async exportFittedHeadBoolean(
+    question: BooleanQuestion,
+  ): Promise<Uint8Array> {
+    if (this.makerPtr === 0) {
+      throw new Error('Decision is already closed.');
+    }
+    if (question.fittedHead != null) {
+      throw new Error(
+        'exportFittedHeadBoolean requires examples, not an existing fittedHead.',
+      );
+    }
+    const examples = resolveBooleanExamples(question);
+    if (!hasBooleanExamples(question)) {
+      throw new Error(
+        'exportFittedHeadBoolean requires positiveExamples and negativeExamples.',
+      );
+    }
+    const conditionText = question.condition ?? '';
+    const condition = question.context
+      ? conditionText
+        ? `${question.context}\n${conditionText}`
+        : question.context
+      : conditionText;
+    const threshold = question.threshold ?? 0.5;
+    const temperature = question.temperature ?? 0;
+    const normalizePrior = question.normalizePrior ?? false;
+    const examplesSnapshot: WasmBooleanExamples = {
+      positiveExamples: [...examples.positiveExamples],
+      negativeExamples: [...examples.negativeExamples],
+      inputPrompt: examples.inputPrompt,
+    };
+    const wasmModule = this.graphRunner
+      .wasmModule as unknown as DecisionMakerWasmModule;
+    if (typeof wasmModule.exportFittedHeadBoolean !== 'function') {
+      throw new Error('Wasm module does not support exportFittedHeadBoolean.');
+    }
+    return this.logInvocation(() => {
+      if (this.makerPtr === 0) {
+        throw new Error('Decision is already closed.');
+      }
+      return wasmModule.exportFittedHeadBoolean!(
+        this.makerPtr,
+        condition,
+        threshold,
+        temperature,
+        normalizePrior,
+        examplesSnapshot,
+      );
+    });
+  }
+
+  /**
+   * Fits `question`'s choice examples on an embedding model and exports the
+   * resulting `FittedHead` binary payload.
+   *
+   * @export
+   * @param question The choice question with `examples` (or per-option
+   *     `options[].examples`) to fit.
+   * @return The serialized `FittedHead` bytes.
+   */
+  async exportFittedHeadChoice(question: ChoiceQuestion): Promise<Uint8Array> {
+    if (this.makerPtr === 0) {
+      throw new Error('Decision is already closed.');
+    }
+    if (question.fittedHead != null) {
+      throw new Error(
+        'exportFittedHeadChoice requires examples, not an existing fittedHead.',
+      );
+    }
+    validateUniqueOptionLabels(question.options);
+    const criteria = resolveChoiceCriteria(question);
+    const examples = resolveChoiceExamples(question, criteria);
+    if (
+      !Object.keys(examples.examples).some(
+        (k) => (getOwn(examples.examples, k)?.length ?? 0) > 0,
+      )
+    ) {
+      throw new Error('exportFittedHeadChoice requires choice examples.');
+    }
+    const baseInstructions = question.instructions ?? '';
+    const instructions = question.context
+      ? baseInstructions
+        ? `${question.context}\n${baseInstructions}`
+        : question.context
+      : baseInstructions;
+    const optionsSnapshot = (question.options ?? []).map((o) => ({
+      ...o,
+      ...(o.examples ? {examples: [...o.examples]} : {}),
+    }));
+    const examplesByKeySnapshot: Record<string, string[]> = {};
+    for (const key of Object.keys(examples.examples)) {
+      const list = getOwn(examples.examples, key);
+      if (list !== undefined) {
+        Object.defineProperty(examplesByKeySnapshot, key, {
+          value: [...list],
+          enumerable: true,
+          writable: true,
+          configurable: true,
+        });
+      }
+    }
+    const examplesSnapshot: WasmChoiceExamples = {
+      examples: examplesByKeySnapshot,
+      inputPrompt: examples.inputPrompt,
+      balanceClassWeights: examples.balanceClassWeights,
+    };
+    const temperature = question.temperature ?? 0;
+    const normalizePrior = question.normalizePrior ?? false;
+    const wasmModule = this.graphRunner
+      .wasmModule as unknown as DecisionMakerWasmModule;
+    if (typeof wasmModule.exportFittedHeadChoice !== 'function') {
+      throw new Error('Wasm module does not support exportFittedHeadChoice.');
+    }
+    return this.logInvocation(() => {
+      if (this.makerPtr === 0) {
+        throw new Error('Decision is already closed.');
+      }
+      return wasmModule.exportFittedHeadChoice!(
+        this.makerPtr,
+        criteria,
+        optionsSnapshot,
+        temperature,
+        instructions,
+        normalizePrior,
+        examplesSnapshot,
+      );
+    });
+  }
+
+  /**
+   * Fits every question's examples in `schema` sequentially on an embedding
+   * model and returns a map of question `id` to serialized `FittedHead` bytes.
+   * All schema structure checks run upfront before queueing Wasm execution,
+   * while backend-level fitting runs question by question in schema order.
+   *
+   * @export
+   * @param schema The schema of example-driven boolean and/or choice questions.
+   * @return Exported `FittedHead` bytes keyed by question `id`.
+   */
+  async exportFittedHeads(
+    schema: ClassifierSchema,
+  ): Promise<Record<string, Uint8Array>> {
+    if (this.makerPtr === 0) {
+      throw new Error('Decision is already closed.');
+    }
+    const questions = schema.questions ?? [];
+    const seenIds = new Set<string>();
+    const questionsSnapshot: ClassifierQuestion[] = [];
+
+    for (const q of questions) {
+      if (!q.id) {
+        throw new Error('ClassifierQuestion id must not be empty.');
+      }
+      if (seenIds.has(q.id)) {
+        throw new Error(`Duplicate ClassifierQuestion id "${q.id}".`);
+      }
+      seenIds.add(q.id);
+      const label = `ClassifierQuestion "${q.id}"`;
+      if (q.fittedHead != null) {
+        throw new Error(
+          `${label}: exportFittedHeads requires examples, not an existing fittedHead.`,
+        );
+      }
+      if (q.type === 'ordinal' || q.type === 'score') {
+        throw new Error(
+          `${label} of type "${q.type}" does not support fitted head export.`,
+        );
+      }
+      if (q.type === 'binary' || q.type === 'boolean') {
+        resolveBooleanExamples(q);
+        if (!hasBooleanExamples(q)) {
+          throw new Error(
+            `${label} requires positiveExamples and negativeExamples for exportFittedHeads.`,
+          );
+        }
+        questionsSnapshot.push({
+          ...q,
+          ...(q.positiveExamples
+            ? {positiveExamples: [...q.positiveExamples]}
+            : {}),
+          ...(q.negativeExamples
+            ? {negativeExamples: [...q.negativeExamples]}
+            : {}),
+          ...(q.options ? {options: q.options.map((o) => ({...o}))} : {}),
+        });
+      } else if (q.type === 'categorical' || q.type === 'choice') {
+        const options = q.options ?? [];
+        validateUniqueOptionLabels(options, label);
+        const examplesByKey: Record<string, string[]> = {};
+        if (options.some((o) => (o.examples?.length ?? 0) > 0)) {
+          for (const o of options) {
+            Object.defineProperty(examplesByKey, o.label, {
+              value: o.examples ?? [],
+              enumerable: true,
+              writable: true,
+              configurable: true,
+            });
+          }
+        }
+        validateChoiceExamples(
+          options.map((o) => o.label),
+          examplesByKey,
+        );
+        if (!options.some((o) => (o.examples?.length ?? 0) > 0)) {
+          throw new Error(
+            `${label} requires option examples for exportFittedHeads.`,
+          );
+        }
+        questionsSnapshot.push({
+          ...q,
+          options: options.map((o) => ({
+            ...o,
+            ...(o.examples ? {examples: [...o.examples]} : {}),
+          })),
+        });
+      } else {
+        throw new Error(`${label} has unsupported type "${String(q.type)}".`);
+      }
+    }
+
+    if (questionsSnapshot.length === 0) {
+      return {};
+    }
+    const schemaContext = schema.context ?? '';
+    const wasmModule = this.graphRunner
+      .wasmModule as unknown as DecisionMakerWasmModule;
+    if (typeof wasmModule.exportFittedHeads !== 'function') {
+      throw new Error('Wasm module does not support exportFittedHeads.');
+    }
+    return this.logInvocation(() => {
+      if (this.makerPtr === 0) {
+        throw new Error('Decision is already closed.');
+      }
+      return wasmModule.exportFittedHeads!(
+        this.makerPtr,
+        schemaContext,
+        questionsSnapshot,
+      );
     });
   }
 

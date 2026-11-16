@@ -1666,4 +1666,563 @@ describe('DecisionMaker', () => {
     expect(mockModule['evaluateSchema']).not.toHaveBeenCalled();
     expect(mockModule['prewarmSchema']).not.toHaveBeenCalled();
   });
+
+  it('exports boolean, choice, and schema fitted heads via Wasm bindings', async () => {
+    const boolHead = new Uint8Array([8, 1, 24, 64, 82, 4]);
+    const choiceHead = new Uint8Array([8, 1, 24, 64, 82, 12]);
+    mockModule['exportFittedHeadBoolean'] = jasmine
+      .createSpy('exportFittedHeadBoolean')
+      .and.resolveTo(boolHead);
+    mockModule['exportFittedHeadChoice'] = jasmine
+      .createSpy('exportFittedHeadChoice')
+      .and.resolveTo(choiceHead);
+    mockModule['exportFittedHeads'] = jasmine
+      .createSpy('exportFittedHeads')
+      .and.resolveTo({'is_urgent': boolHead, 'route': choiceHead});
+
+    const exportedBool = await decisionMaker.exportFittedHeadBoolean({
+      context: 'Support inbox',
+      condition: 'Urgent outage',
+      positiveExamples: ['Server is down!', '500 errors in prod'],
+      negativeExamples: ['Weekly lunch menu', 'Feature brainstorm'],
+      inputPrompt: 'CLASSIFICATION',
+      threshold: 0.7,
+      temperature: 0.8,
+      normalizePrior: true,
+    });
+    expect(exportedBool).toBe(boolHead);
+    expect(mockModule['exportFittedHeadBoolean']).toHaveBeenCalledWith(
+      54321,
+      'Support inbox\nUrgent outage',
+      0.7,
+      0.8,
+      true,
+      {
+        positiveExamples: ['Server is down!', '500 errors in prod'],
+        negativeExamples: ['Weekly lunch menu', 'Feature brainstorm'],
+        inputPrompt: 'CLASSIFICATION',
+      },
+    );
+
+    const exportedChoice = await decisionMaker.exportFittedHeadChoice({
+      context: 'Ticket router',
+      instructions: 'Pick a queue',
+      options: [
+        {
+          label: 'billing',
+          description: 'Invoices',
+          examples: ['Double charged'],
+        },
+        {
+          label: 'tech',
+          description: 'Crashes',
+          examples: ['App freezes', 'Crash on launch'],
+        },
+      ],
+      inputPrompt: 'NONE',
+      balanceClassWeights: false,
+      temperature: 0.5,
+      normalizePrior: true,
+    });
+    expect(exportedChoice).toBe(choiceHead);
+    expect(mockModule['exportFittedHeadChoice']).toHaveBeenCalledWith(
+      54321,
+      {'billing': 'Invoices', 'tech': 'Crashes'},
+      [
+        {
+          label: 'billing',
+          description: 'Invoices',
+          examples: ['Double charged'],
+        },
+        {
+          label: 'tech',
+          description: 'Crashes',
+          examples: ['App freezes', 'Crash on launch'],
+        },
+      ],
+      0.5,
+      'Ticket router\nPick a queue',
+      true,
+      {
+        examples: {
+          'billing': ['Double charged'],
+          'tech': ['App freezes', 'Crash on launch'],
+        },
+        inputPrompt: 'NONE',
+        balanceClassWeights: false,
+      },
+    );
+
+    // Numeric option labels in ChoiceQuestion follow Object.keys(criteria)
+    // order ('1', '2') while keeping examples aligned by label.
+    (mockModule['exportFittedHeadChoice'] as jasmine.Spy).calls.reset();
+    await decisionMaker.exportFittedHeadChoice({
+      options: [
+        {label: '2', description: 'Second', examples: ['two']},
+        {label: '1', description: 'First', examples: ['one']},
+      ],
+    });
+    expect(mockModule['exportFittedHeadChoice']).toHaveBeenCalledWith(
+      54321,
+      {'1': 'First', '2': 'Second'},
+      [
+        {label: '2', description: 'Second', examples: ['two']},
+        {label: '1', description: 'First', examples: ['one']},
+      ],
+      0,
+      '',
+      false,
+      {
+        examples: {'1': ['one'], '2': ['two']},
+        inputPrompt: undefined,
+        balanceClassWeights: true,
+      },
+    );
+
+    (mockModule['exportFittedHeadBoolean'] as jasmine.Spy).calls.reset();
+    (mockModule['exportFittedHeadChoice'] as jasmine.Spy).calls.reset();
+    const schemaQuestions = [
+      {
+        id: 'is_urgent',
+        type: 'binary' as const,
+        prompt: 'Urgent?',
+        positiveExamples: ['Server is down!'],
+        negativeExamples: ['Weekly lunch menu'],
+      },
+      {
+        id: 'route',
+        type: 'categorical' as const,
+        options: [
+          {label: '2', examples: ['Double charged']},
+          {label: '1', examples: ['App freezes']},
+        ],
+        inputPrompt: 'NONE' as const,
+      },
+    ];
+    const exportedSchema = await decisionMaker.exportFittedHeads({
+      context: 'Triage',
+      questions: schemaQuestions,
+    });
+    expect(exportedSchema).toEqual({
+      'is_urgent': boolHead,
+      'route': choiceHead,
+    });
+    expect(mockModule['exportFittedHeads']).toHaveBeenCalledWith(
+      54321,
+      'Triage',
+      schemaQuestions,
+    );
+    expect(mockModule['exportFittedHeadBoolean']).not.toHaveBeenCalled();
+    expect(mockModule['exportFittedHeadChoice']).not.toHaveBeenCalled();
+
+    // Empty schema returns {} without touching Wasm.
+    (mockModule['exportFittedHeads'] as jasmine.Spy).calls.reset();
+    expect(await decisionMaker.exportFittedHeads({questions: []})).toEqual({});
+    expect(await decisionMaker.exportFittedHeads({})).toEqual({});
+    expect(mockModule['exportFittedHeads']).not.toHaveBeenCalled();
+  });
+
+  it('snapshots export inputs and handles mid-queue close and missing Wasm bindings', async () => {
+    const boolHead = new Uint8Array([8, 1]);
+    const choiceHead = new Uint8Array([8, 2]);
+    mockModule['exportFittedHeadBoolean'] = jasmine
+      .createSpy('exportFittedHeadBoolean')
+      .and.resolveTo(boolHead);
+    mockModule['exportFittedHeadChoice'] = jasmine
+      .createSpy('exportFittedHeadChoice')
+      .and.resolveTo(choiceHead);
+    mockModule['exportFittedHeads'] = jasmine
+      .createSpy('exportFittedHeads')
+      .and.resolveTo({'q': boolHead});
+
+    // Hold the invocation queue with a pending evaluation, mutate caller arrays
+    // before the export calls execute, and verify Wasm receives the validated
+    // snapshots.
+    let unblockQueue!: () => void;
+    mockModule['evaluateBoolean'] = jasmine
+      .createSpy('evaluateBoolean')
+      .and.returnValue(
+        new Promise((resolve) => {
+          unblockQueue = () =>
+            resolve({value: true, probabilityTrue: 0.9, confidence: 0.9});
+        }),
+      );
+    const pendingEval = decisionMaker.evaluateBoolean('hi', {
+      condition: 'cond',
+    });
+
+    const pos = ['pos1'];
+    const neg = ['neg1'];
+    const boolPromise = decisionMaker.exportFittedHeadBoolean({
+      positiveExamples: pos,
+      negativeExamples: neg,
+    });
+    pos.push('mutated');
+
+    const choiceOpts = [
+      {label: 'a', examples: ['x']},
+      {label: 'b', examples: ['y']},
+    ];
+    const choicePromise = decisionMaker.exportFittedHeadChoice({
+      options: choiceOpts,
+    });
+    choiceOpts[0].examples.push('mutated');
+    choiceOpts.push({label: 'c', examples: ['z']});
+
+    const schemaQs = [
+      {
+        id: 'q',
+        type: 'boolean' as const,
+        positiveExamples: ['s1'],
+        negativeExamples: ['s2'],
+      },
+    ];
+    const schemaPromise = decisionMaker.exportFittedHeads({
+      questions: schemaQs,
+    });
+    schemaQs[0].positiveExamples.push('mutated');
+    schemaQs.length = 0;
+
+    unblockQueue();
+    await pendingEval;
+    await boolPromise;
+    await choicePromise;
+    await schemaPromise;
+
+    expect(mockModule['exportFittedHeadBoolean']).toHaveBeenCalledWith(
+      54321,
+      '',
+      0.5,
+      0,
+      false,
+      {
+        positiveExamples: ['pos1'],
+        negativeExamples: ['neg1'],
+        inputPrompt: undefined,
+      },
+    );
+    expect(mockModule['exportFittedHeadChoice']).toHaveBeenCalledWith(
+      54321,
+      {'a': '', 'b': ''},
+      [
+        {label: 'a', examples: ['x']},
+        {label: 'b', examples: ['y']},
+      ],
+      0,
+      '',
+      false,
+      {
+        examples: {'a': ['x'], 'b': ['y']},
+        inputPrompt: undefined,
+        balanceClassWeights: true,
+      },
+    );
+    expect(mockModule['exportFittedHeads']).toHaveBeenCalledWith(54321, '', [
+      {
+        id: 'q',
+        type: 'boolean',
+        positiveExamples: ['s1'],
+        negativeExamples: ['s2'],
+      },
+    ]);
+
+    // Missing Wasm bindings reject with clear errors.
+    delete mockModule['exportFittedHeadBoolean'];
+    delete mockModule['exportFittedHeadChoice'];
+    delete mockModule['exportFittedHeads'];
+    await expectAsync(
+      decisionMaker.exportFittedHeadBoolean({
+        positiveExamples: ['a'],
+        negativeExamples: ['b'],
+      }),
+    ).toBeRejectedWithError(
+      'Wasm module does not support exportFittedHeadBoolean.',
+    );
+    await expectAsync(
+      decisionMaker.exportFittedHeadChoice({
+        examples: {'a': ['x'], 'b': ['y']},
+      }),
+    ).toBeRejectedWithError(
+      'Wasm module does not support exportFittedHeadChoice.',
+    );
+    await expectAsync(
+      decisionMaker.exportFittedHeads({
+        questions: [
+          {
+            id: 'q',
+            type: 'boolean',
+            positiveExamples: ['a'],
+            negativeExamples: ['b'],
+          },
+        ],
+      }),
+    ).toBeRejectedWithError('Wasm module does not support exportFittedHeads.');
+
+    // Mid-queue close: queue exports behind an in-flight call, close() before
+    // the queue drains, and ensure all queued exports reject without invoking
+    // Wasm with makerPtr = 0.
+    mockModule['exportFittedHeadBoolean'] = jasmine
+      .createSpy('exportFittedHeadBoolean')
+      .and.resolveTo(boolHead);
+    mockModule['exportFittedHeadChoice'] = jasmine
+      .createSpy('exportFittedHeadChoice')
+      .and.resolveTo(choiceHead);
+    mockModule['exportFittedHeads'] = jasmine
+      .createSpy('exportFittedHeads')
+      .and.resolveTo({});
+    let unblockCloseQueue!: () => void;
+    mockModule['evaluateBoolean'] = jasmine
+      .createSpy('evaluateBoolean')
+      .and.returnValue(
+        new Promise((resolve) => {
+          unblockCloseQueue = () =>
+            resolve({value: false, probabilityTrue: 0.1, confidence: 0.9});
+        }),
+      );
+    const inFlight = decisionMaker.evaluateBoolean('hi', {condition: 'cond'});
+    const queuedBool = decisionMaker.exportFittedHeadBoolean({
+      positiveExamples: ['a'],
+      negativeExamples: ['b'],
+    });
+    const queuedChoice = decisionMaker.exportFittedHeadChoice({
+      examples: {'a': ['x'], 'b': ['y']},
+    });
+    const queuedSchema = decisionMaker.exportFittedHeads({
+      questions: [
+        {
+          id: 'q',
+          type: 'boolean',
+          positiveExamples: ['a'],
+          negativeExamples: ['b'],
+        },
+      ],
+    });
+    decisionMaker.close();
+    unblockCloseQueue();
+    await inFlight;
+    await expectAsync(queuedBool).toBeRejectedWithError(
+      'Decision is already closed.',
+    );
+    await expectAsync(queuedChoice).toBeRejectedWithError(
+      'Decision is already closed.',
+    );
+    await expectAsync(queuedSchema).toBeRejectedWithError(
+      'Decision is already closed.',
+    );
+    expect(mockModule['exportFittedHeadBoolean']).not.toHaveBeenCalled();
+    expect(mockModule['exportFittedHeadChoice']).not.toHaveBeenCalled();
+    expect(mockModule['exportFittedHeads']).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid questions in fitted head export methods', async () => {
+    const existingHead = new Uint8Array([8, 1, 16, 1]);
+    mockModule['exportFittedHeadBoolean'] = jasmine
+      .createSpy('exportFittedHeadBoolean')
+      .and.resolveTo(existingHead);
+    mockModule['exportFittedHeadChoice'] = jasmine
+      .createSpy('exportFittedHeadChoice')
+      .and.resolveTo(existingHead);
+    mockModule['exportFittedHeads'] = jasmine
+      .createSpy('exportFittedHeads')
+      .and.resolveTo({});
+
+    // Boolean validation.
+    await expectAsync(
+      decisionMaker.exportFittedHeadBoolean({condition: 'Is urgent?'}),
+    ).toBeRejectedWithError(
+      'exportFittedHeadBoolean requires positiveExamples and negativeExamples.',
+    );
+    await expectAsync(
+      decisionMaker.exportFittedHeadBoolean({positiveExamples: ['a']}),
+    ).toBeRejectedWithError(/both positiveExamples and negativeExamples/);
+    await expectAsync(
+      decisionMaker.exportFittedHeadBoolean({
+        fittedHead: existingHead,
+        positiveExamples: ['a'],
+        negativeExamples: ['b'],
+      }),
+    ).toBeRejectedWithError(
+      'exportFittedHeadBoolean requires examples, not an existing fittedHead.',
+    );
+    await expectAsync(
+      decisionMaker.exportFittedHeadBoolean({fittedHead: new Uint8Array(0)}),
+    ).toBeRejectedWithError(
+      'exportFittedHeadBoolean requires examples, not an existing fittedHead.',
+    );
+
+    // Choice validation.
+    await expectAsync(
+      decisionMaker.exportFittedHeadChoice({
+        criteria: {'a': 'Option A', 'b': 'Option B'},
+      }),
+    ).toBeRejectedWithError('exportFittedHeadChoice requires choice examples.');
+    await expectAsync(
+      decisionMaker.exportFittedHeadChoice({
+        examples: {'only': ['x']},
+      }),
+    ).toBeRejectedWithError(
+      'A ChoiceQuestion with examples needs at least 2 choices.',
+    );
+    await expectAsync(
+      decisionMaker.exportFittedHeadChoice({
+        options: [{label: 'a', examples: ['x']}, {label: 'b'}],
+      }),
+    ).toBeRejectedWithError("Choice 'b' needs at least one example.");
+    await expectAsync(
+      decisionMaker.exportFittedHeadChoice({
+        options: [
+          {label: 'a', examples: ['x']},
+          {label: 'a', examples: ['y']},
+        ],
+      }),
+    ).toBeRejectedWithError('Duplicate choice option label "a".');
+    await expectAsync(
+      decisionMaker.exportFittedHeadChoice({
+        fittedHead: existingHead,
+        examples: {'a': ['x'], 'b': ['y']},
+      }),
+    ).toBeRejectedWithError(
+      'exportFittedHeadChoice requires examples, not an existing fittedHead.',
+    );
+
+    // Schema validation (atomic before any Wasm call).
+    await expectAsync(
+      decisionMaker.exportFittedHeads({
+        questions: [
+          {
+            id: '',
+            type: 'boolean',
+            positiveExamples: ['a'],
+            negativeExamples: ['b'],
+          },
+        ],
+      }),
+    ).toBeRejectedWithError('ClassifierQuestion id must not be empty.');
+    await expectAsync(
+      decisionMaker.exportFittedHeads({
+        questions: [
+          {
+            id: 'dup',
+            type: 'boolean',
+            positiveExamples: ['a'],
+            negativeExamples: ['b'],
+          },
+          {
+            id: 'dup',
+            type: 'boolean',
+            positiveExamples: ['c'],
+            negativeExamples: ['d'],
+          },
+        ],
+      }),
+    ).toBeRejectedWithError('Duplicate ClassifierQuestion id "dup".');
+    for (const type of ['ordinal', 'score'] as const) {
+      await expectAsync(
+        decisionMaker.exportFittedHeads({
+          questions: [
+            {
+              id: 'valid_first',
+              type: 'boolean',
+              positiveExamples: ['a'],
+              negativeExamples: ['b'],
+            },
+            {
+              id: 'bad_score',
+              type,
+              options: [{label: '1'}, {label: '2'}],
+            },
+          ],
+        }),
+      ).toBeRejectedWithError(
+        `ClassifierQuestion "bad_score" of type "${type}" does not support fitted head export.`,
+      );
+    }
+    await expectAsync(
+      decisionMaker.exportFittedHeads({
+        questions: [
+          {
+            id: 'q_dup_opt',
+            type: 'choice',
+            options: [
+              {label: 'a', examples: ['x']},
+              {label: 'a', examples: ['y']},
+            ],
+          },
+        ],
+      }),
+    ).toBeRejectedWithError(
+      'Duplicate choice option label "a" in ClassifierQuestion "q_dup_opt".',
+    );
+    await expectAsync(
+      decisionMaker.exportFittedHeads({
+        questions: [
+          {
+            id: 'q_bad',
+            type: 'unknown' as unknown as 'boolean',
+          },
+        ],
+      }),
+    ).toBeRejectedWithError(
+      'ClassifierQuestion "q_bad" has unsupported type "unknown".',
+    );
+    await expectAsync(
+      decisionMaker.exportFittedHeads({
+        questions: [
+          {id: 'already_fitted', type: 'boolean', fittedHead: existingHead},
+        ],
+      }),
+    ).toBeRejectedWithError(
+      'ClassifierQuestion "already_fitted": exportFittedHeads requires examples, not an existing fittedHead.',
+    );
+    await expectAsync(
+      decisionMaker.exportFittedHeads({
+        questions: [{id: 'no_bool_ex', type: 'boolean', prompt: 'Urgent?'}],
+      }),
+    ).toBeRejectedWithError(
+      'ClassifierQuestion "no_bool_ex" requires positiveExamples and negativeExamples for exportFittedHeads.',
+    );
+    await expectAsync(
+      decisionMaker.exportFittedHeads({
+        questions: [
+          {
+            id: 'no_choice_ex',
+            type: 'choice',
+            options: [{label: 'a'}, {label: 'b'}],
+          },
+        ],
+      }),
+    ).toBeRejectedWithError(
+      'ClassifierQuestion "no_choice_ex" requires option examples for exportFittedHeads.',
+    );
+
+    expect(mockModule['exportFittedHeadBoolean']).not.toHaveBeenCalled();
+    expect(mockModule['exportFittedHeadChoice']).not.toHaveBeenCalled();
+    expect(mockModule['exportFittedHeads']).not.toHaveBeenCalled();
+
+    // Closed DecisionMaker rejects all three export entry points.
+    decisionMaker.close();
+    await expectAsync(
+      decisionMaker.exportFittedHeadBoolean({
+        positiveExamples: ['a'],
+        negativeExamples: ['b'],
+      }),
+    ).toBeRejectedWithError('Decision is already closed.');
+    await expectAsync(
+      decisionMaker.exportFittedHeadChoice({
+        examples: {'a': ['x'], 'b': ['y']},
+      }),
+    ).toBeRejectedWithError('Decision is already closed.');
+    await expectAsync(
+      decisionMaker.exportFittedHeads({
+        questions: [
+          {
+            id: 'q',
+            type: 'boolean',
+            positiveExamples: ['a'],
+            negativeExamples: ['b'],
+          },
+        ],
+      }),
+    ).toBeRejectedWithError('Decision is already closed.');
+  });
 });
