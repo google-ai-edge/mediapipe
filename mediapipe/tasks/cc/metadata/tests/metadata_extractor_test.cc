@@ -15,18 +15,25 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 
-#include "absl/status/status.h"       // from @com_google_absl
-#include "absl/status/statusor.h"     // from @com_google_absl
-#include "absl/strings/cord.h"        // from @com_google_absl
-#include "absl/strings/str_cat.h"     // from @com_google_absl
-#include "absl/strings/str_format.h"  // from @com_google_absl
-#include "mediapipe/framework/port/file_helpers.h"
+#include <memory>
+#include <string>
+
+#include "absl/flags/flag.h"           // from @com_google_absl
+#include "absl/status/status.h"        // from @com_google_absl
+#include "absl/status/statusor.h"      // from @com_google_absl
+#include "absl/strings/cord.h"         // from @com_google_absl
+#include "absl/strings/str_cat.h"      // from @com_google_absl
+#include "absl/strings/str_format.h"   // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
+#include "flatbuffers/flatbuffers.h"   // from @flatbuffers
+#include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/metadata/metadata_parser.h"
+#include "mediapipe/tasks/metadata/metadata_schema_generated.h"
 
 namespace mediapipe {
 namespace tasks {

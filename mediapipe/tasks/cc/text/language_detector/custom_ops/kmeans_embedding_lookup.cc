@@ -17,9 +17,10 @@ limitations under the License.
 
 #include <algorithm>
 #include <cstdint>
-#include <iostream>
 #include <vector>
 
+#include "tflite/c/c_api_types.h"                   // from @litert
+#include "tflite/c/common.h"                        // from @litert
 #include "tflite/kernels/internal/tensor_ctypes.h"  // from @litert
 #include "tflite/kernels/kernel_util.h"             // from @litert
 

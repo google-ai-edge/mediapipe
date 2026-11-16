@@ -15,9 +15,9 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/text/language_detector/custom_ops/utils/ngram_hash_ops_utils.h"
 
+#include <cstddef>
 #include <string>
 
-#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 
 namespace mediapipe::tasks::text::language_detector::custom_ops {

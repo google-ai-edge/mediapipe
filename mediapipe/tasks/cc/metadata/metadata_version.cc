@@ -18,6 +18,8 @@ limitations under the License.
 #include <stdint.h>
 
 #include <array>
+#include <cstddef>
+#include <cstdint>
 #include <ostream>
 #include <string>
 #include <vector>

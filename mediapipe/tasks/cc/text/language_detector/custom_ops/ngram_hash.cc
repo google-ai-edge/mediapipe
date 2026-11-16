@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/text/language_detector/custom_ops/ngram_hash.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -22,6 +23,8 @@ limitations under the License.
 #include "flatbuffers/flexbuffers.h"  // from @flatbuffers
 #include "mediapipe/tasks/cc/text/language_detector/custom_ops/utils/hash/murmur.h"
 #include "mediapipe/tasks/cc/text/language_detector/custom_ops/utils/ngram_hash_ops_utils.h"
+#include "tflite/c/c_api_types.h"        // from @litert
+#include "tflite/c/common.h"             // from @litert
 #include "tflite/kernels/kernel_util.h"  // from @litert
 #include "tflite/string_util.h"          // from @litert
 

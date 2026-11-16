@@ -16,8 +16,13 @@ limitations under the License.
 #include "mediapipe/tasks/cc/text/custom_ops/sentencepiece/optimized_encoder.h"
 
 #include <algorithm>
+#include <cstdint>
+#include <string>
 #include <tuple>
+#include <vector>
 
+#include "flatbuffers/flatbuffers.h"  // from @flatbuffers
+#include "mediapipe/tasks/cc/text/custom_ops/sentencepiece/config_generated.h"
 #include "mediapipe/tasks/cc/text/custom_ops/sentencepiece/double_array_trie.h"
 #include "mediapipe/tasks/cc/text/custom_ops/sentencepiece/encoder_config_generated.h"
 #include "mediapipe/tasks/cc/text/custom_ops/sentencepiece/utils.h"

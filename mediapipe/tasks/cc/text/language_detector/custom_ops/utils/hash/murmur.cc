@@ -20,6 +20,7 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/text/language_detector/custom_ops/utils/hash/murmur.h"
 
+#include <cstddef>
 #include <cstdint>
 
 #include "absl/base/optimization.h"  // from @com_google_absl

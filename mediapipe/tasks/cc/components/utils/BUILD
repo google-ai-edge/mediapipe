@@ -48,7 +48,6 @@ cc_library(
         "//mediapipe/calculators/core:gate_calculator",
         "//mediapipe/calculators/core:gate_calculator_cc_proto",
         "//mediapipe/framework/api2:builder",
-        "//mediapipe/framework/api2:port",
     ],
 )
 

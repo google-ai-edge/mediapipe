@@ -13,17 +13,20 @@ cc_test(
         "//mediapipe/tasks/testdata/metadata:model_files",
     ],
     deps = [
-        "//mediapipe/framework/port:file_helpers",
+        "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:gtest",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core:utils",
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
+        "//mediapipe/tasks/metadata:metadata_schema_cc",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:cord",
         "@com_google_absl//absl/strings:str_format",
+        "@flatbuffers//:runtime_cc",
     ],
 )
 

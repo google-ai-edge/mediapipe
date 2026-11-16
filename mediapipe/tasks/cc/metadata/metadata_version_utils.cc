@@ -1,8 +1,12 @@
 #include "mediapipe/tasks/cc/metadata/metadata_version_utils.h"
 
+#include <algorithm>
+#include <cstdint>
 #include <string>
+#include <vector>
 
-#include "absl/strings/str_split.h"  // from @com_google_absl
+#include "absl/strings/str_split.h"    // from @com_google_absl
+#include "absl/strings/string_view.h"  // from @com_google_absl
 
 namespace mediapipe {
 namespace tasks {

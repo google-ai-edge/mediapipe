@@ -82,11 +82,13 @@ cc_test(
         "double_array_trie_test.cc",
     ],
     deps = [
+        ":config",
         ":double_array_trie",
         ":double_array_trie_builder",
         ":encoder_config",
         ":utils",
         "//mediapipe/framework/port:gtest_main",
+        "@flatbuffers",
     ],
 )
 
@@ -123,9 +125,11 @@ cc_library(
         "optimized_encoder.h",
     ],
     deps = [
+        ":config",
         ":double_array_trie",
         ":encoder_config",
         ":utils",
+        "@flatbuffers",
     ],
 )
 

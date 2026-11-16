@@ -16,8 +16,6 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_UTILS_GATE_H_
 #define MEDIAPIPE_TASKS_CC_COMPONENTS_UTILS_GATE_H_
 
-#include <utility>
-
 #include "mediapipe/calculators/core/gate_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 

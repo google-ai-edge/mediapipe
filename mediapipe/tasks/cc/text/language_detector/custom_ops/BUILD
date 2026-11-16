@@ -26,6 +26,8 @@ cc_library(
     hdrs = ["kmeans_embedding_lookup.h"],
     copts = tflite_copts(),
     deps = [
+        "@litert//tflite/c:c_api_types",
+        "@litert//tflite/c:common",
         "@litert//tflite/kernels:builtin_ops",
         "@litert//tflite/kernels:kernel_util",
         "@litert//tflite/kernels/internal:tensor",
@@ -43,6 +45,7 @@ cc_test(
         "@litert//tflite:framework",
         "@litert//tflite/c:common",
         "@litert//tflite/kernels:test_util",
+        "@litert//tflite/schema:schema_fbs",
     ],
 )
 
@@ -56,6 +59,8 @@ cc_library(
         "//mediapipe/tasks/cc/text/language_detector/custom_ops/utils/hash:murmur",
         "@flatbuffers",
         "@litert//tflite:string_util",
+        "@litert//tflite/c:c_api_types",
+        "@litert//tflite/c:common",
         "@litert//tflite/kernels:builtin_ops",
         "@litert//tflite/kernels:kernel_util",
     ],
@@ -70,12 +75,11 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/tasks/cc/text/language_detector/custom_ops/utils/hash:murmur",
         "@com_google_absl//absl/log:absl_check",
-        "@com_google_absl//absl/types:optional",
         "@flatbuffers",
         "@litert//tflite:framework",
-        "@litert//tflite:string_util",
         "@litert//tflite/c:common",
         "@litert//tflite/kernels:builtin_ops",
         "@litert//tflite/kernels:test_util",
+        "@litert//tflite/schema:schema_fbs",
     ],
 )

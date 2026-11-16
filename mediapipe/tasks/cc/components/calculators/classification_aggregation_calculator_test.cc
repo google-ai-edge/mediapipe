@@ -14,6 +14,7 @@ limitations under the License.
 ==============================================================================*/
 
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include "absl/status/status.h"         // from @com_google_absl

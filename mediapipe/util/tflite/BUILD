@@ -48,7 +48,6 @@ cc_library_with_tflite(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework/port:logging",
         "//mediapipe/util/tflite/operations:landmarks_to_transform_matrix",
         "//mediapipe/util/tflite/operations:max_pool_argmax",
         "//mediapipe/util/tflite/operations:max_unpooling",
@@ -57,7 +56,6 @@ cc_library_with_tflite(
         "//mediapipe/util/tflite/operations:transform_tensor_bilinear",
         "//mediapipe/util/tflite/operations:transpose_conv_bias",
         "@com_google_absl//absl/log:absl_check",
-        "@litert//tflite:builtin_op_data",
     ],
     # For using the symbol `MediaPipe_RegisterTfLiteOpResolver` in Python
     # with `tensorflow.lite.python.interpreter.InterpreterWithCustomOps`.

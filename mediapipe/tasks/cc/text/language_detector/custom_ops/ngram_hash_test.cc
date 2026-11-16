@@ -15,23 +15,22 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/text/language_detector/custom_ops/ngram_hash.h"
 
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include "absl/log/absl_check.h"      // from @com_google_absl
-#include "absl/types/optional.h"      // from @com_google_absl
 #include "flatbuffers/flexbuffers.h"  // from @flatbuffers
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/cc/text/language_detector/custom_ops/utils/hash/murmur.h"
-#include "tflite/c/common.h"           // from @litert
-#include "tflite/interpreter.h"        // from @litert
-#include "tflite/kernels/register.h"   // from @litert
-#include "tflite/kernels/test_util.h"  // from @litert
-#include "tflite/model.h"              // from @litert
-#include "tflite/string_util.h"        // from @litert
+#include "tflite/c/common.h"                 // from @litert
+#include "tflite/interpreter.h"              // from @litert
+#include "tflite/kernels/test_util.h"        // from @litert
+#include "tflite/schema/schema_generated.h"  // from @litert
 
 namespace mediapipe::tflite_operations {
 namespace {
@@ -126,51 +125,21 @@ TEST(NGramHashTest, ReturnsExpectedValueWhenInputIsSane) {
         MurmurHash64WithSeed(str.c_str(), str.size(), kSeed);
     return static_cast<int>((hash_value % vocab_sizes[vocab_idx]) + 1);
   };
-  const std::vector<std::vector<int>> expected_testcase_outputs(
-      {{
-           // Unigram & Bigram output for "hi".
-           hash("^", 0),
-           hash("h", 0),
-           hash("i", 0),
-           hash("$", 0),
-           hash("^h", 1),
-           hash("hi", 1),
-           hash("i$", 1),
-           hash("$", 1),
-       },
-       {
-           // Unigram & Bigram output for "wow".
-           hash("^", 0),
-           hash("w", 0),
-           hash("o", 0),
-           hash("w", 0),
-           hash("$", 0),
-           hash("^w", 1),
-           hash("wo", 1),
-           hash("ow", 1),
-           hash("w$", 1),
-           hash("$", 1),
-       },
-       {
-           // Unigram & Bigram output for "!" (which will get replaced by " ").
-           hash("^", 0),
-           hash(" ", 0),
-           hash("$", 0),
-           hash("^ ", 1),
-           hash(" $", 1),
-           hash("$", 1),
-       },
-       {
-           // Unigram & Bigram output for "HI" (which will get lower-cased).
-           hash("^", 0),
-           hash("h", 0),
-           hash("i", 0),
-           hash("$", 0),
-           hash("^h", 1),
-           hash("hi", 1),
-           hash("i$", 1),
-           hash("$", 1),
-       }});
+  const std::vector<std::vector<int>> expected_testcase_outputs({
+      {// Unigram & Bigram output for "hi".
+       hash("^", 0), hash("h", 0), hash("i", 0), hash("$", 0),  //
+       hash("^h", 1), hash("hi", 1), hash("i$", 1), hash("$", 1)},
+      {// Unigram & Bigram output for "wow".
+       hash("^", 0), hash("w", 0), hash("o", 0), hash("w", 0), hash("$", 0),  //
+       hash("^w", 1), hash("wo", 1), hash("ow", 1), hash("w$", 1),
+       hash("$", 1)},
+      {// Unigram & Bigram output for "!" (which will get replaced by " ").
+       hash("^", 0), hash(" ", 0), hash("$", 0),  //
+       hash("^ ", 1), hash(" $", 1), hash("$", 1)},
+      {// Unigram & Bigram output for "HI" (which will get lower-cased).
+       hash("^", 0), hash("h", 0), hash("i", 0), hash("$", 0),     //
+       hash("^h", 1), hash("hi", 1), hash("i$", 1), hash("$", 1)}  //
+  });
 
   NGramHashModel m(kSeed, ngram_lengths, vocab_sizes);
   for (int test_idx = 0; test_idx < testcase_inputs.size(); test_idx++) {
@@ -205,65 +174,30 @@ TEST(NGramHashTest, ReturnsExpectedValueWhenMaxSplitsIsSpecified) {
     return static_cast<int>((hash_value % vocab_sizes[vocab_idx]) + 1);
   };
 
-  const std::vector<std::vector<int>> expected_testcase_outputs(
-      {{
-           // Unigram & Bigram output for "wow", when `max_splits` == 2.
-           // We cannot include any of the actual tokens, since `max_splits`
-           // only allows enough space for the delimiters.
-           hash("^", 0),
-           hash("$", 0),
-           hash("^$", 1),
-           hash("$", 1),
-       },
-       {
-           // Unigram & Bigram output for "wow", when `max_splits` == 3.
-           // We can start to include some tokens from the input string.
-           hash("^", 0),
-           hash("w", 0),
-           hash("$", 0),
-           hash("^w", 1),
-           hash("w$", 1),
-           hash("$", 1),
-       },
-       {
-           // Unigram & Bigram output for "wow", when `max_splits` == 4.
-           hash("^", 0),
-           hash("w", 0),
-           hash("o", 0),
-           hash("$", 0),
-           hash("^w", 1),
-           hash("wo", 1),
-           hash("o$", 1),
-           hash("$", 1),
-       },
-       {
-           // Unigram & Bigram output for "wow", when `max_splits` == 5.
-           // We can include the full input string.
-           hash("^", 0),
-           hash("w", 0),
-           hash("o", 0),
-           hash("w", 0),
-           hash("$", 0),
-           hash("^w", 1),
-           hash("wo", 1),
-           hash("ow", 1),
-           hash("w$", 1),
-           hash("$", 1),
-       },
-       {
-           // Unigram & Bigram output for "wow", when `max_splits` == 6.
-           // `max_splits` is more than the full input string.
-           hash("^", 0),
-           hash("w", 0),
-           hash("o", 0),
-           hash("w", 0),
-           hash("$", 0),
-           hash("^w", 1),
-           hash("wo", 1),
-           hash("ow", 1),
-           hash("w$", 1),
-           hash("$", 1),
-       }});
+  const std::vector<std::vector<int>> expected_testcase_outputs({
+      {// Unigram & Bigram output for "wow", when `max_splits` == 2.
+       // We cannot include any of the actual tokens, since `max_splits` only
+       // allows enough space for the delimiters.
+       hash("^", 0), hash("$", 0),  //
+       hash("^$", 1), hash("$", 1)},
+      {// Unigram & Bigram output for "wow", when `max_splits` == 3.
+       // We can start to include some tokens from the input string.
+       hash("^", 0), hash("w", 0), hash("$", 0),  //
+       hash("^w", 1), hash("w$", 1), hash("$", 1)},
+      {// Unigram & Bigram output for "wow", when `max_splits` == 4.
+       hash("^", 0), hash("w", 0), hash("o", 0), hash("$", 0),  //
+       hash("^w", 1), hash("wo", 1), hash("o$", 1), hash("$", 1)},
+      {// Unigram & Bigram output for "wow", when `max_splits` == 5.
+       // We can include the full input string.
+       hash("^", 0), hash("w", 0), hash("o", 0), hash("w", 0), hash("$", 0),  //
+       hash("^w", 1), hash("wo", 1), hash("ow", 1), hash("w$", 1),
+       hash("$", 1)},
+      {// Unigram & Bigram output for "wow", when `max_splits` == 6.
+       // `max_splits` is more than the full input string.
+       hash("^", 0), hash("w", 0), hash("o", 0), hash("w", 0), hash("$", 0),  //
+       hash("^w", 1), hash("wo", 1), hash("ow", 1), hash("w$", 1),
+       hash("$", 1)}  //
+  });
 
   for (int test_idx = 0; test_idx < max_splits.size(); test_idx++) {
     const int testcase_max_splits = max_splits[test_idx];

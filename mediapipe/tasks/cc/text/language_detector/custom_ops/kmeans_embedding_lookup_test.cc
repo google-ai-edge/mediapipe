@@ -9,9 +9,10 @@
 #include "absl/log/absl_check.h"  // from @com_google_absl
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "tflite/c/common.h"           // from @litert
-#include "tflite/interpreter.h"        // from @litert
-#include "tflite/kernels/test_util.h"  // from @litert
+#include "tflite/c/common.h"                 // from @litert
+#include "tflite/interpreter.h"              // from @litert
+#include "tflite/kernels/test_util.h"        // from @litert
+#include "tflite/schema/schema_generated.h"  // from @litert
 
 namespace mediapipe::tflite_operations {
 namespace {
@@ -92,8 +93,11 @@ class KmeansEmbeddingLookupTestWithSampleInputs : public ::testing::Test {
     input_ = std::vector<int>({1, 2, 3, 0, 0});
     encoding_table_ = std::vector<std::vector<uint8_t>>(
         {{0, 0}, {1, 1}, {1, 2}, {1, 0}, {1, 0}, {2, 0}});
-    codebook_ =
-        std::vector<std::vector<float>>({{0.0, 0.0}, {7.0, 7.0}, {7.0, 0.0}});
+    codebook_ = std::vector<std::vector<float>>({
+        {0.0, 0.0},  //
+        {7.0, 7.0},  //
+        {7.0, 0.0}   //
+    });
     expected_output_ = std::vector<float>(
         // The output is the average of the embeddings at the three indices
         // (1, 2, 3).
@@ -130,8 +134,12 @@ TEST_F(KmeansEmbeddingLookupTestWithSampleInputs,
   std::vector<int> input = std::vector<int>({2, 2, 1, 3});
   std::vector<std::vector<uint8_t>> encoding_table =
       std::vector<std::vector<uint8_t>>({{0, 0}, {1, 2}, {3, 0}, {2, 3}});
-  std::vector<std::vector<float>> codebook = std::vector<std::vector<float>>(
-      {{5.0, 2.0, 3.0}, {8.0, 2.0, 4.0}, {1.2, 2.4, 3.6}, {0.5, -2.0, 1.0}});
+  std::vector<std::vector<float>> codebook = std::vector<std::vector<float>>({
+      {5.0, 2.0, 3.0},  //
+      {8.0, 2.0, 4.0},  //
+      {1.2, 2.4, 3.6},  //
+      {0.5, -2.0, 1.0}  //
+  });
   m.Invoke(input, FlattenVector2D<uint8_t>(encoding_table),
            FlattenVector2D<float>(codebook));
   std::vector<float> expected_output =
@@ -149,8 +157,12 @@ TEST_F(KmeansEmbeddingLookupTestWithSampleInputs, IgnoresIndicesAfterZero) {
   std::vector<int> input = std::vector<int>({2, 2, 0, 3});
   std::vector<std::vector<uint8_t>> encoding_table =
       std::vector<std::vector<uint8_t>>({{0, 0}, {1, 2}, {3, 0}, {2, 3}});
-  std::vector<std::vector<float>> codebook = std::vector<std::vector<float>>(
-      {{5.0, 2.0, 3.0}, {8.0, 2.0, 4.0}, {1.2, 2.4, 3.6}, {0.5, -2.0, 1.0}});
+  std::vector<std::vector<float>> codebook = std::vector<std::vector<float>>({
+      {5.0, 2.0, 3.0},  //
+      {8.0, 2.0, 4.0},  //
+      {1.2, 2.4, 3.6},  //
+      {0.5, -2.0, 1.0}  //
+  });
   m.Invoke(input, FlattenVector2D<uint8_t>(encoding_table),
            FlattenVector2D<float>(codebook));
   std::vector<float> expected_output =

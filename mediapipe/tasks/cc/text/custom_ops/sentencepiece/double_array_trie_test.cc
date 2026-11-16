@@ -15,8 +15,13 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/text/custom_ops/sentencepiece/double_array_trie.h"
 
+#include <string>
+#include <vector>
+
+#include "flatbuffers/flatbuffers.h"  // from @flatbuffers
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/tasks/cc/text/custom_ops/sentencepiece/config_generated.h"
 #include "mediapipe/tasks/cc/text/custom_ops/sentencepiece/double_array_trie_builder.h"
 #include "mediapipe/tasks/cc/text/custom_ops/sentencepiece/encoder_config_generated.h"
 #include "mediapipe/tasks/cc/text/custom_ops/sentencepiece/utils.h"
