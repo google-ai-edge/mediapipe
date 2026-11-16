@@ -16,6 +16,7 @@ limitations under the License.
 
 #include <string>
 
+#include "absl/base/attributes.h"        // from @com_google_absl
 #include "absl/base/const_init.h"        // from @com_google_absl
 #include "absl/log/log_entry.h"          // from @com_google_absl
 #include "absl/log/log_sink.h"           // from @com_google_absl
@@ -29,7 +30,8 @@ class CCallbackLogSink : public absl::LogSink {
   CCallbackLogSink(MpLogCallback callback, void* user_data)
       : callback_(callback), user_data_(user_data) {}
 
-  void Send(const absl::LogEntry& entry) override {
+  ABSL_ATTRIBUTE_NO_SANITIZE_CFI void Send(
+      const absl::LogEntry& entry) override {
     if (callback_) {
       std::string msg(entry.text_message());
       callback_(static_cast<int>(entry.log_severity()), msg.c_str(),

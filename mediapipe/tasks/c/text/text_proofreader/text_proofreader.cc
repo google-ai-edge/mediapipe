@@ -21,6 +21,7 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "absl/base/attributes.h"       // from @com_google_absl
 #include "absl/log/absl_check.h"        // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
@@ -86,6 +87,12 @@ void PopulateStreamingResult(const TextProofreaderStreamResult& cpp_result,
 
   c_result->done = cpp_result.done;
 }
+template <typename Callback, typename... Args>
+ABSL_ATTRIBUTE_NO_SANITIZE_CFI auto InvokeCallback(Callback callback,
+                                                   Args... args) {
+  return callback(args...);
+}
+
 }  // namespace
 
 absl::Status CppTextProofreaderCreate(const MpTextProofreaderOptions* options,
@@ -159,14 +166,14 @@ absl::Status CppTextProofreaderProofreadStreaming(
        user_data](absl::StatusOr<TextProofreaderStreamResult> stream_result) {
         if (!stream_result.ok()) {
           std::string error_str = stream_result.status().ToString();
-          callback(user_data, nullptr, error_str.c_str());
+          InvokeCallback(callback, user_data, nullptr, error_str.c_str());
           return;
         }
 
         MpTextProofreaderStreamResult c_result = {};
         std::vector<MpCorrection> c_corrections;
         PopulateStreamingResult(*stream_result, &c_result, &c_corrections);
-        callback(user_data, &c_result, nullptr);
+        InvokeCallback(callback, user_data, &c_result, nullptr);
       });
 }
 

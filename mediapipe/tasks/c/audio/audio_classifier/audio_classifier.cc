@@ -20,6 +20,7 @@ limitations under the License.
 #include <utility>
 
 #include "Eigen/Core"                   // from @eigen
+#include "absl/base/attributes.h"       // from @com_google_absl
 #include "absl/log/absl_check.h"        // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
@@ -66,7 +67,7 @@ AudioClassifier* GetCppClassifier(MpAudioClassifierPtr wrapper) {
 }
 
 // A static result callback function that calls the provided C result callback.
-void CppResultCallback(
+ABSL_ATTRIBUTE_NO_SANITIZE_CFI void CppResultCallback(
     absl::StatusOr<ClassificationResult> result,
     MpAudioClassifierOptions::result_callback_fn c_callback) {
   if (!result.ok()) {

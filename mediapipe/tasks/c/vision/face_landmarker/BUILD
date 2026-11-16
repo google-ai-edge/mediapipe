@@ -69,6 +69,7 @@ cc_test(
 FACE_LANDMARKER_DEPS = [
     ":face_landmarker_result",
     ":face_landmarker_result_converter",
+    "@com_google_absl//absl/base:core_headers",
     "@com_google_absl//absl/log:absl_log",
     "@com_google_absl//absl/status",
     "@com_google_absl//absl/status:statusor",

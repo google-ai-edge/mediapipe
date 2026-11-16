@@ -21,6 +21,7 @@ limitations under the License.
 #include <optional>
 #include <utility>
 
+#include "absl/base/attributes.h"  // from @com_google_absl
 #include "absl/log/absl_check.h"   // from @com_google_absl
 #include "absl/log/absl_log.h"     // from @com_google_absl
 #include "absl/status/status.h"    // from @com_google_absl
@@ -68,6 +69,12 @@ PoseLandmarker* GetCppLandmarker(MpPoseLandmarkerPtr landmarker) {
   return landmarker->instance.get();
 }
 
+template <typename Callback, typename... Args>
+ABSL_ATTRIBUTE_NO_SANITIZE_CFI void InvokeCallback(Callback callback,
+                                                   Args... args) {
+  callback(args...);
+}
+
 }  // namespace
 
 const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
@@ -108,13 +115,13 @@ absl::Status CppPoseLandmarkerCreate(const MpPoseLandmarkerOptions& options,
                           const Image& image, int64_t timestamp) {
           MpImageInternal mp_image({.image = image});
           if (!cpp_result.ok()) {
-            result_callback(ToMpStatus(cpp_result.status()), nullptr, &mp_image,
-                            timestamp);
+            InvokeCallback(result_callback, ToMpStatus(cpp_result.status()),
+                           nullptr, &mp_image, timestamp);
             return;
           }
           MpPoseLandmarkerResult result;
           CppConvertToPoseLandmarkerResult(*cpp_result, &result);
-          result_callback(kMpOk, &result, &mp_image, timestamp);
+          InvokeCallback(result_callback, kMpOk, &result, &mp_image, timestamp);
           CppClosePoseLandmarkerResult(&result);
         };
   }

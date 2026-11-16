@@ -19,6 +19,7 @@ load("@rules_cc//cc:cc_test.bzl", "cc_test")
 licenses(["notice"])
 
 IMAGE_EMBEDDER_DEPS = [
+    "@com_google_absl//absl/base:core_headers",
     "@com_google_absl//absl/log:absl_log",
     "@com_google_absl//absl/status",
     "@com_google_absl//absl/log:absl_check",

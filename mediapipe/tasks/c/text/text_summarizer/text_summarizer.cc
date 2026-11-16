@@ -20,6 +20,7 @@ limitations under the License.
 #include <string>
 #include <utility>
 
+#include "absl/base/attributes.h"       // from @com_google_absl
 #include "absl/log/absl_check.h"        // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
@@ -61,6 +62,12 @@ ConvertCModeToCppMode(enum MpTextSummarizerMode c_mode) {
       // modes.
       return CppMode::KEYPOINTS;
   }
+}
+
+template <typename Callback, typename... Args>
+ABSL_ATTRIBUTE_NO_SANITIZE_CFI auto InvokeCallback(Callback callback,
+                                                   Args... args) {
+  return callback(args...);
 }
 
 }  // namespace
@@ -134,14 +141,14 @@ absl::Status CppTextSummarizerSummarizeStreaming(
                       absl::StatusOr<TextSummarizerStreamResult> result_or) {
         if (!result_or.ok()) {
           std::string error_str = result_or.status().ToString();
-          callback(user_data, nullptr, error_str.c_str());
+          InvokeCallback(callback, user_data, nullptr, error_str.c_str());
         } else {
           const auto& result = result_or.value();
           MpTextSummarizerStreamResult c_result;
           c_result.chunk = const_cast<char*>(
               result.chunk.empty() ? nullptr : result.chunk.c_str());
           c_result.done = result.done;
-          callback(user_data, &c_result, nullptr);
+          InvokeCallback(callback, user_data, &c_result, nullptr);
         }
       });
 }

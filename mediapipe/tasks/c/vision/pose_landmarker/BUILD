@@ -74,6 +74,7 @@ cc_test(
 POSE_LANDMARKER_DEPS = [
     ":pose_landmarker_result",
     ":pose_landmarker_result_converter",
+    "@com_google_absl//absl/base:core_headers",
     "@com_google_absl//absl/log:absl_log",
     "@com_google_absl//absl/log:absl_check",
     "@com_google_absl//absl/status",

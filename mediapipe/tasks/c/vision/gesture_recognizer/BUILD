@@ -61,6 +61,7 @@ cc_test(
 GESTURE_RECOGNIZER_DEPS = [
     ":gesture_recognizer_result",
     ":gesture_recognizer_result_converter",
+    "@com_google_absl//absl/base:core_headers",
     "@com_google_absl//absl/log:absl_check",
     "@com_google_absl//absl/log:absl_log",
     "@com_google_absl//absl/status",

@@ -21,6 +21,7 @@ limitations under the License.
 #include <optional>
 #include <utility>
 
+#include "absl/base/attributes.h"  // from @com_google_absl
 #include "absl/log/absl_check.h"   // from @com_google_absl
 #include "absl/status/status.h"    // from @com_google_absl
 #include "absl/status/statusor.h"  // from @com_google_absl
@@ -73,6 +74,12 @@ FaceLandmarker* GetCppLandmarker(MpFaceLandmarkerPtr wrapper) {
   return wrapper->instance.get();
 }
 
+template <typename Callback, typename... Args>
+ABSL_ATTRIBUTE_NO_SANITIZE_CFI void InvokeCallback(Callback callback,
+                                                   Args... args) {
+  callback(args...);
+}
+
 }  // namespace
 
 void CppConvertToFaceLandmarkerOptions(
@@ -113,14 +120,14 @@ absl::Status CppFaceLandmarkerCreate(const MpFaceLandmarkerOptions& options,
                           const Image& image, int64_t timestamp) {
           MpImageInternal mp_image({.image = image});
           if (!cpp_result.ok()) {
-            result_callback(ToMpStatus(cpp_result.status()), nullptr, &mp_image,
-                            timestamp);
+            InvokeCallback(result_callback, ToMpStatus(cpp_result.status()),
+                           nullptr, &mp_image, timestamp);
             return;
           }
 
           MpFaceLandmarkerResult result;
           CppConvertToFaceLandmarkerResult(*cpp_result, &result);
-          result_callback(kMpOk, &result, &mp_image, timestamp);
+          InvokeCallback(result_callback, kMpOk, &result, &mp_image, timestamp);
           CppCloseFaceLandmarkerResult(&result);
         };
   }

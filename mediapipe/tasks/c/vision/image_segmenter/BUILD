@@ -73,6 +73,7 @@ cc_test(
 IMAGE_SEGMENTER_DEPS = [
     ":image_segmenter_result",
     ":image_segmenter_result_converter",
+    "@com_google_absl//absl/base:core_headers",
     "@com_google_absl//absl/log:absl_log",
     "@com_google_absl//absl/log:absl_check",
     "@com_google_absl//absl/status",

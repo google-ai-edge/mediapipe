@@ -48,6 +48,7 @@ cc_library(
 HOLISTIC_LANDMARKER_DEPS = [
     ":holistic_landmarker_result",
     ":holistic_landmarker_result_converter",
+    "@com_google_absl//absl/base:core_headers",
     "@com_google_absl//absl/log:absl_log",
     "@com_google_absl//absl/status",
     "@com_google_absl//absl/status:statusor",
