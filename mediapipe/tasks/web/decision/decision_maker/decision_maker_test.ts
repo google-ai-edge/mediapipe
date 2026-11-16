@@ -28,11 +28,11 @@ import {
 const NO_BOOLEAN_EXAMPLES = {
   positiveExamples: [],
   negativeExamples: [],
-  inputPrompt: 'CLASSIFICATION',
+  inputPrompt: undefined,
 };
 const NO_CHOICE_EXAMPLES = {
   examples: {},
-  inputPrompt: 'CLASSIFICATION',
+  inputPrompt: undefined,
   balanceClassWeights: true,
 };
 
@@ -1080,7 +1080,7 @@ describe('DecisionMaker', () => {
       false,
       {
         examples: {'a': ['x1', 'x2'], 'b': ['y1']},
-        inputPrompt: 'CLASSIFICATION',
+        inputPrompt: undefined,
         balanceClassWeights: true,
       },
     );
@@ -1094,7 +1094,7 @@ describe('DecisionMaker', () => {
       '',
       '',
       false,
-      {examples, inputPrompt: 'CLASSIFICATION', balanceClassWeights: true},
+      {examples, inputPrompt: undefined, balanceClassWeights: true},
     );
 
     mockModule['prewarmChoice'] = jasmine
@@ -1229,7 +1229,7 @@ describe('DecisionMaker', () => {
       0,
       '',
       false,
-      {examples: {}, inputPrompt: 'CLASSIFICATION', balanceClassWeights: true},
+      {examples: {}, inputPrompt: undefined, balanceClassWeights: true},
     );
     // `toString` is inherited by `examples`, not one of its own keys.
     expect(() =>

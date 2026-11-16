@@ -26,10 +26,12 @@ enum class ScoringMode(val value: Int) {
 
 /** How examples and inputs are embedded by embedding models, for questions with examples. */
 enum class InputPrompt(val value: Int) {
-  /** `"task: classification | query: <text>"`. Best for sentences (default). */
-  CLASSIFICATION(0),
+  /** Not set (default). Questions with examples use [CLASSIFICATION]. */
+  UNSPECIFIED(0),
+  /** `"task: classification | query: <text>"`. Best for sentences. */
+  CLASSIFICATION(1),
   /** The raw text. Best for single words and short phrases. */
-  NONE(1),
+  NONE(2),
 }
 
 /** Sealed hierarchy of structured questions evaluated by [Decision]. */
@@ -58,7 +60,7 @@ constructor(
   val normalizePrior: Boolean = false,
   val positiveExamples: List<String> = emptyList(),
   val negativeExamples: List<String> = emptyList(),
-  val inputPrompt: InputPrompt = InputPrompt.CLASSIFICATION,
+  val inputPrompt: InputPrompt = InputPrompt.UNSPECIFIED,
 ) : DecisionQuestion {
   init {
     require(positiveExamples.isEmpty() == negativeExamples.isEmpty()) {
@@ -101,7 +103,7 @@ constructor(
   val scoringMode: ScoringMode = ScoringMode.LENGTH_NORMALIZED_LOG_PROB,
   val normalizePrior: Boolean = false,
   val examples: List<List<String>> = emptyList(),
-  val inputPrompt: InputPrompt = InputPrompt.CLASSIFICATION,
+  val inputPrompt: InputPrompt = InputPrompt.UNSPECIFIED,
   val balanceClassWeights: Boolean = true,
 ) : DecisionQuestion {
   /**
@@ -191,7 +193,7 @@ constructor(
     fun withExamples(
       examples: Map<String, List<String>>,
       descriptions: Map<String, String> = emptyMap(),
-      inputPrompt: InputPrompt = InputPrompt.CLASSIFICATION,
+      inputPrompt: InputPrompt = InputPrompt.UNSPECIFIED,
       balanceClassWeights: Boolean = true,
       temperature: Float = 0.0f,
       instructions: String = "",

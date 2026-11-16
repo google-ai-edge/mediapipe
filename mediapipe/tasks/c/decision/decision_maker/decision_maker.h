@@ -78,9 +78,10 @@ struct MpBooleanQuestion {
   const char* const* negative_examples;
   // Number of entries in `negative_examples`.
   int negative_examples_count;
-  // With examples, how examples and inputs are embedded: 0 = "task:
-  // classification | query: <text>" (default), 1 = the raw text
-  // (`proto::DecisionInputPrompt`). Ignored without examples.
+  // With examples, how examples and inputs are embedded
+  // (`proto::DecisionInputPrompt`): 0 = unspecified (default, same as 1),
+  // 1 = "task: classification | query: <text>", 2 = the raw text. Ignored
+  // without examples.
   int input_prompt;
 };
 
@@ -118,9 +119,10 @@ struct MpChoiceQuestion {
   // Array of `count` example counts for `examples` (required if `examples` is
   // non-null).
   const int* example_counts;
-  // With examples, how examples and inputs are embedded: 0 = "task:
-  // classification | query: <text>" (default), 1 = the raw text
-  // (`proto::DecisionInputPrompt`). Ignored without examples.
+  // With examples, how examples and inputs are embedded
+  // (`proto::DecisionInputPrompt`): 0 = unspecified (default, same as 1),
+  // 1 = "task: classification | query: <text>", 2 = the raw text. Ignored
+  // without examples.
   int input_prompt;
   // With examples, choices are weighted by N / (K * N_c) unless this is true.
   // Negated so that a zero-initialized struct keeps the default.

@@ -231,14 +231,16 @@ declare interface DecisionMakerWasmModule {
 declare interface WasmBooleanExamples {
   positiveExamples: string[];
   negativeExamples: string[];
-  inputPrompt: InputPrompt;
+  /** Unset leaves the prompt unspecified. */
+  inputPrompt?: InputPrompt;
 }
 
 /** Example fields passed to the Wasm Choice functions. */
 declare interface WasmChoiceExamples {
   /** Choice key to examples; empty when the question has no examples. */
   examples: Record<string, string[]>;
-  inputPrompt: InputPrompt;
+  /** Unset leaves the prompt unspecified. */
+  inputPrompt?: InputPrompt;
   balanceClassWeights: boolean;
 }
 
@@ -272,7 +274,7 @@ function resolveBooleanExamples(question: {
   return {
     positiveExamples,
     negativeExamples,
-    inputPrompt: question.inputPrompt ?? 'CLASSIFICATION',
+    inputPrompt: question.inputPrompt,
   };
 }
 
@@ -335,7 +337,7 @@ function resolveChoiceExamples(
   validateChoiceExamples(keys, examples);
   return {
     examples,
-    inputPrompt: question.inputPrompt ?? 'CLASSIFICATION',
+    inputPrompt: question.inputPrompt,
     balanceClassWeights: question.balanceClassWeights ?? true,
   };
 }

@@ -31,7 +31,7 @@ export declare interface DecisionContextInput {
 
 /**
  * How examples and inputs are embedded, for questions with examples (ignored
- * otherwise). `'CLASSIFICATION'` (the default) embeds
+ * otherwise). `'CLASSIFICATION'` (used when unset) embeds
  * `task: classification | query: <text>` and suits sentences; `'NONE'` embeds
  * the raw text and suits single words and short phrases.
  */

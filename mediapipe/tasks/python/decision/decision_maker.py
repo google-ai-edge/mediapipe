@@ -143,10 +143,12 @@ class ScoringMode:
 class InputPrompt(enum.IntEnum):
   """How examples and inputs are embedded. Only used with examples."""
 
+  # Not set. Questions with examples use CLASSIFICATION.
+  UNSPECIFIED = 0
   # "task: classification | query: <text>". Best for sentences.
-  CLASSIFICATION = 0
+  CLASSIFICATION = 1
   # The raw text. Best for single words and short phrases.
-  NONE = 1
+  NONE = 2
 
 
 @dataclasses.dataclass
@@ -186,7 +188,7 @@ class BooleanQuestion:
   normalize_prior: bool = False
   positive_examples: Sequence[str] = ()
   negative_examples: Sequence[str] = ()
-  input_prompt: InputPrompt = InputPrompt.CLASSIFICATION
+  input_prompt: InputPrompt = InputPrompt.UNSPECIFIED
 
   def __post_init__(self):
     _check_example_list("positive_examples", self.positive_examples)
@@ -214,7 +216,7 @@ class ChoiceQuestion:
   normalize_prior: bool = False
   instructions: str = ""
   examples: Optional[Dict[str, Sequence[str]]] = None
-  input_prompt: InputPrompt = InputPrompt.CLASSIFICATION
+  input_prompt: InputPrompt = InputPrompt.UNSPECIFIED
   # With examples, weights each choice by N / (K * N_c), so that choices with
   # fewer examples aren't penalized.
   balance_class_weights: bool = True
