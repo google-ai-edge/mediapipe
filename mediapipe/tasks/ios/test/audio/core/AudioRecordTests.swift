@@ -18,14 +18,14 @@ import MediaPipeTasksCore
 import Testing
 
 struct AudioRecordTests {
-  private static let monoFormat = AudioDataFormat(sampleRate: 16000.0, channelCount: 1)
-  private static let stereoFormat = AudioDataFormat(sampleRate: 16000.0, channelCount: 2)
+  private static let monoFormat = AudioDataFormat(channelCount: 1, sampleRate: 16000.0)
+  private static let stereoFormat = AudioDataFormat(channelCount: 2, sampleRate: 16000.0)
 
   @Test(arguments: [0, 3])
   func `init rejects unsupported channel count`(channelCount: Int) {
     #expect(throws: TasksError.self) {
       _ = try AudioRecord(
-        audioDataFormat: AudioDataFormat(sampleRate: 16000.0, channelCount: channelCount),
+        audioDataFormat: AudioDataFormat(channelCount: channelCount, sampleRate: 16000.0),
         bufferLength: 6
       )
     }

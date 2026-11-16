@@ -123,7 +123,7 @@ final class AudioClassifierSmokeTests: XCTestCase {
     XCTAssertEqual(result.classificationResults.count, 1)
     XCTAssertEqual(result.timestampInMilliseconds, 1000)
 
-    let format = AudioDataFormat(sampleRate: 16000, channelCount: 1)
+    let format = AudioDataFormat(channelCount: 1, sampleRate: 16000)
     XCTAssertEqual(format.channelCount, 1)
     XCTAssertEqual(format.sampleRate, 16000, accuracy: 1e-3)
 

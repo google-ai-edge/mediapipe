@@ -25,8 +25,14 @@ public struct AudioDataFormat: Sendable, Equatable, Hashable {
   /// Sample rate in Hz.
   public let sampleRate: Double
 
-  public init(sampleRate: Double, channelCount: Int = AudioDataFormat.defaultChannelCount) {
-    self.sampleRate = sampleRate
+  /// Creates an `AudioDataFormat` with the given channel count and sample rate.
+  public init(channelCount: Int, sampleRate: Double) {
     self.channelCount = channelCount
+    self.sampleRate = sampleRate
+  }
+
+  /// Creates a mono `AudioDataFormat` using `defaultChannelCount` and the given sample rate.
+  public init(sampleRate: Double) {
+    self.init(channelCount: Self.defaultChannelCount, sampleRate: sampleRate)
   }
 }

@@ -25,7 +25,7 @@ struct AudioCoreTests {
     #expect(monoFormat.channelCount == 1)
     #expect(monoFormat.sampleRate == 16000.0)
 
-    let stereoFormat = AudioDataFormat(sampleRate: 44100.0, channelCount: 2)
+    let stereoFormat = AudioDataFormat(channelCount: 2, sampleRate: 44100.0)
     #expect(stereoFormat.channelCount == 2)
     #expect(monoFormat != stereoFormat)
 
@@ -73,7 +73,7 @@ struct AudioCoreTests {
 
   @Test
   func `AudioData loads FloatBuffer and bridges to MpAudioData`() throws {
-    let format = AudioDataFormat(sampleRate: 16000.0, channelCount: 2)
+    let format = AudioDataFormat(channelCount: 2, sampleRate: 16000.0)
     let audioData = AudioData(format: format, sampleCount: 3)
     #expect(audioData.bufferLength == 3)
     #expect(audioData.buffer.length == 6)

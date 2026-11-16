@@ -116,7 +116,7 @@ public final class AudioClassifier {
   public static func createAudioRecord(
     channelCount: Int, sampleRate: Double, bufferLength: Int
   ) throws -> AudioRecord {
-    let format = AudioDataFormat(sampleRate: sampleRate, channelCount: channelCount)
+    let format = AudioDataFormat(channelCount: channelCount, sampleRate: sampleRate)
     return try AudioRecord(audioDataFormat: format, bufferLength: bufferLength)
   }
 
