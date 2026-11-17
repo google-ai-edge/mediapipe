@@ -389,7 +389,8 @@ class SemanticRetriever:
     )
 
   def _convert_parts(
-      self, parts: Sequence[Union[ContentPart, Dict[str, Any]]]
+      self,
+      parts: Sequence[Union[TextPart, ImagePart, AudioPart, Dict[str, Any]]],
   ) -> Tuple[Any, List[Any]]:
     """Converts Python ContentPart or dict items into `_MpTaskPartC` array."""
     parts_arr_type = _MpTaskPartC * len(parts)
@@ -595,7 +596,7 @@ class SemanticRetriever:
   def insert_content(
       self,
       record_id: str,
-      parts: Sequence[Union[ContentPart, Dict[str, Any]]],
+      parts: Sequence[Union[TextPart, ImagePart, AudioPart, Dict[str, Any]]],
       metadata: Optional[Dict[str, str]] = None,
   ) -> None:
     """Inserts multi-modal parts with optional metadata.
@@ -627,7 +628,9 @@ class SemanticRetriever:
 
   def retrieve(
       self,
-      query: Union[str, Sequence[Union[ContentPart, Dict[str, Any]]]],
+      query: Union[
+          str, Sequence[Union[TextPart, ImagePart, AudioPart, Dict[str, Any]]]
+      ],
       limit: int,
       min_similarity: float = 0.5,
       metadata_filter: Optional[Dict[str, str]] = None,
@@ -647,7 +650,9 @@ class SemanticRetriever:
       A list of `RetrievalResult` items ordered by similarity score.
     """
     result_c = _MpRetrievalResultC()
-    query_parts: Sequence[Union[ContentPart, Dict[str, Any]]]
+    query_parts: Sequence[
+        Union[TextPart, ImagePart, AudioPart, Dict[str, Any]]
+    ]
     if isinstance(query, str):
       query_parts = [TextPart(text=query)]
     else:

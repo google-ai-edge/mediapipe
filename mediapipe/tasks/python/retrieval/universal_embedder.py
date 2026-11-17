@@ -311,7 +311,7 @@ class UniversalEmbedder:
     return result
 
   def embed_content(
-      self, parts: Sequence[ContentPart]
+      self, parts: Sequence[Union[TextPart, ImagePart, AudioPart]]
   ) -> UniversalEmbedderResult:
     """Extracts a joint embedding from multimodal content parts.
 
