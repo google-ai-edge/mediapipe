@@ -71,19 +71,23 @@ class BaseOptions:
   Attributes:
     model_asset_path: Path to the model asset file.
     model_asset_buffer: The model asset file contents as bytes.
-    delegate: Acceleration to use. Supported values are GPU and CPU. GPU support
-      is currently limited to Ubuntu platforms.
+    delegate: Acceleration to use. Supported values are GPU, CPU, and NPU. GPU
+      support is currently limited to Ubuntu platforms.
+    npu_dispatch_library_dir: Optional directory containing the LiteRT NPU
+      dispatch shared libraries.
   """
 
   class Delegate(enum.IntEnum):
     DEFAULT = 0
     CPU = 1
     GPU = 2
+    NPU = 5
 
 
   model_asset_path: Optional[str] = None
   model_asset_buffer: Optional[bytes] = None
   delegate: Optional[Delegate] = None
+  npu_dispatch_library_dir: Optional[str] = None
 
   @doc_controls.do_not_generate_docs
   def to_ctypes(self) -> base_options_c_lib.MpBaseOptionsC:
@@ -110,7 +114,11 @@ class BaseOptions:
     options.ca_bundle_path = ca_bundle_path.encode('utf-8')
     options.app_id = None
     options.app_version = None
-    options.npu_dispatch_library_dir = None
+    options.npu_dispatch_library_dir = (
+        self.npu_dispatch_library_dir.encode('utf-8')
+        if self.npu_dispatch_library_dir
+        else None
+    )
     options.file_descriptor = -1
     return options
 
@@ -129,4 +137,5 @@ class BaseOptions:
         self.model_asset_path == other.model_asset_path
         and self.model_asset_buffer == other.model_asset_buffer
         and self.delegate == other.delegate
+        and self.npu_dispatch_library_dir == other.npu_dispatch_library_dir
     )

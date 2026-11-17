@@ -54,6 +54,20 @@ class BaseOptionsTest(absltest.TestCase):
     )
     self.assertEqual(options_c.file_descriptor, -1)
 
+  def test_convert_to_ctypes_with_npu_delegate(self):
+    options = base_options_lib.BaseOptions(
+        model_asset_path='/path/to/model',
+        delegate=base_options_lib.BaseOptions.Delegate.NPU,
+        npu_dispatch_library_dir='/data/app/lib/arm64',
+    )
+    options_c = options.to_ctypes()
+    self.assertEqual(options_c.model_asset_path, b'/path/to/model')
+    self.assertEqual(
+        options_c.delegate, base_options_lib.BaseOptions.Delegate.NPU
+    )
+    self.assertEqual(options_c.npu_dispatch_library_dir, b'/data/app/lib/arm64')
+    self.assertEqual(options_c.file_descriptor, -1)
+
   def test_convert_to_ctypes_without_delegate(self):
     options = base_options_lib.BaseOptions(
         model_asset_path='/path/to/model', delegate=None

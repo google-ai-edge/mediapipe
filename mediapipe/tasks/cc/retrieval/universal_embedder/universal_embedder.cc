@@ -192,6 +192,27 @@ absl::StatusOr<std::unique_ptr<UniversalEmbedder>> UniversalEmbedder::Create(
     }
   }
 
+  if (options->base_options.delegate_options.has_value() &&
+      std::holds_alternative<tasks::core::BaseOptions::NpuOptions>(
+          *options->base_options.delegate_options)) {
+    const std::string& dispatch_dir =
+        std::get<tasks::core::BaseOptions::NpuOptions>(
+            *options->base_options.delegate_options)
+            .dispatch_library_directory;
+    if (!dispatch_dir.empty()) {
+      settings.GetMutableMainExecutorSettings().SetLitertDispatchLibDir(
+          dispatch_dir);
+      if (settings.GetMutableVisionExecutorSettings().has_value()) {
+        settings.GetMutableVisionExecutorSettings()->SetLitertDispatchLibDir(
+            dispatch_dir);
+      }
+      if (settings.GetMutableAudioExecutorSettings().has_value()) {
+        settings.GetMutableAudioExecutorSettings()->SetLitertDispatchLibDir(
+            dispatch_dir);
+      }
+    }
+  }
+
 #ifdef __EMSCRIPTEN__
   // In WebAssembly / Emscripten, virtual filesystem does not support XNNPack
   // mmap weight caching.

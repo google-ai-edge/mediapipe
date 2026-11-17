@@ -124,6 +124,13 @@ absl::Status CppUniversalEmbedderCreate(
   cpp_options->text_delegate = ToOptionalDelegate(options.text_delegate);
   cpp_options->vision_delegate = ToOptionalDelegate(options.vision_delegate);
   cpp_options->audio_delegate = ToOptionalDelegate(options.audio_delegate);
+  if (options.base_options.npu_dispatch_library_dir != nullptr &&
+      options.base_options.npu_dispatch_library_dir[0] != '\0') {
+    tasks::core::BaseOptions::NpuOptions npu_options;
+    npu_options.dispatch_library_directory =
+        options.base_options.npu_dispatch_library_dir;
+    cpp_options->base_options.delegate_options = std::move(npu_options);
+  }
   if (options.cache_dir != nullptr && strlen(options.cache_dir) > 0) {
     cpp_options->cache_dir = std::string(options.cache_dir);
   }

@@ -26,6 +26,9 @@ public enum Delegate: Int, Sendable, Equatable, Hashable {
   /// Executes inference on the GPU.
   case gpu = 2
 
+  /// Executes inference on the NPU / Neural Engine.
+  case npu = 5
+
   /// The underlying C delegate representation.
   package var cDelegate: MpDelegate {
     switch self {
@@ -35,6 +38,8 @@ public enum Delegate: Int, Sendable, Equatable, Hashable {
       return MP_DELEGATE_CPU
     case .gpu:
       return MP_DELEGATE_GPU
+    case .npu:
+      return MP_DELEGATE_NPU
     }
   }
 }
