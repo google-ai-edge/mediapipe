@@ -34,6 +34,12 @@ class MpBaseOptionsC(ctypes.Structure):
     app_version: `bytes`, optional application version as a UTF-8 string.
     npu_dispatch_library_dir: `bytes`, optional directory containing the LiteRT
       NPU dispatch libraries as a UTF-8 string.
+    cpu_num_threads: `int`, number of CPU threads to use.
+    cpu_use_xnnpack: `bool`, whether to use XNNPACK on CPU.
+    gpu_cached_kernel_path: `bytes`, optional GPU kernel cache path.
+    gpu_serialized_model_dir: `bytes`, optional GPU serialized model directory.
+    gpu_model_token: `bytes`, optional GPU model cache token.
+    gpu_backend: `int`, the GPU backend to use.
   """
 
   _fields_ = [
@@ -49,4 +55,10 @@ class MpBaseOptionsC(ctypes.Structure):
       ("app_id", ctypes.c_char_p),
       ("app_version", ctypes.c_char_p),
       ("npu_dispatch_library_dir", ctypes.c_char_p),
+      ("cpu_num_threads", ctypes.c_int),
+      ("cpu_use_xnnpack", ctypes.c_bool),
+      ("gpu_cached_kernel_path", ctypes.c_char_p),
+      ("gpu_serialized_model_dir", ctypes.c_char_p),
+      ("gpu_model_token", ctypes.c_char_p),
+      ("gpu_backend", ctypes.c_int),
   ]

@@ -119,6 +119,12 @@ class BaseOptions:
         if self.npu_dispatch_library_dir
         else None
     )
+    options.cpu_num_threads = 0
+    options.cpu_use_xnnpack = False
+    options.gpu_cached_kernel_path = None
+    options.gpu_serialized_model_dir = None
+    options.gpu_model_token = None
+    options.gpu_backend = 0
     options.file_descriptor = -1
     return options
 

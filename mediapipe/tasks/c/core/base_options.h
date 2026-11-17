@@ -16,6 +16,9 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_CORE_BASE_OPTIONS_H_
 #define MEDIAPIPE_TASKS_C_CORE_BASE_OPTIONS_H_
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #ifndef MP_EXPORT
 #if defined(_MSC_VER)
 #define MP_EXPORT __declspec(dllexport)
@@ -56,6 +59,14 @@ enum MpHostSystem {
   MP_HOST_SYSTEM_WINDOWS = 3,
   MP_HOST_SYSTEM_IOS = 4,
   MP_HOST_SYSTEM_ANDROID = 5,
+};
+
+// The GPU API to run inference with when using the LiteRT GPU accelerator.
+enum MpGpuBackend {
+  MP_GPU_BACKEND_DEFAULT = 0,
+  MP_GPU_BACKEND_OPENGL = 1,
+  MP_GPU_BACKEND_OPENCL = 2,
+  MP_GPU_BACKEND_WEBGPU = 3,
 };
 
 // Base options for MediaPipe C Tasks.
@@ -99,12 +110,35 @@ struct MpBaseOptions {
   // `MP_DELEGATE_NPU`; tasks with per-modality delegates may additionally
   // forward it for other `delegate` values.
   const char* npu_dispatch_library_dir;
+
+  // Number of CPU threads to use when `delegate` is `MP_DELEGATE_CPU` (or `<=
+  // 0` for the runtime default).
+  int cpu_num_threads;
+
+  // Whether to use XNNPACK when `delegate` is `MP_DELEGATE_CPU`.
+  bool cpu_use_xnnpack;
+
+  // Optional path to a pre-compiled GPU kernel binary cache when `delegate` is
+  // `MP_DELEGATE_GPU`.
+  const char* gpu_cached_kernel_path;
+
+  // Optional directory for loading and saving a serialized GPU model when
+  // `delegate` is `MP_DELEGATE_GPU`.
+  const char* gpu_serialized_model_dir;
+
+  // Optional unique token identifying the model for GPU serialization when
+  // `delegate` is `MP_DELEGATE_GPU`.
+  const char* gpu_model_token;
+
+  // The GPU backend to use when `delegate` is `MP_DELEGATE_GPU`.
+  enum MpGpuBackend gpu_backend;
 };
 
 // Frees heap-allocated buffer and string fields (`model_asset_buffer`,
 // `model_asset_path`, `host_version`, `ca_bundle_path`, `app_id`,
-// `app_version`, and `npu_dispatch_library_dir`) in `options` and resets all
-// fields to their default values.
+// `app_version`, `npu_dispatch_library_dir`, `gpu_cached_kernel_path`,
+// `gpu_serialized_model_dir`, and `gpu_model_token`) in `options` and resets
+// all fields to their default values.
 // Only call this if all non-null pointer fields in `options` were allocated on
 // the heap (e.g., via `malloc` or `strdup`).
 MP_EXPORT void MpBaseOptionsFree(struct MpBaseOptions* options);

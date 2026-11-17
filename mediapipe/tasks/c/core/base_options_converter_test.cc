@@ -116,6 +116,31 @@ TEST(BaseOptionsConverterTest, IgnoresNpuDispatchLibraryDirForNonNpuDelegate) {
   EXPECT_FALSE(cpp_base_options.delegate_options.has_value());
 }
 
+TEST(BaseOptionsConverterTest, ConvertsGpuDelegateOptions) {
+  MpBaseOptions c_base_options = {};
+  c_base_options.delegate = MP_DELEGATE_GPU;
+  c_base_options.gpu_cached_kernel_path = "/cache/kernels";
+  c_base_options.gpu_serialized_model_dir = "/cache/models";
+  c_base_options.gpu_model_token = "token_1";
+  c_base_options.gpu_backend = MP_GPU_BACKEND_OPENCL;
+
+  mediapipe::tasks::core::BaseOptions cpp_base_options = {};
+
+  CppConvertToBaseOptions(c_base_options, &cpp_base_options);
+  ASSERT_TRUE(cpp_base_options.delegate_options.has_value());
+  ASSERT_TRUE(
+      std::holds_alternative<mediapipe::tasks::core::BaseOptions::GpuOptions>(
+          *cpp_base_options.delegate_options));
+  const auto& gpu_options =
+      std::get<mediapipe::tasks::core::BaseOptions::GpuOptions>(
+          *cpp_base_options.delegate_options);
+  EXPECT_EQ(gpu_options.cached_kernel_path, "/cache/kernels");
+  EXPECT_EQ(gpu_options.serialized_model_dir, "/cache/models");
+  EXPECT_EQ(gpu_options.model_token, "token_1");
+  EXPECT_EQ(gpu_options.backend,
+            mediapipe::tasks::core::BaseOptions::GpuOptions::Backend::OPENCL);
+}
+
 TEST(BaseOptionsConverterTest, ConvertsBaseOptionsAppId) {
   MpBaseOptions c_base_options = {};
   c_base_options.app_id = "test_app_id";
@@ -189,6 +214,12 @@ TEST(BaseOptionsConverterTest, FreesAndResetsBaseOptions) {
       /* app_id= */ strdup("com.example.app"),
       /* app_version= */ strdup("1.2.3"),
       /* npu_dispatch_library_dir= */ strdup("/data/app/lib/arm64"),
+      /* cpu_num_threads= */ 4,
+      /* cpu_use_xnnpack= */ true,
+      /* gpu_cached_kernel_path= */ strdup("/cache/kernels"),
+      /* gpu_serialized_model_dir= */ strdup("/cache/models"),
+      /* gpu_model_token= */ strdup("token"),
+      /* gpu_backend= */ MP_GPU_BACKEND_OPENCL,
   };
 
   MpBaseOptionsFree(&c_base_options);
@@ -205,6 +236,12 @@ TEST(BaseOptionsConverterTest, FreesAndResetsBaseOptions) {
   EXPECT_EQ(c_base_options.app_id, nullptr);
   EXPECT_EQ(c_base_options.app_version, nullptr);
   EXPECT_EQ(c_base_options.npu_dispatch_library_dir, nullptr);
+  EXPECT_EQ(c_base_options.cpu_num_threads, 0);
+  EXPECT_FALSE(c_base_options.cpu_use_xnnpack);
+  EXPECT_EQ(c_base_options.gpu_cached_kernel_path, nullptr);
+  EXPECT_EQ(c_base_options.gpu_serialized_model_dir, nullptr);
+  EXPECT_EQ(c_base_options.gpu_model_token, nullptr);
+  EXPECT_EQ(c_base_options.gpu_backend, MP_GPU_BACKEND_DEFAULT);
 }
 
 TEST(BaseOptionsConverterTest, FreeHandlesNullptr) {

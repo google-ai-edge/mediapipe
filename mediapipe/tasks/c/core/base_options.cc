@@ -49,6 +49,20 @@ void MpBaseOptionsFree(struct MpBaseOptions* options) {
 
   free(const_cast<char*>(options->npu_dispatch_library_dir));
   options->npu_dispatch_library_dir = nullptr;
+
+  options->cpu_num_threads = 0;
+  options->cpu_use_xnnpack = false;
+
+  free(const_cast<char*>(options->gpu_cached_kernel_path));
+  options->gpu_cached_kernel_path = nullptr;
+
+  free(const_cast<char*>(options->gpu_serialized_model_dir));
+  options->gpu_serialized_model_dir = nullptr;
+
+  free(const_cast<char*>(options->gpu_model_token));
+  options->gpu_model_token = nullptr;
+
+  options->gpu_backend = MP_GPU_BACKEND_DEFAULT;
 }
 
 }  // extern "C"

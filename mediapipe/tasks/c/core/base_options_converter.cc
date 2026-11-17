@@ -81,6 +81,22 @@ mediapipe::tasks::core::HostSystem CppConvertToHostSystem(
   }
 }
 
+mediapipe::tasks::core::BaseOptions::GpuOptions::Backend CppConvertToGpuBackend(
+    const MpGpuBackend& in) {
+  switch (in) {
+    case MP_GPU_BACKEND_OPENGL:
+      return mediapipe::tasks::core::BaseOptions::GpuOptions::Backend::OPENGL;
+    case MP_GPU_BACKEND_OPENCL:
+      return mediapipe::tasks::core::BaseOptions::GpuOptions::Backend::OPENCL;
+    case MP_GPU_BACKEND_WEBGPU:
+      return mediapipe::tasks::core::BaseOptions::GpuOptions::Backend::WEBGPU;
+    case MP_GPU_BACKEND_DEFAULT:
+    default:
+      return mediapipe::tasks::core::BaseOptions::GpuOptions::Backend::
+          AUTOMATIC;
+  }
+}
+
 }  // namespace
 
 void CppConvertToBaseOptions(const MpBaseOptions& in,
@@ -102,6 +118,27 @@ void CppConvertToBaseOptions(const MpBaseOptions& in,
   out->app_version = in.app_version ? std::string(in.app_version) : "";
   out->model_asset_descriptor_meta.fd =
       in.file_descriptor != 0 ? in.file_descriptor : -1;
+
+  if (in.delegate == MP_DELEGATE_GPU &&
+      ((in.gpu_cached_kernel_path != nullptr &&
+        in.gpu_cached_kernel_path[0] != '\0') ||
+       (in.gpu_serialized_model_dir != nullptr &&
+        in.gpu_serialized_model_dir[0] != '\0') ||
+       (in.gpu_model_token != nullptr && in.gpu_model_token[0] != '\0') ||
+       in.gpu_backend != MP_GPU_BACKEND_DEFAULT)) {
+    mediapipe::tasks::core::BaseOptions::GpuOptions gpu_options;
+    if (in.gpu_cached_kernel_path != nullptr) {
+      gpu_options.cached_kernel_path = in.gpu_cached_kernel_path;
+    }
+    if (in.gpu_serialized_model_dir != nullptr) {
+      gpu_options.serialized_model_dir = in.gpu_serialized_model_dir;
+    }
+    if (in.gpu_model_token != nullptr) {
+      gpu_options.model_token = in.gpu_model_token;
+    }
+    gpu_options.backend = CppConvertToGpuBackend(in.gpu_backend);
+    out->delegate_options = std::move(gpu_options);
+  }
 
   if (in.delegate == MP_DELEGATE_NPU &&
       in.npu_dispatch_library_dir != nullptr &&
