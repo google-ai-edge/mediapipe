@@ -142,6 +142,13 @@ absl::Status ExtractFilesfromZipFile(
     int error = unzGoToFirstFile(zf);
     while (error == UNZ_OK) {
       ABSL_ASSIGN_OR_RETURN(auto zip_file_info, GetCurrentZipFileInfo(zf));
+      if (zip_file_info.position > buffer_size ||
+          zip_file_info.size > buffer_size - zip_file_info.position) {
+        return CreateStatusWithPayload(
+            StatusCode::kInvalidArgument,
+            "Zip archive entry extends past end of archive buffer.",
+            MediaPipeTasksStatus::kFileZipError);
+      }
       // Store result in map.
       (*files)[zip_file_info.name] = absl::string_view(
           buffer_data + zip_file_info.position, zip_file_info.size);

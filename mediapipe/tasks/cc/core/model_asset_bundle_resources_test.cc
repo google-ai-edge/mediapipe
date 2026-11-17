@@ -249,6 +249,24 @@ TEST(ModelAssetBundleResourcesTest, GetBundleManifestFailsIfNoManifest) {
   EXPECT_EQ(manifest_or.status().code(), absl::StatusCode::kNotFound);
 }
 
+TEST(ModelAssetBundleResourcesTest, RejectsZipEntryExceedingBufferBounds) {
+  std::string bundle = LoadBinaryContent(kTestModelBundlePath);
+  const auto cd_name = bundle.rfind("dummy_hand_landmarker.task");
+  ASSERT_NE(cd_name, std::string::npos);
+  bundle.replace(22, 4, "\xff\xff\x7f\x7f", 4);
+  bundle.replace(cd_name - 22, 4, "\xff\xff\x7f\x7f", 4);
+
+  auto model_file = std::make_unique<proto::ExternalFile>();
+  model_file->set_file_content(std::move(bundle));
+  absl::Status status = ModelAssetBundleResources::Create(
+                            kTestModelBundleResourcesTag, std::move(model_file))
+                            .status();
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(status.GetPayload(kMediaPipeTasksPayload),
+              testing::Optional(absl::Cord(
+                  absl::StrCat(MediaPipeTasksStatus::kFileZipError))));
+}
+
 }  // namespace core
 }  // namespace tasks
 }  // namespace mediapipe
