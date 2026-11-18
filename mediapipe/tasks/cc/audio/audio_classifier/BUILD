@@ -39,11 +39,9 @@ cc_library(
         "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
         "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core:task_runner",
-        "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
-        "@litert//tflite/core/api:op_resolver",
     ],
 )
 
@@ -51,13 +49,19 @@ cc_library(
     name = "audio_classifier_graph",
     srcs = ["audio_classifier_graph.cc"],
     deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/types:optional",
+        "@flatbuffers//:runtime_cc",
         "//mediapipe/calculators/audio:time_series_framer_calculator",
         "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:constant_side_packet_calculator_cc_proto",
         "//mediapipe/calculators/core:side_packet_to_stream_calculator",
         "//mediapipe/calculators/tensor:audio_to_tensor_calculator",
         "//mediapipe/calculators/tensor:audio_to_tensor_calculator_cc_proto",
-        "//mediapipe/calculators/tensor:inference_calculator_cpu",
+        # Registers InferenceCalculatorLiteRt, which this graph runs inference
+        # on.
         "//mediapipe/calculators/tensor:inference_calculator_litert",  # buildcleaner: keep
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -72,14 +76,8 @@ cc_library(
         "//mediapipe/tasks/cc/components/processors/proto:classification_postprocessing_graph_options_cc_proto",
         "//mediapipe/tasks/cc/core:model_resources",
         "//mediapipe/tasks/cc/core:model_task_graph",
-        "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:status_macros",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/types:optional",
-        "@flatbuffers//:runtime_cc",
         "@litert//tflite/schema:schema_fbs",
     ],
     alwayslink = 1,

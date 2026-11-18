@@ -49,10 +49,6 @@ cc_library(
 cc_test(
     name = "audio_embedder_test",
     srcs = ["audio_embedder_test.cc"],
-    data = [
-        "//mediapipe/tasks/testdata/audio:test_audio_clips",
-        "//mediapipe/tasks/testdata/audio:test_models",
-    ],
     deps = [
         ":audio_embedder",
         "//mediapipe/framework/deps:file_path",
@@ -61,6 +57,5 @@ cc_test(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
-        "@litert//tflite:test_util",
     ],
 )
