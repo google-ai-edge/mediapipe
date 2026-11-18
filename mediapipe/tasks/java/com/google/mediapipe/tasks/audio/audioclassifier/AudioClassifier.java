@@ -238,7 +238,7 @@ public final class AudioClassifier extends BaseAudioTaskApi {
    * inference. When this occurs, the input audio clip is split into multiple chunks starting at
    * different timestamps. For this reason, this function returns a vector of ClassificationResult
    * objects, each associated with a timestamp corresponding to the start (in milliseconds) of the
-   * chunk data that was classified, e.g:
+   * chunk data that was classified, e.g.:
    *
    * ClassificationResult #0 (first chunk of data):
    *  timestamp_ms: 0 (starts at 0ms)

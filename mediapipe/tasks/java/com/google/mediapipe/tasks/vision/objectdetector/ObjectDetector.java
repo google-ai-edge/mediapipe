@@ -63,7 +63,7 @@ import java.util.Optional;
  *         <li>if type is {@code kTfLiteFloat32}, NormalizationOptions are required to be attached
  *             to the metadata for input normalization.
  *       </ul>
- *   <li>Output tensors must be the 4 outputs of a {@code DetectionPostProcess} op, i.e:
+ *   <li>Output tensors must be the 4 outputs of a {@code DetectionPostProcess} op, i.e.:
  *       <ul>
  *         <li>Location tensor ({@code kTfLiteFloat32}):
  *             <ul>
@@ -393,7 +393,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
        * <ul>
        *   <li>IMAGE: The mode for detecting objects on single image inputs.
        *   <li>VIDEO: The mode for detecting objects on the decoded frames of a video.
-       *   <li>LIVE_STREAM: The mode for for detecting objects on a live stream of input data, such
+       *   <li>LIVE_STREAM: The mode for detecting objects on a livestream of input data, such
        *       as from camera. In this mode, {@code setResultListener} must be called to set up a
        *       listener to receive the detection results asynchronously.
        * </ul>
@@ -440,7 +440,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
 
       /**
        * Sets the {@link ResultListener} to receive the detection results asynchronously when the
-       * object detector is in the live stream mode.
+       * object detector is in the livestream mode.
        */
       public abstract Builder setResultListener(
           ResultListener<ObjectDetectorResult, MPImage> value);
@@ -455,7 +455,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
        *
        * @throws IllegalArgumentException if the result listener and the running mode are not
        *     properly configured. The result listener should only be set when the object detector is
-       *     in the live stream mode.
+       *     in the livestream mode.
        */
       public final ObjectDetectorOptions build() {
         ObjectDetectorOptions options = autoBuild();

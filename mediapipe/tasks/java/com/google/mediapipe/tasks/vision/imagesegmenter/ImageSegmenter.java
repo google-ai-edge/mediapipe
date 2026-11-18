@@ -798,7 +798,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
        * <ul>
        *   <li>IMAGE: The mode for segmenting image on single image inputs.
        *   <li>VIDEO: The mode for segmenting image on the decoded frames of a video.
-       *   <li>LIVE_STREAM: The mode for for segmenting image on a live stream of input data, such
+       *   <li>LIVE_STREAM: The mode for segmenting image on a livestream of input data, such
        *       as from camera. In this mode, {@code setResultListener} must be called to set up a
        *       listener to receive the recognition results asynchronously.
        * </ul>
@@ -834,7 +834,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
        *
        * @throws IllegalArgumentException if the result listener and the running mode are not
        *     properly configured. The result listener must be set when the image segmenter is in the
-       *     live stream mode.
+       *     livestream mode.
        */
       public final ImageSegmenterOptions build() {
         ImageSegmenterOptions options = autoBuild();

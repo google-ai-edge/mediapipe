@@ -34,7 +34,7 @@ class VisionTaskRunningMode(enum.Enum):
     IMAGE: The mode for running a mediapipe vision task on single image inputs.
     VIDEO: The mode for running a mediapipe vision task on the decoded frames
       of an input video.
-    LIVE_STREAM: The mode for running a mediapipe vision task on a live stream
+    LIVE_STREAM: The mode for running a mediapipe vision task on a livestream
       of input data, such as from camera.
   """
   IMAGE = 'IMAGE'
@@ -64,7 +64,7 @@ def validate_running_mode(
 
   Raises:
     ValueError: If packet callback is provided in image or video mode or
-    missing in live stream mode.
+    missing in livestream mode.
   """
   if running_mode == VisionTaskRunningMode.LIVE_STREAM:
     if packet_callback is None:

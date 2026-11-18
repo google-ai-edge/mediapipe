@@ -57,8 +57,8 @@ public abstract class AudioClassifierResult implements TaskResult {
   }
 
   /**
-   * A list of of timestamped {@link ClassificationResult} objects, each contains one set of results
-   * per classifier head.
+   * A list of timestamped {@link ClassificationResult} objects, each containing one set of
+   * results per classifier head.
    *
    * <p>In the "audio stream" mode, the list only contains one element, representing the
    * classification result of the audio block that starts at {@link

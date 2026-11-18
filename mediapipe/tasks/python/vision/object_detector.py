@@ -173,8 +173,8 @@ class ObjectDetectorOptions:
     running_mode: The running mode of the task. Default to the image mode.
       Object detector task has three running modes: 1) The image mode for
       detecting objects on single image inputs. 2) The video mode for detecting
-      objects on the decoded frames of a video. 3) The live stream mode for
-      detecting objects on a live stream of input data, such as from camera.
+      objects on the decoded frames of a video. 3) The livestream mode for
+      detecting objects on a livestream of input data, such as from camera.
     display_names_locale: The locale to use for display names specified through
       the TFLite Model Metadata.
     max_results: The maximum number of top-scored classification results to
@@ -189,9 +189,9 @@ class ObjectDetectorOptions:
       results whose category name is in this set will be filtered out. Duplicate
       or unknown category names are ignored. Mutually exclusive with
       `category_allowlist`.
-    result_callback: The user-defined result callback for processing live stream
+    result_callback: The user-defined result callback for processing livestream
       data. The result callback should only be specified when the running mode
-      is set to the live stream mode.
+      is set to the livestream mode.
   """
 
   base_options: _BaseOptions
@@ -220,7 +220,7 @@ class ObjectDetector:
     - only RGB inputs are supported (`channels` is required to be 3).
     - if type is kTfLiteFloat32, NormalizationOptions are required to be
       attached to the metadata for input normalization.
-  Output tensors must be the 4 outputs of a `DetectionPostProcess` op, i.e:
+  Output tensors must be the 4 outputs of a `DetectionPostProcess` op, i.e.:
     (kTfLiteFloat32)
     - locations tensor of size `[num_results x 4]`, the inner array
       representing bounding boxes in the form [top, left, right, bottom].
@@ -466,12 +466,12 @@ class ObjectDetector:
   ) -> None:
     """Sends live image data (an Image with a unique timestamp) to perform object detection.
 
-    Only use this method when the ObjectDetector is created with the live stream
+    Only use this method when the ObjectDetector is created with the livestream
     running mode. The input timestamps should be monotonically increasing for
     adjacent calls of this method. This method will return immediately after the
     input image is accepted. The results will be available via the
     `result_callback` provided in the `ObjectDetectorOptions`. The
-    `detect_async` method is designed to process live stream data such as camera
+    `detect_async` method is designed to process livestream data such as camera
     input. To lower the overall latency, object detector may drop the input
     images if needed. In other words, it's not guaranteed to have output per
     input image.

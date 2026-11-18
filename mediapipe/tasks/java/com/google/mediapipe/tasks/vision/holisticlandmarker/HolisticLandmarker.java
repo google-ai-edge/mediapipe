@@ -440,7 +440,7 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
        * <ul>
        *   <li>IMAGE: The mode for detecting holistic landmarks on single image inputs.
        *   <li>VIDEO: The mode for detecting holistic landmarks on the decoded frames of a video.
-       *   <li>LIVE_STREAM: The mode for for detecting holistic landmarks on a live stream of input
+       *   <li>LIVE_STREAM: The mode for detecting holistic landmarks on a livestream of input
        *       data, such as from camera. In this mode, {@code setResultListener} must be called to
        *       set up a listener to receive the detection results asynchronously.
        * </ul>
@@ -497,7 +497,7 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
 
       /**
        * Sets the result listener to receive the detection results asynchronously when the holistic
-       * landmarker is in the live stream mode.
+       * landmarker is in the livestream mode.
        */
       public abstract Builder setResultListener(
           ResultListener<HolisticLandmarkerResult, MPImage> value);
@@ -512,7 +512,7 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
        *
        * @throws IllegalArgumentException if the result listener and the running mode are not
        *     properly configured. The result listener should only be set when the holistic
-       *     landmarker is in the live stream mode.
+       *     landmarker is in the livestream mode.
        */
       public final HolisticLandmarkerOptions build() {
         HolisticLandmarkerOptions options = autoBuild();
@@ -571,7 +571,7 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
           .setOutputPoseSegmentationMasks(DEFAULT_OUTPUT_SEGMENTATION_MASKS);
     }
 
-    /** Converts a {@link HolisticLandmarkerOptions} to a {@link Any} protobuf message. */
+    /** Converts a {@link HolisticLandmarkerOptions} to an {@link Any} protobuf message. */
     @Override
     public Any convertToAnyProto() {
       HolisticLandmarkerGraphOptions.Builder holisticLandmarkerGraphOptions =

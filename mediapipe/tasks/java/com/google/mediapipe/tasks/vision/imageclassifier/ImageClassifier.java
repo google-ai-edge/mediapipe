@@ -371,7 +371,7 @@ public final class ImageClassifier extends BaseVisionTaskApi {
        * <ul>
        *   <li>IMAGE: The mode for performing classification on single image inputs.
        *   <li>VIDEO: The mode for performing classification on the decoded frames of a video.
-       *   <li>LIVE_STREAM: The mode for for performing classification on a live stream of input
+       *   <li>LIVE_STREAM: The mode for performing classification on a livestream of input
        *       data, such as from camera. In this mode, {@code setResultListener} must be called to
        *       set up a listener to receive the classification results asynchronously.
        * </ul>
@@ -418,7 +418,7 @@ public final class ImageClassifier extends BaseVisionTaskApi {
 
       /**
        * Sets the {@link ResultListener} to receive the classification results asynchronously when
-       * the image classifier is in the live stream mode.
+       * the image classifier is in the livestream mode.
        */
       public abstract Builder setResultListener(
           ResultListener<ImageClassifierResult, MPImage> resultListener);

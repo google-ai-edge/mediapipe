@@ -231,10 +231,10 @@ class HolisticLandmarkerOptions:
     running_mode: The running mode of the task. Default to the image mode.
       HolisticLandmarker has three running modes: 1) The image mode for
       detecting holistic landmarks on single image inputs. 2) The video mode for
-      detecting holistic landmarks on the decoded frames of a video. 3) The live
-      stream mode for detecting holistic landmarks on the live stream of input
-      data, such as from camera. In this mode, the "result_callback" below must
-      be specified to receive the detection results asynchronously.
+      detecting holistic landmarks on the decoded frames of a video. 3) The
+      livestream mode for detecting holistic landmarks on the livestream of
+      input data, such as from camera. In this mode, the "result_callback"
+      below must be specified to receive the detection results asynchronously.
     min_face_detection_confidence: The minimum confidence score for the face
       detection to be considered successful.
     min_face_suppression_threshold: The minimum non-maximum-suppression
@@ -252,9 +252,9 @@ class HolisticLandmarkerOptions:
     output_face_blendshapes: Whether HolisticLandmarker outputs face blendshapes
       classification. Face blendshapes are used for rendering the 3D face model.
     output_pose_segmentation_masks: Whether to output pose segmentation masks.
-    result_callback: The user-defined result callback for processing live stream
+    result_callback: The user-defined result callback for processing livestream
       data. The result callback should only be specified when the running mode
-      is set to the live stream mode.
+      is set to the livestream mode.
   """
 
   base_options: _BaseOptions
@@ -644,15 +644,14 @@ class HolisticLandmarker:
 
     The results will be available via the "result_callback" provided in the
     HolisticLandmarkerOptions. Only use this method when the HolisticLandmarker
-    is
-    created with the live stream running mode.
+    is created with the livestream running mode.
 
-    Only use this method when the HolisticLandmarker is created with the live
-    stream running mode. The input timestamps should be monotonically increasing
-    for adjacent calls of this method. This method will return immediately after
-    the input image is accepted. The results will be available via the
-    `result_callback` provided in the `HolisticLandmarkerOptions`. The
-    `detect_async` method is designed to process live stream data such as
+    Only use this method when the HolisticLandmarker is created with the
+    livestream running mode. The input timestamps should be monotonically
+    increasing for adjacent calls of this method. This method will return
+    immediately after the input image is accepted. The results will be available
+    via the `result_callback` provided in the `HolisticLandmarkerOptions`. The
+    `detect_async` method is designed to process livestream data such as
     camera input. To lower the overall latency, holistic landmarker may drop the
     input images if needed. In other words, it's not guaranteed to have output
     per input image.

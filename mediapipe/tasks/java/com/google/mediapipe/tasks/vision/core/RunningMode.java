@@ -21,7 +21,7 @@ package com.google.mediapipe.tasks.vision.core;
  * <ul>
  *   <li>IMAGE: The mode for running a mediapipe vision task on single image inputs.
  *   <li>VIDEO: The mode for running a mediapipe vision task on the decoded frames of a video.
- *   <li>LIVE_STREAM: The mode for running a mediapipe vision task on a live stream of input data,
+ *   <li>LIVE_STREAM: The mode for running a mediapipe vision task on a livestream of input data,
  *       such as from camera.
  * </ul>
  */

@@ -92,7 +92,7 @@ public final class LanguageDetector implements AutoCloseable {
    *
    * @param context an Android {@link Context}.
    * @param modelPath path to the text model with metadata in the assets.
-   * @throws MediaPipeException if there is is an error during {@link LanguageDetector} creation.
+   * @throws MediaPipeException if there is an error during {@link LanguageDetector} creation.
    */
   public static LanguageDetector createFromFile(Context context, String modelPath) {
     BaseOptions baseOptions = BaseOptions.builder().setModelAssetPath(modelPath).build();

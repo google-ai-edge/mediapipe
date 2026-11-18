@@ -140,8 +140,8 @@ class ImageEmbedderOptions:
     running_mode: The running mode of the task. Default to the image mode. Image
       embedder task has three running modes: 1) The image mode for embedding
       image on single image inputs. 2) The video mode for embedding image on the
-      decoded frames of a video. 3) The live stream mode for embedding image on
-      a live stream of input data, such as from camera.
+      decoded frames of a video. 3) The livestream mode for embedding image on
+      a livestream of input data, such as from camera.
     l2_normalize: Whether to normalize the returned feature vector with L2 norm.
       Use this option only if the model does not already contain a native
       L2_NORMALIZATION TF Lite Op. In most cases, this is already the case and
@@ -150,9 +150,9 @@ class ImageEmbedderOptions:
       scalar quantization. Embeddings are implicitly assumed to be unit-norm and
       therefore any dimension is guaranteed to have a value in [-1.0, 1.0]. Use
       the l2_normalize option if this is not the case.
-    result_callback: The user-defined result callback for processing live stream
+    result_callback: The user-defined result callback for processing livestream
       data. The result callback should only be specified when the running mode
-      is set to the live stream mode.
+      is set to the livestream mode.
   """
 
   base_options: _BaseOptions
@@ -360,7 +360,7 @@ class ImageEmbedder:
   ) -> ImageEmbedderResult:
     """Performs image embedding extraction on the provided video frames.
 
-    Extraction is performed on the region of interested specified by the `roi`
+    Extraction is performed on the region of interest specified by the `roi`
     argument if provided, or on the entire image otherwise.
 
     Only use this method when the ImageEmbedder is created with the video
@@ -409,15 +409,15 @@ class ImageEmbedder:
 
     The results will be available via the "result_callback" provided in the
     ImageEmbedderOptions. Embedding extraction is performed on the region of
-    interested specified by the `roi` argument if provided, or on the entire
+    interest specified by the `roi` argument if provided, or on the entire
     image otherwise.
 
-    Only use this method when the ImageEmbedder is created with the live
-    stream running mode. The input timestamps should be monotonically increasing
+    Only use this method when the ImageEmbedder is created with the livestream
+    running mode. The input timestamps should be monotonically increasing
     for adjacent calls of this method. This method will return immediately after
     the input image is accepted. The results will be available via the
     `result_callback` provided in the `ImageEmbedderOptions`. The
-    `embed_async` method is designed to process live stream data such as
+    `embed_async` method is designed to process livestream data such as
     camera input. To lower the overall latency, image embedder may drop the
     input images if needed. In other words, it's not guaranteed to have output
     per input image.

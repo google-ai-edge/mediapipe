@@ -247,8 +247,8 @@ class PoseLandmarkerOptions:
     running_mode: The running mode of the task. Default to the image mode.
       PoseLandmarker has three running modes: 1) The image mode for detecting
       pose landmarks on single image inputs. 2) The video mode for detecting
-      pose landmarks on the decoded frames of a video. 3) The live stream mode
-      for detecting pose landmarks on the live stream of input data, such as
+      pose landmarks on the decoded frames of a video. 3) The livestream mode
+      for detecting pose landmarks on the livestream of input data, such as
       from camera. In this mode, the "result_callback" below must be specified
       to receive the detection results asynchronously.
     num_poses: The maximum number of poses can be detected by the
@@ -260,9 +260,9 @@ class PoseLandmarkerOptions:
     min_tracking_confidence: The minimum confidence score for the pose tracking
       to be considered successful.
     output_segmentation_masks: whether to output segmentation masks.
-    result_callback: The user-defined result callback for processing live stream
+    result_callback: The user-defined result callback for processing livestream
       data. The result callback should only be specified when the running mode
-      is set to the live stream mode.
+      is set to the livestream mode.
   """
 
   base_options: _BaseOptions
@@ -539,14 +539,14 @@ class PoseLandmarker:
 
     The results will be available via the "result_callback" provided in the
     PoseLandmarkerOptions. Only use this method when the PoseLandmarker is
-    created with the live stream running mode.
+    created with the livestream running mode.
 
-    Only use this method when the PoseLandmarker is created with the live
-    stream running mode. The input timestamps should be monotonically increasing
+    Only use this method when the PoseLandmarker is created with the livestream
+    running mode. The input timestamps should be monotonically increasing
     for adjacent calls of this method. This method will return immediately after
     the input image is accepted. The results will be available via the
     `result_callback` provided in the `PoseLandmarkerOptions`. The
-    `detect_async` method is designed to process live stream data such as
+    `detect_async` method is designed to process livestream data such as
     camera input. To lower the overall latency, pose landmarker may drop the
     input images if needed. In other words, it's not guaranteed to have output
     per input image.

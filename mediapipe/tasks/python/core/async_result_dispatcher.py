@@ -128,9 +128,9 @@ class AsyncResultDispatcher:
     once per instance.
 
     Args:
-      python_callback: The user-defined result callback for processing live
-        stream data.
-      c_callback_type: The ctypes callback function wrapperof the function you
+      python_callback: The user-defined result callback for processing
+        livestream data.
+      c_callback_type: The ctypes callback function wrapper of the function you
         wish to create.
 
     Raises:

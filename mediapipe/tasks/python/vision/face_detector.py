@@ -140,15 +140,15 @@ class FaceDetectorOptions:
     running_mode: The running mode of the task. Default to the image mode. Face
       detector task has three running modes: 1) The image mode for detecting
       faces on single image inputs. 2) The video mode for detecting faces on the
-      decoded frames of a video. 3) The live stream mode for detecting faces on
-      a live stream of input data, such as from camera.
+      decoded frames of a video. 3) The livestream mode for detecting faces on
+      a livestream of input data, such as from camera.
     min_detection_confidence: The minimum confidence score for the face
       detection to be considered successful.
     min_suppression_threshold: The minimum non-maximum-suppression threshold for
       face detection to be considered overlapped.
-    result_callback: The user-defined result callback for processing live stream
+    result_callback: The user-defined result callback for processing livestream
       data. The result callback should only be specified when the running mode
-      is set to the live stream mode.
+      is set to the livestream mode.
   """
 
   base_options: _BaseOptions
@@ -372,12 +372,12 @@ class FaceDetector:
   ) -> None:
     """Sends live image data (an Image with a unique timestamp) to perform face detection.
 
-    Only use this method when the FaceDetector is created with the live stream
+    Only use this method when the FaceDetector is created with the livestream
     running mode. The input timestamps should be monotonically increasing for
     adjacent calls of this method. This method will return immediately after the
     input image is accepted. The results will be available via the
     `result_callback` provided in the `FaceDetectorOptions`. The
-    `detect_async` method is designed to process live stream data such as camera
+    `detect_async` method is designed to process livestream data such as camera
     input. To lower the overall latency, face detector may drop the input
     images if needed. In other words, it's not guaranteed to have output per
     input image.

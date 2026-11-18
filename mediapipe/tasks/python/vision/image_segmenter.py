@@ -211,15 +211,15 @@ class ImageSegmenterOptions:
     running_mode: The running mode of the task. Default to the image mode. Image
       segmenter task has three running modes: 1) The image mode for segmenting
       objects on single image inputs. 2) The video mode for segmenting objects
-      on the decoded frames of a video. 3) The live stream mode for segmenting
-      objects on a live stream of input data, such as from camera.
+      on the decoded frames of a video. 3) The livestream mode for segmenting
+      objects on a livestream of input data, such as from camera.
     display_names_locale: The locale to use for display names specified through
       the TFLite Model Metadata.
     output_confidence_masks: Whether to output confidence masks.
     output_category_mask: Whether to output category mask.
-    result_callback: The user-defined result callback for processing live stream
+    result_callback: The user-defined result callback for processing livestream
       data. The result callback should only be specified when the running mode
-      is set to the live stream mode.
+      is set to the livestream mode.
   """
 
   base_options: _BaseOptions
@@ -460,12 +460,12 @@ class ImageSegmenter:
   ) -> None:
     """Sends live image data (an Image with a unique timestamp) to perform image segmentation.
 
-    Only use this method when the ImageSegmenter is created with the live stream
+    Only use this method when the ImageSegmenter is created with the livestream
     running mode. The input timestamps should be monotonically increasing for
     adjacent calls of this method. This method will return immediately after the
     input image is accepted. The results will be available via the
     `result_callback` provided in the `ImageSegmenterOptions`. The
-    `segment_async` method is designed to process live stream data such as
+    `segment_async` method is designed to process livestream data such as
     camera input. To lower the overall latency, image segmenter may drop the
     input images if needed. In other words, it's not guaranteed to have output
     per input image.

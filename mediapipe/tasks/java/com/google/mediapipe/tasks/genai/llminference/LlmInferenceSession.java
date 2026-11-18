@@ -239,14 +239,14 @@ public class LlmInferenceSession implements AutoCloseable {
     }
   }
 
-  /** Cancels active <@code>generateResponseAsync</code> call in the session. */
+  /** Cancels active {@code generateResponseAsync} call in the session. */
   public void cancelGenerateResponseAsync() {
     taskRunner.pendingProcessCancellation(session);
   }
 
   /**
    * Runs an invocation of <b>only</b> the tokenization for the LLM, and returns the size (in
-   * tokens) of the result. Cannot be called while a other calls are in progress.
+   * tokens) of the result. Cannot be called while other calls are in progress.
    *
    * @param text The text to tokenize.
    * @return The number of tokens in the resulting tokenization of the text.

@@ -2990,8 +2990,8 @@ class FaceLandmarkerOptions:
     running_mode: The running mode of the task. Default to the image mode.
       FaceLandmarker has three running modes: 1) The image mode for detecting
       face landmarks on single image inputs. 2) The video mode for detecting
-      face landmarks on the decoded frames of a video. 3) The live stream mode
-      for detecting face landmarks on the live stream of input data, such as
+      face landmarks on the decoded frames of a video. 3) The livestream mode
+      for detecting face landmarks on the livestream of input data, such as
       from camera. In this mode, the "result_callback" below must be specified
       to receive the detection results asynchronously.
     num_faces: The maximum number of faces that can be detected by the
@@ -3008,9 +3008,9 @@ class FaceLandmarkerOptions:
       transformation_matrix. Facial transformation matrix is used to transform
       the face landmarks in canonical face to the detected face, so that users
       can apply face effects on the detected landmarks.
-    result_callback: The user-defined result callback for processing live stream
+    result_callback: The user-defined result callback for processing livestream
       data. The result callback should only be specified when the running mode
-      is set to the live stream mode.
+      is set to the livestream mode.
   """
 
   base_options: _BaseOptions
@@ -3289,14 +3289,14 @@ class FaceLandmarker:
 
     The results will be available via the "result_callback" provided in the
     FaceLandmarkerOptions. Only use this method when the FaceLandmarker is
-    created with the live stream running mode.
+    created with the livestream running mode.
 
-    Only use this method when the FaceLandmarker is created with the live
-    stream running mode. The input timestamps should be monotonically increasing
+    Only use this method when the FaceLandmarker is created with the livestream
+    running mode. The input timestamps should be monotonically increasing
     for adjacent calls of this method. This method will return immediately after
     the input image is accepted. The results will be available via the
     `result_callback` provided in the `FaceLandmarkerOptions`. The
-    `detect_async` method is designed to process live stream data such as
+    `detect_async` method is designed to process livestream data such as
     camera input. To lower the overall latency, face landmarker may drop the
     input images if needed. In other words, it's not guaranteed to have output
     per input image.

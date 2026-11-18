@@ -361,7 +361,7 @@ public final class FaceDetector extends BaseVisionTaskApi {
        * <ul>
        *   <li>IMAGE: The mode for detecting faces on single image inputs.
        *   <li>VIDEO: The mode for detecting faces on the decoded frames of a video.
-       *   <li>LIVE_STREAM: The mode for for detecting faces on a live stream of input data, such as
+       *   <li>LIVE_STREAM: The mode for detecting faces on a livestream of input data, such as
        *       from camera. In this mode, {@code setResultListener} must be called to set up a
        *       listener to receive the detection results asynchronously.
        * </ul>
@@ -382,7 +382,7 @@ public final class FaceDetector extends BaseVisionTaskApi {
 
       /**
        * Sets the {@link ResultListener} to receive the detection results asynchronously when the
-       * face detector is in the live stream mode.
+       * face detector is in the livestream mode.
        */
       public abstract Builder setResultListener(ResultListener<FaceDetectorResult, MPImage> value);
 
@@ -396,7 +396,7 @@ public final class FaceDetector extends BaseVisionTaskApi {
        *
        * @throws IllegalArgumentException if the result listener and the running mode are not
        *     properly configured. The result listener should only be set when the face detector is
-       *     in the live stream mode.
+       *     in the livestream mode.
        */
       public final FaceDetectorOptions build() {
         FaceDetectorOptions options = autoBuild();

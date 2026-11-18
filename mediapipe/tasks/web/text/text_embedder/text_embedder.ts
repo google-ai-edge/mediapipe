@@ -162,7 +162,7 @@ export class TextEmbedder extends TaskRunner {
   }
 
   /**
-   * Performs embeding extraction on the provided text and waits synchronously
+   * Performs embedding extraction on the provided text and waits synchronously
    * for the response.
    *
    * @export

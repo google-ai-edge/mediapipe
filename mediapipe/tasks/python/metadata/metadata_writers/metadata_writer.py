@@ -125,7 +125,7 @@ class BertTokenizer:
 
 @dataclasses.dataclass
 class SentencePieceTokenizer:
-  """Parameters of the sentence piece tokenizer tokenizer [1] metadata information.
+  """Parameters of the sentence piece tokenizer [1] metadata information.
 
   [1]:
     https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L485
@@ -527,7 +527,7 @@ class MetadataWriter(object):
                                                  SentencePieceTokenizer],
                           ids_name: str, mask_name: str,
                           segment_name: str) -> 'MetadataWriter':
-    """Adds an metadata for the text input with bert / sentencepiece tokenizer.
+    """Adds metadata for the text input with bert / sentencepiece tokenizer.
 
     `ids_name`, `mask_name`, and `segment_name` correspond to the `Tensor.name`
     in the TFLite schema, which help to determine the tensor order when
@@ -535,7 +535,7 @@ class MetadataWriter(object):
 
     Args:
       tokenizer: information of the tokenizer used to process the input string,
-        if any. Supported tokenziers are: `BertTokenizer` [1] and
+        if any. Supported tokenizers are: `BertTokenizer` [1] and
         `SentencePieceTokenizer` [2].
       ids_name: name of the ids tensor, which represents the tokenized ids of
         the input text.

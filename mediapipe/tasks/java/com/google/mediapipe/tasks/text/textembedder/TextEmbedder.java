@@ -78,7 +78,7 @@ public final class TextEmbedder implements AutoCloseable {
    *
    * @param context an Android {@link Context}.
    * @param modelPath path to the text model with metadata in the assets.
-   * @throws MediaPipeException if there is is an error during {@link TextEmbedder} creation.
+   * @throws MediaPipeException if there is an error during {@link TextEmbedder} creation.
    */
   public static TextEmbedder createFromFile(Context context, String modelPath) {
     BaseOptions baseOptions = BaseOptions.builder().setModelAssetPath(modelPath).build();

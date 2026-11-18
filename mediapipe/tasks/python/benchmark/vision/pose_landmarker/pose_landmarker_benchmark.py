@@ -25,7 +25,7 @@ _IMAGE_FILE = 'pose.jpg'
 
 
 def run(model_path, n_iterations, delegate):
-  """Run an pose landmarker benchmark.
+  """Run a pose landmarker benchmark.
 
   Args:
       model_path: Path to the TFLite model.

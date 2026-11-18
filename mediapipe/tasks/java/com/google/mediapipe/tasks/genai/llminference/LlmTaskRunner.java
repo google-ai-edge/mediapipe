@@ -189,7 +189,7 @@ final class LlmTaskRunner implements AutoCloseable {
    * Adds a new audio to the session context.
    *
    * @param session The LlmSession to add the audio spectrum to.
-   * @param rawAudioData A array of byte values representing the audio data.
+   * @param rawAudioData An array of byte values representing the audio data.
    */
   public void addAudio(LlmSession session, byte[] rawAudioData) {
     if (rawAudioData == null) {

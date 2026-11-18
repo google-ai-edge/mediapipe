@@ -140,7 +140,7 @@ public class BaseVisionTaskApi implements AutoCloseable {
   }
 
   /**
-   * An asynchronous method to send live stream data to the {@link TaskRunner}. The results will be
+   * An asynchronous method to send livestream data to the {@link TaskRunner}. The results will be
    * available in the user-defined result listener.
    *
    * @param image a MediaPipe {@link MPImage} object for processing.
@@ -164,7 +164,7 @@ public class BaseVisionTaskApi implements AutoCloseable {
   }
 
   /**
-   * An asynchronous method to send live stream data to the {@link TaskRunner}. The results will be
+   * An asynchronous method to send livestream data to the {@link TaskRunner}. The results will be
    * available in the user-defined result listener.
    *
    * @param inputPackets the maps of input stream names to the input packets.

@@ -301,8 +301,8 @@ class HandLandmarkerOptions:
     running_mode: The running mode of the task. Default to the image mode.
       HandLandmarker has three running modes: 1) The image mode for detecting
       hand landmarks on single image inputs. 2) The video mode for detecting
-      hand landmarks on the decoded frames of a video. 3) The live stream mode
-      for detecting hand landmarks on the live stream of input data, such as
+      hand landmarks on the decoded frames of a video. 3) The livestream mode
+      for detecting hand landmarks on the livestream of input data, such as
       from camera. In this mode, the "result_callback" below must be specified
       to receive the detection results asynchronously.
     num_hands: The maximum number of hands can be detected by the hand
@@ -313,9 +313,9 @@ class HandLandmarkerOptions:
       score in the hand landmark detection.
     min_tracking_confidence: The minimum confidence score for the hand tracking
       to be considered successful.
-    result_callback: The user-defined result callback for processing live stream
+    result_callback: The user-defined result callback for processing livestream
       data. The result callback should only be specified when the running mode
-      is set to the live stream mode.
+      is set to the livestream mode.
   """
 
   base_options: _BaseOptions
@@ -543,14 +543,14 @@ class HandLandmarker:
 
     The results will be available via the "result_callback" provided in the
     HandLandmarkerOptions. Only use this method when the HandLandmarker is
-    created with the live stream running mode.
+    created with the livestream running mode.
 
-    Only use this method when the HandLandmarker is created with the live
-    stream running mode. The input timestamps should be monotonically increasing
+    Only use this method when the HandLandmarker is created with the livestream
+    running mode. The input timestamps should be monotonically increasing
     for adjacent calls of this method. This method will return immediately after
     the input image is accepted. The results will be available via the
     `result_callback` provided in the `HandLandmarkerOptions`. The
-    `detect_async` method is designed to process live stream data such as
+    `detect_async` method is designed to process livestream data such as
     camera input. To lower the overall latency, hand landmarker may drop the
     input images if needed. In other words, it's not guaranteed to have output
     per input image.

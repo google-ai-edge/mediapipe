@@ -172,9 +172,9 @@ class GestureRecognizerOptions:
     running_mode: The running mode of the task. Default to the image mode.
       Gesture recognizer task has three running modes: 1) The image mode for
       recognizing hand gestures on single image inputs. 2) The video mode for
-      recognizing hand gestures on the decoded frames of a video. 3) The live
-      stream mode for recognizing hand gestures on a live stream of input data,
-      such as from camera.
+      recognizing hand gestures on the decoded frames of a video. 3) The
+      livestream mode for recognizing hand gestures on a livestream of input
+      data, such as from camera.
     num_hands: The maximum number of hands can be detected by the recognizer.
     min_hand_detection_confidence: The minimum confidence score for the hand
       detection to be considered successful.
@@ -190,9 +190,9 @@ class GestureRecognizerOptions:
     custom_gestures_classifier_options: Options for configuring the custom
       gestures classifier, such as score threshold, allow list and deny list of
       gestures. Note this option is subject to change.
-    result_callback: The user-defined result callback for processing live stream
+    result_callback: The user-defined result callback for processing livestream
       data. The result callback should only be specified when the running mode
-      is set to the live stream mode.
+      is set to the livestream mode.
   """
 
   base_options: _BaseOptions
@@ -513,14 +513,14 @@ class GestureRecognizer:
 
     The results will be available via the "result_callback" provided in the
     GestureRecognizerOptions. Only use this method when the GestureRecognizer
-    is created with the live stream running mode.
+    is created with the livestream running mode.
 
-    Only use this method when the GestureRecognizer is created with the live
-    stream running mode. The input timestamps should be monotonically increasing
-    for adjacent calls of this method. This method will return immediately after
-    the input image is accepted. The results will be available via the
-    `result_callback` provided in the `GestureRecognizerOptions`. The
-    `recognize_async` method is designed to process live stream data such as
+    Only use this method when the GestureRecognizer is created with the
+    livestream running mode. The input timestamps should be monotonically
+    increasing for adjacent calls of this method. This method will return
+    immediately after the input image is accepted. The results will be available
+    via the `result_callback` provided in the `GestureRecognizerOptions`. The
+    `recognize_async` method is designed to process livestream data such as
     camera input. To lower the overall latency, gesture recognizer may drop the
     input images if needed. In other words, it's not guaranteed to have output
     per input image.

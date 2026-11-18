@@ -359,7 +359,7 @@ public final class ImageEmbedder implements AutoCloseable {
        * <ul>
        *   <li>IMAGE: The mode for performing embedding extraction on single image inputs.
        *   <li>VIDEO: The mode for performing embedding extraction on the decoded frames of a video.
-       *   <li>LIVE_STREAM: The mode for for performing embedding extraction on a live stream of
+       *   <li>LIVE_STREAM: The mode for performing embedding extraction on a livestream of
        *       input data, such as from camera. In this mode, {@code setResultListener} must be
        *       called to set up a listener to receive the embedding results asynchronously.
        * </ul>
@@ -388,7 +388,7 @@ public final class ImageEmbedder implements AutoCloseable {
 
       /**
        * Sets the {@link ResultListener} to receive the embedding results asynchronously, when the
-       * image embedder is in the live stream mode.
+       * image embedder is in the livestream mode.
        */
       public abstract Builder setResultListener(
           ResultListener<ImageEmbedderResult, MPImage> resultListener);
@@ -403,7 +403,7 @@ public final class ImageEmbedder implements AutoCloseable {
        *
        * @throws IllegalArgumentException if the result listener and the running mode are not
        *     properly configured. The result listener should only be set when the image embedder is
-       *     in the live stream mode.
+       *     in the livestream mode.
        */
       public final ImageEmbedderOptions build() {
         ImageEmbedderOptions options = autoBuild();

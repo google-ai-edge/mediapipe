@@ -107,7 +107,7 @@ public final class TextClassifier implements AutoCloseable {
    *
    * @param context an Android {@link Context}.
    * @param modelPath path to the text model with metadata in the assets.
-   * @throws MediaPipeException if there is is an error during {@link TextClassifier} creation.
+   * @throws MediaPipeException if there is an error during {@link TextClassifier} creation.
    */
   public static TextClassifier createFromFile(Context context, String modelPath) {
     BaseOptions baseOptions = BaseOptions.builder().setModelAssetPath(modelPath).build();

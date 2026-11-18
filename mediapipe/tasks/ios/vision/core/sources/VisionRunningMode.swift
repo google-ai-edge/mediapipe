@@ -22,7 +22,7 @@ package import third_party_mediapipe_tasks_c_vision_core_image
   /// Runs inference on sequential decoded frames of a video.
   case video = 2
 
-  /// Runs inference on a live stream of camera frames with asynchronous result delivery.
+  /// Runs inference on a livestream of camera frames with asynchronous result delivery.
   case liveStream = 3
 
   /// Human-readable display name for this running mode.

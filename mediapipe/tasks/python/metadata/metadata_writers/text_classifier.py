@@ -90,7 +90,7 @@ class MetadataWriter(metadata_writer.MetadataWriterBase):
     Args:
       model_buffer: valid buffer of the model file.
       tokenizer: information of the tokenizer used to process the input string,
-        if any. Supported tokenziers are: `BertTokenizer` [1] and
+        if any. Supported tokenizers are: `BertTokenizer` [1] and
         `SentencePieceTokenizer` [2]. If the tokenizer is `RegexTokenizer` [3],
         refer to `create_for_regex_model`.
       labels: an instance of Labels helper class used in the output

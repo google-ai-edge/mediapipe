@@ -21,7 +21,7 @@ import {ClassifierOptions} from '../../../../tasks/web/core/classifier_options';
  * Converts a ClassifierOptions object to its Proto representation, optionally
  * based on existing definition.
  * @param options The options object to convert to a Proto. Only options that
- *     are expliclty provided are set.
+ *     are explicitly provided are set.
  * @param baseOptions A base object that options can be merged into.
  */
 export function convertClassifierOptionsToProto(

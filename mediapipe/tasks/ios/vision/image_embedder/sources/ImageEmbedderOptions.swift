@@ -31,7 +31,7 @@ public struct ImageEmbedderOptions: Sendable {
   /// Model asset and hardware accelerator settings.
   public var baseOptions: BaseOptions
 
-  /// Execution mode selecting single image, sequential video, or asynchronous live stream.
+  /// Execution mode selecting single image, sequential video, or asynchronous livestream.
   public var runningMode: VisionRunningMode
 
   /// Whether to normalize returned feature vectors with L2 norm.

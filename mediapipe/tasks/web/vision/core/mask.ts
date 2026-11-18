@@ -44,7 +44,7 @@ export type MPMaskContainer = Uint8Array|Float32Array|WebGLTexture;
  * to limit these conversions. You can verify what underlying types are already
  * available by invoking `has...()`.
  *
- * Masks that are returned from a MediaPipe Tasks are owned by by the
+ * Masks that are returned from a MediaPipe Task are owned by the
  * underlying C++ Task. If you need to extend the lifetime of these objects,
  * you can invoke the `clone()` method. To free up the resources obtained
  * during any clone or type conversion operation, it is important to invoke

@@ -391,7 +391,7 @@ public final class PoseLandmarker extends BaseVisionTaskApi {
        * <ul>
        *   <li>IMAGE: The mode for detecting pose landmarks on single image inputs.
        *   <li>VIDEO: The mode for detecting pose landmarks on the decoded frames of a video.
-       *   <li>LIVE_STREAM: The mode for for detecting pose landmarks on a live stream of input
+       *   <li>LIVE_STREAM: The mode for detecting pose landmarks on a livestream of input
        *       data, such as from camera. In this mode, {@code setResultListener} must be called to
        *       set up a listener to receive the detection results asynchronously.
        * </ul>
@@ -414,7 +414,7 @@ public final class PoseLandmarker extends BaseVisionTaskApi {
 
       /**
        * Sets the result listener to receive the detection results asynchronously when the pose
-       * landmarker is in the live stream mode.
+       * landmarker is in the livestream mode.
        */
       public abstract Builder setResultListener(
           ResultListener<PoseLandmarkerResult, MPImage> value);
@@ -429,7 +429,7 @@ public final class PoseLandmarker extends BaseVisionTaskApi {
        *
        * @throws IllegalArgumentException if the result listener and the running mode are not
        *     properly configured. The result listener should only be set when the pose landmarker is
-       *     in the live stream mode.
+       *     in the livestream mode.
        */
       public final PoseLandmarkerOptions build() {
         PoseLandmarkerOptions options = autoBuild();

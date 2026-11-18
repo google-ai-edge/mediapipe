@@ -32,7 +32,7 @@ public abstract class TaskOptions {
     return null;
   }
 
-  /** Converts a MediaPipe Tasks task-specific options to an proto3 {@link Any} message. */
+  /** Converts a MediaPipe Tasks task-specific options to a proto3 {@link Any} message. */
   public Any convertToAnyProto() {
     return null;
   }
