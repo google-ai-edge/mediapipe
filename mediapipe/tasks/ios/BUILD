@@ -23,11 +23,6 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 exports_files([
-    "MediaPipeTasksAudio.podspec.template",
-    "MediaPipeTasksVision.podspec.template",
-    "MediaPipeTasksText.podspec.template",
-    "MediaPipeTasksRetrieval.podspec.template",
-    "MediaPipeTasksCommon.podspec.template",
     "MediaPipeTasksCommon.swift.template",
     "PrivacyInfo.xcprivacy.template",
     "Package.swift.template",

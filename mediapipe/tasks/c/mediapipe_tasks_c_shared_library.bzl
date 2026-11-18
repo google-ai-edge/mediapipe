@@ -33,7 +33,7 @@ For every domain the macro produces:
 *   `:<name>_lib` - an alias that selects the right genrule for the target OS.
 *   `:<framework_name>` - optionally, a dynamic `apple_xcframework` for iOS
     (device + simulator) that wraps the same code for use from Xcode, Swift
-    Package Manager, CocoaPods or Flutter.
+    Package Manager or Flutter.
 """
 
 load("@build_bazel_rules_apple//apple:apple.bzl", "apple_xcframework")
