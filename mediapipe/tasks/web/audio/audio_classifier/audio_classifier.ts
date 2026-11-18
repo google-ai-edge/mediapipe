@@ -145,7 +145,12 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
         this.options.getClassifierOptions(),
       ),
     );
-    return this.applyOptions(options);
+    return this.applyOptions(
+      options,
+      /* loadTfliteModel= */ true,
+      /* isLiteRtLmModel= */ false,
+      /* useLitert= */ true,
+    );
   }
 
   // TODO: Add a classifyStream() that takes a timestamp

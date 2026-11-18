@@ -74,6 +74,11 @@ class AudioClassifierFake extends AudioClassifier implements
   setResults(results: ClassificationResult[]): void {
     this.resultProtoVector = results;
   }
+
+  /** Returns the acceleration of the current base options. */
+  getAcceleration() {
+    return this.baseOptions.getAcceleration();
+  }
 }
 
 describe('AudioClassifier', () => {
@@ -117,6 +122,12 @@ describe('AudioClassifier', () => {
         categoryDenylistList: []
       }
     ]);
+  });
+
+  it('runs on LiteRT CPU', () => {
+    const acceleration = audioClassifier.getAcceleration()!;
+    expect(acceleration.hasTflite()).toBe(false);
+    expect(acceleration.getLitert()!.hasCpu()).toBe(true);
   });
 
   it('uses a sample rate of 48000 by default', async () => {
