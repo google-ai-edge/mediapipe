@@ -1630,13 +1630,29 @@ absl::Status InferenceRunnerLiteRt::PrepareInputBuffers(
           "); forcing managed copy fallback.");
     }
 
+    // Host memory input tensors that don't meet the required alignment can't be
+    // wrapped with zero-copy. When only the default host memory alignment is
+    // required, copy them into the cached managed buffer (which CreateManaged()
+    // allocates with that alignment) instead of allocating a new aligned tensor
+    // on every run. Stricter alignments (e.g. page-aligned host buffers for GPU
+    // zero-copy) keep the per-run aligned copy in
+    // CreateCpuInputTensorBufferFromMpTensor().
+    const bool unaligned_host_memory =
+        !run_async_ && buffer_type == litert::TensorBufferType::kHostMemory &&
+        alignment == LITERT_HOST_MEMORY_BUFFER_ALIGNMENT &&
+        !IsTensorAligned(*tensor_to_use, alignment);
     const bool use_managed =
-        size_mismatch ||
+        size_mismatch || unaligned_host_memory ||
         absl::c_linear_search(kLiteRtManagedBufferTypes, buffer_type);
     if (use_managed) {
       ABSL_ASSIGN_OR_RETURN(bool needs_realloc,
                             NeedsReallocation(managed_input_buffers_[i],
                                               buffer_size, tensor_type));
+      if (!needs_realloc) {
+        LITERT_ASSIGN_OR_RETURN(litert::TensorBufferType cached_buffer_type,
+                                managed_input_buffers_[i]->BufferType());
+        needs_realloc = (cached_buffer_type != buffer_type);
+      }
 
       if (needs_realloc) {
         LITERT_ASSIGN_OR_RETURN(
@@ -1935,11 +1951,18 @@ absl::StatusOr<std::vector<Tensor>> InferenceRunnerLiteRt::Run(
   }
 #endif  // MEDIAPIPE_METAL_ENABLED
 
-  // Get final output tensor layouts from the compiled model.
-  LITERT_ASSIGN_OR_RETURN(
-      std::vector<litert::Layout> output_tensor_layouts,
-      compiled_model_->GetOutputTensorLayouts(
-          signature_index_, /*update_allocation=*/has_dynamic_dimension_));
+  // CreateOutputRankedTensorType() only uses runtime output layouts when
+  // `has_dynamic_dimension_` is true. Skipping GetOutputTensorLayouts() for
+  // static-shape models avoids both the per-run layout query and an extra
+  // AllocateTensors() pass on the first Run() before I/O buffers are bound.
+  std::vector<litert::Layout> output_tensor_layouts;
+  if (has_dynamic_dimension_) {
+    LITERT_ASSIGN_OR_RETURN(output_tensor_layouts,
+                            compiled_model_->GetOutputTensorLayouts(
+                                signature_index_, /*update_allocation=*/true));
+  } else {
+    output_tensor_layouts.resize(signature_.OutputNames().size());
+  }
 
   ABSL_ASSIGN_OR_RETURN(
       mp_output_tensors,
