@@ -13,9 +13,12 @@
 # limitations under the License.
 """Tests for BaseOptions conversion between Python and C."""
 
+import ctypes
+
 from absl.testing import absltest
 
 from mediapipe.tasks.python.core import base_options as base_options_lib
+from mediapipe.tasks.python.core import base_options_c as base_options_c_lib
 
 
 class BaseOptionsTest(absltest.TestCase):
@@ -78,6 +81,24 @@ class BaseOptionsTest(absltest.TestCase):
         options_c.delegate, base_options_lib.BaseOptions.Delegate.CPU
     )
     self.assertEqual(options_c.file_descriptor, -1)
+
+  def test_c_struct_layout_and_zero_initialization(self):
+    self.assertLen(base_options_c_lib.MpBaseOptionsC._fields_, 21)
+    if ctypes.sizeof(ctypes.c_void_p) == 8:
+      self.assertEqual(ctypes.sizeof(base_options_c_lib.MpBaseOptionsC), 144)
+    options_c = base_options_lib.BaseOptions(
+        model_asset_path='/path/to/model'
+    ).to_ctypes()
+    trailing_size = 2 * ctypes.sizeof(ctypes.c_size_t) + ctypes.sizeof(
+        ctypes.c_void_p
+    )
+    raw_bytes = ctypes.string_at(
+        ctypes.addressof(options_c), ctypes.sizeof(options_c)
+    )
+    self.assertEqual(raw_bytes[-trailing_size:], b'\x00' * trailing_size)
+    self.assertEqual(options_c.litert_runtime_handle, 0)
+    self.assertEqual(options_c.litert_gpu_accelerator_handle, 0)
+    self.assertIsNone(options_c.litert_runtime_context)
 
   def test_equality(self):
     options1 = base_options_lib.BaseOptions(

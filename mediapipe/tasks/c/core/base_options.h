@@ -132,6 +132,16 @@ struct MpBaseOptions {
 
   // The GPU backend to use when `delegate` is `MP_DELEGATE_GPU`.
   enum MpGpuBackend gpu_backend;
+
+  // Handle to the LiteRT runtime provided by Google Play services (or `0` to
+  // use the bundled runtime). Borrowed; must outlive the task.
+  uintptr_t litert_runtime_handle;
+
+  // Optional handle to the LiteRT GPU accelerator from the system runtime.
+  uintptr_t litert_gpu_accelerator_handle;
+
+  // Optional context of the system LiteRT runtime for logging and telemetry.
+  const void* litert_runtime_context;
 };
 
 // Frees heap-allocated buffer and string fields (`model_asset_buffer`,

@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/core/base_options_converter.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <string>
 #include <variant>
@@ -201,6 +203,7 @@ TEST(BaseOptionsConverterTest, ConvertsBaseOptionsFileDescriptorZero) {
 }
 
 TEST(BaseOptionsConverterTest, FreesAndResetsBaseOptions) {
+  int dummy_context = 1;
   MpBaseOptions c_base_options = {
       /* model_asset_buffer= */ strdup("buffer"),
       /* model_asset_buffer_count= */ 6,
@@ -220,6 +223,9 @@ TEST(BaseOptionsConverterTest, FreesAndResetsBaseOptions) {
       /* gpu_serialized_model_dir= */ strdup("/cache/models"),
       /* gpu_model_token= */ strdup("token"),
       /* gpu_backend= */ MP_GPU_BACKEND_OPENCL,
+      /* litert_runtime_handle= */ 11,
+      /* litert_gpu_accelerator_handle= */ 22,
+      /* litert_runtime_context= */ &dummy_context,
   };
 
   MpBaseOptionsFree(&c_base_options);
@@ -242,6 +248,18 @@ TEST(BaseOptionsConverterTest, FreesAndResetsBaseOptions) {
   EXPECT_EQ(c_base_options.gpu_serialized_model_dir, nullptr);
   EXPECT_EQ(c_base_options.gpu_model_token, nullptr);
   EXPECT_EQ(c_base_options.gpu_backend, MP_GPU_BACKEND_DEFAULT);
+  EXPECT_EQ(c_base_options.litert_runtime_handle, 0u);
+  EXPECT_EQ(c_base_options.litert_gpu_accelerator_handle, 0u);
+  EXPECT_EQ(c_base_options.litert_runtime_context, nullptr);
+}
+
+TEST(BaseOptionsConverterTest, IncludesTrailingSlotsInStructLayout) {
+  EXPECT_GE(sizeof(MpBaseOptions),
+            offsetof(MpBaseOptions, gpu_backend) + sizeof(MpGpuBackend) +
+                2 * sizeof(std::uintptr_t) + sizeof(const void*));
+  if constexpr (sizeof(void*) == 8) {
+    EXPECT_EQ(sizeof(MpBaseOptions), 144u);
+  }
 }
 
 TEST(BaseOptionsConverterTest, FreeHandlesNullptr) {

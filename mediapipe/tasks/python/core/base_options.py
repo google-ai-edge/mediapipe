@@ -125,6 +125,9 @@ class BaseOptions:
     options.gpu_serialized_model_dir = None
     options.gpu_model_token = None
     options.gpu_backend = 0
+    options.litert_runtime_handle = 0
+    options.litert_gpu_accelerator_handle = 0
+    options.litert_runtime_context = None
     options.file_descriptor = -1
     return options
 

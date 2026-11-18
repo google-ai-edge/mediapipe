@@ -52,6 +52,7 @@ py_test(
     srcs = ["base_options_test.py"],
     deps = [
         "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:base_options_c",
         "@mediapipe_pip_deps_absl_py//:pkg",
     ],
 )

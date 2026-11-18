@@ -40,6 +40,12 @@ class MpBaseOptionsC(ctypes.Structure):
     gpu_serialized_model_dir: `bytes`, optional GPU serialized model directory.
     gpu_model_token: `bytes`, optional GPU model cache token.
     gpu_backend: `int`, the GPU backend to use.
+    litert_runtime_handle: `int`, handle to the LiteRT runtime provided by
+      Google Play services (or `0` to use the bundled runtime).
+    litert_gpu_accelerator_handle: `int`, optional handle to the LiteRT GPU
+      accelerator from the system runtime.
+    litert_runtime_context: `int`, optional context of the system LiteRT runtime
+      for logging and telemetry.
   """
 
   _fields_ = [
@@ -61,4 +67,7 @@ class MpBaseOptionsC(ctypes.Structure):
       ("gpu_serialized_model_dir", ctypes.c_char_p),
       ("gpu_model_token", ctypes.c_char_p),
       ("gpu_backend", ctypes.c_int),
+      ("litert_runtime_handle", ctypes.c_size_t),
+      ("litert_gpu_accelerator_handle", ctypes.c_size_t),
+      ("litert_runtime_context", ctypes.c_void_p),
   ]

@@ -63,6 +63,10 @@ void MpBaseOptionsFree(struct MpBaseOptions* options) {
   options->gpu_model_token = nullptr;
 
   options->gpu_backend = MP_GPU_BACKEND_DEFAULT;
+
+  options->litert_runtime_handle = 0;
+  options->litert_gpu_accelerator_handle = 0;
+  options->litert_runtime_context = nullptr;
 }
 
 }  // extern "C"
