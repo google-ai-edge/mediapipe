@@ -90,7 +90,7 @@ public class BaseVisionTaskApi implements AutoCloseable {
   protected TaskResult processImageData(Map<String, Packet> inputPackets) {
     if (runningMode != RunningMode.IMAGE) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          MediaPipeException.StatusCode.FAILED_PRECONDITION,
           "Task is not initialized with the image mode. Current running mode:"
               + runningMode.name());
     }
@@ -132,7 +132,7 @@ public class BaseVisionTaskApi implements AutoCloseable {
   protected TaskResult processVideoData(Map<String, Packet> inputPackets, long timestampMs) {
     if (runningMode != RunningMode.VIDEO) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          MediaPipeException.StatusCode.FAILED_PRECONDITION,
           "Task is not initialized with the video mode. Current running mode:"
               + runningMode.name());
     }
@@ -174,7 +174,7 @@ public class BaseVisionTaskApi implements AutoCloseable {
   protected void sendLiveStreamData(Map<String, Packet> inputPackets, long timestampMs) {
     if (runningMode != RunningMode.LIVE_STREAM) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          MediaPipeException.StatusCode.FAILED_PRECONDITION,
           "Task is not initialized with the live stream mode. Current running mode:"
               + runningMode.name());
     }

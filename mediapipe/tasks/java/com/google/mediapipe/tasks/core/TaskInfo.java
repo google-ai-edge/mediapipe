@@ -132,7 +132,7 @@ public abstract class TaskInfo<T extends TaskOptions> {
     Any anyOptions = taskOptions().convertToAnyProto();
     if (!(options == null ^ anyOptions == null)) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.INVALID_ARGUMENT.ordinal(),
+          MediaPipeException.StatusCode.INVALID_ARGUMENT,
           "Only one of convertTo*Proto() method should be implemented for "
               + taskOptions().getClass());
     }

@@ -25,6 +25,12 @@ public class MediaPipeException extends RuntimeException {
     this.statusMessage = statusMessage;
   }
 
+  public MediaPipeException(StatusCode statusCode, String statusMessage) {
+    super(statusCode.description() + ": " + statusMessage);
+    this.statusCode = statusCode;
+    this.statusMessage = statusMessage;
+  }
+
   public MediaPipeException(StatusCode statusCode, String statusMessage, Throwable cause) {
     super(statusCode.description() + ": " + statusMessage, cause);
     this.statusCode = statusCode;

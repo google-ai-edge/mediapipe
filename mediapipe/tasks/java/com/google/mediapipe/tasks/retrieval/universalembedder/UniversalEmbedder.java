@@ -57,7 +57,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * adding support for video embeddings. It wraps the native LiteRT-LM EmbeddingEngine directly,
  * providing real on-device multimodal embeddings.
  */
-@SuppressWarnings({"EnumOrdinal", "IfChainToSwitch", "PatternMatchingInstanceof"})
+@SuppressWarnings({"IfChainToSwitch", "PatternMatchingInstanceof"})
 public final class UniversalEmbedder implements AutoCloseable {
 
   private final UniversalEmbedderOptions options;
@@ -83,7 +83,7 @@ public final class UniversalEmbedder implements AutoCloseable {
       finalPath = proto.getModelAsset().getFileName();
     } else {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.INVALID_ARGUMENT.ordinal(),
+          MediaPipeException.StatusCode.INVALID_ARGUMENT,
           "Model path or file descriptor must be specified in BaseOptions.");
     }
 
@@ -151,8 +151,7 @@ public final class UniversalEmbedder implements AutoCloseable {
   private static Backend getBackend(Context context, BaseOptionsProto.BaseOptions proto) {
     if (proto == null) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.INVALID_ARGUMENT.ordinal(),
-          "BaseOptions proto cannot be null.");
+          MediaPipeException.StatusCode.INVALID_ARGUMENT, "BaseOptions proto cannot be null.");
     }
 
     try {
@@ -174,7 +173,7 @@ public final class UniversalEmbedder implements AutoCloseable {
             File customDir = new File(customPath);
             if (!customDir.exists()) {
               throw new MediaPipeException(
-                  MediaPipeException.StatusCode.INVALID_ARGUMENT.ordinal(),
+                  MediaPipeException.StatusCode.INVALID_ARGUMENT,
                   "NPU dispatch library directory does not exist: " + customPath);
             }
             dispatchDir = customPath;
@@ -197,12 +196,10 @@ public final class UniversalEmbedder implements AutoCloseable {
     } catch (MediaPipeException e) {
       throw e;
     } catch (RuntimeException e) {
-      MediaPipeException exception =
-          new MediaPipeException(
-              MediaPipeException.StatusCode.INTERNAL.ordinal(),
-              "Failed to configure backend execution engine: " + e.getMessage());
-      exception.initCause(e);
-      throw exception;
+      throw new MediaPipeException(
+          MediaPipeException.StatusCode.INTERNAL,
+          "Failed to configure backend execution engine: " + e.getMessage(),
+          e);
     }
   }
 

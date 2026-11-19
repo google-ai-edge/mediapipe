@@ -39,7 +39,7 @@ final class TypeNameRegistryConcrete implements TypeNameRegistry {
   public <T extends MessageLite> void registerTypeName(Class<T> clazz, String typeName) {
     if (typeNames.containsKey(clazz) && !typeNames.get(clazz).equals(typeName)) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.ALREADY_EXISTS.ordinal(),
+          MediaPipeException.StatusCode.ALREADY_EXISTS,
           "Protobuf type name: " + typeName + " conflicts with: " + typeNames.get(clazz));
     }
     typeNames.put(clazz, typeName);

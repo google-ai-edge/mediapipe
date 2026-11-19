@@ -157,8 +157,7 @@ public class VideoInput {
     }
     if (newFrameListener == null) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
-          "newFrameListener is not set.");
+          MediaPipeException.StatusCode.FAILED_PRECONDITION, "newFrameListener is not set.");
     }
     eglManager = new EglManager(sharedContext);
     createSurfaceTexture();

@@ -154,10 +154,10 @@ public final class LanguageDetector implements AutoCloseable {
                   packets.get(CLASSIFICATIONS_OUT_STREAM_INDEX).getTimestamp());
             } catch (IOException e) {
               throw new MediaPipeException(
-                  MediaPipeException.StatusCode.IO_EXCEPTION.ordinal(), e.getMessage());
+                  MediaPipeException.StatusCode.IO_EXCEPTION, e.getMessage(), e);
             } catch (IllegalArgumentException e) {
               throw new MediaPipeException(
-                  MediaPipeException.StatusCode.INVALID_ARGUMENT.ordinal(), e.getMessage());
+                  MediaPipeException.StatusCode.INVALID_ARGUMENT, e.getMessage(), e);
             }
           }
 

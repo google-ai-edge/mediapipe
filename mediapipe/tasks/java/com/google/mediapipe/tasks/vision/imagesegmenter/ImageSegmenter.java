@@ -167,7 +167,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
               if (!PacketGetter.getImageList(
                   packets.get(confidenceMasksOutStreamIndex), buffersArray, copyImage)) {
                 throw new MediaPipeException(
-                    MediaPipeException.StatusCode.INTERNAL.ordinal(),
+                    MediaPipeException.StatusCode.INTERNAL,
                     "There is an error getting confidence masks.");
               }
               for (ByteBuffer buffer : buffersArray) {
@@ -185,7 +185,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
                 buffer = ByteBuffer.allocateDirect(width * height);
                 if (!PacketGetter.getImageData(packets.get(categoryMaskOutStreamIndex), buffer)) {
                   throw new MediaPipeException(
-                      MediaPipeException.StatusCode.INTERNAL.ordinal(),
+                      MediaPipeException.StatusCode.INTERNAL,
                       "There is an error getting category mask.");
                 }
               } else {
@@ -262,7 +262,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
       if (node.getName().contains(TENSORS_TO_SEGMENTATION_CALCULATOR_NAME)) {
         if (foundTensorsToSegmentation) {
           throw new MediaPipeException(
-              MediaPipeException.StatusCode.INTERNAL.ordinal(),
+              MediaPipeException.StatusCode.INTERNAL,
               "The graph has more than one mediapipe.tasks.TensorsToSegmentationCalculator.");
         }
         foundTensorsToSegmentation = true;
@@ -275,7 +275,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
           Long labelKey = Long.valueOf(i);
           if (!options.getLabelItemsMap().containsKey(labelKey)) {
             throw new MediaPipeException(
-                MediaPipeException.StatusCode.INTERNAL.ordinal(),
+                MediaPipeException.StatusCode.INTERNAL,
                 "The lablemap have no expected key: " + labelKey);
           }
           labels.add(options.getLabelItemsMap().get(labelKey).getName());
@@ -356,7 +356,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
   public ImageSegmenterResult segment(MPImage image, SegmentationOptions segmentationOptions) {
     if (hasResultListener) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          MediaPipeException.StatusCode.FAILED_PRECONDITION,
           "ResultListener is provided in the ImageSegmenterOptions, but this method will return an"
               + " ImageSegmentationResult.");
     }
@@ -442,7 +442,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
   public void segmentWithResultListener(MPImage image, SegmentationOptions segmentationOptions) {
     if (!hasResultListener) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          MediaPipeException.StatusCode.FAILED_PRECONDITION,
           "ResultListener is not set in the ImageSegmenterOptions, but this method expects a"
               + " ResultListener to process ImageSegmentationResult.");
     }
@@ -534,7 +534,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
       MPImage image, SegmentationOptions segmentationOptions, long timestampMs) {
     if (hasResultListener) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          MediaPipeException.StatusCode.FAILED_PRECONDITION,
           "ResultListener is provided in the ImageSegmenterOptions, but this method will return an"
               + " ImageSegmentationResult.");
     }
@@ -625,7 +625,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
       MPImage image, SegmentationOptions segmentationOptions, long timestampMs) {
     if (!hasResultListener) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          MediaPipeException.StatusCode.FAILED_PRECONDITION,
           "ResultListener is not set in the ImageSegmenterOptions, but this method expects a"
               + " ResultListener to process ImageSegmentationResult.");
     }

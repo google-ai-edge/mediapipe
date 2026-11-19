@@ -641,7 +641,7 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
 
     if (!PacketGetter.getImageData(packets.get(packetIndex), buffer)) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.INTERNAL.ordinal(),
+          MediaPipeException.StatusCode.INTERNAL,
           "There was an error getting the sefmentation mask.");
     }
 

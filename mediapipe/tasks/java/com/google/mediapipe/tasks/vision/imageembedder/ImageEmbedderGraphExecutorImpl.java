@@ -50,7 +50,6 @@ final class ImageEmbedderGraphExecutorImpl extends BaseVisionTaskApi
   private static final String TASK_GRAPH_NAME =
       "mediapipe.tasks.vision.image_embedder.ImageEmbedderGraph";
 
-  @SuppressWarnings("EnumOrdinal")
   public static ImageEmbedderGraphExecutorImpl create(
       Context context, ImageEmbedderOptions options) {
     OutputHandler<ImageEmbedderResult, MPImage> handler = new OutputHandler<>();
@@ -68,7 +67,7 @@ final class ImageEmbedderGraphExecutorImpl extends BaseVisionTaskApi
                       options.runningMode(), packets.get(EMBEDDINGS_OUT_STREAM_INDEX)));
             } catch (IOException e) {
               throw new MediaPipeException(
-                  MediaPipeException.StatusCode.INTERNAL.ordinal(), e.getMessage());
+                  MediaPipeException.StatusCode.INTERNAL, e.getMessage(), e);
             }
           }
 

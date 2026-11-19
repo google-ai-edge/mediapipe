@@ -76,7 +76,7 @@ public class BaseAudioTaskApi implements AutoCloseable {
   protected TaskResult processAudioClip(AudioData audioClip) {
     if (runningMode != RunningMode.AUDIO_CLIPS) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          MediaPipeException.StatusCode.FAILED_PRECONDITION,
           "Task is not initialized with the audio clips mode. Current running mode:"
               + runningMode.name());
     }
@@ -105,14 +105,14 @@ public class BaseAudioTaskApi implements AutoCloseable {
   protected void checkOrSetSampleRate(double sampleRate) {
     if (runningMode != RunningMode.AUDIO_STREAM) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          MediaPipeException.StatusCode.FAILED_PRECONDITION,
           "Task is not initialized with the audio stream mode. Current running mode:"
               + runningMode.name());
     }
     if (defaultSampleRate > 0) {
       if (Double.compare(sampleRate, defaultSampleRate) != 0) {
         throw new MediaPipeException(
-            MediaPipeException.StatusCode.INVALID_ARGUMENT.ordinal(),
+            MediaPipeException.StatusCode.INVALID_ARGUMENT,
             "The input audio sample rate: "
                 + sampleRate
                 + " is inconsistent with the previously provided: "
@@ -137,7 +137,7 @@ public class BaseAudioTaskApi implements AutoCloseable {
   protected void sendAudioStreamData(AudioData audioClip, long timestampMs) {
     if (runningMode != RunningMode.AUDIO_STREAM) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          MediaPipeException.StatusCode.FAILED_PRECONDITION,
           "Task is not initialized with the audio stream mode. Current running mode:"
               + runningMode.name());
     }

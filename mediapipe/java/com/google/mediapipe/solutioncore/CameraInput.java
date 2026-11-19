@@ -94,8 +94,7 @@ public class CameraInput {
     }
     if (newFrameListener == null) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
-          "newFrameListener is not set.");
+          MediaPipeException.StatusCode.FAILED_PRECONDITION, "newFrameListener is not set.");
     }
     frameTexture = converter.getSurfaceTexture();
     converter.setConsumer(newFrameListener);

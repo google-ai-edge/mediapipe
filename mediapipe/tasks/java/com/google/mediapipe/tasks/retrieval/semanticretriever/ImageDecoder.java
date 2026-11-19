@@ -41,7 +41,6 @@ public final class ImageDecoder {
    * @return the decoded MPImage, or null if decoding failed.
    */
   @Nullable
-  @SuppressWarnings("EnumOrdinal")
   public static MPImage decodeImage(Context context, Uri uri) {
     byte[] bytes = getImageBytes(context, uri);
     if (bytes == null) {
@@ -62,11 +61,10 @@ public final class ImageDecoder {
    * @return the raw bytes of the image, or null if reading failed.
    */
   @Nullable
-  @SuppressWarnings("EnumOrdinal")
   public static byte[] getImageBytes(Context context, Uri uri) {
     if (uri == null) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.INVALID_ARGUMENT.ordinal(), "URI cannot be null");
+          MediaPipeException.StatusCode.INVALID_ARGUMENT, "URI cannot be null");
     }
     byte[] bytes = null;
     String scheme = uri.getScheme();
@@ -100,19 +98,15 @@ public final class ImageDecoder {
     } catch (MediaPipeException e) {
       throw e;
     } catch (FileNotFoundException e) {
-      MediaPipeException ex =
-          new MediaPipeException(
-              MediaPipeException.StatusCode.NOT_FOUND.ordinal(),
-              "URI target not found: " + uri + ": " + e.getMessage());
-      ex.initCause(e);
-      throw ex;
+      throw new MediaPipeException(
+          MediaPipeException.StatusCode.NOT_FOUND,
+          "URI target not found: " + uri + ": " + e.getMessage(),
+          e);
     } catch (IOException | RuntimeException e) {
-      MediaPipeException ex =
-          new MediaPipeException(
-              MediaPipeException.StatusCode.INTERNAL.ordinal(),
-              "Eerror loading image from URI: " + uri + ": " + e.getMessage());
-      ex.initCause(e);
-      throw ex;
+      throw new MediaPipeException(
+          MediaPipeException.StatusCode.INTERNAL,
+          "Eerror loading image from URI: " + uri + ": " + e.getMessage(),
+          e);
     }
     return bytes;
   }

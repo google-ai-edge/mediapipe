@@ -156,7 +156,7 @@ public final class TextClassifier implements AutoCloseable {
                   packets.get(CLASSIFICATIONS_OUT_STREAM_INDEX).getTimestamp());
             } catch (IOException e) {
               throw new MediaPipeException(
-                  MediaPipeException.StatusCode.INTERNAL.ordinal(), e.getMessage());
+                  MediaPipeException.StatusCode.INTERNAL, e.getMessage(), e);
             }
           }
 

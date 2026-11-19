@@ -261,7 +261,7 @@ public class TaskRunner implements AutoCloseable {
     if (!graphStarted.get()) {
       reportError(
           new MediaPipeException(
-              MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+              MediaPipeException.StatusCode.FAILED_PRECONDITION,
               "The task graph hasn't been successfully started or error occurs during graph"
                   + " initialization."));
     }
@@ -301,7 +301,7 @@ public class TaskRunner implements AutoCloseable {
     if (lastSeenTimestamp >= inputTimestamp) {
       reportError(
           new MediaPipeException(
-              MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+              MediaPipeException.StatusCode.FAILED_PRECONDITION,
               "The received packets having a smaller timestamp than the processed timestamp."));
     }
     lastSeenTimestamp = inputTimestamp;

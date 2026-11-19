@@ -75,7 +75,7 @@ public class ImageSolutionBase extends SolutionBase {
       reportError(
           "Error occurs while calling the MediaPipe solution send method.",
           new MediaPipeException(
-              MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+              MediaPipeException.StatusCode.FAILED_PRECONDITION,
               "TextureFrame's timestamp needs to be explicitly set if not in static image mode."));
       return;
     }
@@ -101,7 +101,7 @@ public class ImageSolutionBase extends SolutionBase {
       reportError(
           "Error occurs while calling the solution send method.",
           new MediaPipeException(
-              MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+              MediaPipeException.StatusCode.FAILED_PRECONDITION,
               "When not in static image mode, a timestamp associated with the image is required."
                   + " Use send(Bitmap inputBitmap, long timestamp) instead."));
       return;
@@ -115,7 +115,7 @@ public class ImageSolutionBase extends SolutionBase {
       reportError(
           "The received frame having a smaller timestamp than the processed timestamp.",
           new MediaPipeException(
-              MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+              MediaPipeException.StatusCode.FAILED_PRECONDITION,
               "Receving a frame with invalid timestamp."));
       return;
     }
@@ -127,8 +127,7 @@ public class ImageSolutionBase extends SolutionBase {
           "The solution graph hasn't been successfully started or error occurs during graph"
               + " initializaton.",
           new MediaPipeException(
-              MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
-              "Graph is not started."));
+              MediaPipeException.StatusCode.FAILED_PRECONDITION, "Graph is not started."));
       return;
     }
     lastTimestamp = timestamp;
@@ -145,7 +144,7 @@ public class ImageSolutionBase extends SolutionBase {
         reportError(
             "The input image type is not supported.",
             new MediaPipeException(
-                MediaPipeException.StatusCode.UNIMPLEMENTED.ordinal(),
+                MediaPipeException.StatusCode.UNIMPLEMENTED,
                 "The input image type is not supported."));
       }
       try {

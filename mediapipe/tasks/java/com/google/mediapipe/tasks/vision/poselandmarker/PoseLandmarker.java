@@ -547,8 +547,7 @@ public final class PoseLandmarker extends BaseVisionTaskApi {
         /** deepCopy= */
         true)) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.INTERNAL.ordinal(),
-          "There is an error getting segmented masks.");
+          MediaPipeException.StatusCode.INTERNAL, "There is an error getting segmented masks.");
     }
     for (ByteBuffer buffer : buffersArray) {
       ByteBufferImageBuilder builder =

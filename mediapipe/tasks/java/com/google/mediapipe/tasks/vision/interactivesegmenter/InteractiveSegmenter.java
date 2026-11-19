@@ -86,10 +86,9 @@ public final class InteractiveSegmenter implements AutoCloseable {
             BaseOptionsUtils.HOST_SYSTEM_ANDROID,
             liteRtSystemRuntimeHandle);
     if (nativeSegmenterHandle == 0) {
-      // TODO: b/509975940 - get rid of ordinal() use.
-      @SuppressWarnings("EnumOrdinal")
-      final int code = MediaPipeException.StatusCode.INTERNAL.ordinal();
-      throw new MediaPipeException(code, "Error creating InteractiveSegmenter. Handle is 0.");
+      throw new MediaPipeException(
+          MediaPipeException.StatusCode.INTERNAL,
+          "Error creating InteractiveSegmenter. Handle is 0.");
     }
     return new InteractiveSegmenter(nativeSegmenterHandle);
   }
@@ -122,10 +121,8 @@ public final class InteractiveSegmenter implements AutoCloseable {
     long resultPacketHandle =
         nativeSegment(nativeSegmenterHandle, strokesBytes, graph.getNativeHandle());
     if (resultPacketHandle == 0) {
-      // TODO: b/509975940 - get rid of ordinal() use.
-      @SuppressWarnings("EnumOrdinal")
-      final int code = MediaPipeException.StatusCode.INTERNAL.ordinal();
-      throw new MediaPipeException(code, "Error running segmentation.");
+      throw new MediaPipeException(
+          MediaPipeException.StatusCode.INTERNAL, "Error running segmentation.");
     }
     Packet resultPacket = Packet.create(resultPacketHandle);
     try {
@@ -133,10 +130,8 @@ public final class InteractiveSegmenter implements AutoCloseable {
       int height = PacketGetter.getImageHeight(resultPacket);
       ByteBuffer buffer = PacketGetter.getImageDataDirectly(resultPacket);
       if (buffer == null) {
-        // TODO: b/509975940 - get rid of ordinal() use.
-        @SuppressWarnings("EnumOrdinal")
-        final int code = MediaPipeException.StatusCode.INTERNAL.ordinal();
-        throw new MediaPipeException(code, "Error getting output image data.");
+        throw new MediaPipeException(
+            MediaPipeException.StatusCode.INTERNAL, "Error getting output image data.");
       }
 
       // Copy the buffer because the underlying native memory of `resultPacket`

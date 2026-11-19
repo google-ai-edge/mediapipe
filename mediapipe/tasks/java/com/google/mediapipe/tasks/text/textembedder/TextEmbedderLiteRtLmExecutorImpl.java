@@ -105,8 +105,7 @@ public final class TextEmbedderLiteRtLmExecutorImpl implements TextEmbedderExecu
     if (proto.getModelAsset().hasFilePointerMeta() || proto.getModelAsset().hasFileContent()) {
       throw new MediaPipeException(
           MediaPipeException.StatusCode.INVALID_ARGUMENT,
-          "Loading model from memory buffer is not supported by LiteRT-LM.",
-          null);
+          "Loading model from memory buffer is not supported by LiteRT-LM.");
     }
 
     String finalPath = null;
@@ -119,8 +118,7 @@ public final class TextEmbedderLiteRtLmExecutorImpl implements TextEmbedderExecu
     } else {
       throw new MediaPipeException(
           MediaPipeException.StatusCode.INVALID_ARGUMENT,
-          "Model path or file descriptor must be specified in BaseOptions.",
-          null);
+          "Model path or file descriptor must be specified in BaseOptions.");
     }
 
     Backend backend = getBackend(context, proto);
@@ -136,9 +134,7 @@ public final class TextEmbedderLiteRtLmExecutorImpl implements TextEmbedderExecu
   private static Backend getBackend(Context context, BaseOptionsProto.BaseOptions proto) {
     if (proto == null) {
       throw new MediaPipeException(
-          MediaPipeException.StatusCode.INVALID_ARGUMENT,
-          "BaseOptions proto cannot be null.",
-          null);
+          MediaPipeException.StatusCode.INVALID_ARGUMENT, "BaseOptions proto cannot be null.");
     }
 
     try {
@@ -161,8 +157,7 @@ public final class TextEmbedderLiteRtLmExecutorImpl implements TextEmbedderExecu
             if (!customDir.exists()) {
               throw new MediaPipeException(
                   MediaPipeException.StatusCode.INVALID_ARGUMENT,
-                  "NPU dispatch library directory does not exist: " + customPath,
-                  null);
+                  "NPU dispatch library directory does not exist: " + customPath);
             }
             dispatchDir = customPath;
           }
