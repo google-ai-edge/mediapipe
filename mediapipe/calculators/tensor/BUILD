@@ -1486,6 +1486,30 @@ cc_library(
     }),
 )
 
+cc_test(
+    name = "tensors_to_detections_calculator_test",
+    srcs = ["tensors_to_detections_calculator_test.cc"],
+    deps = [
+        ":tensors_to_detections_calculator",
+        ":tensors_to_detections_calculator_cc_proto",
+        "//mediapipe/framework/api3:contract",
+        "//mediapipe/framework/api3:function_runner",
+        "//mediapipe/framework/api3:graph",
+        "//mediapipe/framework/api3:node",
+        "//mediapipe/framework/api3:packet",
+        "//mediapipe/framework/api3:stream",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status_matchers",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
 mediapipe_proto_library(
     name = "tensors_to_landmarks_calculator_proto",
     srcs = ["tensors_to_landmarks_calculator.proto"],

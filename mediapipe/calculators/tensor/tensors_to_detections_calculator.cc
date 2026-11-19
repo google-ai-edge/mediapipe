@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+#include <cmath>
 #include <unordered_map>
 #include <vector>
 
@@ -297,23 +299,29 @@ absl::Status TensorsToDetectionsCalculator::Open(CalculatorContext* cc) {
 
 absl::Status TensorsToDetectionsCalculator::Process(CalculatorContext* cc) {
   auto output_detections = std::make_unique<std::vector<Detection>>();
+  const auto& input_tensors = *kInTensors(cc);
+  for (const auto& tensor : input_tensors) {
+    RET_CHECK(tensor.element_type() == Tensor::ElementType::kFloat32);
+  }
+  const int num_input_tensors = input_tensors.size();
+  // Models with in-model post-processing output 4 tensors: boxes, classes,
+  // scores and the number of detections. Only ProcessCPU decodes this format.
+  const bool has_in_model_postprocessing = num_input_tensors == 4;
   bool gpu_processing = false;
-  if (CanUseGpu() && cc->Service(mediapipe::kGpuService).IsAvailable() &&
+  if (!has_in_model_postprocessing && CanUseGpu() &&
+      cc->Service(mediapipe::kGpuService).IsAvailable() &&
       gpu_has_enough_work_groups_) {
-    // Use GPU processing only if at least one input tensor is already on GPU
-    // (to avoid CPU->GPU overhead).
-    for (const auto& tensor : *kInTensors(cc)) {
+    // Decode raw box and score tensors on GPU only if at least one input
+    // tensor is already on GPU (to avoid CPU->GPU overhead). Post-processed
+    // tensors are read back on CPU even when they are GPU-resident, e.g.
+    // zero-copy OpenGL buffers from a fully GPU-delegated model.
+    for (const auto& tensor : input_tensors) {
       if (tensor.ready_on_gpu()) {
         gpu_processing = true;
         break;
       }
     }
   }
-  const auto& input_tensors = *kInTensors(cc);
-  for (const auto& tensor : input_tensors) {
-    RET_CHECK(tensor.element_type() == Tensor::ElementType::kFloat32);
-  }
-  const int num_input_tensors = input_tensors.size();
   if (!scores_tensor_index_is_set_) {
     if (num_input_tensors == 2 ||
         num_input_tensors == kNumInputTensorsWithAnchors) {
@@ -323,9 +331,9 @@ absl::Status TensorsToDetectionsCalculator::Process(CalculatorContext* cc) {
     }
     scores_tensor_index_is_set_ = true;
   }
-  if (gpu_processing || num_input_tensors != 4) {
-    // Allows custom bounding box indices when receiving 4 cpu tensors.
-    // Uses the default bbox indices in other cases.
+  if (!has_in_model_postprocessing) {
+    // Allows custom bounding box indices only for models with in-model
+    // post-processing. Uses the default bbox indices in other cases.
     RET_CHECK(!has_custom_box_indices_);
   }
 
@@ -487,9 +495,16 @@ absl::Status TensorsToDetectionsCalculator::ProcessCPU(
     RET_CHECK_EQ(detection_scores_tensor->shape().dims[0], 1);
     RET_CHECK_EQ(detection_scores_tensor->shape().dims[1], max_detections);
 
-    auto num_boxes_view = num_boxes_tensor->GetCpuReadView();
-    auto num_boxes = num_boxes_view.buffer<float>();
-    num_boxes_ = num_boxes[0];
+    // Holds at most one tensor view at a time: the tensors can be in any order
+    // (see tensor_mapping), while their producer may hold the views of all of
+    // them in the output order. Requesting several views here in a different
+    // order causes 'Potential mutex deadlock' when compiled without '-c opt'.
+    float raw_num_boxes = 0.0f;
+    {
+      const Tensor::CpuReadView num_boxes_view =
+          num_boxes_tensor->GetCpuReadView();
+      raw_num_boxes = num_boxes_view.buffer<float>()[0];
+    }
     // The detection model with Detection_PostProcess op may output duplicate
     // boxes with different classes, in the following format:
     //   num_boxes_tensor = [num_boxes]
@@ -499,22 +514,38 @@ absl::Status TensorsToDetectionsCalculator::ProcessCPU(
     // Each box repeats classes_per_detection_ times.
     // Note Detection_PostProcess op is only supported in CPU.
     classes_per_detection_ = options_.max_classes_per_detection();
+    RET_CHECK_GT(classes_per_detection_, 0);
+    RET_CHECK_GE(max_detections, 0);
+    RET_CHECK(std::isfinite(raw_num_boxes));
+    RET_CHECK_GE(raw_num_boxes, 0.0f);
+    RET_CHECK_LE(static_cast<double>(raw_num_boxes),
+                 static_cast<double>(max_detections / classes_per_detection_));
+    num_boxes_ = static_cast<int>(raw_num_boxes);
 
-    auto detection_boxes_view = detection_boxes_tensor->GetCpuReadView();
-    auto detection_boxes = detection_boxes_view.buffer<float>();
-
-    auto detection_scores_view = detection_scores_tensor->GetCpuReadView();
-    auto detection_scores = detection_scores_view.buffer<float>();
-
-    auto detection_classes_view = detection_classes_tensor->GetCpuReadView();
-    auto detection_classes_ptr = detection_classes_view.buffer<float>();
-    std::vector<int> detection_classes(num_boxes_ * classes_per_detection_);
-    for (int i = 0; i < detection_classes.size(); ++i) {
-      detection_classes[i] = static_cast<int>(detection_classes_ptr[i]);
+    const int num_values = num_boxes_ * classes_per_detection_;
+    std::vector<float> detection_scores(num_values);
+    {
+      const Tensor::CpuReadView detection_scores_view =
+          detection_scores_tensor->GetCpuReadView();
+      const float* detection_scores_ptr = detection_scores_view.buffer<float>();
+      std::copy(detection_scores_ptr, detection_scores_ptr + num_values,
+                detection_scores.begin());
     }
-    ABSL_RETURN_IF_ERROR(ConvertToDetections(detection_boxes, detection_scores,
-                                             detection_classes.data(),
-                                             output_detections));
+    std::vector<int> detection_classes(num_values);
+    {
+      const Tensor::CpuReadView detection_classes_view =
+          detection_classes_tensor->GetCpuReadView();
+      const float* detection_classes_ptr =
+          detection_classes_view.buffer<float>();
+      for (int i = 0; i < num_values; ++i) {
+        detection_classes[i] = static_cast<int>(detection_classes_ptr[i]);
+      }
+    }
+    const Tensor::CpuReadView detection_boxes_view =
+        detection_boxes_tensor->GetCpuReadView();
+    ABSL_RETURN_IF_ERROR(ConvertToDetections(
+        detection_boxes_view.buffer<float>(), detection_scores.data(),
+        detection_classes.data(), output_detections));
   }
   return absl::OkStatus();
 }
