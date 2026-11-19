@@ -71,7 +71,7 @@ public struct ImageClassifierOptions: Sendable {
   }
 
   package func withCOptions<Result>(
-    cCallback: MpImageClassifierResultCallback?,
+    liveStreamContext: VisionLiveStreamContext<MpImageClassifierResult>?,
     _ body: (inout MpImageClassifierOptions) throws -> Result
   ) rethrows -> Result {
     let classifierOptions = ClassifierOptions(
@@ -87,9 +87,19 @@ public struct ImageClassifierOptions: Sendable {
           base_options: cBaseOptions,
           running_mode: runningMode.cRunningMode,
           classifier_options: cClassifierOptions,
-          result_callback: cCallback
+          result_callback: nil,
+          result_callback_user_data: nil
         )
-        return try body(&cOptions)
+        if let liveStreamContext {
+          cOptions.result_callback = {
+            VisionLiveStreamContext.receive(
+              userData: $0, status: $1, errorMessage: $2, result: $3,
+              image: $4, timestampMs: $5)
+          }
+          cOptions.result_callback_user_data = liveStreamContext.userData
+        }
+        // `result_callback_user_data` does not retain the context.
+        return try withExtendedLifetime(liveStreamContext) { try body(&cOptions) }
       }
     }
   }

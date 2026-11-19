@@ -46,8 +46,22 @@ typedef struct MpAudioClassifierResult {
 } MpAudioClassifierResult;
 
 // User-defined result callback for processing audio stream data.
+//
+// Arguments of the callback function:
+//   - `user_data`: the `result_callback_user_data` of the options that the
+//     audio classifier was created with, passed through unchanged.
+//   - `status`: `kMpOk` if a result is available, or the error otherwise.
+//   - `error_msg`: the message of the error, or null if `status` is `kMpOk`.
+//   - `result`: the classification result, or null if `status` is not `kMpOk`.
+//
+// `error_msg` and `result` are only valid for the lifetime of the callback and
+// must not be freed by the caller (do not pass `error_msg` to `MpErrorFree()`
+// or `result` to `MpAudioClassifierCloseResult()`). The callback is invoked on
+// a thread of the audio classifier and must not call
+// `MpAudioClassifierClose()`.
 typedef void (*MpAudioClassifierResultCallbackFn)(
-    MpStatus status, MpAudioClassifierResult* result);
+    void* user_data, MpStatus status, const char* error_msg,
+    const MpAudioClassifierResult* result);
 
 // The options for configuring a MediaPipe AudioClassifier task.
 //
@@ -78,6 +92,12 @@ struct MpAudioClassifierOptions {
   // The result callback should only be specified when the running mode is set
   // to kMpAudioRunningModeAudioStream.
   MpAudioClassifierResultCallbackFn result_callback;
+
+  // The pointer that is passed as `user_data` to every invocation of
+  // `result_callback`. Can be null. The audio classifier neither dereferences
+  // nor frees it. It must remain valid until `MpAudioClassifierClose()`
+  // returns.
+  void* result_callback_user_data;
 };
 
 // Creates an AudioClassifier from the provided `options`.
@@ -140,6 +160,10 @@ MP_EXPORT void MpAudioClassifierCloseResult(MpAudioClassifierResult* result);
 
 // Shuts down the AudioClassifier when all the work is done. Frees all memory.
 //
+// Waits for the results of the audio data that was sent with
+// `MpAudioClassifierClassifyAsync()`. Once this function returns,
+// `result_callback` is not invoked anymore, and `classifier` is freed and must
+// not be used, even if an error is returned.
 //
 // @param classifier The audio classifier instance to be closed.
 // @param error_msg An optional pointer to receive the error message if the

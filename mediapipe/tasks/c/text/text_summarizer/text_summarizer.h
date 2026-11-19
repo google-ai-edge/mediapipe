@@ -132,6 +132,8 @@ MP_EXPORT void MpTextSummarizerCloseResult(
     struct MpTextSummarizerResult* result);
 
 // Shuts down the TextSummarizer when all the work is done. Frees all memory.
+// `summarizer` is freed and must not be used anymore, even if an error is
+// returned.
 //
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon

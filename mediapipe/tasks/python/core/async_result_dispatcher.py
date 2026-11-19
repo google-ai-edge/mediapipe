@@ -14,6 +14,7 @@
 
 """A dispatcher to handle asynchronous results from a C library."""
 
+import ctypes
 import dataclasses
 import enum
 import logging
@@ -91,7 +92,9 @@ class AsyncResultDispatcher:
   dispatcher = AsyncResultDispatcher(converter=converter)
   c_callback_type = ctypes.CFUNCTYPE(
       None,  # Return type (void)
+      ctypes.c_void_p,  # User data
       ctypes.c_int32,  # Status code
+      ctypes.c_char_p,  # Error message
       ctypes.POINTER(CResult), # First argument
       ctypes.c_int64 # Second argument
   )
@@ -127,6 +130,11 @@ class AsyncResultDispatcher:
     for execution with the converted data. This function can only be called
     once per instance.
 
+    The C callback must take the user data, the status code and the error
+    message as its first three arguments. The remaining arguments are passed
+    to the converter function. The user data is ignored, since the returned
+    callback is already bound to this dispatcher.
+
     Args:
       python_callback: The user-defined result callback for processing
         livestream data.
@@ -143,16 +151,31 @@ class AsyncResultDispatcher:
       raise RuntimeError("Callback already set.")
     self._callback = python_callback
 
-    def c_callback(status_code: int, *args: Any) -> None:
+    def c_callback(
+        user_data: Optional[int],
+        status_code: int,
+        error_message: Optional[bytes],
+        *args: Any,
+    ) -> None:
       """The callback function that is invoked by the C library.
 
       Args:
+        user_data: The user data that is passed to the C library callback.
         status_code: The status code that is passed to the C library callback.
+        error_message: The error message that is passed to the C library
+          callback, or None if the status code is OK.
         *args: Any additional arguments passed to the C library callback.
       """
+      del user_data  # The callback is bound to this dispatcher.
       if status_code != 0:
-        exception = mediapipe_c_utils.convert_to_exception(status_code)
-        self._put_packet(_ExceptionPacket(exception=exception))  # pyrefly: ignore[bad-argument-type]
+        try:
+          exception = mediapipe_c_utils.convert_to_exception(
+              status_code, ctypes.c_char_p(error_message)
+          )
+          if exception is not None:
+            self._put_packet(_ExceptionPacket(exception=exception))
+        except Exception as e:  # pylint: disable=broad-except
+          self._put_packet(_ExceptionPacket(exception=e))
         return
 
       try:
@@ -207,7 +230,9 @@ class AsyncResultDispatcher:
 
   def close(self) -> None:
     """Shuts down the dispatcher thread and cleans up resources."""
-    if self._state == _DispatcherState.RUNNING:
+    if self._state == _DispatcherState.NOT_STARTED:
+      self._state = _DispatcherState.SHUTTING_DOWN
+    elif self._state == _DispatcherState.RUNNING:
       self._state = _DispatcherState.SHUTTING_DOWN
       try:
         # Write a final byte to unblock the os.read() call.

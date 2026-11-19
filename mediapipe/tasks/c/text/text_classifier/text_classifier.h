@@ -73,6 +73,8 @@ MP_EXPORT MpStatus MpTextClassifierClassify(MpTextClassifierPtr classifier,
 MP_EXPORT void MpTextClassifierCloseResult(MpTextClassifierResult* result);
 
 // Shuts down the TextClassifier when all the work is done. Frees all memory.
+// `classifier` is freed and must not be used anymore, even if an error is
+// returned.
 //
 // To obtain a detailed error, error_msg must be non-null pointer to a char*,
 // which will be populated with a newly-allocated error message upon failure.

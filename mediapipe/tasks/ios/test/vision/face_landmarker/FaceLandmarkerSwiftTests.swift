@@ -64,8 +64,8 @@ final class FaceLandmarkerSwiftTests: XCTestCase {
   func testOptionsMatrixAndConnectionsBridging() throws {
     let custom = FaceLandmarkerOptions(numFaces: 3, outputFaceBlendshapes: true)
     XCTAssertThrowsError(
-      try FaceLandmarkerOptions(numFaces: 0).withCOptions(resultCallback: nil) { _ in })
-    try custom.withCOptions(resultCallback: nil) { cOptions in
+      try FaceLandmarkerOptions(numFaces: 0).withCOptions(liveStreamContext: nil) { _ in })
+    try custom.withCOptions(liveStreamContext: nil) { cOptions in
       XCTAssertEqual(cOptions.running_mode, VisionRunningMode.image.cRunningMode)
       XCTAssertEqual(cOptions.num_faces, 3)
       XCTAssertEqual(cOptions.min_tracking_confidence, 0.5)

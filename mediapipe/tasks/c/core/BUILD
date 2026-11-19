@@ -99,3 +99,27 @@ cc_library(
         "@com_google_absl//absl/status",
     ],
 )
+
+cc_library(
+    name = "result_callback",
+    hdrs = ["result_callback.h"],
+    deps = [
+        ":mp_status",
+        ":mp_status_converter",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status",
+    ],
+)
+
+cc_test(
+    name = "result_callback_test",
+    srcs = ["result_callback_test.cc"],
+    deps = [
+        ":mp_status",
+        ":result_callback",
+        "//mediapipe/framework/port:gtest",
+        "@com_google_absl//absl/status",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

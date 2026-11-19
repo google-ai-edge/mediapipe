@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import Foundation
-private import third_party_mediapipe_tasks_c_audio_audio_classifier_audio_classifier_lib
+package import third_party_mediapipe_tasks_c_audio_audio_classifier_audio_classifier_lib
 private import third_party_mediapipe_tasks_c_audio_core_common
-private import third_party_mediapipe_tasks_c_core_mp_status
+package import third_party_mediapipe_tasks_c_core_mp_status
 
 #if !MEDIAPIPE_SINGLE_MODULE
   @_exported import MediaPipeTasksAudioCore
@@ -31,40 +31,40 @@ public final class AudioClassifier {
   private let lock = NSLock()
   private let runningMode: AudioRunningMode
   private var cClassifier: MpAudioClassifierPtr?
-  private var callbackSlot: Int?
+  /// Receives the audio stream results. The C task keeps an unretained pointer to it until the task
+  /// has been closed. Guarded by `lock` and released together with `cClassifier`, so that a closed
+  /// classifier no longer retains the result handler.
+  private var streamContext: AudioStreamContext?
 
   /// Creates an instance from `options`.
   public init(options: AudioClassifierOptions) throws {
-    var allocation: (slot: Int, callback: MpAudioClassifierResultCallbackFn)?
+    let streamContext: AudioStreamContext?
     switch options.runningMode {
     case .audioClips:
       guard options.audioStreamResultHandler == nil else {
         throw TasksError.invalidArgument(
           "Audio stream result handler must not be set in audio clips mode.")
       }
+      streamContext = nil
     case .audioStream:
       guard let handler = options.audioStreamResultHandler else {
         throw TasksError.invalidArgument(
           "Audio stream result handler must be set in audio stream mode.")
       }
-      allocation = try StreamCallbackPool.acquire(StreamSlot(handler: handler))
+      streamContext = AudioStreamContext(handler: handler)
     }
 
-    var slotToRelease = allocation?.slot
-    defer { if let slot = slotToRelease { StreamCallbackPool.release(slot: slot) } }
-
     var created: MpAudioClassifierPtr?
-    try options.withCOptions(cCallback: allocation?.callback) { cOptions in
+    try options.withCOptions(streamContext: streamContext) { cOptions in
       try MpStatus.check { MpAudioClassifierCreate(&cOptions, &created, &$0) }
     }
     guard let created else {
       throw TasksError.internalError("Failed to create MpAudioClassifier instance.")
     }
 
-    slotToRelease = nil
     self.runningMode = options.runningMode
     self.cClassifier = created
-    self.callbackSlot = allocation?.slot
+    self.streamContext = streamContext
   }
 
   /// Creates an `.audioClips` instance from a local model file.
@@ -74,9 +74,10 @@ public final class AudioClassifier {
   }
 
   deinit {
-    if let classifier = takeClassifierToClose() {
-      defer { unregisterCallbackSlot() }
-      _ = MpAudioClassifierClose(classifier, nil)
+    let (classifier, streamContext) = takeClassifierToClose()
+    if let classifier {
+      // The C task calls the stream context until `MpAudioClassifierClose` has returned.
+      withExtendedLifetime(streamContext) { _ = MpAudioClassifierClose(classifier, nil) }
     }
   }
 
@@ -103,12 +104,16 @@ public final class AudioClassifier {
     }
   }
 
-  /// Flushes pending stream packets and shuts down the underlying MediaPipe graph.
+  /// Flushes pending stream packets and shuts down the underlying MediaPipe graph. Releases the
+  /// audio stream result handler once the results that are still pending have been delivered.
   public func close() throws {
-    guard let classifier = takeClassifierToClose() else { return }
-    defer { unregisterCallbackSlot() }
-    try MpStatus.check(defaultMessage: "Failed to close AudioClassifier.") {
-      MpAudioClassifierClose(classifier, &$0)
+    let (classifier, streamContext) = takeClassifierToClose()
+    guard let classifier else { return }
+    // The C task calls the stream context until `MpAudioClassifierClose` has returned.
+    try withExtendedLifetime(streamContext) {
+      try MpStatus.check(defaultMessage: "Failed to close AudioClassifier.") {
+        MpAudioClassifierClose(classifier, &$0)
+      }
     }
   }
 
@@ -120,19 +125,16 @@ public final class AudioClassifier {
     return try AudioRecord(audioDataFormat: format, bufferLength: bufferLength)
   }
 
-  private func takeClassifierToClose() -> MpAudioClassifierPtr? {
+  /// Removes the C classifier and its stream context from this instance. The caller closes the
+  /// classifier and keeps the context alive until the close call has returned.
+  private func takeClassifierToClose() -> (MpAudioClassifierPtr?, AudioStreamContext?) {
     lock.withLock {
-      defer { cClassifier = nil }
-      return cClassifier
+      defer {
+        cClassifier = nil
+        streamContext = nil
+      }
+      return (cClassifier, streamContext)
     }
-  }
-
-  private func unregisterCallbackSlot() {
-    let slot: Int? = lock.withLock {
-      defer { callbackSlot = nil }
-      return callbackSlot
-    }
-    if let slot { StreamCallbackPool.release(slot: slot) }
   }
 
   private func withPreparedCall<R>(
@@ -158,58 +160,69 @@ public final class AudioClassifier {
   }
 }
 
-private final class StreamSlot: Sendable {
-  let handler: AudioClassifierOptions.AudioStreamResultHandler
-  let queue = DispatchQueue(label: "com.google.mediapipe.tasks.audioClassifier.callback")
-  init(handler: @escaping AudioClassifierOptions.AudioStreamResultHandler) {
+/// Receives the audio stream results of one `AudioClassifier` from the C result callback.
+///
+/// The classifier sets `userData` as `result_callback_user_data` and `cCallback` as
+/// `result_callback` in its C options. The C task does not retain `userData`, so the classifier
+/// must keep this object alive until its `MpAudioClassifierClose` call has returned.
+/// `MpAudioClassifierClose` waits for pending results and invokes no callback after it returns.
+package final class AudioStreamContext: Sendable {
+  private let handler: AudioClassifierOptions.AudioStreamResultHandler
+  private let queue = DispatchQueue(
+    label: "com.google.mediapipe.tasks.audioClassifier.callback.\(UUID().uuidString)"
+  )
+
+  package init(handler: @escaping AudioClassifierOptions.AudioStreamResultHandler) {
     self.handler = handler
   }
-}
 
-// Maps active `AudioClassifier` instances to static C function-pointer trampolines because
-// `MpAudioClassifierResultCallbackFn` is a plain C callback without a `void* user_data` context.
-private enum StreamCallbackPool {
-  private static let lock = NSLock()
-  private nonisolated(unsafe) static var slots = [UnsafeMutableRawPointer?](
-    repeating: nil, count: trampolines.count)
-  private static let trampolines: [MpAudioClassifierResultCallbackFn] = [
-    { run(0, $0, $1) }, { run(1, $0, $1) }, { run(2, $0, $1) }, { run(3, $0, $1) },
-    { run(4, $0, $1) }, { run(5, $0, $1) }, { run(6, $0, $1) }, { run(7, $0, $1) },
-  ]
-
-  static func acquire(_ entry: StreamSlot) throws -> (Int, MpAudioClassifierResultCallbackFn) {
-    try lock.withLock {
-      guard let idx = slots.firstIndex(where: { $0 == nil }) else {
-        throw TasksError(code: .resourceExhausted, message: "No free audio stream callback slots.")
-      }
-      slots[idx] = Unmanaged.passRetained(entry).toOpaque()
-      return (idx, trampolines[idx])
-    }
+  /// The value for `result_callback_user_data` in the C options. Does not retain `self`.
+  package var userData: UnsafeMutableRawPointer {
+    Unmanaged.passUnretained(self).toOpaque()
   }
 
-  static func release(slot: Int) {
-    let opaque: UnsafeMutableRawPointer? = lock.withLock {
-      defer { slots[slot] = nil }
-      return slots[slot]
-    }
-    if let opaque { Unmanaged<StreamSlot>.fromOpaque(opaque).release() }
+  /// The value for `result_callback` in the C options. Delivers the result to the context that its
+  /// `user_data` argument points to.
+  package static let cCallback: MpAudioClassifierResultCallbackFn = {
+    userData, status, errorMessage, cResult in
+    receive(userData: userData, status: status, errorMessage: errorMessage, result: cResult)
   }
 
-  private static func run(
-    _ slot: Int, _ status: MpStatus, _ cResult: UnsafeMutablePointer<MpAudioClassifierResult>?
+  /// Forwards the arguments of a C result callback to the context that `userData` points to.
+  package static func receive(
+    userData: UnsafeMutableRawPointer?,
+    status: MpStatus,
+    errorMessage: UnsafePointer<CChar>?,
+    result: UnsafePointer<MpAudioClassifierResult>?
   ) {
-    guard
-      let entry: StreamSlot = lock.withLock({
-        slots[slot].map { Unmanaged<StreamSlot>.fromOpaque($0).takeUnretainedValue() }
-      })
-    else { return }
-    let handler = entry.handler
+    guard let userData else { return }
+    Unmanaged<AudioStreamContext>.fromOpaque(userData).takeUnretainedValue()
+      .deliver(status, errorMessage, result)
+  }
+
+  /// Decodes `cResult` synchronously before the C pointers expire and delivers the outcome on
+  /// `queue`.
+  private func deliver(
+    _ status: MpStatus,
+    _ errorMessage: UnsafePointer<CChar>?,
+    _ cResult: UnsafePointer<MpAudioClassifierResult>?
+  ) {
     let outcome: Result<AudioClassifierResult, any Error>
-    if status == kMpOk, let cResult {
+    if status != kMpOk {
+      outcome = .failure(
+        TasksError(
+          code: TasksErrorCode(cStatus: status),
+          message: errorMessage.map { String(cString: $0) }
+        )
+      )
+    } else if let cResult {
       outcome = .success(AudioClassifierResult(cResult: cResult.pointee))
     } else {
-      outcome = .failure(TasksError(code: TasksErrorCode(cStatus: status)))
+      outcome = .failure(
+        TasksError.internalError("Audio stream callback received kMpOk with a null result.")
+      )
     }
-    entry.queue.async { handler(outcome) }
+    let handler = self.handler
+    queue.async { handler(outcome) }
   }
 }

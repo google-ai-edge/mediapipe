@@ -77,7 +77,7 @@ public struct ObjectDetectorOptions: Sendable {
   /// Invokes `body` with a mutable C `MpObjectDetectorOptions` pointer whose nested C buffers
   /// remain valid for the duration of the closure call.
   package func withCOptions<Result>(
-    cCallback: MpObjectDetectorResultCallback?,
+    liveStreamContext: VisionLiveStreamContext<MpObjectDetectorResult>?,
     _ body: (UnsafeMutablePointer<MpObjectDetectorOptions>) throws -> Result
   ) throws -> Result {
     guard let cMaxResults = Int32(exactly: maxResults) else {
@@ -97,8 +97,18 @@ public struct ObjectDetectorOptions: Sendable {
             cOptions.category_allowlist_count = allowlistCount
             cOptions.category_denylist = denylistPtr
             cOptions.category_denylist_count = denylistCount
-            cOptions.result_callback = cCallback
-            return try withUnsafeMutablePointer(to: &cOptions, body)
+            if let liveStreamContext {
+              cOptions.result_callback = {
+                VisionLiveStreamContext.receive(
+                  userData: $0, status: $1, errorMessage: $2, result: $3,
+                  image: $4, timestampMs: $5)
+              }
+              cOptions.result_callback_user_data = liveStreamContext.userData
+            }
+            // `result_callback_user_data` does not retain the context.
+            return try withExtendedLifetime(liveStreamContext) {
+              try withUnsafeMutablePointer(to: &cOptions, body)
+            }
           }
         }
       }

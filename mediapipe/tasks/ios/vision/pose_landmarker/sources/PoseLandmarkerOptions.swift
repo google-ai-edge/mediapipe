@@ -70,7 +70,7 @@ public struct PoseLandmarkerOptions: Sendable {
   }
 
   package func withCOptions<Result>(
-    cCallback: MpPoseLandmarkerResultCallback?,
+    liveStreamContext: VisionLiveStreamContext<MpPoseLandmarkerResult>?,
     _ body: (inout MpPoseLandmarkerOptions) throws -> Result
   ) throws -> Result {
     guard let cNumPoses = Int32(exactly: numPoses), cNumPoses > 0 else {
@@ -85,9 +85,19 @@ public struct PoseLandmarkerOptions: Sendable {
         min_pose_presence_confidence: minPosePresenceConfidence,
         min_tracking_confidence: minTrackingConfidence,
         output_segmentation_masks: outputSegmentationMasks,
-        result_callback: cCallback
+        result_callback: nil,
+        result_callback_user_data: nil
       )
-      return try body(&cOptions)
+      if let liveStreamContext {
+        cOptions.result_callback = {
+          VisionLiveStreamContext.receive(
+            userData: $0, status: $1, errorMessage: $2, result: $3,
+            image: $4, timestampMs: $5)
+        }
+        cOptions.result_callback_user_data = liveStreamContext.userData
+      }
+      // `result_callback_user_data` does not retain the context.
+      return try withExtendedLifetime(liveStreamContext) { try body(&cOptions) }
     }
   }
 }

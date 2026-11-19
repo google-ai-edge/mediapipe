@@ -55,7 +55,9 @@ class MpImageSegmenterResultC(ctypes.Structure):
 
 _C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
     None,
+    ctypes.c_void_p,  # user_data
     ctypes.c_int32,  # MpStatus
+    ctypes.c_char_p,  # error_msg
     ctypes.POINTER(MpImageSegmenterResultC),
     ctypes.c_void_p,  # MpImage
     ctypes.c_int64,  # timestamp_ms
@@ -72,6 +74,7 @@ class MpImageSegmenterOptionsC(ctypes.Structure):
       ('output_confidence_masks', ctypes.c_bool),
       ('output_category_mask', ctypes.c_bool),
       ('result_callback', _C_TYPES_RESULT_CALLBACK),
+      ('result_callback_user_data', ctypes.c_void_p),
   ]
 
   @classmethod
@@ -528,10 +531,15 @@ class ImageSegmenter:
     """Closes ImageSegmenter."""
     if not self._handle:
       return
-    self._lib.MpImageSegmenterClose(self._handle)  # pyrefly: ignore[missing-attribute]
+    # The C library frees the task even if it fails to close, so the handle
+    # must not be used again.
+    handle = self._handle
     self._handle = None  # pyrefly: ignore[bad-assignment]
-    self._dispatcher.close()
-    self._lib.close()
+    try:
+      self._lib.MpImageSegmenterClose(handle)  # pyrefly: ignore[missing-attribute]
+    finally:
+      self._dispatcher.close()
+      self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

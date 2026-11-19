@@ -55,7 +55,11 @@ class MpAudioClassifierResultC(ctypes.Structure):
 
 
 _C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
-    None, ctypes.c_int32, ctypes.POINTER(MpAudioClassifierResultC)
+    None,
+    ctypes.c_void_p,  # user_data
+    ctypes.c_int32,  # MpStatus
+    ctypes.c_char_p,  # error_msg
+    ctypes.POINTER(MpAudioClassifierResultC),
 )
 
 
@@ -67,6 +71,7 @@ class MpAudioClassifierOptionsC(ctypes.Structure):
       ('classifier_options', classifier_options_c.MpClassifierOptionsC),
       ('running_mode', ctypes.c_int),
       ('result_callback', _C_TYPES_RESULT_CALLBACK),
+      ('result_callback_user_data', ctypes.c_void_p),
   ]
 
   @classmethod
@@ -430,10 +435,15 @@ class AudioClassifier:
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._handle:
-      self._lib.MpAudioClassifierClose(self._handle)  # pyrefly: ignore[missing-attribute]
+      # The C library frees the task even if it fails to close, so the handle
+      # must not be used again.
+      handle = self._handle
       self._handle = None  # pyrefly: ignore[bad-assignment]
-      self._dispatcher.close()
-      self._lib.close()
+      try:
+        self._lib.MpAudioClassifierClose(handle)  # pyrefly: ignore[missing-attribute]
+      finally:
+        self._dispatcher.close()
+        self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

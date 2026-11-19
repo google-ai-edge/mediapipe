@@ -305,9 +305,14 @@ class LanguageDetector:
     """Shuts down the MediaPipe task instance."""
     if not self._detector_handle:
       return
-    self._lib.MpLanguageDetectorClose(self._detector_handle)  # pyrefly: ignore[missing-attribute]
+    # The C library frees the task even if it fails to close, so the handle
+    # must not be used again.
+    handle = self._detector_handle
     self._detector_handle = None  # pyrefly: ignore[bad-assignment]
-    self._lib.close()
+    try:
+      self._lib.MpLanguageDetectorClose(handle)  # pyrefly: ignore[missing-attribute]
+    finally:
+      self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

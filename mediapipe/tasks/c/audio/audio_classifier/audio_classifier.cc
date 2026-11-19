@@ -20,7 +20,6 @@ limitations under the License.
 #include <utility>
 
 #include "Eigen/Core"                   // from @eigen
-#include "absl/base/attributes.h"       // from @com_google_absl
 #include "absl/log/absl_check.h"        // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
@@ -35,6 +34,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/core/base_options_converter.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/core/mp_status_converter.h"
+#include "mediapipe/tasks/c/core/result_callback.h"
 #include "mediapipe/tasks/cc/audio/audio_classifier/audio_classifier.h"
 #include "mediapipe/tasks/cc/components/containers/classification_result.h"
 
@@ -59,7 +59,7 @@ using ::mediapipe::tasks::c::components::containers::
 using ::mediapipe::tasks::c::components::processors::
     CppConvertToClassifierOptions;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
-using ::mediapipe::tasks::c::core::ToMpStatus;
+using ::mediapipe::tasks::c::core::ResultCallback;
 using ::mediapipe::tasks::components::containers::ClassificationResult;
 
 AudioClassifier* GetCppClassifier(MpAudioClassifierPtr wrapper) {
@@ -68,23 +68,24 @@ AudioClassifier* GetCppClassifier(MpAudioClassifierPtr wrapper) {
 }
 
 // A static result callback function that calls the provided C result callback.
-ABSL_ATTRIBUTE_NO_SANITIZE_CFI void CppResultCallback(
+void CppResultCallback(
     absl::StatusOr<ClassificationResult> result,
-    MpAudioClassifierResultCallbackFn c_callback) {
+    const ResultCallback<MpAudioClassifierResult>& c_callback) {
   if (!result.ok()) {
-    c_callback(ToMpStatus(result.status()), nullptr);
+    c_callback.InvokeWithError(result.status());
     return;
   }
 
-  auto classification_result = std::make_unique<MpClassificationResult[]>(1);
-  CppConvertToClassificationResult(*result, classification_result.get());
-
   // The C++ async callback receives one classification result at a time, so we
-  // create a new result with a single result and call the callback.
-  MpAudioClassifierResult c_result = {
-      .results = classification_result.release(), .results_count = 1};
-  c_callback(kMpOk, &c_result);
-  MpAudioClassifierCloseResult(&c_result);
+  // wrap a single stack-allocated result and close its inner allocations after
+  // the callback returns.
+  MpClassificationResult classification_result = {};
+  CppConvertToClassificationResult(*result, &classification_result);
+
+  const MpAudioClassifierResult c_result = {.results = &classification_result,
+                                            .results_count = 1};
+  c_callback.InvokeWithResult(&c_result);
+  CppCloseClassificationResult(&classification_result);
 }
 
 mediapipe::Matrix CppConvertToMatrix(const MpAudioData* audio_data) {
@@ -110,9 +111,10 @@ absl::StatusOr<std::unique_ptr<AudioClassifier>> CppCreateAudioClassifier(
                         CppConvertToRunningMode(options.running_mode));
 
   if (options.result_callback) {
+    const ResultCallback c_callback(options.result_callback,
+                                    options.result_callback_user_data);
     cpp_options->result_callback =
-        [c_callback = options.result_callback](
-            absl::StatusOr<ClassificationResult> result) {
+        [c_callback](absl::StatusOr<ClassificationResult> result) {
           CppResultCallback(std::move(result), c_callback);
         };
   }
@@ -180,12 +182,12 @@ absl::Status MpAudioClassifierClassifyAsync(MpAudioClassifierPtr classifier,
 
 absl::Status MpAudioClassifierClose(MpAudioClassifierPtr classifier) {
   auto* cpp_classifier = GetCppClassifier(classifier);
-  auto cpp_status = cpp_classifier->Close();
-  if (!cpp_status.ok()) {
-    return cpp_status;
-  }
+  absl::Status cpp_status = cpp_classifier->Close();
+  // The classifier is freed even if it fails to close: once this function
+  // returns, the result callback is not invoked anymore, so that the caller
+  // can release `result_callback_user_data`.
   delete classifier;
-  return absl::OkStatus();
+  return cpp_status;
 }
 
 }  // namespace mediapipe::tasks::c::audio::audio_classifier

@@ -19,7 +19,6 @@ load("@rules_cc//cc:cc_test.bzl", "cc_test")
 licenses(["notice"])
 
 OBJECT_DETECTOR_DEPS = [
-    "@com_google_absl//absl/base:core_headers",
     "@com_google_absl//absl/log:absl_log",
     "@com_google_absl//absl/status",
     "@com_google_absl//absl/status:statusor",
@@ -32,6 +31,7 @@ OBJECT_DETECTOR_DEPS = [
     "//mediapipe/tasks/c/core:common",
     "//mediapipe/tasks/c/core:mp_status",
     "//mediapipe/tasks/c/core:mp_status_converter",
+    "//mediapipe/tasks/c/core:result_callback",
     "//mediapipe/tasks/c/vision/core:image",
     "//mediapipe/tasks/c/vision/core:image_frame_util",
     "//mediapipe/tasks/c/vision/core:image_processing_options",

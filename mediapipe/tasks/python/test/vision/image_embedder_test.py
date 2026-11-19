@@ -14,6 +14,7 @@
 """Tests for image embedder."""
 
 import enum
+import gc
 import os
 import threading
 from unittest import mock
@@ -444,6 +445,32 @@ class ImageEmbedderTest(parameterized.TestCase):
         if callback_exception is not None:
           raise callback_exception
         callback_event.clear()
+
+  def test_embed_async_retains_callback_after_options_collected(self):
+    callback_event = threading.Event()
+    received_timestamps: list[int] = []
+
+    def on_result(
+        unused_result: _ImageEmbedderResult,
+        unused_image: _Image,
+        timestamp_ms: int,
+    ):
+      received_timestamps.append(timestamp_ms)
+      callback_event.set()
+
+    options = _ImageEmbedderOptions(
+        base_options=_BaseOptions(model_asset_path=self.model_path),
+        running_mode=_RUNNING_MODE.LIVE_STREAM,
+        result_callback=on_result,
+    )
+    embedder = _ImageEmbedder.create_from_options(options)
+    del options
+    gc.collect()
+    with embedder:
+      embedder.embed_async(self.test_image, 42)
+      self.assertTrue(callback_event.wait(timeout=5.0))
+
+    self.assertEqual(received_timestamps, [42])
 
 
 if __name__ == '__main__':

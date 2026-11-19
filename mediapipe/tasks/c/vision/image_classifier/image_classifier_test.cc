@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <cstdint>
 #include <cstdlib>
+#include <iterator>
 
 #include "absl/flags/flag.h"           // from @com_google_absl
 #include "absl/strings/string_view.h"  // from @com_google_absl
@@ -184,15 +185,19 @@ TEST(ImageClassifierTest, VideoModeTest) {
 
 // A structure to support LiveStreamModeTest below. This structure holds a
 // static method `Fn` for a callback function of C API. A `static` qualifier
-// allows to take an address of the method to follow API style. Another static
-// struct member is `last_timestamp` that is used to verify that current
-// timestamp is greater than the previous one.
+// allows to take an address of the method to follow API style. An instance of
+// the structure is passed to the callback as `user_data`. Its member
+// `last_timestamp` is used to verify that current timestamp is greater than
+// the previous one.
 struct LiveStreamModeCallback {
-  static int64_t last_timestamp;
-  static void Fn(MpStatus status,
+  int64_t last_timestamp = -1;
+  static void Fn(void* user_data, MpStatus status, const char* error_msg,
                  const MpImageClassifierResult* classifier_result,
                  const MpImagePtr image, int64_t timestamp) {
+    auto* self = reinterpret_cast<LiveStreamModeCallback*>(user_data);
+    ASSERT_NE(self, nullptr);
     ASSERT_EQ(status, kMpOk);
+    EXPECT_EQ(error_msg, nullptr);
     ASSERT_NE(classifier_result, nullptr);
     EXPECT_EQ(
         std::string{
@@ -202,17 +207,17 @@ struct LiveStreamModeCallback {
                 0.7939f, kPrecision);
     EXPECT_GT(MpImageGetWidth(image), 0);
     EXPECT_GT(MpImageGetHeight(image), 0);
-    EXPECT_GT(timestamp, last_timestamp);
-    last_timestamp = timestamp;
+    EXPECT_GT(timestamp, self->last_timestamp);
+    self->last_timestamp = timestamp;
   }
 };
-int64_t LiveStreamModeCallback::last_timestamp = -1;
 
 TEST(ImageClassifierTest, LiveStreamModeTest) {
   const ScopedMpImage image = GetImage(GetFullPath("burger.jpg"));
 
   const std::string model_path = GetFullPath(kModelName);
 
+  LiveStreamModeCallback callback;
   MpImageClassifierOptions options = {
       /* base_options= */ {/* model_asset_buffer= */ nullptr,
                            /* model_asset_buffer_count= */ 0,
@@ -227,6 +232,7 @@ TEST(ImageClassifierTest, LiveStreamModeTest) {
        /* category_denylist= */ nullptr,
        /* category_denylist_count= */ 0},
       /* result_callback= */ LiveStreamModeCallback::Fn,
+      /* result_callback_user_data= */ &callback,
   };
 
   MpImageClassifierPtr classifier;
@@ -250,8 +256,63 @@ TEST(ImageClassifierTest, LiveStreamModeTest) {
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
-  EXPECT_LE(LiveStreamModeCallback::last_timestamp, kIterations);
-  EXPECT_GE(LiveStreamModeCallback::last_timestamp, 0);
+  EXPECT_LE(callback.last_timestamp, kIterations);
+  EXPECT_GE(callback.last_timestamp, 0);
+}
+
+// A result callback for tests that do not expect a result.
+void IgnoreResult(void* user_data, MpStatus status, const char* error_msg,
+                  const MpImageClassifierResult* result, MpImagePtr image,
+                  int64_t timestamp_ms) {}
+
+TEST(ImageClassifierTest, CloseFreesClassifierWhenGraphFailed) {
+  const std::string model_path = GetFullPath(kModelName);
+
+  MpImageClassifierOptions options = {
+      /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_buffer_count= */ 0,
+                           /* model_asset_path= */ model_path.c_str()},
+      /* running_mode= */ MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM,
+      /* classifier_options= */
+      {/* display_names_locale= */ nullptr,
+       /* max_results= */ -1,
+       /* score_threshold= */ 0.0,
+       /* category_allowlist= */ nullptr,
+       /* category_allowlist_count= */ 0,
+       /* category_denylist= */ nullptr,
+       /* category_denylist_count= */ 0},
+      /* result_callback= */ IgnoreResult,
+  };
+
+  MpImageClassifierPtr classifier;
+  ASSERT_EQ(
+      MpImageClassifierCreate(&options, &classifier, /* error_msg= */ nullptr),
+      kMpOk);
+
+  // The graph cannot convert an image with float pixels into a tensor. It
+  // fails when it processes the image, which is after ClassifyAsync() has
+  // accepted the image.
+  const float pixels[4] = {0.0f, 0.25f, 0.5f, 1.0f};
+  MpImagePtr image_ptr = nullptr;
+  ASSERT_EQ(MpImageCreateFromFloatData(kMpImageFormatVec32F1, /* width= */ 2,
+                                       /* height= */ 2, pixels,
+                                       /* pixel_data_size= */ std::size(pixels),
+                                       &image_ptr, /* error_msg= */ nullptr),
+            kMpOk);
+  const ScopedMpImage image(image_ptr);
+  ASSERT_EQ(
+      MpImageClassifierClassifyAsync(classifier, image.get(),
+                                     /* image_processing_options= */ nullptr,
+                                     /* timestamp_ms= */ 0,
+                                     /* error_msg= */ nullptr),
+      kMpOk);
+
+  // Close() reports the error of the graph. It must free the classifier
+  // nevertheless, which the leak checker of the sanitizers verifies.
+  char* error_msg = nullptr;
+  EXPECT_NE(MpImageClassifierClose(classifier, &error_msg), kMpOk);
+  EXPECT_NE(error_msg, nullptr);
+  MpErrorFree(error_msg);
 }
 
 TEST(ImageClassifierTest, InvalidArgumentHandling) {

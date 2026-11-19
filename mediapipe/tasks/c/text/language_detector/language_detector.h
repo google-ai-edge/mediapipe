@@ -94,6 +94,8 @@ MP_EXPORT void MpLanguageDetectorCloseResult(
     struct MpLanguageDetectorResult* result);
 
 // Shuts down the LanguageDetector when all the work is done. Frees all memory.
+// `detector` is freed and must not be used anymore, even if an error is
+// returned.
 // Returns `kMpOk` on success.
 //
 // To obtain a detailed error, `error_msg` must be non-null pointer to a

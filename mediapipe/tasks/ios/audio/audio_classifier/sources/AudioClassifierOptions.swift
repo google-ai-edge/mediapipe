@@ -67,7 +67,7 @@ public struct AudioClassifierOptions: Sendable {
   }
 
   package func withCOptions<R>(
-    cCallback: MpAudioClassifierResultCallbackFn?,
+    streamContext: AudioStreamContext? = nil,
     _ body: (inout MpAudioClassifierOptions) throws -> R
   ) rethrows -> R {
     let classifierOptions = ClassifierOptions(
@@ -80,9 +80,14 @@ public struct AudioClassifierOptions: Sendable {
     return try baseOptions.withCOptions { cBase in
       try classifierOptions.withCOptions { cClassifier in
         var cOptions = MpAudioClassifierOptions(
-          base_options: cBase, classifier_options: cClassifier,
-          running_mode: runningMode.cRunningMode, result_callback: cCallback)
-        return try body(&cOptions)
+          base_options: cBase,
+          classifier_options: cClassifier,
+          running_mode: runningMode.cRunningMode,
+          result_callback: streamContext.map { _ in AudioStreamContext.cCallback },
+          result_callback_user_data: streamContext?.userData
+        )
+        // `result_callback_user_data` does not retain the context.
+        return try withExtendedLifetime(streamContext) { try body(&cOptions) }
       }
     }
   }

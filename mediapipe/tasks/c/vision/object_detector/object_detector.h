@@ -40,10 +40,29 @@ extern "C" {
 typedef struct MpObjectDetectorInternal* MpObjectDetectorPtr;
 typedef struct MpDetectionResult MpObjectDetectorResult;
 
-// The user-defined result callback for processing live stream data.
+// The user-defined result callback for processing live stream data. The result
+// callback should only be specified when the running mode is set to
+// MP_RUNNING_MODE_LIVE_STREAM.
+//
+// Arguments of the callback function:
+//   - `user_data`: the `result_callback_user_data` of the options that the
+//     object detector was created with, passed through unchanged.
+//   - `status`: `kMpOk` if a result is available, or the error otherwise.
+//   - `error_msg`: the message of the error, or null if `status` is `kMpOk`.
+//   - `result`: the result, or null if `status` is not `kMpOk`.
+//   - `image`: the image that the result was obtained on. If `status` is not
+//     `kMpOk`, an empty image that must not be used.
+//   - `timestamp_ms`: the timestamp of that image. Unspecified if `status` is
+//     not `kMpOk`.
+//
+// `error_msg`, `result` and `image` are only valid for the lifetime of the
+// callback and must not be freed by the caller (do not pass `error_msg` to
+// `MpErrorFree()`). The callback is invoked on a thread of the object detector
+// and must not call `MpObjectDetectorClose()`.
 typedef void (*MpObjectDetectorResultCallback)(
-    MpStatus status, const MpObjectDetectorResult* result,
-    const MpImagePtr image, int64_t timestamp_ms);
+    void* user_data, MpStatus status, const char* error_msg,
+    const MpObjectDetectorResult* result, const MpImagePtr image,
+    int64_t timestamp_ms);
 
 // The options for configuring a MediaPipe object detector task.
 //
@@ -92,16 +111,16 @@ struct MpObjectDetectorOptions {
   // The number of elements in the category denylist.
   uint32_t category_denylist_count;
 
-  // The user-defined result callback for processing live stream data.
-  // The result callback should only be specified when the running mode is set
-  // to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
-  // function include: the pointer to detection result, the image that result
-  // was obtained on, the timestamp relevant to detection results and pointer to
-  // error message in case of any failure. The validity of the passed arguments
-  // is true for the lifetime of the callback function.
-  //
-  // The passed arguments are only valid for the lifetime of the callback.
+  // The user-defined result callback for processing live stream data. The
+  // result callback should only be specified when the running mode is set to
+  // MP_RUNNING_MODE_LIVE_STREAM. See
+  // `MpObjectDetectorResultCallback` for details.
   MpObjectDetectorResultCallback result_callback;
+
+  // The pointer that is passed as `user_data` to every invocation of
+  // `result_callback`. Can be null. The object detector neither dereferences
+  // nor frees it. It must remain valid until `MpObjectDetectorClose()` returns.
+  void* result_callback_user_data;
 };
 
 // Creates an ObjectDetector from the provided `options`.
@@ -144,13 +163,8 @@ MP_EXPORT MpStatus MpObjectDetectorDetectForVideo(
 // provide a timestamp (in milliseconds) to indicate when the input image is
 // sent to the object detector. The input timestamps must be monotonically
 // increasing.
-// The `result_callback` provides:
-//   - The detection results as an MpObjectDetectorResult object.
-//   - The const reference to the corresponding input image that the image
-//     detector runs on. Note that the const reference to the image will no
-//     longer be valid when the callback returns. To access the image data
-//     outside of the callback, callers need to make a copy of the image.
-//   - The input timestamp in milliseconds.
+// See `MpObjectDetectorResultCallback` for the arguments that `result_callback`
+// receives.
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.
@@ -163,7 +177,11 @@ MpObjectDetectorDetectAsync(MpObjectDetectorPtr detector, MpImagePtr image,
 // Does not free the result pointer itself.
 MP_EXPORT void MpObjectDetectorCloseResult(MpObjectDetectorResult* result);
 
-// Frees object detector.
+// Shuts down and frees the object detector. In the live stream mode, waits for
+// the pending results. Once this function returns, `result_callback` is not
+// invoked anymore, and `detector` is freed and must not be used, even if an
+// error is returned.
+//
 // If an error occurs, returns an error code and sets the error parameter to an
 // an error message (if `error_msg` is not `nullptr`). You must free the memory
 // allocated for the error message.

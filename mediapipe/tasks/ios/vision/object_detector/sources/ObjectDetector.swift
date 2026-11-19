@@ -29,7 +29,9 @@ package import third_party_mediapipe_tasks_c_vision_object_detector_object_detec
 public final class ObjectDetector {
   private let cDetector: MpObjectDetectorPtr
   private let runner: VisionTaskRunner
-  private let liveStreamRegistration: VisionLiveStreamRegistration?
+  /// Receives the live-stream results. The C task keeps an unretained pointer to it until the task
+  /// has been closed.
+  private let liveStreamContext: VisionLiveStreamContext<MpObjectDetectorResult>?
 
   /// Creates an `ObjectDetector` configured with `options`.
   public init(options: ObjectDetectorOptions) throws {
@@ -40,30 +42,18 @@ public final class ObjectDetector {
       normRectAllowed: true,
       hasLiveStreamHandler: options.liveStreamResultHandler != nil
     )
-    var registration: VisionLiveStreamRegistration?
-    var cCallback: MpObjectDetectorResultCallback?
-    if let handler = options.liveStreamResultHandler {
-      let registered = try VisionLiveStreamRegistration.register(
+    let liveStreamContext = options.liveStreamResultHandler.map { handler in
+      VisionLiveStreamContext<MpObjectDetectorResult>(
         queueLabelSuffix: "objectDetector",
-        resultType: MpObjectDetectorResult.self,
-        as: MpObjectDetectorResultCallback.self,
         decode: { cResultPtr, _, timestampMs in
           ObjectDetectorResult(cResult: cResultPtr.pointee, timestampInMilliseconds: timestampMs)
         },
         handler: handler
       )
-      registration = registered.registration
-      cCallback = registered.cCallback
     }
 
-    var succeeded = false
-    defer {
-      if !succeeded {
-        registration?.unregister()
-      }
-    }
     var detectorPtr: MpObjectDetectorPtr?
-    try options.withCOptions(cCallback: cCallback) { cOptionsPtr in
+    try options.withCOptions(liveStreamContext: liveStreamContext) { cOptionsPtr in
       try MpStatus.check(defaultMessage: "Failed to create ObjectDetector.") { errorMsg in
         MpObjectDetectorCreate(cOptionsPtr, &detectorPtr, &errorMsg)
       }
@@ -71,10 +61,9 @@ public final class ObjectDetector {
     guard let detectorPtr else {
       throw TasksError.internalError("MpObjectDetectorCreate succeeded without returning a task.")
     }
-    succeeded = true
     self.cDetector = detectorPtr
     self.runner = runner
-    self.liveStreamRegistration = registration
+    self.liveStreamContext = liveStreamContext
   }
 
   /// Creates an `ObjectDetector` in `.image` mode using the model file at `modelPath`.
@@ -85,7 +74,6 @@ public final class ObjectDetector {
 
   deinit {
     _ = MpObjectDetectorClose(cDetector, nil)
-    liveStreamRegistration?.unregister()
   }
 
   /// Detects objects in a standalone `image` (`.image` running mode only).

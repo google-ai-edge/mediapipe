@@ -63,7 +63,7 @@ public struct HandLandmarkerOptions: Sendable {
   /// Invokes `body` with a mutable C `MpHandLandmarkerOptions` pointer whose nested C buffers
   /// remain valid for the duration of the closure call.
   package func withCOptions<Result>(
-    cCallback: MpHandLandmarkerResultCallback?,
+    liveStreamContext: VisionLiveStreamContext<MpHandLandmarkerResult>?,
     _ body: (UnsafeMutablePointer<MpHandLandmarkerOptions>) throws -> Result
   ) throws -> Result {
     guard numHands > 0, let cNumHands = Int32(exactly: numHands) else {
@@ -77,8 +77,18 @@ public struct HandLandmarkerOptions: Sendable {
       cOptions.min_hand_detection_confidence = minHandDetectionConfidence
       cOptions.min_hand_presence_confidence = minHandPresenceConfidence
       cOptions.min_tracking_confidence = minTrackingConfidence
-      cOptions.result_callback = cCallback
-      return try withUnsafeMutablePointer(to: &cOptions, body)
+      if let liveStreamContext {
+        cOptions.result_callback = {
+          VisionLiveStreamContext.receive(
+            userData: $0, status: $1, errorMessage: $2, result: $3,
+            image: $4, timestampMs: $5)
+        }
+        cOptions.result_callback_user_data = liveStreamContext.userData
+      }
+      // `result_callback_user_data` does not retain the context.
+      return try withExtendedLifetime(liveStreamContext) {
+        try withUnsafeMutablePointer(to: &cOptions, body)
+      }
     }
   }
 }

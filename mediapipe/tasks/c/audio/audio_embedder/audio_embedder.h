@@ -101,6 +101,8 @@ MP_EXPORT MpStatus MpAudioEmbedderEmbed(MpAudioEmbedderPtr embedder,
 MP_EXPORT void MpAudioEmbedderCloseResult(MpAudioEmbedderResult* result);
 
 // Shuts down the AudioEmbedder when all the work is done. Frees all memory.
+// `embedder` is freed and must not be used anymore, even if an error is
+// returned.
 //
 // @param embedder The audio embedder instance to be closed.
 // @param error_msg An optional pointer to receive the error message if the

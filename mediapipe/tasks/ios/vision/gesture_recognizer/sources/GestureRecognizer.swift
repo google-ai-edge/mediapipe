@@ -31,7 +31,9 @@ package import third_party_mediapipe_tasks_c_vision_gesture_recognizer_gesture_r
 public final class GestureRecognizer {
   private let cRecognizer: MpGestureRecognizerPtr
   private let runner: VisionTaskRunner
-  private let liveStreamRegistration: VisionLiveStreamRegistration?
+  /// Receives the live-stream results. The C task keeps an unretained pointer to it until the task
+  /// has been closed.
+  private let liveStreamContext: VisionLiveStreamContext<MpGestureRecognizerResult>?
 
   /// Initializes a gesture recognizer configured with `options`.
   ///
@@ -42,36 +44,27 @@ public final class GestureRecognizer {
       baseOptions: options.baseOptions, runningMode: options.runningMode,
       roiAllowed: false, normRectAllowed: true, hasLiveStreamHandler: handler != nil)
 
-    var registration: VisionLiveStreamRegistration?
-    var cCallback: MpGestureRecognizerResultCallback?
-    if options.runningMode == .liveStream, let handler {
-      let registered = try VisionLiveStreamRegistration.register(
-        queueLabelSuffix: "gesture_recognizer", resultType: MpGestureRecognizerResult.self,
-        as: MpGestureRecognizerResultCallback.self,
+    // `VisionTaskRunner` has checked that a handler is set exactly in the live stream mode.
+    let liveStreamContext = handler.map { handler in
+      VisionLiveStreamContext<MpGestureRecognizerResult>(
+        queueLabelSuffix: "gesture_recognizer",
         decode: { ptr, _, ts in
           GestureRecognizerResult(cResult: ptr.pointee, timestampInMilliseconds: ts)
         }, handler: handler)
-      registration = registered.registration
-      cCallback = registered.cCallback
     }
 
-    do {
-      self.cRecognizer = try options.withCOptions(cCallback: cCallback) { cOptions in
-        var recognizerPtr: MpGestureRecognizerPtr?
-        try MpStatus.check(defaultMessage: "Failed to create GestureRecognizer.") { errorMessage in
-          MpGestureRecognizerCreate(&cOptions, &recognizerPtr, &errorMessage)
-        }
-        guard let validRecognizer = recognizerPtr else {
-          throw TasksError.internalError("MpGestureRecognizerCreate returned a null pointer.")
-        }
-        return validRecognizer
+    self.cRecognizer = try options.withCOptions(liveStreamContext: liveStreamContext) { cOptions in
+      var recognizerPtr: MpGestureRecognizerPtr?
+      try MpStatus.check(defaultMessage: "Failed to create GestureRecognizer.") { errorMessage in
+        MpGestureRecognizerCreate(&cOptions, &recognizerPtr, &errorMessage)
       }
-      self.runner = runner
-      self.liveStreamRegistration = registration
-    } catch {
-      registration?.unregister()
-      throw error
+      guard let validRecognizer = recognizerPtr else {
+        throw TasksError.internalError("MpGestureRecognizerCreate returned a null pointer.")
+      }
+      return validRecognizer
     }
+    self.runner = runner
+    self.liveStreamContext = liveStreamContext
   }
 
   /// Initializes a recognizer in `.image` mode from a `.task` bundle path with default options.
@@ -82,7 +75,6 @@ public final class GestureRecognizer {
 
   deinit {
     _ = MpGestureRecognizerClose(cRecognizer, nil)
-    liveStreamRegistration?.unregister()
   }
 
   /// Recognizes hand gestures in a still `image` when running in `.image` mode.

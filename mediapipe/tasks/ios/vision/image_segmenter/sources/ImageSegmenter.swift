@@ -37,7 +37,9 @@ public final class ImageSegmenter {
 
   private let cSegmenter: MpImageSegmenterPtr
   private let runner: VisionTaskRunner
-  private let liveStreamRegistration: VisionLiveStreamRegistration?
+  /// Receives the live-stream results. The C task keeps an unretained pointer to it until the task
+  /// has been closed.
+  private let liveStreamContext: VisionLiveStreamContext<MpImageSegmenterResult>?
 
   /// Creates an image segmenter and initializes the underlying MediaPipe task graph.
   ///
@@ -46,10 +48,9 @@ public final class ImageSegmenter {
     let runner = try VisionTaskRunner(
       baseOptions: options.baseOptions, runningMode: options.runningMode, roiAllowed: false,
       hasLiveStreamHandler: options.liveStreamResultHandler != nil)
-    let registered = try options.liveStreamResultHandler.map { handler in
-      try VisionLiveStreamRegistration.register(
-        queueLabelSuffix: "imageSegmenter", resultType: MpImageSegmenterResult.self,
-        as: MpImageSegmenterResultCallback.self,
+    let liveStreamContext = options.liveStreamResultHandler.map { handler in
+      VisionLiveStreamContext<MpImageSegmenterResult>(
+        queueLabelSuffix: "imageSegmenter",
         decode: { cResult, _, timestamp in
           try ImageSegmenterResult(cResult: cResult.pointee, timestampInMilliseconds: timestamp)
         },
@@ -57,31 +58,27 @@ public final class ImageSegmenter {
     }
     let cSegmenter: MpImageSegmenterPtr
     let labels: [String]
+    cSegmenter = try options.withCOptions(liveStreamContext: liveStreamContext) { cOptions in
+      var segmenterPtr: MpImageSegmenterPtr?
+      try MpStatus.check(defaultMessage: "Failed to create ImageSegmenter.") { errorMessage in
+        MpImageSegmenterCreate(&cOptions, &segmenterPtr, &errorMessage)
+      }
+      guard let segmenterPtr else {
+        throw TasksError.internalError("MpImageSegmenterCreate returned a null pointer.")
+      }
+      return segmenterPtr
+    }
     do {
-      cSegmenter = try options.withCOptions(resultCallback: registered?.cCallback) { cOptions in
-        var segmenterPtr: MpImageSegmenterPtr?
-        try MpStatus.check(defaultMessage: "Failed to create ImageSegmenter.") { errorMessage in
-          MpImageSegmenterCreate(&cOptions, &segmenterPtr, &errorMessage)
-        }
-        guard let segmenterPtr else {
-          throw TasksError.internalError("MpImageSegmenterCreate returned a null pointer.")
-        }
-        return segmenterPtr
-      }
-      do {
-        labels = try Self.labels(of: cSegmenter)
-      } catch {
-        _ = MpImageSegmenterClose(cSegmenter, nil)
-        throw error
-      }
+      labels = try Self.labels(of: cSegmenter)
     } catch {
-      registered?.registration.unregister()
+      // The C task keeps an unretained pointer to the context until it has been closed.
+      withExtendedLifetime(liveStreamContext) { _ = MpImageSegmenterClose(cSegmenter, nil) }
       throw error
     }
     self.cSegmenter = cSegmenter
     self.labels = labels
     self.runner = runner
-    self.liveStreamRegistration = registered?.registration
+    self.liveStreamContext = liveStreamContext
   }
 
   /// Creates an image segmenter in `.image` mode from a local model file path.
@@ -94,7 +91,6 @@ public final class ImageSegmenter {
 
   deinit {
     _ = MpImageSegmenterClose(cSegmenter, nil)
-    liveStreamRegistration?.unregister()
   }
 
   /// Segments a single image in `.image` running mode.

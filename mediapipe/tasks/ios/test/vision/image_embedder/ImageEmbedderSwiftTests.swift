@@ -204,4 +204,22 @@ struct ImageEmbedderSwiftTests {
     #expect(cbTs == 10 && liveRes.timestampInMilliseconds == 10)
     _ = try checkHead(liveRes)
   }
+
+  @Test func `close releases the liveStream result handler`() throws {
+    let model = try path(TestFixture.model, "tflite")
+    weak var collector: LiveStreamCollector?
+    let embedder: ImageEmbedder
+    do {
+      // The result handler holds the only strong reference to the collector.
+      let box = LiveStreamCollector()
+      collector = box
+      embedder = try ImageEmbedder(
+        options: opts(model, mode: .liveStream) { box.record($0, timestamp: $1) })
+    }
+    try withExtendedLifetime(embedder) {
+      #expect(collector != nil)
+      try embedder.close()
+      #expect(collector == nil)
+    }
+  }
 }

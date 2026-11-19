@@ -608,6 +608,7 @@ class HolisticLandmarkerTest(parameterized.TestCase):
             'output_face_blendshapes',
             'output_pose_segmentation_masks',
             'result_callback',
+            'result_callback_user_data',
         ],
     )
     model_path = test_utils.get_test_data_path(

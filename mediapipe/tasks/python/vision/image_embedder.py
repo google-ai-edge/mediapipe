@@ -49,6 +49,17 @@ class _MpEmbedderOptionsC(ctypes.Structure):
   ]
 
 
+C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
+    None,
+    ctypes.c_void_p,  # user_data
+    ctypes.c_int32,  # MpStatus
+    ctypes.c_char_p,  # error_msg
+    ctypes.POINTER(embedding_result_c_module.MpEmbeddingResultC),
+    ctypes.c_void_p,  # MpImage
+    ctypes.c_int64,  # timestamp_ms
+)
+
+
 class MpImageEmbedderOptionsC(ctypes.Structure):
   """The MediaPipe Tasks MpImageEmbedderOptions CTypes struct."""
 
@@ -56,16 +67,8 @@ class MpImageEmbedderOptionsC(ctypes.Structure):
       ('base_options', base_options_c_module.MpBaseOptionsC),
       ('running_mode', ctypes.c_int),
       ('embedder_options', _MpEmbedderOptionsC),
-      (
-          'result_callback',
-          ctypes.CFUNCTYPE(
-              None,
-              ctypes.c_int32,  # MpStatus
-              ctypes.POINTER(embedding_result_c_module.MpEmbeddingResultC),
-              ctypes.c_void_p,  # image
-              ctypes.c_int64,  # timestamp_ms
-          ),
-      ),
+      ('result_callback', C_TYPES_RESULT_CALLBACK),
+      ('result_callback_user_data', ctypes.c_void_p),
   ]
 
 
@@ -122,14 +125,6 @@ _CTYPES_SIGNATURES = (
     ),
 )
 
-C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
-    None,
-    ctypes.c_int32,  # MpStatus
-    ctypes.POINTER(embedding_result_c_module.MpEmbeddingResultC),
-    ctypes.c_void_p,  # MpImage
-    ctypes.c_int64,  # timestamp_ms
-)
-
 
 @dataclasses.dataclass
 class ImageEmbedderOptions:
@@ -163,26 +158,12 @@ class ImageEmbedderOptions:
       Callable[[ImageEmbedderResult, image_module.Image, int], None]
   ] = None
 
-  _result_callback_c: Optional[
-      Callable[
-          [
-              ctypes.c_int32,  # MpStatus
-              ctypes.c_void_p,  # MpEmbeddingResultC
-              ctypes.c_void_p,  # MpImage
-              ctypes.c_int64,  # timestamp_ms
-          ],
-          None,
-      ]
-  ] = None
-
   @doc_controls.do_not_generate_docs
   def to_ctypes(
-      self, dispatcher: async_result_dispatcher.AsyncResultDispatcher
+      self,
+      result_callback: C_TYPES_RESULT_CALLBACK,
   ) -> MpImageEmbedderOptionsC:
     """Generates an MpImageEmbedderOptionsC object."""
-    self._result_callback_c = dispatcher.wrap_callback(
-        self.result_callback, C_TYPES_RESULT_CALLBACK
-    )
     base_options_c = self.base_options.to_ctypes()
     embedder_options_c = _MpEmbedderOptionsC(
         l2_normalize=self.l2_normalize, quantize=self.quantize
@@ -191,7 +172,7 @@ class ImageEmbedderOptions:
         base_options=base_options_c,
         running_mode=self.running_mode.ctype,
         embedder_options=embedder_options_c,
-        result_callback=self._result_callback_c,
+        result_callback=result_callback,
     )
 
 
@@ -218,12 +199,14 @@ class ImageEmbedder:
   _lib: serial_dispatcher.SerialDispatcher
   _handle: ctypes.c_void_p
   _dispatcher: async_result_dispatcher.AsyncResultDispatcher
+  _async_callback: C_TYPES_RESULT_CALLBACK
 
   def __init__(
       self,
       lib: serial_dispatcher.SerialDispatcher,
       handle: ctypes.c_void_p,
       dispatcher: async_result_dispatcher.AsyncResultDispatcher,
+      async_callback: C_TYPES_RESULT_CALLBACK,
   ):
     """Initializes a new ImageEmbedder instance.
 
@@ -231,10 +214,13 @@ class ImageEmbedder:
       lib: The dispatcher to use for all C function calls.
       handle: The C pointer to the underlying image embedder.
       dispatcher: The handler for async results.
+      async_callback: The C callback for async results, retained for the
+        lifetime of the task.
     """
     self._lib = lib
     self._handle = handle
     self._dispatcher = dispatcher
+    self._async_callback = async_callback
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'ImageEmbedder':
@@ -306,13 +292,18 @@ class ImageEmbedder:
       return (py_result, py_image, timestamp_ms)
 
     dispatcher = _AsyncResultDispatcher(converter=convert_result)
-    ctypes_options = options.to_ctypes(dispatcher)
+    c_callback = dispatcher.wrap_callback(
+        options.result_callback, C_TYPES_RESULT_CALLBACK
+    )
+    ctypes_options = options.to_ctypes(c_callback)
 
     embedder_handle = ctypes.c_void_p()
     lib.MpImageEmbedderCreate(  # pyrefly: ignore[missing-attribute]
         ctypes.byref(ctypes_options), ctypes.byref(embedder_handle)
     )
-    return cls(lib, embedder_handle, dispatcher=dispatcher)
+    return cls(
+        lib, embedder_handle, dispatcher=dispatcher, async_callback=c_callback
+    )
 
   def embed(
       self,
@@ -453,10 +444,15 @@ class ImageEmbedder:
     """Closes the ImageEmbedder."""
     if not self._handle:
       return
-    self._lib.MpImageEmbedderClose(self._handle)  # pyrefly: ignore[missing-attribute]
+    # The C library frees the task even if it fails to close, so the handle
+    # must not be used again.
+    handle = self._handle
     self._handle = None  # pyrefly: ignore[bad-assignment]
-    self._dispatcher.close()
-    self._lib.close()
+    try:
+      self._lib.MpImageEmbedderClose(handle)  # pyrefly: ignore[missing-attribute]
+    finally:
+      self._dispatcher.close()
+      self._lib.close()
 
   @classmethod
   def cosine_similarity(

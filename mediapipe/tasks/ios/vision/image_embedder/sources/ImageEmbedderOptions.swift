@@ -59,7 +59,7 @@ public struct ImageEmbedderOptions: Sendable {
   }
 
   package func withCOptions<R>(
-    cCallback: MpImageEmbedderResultCallbackFn?,
+    liveStreamContext: VisionLiveStreamContext<MpImageEmbedderResult>?,
     _ body: (inout MpImageEmbedderOptions) throws -> R
   ) rethrows -> R {
     let embedderOptions = EmbedderOptions(l2Normalize: l2Normalize, quantize: quantize)
@@ -69,9 +69,19 @@ public struct ImageEmbedderOptions: Sendable {
           base_options: cBase,
           running_mode: runningMode.cRunningMode,
           embedder_options: cEmbedder,
-          result_callback: cCallback
+          result_callback: nil,
+          result_callback_user_data: nil
         )
-        return try body(&cOptions)
+        if let liveStreamContext {
+          cOptions.result_callback = {
+            VisionLiveStreamContext.receive(
+              userData: $0, status: $1, errorMessage: $2, result: $3,
+              image: $4, timestampMs: $5)
+          }
+          cOptions.result_callback_user_data = liveStreamContext.userData
+        }
+        // `result_callback_user_data` does not retain the context.
+        return try withExtendedLifetime(liveStreamContext) { try body(&cOptions) }
       }
     }
   }

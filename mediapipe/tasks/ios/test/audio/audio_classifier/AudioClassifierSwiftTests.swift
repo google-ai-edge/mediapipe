@@ -16,6 +16,9 @@ import AVFoundation
 import Foundation
 import MediaPipeTasksAudioClassifier
 import Testing
+import third_party_mediapipe_tasks_c_audio_audio_classifier_audio_classifier_lib
+import third_party_mediapipe_tasks_c_components_containers_classification_result
+import third_party_mediapipe_tasks_c_core_mp_status
 
 private final class BundleToken {}
 
@@ -311,6 +314,23 @@ struct AudioClassifierSwiftTests {
     try streamClassifier.close()
   }
 
+  @Test func `close releases the audio stream result handler`() throws {
+    let model = try path(TestFixture.yamnet, "tflite")
+    weak var collector: StreamCollector?
+    let classifier: AudioClassifier
+    do {
+      // The result handler holds the only strong reference to the collector.
+      let (stream, box) = try makeStream(model)
+      classifier = stream
+      collector = box
+    }
+    try withExtendedLifetime(classifier) {
+      #expect(collector != nil)
+      try classifier.close()
+      #expect(collector == nil)
+    }
+  }
+
   @Test func `classifyAsync streams 16kHz speech blocks`() throws {
     try assertSpeechStreamClassification(clipName: TestFixture.speech16k)
   }
@@ -337,5 +357,120 @@ struct AudioClassifierSwiftTests {
     }
     try stream.close()
     #expect(box.waitFor(count: 1) == true)
+  }
+
+  @Test func `AudioStreamContext decodes results and forwards errors`() async throws {
+    let deliveredResult: AudioClassifierResult =
+      try await withCheckedThrowingContinuation { continuation in
+        let context = AudioStreamContext { continuation.resume(with: $0) }
+        var classification = MpClassificationResult(
+          classifications: nil, classifications_count: 0, timestamp_ms: 321, has_timestamp_ms: true
+        )
+        withExtendedLifetime(context) {
+          withUnsafeMutablePointer(to: &classification) { classificationPtr in
+            var cResult = MpAudioClassifierResult(results: classificationPtr, results_count: 1)
+            withUnsafePointer(to: &cResult) { cResultPtr in
+              AudioStreamContext.receive(
+                userData: context.userData, status: kMpOk, errorMessage: nil, result: cResultPtr)
+            }
+          }
+        }
+      }
+    #expect(deliveredResult.classificationResults.count == 1)
+    #expect(deliveredResult.timestampInMilliseconds == 321)
+
+    let messageOutcome: Result<AudioClassifierResult, any Error> =
+      await withCheckedContinuation { continuation in
+        let context = AudioStreamContext { continuation.resume(returning: $0) }
+        withExtendedLifetime(context) {
+          "Stream error.".withCString { msg in
+            AudioStreamContext.receive(
+              userData: context.userData, status: kMpInvalidArgument, errorMessage: msg,
+              result: nil)
+          }
+        }
+      }
+    let messageError = try #require(throws: TasksError.self) { _ = try messageOutcome.get() }
+    #expect(messageError.code == .invalidArgument)
+    #expect(messageError.message == "Stream error.")
+
+    let nilMessageOutcome: Result<AudioClassifierResult, any Error> =
+      await withCheckedContinuation { continuation in
+        let context = AudioStreamContext { continuation.resume(returning: $0) }
+        withExtendedLifetime(context) {
+          AudioStreamContext.receive(
+            userData: context.userData, status: kMpNotFound, errorMessage: nil, result: nil)
+        }
+      }
+    let nilMessageError = try #require(throws: TasksError.self) { _ = try nilMessageOutcome.get() }
+    #expect(nilMessageError.code == .notFound)
+
+    let emptyMessageOutcome: Result<AudioClassifierResult, any Error> =
+      await withCheckedContinuation { continuation in
+        let context = AudioStreamContext { continuation.resume(returning: $0) }
+        withExtendedLifetime(context) {
+          "".withCString { emptyMsg in
+            AudioStreamContext.receive(
+              userData: context.userData, status: kMpInternal, errorMessage: emptyMsg, result: nil)
+          }
+        }
+      }
+    let emptyMessageError = try #require(throws: TasksError.self) {
+      _ = try emptyMessageOutcome.get()
+    }
+    #expect(emptyMessageError.code == .internalError)
+
+    let nullResultOutcome: Result<AudioClassifierResult, any Error> =
+      await withCheckedContinuation { continuation in
+        let context = AudioStreamContext { continuation.resume(returning: $0) }
+        withExtendedLifetime(context) {
+          AudioStreamContext.receive(
+            userData: context.userData, status: kMpOk, errorMessage: nil, result: nil)
+        }
+      }
+    let nullResultError = try #require(throws: TasksError.self) {
+      _ = try nullResultOutcome.get()
+    }
+    #expect(nullResultError.code == .internalError)
+  }
+
+  @Test func `AudioStreamContext delivers a result only to the context of its user data`()
+    async throws
+  {
+    let (otherStream, otherContinuation) = AsyncStream<Int>.makeStream()
+    let other = AudioStreamContext { outcome in
+      otherContinuation.yield((try? outcome.get().timestampInMilliseconds) ?? -1)
+    }
+    let deliveredTimestamp: Int = try await withCheckedThrowingContinuation { continuation in
+      let context = AudioStreamContext { outcome in
+        continuation.resume(with: outcome.map(\.timestampInMilliseconds))
+      }
+      var targetClassification = MpClassificationResult(
+        classifications: nil, classifications_count: 0, timestamp_ms: 12, has_timestamp_ms: true
+      )
+      var sentinelClassification = MpClassificationResult(
+        classifications: nil, classifications_count: 0, timestamp_ms: 99, has_timestamp_ms: true
+      )
+      withExtendedLifetime((other, context)) {
+        withUnsafeMutablePointer(to: &targetClassification) { targetPtr in
+          withUnsafeMutablePointer(to: &sentinelClassification) { sentinelPtr in
+            var targetResult = MpAudioClassifierResult(results: targetPtr, results_count: 1)
+            var sentinelResult = MpAudioClassifierResult(results: sentinelPtr, results_count: 1)
+            withUnsafePointer(to: &targetResult) { targetResultPtr in
+              AudioStreamContext.receive(
+                userData: nil, status: kMpOk, errorMessage: nil, result: targetResultPtr)
+              AudioStreamContext.cCallback(context.userData, kMpOk, nil, targetResultPtr)
+            }
+            withUnsafePointer(to: &sentinelResult) { sentinelResultPtr in
+              AudioStreamContext.cCallback(other.userData, kMpOk, nil, sentinelResultPtr)
+            }
+          }
+        }
+      }
+    }
+
+    #expect(deliveredTimestamp == 12)
+    var otherIterator = otherStream.makeAsyncIterator()
+    #expect(await otherIterator.next() == 99)
   }
 }

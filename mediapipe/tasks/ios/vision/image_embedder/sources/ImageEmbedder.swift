@@ -30,7 +30,10 @@ public final class ImageEmbedder {
   private let runner: VisionTaskRunner
   private let lock = NSLock()
   private var cEmbedder: MpImageEmbedderPtr?
-  private var liveStreamRegistration: VisionLiveStreamRegistration?
+  /// Receives the live-stream results. The C task keeps an unretained pointer to it until the task
+  /// has been closed. Guarded by `lock` and released together with `cEmbedder`, so that a closed
+  /// embedder no longer retains the result handler.
+  private var liveStreamContext: VisionLiveStreamContext<MpImageEmbedderResult>?
 
   /// Creates an instance from `options`.
   public init(options: ImageEmbedderOptions) throws {
@@ -42,37 +45,27 @@ public final class ImageEmbedder {
       hasLiveStreamHandler: options.liveStreamResultHandler != nil
     )
 
-    var registration: VisionLiveStreamRegistration?
-    var cCallback: MpImageEmbedderResultCallbackFn?
-    if let handler = options.liveStreamResultHandler {
-      let registered = try VisionLiveStreamRegistration.register(
+    let liveStreamContext = options.liveStreamResultHandler.map { handler in
+      VisionLiveStreamContext<MpImageEmbedderResult>(
         queueLabelSuffix: "imageEmbedder",
-        resultType: MpImageEmbedderResult.self,
-        as: MpImageEmbedderResultCallbackFn.self,
         decode: { cResultPtr, _, ts in
           ImageEmbedderResult(cResult: cResultPtr.pointee, timestampInMilliseconds: ts)
         },
         handler: handler
       )
-      registration = registered.registration
-      cCallback = registered.cCallback
     }
 
-    var pendingRegistration = registration
-    defer { pendingRegistration?.unregister() }
-
     var created: MpImageEmbedderPtr?
-    try options.withCOptions(cCallback: cCallback) { cOptions in
+    try options.withCOptions(liveStreamContext: liveStreamContext) { cOptions in
       try MpStatus.check { MpImageEmbedderCreate(&cOptions, &created, &$0) }
     }
     guard let created else {
       throw TasksError.internalError("Failed to create MpImageEmbedder instance.")
     }
 
-    pendingRegistration = nil
     self.runner = runner
     self.cEmbedder = created
-    self.liveStreamRegistration = registration
+    self.liveStreamContext = liveStreamContext
   }
 
   /// Creates an `.image` mode instance from a local model file.
@@ -82,9 +75,10 @@ public final class ImageEmbedder {
   }
 
   deinit {
-    if let embedder = takeEmbedderToClose() {
-      _ = MpImageEmbedderClose(embedder, nil)
-      unregisterLiveStream()
+    let (embedder, liveStreamContext) = takeEmbedderToClose()
+    if let embedder {
+      // The C task calls the live-stream context until `MpImageEmbedderClose` has returned.
+      withExtendedLifetime(liveStreamContext) { _ = MpImageEmbedderClose(embedder, nil) }
     }
   }
 
@@ -140,12 +134,16 @@ public final class ImageEmbedder {
     }
   }
 
-  /// Flushes pending live-stream packets and shuts down the underlying MediaPipe graph.
+  /// Flushes pending live-stream packets and shuts down the underlying MediaPipe graph. Releases
+  /// the live-stream result handler once the results that are still pending have been delivered.
   public func close() throws {
-    guard let embedder = takeEmbedderToClose() else { return }
-    defer { unregisterLiveStream() }
-    try MpStatus.check(defaultMessage: "Failed to close ImageEmbedder.") {
-      MpImageEmbedderClose(embedder, &$0)
+    let (embedder, liveStreamContext) = takeEmbedderToClose()
+    guard let embedder else { return }
+    // The C task calls the live-stream context until `MpImageEmbedderClose` has returned.
+    try withExtendedLifetime(liveStreamContext) {
+      try MpStatus.check(defaultMessage: "Failed to close ImageEmbedder.") {
+        MpImageEmbedderClose(embedder, &$0)
+      }
     }
   }
 
@@ -164,18 +162,17 @@ public final class ImageEmbedder {
     return embedder
   }
 
-  private func takeEmbedderToClose() -> MpImageEmbedderPtr? {
+  /// Removes the C embedder and its live-stream context from this instance. The caller closes the
+  /// embedder and keeps the context alive until the close call has returned.
+  private func takeEmbedderToClose() -> (
+    MpImageEmbedderPtr?, VisionLiveStreamContext<MpImageEmbedderResult>?
+  ) {
     lock.withLock {
-      defer { cEmbedder = nil }
-      return cEmbedder
+      defer {
+        cEmbedder = nil
+        liveStreamContext = nil
+      }
+      return (cEmbedder, liveStreamContext)
     }
-  }
-
-  private func unregisterLiveStream() {
-    let registration = lock.withLock {
-      defer { liveStreamRegistration = nil }
-      return liveStreamRegistration
-    }
-    registration?.unregister()
   }
 }

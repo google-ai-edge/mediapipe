@@ -171,7 +171,7 @@ def convert_to_exception(
 ) -> Union[Exception, None]:
   """Returns an exception based on the MpStatus code, or None if MP_OK."""
   error_str = (
-      error_message.value.decode('utf-8')
+      error_message.value.decode('utf-8', errors='replace')
       if error_message and error_message.value is not None
       else None
   )

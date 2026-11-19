@@ -90,12 +90,11 @@ void CppTextClassifierCloseResult(MpTextClassifierResult* result) {
 
 absl::Status CppTextClassifierClose(MpTextClassifierPtr classifier) {
   auto* cpp_classifier = GetCppClassifier(classifier);
-  auto result = cpp_classifier->Close();
-  if (!result.ok()) {
-    return result;
-  }
+  absl::Status status = cpp_classifier->Close();
+  // The classifier is freed even if it fails to close. It cannot be closed a
+  // second time, so it would be leaked otherwise.
   delete classifier;
-  return absl::OkStatus();
+  return status;
 }
 
 }  // namespace mediapipe::tasks::c::text::text_classifier

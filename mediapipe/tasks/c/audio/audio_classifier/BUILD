@@ -18,7 +18,6 @@ load("@rules_cc//cc:cc_test.bzl", "cc_test")
 licenses(["notice"])
 
 AUDIO_CLASSIFIER_DEPS = [
-    "@com_google_absl//absl/base:core_headers",
     "@com_google_absl//absl/log:absl_log",
     "@com_google_absl//absl/status",
     "@com_google_absl//absl/status:status_macros",
@@ -37,6 +36,7 @@ AUDIO_CLASSIFIER_DEPS = [
     "//mediapipe/tasks/c/core:base_options_converter",
     "//mediapipe/tasks/c/core:mp_status",
     "//mediapipe/tasks/c/core:mp_status_converter",
+    "//mediapipe/tasks/c/core:result_callback",
     "//mediapipe/tasks/cc/audio/audio_classifier",
     "//mediapipe/tasks/cc/components/containers:classification_result",
 ]

@@ -31,7 +31,9 @@ private import third_party_mediapipe_tasks_c_vision_holistic_landmarker_holistic
 public final class HolisticLandmarker {
   private let cLandmarker: MpHolisticLandmarkerPtr
   private let runner: VisionTaskRunner
-  private let liveStreamRegistration: VisionLiveStreamRegistration?
+  /// Receives the live-stream results. The C task keeps an unretained pointer to it until the task
+  /// has been closed.
+  private let liveStreamContext: VisionLiveStreamContext<MpHolisticLandmarkerResult>?
 
   /// Creates a `HolisticLandmarker` configured with `options`.
   public init(options: HolisticLandmarkerOptions) throws {
@@ -39,31 +41,25 @@ public final class HolisticLandmarker {
       baseOptions: options.baseOptions, runningMode: options.runningMode,
       roiAllowed: false, normRectAllowed: false,
       hasLiveStreamHandler: options.liveStreamResultHandler != nil)
-    let registered = try options.liveStreamResultHandler.map { handler in
-      try VisionLiveStreamRegistration.register(
-        queueLabelSuffix: "holisticLandmarker", resultType: MpHolisticLandmarkerResult.self,
-        as: MpHolisticLandmarkerResultCallback.self,
+    let liveStreamContext = options.liveStreamResultHandler.map { handler in
+      VisionLiveStreamContext<MpHolisticLandmarkerResult>(
+        queueLabelSuffix: "holisticLandmarker",
         decode: { cResult, _, ts in
           try HolisticLandmarkerResult(cResult: cResult.pointee, timestampInMilliseconds: ts)
         }, handler: handler)
     }
-    do {
-      self.cLandmarker = try options.withCOptions(resultCallback: registered?.cCallback) { cOpts in
-        var ptr: MpHolisticLandmarkerPtr?
-        try MpStatus.check(defaultMessage: "Failed to create HolisticLandmarker.") { errorMsg in
-          MpHolisticLandmarkerCreate(&cOpts, &ptr, &errorMsg)
-        }
-        guard let ptr else {
-          throw TasksError.internalError("MpHolisticLandmarkerCreate returned a null instance.")
-        }
-        return ptr
+    self.cLandmarker = try options.withCOptions(liveStreamContext: liveStreamContext) { cOpts in
+      var ptr: MpHolisticLandmarkerPtr?
+      try MpStatus.check(defaultMessage: "Failed to create HolisticLandmarker.") { errorMsg in
+        MpHolisticLandmarkerCreate(&cOpts, &ptr, &errorMsg)
       }
-    } catch {
-      registered?.registration.unregister()
-      throw error
+      guard let ptr else {
+        throw TasksError.internalError("MpHolisticLandmarkerCreate returned a null instance.")
+      }
+      return ptr
     }
     self.runner = runner
-    self.liveStreamRegistration = registered?.registration
+    self.liveStreamContext = liveStreamContext
   }
 
   /// Creates a `HolisticLandmarker` in `.image` mode from a local `.task` model bundle path.
@@ -74,7 +70,6 @@ public final class HolisticLandmarker {
 
   deinit {
     _ = MpHolisticLandmarkerClose(cLandmarker, nil)
-    liveStreamRegistration?.unregister()
   }
 
   /// Detects holistic landmarks in a standalone `image` (`.image` running mode only).

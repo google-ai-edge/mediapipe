@@ -168,9 +168,11 @@ absl::Status CppTextSummarizerClose(MpTextSummarizerPtr summarizer) {
     return absl::OkStatus();
   }
   TextSummarizer* cpp_summarizer = GetCppSummarizer(summarizer);
-  ABSL_RETURN_IF_ERROR(cpp_summarizer->Close());
+  absl::Status status = cpp_summarizer->Close();
+  // The summarizer is freed even if it fails to close, like the other tasks of
+  // the C API: the handle is never valid after this function returns.
   delete summarizer;
-  return absl::OkStatus();
+  return status;
 }
 
 }  // namespace mediapipe::tasks::c::text::text_summarizer

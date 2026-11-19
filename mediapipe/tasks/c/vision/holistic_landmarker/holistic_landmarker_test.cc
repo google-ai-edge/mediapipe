@@ -268,28 +268,32 @@ TEST(HolisticLandmarkerTest, ReturnsEmptyResultsWithHighThresholds) {
 
 // A structure to support LiveStreamModeTest below. This structure holds a
 // static method `Fn` for a callback function of C API. A `static` qualifier
-// allows to take an address of the method to follow API style. Another static
-// struct member is `last_timestamp` that is used to verify that current
-// timestamp is greater than the previous one.
+// allows to take an address of the method to follow API style. An instance of
+// the structure is passed to the callback as `user_data`. Its member
+// `last_timestamp` is used to verify that current timestamp is greater than
+// the previous one.
 struct LiveStreamModeCallback {
-  static int64_t last_timestamp;
-  static void LiveStreamCallback(MpStatus status_code,
+  int64_t last_timestamp = -1;
+  static void LiveStreamCallback(void* user_data, MpStatus status_code,
+                                 const char* error_msg,
                                  const MpHolisticLandmarkerResult* result,
                                  MpImagePtr image, int64_t timestamp) {
+    auto* self = reinterpret_cast<LiveStreamModeCallback*>(user_data);
+    ASSERT_NE(self, nullptr);
     ASSERT_EQ(status_code, kMpOk);
+    EXPECT_EQ(error_msg, nullptr);
     const HolisticResultProto expected_result =
         GetExpectedHolisticResult(kHolisticResultProto);
     AssertHolisticLandmarkerResult(result, expected_result);
-    EXPECT_GT(timestamp, last_timestamp);
-    last_timestamp = timestamp;
+    EXPECT_GT(timestamp, self->last_timestamp);
+    self->last_timestamp = timestamp;
   }
 };
-
-int64_t LiveStreamModeCallback::last_timestamp = -1;
 
 TEST(HolisticLandmarkerTest, LiveStreamModeSucceeds) {
   const auto image = GetImage(GetFullPath(kTestImageFile));
   const std::string model_path = GetFullPath(kModelFile);
+  LiveStreamModeCallback callback;
   MpHolisticLandmarkerOptions options = {
       .base_options = {.model_asset_path = model_path.c_str()},
       .running_mode = MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM,
@@ -303,6 +307,7 @@ TEST(HolisticLandmarkerTest, LiveStreamModeSucceeds) {
       .output_face_blendshapes = true,
       .output_pose_segmentation_masks = true,
       .result_callback = &LiveStreamModeCallback::LiveStreamCallback,
+      .result_callback_user_data = &callback,
   };
 
   MpHolisticLandmarkerPtr landmarker_ptr;
@@ -328,6 +333,6 @@ TEST(HolisticLandmarkerTest, LiveStreamModeSucceeds) {
 
   // Due to the flow limiter, the total of outputs might be smaller than the
   // number of iterations.
-  EXPECT_LE(LiveStreamModeCallback::last_timestamp, kIterations);
-  EXPECT_GE(LiveStreamModeCallback::last_timestamp, 0);
+  EXPECT_LE(callback.last_timestamp, kIterations);
+  EXPECT_GE(callback.last_timestamp, 0);
 }

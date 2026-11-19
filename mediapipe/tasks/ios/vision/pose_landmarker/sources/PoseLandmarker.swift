@@ -39,7 +39,9 @@ public final class PoseLandmarker {
   private let cLandmarker: MpPoseLandmarkerPtr
   private let runner: VisionTaskRunner
   private let outputSegmentationMasks: Bool
-  private let liveStreamRegistration: VisionLiveStreamRegistration?
+  /// Receives the live-stream results. The C task keeps an unretained pointer to it until the task
+  /// has been closed.
+  private let liveStreamContext: VisionLiveStreamContext<MpPoseLandmarkerResult>?
 
   /// Creates a `PoseLandmarker` configured with `options`.
   public init(options: PoseLandmarkerOptions) throws {
@@ -49,13 +51,9 @@ public final class PoseLandmarker {
       baseOptions: options.baseOptions, runningMode: options.runningMode,
       roiAllowed: false, normRectAllowed: true, hasLiveStreamHandler: handler != nil
     )
-    var registration: VisionLiveStreamRegistration?
-    var cCallback: MpPoseLandmarkerResultCallback?
-    if let handler {
-      let registered = try VisionLiveStreamRegistration.register(
+    let liveStreamContext = handler.map { handler in
+      VisionLiveStreamContext<MpPoseLandmarkerResult>(
         queueLabelSuffix: "poseLandmarker",
-        resultType: MpPoseLandmarkerResult.self,
-        as: MpPoseLandmarkerResultCallback.self,
         decode: { cResultPtr, _, timestampMs in
           try PoseLandmarkerResult(
             cResult: cResultPtr.pointee, outputSegmentationMasks: outputMasks,
@@ -63,28 +61,21 @@ public final class PoseLandmarker {
         },
         handler: handler
       )
-      registration = registered.registration
-      cCallback = registered.cCallback
     }
 
-    do {
-      var landmarkerPtr: MpPoseLandmarkerPtr?
-      try options.withCOptions(cCallback: cCallback) { cOptions in
-        try MpStatus.check(defaultMessage: "Failed to create PoseLandmarker.") { errorMsg in
-          MpPoseLandmarkerCreate(&cOptions, &landmarkerPtr, &errorMsg)
-        }
+    var landmarkerPtr: MpPoseLandmarkerPtr?
+    try options.withCOptions(liveStreamContext: liveStreamContext) { cOptions in
+      try MpStatus.check(defaultMessage: "Failed to create PoseLandmarker.") { errorMsg in
+        MpPoseLandmarkerCreate(&cOptions, &landmarkerPtr, &errorMsg)
       }
-      guard let landmarkerPtr else {
-        throw TasksError.internalError("MpPoseLandmarkerCreate returned a null pointer.")
-      }
-      self.cLandmarker = landmarkerPtr
-      self.runner = runner
-      self.outputSegmentationMasks = outputMasks
-      self.liveStreamRegistration = registration
-    } catch {
-      registration?.unregister()
-      throw error
     }
+    guard let landmarkerPtr else {
+      throw TasksError.internalError("MpPoseLandmarkerCreate returned a null pointer.")
+    }
+    self.cLandmarker = landmarkerPtr
+    self.runner = runner
+    self.outputSegmentationMasks = outputMasks
+    self.liveStreamContext = liveStreamContext
   }
 
   /// Creates a `PoseLandmarker` in `.image` mode using the model bundle at `modelPath`.
@@ -95,7 +86,6 @@ public final class PoseLandmarker {
 
   deinit {
     _ = MpPoseLandmarkerClose(cLandmarker, nil)
-    liveStreamRegistration?.unregister()
   }
 
   /// Detects pose landmarks in a still `image` (`.image` running mode only).

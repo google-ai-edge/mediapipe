@@ -26,7 +26,12 @@ _MpStatus = mediapipe_c_utils.MpStatus
 
 _MP_STATUS_OK = _MpStatus.MP_OK.value
 _C_CALLBACK_TYPE = ctypes.CFUNCTYPE(
-    None, ctypes.c_int32, ctypes.c_char_p, ctypes.c_char_p
+    None,
+    ctypes.c_void_p,  # User data
+    ctypes.c_int32,  # Status code
+    ctypes.c_char_p,  # Error message
+    ctypes.c_char_p,
+    ctypes.c_char_p,
 )
 
 
@@ -50,7 +55,7 @@ class AsyncResultDispatcherTest(absltest.TestCase):
     c_types_callback = dispatcher.wrap_callback(
         mock_callback, _C_CALLBACK_TYPE
     )
-    c_types_callback(_MP_STATUS_OK, b"1", b"1")
+    c_types_callback(None, _MP_STATUS_OK, None, b"1", b"1")
     dispatcher.close()
 
     mock_callback.assert_called_once_with(1, 1)
@@ -62,22 +67,88 @@ class AsyncResultDispatcherTest(absltest.TestCase):
     c_types_callback = dispatcher.wrap_callback(
         mock_callback, _C_CALLBACK_TYPE
     )
-    c_types_callback(_MpStatus.MP_OK.value, b"1", b"2")
-    c_types_callback(_MpStatus.MP_OK.value, b"3", b"4")
+    c_types_callback(None, _MpStatus.MP_OK.value, None, b"1", b"2")
+    c_types_callback(None, _MpStatus.MP_OK.value, None, b"3", b"4")
     dispatcher.close()
 
     # Check that the callback was called twice, even though the calls raise
     # exceptions.
     mock_callback.assert_has_calls([mock.call(1, 2), mock.call(3, 4)])
 
+  def test_error_is_logged_with_message_and_does_not_invoke_callback(self):
+    mock_callback = mock.Mock()
+    dispatcher = _AsyncResultDispatcher(converter=_to_int_converter)
+    c_types_callback = dispatcher.wrap_callback(mock_callback, _C_CALLBACK_TYPE)
+
+    with self.assertLogs(level="ERROR") as logs:
+      c_types_callback(
+          None,
+          _MpStatus.MP_INVALID_ARGUMENT.value,
+          b"The image is invalid.",
+          None,
+          None,
+      )
+      dispatcher.close()
+
+    self.assertLen(logs.output, 1)
+    self.assertIn("The image is invalid.", logs.output[0])
+    mock_callback.assert_not_called()
+
+  def test_error_is_logged_when_message_is_none_or_empty(self):
+    mock_callback = mock.Mock()
+    dispatcher = _AsyncResultDispatcher(converter=_to_int_converter)
+    c_types_callback = dispatcher.wrap_callback(mock_callback, _C_CALLBACK_TYPE)
+
+    with self.assertLogs(level="ERROR") as logs:
+      c_types_callback(
+          None, _MpStatus.MP_INVALID_ARGUMENT.value, None, None, None
+      )
+      c_types_callback(
+          None, _MpStatus.MP_INVALID_ARGUMENT.value, b"", None, None
+      )
+      dispatcher.close()
+
+    self.assertLen(logs.output, 2)
+    self.assertIn("Invalid argument", logs.output[0])
+    self.assertIn("Invalid argument", logs.output[1])
+    mock_callback.assert_not_called()
+
+  def test_error_with_invalid_utf8_bytes_is_logged_with_replacement(self):
+    mock_callback = mock.Mock()
+    dispatcher = _AsyncResultDispatcher(converter=_to_int_converter)
+    c_types_callback = dispatcher.wrap_callback(mock_callback, _C_CALLBACK_TYPE)
+
+    with self.assertLogs(level="ERROR") as logs:
+      c_types_callback(
+          None,
+          _MpStatus.MP_NOT_FOUND.value,
+          b"Invalid path: \xff\xfe",
+          None,
+          None,
+      )
+      dispatcher.close()
+
+    self.assertLen(logs.output, 1)
+    self.assertIn("Invalid path: \ufffd\ufffd", logs.output[0])
+    mock_callback.assert_not_called()
+
+  def test_user_data_is_ignored(self):
+    mock_callback = mock.Mock()
+    dispatcher = _AsyncResultDispatcher(converter=_to_int_converter)
+    c_types_callback = dispatcher.wrap_callback(mock_callback, _C_CALLBACK_TYPE)
+    c_types_callback(1234, _MP_STATUS_OK, None, b"1", b"2")
+    dispatcher.close()
+
+    mock_callback.assert_called_once_with(1, 2)
+
   def test_close_flushes_queue(self):
     mock_callback = mock.Mock()
 
     dispatcher = _AsyncResultDispatcher(converter=_to_int_converter)
     c_callback = dispatcher.wrap_callback(mock_callback, _C_CALLBACK_TYPE)
-    c_callback(_MpStatus.MP_OK.value, b"1", b"1")
-    c_callback(_MpStatus.MP_OK.value, b"2", b"2")
-    c_callback(_MpStatus.MP_OK.value, b"3", b"3")
+    c_callback(None, _MpStatus.MP_OK.value, None, b"1", b"1")
+    c_callback(None, _MpStatus.MP_OK.value, None, b"2", b"2")
+    c_callback(None, _MpStatus.MP_OK.value, None, b"3", b"3")
     dispatcher.close()
 
     self.assertEqual(mock_callback.call_count, 3)
@@ -99,7 +170,7 @@ class AsyncResultDispatcherTest(absltest.TestCase):
     c_types_callback = dispatcher.wrap_callback(
         mock_callback, _C_CALLBACK_TYPE
     )
-    c_types_callback(_MpStatus.MP_OK.value, b"1", b"1")
+    c_types_callback(None, _MpStatus.MP_OK.value, None, b"1", b"1")
     dispatcher.close()
 
     self.assertIsNotNone(callback_thread_id)
@@ -111,9 +182,10 @@ class AsyncResultDispatcherTest(absltest.TestCase):
     c_callback = dispatcher.wrap_callback(mock_callback, _C_CALLBACK_TYPE)
     dispatcher.close()
 
-    c_callback(_MpStatus.MP_OK.value, b"100", b"100")
+    c_callback(None, _MpStatus.MP_OK.value, None, b"100", b"100")
 
     self.assertFalse(mock_callback.called)
+    self.assertIsNone(dispatcher._dispatcher_thread)
 
 
 if __name__ == "__main__":

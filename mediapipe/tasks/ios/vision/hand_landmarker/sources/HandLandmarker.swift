@@ -50,7 +50,9 @@ public final class HandLandmarker {
 
   private let cLandmarker: MpHandLandmarkerPtr
   private let runner: VisionTaskRunner
-  private let liveStreamRegistration: VisionLiveStreamRegistration?
+  /// Receives the live-stream results. The C task keeps an unretained pointer to it until the task
+  /// has been closed.
+  private let liveStreamContext: VisionLiveStreamContext<MpHandLandmarkerResult>?
 
   /// Creates a `HandLandmarker` configured with `options`.
   public init(options: HandLandmarkerOptions) throws {
@@ -61,25 +63,17 @@ public final class HandLandmarker {
       normRectAllowed: true,
       hasLiveStreamHandler: options.liveStreamResultHandler != nil
     )
-    var registration: VisionLiveStreamRegistration?
-    var cCallback: MpHandLandmarkerResultCallback?
-    if let handler = options.liveStreamResultHandler {
-      let registered = try VisionLiveStreamRegistration.register(
+    let liveStreamContext = options.liveStreamResultHandler.map { handler in
+      VisionLiveStreamContext<MpHandLandmarkerResult>(
         queueLabelSuffix: "handLandmarker",
-        resultType: MpHandLandmarkerResult.self,
-        as: MpHandLandmarkerResultCallback.self,
         decode: { ptr, _, ts in
           HandLandmarkerResult(cResult: ptr.pointee, timestampInMilliseconds: ts)
         },
         handler: handler
       )
-      registration = registered.registration
-      cCallback = registered.cCallback
     }
-    var succeeded = false
-    defer { if !succeeded { registration?.unregister() } }
     var landmarkerPtr: MpHandLandmarkerPtr?
-    try options.withCOptions(cCallback: cCallback) { cOptionsPtr in
+    try options.withCOptions(liveStreamContext: liveStreamContext) { cOptionsPtr in
       try MpStatus.check(defaultMessage: "Failed to create HandLandmarker.") { errorMsg in
         MpHandLandmarkerCreate(cOptionsPtr, &landmarkerPtr, &errorMsg)
       }
@@ -87,10 +81,9 @@ public final class HandLandmarker {
     guard let landmarkerPtr else {
       throw TasksError.internalError("MpHandLandmarkerCreate succeeded without returning a task.")
     }
-    succeeded = true
     self.cLandmarker = landmarkerPtr
     self.runner = runner
-    self.liveStreamRegistration = registration
+    self.liveStreamContext = liveStreamContext
   }
 
   /// Creates a `HandLandmarker` in `.image` mode using the model asset bundle at `modelPath`.
@@ -101,7 +94,6 @@ public final class HandLandmarker {
 
   deinit {
     _ = MpHandLandmarkerClose(cLandmarker, nil)
-    liveStreamRegistration?.unregister()
   }
 
   /// Detects hand landmarks in a standalone `image` (`.image` running mode only).

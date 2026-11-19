@@ -590,6 +590,29 @@ class ImageClassifierTest(parameterized.TestCase):
       with self.assertRaises(ValueError):
         classifier.classify_async(self.test_image, 0)
 
+  def test_close_after_graph_error_does_not_close_the_task_twice(self):
+    options = _ImageClassifierOptions(
+        base_options=_BaseOptions(model_asset_path=self.model_path),
+        running_mode=_RUNNING_MODE.LIVE_STREAM,
+        result_callback=mock.MagicMock(),
+    )
+    classifier = _ImageClassifier.create_from_options(options)
+    # The graph cannot convert an image with float pixels into a tensor. It
+    # fails when it processes the image, which is after classify_async() has
+    # accepted the image.
+    float_image = _Image(
+        image_format=image_module.ImageFormat.VEC32F1,
+        data=np.zeros((2, 2), dtype=np.float32),
+    )
+    classifier.classify_async(float_image, 0)
+
+    with self.assertRaisesRegex(ValueError, 'Unsupported format'):
+      classifier.close()
+
+    # The C library has freed the task although it failed to close. Closing
+    # again must not pass the freed task to the C library.
+    classifier.close()
+
   @parameterized.parameters(
       (0, _generate_burger_results()), (1, _generate_empty_results())
   )

@@ -78,7 +78,7 @@ public struct HolisticLandmarkerOptions: Sendable {
   }
 
   package func withCOptions<Result>(
-    resultCallback: MpHolisticLandmarkerResultCallback? = nil,
+    liveStreamContext: VisionLiveStreamContext<MpHolisticLandmarkerResult>? = nil,
     _ body: (inout MpHolisticLandmarkerOptions) throws -> Result
   ) throws -> Result {
     try baseOptions.withCOptions { cBaseOptions in
@@ -94,8 +94,16 @@ public struct HolisticLandmarkerOptions: Sendable {
       cOptions.min_hand_landmarks_confidence = minHandLandmarksConfidence
       cOptions.output_face_blendshapes = outputFaceBlendshapes
       cOptions.output_pose_segmentation_masks = outputPoseSegmentationMasks
-      cOptions.result_callback = resultCallback
-      return try body(&cOptions)
+      if let liveStreamContext {
+        cOptions.result_callback = {
+          VisionLiveStreamContext.receive(
+            userData: $0, status: $1, errorMessage: $2, result: $3,
+            image: $4, timestampMs: $5)
+        }
+        cOptions.result_callback_user_data = liveStreamContext.userData
+      }
+      // `result_callback_user_data` does not retain the context.
+      return try withExtendedLifetime(liveStreamContext) { try body(&cOptions) }
     }
   }
 }

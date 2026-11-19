@@ -61,7 +61,7 @@ public struct FaceDetectorOptions: Sendable {
   /// Invokes `body` with a transient C `MpFaceDetectorOptions` struct whose underlying
   /// `BaseOptions` pointers remain valid for the duration of the closure call.
   package func withCOptions<Result>(
-    resultCallback: MpFaceDetectorResultCallback? = nil,
+    liveStreamContext: VisionLiveStreamContext<MpFaceDetectorResult>? = nil,
     _ body: (inout MpFaceDetectorOptions) throws -> Result
   ) throws -> Result {
     try baseOptions.withCOptions { cBaseOptions in
@@ -70,8 +70,16 @@ public struct FaceDetectorOptions: Sendable {
       cOptions.running_mode = runningMode.cRunningMode
       cOptions.min_detection_confidence = minDetectionConfidence
       cOptions.min_suppression_threshold = minSuppressionThreshold
-      cOptions.result_callback = resultCallback
-      return try body(&cOptions)
+      if let liveStreamContext {
+        cOptions.result_callback = {
+          VisionLiveStreamContext.receive(
+            userData: $0, status: $1, errorMessage: $2, result: $3,
+            image: $4, timestampMs: $5)
+        }
+        cOptions.result_callback_user_data = liveStreamContext.userData
+      }
+      // `result_callback_user_data` does not retain the context.
+      return try withExtendedLifetime(liveStreamContext) { try body(&cOptions) }
     }
   }
 }

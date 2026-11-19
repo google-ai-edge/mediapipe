@@ -131,9 +131,11 @@ void MpAudioEmbedderCloseResult(MpAudioEmbedderResult* result) {
 
 absl::Status MpAudioEmbedderClose(MpAudioEmbedderPtr embedder) {
   auto* cpp_embedder = GetCppEmbedder(embedder);
-  ABSL_RETURN_IF_ERROR(cpp_embedder->Close());
+  absl::Status status = cpp_embedder->Close();
+  // The embedder is freed even if it fails to close, like the other tasks of
+  // the C API: the handle is never valid after this function returns.
   delete embedder;
-  return absl::OkStatus();
+  return status;
 }
 
 absl::Status MpAudioEmbedderCosineSimilarity(const MpEmbedding* u,

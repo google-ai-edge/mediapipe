@@ -69,7 +69,6 @@ cc_test(
 FACE_LANDMARKER_DEPS = [
     ":face_landmarker_result",
     ":face_landmarker_result_converter",
-    "@com_google_absl//absl/base:core_headers",
     "@com_google_absl//absl/log:absl_log",
     "@com_google_absl//absl/status",
     "@com_google_absl//absl/status:statusor",
@@ -79,6 +78,7 @@ FACE_LANDMARKER_DEPS = [
     "//mediapipe/tasks/c/core:base_options_converter",
     "//mediapipe/tasks/c/core:mp_status",
     "//mediapipe/tasks/c/core:mp_status_converter",
+    "//mediapipe/tasks/c/core:result_callback",
     "//mediapipe/tasks/c/core:common",
     "//mediapipe/tasks/c/vision/core:image",
     "//mediapipe/tasks/c/vision/core:image_frame_util",

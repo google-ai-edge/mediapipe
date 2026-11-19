@@ -68,7 +68,7 @@ public struct ImageSegmenterOptions: Sendable {
   /// Invokes `body` with a C `MpImageSegmenterOptions` struct whose pointer fields remain valid
   /// for the duration of the closure call.
   package func withCOptions<Result>(
-    resultCallback: MpImageSegmenterResultCallback?,
+    liveStreamContext: VisionLiveStreamContext<MpImageSegmenterResult>?,
     _ body: (inout MpImageSegmenterOptions) throws -> Result
   ) rethrows -> Result {
     try baseOptions.withCOptions { cBaseOptions in
@@ -79,8 +79,16 @@ public struct ImageSegmenterOptions: Sendable {
         cOptions.display_names_locale = localePtr
         cOptions.output_confidence_masks = outputConfidenceMasks
         cOptions.output_category_mask = outputCategoryMask
-        cOptions.result_callback = resultCallback
-        return try body(&cOptions)
+        if let liveStreamContext {
+          cOptions.result_callback = {
+            VisionLiveStreamContext.receive(
+              userData: $0, status: $1, errorMessage: $2, result: $3,
+              image: $4, timestampMs: $5)
+          }
+          cOptions.result_callback_user_data = liveStreamContext.userData
+        }
+        // `result_callback_user_data` does not retain the context.
+        return try withExtendedLifetime(liveStreamContext) { try body(&cOptions) }
       }
     }
   }

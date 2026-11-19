@@ -72,7 +72,7 @@ public struct GestureRecognizerOptions: Sendable {
   }
 
   package func withCOptions<Result>(
-    cCallback: MpGestureRecognizerResultCallback?,
+    liveStreamContext: VisionLiveStreamContext<MpGestureRecognizerResult>?,
     _ body: (inout MpGestureRecognizerOptions) throws -> Result
   ) throws -> Result {
     guard numHands > 0, let cNumHands = Int32(exactly: numHands) else {
@@ -88,8 +88,18 @@ public struct GestureRecognizerOptions: Sendable {
             min_hand_presence_confidence: minHandPresenceConfidence,
             min_tracking_confidence: minTrackingConfidence,
             canned_gestures_classifier_options: cCanned,
-            custom_gestures_classifier_options: cCustom, result_callback: cCallback)
-          return try body(&cOptions)
+            custom_gestures_classifier_options: cCustom, result_callback: nil,
+            result_callback_user_data: nil)
+          if let liveStreamContext {
+            cOptions.result_callback = {
+              VisionLiveStreamContext.receive(
+                userData: $0, status: $1, errorMessage: $2, result: $3,
+                image: $4, timestampMs: $5)
+            }
+            cOptions.result_callback_user_data = liveStreamContext.userData
+          }
+          // `result_callback_user_data` does not retain the context.
+          return try withExtendedLifetime(liveStreamContext) { try body(&cOptions) }
         }
       }
     }

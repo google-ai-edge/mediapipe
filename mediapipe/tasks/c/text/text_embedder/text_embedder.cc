@@ -149,12 +149,11 @@ void CppTextEmbedderCloseResult(MpTextEmbedderResult* result) {
 
 absl::Status CppTextEmbedderClose(MpTextEmbedderPtr embedder) {
   auto cpp_embedder = GetCppEmbedder(embedder);
-  auto result = cpp_embedder->Close();
-  if (!result.ok()) {
-    return result;
-  }
+  absl::Status status = cpp_embedder->Close();
+  // The embedder is freed even if it fails to close. It cannot be closed a
+  // second time, so it would be leaked otherwise.
   delete embedder;
-  return absl::OkStatus();
+  return status;
 }
 
 absl::Status CppTextEmbedderCosSimilarity(const MpEmbedding* u,

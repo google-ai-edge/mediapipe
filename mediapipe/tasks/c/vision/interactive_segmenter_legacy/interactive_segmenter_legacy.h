@@ -125,6 +125,8 @@ MP_EXPORT void MpInteractiveSegmenterLegacyCloseResult(
     MpImageSegmenterResult* result);
 
 // Frees interactive segmenter.
+// `segmenter` is freed and must not be used anymore, even if an error is
+// returned.
 // Returns kMpOk on success.
 //
 // To obtain a detailed error, `error_msg` must be non-null pointer to a

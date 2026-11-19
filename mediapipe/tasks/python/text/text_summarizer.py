@@ -318,10 +318,15 @@ class TextSummarizer:
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._summarizer_handle:
-      self._lib.MpTextSummarizerClose(self._summarizer_handle)  # pyrefly: ignore[missing-attribute]
+      # The C library frees the task even if it fails to close, so the handle
+      # must not be used again.
+      handle = self._summarizer_handle
       self._summarizer_handle = None  # pyrefly: ignore[bad-assignment]
-      self._async_result_callback = None
-      self._lib.close()
+      try:
+        self._lib.MpTextSummarizerClose(handle)  # pyrefly: ignore[missing-attribute]
+      finally:
+        self._async_result_callback = None
+        self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

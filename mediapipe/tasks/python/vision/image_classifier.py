@@ -43,7 +43,9 @@ _AsyncResultDispatcher = async_result_dispatcher.AsyncResultDispatcher
 
 _C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
     None,
+    ctypes.c_void_p,  # user_data
     ctypes.c_int32,  # MpStatus
+    ctypes.c_char_p,  # error_msg
     ctypes.POINTER(classification_result_c.MpClassificationResultC),
     ctypes.c_void_p,  # MpImage
     ctypes.c_int64,  # timestamp_ms
@@ -61,6 +63,7 @@ class MpImageClassifierOptionsC(ctypes.Structure):
           classifier_options_c.MpClassifierOptionsC,
       ),
       ("result_callback", _C_TYPES_RESULT_CALLBACK),
+      ("result_callback_user_data", ctypes.c_void_p),
   ]
 
   @classmethod
@@ -459,10 +462,15 @@ class ImageClassifier:
     """Closes ImageClassifier."""
     if not self._handle:
       return
-    self._lib.MpImageClassifierClose(self._handle)  # pyrefly: ignore[missing-attribute]
+    # The C library frees the task even if it fails to close, so the handle
+    # must not be used again.
+    handle = self._handle
     self._handle = None  # pyrefly: ignore[bad-assignment]
-    self._dispatcher.close()
-    self._lib.close()
+    try:
+      self._lib.MpImageClassifierClose(handle)  # pyrefly: ignore[missing-attribute]
+    finally:
+      self._dispatcher.close()
+      self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

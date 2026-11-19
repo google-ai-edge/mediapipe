@@ -73,7 +73,7 @@ public struct FaceLandmarkerOptions: Sendable {
   /// Invokes `body` with a C `MpFaceLandmarkerOptions` struct whose pointer fields remain valid for
   /// the duration of the closure call.
   package func withCOptions<Result>(
-    resultCallback: MpFaceLandmarkerResultCallback?,
+    liveStreamContext: VisionLiveStreamContext<MpFaceLandmarkerResult>?,
     _ body: (inout MpFaceLandmarkerOptions) throws -> Result
   ) throws -> Result {
     guard numFaces > 0, let cNumFaces = Int32(exactly: numFaces) else {
@@ -89,8 +89,16 @@ public struct FaceLandmarkerOptions: Sendable {
       cOptions.min_tracking_confidence = minTrackingConfidence
       cOptions.output_face_blendshapes = outputFaceBlendshapes
       cOptions.output_facial_transformation_matrixes = outputFacialTransformationMatrixes
-      cOptions.result_callback = resultCallback
-      return try body(&cOptions)
+      if let liveStreamContext {
+        cOptions.result_callback = {
+          VisionLiveStreamContext.receive(
+            userData: $0, status: $1, errorMessage: $2, result: $3,
+            image: $4, timestampMs: $5)
+        }
+        cOptions.result_callback_user_data = liveStreamContext.userData
+      }
+      // `result_callback_user_data` does not retain the context.
+      return try withExtendedLifetime(liveStreamContext) { try body(&cOptions) }
     }
   }
 }

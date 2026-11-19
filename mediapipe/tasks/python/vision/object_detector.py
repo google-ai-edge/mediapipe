@@ -41,7 +41,9 @@ _LiveStreamPacket = async_result_dispatcher.LiveStreamPacket
 
 _C_TYPES_RESULT_CALLBACK = ctypes.CFUNCTYPE(
     None,
+    ctypes.c_void_p,  # user_data
     ctypes.c_int32,  # MpStatus
+    ctypes.c_char_p,  # error_msg
     ctypes.POINTER(detections_c_module.MpDetectionResultC),
     ctypes.c_void_p,  # MpImage
     ctypes.c_int64,  # timestamp_ms
@@ -62,6 +64,7 @@ class MpObjectDetectorOptionsC(ctypes.Structure):
       ('category_denylist', ctypes.POINTER(ctypes.c_char_p)),
       ('category_denylist_count', ctypes.c_int),
       ('result_callback', _C_TYPES_RESULT_CALLBACK),
+      ('result_callback_user_data', ctypes.c_void_p),
   ]
 
   @classmethod
@@ -511,10 +514,15 @@ class ObjectDetector:
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._handle:
-      self._lib.MpObjectDetectorClose(self._handle)  # pyrefly: ignore[missing-attribute]
+      # The C library frees the task even if it fails to close, so the handle
+      # must not be used again.
+      handle = self._handle
       self._handle = None  # pyrefly: ignore[bad-assignment]
-      self._dispatcher.close()
-      self._lib.close()
+      try:
+        self._lib.MpObjectDetectorClose(handle)  # pyrefly: ignore[missing-attribute]
+      finally:
+        self._dispatcher.close()
+        self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

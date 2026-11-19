@@ -21,7 +21,6 @@ limitations under the License.
 #include <optional>
 #include <utility>
 
-#include "absl/base/attributes.h"  // from @com_google_absl
 #include "absl/log/absl_check.h"   // from @com_google_absl
 #include "absl/log/absl_log.h"     // from @com_google_absl
 #include "absl/status/status.h"    // from @com_google_absl
@@ -31,6 +30,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/core/mp_status_converter.h"
+#include "mediapipe/tasks/c/core/result_callback.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
@@ -57,7 +57,7 @@ using ::mediapipe::tasks::c::components::containers::
 using ::mediapipe::tasks::c::components::containers::
     CppConvertToHandLandmarkerResult;
 using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
-using ::mediapipe::tasks::c::core::ToMpStatus;
+using ::mediapipe::tasks::c::core::ResultCallback;
 using ::mediapipe::tasks::c::vision::core::CppConvertToImageProcessingOptions;
 using ::mediapipe::tasks::vision::core::RunningMode;
 using ::mediapipe::tasks::vision::hand_landmarker::HandLandmarker;
@@ -71,12 +71,6 @@ const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
 HandLandmarker* GetCppLandmarker(MpHandLandmarkerPtr landmarker) {
   ABSL_CHECK(landmarker != nullptr) << "HandLandmarker is null.";
   return landmarker->instance.get();
-}
-
-template <typename Callback, typename... Args>
-ABSL_ATTRIBUTE_NO_SANITIZE_CFI void InvokeCallback(Callback callback,
-                                                   Args... args) {
-  callback(args...);
 }
 
 }  // namespace
@@ -109,20 +103,21 @@ absl::Status CppHandLandmarkerCreate(const MpHandLandmarkerOptions& options,
           "Provided null pointer to callback function.");
     }
 
-    MpHandLandmarkerResultCallback result_callback = options.result_callback;
+    const ResultCallback result_callback(options.result_callback,
+                                         options.result_callback_user_data);
     cpp_options->result_callback =
         [result_callback](absl::StatusOr<CppHandLandmarkerResult> cpp_result,
                           const Image& image, int64_t timestamp) {
           MpImageInternal mp_image({.image = image});
           if (!cpp_result.ok()) {
-            InvokeCallback(result_callback, ToMpStatus(cpp_result.status()),
-                           nullptr, &mp_image, timestamp);
+            result_callback.InvokeWithError(cpp_result.status(), &mp_image,
+                                            timestamp);
             return;
           }
 
           MpHandLandmarkerResult result;
           CppConvertToHandLandmarkerResult(*cpp_result, &result);
-          InvokeCallback(result_callback, kMpOk, &result, &mp_image, timestamp);
+          result_callback.InvokeWithResult(&result, &mp_image, timestamp);
           CppCloseHandLandmarkerResult(&result);
         };
   }
@@ -201,12 +196,12 @@ void CppHandLandmarkerCloseResult(MpHandLandmarkerResult* result) {
 
 absl::Status CppHandLandmarkerClose(MpHandLandmarkerPtr landmarker) {
   auto cpp_landmarker = GetCppLandmarker(landmarker);
-  auto result = cpp_landmarker->Close();
-  if (!result.ok()) {
-    return result;
-  }
+  absl::Status status = cpp_landmarker->Close();
+  // The landmarker is freed even if it fails to close: once this function
+  // returns, the result callback is not invoked anymore, so that the caller
+  // can release `result_callback_user_data`.
   delete landmarker;
-  return absl::OkStatus();
+  return status;
 }
 
 }  // namespace mediapipe::tasks::c::vision::hand_landmarker

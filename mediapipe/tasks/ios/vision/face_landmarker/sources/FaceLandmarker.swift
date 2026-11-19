@@ -33,7 +33,9 @@ package import third_party_mediapipe_tasks_c_vision_face_landmarker_face_landmar
 public final class FaceLandmarker {
   private let cLandmarker: MpFaceLandmarkerPtr
   private let runner: VisionTaskRunner
-  private let liveStreamRegistration: VisionLiveStreamRegistration?
+  /// Receives the live-stream results. The C task keeps an unretained pointer to it until the task
+  /// has been closed.
+  private let liveStreamContext: VisionLiveStreamContext<MpFaceLandmarkerResult>?
 
   /// Lips connections of the face mesh.
   public static var lipsConnections: [Connection] { FaceLandmarksConnections.lips }
@@ -65,31 +67,24 @@ public final class FaceLandmarker {
     let runner = try VisionTaskRunner(
       baseOptions: options.baseOptions, runningMode: options.runningMode, roiAllowed: false,
       normRectAllowed: true, hasLiveStreamHandler: options.liveStreamResultHandler != nil)
-    let registered = try options.liveStreamResultHandler.map { handler in
-      try VisionLiveStreamRegistration.register(
-        queueLabelSuffix: "faceLandmarker", resultType: MpFaceLandmarkerResult.self,
-        as: MpFaceLandmarkerResultCallback.self,
+    let liveStreamContext = options.liveStreamResultHandler.map { handler in
+      VisionLiveStreamContext<MpFaceLandmarkerResult>(
+        queueLabelSuffix: "faceLandmarker",
         decode: { FaceLandmarkerResult(cResult: $0.pointee, timestampInMilliseconds: $2) },
         handler: handler)
     }
-    do {
-      self.cLandmarker = try options.withCOptions(resultCallback: registered?.cCallback) {
-        cOptions in
-        var landmarkerPtr: MpFaceLandmarkerPtr?
-        try MpStatus.check(defaultMessage: "Failed to create FaceLandmarker.") { errorMessage in
-          MpFaceLandmarkerCreate(&cOptions, &landmarkerPtr, &errorMessage)
-        }
-        guard let landmarkerPtr else {
-          throw TasksError.internalError("MpFaceLandmarkerCreate returned a null pointer.")
-        }
-        return landmarkerPtr
+    self.cLandmarker = try options.withCOptions(liveStreamContext: liveStreamContext) { cOptions in
+      var landmarkerPtr: MpFaceLandmarkerPtr?
+      try MpStatus.check(defaultMessage: "Failed to create FaceLandmarker.") { errorMessage in
+        MpFaceLandmarkerCreate(&cOptions, &landmarkerPtr, &errorMessage)
       }
-    } catch {
-      registered?.registration.unregister()
-      throw error
+      guard let landmarkerPtr else {
+        throw TasksError.internalError("MpFaceLandmarkerCreate returned a null pointer.")
+      }
+      return landmarkerPtr
     }
     self.runner = runner
-    self.liveStreamRegistration = registered?.registration
+    self.liveStreamContext = liveStreamContext
   }
 
   /// Creates a face landmarker in `.image` mode from a local `.task` model file path.
@@ -100,7 +95,6 @@ public final class FaceLandmarker {
 
   deinit {
     _ = MpFaceLandmarkerClose(cLandmarker, nil)
-    liveStreamRegistration?.unregister()
   }
 
   /// Detects face landmarks in a single image. Requires `.image` running mode.

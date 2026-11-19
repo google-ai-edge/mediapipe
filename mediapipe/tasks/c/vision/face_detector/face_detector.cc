@@ -21,7 +21,6 @@ limitations under the License.
 #include <optional>
 #include <utility>
 
-#include "absl/base/attributes.h"  // from @com_google_absl
 #include "absl/log/absl_check.h"   // from @com_google_absl
 #include "absl/status/status.h"    // from @com_google_absl
 #include "absl/status/statusor.h"  // from @com_google_absl
@@ -31,6 +30,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/core/common.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/core/mp_status_converter.h"
+#include "mediapipe/tasks/c/core/result_callback.h"
 #include "mediapipe/tasks/c/vision/core/image.h"
 #include "mediapipe/tasks/c/vision/core/image_frame_util.h"
 #include "mediapipe/tasks/c/vision/core/image_processing_options.h"
@@ -58,7 +58,7 @@ using CppFaceDetectorResult =
     ::mediapipe::tasks::vision::face_detector::FaceDetectorResult;
 using CppImageProcessingOptions =
     ::mediapipe::tasks::vision::core::ImageProcessingOptions;
-using ::mediapipe::tasks::c::core::ToMpStatus;
+using ::mediapipe::tasks::c::core::ResultCallback;
 using ::mediapipe::tasks::c::vision::core::CppConvertToImageProcessingOptions;
 
 const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
@@ -66,12 +66,6 @@ const Image& ToImage(const MpImagePtr mp_image) { return mp_image->image; }
 FaceDetector* GetCppDetector(MpFaceDetectorPtr wrapper) {
   ABSL_CHECK(wrapper != nullptr) << "FaceDetector is null.";
   return wrapper->instance.get();
-}
-
-template <typename Callback, typename... Args>
-ABSL_ATTRIBUTE_NO_SANITIZE_CFI void InvokeCallback(Callback callback,
-                                                   Args... args) {
-  callback(args...);
 }
 
 }  // namespace
@@ -102,19 +96,20 @@ absl::Status CppFaceDetectorCreate(const MpFaceDetectorOptions& options,
           "Provided null pointer to callback function.");
     }
 
-    MpFaceDetectorResultCallback result_callback = options.result_callback;
+    const ResultCallback result_callback(options.result_callback,
+                                         options.result_callback_user_data);
     cpp_options->result_callback =
         [result_callback](absl::StatusOr<CppFaceDetectorResult> cpp_result,
                           const Image& image, int64_t timestamp) {
           MpImageInternal mp_image({.image = image});
           if (!cpp_result.ok()) {
-            InvokeCallback(result_callback, ToMpStatus(cpp_result.status()),
-                           nullptr, &mp_image, timestamp);
+            result_callback.InvokeWithError(cpp_result.status(), &mp_image,
+                                            timestamp);
             return;
           }
           MpFaceDetectorResult result;
           CppConvertToDetectionResult(*cpp_result, &result);
-          InvokeCallback(result_callback, kMpOk, &result, &mp_image, timestamp);
+          result_callback.InvokeWithResult(&result, &mp_image, timestamp);
           CppCloseDetectionResult(&result);
         };
   }
@@ -188,12 +183,12 @@ void CppFaceDetectorCloseResult(MpFaceDetectorResult* result) {
 
 absl::Status CppFaceDetectorClose(MpFaceDetectorPtr detector) {
   auto* cpp_detector = GetCppDetector(detector);
-  auto result = cpp_detector->Close();
-  if (!result.ok()) {
-    return result;
-  }
+  absl::Status status = cpp_detector->Close();
+  // The detector is freed even if it fails to close: once this function
+  // returns, the result callback is not invoked anymore, so that the caller
+  // can release `result_callback_user_data`.
   delete detector;
-  return absl::OkStatus();
+  return status;
 }
 
 }  // namespace mediapipe::tasks::c::vision::face_detector

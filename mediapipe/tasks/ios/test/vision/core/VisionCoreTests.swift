@@ -251,29 +251,24 @@ struct VisionCoreTests {
   }
 
   @Test
-  func `VisionLiveStreamRegistration dispatches results, forwards errors, and recycles slots`()
+  func `VisionLiveStreamContext decodes results and forwards errors with their message`()
     async throws
   {
-    typealias TestCCallback =
-      @convention(c) (MpStatus, UnsafePointer<MpRectF>?, MpImagePtr?, Int64) -> Void
-
     let (deliveredOutcome, deliveredTimestamp): (Result<Float, any Error>, Int) =
-      try await withCheckedThrowingContinuation { continuation in
-        do {
-          let registered = try VisionLiveStreamRegistration.register(
-            queueLabelSuffix: "test",
-            resultType: MpRectF.self,
-            as: TestCCallback.self,
-            decode: { rectPtr, _, _ in rectPtr.pointee.right - rectPtr.pointee.left },
-            handler: { outcome, ts in continuation.resume(returning: (outcome, ts)) }
-          )
-          defer { registered.registration.unregister() }
-          var rect = MpRectF(left: 0.25, top: 0.0, bottom: 1.0, right: 0.75)
+      await withCheckedContinuation { continuation in
+        let context = VisionLiveStreamContext<MpRectF>(
+          queueLabelSuffix: "test",
+          decode: { rectPtr, _, _ in rectPtr.pointee.right - rectPtr.pointee.left },
+          handler: { outcome, ts in continuation.resume(returning: (outcome, ts)) }
+        )
+        var rect = MpRectF(left: 0.25, top: 0.0, bottom: 1.0, right: 0.75)
+        // `userData` does not retain the context, as in the C options of a task.
+        withExtendedLifetime(context) {
           withUnsafePointer(to: &rect) { rectPtr in
-            registered.cCallback(kMpOk, rectPtr, nil, 123)
+            VisionLiveStreamContext.receive(
+              userData: context.userData, status: kMpOk, errorMessage: nil,
+              result: rectPtr, image: nil, timestampMs: 123)
           }
-        } catch {
-          continuation.resume(throwing: error)
         }
       }
 
@@ -282,58 +277,120 @@ struct VisionCoreTests {
     #expect(deliveredTimestamp == 123)
 
     let (errorOutcome, errorTimestamp): (Result<Float, any Error>, Int) =
-      try await withCheckedThrowingContinuation { continuation in
-        do {
-          let registered = try VisionLiveStreamRegistration.register(
-            queueLabelSuffix: "test_err",
-            as: TestCCallback.self,
-            decode: { (rectPtr: UnsafePointer<MpRectF>, _, _) in rectPtr.pointee.left },
-            handler: { outcome, ts in continuation.resume(returning: (outcome, ts)) }
-          )
-          defer { registered.registration.unregister() }
-          registered.cCallback(kMpInvalidArgument, nil, nil, 456)
-        } catch {
-          continuation.resume(throwing: error)
+      await withCheckedContinuation { continuation in
+        let context = VisionLiveStreamContext<MpRectF>(
+          queueLabelSuffix: "test_err",
+          decode: { rectPtr, _, _ in rectPtr.pointee.left },
+          handler: { outcome, ts in continuation.resume(returning: (outcome, ts)) }
+        )
+        withExtendedLifetime(context) {
+          "The image is invalid.".withCString { message in
+            VisionLiveStreamContext<MpRectF>.receive(
+              userData: context.userData, status: kMpInvalidArgument, errorMessage: message,
+              result: nil, image: nil, timestampMs: 456)
+          }
         }
       }
 
     #expect(errorTimestamp == 456)
-    #expect(throws: TasksError.self) { _ = try errorOutcome.get() }
+    let error = try #require(throws: TasksError.self) { _ = try errorOutcome.get() }
+    #expect(error.code == .invalidArgument)
+    #expect(error.message == "The image is invalid.")
 
-    var active: [VisionLiveStreamRegistration] = []
-    defer { active.forEach { $0.unregister() } }
-    for _ in 0..<VisionLiveStreamRegistration.capacity {
-      let reg = try VisionLiveStreamRegistration.register(
-        queueLabelSuffix: "pool",
-        as: TestCCallback.self,
-        decode: { (ptr: UnsafePointer<MpRectF>, _, _) in ptr.pointee.left },
-        handler: { _, _ in }
+    let nilMessageOutcome: Result<Float, any Error> = await withCheckedContinuation {
+      continuation in
+      let context = VisionLiveStreamContext<MpRectF>(
+        queueLabelSuffix: "test_nil_msg",
+        decode: { rectPtr, _, _ in rectPtr.pointee.left },
+        handler: { outcome, _ in continuation.resume(returning: outcome) }
       )
-      active.append(reg.registration)
+      withExtendedLifetime(context) {
+        VisionLiveStreamContext<MpRectF>.receive(
+          userData: context.userData, status: kMpNotFound, errorMessage: nil, result: nil,
+          image: nil, timestampMs: 500)
+      }
     }
+    let nilMessageError = try #require(throws: TasksError.self) { _ = try nilMessageOutcome.get() }
+    #expect(nilMessageError.code == .notFound)
 
-    let error = try #require(throws: TasksError.self) {
-      try VisionLiveStreamRegistration.register(
-        queueLabelSuffix: "overflow",
-        as: TestCCallback.self,
-        decode: { (ptr: UnsafePointer<MpRectF>, _, _) in ptr.pointee.left },
-        handler: { _, _ in }
-      )
+    let emptyMessageOutcome: Result<Float, any Error> =
+      await withCheckedContinuation { continuation in
+        let context = VisionLiveStreamContext<MpRectF>(
+          queueLabelSuffix: "test_empty_msg",
+          decode: { rectPtr, _, _ in rectPtr.pointee.left },
+          handler: { outcome, _ in continuation.resume(returning: outcome) }
+        )
+        withExtendedLifetime(context) {
+          "".withCString { emptyMessage in
+            VisionLiveStreamContext<MpRectF>.receive(
+              userData: context.userData, status: kMpInternal, errorMessage: emptyMessage,
+              result: nil, image: nil, timestampMs: 501)
+          }
+        }
+      }
+    let emptyMessageError = try #require(throws: TasksError.self) {
+      _ = try emptyMessageOutcome.get()
     }
+    #expect(emptyMessageError.code == .internalError)
 
-    #expect(error.code == .resourceExhausted)
+    let (nullResultOutcome, _): (Result<Float, any Error>, Int) =
+      await withCheckedContinuation { continuation in
+        let context = VisionLiveStreamContext<MpRectF>(
+          queueLabelSuffix: "test_null",
+          decode: { rectPtr, _, _ in rectPtr.pointee.left },
+          handler: { outcome, ts in continuation.resume(returning: (outcome, ts)) }
+        )
+        withExtendedLifetime(context) {
+          VisionLiveStreamContext<MpRectF>.receive(
+            userData: context.userData, status: kMpOk, errorMessage: nil, result: nil, image: nil,
+            timestampMs: 789)
+        }
+      }
 
-    let released = active.removeLast()
-    released.unregister()
-    released.unregister()
+    let nullResultError = try #require(throws: TasksError.self) {
+      _ = try nullResultOutcome.get()
+    }
+    #expect(nullResultError.code == .internalError)
+  }
 
-    let recycled = try VisionLiveStreamRegistration.register(
-      queueLabelSuffix: "recycled",
-      as: TestCCallback.self,
-      decode: { (ptr: UnsafePointer<MpRectF>, _, _) in ptr.pointee.left },
-      handler: { _, _ in }
+  @Test
+  func `VisionLiveStreamContext delivers a result only to the context of its user data`()
+    async throws
+  {
+    let (otherStream, otherContinuation) = AsyncStream<Int>.makeStream()
+    let other = VisionLiveStreamContext<MpRectF>(
+      queueLabelSuffix: "test_other",
+      decode: { rectPtr, _, _ in rectPtr.pointee.left },
+      handler: { _, ts in otherContinuation.yield(ts) }
     )
-    recycled.registration.unregister()
+    let deliveredValue: Float = try await withCheckedThrowingContinuation { continuation in
+      let context = VisionLiveStreamContext<MpRectF>(
+        queueLabelSuffix: "test_target",
+        decode: { rectPtr, _, _ in rectPtr.pointee.left },
+        handler: { outcome, _ in continuation.resume(with: outcome) }
+      )
+      var rect = MpRectF(left: 0.25, top: 0.0, bottom: 1.0, right: 0.75)
+      withExtendedLifetime((other, context)) {
+        withUnsafePointer(to: &rect) { rectPtr in
+          // Without user data, there is no context to deliver to.
+          VisionLiveStreamContext<MpRectF>.receive(
+            userData: nil, status: kMpOk, errorMessage: nil, result: rectPtr,
+            image: nil, timestampMs: 1)
+          VisionLiveStreamContext.receive(
+            userData: context.userData, status: kMpOk, errorMessage: nil,
+            result: rectPtr, image: nil, timestampMs: 2)
+          // Enqueue a sentinel on `other`'s serial FIFO queue so awaiting its first element proves
+          // neither earlier call reached `other`.
+          VisionLiveStreamContext.receive(
+            userData: other.userData, status: kMpOk, errorMessage: nil,
+            result: rectPtr, image: nil, timestampMs: 99)
+        }
+      }
+    }
+
+    #expect(deliveredValue == 0.25)
+    var otherIterator = otherStream.makeAsyncIterator()
+    #expect(await otherIterator.next() == 99)
   }
 
   @Test

@@ -91,12 +91,11 @@ void CppLanguageDetectorCloseResult(MpLanguageDetectorResult* result) {
 
 absl::Status CppLanguageDetectorClose(MpLanguageDetectorPtr detector) {
   auto* cpp_detector = GetCppDetector(detector);
-  auto result = cpp_detector->Close();
-  if (!result.ok()) {
-    return result;
-  }
+  absl::Status status = cpp_detector->Close();
+  // The detector is freed even if it fails to close. It cannot be closed a
+  // second time, so it would be leaked otherwise.
   delete detector;
-  return absl::OkStatus();
+  return status;
 }
 
 }  // namespace mediapipe::tasks::c::text::language_detector

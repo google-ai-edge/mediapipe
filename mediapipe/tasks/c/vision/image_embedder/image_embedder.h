@@ -41,10 +41,28 @@ typedef struct MpImageEmbedderInternal* MpImageEmbedderPtr;
 typedef struct MpEmbeddingResult ImageEmbedderResult;
 typedef struct MpEmbeddingResult MpImageEmbedderResult;
 
-// The user-defined result callback for processing live stream data.
+// The user-defined result callback for processing live stream data. The result
+// callback should only be specified when the running mode is set to
+// MP_RUNNING_MODE_LIVE_STREAM.
+//
+// Arguments of the callback function:
+//   - `user_data`: the `result_callback_user_data` of the options that the
+//     image embedder was created with, passed through unchanged.
+//   - `status`: `kMpOk` if a result is available, or the error otherwise.
+//   - `error_msg`: the message of the error, or null if `status` is `kMpOk`.
+//   - `result`: the result, or null if `status` is not `kMpOk`.
+//   - `image`: the image that the result was obtained on. If `status` is not
+//     `kMpOk`, an empty image that must not be used.
+//   - `timestamp_ms`: the timestamp of that image. Unspecified if `status` is
+//     not `kMpOk`.
+//
+// `error_msg`, `result` and `image` are only valid for the lifetime of the
+// callback and must not be freed by the caller (do not pass `error_msg` to
+// `MpErrorFree()`). The callback is invoked on a thread of the image embedder
+// and must not call `MpImageEmbedderClose()`.
 typedef void (*MpImageEmbedderResultCallbackFn)(
-    MpStatus status, const ImageEmbedderResult* result, MpImagePtr image,
-    int64_t timestamp_ms);
+    void* user_data, MpStatus status, const char* error_msg,
+    const ImageEmbedderResult* result, MpImagePtr image, int64_t timestamp_ms);
 
 // The options for configuring a MediaPipe image embedder task.
 //
@@ -70,16 +88,16 @@ typedef struct MpImageEmbedderOptions {
   // quantize.
   struct MpEmbedderOptions embedder_options;
 
-  // The user-defined result callback for processing live stream data.
-  // The result callback should only be specified when the running mode is set
-  // to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
-  // function include: the pointer to embedding result, the image that result
-  // was obtained on, the timestamp relevant to embedding extraction results and
-  // pointer to error message in case of any failure. The validity of the passed
-  // arguments is true for the lifetime of the callback function.
-  //
-  // The passed arguments are only valid for the lifetime of the callback.
+  // The user-defined result callback for processing live stream data. The
+  // result callback should only be specified when the running mode is set to
+  // MP_RUNNING_MODE_LIVE_STREAM. See
+  // `MpImageEmbedderResultCallbackFn` for details.
   MpImageEmbedderResultCallbackFn result_callback;
+
+  // The pointer that is passed as `user_data` to every invocation of
+  // `result_callback`. Can be null. The image embedder neither dereferences nor
+  // frees it. It must remain valid until `MpImageEmbedderClose()` returns.
+  void* result_callback_user_data;
 } MpImageEmbedderOptions;
 
 // Creates an ImageEmbedder from the provided `options`.
@@ -132,13 +150,8 @@ MP_EXPORT MpStatus MpImageEmbedderEmbedForVideo(
 // provide a timestamp (in milliseconds) to indicate when the input image is
 // sent to the object detector. The input timestamps must be monotonically
 // increasing.
-// The `result_callback` provides
-//   - The embedding results as a `ImageEmbedderResult` object.
-//   - The const reference to the corresponding input image that the image
-//     embedder runs on. Note that the const reference to the image will no
-//     longer be valid when the callback returns. To access the image data
-//     outside of the callback, callers need to make a copy of the image.
-//   - The input timestamp in milliseconds.
+// See `MpImageEmbedderResultCallbackFn` for the arguments that
+// `result_callback` receives.
 //
 // Returns kMpOk on success. To obtain a detailed error, `error_msg` must be
 // non-null pointer to a `char*`, which will be populated with a newly-allocated
@@ -153,7 +166,10 @@ MP_EXPORT MpStatus MpImageEmbedderEmbedAsync(
 // Does not free the result pointer itself.
 MP_EXPORT void MpImageEmbedderCloseResult(ImageEmbedderResult* result);
 
-// Frees image embedder.
+// Shuts down and frees the image embedder. In the live stream mode, waits for
+// the pending results. Once this function returns, `result_callback` is not
+// invoked anymore, and `embedder` is freed and must not be used, even if an
+// error is returned.
 //
 // To obtain a detailed error, `error_msg` must be non-null pointer to a
 // `char*`, which will be populated with a newly-allocated error message upon

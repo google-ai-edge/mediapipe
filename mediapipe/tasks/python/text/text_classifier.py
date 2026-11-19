@@ -248,9 +248,14 @@ class TextClassifier:
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._classifier_handle:
-      self._lib.MpTextClassifierClose(self._classifier_handle)  # pyrefly: ignore[missing-attribute]
+      # The C library frees the task even if it fails to close, so the handle
+      # must not be used again.
+      handle = self._classifier_handle
       self._classifier_handle = None  # pyrefly: ignore[bad-assignment]
-      self._lib.close()
+      try:
+        self._lib.MpTextClassifierClose(handle)  # pyrefly: ignore[missing-attribute]
+      finally:
+        self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

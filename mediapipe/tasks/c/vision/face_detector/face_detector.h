@@ -40,14 +40,27 @@ extern "C" {
 typedef struct MpFaceDetectorInternal* MpFaceDetectorPtr;
 typedef struct MpDetectionResult MpFaceDetectorResult;
 
-// The user-defined result callback for processing live stream data.
-// The result callback should only be specified when the running mode is set
-// to MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM. Arguments of the callback
-// function include: the status code, the pointer to detection result, the image
-// that result was obtained on, and the timestamp relevant to detection results.
+// The user-defined result callback for processing live stream data. The result
+// callback should only be specified when the running mode is set to
+// MP_RUNNING_MODE_LIVE_STREAM.
 //
-// The passed arguments are only valid for the lifetime of the callback.
-typedef void (*MpFaceDetectorResultCallback)(MpStatus status,
+// Arguments of the callback function:
+//   - `user_data`: the `result_callback_user_data` of the options that the face
+//     detector was created with, passed through unchanged.
+//   - `status`: `kMpOk` if a result is available, or the error otherwise.
+//   - `error_msg`: the message of the error, or null if `status` is `kMpOk`.
+//   - `result`: the result, or null if `status` is not `kMpOk`.
+//   - `image`: the image that the result was obtained on. If `status` is not
+//     `kMpOk`, an empty image that must not be used.
+//   - `timestamp_ms`: the timestamp of that image. Unspecified if `status` is
+//     not `kMpOk`.
+//
+// `error_msg`, `result` and `image` are only valid for the lifetime of the
+// callback and must not be freed by the caller (do not pass `error_msg` to
+// `MpErrorFree()`). The callback is invoked on a thread of the face detector
+// and must not call `MpFaceDetectorClose()`.
+typedef void (*MpFaceDetectorResultCallback)(void* user_data, MpStatus status,
+                                             const char* error_msg,
                                              const MpFaceDetectorResult* result,
                                              const MpImagePtr image,
                                              int64_t timestamp_ms);
@@ -83,7 +96,13 @@ struct MpFaceDetectorOptions {
   float min_suppression_threshold;
 
   // Callback invoked asynchronously in live stream mode.
+  // See `MpFaceDetectorResultCallback` for details.
   MpFaceDetectorResultCallback result_callback;
+
+  // The pointer that is passed as `user_data` to every invocation of
+  // `result_callback`. Can be null. The face detector neither dereferences nor
+  // frees it. It must remain valid until `MpFaceDetectorClose()` returns.
+  void* result_callback_user_data;
 };
 
 // Creates an FaceDetector from the provided `options`.
@@ -134,13 +153,8 @@ MP_EXPORT MpStatus MpFaceDetectorDetectForVideo(
 // provide a timestamp (in milliseconds) to indicate when the input image is
 // sent to the face detector. The input timestamps must be monotonically
 // increasing.
-// The `result_callback` provides:
-//   - The recognition results as an MpFaceDetectorResult object.
-//   - The const reference to the corresponding input image that the face
-//     detector runs on. Note that the const reference to the image will no
-//     longer be valid when the callback returns. To access the image data
-//     outside of the callback, callers need to make a copy of the image.
-//   - The input timestamp in milliseconds.
+// See `MpFaceDetectorResultCallback` for the arguments that `result_callback`
+// receives.
 //
 // Returns `kMpOk` on success. To obtain a detailed error, error_msg must be
 // non-null pointer to a char*, which will be populated with a newly-allocated
@@ -155,7 +169,10 @@ MpFaceDetectorDetectAsync(MpFaceDetectorPtr detector, MpImagePtr image,
 // Does not free the result pointer itself.
 MP_EXPORT void MpFaceDetectorCloseResult(MpFaceDetectorResult* result);
 
-// Frees face detector.
+// Shuts down and frees the face detector. In the live stream mode, waits for
+// the pending results. Once this function returns, `result_callback` is not
+// invoked anymore, and `detector` is freed and must not be used, even if an
+// error is returned.
 //
 // Returns `kMpOk` on success. To obtain a detailed error, error_msg must be
 // non-null pointer to a char*, which will be populated with a newly-allocated

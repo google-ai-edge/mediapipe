@@ -156,125 +156,54 @@ package struct VisionTaskRunner: Sendable {
   }
 }
 
-/// Scoped slot in the C live-stream callback pool (`@unchecked Sendable`: `lock` guards state).
+/// Receives the live-stream results of one Vision task from the task's C result callback.
 ///
-/// Decodes `CResult` synchronously before C pointers expire, dispatches delivery on a serial queue,
-/// and releases the slot via `unregister()` after `Mp*Close` in `deinit`.
+/// The task sets `userData` as `result_callback_user_data` in its C options, and sets
+/// `result_callback` to a `@convention(c)` closure that forwards its arguments to
+/// `receive(userData:status:errorMessage:result:image:timestampMs:)`:
 ///
-/// Why this uses a 32-slot static `@convention(c)` trampoline table and `unsafeBitCast` to
-/// `CCallback`:
-/// 1. MediaPipe's Vision C callbacks (`Mp*ResultCallback` in `tasks/c/vision/`) omit a
-///    `void* user_data` context pointer (the same C-API constraint behind `VisionCallbackPool` in
-///    Objective-C++ `MPPVisionTaskRunner.h`).
-/// 2. Swift `@convention(c)` function pointers cannot capture state or generic type parameters.
-/// 3. Every Vision `Mp*ResultCallback` shares the identical 4-argument C ABI layout
-///    `(MpStatus, const Mp*Result*, MpImagePtr, int64_t)`, allowing one shared pool to serve all
-///    live-stream Vision tasks instead of duplicating 32 trampolines in every task file.
-package final class VisionLiveStreamRegistration: @unchecked Sendable {
-  private typealias RawCCallback =
-    @convention(c) (MpStatus, UnsafeRawPointer?, MpImagePtr?, Int64) -> Void
-  private typealias SlotCallback =
-    @Sendable (MpStatus, UnsafeRawPointer?, MpImagePtr?, Int64) -> Void
+/// ```swift
+/// cOptions.result_callback = {
+///   VisionLiveStreamContext.receive(
+///     userData: $0, status: $1, errorMessage: $2, result: $3, image: $4, timestampMs: $5)
+/// }
+/// cOptions.result_callback_user_data = context.userData
+/// ```
+///
+/// The C task does not retain `userData`, so the Swift task must keep this object alive until its
+/// `Mp*Close` call has returned. `Mp*Close` waits for pending results and invokes no callback after
+/// it returns. Code that does not hold the context in a stored property during such a C call must
+/// wrap the call in `withExtendedLifetime`.
+///
+/// Decodes `CResult` synchronously before the C pointers expire and delivers the outcome on a
+/// private serial queue.
+package final class VisionLiveStreamContext<CResult>: Sendable {
+  private let deliver:
+    @Sendable (MpStatus, UnsafePointer<CChar>?, UnsafePointer<CResult>?, MpImagePtr?, Int64) -> Void
 
-  /// `@unchecked Sendable` is safe because `slots` is exclusively accessed under `lock`.
-  private final class PoolStorage: @unchecked Sendable {
-    static let shared = PoolStorage()
-    private let lock = NSLock()
-    private var slots = [SlotCallback?](repeating: nil, count: trampolines.count)
-
-    func allocate(_ callback: @escaping SlotCallback) throws -> Int {
-      try lock.withLock {
-        guard let index = slots.firstIndex(where: { $0 == nil }) else {
-          throw TasksError(
-            code: .resourceExhausted,
-            message: "Maximum concurrent Vision live-stream tasks (\(slots.count)) exceeded."
-          )
-        }
-        slots[index] = callback
-        return index
-      }
-    }
-
-    func free(_ index: Int) {
-      lock.withLock { slots[index] = nil }
-    }
-
-    func callback(at index: Int) -> SlotCallback? {
-      lock.withLock { slots[index] }
-    }
-  }
-
-  private static func dispatch(
-    _ slot: Int, _ status: MpStatus, _ raw: UnsafeRawPointer?, _ img: MpImagePtr?, _ ts: Int64
-  ) {
-    PoolStorage.shared.callback(at: slot)?(status, raw, img, ts)
-  }
-
-  private static let trampolines: [RawCCallback] = [
-    { dispatch(0, $0, $1, $2, $3) }, { dispatch(1, $0, $1, $2, $3) },
-    { dispatch(2, $0, $1, $2, $3) }, { dispatch(3, $0, $1, $2, $3) },
-    { dispatch(4, $0, $1, $2, $3) }, { dispatch(5, $0, $1, $2, $3) },
-    { dispatch(6, $0, $1, $2, $3) }, { dispatch(7, $0, $1, $2, $3) },
-    { dispatch(8, $0, $1, $2, $3) }, { dispatch(9, $0, $1, $2, $3) },
-    { dispatch(10, $0, $1, $2, $3) }, { dispatch(11, $0, $1, $2, $3) },
-    { dispatch(12, $0, $1, $2, $3) }, { dispatch(13, $0, $1, $2, $3) },
-    { dispatch(14, $0, $1, $2, $3) }, { dispatch(15, $0, $1, $2, $3) },
-    { dispatch(16, $0, $1, $2, $3) }, { dispatch(17, $0, $1, $2, $3) },
-    { dispatch(18, $0, $1, $2, $3) }, { dispatch(19, $0, $1, $2, $3) },
-    { dispatch(20, $0, $1, $2, $3) }, { dispatch(21, $0, $1, $2, $3) },
-    { dispatch(22, $0, $1, $2, $3) }, { dispatch(23, $0, $1, $2, $3) },
-    { dispatch(24, $0, $1, $2, $3) }, { dispatch(25, $0, $1, $2, $3) },
-    { dispatch(26, $0, $1, $2, $3) }, { dispatch(27, $0, $1, $2, $3) },
-    { dispatch(28, $0, $1, $2, $3) }, { dispatch(29, $0, $1, $2, $3) },
-    { dispatch(30, $0, $1, $2, $3) }, { dispatch(31, $0, $1, $2, $3) },
-  ]
-
-  package static var capacity: Int { trampolines.count }
-
-  private let slotIndex: Int
-  private let lock = NSLock()
-  private var unregistered = false
-
-  private init(slotIndex: Int) {
-    self.slotIndex = slotIndex
-  }
-
-  deinit {
-    unregister()
-  }
-
-  /// Releases this registration's C callback slot. Safe to call multiple times.
-  package func unregister() {
-    let shouldFree = lock.withLock {
-      defer { unregistered = true }
-      return !unregistered
-    }
-    if shouldFree {
-      PoolStorage.shared.free(slotIndex)
-    }
-  }
-
-  /// Acquires a callback slot that decodes `CResult` synchronously during the C callback and
-  /// delivers the `Result` asynchronously on a serial `DispatchQueue`.
-  package static func register<CResult, SwiftResult: Sendable, CCallback>(
+  /// Creates a context that decodes each `CResult` with `decode` and passes the outcome and the
+  /// timestamp in milliseconds to `handler` on a serial `DispatchQueue`.
+  package init<SwiftResult: Sendable>(
     queueLabelSuffix: String,
-    resultType: CResult.Type = CResult.self,
-    as callbackType: CCallback.Type = CCallback.self,
     decode: @escaping @Sendable (UnsafePointer<CResult>, MpImagePtr?, Int) throws -> SwiftResult,
     handler: @escaping @Sendable (Result<SwiftResult, any Error>, Int) -> Void
-  ) throws -> (registration: VisionLiveStreamRegistration, cCallback: CCallback) {
-    precondition(MemoryLayout<CCallback>.size == MemoryLayout<RawCCallback>.size)
+  ) {
     let queue = DispatchQueue(
       label: "com.mediapipe.tasks.vision.\(queueLabelSuffix).\(UUID().uuidString)"
     )
-    let slotIndex = try PoolStorage.shared.allocate { status, rawResult, cImage, timestampMs in
+    deliver = { status, errorMessage, cResult, cImage, timestampMs in
       let timestamp = Int(clamping: timestampMs)
       let outcome: Result<SwiftResult, any Error>
       if status != kMpOk {
-        outcome = .failure(TasksError(code: TasksErrorCode(cStatus: status)))
-      } else if let rawResult {
+        outcome = .failure(
+          TasksError(
+            code: TasksErrorCode(cStatus: status),
+            message: errorMessage.map { String(cString: $0) }
+          )
+        )
+      } else if let cResult {
         outcome = Result {
-          try decode(rawResult.assumingMemoryBound(to: CResult.self), cImage, timestamp)
+          try decode(cResult, cImage, timestamp)
         }
       } else {
         outcome = .failure(
@@ -283,9 +212,24 @@ package final class VisionLiveStreamRegistration: @unchecked Sendable {
       }
       queue.async { handler(outcome, timestamp) }
     }
-    return (
-      registration: VisionLiveStreamRegistration(slotIndex: slotIndex),
-      cCallback: unsafeBitCast(trampolines[slotIndex], to: callbackType)
-    )
+  }
+
+  /// The value for `result_callback_user_data` in the C options. Does not retain `self`.
+  package var userData: UnsafeMutableRawPointer {
+    Unmanaged.passUnretained(self).toOpaque()
+  }
+
+  /// Forwards the arguments of a C result callback to the context that `userData` points to.
+  package static func receive(
+    userData: UnsafeMutableRawPointer?,
+    status: MpStatus,
+    errorMessage: UnsafePointer<CChar>?,
+    result: UnsafePointer<CResult>?,
+    image: MpImagePtr?,
+    timestampMs: Int64
+  ) {
+    guard let userData else { return }
+    Unmanaged<VisionLiveStreamContext<CResult>>.fromOpaque(userData).takeUnretainedValue()
+      .deliver(status, errorMessage, result, image, timestampMs)
   }
 }

@@ -30,7 +30,9 @@ package import third_party_mediapipe_tasks_c_vision_image_classifier_image_class
 public final class ImageClassifier {
   private let cClassifier: MpImageClassifierPtr
   private let runner: VisionTaskRunner
-  private let liveStreamRegistration: VisionLiveStreamRegistration?
+  /// Receives the live-stream results. The C task keeps an unretained pointer to it until the task
+  /// has been closed.
+  private let liveStreamContext: VisionLiveStreamContext<MpImageClassifierResult>?
 
   /// Initializes a classifier configured with `options`.
   ///
@@ -45,39 +47,29 @@ public final class ImageClassifier {
       hasLiveStreamHandler: handler != nil
     )
 
-    var registration: VisionLiveStreamRegistration?
-    var cCallback: MpImageClassifierResultCallback?
-    if options.runningMode == .liveStream, let handler {
-      let registered = try VisionLiveStreamRegistration.register(
+    // `VisionTaskRunner` has checked that a handler is set exactly in the live stream mode.
+    let liveStreamContext = handler.map { handler in
+      VisionLiveStreamContext<MpImageClassifierResult>(
         queueLabelSuffix: "image_classifier",
-        resultType: MpImageClassifierResult.self,
-        as: MpImageClassifierResultCallback.self,
         decode: { cResultPtr, _, timestampMs in
           ImageClassifierResult(cResult: cResultPtr.pointee, timestampInMilliseconds: timestampMs)
         },
         handler: handler
       )
-      registration = registered.registration
-      cCallback = registered.cCallback
     }
 
-    do {
-      self.cClassifier = try options.withCOptions(cCallback: cCallback) { cOptions in
-        var classifierPtr: MpImageClassifierPtr?
-        try MpStatus.check(defaultMessage: "Failed to create ImageClassifier.") { errorMessage in
-          MpImageClassifierCreate(&cOptions, &classifierPtr, &errorMessage)
-        }
-        guard let validClassifier = classifierPtr else {
-          throw TasksError.internalError("MpImageClassifierCreate returned a null pointer.")
-        }
-        return validClassifier
+    self.cClassifier = try options.withCOptions(liveStreamContext: liveStreamContext) { cOptions in
+      var classifierPtr: MpImageClassifierPtr?
+      try MpStatus.check(defaultMessage: "Failed to create ImageClassifier.") { errorMessage in
+        MpImageClassifierCreate(&cOptions, &classifierPtr, &errorMessage)
       }
-      self.runner = runner
-      self.liveStreamRegistration = registration
-    } catch {
-      registration?.unregister()
-      throw error
+      guard let validClassifier = classifierPtr else {
+        throw TasksError.internalError("MpImageClassifierCreate returned a null pointer.")
+      }
+      return validClassifier
     }
+    self.runner = runner
+    self.liveStreamContext = liveStreamContext
   }
 
   /// Initializes a classifier in `.image` mode from a model file path with default options.
@@ -89,7 +81,6 @@ public final class ImageClassifier {
 
   deinit {
     _ = MpImageClassifierClose(cClassifier, nil)
-    liveStreamRegistration?.unregister()
   }
 
   /// Classifies a still `image` when running in `.image` mode.

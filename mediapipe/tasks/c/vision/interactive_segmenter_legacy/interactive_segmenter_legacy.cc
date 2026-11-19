@@ -169,12 +169,11 @@ void CppImageSegmenterCloseResult(MpImageSegmenterResult* result) {
 absl::Status CppInteractiveSegmenterLegacyClose(
     MpInteractiveSegmenterLegacyPtr segmenter) {
   auto cpp_segmenter = GetCppSegmenter(segmenter);
-  auto result = cpp_segmenter->Close();
-  if (!result.ok()) {
-    return result;
-  }
+  absl::Status status = cpp_segmenter->Close();
+  // The segmenter is freed even if it fails to close. It cannot be closed a
+  // second time, so it would be leaked otherwise.
   delete segmenter;
-  return absl::OkStatus();
+  return status;
 }
 
 absl::Status CppInteractiveSegmenterLegacyGetLabels(

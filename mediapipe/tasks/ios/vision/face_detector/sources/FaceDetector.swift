@@ -29,7 +29,9 @@ private import third_party_mediapipe_tasks_c_vision_face_detector_face_detector_
 public final class FaceDetector {
   private let cDetector: MpFaceDetectorPtr
   private let runner: VisionTaskRunner
-  private let liveStreamRegistration: VisionLiveStreamRegistration?
+  /// Receives the live-stream results. The C task keeps an unretained pointer to it until the task
+  /// has been closed.
+  private let liveStreamContext: VisionLiveStreamContext<MpFaceDetectorResult>?
 
   /// Creates a `FaceDetector` configured with `options`.
   public init(options: FaceDetectorOptions) throws {
@@ -41,42 +43,31 @@ public final class FaceDetector {
       hasLiveStreamHandler: options.liveStreamResultHandler != nil
     )
 
-    let registration: VisionLiveStreamRegistration?
-    let cCallback: MpFaceDetectorResultCallback?
+    let liveStreamContext: VisionLiveStreamContext<MpFaceDetectorResult>?
     if options.runningMode == .liveStream, let handler = options.liveStreamResultHandler {
-      let registered = try VisionLiveStreamRegistration.register(
+      liveStreamContext = VisionLiveStreamContext<MpFaceDetectorResult>(
         queueLabelSuffix: "faceDetector",
-        resultType: MpFaceDetectorResult.self,
-        as: MpFaceDetectorResultCallback.self,
         decode: { cResultPtr, _, timestampMs in
           FaceDetectorResult(cResult: cResultPtr.pointee, timestampInMilliseconds: timestampMs)
         },
         handler: handler
       )
-      registration = registered.registration
-      cCallback = registered.cCallback
     } else {
-      registration = nil
-      cCallback = nil
+      liveStreamContext = nil
     }
 
-    do {
-      self.cDetector = try options.withCOptions(resultCallback: cCallback) { cOptions in
-        var detectorPtr: MpFaceDetectorPtr?
-        try MpStatus.check(defaultMessage: "Failed to create FaceDetector.") { errorMessage in
-          MpFaceDetectorCreate(&cOptions, &detectorPtr, &errorMessage)
-        }
-        guard let detectorPtr else {
-          throw TasksError.internalError("MpFaceDetectorCreate returned a null handle.")
-        }
-        return detectorPtr
+    self.cDetector = try options.withCOptions(liveStreamContext: liveStreamContext) { cOptions in
+      var detectorPtr: MpFaceDetectorPtr?
+      try MpStatus.check(defaultMessage: "Failed to create FaceDetector.") { errorMessage in
+        MpFaceDetectorCreate(&cOptions, &detectorPtr, &errorMessage)
       }
-    } catch {
-      registration?.unregister()
-      throw error
+      guard let detectorPtr else {
+        throw TasksError.internalError("MpFaceDetectorCreate returned a null handle.")
+      }
+      return detectorPtr
     }
     self.runner = runner
-    self.liveStreamRegistration = registration
+    self.liveStreamContext = liveStreamContext
   }
 
   /// Creates an `.image`-mode `FaceDetector` from a local model file path.
@@ -86,7 +77,6 @@ public final class FaceDetector {
 
   deinit {
     _ = MpFaceDetectorClose(cDetector, nil)
-    liveStreamRegistration?.unregister()
   }
 
   /// Detects faces in a standalone image when initialized in `.image` mode.
