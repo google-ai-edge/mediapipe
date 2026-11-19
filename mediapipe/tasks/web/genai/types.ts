@@ -14,5 +14,5 @@
  * limitations under the License.
  */
 
-export * from '../../../tasks/web/core/fileset_resolver';
+export * from './fileset_resolver';
 export * from '../../../tasks/web/genai/llm_inference/llm_inference';

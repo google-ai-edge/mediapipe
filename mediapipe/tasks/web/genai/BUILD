@@ -5,7 +5,12 @@ load(
     "//mediapipe/framework/tool:mediapipe_files.bzl",
     "mediapipe_files",
 )
-load("//mediapipe/tasks/web:build_defs.bzl", "pkg_npm", "rollup_bundle")
+load(
+    "//mediapipe/tasks/web:build_defs.bzl",
+    "mediapipe_ts_template",
+    "pkg_npm",
+    "rollup_bundle",
+)
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -16,8 +21,23 @@ mediapipe_files(srcs = [
     "wasm/genai_wasm_module_internal.wasm",
 ])
 
+mediapipe_ts_template(
+    name = "fileset_resolver_genrule",
+    src = "fileset_resolver.ts.template",
+    out = "fileset_resolver.ts",
+)
+
+ts_library(
+    name = "fileset_resolver",
+    srcs = ["fileset_resolver.ts"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/tasks/web/core",
+    ],
+)
+
 GENAI_LIBS = [
-    "//mediapipe/tasks/web/core:fileset_resolver",
+    ":fileset_resolver",
     "//mediapipe/tasks/web/genai/llm_inference",
 ]
 

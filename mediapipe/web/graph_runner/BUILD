@@ -1,7 +1,7 @@
 # The TypeScript graph runner used by all MediaPipe Web tasks.
 
 load("//mediapipe/framework/port:build_config.bzl", "ts_declaration", "ts_library")
-load("//mediapipe/tasks/web:build_defs.bzl", "jasmine_node_test")
+load("//mediapipe/tasks/web:build_defs.bzl", "jasmine_node_test", "mediapipe_ts_template")
 
 package(default_visibility = [
     "//mediapipe/tasks:internal",
@@ -108,11 +108,10 @@ ts_library(
     deps = [":platform_utils"],
 )
 
-genrule(
+mediapipe_ts_template(
     name = "run_script_genrule",
-    srcs = ["run_script_helper.ts.template"],
-    outs = ["run_script_helper.ts"],
-    cmd = "cp $< $@",
+    src = "run_script_helper.ts.template",
+    out = "run_script_helper.ts",
 )
 
 ts_library(

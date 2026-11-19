@@ -16,8 +16,8 @@
 
 import 'jasmine';
 
-import {FilesetResolver} from '../../../../tasks/web/core/fileset_resolver';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
+import {FilesetResolver} from '../../../../tasks/web/genai/fileset_resolver';
 import {ProgressListener} from '../../../../web/graph_runner/graph_runner_llm_inference_lib';
 // Placeholder for internal dependency on trusted resource URL builder
 import {LlmInference} from './llm_inference';

@@ -140,3 +140,20 @@ def pkg_npm(name, package_json = None, srcs = [], substitutions = {}, deps = [],
         srcs = srcs + deps,
         **kwargs
     )
+
+def mediapipe_ts_template(name, src, out, visibility = None):
+    """Rule for copying an already-scrubbed TS template file in OSS.
+
+    Args:
+        name: The name of the genrule target to create.
+        src: The input `.ts.template` source file.
+        out: The output `.ts` file name.
+        visibility: Optional visibility to apply to the generated target.
+    """
+    native.genrule(
+        name = name,
+        srcs = [src],
+        outs = [out],
+        cmd = "cp $< $@",
+        visibility = visibility,
+    )

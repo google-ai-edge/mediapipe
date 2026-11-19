@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {FilesetResolver as FilesetResolverImpl} from '../../../tasks/web/core/fileset_resolver';
+import {FilesetResolver as FilesetResolverImpl} from './fileset_resolver';
 import {
   LlmInference as LlmInferenceImpl,
   LoraModel as LoraModelImpl,

@@ -1,7 +1,7 @@
 # This package contains options shared by all MediaPipe Tasks for Web.
 
 load("//mediapipe/framework/port:build_config.bzl", "ts_declaration", "ts_library")
-load("//mediapipe/tasks/web:build_defs.bzl", "jasmine_node_test")
+load("//mediapipe/tasks/web:build_defs.bzl", "jasmine_node_test", "mediapipe_ts_template")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -78,11 +78,10 @@ ts_library(
     ],
 )
 
-genrule(
-    name = "run_script_genrule",
-    srcs = ["fileset_resolver.ts.template"],
-    outs = ["fileset_resolver.ts"],
-    cmd = "cp $< $@",
+mediapipe_ts_template(
+    name = "fileset_resolver_genrule",
+    src = "fileset_resolver.ts.template",
+    out = "fileset_resolver.ts",
 )
 
 ts_library(
