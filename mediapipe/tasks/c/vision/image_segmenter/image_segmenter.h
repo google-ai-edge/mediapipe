@@ -54,12 +54,17 @@ typedef void (*MpImageSegmenterResultCallback)(
     int64_t timestamp_ms);
 
 // The options for configuring a mediapipe image segmenter task.
+//
+// The struct has no default values, in C or in C++: a field that is never
+// written is indeterminate. Zero-initialize the struct (`= {0}` in C, `= {}`
+// in C++) and then set its fields; the suggested defaults are listed below.
+// Zero is not a valid `running_mode`, so that field must always be set.
 struct MpImageSegmenterOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
   struct MpBaseOptions base_options;
 
-  // The running mode of the task. Default to the image mode.
+  // The running mode of the task. Suggested default: MP_RUNNING_MODE_IMAGE.
   // Image segmenter has three running modes:
   // 1) The image mode for segmenting image on single image inputs.
   // 2) The video mode for segmenting image on the decoded frames of a video.
@@ -73,24 +78,15 @@ struct MpImageSegmenterOptions {
   const char* display_names_locale;
 
   // Whether to output confidence masks.
-#ifdef __cplusplus
-  bool output_confidence_masks = true;
-#else
+  // Suggested default: true.
   bool output_confidence_masks;
-#endif
 
   // Whether to output category mask.
-#ifdef __cplusplus
-  bool output_category_mask = false;
-#else
+  // Suggested default: false.
   bool output_category_mask;
-#endif
 
   // The user-defined result callback for processing live stream data. See
   // `MpImageSegmenterResultCallback` for details.
-#ifdef __cplusplus
-  using result_callback_fn = MpImageSegmenterResultCallback;
-#endif
   MpImageSegmenterResultCallback result_callback;
 };
 

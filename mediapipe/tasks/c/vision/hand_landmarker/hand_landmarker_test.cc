@@ -261,7 +261,7 @@ TEST(HandLandmarkerTest, LiveStreamModeTest) {
       /* min_hand_detection_confidence= */ 0.5,
       /* min_hand_presence_confidence= */ 0.5,
       /* min_tracking_confidence= */ 0.5,
-      /* result_callback_fn= */ LiveStreamModeCallback::Fn,
+      /* result_callback= */ LiveStreamModeCallback::Fn,
   };
 
   MpHandLandmarkerPtr landmarker;

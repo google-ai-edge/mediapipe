@@ -102,8 +102,7 @@ absl::Status CppFaceDetectorCreate(const MpFaceDetectorOptions& options,
           "Provided null pointer to callback function.");
     }
 
-    MpFaceDetectorOptions::result_callback_fn result_callback =
-        options.result_callback;
+    MpFaceDetectorResultCallback result_callback = options.result_callback;
     cpp_options->result_callback =
         [result_callback](absl::StatusOr<CppFaceDetectorResult> cpp_result,
                           const Image& image, int64_t timestamp) {

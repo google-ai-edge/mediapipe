@@ -54,12 +54,17 @@ typedef void (*MpFaceLandmarkerResultCallback)(
     int64_t timestamp_ms);
 
 // The options for configuring a MediaPipe face landmarker task.
+//
+// The struct has no default values, in C or in C++: a field that is never
+// written is indeterminate. Zero-initialize the struct (`= {0}` in C, `= {}`
+// in C++) and then set its fields; the suggested defaults are listed below.
+// Zero is not a valid `running_mode`, so that field must always be set.
 struct MpFaceLandmarkerOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
   struct MpBaseOptions base_options;
 
-  // The running mode of the task. Default to the image mode.
+  // The running mode of the task. Suggested default: MP_RUNNING_MODE_IMAGE.
   // FaceLandmarker has three running modes:
   // 1) The image mode for recognizing face landmarks on single image inputs.
   // 2) The video mode for recognizing face landmarks on the decoded frames of a
@@ -70,59 +75,38 @@ struct MpFaceLandmarkerOptions {
   enum MpRunningMode running_mode;
 
   // The maximum number of faces can be detected by the FaceLandmarker.
-#ifdef __cplusplus
-  int num_faces = 1;
-#else
+  // Suggested default: 1.
   int num_faces;
-#endif
 
   // The minimum confidence score for the face detection to be considered
   // successful.
-#ifdef __cplusplus
-  float min_face_detection_confidence = 0.5;
-#else
+  // Suggested default: 0.5.
   float min_face_detection_confidence;
-#endif
 
   // The minimum confidence score of face presence score in the face landmark
   // detection.
-#ifdef __cplusplus
-  float min_face_presence_confidence = 0.5;
-#else
+  // Suggested default: 0.5.
   float min_face_presence_confidence;
-#endif
 
   // The minimum confidence score for the face tracking to be considered
   // successful.
-#ifdef __cplusplus
-  float min_tracking_confidence = 0.5;
-#else
+  // Suggested default: 0.5.
   float min_tracking_confidence;
-#endif
 
   // Whether FaceLandmarker outputs face blendshapes classification. Face
   // blendshapes are used for rendering the 3D face model.
-#ifdef __cplusplus
-  bool output_face_blendshapes = false;
-#else
+  // Suggested default: false.
   bool output_face_blendshapes;
-#endif
 
   // Whether FaceLandmarker outputs facial transformation_matrix. Facial
   // transformation matrix is used to transform the face landmarks in canonical
   // face to the detected face, so that users can apply face effects on the
   // detected landmarks.
-#ifdef __cplusplus
-  bool output_facial_transformation_matrixes = false;
-#else
+  // Suggested default: false.
   bool output_facial_transformation_matrixes;
-#endif
 
   // The user-defined result callback for processing live stream data. See
   // `MpFaceLandmarkerResultCallback` for details.
-#ifdef __cplusplus
-  using result_callback_fn = MpFaceLandmarkerResultCallback;
-#endif
   MpFaceLandmarkerResultCallback result_callback;
 };
 

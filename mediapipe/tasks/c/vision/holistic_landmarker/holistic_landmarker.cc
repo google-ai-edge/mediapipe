@@ -109,7 +109,7 @@ absl::Status CppHolisticLandmarkerCreate(
           "Provided null pointer to callback function.");
     }
 
-    MpHolisticLandmarkerOptions::result_callback_fn result_callback =
+    MpHolisticLandmarkerResultCallback result_callback =
         options.result_callback;
     cpp_options->result_callback =
         [result_callback](

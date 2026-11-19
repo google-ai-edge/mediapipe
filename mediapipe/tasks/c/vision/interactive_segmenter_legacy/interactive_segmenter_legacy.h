@@ -42,32 +42,27 @@ typedef struct MpInteractiveSegmenterLegacyInternal*
     MpInteractiveSegmenterLegacyPtr;
 
 // The options for configuring a mediapipe interactive segmenter task.
+//
+// The struct has no default values, in C or in C++: a field that is never
+// written is indeterminate. Zero-initialize the struct (`= {0}` in C, `= {}`
+// in C++) and then set its fields; the suggested defaults are listed below.
 struct MpInteractiveSegmenterLegacyOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
   struct MpBaseOptions base_options;
 
   // The locale to use for display names specified through the TFLite Model
-  // Metadata, if any. Defaults to English.
-#ifdef __cplusplus
-  const char* display_names_locale = nullptr;
-#else
+  // Metadata, if any. Defaults to English when NULL.
+  // Suggested default: NULL.
   const char* display_names_locale;
-#endif
 
   // Whether to output confidence masks.
-#ifdef __cplusplus
-  bool output_confidence_masks = true;
-#else
+  // Suggested default: true.
   bool output_confidence_masks;
-#endif
 
   // Whether to output category mask.
-#ifdef __cplusplus
-  bool output_category_mask = false;
-#else
+  // Suggested default: false.
   bool output_category_mask;
-#endif
 };
 
 // The format used to specify the region-of-interest.

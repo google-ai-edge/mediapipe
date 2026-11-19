@@ -141,11 +141,20 @@ TEST(HolisticLandmarkerTest, ImageModeSucceeds) {
   const auto expected_result = GetExpectedHolisticResult(kHolisticResultProto);
   const auto image = GetImage(GetFullPath(kTestImageFile));
   const std::string model_path = GetFullPath(kModelFile);
-  MpHolisticLandmarkerOptions options;
-  options.base_options = {.model_asset_path = model_path.c_str()};
-  options.running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE;
-  options.output_face_blendshapes = true;
-  options.output_pose_segmentation_masks = true;
+  MpHolisticLandmarkerOptions options = {
+      .base_options = {.model_asset_path = model_path.c_str()},
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
+      .min_face_detection_confidence = 0.5f,
+      .min_face_suppression_threshold = 0.3f,
+      .min_face_presence_confidence = 0.5f,
+      .min_hand_landmarks_confidence = 0.5f,
+      .min_pose_detection_confidence = 0.5f,
+      .min_pose_suppression_threshold = 0.3f,
+      .min_pose_presence_confidence = 0.5f,
+      .output_face_blendshapes = true,
+      .output_pose_segmentation_masks = true,
+      .result_callback = nullptr,
+  };
 
   MpHolisticLandmarkerPtr landmarker_ptr;
   char* error_msg = nullptr;
@@ -171,11 +180,20 @@ TEST(HolisticLandmarkerTest, VideoModeSucceeds) {
   const auto expected_result = GetExpectedHolisticResult(kHolisticResultProto);
   const auto image = GetImage(GetFullPath(kTestImageFile));
   const std::string model_path = GetFullPath(kModelFile);
-  MpHolisticLandmarkerOptions options;
-  options.base_options = {.model_asset_path = model_path.c_str()};
-  options.running_mode = MpRunningMode::MP_RUNNING_MODE_VIDEO;
-  options.output_face_blendshapes = true;
-  options.output_pose_segmentation_masks = true;
+  MpHolisticLandmarkerOptions options = {
+      .base_options = {.model_asset_path = model_path.c_str()},
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_VIDEO,
+      .min_face_detection_confidence = 0.5f,
+      .min_face_suppression_threshold = 0.3f,
+      .min_face_presence_confidence = 0.5f,
+      .min_hand_landmarks_confidence = 0.5f,
+      .min_pose_detection_confidence = 0.5f,
+      .min_pose_suppression_threshold = 0.3f,
+      .min_pose_presence_confidence = 0.5f,
+      .output_face_blendshapes = true,
+      .output_pose_segmentation_masks = true,
+      .result_callback = nullptr,
+  };
 
   MpHolisticLandmarkerPtr landmarker_ptr;
   char* error_msg = nullptr;
@@ -204,18 +222,20 @@ TEST(HolisticLandmarkerTest, VideoModeSucceeds) {
 TEST(HolisticLandmarkerTest, ReturnsEmptyResultsWithHighThresholds) {
   const auto image = GetImage(GetFullPath(kTestImageFile));
   const std::string model_path = GetFullPath(kModelFile);
-  MpHolisticLandmarkerOptions options;
-  options.base_options = {.model_asset_path = model_path.c_str()};
-  options.running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE;
-  options.output_face_blendshapes = true;
-  options.output_pose_segmentation_masks = true;
-  options.min_face_detection_confidence = 1.0f;
-  options.min_face_presence_confidence = 1.0f;
-  options.min_hand_landmarks_confidence = 1.0f;
-  options.min_pose_detection_confidence = 1.0f;
-  options.min_pose_presence_confidence = 1.0f;
-  options.min_face_suppression_threshold = 1.0f;
-  options.min_pose_suppression_threshold = 1.0f;
+  MpHolisticLandmarkerOptions options = {
+      .base_options = {.model_asset_path = model_path.c_str()},
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_IMAGE,
+      .min_face_detection_confidence = 1.0f,
+      .min_face_suppression_threshold = 1.0f,
+      .min_face_presence_confidence = 1.0f,
+      .min_hand_landmarks_confidence = 1.0f,
+      .min_pose_detection_confidence = 1.0f,
+      .min_pose_suppression_threshold = 1.0f,
+      .min_pose_presence_confidence = 1.0f,
+      .output_face_blendshapes = true,
+      .output_pose_segmentation_masks = true,
+      .result_callback = nullptr,
+  };
 
   MpHolisticLandmarkerPtr landmarker_ptr;
   char* error_msg = nullptr;
@@ -270,12 +290,20 @@ int64_t LiveStreamModeCallback::last_timestamp = -1;
 TEST(HolisticLandmarkerTest, LiveStreamModeSucceeds) {
   const auto image = GetImage(GetFullPath(kTestImageFile));
   const std::string model_path = GetFullPath(kModelFile);
-  MpHolisticLandmarkerOptions options;
-  options.base_options = {.model_asset_path = model_path.c_str()};
-  options.running_mode = MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM;
-  options.output_face_blendshapes = true;
-  options.output_pose_segmentation_masks = true;
-  options.result_callback = &LiveStreamModeCallback::LiveStreamCallback;
+  MpHolisticLandmarkerOptions options = {
+      .base_options = {.model_asset_path = model_path.c_str()},
+      .running_mode = MpRunningMode::MP_RUNNING_MODE_LIVE_STREAM,
+      .min_face_detection_confidence = 0.5f,
+      .min_face_suppression_threshold = 0.3f,
+      .min_face_presence_confidence = 0.5f,
+      .min_hand_landmarks_confidence = 0.5f,
+      .min_pose_detection_confidence = 0.5f,
+      .min_pose_suppression_threshold = 0.3f,
+      .min_pose_presence_confidence = 0.5f,
+      .output_face_blendshapes = true,
+      .output_pose_segmentation_masks = true,
+      .result_callback = &LiveStreamModeCallback::LiveStreamCallback,
+  };
 
   MpHolisticLandmarkerPtr landmarker_ptr;
   char* error_msg = nullptr;

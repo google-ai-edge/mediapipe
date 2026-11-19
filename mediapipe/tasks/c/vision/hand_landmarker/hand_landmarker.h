@@ -45,12 +45,17 @@ typedef void (*MpHandLandmarkerResultCallback)(
     int64_t timestamp_ms);
 
 // The options for configuring a MediaPipe hand landmarker task.
+//
+// The struct has no default values, in C or in C++: a field that is never
+// written is indeterminate. Zero-initialize the struct (`= {0}` in C, `= {}`
+// in C++) and then set its fields; the suggested defaults are listed below.
+// Zero is not a valid `running_mode`, so that field must always be set.
 typedef struct MpHandLandmarkerOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
   struct MpBaseOptions base_options;
 
-  // The running mode of the task. Default to the image mode.
+  // The running mode of the task. Suggested default: MP_RUNNING_MODE_IMAGE.
   // HandLandmarker has three running modes:
   // 1) The image mode for recognizing hand landmarks on single image inputs.
   // 2) The video mode for recognizing hand landmarks on the decoded frames of a
@@ -60,27 +65,24 @@ typedef struct MpHandLandmarkerOptions {
   //    below must be specified to receive the detection results asynchronously.
   enum MpRunningMode running_mode;
 
-#ifdef __cplusplus
   // The maximum number of hands can be detected by the HandLandmarker.
-  int num_hands = 1;
+  // Suggested default: 1.
+  int num_hands;
 
   // The minimum confidence score for the hand detection to be considered
   // successful.
-  float min_hand_detection_confidence = 0.5;
+  // Suggested default: 0.5.
+  float min_hand_detection_confidence;
 
   // The minimum confidence score of hand presence score in the hand landmark
   // detection.
-  float min_hand_presence_confidence = 0.5;
+  // Suggested default: 0.5.
+  float min_hand_presence_confidence;
 
   // The minimum confidence score for the hand tracking to be considered
   // successful.
-  float min_tracking_confidence = 0.5;
-#else
-  int num_hands;
-  float min_hand_detection_confidence;
-  float min_hand_presence_confidence;
+  // Suggested default: 0.5.
   float min_tracking_confidence;
-#endif
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
@@ -92,9 +94,6 @@ typedef struct MpHandLandmarkerOptions {
   //
   // The passed arguments are only valid for the lifetime of the callback.
   MpHandLandmarkerResultCallback result_callback;
-#ifdef __cplusplus
-  using result_callback_fn = MpHandLandmarkerResultCallback;
-#endif
 } MpHandLandmarkerOptions;
 
 // Creates an HandLandmarker from the provided `options`.

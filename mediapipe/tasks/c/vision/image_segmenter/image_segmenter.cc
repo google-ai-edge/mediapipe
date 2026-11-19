@@ -105,8 +105,7 @@ absl::Status CppImageSegmenterCreate(const MpImageSegmenterOptions& options,
           "Provided null pointer to callback function.");
     }
 
-    MpImageSegmenterOptions::result_callback_fn result_callback =
-        options.result_callback;
+    MpImageSegmenterResultCallback result_callback = options.result_callback;
     cpp_options->result_callback =
         [result_callback](absl::StatusOr<CppImageSegmenterResult> cpp_result,
                           const Image& image, int64_t timestamp) {

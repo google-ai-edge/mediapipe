@@ -118,8 +118,7 @@ absl::Status CppMpGestureRecognizerCreate(
           "Provided null pointer to callback function.");
     }
 
-    MpGestureRecognizerOptions::result_callback_fn result_callback =
-        options.result_callback;
+    MpGestureRecognizerResultCallback result_callback = options.result_callback;
     cpp_options->result_callback =
         [result_callback](
             absl::StatusOr<CppMpGestureRecognizerResult> cpp_result,

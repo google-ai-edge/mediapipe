@@ -53,12 +53,17 @@ typedef void (*MpFaceDetectorResultCallback)(MpStatus status,
                                              int64_t timestamp_ms);
 
 // The options for configuring a MediaPipe face detector task.
+//
+// The struct has no default values, in C or in C++: a field that is never
+// written is indeterminate. Zero-initialize the struct (`= {0}` in C, `= {}`
+// in C++) and then set its fields; the suggested defaults are listed below.
+// Zero is not a valid `running_mode`, so that field must always be set.
 struct MpFaceDetectorOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
   struct MpBaseOptions base_options;
 
-  // The running mode of the task. Default to the image mode.
+  // The running mode of the task. Suggested default: MP_RUNNING_MODE_IMAGE.
   // Face Detector has three running modes:
   // 1) The image mode for detecting faces on single image inputs.
   // 2) The video mode for detecting faces on the decoded frames of a video.
@@ -69,24 +74,15 @@ struct MpFaceDetectorOptions {
 
   // The minimum confidence score for the face detection to be considered
   // successful.
-#ifdef __cplusplus
-  float min_detection_confidence = 0.5;
-#else
+  // Suggested default: 0.5.
   float min_detection_confidence;
-#endif
 
   // The minimum non-maximum-suppression threshold for face detection to be
   // considered overlapped.
-#ifdef __cplusplus
-  float min_suppression_threshold = 0.5;
-#else
+  // Suggested default: 0.3.
   float min_suppression_threshold;
-#endif
 
   // Callback invoked asynchronously in live stream mode.
-#ifdef __cplusplus
-  using result_callback_fn = MpFaceDetectorResultCallback;
-#endif
   MpFaceDetectorResultCallback result_callback;
 };
 

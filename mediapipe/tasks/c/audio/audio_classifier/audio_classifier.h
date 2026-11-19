@@ -50,6 +50,11 @@ typedef void (*MpAudioClassifierResultCallbackFn)(
     MpStatus status, MpAudioClassifierResult* result);
 
 // The options for configuring a MediaPipe AudioClassifier task.
+//
+// The struct has no default values, in C or in C++: a field that is never
+// written is indeterminate. Zero-initialize the struct (`= {0}` in C, `= {}`
+// in C++) and then set its fields; the suggested defaults are listed below.
+// Zero is not a valid `running_mode`, so that field must always be set.
 struct MpAudioClassifierOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
@@ -59,19 +64,15 @@ struct MpAudioClassifierOptions {
   // number of results, etc.
   struct MpClassifierOptions classifier_options;
 
-  // The running mode of the audio classifier. Default to the audio clips mode.
+  // The running mode of the audio classifier. Suggested default:
+  // kMpAudioRunningModeAudioClips.
   // Audio classifier has two running modes:
   // 1) The audio clips mode for running classification on independent audio
   //    clips.
   // 2) The audio stream mode for running classification on the audio stream,
   //    such as from microphone. In this mode, the "result_callback" below must
   //    be specified to receive the classification results asynchronously.
-#ifdef __cplusplus
-  MpAudioRunningMode running_mode = kMpAudioRunningModeAudioClips;
-  using result_callback_fn = MpAudioClassifierResultCallbackFn;
-#else
   enum MpAudioRunningMode running_mode;
-#endif
 
   // The user-defined result callback for processing audio stream data.
   // The result callback should only be specified when the running mode is set

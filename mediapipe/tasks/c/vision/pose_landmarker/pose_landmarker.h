@@ -47,12 +47,17 @@ typedef void (*MpPoseLandmarkerResultCallback)(
     const MpImagePtr image, int64_t timestamp_ms);
 
 // The options for configuring a MediaPipe pose landmarker task.
+//
+// The struct has no default values, in C or in C++: a field that is never
+// written is indeterminate. Zero-initialize the struct (`= {0}` in C, `= {}`
+// in C++) and then set its fields; the suggested defaults are listed below.
+// Zero is not a valid `running_mode`, so that field must always be set.
 typedef struct MpPoseLandmarkerOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
   struct MpBaseOptions base_options;
 
-  // The running mode of the task. Default to the image mode.
+  // The running mode of the task. Suggested default: MP_RUNNING_MODE_IMAGE.
   // PoseLandmarker has three running modes:
   // 1) The image mode for recognizing pose landmarks on single image inputs.
   // 2) The video mode for recognizing pose landmarks on the decoded frames of a
@@ -62,33 +67,28 @@ typedef struct MpPoseLandmarkerOptions {
   //    below must be specified to receive the detection results asynchronously.
   enum MpRunningMode running_mode;
 
-#ifdef __cplusplus
   // The maximum number of poses can be detected by the PoseLandmarker.
-  int num_poses = 1;
+  // Suggested default: 1.
+  int num_poses;
 
   // The minimum confidence score for the pose detection to be considered
   // successful.
-  float min_pose_detection_confidence = 0.5;
+  // Suggested default: 0.5.
+  float min_pose_detection_confidence;
 
   // The minimum confidence score of pose presence score in the pose landmark
   // detection.
-  float min_pose_presence_confidence = 0.5;
+  // Suggested default: 0.5.
+  float min_pose_presence_confidence;
 
   // The minimum confidence score for the pose tracking to be considered
   // successful.
-  float min_tracking_confidence = 0.5;
+  // Suggested default: 0.5.
+  float min_tracking_confidence;
 
   // Whether to output segmentation masks.
-  bool output_segmentation_masks = false;
-
-  using result_callback_fn = MpPoseLandmarkerResultCallback;
-#else
-  int num_poses;
-  float min_pose_detection_confidence;
-  float min_pose_presence_confidence;
-  float min_tracking_confidence;
+  // Suggested default: false.
   bool output_segmentation_masks;
-#endif
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set

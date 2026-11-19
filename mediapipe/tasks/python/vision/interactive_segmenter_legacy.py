@@ -143,6 +143,7 @@ class InteractiveSegmenterLegacyOptions:
     """Generates an MpInteractiveSegmenterLegacyOptionsC ctypes struct."""
     return MpInteractiveSegmenterLegacyOptionsC(
         base_options=self.base_options.to_ctypes(),
+        display_names_locale=None,
         output_confidence_masks=self.output_confidence_masks,
         output_category_mask=self.output_category_mask,
     )

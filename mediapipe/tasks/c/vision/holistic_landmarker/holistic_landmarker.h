@@ -52,12 +52,17 @@ typedef void (*MpHolisticLandmarkerResultCallback)(
     int64_t timestamp_ms);
 
 // The options for configuring a MediaPipe holistic landmarker task.
+//
+// The struct has no default values, in C or in C++: a field that is never
+// written is indeterminate. Zero-initialize the struct (`= {0}` in C, `= {}`
+// in C++) and then set its fields; the suggested defaults are listed below.
+// Zero is not a valid `running_mode`, so that field must always be set.
 struct MpHolisticLandmarkerOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
   struct MpBaseOptions base_options;
 
-  // The running mode of the task. Default to the image mode.
+  // The running mode of the task. Suggested default: MP_RUNNING_MODE_IMAGE.
   // HolisticLandmarker has three running modes:
   // 1) The image mode for detecting holistic landmarks on single image inputs.
   // 2) The video mode for detecting holistic landmarks on the decoded frames of
@@ -65,89 +70,53 @@ struct MpHolisticLandmarkerOptions {
   // 3) The live stream mode for detecting holistic landmarks on the live stream
   //    of input data, such as from camera. In this mode, the "result_callback"
   //    below must be specified to receive the detection results asynchronously.
-#ifdef __cplusplus
-  enum MpRunningMode running_mode = MP_RUNNING_MODE_IMAGE;
-#else
   enum MpRunningMode running_mode;
-#endif
 
   // The minimum confidence score for the face detection to be considered
   // successful.
-#ifdef __cplusplus
-  float min_face_detection_confidence = 0.5f;
-#else
+  // Suggested default: 0.5.
   float min_face_detection_confidence;
-#endif
 
   // The minimum threshold for the face suppression score in the face detection.
-#ifdef __cplusplus
-  float min_face_suppression_threshold = 0.3f;
-#else
+  // Suggested default: 0.3.
   float min_face_suppression_threshold;
-#endif
 
   // The minimum confidence score of face presence score in the face landmark
   // detection.
-#ifdef __cplusplus
-  float min_face_presence_confidence = 0.5f;
-#else
+  // Suggested default: 0.5.
   float min_face_presence_confidence;
-#endif
 
   // The minimum confidence score of hand presence score in the hand landmark
   // detection.
-#ifdef __cplusplus
-  float min_hand_landmarks_confidence = 0.5f;
-#else
+  // Suggested default: 0.5.
   float min_hand_landmarks_confidence;
-#endif
 
   // The minimum confidence score for the pose detection to be considered
   // successful.
-#ifdef __cplusplus
-  float min_pose_detection_confidence = 0.5f;
-#else
+  // Suggested default: 0.5.
   float min_pose_detection_confidence;
-#endif
 
   // The minimum threshold for the pose suppression score in the pose detection.
-#ifdef __cplusplus
-  float min_pose_suppression_threshold = 0.3f;
-#else
+  // Suggested default: 0.3.
   float min_pose_suppression_threshold;
-#endif
 
   // The minimum confidence score of pose presence score in the pose landmark
   // detection.
-#ifdef __cplusplus
-  float min_pose_presence_confidence = 0.5f;
-#else
+  // Suggested default: 0.5.
   float min_pose_presence_confidence;
-#endif
 
   // Whether to output face blendshapes classification. Face blendshapes are
   // used for rendering animations of the face.
-#ifdef __cplusplus
-  bool output_face_blendshapes = false;
-#else
+  // Suggested default: false.
   bool output_face_blendshapes;
-#endif
 
   // Whether to output segmentation masks.
-#ifdef __cplusplus
-  bool output_pose_segmentation_masks = false;
-#else
+  // Suggested default: false.
   bool output_pose_segmentation_masks;
-#endif
 
   // The user-defined result callback for processing live stream data. See
   // `MpHolisticLandmarkerResultCallback` for details.
-#ifdef __cplusplus
-  using result_callback_fn = MpHolisticLandmarkerResultCallback;
-  MpHolisticLandmarkerResultCallback result_callback = nullptr;
-#else
   MpHolisticLandmarkerResultCallback result_callback;
-#endif
 };
 
 // Creates an HolisticLandmarker from the provided `options`.

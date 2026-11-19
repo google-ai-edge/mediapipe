@@ -48,12 +48,17 @@ typedef void (*MpImageClassifierResultCallback)(
     int64_t timestamp_ms);
 
 // The options for configuring a MediaPipe image classifier task.
+//
+// The struct has no default values, in C or in C++: a field that is never
+// written is indeterminate. Zero-initialize the struct (`= {0}` in C, `= {}`
+// in C++) and then set its fields; the suggested defaults are listed below.
+// Zero is not a valid `running_mode`, so that field must always be set.
 struct MpImageClassifierOptions {
   // Base options for configuring MediaPipe Tasks, such as specifying the model
   // file with metadata, accelerator options, op resolver, etc.
   struct MpBaseOptions base_options;
 
-  // The running mode of the task. Default to the image mode.
+  // The running mode of the task. Suggested default: MP_RUNNING_MODE_IMAGE.
   // Image classifier has three running modes:
   // 1) The image mode for classifying image on single image inputs.
   // 2) The video mode for classifying image on the decoded frames of a video.
@@ -75,9 +80,6 @@ struct MpImageClassifierOptions {
   // passed arguments is true for the lifetime of the callback function.
   //
   // The passed arguments are only valid for the lifetime of the callback.
-#ifdef __cplusplus
-  typedef MpImageClassifierResultCallback result_callback_fn;
-#endif
   MpImageClassifierResultCallback result_callback;
 };
 

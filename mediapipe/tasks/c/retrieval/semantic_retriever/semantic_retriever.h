@@ -23,11 +23,6 @@ limitations under the License.
 #include "mediapipe/tasks/c/core/mp_status.h"
 #include "mediapipe/tasks/c/retrieval/universal_embedder/universal_embedder.h"
 
-#ifdef __cplusplus
-#include "mediapipe/tasks/c/text/text_embedder/text_embedder.h"
-#include "mediapipe/tasks/c/vision/image_embedder/image_embedder.h"
-#endif  // __cplusplus
-
 #ifndef MP_EXPORT
 #if defined(_MSC_VER)
 #define MP_EXPORT __declspec(dllexport)
@@ -43,12 +38,11 @@ extern "C" {
 typedef struct MpSemanticRetrieverInternal* MpSemanticRetrieverPtr;
 typedef struct MpSqliteVectorStoreInternal* MpSqliteVectorStorePtr;
 
-#ifndef __cplusplus
-// Opaque embedder handles, declared here so that C clients do not need the
-// text and image embedder headers.
+// Opaque embedder handles, declared here so that clients do not need the text
+// and image embedder headers. These repeat the declarations in
+// `text_embedder.h` and `image_embedder.h`.
 typedef struct MpTextEmbedderInternal* MpTextEmbedderPtr;
 typedef struct MpImageEmbedderInternal* MpImageEmbedderPtr;
-#endif  // __cplusplus
 
 // A simple key-value string pair representation for metadata.
 typedef struct MpKeyValuePair {

@@ -69,7 +69,7 @@ AudioClassifier* GetCppClassifier(MpAudioClassifierPtr wrapper) {
 // A static result callback function that calls the provided C result callback.
 ABSL_ATTRIBUTE_NO_SANITIZE_CFI void CppResultCallback(
     absl::StatusOr<ClassificationResult> result,
-    MpAudioClassifierOptions::result_callback_fn c_callback) {
+    MpAudioClassifierResultCallbackFn c_callback) {
   if (!result.ok()) {
     c_callback(ToMpStatus(result.status()), nullptr);
     return;

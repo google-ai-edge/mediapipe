@@ -69,6 +69,7 @@ TEST(InteractiveSegmenterLegacyTest,
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
+      .display_names_locale = nullptr,
       .output_confidence_masks = false,
       .output_category_mask = true,
   };
@@ -120,6 +121,7 @@ TEST(InteractiveSegmenterLegacyTest,
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
+      .display_names_locale = nullptr,
       .output_confidence_masks = false,
       .output_category_mask = true,
   };
@@ -169,6 +171,7 @@ TEST(InteractiveSegmenterLegacyTest, ImageModeTestWithRotation) {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
+      .display_names_locale = nullptr,
       .output_confidence_masks = false,
       .output_category_mask = true,
   };
@@ -217,6 +220,7 @@ TEST(InteractiveSegmenterLegacyTest, InvalidArgumentHandling) {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = nullptr},
+      .display_names_locale = nullptr,
       .output_confidence_masks = false,
       .output_category_mask = true,
   };
@@ -239,6 +243,7 @@ TEST(InteractiveSegmenterLegacyTest, FailedRecognitionHandling) {
       .base_options = {.model_asset_buffer = nullptr,
                        .model_asset_buffer_count = 0,
                        .model_asset_path = model_path.c_str()},
+      .display_names_locale = nullptr,
       .output_confidence_masks = false,
       .output_category_mask = true,
   };

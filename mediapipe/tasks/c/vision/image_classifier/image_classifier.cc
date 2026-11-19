@@ -101,8 +101,7 @@ absl::Status CppMpImageClassifierCreate(const MpImageClassifierOptions& options,
           "Provided null pointer to callback function.");
     }
 
-    MpImageClassifierOptions::result_callback_fn result_callback =
-        options.result_callback;
+    MpImageClassifierResultCallback result_callback = options.result_callback;
     cpp_options->result_callback =
         [result_callback](absl::StatusOr<CppMpImageClassifierResult> cpp_result,
                           const Image& image, int64_t timestamp) {

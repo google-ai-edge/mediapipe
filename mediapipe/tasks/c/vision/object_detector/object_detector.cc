@@ -115,8 +115,7 @@ absl::Status CppObjectDetectorCreate(const MpObjectDetectorOptions& options,
           "Provided null pointer to callback function.");
     }
 
-    MpObjectDetectorOptions::result_callback_fn result_callback =
-        options.result_callback;
+    MpObjectDetectorResultCallback result_callback = options.result_callback;
     cpp_options->result_callback =
         [result_callback](absl::StatusOr<CppObjectDetectorResult> cpp_result,
                           const Image& image, int64_t timestamp) {

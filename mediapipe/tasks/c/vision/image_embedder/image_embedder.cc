@@ -97,8 +97,7 @@ absl::Status CppImageEmbedderCreate(const MpImageEmbedderOptions& options,
           "Provided null pointer to callback function.");
     }
 
-    MpImageEmbedderOptions::result_callback_fn result_callback =
-        options.result_callback;
+    MpImageEmbedderResultCallbackFn result_callback = options.result_callback;
     cpp_options->result_callback =
         [result_callback](absl::StatusOr<CppImageEmbedderResult> cpp_result,
                           const Image& image, int64_t timestamp) {
