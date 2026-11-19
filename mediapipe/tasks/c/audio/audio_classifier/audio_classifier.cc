@@ -30,6 +30,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/audio/core/running_mode_converter.h"
 #include "mediapipe/tasks/c/components/containers/classification_result.h"
 #include "mediapipe/tasks/c/components/containers/classification_result_converter.h"
+#include "mediapipe/tasks/c/components/processors/classifier_options.h"
 #include "mediapipe/tasks/c/components/processors/classifier_options_converter.h"
 #include "mediapipe/tasks/c/core/base_options_converter.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
@@ -75,7 +76,7 @@ ABSL_ATTRIBUTE_NO_SANITIZE_CFI void CppResultCallback(
     return;
   }
 
-  auto classification_result = std::make_unique<MpClassificationResult>();
+  auto classification_result = std::make_unique<MpClassificationResult[]>(1);
   CppConvertToClassificationResult(*result, classification_result.get());
 
   // The C++ async callback receives one classification result at a time, so we
@@ -150,8 +151,7 @@ absl::Status MpAudioClassifierClassify(MpAudioClassifierPtr classifier,
       std::make_unique<MpClassificationResult[]>(cpp_result->size());
   result_out->results_count = cpp_result->size();
   for (int i = 0; i < result_out->results_count; ++i) {
-    CppConvertToClassificationResult(cpp_result->at(i),
-                                     &(c_classifications.get()[i]));
+    CppConvertToClassificationResult(cpp_result->at(i), &c_classifications[i]);
   }
   result_out->results = c_classifications.release();
   return absl::OkStatus();
