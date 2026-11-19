@@ -33,6 +33,7 @@
 #include "absl/strings/str_cat.h"           // from @com_google_absl
 #include "absl/strings/str_format.h"        // from @com_google_absl
 #include "absl/strings/string_view.h"       // from @com_google_absl
+#include "absl/strings/strip.h"             // from @com_google_absl
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
@@ -110,32 +111,31 @@ GetMatElementAccessor(const cv::Mat& mat) {
         return reinterpret_cast<const cv::float16_t*>(mat_ptr)[idx];
 #endif
       };
+#if CV_VERSION_MAJOR >= 5
+    case CV_16BF:
+      return [](const uint8_t* mat_ptr, int idx) -> double {
+        return reinterpret_cast<const cv::bfloat*>(mat_ptr)[idx];
+      };
+    case CV_Bool:
+      return [](const uint8_t* mat_ptr, int idx) -> double {
+        return reinterpret_cast<const bool*>(mat_ptr)[idx] ? 1.0 : 0.0;
+      };
+    case CV_32U:
+      return [](const uint8_t* mat_ptr, int idx) -> double {
+        return GetNormalizedValue<uint32_t>(mat_ptr, idx);
+      };
+    case CV_64U:
+      return [](const uint8_t* mat_ptr, int idx) -> double {
+        return GetNormalizedValue<uint64_t>(mat_ptr, idx);
+      };
+    case CV_64S:
+      return [](const uint8_t* mat_ptr, int idx) -> double {
+        return GetNormalizedValue<int64_t>(mat_ptr, idx);
+      };
+#endif
     default:
       return absl::UnimplementedError(
           absl::StrCat("Unhandled mat depth ", mat.depth()));
-  }
-}
-
-const char* MatDepthToString(int depth) {
-  switch (depth) {
-    case CV_8U:
-      return "8U";
-    case CV_8S:
-      return "8S";
-    case CV_16U:
-      return "16U";
-    case CV_16S:
-      return "16S";
-    case CV_32S:
-      return "32S";
-    case CV_32F:
-      return "32F";
-    case CV_64F:
-      return "64F";
-    case CV_16F:
-      return "16F";
-    default:
-      return "UnknownDepth";
   }
 }
 
@@ -374,8 +374,9 @@ void LogMat(const cv::Mat& mat, absl::string_view name) {
   int num_channels = mat.channels();
 
   ABSL_LOG(INFO) << name << "[" << width << " " << height << " " << num_channels
-                 << " " << MatDepthToString(mat.depth()) << "C"
-                 << mat.channels() << "] =";
+                 << " "
+                 << absl::StripPrefix(cv::typeToString(mat.type()), "CV_")
+                 << "] =";
 
   if (width == 0 || height == 0 || num_channels == 0) {
     ABSL_LOG(INFO) << "  <empty>";
