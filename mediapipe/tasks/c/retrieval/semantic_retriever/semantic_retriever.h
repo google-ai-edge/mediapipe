@@ -38,11 +38,11 @@ extern "C" {
 typedef struct MpSemanticRetrieverInternal* MpSemanticRetrieverPtr;
 typedef struct MpSqliteVectorStoreInternal* MpSqliteVectorStorePtr;
 
-// Opaque embedder handles, declared here so that clients do not need the text
-// and image embedder headers. These repeat the declarations in
-// `text_embedder.h` and `image_embedder.h`.
-typedef struct MpTextEmbedderInternal* MpTextEmbedderPtr;
-typedef struct MpImageEmbedderInternal* MpImageEmbedderPtr;
+// Opaque embedder types, forward-declared here so that clients do not need the
+// text and image embedder headers. `MpTextEmbedderPtr` and `MpImageEmbedderPtr`
+// are pointers to these types.
+struct MpTextEmbedderInternal;
+struct MpImageEmbedderInternal;
 
 // A simple key-value string pair representation for metadata.
 typedef struct MpKeyValuePair {
@@ -117,10 +117,10 @@ typedef struct MpSemanticRetrieverOptions {
   MpUniversalEmbedderPtr embedder;
 
   // Optional text embedder ptr to use for generating embeddings.
-  MpTextEmbedderPtr text_embedder;
+  struct MpTextEmbedderInternal* text_embedder;
 
   // Optional image embedder ptr to use for generating embeddings.
-  MpImageEmbedderPtr image_embedder;
+  struct MpImageEmbedderInternal* image_embedder;
 
   // The size of each text chunk (default 512).
   int chunk_size;

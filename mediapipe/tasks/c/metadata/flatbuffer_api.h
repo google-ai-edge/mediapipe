@@ -17,9 +17,8 @@ limitations under the License.
 #define MEDIAPIPE_TASKS_C_METADATA_FLATBUFFER_API_H_
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
-
-#include <cstddef>
 
 #include "mediapipe/tasks/c/core/mp_status.h"
 

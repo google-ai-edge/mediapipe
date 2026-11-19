@@ -89,7 +89,7 @@ MP_EXPORT MpStatus MpAudioEmbedderCreate(struct MpAudioEmbedderOptions* options,
 //     error message with `MpErrorFree()`.
 // @return An `MpStatus` indicating success or failure.
 MP_EXPORT MpStatus MpAudioEmbedderEmbed(MpAudioEmbedderPtr embedder,
-                                        const MpAudioData* audio_data,
+                                        const struct MpAudioData* audio_data,
                                         MpAudioEmbedderResult* result_out,
                                         char** error_msg);
 
