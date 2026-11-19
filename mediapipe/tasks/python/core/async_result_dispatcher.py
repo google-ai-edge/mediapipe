@@ -115,6 +115,10 @@ class AsyncResultDispatcher:
     """
     self._converter = converter
     self._data_queue = queue.Queue()
+    # Guards `_state` transitions and the pipe file descriptors: the C library
+    # may invoke the callback from several of its own threads, and `close()`
+    # may be called from any thread.
+    self._lock = threading.Lock()
 
   def wrap_callback(
       self,
@@ -193,32 +197,42 @@ class AsyncResultDispatcher:
 
   def _put_packet(self, packet: _AsyncResultPacket) -> None:
     """Puts a data packet into the queue and signals the dispatcher thread."""
-    if self._state == _DispatcherState.NOT_STARTED:
-      self._start()
-    elif self._state == _DispatcherState.SHUTTING_DOWN:
-      return
+    with self._lock:
+      if self._state == _DispatcherState.NOT_STARTED:
+        self._start()
+      elif self._state == _DispatcherState.SHUTTING_DOWN:
+        return
 
-    self._data_queue.put(packet)
-    try:
-      os.write(self._pipe_write_fd, b"\0")
-    except OSError:
-      # Pipe might error during shutdown. Ignore.
-      pass
-
-  def close(self) -> None:
-    """Shuts down the dispatcher thread and cleans up resources."""
-    if self._state == _DispatcherState.RUNNING:
-      self._state = _DispatcherState.SHUTTING_DOWN
+      self._data_queue.put(packet)
       try:
-        # Write a final byte to unblock the os.read() call.
         os.write(self._pipe_write_fd, b"\0")
       except OSError:
+        # Pipe might error during shutdown. Ignore.
         pass
 
-      if self._dispatcher_thread:
-        self._dispatcher_thread.join()
-      os.close(self._pipe_read_fd)
-      os.close(self._pipe_write_fd)
+  def close(self) -> None:
+    """Shuts down the dispatcher thread and cleans up resources.
+
+    Safe to call more than once and from several threads: only the first call
+    shuts down, so the pipe file descriptors are closed exactly once. A
+    dispatcher that was never started will not start after this call.
+    """
+    with self._lock:
+      was_running = self._state == _DispatcherState.RUNNING
+      self._state = _DispatcherState.SHUTTING_DOWN
+      if was_running:
+        try:
+          # Write a final byte to unblock the os.read() call.
+          os.write(self._pipe_write_fd, b"\0")
+        except OSError:
+          pass
+    if not was_running:
+      return
+
+    if self._dispatcher_thread:
+      self._dispatcher_thread.join()
+    os.close(self._pipe_read_fd)
+    os.close(self._pipe_write_fd)
 
   def _start(self) -> None:
     """Starts the dispatcher thread."""

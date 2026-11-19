@@ -15,6 +15,7 @@
 
 import ctypes
 import enum
+import threading
 from typing import Any
 
 import numpy as np
@@ -25,6 +26,9 @@ from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _CFunction = mediapipe_c_utils.CFunction
 _CStatusFunction = mediapipe_c_utils.CStatusFunction
+
+# Serializes the calls that create an Image's cached contiguous pixel data.
+_NUMPY_VIEW_LOCK = threading.Lock()
 
 
 class ImageFormat(enum.IntEnum):
@@ -197,6 +201,30 @@ _CTYPES_SIGNATURES = (
 )
 
 
+class _PixelDataOwner:
+  """Exposes the pixel data owned by an `Image` to numpy, without copying.
+
+  numpy keeps a reference to the object that provides an array's memory (the
+  array's `base`). Using this object as that base ties the lifetime of the
+  `Image` (which frees the pixel data when it is garbage collected) to the
+  lifetime of every array, or array view, that points into the pixel data.
+  """
+
+  def __init__(
+      self, image: "Image", data_ptr: Any, shape: tuple[int, ...]
+  ) -> None:
+    self._image = image
+    dtype = np.dtype(data_ptr._type_)  # pylint: disable=protected-access
+    address = ctypes.cast(data_ptr, ctypes.c_void_p).value
+    self.__array_interface__ = {
+        "version": 3,
+        "shape": shape,
+        "typestr": dtype.str,
+        # The second item marks the data as read-only.
+        "data": (address, True),
+    }
+
+
 class Image:
   """A container for storing an image or a video frame.
 
@@ -204,13 +232,13 @@ class Image:
   Pixels are encoded row-major in an interleaved fashion. Image supports
   uint8, uint16, and float as its data types.
 
-  Image can be created by copying the data from a numpy ndarray that stores
-  the pixel data continuously. The data in an Image will become immutable
-  after creation.
+  Image can be created by copying the data from a numpy ndarray. The data in
+  an Image will become immutable after creation.
 
   The pixel data in an Image can be retrieved as a numpy ndarray by calling
   `Image.numpy_view()`. The returned numpy ndarray is a reference to the
-  internal data and itself is unwritable. If the callers want to modify the
+  internal data and itself is unwritable. It keeps the Image alive for as long
+  as the ndarray (or any view of it) exists. If the callers want to modify the
   numpy ndarray, it's required to obtain a copy of it.
 
   Pixel data retrieval examples:
@@ -240,9 +268,16 @@ class Image:
 
     Args:
       image_format: The format of the image data.
-      data: A numpy ndarray containing the image data.
+      data: A numpy ndarray containing the image data. The data is copied. If
+        the ndarray is not C-contiguous (for example a slice such as
+        `frame[:, ::-1]` or a transposed array), a C-contiguous copy of it is
+        made first, so that the image is created from the ndarray's logical
+        content.
     """
     self._lib = mediapipe_c_bindings.load_raw_library(_CTYPES_SIGNATURES)
+    # Set before anything can raise, so that `__del__` never sees an
+    # uninitialized Image.
+    self._image_ptr = ctypes.c_void_p()
 
     if data.ndim == 2:
       height, width = data.shape
@@ -251,7 +286,9 @@ class Image:
     else:
       raise ValueError(f"Unsupported number of dimensions:{data.ndim}")
 
-    self._image_ptr = ctypes.c_void_p()
+    # The C API reads the pixel data as one contiguous buffer, ignoring the
+    # ndarray's strides. Returns `data` itself if it is already C-contiguous.
+    data = np.ascontiguousarray(data)
 
     error_msg = ctypes.c_char_p()
     if data.dtype == np.uint8:
@@ -377,8 +414,10 @@ class Image:
     """Returns the image pixel data as an unwritable numpy ndarray.
 
     Realign the pixel data to be stored contiguously and return a reference to
-    the unwritable numpy ndarray. If the callers want to modify the numpy array
-    data, it's required to obtain a copy of the ndarray.
+    the unwritable numpy ndarray. The returned ndarray keeps this Image alive,
+    so it remains valid after the last reference to the Image is dropped. If the
+    callers want to modify the numpy array data, it's required to obtain a copy
+    of the ndarray.
 
     Returns:
       An unwritable numpy ndarray.
@@ -394,33 +433,41 @@ class Image:
     error_msg = ctypes.c_char_p()
     image_format = self.image_format
 
-    if image_format in (ImageFormat.GRAY8, ImageFormat.SRGB, ImageFormat.SRGBA):
-      status = self._lib.MpImageDataUint8(
-          self._image_ptr, ctypes.byref(data_ptr), ctypes.byref(error_msg)
-      )
-      numpy_ptr = ctypes.cast(data_ptr, ctypes.POINTER(ctypes.c_uint8))
-    elif image_format in (
-        ImageFormat.GRAY16,
-        ImageFormat.SRGB48,
-        ImageFormat.SRGBA64,
-    ):
-      data_ptr = ctypes.POINTER(ctypes.c_uint16)()
-      status = self._lib.MpImageDataUint16(
-          self._image_ptr, ctypes.byref(data_ptr), ctypes.byref(error_msg)
-      )
-      numpy_ptr = ctypes.cast(data_ptr, ctypes.POINTER(ctypes.c_uint16))
-    elif image_format in (
-        ImageFormat.VEC32F1,
-        ImageFormat.VEC32F2,
-        ImageFormat.VEC32F4,
-    ):
-      data_ptr = ctypes.POINTER(ctypes.c_float)()
-      status = self._lib.MpImageDataFloat32(
-          self._image_ptr, ctypes.byref(data_ptr), ctypes.byref(error_msg)
-      )
-      numpy_ptr = ctypes.cast(data_ptr, ctypes.POINTER(ctypes.c_float))
-    else:
-      raise ValueError(f"Unsupported image format: {image_format}")
+    # The C library caches the contiguous copy of non-contiguous pixel data in
+    # the image without synchronization: concurrent first calls would free the
+    # copy that another call just returned.
+    with _NUMPY_VIEW_LOCK:
+      if image_format in (
+          ImageFormat.GRAY8,
+          ImageFormat.SRGB,
+          ImageFormat.SRGBA,
+      ):
+        status = self._lib.MpImageDataUint8(
+            self._image_ptr, ctypes.byref(data_ptr), ctypes.byref(error_msg)
+        )
+        numpy_ptr = ctypes.cast(data_ptr, ctypes.POINTER(ctypes.c_uint8))
+      elif image_format in (
+          ImageFormat.GRAY16,
+          ImageFormat.SRGB48,
+          ImageFormat.SRGBA64,
+      ):
+        data_ptr = ctypes.POINTER(ctypes.c_uint16)()
+        status = self._lib.MpImageDataUint16(
+            self._image_ptr, ctypes.byref(data_ptr), ctypes.byref(error_msg)
+        )
+        numpy_ptr = ctypes.cast(data_ptr, ctypes.POINTER(ctypes.c_uint16))
+      elif image_format in (
+          ImageFormat.VEC32F1,
+          ImageFormat.VEC32F2,
+          ImageFormat.VEC32F4,
+      ):
+        data_ptr = ctypes.POINTER(ctypes.c_float)()
+        status = self._lib.MpImageDataFloat32(
+            self._image_ptr, ctypes.byref(data_ptr), ctypes.byref(error_msg)
+        )
+        numpy_ptr = ctypes.cast(data_ptr, ctypes.POINTER(ctypes.c_float))
+      else:
+        raise ValueError(f"Unsupported image format: {image_format}")
 
     try:
       mediapipe_c_utils.handle_status(status, error_msg)
@@ -429,12 +476,8 @@ class Image:
         self._lib.MpErrorFree(error_msg)
 
     shape = (self.height, self.width, self.channels)
-    array = np.ctypeslib.as_array(
-        numpy_ptr,
-        shape=shape,
-    )
-    array.flags.writeable = False
-    return array
+    # The array doesn't copy the pixel data, so it must keep this Image alive.
+    return np.asarray(_PixelDataOwner(self, numpy_ptr, shape))
 
   def __getitem__(self, key: tuple[int, ...]) -> Any:
     """Use the indexer operators to access pixel data.
