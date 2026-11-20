@@ -1,15 +1,3 @@
-diff --git a/ml_drift_delegate/delegate/serialization_weight_cache/BUILD b/ml_drift_delegate/delegate/serialization_weight_cache/BUILD
-index cb6b5ed..a47cb0b 100644
---- a/ml_drift_delegate/delegate/serialization_weight_cache/BUILD
-+++ b/ml_drift_delegate/delegate/serialization_weight_cache/BUILD
-@@ -126,7 +126,6 @@ py_binary(
-     name = "generate_build_identifier_py",
-     srcs = ["generate_build_identifier.py"],
-     main = "generate_build_identifier.py",
--    strict_deps = False,
-     tags = ["notap"],  # This should only be built as part of the related genrule.
- )
- 
 diff --git a/rules_python_compat.bzl b/rules_python_compat.bzl
 new file mode 100644
 index 0000000..390e1e4
@@ -27,7 +15,7 @@ index 0000000..390e1e4
 +def py_test(strict_deps = None, **kwargs):
 +    _py_test(**kwargs)
 diff --git a/tflite/build_def.bzl b/tflite/build_def.bzl
-index 86b7358..45cca75 100644
+index c9ad8a9..92fcffd 100644
 --- a/tflite/build_def.bzl
 +++ b/tflite/build_def.bzl
 @@ -15,7 +15,7 @@
@@ -53,7 +41,7 @@ index a78f6d8..4bddce1 100644
  # Default values used by the test runner.
  _default_test_file_exts = ["mlir", ".pbtxt", ".td"]
 diff --git a/tflite/converter/python/BUILD b/tflite/converter/python/BUILD
-index 800e389..f9620ba 100644
+index 3c0ab17..1bf1a87 100644
 --- a/tflite/converter/python/BUILD
 +++ b/tflite/converter/python/BUILD
 @@ -16,7 +16,7 @@
@@ -65,7 +53,7 @@ index 800e389..f9620ba 100644
  load("@xla//xla/tsl/platform:build_config_root.bzl", "if_pywrap")
  
  licenses(["notice"])
-@@ -324,7 +324,6 @@ py_library(
+@@ -325,7 +325,6 @@ py_library(
      srcs = [
          "wrap_converter.py",
      ],
@@ -74,7 +62,7 @@ index 800e389..f9620ba 100644
          ":_pywrap_converter_api",
          "@org_tensorflow//tensorflow/compiler/mlir/quantization/tensorflow/python:py_function_lib_py",
 diff --git a/tflite/experimental/acceleration/compatibility/BUILD b/tflite/experimental/acceleration/compatibility/BUILD
-index 86c4a45..11bb04f 100644
+index 92863b7..edada77 100644
 --- a/tflite/experimental/acceleration/compatibility/BUILD
 +++ b/tflite/experimental/acceleration/compatibility/BUILD
 @@ -17,7 +17,7 @@ load("@flatbuffers//:build_defs.bzl", "flatbuffer_android_library", "flatbuffer_
@@ -108,7 +96,7 @@ index a9ca09f..57a4906 100644
  package(
      # copybara:uncomment default_applicable_licenses = ["@org_tensorflow//tensorflow:license"],
 diff --git a/tflite/python/BUILD b/tflite/python/BUILD
-index 16d8630..0c0fcc7 100644
+index 3b145a9..af50216 100644
 --- a/tflite/python/BUILD
 +++ b/tflite/python/BUILD
 @@ -19,8 +19,8 @@ load("@org_tensorflow//tensorflow:tensorflow.bzl", "py_test")
@@ -122,7 +110,7 @@ index 16d8630..0c0fcc7 100644
  load("//tflite:api_visibility.bzl", "TFLITE_PYTHON_CLIENTS_VISIBILITY")
  load("//tflite:build_def.bzl", "tflite_exec_properties")
  load("//tflite:special_rules.bzl", "internal_visibility_allowlist")
-@@ -64,7 +64,6 @@ py_library(
+@@ -63,7 +63,6 @@ py_library(
          "interpreter.py",
      ],
      compatible_with = get_compatible_with_portable(),
@@ -130,7 +118,7 @@ index 16d8630..0c0fcc7 100644
      visibility = TFLITE_PYTHON_CLIENTS_VISIBILITY,
      deps = [
          "//tflite/python/interpreter_wrapper:_pywrap_litert_interpreter_wrapper",
-@@ -86,7 +85,6 @@ py_test(
+@@ -85,7 +84,6 @@ py_test(
      # Static linking is required because this loads a cc_binary as a shared
      # library, which would otherwise create ODR violations.
      # copybara:uncomment linking_mode = "static",
@@ -138,7 +126,7 @@ index 16d8630..0c0fcc7 100644
      tags = [
          "no_oss",  # TODO(b/190842754): Enable test in OSS.
      ],
-@@ -107,7 +105,6 @@ py_test(
+@@ -106,7 +104,6 @@ py_test(
  py_library(
      name = "test_util",
      srcs = ["test_util.py"],
@@ -146,7 +134,7 @@ index 16d8630..0c0fcc7 100644
      visibility = ["//visibility:public"],
      deps = [
          ":lite",
-@@ -124,7 +121,6 @@ py_test(
+@@ -123,7 +120,6 @@ py_test(
          "//tflite:testdata/add.bin",
          "//tflite:testdata/softplus_flex.bin",
      ],
@@ -154,7 +142,7 @@ index 16d8630..0c0fcc7 100644
      deps = [
          ":test_util",
          #internal proto upb dep
-@@ -138,7 +134,6 @@ py_test(
+@@ -137,7 +133,6 @@ py_test(
  py_library(
      name = "lite",
      srcs = ["lite.py"],
@@ -162,7 +150,7 @@ index 16d8630..0c0fcc7 100644
      tags = [
          "ignore_for_dep=third_party.py.keras",
      ],
-@@ -197,7 +192,6 @@ py_test(
+@@ -196,7 +191,6 @@ py_test(
          "@tflite_mobilenet_ssd_quant_protobuf//:tflite_graph.pb",
      ],
      shard_count = 4,
@@ -170,7 +158,7 @@ index 16d8630..0c0fcc7 100644
      tags = [
          "no_windows",
      ],
-@@ -246,7 +240,6 @@ py_test(
+@@ -245,7 +239,6 @@ py_test(
      ],
      exec_properties = tflite_exec_properties(),
      shard_count = 18,
@@ -178,7 +166,7 @@ index 16d8630..0c0fcc7 100644
      tags = [
          "no_windows",
      ],
-@@ -289,7 +282,6 @@ py_library(
+@@ -288,7 +281,6 @@ py_library(
      name = "lite_v2_test_util",
      testonly = 1,
      srcs = ["lite_v2_test_util.py"],
@@ -186,7 +174,7 @@ index 16d8630..0c0fcc7 100644
      tags = [
          "no_windows",
      ],
-@@ -315,7 +307,6 @@ py_library(
+@@ -314,7 +306,6 @@ py_library(
  py_test(
      name = "lite_flex_test",
      srcs = ["lite_flex_test.py"],
@@ -194,7 +182,7 @@ index 16d8630..0c0fcc7 100644
      deps = [
          ":convert",
          ":interpreter",
-@@ -347,7 +338,6 @@ py_test(
+@@ -346,7 +337,6 @@ py_test(
  py_library(
      name = "util",
      srcs = ["util.py"],
@@ -202,7 +190,7 @@ index 16d8630..0c0fcc7 100644
      visibility = internal_visibility_allowlist(),
      deps = [
          ":conversion_metadata_schema_py",
-@@ -372,7 +362,6 @@ py_library(
+@@ -371,7 +361,6 @@ py_library(
  py_test(
      name = "util_test",
      srcs = ["util_test.py"],
@@ -210,7 +198,7 @@ index 16d8630..0c0fcc7 100644
      tags = [
          "no_windows",
      ],
-@@ -401,7 +390,6 @@ py_library(
+@@ -400,7 +389,6 @@ py_library(
      srcs = [
          "tflite_keras_util.py",
      ],
@@ -218,7 +206,7 @@ index 16d8630..0c0fcc7 100644
      deps = [
          "@org_tensorflow//tensorflow/python/eager:def_function",
          "@org_tensorflow//tensorflow/python/framework:tensor_spec",
-@@ -414,7 +402,6 @@ py_library(
+@@ -413,7 +401,6 @@ py_library(
  py_library(
      name = "lite_constants",
      srcs = ["lite_constants.py"],
@@ -226,7 +214,7 @@ index 16d8630..0c0fcc7 100644
      deps = [
          "//tflite/converter:converter_flags_proto_py",
          "@org_tensorflow//tensorflow/python/framework:dtypes",
-@@ -452,7 +439,6 @@ pytype_strict_library(
+@@ -451,7 +438,6 @@ pytype_strict_library(
  py_library(
      name = "op_hint",
      srcs = ["op_hint.py"],
@@ -234,7 +222,7 @@ index 16d8630..0c0fcc7 100644
      visibility = ["//visibility:public"],
      deps = [
          "@org_tensorflow//tensorflow/core:protos_all_py",
-@@ -500,7 +486,6 @@ pytype_strict_contrib_test(
+@@ -499,7 +485,6 @@ pytype_strict_contrib_test(
  py_library(
      name = "convert_saved_model",
      srcs = ["convert_saved_model.py"],
@@ -242,7 +230,7 @@ index 16d8630..0c0fcc7 100644
      visibility = [
          "//tflite:__subpackages__",
      ],
-@@ -520,7 +505,6 @@ py_library(
+@@ -519,7 +504,6 @@ py_library(
  py_test(
      name = "convert_saved_model_test",
      srcs = ["convert_saved_model_test.py"],
@@ -250,7 +238,7 @@ index 16d8630..0c0fcc7 100644
      tags = [
          "no_windows",
      ],
-@@ -547,7 +531,6 @@ py_test(
+@@ -546,7 +530,6 @@ py_test(
  py_binary(
      name = "convert_file_to_c_source",
      srcs = ["convert_file_to_c_source.py"],
@@ -258,7 +246,7 @@ index 16d8630..0c0fcc7 100644
      visibility = ["//visibility:public"],
      deps = [
          ":util",
-@@ -565,7 +548,6 @@ sh_test(
+@@ -564,7 +547,6 @@ sh_test(
  py_library(
      name = "schema_util",
      srcs = ["schema_util.py"],
@@ -266,7 +254,7 @@ index 16d8630..0c0fcc7 100644
      visibility = ["//tflite/schema:utils_friends"],
      deps = [
          "@org_tensorflow//tensorflow/python/util:all_util",
-@@ -577,7 +559,6 @@ py_library(
+@@ -576,7 +558,6 @@ py_library(
  py_library(
      name = "convert_phase",
      srcs = ["convert_phase.py"],
@@ -274,7 +262,7 @@ index 16d8630..0c0fcc7 100644
      visibility = ["//tflite:__subpackages__"],
      deps = [
          "//tflite/converter/metrics:converter_error_data_proto_py",
-@@ -590,7 +571,6 @@ py_library(
+@@ -589,7 +570,6 @@ py_library(
      srcs = [
          "analyzer.py",
      ],
@@ -282,7 +270,7 @@ index 16d8630..0c0fcc7 100644
      visibility = ["//visibility:public"],
      deps = [
          "//tflite/converter/python:wrap_converter",
-@@ -614,7 +594,6 @@ py_test(
+@@ -613,7 +593,6 @@ py_test(
          "//tflite:testdata/multi_add_flex.bin",
      ],
      exec_properties = tflite_exec_properties(),
@@ -290,7 +278,7 @@ index 16d8630..0c0fcc7 100644
      deps = [
          ":analyzer",
          #internal proto upb dep
-@@ -636,7 +615,6 @@ py_test(
+@@ -635,7 +614,6 @@ py_test(
  # and refer pywrap_tflite to any target that needsd to selected shared objects.
  py_library(
      name = "tflite_pywrap_deps",
@@ -348,7 +336,7 @@ index a24d12d..6c91fc8 100644
      deps = [
          ":calibrator",
 diff --git a/tflite/python/testdata/BUILD b/tflite/python/testdata/BUILD
-index 9d05bb2..73f7b9b 100644
+index 63c2885..168134b 100644
 --- a/tflite/python/testdata/BUILD
 +++ b/tflite/python/testdata/BUILD
 @@ -22,7 +22,7 @@ load(
@@ -463,7 +451,7 @@ index 79f17cc..d97f6b9 100644
  
  cc_library(
 diff --git a/tflite/tools/BUILD b/tflite/tools/BUILD
-index d9217f2..4ac747e 100644
+index 76c937f..76d4df4 100644
 --- a/tflite/tools/BUILD
 +++ b/tflite/tools/BUILD
 @@ -24,8 +24,8 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
@@ -573,7 +561,7 @@ index d9217f2..4ac747e 100644
      deps = [
          "//tflite/python:schema_py",
          "@flatbuffers//:runtime_py",
-@@ -410,7 +398,6 @@ tf_cc_test(
+@@ -412,7 +400,6 @@ tf_cc_test(
  py_binary(
      name = "zip_files",
      srcs = ["zip_files.py"],

@@ -250,6 +250,16 @@ http_archive(
     urls = ["https://github.com/google/pthreadpool/archive/02460584c6092e527c8b89f7df4de143d70e801f.zip"],
 )
 
+# FP16 declared before tf_workspace2() using LiteRT's BUILD file so both
+# @FP16//:FP16 (used by XNNPACK/TF) and @FP16//:fp16 (used by @ml_drift) exist.
+http_archive(
+    name = "FP16",
+    build_file = "@litert//third_party/FP16:FP16.BUILD",
+    sha256 = "d973501a40c55126b31accc2d9f08d931ec3cc190c0430309a5e341d3c0ce32a",
+    strip_prefix = "FP16-4dfe081cf6bcd15db339cf2680b9281b8451eeb3",
+    url = "https://github.com/Maratyszcza/FP16/archive/4dfe081cf6bcd15db339cf2680b9281b8451eeb3.zip",
+)
+
 # TF v2.21.0
 # org_tensorflow depends on Eigen, XNNPACK, and pybind11_protobuf, which also have explicit
 # repository definitions in this WORKSPACE. If updating the tensorflow version, make sure to check
@@ -838,7 +848,7 @@ http_archive(
     url = "https://curl.haxx.se/download/curl-8.10.1.tar.gz",
 )
 
-# LiteRT v2.3.0
+# LiteRT (commit f3c8f18acbf1563e0f8f91d1d0b69f872d45202b)
 # Fetch just the source tree and let it use our already-defined workspace
 # dependencies (@org_tensorflow, @xla, etc.) to avoid collisions.
 #
@@ -864,9 +874,66 @@ http_archive(
         "@//third_party:litert_custom_ops.diff",
         "@//third_party:litert_internal_fbs_fix.diff",
     ],
-    sha256 = "ec32db733e93501c693a8ab99e413c2d5d746dee7d452a8d6912046d7bc5c04e",
-    strip_prefix = "LiteRT-2.3.0",
-    urls = ["https://github.com/google-ai-edge/LiteRT/archive/refs/tags/v2.3.0.tar.gz"],
+    sha256 = "46fdf6dd79025a8b28e68f9c1610b1d08003e32b806aed55c0bb1b01db727757",
+    strip_prefix = "LiteRT-f3c8f18acbf1563e0f8f91d1d0b69f872d45202b",
+    urls = ["https://github.com/google-ai-edge/LiteRT/archive/f3c8f18acbf1563e0f8f91d1d0b69f872d45202b.tar.gz"],
+)
+
+# SafeInt (transitive dependency of LiteRT)
+http_archive(
+    name = "SafeInt",
+    build_file = "@litert//:BUILD.SafeInt",
+    sha256 = "4bd737e5885112e796742b7b6ba7181ff346855dc22d29ed2b258de567a1de8d",
+    strip_prefix = "SafeInt-72f0745e26091af6d1186fd91426377f16688ba7",
+    url = "https://github.com/dcleblanc/SafeInt/archive/72f0745e26091af6d1186fd91426377f16688ba7.tar.gz",
+)
+
+# ML Drift (transitive dependency of LiteRT)
+_ML_DRIFT_COMMIT = "1b18771f44c0be3d972847b31a80f6dc3d6964b5"
+
+http_archive(
+    name = "ml_drift",
+    patch_cmds = [
+        # Add external/ml_drift to flatc include paths for gl_inference_context_cc_fbs.
+        "sed -i -e 's|\"-I .\",|\"-I .\", \"-I external/ml_drift\",|g' ml_drift/gl/BUILD",
+        # Avoid passing -ldl to MSVC linker on Windows in opencl_wrapper.
+        "grep -q '\"//conditions:default\": \\[\"-ldl\"\\],' ml_drift/cl/BUILD && sed -i -e 's|\"//conditions:default\": \\[\"-ldl\"\\],|\"@platforms//os:windows\": [], \"//conditions:default\": [\"-ldl\"],|g' ml_drift/cl/BUILD",
+        # Avoid int -> uint32_t narrowing conversion in VulkanInfo default member initializers on MSVC.
+        "grep -q 'uint32_t api_version.* = -1;' ml_drift/common/gpu_info.h && sed -i -e 's|uint32_t api_version\\(.*\\) = -1;|uint32_t api_version\\1 = static_cast<uint32_t>(-1);|g' ml_drift/common/gpu_info.h",
+    ],
+    repo_mapping = {
+        "@fp16": "@FP16",
+        "@com_github_google_re2": "@com_googlesource_code_re2",
+    },
+    sha256 = "0a7384901754a4ee84220561bcf5447fde4363cbc8a42c94743f183d178feb30",
+    strip_prefix = "ml-drift-" + _ML_DRIFT_COMMIT,
+    urls = [
+        "https://github.com/google-ai-edge/ml-drift/archive/" + _ML_DRIFT_COMMIT + ".tar.gz",
+    ],
+)
+
+_EGL_HEADERS_COMMIT = "db3425b8246136faccb5e2782b5694960bd6edf1"
+
+http_archive(
+    name = "egl_headers",
+    build_file = "@ml_drift//third_party/egl_headers:egl_headers.BUILD",
+    sha256 = "3d6b42b23da8030f5b29ade07d7384c5f885e713f17f04650f6cd4b8329b88e8",
+    strip_prefix = "EGL-Registry-" + _EGL_HEADERS_COMMIT + "/api",
+    urls = [
+        "https://github.com/KhronosGroup/EGL-Registry/archive/" + _EGL_HEADERS_COMMIT + ".tar.gz",
+    ],
+)
+
+_OPENGL_HEADERS_COMMIT = "1cdd228e34966dd6b95bd203e9f84faba0f371a1"
+
+http_archive(
+    name = "opengl_headers",
+    build_file = "@ml_drift//third_party/opengl_headers:opengl_headers.BUILD",
+    sha256 = "d8ac2e70b4a8173d4e30ceb726eb8b3137883d459e4666983eb1d2444483c62c",
+    strip_prefix = "OpenGL-Registry-" + _OPENGL_HEADERS_COMMIT + "/api",
+    urls = [
+        "https://github.com/KhronosGroup/OpenGL-Registry/archive/" + _OPENGL_HEADERS_COMMIT + ".tar.gz",
+    ],
 )
 
 # LiteRT-LM

@@ -1,8 +1,8 @@
 diff --git a/tflite/delegates/gpu/common/BUILD b/tflite/delegates/gpu/common/BUILD
-index c49f2ce731d..d72773c0a5b 100644
+index 63a52dc..749f88d 100644
 --- a/tflite/delegates/gpu/common/BUILD
 +++ b/tflite/delegates/gpu/common/BUILD
-@@ -173,7 +173,7 @@ cc_library(
+@@ -279,7 +279,7 @@ cc_library(
          "@com_google_absl//absl/container:flat_hash_set",
          "@com_google_absl//absl/status",
          "@com_google_absl//absl/strings",
@@ -13,7 +13,7 @@ index c49f2ce731d..d72773c0a5b 100644
  cc_test(
 diff --git a/tflite/delegates/gpu/common/mediapipe/BUILD b/tflite/delegates/gpu/common/mediapipe/BUILD
 new file mode 100644
-index 00000000000..58967ddbb66
+index 0000000..baa8990
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/mediapipe/BUILD
 @@ -0,0 +1,93 @@
@@ -112,7 +112,7 @@ index 00000000000..58967ddbb66
 +)
 diff --git a/tflite/delegates/gpu/common/mediapipe/custom_parsers.cc b/tflite/delegates/gpu/common/mediapipe/custom_parsers.cc
 new file mode 100644
-index 00000000000..52c11b90fc8
+index 0000000..3bc9086
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/mediapipe/custom_parsers.cc
 @@ -0,0 +1,34 @@
@@ -152,7 +152,7 @@ index 00000000000..52c11b90fc8
 +}  // namespace tflite
 diff --git a/tflite/delegates/gpu/common/mediapipe/custom_transformations.cc b/tflite/delegates/gpu/common/mediapipe/custom_transformations.cc
 new file mode 100644
-index 00000000000..1509ea3bcf3
+index 0000000..3b2acb4
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/mediapipe/custom_transformations.cc
 @@ -0,0 +1,24 @@
@@ -182,7 +182,7 @@ index 00000000000..1509ea3bcf3
 +}  // namespace tflite
 diff --git a/tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.cc b/tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.cc
 new file mode 100644
-index 00000000000..4e73cf649e6
+index 0000000..9bc6b0c
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.cc
 @@ -0,0 +1,182 @@
@@ -370,7 +370,7 @@ index 00000000000..4e73cf649e6
 +}  // namespace tflite
 diff --git a/tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h b/tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h
 new file mode 100644
-index 00000000000..78c72aea123
+index 0000000..2e22081
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/mediapipe/landmarks_to_transform_matrix.h
 @@ -0,0 +1,96 @@
@@ -472,7 +472,7 @@ index 00000000000..78c72aea123
 +#endif  // TFLITE_DELEGATES_GPU_COMMON_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
 diff --git a/tflite/delegates/gpu/common/mediapipe/transform_landmarks.cc b/tflite/delegates/gpu/common/mediapipe/transform_landmarks.cc
 new file mode 100644
-index 00000000000..fba7e742998
+index 0000000..38813aa
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/mediapipe/transform_landmarks.cc
 @@ -0,0 +1,169 @@
@@ -647,7 +647,7 @@ index 00000000000..fba7e742998
 +}  // namespace tflite
 diff --git a/tflite/delegates/gpu/common/mediapipe/transform_landmarks.h b/tflite/delegates/gpu/common/mediapipe/transform_landmarks.h
 new file mode 100644
-index 00000000000..f804e14e55d
+index 0000000..9371995
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/mediapipe/transform_landmarks.h
 @@ -0,0 +1,74 @@
@@ -727,7 +727,7 @@ index 00000000000..f804e14e55d
 +#endif  // TFLITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
 diff --git a/tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.cc b/tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.cc
 new file mode 100644
-index 00000000000..704ce7d4a47
+index 0000000..1aa5138
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.cc
 @@ -0,0 +1,142 @@
@@ -875,7 +875,7 @@ index 00000000000..704ce7d4a47
 +}  // namespace tflite
 diff --git a/tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h b/tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h
 new file mode 100644
-index 00000000000..8a1f840c12f
+index 0000000..7ff9335
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/mediapipe/transform_tensor_bilinear.h
 @@ -0,0 +1,54 @@
@@ -934,10 +934,10 @@ index 00000000000..8a1f840c12f
 +
 +#endif  // TFLITE_DELEGATES_GPU_COMMON_MEDIAPIPE_TRANSFORM_TENSOR_BILINEAR_H_
 diff --git a/tflite/delegates/gpu/common/selectors/BUILD b/tflite/delegates/gpu/common/selectors/BUILD
-index ec6c2281b9e..26cf9aab1a9 100644
+index 3089792..9ac27f5 100644
 --- a/tflite/delegates/gpu/common/selectors/BUILD
 +++ b/tflite/delegates/gpu/common/selectors/BUILD
-@@ -45,9 +45,9 @@ cc_library(
+@@ -62,9 +62,9 @@ cc_library(
          "//tflite/delegates/gpu/common:model",
          "//tflite/delegates/gpu/common:model_hints",
          "//tflite/delegates/gpu/common:status",
@@ -950,7 +950,7 @@ index ec6c2281b9e..26cf9aab1a9 100644
  
 diff --git a/tflite/delegates/gpu/common/selectors/mediapipe/BUILD b/tflite/delegates/gpu/common/selectors/mediapipe/BUILD
 new file mode 100644
-index 00000000000..d5a28d6f72e
+index 0000000..4dc01e4
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/selectors/mediapipe/BUILD
 @@ -0,0 +1,21 @@
@@ -977,7 +977,7 @@ index 00000000000..d5a28d6f72e
 +)
 diff --git a/tflite/delegates/gpu/common/selectors/mediapipe/default_selector.cc b/tflite/delegates/gpu/common/selectors/mediapipe/default_selector.cc
 new file mode 100644
-index 00000000000..9c93149f95b
+index 0000000..aa5303a
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/selectors/mediapipe/default_selector.cc
 @@ -0,0 +1,48 @@
@@ -1031,7 +1031,7 @@ index 00000000000..9c93149f95b
 +}  // namespace tflite
 diff --git a/tflite/delegates/gpu/common/tasks/mediapipe/BUILD b/tflite/delegates/gpu/common/tasks/mediapipe/BUILD
 new file mode 100644
-index 00000000000..9df0735f0eb
+index 0000000..ddcd5a2
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/tasks/mediapipe/BUILD
 @@ -0,0 +1,39 @@
@@ -1076,7 +1076,7 @@ index 00000000000..9df0735f0eb
 +)
 diff --git a/tflite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.cc b/tflite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.cc
 new file mode 100644
-index 00000000000..18f28b19361
+index 0000000..d4a1d7f
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.cc
 @@ -0,0 +1,368 @@
@@ -1450,7 +1450,7 @@ index 00000000000..18f28b19361
 +}  // namespace tflite
 diff --git a/tflite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h b/tflite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h
 new file mode 100644
-index 00000000000..2fd523df7c7
+index 0000000..594089b
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/tasks/mediapipe/landmarks_to_transform_matrix.h
 @@ -0,0 +1,26 @@
@@ -1482,7 +1482,7 @@ index 00000000000..2fd523df7c7
 +#endif  // TFLITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPELANDMARKS_TO_TRANSFORM_MATRIX_H_
 diff --git a/tflite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.cc b/tflite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.cc
 new file mode 100644
-index 00000000000..999917a9251
+index 0000000..f05b6e1
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.cc
 @@ -0,0 +1,116 @@
@@ -1604,7 +1604,7 @@ index 00000000000..999917a9251
 +}  // namespace tflite
 diff --git a/tflite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h b/tflite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h
 new file mode 100644
-index 00000000000..5c0be19033a
+index 0000000..935d2d3
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/tasks/mediapipe/transform_landmarks.h
 @@ -0,0 +1,21 @@
@@ -1631,7 +1631,7 @@ index 00000000000..5c0be19033a
 +#endif  // TFLITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_LANDMARKS_H_
 diff --git a/tflite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.cc b/tflite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.cc
 new file mode 100644
-index 00000000000..2723216f324
+index 0000000..f32f030
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.cc
 @@ -0,0 +1,123 @@
@@ -1760,7 +1760,7 @@ index 00000000000..2723216f324
 +}  // namespace tflite
 diff --git a/tflite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h b/tflite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h
 new file mode 100644
-index 00000000000..0251265cdf4
+index 0000000..7d39a3e
 --- /dev/null
 +++ b/tflite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h
 @@ -0,0 +1,22 @@
@@ -1787,10 +1787,10 @@ index 00000000000..0251265cdf4
 +
 +#endif  // TFLITE_DELEGATES_GPU_COMMON_TASKS_MEDIAPIPETRANSFORM_TENSOR_BILINEAR_H_
 diff --git a/tflite/delegates/gpu/common/transformations/BUILD b/tflite/delegates/gpu/common/transformations/BUILD
-index d26b4f807de..9596dbab7e6 100644
+index 70be848..f90bf89 100644
 --- a/tflite/delegates/gpu/common/transformations/BUILD
 +++ b/tflite/delegates/gpu/common/transformations/BUILD
-@@ -287,7 +287,7 @@ cc_library(
+@@ -301,7 +301,7 @@ cc_library(
          ":merge_padding_with",
          ":remove_noop",
          "//tflite/delegates/gpu/common:model_transformer",
@@ -1800,10 +1800,10 @@ index d26b4f807de..9596dbab7e6 100644
  
  cc_library(
 diff --git a/tflite/delegates/gpu/gl/kernels/BUILD b/tflite/delegates/gpu/gl/kernels/BUILD
-index b7860b44ede..30cc160d32c 100644
+index c3d8850..b7773ba 100644
 --- a/tflite/delegates/gpu/gl/kernels/BUILD
 +++ b/tflite/delegates/gpu/gl/kernels/BUILD
-@@ -153,10 +153,11 @@ cc_test(
+@@ -172,10 +172,11 @@ cc_test(
  
  cc_library(
      name = "custom_registry",
@@ -1818,7 +1818,7 @@ index b7860b44ede..30cc160d32c 100644
  )
 diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/BUILD b/tflite/delegates/gpu/gl/kernels/mediapipe/BUILD
 new file mode 100644
-index 00000000000..f5e696d0859
+index 0000000..576c241
 --- /dev/null
 +++ b/tflite/delegates/gpu/gl/kernels/mediapipe/BUILD
 @@ -0,0 +1,85 @@
@@ -1909,7 +1909,7 @@ index 00000000000..f5e696d0859
 +tflite_portable_test_suite()
 diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc b/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc
 new file mode 100644
-index 00000000000..de75dd7df2e
+index 0000000..5252ea3
 --- /dev/null
 +++ b/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc
 @@ -0,0 +1,356 @@
@@ -2271,7 +2271,7 @@ index 00000000000..de75dd7df2e
 +}  // namespace tflite
 diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc.orig b/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc.orig
 new file mode 100644
-index 00000000000..3e884b643a5
+index 0000000..5399d9e
 --- /dev/null
 +++ b/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.cc.orig
 @@ -0,0 +1,356 @@
@@ -2633,7 +2633,7 @@ index 00000000000..3e884b643a5
 +}  // namespace tflite
 diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h b/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h
 new file mode 100644
-index 00000000000..d3949050578
+index 0000000..d84cdfb
 --- /dev/null
 +++ b/tflite/delegates/gpu/gl/kernels/mediapipe/landmarks_to_transform_matrix.h
 @@ -0,0 +1,19 @@
@@ -2658,7 +2658,7 @@ index 00000000000..d3949050578
 +#endif  // TFLITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_LANDMARKS_TO_TRANSFORM_MATRIX_H_
 diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/registry.cc b/tflite/delegates/gpu/gl/kernels/mediapipe/registry.cc
 new file mode 100644
-index 00000000000..3ef02a248c3
+index 0000000..e403cc2
 --- /dev/null
 +++ b/tflite/delegates/gpu/gl/kernels/mediapipe/registry.cc
 @@ -0,0 +1,28 @@
@@ -2692,7 +2692,7 @@ index 00000000000..3ef02a248c3
 +}  // namespace tflite
 diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.cc b/tflite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.cc
 new file mode 100644
-index 00000000000..980e2aa99e6
+index 0000000..63dfb58
 --- /dev/null
 +++ b/tflite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.cc
 @@ -0,0 +1,123 @@
@@ -2821,7 +2821,7 @@ index 00000000000..980e2aa99e6
 +}  // namespace tflite
 diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h b/tflite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h
 new file mode 100644
-index 00000000000..cfb656675e4
+index 0000000..cd63182
 --- /dev/null
 +++ b/tflite/delegates/gpu/gl/kernels/mediapipe/transform_landmarks.h
 @@ -0,0 +1,19 @@
@@ -2846,7 +2846,7 @@ index 00000000000..cfb656675e4
 +#endif  // TFLITE_DELEGATES_GPU_GL_KERNELS_MEDIAPIPE_TRANSFORM_LANDMARKS_H_
 diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.cc b/tflite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.cc
 new file mode 100644
-index 00000000000..8013b9b3505
+index 0000000..f6fe2a6
 --- /dev/null
 +++ b/tflite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.cc
 @@ -0,0 +1,169 @@
@@ -3021,7 +3021,7 @@ index 00000000000..8013b9b3505
 +}  // namespace tflite
 diff --git a/tflite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h b/tflite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h
 new file mode 100644
-index 00000000000..c62387a4b96
+index 0000000..834ab95
 --- /dev/null
 +++ b/tflite/delegates/gpu/gl/kernels/mediapipe/transform_tensor_bilinear.h
 @@ -0,0 +1,19 @@
