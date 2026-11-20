@@ -579,7 +579,7 @@ public final class HolisticLandmarker extends BaseVisionTaskApi {
               .setBaseOptions(
                   BaseOptionsProto.BaseOptions.newBuilder()
                       .setUseStreamMode(runningMode() != RunningMode.IMAGE)
-                      .mergeFrom(convertBaseOptionsToProto(baseOptions()))
+                      .mergeFrom(convertBaseOptionsToProto(baseOptions(), /* useLiteRt= */ true))
                       .build());
 
       HandLandmarksDetectorGraphOptions.Builder handLandmarksDetectorGraphOptions =

@@ -162,6 +162,7 @@ cc_library(
     deps = [
         "//mediapipe/calculators/tensor:image_to_tensor_calculator_cc_proto",
         "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_litert",  # buildcleaner: keep
         "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
         "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",

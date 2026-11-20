@@ -382,19 +382,30 @@ class HolisticLandmarkerGraph : public core::ModelTaskGraph {
           holistic_options->mutable_face_landmarks_detector_graph_options(),
           kFaceLandmarksDetectorModelName, create_copy));
       if (is_face_blendshapes_requested) {
+        auto* face_blendshapes_graph_options =
+            holistic_options->mutable_face_landmarks_detector_graph_options()
+                ->mutable_face_blendshapes_graph_options();
         ABSL_RETURN_IF_ERROR(SetSubTaskBaseOptions(
             model_asset_bundle_resources, holistic_options,
-            holistic_options->mutable_face_landmarks_detector_graph_options()
-                ->mutable_face_blendshapes_graph_options(),
-            kFaceBlendshapesModelName, create_copy));
+            face_blendshapes_graph_options, kFaceBlendshapesModelName,
+            create_copy));
         // The blendshapes model is not supported by the GPU delegate (it fails
-        // with a batch size mismatch), so always run it on CPU with XNNPACK,
-        // consistent with FaceLandmarkerGraph.
-        holistic_options->mutable_face_landmarks_detector_graph_options()
-            ->mutable_face_blendshapes_graph_options()
-            ->mutable_base_options()
-            ->mutable_acceleration()
-            ->mutable_xnnpack();
+        // with a batch size mismatch), so always run it on CPU, consistent
+        // with FaceLandmarkerGraph: LiteRT CPU on LiteRT, XNNPACK otherwise.
+        if (holistic_options->base_options().acceleration().has_litert()) {
+          // Only drop the non-CPU accelerators, so that caller-provided CPU
+          // and general LiteRT options are kept.
+          auto* litert = face_blendshapes_graph_options->mutable_base_options()
+                             ->mutable_acceleration()
+                             ->mutable_litert();
+          litert->clear_gpu();
+          litert->clear_npu();
+          litert->mutable_cpu();
+        } else {
+          face_blendshapes_graph_options->mutable_base_options()
+              ->mutable_acceleration()
+              ->mutable_xnnpack();
+        }
       }
     }
 
@@ -402,6 +413,20 @@ class HolisticLandmarkerGraph : public core::ModelTaskGraph {
         model_asset_bundle_resources, holistic_options,
         holistic_options->mutable_pose_detector_graph_options(),
         kPoseDetectorModelName, create_copy));
+    if (holistic_options->base_options().acceleration().has_litert() &&
+        holistic_options->base_options().acceleration().litert().has_gpu()) {
+      // TODO: b/496436270 - Switch pose_detector to GPU once LiteRT GPU
+      // supports DENSIFY / sparse weights in pose_detector.tflite.
+      // Only drop the non-CPU accelerators, so that caller-provided CPU and
+      // general LiteRT options are kept.
+      auto* litert = holistic_options->mutable_pose_detector_graph_options()
+                         ->mutable_base_options()
+                         ->mutable_acceleration()
+                         ->mutable_litert();
+      litert->clear_gpu();
+      litert->clear_npu();
+      litert->mutable_cpu();
+    }
     // Forcely set num_poses to 1, because holistic landmarker sonly supports a
     // single subject for now.
     holistic_options->mutable_pose_detector_graph_options()->set_num_poses(1);

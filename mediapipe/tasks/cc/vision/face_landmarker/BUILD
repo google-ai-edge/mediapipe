@@ -49,6 +49,7 @@ cc_library(
         "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/core:split_vector_calculator_cc_proto",
         "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_litert",  # buildcleaner: keep
         "//mediapipe/calculators/tensor:landmarks_to_tensor_calculator",
         "//mediapipe/calculators/tensor:landmarks_to_tensor_calculator_cc_proto",
         "//mediapipe/calculators/tensor:tensors_to_classification_calculator",
@@ -83,6 +84,7 @@ cc_library(
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator_cc_proto",
         "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_litert",  # buildcleaner: keep
         "//mediapipe/calculators/tensor:tensors_to_floats_calculator",
         "//mediapipe/calculators/tensor:tensors_to_floats_calculator_cc_proto",
         "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
