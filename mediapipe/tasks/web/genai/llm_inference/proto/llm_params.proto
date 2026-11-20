@@ -81,7 +81,7 @@ message Channel {
 }
 
 // Parameters for Large Language Models (LLM).
-// Next ID: 21
+// Next ID: 22
 message LlmParameters {
   TransformerParameters transformer_parameters = 1;
 
@@ -141,4 +141,8 @@ message LlmParameters {
 
   // Tokens to suppress during decode.
   repeated int32 suppressed_tokens = 20;
+
+  // If this model includes a Multi-Token Prediction (MTP) drafter, these
+  // params configure the MTP drafter transformer.
+  optional TransformerParameters mtp_transformer_parameters = 21;
 }
