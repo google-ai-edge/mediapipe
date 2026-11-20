@@ -41,6 +41,19 @@ py_library(
 )
 
 py_test(
+    name = "drawing_utils_test",
+    srcs = ["drawing_utils_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:bounding_box",
+        "//mediapipe/tasks/python/components/containers:detections",
+        "//mediapipe/tasks/python/components/containers:keypoint",
+        "//mediapipe/tasks/python/vision:drawing_utils",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)
+
+py_test(
     name = "object_detector_test",
     srcs = ["object_detector_test.py"],
     data = [

@@ -98,6 +98,9 @@ def draw_detection(
       keypoint_px = _normalized_to_pixel_coordinates(
           keypoint.x, keypoint.y, image_cols, image_rows  # pyrefly: ignore[bad-argument-type]
       )
+      if keypoint_px is None:
+        # Skip keypoints outside the image, as draw_landmarks does.
+        continue
       cv2.circle(
           image,
           keypoint_px,
