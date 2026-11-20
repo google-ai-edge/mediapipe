@@ -753,9 +753,21 @@ InferenceRunnerLiteRt::Create(
     }
   }
 
-  LITERT_ASSIGN_OR_RETURN(auto compiled_model, litert::CompiledModel::Create(
-                                                   environment, model_buffer,
-                                                   jit_compilation_options));
+  // TODO: Inline into LITERT_ASSIGN_OR_RETURN via
+  // ErrorStatusBuilder::SetStatus once available.
+  auto compiled_model_or = litert::CompiledModel::Create(
+      environment, model_buffer, jit_compilation_options);
+  if (!compiled_model_or &&
+      compiled_model_or.Error().StatusValue() ==
+          litert::Status::kErrorCompilation &&
+      !(accelerator & litert::HwAccelerators::kCpu)) {
+    return absl::InvalidArgumentError(absl::StrCat(
+        "Model contains operations or configurations not supported by the ",
+        (accelerator & litert::HwAccelerators::kGpu) ? "GPU" : "NPU",
+        " delegate: ", compiled_model_or.Error().Message()));
+  }
+  LITERT_ASSIGN_OR_RETURN(litert::CompiledModel compiled_model,
+                          std::move(compiled_model_or));
   LITERT_ASSIGN_OR_RETURN(auto signatures, compiled_model.GetSignatures());
   const int num_signatures = signatures.size();
   RET_CHECK_GT(num_signatures, 0) << "Model must have at least one signature";

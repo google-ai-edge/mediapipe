@@ -777,6 +777,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/strings:string_view",
         "@litert//tflite/delegates/gpu:metal_delegate",
         "@litert//tflite/delegates/gpu:metal_delegate_internal",
         "@litert//tflite/delegates/gpu/common:shape",
