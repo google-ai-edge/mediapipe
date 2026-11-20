@@ -23,6 +23,7 @@ limitations under the License.
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "absl/status/statusor.h"       // from @com_google_absl
+#include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/tasks/cc/audio/audio_classifier/proto/audio_classifier_graph_options.pb.h"
@@ -33,6 +34,8 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/processors/classifier_options.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
+#include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
+#include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 
 namespace mediapipe {
@@ -87,6 +90,14 @@ ConvertAudioClassifierOptionsToProto(AudioClassifierOptions* options) {
   auto base_options_proto = std::make_unique<tasks::core::proto::BaseOptions>(
       tasks::core::ConvertBaseOptionsToProto(&(options->base_options),
                                              /*use_litert=*/true));
+  // Audio models commonly compute their spectrogram inside the model with ops
+  // that GPU accelerators do not implement (e.g. RFFT2D and COMPLEX_ABS). Also
+  // allow the CPU accelerator when the GPU is requested, so that the supported
+  // ops run on the GPU and the remaining ops fall back to the CPU instead of
+  // failing model compilation.
+  if (base_options_proto->acceleration().litert().has_gpu()) {
+    base_options_proto->mutable_acceleration()->mutable_litert()->mutable_cpu();
+  }
   options_proto->mutable_base_options()->Swap(base_options_proto.get());
   options_proto->mutable_base_options()->set_use_stream_mode(
       options->running_mode == core::RunningMode::AUDIO_STREAM);

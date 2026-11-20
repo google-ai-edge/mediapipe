@@ -27,6 +27,7 @@ cc_library(
     hdrs = ["audio_classifier.h"],
     deps = [
         ":audio_classifier_graph",
+        "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/tasks/cc/audio/audio_classifier/proto:audio_classifier_graph_options_cc_proto",
@@ -39,6 +40,8 @@ cc_library(
         "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
         "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core:task_runner",
+        "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
+        "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
         "@com_google_absl//absl/status:statusor",
