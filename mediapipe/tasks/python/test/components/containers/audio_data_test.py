@@ -94,6 +94,50 @@ class AudioDataTest(parameterized.TestCase):
         audio_data_py, expected_buffer=audio_data.buffer
     )
 
+  def test_load_from_array_shorter_mono_chunks_fill_buffer_from_the_end(self):
+    audio_data = _AudioData(buffer_length=6)
+
+    audio_data.load_from_array(np.array([1, 2, 3], dtype=np.float32))
+    np.testing.assert_array_equal(audio_data.buffer.ravel(), [0, 0, 0, 1, 2, 3])
+
+    audio_data.load_from_array(np.array([4, 5], dtype=np.float32))
+    np.testing.assert_array_equal(audio_data.buffer.ravel(), [0, 1, 2, 3, 4, 5])
+
+  def test_load_from_array_shorter_chunk_after_full_buffer_load(self):
+    audio_data = _AudioData(buffer_length=4)
+    audio_data.load_from_array(np.arange(4, dtype=np.float32))
+
+    audio_data.load_from_array(np.array([9, 8], dtype=np.float32))
+
+    np.testing.assert_array_equal(audio_data.buffer.ravel(), [2, 3, 9, 8])
+
+  @parameterized.parameters(np.float64, np.int16)
+  def test_load_from_array_converts_longer_input_to_float32(self, dtype):
+    audio_data = _AudioData(buffer_length=4)
+
+    audio_data.load_from_array(np.arange(6, dtype=dtype))
+
+    self.assertEqual(audio_data.buffer.dtype, np.float32)
+    np.testing.assert_array_equal(audio_data.buffer.ravel(), [2, 3, 4, 5])
+
+  def test_load_from_array_honors_offset_and_size_below_buffer_length(self):
+    audio_data = _AudioData(buffer_length=4)
+
+    audio_data.load_from_array(
+        np.arange(6, dtype=np.float32), offset=1, size=2
+    )
+
+    self.assertEqual(audio_data.buffer_length, 4)
+    np.testing.assert_array_equal(audio_data.buffer.ravel(), [0, 0, 1, 2])
+
+  def test_load_from_array_with_zero_size_keeps_buffer(self):
+    audio_data = _AudioData(buffer_length=4)
+    audio_data.load_from_array(np.arange(4, dtype=np.float32))
+
+    audio_data.load_from_array(np.ones(3, dtype=np.float32), size=0)
+
+    np.testing.assert_array_equal(audio_data.buffer.ravel(), [0, 1, 2, 3])
+
 
 if __name__ == '__main__':
   absltest.main()

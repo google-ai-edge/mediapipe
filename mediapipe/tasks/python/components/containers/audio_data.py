@@ -90,18 +90,25 @@ class AudioData(object):
           f"Index out of range. offset {offset} + size {size} should be <= "
           f"src's length: {len(src)}")
 
-    if len(src) >= len(self._buffer):
-      # If the internal buffer is shorter than the load target (src), copy
-      # values from the end of the src array to the internal buffer.
+    if size == 0:
+      return
+
+    if size >= len(self._buffer):
+      # If the internal buffer is shorter than the load target
+      # (src[offset:offset + size]), copy values from the end of the load
+      # target to the internal buffer.
       new_offset = offset + size - len(self._buffer)
       new_size = len(self._buffer)
-      self._buffer = src[new_offset:new_offset + new_size].copy()
+      self._buffer = src[new_offset:new_offset + new_size].astype(np.float32)
     else:
       # Shift the internal buffer backward and add the incoming data to the end
       # of the buffer.
       shift = size
+      incoming = src[offset:offset + size]
       self._buffer = np.roll(self._buffer, -shift, axis=0)
-      self._buffer[-shift:, :] = src[offset:offset + size].copy()
+      self._buffer[-shift:] = incoming.reshape(
+          (shift,) + self._buffer.shape[1:]
+      )
 
   @classmethod
   def create_from_array(cls,
