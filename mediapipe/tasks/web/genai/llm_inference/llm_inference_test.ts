@@ -77,6 +77,27 @@ describe('LlmInference', () => {
           expect(llmInference).toBeDefined();
         });
 
+        it('loads a model from modelAssetPath', async () => {
+          const pathOptions = {
+            baseOptions: { modelAssetPath: modelUrl },
+            numResponses: 1,
+          };
+          
+          llmInference = await LlmInference.createFromOptions(genaiFileset, pathOptions);
+          expect(llmInference).toBeDefined();
+        });
+
+        it('handles modelAssetPath loading errors', async () => {
+          const invalidPathOptions = {
+            baseOptions: { modelAssetPath: 'http://invalid-url/nonexistent.bin' },
+            numResponses: 1,
+          };
+          
+          await expectAsync(
+            LlmInference.createFromOptions(genaiFileset, invalidPathOptions)
+          ).toBeRejectedWithError(/Failed to load model from path/);
+        });
+
         it('loads a model, deletes it, and then loads it again', async () => {
           llmInference = await load();
 
@@ -295,6 +316,8 @@ describe('LlmInference', () => {
           }).toThrowError(/currently loading or processing/);
           expect(typeof (await responsePromise)).toBe('string');
         });
+
+
       });
 
       describe('running', () => {
@@ -387,6 +410,8 @@ describe('LlmInference', () => {
           await expectAsync(responsePromise).toBeResolved();
           expect(typeof (await responsePromise)).toBe('string');
         });
+
+
       });
     });
   }
