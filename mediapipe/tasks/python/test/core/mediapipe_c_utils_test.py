@@ -13,6 +13,8 @@
 # limitations under the License.
 
 import ctypes
+import gc
+import weakref
 
 from absl.testing import absltest
 from absl.testing import parameterized
@@ -90,6 +92,29 @@ class MediapipeCBindingsTest(parameterized.TestCase):
     self.assertIsNone(
         mediapipe_c_utils.handle_status(MpStatus.MP_OK, ctypes.c_char_p())
     )
+
+  def test_handle_status_does_not_retain_caller_frame_in_cycle(self):
+    class _Marker:
+      pass
+
+    def call_that_raises():
+      marker = _Marker()
+      ref = weakref.ref(marker)
+      try:
+        mediapipe_c_utils.handle_status(
+            MpStatus.MP_INVALID_ARGUMENT, ctypes.c_char_p(b"bad arg")
+        )
+      except ValueError:
+        pass
+      del marker
+      return ref
+
+    gc.disable()
+    try:
+      marker_ref = call_that_raises()
+      self.assertIsNone(marker_ref())
+    finally:
+      gc.enable()
 
 
 if __name__ == "__main__":

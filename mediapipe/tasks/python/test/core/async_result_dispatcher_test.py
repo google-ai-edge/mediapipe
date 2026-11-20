@@ -13,6 +13,8 @@
 # limitations under the License.
 
 import ctypes
+import os
+import queue
 import threading
 from unittest import mock
 
@@ -186,6 +188,166 @@ class AsyncResultDispatcherTest(absltest.TestCase):
 
     self.assertFalse(mock_callback.called)
     self.assertIsNone(dispatcher._dispatcher_thread)
+
+  def test_concurrent_callbacks_and_close_do_not_corrupt_pipes(self):
+    for _ in range(25):
+      dispatcher = _AsyncResultDispatcher(converter=_to_int_converter)
+      c_callback = dispatcher.wrap_callback(
+          lambda a, b: None, _C_CALLBACK_TYPE
+      )
+      c_callback(None, _MP_STATUS_OK, None, b"1", b"2")
+
+      barrier = threading.Barrier(2)
+
+      def _spam_callbacks(cb=c_callback, b=barrier):
+        b.wait()
+        for _ in range(20):
+          cb(None, _MP_STATUS_OK, None, b"3", b"4")
+
+      writer = threading.Thread(target=_spam_callbacks)
+      writer.start()
+      barrier.wait()
+      dispatcher.close()
+      writer.join(timeout=5.0)
+      self.assertFalse(writer.is_alive())
+
+  def test_delivers_each_result_before_close(self):
+    received = queue.Queue()
+    dispatcher = _AsyncResultDispatcher(converter=_to_int_converter)
+    self.addCleanup(dispatcher.close)
+    c_callback = dispatcher.wrap_callback(
+        lambda first, second: received.put((first, second)), _C_CALLBACK_TYPE
+    )
+
+    # The dispatcher thread becomes idle between results, so each result has to
+    # wake it up again.
+    for i in range(100):
+      c_callback(None, _MP_STATUS_OK, None, str(i).encode(), b"0")
+      self.assertEqual(received.get(timeout=10.0), (i, 0))
+
+  def test_delivers_results_that_arrive_during_slow_callback(self):
+    # More results than fit into an OS pipe buffer on any supported platform.
+    num_results = 100000
+    first_callback_started = threading.Event()
+    first_callback_may_return = threading.Event()
+    all_results_received = threading.Event()
+    received = []
+
+    def slow_first_callback(first: int, second: int):
+      del second
+      if not received:
+        first_callback_started.set()
+        first_callback_may_return.wait()
+      received.append(first)
+      if len(received) == num_results:
+        all_results_received.set()
+
+    dispatcher = _AsyncResultDispatcher(converter=_to_int_converter)
+    self.addCleanup(dispatcher.close)
+    self.addCleanup(first_callback_may_return.set)
+    c_callback = dispatcher.wrap_callback(slow_first_callback, _C_CALLBACK_TYPE)
+
+    c_callback(None, _MP_STATUS_OK, None, b"0", b"0")
+    first_callback_started.wait()
+    for i in range(1, num_results):
+      c_callback(None, _MP_STATUS_OK, None, str(i).encode(), b"0")
+    first_callback_may_return.set()
+
+    self.assertTrue(all_results_received.wait(timeout=60.0))
+    self.assertEqual(received, list(range(num_results)))
+
+  def test_close_from_callback_does_not_wait_for_itself(self):
+    callback_returned = threading.Event()
+    dispatcher = _AsyncResultDispatcher(converter=_to_int_converter)
+
+    def close_dispatcher(first: int, second: int):
+      del first, second
+      dispatcher.close()
+      callback_returned.set()
+
+    c_callback = dispatcher.wrap_callback(close_dispatcher, _C_CALLBACK_TYPE)
+    c_callback(None, _MP_STATUS_OK, None, b"1", b"2")
+    dispatcher.close()
+
+    self.assertTrue(callback_returned.is_set())
+
+  def test_concurrent_close_calls_wait_for_running_callback(self):
+    callback_started = threading.Event()
+    callback_may_return = threading.Event()
+    self.addCleanup(callback_may_return.set)
+
+    def blocking_callback(first: int, second: int):
+      del first, second
+      callback_started.set()
+      callback_may_return.wait()
+
+    dispatcher = _AsyncResultDispatcher(converter=_to_int_converter)
+    c_callback = dispatcher.wrap_callback(blocking_callback, _C_CALLBACK_TYPE)
+    c_callback(None, _MP_STATUS_OK, None, b"1", b"2")
+    callback_started.wait()
+
+    closers = [
+        threading.Thread(target=dispatcher.close, daemon=True),
+        threading.Thread(target=dispatcher.close, daemon=True),
+    ]
+    for closer in closers:
+      closer.start()
+    for closer in closers:
+      closer.join(timeout=0.1)
+      self.assertTrue(closer.is_alive())
+
+    callback_may_return.set()
+    for closer in closers:
+      closer.join(timeout=5.0)
+      self.assertFalse(closer.is_alive())
+
+  def test_close_does_not_wait_for_callback_during_interpreter_shutdown(self):
+    callback_started = threading.Event()
+    callback_may_return = threading.Event()
+    self.addCleanup(callback_may_return.set)
+
+    def blocking_callback(first: int, second: int):
+      del first, second
+      callback_started.set()
+      callback_may_return.wait()
+
+    dispatcher = _AsyncResultDispatcher(converter=_to_int_converter)
+    c_callback = dispatcher.wrap_callback(blocking_callback, _C_CALLBACK_TYPE)
+    c_callback(None, _MP_STATUS_OK, None, b"1", b"2")
+    callback_started.wait()
+
+    with mock.patch.object(
+        mediapipe_c_utils, "is_shutdown", return_value=True, autospec=True
+    ):
+      closer = threading.Thread(target=dispatcher.close, daemon=True)
+      closer.start()
+      closer.join(timeout=5.0)
+
+    self.assertFalse(closer.is_alive())
+
+  def test_close_closes_pipe_file_descriptors(self):
+    pipe_fds = []
+    create_pipe = os.pipe
+
+    def create_and_record_pipe():
+      fds = create_pipe()
+      pipe_fds.extend(fds)
+      return fds
+
+    dispatcher = _AsyncResultDispatcher(converter=_to_int_converter)
+    c_callback = dispatcher.wrap_callback(
+        lambda first, second: None, _C_CALLBACK_TYPE
+    )
+    with mock.patch.object(
+        os, "pipe", side_effect=create_and_record_pipe, autospec=True
+    ):
+      c_callback(None, _MP_STATUS_OK, None, b"1", b"2")
+    dispatcher.close()
+
+    self.assertLen(pipe_fds, 2)
+    for pipe_fd in pipe_fds:
+      with self.assertRaisesRegex(OSError, "Bad file descriptor"):
+        os.fstat(pipe_fd)
 
 
 if __name__ == "__main__":

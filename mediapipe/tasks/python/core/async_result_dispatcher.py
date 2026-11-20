@@ -106,6 +106,7 @@ class AsyncResultDispatcher:
   _data_queue: queue.Queue[_AsyncResultPacket]
   _pipe_read_fd: int = _PIPE_NOT_INITIALIZED
   _pipe_write_fd: int = _PIPE_NOT_INITIALIZED
+  _pipe_signaled: bool = False
   _state: _DispatcherState = _DispatcherState.NOT_STARTED
   _dispatcher_thread: Optional[threading.Thread] = None
 
@@ -118,6 +119,7 @@ class AsyncResultDispatcher:
     """
     self._converter = converter
     self._data_queue = queue.Queue()
+    self._lock = threading.Lock()
 
   def wrap_callback(
       self,
@@ -196,57 +198,104 @@ class AsyncResultDispatcher:
       except Exception as e:  # pylint: disable=broad-except
         logging.exception("Error in callback: %r", e)
 
+  def _close_pipes(self) -> None:
+    """Closes OS pipe file descriptors if still open."""
+    with self._lock:
+      read_fd, self._pipe_read_fd = self._pipe_read_fd, _PIPE_NOT_INITIALIZED
+    if read_fd != _PIPE_NOT_INITIALIZED:
+      try:
+        os.close(read_fd)
+      except OSError:
+        pass
+    with self._lock:
+      write_fd, self._pipe_write_fd = self._pipe_write_fd, _PIPE_NOT_INITIALIZED
+      if write_fd != _PIPE_NOT_INITIALIZED:
+        try:
+          os.close(write_fd)
+        except OSError:
+          pass
+
   def _dispatcher_loop(self) -> None:
     """The main loop for the dispatcher thread."""
-    while True:
-      # Drain elements that are currently in the queue.
-      while not self._data_queue.empty():
-        packet = self._data_queue.get_nowait()
-        self._process_packet(packet)
+    try:
+      while True:
+        # Drain elements that are currently in the queue.
+        while not self._data_queue.empty():
+          packet = self._data_queue.get_nowait()
+          self._process_packet(packet)
 
-      if self._state == _DispatcherState.SHUTTING_DOWN:
-        break
+        with self._lock:
+          if not self._data_queue.empty():
+            continue
+          if self._state == _DispatcherState.SHUTTING_DOWN:
+            break
+          read_fd = self._pipe_read_fd
 
-      try:
-        # Block until the C callback writes to the pipe again
-        os.read(self._pipe_read_fd, 1)
-      except OSError:
-        # Pipe might error during shutdown. Ignore.
-        continue
+        if read_fd == _PIPE_NOT_INITIALIZED:
+          break
 
-  def _put_packet(self, packet: _AsyncResultPacket) -> None:
-    """Puts a data packet into the queue and signals the dispatcher thread."""
-    if self._state == _DispatcherState.NOT_STARTED:
-      self._start()
-    elif self._state == _DispatcherState.SHUTTING_DOWN:
+        try:
+          # Block until the dispatcher is signaled again.
+          os.read(read_fd, 1)
+        except OSError:
+          # Pipe might error during shutdown. Ignore.
+          continue
+        with self._lock:
+          self._pipe_signaled = False
+    finally:
+      self._close_pipes()
+
+  def _signal_locked(self) -> None:
+    """Wakes up the dispatcher thread while holding `self._lock`.
+
+    Signals are coalesced until the dispatcher thread consumed the previous
+    one. The pipe therefore never holds more than one byte, and writing to it
+    cannot block while `self._lock` is held, even if the user callback is slower
+    than the C library.
+    """
+    if self._pipe_signaled or self._pipe_write_fd == _PIPE_NOT_INITIALIZED:
       return
-
-    self._data_queue.put(packet)
     try:
       os.write(self._pipe_write_fd, b"\0")
     except OSError:
       # Pipe might error during shutdown. Ignore.
-      pass
+      return
+    self._pipe_signaled = True
+
+  def _put_packet(self, packet: _AsyncResultPacket) -> None:
+    """Puts a data packet into the queue and signals the dispatcher thread."""
+    with self._lock:
+      if self._state == _DispatcherState.NOT_STARTED:
+        self._start_locked()
+      elif self._state == _DispatcherState.SHUTTING_DOWN:
+        return
+
+      self._data_queue.put(packet)
+      self._signal_locked()
 
   def close(self) -> None:
-    """Shuts down the dispatcher thread and cleans up resources."""
-    if self._state == _DispatcherState.NOT_STARTED:
-      self._state = _DispatcherState.SHUTTING_DOWN
-    elif self._state == _DispatcherState.RUNNING:
-      self._state = _DispatcherState.SHUTTING_DOWN
-      try:
-        # Write a final byte to unblock the os.read() call.
-        os.write(self._pipe_write_fd, b"\0")
-      except OSError:
-        pass
+    """Shuts down the dispatcher thread and cleans up resources.
 
-      if self._dispatcher_thread:
-        self._dispatcher_thread.join()
-      os.close(self._pipe_read_fd)
-      os.close(self._pipe_write_fd)
+    Waits until the dispatcher thread delivered all pending results, unless
+    this is called by the user callback or while the interpreter shuts down.
+    """
+    with self._lock:
+      self._state = _DispatcherState.SHUTTING_DOWN
+      # Unblock the os.read() call so that the thread notices the new state.
+      self._signal_locked()
+      dispatcher_thread = self._dispatcher_thread
 
-  def _start(self) -> None:
-    """Starts the dispatcher thread."""
+    # The dispatcher thread closes the pipes when it exits. It cannot join
+    # itself, and daemon threads no longer run once the interpreter shuts down.
+    if (
+        dispatcher_thread is not None
+        and dispatcher_thread is not threading.current_thread()
+        and not mediapipe_c_utils.is_shutdown()
+    ):
+      dispatcher_thread.join()
+
+  def _start_locked(self) -> None:
+    """Starts the dispatcher thread while holding `self._lock`."""
     if self._callback is None:
       raise ValueError("Dispatcher should not be started without a callback.")
     self._state = _DispatcherState.RUNNING

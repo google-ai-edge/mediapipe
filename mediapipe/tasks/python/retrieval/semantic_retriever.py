@@ -735,9 +735,14 @@ class SemanticRetriever:
     """Shuts down and releases the retriever."""
     if not self._retriever_handle:
       return
-    self._lib.MpSemanticRetrieverClose(self._retriever_handle)
+    # The C library frees the task even if it fails to close, so the handle
+    # must not be used again.
+    handle = self._retriever_handle
     self._retriever_handle = None
-    self._lib.close()
+    try:
+      self._lib.MpSemanticRetrieverClose(handle)
+    finally:
+      self._lib.close()
 
   def __enter__(self) -> 'SemanticRetriever':
     return self

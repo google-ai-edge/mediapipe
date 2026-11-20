@@ -376,10 +376,16 @@ class TextProofreader:
   def close(self):
     """Shuts down the MediaPipe task instance."""
     if self._proofreader_handle:
-      self._lib.MpTextProofreaderClose(self._proofreader_handle)  # pyrefly: ignore[missing-attribute]
+      # The C library frees the task even if it fails to close, so the handle
+      # must not be used again.
+      handle = self._proofreader_handle
       self._proofreader_handle = None  # pyrefly: ignore[bad-assignment]
-      self._async_result_callback = None
-      self._lib.close()
+      try:
+        self._lib.MpTextProofreaderClose(handle)  # pyrefly: ignore[missing-attribute]
+      finally:
+        self._async_result_callback = None
+        self._c_callback = None  # pyrefly: ignore[bad-assignment]
+        self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

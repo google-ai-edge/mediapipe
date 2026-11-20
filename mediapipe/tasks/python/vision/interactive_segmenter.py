@@ -242,9 +242,14 @@ class InteractiveSegmenter:
     """Closes the InteractiveSegmenter."""
     if not self._handle:
       return
-    self._lib.MpInteractiveSegmenterClose(self._handle)  # pyrefly: ignore[missing-attribute]
+    # The C library frees the task even if it fails to close, so the handle
+    # must not be used again.
+    handle = self._handle
     self._handle = None  # pyrefly: ignore[bad-assignment]
-    self._lib.close()
+    try:
+      self._lib.MpInteractiveSegmenterClose(handle)  # pyrefly: ignore[missing-attribute]
+    finally:
+      self._lib.close()
 
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""

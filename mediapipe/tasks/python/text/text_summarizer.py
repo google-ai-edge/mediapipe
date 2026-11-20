@@ -326,6 +326,7 @@ class TextSummarizer:
         self._lib.MpTextSummarizerClose(handle)  # pyrefly: ignore[missing-attribute]
       finally:
         self._async_result_callback = None
+        self._c_callback = None  # pyrefly: ignore[bad-assignment]
         self._lib.close()
 
   def __enter__(self):

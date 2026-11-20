@@ -1197,13 +1197,21 @@ class DecisionMaker:
   def close(self):
     """Releases resources associated with the task."""
     if self._handle:
-      # pyrefly: ignore[missing-attribute]
-      self._lib.MpDecisionMakerClose(self._handle)
+      # The C library frees the task even if it fails to close, so the handle
+      # must not be used again.
+      handle = self._handle
       self._handle = None  # pyrefly: ignore[bad-assignment]
-      self._lib.close()
+      try:
+        # pyrefly: ignore[missing-attribute]
+        self._lib.MpDecisionMakerClose(handle)
+      finally:
+        self._lib.close()
 
   def __enter__(self):
     return self
 
   def __exit__(self, exc_type, exc_val, exc_tb):
+    self.close()
+
+  def __del__(self):
     self.close()

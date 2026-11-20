@@ -14,7 +14,6 @@
 """Common MediaPipe CTypes definitions and utilities."""
 
 import atexit
-import concurrent.futures
 import ctypes
 import dataclasses
 import enum
@@ -58,28 +57,12 @@ class CFunction:
   argtypes: list[Any]
   restype: Any
 
-  def create_python_wrapper(
-      self, lib: ctypes.CDLL, executor: concurrent.futures.Executor
-  ) -> Callable[..., Any]:
-    """Creates a callable wrapper that executes the C function on the executor.
-
-    Args:
-      lib: The ctypes shared library.
-      executor: The executor to use for the C function.
-
-    Returns:
-      A callable that executes the C function on the executor.
-    """
+  def create_c_wrapper(self, lib: ctypes.CDLL) -> Callable[..., Any]:
+    """Creates a callable wrapper that invokes the C function directly."""
     c_func = getattr(lib, self.func_name)
     c_func.argtypes = self.argtypes
     c_func.restype = self.restype
-
-    @functools.wraps(c_func)
-    def dispatcher_wrapper(*args, **kwargs) -> Any:
-      future = executor.submit(c_func, *args, **kwargs)
-      return future.result()
-
-    return dispatcher_wrapper
+    return c_func
 
 
 @dataclasses.dataclass(frozen=True)
@@ -101,47 +84,24 @@ class CStatusFunction(CFunction):
     full_argtypes = list(core_argtypes) + [ctypes.POINTER(ctypes.c_char_p)]
     super().__init__(func_name, full_argtypes, restype=ctypes.c_int)
 
-  def create_python_wrapper(
-      self, lib: ctypes.CDLL, executor: concurrent.futures.Executor
-  ) -> Callable[..., None]:
-    """Creates a callable wrapper that executes the C function on the executor.
-
-    This function raises a Python exception based on the MpStatus code returned
-    by the C API function and the error message argument.
-
-    Args:
-      lib: The ctypes shared library.
-      executor: The executor to use for the C function.
-
-    Returns:
-      A callable that executes the C function on the executor.
-    """
-    c_func = getattr(lib, self.func_name)
-    c_func.argtypes = self.argtypes
-    c_func.restype = self.restype
-    error_msg_index = len(self.argtypes)
+  def create_c_wrapper(self, lib: ctypes.CDLL) -> Callable[..., None]:
+    """Creates a callable wrapper that invokes the status C function directly."""
+    c_func = super().create_c_wrapper(lib)
 
     @functools.wraps(c_func)
-    def dispatcher_wrapper(*args, **kwargs) -> None:
+    def status_wrapper(*args, **kwargs) -> None:
       if is_shutdown():
         return
+      error_msg = ctypes.c_char_p()
+      call_args = [*args, ctypes.byref(error_msg)]
+      status = c_func(*call_args, **kwargs)
+      try:
+        handle_status(status, error_msg)
+      finally:
+        if error_msg.value is not None:
+          lib.MpErrorFree(error_msg)
 
-      def dispatch_and_free():
-        # Add the error message argument to the list of arguments.
-        error_msg = ctypes.c_char_p()
-        call_args = list(args)
-        call_args.insert(error_msg_index, ctypes.byref(error_msg))
-
-        status = c_func(*call_args, **kwargs)
-        try:
-          handle_status(status, error_msg)
-        finally:
-          if error_msg.value is not None:
-            lib.MpErrorFree(error_msg)
-
-      executor.submit(dispatch_and_free).result()
-
-    return dispatcher_wrapper
+    return status_wrapper
 
 
 class MpStatus(enum.IntEnum):
@@ -227,6 +187,7 @@ def handle_status(
   Raises:
     An error if the MpStatus is not kMpOk.
   """
-  exception = convert_to_exception(status, error_message)
-  if exception:
-    raise exception
+  # Raise directly without storing the exception in a local variable so the
+  # traceback frame does not form a reference cycle with the raised exception.
+  if status != MpStatus.MP_OK:
+    raise convert_to_exception(status, error_message)  # pyrefly: ignore[bad-raise]

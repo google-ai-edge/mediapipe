@@ -396,9 +396,14 @@ class UniversalEmbedder:
     """Shuts down and releases the UniversalEmbedder."""
     if not self._embedder_handle:
       return
-    self._lib.MpUniversalEmbedderClose(self._embedder_handle)
+    # The C library frees the task even if it fails to close, so the handle
+    # must not be used again.
+    handle = self._embedder_handle
     self._embedder_handle = None
-    self._lib.close()
+    try:
+      self._lib.MpUniversalEmbedderClose(handle)
+    finally:
+      self._lib.close()
 
   def __enter__(self) -> 'UniversalEmbedder':
     return self
