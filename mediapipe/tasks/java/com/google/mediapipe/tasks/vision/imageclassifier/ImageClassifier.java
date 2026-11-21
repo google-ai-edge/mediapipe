@@ -490,7 +490,7 @@ public final class ImageClassifier extends BaseVisionTaskApi {
       BaseOptionsProto.BaseOptions.Builder baseOptionsBuilder =
           BaseOptionsProto.BaseOptions.newBuilder();
       baseOptionsBuilder.setUseStreamMode(runningMode() != RunningMode.IMAGE);
-      baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions(), /* useLiteRt= */ true));
+      baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions()));
       ClassifierOptionsProto.ClassifierOptions.Builder classifierOptionsBuilder =
           ClassifierOptionsProto.ClassifierOptions.newBuilder();
       displayNamesLocale().ifPresent(classifierOptionsBuilder::setDisplayNamesLocale);
