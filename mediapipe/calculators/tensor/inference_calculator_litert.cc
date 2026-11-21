@@ -22,7 +22,9 @@
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "absl/status/statusor.h"       // from @com_google_absl
 #include "absl/time/time.h"             // from @com_google_absl
+#include "litert/cc/litert_macros.h"    // from @litert
 #include "litert/cc/litert_options.h"   // from @litert
+#include "litert/tflite_support/op_resolver/op_resolver.h"  // from @litert
 #include "mediapipe/calculators/tensor/inference_calculator.h"
 #include "mediapipe/calculators/tensor/inference_runner.h"
 #include "mediapipe/calculators/tensor/inference_runner_litert.h"
@@ -35,6 +37,7 @@
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
+#include "tflite/mutable_op_resolver.h"  // from @litert
 
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
@@ -76,6 +79,27 @@ class InferenceCalculatorLiteRtImpl
 bool UseGpu(const mediapipe::InferenceCalculatorOptions& options) {
   return options.delegate().litert().has_gpu();
 }
+
+namespace {
+
+// Returns the OP_RESOLVER (or deprecated CUSTOM_OP_RESOLVER) side packet, or
+// nullptr if not connected. LiteRT needs a tflite::MutableOpResolver.
+absl::StatusOr<const tflite::MutableOpResolver*> GetOpResolver(
+    CalculatorContext* cc) {
+  if (InferenceCalculator::kSideInOpResolver(cc).IsConnected()) {
+    const auto* resolver = dynamic_cast<const tflite::MutableOpResolver*>(
+        &InferenceCalculator::kSideInOpResolver(cc).Get());
+    RET_CHECK(resolver != nullptr)
+        << "OP_RESOLVER must be a tflite::MutableOpResolver.";
+    return resolver;
+  }
+  if (InferenceCalculator::kSideInCustomOpResolver(cc).IsConnected()) {
+    return &InferenceCalculator::kSideInCustomOpResolver(cc).Get();
+  }
+  return nullptr;
+}
+
+}  // namespace
 
 absl::Status InferenceCalculatorLiteRtImpl::UpdateContract(
     CalculatorContract* cc) {
@@ -182,6 +206,25 @@ InferenceCalculatorLiteRtImpl::CreateInferenceRunner(CalculatorContext* cc) {
   };
 
   std::optional<litert::Options> litert_options;
+  // The OP_RESOLVER side packet replaces LiteRT's default builtin op resolver.
+  // The system LiteRT runtime is a separate binary and can't take an op
+  // resolver, so the OP_RESOLVER side packet is ignored with the system LiteRT
+  // runtime.
+  //
+  // Copies only the ops of the op resolver, not TFLite's default XNNPACK
+  // delegate, which would otherwise run on top of the LiteRT accelerators.
+  // This copy must outlive InferenceRunnerLiteRt::Create().
+  tflite::MutableOpResolver resolver_without_default_delegates;
+  if (system_handles.runtime == 0) {
+    ABSL_ASSIGN_OR_RETURN(const tflite::MutableOpResolver* op_resolver,
+                          GetOpResolver(cc));
+    if (op_resolver != nullptr) {
+      resolver_without_default_delegates.AddAll(*op_resolver);
+      LITERT_ASSIGN_OR_RETURN(litert_options, litert::Options::Create());
+      LITERT_RETURN_IF_ERROR(litert::tflite_support::SetOpResolver(
+          *litert_options, &resolver_without_default_delegates));
+    }
+  }
 
   return InferenceRunnerLiteRt::Create(
       std::move(model_packet), litert,

@@ -739,7 +739,10 @@ cc_library(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/types:optional",
+        "@litert//litert/cc:litert_macros",
         "@litert//litert/cc:litert_options",
+        "@litert//litert/tflite_support/op_resolver",
+        "@litert//tflite:mutable_op_resolver",
     ] + select({
         "//mediapipe:apple": [
             "//mediapipe/gpu:MPPMetalHelper",
