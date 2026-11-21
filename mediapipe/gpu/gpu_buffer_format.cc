@@ -92,7 +92,7 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
           {GpuBufferFormat::kBGRA32,
            {
   // internal_format, format, type, downscale
-#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#if MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER
                // On Apple platforms, we have different code paths for iOS
                // (using CVPixelBuffer) and on macOS (using GlTextureBuffer).
                // When using CVPixelBuffer, the preferred transfer format is
@@ -101,7 +101,7 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
                {GL_RGBA, GL_BGRA, GL_UNSIGNED_BYTE, 1},
 #else
                {GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, 1},
-#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#endif  // MEDIAPIPE_GPU_BUFFER_POOL_USE_CV_PIXEL_BUFFER
            }},
           {GpuBufferFormat::kOneComponent8,
            {
