@@ -155,22 +155,25 @@ cc_library(
     deps = [
         ":set_alpha_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
-        "//mediapipe/framework/port:vector",
+        "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
+        "@com_google_absl//absl/strings",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
+            "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_quad_renderer",
             "//mediapipe/gpu:gl_simple_shaders",
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gpu_buffer_format",
             "//mediapipe/gpu:shader_util",
         ],
     }),
@@ -180,19 +183,27 @@ cc_library(
 cc_test(
     name = "set_alpha_calculator_test",
     srcs = ["set_alpha_calculator_test.cc"],
+    tags = [
+        "noasan",  # TODO: Remove noasan tag when SwiftShader supports sanitizers
+    ],
     deps = [
         ":set_alpha_calculator",
-        ":set_alpha_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
-        "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:opencv_core",
-        "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:parse_text_proto",
         "@com_google_googletest//:gtest_main",
-    ],
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
+            "//mediapipe/gpu:image_frame_to_gpu_buffer_calculator",
+        ],
+    }),
 )
 
 cc_library(

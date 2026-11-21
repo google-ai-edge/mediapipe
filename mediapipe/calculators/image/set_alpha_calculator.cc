@@ -12,24 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+#include <cmath>
 #include <memory>
+#include <string>
+#include <type_traits>
 
 #include "absl/log/absl_log.h"          // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/strings/str_cat.h"       // from @com_google_absl
 #include "mediapipe/calculators/image/set_alpha_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
-#include "mediapipe/framework/port/opencv_core_inc.h"
+#include "mediapipe/framework/port/opencv_core_inc.h"  // IWYU pragma: keep
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
-#include "mediapipe/framework/port/vector.h"
+#include "mediapipe/framework/port/ret_check.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
+#include "mediapipe/gpu/gpu_buffer.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/shader_util.h"
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
@@ -65,7 +72,7 @@ absl::Status CopyAlphaImage(const cv::Mat& alpha_mat, cv::Mat& output_mat) {
     for (int j = 0; j < output_mat.cols; ++j) {
       const int out_idx = j * kNumChannelsRGBA;
       const int alpha_idx = j * alpha_mat.channels();
-      if constexpr (std::is_same<AlphaType, uchar>::value) {
+      if constexpr (std::is_same_v<AlphaType, uchar>) {
         out_ptr[out_idx + 3] = alpha_ptr[alpha_idx + 0];  // channel 0 of mask
       } else {
         const AlphaType alpha = alpha_ptr[alpha_idx + 0];  // channel 0 of mask
@@ -403,9 +410,11 @@ void SetAlphaCalculator::GlRender(CalculatorContext* cc) {
   // vertex storage
   GLuint vbo[2];
   glGenBuffers(2, vbo);
+#if !defined(__APPLE__) || !TARGET_OS_OSX || defined(OSX_ENABLE_3_2_CORE)
   GLuint vao;
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
+#endif
 
   // vbo 0
   glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
@@ -428,8 +437,10 @@ void SetAlphaCalculator::GlRender(CalculatorContext* cc) {
   glDisableVertexAttribArray(ATTRIB_VERTEX);
   glDisableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
+#if !defined(__APPLE__) || !TARGET_OS_OSX || defined(OSX_ENABLE_3_2_CORE)
   glBindVertexArray(0);
   glDeleteVertexArrays(1, &vao);
+#endif
   glDeleteBuffers(2, vbo);
 
 #endif  // !MEDIAPIPE_DISABLE_GPU
@@ -448,23 +459,10 @@ absl::Status SetAlphaCalculator::GlSetup(CalculatorContext* cc) {
 
   // Shader to overlay a texture onto another when overlay is non-zero.
   // TODO split into two shaders to handle alpha_value<0 separately
-  const GLchar* frag_src = GLES_VERSION_COMPAT
-      R"(
-  #if __VERSION__ < 130
-    #define in varying
-  #endif  // __VERSION__ < 130
-
-  #ifdef GL_ES
-    #define fragColor gl_FragColor
-    precision highp float;
-  #else
-    #define lowp
-    #define mediump
-    #define highp
-    #define texture2D texture
-    out vec4 fragColor;
-  #endif  // defined(GL_ES)
-
+  const std::string frag_src =
+      absl::StrCat(mediapipe::kMediaPipeFragmentShaderPreamble,
+                   R"(
+    DEFAULT_PRECISION(highp, float)
     in vec2 sample_coordinate;
     uniform sampler2D input_frame;
     uniform sampler2D alpha_mask;
@@ -474,13 +472,12 @@ absl::Status SetAlphaCalculator::GlSetup(CalculatorContext* cc) {
       vec3 image_pix = texture2D(input_frame, sample_coordinate).rgb;
       float alpha = alpha_value;
       if (alpha_value < 0.0) alpha = texture2D(alpha_mask, sample_coordinate).r;
-      vec4 out_pix = vec4(image_pix, alpha);
-      fragColor = out_pix;
+      gl_FragColor = vec4(image_pix, alpha);
     }
-  )";
+  )");
 
   // Create shader program and set parameters.
-  mediapipe::GlhCreateProgram(mediapipe::kBasicVertexShader, frag_src,
+  mediapipe::GlhCreateProgram(mediapipe::kBasicVertexShader, frag_src.c_str(),
                               NUM_ATTRIBUTES, (const GLchar**)&attr_name[0],
                               attr_location, &program_);
   RET_CHECK(program_) << "Problem initializing the program.";

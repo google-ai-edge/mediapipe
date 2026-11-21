@@ -21,6 +21,7 @@
 
 #include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/shader_util.h"
 
@@ -28,17 +29,31 @@ namespace mediapipe {
 
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
 
+namespace {
+
+// Without OSX_ENABLE_3_2_CORE, NSOpenGLContext on macOS creates a legacy
+// OpenGL 2.1 context, where OpenGL 3.0 ARB_vertex_array_object entry points
+// (glGenVertexArrays / glBindVertexArray) fail with GL_INVALID_OPERATION.
+constexpr bool kUseVao =
+#if defined(__APPLE__) && TARGET_OS_OSX && !defined(OSX_ENABLE_3_2_CORE)
+    false;
+#else
+    true;
+#endif
+
+}  // namespace
+
 // static
 FrameScaleMode FrameScaleModeFromProto(ScaleMode_Mode proto_scale_mode,
                                        FrameScaleMode default_mode) {
   switch (proto_scale_mode) {
-    case ScaleMode_Mode_DEFAULT:
+    case ScaleMode::DEFAULT:
       return default_mode;
-    case ScaleMode_Mode_STRETCH:
+    case ScaleMode::STRETCH:
       return FrameScaleMode::kStretch;
-    case ScaleMode_Mode_FIT:
+    case ScaleMode::FIT:
       return FrameScaleMode::kFit;
-    case ScaleMode_Mode_FILL_AND_CROP:
+    case ScaleMode::FILL_AND_CROP:
       return FrameScaleMode::kFillAndCrop;
     default:
       return default_mode;
@@ -90,19 +105,24 @@ absl::Status QuadRenderer::GlSetup(
   scale_unif_ = glGetUniformLocation(program_, "scale");
   RET_CHECK(scale_unif_ != -1) << "could not find uniform 'scale'";
 
-  glGenVertexArrays(1, &vao_);
   glGenBuffers(2, vbo_);
-
-  glBindVertexArray(vao_);
-  glEnableVertexAttribArray(ATTRIB_VERTEX);
-  glEnableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
+  if (kUseVao) {
+    glGenVertexArrays(1, &vao_);
+    glBindVertexArray(vao_);
+    glEnableVertexAttribArray(ATTRIB_VERTEX);
+    glEnableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
+  }
 
   glBindBuffer(GL_ARRAY_BUFFER, vbo_[1]);
   glBufferData(GL_ARRAY_BUFFER, sizeof(mediapipe::kBasicTextureVertices),
                kBasicTextureVertices, GL_STATIC_DRAW);
-  glVertexAttribPointer(ATTRIB_TEXTURE_POSITION, 2, GL_FLOAT, 0, 0, nullptr);
+  if (kUseVao) {
+    glVertexAttribPointer(ATTRIB_TEXTURE_POSITION, 2, GL_FLOAT, 0, 0, nullptr);
+  }
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindVertexArray(0);
+  if (kUseVao) {
+    glBindVertexArray(0);
+  }
 
   return absl::OkStatus();
 }
@@ -186,14 +206,34 @@ absl::Status QuadRenderer::GlRender(float frame_width, float frame_height,
 
   // Draw.
 
-  glBindVertexArray(vao_);
-  if (rotation != rotation_) {
-    rotation_ = rotation;
-    UpdateVertices(rotation);
-  }
+  if (vao_) {
+    glBindVertexArray(vao_);
+    if (rotation != rotation_) {
+      rotation_ = rotation;
+      UpdateVertices(rotation);
+    }
 
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-  glBindVertexArray(0);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+  } else {
+    if (rotation != rotation_) {
+      rotation_ = rotation;
+      UpdateVertices(rotation);
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_[0]);
+    glEnableVertexAttribArray(ATTRIB_VERTEX);
+    glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, 0, 0, nullptr);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_[1]);
+    glEnableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
+    glVertexAttribPointer(ATTRIB_TEXTURE_POSITION, 2, GL_FLOAT, 0, 0, nullptr);
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    glDisableVertexAttribArray(ATTRIB_VERTEX);
+    glDisableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+  }
 
   return absl::OkStatus();
 }
@@ -219,7 +259,9 @@ void QuadRenderer::UpdateVertices(FrameRotation rotation) const {
   glBindBuffer(GL_ARRAY_BUFFER, vbo_[0]);
   glBufferData(GL_ARRAY_BUFFER, sizeof(mediapipe::kBasicSquareVertices),
                vertices, GL_STATIC_DRAW);
-  glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, 0, 0, nullptr);
+  if (vao_) {
+    glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, 0, 0, nullptr);
+  }
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
