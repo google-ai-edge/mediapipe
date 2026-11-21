@@ -105,13 +105,13 @@ mediapipe_simple_subgraph(
     graph = "hand_landmarks_from_pose_gpu.pbtxt",
     register_as = "HandLandmarksFromPoseGpu",
     deps = [
-        ":hand_landmarks_from_pose_to_recrop_roi",
         ":hand_recrop_by_roi_gpu",
         ":hand_tracking",
         ":hand_visibility_from_hand_landmarks_from_pose",
         "//mediapipe/calculators/core:gate_calculator",
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/modules/hand_landmark:hand_landmark_gpu",
+        "//mediapipe/modules/holistic_landmark/calculators:hand_roi_from_pose_net_calculator",
     ],
 )
 
@@ -120,13 +120,13 @@ mediapipe_simple_subgraph(
     graph = "hand_landmarks_from_pose_cpu.pbtxt",
     register_as = "HandLandmarksFromPoseCpu",
     deps = [
-        ":hand_landmarks_from_pose_to_recrop_roi",
         ":hand_recrop_by_roi_cpu",
         ":hand_tracking",
         ":hand_visibility_from_hand_landmarks_from_pose",
         "//mediapipe/calculators/core:gate_calculator",
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/modules/hand_landmark:hand_landmark_cpu",
+        "//mediapipe/modules/holistic_landmark/calculators:hand_roi_from_pose_net_calculator",
     ],
 )
 
@@ -205,6 +205,7 @@ mediapipe_simple_subgraph(
     register_as = "HandLandmarksLeftAndRightGpu",
     deps = [
         ":hand_landmarks_from_pose_gpu",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:split_proto_list_calculator",
     ],
 )
@@ -215,6 +216,7 @@ mediapipe_simple_subgraph(
     register_as = "HandLandmarksLeftAndRightCpu",
     deps = [
         ":hand_landmarks_from_pose_cpu",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:split_proto_list_calculator",
     ],
 )
