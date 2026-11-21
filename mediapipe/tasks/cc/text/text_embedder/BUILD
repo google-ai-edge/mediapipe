@@ -125,6 +125,7 @@ cc_library(
     deps = [
         "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
         "//mediapipe/calculators/tensor:inference_calculator_cpu",
+        "//mediapipe/calculators/tensor:inference_calculator_litert",  # buildcleaner: keep
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:builder",

@@ -378,7 +378,7 @@ public final class TextEmbedder implements AutoCloseable {
     public CalculatorOptions convertToCalculatorOptionsProto() {
       BaseOptionsProto.BaseOptions.Builder baseOptionsBuilder =
           BaseOptionsProto.BaseOptions.newBuilder();
-      baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions()));
+      baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions(), /* useLiteRt= */ true));
       EmbedderOptionsProto.EmbedderOptions.Builder embedderOptionsBuilder =
           EmbedderOptionsProto.EmbedderOptions.newBuilder();
       embedderOptionsBuilder.setL2Normalize(l2Normalize());

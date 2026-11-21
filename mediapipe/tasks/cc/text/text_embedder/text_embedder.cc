@@ -130,7 +130,8 @@ std::unique_ptr<proto::TextEmbedderGraphOptions>
 ConvertTextEmbedderOptionsToProto(TextEmbedderOptions* options) {
   auto options_proto = std::make_unique<proto::TextEmbedderGraphOptions>();
   auto base_options_proto = std::make_unique<tasks::core::proto::BaseOptions>(
-      tasks::core::ConvertBaseOptionsToProto(&(options->base_options)));
+      tasks::core::ConvertBaseOptionsToProto(&(options->base_options),
+                                             /*use_litert=*/true));
   options_proto->mutable_base_options()->Swap(base_options_proto.get());
   auto embedder_options_proto =
       std::make_unique<components::processors::proto::EmbedderOptions>(
