@@ -305,7 +305,7 @@ public final class LanguageDetector implements AutoCloseable {
     public CalculatorOptions convertToCalculatorOptionsProto() {
       BaseOptionsProto.BaseOptions.Builder baseOptionsBuilder =
           BaseOptionsProto.BaseOptions.newBuilder();
-      baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions()));
+      baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions(), /* useLiteRt= */ true));
       ClassifierOptionsProto.ClassifierOptions.Builder classifierOptionsBuilder =
           ClassifierOptionsProto.ClassifierOptions.newBuilder();
       displayNamesLocale().ifPresent(classifierOptionsBuilder::setDisplayNamesLocale);
