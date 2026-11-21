@@ -126,7 +126,14 @@ cc_library(
     name = "image_embedder_graph",
     srcs = ["image_embedder_graph.cc"],
     deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
+        "@com_google_absl//absl/status:statusor",
         "//mediapipe/calculators/tensor:inference_calculator",
+        # Registers InferenceCalculatorLiteRt, which this graph runs inference
+        # on. Without it InferenceCalculatorSelectorImpl silently falls back to
+        # the GL/CPU implementations.
+        "//mediapipe/calculators/tensor:inference_calculator_litert",  # buildcleaner: keep
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",
@@ -140,9 +147,6 @@ cc_library(
         "//mediapipe/tasks/cc/components/processors/proto:image_preprocessing_graph_options_cc_proto",
         "//mediapipe/tasks/cc/core:model_task_graph",
         "//mediapipe/tasks/cc/vision/image_embedder/proto:image_embedder_graph_options_cc_proto",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:status_macros",
-        "@com_google_absl//absl/status:statusor",
     ],
     alwayslink = 1,
 )

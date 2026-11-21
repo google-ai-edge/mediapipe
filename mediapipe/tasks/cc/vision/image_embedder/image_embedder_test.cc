@@ -129,7 +129,7 @@ TEST_F(CreateTest, FailsWithSelectiveOpResolverMissingOps) {
 
   EXPECT_EQ(image_embedder.status().code(), absl::StatusCode::kInternal);
   EXPECT_THAT(image_embedder.status().message(),
-              HasSubstr("interpreter_builder(&interpreter) == kTfLiteOk"));
+              HasSubstr("Failed to build TFL interpreter"));
 }
 
 TEST_F(CreateTest, FailsWithMissingModel) {

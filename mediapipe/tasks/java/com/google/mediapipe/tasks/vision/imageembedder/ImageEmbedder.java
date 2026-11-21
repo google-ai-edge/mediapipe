@@ -448,7 +448,7 @@ public final class ImageEmbedder implements AutoCloseable {
       BaseOptionsProto.BaseOptions.Builder baseOptionsBuilder =
           BaseOptionsProto.BaseOptions.newBuilder();
       baseOptionsBuilder.setUseStreamMode(runningMode() != RunningMode.IMAGE);
-      baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions()));
+      baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions(), /* useLiteRt= */ true));
       EmbedderOptionsProto.EmbedderOptions.Builder embedderOptionsBuilder =
           EmbedderOptionsProto.EmbedderOptions.newBuilder();
       embedderOptionsBuilder.setL2Normalize(l2Normalize());
