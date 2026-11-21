@@ -641,6 +641,8 @@ cc_test(
     data = glob(["testdata/box_tracker/*"]),
     deps = [
         ":box_tracker",
+        ":flow_packager_cc_proto",
+        ":tracking",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:gtest_main",
         "@com_google_absl//absl/flags:flag",
