@@ -1,0 +1,43 @@
+// Copyright 2026 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Metadata proto emitted as a side packet by TfLiteInferenceCalculator.
+
+syntax = "proto2";
+package mediapipe;
+
+// Metadata for a single TFLite tensor (input or output).
+message TfLiteTensorSpec {
+  optional string name = 1;
+  repeated int32 shape = 2;  // e.g. [1, 640, 640, 3]
+
+  enum TensorType {
+    FLOAT32 = 0;
+    INT8    = 1;
+    UINT8   = 2;
+    INT32   = 3;
+    INT64   = 4;
+  }
+  optional TensorType type = 3 [default = FLOAT32];
+
+  // For quantized (INT8/UINT8) tensors. Both 0.0/0 means not quantized.
+  optional float quantization_scale      = 4 [default = 0.0];
+  optional int32 quantization_zero_point = 5 [default = 0];
+}
+
+// Emitted as a side packet by TfLiteInferenceCalculator after Open().
+message TfLiteModelMetadata {
+  repeated TfLiteTensorSpec inputs  = 1;
+  repeated TfLiteTensorSpec outputs = 2;
+}
