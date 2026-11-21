@@ -519,17 +519,47 @@ cc_library(
         ":image_clone_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:status_macros",
+        "@com_google_absl//absl/status:statusor",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gpu_buffer",
         ],
+    }) + select({
+        "//mediapipe:apple": [
+            "//third_party/apple_frameworks:Accelerate",
+        ],
+        "//conditions:default": [],
     }),
     alwayslink = 1,
+)
+
+cc_test(
+    name = "image_clone_calculator_test",
+    srcs = ["image_clone_calculator_test.cc"],
+    tags = [
+        "noasan",
+        "not_run:arm",
+    ],
+    deps = [
+        ":image_clone_calculator",
+        ":image_clone_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+    ],
 )
 
 cc_library(

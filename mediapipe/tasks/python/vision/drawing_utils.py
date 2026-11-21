@@ -28,6 +28,7 @@ from mediapipe.tasks.python.vision import face_landmarker
 _PRESENCE_THRESHOLD = 0.5
 _VISIBILITY_THRESHOLD = 0.5
 _BGR_CHANNELS = 3
+_BGRA_CHANNELS = 4
 _CONNECTION = face_landmarker.FaceLandmarksConnections.Connection
 
 WHITE_COLOR = (224, 224, 224)
@@ -40,7 +41,7 @@ BLUE_COLOR = (255, 0, 0)
 @dataclasses.dataclass
 class DrawingSpec:
   # Color for drawing the annotation. Default to the white color.
-  color: tuple[int, int, int] = WHITE_COLOR
+  color: Union[tuple[int, int, int], tuple[int, int, int, int]] = WHITE_COLOR
   # Thickness for drawing the annotation. Default to 2 pixels.
   thickness: int = 2
   # Circle radius. Default to 2 pixels.
@@ -69,6 +70,22 @@ def _normalized_to_pixel_coordinates(
   return x_px, y_px
 
 
+def _validate_image_channels(image: np.ndarray) -> tuple[int, int, int]:
+  """Validates that `image` is a 3- or 4-channel 2D image and returns shape."""
+  if image.ndim != 3 or image.shape[2] not in (_BGR_CHANNELS, _BGRA_CHANNELS):
+    raise ValueError('Input image must contain three or four channel bgr data.')
+  return image.shape[0], image.shape[1], image.shape[2]
+
+
+def _color_for_channels(
+    color: tuple[int, ...], channels: int
+) -> tuple[int, ...]:
+  """Appends opaque alpha (255) when drawing 3-tuple colors onto 4-channel images."""
+  if channels == _BGRA_CHANNELS and len(color) == _BGR_CHANNELS:
+    return (*color, 255)
+  return color
+
+
 def draw_detection(
     image: np.ndarray,
     detection: detections_module.Detection,
@@ -78,7 +95,7 @@ def draw_detection(
   """Draws the detction bounding box and keypoints on the image.
 
   Args:
-    image: A three channel BGR image represented as numpy ndarray.
+    image: A three or four channel BGR/BGRA image represented as numpy ndarray.
     detection: A detection object with a bounding box.
     keypoint_drawing_spec: A DrawingSpec object that specifies the keypoints'
       drawing settings such as color, line thickness, and circle radius.
@@ -86,25 +103,27 @@ def draw_detection(
       drawing settings such as color and line thickness.
 
   Raises:
-    ValueError: If the input image is not three channel BGR.
+    ValueError: If the input image is not three or four channel data.
   """
-  if image.shape[2] != _BGR_CHANNELS:
-    raise ValueError('Input image must contain three channel bgr data.')
-  image_rows, image_cols, _ = image.shape
+  image_rows, image_cols, image_channels = _validate_image_channels(image)
 
   # Draws keypoints.
   if detection.keypoints:
+    keypoint_color = _color_for_channels(
+        keypoint_drawing_spec.color, image_channels
+    )
     for keypoint in detection.keypoints:
       keypoint_px = _normalized_to_pixel_coordinates(
           keypoint.x, keypoint.y, image_cols, image_rows  # pyrefly: ignore[bad-argument-type]
       )
-      cv2.circle(
-          image,
-          keypoint_px,
-          keypoint_drawing_spec.circle_radius,
-          keypoint_drawing_spec.color,
-          keypoint_drawing_spec.thickness,
-      )
+      if keypoint_px:
+        cv2.circle(
+            image,
+            keypoint_px,
+            keypoint_drawing_spec.circle_radius,
+            keypoint_color,
+            keypoint_drawing_spec.thickness,
+        )
 
   # Draws bounding box.
   rect_start_point = (
@@ -115,8 +134,13 @@ def draw_detection(
       detection.bounding_box.origin_x + detection.bounding_box.width,
       detection.bounding_box.origin_y + detection.bounding_box.height,
   )
-  cv2.rectangle(image, rect_start_point, rect_end_point,
-                bbox_drawing_spec.color, bbox_drawing_spec.thickness)
+  cv2.rectangle(
+      image,
+      rect_start_point,
+      rect_end_point,
+      _color_for_channels(bbox_drawing_spec.color, image_channels),
+      bbox_drawing_spec.thickness,
+  )
 
 
 def draw_landmarks(
@@ -134,7 +158,7 @@ def draw_landmarks(
   """Draws the landmarks and the connections on the image.
 
   Args:
-    image: A three channel BGR image represented as numpy ndarray.
+    image: A three or four channel BGR/BGRA image represented as numpy ndarray.
     landmark_list: A list of normalized landmarks to be annotated on the image.
     connections: A list of landmark index tuples that specifies how landmarks to
       be connected in the drawing.
@@ -151,14 +175,12 @@ def draw_landmarks(
 
   Raises:
     ValueError: If one of the followings:
-      a) If the input image is not three channel BGR.
+      a) If the input image is not three or four channel data.
       b) If any connetions contain invalid landmark index.
   """
   if not landmark_list:
     return
-  if image.shape[2] != _BGR_CHANNELS:
-    raise ValueError('Input image must contain three channel bgr data.')
-  image_rows, image_cols, _ = image.shape
+  image_rows, image_cols, image_channels = _validate_image_channels(image)
   idx_to_coordinates = {}
   for idx, landmark in enumerate(landmark_list):
     if (
@@ -188,23 +210,33 @@ def draw_landmarks(
             if isinstance(connection_drawing_spec, Mapping)
             else connection_drawing_spec
         )
-        cv2.line(image, idx_to_coordinates[start_idx],
-                 idx_to_coordinates[end_idx], drawing_spec.color,
-                 drawing_spec.thickness)
+        cv2.line(
+            image,
+            idx_to_coordinates[start_idx],
+            idx_to_coordinates[end_idx],
+            _color_for_channels(drawing_spec.color, image_channels),
+            drawing_spec.thickness,
+        )
   # Draws landmark points after finishing the connection lines, which is
   # aesthetically better.
   if is_drawing_landmarks and landmark_drawing_spec:
+    border_color = _color_for_channels(WHITE_COLOR, image_channels)
     for idx, landmark_px in idx_to_coordinates.items():
       drawing_spec = landmark_drawing_spec[idx] if isinstance(
           landmark_drawing_spec, Mapping) else landmark_drawing_spec
       # White circle border
       circle_border_radius = max(drawing_spec.circle_radius + 1,
                                  int(drawing_spec.circle_radius * 1.2))
-      cv2.circle(image, landmark_px, circle_border_radius, WHITE_COLOR,
+      cv2.circle(image, landmark_px, circle_border_radius, border_color,
                  drawing_spec.thickness)
       # Fill color into the circle
-      cv2.circle(image, landmark_px, drawing_spec.circle_radius,
-                 drawing_spec.color, drawing_spec.thickness)
+      cv2.circle(
+          image,
+          landmark_px,
+          drawing_spec.circle_radius,
+          _color_for_channels(drawing_spec.color, image_channels),
+          drawing_spec.thickness,
+      )
 
 
 def draw_axis(
@@ -219,7 +251,7 @@ def draw_axis(
   """Draws the 3D axis on the image.
 
   Args:
-    image: A three channel BGR image represented as numpy ndarray.
+    image: A three or four channel BGR/BGRA image represented as numpy ndarray.
     rotation: Rotation matrix from object to camera coordinate frame.
     translation: Translation vector from object to camera coordinate frame.
     focal_length: camera focal length along x and y directions.
@@ -230,11 +262,9 @@ def draw_axis(
 
   Raises:
     ValueError: If one of the followings:
-      a) If the input image is not three channel BGR.
+      a) If the input image is not three or four channel data.
   """
-  if image.shape[2] != _BGR_CHANNELS:
-    raise ValueError('Input image must contain three channel bgr data.')
-  image_rows, image_cols, _ = image.shape
+  image_rows, image_cols, image_channels = _validate_image_channels(image)
   # Create axis points in camera coordinate frame.
   axis_world = np.float32([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]])  # pyrefly: ignore[bad-argument-type]
   axis_cam = np.matmul(rotation, axis_length * axis_world.T).T + translation
@@ -254,15 +284,38 @@ def draw_axis(
   x_axis = (x_im[1], y_im[1])  # pyrefly: ignore[bad-index]
   y_axis = (x_im[2], y_im[2])  # pyrefly: ignore[bad-index]
   z_axis = (x_im[3], y_im[3])  # pyrefly: ignore[bad-index]
-  cv2.arrowedLine(image, origin, x_axis, RED_COLOR, axis_drawing_spec.thickness)
-  cv2.arrowedLine(image, origin, y_axis, GREEN_COLOR,
-                  axis_drawing_spec.thickness)
-  cv2.arrowedLine(image, origin, z_axis, BLUE_COLOR,
-                  axis_drawing_spec.thickness)
+  cv2.arrowedLine(
+      image,
+      origin,
+      x_axis,
+      _color_for_channels(RED_COLOR, image_channels),
+      axis_drawing_spec.thickness,
+  )
+  cv2.arrowedLine(
+      image,
+      origin,
+      y_axis,
+      _color_for_channels(GREEN_COLOR, image_channels),
+      axis_drawing_spec.thickness,
+  )
+  cv2.arrowedLine(
+      image,
+      origin,
+      z_axis,
+      _color_for_channels(BLUE_COLOR, image_channels),
+      axis_drawing_spec.thickness,
+  )
 
 
 def _normalize_color(color):
   return tuple(v / 255. for v in color)
+
+
+def _bgr_to_rgb_color(
+    color: Union[tuple[int, int, int], tuple[int, int, int, int]],
+) -> tuple[int, ...]:
+  """Swaps BGR channels to RGB while preserving an optional 4th alpha channel."""
+  return (*color[2::-1], *color[3:])
 
 
 def plot_landmarks(
@@ -312,7 +365,7 @@ def plot_landmarks(
         xs=[-landmark.z or 0],  # pyrefly: ignore[unsupported-operation]
         ys=[landmark.x or 0],
         zs=[-landmark.y or 0],  # pyrefly: ignore[unsupported-operation]
-        color=_normalize_color(landmark_drawing_spec.color[::-1]),
+        color=_normalize_color(_bgr_to_rgb_color(landmark_drawing_spec.color)),
         linewidth=landmark_drawing_spec.thickness,
     )
     plotted_landmarks[idx] = (-landmark.z, landmark.x, -landmark.y)  # pyrefly: ignore[unsupported-operation]
@@ -333,6 +386,8 @@ def plot_landmarks(
             xs=[landmark_pair[0][0], landmark_pair[1][0]],
             ys=[landmark_pair[0][1], landmark_pair[1][1]],
             zs=[landmark_pair[0][2], landmark_pair[1][2]],
-            color=_normalize_color(connection_drawing_spec.color[::-1]),
+            color=_normalize_color(
+                _bgr_to_rgb_color(connection_drawing_spec.color)
+            ),
             linewidth=connection_drawing_spec.thickness)
   plt.show()

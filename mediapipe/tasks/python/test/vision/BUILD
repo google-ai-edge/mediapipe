@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # Placeholder for internal Python strict contrib test macro and library compatibility macro.
+# Placeholder: load py_test
 
 licenses(["notice"])
 
@@ -264,6 +265,21 @@ py_test(
     deps = [
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision/core:image",
+        "@mediapipe_pip_deps_absl_py//:pkg",
+        "@mediapipe_pip_deps_numpy//:pkg",
+    ],
+)
+
+py_test(
+    name = "drawing_utils_test",
+    srcs = ["drawing_utils_test.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:bounding_box",
+        "//mediapipe/tasks/python/components/containers:detections",
+        "//mediapipe/tasks/python/components/containers:keypoint",
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//mediapipe/tasks/python/vision:drawing_utils",
+        "//mediapipe/tasks/python/vision:face_landmarker",
         "@mediapipe_pip_deps_absl_py//:pkg",
         "@mediapipe_pip_deps_numpy//:pkg",
     ],

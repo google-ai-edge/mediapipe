@@ -12,15 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
+#include <memory>
+#include <utility>
+
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "mediapipe/calculators/image/image_clone_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
+#include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/image_format.pb.h"
+#include "mediapipe/framework/formats/image_frame.h"
+
+#if defined(__APPLE__) && !MEDIAPIPE_DISABLE_GPU
+#include <Accelerate/Accelerate.h>
+
+#include <cstddef>
+#include <limits>
+
+#include "absl/status/statusor.h"  // from @com_google_absl
+#endif  // defined(__APPLE__) && !MEDIAPIPE_DISABLE_GPU
 
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
+#include "mediapipe/gpu/gpu_buffer.h"
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
 namespace mediapipe {
@@ -32,6 +49,56 @@ using GpuBuffer = AnyType;
 #else
 using GpuBuffer = mediapipe::GpuBuffer;
 #endif  // MEDIAPIPE_DISABLE_GPU
+
+#if defined(__APPLE__) && !MEDIAPIPE_DISABLE_GPU
+namespace {
+
+absl::StatusOr<std::unique_ptr<mediapipe::ImageFrame>> ExpandSrgbToSrgba(
+    const mediapipe::ImageFrame& src_frame) {
+  const int width = src_frame.Width();
+  const int height = src_frame.Height();
+  constexpr int64_t kAlignment =
+      mediapipe::ImageFrame::kGlDefaultAlignmentBoundary;
+  const int64_t dst_width_step =
+      ((int64_t{width} * 4) + kAlignment - 1) & ~(kAlignment - 1);
+  if (width < 0 || height < 0 ||
+      dst_width_step > std::numeric_limits<int>::max() ||
+      int64_t{height} * dst_width_step > std::numeric_limits<int>::max()) {
+    return absl::InvalidArgumentError(
+        "Image dimensions overflow 4-channel SRGBA allocation size.");
+  }
+  auto rgba_frame = std::make_unique<mediapipe::ImageFrame>(
+      mediapipe::ImageFormat::SRGBA, width, height,
+      mediapipe::ImageFrame::kGlDefaultAlignmentBoundary);
+  if (width > 0 && height > 0 && rgba_frame->MutablePixelData() == nullptr) {
+    return absl::ResourceExhaustedError(
+        "Failed to allocate 4-channel SRGBA ImageFrame.");
+  }
+  if (width > 0 && height > 0) {
+    const vImage_Buffer src_buffer = {
+        .data = const_cast<uint8_t*>(src_frame.PixelData()),
+        .height = static_cast<vImagePixelCount>(height),
+        .width = static_cast<vImagePixelCount>(width),
+        .rowBytes = static_cast<size_t>(src_frame.WidthStep()),
+    };
+    const vImage_Buffer dst_buffer = {
+        .data = rgba_frame->MutablePixelData(),
+        .height = static_cast<vImagePixelCount>(height),
+        .width = static_cast<vImagePixelCount>(width),
+        .rowBytes = static_cast<size_t>(rgba_frame->WidthStep()),
+    };
+    const vImage_Error error = vImageConvert_RGB888toRGBA8888(
+        &src_buffer, /*aSrc=*/nullptr, /*alpha=*/255, &dst_buffer,
+        /*premultiply=*/false, kvImageNoFlags);
+    if (error != kvImageNoError) {
+      return absl::InternalError("vImage RGB to RGBA conversion failed.");
+    }
+  }
+  return rgba_frame;
+}
+
+}  // namespace
+#endif  // defined(__APPLE__) && !MEDIAPIPE_DISABLE_GPU
 
 // Clones an input image and makes sure in the output clone the pixel data are
 // stored on the target storage (CPU vs GPU) specified in the calculator option.
@@ -87,6 +154,17 @@ class ImageCloneCalculator : public Node {
       // the input Image.
       output = std::make_unique<Image>(input.GetGpuBuffer());
 #endif  // !MEDIAPIPE_DISABLE_GPU
+#if defined(__APPLE__) && !MEDIAPIPE_DISABLE_GPU
+    } else if (output_on_gpu_ &&
+               input.image_format() == mediapipe::ImageFormat::SRGB) {
+      // Metal textures do not have a 3-channel 24-bit pixel format. Expand CPU
+      // SRGB frames to 4-channel SRGBA before uploading to GPU storage.
+      const std::shared_ptr<mediapipe::ImageFrame> src_frame =
+          input.GetImageFrameSharedPtr();
+      ABSL_ASSIGN_OR_RETURN(std::unique_ptr<mediapipe::ImageFrame> rgba_frame,
+                            ExpandSrgbToSrgba(*src_frame));
+      output = std::make_unique<Image>(std::move(rgba_frame));
+#endif  // defined(__APPLE__) && !MEDIAPIPE_DISABLE_GPU
     } else {
       // Make a copy of the input packet to co-own the input Image.
       mediapipe::Packet* packet_copy_ptr =
