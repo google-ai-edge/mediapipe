@@ -52,7 +52,6 @@ cc_library(
     srcs = ["text_classifier_graph.cc"],
     deps = [
         "//mediapipe/calculators/tensor:inference_calculator_cpu",
-        "//mediapipe/calculators/tensor:inference_calculator_litert",  # buildcleaner: keep
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:builder",

@@ -85,20 +85,21 @@ public class TextClassifierTest {
   }
 
   @Test
-  public void classify_failsWithMissingOpResolver() throws Exception {
+  public void create_failsWithMissingOpResolver() throws Exception {
     TextClassifierOptions options =
         TextClassifierOptions.builder()
             .setBaseOptions(
                 BaseOptions.builder().setModelAssetPath(STRING_TO_BOOL_MODEL_FILE).build())
             .build();
-    // LiteRT reports the unresolved custom op when it allocates the tensors for the first input.
-    TextClassifier textClassifier =
-        TextClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
     MediaPipeException exception =
-        assertThrows(MediaPipeException.class, () -> textClassifier.classify(POSITIVE_TEXT));
+        assertThrows(
+            MediaPipeException.class,
+            () ->
+                TextClassifier.createFromOptions(
+                    ApplicationProvider.getApplicationContext(), options));
     // TODO: Make MediaPipe InferenceCalculator report the detailed.
     // interpreter errors (e.g., "Encountered unresolved custom op").
-    assertThat(exception).hasMessageThat().contains("Failed to allocate tensors");
+    assertThat(exception).hasMessageThat().contains("== kTfLiteOk");
   }
 
   @Test

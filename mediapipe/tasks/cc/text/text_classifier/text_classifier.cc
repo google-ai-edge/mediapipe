@@ -72,8 +72,7 @@ std::unique_ptr<proto::TextClassifierGraphOptions>
 ConvertTextClassifierOptionsToProto(TextClassifierOptions* options) {
   auto options_proto = std::make_unique<proto::TextClassifierGraphOptions>();
   auto base_options_proto = std::make_unique<tasks::core::proto::BaseOptions>(
-      tasks::core::ConvertBaseOptionsToProto(&(options->base_options),
-                                             /*use_litert=*/true));
+      tasks::core::ConvertBaseOptionsToProto(&(options->base_options)));
   options_proto->mutable_base_options()->Swap(base_options_proto.get());
   auto classifier_options_proto =
       std::make_unique<tasks::components::processors::proto::ClassifierOptions>(
