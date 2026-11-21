@@ -201,7 +201,8 @@ export class ObjectDetector extends VisionTaskRunner {
    * @export
    * @param image An image to process.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
-   *    to process the input image before running inference.
+   *    to process the input image before running inference. Region-of-interest
+   *    is not supported by ObjectDetector.
    * @return A result containing a list of detected objects.
    */
   detect(
@@ -222,7 +223,8 @@ export class ObjectDetector extends VisionTaskRunner {
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
-   *    to process the input image before running inference.
+   *    to process the input image before running inference. Region-of-interest
+   *    is not supported by ObjectDetector.
    * @return A result containing a list of detected objects.
    */
   detectForVideo(
@@ -283,5 +285,4 @@ export class ObjectDetector extends VisionTaskRunner {
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
   }
 }
-
 
