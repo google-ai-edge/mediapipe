@@ -744,7 +744,10 @@ cc_library(
         "@litert//litert/tflite_support/op_resolver",
         "@litert//tflite:mutable_op_resolver",
     ] + select({
-        "//mediapipe:apple": [
+        # Metal is only available when GPU support is compiled in: with
+        # --define=MEDIAPIPE_DISABLE_GPU=1, MEDIAPIPE_METAL_ENABLED is 0 and
+        # MPPMetalHelper does not build.
+        ":platform_apple_with_gpu": [
             "//mediapipe/gpu:MPPMetalHelper",
         ],
         "//conditions:default": [],
@@ -916,7 +919,8 @@ cc_library(
             "//mediapipe/framework/formats:unique_fd",
             "//mediapipe/util:sync_wait",
         ],
-        "//mediapipe:apple": [
+        # See the comment on :inference_calculator_litert.
+        ":platform_apple_with_gpu": [
             "//mediapipe/gpu:MPPMetalHelper",
             "@litert//tflite/delegates/gpu/common:shape",
             "@litert//tflite/delegates/gpu/metal:buffer_convert",
