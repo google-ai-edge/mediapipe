@@ -121,12 +121,12 @@ def _get_proto_provider(dep):
              ", TransitiveProtoInfo," +
              " or ProtoInfo")
 
+def _has_descriptor_sets(provider):
+    return hasattr(provider, "transitive_descriptor_sets")
+
 def _encode_binary_proto_impl(ctx):
     """Implementation of the encode_binary_proto rule."""
-    all_protos = depset(
-        direct = [],
-        transitive = [_get_proto_provider(dep).transitive_sources for dep in ctx.attr.deps],
-    )
+    providers = [_get_proto_provider(dep) for dep in ctx.attr.deps]
 
     textpb = ctx.file.input
     binarypb = ctx.outputs.output or ctx.actions.declare_file(
@@ -134,38 +134,73 @@ def _encode_binary_proto_impl(ctx):
         sibling = textpb,
     )
 
-    args = ctx.actions.args()
-    args.add(textpb)
-    args.add(binarypb)
-    args.add(ctx.executable._proto_compiler)
-    args.add(ctx.attr.message_type, format = "--encode=%s")
-    args.add("--proto_path=.")
-    args.add_all(
-        all_protos,
-        map_each = _map_root_path,
-        format_each = "--proto_path=%s",
-        uniquify = True,
-    )
-    args.add_all(
-        all_protos,
-        map_each = _map_short_path,
-        uniquify = True,
-    )
+    if providers and all([_has_descriptor_sets(p) for p in providers]):
+        descriptor_sets = depset(transitive = [
+            p.transitive_descriptor_sets
+            for p in providers
+        ])
+        wrapper_args = ctx.actions.args()
+        wrapper_args.add(textpb)
+        wrapper_args.add(binarypb)
+        wrapper_args.add(ctx.executable._proto_compiler)
 
-    # Note: the combination of absolute_paths and proto_path, as well as the exact
-    # order of gendir before ., is needed for the proto compiler to resolve
-    # import statements that reference proto files produced by a genrule.
-    ctx.actions.run_shell(
-        tools = depset(
-            direct = [textpb, ctx.executable._proto_compiler],
-            transitive = [all_protos],
-        ),
-        outputs = [binarypb],
-        command = "${@:3} < $1 > $2",
-        arguments = [args],
-        mnemonic = "EncodeProto",
-        toolchain = None,
-    )
+        protoc_args = ctx.actions.args()
+        protoc_args.set_param_file_format("multiline")
+        protoc_args.use_param_file("@%s")
+        protoc_args.add(ctx.attr.message_type, format = "--encode=%s")
+        protoc_args.add_joined(
+            descriptor_sets,
+            join_with = ctx.configuration.host_path_separator,
+            format_joined = "--descriptor_set_in=%s",
+            omit_if_empty = True,
+        )
+        ctx.actions.run_shell(
+            inputs = depset(direct = [textpb], transitive = [descriptor_sets]),
+            tools = [ctx.executable._proto_compiler],
+            outputs = [binarypb],
+            command = "${@:3} < \"$1\" > \"$2\"",
+            arguments = [wrapper_args, protoc_args],
+            mnemonic = "EncodeProto",
+            toolchain = None,
+        )
+    else:
+        all_protos = depset(
+            direct = [],
+            transitive = [p.transitive_sources for p in providers],
+        )
+
+        args = ctx.actions.args()
+        args.add(textpb)
+        args.add(binarypb)
+        args.add(ctx.executable._proto_compiler)
+        args.add(ctx.attr.message_type, format = "--encode=%s")
+        args.add("--proto_path=.")
+        args.add_all(
+            all_protos,
+            map_each = _map_root_path,
+            format_each = "--proto_path=%s",
+            uniquify = True,
+        )
+        args.add_all(
+            all_protos,
+            map_each = _map_short_path,
+            uniquify = True,
+        )
+
+        # Note: the combination of absolute_paths and proto_path, as well as the exact
+        # order of gendir before ., is needed for the proto compiler to resolve
+        # import statements that reference proto files produced by a genrule.
+        ctx.actions.run_shell(
+            tools = depset(
+                direct = [textpb, ctx.executable._proto_compiler],
+                transitive = [all_protos],
+            ),
+            outputs = [binarypb],
+            command = "${@:3} < $1 > $2",
+            arguments = [args],
+            mnemonic = "EncodeProto",
+            toolchain = None,
+        )
 
     output_depset = depset([binarypb])
     return [DefaultInfo(
@@ -222,16 +257,48 @@ def encode_binary_proto(name, input, message_type, deps, **kwargs):
 
 def _generate_proto_descriptor_set_impl(ctx):
     """Implementation of the generate_proto_descriptor_set rule."""
-    all_protos = depset(transitive = [
-        _get_proto_provider(dep).transitive_sources
+    providers = [
+        _get_proto_provider(dep)
         for dep in ctx.attr.deps
         if (
             ProtoInfo in dep or
             TransitiveProtoInfo in dep or
             hasattr(dep, "proto")
         )
-    ])
+    ]
     descriptor = ctx.outputs.output
+
+    if providers and all([_has_descriptor_sets(p) for p in providers]):
+        # Concatenating serialized FileDescriptorSets works in protobuf wire
+        # format because FileDescriptorSet only populates its single top-level
+        # repeated field (repeated FileDescriptorProto file = 1), with no
+        # singular fields that wire concatenation would overwrite. Each
+        # proto_library descriptor set holds only its own srcs, and a postorder
+        # depset lists dependencies before dependents, so files stay in
+        # dependency order with no duplicates. One difference from compiling
+        # sources directly: ProtoInfo.transitive_descriptor_sets leaves out
+        # option_deps (see proto_info.bzl), while transitive_protos includes
+        # them.
+        descriptor_sets = depset(
+            transitive = [p.transitive_descriptor_sets for p in providers],
+            order = "postorder",
+        )
+        out_args = ctx.actions.args()
+        out_args.add(descriptor)
+        in_args = ctx.actions.args()
+        in_args.use_param_file("%s", use_always = True)
+        in_args.add_all(descriptor_sets, uniquify = True)
+        ctx.actions.run_shell(
+            inputs = descriptor_sets,
+            outputs = [descriptor],
+            command = "< \"$2\" xargs cat > \"$1\"",
+            arguments = [out_args, in_args],
+            mnemonic = "GenerateProtoDescriptor",
+            toolchain = None,
+        )
+        return
+
+    all_protos = depset(transitive = [p.transitive_sources for p in providers])
 
     args = ctx.actions.args()
     args.add("--descriptor_set_out=%s" % descriptor.path)

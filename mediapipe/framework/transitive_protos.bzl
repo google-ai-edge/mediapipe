@@ -85,7 +85,8 @@ def _gather_transitive_protos_deps(deps, option_deps = [], my_protos = [], my_de
     )
     descriptors = depset(
         my_descriptors,
-        transitive = [dep[_TransitiveProtoAspectInfo].descriptors for dep in useful_deps],
+        transitive = [dep[_TransitiveProtoAspectInfo].descriptors for dep in useful_deps] +
+                     [dep[_TransitiveProtoAspectInfo].descriptors for dep in option_deps],
     )
 
     return _TransitiveProtoAspectInfo(

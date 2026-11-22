@@ -77,10 +77,8 @@ def mediapipe_binary_graph(name, graph = None, output_name = None, deps = [], te
         compatible_with = compatible_with,
     )
 
-    # This generates a single descriptor set with a single invocation of the proto compiler.
-    # May be faster than using the descriptor sets from proto_library.
-    # We always pass at least the calculator proto since the proto compiler would fail
-    # if it were passed no protos.
+    # This generates a single descriptor set from the transitive proto descriptor sets.
+    # We always pass at least the calculator proto so the descriptor set is non-empty.
     generate_proto_descriptor_set(
         name = name + "_proto_descriptor_set",
         deps = [
