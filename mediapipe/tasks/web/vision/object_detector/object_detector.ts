@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import {DetectionLabelIdToTextCalculatorOptions} from '../../../../calculators/util/detection_label_id_to_text_calculator_pb';
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {Detection as DetectionProto} from '../../../../framework/formats/detection_pb';
@@ -26,6 +27,7 @@ import {
   VisionGraphRunner,
   VisionTaskRunner,
 } from '../../../../tasks/web/vision/core/vision_task_runner';
+import {LabelMapItem} from '../../../../util/label_map_pb';
 import {
   ImageSource,
   WasmModule,
@@ -39,6 +41,8 @@ const IMAGE_STREAM = 'input_frame_gpu';
 const NORM_RECT_STREAM = 'norm_rect';
 const DETECTIONS_STREAM = 'detections';
 const OBJECT_DETECTOR_GRAPH = 'mediapipe.tasks.vision.ObjectDetectorGraph';
+const DETECTION_LABEL_ID_TO_TEXT_CALCULATOR_NAME =
+  'DetectionLabelIdToTextCalculator';
 
 export type {ObjectDetectorOptions} from './object_detector_options';
 export type {
@@ -57,6 +61,7 @@ export {type ImageSource}; // Used in the public API
  */
 export class ObjectDetector extends VisionTaskRunner {
   private result: ObjectDetectorResult = {detections: []};
+  private labels: string[] = [];
   private readonly options = new ObjectDetectorOptionsProto();
 
   /**
@@ -191,6 +196,55 @@ export class ObjectDetector extends VisionTaskRunner {
     }
 
     return this.applyOptions(options);
+  }
+
+  protected override onGraphRefreshed(): void {
+    this.populateLabels();
+  }
+
+  /**
+   * Populate labels from DetectionLabelIdToTextCalculator in the expanded
+   * graph. The calculator is configured from TFLite Model Metadata when the
+   * ObjectDetector graph is built.
+   */
+  private populateLabels(): void {
+    const graphConfig = this.getCalculatorGraphConfig();
+    const labelCalculators = graphConfig.getNodeList().filter(
+      (n: CalculatorGraphConfig.Node) =>
+        n.getName().includes(DETECTION_LABEL_ID_TO_TEXT_CALCULATOR_NAME) ||
+        n.getCalculator().includes(DETECTION_LABEL_ID_TO_TEXT_CALCULATOR_NAME),
+    );
+
+    this.labels = [];
+    if (labelCalculators.length > 1) {
+      throw new Error(
+        `The graph has more than one ${DETECTION_LABEL_ID_TO_TEXT_CALCULATOR_NAME}.`,
+      );
+    } else if (labelCalculators.length === 1) {
+      const labelItems =
+        labelCalculators[0]
+          .getOptions()
+          ?.getExtension(DetectionLabelIdToTextCalculatorOptions.ext)
+          ?.getLabelItemsMap() ?? new Map<string, LabelMapItem>();
+      labelItems.forEach((value, index) => {
+        this.labels[Number(index)] = value.getName()!;
+      });
+    }
+  }
+
+  /**
+   * Get the category label list the ObjectDetector can recognize. The index in
+   * the returned array corresponds to the category index in the model label
+   * map.
+   *
+   * If there is no labelmap provided in the model file, an empty array is
+   * returned.
+   *
+   * @export
+   * @return The labels used by the current model.
+   */
+  getLabels(): string[] {
+    return this.labels;
   }
 
   /**
