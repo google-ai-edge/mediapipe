@@ -167,13 +167,26 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
                         ->mutable_base_options()
                         ->mutable_model_asset(),
                     is_copy);
-    face_landmarks_detector_graph_options
-        ->mutable_face_blendshapes_graph_options()
-        ->mutable_base_options()
-        ->mutable_acceleration()
-        ->mutable_xnnpack();
-    ABSL_LOG(WARNING) << "Sets FaceBlendshapesGraph acceleration to xnnpack "
-                      << "by default.";
+    const auto& acceleration = options->base_options().acceleration();
+    if (acceleration.has_litert()) {
+      auto* litert = face_landmarks_detector_graph_options
+                         ->mutable_face_blendshapes_graph_options()
+                         ->mutable_base_options()
+                         ->mutable_acceleration()
+                         ->mutable_litert();
+      // LiteRT's CPU accelerator uses XNNPACK by default.
+      litert->mutable_cpu();
+      VLOG(1) << "Sets FaceBlendshapesGraph acceleration to litert "
+              << "CPU by default.";
+    } else {
+      face_landmarks_detector_graph_options
+          ->mutable_face_blendshapes_graph_options()
+          ->mutable_base_options()
+          ->mutable_acceleration()
+          ->mutable_xnnpack();
+      VLOG(1) << "Sets FaceBlendshapesGraph acceleration to xnnpack "
+              << "by default.";
+    }
   }
 
   return absl::OkStatus();
