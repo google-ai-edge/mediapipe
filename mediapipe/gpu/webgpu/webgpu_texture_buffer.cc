@@ -69,23 +69,23 @@ static wgpu::Texture CreateTexture(const wgpu::Device& device, uint32_t width,
 }
 
 std::unique_ptr<WebGpuTextureBuffer> WebGpuTextureBuffer::Create(
-    const wgpu::Device& device, uint32_t width, uint32_t height,
-    GpuBufferFormat format) {
+    const wgpu::Instance& instance, const wgpu::Device& device, uint32_t width,
+    uint32_t height, GpuBufferFormat format) {
   if (format != GpuBufferFormat::kRGBA32 &&
       format != GpuBufferFormat::kRGBAFloat128 &&
       format != GpuBufferFormat::kGrayFloat32)
     return nullptr;
   wgpu::Texture texture = CreateTexture(device, width, height, format, {});
-  return std::make_unique<WebGpuTextureBuffer>(std::move(texture), width,
-                                               height, format);
+  return std::make_unique<WebGpuTextureBuffer>(
+      instance, device, std::move(texture), width, height, format);
 }
 
 std::unique_ptr<WebGpuTextureBuffer> WebGpuTextureBuffer::Create(
     uint32_t width, uint32_t height, GpuBufferFormat format) {
   const auto cc = LegacyCalculatorSupport::Scoped<CalculatorContext>::current();
   if (!cc) return nullptr;
-  const wgpu::Device device = cc->Service(kWebGpuService).GetObject().device();
-  return Create(device, width, height, format);
+  const auto& service = cc->Service(kWebGpuService).GetObject();
+  return Create(service.instance(), service.device(), width, height, format);
 }
 
 WebGpuTextureView WebGpuTextureBuffer::GetReadView(
@@ -103,9 +103,10 @@ WebGpuTextureBufferPool::CreateBufferWithoutPool(
     const internal::GpuBufferSpec& spec) {
   const auto cc = LegacyCalculatorSupport::Scoped<CalculatorContext>::current();
   RET_CHECK(cc) << "Calculator context not found.";
-  const wgpu::Device device = cc->Service(kWebGpuService).GetObject().device();
+  const auto& service = cc->Service(kWebGpuService).GetObject();
   std::unique_ptr<WebGpuTextureBuffer> buffer =
-      WebGpuTextureBuffer::Create(device, spec.width, spec.height, spec.format);
+      WebGpuTextureBuffer::Create(service.instance(), service.device(),
+                                  spec.width, spec.height, spec.format);
   RET_CHECK(buffer) << absl::StrFormat(
       "Failed to Create WebGPU buffer: %d x %d, %d", spec.width, spec.height,
       static_cast<uint32_t>(spec.format));

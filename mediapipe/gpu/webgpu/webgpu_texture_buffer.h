@@ -24,7 +24,8 @@ class WebGpuTextureBuffer
           WebGpuTextureBuffer, internal::ViewProvider<WebGpuTextureView>> {
  public:
   static std::unique_ptr<WebGpuTextureBuffer> Create(
-      const wgpu::Device& device, uint32_t width, uint32_t height,
+      const wgpu::Instance& instance, const wgpu::Device& device,
+      uint32_t width, uint32_t height,
       GpuBufferFormat format = GpuBufferFormat::kRGBA32);
 
   static std::unique_ptr<WebGpuTextureBuffer> Create(uint32_t width,
@@ -37,12 +38,14 @@ class WebGpuTextureBuffer
   //   avoid its destruction (no-op deleter) or perform custom actions on
   //   deletion if needed.
   WebGpuTextureBuffer(
-      wgpu::Texture texture, uint32_t width, uint32_t height,
-      GpuBufferFormat format,
+      wgpu::Instance instance, wgpu::Device device, wgpu::Texture texture,
+      uint32_t width, uint32_t height, GpuBufferFormat format,
       /*absl_nonnull - not yet supported*/
       absl::AnyInvocable<void(wgpu::Texture*)> texture_deleter =
           [](wgpu::Texture* texture) { texture->Destroy(); })
-      : texture_(std::move(texture)),
+      : instance_(std::move(instance)),
+        device_(std::move(device)),
+        texture_(std::move(texture)),
         width_(width),
         height_(height),
         format_(format),
@@ -62,10 +65,15 @@ class WebGpuTextureBuffer
 
   GpuBufferFormat format() const override { return format_; }
 
+  const wgpu::Device& device() const { return device_; }
+  const wgpu::Instance& instance() const { return instance_; }
+
   // TODO: implement.
   void Reuse() {}
 
  private:
+  wgpu::Instance instance_;
+  wgpu::Device device_;
   wgpu::Texture texture_;
   const uint32_t width_ = 0;
   const uint32_t height_ = 0;
@@ -80,27 +88,31 @@ Canvas& RenderToWebGpuCanvas(const std::shared_ptr<WebGpuTextureBuffer>& input,
 class WebGpuTextureBufferPool : public ReusablePool<WebGpuTextureBuffer> {
  public:
   static std::shared_ptr<WebGpuTextureBufferPool> Create(
-      const wgpu::Device& device, const internal::GpuBufferSpec& spec,
-      const MultiPoolOptions& options) {
-    return std::make_shared<WebGpuTextureBufferPool>(device, spec, options);
+      const wgpu::Instance& instance, const wgpu::Device& device,
+      const internal::GpuBufferSpec& spec, const MultiPoolOptions& options) {
+    return std::make_shared<WebGpuTextureBufferPool>(instance, device, spec,
+                                                     options);
   }
 
   static absl::StatusOr<std::shared_ptr<WebGpuTextureBuffer>>
   CreateBufferWithoutPool(const internal::GpuBufferSpec& spec);
 
-  WebGpuTextureBufferPool(const wgpu::Device& device,
+  WebGpuTextureBufferPool(const wgpu::Instance& instance,
+                          const wgpu::Device& device,
                           const internal::GpuBufferSpec& spec,
                           const MultiPoolOptions& options)
       : ReusablePool<WebGpuTextureBuffer>(
             [this] {
-              return WebGpuTextureBuffer::Create(device_, spec_.width,
-                                                 spec_.height, spec_.format);
+              return WebGpuTextureBuffer::Create(
+                  instance_, device_, spec_.width, spec_.height, spec_.format);
             },
             options),
+        instance_(instance),
         device_(device),
         spec_(spec) {}
 
  private:
+  const wgpu::Instance instance_;
   const wgpu::Device device_;
   const internal::GpuBufferSpec& spec_;
 };
@@ -110,14 +122,16 @@ class WebGpuTextureBufferMultiPool
                        std::shared_ptr<WebGpuTextureBuffer>> {
  public:
   explicit WebGpuTextureBufferMultiPool(
-      const wgpu::Device& device,
+      const wgpu::Instance& instance, const wgpu::Device& device,
       const MultiPoolOptions& options = kDefaultMultiPoolOptions)
       : MultiPool(
             [this](const internal::GpuBufferSpec& spec,
                    const MultiPoolOptions& options) {
-              return WebGpuTextureBufferPool::Create(device_, spec, options);
+              return WebGpuTextureBufferPool::Create(instance_, device_, spec,
+                                                     options);
             },
             options),
+        instance_(instance),
         device_(device) {}
 
   // TODO: This and RenderToWebGpuCanvas use kBGRA32 as defaults, while
@@ -130,13 +144,14 @@ class WebGpuTextureBufferMultiPool
   }
 
  private:
+  const wgpu::Instance instance_;
   const wgpu::Device device_;
 };
 
 inline const WebGpuContextAttachment<WebGpuTextureBufferMultiPool>
     kWebGpuTexturePool{[](WebGpuContext& ctx) {
       return WebGpuContextAttachment<WebGpuTextureBufferMultiPool>::MakePtr(
-          ctx.device);
+          ctx.instance, ctx.device);
     }};
 
 }  // namespace mediapipe
