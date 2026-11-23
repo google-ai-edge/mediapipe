@@ -183,10 +183,8 @@ class ImageToTensorNodeImpl
     ABSL_RETURN_IF_ERROR(
         InitConverterIfNecessary(&cc.GetGenericContext(), *image));
 
-    Tensor::ElementType output_tensor_type =
-        GetOutputTensorType(image->UsesGpu(), params_);
     Tensor tensor(
-        output_tensor_type,
+        params_.tensor_type,
         {1, tensor_height, tensor_width, GetNumOutputChannels(*image)},
         memory_manager_);
     ABSL_RETURN_IF_ERROR((image->UsesGpu() ? gpu_converter_ : cpu_converter_)
@@ -213,38 +211,37 @@ class ImageToTensorNodeImpl
       return absl::UnimplementedError(
           "GPU processing is disabled in build flags");
 #else
-      if (!params_.is_float_output) {
-        return absl::UnimplementedError(
-            "ImageToTensorConverter for the input GPU image currently doesn't "
-            "support quantization.");
-      }
       if (!gpu_converter_) {
 #if MEDIAPIPE_METAL_ENABLED
         ABSL_ASSIGN_OR_RETURN(
             gpu_converter_,
-            CreateMetalConverter(cc, GetBorderMode(options_.border_mode())));
+            CreateMetalConverter(cc, GetBorderMode(options_.border_mode()),
+                                 params_.tensor_type));
 #elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
         ABSL_ASSIGN_OR_RETURN(bool input_starts_at_bottom,
                               IsGpuOriginAtBottom(options_.gpu_origin()));
-        ABSL_ASSIGN_OR_RETURN(gpu_converter_,
-                              CreateImageToGlBufferTensorConverter(
-                                  cc, input_starts_at_bottom,
-                                  GetBorderMode(options_.border_mode())));
+        ABSL_ASSIGN_OR_RETURN(
+            gpu_converter_,
+            CreateImageToGlBufferTensorConverter(
+                cc, input_starts_at_bottom,
+                GetBorderMode(options_.border_mode()), params_.tensor_type));
 #else
         if (IsWebGpuAvailable()) {
 #if MEDIAPIPE_USE_WEBGPU
           ABSL_ASSIGN_OR_RETURN(gpu_converter_,
-                                CreateImageToWebGpuTextureTensorConverter(cc));
+                                CreateImageToWebGpuTextureTensorConverter(
+                                    cc, params_.tensor_type));
 #endif  // MEDIAPIPE_USE_WEBGPU
         }
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
         if (!gpu_converter_) {
           ABSL_ASSIGN_OR_RETURN(bool input_starts_at_bottom,
                                 IsGpuOriginAtBottom(options_.gpu_origin()));
-          ABSL_ASSIGN_OR_RETURN(gpu_converter_,
-                                CreateImageToGlTextureTensorConverter(
-                                    cc, input_starts_at_bottom,
-                                    GetBorderMode(options_.border_mode())));
+          ABSL_ASSIGN_OR_RETURN(
+              gpu_converter_,
+              CreateImageToGlTextureTensorConverter(
+                  cc, input_starts_at_bottom,
+                  GetBorderMode(options_.border_mode()), params_.tensor_type));
         }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
         if (!gpu_converter_) {
@@ -259,18 +256,16 @@ class ImageToTensorNodeImpl
 #if !MEDIAPIPE_DISABLE_OPENCV
         ABSL_ASSIGN_OR_RETURN(
             cpu_converter_,
-            CreateOpenCvConverter(
-                cc, GetBorderMode(options_.border_mode()),
-                GetOutputTensorType(/*uses_gpu=*/false, params_)));
+            CreateOpenCvConverter(cc, GetBorderMode(options_.border_mode()),
+                                  params_.tensor_type));
 // TODO: FrameBuffer-based converter needs to call GetGpuBuffer()
 // to get access to a FrameBuffer view. Investigate if GetGpuBuffer() can be
 // made available even with MEDIAPIPE_DISABLE_GPU set.
 #elif MEDIAPIPE_ENABLE_HALIDE
-        ABSL_ASSIGN_OR_RETURN(
-            cpu_converter_,
-            CreateFrameBufferConverter(
-                cc, GetBorderMode(options_.border_mode()),
-                GetOutputTensorType(/*uses_gpu=*/false, params_)));
+        ABSL_ASSIGN_OR_RETURN(cpu_converter_,
+                              CreateFrameBufferConverter(
+                                  cc, GetBorderMode(options_.border_mode()),
+                                  params_.tensor_type));
 #else
         ABSL_LOG(FATAL) << "Cannot create image to tensor CPU converter since "
                            "MEDIAPIPE_DISABLE_OPENCV is defined and "

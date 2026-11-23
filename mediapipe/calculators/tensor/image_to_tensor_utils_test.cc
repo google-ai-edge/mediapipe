@@ -19,6 +19,7 @@
 
 #include "absl/status/status.h"  // from @com_google_absl
 #include "mediapipe/framework/formats/rect.pb.h"
+#include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
@@ -315,27 +316,63 @@ TEST(GetBorderMode, GetBorderMode) {
   EXPECT_EQ(BorderMode::kZero, GetBorderMode(border_mode));
 }
 
-TEST(GetOutputTensorType, GetOutputTensorType) {
-  OutputTensorParams params;
-  // Return float32 when GPU is enabled.
-  EXPECT_EQ(Tensor::ElementType::kFloat32,
-            GetOutputTensorType(/*uses_gpu=*/true, params));
+TEST(GetOutputTensorParams, TensorTypeFollowsRangeField) {
+  auto options =
+      mediapipe::ParseTextProtoOrDie<mediapipe::ImageToTensorCalculatorOptions>(
+          kValidFloatProto);
+  EXPECT_EQ(GetOutputTensorParams(options).tensor_type,
+            Tensor::ElementType::kFloat32);
 
-  // Return float32 when is_float_output is set to true.
-  params.is_float_output = true;
-  EXPECT_EQ(Tensor::ElementType::kFloat32,
-            GetOutputTensorType(/*uses_gpu=*/false, params));
+  // int8 even for a non-negative range.
+  options.mutable_output_tensor_int_range()->set_min(0);
+  options.mutable_output_tensor_int_range()->set_max(127);
+  EXPECT_EQ(GetOutputTensorParams(options).tensor_type,
+            Tensor::ElementType::kInt8);
 
-  // Return int8 when range_min is negative.
-  params.is_float_output = false;
-  params.range_min = -255.0f;
-  EXPECT_EQ(Tensor::ElementType::kInt8,
-            GetOutputTensorType(/*uses_gpu=*/false, params));
+  options.mutable_output_tensor_uint_range()->set_min(0);
+  options.mutable_output_tensor_uint_range()->set_max(255);
+  EXPECT_EQ(GetOutputTensorParams(options).tensor_type,
+            Tensor::ElementType::kUInt8);
+}
 
-  // Return 8int8 when range_min is non-negative.
-  params.range_min = 0.0f;
-  EXPECT_EQ(Tensor::ElementType::kUInt8,
-            GetOutputTensorType(/*uses_gpu=*/false, params));
+TEST(ValidateOutputTensorTypeAndRange, AcceptsValidTypeAndRange) {
+  Tensor float_tensor(Tensor::ElementType::kFloat32, {1, 2, 2, 3});
+  MP_EXPECT_OK(ValidateOutputTensorTypeAndRange(
+      float_tensor, Tensor::ElementType::kFloat32, -1.0f, 1.0f));
+
+  Tensor uint8_tensor(Tensor::ElementType::kUInt8, {1, 2, 2, 3});
+  MP_EXPECT_OK(ValidateOutputTensorTypeAndRange(
+      uint8_tensor, Tensor::ElementType::kUInt8, 0.0f, 255.0f));
+
+  Tensor int8_tensor(Tensor::ElementType::kInt8, {1, 2, 2, 3});
+  MP_EXPECT_OK(ValidateOutputTensorTypeAndRange(
+      int8_tensor, Tensor::ElementType::kInt8, -128.0f, 127.0f));
+}
+
+TEST(ValidateOutputTensorTypeAndRange, RejectsMismatchedType) {
+  Tensor uint8_tensor(Tensor::ElementType::kUInt8, {1, 2, 2, 3});
+  EXPECT_THAT(
+      ValidateOutputTensorTypeAndRange(
+          uint8_tensor, Tensor::ElementType::kFloat32, 0.0f, 1.0f),
+      StatusIs(absl::StatusCode::kInternal, HasSubstr("does not match")));
+}
+
+TEST(ValidateOutputTensorTypeAndRange, RejectsOutOfBounds8BitRange) {
+  Tensor uint8_tensor(Tensor::ElementType::kUInt8, {1, 2, 2, 3});
+  EXPECT_THAT(ValidateOutputTensorTypeAndRange(
+                  uint8_tensor, Tensor::ElementType::kUInt8, -1.0f, 255.0f),
+              StatusIs(absl::StatusCode::kInternal, HasSubstr("uint8")));
+  EXPECT_THAT(ValidateOutputTensorTypeAndRange(
+                  uint8_tensor, Tensor::ElementType::kUInt8, 0.0f, 256.0f),
+              StatusIs(absl::StatusCode::kInternal, HasSubstr("uint8")));
+
+  Tensor int8_tensor(Tensor::ElementType::kInt8, {1, 2, 2, 3});
+  EXPECT_THAT(ValidateOutputTensorTypeAndRange(
+                  int8_tensor, Tensor::ElementType::kInt8, -129.0f, 127.0f),
+              StatusIs(absl::StatusCode::kInternal, HasSubstr("int8")));
+  EXPECT_THAT(ValidateOutputTensorTypeAndRange(
+                  int8_tensor, Tensor::ElementType::kInt8, -128.0f, 128.0f),
+              StatusIs(absl::StatusCode::kInternal, HasSubstr("int8")));
 }
 
 }  // namespace

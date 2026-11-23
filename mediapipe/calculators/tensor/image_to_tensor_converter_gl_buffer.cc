@@ -18,10 +18,14 @@
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
+#include <algorithm>
 #include <array>
+#include <cstdint>
 #include <memory>
+#include <string>
 #include <vector>
 
+#include "absl/log/absl_log.h"          // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "absl/status/statusor.h"       // from @com_google_absl
@@ -62,24 +66,28 @@ class SubRectExtractorGl {
       tflite::gpu::gl::CommandQueue* command_queue,
       tflite::gpu::gl::GlBuffer* destination);
 
+  // `tensor_type`: float32, uint8 or int8.
   static absl::StatusOr<SubRectExtractorGl> Create(
       const mediapipe::GlContext& gl_context, bool input_starts_at_bottom,
-      BorderMode border_mode);
+      BorderMode border_mode, Tensor::ElementType tensor_type);
 
  private:
   explicit SubRectExtractorGl(tflite::gpu::gl::GlProgram program,
                               tflite::gpu::uint3 workgroup_size,
                               bool use_custom_zero_border,
-                              BorderMode border_mode)
+                              BorderMode border_mode,
+                              Tensor::ElementType tensor_type)
       : program_(std::move(program)),
         workgroup_size_(workgroup_size),
         use_custom_zero_border_(use_custom_zero_border),
-        border_mode_(border_mode) {}
+        border_mode_(border_mode),
+        tensor_type_(tensor_type) {}
 
   tflite::gpu::gl::GlProgram program_;
   tflite::gpu::uint3 workgroup_size_;
   bool use_custom_zero_border_ = false;
   BorderMode border_mode_ = BorderMode::kReplicate;
+  Tensor::ElementType tensor_type_ = Tensor::ElementType::kFloat32;
 };
 
 absl::Status SetMat4x4(const tflite::gpu::gl::GlProgram& program,
@@ -91,20 +99,45 @@ absl::Status SetMat4x4(const tflite::gpu::gl::GlProgram& program,
                             1, GL_TRUE, data);
 }
 
+// Returns the shader invocation count for an output of `destination_size`.
+absl::StatusOr<tflite::gpu::uint3> GetWorkSize(
+    Tensor::ElementType tensor_type, const tflite::gpu::HW& destination_size) {
+  RET_CHECK_GT(destination_size.w, 0);
+  RET_CHECK_GT(destination_size.h, 0);
+  switch (tensor_type) {
+    case Tensor::ElementType::kFloat32:
+      return tflite::gpu::uint3{static_cast<uint32_t>(destination_size.w),
+                                static_cast<uint32_t>(destination_size.h), 1u};
+    case Tensor::ElementType::kUInt8:
+    case Tensor::ElementType::kInt8: {
+      // One invocation per 4 pixels. X wraps to stay within the minimum
+      // GL_MAX_COMPUTE_WORK_GROUP_COUNT.
+      constexpr uint64_t kInvocationsPerRow = 1024ULL * 64;
+      const uint64_t num_pixels =
+          static_cast<uint64_t>(destination_size.w) * destination_size.h;
+      const uint64_t num_invocations = (num_pixels + 3) / 4;
+      if (num_invocations <= kInvocationsPerRow) {
+        return tflite::gpu::uint3{static_cast<uint32_t>(num_invocations), 1u,
+                                  1u};
+      }
+      const uint64_t num_rows =
+          (num_invocations + kInvocationsPerRow - 1) / kInvocationsPerRow;
+      RET_CHECK_LE(num_rows, 65535ULL)
+          << "Output tensor too large for GLES 3.1 compute dispatch.";
+      return tflite::gpu::uint3{static_cast<uint32_t>(kInvocationsPerRow),
+                                static_cast<uint32_t>(num_rows), 1u};
+    }
+    default:
+      return absl::InvalidArgumentError(
+          absl::StrCat("Unsupported output tensor type: ",
+                       Tensor::ElementTypeName(tensor_type)));
+  }
+}
+
 constexpr char kShaderCode[] = R"(
 layout(std430) buffer;
 
 precision highp float;
-
-// It is possible to use "vec3 elements[];" here, however due to alignment
-// requirements it works only when "packed" layout is used. "packed" layout is
-// determined by implementation and it's expected that OpenGL API is used to
-// query the layout. Favoring float array over vec3, considering performance is
-// comparable, layout is the same and no need for layout querying (even though
-// it's not quite needed here as there's only one member).
-layout(binding = 0) writeonly buffer B0 {
-  float elements[];
-} output_data;
 
 uniform ivec2 out_size;
 uniform float alpha;
@@ -112,14 +145,10 @@ uniform float beta;
 uniform mat4 transform_matrix;
 uniform mediump sampler2D input_data;
 
-void main() {
+// Samples the input at output pixel `gid`, transformed as alpha * x + beta.
+vec4 sample_output_pixel(ivec2 gid) {
     int out_width = out_size.x;
     int out_height = out_size.y;
-
-    ivec2 gid = ivec2(gl_GlobalInvocationID.xy);
-    if (gid.x >= out_width || gid.y >= out_height) {
-        return;
-    }
 
     // transform from image.width, image.height range to [0, 1]
     float normal_x = (float(gid.x) + 0.5f) / float(out_width);
@@ -140,6 +169,83 @@ void main() {
       float(tc.x < 0.0 || tc.x > 1.0 || tc.y < 0.0 || tc.y > 1.0);
     src_value = mix(src_value, vec4(0.0, 0.0, 0.0, 0.0), out_of_bounds);
 #endif
+    return src_value;
+}
+
+#ifdef OUTPUT_BYTES
+// 8-bit output. GLSL ES has no 8-bit buffers, so each invocation writes 4 RGB
+// pixels as 3 whole uints, avoiding races on shared uints. Values are rounded,
+// clamped and truncated to 8 bits (two's complement for int8).
+layout(binding = 0) writeonly buffer B0 {
+  uint elements[];
+} output_data;
+
+uint to_byte(float value) {
+#ifdef OUTPUT_SIGNED
+    float clamped = clamp(floor(value + 0.5), -128.0, 127.0);
+#else
+    float clamped = clamp(floor(value + 0.5), 0.0, 255.0);
+#endif  // OUTPUT_SIGNED
+    return uint(int(clamped) & 0xFF);
+}
+
+uint pack_bytes(float b0, float b1, float b2, float b3) {
+    return to_byte(b0) | (to_byte(b1) << 8) | (to_byte(b2) << 16) |
+           (to_byte(b3) << 24);
+}
+
+void main() {
+    uint num_pixels = uint(out_size.x) * uint(out_size.y);
+    uint invocation =
+        gl_GlobalInvocationID.y * (gl_NumWorkGroups.x * gl_WorkGroupSize.x) +
+        gl_GlobalInvocationID.x;
+    uint first_pixel = 4u * invocation;
+    if (first_pixel >= num_pixels) {
+        return;
+    }
+    vec3 p[4];
+    for (uint i = 0u; i < 4u; ++i) {
+        uint pixel = first_pixel + i;
+        p[i] = vec3(0.0);
+        if (pixel < num_pixels) {
+            p[i] = sample_output_pixel(
+                ivec2(int(pixel % uint(out_size.x)),
+                      int(pixel / uint(out_size.x)))).rgb;
+        }
+    }
+    uint num_elements = (3u * num_pixels + 3u) / 4u;
+    uint first_element = 3u * invocation;
+    output_data.elements[first_element] =
+        pack_bytes(p[0].r, p[0].g, p[0].b, p[1].r);
+    if (first_element + 1u < num_elements) {
+        output_data.elements[first_element + 1u] =
+            pack_bytes(p[1].g, p[1].b, p[2].r, p[2].g);
+    }
+    if (first_element + 2u < num_elements) {
+        output_data.elements[first_element + 2u] =
+            pack_bytes(p[2].b, p[3].r, p[3].g, p[3].b);
+    }
+}
+#else
+// It is possible to use "vec3 elements[];" here, however due to alignment
+// requirements it works only when "packed" layout is used. "packed" layout is
+// determined by implementation and it's expected that OpenGL API is used to
+// query the layout. Favoring float array over vec3, considering performance is
+// comparable, layout is the same and no need for layout querying (even though
+// it's not quite needed here as there's only one member).
+layout(binding = 0) writeonly buffer B0 {
+  float elements[];
+} output_data;
+
+void main() {
+    int out_width = out_size.x;
+    int out_height = out_size.y;
+
+    ivec2 gid = ivec2(gl_GlobalInvocationID.xy);
+    if (gid.x >= out_width || gid.y >= out_height) {
+        return;
+    }
+    vec4 src_value = sample_output_pixel(gid);
 
     int linear_index = gid.y * out_width + gid.x;
 
@@ -149,6 +255,7 @@ void main() {
     output_data.elements[first_component_index + 1] = src_value.g;
     output_data.elements[first_component_index + 2] = src_value.b;
 }
+#endif  // OUTPUT_BYTES
 )";
 
 absl::Status SubRectExtractorGl::ExtractSubRectToBuffer(
@@ -158,6 +265,8 @@ absl::Status SubRectExtractorGl::ExtractSubRectToBuffer(
     const tflite::gpu::HW& destination_size,
     tflite::gpu::gl::CommandQueue* command_queue,
     tflite::gpu::gl::GlBuffer* destination) {
+  ABSL_ASSIGN_OR_RETURN(const tflite::gpu::uint3 work_size,
+                        GetWorkSize(tensor_type_, destination_size));
   std::array<float, 16> transform_mat;
   GetRotatedSubRectToRectTransformMatrix(texture_sub_rect, texture_size.w,
                                          texture_size.h, flip_horizontally,
@@ -194,9 +303,8 @@ absl::Status SubRectExtractorGl::ExtractSubRectToBuffer(
       {"out_size", tflite::gpu::int2(destination_size.w, destination_size.h)}));
   ABSL_RETURN_IF_ERROR(program_.SetParameter({"alpha", alpha}));
   ABSL_RETURN_IF_ERROR(program_.SetParameter({"beta", beta}));
-  tflite::gpu::uint3 num_workgroups = tflite::gpu::DivideRoundUp(
-      tflite::gpu::uint3{destination_size.w, destination_size.h, 1},
-      workgroup_size_);
+  tflite::gpu::uint3 num_workgroups =
+      tflite::gpu::DivideRoundUp(work_size, workgroup_size_);
   ABSL_RETURN_IF_ERROR(command_queue->Dispatch(program_, num_workgroups));
 
   // Resetting to MediaPipe texture param defaults.
@@ -210,11 +318,13 @@ absl::Status SubRectExtractorGl::ExtractSubRectToBuffer(
 
 absl::StatusOr<SubRectExtractorGl> SubRectExtractorGl::Create(
     const mediapipe::GlContext& gl_context, bool input_starts_at_bottom,
-    BorderMode border_mode) {
+    BorderMode border_mode, Tensor::ElementType tensor_type) {
   bool use_custom_zero_border = border_mode == BorderMode::kZero &&
                                 !IsGlClampToBorderSupported(gl_context);
+  const bool output_bytes = tensor_type != Tensor::ElementType::kFloat32;
 
-  const tflite::gpu::uint3 workgroup_size = {8, 8, 1};
+  const tflite::gpu::uint3 workgroup_size =
+      output_bytes ? tflite::gpu::uint3{64, 1, 1} : tflite::gpu::uint3{8, 8, 1};
   std::string starts_at_bottom_def;
   if (input_starts_at_bottom) {
     starts_at_bottom_def = R"(
@@ -227,9 +337,20 @@ absl::StatusOr<SubRectExtractorGl> SubRectExtractorGl::Create(
       #define CUSTOM_ZERO_BORDER_MODE
     )";
   }
+  std::string output_bytes_def;
+  if (output_bytes) {
+    output_bytes_def = R"(
+      #define OUTPUT_BYTES
+    )";
+  }
+  if (tensor_type == Tensor::ElementType::kInt8) {
+    absl::StrAppend(&output_bytes_def, R"(
+      #define OUTPUT_SIGNED
+    )");
+  }
   const std::string full_shader_source = absl::StrCat(
       tflite::gpu::gl::GetShaderHeader(workgroup_size), starts_at_bottom_def,
-      custom_zero_border_mode_def, kShaderCode);
+      custom_zero_border_mode_def, output_bytes_def, kShaderCode);
 
   tflite::gpu::gl::GlShader shader;
   ABSL_RETURN_IF_ERROR(tflite::gpu::gl::GlShader::CompileShader(
@@ -239,29 +360,26 @@ absl::StatusOr<SubRectExtractorGl> SubRectExtractorGl::Create(
       tflite::gpu::gl::GlProgram::CreateWithShader(shader, &program));
 
   return SubRectExtractorGl(std::move(program), workgroup_size,
-                            use_custom_zero_border, border_mode);
+                            use_custom_zero_border, border_mode, tensor_type);
 }
 
 class ImageToTensorGlBufferConverter : public ImageToTensorConverter {
  public:
   absl::Status Init(CalculatorContext* cc, bool input_starts_at_bottom,
-                    BorderMode border_mode) {
+                    BorderMode border_mode, Tensor::ElementType tensor_type) {
+    switch (tensor_type) {
+      case Tensor::ElementType::kFloat32:
+      case Tensor::ElementType::kUInt8:
+      case Tensor::ElementType::kInt8:
+        break;
+      default:
+        return absl::InvalidArgumentError(
+            absl::StrCat("Unsupported output tensor type: ",
+                         Tensor::ElementTypeName(tensor_type)));
+    }
+    tensor_type_ = tensor_type;
     ABSL_RETURN_IF_ERROR(gl_helper_.Open(cc));
-    return gl_helper_.RunInGlContext([this, input_starts_at_bottom,
-                                      border_mode]() -> absl::Status {
-      tflite::gpu::GpuInfo gpu_info;
-      ABSL_RETURN_IF_ERROR(tflite::gpu::gl::RequestGpuInfo(&gpu_info));
-      RET_CHECK(gpu_info.IsApiOpenGl31OrAbove())
-          << "OpenGL ES 3.1 is required.";
-      command_queue_ = tflite::gpu::gl::NewCommandQueue(gpu_info);
-
-      ABSL_ASSIGN_OR_RETURN(
-          auto extractor,
-          SubRectExtractorGl::Create(gl_helper_.GetGlContext(),
-                                     input_starts_at_bottom, border_mode));
-      extractor_ = absl::make_unique<SubRectExtractorGl>(std::move(extractor));
-      return absl::OkStatus();
-    });
+    return InitGl(input_starts_at_bottom, border_mode);
   }
 
   absl::Status Convert(const mediapipe::Image& input, const RotatedRect& roi,
@@ -278,7 +396,8 @@ class ImageToTensorGlBufferConverter : public ImageToTensorConverter {
     }
     const auto& output_shape = output_tensor.shape();
     ABSL_RETURN_IF_ERROR(ValidateTensorShape(output_shape));
-
+    ABSL_RETURN_IF_ERROR(ValidateOutputTensorTypeAndRange(
+        output_tensor, tensor_type_, range_min, range_max));
     ABSL_RETURN_IF_ERROR(gl_helper_.RunInGlContext(
         [this, &output_tensor, &input, &roi, &output_shape, range_min,
          range_max, tensor_buffer_offset]() -> absl::Status {
@@ -305,15 +424,48 @@ class ImageToTensorGlBufferConverter : public ImageToTensorConverter {
                                            buffer_view.name(), output_size,
                                            /*offset=*/tensor_buffer_offset,
                                            /*has_ownership=*/false);
-          ABSL_RETURN_IF_ERROR(extractor_->ExtractSubRectToBuffer(
-              input_texture,
-              tflite::gpu::HW(source_texture.height(), source_texture.width()),
-              roi,
-              /*flip_horizontally=*/false, transform.scale, transform.offset,
-              tflite::gpu::HW(output_shape.dims[1], output_shape.dims[2]),
-              command_queue_.get(), &output));
+          const tflite::gpu::HW texture_size(source_texture.height(),
+                                             source_texture.width());
+          const tflite::gpu::HW destination_size(output_shape.dims[1],
+                                                 output_shape.dims[2]);
 
-          return absl::OkStatus();
+          // Write directly into the output buffer if it can be bound as an
+          // SSBO (size a multiple of 4, aligned offset).
+          if (output_size % 4 == 0 &&
+              tensor_buffer_offset % ssbo_offset_alignment_ == 0) {
+            return extractor_->ExtractSubRectToBuffer(
+                input_texture, texture_size, roi,
+                /*flip_horizontally=*/false, transform.scale, transform.offset,
+                destination_size, command_queue_.get(), &output);
+          }
+
+          ABSL_LOG_FIRST_N(WARNING, 1)
+              << "Cannot write directly into the output buffer: " << output_size
+              << " bytes at offset " << tensor_buffer_offset << " ("
+              << destination_size.w << "x" << destination_size.h << " pixels, "
+              << output_tensor.element_size()
+              << " bytes per element) with an SSBO offset alignment of "
+              << ssbo_offset_alignment_
+              << " bytes and 4-byte SSBO elements. Falling back to writing "
+                 "into a scratch buffer and copying it into the output "
+                 "buffer, which is slower.";
+          const size_t scratch_size = (output_size + 3) / 4 * 4;
+          if (scratch_buffer_.bytes_size() < scratch_size) {
+            ABSL_RETURN_IF_ERROR(
+                tflite::gpu::gl::CreateReadWriteShaderStorageBuffer<uint32_t>(
+                    scratch_size / 4, &scratch_buffer_));
+          }
+          tflite::gpu::gl::GlBuffer scratch;
+          ABSL_RETURN_IF_ERROR(
+              scratch_buffer_.MakeView(/*offset=*/0, scratch_size, &scratch));
+          ABSL_RETURN_IF_ERROR(extractor_->ExtractSubRectToBuffer(
+              input_texture, texture_size, roi,
+              /*flip_horizontally=*/false, transform.scale, transform.offset,
+              destination_size, command_queue_.get(), &scratch));
+          // glCopyBufferSubData has no alignment requirements.
+          ABSL_RETURN_IF_ERROR(
+              scratch_buffer_.MakeView(/*offset=*/0, output_size, &scratch));
+          return tflite::gpu::gl::CopyBuffer(scratch, output);
         }));
 
     return absl::OkStatus();
@@ -324,10 +476,34 @@ class ImageToTensorGlBufferConverter : public ImageToTensorConverter {
       // Release OpenGL resources.
       extractor_ = nullptr;
       command_queue_ = nullptr;
+      scratch_buffer_ = tflite::gpu::gl::GlBuffer();
     });
   }
 
  private:
+  absl::Status InitGl(bool input_starts_at_bottom, BorderMode border_mode) {
+    return gl_helper_.RunInGlContext([this, input_starts_at_bottom,
+                                      border_mode]() -> absl::Status {
+      tflite::gpu::GpuInfo gpu_info;
+      ABSL_RETURN_IF_ERROR(tflite::gpu::gl::RequestGpuInfo(&gpu_info));
+      RET_CHECK(gpu_info.IsApiOpenGl31OrAbove())
+          << "OpenGL ES 3.1 is required.";
+      command_queue_ = tflite::gpu::gl::NewCommandQueue(gpu_info);
+
+      GLint ssbo_offset_alignment = 0;
+      glGetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT,
+                    &ssbo_offset_alignment);
+      ssbo_offset_alignment_ = std::max(4, ssbo_offset_alignment);
+
+      ABSL_ASSIGN_OR_RETURN(
+          auto extractor, SubRectExtractorGl::Create(
+                              gl_helper_.GetGlContext(), input_starts_at_bottom,
+                              border_mode, tensor_type_));
+      extractor_ = std::make_unique<SubRectExtractorGl>(std::move(extractor));
+      return absl::OkStatus();
+    });
+  }
+
   absl::Status ValidateTensorShape(const Tensor::Shape& output_shape) {
     RET_CHECK_EQ(output_shape.dims.size(), 4)
         << "Wrong output dims size: " << output_shape.dims.size();
@@ -338,8 +514,11 @@ class ImageToTensorGlBufferConverter : public ImageToTensorConverter {
     return absl::OkStatus();
   }
 
+  Tensor::ElementType tensor_type_ = Tensor::ElementType::kFloat32;
+  int ssbo_offset_alignment_ = 4;
   std::unique_ptr<tflite::gpu::gl::CommandQueue> command_queue_;
   std::unique_ptr<SubRectExtractorGl> extractor_;
+  tflite::gpu::gl::GlBuffer scratch_buffer_;
   mediapipe::GlCalculatorHelper gl_helper_;
 };
 
@@ -348,9 +527,11 @@ class ImageToTensorGlBufferConverter : public ImageToTensorConverter {
 absl::StatusOr<std::unique_ptr<ImageToTensorConverter>>
 CreateImageToGlBufferTensorConverter(CalculatorContext* cc,
                                      bool input_starts_at_bottom,
-                                     BorderMode border_mode) {
+                                     BorderMode border_mode,
+                                     Tensor::ElementType tensor_type) {
   auto result = absl::make_unique<ImageToTensorGlBufferConverter>();
-  ABSL_RETURN_IF_ERROR(result->Init(cc, input_starts_at_bottom, border_mode));
+  ABSL_RETURN_IF_ERROR(
+      result->Init(cc, input_starts_at_bottom, border_mode, tensor_type));
 
   return result;
 }

@@ -2010,6 +2010,7 @@ cc_library(
             ":image_to_tensor_converter",
             ":image_to_tensor_converter_gl_utils",
             ":image_to_tensor_utils",
+            "@com_google_absl//absl/log:absl_log",
             "@com_google_absl//absl/status",
             "@com_google_absl//absl/status:status_macros",
             "@com_google_absl//absl/strings",
@@ -2109,6 +2110,7 @@ cc_library(
             "//mediapipe/framework/port:ret_check",
             "//mediapipe/gpu:MPPMetalHelper",
             "//mediapipe/gpu:gpu_buffer_format",
+            "@com_google_absl//absl/log:absl_log",
             "@com_google_absl//absl/status",
             "@com_google_absl//absl/status:status_macros",
             "@com_google_absl//absl/status:statusor",
@@ -2159,6 +2161,7 @@ cc_test(
     deps = [
         ":image_to_tensor_utils",
         "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "@com_google_absl//absl/status",

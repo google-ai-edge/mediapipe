@@ -24,16 +24,19 @@
 #include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/tensor.h"
 
 namespace mediapipe {
 
 // Creates image to tensor (represented as OpenGL texture) converter.
+// `tensor_type`: float32, uint8 or int8.
 // NOTE: mediapipe::GlCalculatorHelper::UpdateContract invocation must precede
 // converter creation.
 absl::StatusOr<std::unique_ptr<ImageToTensorConverter>>
 CreateImageToGlTextureTensorConverter(CalculatorContext* cc,
                                       bool input_starts_at_bottom,
-                                      BorderMode border_mode);
+                                      BorderMode border_mode,
+                                      Tensor::ElementType tensor_type);
 
 }  // namespace mediapipe
 

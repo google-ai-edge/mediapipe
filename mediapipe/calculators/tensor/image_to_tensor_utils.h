@@ -56,7 +56,8 @@ struct OutputTensorParams {
   std::optional<int> output_height;
   std::optional<int> output_width;
   int output_batch;
-  bool is_float_output;
+  // float32, int8 or uint8, depending on the output_tensor_*_range set.
+  Tensor::ElementType tensor_type;
   float range_min;
   float range_max;
 };
@@ -181,16 +182,19 @@ template <typename T>
 OutputTensorParams GetOutputTensorParams(const T& options) {
   OutputTensorParams params;
   if (options.has_output_tensor_uint_range()) {
+    params.tensor_type = Tensor::ElementType::kUInt8;
     params.range_min =
         static_cast<float>(options.output_tensor_uint_range().min());
     params.range_max =
         static_cast<float>(options.output_tensor_uint_range().max());
   } else if (options.has_output_tensor_int_range()) {
+    params.tensor_type = Tensor::ElementType::kInt8;
     params.range_min =
         static_cast<float>(options.output_tensor_int_range().min());
     params.range_max =
         static_cast<float>(options.output_tensor_int_range().max());
   } else {
+    params.tensor_type = Tensor::ElementType::kFloat32;
     params.range_min = options.output_tensor_float_range().min();
     params.range_max = options.output_tensor_float_range().max();
   }
@@ -200,7 +204,6 @@ OutputTensorParams GetOutputTensorParams(const T& options) {
   if (options.has_output_tensor_height()) {
     params.output_height = options.output_tensor_height();
   }
-  params.is_float_output = options.has_output_tensor_float_range();
   params.output_batch = 1;
   return params;
 }
@@ -209,12 +212,14 @@ OutputTensorParams GetOutputTensorParams(const T& options) {
 BorderMode GetBorderMode(
     const mediapipe::ImageToTensorCalculatorOptions::BorderMode& mode);
 
-// Gets the output tensor type.
-Tensor::ElementType GetOutputTensorType(bool uses_gpu,
-                                        const OutputTensorParams& params);
-
 // Gets the number of output channels from the input Image format.
 int GetNumOutputChannels(const mediapipe::Image& image);
+
+// Validates that `output_tensor` has `expected_type` and that
+// `[range_min, range_max]` fits into `expected_type` for 8-bit integer types.
+absl::Status ValidateOutputTensorTypeAndRange(const Tensor& output_tensor,
+                                              Tensor::ElementType expected_type,
+                                              float range_min, float range_max);
 
 // Converts the packet that hosts different format (Image, ImageFrame,
 // GpuBuffer) into the mediapipe::Image format.

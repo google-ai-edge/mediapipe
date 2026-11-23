@@ -24,14 +24,18 @@
 #include "absl/status/statusor.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/tensor.h"
 
 namespace mediapipe {
 
-// Creates Metal image-to-tensor converter.
+// Creates Metal image-to-tensor converter for output tensors of `tensor_type`
+// (kFloat32, kUInt8 or kInt8). Outputs 4 channels ([1, H, W, 4], [R, G, B, 0]
+// for 8-bit types) by default.
 // NOTE: [MPPMetalHelper updateContract:...] invocation must precede
 // converter creation.
 absl::StatusOr<std::unique_ptr<ImageToTensorConverter>> CreateMetalConverter(
-    CalculatorContext* cc, BorderMode border_mode);
+    CalculatorContext* cc, BorderMode border_mode,
+    Tensor::ElementType tensor_type);
 
 }  // namespace mediapipe
 

@@ -164,6 +164,20 @@ struct MtlResources {};
 #endif  // MEDIAPIPE_METAL_ENABLED
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+namespace {
+
+// int8 uses two's complement in normalized RGBA8.
+bool IsByteTexture(Tensor::ElementType element_type) {
+  return element_type == Tensor::ElementType::kUInt8 ||
+         element_type == Tensor::ElementType::kInt8;
+}
+
+GLenum GlTexturePixelType(Tensor::ElementType element_type) {
+  return IsByteTexture(element_type) ? GL_UNSIGNED_BYTE : GL_FLOAT;
+}
+
+}  // namespace
+
 bool Tensor::NeedsHalfFloatRenderTarget() const {
   static bool has_color_buffer_float =
       gl_context_->HasGlExtension("WEBGL_color_buffer_float") ||
@@ -210,6 +224,7 @@ Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dReadView() const {
     // Set alignment for the proper value (default) to avoid address sanitizer
     // error "out of boundary reading".
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+    const GLenum pixel_type = GlTexturePixelType(element_type_);
 #ifdef __EMSCRIPTEN__
     // Under WebGL1, format must match in order to use glTexSubImage2D, so if we
     // have a half-float texture, then uploading from GL_FLOAT here would fail.
@@ -220,13 +235,13 @@ Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dReadView() const {
     // that case, which is incompatible.
     if (gl_context_->GetGlVersion() == mediapipe::GlVersion::kGLES2) {
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_width_, texture_height_,
-                   0, GL_RGBA, GL_FLOAT, temp_buffer.get());
+                   0, GL_RGBA, pixel_type, temp_buffer.get());
       texture_is_half_float_ = false;
     } else
 #endif  // __EMSCRIPTEN__
     {
       glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture_width_, texture_height_,
-                      GL_RGBA, GL_FLOAT, temp_buffer.get());
+                      GL_RGBA, pixel_type, temp_buffer.get());
     }
     glBindTexture(GL_TEXTURE_2D, 0);
     valid_ |= kValidOpenGlTexture2d;
@@ -239,10 +254,11 @@ Tensor::OpenGlTexture2dView Tensor::GetOpenGlTexture2dWriteView() const {
   AllocateOpenGlTexture2d();
 #ifdef __EMSCRIPTEN__
   // On web, we may have to change type from float to half-float
-  if (!texture_is_half_float_ && NeedsHalfFloatRenderTarget()) {
+  if (!IsByteTexture(element_type_) && !texture_is_half_float_ &&
+      NeedsHalfFloatRenderTarget()) {
     glBindTexture(GL_TEXTURE_2D, opengl_texture2d_);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_width_, texture_height_, 0,
-                 GL_RGBA, GL_HALF_FLOAT_OES, 0 /* data */);
+                 GL_RGBA, GL_HALF_FLOAT_OES, /*data=*/nullptr);
     glBindTexture(GL_TEXTURE_2D, 0);
     texture_is_half_float_ = true;
   }
@@ -306,11 +322,12 @@ void Tensor::AllocateOpenGlTexture2d() const {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     OpenGlTexture2dView::GetLayoutDimensions(shape_, &texture_width_,
                                              &texture_height_);
+    const bool byte_texture = IsByteTexture(element_type_);
     if (gl_context_->GetGlVersion() != mediapipe::GlVersion::kGLES2) {
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-      glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, texture_width_,
-                     texture_height_);
+      glTexStorage2D(GL_TEXTURE_2D, 1, byte_texture ? GL_RGBA8 : GL_RGBA32F,
+                     texture_width_, texture_height_);
     } else {
       // GLES2.0 supports only clamp addressing mode for NPOT textures.
       // If any of dimensions is NPOT then both addressing modes are clamp.
@@ -318,27 +335,30 @@ void Tensor::AllocateOpenGlTexture2d() const {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
       }
-      // We assume all contexts will have the same extensions, so we only check
-      // once for OES_texture_float extension, to save time.
-      static bool has_oes_extension =
-          gl_context_->HasGlExtension("OES_texture_float");
-      ABSL_LOG_IF(FATAL, !has_oes_extension)
-          << "OES_texture_float extension required in order to use MP tensor "
-          << "with GLES 2.0";
-      // Allocate the image data; note that it's no longer RGBA32F, so will be
-      // lower precision.
-      auto type = GL_FLOAT;
-      // On web, we might need to change type to half-float (e.g. for iOS-
-      // Safari) in order to have a valid framebuffer. See b/194442743 for more
-      // details.
+      GLenum type = GL_UNSIGNED_BYTE;
+      if (!byte_texture) {
+        // We assume all contexts will have the same extensions, so we only
+        // check once for OES_texture_float extension, to save time.
+        static bool has_oes_extension =
+            gl_context_->HasGlExtension("OES_texture_float");
+        ABSL_LOG_IF(FATAL, !has_oes_extension)
+            << "OES_texture_float extension required in order to use MP tensor "
+            << "with GLES 2.0";
+        // Allocate the image data; note that it's no longer RGBA32F, so will
+        // be lower precision.
+        type = GL_FLOAT;
+        // On web, we might need to change type to half-float (e.g. for iOS-
+        // Safari) in order to have a valid framebuffer. See b/194442743 for
+        // more details.
 #ifdef __EMSCRIPTEN__
-      if (NeedsHalfFloatRenderTarget()) {
-        type = GL_HALF_FLOAT_OES;
-        texture_is_half_float_ = true;
-      }
+        if (NeedsHalfFloatRenderTarget()) {
+          type = GL_HALF_FLOAT_OES;
+          texture_is_half_float_ = true;
+        }
 #endif  // __EMSCRIPTEN
+      }
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_width_, texture_height_,
-                   0, GL_RGBA, type, 0 /* data */);
+                   0, GL_RGBA, type, /*data=*/nullptr);
     }
     glBindTexture(GL_TEXTURE_2D, 0);
     glGenFramebuffers(1, &frame_buffer_);
@@ -666,8 +686,8 @@ absl::Status Tensor::ReadBackGpuToCpu() const {
       glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                              GL_TEXTURE_2D, opengl_texture2d_, 0);
       glPixelStorei(GL_PACK_ALIGNMENT, 4);
-      glReadPixels(0, 0, texture_width_, texture_height_, GL_RGBA, GL_FLOAT,
-                   buffer);
+      glReadPixels(0, 0, texture_width_, texture_height_, GL_RGBA,
+                   GlTexturePixelType(element_type_), buffer);
       uint8_t* dest_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
       const int actual_depth_size = BhwcDepthFromShape(shape_) * element_size();
       const int num_slices = (BhwcDepthFromShape(shape_) + 3) / 4;

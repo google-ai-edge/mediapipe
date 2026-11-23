@@ -26,6 +26,12 @@ wgpu::TextureFormat GetWebGpuTextureFormat(Tensor::Shape shape,
     // Pad all F16 data to RGBA because only RGBA textures support storage
     // binding.
     return wgpu::TextureFormat::RGBA16Float;
+  } else if (element_type == Tensor::ElementType::kUInt8) {
+    // Pad all 8-bit data to RGBA because only RGBA textures support storage
+    // binding.
+    return wgpu::TextureFormat::RGBA8Uint;
+  } else if (element_type == Tensor::ElementType::kInt8) {
+    return wgpu::TextureFormat::RGBA8Sint;
   } else if (element_type == Tensor::ElementType::kFloat32) {
     switch (depth) {
       case 1:
@@ -43,7 +49,7 @@ wgpu::TextureFormat GetWebGpuTextureFormat(Tensor::Shape shape,
   } else {
     ABSL_CHECK(false)
         << "WebGpuTexture2dView supports only tensors with element type "
-           "float16 or float32.";
+           "float16, float32, uint8 or int8.";
   }
 }
 
@@ -91,10 +97,14 @@ Tensor::WebGpuTexture2dView Tensor::GetWebGpuTexture2dWriteView(
     format = wgpu::TextureFormat::RGBA16Float;
   } else if (element_type_ == Tensor::ElementType::kFloat32) {
     format = wgpu::TextureFormat::RGBA32Float;
+  } else if (element_type_ == Tensor::ElementType::kUInt8) {
+    format = wgpu::TextureFormat::RGBA8Uint;
+  } else if (element_type_ == Tensor::ElementType::kInt8) {
+    format = wgpu::TextureFormat::RGBA8Sint;
   } else {
     ABSL_QCHECK(false)
         << "WebGpuTexture2dView supports only tensors with element type "
-           "float16 or float32.";
+           "float16, float32, uint8 or int8.";
   }
 
   if (!webgpu_texture2d_) {

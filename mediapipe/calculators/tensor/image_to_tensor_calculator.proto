@@ -33,7 +33,8 @@ message ImageToTensorCalculatorOptions {
 
   // Range of int values [min, max].
   // min, must be strictly less than max.
-  // Please note that IntRange is supported for CPU tensors only.
+  // Please note that IntRange (int8 output) is not supported by:
+  // - the FrameBuffer based CPU converter (used if OpenCV is disabled)
   message IntRange {
     optional int64 min = 1;
     optional int64 max = 2;
@@ -41,7 +42,9 @@ message ImageToTensorCalculatorOptions {
 
   // Range of uint values [min, max].
   // min, must be strictly less than max.
-  // Please note that UIntRange is supported for CPU tensors only.
+  // Please note that UIntRange (uint8 output) is not supported by:
+  // - the FrameBuffer based CPU converter (used if OpenCV is disabled), except
+  //   for the range [0, 255]
   message UIntRange {
     optional uint64 min = 1;
     optional uint64 max = 2;
@@ -64,7 +67,8 @@ message ImageToTensorCalculatorOptions {
   // if false, image region is stretched to fill output tensor fully.
   optional bool keep_aspect_ratio = 3;
 
-  // Output tensor element range/type image pixels are converted to.
+  // Output range. The set field selects the output tensor type: float32, int8
+  // or uint8.
   oneof range {
     FloatRange output_tensor_float_range = 4;
     IntRange output_tensor_int_range = 7;

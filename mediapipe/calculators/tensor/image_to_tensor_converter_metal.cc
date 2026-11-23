@@ -20,9 +20,11 @@
 #include <TargetConditionals.h>
 
 #include <array>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
+#include "absl/log/absl_log.h"          // from @com_google_absl
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "absl/status/statusor.h"       // from @com_google_absl
@@ -103,6 +105,12 @@ constexpr char kFragmentShader[] = R"(
   #define Type float
   #endif  // OUTPUT_F32C4
 
+  // 8-bit (uint8 / int8) output via a normalized RGBA8 render target.
+  #ifdef OUTPUT_U8C4
+  #define Type4 float4
+  #define Type float
+  #endif  // OUTPUT_U8C4
+
   fragment Type4 fragmentShader(TextureVertex vertex_output [[stage_in]],
                                   texture2d<Type> texture [[texture(0)]],
                                   constant float* parameters [[buffer(1)]])
@@ -121,11 +129,17 @@ constexpr char kFragmentShader[] = R"(
     #endif  // CLAMP_TO_EDGE
 
     Type4 texture_pixel = texture.sample(linear_sampler, vertex_output.uv);
-    return Type4(alpha * texture_pixel.rgb + beta, 0);
+    Type4 value = Type4(alpha * texture_pixel.rgb + beta, 0);
+    #ifdef OUTPUT_U8C4
+    // Round, clamp and store the low byte (two's complement for int8) / 255.
+    value = clamp(floor(value + 0.5), Type4(OUTPUT_MIN), Type4(OUTPUT_MAX));
+    value = (value - 256.0 * floor(value / 256.0)) / 255.0;
+    #endif  // OUTPUT_U8C4
+    return value;
   }
 )";
 
-enum class OutputFormat { kF16C4, kF32C4 };
+enum class OutputFormat { kF16C4, kF32C4, kU8C4 };
 
 MTLPixelFormat GetPixelFormat(OutputFormat output_format) {
   switch (output_format) {
@@ -133,6 +147,8 @@ MTLPixelFormat GetPixelFormat(OutputFormat output_format) {
       return MTLPixelFormatRGBA16Float;
     case OutputFormat::kF32C4:
       return MTLPixelFormatRGBA32Float;
+    case OutputFormat::kU8C4:
+      return MTLPixelFormatRGBA8Unorm;
   }
 }
 int GetBytesPerRaw(OutputFormat output_format, const tflite::gpu::HW& size) {
@@ -144,6 +160,9 @@ int GetBytesPerRaw(OutputFormat output_format, const tflite::gpu::HW& size) {
     case OutputFormat::kF32C4:
       type_size = sizeof(float);
       break;
+    case OutputFormat::kU8C4:
+      type_size = sizeof(uint8_t);
+      break;
   }
   constexpr int kNumChannels = 4;
   return size.w * kNumChannels * type_size;
@@ -151,12 +170,13 @@ int GetBytesPerRaw(OutputFormat output_format, const tflite::gpu::HW& size) {
 
 class SubRectExtractorMetal {
  public:
+  // `output_signed`: For kU8C4, whether the bytes are int8 instead of uint8.
   static absl::StatusOr<std::unique_ptr<SubRectExtractorMetal>> Make(
-      id<MTLDevice> device, OutputFormat output_format,
+      id<MTLDevice> device, OutputFormat output_format, bool output_signed,
       BorderMode border_mode) {
     id<MTLRenderPipelineState> pipeline_state;
     ABSL_RETURN_IF_ERROR(SubRectExtractorMetal::MakePipelineState(
-        device, output_format, border_mode, &pipeline_state));
+        device, output_format, output_signed, border_mode, &pipeline_state));
 
     return absl::make_unique<SubRectExtractorMetal>(device, pipeline_state,
                                                     output_format);
@@ -185,16 +205,31 @@ class SubRectExtractorMetal {
                        const tflite::gpu::HW& destination_size,
                        id<MTLCommandBuffer> command_buffer,
                        id<MTLBuffer> destination) {
-#if TARGET_OS_SIMULATOR
-    return InternalExecuteSimulator(input_texture, sub_rect, flip_horizontally,
-                                    alpha, beta, destination_size,
-                                    command_buffer, destination);
-#else
-    auto output_texture = MTLTextureWithBuffer(destination_size, destination);
-    return InternalExecute(input_texture, sub_rect, flip_horizontally, alpha,
-                           beta, destination_size, command_buffer,
-                           output_texture);
-#endif  // TARGET_OS_SIMULATOR
+#if !TARGET_OS_SIMULATOR
+    id<MTLTexture> output_texture =
+        MTLTextureWithBuffer(destination_size, destination);
+    if (output_texture != nil) {
+      return InternalExecute(input_texture, sub_rect, flip_horizontally, alpha,
+                             beta, destination_size, command_buffer,
+                             output_texture);
+    }
+    const NSUInteger bytes_per_row =
+        GetBytesPerRaw(output_format_, destination_size);
+    const NSUInteger alignment = [device_
+        minimumLinearTextureAlignmentForPixelFormat:GetPixelFormat(
+                                                        output_format_)];
+    ABSL_LOG_FIRST_N(WARNING, 1)
+        << "Cannot render directly into the output buffer: rows of "
+        << bytes_per_row << " bytes (" << destination_size.w << "x"
+        << destination_size.h << " pixels, "
+        << bytes_per_row / destination_size.w
+        << " bytes per pixel) with a linear texture alignment of " << alignment
+        << " bytes. Falling back to rendering into a separate texture and "
+           "blitting it into the output buffer, which is slower.";
+#endif  // !TARGET_OS_SIMULATOR
+    return InternalExecuteViaBlit(input_texture, sub_rect, flip_horizontally,
+                                  alpha, beta, destination_size, command_buffer,
+                                  destination);
   }
 
  private:
@@ -207,8 +242,15 @@ class SubRectExtractorMetal {
                                     height:size.h
                                  mipmapped:NO];
     texture_desc.usage = MTLTextureUsageRenderTarget;
+    texture_desc.resourceOptions = buffer.resourceOptions;
 
     NSUInteger output_bytes_per_row = GetBytesPerRaw(output_format_, size);
+    NSUInteger alignment = [device_
+        minimumLinearTextureAlignmentForPixelFormat:GetPixelFormat(
+                                                        output_format_)];
+    if (alignment > 0 && output_bytes_per_row % alignment != 0) {
+      return nil;
+    }
 
     id<MTLTexture> texture =
         [buffer newTextureWithDescriptor:texture_desc
@@ -269,20 +311,22 @@ class SubRectExtractorMetal {
     return absl::OkStatus();
   }
 
-#if TARGET_OS_SIMULATOR
-  absl::Status InternalExecuteSimulator(id<MTLTexture> input_texture,
-                                        const RotatedRect& sub_rect,
-                                        bool flip_horizontally, float alpha,
-                                        float beta,
-                                        const tflite::gpu::HW& destination_size,
-                                        id<MTLCommandBuffer> command_buffer,
-                                        id<MTLBuffer> destination) {
+  // Fallback for simulator (no buffer-backed linear textures) and unaligned
+  // rows.
+  absl::Status InternalExecuteViaBlit(id<MTLTexture> input_texture,
+                                      const RotatedRect& sub_rect,
+                                      bool flip_horizontally, float alpha,
+                                      float beta,
+                                      const tflite::gpu::HW& destination_size,
+                                      id<MTLCommandBuffer> command_buffer,
+                                      id<MTLBuffer> destination) {
     MTLTextureDescriptor* texture_desc = [MTLTextureDescriptor
         texture2DDescriptorWithPixelFormat:GetPixelFormat(output_format_)
                                      width:destination_size.w
                                     height:destination_size.h
                                  mipmapped:NO];
     texture_desc.usage = MTLTextureUsageRenderTarget;
+    texture_desc.storageMode = MTLStorageModePrivate;
     id<MTLTexture> output_texture =
         [device_ newTextureWithDescriptor:texture_desc];
     ABSL_RETURN_IF_ERROR(
@@ -304,11 +348,10 @@ class SubRectExtractorMetal {
     [blit_encoder endEncoding];
     return absl::OkStatus();
   }
-#endif  // TARGET_OS_SIMULATOR
 
   static absl::Status MakePipelineState(
-      id<MTLDevice> device, OutputFormat output_format, BorderMode border_mode,
-      id<MTLRenderPipelineState>* pipeline_state) {
+      id<MTLDevice> device, OutputFormat output_format, bool output_signed,
+      BorderMode border_mode, id<MTLRenderPipelineState>* pipeline_state) {
     RET_CHECK(pipeline_state != nil);
 
     std::string output_type_def;
@@ -321,6 +364,18 @@ class SubRectExtractorMetal {
       case OutputFormat::kF32C4:
         output_type_def = R"(
           #define OUTPUT_F32C4
+        )";
+        break;
+      case OutputFormat::kU8C4:
+        output_type_def = output_signed ? R"(
+          #define OUTPUT_U8C4
+          #define OUTPUT_MIN -128.0
+          #define OUTPUT_MAX 127.0
+        )"
+                                        : R"(
+          #define OUTPUT_U8C4
+          #define OUTPUT_MIN 0.0
+          #define OUTPUT_MAX 255.0
         )";
         break;
     }
@@ -388,12 +443,31 @@ class SubRectExtractorMetal {
 
 class ImageToTensorMetalConverter : public ImageToTensorConverter {
  public:
-  absl::Status Init(CalculatorContext* cc, BorderMode border_mode) {
+  absl::Status Init(CalculatorContext* cc, BorderMode border_mode,
+                    Tensor::ElementType tensor_type) {
+    OutputFormat output_format;
+    switch (tensor_type) {
+      case Tensor::ElementType::kFloat32:
+        output_format = OutputFormat::kF32C4;
+        break;
+      case Tensor::ElementType::kUInt8:
+      case Tensor::ElementType::kInt8:
+        output_format = OutputFormat::kU8C4;
+        break;
+      default:
+        return absl::InvalidArgumentError(
+            absl::StrCat("Unsupported output tensor type: ",
+                         Tensor::ElementTypeName(tensor_type)));
+    }
+    tensor_type_ = tensor_type;
     metal_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
     RET_CHECK(metal_helper_);
-    ABSL_ASSIGN_OR_RETURN(extractor_, SubRectExtractorMetal::Make(
-                                          metal_helper_.mtlDevice,
-                                          OutputFormat::kF32C4, border_mode));
+    ABSL_ASSIGN_OR_RETURN(
+        extractor_,
+        SubRectExtractorMetal::Make(
+            metal_helper_.mtlDevice, output_format,
+            /*output_signed=*/tensor_type == Tensor::ElementType::kInt8,
+            border_mode));
     return absl::OkStatus();
   }
 
@@ -410,6 +484,8 @@ class ImageToTensorMetalConverter : public ImageToTensorConverter {
     }
     RET_CHECK_EQ(tensor_buffer_offset, 0)
         << "The non-zero tensor_buffer_offset input is not supported yet.";
+    ABSL_RETURN_IF_ERROR(ValidateOutputTensorTypeAndRange(
+        output_tensor, tensor_type_, range_min, range_max));
     const auto& output_shape = output_tensor.shape();
     ABSL_RETURN_IF_ERROR(ValidateTensorShape(output_shape));
 
@@ -450,15 +526,17 @@ class ImageToTensorMetalConverter : public ImageToTensorConverter {
   }
 
   MPPMetalHelper* metal_helper_ = nil;
+  Tensor::ElementType tensor_type_ = Tensor::ElementType::kFloat32;
   std::unique_ptr<SubRectExtractorMetal> extractor_;
 };
 
 }  // namespace
 
 absl::StatusOr<std::unique_ptr<ImageToTensorConverter>> CreateMetalConverter(
-    CalculatorContext* cc, BorderMode border_mode) {
+    CalculatorContext* cc, BorderMode border_mode,
+    Tensor::ElementType tensor_type) {
   auto result = absl::make_unique<ImageToTensorMetalConverter>();
-  ABSL_RETURN_IF_ERROR(result->Init(cc, border_mode));
+  ABSL_RETURN_IF_ERROR(result->Init(cc, border_mode, tensor_type));
 
   return result;
 }

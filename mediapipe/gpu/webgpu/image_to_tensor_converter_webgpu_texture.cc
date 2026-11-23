@@ -5,14 +5,19 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <string>
 
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
+#include "absl/status/statusor.h"       // from @com_google_absl
+#include "absl/strings/str_cat.h"       // from @com_google_absl
 #include "absl/strings/str_format.h"    // from @com_google_absl
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/webgpu/webgpu_headers.h"
 #include "mediapipe/gpu/webgpu/webgpu_service.h"
@@ -104,61 +109,52 @@ void GetTransposedRotatedSubRectToRectTransformMatrixWebGpu(
   matrix[11] = 0.0f;
 }
 
+struct OutputTypeShaderConfig {
+  const char* storage_format;
+  const char* store_value;
+};
+
+absl::StatusOr<OutputTypeShaderConfig> GetOutputTypeShaderConfig(
+    Tensor::ElementType element_type) {
+  switch (element_type) {
+    case Tensor::ElementType::kFloat32:
+      return OutputTypeShaderConfig{
+          .storage_format = "rgba32float",
+          .store_value = "vec4<f32>(output_value, 1.0)",
+      };
+    // 8-bit output uses integer textures. Round and clamp, since out-of-range
+    // stores are undefined.
+    case Tensor::ElementType::kUInt8:
+      return OutputTypeShaderConfig{
+          .storage_format = "rgba8uint",
+          .store_value =
+              "vec4<u32>(vec3<u32>(clamp(floor(output_value + "
+              "0.5), vec3<f32>(0.0), vec3<f32>(255.0))), 0u)",
+      };
+    case Tensor::ElementType::kInt8:
+      return OutputTypeShaderConfig{
+          .storage_format = "rgba8sint",
+          .store_value =
+              "vec4<i32>(vec3<i32>(clamp(floor(output_value + "
+              "0.5), vec3<f32>(-128.0), vec3<f32>(127.0))), 0)",
+      };
+    default:
+      return absl::InvalidArgumentError(
+          absl::StrCat("Unsupported output tensor type: ",
+                       Tensor::ElementTypeName(element_type)));
+  }
+}
+
 // Crude ImageToTensorConverter that does the minimal for WebGPU textures.
 class Converter : public ImageToTensorConverter {
  public:
   // TODO: Support `input_starts_at_bottom` and `border_mode`.
-  Converter(CalculatorContext* cc)
-      : service_(cc->Service(kWebGpuService).GetObject()) {
-    const std::string shader = absl::StrFormat(R"(
-struct Parameters {
-  transform: mat3x3f,
-  output_size : vec2<u32>,
-  value_transform : vec2<f32>,
-};
+  explicit Converter(CalculatorContext* cc)
+      : service_(cc->Service(kWebGpuService).GetObject()) {}
 
-@group(0) @binding(0) var input : texture_2d<f32>;
-@group(0) @binding(1) var input_sampler : sampler;
-@group(0) @binding(2) var output : texture_storage_2d<rgba32float, write>;
-@group(0) @binding(3) var<uniform> params : Parameters;
-
-@compute @workgroup_size(%d, %d)
-fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
-  if (gid.x >= params.output_size.x || gid.y >= params.output_size.y) {
-    return;
-  }
-
-  let output_coord = vec2f(gid.xy) + vec2f(0.5);
-  let input_coord = (params.transform * vec3<f32>(output_coord, 1.0f)).xy;
-  let input_value = textureSampleLevel(input, input_sampler, input_coord, 0);
-  let output_value = params.value_transform.x * input_value.xyz
-      + vec3<f32>(params.value_transform.y);
-  textureStore(
-      output, vec2<i32>(gid.xy),
-      vec4<f32>(output_value, 1.0));
-}
-)",
-                                               kTileSize, kTileSize);
-
-    // Create the shader module.
-    wgpu::ShaderSourceWGSL wgsl;
-    wgsl.code = shader.c_str();
-    wgpu::ShaderModuleDescriptor shader_desc = {.nextInChain = &wgsl};
-    wgpu::ShaderModule module =
-        service_.device().CreateShaderModule(&shader_desc);
-
-    // Create the compute pipeline.
-    wgpu::ComputePipelineDescriptor pipeline_desc = {
-        .compute =
-            {
-                .module = module,
-                .entryPoint = "main",
-                .constantCount = 0,
-                .constants = nullptr,
-            },
-    };
-    pipeline_ = WebGpuCreateComputePipelineAsync(
-        service_.instance(), service_.device(), &pipeline_desc);
+  absl::Status Init(Tensor::ElementType tensor_type) {
+    tensor_type_ = tensor_type;
+    ABSL_RETURN_IF_ERROR(CreatePipeline());
 
     // Create a uniform buffer for the parameters.
     wgpu::BufferDescriptor buffer_desc = {
@@ -173,6 +169,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
         .minFilter = wgpu::FilterMode::Linear,
     };
     sampler_ = service_.device().CreateSampler(&sampler_desc);
+    return absl::OkStatus();
   }
 
   absl::Status Convert(const mediapipe::Image& input, const RotatedRect& roi,
@@ -180,6 +177,8 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
                        int tensor_buffer_offset, Tensor& output_tensor) final {
     RET_CHECK_EQ(tensor_buffer_offset, 0)
         << "The non-zero tensor_buffer_offset input is not supported yet.";
+    ABSL_RETURN_IF_ERROR(ValidateOutputTensorTypeAndRange(
+        output_tensor, tensor_type_, range_min, range_max));
     const auto& output_shape = output_tensor.shape();
     ABSL_RETURN_IF_ERROR(ValidateTensorShape(output_shape));
 
@@ -272,6 +271,60 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   }
 
  private:
+  absl::Status CreatePipeline() {
+    ABSL_ASSIGN_OR_RETURN(const OutputTypeShaderConfig config,
+                          GetOutputTypeShaderConfig(tensor_type_));
+    const std::string shader = absl::StrFormat(R"(
+struct Parameters {
+  transform: mat3x3f,
+  output_size : vec2<u32>,
+  value_transform : vec2<f32>,
+};
+
+@group(0) @binding(0) var input : texture_2d<f32>;
+@group(0) @binding(1) var input_sampler : sampler;
+@group(0) @binding(2) var output : texture_storage_2d<%s, write>;
+@group(0) @binding(3) var<uniform> params : Parameters;
+
+@compute @workgroup_size(%d, %d)
+fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+  if (gid.x >= params.output_size.x || gid.y >= params.output_size.y) {
+    return;
+  }
+
+  let output_coord = vec2f(gid.xy) + vec2f(0.5);
+  let input_coord = (params.transform * vec3<f32>(output_coord, 1.0f)).xy;
+  let input_value = textureSampleLevel(input, input_sampler, input_coord, 0);
+  let output_value = params.value_transform.x * input_value.xyz
+      + vec3<f32>(params.value_transform.y);
+  textureStore(output, vec2<i32>(gid.xy), %s);
+}
+)",
+                                               config.storage_format, kTileSize,
+                                               kTileSize, config.store_value);
+
+    // Create the shader module.
+    wgpu::ShaderSourceWGSL wgsl;
+    wgsl.code = shader.c_str();
+    wgpu::ShaderModuleDescriptor shader_desc = {.nextInChain = &wgsl};
+    wgpu::ShaderModule module =
+        service_.device().CreateShaderModule(&shader_desc);
+
+    // Create the compute pipeline.
+    wgpu::ComputePipelineDescriptor pipeline_desc = {
+        .compute =
+            {
+                .module = module,
+                .entryPoint = "main",
+                .constantCount = 0,
+                .constants = nullptr,
+            },
+    };
+    pipeline_ = WebGpuCreateComputePipelineAsync(
+        service_.instance(), service_.device(), &pipeline_desc);
+    return absl::OkStatus();
+  }
+
   absl::Status ValidateTensorShape(const Tensor::Shape& output_shape) {
     RET_CHECK_EQ(output_shape.dims.size(), 4)
         << "Wrong output dims size: " << output_shape.dims.size();
@@ -284,6 +337,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   }
 
   const WebGpuService& service_;
+  Tensor::ElementType tensor_type_ = Tensor::ElementType::kFloat32;
   WebGpuAsyncFuture<wgpu::ComputePipeline> pipeline_;
   wgpu::Buffer params_buffer_;
   wgpu::Sampler sampler_;
@@ -306,8 +360,11 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 }  // namespace
 
 absl::StatusOr<std::unique_ptr<ImageToTensorConverter>>
-CreateImageToWebGpuTextureTensorConverter(CalculatorContext* cc) {
-  return std::make_unique<Converter>(cc);
+CreateImageToWebGpuTextureTensorConverter(CalculatorContext* cc,
+                                          Tensor::ElementType tensor_type) {
+  auto converter = std::make_unique<Converter>(cc);
+  ABSL_RETURN_IF_ERROR(converter->Init(tensor_type));
+  return converter;
 }
 
 }  // namespace mediapipe

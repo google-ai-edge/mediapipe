@@ -198,6 +198,8 @@ absl::StatusOr<uint32_t> WebGpuTextureFormatBytesPerPixel(
     wgpu::TextureFormat format) {
   switch (format) {
     case wgpu::TextureFormat::RGBA8Unorm:
+    case wgpu::TextureFormat::RGBA8Uint:
+    case wgpu::TextureFormat::RGBA8Sint:
       return 4;
     case wgpu::TextureFormat::R16Float:
       return 2;
@@ -224,6 +226,8 @@ absl::StatusOr<uint32_t> WebGpuTextureFormatDepth(wgpu::TextureFormat format) {
     case wgpu::TextureFormat::RG16Float:
     case wgpu::TextureFormat::RG32Float:
       return 2;
+    case wgpu::TextureFormat::RGBA8Uint:
+    case wgpu::TextureFormat::RGBA8Sint:
     case wgpu::TextureFormat::RGBA16Float:
     case wgpu::TextureFormat::RGBA32Float:
       return 4;

@@ -20,6 +20,7 @@
 
 #include <array>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "absl/log/absl_log.h"          // from @com_google_absl
@@ -49,7 +50,18 @@ constexpr int kNumAttributes = 2;
 class ImageToTensorGlTextureConverter : public ImageToTensorConverter {
  public:
   absl::Status Init(CalculatorContext* cc, bool input_starts_at_bottom,
-                    BorderMode border_mode) {
+                    BorderMode border_mode, Tensor::ElementType tensor_type) {
+    switch (tensor_type) {
+      case Tensor::ElementType::kFloat32:
+      case Tensor::ElementType::kUInt8:
+      case Tensor::ElementType::kInt8:
+        break;
+      default:
+        return absl::InvalidArgumentError(
+            absl::StrCat("Unsupported output tensor type: ",
+                         Tensor::ElementTypeName(tensor_type)));
+    }
+    tensor_type_ = tensor_type;
     ABSL_RETURN_IF_ERROR(gl_helper_.Open(cc));
     return gl_helper_.RunInGlContext([this, input_starts_at_bottom,
                                       border_mode]() -> absl::Status {
@@ -110,7 +122,14 @@ class ImageToTensorGlTextureConverter : public ImageToTensorConverter {
                         sample_coordinate.y < 0.0 || sample_coordinate.y > 1.0);
               color = mix(color, vec4(0.0, 0.0, 0.0, 0.0), out_of_bounds);
             #endif  // defined(CUSTOM_ZERO_BORDER_MODE)
-              fragColor = alpha * color + beta;
+              vec4 value = alpha * color + beta;
+            #ifdef OUTPUT_BYTES
+              // 8-bit output in a normalized RGBA8 texture: round, clamp and
+              // store the low byte (two's complement for int8) / 255.
+              value = clamp(floor(value + 0.5), OUTPUT_MIN, OUTPUT_MAX);
+              value = mod(value, 256.0) / 255.0;
+            #endif  // defined(OUTPUT_BYTES)
+              fragColor = value;
             }
           )";
 
@@ -132,9 +151,24 @@ class ImageToTensorGlTextureConverter : public ImageToTensorConverter {
           #define CUSTOM_ZERO_BORDER_MODE
         )";
       }
+      std::string output_bytes_def;
+      if (tensor_type_ == Tensor::ElementType::kUInt8) {
+        output_bytes_def = R"(
+          #define OUTPUT_BYTES
+          #define OUTPUT_MIN 0.0
+          #define OUTPUT_MAX 255.0
+        )";
+      } else if (tensor_type_ == Tensor::ElementType::kInt8) {
+        output_bytes_def = R"(
+          #define OUTPUT_BYTES
+          #define OUTPUT_MIN -128.0
+          #define OUTPUT_MAX 127.0
+        )";
+      }
       const std::string extract_sub_rect_frag_src =
           absl::StrCat(mediapipe::kMediaPipeFragmentShaderPreamble,
-                       custom_zero_border_mode_def, kExtractSubRectFragBody);
+                       custom_zero_border_mode_def, output_bytes_def,
+                       kExtractSubRectFragBody);
       mediapipe::GlhCreateProgram(extract_sub_rect_vertex_src.c_str(),
                                   extract_sub_rect_frag_src.c_str(),
                                   kNumAttributes, &attr_name[0], attr_location,
@@ -186,6 +220,8 @@ class ImageToTensorGlTextureConverter : public ImageToTensorConverter {
         << "The non-zero tensor_buffer_offset input is not supported yet.";
     const auto& output_shape = output_tensor.shape();
     ABSL_RETURN_IF_ERROR(ValidateTensorShape(output_shape));
+    ABSL_RETURN_IF_ERROR(ValidateOutputTensorTypeAndRange(
+        output_tensor, tensor_type_, range_min, range_max));
 
     ABSL_RETURN_IF_ERROR(gl_helper_.RunInGlContext(
         [this, &output_tensor, &input, &roi, &output_shape, range_min,
@@ -219,6 +255,8 @@ class ImageToTensorGlTextureConverter : public ImageToTensorConverter {
     std::array<float, 16> transform_mat;
 
     glDisable(GL_DEPTH_TEST);
+    glDisable(GL_DITHER);
+    glDisable(GL_BLEND);
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
     glViewport(0, 0, output_width, output_height);
 
@@ -333,6 +371,7 @@ class ImageToTensorGlTextureConverter : public ImageToTensorConverter {
   }
 
   mediapipe::GlCalculatorHelper gl_helper_;
+  Tensor::ElementType tensor_type_ = Tensor::ElementType::kFloat32;
   bool use_custom_zero_border_ = false;
   BorderMode border_mode_ = BorderMode::kReplicate;
   GLuint vao_ = 0;
@@ -349,9 +388,11 @@ class ImageToTensorGlTextureConverter : public ImageToTensorConverter {
 absl::StatusOr<std::unique_ptr<ImageToTensorConverter>>
 CreateImageToGlTextureTensorConverter(CalculatorContext* cc,
                                       bool input_starts_at_bottom,
-                                      BorderMode border_mode) {
+                                      BorderMode border_mode,
+                                      Tensor::ElementType tensor_type) {
   auto result = std::make_unique<ImageToTensorGlTextureConverter>();
-  ABSL_RETURN_IF_ERROR(result->Init(cc, input_starts_at_bottom, border_mode));
+  ABSL_RETURN_IF_ERROR(
+      result->Init(cc, input_starts_at_bottom, border_mode, tensor_type));
   return result;
 }
 

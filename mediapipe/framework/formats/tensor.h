@@ -315,7 +315,8 @@ class Tensor {
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   // TODO: Use GlTextureView instead.
-  // Only float32 textures are supported with 1/2/3/4 depths.
+  // Supported with 1/2/3/4 depths. float32 tensors use RGBA32F textures,
+  // uint8 / int8 tensors normalized RGBA8 textures holding the raw bytes.
   // OpenGlTexture2dView currently only supports BHWC memory layout.
   class OpenGlTexture2dView : public View {
    public:

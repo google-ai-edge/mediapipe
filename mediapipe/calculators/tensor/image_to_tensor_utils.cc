@@ -252,22 +252,6 @@ BorderMode GetBorderMode(
   }
 }
 
-Tensor::ElementType GetOutputTensorType(bool uses_gpu,
-                                        const OutputTensorParams& params) {
-  if (!uses_gpu) {
-    if (params.is_float_output) {
-      return Tensor::ElementType::kFloat32;
-    }
-    if (params.range_min < 0) {
-      return Tensor::ElementType::kInt8;
-    } else {
-      return Tensor::ElementType::kUInt8;
-    }
-  }
-  // Always use float32 when GPU is enabled.
-  return Tensor::ElementType::kFloat32;
-}
-
 int GetNumOutputChannels(const mediapipe::Image& image) {
 #if !MEDIAPIPE_DISABLE_GPU
 #if MEDIAPIPE_METAL_ENABLED
@@ -285,6 +269,32 @@ int GetNumOutputChannels(const mediapipe::Image& image) {
     return 1;
   }
   return 3;
+}
+
+absl::Status ValidateOutputTensorTypeAndRange(const Tensor& output_tensor,
+                                              Tensor::ElementType expected_type,
+                                              float range_min,
+                                              float range_max) {
+  RET_CHECK(output_tensor.element_type() == expected_type)
+      << "Output tensor type "
+      << Tensor::ElementTypeName(output_tensor.element_type())
+      << " does not match the converter's "
+      << Tensor::ElementTypeName(expected_type) << ".";
+  switch (expected_type) {
+    case Tensor::ElementType::kUInt8:
+      RET_CHECK(range_min >= 0.0f && range_max <= 255.0f)
+          << "Output range [" << range_min << ", " << range_max
+          << "] does not fit uint8.";
+      break;
+    case Tensor::ElementType::kInt8:
+      RET_CHECK(range_min >= -128.0f && range_max <= 127.0f)
+          << "Output range [" << range_min << ", " << range_max
+          << "] does not fit int8.";
+      break;
+    default:
+      break;
+  }
+  return absl::OkStatus();
 }
 
 absl::StatusOr<std::shared_ptr<const mediapipe::Image>> GetInputImage(
