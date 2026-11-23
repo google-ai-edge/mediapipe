@@ -63,10 +63,6 @@ let package = Package(
             ${MPP_COMMON_TARGET_ARG}
         ),
         .binaryTarget(
-            name: "MediaPipeTaskGraphsBinary",
-            ${MPP_GRAPHS_TARGET_ARG}
-        ),
-        .binaryTarget(
             name: "MediaPipeTasksVision",
             ${MPP_VISION_TARGET_ARG}
         ),
@@ -90,26 +86,12 @@ let package = Package(
             name: "MediaPipeTasksLinker",
             dependencies: [
                 "MediaPipeTasksCommonBinary",
-                "MediaPipeTaskGraphsBinary",
-                "MediaPipeTasksVision",
-                "MediaPipeTasksText",
-                "MediaPipeTasksAudio",
-                "MediaPipeTasksRetrieval",
-                "MediaPipeTasksDecision",
             ],
             path: "Sources/MediaPipeTasksCommon",
             resources: [
                 .copy("PrivacyInfo.xcprivacy"),
             ],
             linkerSettings: [
-                // Note: -all_load is required to prevent the Apple linker
-                // from stripping C++ static calculator registration
-                // constructors (REGISTER_CALCULATOR) in
-                // MediaPipeTaskGraphsBinary. Downstream libraries wrapping
-                // MediaPipeTasks in a remote SPM package must reference this
-                // package by branch/revision or local path due to Apple's
-                // .unsafeFlags restriction.
-                .unsafeFlags(["-Xlinker", "-all_load"]),
                 .linkedLibrary("c++"),
                 // Required by the SQLite vector store behind SemanticRetriever.
                 .linkedLibrary("sqlite3"),

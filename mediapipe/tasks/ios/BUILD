@@ -15,6 +15,7 @@
 load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load(
     ":ios_build_rules.bzl",
+    "mediapipe_dynamic_xcframework",
     "mediapipe_static_xcframework",
 )
 
@@ -155,18 +156,24 @@ mediapipe_static_xcframework(
     deps = [":MediaPipeTaskGraphs"],
 )
 
-mediapipe_static_xcframework(
+# Dynamic XCFramework housing shared pure-Swift core types (`MediaPipeTasksCommon`), all C/C++
+# task implementations, and force-loaded calculator graphs so host apps, app extensions, and
+# hosted XCTest bundles load one runtime copy per process without duplicate registration crashes
+# or consumer `-all_load` linker flags.
+mediapipe_dynamic_xcframework(
     name = "MediaPipeTasksCommon_framework",
-    avoid_deps = CALCULATORS_AND_GRAPHS,
-    bundle_format = "framework",
     bundle_id = "com.google.mediapipe.tasks.common",
     bundle_name = "MediaPipeTasksCommon",
-    infoplists = [":empty.plist"],
-    # Including `OpenCV` and `TensorFlowLiteC` deps of the graphs here to avoid
-    # conflicts with `TensorFlowLiteSwift` and `OpenCV` frameworks as iOS
-    # `xcframeworks` handle duplicate dependencies with other iOS
-    # `xcframeworks`. Including them with task graphs causes duplicate symbols
-    # when installed alongside the respective frameworks since task graphs are
-    # built as static libraries and force loaded.
-    deps = MEDIAPIPE_TASKS_COMMON_DEPS,
+    exported_symbols_lists = [":MediaPipeTasksCommon.exported_symbols"],
+    # `-x` strips non-global local symbols (~17 MiB per slice in `__LINKEDIT`) because
+    # `rules_apple` and Xcode's `Embed Frameworks` phase do not strip dynamic frameworks.
+    linkopts = [
+        "-dead_strip",
+        "-x",
+        "-headerpad_max_install_names",
+        "-lsqlite3",
+    ],
+    deps = MEDIAPIPE_TASKS_COMMON_DEPS + [
+        ":MediaPipeTaskGraphs",
+    ],
 )

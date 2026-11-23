@@ -3,8 +3,12 @@
 load(
     "@build_bazel_rules_apple//apple:apple.bzl",
     "apple_static_xcframework",
+    "apple_xcframework",
 )
+load("@rules_cc//cc:find_cc_toolchain.bzl", "CC_TOOLCHAIN_ATTRS", "find_cc_toolchain", "use_cc_toolchain")
 load("@rules_cc//cc:objc_library.bzl", "objc_library")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load(
     "//mediapipe:version.bzl",
     "MEDIAPIPE_FULL_VERSION",
@@ -236,3 +240,110 @@ def mediapipe_static_xcframework(
     )
     if strip_rust_metadata:
         _strip_rust_metadata(name, ":" + target_name, final_visibility)
+
+def _mediapipe_alwayslink_libs_impl(ctx):
+    cc_toolchain = find_cc_toolchain(ctx)
+    feature_configuration = cc_common.configure_features(
+        ctx = ctx,
+        cc_toolchain = cc_toolchain,
+        requested_features = ctx.features,
+        unsupported_features = ctx.disabled_features,
+    )
+    direct_owners = {dep.label: True for dep in ctx.attr.deps}
+    new_linker_inputs = []
+    seen = {}
+    comp_contexts = []
+    for dep in ctx.attr.deps:
+        if CcInfo not in dep:
+            continue
+        cc_info = dep[CcInfo]
+        comp_contexts.append(cc_info.compilation_context)
+        if not cc_info.linking_context:
+            continue
+        for linker_input in cc_info.linking_context.linker_inputs.to_list():
+            owner_key = linker_input.owner or linker_input
+            if owner_key in seen:
+                continue
+            seen[owner_key] = True
+            if linker_input.owner not in direct_owners:
+                new_linker_inputs.append(linker_input)
+                continue
+            needs_wrap = any([
+                not lib.alwayslink and (lib.static_library or lib.pic_static_library)
+                for lib in linker_input.libraries
+            ])
+            if not needs_wrap:
+                new_linker_inputs.append(linker_input)
+                continue
+            new_libraries = []
+            for lib in linker_input.libraries:
+                if lib.alwayslink or not (lib.static_library or lib.pic_static_library):
+                    new_libraries.append(lib)
+                    continue
+                new_libraries.append(cc_common.create_library_to_link(
+                    actions = ctx.actions,
+                    feature_configuration = feature_configuration,
+                    cc_toolchain = cc_toolchain,
+                    static_library = lib.static_library,
+                    pic_static_library = lib.pic_static_library,
+                    alwayslink = True,
+                ))
+            add_inputs = linker_input.additional_inputs
+            if type(add_inputs) != "depset":
+                add_inputs = depset(add_inputs or [])
+            new_linker_inputs.append(cc_common.create_linker_input(
+                owner = linker_input.owner,
+                libraries = depset(new_libraries, order = "topological"),
+                user_link_flags = linker_input.user_link_flags,
+                additional_inputs = add_inputs,
+            ))
+
+    comp_ctx = cc_common.merge_compilation_contexts(
+        compilation_contexts = comp_contexts,
+    ) if comp_contexts else cc_common.create_compilation_context()
+    return [
+        CcInfo(
+            compilation_context = comp_ctx,
+            linking_context = cc_common.create_linking_context(
+                linker_inputs = depset(new_linker_inputs, order = "topological"),
+            ),
+        ),
+    ]
+
+mediapipe_alwayslink_libs = rule(
+    implementation = _mediapipe_alwayslink_libs_impl,
+    attrs = dict(
+        CC_TOOLCHAIN_ATTRS,
+        deps = attr.label_list(),
+    ),
+    doc = "Marks direct C/C++ library deps alwayslink=True without force-loading transitive third-party archives.",
+    fragments = ["cpp"],
+    toolchains = use_cc_toolchain(),
+)
+
+def mediapipe_dynamic_xcframework(name, **kwargs):
+    """An apple_xcframework configured with MediaPipe iOS defaults.
+
+    Args:
+      name: The name of the apple_xcframework target.
+      **kwargs: Arguments passed to apple_xcframework.
+    """
+    kwargs.setdefault("bundle_name", name)
+    kwargs["infoplists"] = [_framework_infoplist(name)]
+
+    if "ios" not in kwargs:
+        kwargs["ios"] = {
+            "simulator": [
+                "arm64",
+            ],
+            "device": ["arm64"],
+        }
+    if "minimum_os_versions" not in kwargs:
+        kwargs["minimum_os_versions"] = {
+            "ios": MPP_TASK_MINIMUM_OS_VERSION,
+        }
+
+    apple_xcframework(
+        name = name,
+        **kwargs
+    )

@@ -1,0 +1,9 @@
+# Exported symbols for the dynamic MediaPipeTasksCommon XCFramework.
+# Internal C++, OpenCV, TensorFlow Lite, LiteRT-LM, Abseil, Protobuf, and Rust
+# symbols remain hidden inside the framework binary.
+_Mp*
+# Swift 5 stable ABI symbols (`_$s` Mach-O prefix + length-prefixed module name
+# `20MediaPipeTasksCommon`): top-level declarations (`_$s20MediaPipeTasksCommon*`)
+# and `package` extensions on stdlib/C types (`_$s*20MediaPipeTasksCommon*E*`).
+_$s20MediaPipeTasksCommon*
+_$s*20MediaPipeTasksCommon*E*
