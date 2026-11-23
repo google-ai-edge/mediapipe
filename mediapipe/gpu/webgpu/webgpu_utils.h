@@ -67,7 +67,15 @@ absl::StatusOr<wgpu::Texture> CreateWebGpuTexture2dAndUploadData(
     wgpu::TextureFormat format, wgpu::TextureUsage usage,
     const wgpu::Queue& queue, uint32_t bytes_per_pixel, void* data);
 
-absl::Status GetTexture2dData(const wgpu::Device& device,
+// Reads back data from a 2D WebGPU texture into `dst`.
+// Preconditions:
+// - `bytes_per_row` must be a multiple of 256.
+// - `dst` must point to at least `height * bytes_per_row` writable bytes.
+// - `instance` must be non-null with `wgpu::InstanceFeatureName::TimedWaitAny`
+//   enabled on native.
+// - JSPI is required on Emscripten.
+absl::Status GetTexture2dData(const wgpu::Instance& instance,
+                              const wgpu::Device& device,
                               const wgpu::Queue& queue,
                               const wgpu::Texture& texture, uint32_t width,
                               uint32_t height, uint32_t bytes_per_row,

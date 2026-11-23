@@ -514,6 +514,7 @@ void Tensor::Move(Tensor* src) {
 #if MEDIAPIPE_USE_WEBGPU
   webgpu_texture2d_ = std::move(src->webgpu_texture2d_);
   webgpu_device_ = std::move(src->webgpu_device_);
+  webgpu_instance_ = std::move(src->webgpu_instance_);
 #endif  // MEDIAPIPE_USE_WEBGPU
 }
 
@@ -704,8 +705,7 @@ absl::Status Tensor::ReadBackGpuToCpu() const {
     return absl::OkStatus();
   }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
-#if __EMSCRIPTEN__ && MEDIAPIPE_USE_WEBGPU
-  // TODO: GetTexture2dData is only supported on Emscripten right now.
+#if MEDIAPIPE_USE_WEBGPU
   if (valid_ & kValidWebGpuTexture2d) {
     const int width = BhwcWidthFromShape(shape_);
     const int height = BhwcHeightFromShape(shape_);
@@ -723,9 +723,9 @@ absl::Status Tensor::ReadBackGpuToCpu() const {
     const int buffer_size = height * bytes_per_row;
     std::vector<uint8_t> buffer_data(buffer_size);
 
-    RET_CHECK_OK(GetTexture2dData(webgpu_device_, queue, webgpu_texture2d_,
-                                  width, height, bytes_per_row,
-                                  buffer_data.data()));
+    RET_CHECK_OK(GetTexture2dData(webgpu_instance_, webgpu_device_, queue,
+                                  webgpu_texture2d_, width, height,
+                                  bytes_per_row, buffer_data.data()));
 
     uint8_t* src_buffer = buffer_data.data();
     uint8_t* dst_buffer = reinterpret_cast<uint8_t*>(cpu_buffer_);
@@ -746,7 +746,7 @@ absl::Status Tensor::ReadBackGpuToCpu() const {
 
     return absl::OkStatus();
   }
-#endif  // __EMSCRIPTEN__ && MEDIAPIPE_USE_WEBGPU
+#endif  // MEDIAPIPE_USE_WEBGPU
 
   return absl::FailedPreconditionError(absl::StrCat(
       "Failed to read back data from GPU to CPU. Valid formats: ", valid_));

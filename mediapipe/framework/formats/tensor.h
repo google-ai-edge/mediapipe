@@ -601,6 +601,7 @@ class Tensor {
   mutable std::unique_ptr<MtlResources> mtl_resources_;
 
 #if MEDIAPIPE_USE_WEBGPU
+  mutable wgpu::Instance webgpu_instance_;
   mutable wgpu::Device webgpu_device_;
   mutable wgpu::Texture webgpu_texture2d_;
 #endif  // MEDIAPIPE_USE_WEBGPU

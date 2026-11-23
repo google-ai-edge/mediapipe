@@ -77,6 +77,7 @@ Tensor::WebGpuTexture2dView Tensor::GetWebGpuTexture2dReadView(
         kTextureUsage, queue, bytes_per_pixel, cpu_buffer_);
     ABSL_QCHECK(texture_or_error.ok())
         << "Failed to create WebGPU texture: " << texture_or_error.status();
+    webgpu_instance_ = service.instance();
     webgpu_device_ = device;
     webgpu_texture2d_ = texture_or_error.value();
     valid_ |= kValidWebGpuTexture2d;
@@ -108,6 +109,7 @@ Tensor::WebGpuTexture2dView Tensor::GetWebGpuTexture2dWriteView(
   }
 
   if (!webgpu_texture2d_) {
+    webgpu_instance_ = service.instance();
     webgpu_device_ = device;
     webgpu_texture2d_ = CreateTextureWebGpuTexture2d(
         device, BhwcWidthFromShape(shape_), BhwcHeightFromShape(shape_), format,

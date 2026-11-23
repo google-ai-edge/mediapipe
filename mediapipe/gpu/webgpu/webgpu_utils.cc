@@ -6,6 +6,10 @@
 #include <string>
 #include <utility>
 
+#ifndef __EMSCRIPTEN__
+#include <cstring>
+#endif  // __EMSCRIPTEN__
+
 #include "absl/status/status.h"         // from @com_google_absl
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "absl/status/statusor.h"       // from @com_google_absl
@@ -301,20 +305,34 @@ absl::StatusOr<wgpu::Texture> CreateWebGpuTexture2dAndUploadData(
   return texture;
 }
 
-absl::Status GetTexture2dData(const wgpu::Device& device,
+absl::Status GetTexture2dData(const wgpu::Instance& instance,
+                              const wgpu::Device& device,
                               const wgpu::Queue& queue,
                               const wgpu::Texture& texture, uint32_t width,
                               uint32_t height, uint32_t bytes_per_row,
                               uint8_t* dst) {
+  if (dst == nullptr) {
+    return absl::InvalidArgumentError("dst must not be null.");
+  }
+  if (bytes_per_row % 256 != 0) {
+    return absl::InvalidArgumentError(
+        "bytes_per_row must be a multiple of 256.");
+  }
 #ifdef __EMSCRIPTEN__
   if (!IsJspiAvailable()) {
     return absl::UnimplementedError("GetTexture2dData requires JSPI.");
   }
-  const uint32_t buffer_size = height * bytes_per_row;
+#else
+  if (!instance) {
+    return absl::InvalidArgumentError(
+        "GetTexture2dData requires a valid wgpu::Instance on native.");
+  }
+#endif  // __EMSCRIPTEN__
+  const uint64_t buffer_size = static_cast<uint64_t>(height) * bytes_per_row;
 
   wgpu::BufferDescriptor buffer_descriptor = {
       .usage = wgpu::BufferUsage::MapRead | wgpu::BufferUsage::CopyDst,
-      .size = (uint64_t)buffer_size};
+      .size = buffer_size};
   wgpu::Buffer webgpu_buffer = device.CreateBuffer(&buffer_descriptor);
 
   auto command_encoder = device.CreateCommandEncoder({});
@@ -330,14 +348,43 @@ absl::Status GetTexture2dData(const wgpu::Device& device,
   wgpu::CommandBuffer copy_command_buffer = command_encoder.Finish();
   queue.Submit(1, &copy_command_buffer);
 
+#ifdef __EMSCRIPTEN__
   mediapipe_map_buffer_jspi(webgpu_buffer.Get(), dst);
+#else
+  auto map_status = std::make_shared<absl::Status>(
+      absl::InternalError("MapAsync did not complete."));
+  auto future = webgpu_buffer.MapAsync(
+      wgpu::MapMode::Read, 0, buffer_size, wgpu::CallbackMode::WaitAnyOnly,
+      [map_status](wgpu::MapAsyncStatus status, wgpu::StringView message) {
+        if (status == wgpu::MapAsyncStatus::Success) {
+          *map_status = absl::OkStatus();
+        } else {
+          *map_status = absl::InternalError(std::string(message));
+        }
+      });
+  wgpu::WaitStatus wait_status = instance.WaitAny(future, UINT64_MAX);
+  if (wait_status != wgpu::WaitStatus::Success) {
+    webgpu_buffer.Destroy();
+    return absl::InternalError("Failed to wait for WebGPU buffer mapping.");
+  }
+  if (!map_status->ok()) {
+    webgpu_buffer.Destroy();
+    return *map_status;
+  }
+  const void* src = webgpu_buffer.GetConstMappedRange(0, buffer_size);
+  if (src == nullptr && buffer_size > 0) {
+    webgpu_buffer.Unmap();
+    webgpu_buffer.Destroy();
+    return absl::InternalError("Failed to get mapped range for WebGPU buffer.");
+  }
+  if (buffer_size > 0) {
+    std::memcpy(dst, src, buffer_size);
+  }
+  webgpu_buffer.Unmap();
+#endif  // __EMSCRIPTEN__
   webgpu_buffer.Destroy();
 
   return absl::OkStatus();
-#else
-  // TODO: Implement when not using emscripten.
-  return absl::UnimplementedError("GetTexture2dData requires __EMSCRIPTEN__.");
-#endif  // __EMSCRIPTEN__
 }
 
 }  // namespace mediapipe
