@@ -29,13 +29,13 @@
 namespace mediapipe {
 
 // Creates Metal image-to-tensor converter for output tensors of `tensor_type`
-// (kFloat32, kUInt8 or kInt8). Outputs 4 channels ([1, H, W, 4], [R, G, B, 0]
-// for 8-bit types) by default.
+// (kFloat32, kUInt8 or kInt8) with `num_channels` channels (3 or 4): [1, H, W,
+// num_channels]. With 4 channels, 8-bit types output [R, G, B, 0].
 // NOTE: [MPPMetalHelper updateContract:...] invocation must precede
 // converter creation.
 absl::StatusOr<std::unique_ptr<ImageToTensorConverter>> CreateMetalConverter(
     CalculatorContext* cc, BorderMode border_mode,
-    Tensor::ElementType tensor_type);
+    Tensor::ElementType tensor_type, int num_channels);
 
 }  // namespace mediapipe
 

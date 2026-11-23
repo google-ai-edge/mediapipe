@@ -26,6 +26,7 @@
 #include "absl/flags/flag.h"           // from @com_google_absl
 #include "absl/log/absl_check.h"       // from @com_google_absl
 #include "absl/status/status.h"        // from @com_google_absl
+#include "absl/status/statusor.h"      // from @com_google_absl
 #include "absl/strings/string_view.h"  // from @com_google_absl
 #include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
@@ -56,6 +57,7 @@
 namespace mediapipe {
 namespace {
 
+using ::absl_testing::IsOkAndHolds;
 using ::absl_testing::StatusIs;
 
 using ::mediapipe::api3::GenericGraph;
@@ -678,6 +680,39 @@ TEST(ImageToTensorCalculatorTest, InvalidRoiZeroDimensionsCausesError) {
   EXPECT_THAT(graph.WaitUntilIdle(),
               StatusIs(absl::StatusCode::kInvalidArgument,
                        HasSubstr("ROI width and height must be > 0")));
+}
+
+// Converts `image` on the CPU with `metal_three_channel_output` set and returns
+// the output tensor's shape.
+absl::StatusOr<std::vector<int>> GetShapeWithMetalThreeChannelOutput(
+    Image image) {
+  auto runner = Runner::For([&](GenericGraph& graph,
+                                Stream<Image> image_stream) -> Stream<Tensor> {
+                  auto& node = graph.AddNode<ImageToTensorNode>();
+                  auto& opts = *node.options.Mutable();
+                  opts.set_output_tensor_width(64);
+                  opts.set_output_tensor_height(64);
+                  opts.mutable_output_tensor_float_range()->set_min(0.0f);
+                  opts.mutable_output_tensor_float_range()->set_max(1.0f);
+                  opts.set_metal_three_channel_output(true);
+                  node.in.Set(image_stream);
+                  return node.out_tensor.Get();
+                }).Create();
+  if (!runner.ok()) return runner.status();
+  absl::StatusOr<Packet<Tensor>> tensor_packet =
+      runner->Run(api3::MakePacket<Image>(std::move(image)));
+  if (!tensor_packet.ok()) return tensor_packet.status();
+  return tensor_packet->GetOrDie().shape().dims;
+}
+
+TEST(ImageToTensorCalculatorTest,
+     MetalThreeChannelOutputIsIgnoredForCpuImages) {
+  EXPECT_THAT(GetShapeWithMetalThreeChannelOutput(ReadImageRgb("input.jpg")),
+              IsOkAndHolds(std::vector<int>{1, 64, 64, 3}));
+  auto gray_frame = std::make_shared<ImageFrame>(ImageFormat::GRAY8, 32, 32);
+  gray_frame->SetToZero();
+  EXPECT_THAT(GetShapeWithMetalThreeChannelOutput(Image(std::move(gray_frame))),
+              IsOkAndHolds(std::vector<int>{1, 64, 64, 1}));
 }
 
 }  // namespace

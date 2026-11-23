@@ -185,7 +185,8 @@ class ImageToTensorNodeImpl
 
     Tensor tensor(
         params_.tensor_type,
-        {1, tensor_height, tensor_width, GetNumOutputChannels(*image)},
+        {1, tensor_height, tensor_width,
+         GetNumOutputChannels(*image, options_.metal_three_channel_output())},
         memory_manager_);
     ABSL_RETURN_IF_ERROR((image->UsesGpu() ? gpu_converter_ : cpu_converter_)
                              ->Convert(*image, roi, params_.range_min,
@@ -215,8 +216,10 @@ class ImageToTensorNodeImpl
 #if MEDIAPIPE_METAL_ENABLED
         ABSL_ASSIGN_OR_RETURN(
             gpu_converter_,
-            CreateMetalConverter(cc, GetBorderMode(options_.border_mode()),
-                                 params_.tensor_type));
+            CreateMetalConverter(
+                cc, GetBorderMode(options_.border_mode()), params_.tensor_type,
+                GetNumOutputChannels(image,
+                                     options_.metal_three_channel_output())));
 #elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
         ABSL_ASSIGN_OR_RETURN(bool input_starts_at_bottom,
                               IsGpuOriginAtBottom(options_.gpu_origin()));

@@ -212,8 +212,10 @@ OutputTensorParams GetOutputTensorParams(const T& options) {
 BorderMode GetBorderMode(
     const mediapipe::ImageToTensorCalculatorOptions::BorderMode& mode);
 
-// Gets the number of output channels from the input Image format.
-int GetNumOutputChannels(const mediapipe::Image& image);
+// Gets the number of output channels from the input Image format. For GPU
+// images with Metal, this is 4 unless `metal_three_channel_output` is set.
+int GetNumOutputChannels(const mediapipe::Image& image,
+                         bool metal_three_channel_output = false);
 
 // Validates that `output_tensor` has `expected_type` and that
 // `[range_min, range_max]` fits into `expected_type` for 8-bit integer types.

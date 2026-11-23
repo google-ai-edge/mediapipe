@@ -19,9 +19,11 @@
 #import <Metal/Metal.h>
 #include <TargetConditionals.h>
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "absl/log/absl_log.h"          // from @com_google_absl
@@ -29,6 +31,7 @@
 #include "absl/status/status_macros.h"  // from @com_google_absl
 #include "absl/status/statusor.h"       // from @com_google_absl
 #include "absl/strings/str_cat.h"       // from @com_google_absl
+#include "absl/strings/string_view.h"   // from @com_google_absl
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -139,7 +142,68 @@ constexpr char kFragmentShader[] = R"(
   }
 )";
 
-enum class OutputFormat { kF16C4, kF32C4, kU8C4 };
+// Writes a packed 3-channel (H x W x 3) tensor directly into the output
+// buffer, as float32 or (with OUTPUT_BYTES) 8-bit values. Unlike the render
+// pipeline above, which writes 4 channels per pixel, this needs no linear
+// texture aliasing the buffer, and hence no alignment fallback.
+constexpr char kPackedKernel[] = R"(
+  #ifdef OUTPUT_BYTES
+  #define OutputType uchar
+  #else
+  #define OutputType float
+  #endif  // OUTPUT_BYTES
+
+  kernel void extractSubRectPacked(
+      texture2d<float> texture [[texture(0)]],
+      device OutputType* output [[buffer(0)]],
+      constant float4x4& transform_matrix [[buffer(1)]],
+      constant float* parameters [[buffer(2)]],
+      uint2 gid [[thread_position_in_grid]]) {
+    const float alpha = parameters[0];
+    const float beta = parameters[1];
+    const int out_width = int(parameters[2]);
+    const int out_height = int(parameters[3]);
+    if (int(gid.x) >= out_width || int(gid.y) >= out_height) {
+      return;
+    }
+
+    #ifdef CLAMP_TO_ZERO
+    constexpr sampler linear_sampler(address::clamp_to_zero, min_filter::linear,
+      mag_filter::linear);
+    #endif  // CLAMP_TO_ZERO
+
+    #ifdef CLAMP_TO_EDGE
+    constexpr sampler linear_sampler(address::clamp_to_edge, min_filter::linear,
+      mag_filter::linear);
+    #endif  // CLAMP_TO_EDGE
+
+    // Same mapping as the vertex shader: output pixel center -> ROI -> input.
+    const float2 uv = (float2(gid) + 0.5) / float2(out_width, out_height);
+    const float2 coord = (float4(uv, 0.0, 1.0) * transform_matrix).xy;
+    float3 value = alpha * texture.sample(linear_sampler, coord).rgb + beta;
+    #ifdef OUTPUT_BYTES
+    // Round and clamp the value to the range of the output type, and truncate
+    // it to its low byte (which is the two's complement representation for
+    // int8).
+    value = clamp(floor(value + 0.5), float3(OUTPUT_MIN), float3(OUTPUT_MAX));
+    value = value - 256.0 * floor(value / 256.0);
+    #endif  // OUTPUT_BYTES
+    const int index = 3 * (int(gid.y) * out_width + int(gid.x));
+    output[index] = OutputType(value.r);
+    output[index + 1] = OutputType(value.g);
+    output[index + 2] = OutputType(value.b);
+  }
+)";
+
+// kF16C4 / kF32C4 / kU8C4: 4 channels per pixel, rendered into a texture
+// aliasing (or blitted into) the output buffer. kF32C3 / kU8C3: 3 channels
+// per pixel, written by a compute kernel.
+enum class OutputFormat { kF16C4, kF32C4, kU8C4, kF32C3, kU8C3 };
+
+bool IsPacked(OutputFormat output_format) {
+  return output_format == OutputFormat::kF32C3 ||
+         output_format == OutputFormat::kU8C3;
+}
 
 MTLPixelFormat GetPixelFormat(OutputFormat output_format) {
   switch (output_format) {
@@ -149,6 +213,9 @@ MTLPixelFormat GetPixelFormat(OutputFormat output_format) {
       return MTLPixelFormatRGBA32Float;
     case OutputFormat::kU8C4:
       return MTLPixelFormatRGBA8Unorm;
+    case OutputFormat::kF32C3:
+    case OutputFormat::kU8C3:
+      return MTLPixelFormatInvalid;  // Not rendered into a texture.
   }
 }
 int GetBytesPerRaw(OutputFormat output_format, const tflite::gpu::HW& size) {
@@ -163,6 +230,9 @@ int GetBytesPerRaw(OutputFormat output_format, const tflite::gpu::HW& size) {
     case OutputFormat::kU8C4:
       type_size = sizeof(uint8_t);
       break;
+    case OutputFormat::kF32C3:
+    case OutputFormat::kU8C3:
+      ABSL_LOG(FATAL) << "Packed output formats have no texture rows.";
   }
   constexpr int kNumChannels = 4;
   return size.w * kNumChannels * type_size;
@@ -170,33 +240,46 @@ int GetBytesPerRaw(OutputFormat output_format, const tflite::gpu::HW& size) {
 
 class SubRectExtractorMetal {
  public:
-  // `output_signed`: For kU8C4, whether the bytes are int8 instead of uint8.
+  // `output_signed`: For kU8C4 / kU8C3, whether the bytes are int8 instead of
+  // uint8.
   static absl::StatusOr<std::unique_ptr<SubRectExtractorMetal>> Make(
       id<MTLDevice> device, OutputFormat output_format, bool output_signed,
       BorderMode border_mode) {
+    if (IsPacked(output_format)) {
+      id<MTLComputePipelineState> compute_pipeline_state;
+      ABSL_RETURN_IF_ERROR(SubRectExtractorMetal::MakeComputePipelineState(
+          device, output_format, output_signed, border_mode,
+          &compute_pipeline_state));
+      return absl::make_unique<SubRectExtractorMetal>(
+          device, /*pipeline_state=*/nil, compute_pipeline_state,
+          output_format);
+    }
     id<MTLRenderPipelineState> pipeline_state;
     ABSL_RETURN_IF_ERROR(SubRectExtractorMetal::MakePipelineState(
         device, output_format, output_signed, border_mode, &pipeline_state));
-
-    return absl::make_unique<SubRectExtractorMetal>(device, pipeline_state,
-                                                    output_format);
+    return absl::make_unique<SubRectExtractorMetal>(
+        device, pipeline_state, /*compute_pipeline_state=*/nil, output_format);
   }
 
   SubRectExtractorMetal(id<MTLDevice> device,
                         id<MTLRenderPipelineState> pipeline_state,
+                        id<MTLComputePipelineState> compute_pipeline_state,
                         OutputFormat output_format)
       : device_(device),
         pipeline_state_(pipeline_state),
+        compute_pipeline_state_(compute_pipeline_state),
         output_format_(output_format) {
-    positions_buffer_ =
-        [device_ newBufferWithBytes:kBasicSquareVertices
-                             length:sizeof(kBasicSquareVertices)
-                            options:MTLResourceOptionCPUCacheModeDefault];
+    if (!IsPacked(output_format_)) {
+      positions_buffer_ =
+          [device_ newBufferWithBytes:kBasicSquareVertices
+                               length:sizeof(kBasicSquareVertices)
+                              options:MTLResourceOptionCPUCacheModeDefault];
 
-    tex_coords_buffer_ =
-        [device_ newBufferWithBytes:kBasicTextureVertices
-                             length:sizeof(kBasicTextureVertices)
-                            options:MTLResourceOptionCPUCacheModeDefault];
+      tex_coords_buffer_ =
+          [device_ newBufferWithBytes:kBasicTextureVertices
+                               length:sizeof(kBasicTextureVertices)
+                              options:MTLResourceOptionCPUCacheModeDefault];
+    }
   }
 
   absl::Status Execute(id<MTLTexture> input_texture,
@@ -205,6 +288,11 @@ class SubRectExtractorMetal {
                        const tflite::gpu::HW& destination_size,
                        id<MTLCommandBuffer> command_buffer,
                        id<MTLBuffer> destination) {
+    if (IsPacked(output_format_)) {
+      return InternalExecutePacked(input_texture, sub_rect, flip_horizontally,
+                                   alpha, beta, destination_size,
+                                   command_buffer, destination);
+    }
 #if !TARGET_OS_SIMULATOR
     id<MTLTexture> output_texture =
         MTLTextureWithBuffer(destination_size, destination);
@@ -349,6 +437,120 @@ class SubRectExtractorMetal {
     return absl::OkStatus();
   }
 
+  absl::Status InternalExecutePacked(id<MTLTexture> input_texture,
+                                     const RotatedRect& sub_rect,
+                                     bool flip_horizontally, float alpha,
+                                     float beta,
+                                     const tflite::gpu::HW& destination_size,
+                                     id<MTLCommandBuffer> command_buffer,
+                                     id<MTLBuffer> destination) {
+    RET_CHECK(command_buffer != nil);
+    RET_CHECK(destination != nil);
+    RET_CHECK_GT(destination_size.w, 0);
+    RET_CHECK_GT(destination_size.h, 0);
+
+    std::array<float, 16> transform_mat;
+    GetRotatedSubRectToRectTransformMatrix(sub_rect, input_texture.width,
+                                           input_texture.height,
+                                           flip_horizontally, &transform_mat);
+    const float parameters[] = {alpha, beta,
+                                static_cast<float>(destination_size.w),
+                                static_cast<float>(destination_size.h)};
+
+    id<MTLComputeCommandEncoder> command_encoder =
+        [command_buffer computeCommandEncoder];
+    RET_CHECK(command_encoder != nil);
+    [command_encoder setComputePipelineState:compute_pipeline_state_];
+    [command_encoder setTexture:input_texture atIndex:0];
+    [command_encoder setBuffer:destination offset:0 atIndex:0];
+    [command_encoder setBytes:transform_mat.data()
+                       length:sizeof(transform_mat)
+                      atIndex:1];
+    [command_encoder setBytes:parameters length:sizeof(parameters) atIndex:2];
+
+    // The kernel bounds-checks, so round the grid up to whole threadgroups
+    // (dispatchThreads would require non-uniform threadgroup support).
+    const NSUInteger group_width = std::clamp<NSUInteger>(
+        compute_pipeline_state_.threadExecutionWidth, 1, 16);
+    const NSUInteger group_height = std::max<NSUInteger>(
+        1, compute_pipeline_state_.maxTotalThreadsPerThreadgroup / group_width);
+    const MTLSize threads_per_group =
+        MTLSizeMake(group_width, std::min<NSUInteger>(group_height, 16), 1);
+    const MTLSize groups =
+        MTLSizeMake((destination_size.w + threads_per_group.width - 1) /
+                        threads_per_group.width,
+                    (destination_size.h + threads_per_group.height - 1) /
+                        threads_per_group.height,
+                    1);
+    [command_encoder dispatchThreadgroups:groups
+                    threadsPerThreadgroup:threads_per_group];
+    [command_encoder endEncoding];
+    return absl::OkStatus();
+  }
+
+  static absl::string_view GetClampDef(BorderMode border_mode) {
+    switch (border_mode) {
+      case BorderMode::kReplicate:
+        return R"(
+          #define CLAMP_TO_EDGE
+        )";
+      case BorderMode::kZero:
+        return R"(
+          #define CLAMP_TO_ZERO
+        )";
+    }
+  }
+
+  // Defines OUTPUT_MIN / OUTPUT_MAX, the range of the 8-bit output values.
+  static absl::string_view GetOutputRangeDef(bool output_signed) {
+    return output_signed ? R"(
+          #define OUTPUT_MIN -128.0
+          #define OUTPUT_MAX 127.0
+        )"
+                         : R"(
+          #define OUTPUT_MIN 0.0
+          #define OUTPUT_MAX 255.0
+        )";
+  }
+
+  static absl::Status MakeComputePipelineState(
+      id<MTLDevice> device, OutputFormat output_format, bool output_signed,
+      BorderMode border_mode, id<MTLComputePipelineState>* pipeline_state) {
+    RET_CHECK(pipeline_state != nil);
+    std::string output_bytes_def;
+    if (output_format == OutputFormat::kU8C3) {
+      output_bytes_def = absl::StrCat(R"(
+        #define OUTPUT_BYTES
+      )",
+                                      GetOutputRangeDef(output_signed));
+    }
+    const std::string shader_lib =
+        absl::StrCat(kShaderLibHeader, output_bytes_def,
+                     GetClampDef(border_mode), kPackedKernel);
+    NSString* library_source =
+        [[NSString alloc] initWithBytes:shader_lib.data()
+                                 length:shader_lib.size()
+                               encoding:NSUTF8StringEncoding];
+    NSError* error = nil;
+    id<MTLLibrary> library =
+        [device newLibraryWithSource:library_source options:nil error:&error];
+    RET_CHECK(library != nil)
+        << "Couldn't create a shader library: "
+        << (error ? [[error localizedDescription] UTF8String] : "unknown");
+    id<MTLFunction> kernel_function =
+        [library newFunctionWithName:@"extractSubRectPacked"];
+    RET_CHECK(kernel_function != nil)
+        << "Failed creating a new kernel function!";
+    error = nil;
+    *pipeline_state =
+        [device newComputePipelineStateWithFunction:kernel_function
+                                              error:&error];
+    RET_CHECK(*pipeline_state != nil)
+        << "Couldn't create a compute pipeline state: "
+        << (error ? [[error localizedDescription] UTF8String] : "unknown");
+    return absl::OkStatus();
+  }
+
   static absl::Status MakePipelineState(
       id<MTLDevice> device, OutputFormat output_format, bool output_signed,
       BorderMode border_mode, id<MTLRenderPipelineState>* pipeline_state) {
@@ -367,38 +569,19 @@ class SubRectExtractorMetal {
         )";
         break;
       case OutputFormat::kU8C4:
-        output_type_def = output_signed ? R"(
+        output_type_def = absl::StrCat(R"(
           #define OUTPUT_U8C4
-          #define OUTPUT_MIN -128.0
-          #define OUTPUT_MAX 127.0
-        )"
-                                        : R"(
-          #define OUTPUT_U8C4
-          #define OUTPUT_MIN 0.0
-          #define OUTPUT_MAX 255.0
-        )";
+        )",
+                                       GetOutputRangeDef(output_signed));
         break;
-    }
-
-    std::string clamp_def;
-    switch (border_mode) {
-      case BorderMode::kReplicate: {
-        clamp_def = R"(
-          #define CLAMP_TO_EDGE
-        )";
-        break;
-      }
-      case BorderMode::kZero: {
-        clamp_def = R"(
-          #define CLAMP_TO_ZERO
-        )";
-        break;
-      }
+      case OutputFormat::kF32C3:
+      case OutputFormat::kU8C3:
+        return absl::InternalError("Packed formats use the compute pipeline.");
     }
 
     std::string shader_lib =
-        absl::StrCat(kShaderLibHeader, output_type_def, clamp_def,
-                     kVertexShader, kFragmentShader);
+        absl::StrCat(kShaderLibHeader, output_type_def,
+                     GetClampDef(border_mode), kVertexShader, kFragmentShader);
     NSError* error = nil;
     NSString* library_source =
         [NSString stringWithUTF8String:shader_lib.c_str()];
@@ -434,40 +617,51 @@ class SubRectExtractorMetal {
     return absl::OkStatus();
   }
 
-  id<MTLBuffer> positions_buffer_;
-  id<MTLBuffer> tex_coords_buffer_;
+  id<MTLBuffer> positions_buffer_ = nil;
+  id<MTLBuffer> tex_coords_buffer_ = nil;
   id<MTLDevice> device_;
+  // Exactly one of these is set, depending on IsPacked(output_format_).
   id<MTLRenderPipelineState> pipeline_state_;
+  id<MTLComputePipelineState> compute_pipeline_state_;
   OutputFormat output_format_;
 };
 
 class ImageToTensorMetalConverter : public ImageToTensorConverter {
  public:
   absl::Status Init(CalculatorContext* cc, BorderMode border_mode,
-                    Tensor::ElementType tensor_type) {
-    OutputFormat output_format;
+                    Tensor::ElementType tensor_type, int num_channels) {
+    RET_CHECK(num_channels == 3 || num_channels == 4)
+        << "Unsupported number of output channels: " << num_channels;
+    bool output_bytes;
     switch (tensor_type) {
       case Tensor::ElementType::kFloat32:
-        output_format = OutputFormat::kF32C4;
+        output_bytes = false;
         break;
       case Tensor::ElementType::kUInt8:
       case Tensor::ElementType::kInt8:
-        output_format = OutputFormat::kU8C4;
+        output_bytes = true;
         break;
       default:
         return absl::InvalidArgumentError(
             absl::StrCat("Unsupported output tensor type: ",
                          Tensor::ElementTypeName(tensor_type)));
     }
+    const OutputFormat output_format =
+        num_channels == 3
+            ? (output_bytes ? OutputFormat::kU8C3 : OutputFormat::kF32C3)
+            : (output_bytes ? OutputFormat::kU8C4 : OutputFormat::kF32C4);
     tensor_type_ = tensor_type;
-    metal_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
-    RET_CHECK(metal_helper_);
-    ABSL_ASSIGN_OR_RETURN(
-        extractor_,
-        SubRectExtractorMetal::Make(
-            metal_helper_.mtlDevice, output_format,
-            /*output_signed=*/tensor_type == Tensor::ElementType::kInt8,
-            border_mode));
+    num_channels_ = num_channels;
+    @autoreleasepool {
+      metal_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
+      RET_CHECK(metal_helper_);
+      ABSL_ASSIGN_OR_RETURN(
+          extractor_,
+          SubRectExtractorMetal::Make(
+              metal_helper_.mtlDevice, output_format,
+              /*output_signed=*/tensor_type == Tensor::ElementType::kInt8,
+              border_mode));
+    }
     return absl::OkStatus();
   }
 
@@ -520,13 +714,14 @@ class ImageToTensorMetalConverter : public ImageToTensorConverter {
     RET_CHECK_EQ(output_shape.dims[0], 1)
         << "Handling batch dimension not equal to 1 is not implemented in this "
            "converter.";
-    RET_CHECK_EQ(output_shape.dims[3], 4)
+    RET_CHECK_EQ(output_shape.dims[3], num_channels_)
         << "Wrong output channel: " << output_shape.dims[3];
     return absl::OkStatus();
   }
 
   MPPMetalHelper* metal_helper_ = nil;
   Tensor::ElementType tensor_type_ = Tensor::ElementType::kFloat32;
+  int num_channels_ = 4;
   std::unique_ptr<SubRectExtractorMetal> extractor_;
 };
 
@@ -534,9 +729,10 @@ class ImageToTensorMetalConverter : public ImageToTensorConverter {
 
 absl::StatusOr<std::unique_ptr<ImageToTensorConverter>> CreateMetalConverter(
     CalculatorContext* cc, BorderMode border_mode,
-    Tensor::ElementType tensor_type) {
+    Tensor::ElementType tensor_type, int num_channels) {
   auto result = absl::make_unique<ImageToTensorMetalConverter>();
-  ABSL_RETURN_IF_ERROR(result->Init(cc, border_mode, tensor_type));
+  ABSL_RETURN_IF_ERROR(
+      result->Init(cc, border_mode, tensor_type, num_channels));
 
   return result;
 }

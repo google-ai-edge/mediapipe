@@ -87,4 +87,13 @@ message ImageToTensorCalculatorOptions {
   //
   // BORDER_REPLICATE is used by default.
   optional BorderMode border_mode = 6;
+
+  // For GPU images with Metal, output packed 3-channel (RGB) tensors instead
+  // of the default 4-channel (RGBA, alpha is 0) tensors. Use this if the
+  // inference backend requires the tensor to match a 3-channel model input
+  // exactly, e.g. LiteRT's CompiledModel. InferenceCalculator's TFLite GPU
+  // delegate path accepts both, since the TFLite GPU delegate pads channels to
+  // 4 internally. Ignored otherwise: the other converters already output 3
+  // channels (1 for single-channel CPU images).
+  optional bool metal_three_channel_output = 9;
 }

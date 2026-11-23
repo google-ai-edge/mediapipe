@@ -1920,6 +1920,7 @@ cc_test(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:optional",
@@ -2035,6 +2036,37 @@ cc_library(
     }),
 )
 
+# Tests the Metal converter, see the file comment for what is (not) covered.
+mediapipe_cc_test(
+    name = "image_to_tensor_calculator_metal_test",
+    srcs = ["image_to_tensor_calculator_metal_test.cc"],
+    platforms = ["ios"],
+    deps = [
+        ":image_to_tensor_calculator",
+        ":image_to_tensor_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:port",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status_matchers",
+        "//mediapipe/framework/tool:sink",
+        "//mediapipe/gpu:gpu_buffer",
+        "//mediapipe/util:image_test_utils",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
+        "@com_google_absl//absl/status:statusor",
+    ] + select({
+        "//mediapipe:apple": [
+            "//mediapipe/objc:CFHolder",
+            "//mediapipe/objc:util",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
 cc_library(
     name = "image_to_tensor_converter_gl_texture",
     srcs = ["image_to_tensor_converter_gl_texture.cc"],
@@ -2115,6 +2147,7 @@ cc_library(
             "@com_google_absl//absl/status:status_macros",
             "@com_google_absl//absl/status:statusor",
             "@com_google_absl//absl/strings",
+            "@com_google_absl//absl/strings:string_view",
             "@litert//tflite/delegates/gpu/common:shape",
             "@litert//tflite/delegates/gpu/common:types",
         ],

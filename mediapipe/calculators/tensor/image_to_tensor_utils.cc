@@ -252,11 +252,12 @@ BorderMode GetBorderMode(
   }
 }
 
-int GetNumOutputChannels(const mediapipe::Image& image) {
+int GetNumOutputChannels(const mediapipe::Image& image,
+                         bool metal_three_channel_output) {
 #if !MEDIAPIPE_DISABLE_GPU
 #if MEDIAPIPE_METAL_ENABLED
   if (image.UsesGpu()) {
-    return 4;
+    return metal_three_channel_output ? 3 : 4;
   }
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // !MEDIAPIPE_DISABLE_GPU
