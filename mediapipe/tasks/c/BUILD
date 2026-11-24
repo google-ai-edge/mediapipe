@@ -110,7 +110,8 @@ mediapipe_tasks_c_shared_library(
     framework_name = "MediaPipeTasksVisionC",
     version_script = ":mediapipe_tasks_vision_version_script.lds",
     visibility = ["//visibility:public"],
-    deps = MEDIAPIPE_TASKS_C_CORE_DEPS + MEDIAPIPE_TASKS_C_VISION_DEPS,
+    deps = MEDIAPIPE_TASKS_C_CORE_DEPS +
+           MEDIAPIPE_TASKS_C_VISION_DEPS,
 )
 
 mediapipe_tasks_c_shared_library(
