@@ -148,13 +148,12 @@ absl::StatusOr<OutputTypeShaderConfig> GetOutputTypeShaderConfig(
 // Crude ImageToTensorConverter that does the minimal for WebGPU textures.
 class Converter : public ImageToTensorConverter {
  public:
-  // TODO: Support `input_starts_at_bottom` and `border_mode`.
-  explicit Converter(CalculatorContext* cc)
-      : service_(cc->Service(kWebGpuService).GetObject()) {}
-
-  absl::Status Init(Tensor::ElementType tensor_type) {
-    tensor_type_ = tensor_type;
-    ABSL_RETURN_IF_ERROR(CreatePipeline());
+  // TODO: Support `input_starts_at_bottom`.
+  Converter(const WebGpuService& service, Tensor::ElementType tensor_type,
+            const OutputTypeShaderConfig& shader_config,
+            bool use_custom_zero_border)
+      : service_(service), tensor_type_(tensor_type) {
+    CreatePipeline(shader_config, use_custom_zero_border);
 
     // Create a uniform buffer for the parameters.
     wgpu::BufferDescriptor buffer_desc = {
@@ -163,13 +162,19 @@ class Converter : public ImageToTensorConverter {
     };
     params_buffer_ = service_.device().CreateBuffer(&buffer_desc);
 
-    // Create sampler
+    // Create sampler. WebGPU's wgpu::AddressMode only supports ClampToEdge
+    // (BorderMode::kReplicate), Repeat, and MirrorRepeat; there is no
+    // ClampToBorder, so BorderMode::kZero is handled in the shader via
+    // kCustomZeroBorderMode. This matches WebGL2's CUSTOM_ZERO_BORDER_MODE
+    // hard cutoff at [0.0, 1.0] before value_transform
+    // (see image_to_tensor_converter_gl_texture.cc).
     wgpu::SamplerDescriptor sampler_desc = {
+        .addressModeU = wgpu::AddressMode::ClampToEdge,
+        .addressModeV = wgpu::AddressMode::ClampToEdge,
         .magFilter = wgpu::FilterMode::Linear,
         .minFilter = wgpu::FilterMode::Linear,
     };
     sampler_ = service_.device().CreateSampler(&sampler_desc);
-    return absl::OkStatus();
   }
 
   absl::Status Convert(const mediapipe::Image& input, const RotatedRect& roi,
@@ -271,10 +276,12 @@ class Converter : public ImageToTensorConverter {
   }
 
  private:
-  absl::Status CreatePipeline() {
-    ABSL_ASSIGN_OR_RETURN(const OutputTypeShaderConfig config,
-                          GetOutputTypeShaderConfig(tensor_type_));
-    const std::string shader = absl::StrFormat(R"(
+  void CreatePipeline(const OutputTypeShaderConfig& config,
+                      bool use_custom_zero_border) {
+    const std::string shader = absl::StrFormat(
+        R"(
+const kTileSize : u32 = %uu;
+const kCustomZeroBorderMode : bool = %s;
 struct Parameters {
   transform: mat3x3f,
   output_size : vec2<u32>,
@@ -286,7 +293,7 @@ struct Parameters {
 @group(0) @binding(2) var output : texture_storage_2d<%s, write>;
 @group(0) @binding(3) var<uniform> params : Parameters;
 
-@compute @workgroup_size(%d, %d)
+@compute @workgroup_size(kTileSize, kTileSize)
 fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   if (gid.x >= params.output_size.x || gid.y >= params.output_size.y) {
     return;
@@ -294,14 +301,19 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 
   let output_coord = vec2f(gid.xy) + vec2f(0.5);
   let input_coord = (params.transform * vec3<f32>(output_coord, 1.0f)).xy;
-  let input_value = textureSampleLevel(input, input_sampler, input_coord, 0);
+  var input_value = vec4<f32>(0.0);
+  if (!kCustomZeroBorderMode ||
+      (input_coord.x >= 0.0 && input_coord.x <= 1.0 &&
+       input_coord.y >= 0.0 && input_coord.y <= 1.0)) {
+    input_value = textureSampleLevel(input, input_sampler, input_coord, 0);
+  }
   let output_value = params.value_transform.x * input_value.xyz
       + vec3<f32>(params.value_transform.y);
   textureStore(output, vec2<i32>(gid.xy), %s);
 }
 )",
-                                               config.storage_format, kTileSize,
-                                               kTileSize, config.store_value);
+        kTileSize, use_custom_zero_border ? "true" : "false",
+        config.storage_format, config.store_value);
 
     // Create the shader module.
     wgpu::ShaderSourceWGSL wgsl;
@@ -322,7 +334,6 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     };
     pipeline_ = WebGpuCreateComputePipelineAsync(
         service_.instance(), service_.device(), &pipeline_desc);
-    return absl::OkStatus();
   }
 
   absl::Status ValidateTensorShape(const Tensor::Shape& output_shape) {
@@ -361,10 +372,26 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 
 absl::StatusOr<std::unique_ptr<ImageToTensorConverter>>
 CreateImageToWebGpuTextureTensorConverter(CalculatorContext* cc,
+                                          BorderMode border_mode,
                                           Tensor::ElementType tensor_type) {
-  auto converter = std::make_unique<Converter>(cc);
-  ABSL_RETURN_IF_ERROR(converter->Init(tensor_type));
-  return converter;
+  RET_CHECK(cc != nullptr) << "CalculatorContext must not be null.";
+  if (!cc->Service(kWebGpuService).IsAvailable()) {
+    return absl::FailedPreconditionError("WebGpuService is not available.");
+  }
+  ABSL_ASSIGN_OR_RETURN(const OutputTypeShaderConfig shader_config,
+                        GetOutputTypeShaderConfig(tensor_type));
+  switch (border_mode) {
+    case BorderMode::kReplicate:
+      return std::make_unique<Converter>(
+          cc->Service(kWebGpuService).GetObject(), tensor_type, shader_config,
+          /*use_custom_zero_border=*/false);
+    case BorderMode::kZero:
+      return std::make_unique<Converter>(
+          cc->Service(kWebGpuService).GetObject(), tensor_type, shader_config,
+          /*use_custom_zero_border=*/true);
+  }
+  return absl::InvalidArgumentError(
+      absl::StrCat("Unsupported border mode: ", static_cast<int>(border_mode)));
 }
 
 }  // namespace mediapipe

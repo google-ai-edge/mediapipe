@@ -233,7 +233,8 @@ class ImageToTensorNodeImpl
 #if MEDIAPIPE_USE_WEBGPU
           ABSL_ASSIGN_OR_RETURN(gpu_converter_,
                                 CreateImageToWebGpuTextureTensorConverter(
-                                    cc, params_.tensor_type));
+                                    cc, GetBorderMode(options_.border_mode()),
+                                    params_.tensor_type));
 #endif  // MEDIAPIPE_USE_WEBGPU
         }
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
