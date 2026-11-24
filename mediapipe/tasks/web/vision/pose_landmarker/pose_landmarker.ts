@@ -274,7 +274,6 @@ export class PoseLandmarker extends VisionTaskRunner {
    * @param image An image to process.
    * @return The landmarker result. Any masks are copied to avoid lifetime
    *     limits.
-   * @return The detected pose landmarks.
    */
   detect(image: ImageSource): PoseLandmarkerResult;
   /**
@@ -286,9 +285,10 @@ export class PoseLandmarker extends VisionTaskRunner {
    *
    * @export
    * @param image An image to process.
+   * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
+   *    to process the input image before running inference.
    * @return The landmarker result. Any masks are copied to avoid lifetime
    *     limits.
-   * @return The detected pose landmarks.
    */
   detect(
     image: ImageSource,
