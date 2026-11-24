@@ -26,10 +26,11 @@ export type RunningMode = 'IMAGE'|'VIDEO';
 /** The options for configuring a MediaPipe vision task. */
 export declare interface VisionTaskOptions extends TaskRunnerOptions {
   /**
-   * The canvas element to bind textures to. This has to be set for GPU
-   * processing. The task will initialize a WebGL context and throw an error if
-   * this fails (e.g. if you have already initialized a different type of
-   * context).
+   * The canvas element to bind textures to. If not set, the task creates its
+   * own canvas (an OffscreenCanvas when supported). The task initializes a
+   * WebGL context on this canvas for both the 'CPU' and 'GPU' delegates, and
+   * throws an error if this fails (e.g. if WebGL is not available or you have
+   * already initialized a different type of context).
    */
   canvas?: HTMLCanvasElement|OffscreenCanvas;
 
