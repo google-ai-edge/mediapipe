@@ -101,7 +101,8 @@ std::unique_ptr<ObjectDetectorOptionsProto> ConvertObjectDetectorOptionsToProto(
     ObjectDetectorOptions* options) {
   auto options_proto = std::make_unique<ObjectDetectorOptionsProto>();
   auto base_options_proto = std::make_unique<tasks::core::proto::BaseOptions>(
-      tasks::core::ConvertBaseOptionsToProto(&(options->base_options)));
+      tasks::core::ConvertBaseOptionsToProto(&(options->base_options),
+                                             /*use_litert=*/true));
   options_proto->mutable_base_options()->Swap(base_options_proto.get());
   options_proto->mutable_base_options()->set_use_stream_mode(
       options->running_mode != core::RunningMode::IMAGE);

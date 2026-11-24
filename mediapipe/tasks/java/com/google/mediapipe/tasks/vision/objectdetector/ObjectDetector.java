@@ -507,7 +507,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
       BaseOptionsProto.BaseOptions.Builder baseOptionsBuilder =
           BaseOptionsProto.BaseOptions.newBuilder();
       baseOptionsBuilder.setUseStreamMode(runningMode() != RunningMode.IMAGE);
-      baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions()));
+      baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions(), /* useLiteRt= */ true));
       ObjectDetectorOptionsProto.ObjectDetectorOptions.Builder taskOptionsBuilder =
           ObjectDetectorOptionsProto.ObjectDetectorOptions.newBuilder()
               .setBaseOptions(baseOptionsBuilder);

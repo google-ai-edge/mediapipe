@@ -60,6 +60,7 @@ cc_library(
     srcs = ["object_detector_graph.cc"],
     deps = [
         "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_litert",  # buildcleaner: keep
         "//mediapipe/calculators/util:detection_projection_calculator",
         "//mediapipe/calculators/util:detection_transformation_calculator",
         "//mediapipe/calculators/util:detections_deduplicate_calculator",

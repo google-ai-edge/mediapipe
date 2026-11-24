@@ -242,11 +242,17 @@ TEST_F(CreateFromOptionsTest, FailsWithSelectiveOpResolverMissingOps) {
   options->base_options.op_resolver =
       std::make_unique<MobileSsdQuantizedOpResolverMissingOps>();
   auto object_detector = ObjectDetector::Create(std::move(options));
-  // TODO: Make MediaPipe InferenceCalculator report the detailed.
-  // interpreter errors (e.g., "Encountered unresolved custom op").
-  EXPECT_EQ(object_detector.status().code(), absl::StatusCode::kInternal);
-  EXPECT_THAT(object_detector.status().message(),
-              HasSubstr("interpreter->AllocateTensors() == kTfLiteOk"));
+  // LiteRT accepts the unresolved custom op (TFLite_Detection_PostProcess) at
+  // Create() and reports it at the first Detect().
+  MP_ASSERT_OK(object_detector);
+  MP_ASSERT_OK_AND_ASSIGN(Image image, DecodeImageFromFile(JoinPath(
+                                           "./", kTestDataDirectory,
+                                           "cats_and_dogs_no_resizing.jpg")));
+  absl::StatusOr<ObjectDetectorResult> result =
+      (*object_detector)->Detect(image);
+  EXPECT_EQ(result.status().code(), absl::StatusCode::kInternal);
+  EXPECT_THAT(result.status().message(),
+              HasSubstr("Failed to allocate tensors"));
 }
 
 TEST_F(CreateFromOptionsTest, FailsWithMissingModel) {
