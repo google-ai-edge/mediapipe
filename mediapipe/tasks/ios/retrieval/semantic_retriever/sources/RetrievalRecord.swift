@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import Foundation
-internal import third_party_mediapipe_tasks_c_retrieval_semantic_retriever_semantic_retriever
+package import third_party_mediapipe_tasks_c_retrieval_semantic_retriever_semantic_retriever
 
 #if !MEDIAPIPE_SINGLE_MODULE
   import MediaPipeTasksComponents
@@ -63,15 +63,15 @@ public struct RetrievalRecord: Sendable, Equatable, Hashable {
     self.childIds = childIds
   }
 
-  init(cRecord: MpVectorStoreRecord) {
+  package init(cRecord: MpVectorStoreRecord) {
     self.id = cRecord.id.map { String(cString: $0) } ?? ""
     self.content = Array(cArray: cRecord.parts, count: cRecord.parts_count) { cPart in
       switch cPart.kind {
       case kMpTaskPartImage:
-        let filePath = cPart.image_part.file_path.map { String(cString: $0) }
+        let filePath = String(nonEmptyCString: cPart.image_part.file_path)
         return .image(ImagePart(filePath: filePath))
       case kMpTaskPartAudio:
-        let filePath = cPart.audio_part.audio_path.map { String(cString: $0) }
+        let filePath = String(nonEmptyCString: cPart.audio_part.audio_path)
         return .audio(AudioPart(filePath: filePath))
       default:
         let text = cPart.text_part.text.map { String(cString: $0) } ?? ""
@@ -84,7 +84,7 @@ public struct RetrievalRecord: Sendable, Equatable, Hashable {
       (pair.key.map { String(cString: $0) } ?? "", pair.value.map { String(cString: $0) } ?? "")
     }
     self.metadata = Dictionary(pairs) { _, last in last }
-    self.parentId = cRecord.parent_id.map { String(cString: $0) }
+    self.parentId = String(nonEmptyCString: cRecord.parent_id)
     self.childIds = Array(cArray: cRecord.child_ids, count: cRecord.child_ids_count) { ptr in
       ptr.map { String(cString: $0) } ?? ""
     }

@@ -44,26 +44,10 @@ public struct ResultCategory: Sendable, Equatable, Hashable {
   package init(cCategory: MpCategory) {
     self.index = Int(cCategory.index)
     self.score = cCategory.score
-    self.categoryName = cCategory.category_name.map { String(cString: $0) }
-    self.displayName = cCategory.display_name.map { String(cString: $0) }
+    self.categoryName = String(nonEmptyCString: cCategory.category_name)
+    self.displayName = String(nonEmptyCString: cCategory.display_name)
   }
 }
 
 /// Alias matching the canonical MediaPipe `Category` container name.
 public typealias Category = ResultCategory
-
-extension Array {
-  /// Creates an array by mapping `count` elements from a nullable C array pointer, or an empty
-  /// array when `cArray` is `nil` or `count <= 0`.
-  package init<CElement>(
-    cArray: UnsafePointer<CElement>?,
-    count: some BinaryInteger,
-    transform: (CElement) -> Element
-  ) {
-    guard let cArray, let elementCount = Int(exactly: count), elementCount > 0 else {
-      self = []
-      return
-    }
-    self = UnsafeBufferPointer(start: cArray, count: elementCount).map(transform)
-  }
-}

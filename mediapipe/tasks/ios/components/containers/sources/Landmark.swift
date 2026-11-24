@@ -55,7 +55,7 @@ public struct Landmark: Sendable, Equatable, Hashable {
     self.z = cLandmark.z
     self.visibility = cLandmark.has_visibility ? cLandmark.visibility : nil
     self.presence = cLandmark.has_presence ? cLandmark.presence : nil
-    self.name = cLandmark.name.map { String(cString: $0) }
+    self.name = String(nonEmptyCString: cLandmark.name)
   }
 
   /// Returns an array of `Landmark` values copied from a C `MpLandmarks` struct.
@@ -105,7 +105,7 @@ public struct NormalizedLandmark: Sendable, Equatable, Hashable {
     self.z = cLandmark.z
     self.visibility = cLandmark.has_visibility ? cLandmark.visibility : nil
     self.presence = cLandmark.has_presence ? cLandmark.presence : nil
-    self.name = cLandmark.name.map { String(cString: $0) }
+    self.name = String(nonEmptyCString: cLandmark.name)
   }
 
   /// Returns an array of `NormalizedLandmark` values copied from a C `MpNormalizedLandmarks`

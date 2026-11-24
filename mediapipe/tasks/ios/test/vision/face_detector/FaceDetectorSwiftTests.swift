@@ -70,6 +70,9 @@ final class FaceDetectorSwiftTests: XCTestCase {
     XCTAssertEqual(result.detections.count, 1, file: file, line: line)
     let detection = try XCTUnwrap(result.detections.first, file: file, line: line)
     XCTAssertFalse(detection.boundingBox.isEmpty, file: file, line: line)
+    let category = try XCTUnwrap(detection.categories.first, file: file, line: line)
+    XCTAssertNil(category.categoryName, file: file, line: line)
+    XCTAssertNil(category.displayName, file: file, line: line)
     let keypoints = try XCTUnwrap(detection.keypoints, file: file, line: line)
     XCTAssertEqual(keypoints.count, expectedKeypoints.count, file: file, line: line)
     for (actual, expected) in zip(keypoints, expectedKeypoints) {

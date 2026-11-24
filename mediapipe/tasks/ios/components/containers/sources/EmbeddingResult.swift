@@ -59,7 +59,7 @@ public struct Embedding: Sendable, Equatable, Hashable {
     }
 
     self.headIndex = Int(cEmbedding.head_index)
-    self.headName = cEmbedding.head_name.map { String(cString: $0) }
+    self.headName = String(nonEmptyCString: cEmbedding.head_name)
   }
 }
 

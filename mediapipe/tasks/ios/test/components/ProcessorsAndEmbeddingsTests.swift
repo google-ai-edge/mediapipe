@@ -82,45 +82,50 @@ struct ProcessorsAndEmbeddingsTests {
     var floats: [Float] = [0.6, 0.8]
     var quantized: [CChar] = [CChar(bitPattern: 0x7F), CChar(bitPattern: 0x80)]
     var headName = Array("embedder".utf8CString)
+    var emptyHeadName = Array("".utf8CString)
 
     try floats.withUnsafeMutableBufferPointer { floatBuf in
       try quantized.withUnsafeMutableBufferPointer { quantizedBuf in
         try headName.withUnsafeMutableBufferPointer { headNameBuf in
-          var cEmbeddings = [
-            MpEmbedding(
-              float_embedding: floatBuf.baseAddress, quantized_embedding: nil,
-              values_count: UInt32(floatBuf.count), head_index: 0,
-              head_name: headNameBuf.baseAddress
-            ),
-            MpEmbedding(
-              float_embedding: nil, quantized_embedding: quantizedBuf.baseAddress,
-              values_count: UInt32(quantizedBuf.count), head_index: 1, head_name: nil
-            ),
-            MpEmbedding(
-              float_embedding: floatBuf.baseAddress, quantized_embedding: nil,
-              values_count: 0, head_index: 2, head_name: nil
-            ),
-          ]
+          try emptyHeadName.withUnsafeMutableBufferPointer { emptyHeadNameBuf in
+            var cEmbeddings = [
+              MpEmbedding(
+                float_embedding: floatBuf.baseAddress, quantized_embedding: nil,
+                values_count: UInt32(floatBuf.count), head_index: 0,
+                head_name: headNameBuf.baseAddress
+              ),
+              MpEmbedding(
+                float_embedding: nil, quantized_embedding: quantizedBuf.baseAddress,
+                values_count: UInt32(quantizedBuf.count), head_index: 1, head_name: nil
+              ),
+              MpEmbedding(
+                float_embedding: floatBuf.baseAddress, quantized_embedding: nil,
+                values_count: 0, head_index: 2, head_name: emptyHeadNameBuf.baseAddress
+              ),
+            ]
 
-          try cEmbeddings.withUnsafeMutableBufferPointer { embeddingsBuf in
-            let cResult = MpEmbeddingResult(
-              embeddings: embeddingsBuf.baseAddress,
-              embeddings_count: UInt32(embeddingsBuf.count),
-              timestamp_ms: 0,
-              has_timestamp_ms: false
-            )
+            try cEmbeddings.withUnsafeMutableBufferPointer { embeddingsBuf in
+              let cResult = MpEmbeddingResult(
+                embeddings: embeddingsBuf.baseAddress,
+                embeddings_count: UInt32(embeddingsBuf.count),
+                timestamp_ms: 0,
+                has_timestamp_ms: false
+              )
 
-            let result = EmbeddingResult(cResult: cResult)
-            #expect(result.timestampInMilliseconds == nil)
-            #expect(result.embeddings.count == 3)
-            let first = try #require(result.embeddings.first)
-            #expect(first.floatEmbedding == [0.6, 0.8])
-            #expect(first.quantizedEmbedding == nil)
-            #expect(first.headName == "embedder")
-            #expect(result.embeddings[1].quantizedEmbedding == [0x7F, 0x80])
-            #expect(result.embeddings[1].floatEmbedding == nil)
-            #expect(result.embeddings[2].floatEmbedding == [])
-            #expect(result.embeddings[2].quantizedEmbedding == nil)
+              let result = EmbeddingResult(cResult: cResult)
+              #expect(result.timestampInMilliseconds == nil)
+              #expect(result.embeddings.count == 3)
+              let first = try #require(result.embeddings.first)
+              #expect(first.floatEmbedding == [0.6, 0.8])
+              #expect(first.quantizedEmbedding == nil)
+              #expect(first.headName == "embedder")
+              #expect(result.embeddings[1].quantizedEmbedding == [0x7F, 0x80])
+              #expect(result.embeddings[1].floatEmbedding == nil)
+              #expect(result.embeddings[1].headName == nil)
+              #expect(result.embeddings[2].floatEmbedding == [])
+              #expect(result.embeddings[2].quantizedEmbedding == nil)
+              #expect(result.embeddings[2].headName == nil)
+            }
           }
         }
       }

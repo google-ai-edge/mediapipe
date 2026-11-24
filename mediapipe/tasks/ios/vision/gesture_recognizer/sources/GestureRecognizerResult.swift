@@ -52,8 +52,8 @@ public struct GestureRecognizerResult: Sendable, Equatable, Hashable {
     self.gestures = Array(cArray: cResult.gestures, count: cResult.gestures_count) { cList in
       Array(cArray: cList.categories, count: cList.categories_count) { c in
         ResultCategory(
-          index: -1, score: c.score, categoryName: c.category_name.map { String(cString: $0) },
-          displayName: c.display_name.map { String(cString: $0) })
+          index: -1, score: c.score, categoryName: String(nonEmptyCString: c.category_name),
+          displayName: String(nonEmptyCString: c.display_name))
       }
     }
     self.handedness = Array(cArray: cResult.handedness, count: cResult.handedness_count) {

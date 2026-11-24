@@ -17,6 +17,8 @@ import Foundation
 import MediaPipeTasksGestureRecognizer
 import Testing
 import UIKit
+import third_party_mediapipe_tasks_c_components_containers_category
+import third_party_mediapipe_tasks_c_vision_gesture_recognizer_gesture_recognizer_result
 
 private final class BundleToken {}
 
@@ -262,5 +264,33 @@ struct GestureRecognizerSwiftTests {
     #expect(event.1 == 100)
     #expect(liveResult.timestampInMilliseconds == 100)
     try expectSingleHand(liveResult, label: "Thumb_Up")
+  }
+
+  @Test func `empty C strings bridge to nil on gesture and handedness categories`() throws {
+    var empty = Array("".utf8CString)
+    try empty.withUnsafeMutableBufferPointer { emptyBuf in
+      let emptyPtr = emptyBuf.baseAddress
+      var cGestureCategory = MpCategory(
+        index: 0, score: 0.9, category_name: emptyPtr, display_name: emptyPtr)
+      var cHandednessCategory = MpCategory(
+        index: 1, score: 0.8, category_name: emptyPtr, display_name: emptyPtr)
+      var cGestures = MpCategories(categories: &cGestureCategory, categories_count: 1)
+      var cHandedness = MpCategories(categories: &cHandednessCategory, categories_count: 1)
+      let cResult = MpGestureRecognizerResult(
+        gestures: &cGestures, gestures_count: 1,
+        handedness: &cHandedness, handedness_count: 1,
+        hand_landmarks: nil, hand_landmarks_count: 0,
+        hand_world_landmarks: nil, hand_world_landmarks_count: 0)
+
+      let result = GestureRecognizerResult(cResult: cResult, timestampInMilliseconds: 42)
+      let gesture = try #require(result.gestures.first?.first)
+      #expect(gesture.index == -1)
+      #expect(gesture.categoryName == nil)
+      #expect(gesture.displayName == nil)
+      let hand = try #require(result.handedness.first?.first)
+      #expect(hand.index == 1)
+      #expect(hand.categoryName == nil)
+      #expect(hand.displayName == nil)
+    }
   }
 }

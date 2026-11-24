@@ -37,7 +37,7 @@ public struct Classifications: Sendable, Equatable, Hashable {
   /// Creates `Classifications` copied from a C `MpClassifications` struct.
   package init(cClassifications: MpClassifications) {
     self.headIndex = Int(cClassifications.head_index)
-    self.headName = cClassifications.head_name.map { String(cString: $0) }
+    self.headName = String(nonEmptyCString: cClassifications.head_name)
     self.categories = Array(
       cArray: cClassifications.categories,
       count: cClassifications.categories_count,

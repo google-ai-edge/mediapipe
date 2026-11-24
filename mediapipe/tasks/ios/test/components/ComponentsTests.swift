@@ -120,4 +120,38 @@ struct ComponentsTests {
     #expect(RegionOfInterest(keypoint: point).keypoint == point)
     #expect(RegionOfInterest(scribbles: [point]).scribbles == [point])
   }
+
+  @Test func `Empty C strings bridge to nil on optional container metadata`() {
+    var empty = Array("".utf8CString)
+    empty.withUnsafeMutableBufferPointer { emptyBuf in
+      let emptyPtr = emptyBuf.baseAddress
+      let category = ResultCategory(
+        cCategory: MpCategory(
+          index: 0, score: 0.9, category_name: emptyPtr, display_name: emptyPtr))
+      #expect(category.categoryName == nil)
+      #expect(category.displayName == nil)
+
+      let classifications = Classifications(
+        cClassifications: MpClassifications(
+          categories: nil, categories_count: 0, head_index: 0, head_name: emptyPtr))
+      #expect(classifications.headName == nil)
+
+      let keypoint = NormalizedKeypoint(
+        cKeypoint: MpNormalizedKeypoint(
+          x: 0.1, y: 0.2, label: emptyPtr, score: 0.5, has_score: true))
+      #expect(keypoint.label == nil)
+
+      let landmark = Landmark(
+        cLandmark: MpLandmark(
+          x: 1, y: 2, z: 3, has_visibility: false, visibility: 0, has_presence: false,
+          presence: 0, name: emptyPtr))
+      #expect(landmark.name == nil)
+
+      let normalizedLandmark = NormalizedLandmark(
+        cLandmark: MpNormalizedLandmark(
+          x: 0.1, y: 0.2, z: 0.3, has_visibility: false, visibility: 0, has_presence: false,
+          presence: 0, name: emptyPtr))
+      #expect(normalizedLandmark.name == nil)
+    }
+  }
 }

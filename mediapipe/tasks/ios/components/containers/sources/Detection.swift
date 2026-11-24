@@ -43,7 +43,7 @@ public struct NormalizedKeypoint: Sendable, Equatable {
   /// Creates a `NormalizedKeypoint` copied from a C `MpNormalizedKeypoint` struct.
   package init(cKeypoint: MpNormalizedKeypoint) {
     self.location = CGPoint(x: Double(cKeypoint.x), y: Double(cKeypoint.y))
-    self.label = cKeypoint.label.map { String(cString: $0) }
+    self.label = String(nonEmptyCString: cKeypoint.label)
     self.score = cKeypoint.has_score ? cKeypoint.score : nil
   }
 }
