@@ -34,6 +34,8 @@
 #include "mediapipe/framework/port/ret_check.h"
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
+#include "mediapipe/gpu/gl_context.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
 #include "mediapipe/framework/formats/hardware_buffer.h"
@@ -54,6 +56,15 @@
 #endif  // MEDIAPIPE_USE_WEBGPU
 
 namespace mediapipe {
+
+#if !MEDIAPIPE_METAL_ENABLED
+namespace {
+// Extra bytes allocated after a malloc-backed CPU buffer. Matches XNNPACK's
+// XNN_EXTRA_BYTES, the number of bytes its kernels may read past the end of a
+// tensor.
+constexpr size_t kCpuBufferPaddingBytes = 16;
+}  // namespace
+#endif  // !MEDIAPIPE_METAL_ENABLED
 
 // Zero and negative values are not checked here.
 bool IsPowerOfTwo(int v) { return (v & (v - 1)) == 0; }
@@ -823,16 +834,26 @@ absl::Status Tensor::AllocateCpuBuffer() const {
     // memory page which should match common alignment requirements.
     cpu_buffer_ = AllocateVirtualMemory(bytes());
 #else
+    // The buffer may be handed to an inference runtime without a copy. XNNPACK
+    // kernels may read up to kCpuBufferPaddingBytes past the end of a tensor,
+    // so over-allocate and zero the padding. bytes() is unchanged.
+    const int num_bytes = bytes();
+    RET_CHECK_GE(num_bytes, 0) << "Tensor byte size must be non-negative.";
+    const size_t data_bytes = static_cast<size_t>(num_bytes);
+    const size_t padded_bytes = data_bytes + kCpuBufferPaddingBytes;
     if (memory_alignment_ > 0) {
       // TODO b/339271330 - Investigate how aligned memory performs in
       // MP WebAssembly targets.
       // TfLite custom allocation requires at least memory_alignment_ bytes.
-      cpu_buffer_ = aligned_malloc(std::max(memory_alignment_, bytes()),
-                                   memory_alignment_);
+      cpu_buffer_ = aligned_malloc(
+          std::max(static_cast<size_t>(memory_alignment_), padded_bytes),
+          memory_alignment_);
     } else {
-      cpu_buffer_ = malloc(bytes());
+      cpu_buffer_ = malloc(padded_bytes);
     }
     RET_CHECK(cpu_buffer_) << "Failed to allocate CPU buffer.";
+    std::memset(static_cast<uint8_t*>(cpu_buffer_) + data_bytes, 0,
+                kCpuBufferPaddingBytes);
 #endif  // MEDIAPIPE_METAL_ENABLED
   }
   return absl::OkStatus();

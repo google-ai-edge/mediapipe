@@ -7,13 +7,10 @@
 
 #include "mediapipe/framework/memory_manager.h"
 #include "mediapipe/framework/port.h"  // IWYU pragma: keep
-#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/gpu/multi_pool.h"
 #if !MEDIAPIPE_DISABLE_GPU
-#include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_context.h"  // IWYU pragma: keep
-#include "mediapipe/gpu/gpu_buffer_format.h"
 #endif
 
 namespace mediapipe {
@@ -72,6 +69,27 @@ TEST(Cpu, TestAlignedMemoryAllocation) {
     memset(data_ptr, 0, t1.bytes());
   }
 }
+
+#if !MEDIAPIPE_METAL_ENABLED
+// XNNPACK kernels may read up to 16 bytes (XNN_EXTRA_BYTES) past the end of a
+// tensor that is passed to the runtime without a copy, so malloc-backed CPU
+// buffers are padded with zeroed bytes.
+TEST(Cpu, CpuBufferIsPaddedWithZeroedBytes) {
+  constexpr int kPaddingBytes = 16;
+  for (const int alignment_bytes : {0, 64}) {
+    Tensor tensor(Tensor::ElementType::kUInt8, Tensor::Shape{1, 320, 320, 3},
+                  /*memory_manager=*/nullptr, alignment_bytes);
+    auto view = tensor.GetCpuWriteView();
+    uint8_t* buffer = view.buffer<uint8_t>();
+    ASSERT_NE(buffer, nullptr);
+    memset(buffer, 0xFF, tensor.bytes());
+    for (int i = 0; i < kPaddingBytes; ++i) {
+      EXPECT_EQ(buffer[tensor.bytes() + i], 0)
+          << "alignment=" << alignment_bytes << " padding byte " << i;
+    }
+  }
+}
+#endif  // !MEDIAPIPE_METAL_ENABLED
 
 TEST(Cpu, TestTensorMove) {
   Tensor t1(Tensor::ElementType::kFloat32, Tensor::Shape{4, 3, 2, 3},
