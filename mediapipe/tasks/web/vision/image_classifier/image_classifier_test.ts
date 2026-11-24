@@ -17,10 +17,17 @@
 import 'jasmine';
 
 // Placeholder for internal dependency on encodeByteArray
+import {TensorsToClassificationCalculatorOptions} from '../../../../calculators/tensor/tensors_to_classification_calculator_pb';
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
+import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {Classification, ClassificationList} from '../../../../framework/formats/classification_pb';
 import {ClassificationResult, Classifications} from '../../../../tasks/cc/components/containers/proto/classifications_pb';
 import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, MediapipeTasksFake, SpyWasmModule, verifyGraph, verifyListenersRegistered} from '../../../../tasks/web/core/task_runner_test_utils';
+import {LabelMapItem} from '../../../../util/label_map_pb';
+import {
+  CALCULATOR_GRAPH_CONFIG_LISTENER_NAME,
+  SimpleListener,
+} from '../../../../web/graph_runner/graph_runner';
 
 import {ImageClassifier} from './image_classifier';
 
@@ -152,6 +159,66 @@ describe('ImageClassifier', () => {
         headIndex: 1,
         headName: 'headName'
       }]
+    });
+  });
+
+  describe('getLabels() and getDisplayNames()', () => {
+    function graphConfigWithLabels(
+        entries: Array<{name: string; displayName?: string}>): Uint8Array {
+      const graph = new CalculatorGraphConfig();
+      const node = new CalculatorGraphConfig.Node();
+      node.setName('TensorsToClassificationCalculator');
+      node.setCalculator('TensorsToClassificationCalculator');
+
+      const labelOptions = new TensorsToClassificationCalculatorOptions();
+      entries.forEach((entry, index) => {
+        const item = new LabelMapItem();
+        item.setName(entry.name);
+        if (entry.displayName !== undefined) {
+          item.setDisplayName(entry.displayName);
+        }
+        labelOptions.getLabelItemsMap().set(index, item);
+      });
+
+      const calculatorOptions = new CalculatorOptions();
+      calculatorOptions.setExtension(
+          TensorsToClassificationCalculatorOptions.ext, labelOptions);
+      node.setOptions(calculatorOptions);
+      graph.addNode(node);
+      return graph.serializeBinary();
+    }
+
+    async function loadLabelMap(
+        entries: Array<{name: string; displayName?: string}>): Promise<void> {
+      imageClassifier.fakeWasmModule._getGraphConfig.and.callFake(() => {
+        (imageClassifier.fakeWasmModule.simpleListeners![
+           CALCULATOR_GRAPH_CONFIG_LISTENER_NAME
+         ] as SimpleListener<Uint8Array>)(graphConfigWithLabels(entries), 0);
+      });
+      await imageClassifier.setOptions(
+          {baseOptions: {modelAssetBuffer: new Uint8Array([1])}});
+    }
+
+    it('returns empty lists when the model has no labelmap', () => {
+      expect(imageClassifier.getLabels()).toEqual([]);
+      expect(imageClassifier.getDisplayNames()).toEqual([]);
+    });
+
+    it('returns labels and display names from the model metadata', async () => {
+      await loadLabelMap([
+        {name: 'apple', displayName: 'manzana'},
+        {name: 'banana', displayName: 'plátano'},
+      ]);
+
+      expect(imageClassifier.getLabels()).toEqual(['apple', 'banana']);
+      expect(imageClassifier.getDisplayNames()).toEqual(['manzana', 'plátano']);
+    });
+
+    it('returns an empty list when the labelmap has no display names', async () => {
+      await loadLabelMap([{name: 'cat'}, {name: 'dog'}]);
+
+      expect(imageClassifier.getLabels()).toEqual(['cat', 'dog']);
+      expect(imageClassifier.getDisplayNames()).toEqual([]);
     });
   });
 });
