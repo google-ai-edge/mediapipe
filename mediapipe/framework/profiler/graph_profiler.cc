@@ -17,14 +17,18 @@
 #include <fstream>
 #include <list>
 #include <memory>
+#include <string_view>
 
 #include "absl/log/absl_check.h"         // from @com_google_absl
 #include "absl/log/absl_log.h"           // from @com_google_absl
 #include "absl/status/status.h"          // from @com_google_absl
 #include "absl/status/status_macros.h"   // from @com_google_absl
+#include "absl/strings/str_cat.h"        // from @com_google_absl
 #include "absl/strings/substitute.h"     // from @com_google_absl
 #include "absl/synchronization/mutex.h"  // from @com_google_absl
 #include "absl/time/time.h"              // from @com_google_absl
+#include "mediapipe/framework/calculator_context.h"
+#include "mediapipe/framework/packet_generator.pb.h"
 #include "mediapipe/framework/port/advanced_proto_lite_inc.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/proto_ns.h"
@@ -34,6 +38,7 @@
 #include "mediapipe/framework/tool/name_util.h"
 #include "mediapipe/framework/tool/tag_map.h"
 #include "mediapipe/framework/tool/validate_name.h"
+#include "mediapipe/framework/validated_graph_config.h"
 
 namespace mediapipe {
 
@@ -119,6 +124,28 @@ PacketInfo* GetPacketInfo(PacketInfoMap* map, const PacketId& packet_id) {
     }
   }
   return nullptr;
+}
+
+constexpr std::string_view kPacketGeneratorWrapperCalculatorName =
+    "PacketGeneratorWrapperCalculator";
+
+// Returns true if |calculator_context| belongs to an internal
+// PacketGeneratorWrapperCalculator node dynamically created for a
+// non-scheduled PacketGenerator rather than a CalculatorGraphConfig::Node.
+bool IsPacketGeneratorWrapper(const ValidatedGraphConfig* validated_graph,
+                              const CalculatorContext& calculator_context) {
+  if (validated_graph == nullptr || calculator_context.CalculatorType() !=
+                                        kPacketGeneratorWrapperCalculatorName) {
+    return false;
+  }
+  int index = calculator_context.NodeId();
+  if (index < 0 || index >= validated_graph->Config().packet_generator_size()) {
+    return false;
+  }
+  const PacketGeneratorConfig& pg_config =
+      validated_graph->Config().packet_generator(index);
+  return calculator_context.NodeName() ==
+         absl::StrCat("__pg_", index, "_", pg_config.packet_generator());
 }
 
 }  // namespace
@@ -452,6 +479,9 @@ void GraphProfiler::SetOpenRuntime(const CalculatorContext& calculator_context,
   if (!is_profiling_) {
     return;
   }
+  if (IsPacketGeneratorWrapper(validated_graph_, calculator_context)) {
+    return;
+  }
 
   const std::string& node_name = calculator_context.NodeName();
   int64_t time_usec = end_time_usec - start_time_usec;
@@ -473,6 +503,9 @@ void GraphProfiler::SetCloseRuntime(const CalculatorContext& calculator_context,
                                     int64_t end_time_usec) {
   absl::ReaderMutexLock lock(profiler_mutex_);
   if (!is_profiling_) {
+    return;
+  }
+  if (IsPacketGeneratorWrapper(validated_graph_, calculator_context)) {
     return;
   }
   const std::string& node_name = calculator_context.NodeName();
@@ -563,6 +596,9 @@ void GraphProfiler::AddProcessSample(
     int64_t end_time_usec) {
   absl::ReaderMutexLock lock(profiler_mutex_);
   if (!is_profiling_) {
+    return;
+  }
+  if (IsPacketGeneratorWrapper(validated_graph_, calculator_context)) {
     return;
   }
 

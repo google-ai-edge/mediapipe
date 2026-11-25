@@ -649,6 +649,73 @@ TEST_F(GraphTracerE2ETest, PassThroughGraphProfile) {
             2);
 }
 
+class Uint64SidePacketCalculator : public CalculatorBase {
+ public:
+  static absl::Status GetContract(CalculatorContract* cc) {
+    cc->OutputSidePackets().Index(0).Set<uint64_t>();
+    return absl::OkStatus();
+  }
+
+  absl::Status Open(CalculatorContext* cc) final {
+    cc->OutputSidePackets().Index(0).Set(
+        MakePacket<uint64_t>((5ULL << 32) | 1ULL));
+    return absl::OkStatus();
+  }
+
+  absl::Status Process(CalculatorContext* cc) final {
+    return tool::StatusStop();
+  }
+};
+REGISTER_CALCULATOR(Uint64SidePacketCalculator);
+
+TEST_F(GraphTracerE2ETest, PacketGeneratorWithCalculatorSidePacketProfile) {
+  CalculatorGraphConfig config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        profiler_config {
+          enable_profiler: true
+          enable_stream_latency: true
+          trace_enabled: true
+          trace_log_disabled: true
+        }
+        node {
+          calculator: "Uint64SidePacketCalculator"
+          output_side_packet: "raw_range"
+        }
+        packet_generator {
+          packet_generator: "IntSplitterPacketGenerator"
+          input_side_packet: "raw_range"
+          output_side_packet: "range_step"
+        }
+        node {
+          calculator: "RangeCalculator"
+          input_side_packet: "range_step"
+          output_stream: "out"
+          output_stream: "sum"
+          output_stream: "mean"
+        }
+      )pb");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  std::vector<Packet> out_packets;
+  MP_ASSERT_OK(graph.ObserveOutputStream("out", [&](const Packet& packet) {
+    out_packets.push_back(packet);
+    return absl::OkStatus();
+  }));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.WaitUntilDone());
+  EXPECT_EQ(out_packets.size(), 6);
+
+  std::vector<CalculatorProfile> profiles;
+  MP_EXPECT_OK(graph.profiler()->GetCalculatorProfiles(&profiles));
+  EXPECT_EQ(profiles.size(), 2);
+
+  GraphProfile captured_profile;
+  MP_EXPECT_OK(graph.profiler()->CaptureProfile(&captured_profile,
+                                                PopulateGraphConfig::kFull));
+  EXPECT_EQ(captured_profile.calculator_profiles_size(), 2);
+}
+
 TEST_F(GraphTracerE2ETest, DemuxGraphLog) {
   SetUpDemuxInFlightGraph();
   RunDemuxInFlightGraph();

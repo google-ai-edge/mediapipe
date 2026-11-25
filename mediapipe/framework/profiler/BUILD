@@ -110,6 +110,7 @@ cc_library(
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_profile_cc_proto",
         "//mediapipe/framework:executor",
+        "//mediapipe/framework:packet_generator_cc_proto",
         "//mediapipe/framework:validated_graph_config",
         "//mediapipe/framework/deps:clock",
         "//mediapipe/framework/port:advanced_proto_lite",

@@ -1478,5 +1478,154 @@ TEST_F(GraphProfilerTestPeer, WriteToMutableMemfile) {
   EXPECT_FALSE(content.empty());
 }
 
+class SeedUint64SidePacketCalculator : public CalculatorBase {
+ public:
+  static absl::Status GetContract(CalculatorContract* cc) {
+    cc->InputSidePackets().Index(0).Set<uint32_t>();
+    cc->OutputSidePackets().Index(0).Set<uint64_t>();
+    return absl::OkStatus();
+  }
+
+  absl::Status Open(CalculatorContext* cc) final {
+    uint64_t count = cc->InputSidePackets().Index(0).Get<uint32_t>();
+    cc->OutputSidePackets().Index(0).Set(
+        MakePacket<uint64_t>((count << 32) | 1ULL));
+    return absl::OkStatus();
+  }
+
+  absl::Status Process(CalculatorContext* cc) final {
+    return tool::StatusStop();
+  }
+};
+REGISTER_CALCULATOR(SeedUint64SidePacketCalculator);
+
+TEST_F(GraphProfilerTestPeer,
+       PacketGeneratorConsumingCalculatorOutputSidePacket) {
+  CalculatorGraphConfig config = CreateGraphConfig(R"pb(
+    profiler_config {
+      enable_profiler: true
+      enable_stream_latency: true
+      trace_enabled: true
+      trace_log_disabled: true
+    }
+    input_side_packet: "count"
+    node {
+      calculator: "SeedUint64SidePacketCalculator"
+      input_side_packet: "count"
+      output_side_packet: "raw_range"
+    }
+    packet_generator {
+      packet_generator: "IntSplitterPacketGenerator"
+      input_side_packet: "raw_range"
+      output_side_packet: "range_step"
+    }
+    node {
+      calculator: "RangeCalculator"
+      input_side_packet: "range_step"
+      output_stream: "out"
+      output_stream: "sum"
+      output_stream: "mean"
+    }
+    node {
+      calculator: "PassThroughCalculator"
+      input_stream: "out"
+      input_stream: "sum"
+      input_stream: "mean"
+      output_stream: "out_1"
+      output_stream: "sum_1"
+      output_stream: "mean_1"
+    }
+  )pb");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  std::vector<Packet> out_packets;
+  MP_ASSERT_OK(graph.ObserveOutputStream("out_1", [&](const Packet& packet) {
+    out_packets.push_back(packet);
+    return absl::OkStatus();
+  }));
+
+  for (uint32_t count : {10U, 20U}) {
+    out_packets.clear();
+    MP_ASSERT_OK(graph.StartRun({{"count", MakePacket<uint32_t>(count)}}));
+    MP_ASSERT_OK(graph.WaitUntilDone());
+    EXPECT_EQ(out_packets.size(), count + 1);
+  }
+
+  std::vector<CalculatorProfile> profiles;
+  MP_ASSERT_OK(graph.profiler()->GetCalculatorProfiles(&profiles));
+  EXPECT_EQ(profiles.size(), 3);
+  EXPECT_EQ(GetProfileWithName(profiles, "RangeCalculator")
+                .process_runtime()
+                .count(0),
+            10 + 20);
+  EXPECT_EQ(GetProfileWithName(profiles, "PassThroughCalculator")
+                .process_runtime()
+                .count(0),
+            (10 + 3) + (20 + 3));
+
+  GraphProfile captured_profile;
+  MP_ASSERT_OK(graph.profiler()->CaptureProfile(&captured_profile,
+                                                PopulateGraphConfig::kFull));
+  EXPECT_EQ(captured_profile.calculator_profiles_size(), 3);
+  EXPECT_EQ(captured_profile.config().node_size(), 3);
+}
+
+TEST_F(GraphProfilerTestPeer, UnregisteredCalculatorStillCheckFails) {
+  InitializeProfilerWithGraphConfig(R"pb(
+    profiler_config { enable_profiler: true }
+    input_side_packet: "raw_range"
+    input_stream: "input_stream"
+    packet_generator {
+      packet_generator: "IntSplitterPacketGenerator"
+      input_side_packet: "raw_range"
+      output_side_packet: "range_step"
+    }
+    node { calculator: "DummyTestCalculator" input_stream: "input_stream" }
+  )pb");
+  TestContextBuilder unknown_context("UnknownCalculator", /*node_id=*/0, {},
+                                     {});
+  EXPECT_DEATH(
+      GraphProfilerTestPeer::SetOpenRuntime(*unknown_context.get(), 0, 10),
+      "has not been added during initialization");
+  EXPECT_DEATH(
+      GraphProfilerTestPeer::SetCloseRuntime(*unknown_context.get(), 0, 10),
+      "has not been added during initialization");
+  EXPECT_DEATH(
+      GraphProfilerTestPeer::AddProcessSample(*unknown_context.get(), 0, 10),
+      "has not been added during initialization");
+
+  auto make_wrapper_context = [](const std::string& node_name, int node_id,
+                                 std::unique_ptr<CalculatorState>* state_out) {
+    *state_out = std::make_unique<CalculatorState>(
+        node_name, node_id, "PacketGeneratorWrapperCalculator",
+        CalculatorGraphConfig::Node(), /*profiling_context=*/nullptr,
+        /*graph_service_manager=*/nullptr);
+    return std::make_unique<CalculatorContext>(
+        state_out->get(),
+        tool::CreateTagMap(std::vector<std::string>{}).value(),
+        tool::CreateTagMap(std::vector<std::string>{}).value());
+  };
+
+  std::unique_ptr<CalculatorState> negative_id_state;
+  auto negative_id_ctx = make_wrapper_context(
+      "__pg_-1_IntSplitterPacketGenerator", /*node_id=*/-1, &negative_id_state);
+  EXPECT_DEATH(GraphProfilerTestPeer::SetOpenRuntime(*negative_id_ctx, 0, 10),
+               "has not been added during initialization");
+
+  std::unique_ptr<CalculatorState> out_of_bounds_state;
+  auto out_of_bounds_ctx = make_wrapper_context(
+      "__pg_1_IntSplitterPacketGenerator", /*node_id=*/1, &out_of_bounds_state);
+  EXPECT_DEATH(GraphProfilerTestPeer::SetOpenRuntime(*out_of_bounds_ctx, 0, 10),
+               "has not been added during initialization");
+
+  std::unique_ptr<CalculatorState> mismatched_name_state;
+  auto mismatched_name_ctx = make_wrapper_context(
+      "ExplicitWrapperNode", /*node_id=*/0, &mismatched_name_state);
+  EXPECT_DEATH(
+      GraphProfilerTestPeer::SetOpenRuntime(*mismatched_name_ctx, 0, 10),
+      "has not been added during initialization");
+}
+
 }  // namespace
 }  // namespace mediapipe

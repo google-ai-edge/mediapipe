@@ -40,7 +40,10 @@ struct TaskId {
   inline bool operator==(const TaskId& other) const {
     return id == other.id && ts == other.ts && event_type == other.event_type;
   }
-  inline size_t hash() const { return id + ts.Value() + (event_type << 10); }
+  size_t hash() const {
+    return static_cast<size_t>(id) + static_cast<size_t>(ts.Value()) +
+           (static_cast<size_t>(event_type) << 10);
+  }
 };
 }  // namespace mediapipe
 
