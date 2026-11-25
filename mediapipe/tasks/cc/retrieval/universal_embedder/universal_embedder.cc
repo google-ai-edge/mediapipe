@@ -41,6 +41,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/utils/tga_utils.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/embedding_provider.h"
+#include "mediapipe/tasks/cc/core/litert_lm_utils.h"
 #include "mediapipe/tasks/cc/core/logging/factory/logging_factory.h"
 #include "mediapipe/tasks/cc/core/logging/tasks_logger.h"
 #include "mediapipe/tasks/cc/core/running_mode.h"
@@ -67,18 +68,6 @@ using ::litert::lm::InputText;
 using ::litert::lm::MemoryMappedFile;
 using ::litert::lm::ModelAssets;
 using ::mediapipe::tasks::components::utils::EncodeToTga;
-
-::litert::lm::Backend ToLiteRtLmBackend(
-    tasks::core::BaseOptions::Delegate delegate) {
-  switch (delegate) {
-    case tasks::core::BaseOptions::GPU:
-      return ::litert::lm::Backend::GPU;
-    case tasks::core::BaseOptions::NPU:
-      return ::litert::lm::Backend::NPU;
-    default:
-      return ::litert::lm::Backend::CPU;
-  }
-}
 
 // Returns true if `path` refers to an existing regular file that can be opened
 // for reading. This is checked up front so that a bad model path never reaches
@@ -137,12 +126,14 @@ absl::StatusOr<std::unique_ptr<UniversalEmbedder>> UniversalEmbedder::Create(
   const tasks::core::BaseOptions::Delegate base_delegate =
       options->base_options.delegate;
   ABSL_ASSIGN_OR_RETURN(
-      auto settings,
-      EmbeddingEngineSettings::CreateDefault(
-          std::move(model_assets),
-          ToLiteRtLmBackend(options->text_delegate.value_or(base_delegate)),
-          ToLiteRtLmBackend(options->vision_delegate.value_or(base_delegate)),
-          ToLiteRtLmBackend(options->audio_delegate.value_or(base_delegate))));
+      auto settings, EmbeddingEngineSettings::CreateDefault(
+                         std::move(model_assets),
+                         tasks::core::ToLiteRtLmBackend(
+                             options->text_delegate.value_or(base_delegate)),
+                         tasks::core::ToLiteRtLmBackend(
+                             options->vision_delegate.value_or(base_delegate)),
+                         tasks::core::ToLiteRtLmBackend(
+                             options->audio_delegate.value_or(base_delegate))));
 
   if (options->max_input_length.has_value()) {
     settings.SetMaxInputLength(options->max_input_length);

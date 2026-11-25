@@ -475,3 +475,20 @@ cc_test(
         "@com_google_absl//absl/status:statusor",
     ],
 )
+
+cc_library(
+    name = "litert_lm_utils",
+    srcs = ["litert_lm_utils.cc"],
+    hdrs = ["litert_lm_utils.h"],
+    visibility = ["//mediapipe/tasks:__subpackages__"],
+    deps = [
+        ":base_options",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:status_macros",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
+        "@litert_lm//runtime/executor:executor_settings_base",
+        "@litert_lm//runtime/util:scoped_file",
+    ],
+)

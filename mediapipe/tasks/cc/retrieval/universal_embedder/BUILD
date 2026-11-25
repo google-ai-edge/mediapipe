@@ -31,6 +31,7 @@ cc_library(
         "//mediapipe/tasks/cc/components/utils:tga_utils",
         "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core:embedding_provider",
+        "//mediapipe/tasks/cc/core:litert_lm_utils",
         "//mediapipe/tasks/cc/core:running_mode",
         "//mediapipe/tasks/cc/core:tasks_logging_factory",  # build_cleaner: keep
         "//mediapipe/tasks/cc/core/logging:tasks_logger",
