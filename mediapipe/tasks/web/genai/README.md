@@ -19,7 +19,7 @@ E2B](https://huggingface.co/google/gemma-3n-E2B-it-litert-lm/blob/main/gemma-3n-
 Alternatively, you can browse for more pre-converted models on our [LiteRT HuggingFace community](https://huggingface.co/litert-community/models), where files named "-web.task" are
 specially converted to run optimally in the browser. All text-only variants of
 Gemma 3 are available there, as well as [MedGemma-27B-Text](https://huggingface.co/litert-community/MedGemma-27B-IT/blob/main/medgemma-27b-it-int8-web.task). See
-our web inference [guide](https://developers.google.com/mediapipe/solutions/genai/llm_inference/web_js) for more information.
+our web inference [guide](https://developers.google.com/edge/litert-lm) for more information.
 Note that only models encoded for the GPU backend are currently supported.
 
 ```

@@ -9,7 +9,7 @@ building on the web. It combines in-memory vector storage with embedding-based
 retrieval, allowing you to quickly build multi-modal semantic search into your
 web apps.
 
-For more information, refer to the [Semantic Retriever](https://developers.google.com/mediapipe/solutions/retrieval/semantic_retriever/web_js)
+For more information, refer to the [Semantic Retriever](https://developers.google.com/edge/mediapipe/solutions/retrieval/semantic_retriever?tab=Web)
 documentation.
 
 ```javascript
@@ -44,7 +44,7 @@ The MediaPipe Universal Embedder extracts versatile feature embeddings from
 multi-modal inputs – including text, image, and audio - all within the same
 embedding space.
 
-For more information, refer to the [Universal Embedder](https://developers.google.com/mediapipe/solutions/retrieval/universal_embedder/web_js)
+For more information, refer to the [Universal Embedder](https://developers.google.com/edge/mediapipe/solutions/retrieval/universal_embedder?tab=Web)
 documentation.
 
 ```javascript

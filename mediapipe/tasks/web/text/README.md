@@ -16,7 +16,7 @@ const languageDetector = await LanguageDetector.createFromModelPath(text,
 const result = languageDetector.detect(textData);
 ```
 
-For more information, refer to the [Language Detector](https://developers.google.com/mediapipe/solutions/text/language_detector/web_js) documentation.
+For more information, refer to the [Language Detector](https://developers.google.com/edge/mediapipe/solutions/text/language_detector?tab=Web) documentation.
 
 ## Text Classifier
 
@@ -33,7 +33,7 @@ const textClassifier = await TextClassifier.createFromModelPath(text,
 const classifications = textClassifier.classify(textData);
 ```
 
-For more information, refer to the [Text Classification](https://developers.google.com/mediapipe/solutions/text/text_classifier/web_js) documentation.
+For more information, refer to the [Text Classification](https://developers.google.com/edge/mediapipe/solutions/text/text_classifier?tab=Web) documentation.
 
 ## Text Embedder
 
@@ -49,7 +49,7 @@ const textEmbedder = await TextEmbedder.createFromModelPath(text,
 const embeddings = textEmbedder.embed(textData);
 ```
 
-For more information, refer to the [Text Embedder](https://developers.google.com/mediapipe/solutions/text/text_embedder/web_js) documentation.
+For more information, refer to the [Text Embedder](https://developers.google.com/edge/mediapipe/solutions/text/text_embedder?tab=Web) documentation.
 
 ### Privacy Notice
 

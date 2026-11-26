@@ -20,8 +20,8 @@ bazel run -c opt //mediapipe/tasks/python/benchmark/vision/image_classifier:imag
     *   The default value is `mobilenet_v2_1.0_224.tflite`
     *   TensorFlow Lite image classification models **with metadata**
         * Models from [TensorFlow Hub](https://tfhub.dev/tensorflow/collections/lite/task-library/image-classifier/1)
-        * Models from [MediaPipe Models](https://developers.google.com/mediapipe/solutions/vision/image_classifier/index#models)
-        * Models trained with [MediaPipe Model Maker](https://developers.google.com/mediapipe/solutions/customization/image_classifier) are supported.
+        * Models from [MediaPipe Models](https://developers.google.com/edge/mediapipe/solutions/vision/image_classifier#models)
+        * Models trained with [MediaPipe Model Maker](https://developers.google.com/edge/mediapipe/solutions/vision/image_classifier) are supported.
 *   You can optionally specify the `iterations` parameter to limit the number of
     iterations for benchmarking:
     *   Supported value: A positive integer.

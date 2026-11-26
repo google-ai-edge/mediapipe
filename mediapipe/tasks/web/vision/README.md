@@ -18,7 +18,7 @@ const image = document.getElementById("image") as HTMLImageElement;
 const detections = faceDetector.detect(image);
 ```
 
-For more information, refer to the [Face Detector](https://developers.google.com/mediapipe/solutions/vision/face_detector/web_js) documentation.
+For more information, refer to the [Face Detector](https://developers.google.com/edge/mediapipe/solutions/vision/face_detector?tab=Web) documentation.
 
 ## Face Landmarker
 
@@ -37,7 +37,7 @@ const image = document.getElementById("image") as HTMLImageElement;
 const landmarks = faceLandmarker.detect(image);
 ```
 
-For more information, refer to the [Face Landmarker](https://developers.google.com/mediapipe/solutions/vision/face_landmarker/web_js) documentation.
+For more information, refer to the [Face Landmarker](https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker?tab=Web) documentation.
 
 ## Gesture Recognizer
 
@@ -57,7 +57,7 @@ const image = document.getElementById("image") as HTMLImageElement;
 const recognitions = gestureRecognizer.recognize(image);
 ```
 
-For more information, refer to the [Gesture Recognizer](https://developers.google.com/mediapipe/solutions/vision/gesture_recognizer/web_js) documentation.
+For more information, refer to the [Gesture Recognizer](https://developers.google.com/edge/mediapipe/solutions/vision/gesture_recognizer?tab=Web) documentation.
 
 ## Hand Landmarker
 
@@ -76,7 +76,7 @@ const image = document.getElementById("image") as HTMLImageElement;
 const landmarks = handLandmarker.detect(image);
 ```
 
-For more information, refer to the [Hand Landmarker](https://developers.google.com/mediapipe/solutions/vision/hand_landmarker/web_js) documentation.
+For more information, refer to the [Hand Landmarker](https://developers.google.com/edge/mediapipe/solutions/vision/hand_landmarker?tab=Web) documentation.
 
 ## Holistic Landmarker
 
@@ -112,7 +112,7 @@ const image = document.getElementById("image") as HTMLImageElement;
 const classifications = imageClassifier.classify(image);
 ```
 
-For more information, refer to the [Image Classifier](https://developers.google.com/mediapipe/solutions/vision/image_classifier/web_js) documentation.
+For more information, refer to the [Image Classifier](https://developers.google.com/edge/mediapipe/solutions/vision/image_classifier?tab=Web) documentation.
 
 ## Image Embedder
 
@@ -146,7 +146,7 @@ imageSegmenter.segment(image, (masks, width, height) => {
 });
 ```
 
-For more information, refer to the [Image Segmenter](https://developers.google.com/mediapipe/solutions/vision/image_segmenter/web_js) documentation.
+For more information, refer to the [Image Segmenter](https://developers.google.com/edge/mediapipe/solutions/vision/image_segmenter?tab=Web) documentation.
 
 ## Interactive Segmenter
 
@@ -170,7 +170,7 @@ const mask = interactiveSegmenter.segment([{
 }]);
 ```
 
-For more information, refer to the [Interactive Segmenter](https://developers.google.com/mediapipe/solutions/vision/interactive_segmenter/web_js) documentation.
+For more information, refer to the [Interactive Segmenter](https://developers.google.com/edge/mediapipe/solutions/vision/interactive_segmenter?tab=Web) documentation.
 
 ## Object Detector
 
@@ -188,7 +188,7 @@ const image = document.getElementById("image") as HTMLImageElement;
 const detections = objectDetector.detect(image);
 ```
 
-For more information, refer to the [Object Detector](https://developers.google.com/mediapipe/solutions/vision/object_detector/web_js) documentation.
+For more information, refer to the [Object Detector](https://developers.google.com/edge/mediapipe/solutions/vision/object_detector?tab=Web) documentation.
 
 ## Pose Landmarker
 
@@ -207,7 +207,7 @@ const image = document.getElementById("image") as HTMLImageElement;
 const landmarks = poseLandmarker.detect(image);
 ```
 
-For more information, refer to the [Pose Landmarker](https://developers.google.com/mediapipe/solutions/vision/pose_landmarker/web_js) documentation.
+For more information, refer to the [Pose Landmarker](https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker?tab=Web) documentation.
 
 ### Privacy Notice
 
