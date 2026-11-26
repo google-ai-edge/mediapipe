@@ -14,6 +14,7 @@
 
 import Foundation
 package import third_party_mediapipe_tasks_c_audio_audio_transcriber_audio_transcriber_lib
+package import third_party_mediapipe_tasks_c_audio_core_transcription_segment
 
 /// A single interim or finalized transcript span produced by `AudioTranscriber`.
 public struct TranscriptionSegment: Sendable, Equatable, Hashable {

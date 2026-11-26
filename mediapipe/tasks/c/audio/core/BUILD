@@ -25,6 +25,11 @@ cc_library(
 )
 
 cc_library(
+    name = "transcription_segment",
+    hdrs = ["transcription_segment.h"],
+)
+
+cc_library(
     name = "running_mode_converter",
     srcs = ["running_mode_converter.cc"],
     hdrs = ["running_mode_converter.h"],

@@ -25,6 +25,7 @@ cc_library(
     hdrs = ["audio_transcriber.h"],
     visibility = ["//mediapipe/tasks/c:__subpackages__"],
     deps = [
+        "//mediapipe/tasks/c/audio/core:transcription_segment",
         "//mediapipe/tasks/c/core:base_options",
         "//mediapipe/tasks/c/core:mp_status",
     ],

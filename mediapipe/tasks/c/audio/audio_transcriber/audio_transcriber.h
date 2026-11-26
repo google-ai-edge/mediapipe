@@ -20,6 +20,7 @@ limitations under the License.
 #include <stddef.h>
 #include <stdint.h>
 
+#include "mediapipe/tasks/c/audio/core/transcription_segment.h"
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/c/core/mp_status.h"
 
@@ -67,14 +68,6 @@ struct MpAudioTranscriberOptions {
 
   // Optional directory path for caching compiled model artifacts (nullable).
   const char* cache_dir;
-};
-
-// A single transcribed segment emitted by AudioTranscriber.
-struct MpTranscriptionSegment {
-  char* transcript;
-  bool is_final;
-  int64_t from_timestamp_ms;
-  int64_t to_timestamp_ms;
 };
 
 // The result of an AudioTranscriber invocation.

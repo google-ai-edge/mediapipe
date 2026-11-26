@@ -26,6 +26,7 @@
 #include "mediapipe/tasks/c/audio/audio_embedder/audio_embedder.h"
 #include "mediapipe/tasks/c/audio/audio_transcriber/audio_transcriber.h"
 #include "mediapipe/tasks/c/audio/core/common.h"
+#include "mediapipe/tasks/c/audio/core/transcription_segment.h"
 #include "mediapipe/tasks/c/audio/text_to_speech/text_to_speech.h"
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/components/containers/classification_result.h"
