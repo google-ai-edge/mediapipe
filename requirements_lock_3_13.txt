@@ -6,7 +6,7 @@
 #
 absl-py==2.5.0
     # via -r mediapipe/opensource_only/requirements.txt
-certifi==2026.7.22
+certifi==2026.10.19
     # via -r mediapipe/opensource_only/requirements.txt
 cffi==2.1.1
     # via sounddevice
@@ -32,7 +32,7 @@ opencv-contrib-python==5.0.0.93
     # via -r mediapipe/opensource_only/requirements.txt
 packaging==26.3
     # via matplotlib
-pillow==12.3.0
+pillow==13.0.0
     # via matplotlib
 pycparser==3.0
     # via cffi
