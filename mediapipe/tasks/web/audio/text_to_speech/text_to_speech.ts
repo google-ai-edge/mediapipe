@@ -445,10 +445,11 @@ export class TextToSpeech extends TaskRunner {
         unknown
       >;
       wasmModule['preinitializedWebGPUDevice'] = undefined;
-      const globalScope = (typeof self !== 'undefined'
-        ? self
-        : globalThis) as unknown as Record<string, unknown>;
-      if (typeof globalScope['Module'] === 'object' && globalScope['Module']) {
+      const globalScope = globalThis as unknown as Record<string, unknown>;
+      if (
+        typeof globalScope['Module'] === 'object' &&
+        globalScope['Module'] != null
+      ) {
         (globalScope['Module'] as Record<string, unknown>)[
           'preinitializedWebGPUDevice'
         ] = undefined;
@@ -519,21 +520,18 @@ export class TextToSpeech extends TaskRunner {
                   configurable: true,
                 });
               } catch {
-                try {
-                  deviceWithInfo.adapterInfo = adapterInfo;
-                } catch {}
+                // Ignore if `adapterInfo` is non-configurable on this browser's
+                // `GPUDevice` prototype.
               }
             }
             wasmModule['preinitializedWebGPUDevice'] = device;
           }
         }
         if (wasmModule['preinitializedWebGPUDevice']) {
-          const globalScope = (typeof self !== 'undefined'
-            ? self
-            : globalThis) as unknown as Record<string, unknown>;
+          const globalScope = globalThis as unknown as Record<string, unknown>;
           if (
             typeof globalScope['Module'] === 'object' &&
-            globalScope['Module']
+            globalScope['Module'] != null
           ) {
             (globalScope['Module'] as Record<string, unknown>)[
               'preinitializedWebGPUDevice'
