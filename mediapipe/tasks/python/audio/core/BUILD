@@ -13,10 +13,16 @@
 # limitations under the License.
 
 # Placeholder for internal Python strict library and test compatibility macro.
+# Placeholder: load py_library
 
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
+
+py_library(
+    name = "transcription_segment",
+    srcs = ["transcription_segment.py"],
+)
 
 py_library(
     name = "audio_task_running_mode",

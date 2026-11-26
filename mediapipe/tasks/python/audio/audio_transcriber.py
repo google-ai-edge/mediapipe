@@ -22,6 +22,7 @@ from typing import Optional, Union
 
 import numpy as np
 
+from mediapipe.tasks.python.audio.core import transcription_segment
 from mediapipe.tasks.python.core import base_options as base_options_lib
 from mediapipe.tasks.python.core import base_options_c
 from mediapipe.tasks.python.core import mediapipe_c_bindings
@@ -137,22 +138,7 @@ def _check_status(lib: ctypes.CDLL, status: int, err_ptr: ctypes.c_char_p):
     raise RuntimeError(f'AudioTranscriber C API error ({status}): {msg}')
 
 
-@dataclasses.dataclass(frozen=True)
-class TranscriptionSegment:
-  """A single transcribed segment with start and end timestamps.
-
-  Attributes:
-    transcript: The recognized text for this audio segment.
-    is_final: Whether this segment is finalized or an interim hypothesis.
-    from_timestamp_ms: Segment start time in milliseconds relative to stream
-      start.
-    to_timestamp_ms: Segment end time in milliseconds relative to stream start.
-  """
-
-  transcript: str
-  is_final: bool
-  from_timestamp_ms: int
-  to_timestamp_ms: int
+TranscriptionSegment = transcription_segment.TranscriptionSegment
 
 
 @dataclasses.dataclass(frozen=True)

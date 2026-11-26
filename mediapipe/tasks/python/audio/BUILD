@@ -69,6 +69,7 @@ py_library(
         "audio_transcriber.py",
     ],
     deps = [
+        "//mediapipe/tasks/python/audio/core:transcription_segment",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:base_options_c",
         "//mediapipe/tasks/python/core:mediapipe_c_bindings",
