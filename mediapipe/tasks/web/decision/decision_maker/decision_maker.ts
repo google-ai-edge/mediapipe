@@ -20,6 +20,10 @@ import {
   TaskRunner,
 } from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
+import {
+  provideWebGpuDevice,
+  removeWebGpuDevice,
+} from '../../../../tasks/web/core/webgpu_device';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 import type {
@@ -1563,111 +1567,9 @@ export class DecisionMaker extends TaskRunner {
     }
 
     if (this.backendType === CPU_DELEGATE_BACKEND_TYPE) {
-      // Use quoted property access: Emscripten reads this field by name
-      // from the Module object, so it must not be renamed by the compiler.
-      const wasmModule = this.graphRunner.wasmModule as unknown as Record<
-        string,
-        unknown
-      >;
-      wasmModule['preinitializedWebGPUDevice'] = undefined;
-      const globalScope = globalThis as unknown as Record<string, unknown>;
-      if (
-        typeof globalScope['Module'] === 'object' &&
-        globalScope['Module'] != null
-      ) {
-        (globalScope['Module'] as Record<string, unknown>)[
-          'preinitializedWebGPUDevice'
-        ] = undefined;
-      }
-    } else if (typeof navigator !== 'undefined' && navigator.gpu) {
-      try {
-        // Use quoted property access: Emscripten reads this field by name
-        // from the Module object, so it must not be renamed by the compiler.
-        const wasmModule = this.graphRunner.wasmModule as unknown as Record<
-          string,
-          unknown
-        >;
-        if (!wasmModule['preinitializedWebGPUDevice']) {
-          const adapter = await navigator.gpu.requestAdapter({
-            powerPreference: 'high-performance',
-          });
-          const adapterInfo = (
-            adapter as unknown as {
-              info?: {
-                vendor?: string;
-                architecture?: string;
-                description?: string;
-              };
-            }
-          )?.info;
-          const isFallback = Boolean(
-            (adapter as unknown as {isFallbackAdapter?: boolean})
-              ?.isFallbackAdapter,
-          );
-          const isSoftwareAdapter =
-            isFallback ||
-            /swiftshader|llvmpipe|software|lavapipe/i.test(
-              `${adapterInfo?.vendor ?? ''} ${adapterInfo?.architecture ?? ''} ${adapterInfo?.description ?? ''}`,
-            );
-          if (adapter && !isSoftwareAdapter) {
-            const requiredFeatures: GPUFeatureName[] = [];
-            for (const feat of [
-              'shader-f16',
-              'subgroups',
-            ] as GPUFeatureName[]) {
-              if (adapter.features.has(feat)) {
-                requiredFeatures.push(feat);
-              }
-            }
-            const requiredLimits: Record<string, number> = {};
-            for (const limitKey of [
-              'maxBufferSize',
-              'maxStorageBufferBindingSize',
-              'maxStorageBuffersPerShaderStage',
-              'maxComputeWorkgroupStorageSize',
-              'maxTextureDimension2D',
-            ]) {
-              const val = (
-                adapter.limits as unknown as Record<string, number | undefined>
-              )[limitKey];
-              if (typeof val === 'number') {
-                requiredLimits[limitKey] = val;
-              }
-            }
-            const device = await adapter.requestDevice({
-              requiredFeatures,
-              requiredLimits,
-            });
-            const deviceWithInfo = device as unknown as {adapterInfo?: unknown};
-            if (!deviceWithInfo.adapterInfo && adapterInfo) {
-              try {
-                Object.defineProperty(device, 'adapterInfo', {
-                  value: adapterInfo,
-                  writable: true,
-                  configurable: true,
-                });
-              } catch {
-                // Ignore if `adapterInfo` is non-configurable on this browser's
-                // `GPUDevice` prototype.
-              }
-            }
-            wasmModule['preinitializedWebGPUDevice'] = device;
-          }
-        }
-        if (wasmModule['preinitializedWebGPUDevice']) {
-          const globalScope = globalThis as unknown as Record<string, unknown>;
-          if (
-            typeof globalScope['Module'] === 'object' &&
-            globalScope['Module'] != null
-          ) {
-            (globalScope['Module'] as Record<string, unknown>)[
-              'preinitializedWebGPUDevice'
-            ] = wasmModule['preinitializedWebGPUDevice'];
-          }
-        }
-      } catch (e) {
-        console.warn('WebGPU device initialization failed:', e);
-      }
+      removeWebGpuDevice(this.graphRunner.wasmModule);
+    } else {
+      await provideWebGpuDevice(this.graphRunner.wasmModule);
     }
 
     const wasmModule = this.graphRunner

@@ -16,6 +16,7 @@ ts_library(
         "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner",
+        "//mediapipe/tasks/web/core:webgpu_device",
         "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )

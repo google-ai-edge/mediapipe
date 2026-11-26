@@ -32,6 +32,29 @@ jasmine_node_test(
 )
 
 ts_library(
+    name = "webgpu_device",
+    srcs = ["webgpu_device.ts"],
+    deps = [
+        "//mediapipe/web/graph_runner:graph_runner_ts",
+    ],
+)
+
+ts_library(
+    name = "webgpu_device_test_lib",
+    testonly = True,
+    srcs = ["webgpu_device_test.ts"],
+    deps = [
+        ":webgpu_device",
+        "//mediapipe/web/graph_runner:graph_runner_ts",
+    ],
+)
+
+jasmine_node_test(
+    name = "webgpu_device_test",
+    srcs = [":webgpu_device_test_lib"],
+)
+
+ts_library(
     name = "task_logger",
     srcs = ["task_logger.ts"],
 )
