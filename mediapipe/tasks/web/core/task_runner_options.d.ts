@@ -30,7 +30,11 @@ export declare interface BaseOptions {
    */
   modelAssetBuffer?: Uint8Array | ReadableStreamDefaultReader | undefined;
 
-  /** Overrides the default backend to use for the provided model. */
+  /**
+   * Overrides the default backend to use for the provided model. Note that
+   * vision tasks still use WebGL for image pre- and post-processing when
+   * `delegate` is 'CPU', so a WebGL context must be available either way.
+   */
   delegate?: 'CPU' | 'GPU' | undefined;
 }
 
