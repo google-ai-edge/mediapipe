@@ -222,9 +222,11 @@ export class GestureRecognizer extends VisionTaskRunner {
    * @param options The options for the gesture recognizer.
    */
   override setOptions(options: GestureRecognizerOptions): Promise<void> {
-    this.handDetectorGraphOptions.setNumHands(
-      options.numHands ?? DEFAULT_NUM_HANDS,
-    );
+    if ('numHands' in options) {
+      this.handDetectorGraphOptions.setNumHands(
+        options.numHands ?? DEFAULT_NUM_HANDS,
+      );
+    }
     if ('minHandDetectionConfidence' in options) {
       this.handDetectorGraphOptions.setMinDetectionConfidence(
         options.minHandDetectionConfidence ?? DEFAULT_CONFIDENCE,
@@ -497,5 +499,4 @@ export class GestureRecognizer extends VisionTaskRunner {
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
   }
 }
-
 
